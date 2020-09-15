@@ -56,13 +56,21 @@ namespace iNOPC.Drivers.IEC_104
             // запуск опроса
             try
             {
-                Conn = new Connection(Configuration.Host, Configuration.Port)
+                var apci = new APCIParameters
+                { 
+                    T0 = Configuration.ConnectionTimeoutT0, 
+                    T1 = Configuration.TimeoutT1, 
+                    T2 = Configuration.TimeoutT2, 
+                    T3 = Configuration.TimeoutT3,
+                };
+
+                Conn = new Connection(Configuration.Host, Configuration.Port, apci, new ApplicationLayerParameters { })
                 {
                     DebugOutput = false,
                     Autostart = true,
                 };
 
-                Conn.SetConnectTimeout(Configuration.ConnectionTimeout);
+                Conn.SetConnectTimeout(Configuration.ConnectionTimeoutT0);
                 Conn.SetASDUReceivedHandler(AsduReceivedHandler, null);
                 Conn.SetReceivedRawMessageHandler(RawMessageHandler, "RX");
                 Conn.SetSentRawMessageHandler(RawMessageHandler, "TX");

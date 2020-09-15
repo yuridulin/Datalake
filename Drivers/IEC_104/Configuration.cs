@@ -10,7 +10,13 @@ namespace iNOPC.Drivers.IEC_104
 
         public int Port { get; set; } = 2404;
 
-        public int ConnectionTimeout { get; set; } = 1000;
+        public int ConnectionTimeoutT0 { get; set; } = 1000;
+
+        public int TimeoutT1 { get; set; } = 1000;
+
+        public int TimeoutT2 { get; set; } = 1000;
+
+        public int TimeoutT3 { get; set; } = 1000;
 
         public int ReconnectTimeout { get; set; } = 2000;
 
@@ -32,7 +38,10 @@ namespace iNOPC.Drivers.IEC_104
                 Html.Value("Адрес устройства", nameof(config.Host), config.Host) +
                 Html.Value("TCP порт", nameof(config.Port), config.Port) +
                 Html.Value("Режим прослушки", nameof(config.UseInterrogation), config.UseInterrogation) +
-                Html.Value("Таймаут подключения", nameof(config.ConnectionTimeout), config.ConnectionTimeout) +
+                Html.Value("Таймаут подключения t0", nameof(config.ConnectionTimeoutT0), config.ConnectionTimeoutT0) +
+                Html.Value("Таймаут подтверждения запроса t1", nameof(config.TimeoutT1), config.TimeoutT1) +
+                Html.Value("Таймаут подтверждения ответа t2", nameof(config.TimeoutT2), config.TimeoutT2) +
+                Html.Value("Таймаут простоя t3", nameof(config.TimeoutT3), config.TimeoutT3) +
                 Html.Value("Таймаут переподключения", nameof(config.ReconnectTimeout), config.ReconnectTimeout) +
                 Html.Value("Таймаут команды для синхр. времени", nameof(config.SyncClockTimeout), config.SyncClockTimeout) +
                 Html.Value("Таймаут цикличного опроса", nameof(config.InterrogationTimeout), config.InterrogationTimeout);
