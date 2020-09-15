@@ -1,0 +1,195 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using iNOPC.Server.Web;
+using iNOPC.Library;
+using System.Diagnostics;
+
+namespace iNOPC.Server.Models
+{
+    public class Device
+    {
+        // Параметры конфигурации
+
+        public string Name { get; set; } = "UnnamedDevice";
+
+        public bool Active { get; set; } = false;
+
+        public string Configuration { get; set; } = "{}";
+
+
+        // Рабочие параметры
+
+        public int Id { get; set; } = 0;
+
+        public string DriverName { get; set; }
+
+        public int DriverId { get; set; }
+
+        public List<Log> Logs { get; set; } = new List<Log>();
+
+        private IDriver InnerDriver { get; set; } = null;
+
+
+        // Методы взаимодействия
+
+        public void Start()
+        {
+            // Получение типа драйвера из сборки
+            var driver = Storage.Drivers.FirstOrDefault(x => x.Name == DriverName);
+            if (driver == null)
+            {
+                Log("Драйвер " + DriverName + " не найден", LogType.ERROR);
+                return;
+            }
+
+            var type = driver.DriverType;
+            if (type == null)
+            {
+                Log("Драйвер " + DriverName + " не содержит тип Driver", LogType.ERROR);
+                return;
+            }
+
+            // Пересоздание объекта драйвера при необходимости
+            try
+            {
+                if (InnerDriver == null || InnerDriver.GetType() != type)
+                {
+                    InnerDriver = (IDriver)Activator.CreateInstance(type);
+
+                    // Так как объект только создан, вешаем обработчики событий
+                    InnerDriver.LogEvent += Log;
+                    InnerDriver.UpdateEvent += Update;
+                    InnerDriver.WinLogEvent += WinLog;
+                }
+            }
+            catch (Exception e)
+            {
+                Log("Драйвер не создан: " + e.Message, LogType.ERROR);
+                return;
+            }
+
+            // Запуск мониторинга
+            try
+            {
+                Active = InnerDriver.Start(Configuration);
+
+                WebSocket.Broadcast("tree");
+                WebSocket.Broadcast("driver.devices:" + DriverId);
+            }
+            catch (Exception e)
+            {
+                try
+                {
+                    InnerDriver.Stop();
+                }
+                catch (Exception) { }
+
+                Log("Ошибка при старте опроса: " + e.Message, LogType.ERROR);
+            }
+        }
+
+        public void Stop()
+        {
+            try
+            {
+                InnerDriver?.Stop();
+
+                Active = false;
+
+                WebSocket.Broadcast("tree");
+                WebSocket.Broadcast("driver.updated:" + DriverId);
+            }
+            catch (Exception e)
+            {
+                Log("Ошибка при остановке опроса: " + e.Message, LogType.WARNING);
+            }
+        }
+
+        public void Log(string text, LogType type = LogType.REGULAR)
+        {
+            lock (Logs)
+            {
+                if (Logs.Count >= 1500)
+                {
+                    Logs.RemoveAt(0);
+                }
+                Logs.Add(new Log
+                {
+                    Date = DateTime.Now,
+                    Text = text,
+                    Type = type
+                });
+
+                if (type == LogType.ERROR)
+                {
+                    Program.Err("Error: " + text + "\nDriver: " + Name);
+                    WebSocket.Broadcast("tree");
+                    WebSocket.Broadcast("driver.devices:" + DriverId);
+                }
+
+                WebSocket.Log(Id, new {
+                    Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"),
+                    Text = text,
+                    Type = type
+                });
+            }
+        }
+
+        public void WinLog(string text)
+        {
+            EventLog.WriteEntry("iNOPC_Server", DriverName + "." + Name + ": " + text, EventLogEntryType.Information);
+        }
+
+        public void Update()
+        {
+            var fields = Fields();
+
+            foreach (var field in fields)
+            {
+                OPC.Write(DriverName + '.' + Name + '.' + field.Key, field.Value);
+            }
+
+            WebSocket.Broadcast("device.fields:" + Id);
+        }
+
+        public void Write(string fieldName, object value)
+        {
+            if (!Active) return;
+            if (InnerDriver == null) return;
+            
+            InnerDriver.Write(fieldName, value);
+        }
+
+        public string GetConfigurationPage()
+        {
+            // Получение типа драйвера из сборки
+            var driver = Storage.Drivers.FirstOrDefault(x => x.Name == DriverName);
+            if (driver == null)
+            {
+                Log("Драйвер " + DriverName + " не найден", LogType.ERROR);
+                return null;
+            }
+
+            if (driver.ConfigurationPage == null)
+            {
+                Log("Драйвер " + DriverName + " не содержит конфигурационной страницы", LogType.ERROR);
+                return null;
+            }
+
+            return (string)driver.ConfigurationPage.Invoke(null, new object[] { Configuration });
+        }
+
+        public Dictionary<string, object> Fields()
+        {
+            if (InnerDriver != null)
+            {
+                lock (InnerDriver.Fields)
+                {
+                    return InnerDriver.Fields.ToDictionary(x => x.Key, x => x.Value);
+                }
+            }
+            else return new Dictionary<string, object>();
+        }
+    }
+}

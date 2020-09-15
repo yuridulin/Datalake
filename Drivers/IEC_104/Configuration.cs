@@ -1,0 +1,68 @@
+﻿using iNOPC.Library;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+
+namespace iNOPC.Drivers.IEC_104
+{
+    public class Configuration
+    {
+        public string Host { get; set; } = "192.168.1.1";
+
+        public int Port { get; set; } = 2404;
+
+        public int ConnectionTimeout { get; set; } = 1000;
+
+        public int ReconnectTimeout { get; set; } = 2000;
+
+        public int InterrogationTimeout { get; set; } = 10000;
+
+        public int SyncClockTimeout { get; set; } = 60000;
+
+        public bool UseInterrogation { get; set; } = true;
+
+        public List<Field> NamedFields { get; set; } = new List<Field>();
+
+        public static string GetPage(string json)
+        {
+            var config = JsonConvert.DeserializeObject<Configuration>(json);
+
+            string html = "";
+
+            html +=
+                Html.Value("Адрес устройства", nameof(config.Host), config.Host) +
+                Html.Value("TCP порт", nameof(config.Port), config.Port) +
+                Html.Value("Режим прослушки", nameof(config.UseInterrogation), config.UseInterrogation) +
+                Html.Value("Таймаут подключения", nameof(config.ConnectionTimeout), config.ConnectionTimeout) +
+                Html.Value("Таймаут переподключения", nameof(config.ReconnectTimeout), config.ReconnectTimeout) +
+                Html.Value("Таймаут команды для синхр. времени", nameof(config.SyncClockTimeout), config.SyncClockTimeout) +
+                Html.Value("Таймаут цикличного опроса", nameof(config.InterrogationTimeout), config.InterrogationTimeout);
+
+            html += "<div type='array' name='" + nameof(config.NamedFields) + "'>"
+                + "<span>Именованные поля</span>"
+                + "<button onclick='_add(this)'>Добавить</button>";
+
+            foreach (var field in config.NamedFields)
+            {
+                html += NamedFieldString(field);
+            }
+
+            html += "</div>";
+
+            html += "<script>" +
+                "function _add(button) { button.insertAdjacentHTML('afterEnd', \"" + NamedFieldString(new Field { Address = 0, Name = "" }) + "\") }" +
+                "function _del(button) { button.parentNode.parentNode.removeChild(button.parentNode) }" +
+                "</script>";
+
+            return html;
+
+            string NamedFieldString(Field field)
+            {
+                return "<p>"
+                    + Html.Input("Адрес", nameof(field.Address), field.Address)
+                    + Html.Input("Имя", nameof(field.Name), field.Name)
+                    + "<button onclick='_del(this)'>Удалить</button>"
+                    + "</p>";
+            }
+        }
+    }
+}
