@@ -1,6 +1,7 @@
 ﻿using iNOPC.Drivers.MODBUS_TCP.Models;
 using iNOPC.Library;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace iNOPC.Drivers.MODBUS_TCP
@@ -55,12 +56,33 @@ namespace iNOPC.Drivers.MODBUS_TCP
 
             string NamedFieldString(Field field)
             {
+                string select = "<span>Тип</span>"
+                    + "<select name='" + nameof(field.Type) + "'>"
+                    + Option(nameof(Byte))
+                    + Option(nameof(Int16))
+                    + Option(nameof(Int32))
+                    + Option(nameof(Int64))
+                    + Option(nameof(UInt16))
+                    + Option(nameof(UInt32))
+                    + Option(nameof(Single))
+                    + Option(nameof(Double))
+                    + Option(nameof(DateTime))
+                    + Option("Int.Int")
+                    + Option("TM2Date")
+                    + "</select>";
+
                 return "<p>"
                     + Html.Input("Имя", nameof(field.Name), field.Name)
-                    + Html.Input("Тип", nameof(field.Type), field.Type)
+                    + select
                     + Html.Input("Адрес", nameof(field.Address), field.Address)
+                    + Html.Input("Множитель", nameof(field.Scale), field.Scale)
                     + "<button onclick='_del(this)'>Удалить</button>"
                     + "</p>";
+
+                string Option(string type, string name = null)
+                {
+                    return "<option" + (type == field.Type ? " selected" : "") + " value='type'>" + (name ?? type) + "</option>";
+                }
             }
         }
     }

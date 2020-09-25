@@ -230,20 +230,21 @@ namespace iNOPC.Drivers.MODBUS_TCP
         {
             switch (type)
             {
-                case "Word":
-                case "UInt16":
+                case nameof(Byte):
+                case nameof(Int16):
+                case nameof(UInt16):
                     return 1;
 
-                case "Int":
-                case "UInt32":
-                case "Single":
-                case "Date":
+                case nameof(Int32):
+                case nameof(UInt32):
+                case nameof(Single):
+                case nameof(DateTime):
                 default:
                     return 2;
 
-                case "Long":
-                case "UInt64":
-                case "Double":
+                case nameof(Int64):
+                case nameof(UInt64):
+                case nameof(Double):
                 case "Int.Int":
                 case "TM2Date":
                     return 4;
@@ -258,7 +259,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
                 {
                     try
                     {
-                        Client.Close();
+                        Client?.Close();
                         Client = null;
 
                         Stream = null;

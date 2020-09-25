@@ -95,7 +95,11 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
 
                     switch (part.Type)
                     {
-                        case "Date":
+                        case nameof(Byte):
+                            value = OldByteFirst ? valueBytes[1] : valueBytes[0];
+                            break;
+
+                        case nameof(DateTime):
                             if (OldRegisterFirst)
                             {
                                 toValue = OldByteFirst ? new[]
@@ -135,11 +139,7 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             value = (new DateTime(1970, 1, 1, 3, 0, 0, 0, DateTimeKind.Utc) + TimeSpan.FromSeconds(BitConverter.ToInt32(toValue, 0))).ToString("HH:mm:ss");
                             break;
 
-                        case "TM2Date":
-                            value = new DateTime(valueBytes[5], valueBytes[4], valueBytes[3], valueBytes[2], valueBytes[1], valueBytes[0]).ToString("HH:mm:ss");
-                            break;
-
-                        case "Word":
+                        case nameof(Int16):
                             if (OldRegisterFirst)
                             {
                                 toValue = OldByteFirst
@@ -172,7 +172,7 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             value = BitConverter.ToInt16(toValue, 0);
                             break;
 
-                        case "UInt16":
+                        case nameof(UInt16):
                             if (OldRegisterFirst)
                             {
                                 toValue = OldByteFirst
@@ -205,7 +205,7 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             value = BitConverter.ToUInt16(toValue, 0);
                             break;
 
-                        case "Int":
+                        case nameof(Int32):
                             if (OldRegisterFirst)
                             {
                                 toValue = OldByteFirst
@@ -246,7 +246,7 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             value = BitConverter.ToInt32(toValue, 0);
                             break;
 
-                        case "UInt32":
+                        case nameof(UInt32):
                             if (OldRegisterFirst)
                             {
                                 toValue = OldByteFirst
@@ -287,7 +287,7 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             value = BitConverter.ToUInt32(toValue, 0);
                             break;
 
-                        case "Long":
+                        case nameof(Int64):
                             if (OldRegisterFirst)
                             {
                                 toValue = OldByteFirst ? new[]
@@ -342,8 +342,7 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             part.Value = BitConverter.ToInt64(toValue, 0);
                             break;
 
-
-                        case "UInt64":
+                        case nameof(UInt64):
                             if (OldRegisterFirst)
                             {
                                 toValue = OldByteFirst ? new[]
@@ -398,7 +397,7 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             value = BitConverter.ToUInt64(toValue, 0);
                             break;
 
-                        case "Double":
+                        case nameof(Double):
                             if (OldRegisterFirst)
                             {
                                 toValue = OldByteFirst ? new[]
@@ -453,7 +452,7 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             value = BitConverter.ToDouble(toValue, 0);
                             break;
 
-                        case "Single":
+                        case nameof(Single):
                             if (OldRegisterFirst)
                             {
                                 toValue = OldByteFirst
@@ -576,6 +575,10 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             first = BitConverter.ToInt32(toValue, 0);
 
                             value = Convert.ToDouble(first.ToString() + "," + second.ToString());
+                            break;
+
+                        case "TM2Date":
+                            value = new DateTime(valueBytes[5], valueBytes[4], valueBytes[3], valueBytes[2], valueBytes[1], valueBytes[0]).ToString("HH:mm:ss");
                             break;
                     }
 
