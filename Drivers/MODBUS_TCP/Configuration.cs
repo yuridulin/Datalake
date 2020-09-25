@@ -82,7 +82,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
 
                 string Option(string type, string name = null)
                 {
-                    return "<option" + (type == field.Type ? " selected" : "") + " value='type'>" + (name ?? type) + "</option>";
+                    return "<option" + (type == field.Type ? " selected" : "") + " value='" + type + "'>" + (name ?? type) + "</option>";
                 }
             }
         }

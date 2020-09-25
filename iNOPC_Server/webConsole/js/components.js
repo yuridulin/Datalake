@@ -544,7 +544,7 @@ function DeviceSave(id) {
 			var parts = el.querySelectorAll('p')
 			parts.forEach(function (p) {
 				var x = {}
-				p.querySelectorAll('input').forEach(function (i) {
+				p.querySelectorAll('input,select').forEach(function (i) {
 					x[i.name] = i.type == 'checkbox' ? i.checked : i.value
 				})
 				arr.push(x)
