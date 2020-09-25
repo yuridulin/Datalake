@@ -75,7 +75,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
                     + Html.Input("Имя", nameof(field.Name), field.Name)
                     + select
                     + Html.Input("Адрес", nameof(field.Address), field.Address)
-                    + Html.Input("Множитель", nameof(field.Scale), field.Scale)
+                    + Html.Input("Делитель", nameof(field.Scale), field.Scale)
                     + "<button onclick='_del(this)'>Удалить</button>"
                     + "</p>";
 

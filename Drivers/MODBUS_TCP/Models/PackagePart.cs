@@ -6,6 +6,8 @@
 
         public string Type { get; set; } = "";
 
+        public ushort Scale { get; set; } = 1;
+
         public byte Length { get; set; } = 0;
 
         public object Value { get; set; } = 0;

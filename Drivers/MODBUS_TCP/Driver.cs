@@ -164,6 +164,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
                         FieldName = fields[0].Name,
                         Length = length,
                         Type = fields[0].Type,
+                        Scale = fields[0].Scale,
                     });
 
                     fields[0].Checked = true;
@@ -179,6 +180,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
                                 FieldName = fields[k].Name,
                                 Length = fieldKlength,
                                 Type = fields[k].Type,
+                                Scale = fields[k].Scale,
                             });
 
                             length = fieldKlength;
@@ -210,6 +212,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
                                 FieldName = field.Name,
                                 Length = GetRegistersCount(field.Type),
                                 Type = field.Type,
+                                Scale = field.Scale,
                             }
                         },
                     });

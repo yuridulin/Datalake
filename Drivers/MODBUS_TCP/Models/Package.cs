@@ -169,7 +169,8 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                                     };
                             }
 
-                            value = BitConverter.ToInt16(toValue, 0);
+                            var _int16 = BitConverter.ToInt16(toValue, 0);
+                            value = part.Scale != 0 ? (_int16 / part.Scale) : _int16;
                             break;
 
                         case nameof(UInt16):
@@ -202,7 +203,8 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                                     };
                             }
 
-                            value = BitConverter.ToUInt16(toValue, 0);
+                            var _uint16 = BitConverter.ToUInt16(toValue, 0);
+                            value = part.Scale != 0 ? (_uint16 / part.Scale) : _uint16;
                             break;
 
                         case nameof(Int32):
@@ -243,7 +245,8 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                                     };
                             }
 
-                            value = BitConverter.ToInt32(toValue, 0);
+                            var _int32 = BitConverter.ToInt32(toValue, 0);
+                            value = part.Scale != 0 ? (_int32 / part.Scale) : _int32;
                             break;
 
                         case nameof(UInt32):
@@ -285,6 +288,8 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             }
 
                             value = BitConverter.ToUInt32(toValue, 0);
+                            var _uint32 = BitConverter.ToInt32(toValue, 0);
+                            value = part.Scale != 0 ? (_uint32 / part.Scale) : _uint32;
                             break;
 
                         case nameof(Int64):
@@ -340,6 +345,8 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             }
 
                             part.Value = BitConverter.ToInt64(toValue, 0);
+                            var _int64 = BitConverter.ToInt32(toValue, 0);
+                            value = part.Scale != 0 ? (_int64 / part.Scale) : _int64;
                             break;
 
                         case nameof(UInt64):
@@ -395,6 +402,8 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             }
 
                             value = BitConverter.ToUInt64(toValue, 0);
+                            var _uint64 = BitConverter.ToInt32(toValue, 0);
+                            value = part.Scale != 0 ? (_uint64 / part.Scale) : _uint64;
                             break;
 
                         case nameof(Double):
@@ -450,6 +459,8 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             }
 
                             value = BitConverter.ToDouble(toValue, 0);
+                            var _double = BitConverter.ToInt32(toValue, 0);
+                            value = part.Scale != 0 ? (_double / part.Scale) : _double;
                             break;
 
                         case nameof(Single):
@@ -491,6 +502,8 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             }
 
                             value = BitConverter.ToSingle(toValue, 0);
+                            var _single = BitConverter.ToInt32(toValue, 0);
+                            value = part.Scale != 0 ? (_single / part.Scale) : _single;
                             break;
 
                         case "Int.Int":
@@ -575,6 +588,8 @@ namespace iNOPC.Drivers.MODBUS_TCP.Models
                             first = BitConverter.ToInt32(toValue, 0);
 
                             value = Convert.ToDouble(first.ToString() + "," + second.ToString());
+                            var _intint = BitConverter.ToInt32(toValue, 0);
+                            value = part.Scale != 0 ? (_intint / part.Scale) : _intint;
                             break;
 
                         case "TM2Date":
