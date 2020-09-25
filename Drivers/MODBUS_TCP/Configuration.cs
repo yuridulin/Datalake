@@ -64,6 +64,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
                     + Option(nameof(Int64))
                     + Option(nameof(UInt16))
                     + Option(nameof(UInt32))
+                    + Option(nameof(UInt64))
                     + Option(nameof(Single))
                     + Option(nameof(Double))
                     + Option(nameof(DateTime))
