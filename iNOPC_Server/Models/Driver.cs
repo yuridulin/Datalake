@@ -78,7 +78,7 @@ namespace iNOPC.Server.Models
                 // возобновляем опросы
                 foreach (var device in Devices)
                 {
-                    if (activeDevices.Contains(device.Name))
+                    if (activeDevices.Contains(device.Name) || device.AutoStart)
                     {
                         device.Start();
                     }

@@ -380,6 +380,7 @@ namespace iNOPC.Server.Web
                         return new
                         {
                             device.Name,
+                            device.AutoStart,
                             IsActive = device.Active
                         };
                     }
@@ -471,6 +472,7 @@ namespace iNOPC.Server.Web
                     {
                         Id = ++Storage.NextId,
                         Name = "New_Device_" + Storage.NextId,
+                        AutoStart = false,
                         Configuration = driver.DefaultConfiguratuon,
                         DriverId = driver.Id,
                         DriverName = driver.Name,
@@ -507,11 +509,12 @@ namespace iNOPC.Server.Web
                         if (active) device.Stop();
 
                         device.Name = data.Name;
+                        device.AutoStart = data.AutoStart;
                         device.Configuration = data.Configuration;
 
                         Storage.Save();
 
-                        if (active) device.Start();
+                        if (active || device.AutoStart) device.Start();
 
                         WebSocket.Broadcast("tree");
                         WebSocket.Broadcast("driver.devices:" + driver.Id);

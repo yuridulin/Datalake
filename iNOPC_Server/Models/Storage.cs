@@ -56,6 +56,7 @@ namespace iNOPC.Server.Models
                     {
                         device.Name,
                         device.Active,
+                        device.AutoStart,
                         device.Configuration,
                     })
                 })));

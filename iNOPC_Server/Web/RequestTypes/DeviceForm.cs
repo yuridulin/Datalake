@@ -6,6 +6,8 @@
 
         public string Name { get; set; }
 
+        public bool AutoStart { get; set; }
+
         public string Configuration { get; set; }
     }
 }

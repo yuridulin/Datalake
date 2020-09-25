@@ -304,6 +304,7 @@ function DriverCreate() {
 }
 
 var deviceName
+var deviceAutoStart
 var timeout = 0
 
 function Device(id) {
@@ -326,6 +327,9 @@ function Device(id) {
 			h('div.container',
 				h('span', 'Имя'),
 				deviceName = h('input', { value: device.Name }),
+
+				h('span', 'Автостарт'),
+				deviceAutoStart = h('input', device.AutoStart ? { type: 'checkbox', checked: true } : { type: 'checkbox' }),
 
 				h('button', {
 					innerHTML: 'Старт',
@@ -466,11 +470,11 @@ function Device(id) {
 		DeviceLogs(id)
 		DeviceFields(id)
 
-		if (device.IsActive) {
+		//if (device.IsActive) {
 			timeout = setInterval(function () {
 				DeviceFields(id)
 			}, 1000)
-		}
+		//}
 	})
 }
 
@@ -552,6 +556,7 @@ function DeviceSave(id) {
 	var form = {
 		Id: id,
 		Name: deviceName.value,
+		AutoStart: deviceAutoStart.checked,
 		Configuration: JSON.stringify(config)
 	}
 

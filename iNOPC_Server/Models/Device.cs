@@ -15,6 +15,8 @@ namespace iNOPC.Server.Models
 
         public bool Active { get; set; } = false;
 
+        public bool AutoStart { get; set; } = false;
+
         public string Configuration { get; set; } = "{}";
 
 
