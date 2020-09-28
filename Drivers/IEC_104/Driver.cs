@@ -327,15 +327,15 @@ namespace iNOPC.Drivers.IEC_104
 
             try
             {
-                if (asdu.TypeId == TypeID.M_SP_NA_1) /* Однобитная информация в байте (ТС) */
+                if (asdu.TypeId == TypeID.M_ME_TC_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
                     {
-                        var val = (SinglePointInformation)asdu.GetElement(i);
+                        var val = (MeasuredValueShortWithCP24Time2a)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.Value);
                     }
                 }
-                else if (asdu.TypeId == TypeID.M_ME_TE_1) /* Значение измеряемой величины, масштабированное значение (2 байта) с меткой времени (7 байт) */
+                else if (asdu.TypeId == TypeID.M_ME_TE_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
                     {
@@ -343,7 +343,7 @@ namespace iNOPC.Drivers.IEC_104
                         WriteValue(val.ObjectAddress, val.ScaledValue);
                     }
                 }
-                else if (asdu.TypeId == TypeID.M_ME_TF_1) /* Значение измеряемой величины, короткий формат с плавающей запятой (4 байта) с меткой времени */
+                else if (asdu.TypeId == TypeID.M_ME_TF_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
                     {
@@ -351,23 +351,8 @@ namespace iNOPC.Drivers.IEC_104
                         WriteValue(val.ObjectAddress, val.Value);
                     }
                 }
-                else if (asdu.TypeId == TypeID.M_SP_TB_1) /* Однобитная информация в байте (ТС) c меткой времени (7 байт) */
-                {
-                    for (int i = 0; i < asdu.NumberOfElements; i++)
-                    {
-                        var val = (SinglePointWithCP56Time2a)asdu.GetElement(i);
-                        WriteValue(val.ObjectAddress, val.Value);
-                    }
-                }
-                else if (asdu.TypeId == TypeID.M_ME_NC_1) /* Значение измеряемой величины, короткий формат с плавающей запятой (4 байта) */
-                {
-                    for (int i = 0; i < asdu.NumberOfElements; i++)
-                    {
-                        var val = (MeasuredValueShort)asdu.GetElement(i);
-                        WriteValue(val.ObjectAddress, val.Value);
-                    }
-                }
-                else if (asdu.TypeId == TypeID.M_ME_NB_1) /* Значение измеряемой величины, масштабированное значение (2 байта) */
+
+                else if (asdu.TypeId == TypeID.M_ME_NB_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
                     {
@@ -375,7 +360,15 @@ namespace iNOPC.Drivers.IEC_104
                         WriteValue(val.ObjectAddress, val.ScaledValue);
                     }
                 }
-                else if (asdu.TypeId == TypeID.M_ME_ND_1) /* Значение измеряемой величины, нормализованное значение (2 байта) без описателя качества */
+                else if (asdu.TypeId == TypeID.M_ME_NC_1)
+                {
+                    for (int i = 0; i < asdu.NumberOfElements; i++)
+                    {
+                        var val = (MeasuredValueShort)asdu.GetElement(i);
+                        WriteValue(val.ObjectAddress, val.Value);
+                    }
+                }
+                else if (asdu.TypeId == TypeID.M_ME_ND_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
                     {
@@ -383,6 +376,24 @@ namespace iNOPC.Drivers.IEC_104
                         WriteValue(val.ObjectAddress, val.NormalizedValue);
                     }
                 }
+
+                else if (asdu.TypeId == TypeID.M_SP_NA_1)
+                {
+                    for (int i = 0; i < asdu.NumberOfElements; i++)
+                    {
+                        var val = (SinglePointInformation)asdu.GetElement(i);
+                        WriteValue(val.ObjectAddress, val.Value);
+                    }
+                }
+                else if (asdu.TypeId == TypeID.M_SP_TB_1)
+                {
+                    for (int i = 0; i < asdu.NumberOfElements; i++)
+                    {
+                        var val = (SinglePointWithCP56Time2a)asdu.GetElement(i);
+                        WriteValue(val.ObjectAddress, val.Value);
+                    }
+                }
+
                 else if (asdu.TypeId == TypeID.C_SC_NA_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
@@ -390,6 +401,10 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (SingleCommand)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.State);
                     }
+                }
+                else if (asdu.TypeId == TypeID.C_CS_NA_1)
+                {
+                    LogEvent("Получена команда синхронизации времени", LogType.WARNING);
                 }
                 else
                 {
