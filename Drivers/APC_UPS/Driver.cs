@@ -135,11 +135,7 @@ namespace iNOPC.Drivers.APC_UPS
 
         Timer Timer { get; set; }
 
-        string Url { get; set; } = "";
-
-        string Path { get; set; } = "";
-
-        private string[] DateTimeFields { get; set; } = new string[] { "LINEV", "LOADPCT", "BCHARGE", "TIMELEFT", "OUTPUTV", "ITEMP", "BATTV" };
+        private string[] DateTimeFields { get; set; } = new string[] { "DATE", "XONBATT", "TONBATT", "XOFFBATT", "LASTSTEST", "END APC", "MANDATE", "BATTDATE" };
 
         private string[] NumberFields { get; set; } = new string[] { "LINEV", "LOADPCT", "BCHARGE", "TIMELEFT", "OUTPUTV", "ITEMP", "BATTV" };
 
@@ -155,8 +151,8 @@ namespace iNOPC.Drivers.APC_UPS
                 {
                     cmd.StartInfo = new ProcessStartInfo
                     {
-                        FileName = Path,
-                        Arguments = "status " + Url,
+                        FileName = Configuration.Path,
+                        Arguments = "status " + Configuration.Url,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         CreateNoWindow = true
@@ -221,17 +217,41 @@ namespace iNOPC.Drivers.APC_UPS
                                 val = val
                                     .Replace("╠шэёъюх тЁхь", "")
                                     .Replace("Минское время", "")
-                                    .Replace("Калининградское время (зима)", "")
+                                    .Replace("Калининградское время", "")
+                                    .Replace("(зима)", "")
+                                    .Replace("RTZ 2", "")
+                                    .Replace("Seconds", "")
+                                    //.Replace("seconds", "")
                                     .Replace("+0300", "")
+                                    .Replace("(чшьр)", "")
+                                    .Replace("  ", " ")
                                     .Trim();
 
-                                if (DateTime.TryParseExact(val, "ddd MMM dd HH:mm:ss  yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime d))
+                                //Thu Oct 01 10:54:45 2020
+                                if (DateTime.TryParse(val, out DateTime d))
                                 {
                                     Fields[name] = d.ToString("dd.MM.yyyy HH:mm:ss");
                                 }
-                                if (DateTime.TryParseExact(val, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out d))
+                                else if (DateTime.TryParseExact(val, "ddd MMM dd HH:mm:ss yyyy", CultureInfo.GetCultureInfo("en-US"), DateTimeStyles.None, out d))
                                 {
                                     Fields[name] = d.ToString("dd.MM.yyyy HH:mm:ss");
+                                }
+                                else if (DateTime.TryParseExact(val, "ddd MMM dd HH:mm:ss yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out d))
+                                {
+                                    Fields[name] = d.ToString("dd.MM.yyyy HH:mm:ss");
+                                }
+                                else if (DateTime.TryParseExact(val, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out d))
+                                {
+                                    Fields[name] = d.ToString("dd.MM.yyyy HH:mm:ss");
+                                }
+                                else if (DateTime.TryParseExact(val, "MM/dd/yy", CultureInfo.InvariantCulture, DateTimeStyles.None, out d))
+                                {
+                                    Fields[name] = d.ToString("dd.MM.yyyy HH:mm:ss");
+                                }
+                                else
+								{
+                                    LogEvent("Строка с датой не разобрана: " + val, LogType.WARNING);
+                                    Fields[name] = val;
                                 }
                             }
 
