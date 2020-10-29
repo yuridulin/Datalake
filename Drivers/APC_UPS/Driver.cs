@@ -348,7 +348,7 @@ namespace iNOPC.Drivers.APC
         void Log(string message)
 		{
             LogEvent(message);
-            EventLog.WriteEntry("apcupsd", "UPS \"" + Configuration.Name + "\": " + message);
+            EventLog.WriteEntry("apcupsd", "UPS \"" + Configuration.Name + "\": " + message, EventLogEntryType.Error);
         }
 
         void LoadError()
