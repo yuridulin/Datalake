@@ -95,18 +95,22 @@ namespace iNOPC.Drivers.APC
 				.Replace("(зима)", "")
 				.Replace("RTZ 2", "")
 				.Replace("Seconds", "")
-				//.Replace("seconds", "")
 				.Replace("+0300", "")
 				.Replace("(чшьр)", "")
 				.Replace("  ", " ")
-				.Trim();
+				.Replace("  ", " ")
+				.Replace("  ", " ")
+                .Trim();
 
-			if (DateTime.TryParse(text, out DateTime dt)) return dt;
-            else if (DateTime.TryParseExact(text, "ddd MMM dd HH:mm:ss yyyy", CultureInfo.GetCultureInfo("en-US"), DateTimeStyles.None, out dt)) return dt;
+            if (DateTime.TryParse(text, out DateTime dt)) return dt;
             else if (DateTime.TryParseExact(text, "ddd MMM dd HH:mm:ss yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt)) return dt;
             else if (DateTime.TryParseExact(text, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt)) return dt;
             else if (DateTime.TryParseExact(text, "MM/dd/yy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt)) return dt;
-            else return new DateTime(1, 1, 1);
+            else
+            {
+                LogEvent("Дата не распознана: " + text, LogType.WARNING);
+                return new DateTime(1, 1, 1);
+            }
         }
 
         double ToNumeric(string text)
@@ -142,7 +146,7 @@ namespace iNOPC.Drivers.APC
                 {
                     cmd.StartInfo = new ProcessStartInfo
                     {
-                        FileName = Environment.CurrentDirectory + @"\Drivers\ApcAccess\ApcAccess.exe",
+                        FileName = @"C:\iNOPC\Drivers\ApcAccess\ApcAccess.exe",
                         Arguments = "status " + Configuration.Url,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
@@ -267,6 +271,7 @@ namespace iNOPC.Drivers.APC
 			{
                 Log("Статус изменился с [" + Stats.STATUS + "] на [" + stats.STATUS + "]");
 			}
+
             if (stats.ACTIVE != Stats.ACTIVE)
 			{
                 if (stats.ACTIVE)
@@ -278,6 +283,7 @@ namespace iNOPC.Drivers.APC
                     Log("Служба ApcUpsD не отвечает");
                 }
             }
+
             if (stats.LINEV < 200)
 			{
                 if (stats.LINEV != Stats.LINEV)
@@ -289,6 +295,7 @@ namespace iNOPC.Drivers.APC
             {
                 Log("Напряжение в норме");
             }
+
             if (stats.ITEMP > 40)
             {
                 if (stats.ITEMP != Stats.ITEMP)
@@ -300,14 +307,15 @@ namespace iNOPC.Drivers.APC
             {
                 Log("Температура в норме");
             }
+
             if (stats.TIMELEFT < 30)
             {
-                if (stats.ITEMP != Stats.ITEMP)
+                if (stats.TIMELEFT != Stats.TIMELEFT)
                 {
                     Log("Время до отключения меньше 30 минут");
                 }
             }
-            else if (Stats.ITEMP < 30)
+            else if (Stats.TIMELEFT < 30)
             {
                 Log("Время до отключения в норме");
             }
@@ -340,7 +348,7 @@ namespace iNOPC.Drivers.APC
         void Log(string message)
 		{
             LogEvent(message);
-            EventLog.WriteEntry("apcupds", "UPS \"" + Configuration.Name + "\": " + message);
+            EventLog.WriteEntry("apcupsd", "UPS \"" + Configuration.Name + "\": " + message);
         }
 
         void LoadError()
