@@ -13,15 +13,15 @@
 
             if (type.Equals(typeof(byte)) || type.Equals(typeof(int)) || type.Equals(typeof(uint)) || type.Equals(typeof(ushort)))
             {
-                return "<span>" + desc + "</span><input name='" + name + "' type='number' value='" + value + "' />";
+                return "<div title=\"" + desc + "\"><span>" + desc + "</span></div><div><input name='" + name + "' type='number' value='" + value + "' /></div>";
             }
 
             if (type.Equals(typeof(bool)))
             {
-                return "<span>" + desc + "</span><input name='" + name + "' type='checkbox' " + ((bool)value ? "checked" : "") + " />";
+                return "<div title=\"" + desc + "\"><span>" + desc + "</span></div><div><input name='" + name + "' type='checkbox' " + ((bool)value ? "checked" : "") + " /></div>";
             }
 
-            return "<span>" + desc + "</span><input name='" + name + "' type='text' value='" + value + "' />";
+            return "<div title=\"" + desc + "\"><span>" + desc + "</span></div><div><input name='" + name + "' type='text' value='" + value + "' /></div>";
         }
     }
 }

@@ -532,7 +532,7 @@ function DeviceFields(id) {
 
 function DeviceSave(id) {
 	var config = {}
-	$('#device-configuration .form').querySelectorAll('div').forEach(function (el) {
+	$('#device-configuration .form').querySelectorAll('div[type]').forEach(function (el) {
 
 		if (el.getAttribute('type') == 'value') {
 			var input = el.querySelector('input')

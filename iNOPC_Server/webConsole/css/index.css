@@ -79,7 +79,14 @@ body {
 		font-size: .9em;
 	}
 
+div.value {
+	display: table;
+	width: 100%;
+}
 
+div.value > * {
+	display: table-cell;
+}
 
 
 .container-caption {
@@ -199,6 +206,7 @@ button:focus {
 	}
 
 	#device-configuration input {
+		width: 100%;
 		border: 0;
 		box-shadow: none;
 		border-bottom: 1px solid #ccc;
@@ -207,6 +215,19 @@ button:focus {
 	#device-configuration p {
 		margin: 0;
 		margin-left: 2em;
+	}
+
+div[type="value"] {
+	display: table;
+	width: 99%;
+}
+
+	div[type="value"] > div:first-child {
+		width: 25%;
+	}
+
+	div[type="value"] > div {
+		display: table-cell;
 	}
 
 #device-fields {
