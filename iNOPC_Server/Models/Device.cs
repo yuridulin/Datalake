@@ -87,7 +87,7 @@ namespace iNOPC.Server.Models
                 }
                 catch (Exception) { }
 
-                Log("Ошибка при старте опроса: " + e.Message, LogType.ERROR);
+                Log("Ошибка при старте опроса: " + e.Message + ": " + e.StackTrace, LogType.ERROR);
             }
         }
 
