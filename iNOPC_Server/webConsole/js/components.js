@@ -309,7 +309,6 @@ var timeout = 0
 
 function Device(id) {
 
-	clearInterval(timeout)
 	lastLog = ''
 
 	var x1, x2, x3, logsDetailed, logsWarnings
@@ -470,11 +469,10 @@ function Device(id) {
 		DeviceLogs(id)
 		DeviceFields(id)
 
-		//if (device.IsActive) {
-			timeout = setInterval(function () {
-				DeviceFields(id)
-			}, 1000)
-		//}
+		clearInterval(timeout)
+		timeout = setInterval(function () {
+			DeviceFields(id)
+		}, 1000)
 	})
 }
 

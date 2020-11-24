@@ -89,15 +89,15 @@ namespace iNOPC.Drivers.IEC_104
 
             IsActive = true;
 
-            ConnectionTimer = new Timer(Configuration.ReconnectTimeout);
+            ConnectionTimer = new Timer(Configuration.ReconnectTimeout * 1000);
             ConnectionTimer.Elapsed += (s, e) => CheckConnection();
             ConnectionTimer.Start();
 
-            InterrogationTimer = new Timer(Configuration.InterrogationTimeout);
+            InterrogationTimer = new Timer(Configuration.InterrogationTimeout * 1000);
             InterrogationTimer.Elapsed += (s, e) => SendInterrogation();
             InterrogationTimer.Start();
 
-            ClockTimer = new Timer(Configuration.SyncClockTimeout);
+            ClockTimer = new Timer(Configuration.SyncClockTimeout * 1000);
             ClockTimer.Elapsed += (s, e) => SyncClock();
             ClockTimer.Start();
 
@@ -264,12 +264,16 @@ namespace iNOPC.Drivers.IEC_104
                 if (Configuration.UseInterrogation)
                 { 
                     Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
+
+                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
                 }
                 else
                 {
                     foreach (var field in Configuration.NamedFields)
                     {
                         Conn.SendReadCommand(1, field.Address);
+
+                        Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
                     }
                 }
             }
@@ -282,6 +286,8 @@ namespace iNOPC.Drivers.IEC_104
             if (Conn.IsRunning)
             {
                 Conn.SendClockSyncCommand(1, new CP56Time2a(DateTime.Now));
+
+                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > CLOCK: Ca [" + 1 + "]");
             }
         }
 
@@ -317,6 +323,7 @@ namespace iNOPC.Drivers.IEC_104
             }
 
             LogEvent(parameter + ": " + Helpers.BytesToString(message.Take(messageSize).ToArray()), LogType.DETAILED);
+            Console.WriteLine("\t" + Helpers.BytesToString(message.Take(messageSize).ToArray()));
 
             return true;
         }
@@ -324,6 +331,8 @@ namespace iNOPC.Drivers.IEC_104
         bool AsduReceivedHandler(object parameter, ASDU asdu)
         {
             if (!IsActive) return false;
+
+            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " < ASDU: Ca [" + asdu.Ca + "] Cot [" + asdu.Cot + "] Oa [" + asdu.Oa + "]");
 
             try
             {

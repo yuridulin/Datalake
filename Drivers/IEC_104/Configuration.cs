@@ -38,13 +38,13 @@ namespace iNOPC.Drivers.IEC_104
                 Html.Value("Адрес устройства", nameof(config.Host), config.Host) +
                 Html.Value("TCP порт", nameof(config.Port), config.Port) +
                 Html.Value("Режим прослушки", nameof(config.UseInterrogation), config.UseInterrogation) +
-                Html.Value("Таймаут подключения t0", nameof(config.ConnectionTimeoutT0), config.ConnectionTimeoutT0) +
-                Html.Value("Таймаут подтверждения запроса t1", nameof(config.TimeoutT1), config.TimeoutT1) +
-                Html.Value("Таймаут подтверждения ответа t2", nameof(config.TimeoutT2), config.TimeoutT2) +
-                Html.Value("Таймаут простоя t3", nameof(config.TimeoutT3), config.TimeoutT3) +
-                Html.Value("Таймаут переподключения", nameof(config.ReconnectTimeout), config.ReconnectTimeout) +
-                Html.Value("Таймаут команды для синхр. времени", nameof(config.SyncClockTimeout), config.SyncClockTimeout) +
-                Html.Value("Таймаут цикличного опроса", nameof(config.InterrogationTimeout), config.InterrogationTimeout);
+                Html.Value("T0, с", nameof(config.ConnectionTimeoutT0), config.ConnectionTimeoutT0) +
+                Html.Value("T1, с", nameof(config.TimeoutT1), config.TimeoutT1) +
+                Html.Value("T2, с", nameof(config.TimeoutT2), config.TimeoutT2) +
+                Html.Value("T3, с", nameof(config.TimeoutT3), config.TimeoutT3) +
+                Html.Value("Таймаут переподключения, с", nameof(config.ReconnectTimeout), config.ReconnectTimeout) +
+                Html.Value("Таймаут команды для синхр. времени, с", nameof(config.SyncClockTimeout), config.SyncClockTimeout) +
+                Html.Value("Таймаут цикличного опроса, с", nameof(config.InterrogationTimeout), config.InterrogationTimeout);
 
             html += "<div type='array' name='" + nameof(config.NamedFields) + "'>"
                 + "<span>Именованные поля</span>"

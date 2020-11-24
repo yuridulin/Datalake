@@ -206,10 +206,14 @@ button:focus {
 	}
 
 	#device-configuration input {
-		width: 100%;
+		width: 99%;
 		border: 0;
 		box-shadow: none;
 		border-bottom: 1px solid #ccc;
+	}
+
+	#device-configuration input[type=checkbox] {
+		width: inherit;
 	}
 
 	#device-configuration p {
