@@ -10,19 +10,19 @@ namespace iNOPC.Drivers.IEC_104
 
         public int Port { get; set; } = 2404;
 
-        public int ConnectionTimeoutT0 { get; set; } = 1000;
+        public int ConnectionTimeoutT0 { get; set; } = 10;
 
-        public int TimeoutT1 { get; set; } = 1000;
+        public int TimeoutT1 { get; set; } = 2;
 
-        public int TimeoutT2 { get; set; } = 1000;
+        public int TimeoutT2 { get; set; } = 5;
 
-        public int TimeoutT3 { get; set; } = 1000;
+        public int TimeoutT3 { get; set; } = 10;
 
-        public int ReconnectTimeout { get; set; } = 2000;
+        public int ReconnectTimeout { get; set; } = 10;
 
-        public int InterrogationTimeout { get; set; } = 10000;
+        public int InterrogationTimeout { get; set; } = 30;
 
-        public int SyncClockTimeout { get; set; } = 60000;
+        public int SyncClockTimeout { get; set; } = 60;
 
         public bool UseInterrogation { get; set; } = true;
 
