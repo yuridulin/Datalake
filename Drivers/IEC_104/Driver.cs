@@ -58,7 +58,7 @@ namespace iNOPC.Drivers.IEC_104
             {
                 var apci = new APCIParameters
                 { 
-                    T0 = Configuration.ConnectionTimeoutT0, 
+                    T0 = Configuration.ConnectionTimeoutT0, // задаётся в конфиге в секундах
                     T1 = Configuration.TimeoutT1, 
                     T2 = Configuration.TimeoutT2, 
                     T3 = Configuration.TimeoutT3,
@@ -70,7 +70,7 @@ namespace iNOPC.Drivers.IEC_104
                     Autostart = true,
                 };
 
-                Conn.SetConnectTimeout(Configuration.ConnectionTimeoutT0);
+                //Conn.SetConnectTimeout(Configuration.ConnectionTimeoutT0); // отдельный метод для установки Т0, и сюда нужно передавать мс
                 Conn.SetASDUReceivedHandler(AsduReceivedHandler, null);
                 Conn.SetReceivedRawMessageHandler(RawMessageHandler, "RX");
                 Conn.SetSentRawMessageHandler(RawMessageHandler, "TX");
