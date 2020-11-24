@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using iNOPC.Server.Models;
@@ -92,6 +93,28 @@ namespace iNOPC.Server
             SetVendorInfo("iNOPC RUP Vitebskenergo");
             InitWTOPCsvr(CLSID, 1000);
             Deactivate30MinTimer(Pass);
+
+            try
+            {
+                Process process;
+
+                // Пересоздание службы
+                process = Process.Start("cmd.exe", "/c \"" + Environment.CurrentDirectory + "\\OPC\\service.bat" + "\"");
+                process.WaitForExit();
+
+                // Создание нужных записей в DCOM
+                process = Process.Start("regedit.exe", "/s \"" + Environment.CurrentDirectory + "\\OPC\\dcom.reg" + "\"");
+                process.WaitForExit();
+
+                // Создание нужных записей в DCOM
+                process = Process.Start("regedit.exe", "/s \"" + Environment.CurrentDirectory + "\\OPC\\exe.reg" + "\"");
+                process.WaitForExit();
+            }
+            catch (Exception e)
+			{
+                Console.WriteLine("Ошибка при создании записей в реестре: " + e.Message);
+			}
+
             RefreshAllClients();
         }
 
