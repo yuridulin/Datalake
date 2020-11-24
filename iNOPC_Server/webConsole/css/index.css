@@ -206,14 +206,9 @@ button:focus {
 	}
 
 	#device-configuration input {
-		width: 99%;
 		border: 0;
 		box-shadow: none;
 		border-bottom: 1px solid #ccc;
-	}
-
-	#device-configuration input[type=checkbox] {
-		width: inherit;
 	}
 
 	#device-configuration p {
@@ -233,13 +228,6 @@ div[type="value"] {
 	div[type="value"] > div {
 		display: table-cell;
 	}
-
-div[type="array"] div {
-	display: inline;
-}
-div[type="array"] input {
-	width: inherit !important;
-}
 
 #device-fields {
 	overflow-y: auto;
