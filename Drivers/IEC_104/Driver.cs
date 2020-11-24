@@ -415,6 +415,10 @@ namespace iNOPC.Drivers.IEC_104
                 {
                     LogEvent("Получена команда синхронизации времени", LogType.WARNING);
                 }
+                else if (asdu.TypeId == TypeID.C_IC_NA_1)
+                {
+                    LogEvent("Получена команда опроса", LogType.WARNING);
+                }
                 else
                 {
                     bool found = false;
