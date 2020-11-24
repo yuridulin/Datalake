@@ -234,6 +234,13 @@ div[type="value"] {
 		display: table-cell;
 	}
 
+div[type="array"] div {
+	display: inline;
+}
+div[type="array"] input {
+	width: inherit !important;
+}
+
 #device-fields {
 	overflow-y: auto;
 	max-height: 35em;

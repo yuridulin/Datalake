@@ -571,7 +571,7 @@ function Settings() {
 	mount('#view',
 		h('div.container',
 			h('button', {
-				innerHTML: 'Инициализировать DCOM',
+				innerHTML: 'Создать службу и инициализировать DCOM',
 				onclick: function () {
 					ask({ method: 'opc.dcom' }, function (data) {
 						if (data) alert('Инициализация DCOM выполнена')
