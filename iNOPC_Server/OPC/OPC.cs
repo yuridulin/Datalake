@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using iNOPC.Server.Models;
+using Microsoft.Win32;
 
 namespace iNOPC.Server
 {
@@ -87,9 +89,11 @@ namespace iNOPC.Server
 
         public static void InitDCOM()
         {
+            string pathToExe = Environment.CurrentDirectory + "\\iNOPC_Server.exe";
+
             RequestDisconnect();
             UnregisterServer(CLSID, ServerName);
-            UpdateRegistry(CLSID, ServerName, ServerName, Environment.CurrentDirectory + "\\iNOPC_Server.exe");
+            UpdateRegistry(CLSID, ServerName, ServerName, pathToExe);
             SetVendorInfo("iNOPC RUP Vitebskenergo");
             InitWTOPCsvr(CLSID, 1000);
             Deactivate30MinTimer(Pass);
@@ -99,16 +103,50 @@ namespace iNOPC.Server
                 Process process;
 
                 // Пересоздание службы
-                process = Process.Start("cmd.exe", "/c \"" + Environment.CurrentDirectory + "\\OPC\\service.bat" + "\"");
+                process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+					{
+                        FileName = "cmd.exe",
+                        CreateNoWindow = true,
+                        RedirectStandardInput = true,
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                    },
+                };
+                process.Start();
+
+                process.StandardInput.WriteLine("sc delete VST_OPC");
+                process.StandardInput.WriteLine("sc delete iNOPC");
+                process.StandardInput.WriteLine("sc create iNOPC binPath=\"" + pathToExe + "\" DisplayName=\"iNOPC\" start=auto && exit");
                 process.WaitForExit();
 
-                // Создание нужных записей в DCOM
-                process = Process.Start("regedit.exe", "/s \"" + Environment.CurrentDirectory + "\\OPC\\dcom.reg" + "\"");
+                // Создание записи в DCOM 1
+                File.WriteAllText("C:\\dcom.reg", 
+                    "Windows Registry Editor Version 5.00\n\n" +
+                    "[HKEY_CLASSES_ROOT\\AppID\\{3335347b-3337-3735-622d-333733392d33}]\n" +
+                    "@=\"iNOPC\"\n" +
+                    "\"AuthenticationLevel\"=dword:00000001\n" +
+                    "\"LocalService\"=\"iNOPC\"\n" +
+                    "\"ServiceParameters\"=\"-Service\"\n\n");
+
+                process = Process.Start("regedit.exe", "/s C:\\dcom.reg");
                 process.WaitForExit();
 
-                // Создание нужных записей в DCOM
-                process = Process.Start("regedit.exe", "/s \"" + Environment.CurrentDirectory + "\\OPC\\exe.reg" + "\"");
+                // Создание записи в DCOM 2
+                File.WriteAllText("C:\\dcom.reg",
+                    "Windows Registry Editor Version 5.00\n\n" +
+                    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes\\AppID\\iNOPC_Server.exe]\n" +
+                    "@=\"iNOPC_Server.exe\"\n" +
+                    "\"AppID\"=\"{3335347b-3337-3735-622d-333733392d33}\"\n" +
+                    "\"LocalService\"=\"iNOPC\"\n" +
+                    "\"ServiceParameters\"=\"-Service\"\n\n");
+
+                process = Process.Start("regedit.exe", "/s C:\\dcom.reg");
                 process.WaitForExit();
+
+                // Удаление временного файла
+                File.Delete("C:\\dcom.reg");
             }
             catch (Exception e)
 			{
