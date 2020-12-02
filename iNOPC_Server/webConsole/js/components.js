@@ -366,36 +366,52 @@ function Device(id) {
 
 			h('div.container',
 				h('div',
+					h('span.container-expand-button',
+						{
+							onclick: function () {
+								x1.classList.toggle('closed')
+								this.querySelector('i').classList.toggle('ic-expand-more')
+								this.querySelector('i').classList.toggle('ic-expand-less')
+								ls(id + '.settings', x1.classList.contains('closed') ? 'close' : 'open')
+							}
+						},
+						h('i.ic.ic-expand-' + (ls(id + '.settings') == 'open' ? 'more' : 'less')),
+						h('span.container-expand-caption', 'Настройки')
+					)
+				),
+				x1 = h(ls(id + '.settings') == 'open' ? 'div.container-data' : 'div.container-data.closed',
 					{
+						style: { height: ls(id + '.settings.h') },
 						onclick: function () {
-							x1.classList.toggle('closed')
-							this.querySelector('i').classList.toggle('ic-expand-more')
-							this.querySelector('i').classList.toggle('ic-expand-less')
-							ls(id + '.settings', x1.classList.contains('closed') ? 'close' : 'open')
+							ls(id + '.settings.h', this.style.height)
 						}
 					},
-					h('i.ic.ic-expand-' + (ls(id + '.settings') == 'open' ? 'more' : 'less')),
-					h('span.container-caption', 'Настройки')
-				),
-				x1 = h(ls(id + '.settings') == 'open' ? 'div' : 'div.closed',
 					h('div#device-configuration.sub')
 				)
 			),
 
 			h('div.container',
 				h('div',
+					h('span.container-expand-button',
+						{
+							onclick: function () {
+								x2.classList.toggle('closed')
+								this.querySelector('i').classList.toggle('ic-expand-more')
+								this.querySelector('i').classList.toggle('ic-expand-less')
+								ls(id + '.logs', x2.classList.contains('closed') ? 'close' : 'open')
+							}
+						},
+						h('i.ic.ic-expand-' + (ls(id + '.logs') == 'open' ? 'more' : 'less')),
+						h('span.container-expand-caption', 'Логи')
+					)
+				),
+				x2 = h(ls(id + '.logs') == 'open' ? 'div.container-data' : 'div.container-data.closed',
 					{
+						style: { height: ls(id + '.logs.h') },
 						onclick: function () {
-							x2.classList.toggle('closed')
-							this.querySelector('i').classList.toggle('ic-expand-more')
-							this.querySelector('i').classList.toggle('ic-expand-less')
-							ls(id + '.logs', x2.classList.contains('closed') ? 'close' : 'open')
+							ls(id + '.logs.h', this.style.height)
 						}
 					},
-					h('i.ic.ic-expand-' + (ls(id + '.logs') == 'open' ? 'more' : 'less')),
-					h('span.container-caption', 'Логи')
-				),
-				x2 = h(ls(id + '.logs') == 'open' ? 'div' : 'div.closed',
 					h('label',
 						logsDetailed = h('input', { 
 							type: 'checkbox',
@@ -435,18 +451,26 @@ function Device(id) {
 
 			h('div.container',
 				h('div',
+					h('span.container-expand-button',
+						{
+							onclick: function () {
+								x3.classList.toggle('closed')
+								this.querySelector('i').classList.toggle('ic-expand-more')
+								this.querySelector('i').classList.toggle('ic-expand-less')
+								ls(id + '.fields', x3.classList.contains('closed') ? 'close' : 'open')
+							}
+						},
+						h('i.ic.ic-expand-' + (ls(id + '.fields') == 'open' ? 'more' : 'less')),
+						h('span.container-expand-caption', 'Опрашиваемые параметры')
+					)
+				),
+				x3 = h(ls(id + '.fields') == 'open' ? 'div.container-data' : 'div.container-data.closed',
 					{
+						style: { height: ls(id + '.fields.h') },
 						onclick: function () {
-							x3.classList.toggle('closed')
-							this.querySelector('i').classList.toggle('ic-expand-more')
-							this.querySelector('i').classList.toggle('ic-expand-less')
-							ls(id + '.fields', x3.classList.contains('closed') ? 'close' : 'open')
+							ls(id + '.fields.h', this.style.height)
 						}
 					},
-					h('i.ic.ic-expand-' + (ls(id + '.fields') == 'open' ? 'more' : 'less')),
-					h('span.container-caption', 'Опрашиваемые параметры')
-				),
-				x3 = h(ls(id + '.fields') == 'open' ? 'div' : 'div.closed',
 					h('table',
 						h('tr',
 							h('th', { style: { width: '12em' }}, 'Параметр'),
@@ -514,6 +538,7 @@ function DeviceLog(id, log) {
 
 function DeviceFields(id) {
 	ask({ method: 'device.fields', body: { Id: id } }, function (fields) {
+		if (ID != id) return
 		mount('#device-fields', 
 			h('table',
 				Object.keys(fields).map(function (key) {
