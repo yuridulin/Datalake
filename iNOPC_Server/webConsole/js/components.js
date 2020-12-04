@@ -134,7 +134,7 @@ function BuildTree(json) {
 				h('span', {
 					innerHTML: 'Настройки',
 					onclick: function () {
-						TreeSetActive(this)
+						
 						Settings()
 					}
 				})
@@ -144,8 +144,12 @@ function BuildTree(json) {
 }
 
 function TreeSetActive(el) {
+
 	var old = document.querySelector('.tree .active')
 	if (old) old.className = old.className.replace('active', '')
+
+	if (!el) return
+
 	el.parentNode.parentNode.className += ' active'
 }
 
@@ -591,8 +595,12 @@ function DeviceSave(id) {
 
 
 function Settings() {
+
+	TreeSetActive(null)
+
 	ID = 0
 	clearInterval(timeout)
+
 	mount('#view',
 		h('div.container',
 			h('button', {
@@ -609,6 +617,41 @@ function Settings() {
 					ask({ method: 'opc.clean' }, function (data) {
 						if (data) alert('Реинициализация OPC тегов выполнена')
 					})
+				}
+			})
+		)
+	)
+}
+
+function Authorization() {
+
+	TreeSetActive(null)
+
+	ID = 0
+	clearInterval(timeout)
+
+	var inputName, inputPass
+
+	mount('#view',
+		h('div.container',
+
+			'Вы авторизованы как ' + ls('auth.name'),
+			h('button', {
+				innerHTML: 'Выход',
+				onclick: function () {
+					console.log('name', inputName.value, 'pass', inputPass.value)
+				}
+			}),
+
+			h('h3', 'Введите данные своей учётной записи, чтобы выполнить повторную авторизацию'),
+			h('span', 'Имя учётной записи'),
+			inputName = h('input', { type: 'text', name: 'login' }),
+			h('span', 'Пароль'),
+			inputPass = h('input', { type: 'password', name: 'password' }),
+			h('button', {
+				innerHTML: 'Вход',
+				onclick: function () {
+					console.log('name', inputName.value, 'pass', inputPass.value)
 				}
 			})
 		)

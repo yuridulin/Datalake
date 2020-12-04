@@ -265,7 +265,7 @@ namespace iNOPC.Drivers.IEC_104
                 { 
                     Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
 
-                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
+                    //Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
                 }
                 else
                 {
@@ -273,7 +273,7 @@ namespace iNOPC.Drivers.IEC_104
                     {
                         Conn.SendReadCommand(1, field.Address);
 
-                        Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
+                        //Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
                     }
                 }
             }
@@ -323,7 +323,7 @@ namespace iNOPC.Drivers.IEC_104
             }
 
             LogEvent(parameter + ": " + Helpers.BytesToString(message.Take(messageSize).ToArray()), LogType.DETAILED);
-            Console.WriteLine("\t" + Helpers.BytesToString(message.Take(messageSize).ToArray()));
+            //Console.WriteLine("\t" + Helpers.BytesToString(message.Take(messageSize).ToArray()));
 
             return true;
         }
@@ -332,7 +332,7 @@ namespace iNOPC.Drivers.IEC_104
         {
             if (!IsActive) return false;
 
-            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " < ASDU: Ca [" + asdu.Ca + "] Cot [" + asdu.Cot + "] Oa [" + asdu.Oa + "]");
+            //Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " < ASDU: Ca [" + asdu.Ca + "] Cot [" + asdu.Cot + "] Oa [" + asdu.Oa + "]");
 
             try
             {
