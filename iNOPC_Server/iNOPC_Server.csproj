@@ -13,6 +13,21 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -60,11 +75,14 @@
     <Compile Include="OPC\OPC.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Web\AccessTypes.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Web\RequestTypes\DeviceForm.cs" />
     <Compile Include="Web\RequestTypes\DeviceLogs.cs" />
     <Compile Include="Web\RequestTypes\DriverForm.cs" />
     <Compile Include="Web\RequestTypes\IdOnly.cs" />
+    <Compile Include="Web\User.cs" />
+    <Compile Include="Web\Session.cs" />
     <Compile Include="Web\WebSocket.cs" />
     <Compile Include="Web\WebSocketReceiver.cs" />
   </ItemGroup>
@@ -81,7 +99,13 @@
       <Name>iNOPC_Library</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
   <ItemGroup>
     <Content Include="iNOPC_Server.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

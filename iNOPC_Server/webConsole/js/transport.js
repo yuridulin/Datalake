@@ -54,12 +54,26 @@ function connectToServer() {
 	}
 }
 
+/**
+ * Обращение к серверу за конкретной информацией с авторизацией каждого запроса
+ * @param {any} parameters Объект с данными, передаваемыми на сервер
+ * @param {any} callback Обработчик, в который передается результат запроса
+ */
 function ask(parameters, callback) {
 	var xhr = new XMLHttpRequest()
 	xhr.open('POST', location.origin + '/' + parameters.method, true)
 	xhr.onreadystatechange = function () {
+
+		// Ожидание ответа сервера
 		if (xhr.readyState != 4) return
 		if (xhr.status != 200) return console.log('ask err: xhr return ' + xhr.status + ' [' + xhr.statusText + ']')
+
+		// Получение данных авторизации
+		accessType = +(xhr.getResponseHeader('Inopc-Access-Type') || '0')
+		accessName = xhr.getResponseHeader('Inopc-Access-Type') || null
+		AuthPanel()
+
+		// Получение результата запроса
 		var json = {}
 		try { json = JSON.parse(xhr.responseText) } catch (e) { console.log('ask err: not json [' + xhr.responseText + ']') }
 		if (!callback) return

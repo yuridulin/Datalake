@@ -14,6 +14,18 @@ namespace iNOPC.Server.Web
 {
     public class Http
     {
+        public static List<Session> Sessions { get; set; } = new List<Session>();
+
+        public static List<User> Users { get; set; } = new List<User> 
+        { 
+            new User
+			{
+                Login = "admin",
+                Password = "pass123",
+                AccessType = AccessTypes.WRITE,
+			},
+        };
+
         public static async Task Start()
         {
             Listener = new HttpListener();
@@ -87,7 +99,13 @@ namespace iNOPC.Server.Web
                 }
                 else
                 {
-                    responseString = JsonConvert.SerializeObject(Action(url, requestBody));
+                    // авторизация запроса по токену, хранящемуся в куках. Если запрос - аутентификация, то обработчик перезапишет это значение
+                    var token = request.Cookies["Inopc-Access-Token"]?.Value ?? null;
+                    var session = Sessions.FirstOrDefault(x => token != null && x.Token == token && x.Expire > DateTime.Now);
+                    Console.WriteLine(token + "" + (session == null));
+                    response.Headers.Set("Inopc-Access-Type", session != null ? ((int)session.AccessType).ToString() : "0");
+
+                    responseString = JsonConvert.SerializeObject(Action(url, requestBody, ref response));
                     response.ContentType = "application/json";
                 }
             }
@@ -109,12 +127,15 @@ namespace iNOPC.Server.Web
             }
         }
 
-        static object Action(string methodName, string body)
+        static object Action(string methodName, string body, ref HttpListenerResponse resp)
         {
             try
             {
                 switch (methodName)
                 {
+                    case "login": return Login(body, ref resp);
+                    case "logout": return Logout(body, ref resp);
+
                     case "tree": return Tree();
 
                     case "opc.dcom": return OpcDcom();
@@ -148,6 +169,50 @@ namespace iNOPC.Server.Web
             }
         }
 
+
+        static object Login(string body, ref HttpListenerResponse response)
+		{
+            var user = JsonConvert.DeserializeObject<User>(body);
+            var auth = Users.Where(x => x.Login == user.Login && x.Password == user.Password).FirstOrDefault();
+
+            if (auth == null)
+			{
+                return new { Unknown = true };
+			}
+            else
+			{
+                var session = new Session
+                {
+                    Token = new Random().Next().ToString(),
+                    AccessType = auth.AccessType,
+                    Expire = DateTime.Now.AddDays(7),
+                };
+
+                Sessions.Add(session);
+
+                response.Headers.Add("Set-Cookie", "Inopc-Login=" + user.Login);
+                response.Headers.Add("Set-Cookie", "Inopc-Access-Token=" + session.Token);
+                response.Headers.Add("Inopc-Access-Type", session != null ? ((int)session.AccessType).ToString() : "0");
+
+                return new { Found = true };
+            }
+		}
+
+        static object Logout(string body, ref HttpListenerResponse response)
+		{
+            var session = JsonConvert.DeserializeObject<Session>(body);
+            var old = Sessions.Where(x => x.Token == session.Token).FirstOrDefault();
+
+            if (old != null)
+			{
+                Sessions.Remove(old);
+			}
+
+            response.Headers.Add("Set-Cookie", "Inopc-Login=x; Max-Age=-1");
+            response.Headers.Add("Set-Cookie", "Inopc-Access-Token=x; Max-Age=-1");
+
+            return new { Done = true };
+		}
 
         static object Tree()
         {

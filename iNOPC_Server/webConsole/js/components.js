@@ -1,4 +1,6 @@
 var ID = 0
+var accessType = 0
+var accessName = null
 
 var LogTypes = {
 	0: 'Информация',
@@ -8,9 +10,11 @@ var LogTypes = {
 }
 
 function Home() {
+
 	ID = 0
 	mount('#view', 'подключаемся...')
 	clearInterval(timeout)
+
 	ask({ method: 'tree' }, function (json) {
 		BuildTree(json)
 		mount('#view',
@@ -70,6 +74,20 @@ function Tree() {
 
 function BuildTree(json) {
 	mount('#tree', h('div',
+		accessType < ACCESSTYPES.WRITE ? '' : 
+			h('div.node',
+				h('div.node-caption',
+					{
+						title: 'Нажмите, чтобы перейти к настройке сервера',
+						onclick: function () {
+							TreeSetActive(this)
+							DriverCreate()
+						}
+					},
+					h('i.ic.ic-menu'),
+					h('span', 'Настройки')
+				)
+			),
 		json.map(function (driver) {
 			return h('div.node' + (ls(driver.Id) == 'open' ? '.open' : ''),
 				h('div.node-caption',
@@ -124,18 +142,6 @@ function BuildTree(json) {
 					onclick: function () {
 						TreeSetActive(this)
 						DriverCreate()
-					}
-				})
-			)
-		),
-		h('div.node',
-			h('div.node-caption',
-				h('i.ic.ic-menu'),
-				h('span', {
-					innerHTML: 'Настройки',
-					onclick: function () {
-						
-						Settings()
 					}
 				})
 			)
@@ -623,6 +629,21 @@ function Settings() {
 	)
 }
 
+function AuthPanel() {
+	mount('#auth',
+		h('div.panel-el',
+			{
+				title: 'Нажмите, чтобы изменить уровень доступа',
+				onclick: function () {
+					Authorization()
+				}
+			},
+			h('i.ic.ic-person'),
+			h('span', accessType == 3 ? 'Полный доступ' : accessType == 2 ? 'Доступ для записи' : accessType == 1 ? 'Доступ для чтения' : 'Гостевой доступ')
+		)
+	)
+}
+
 function Authorization() {
 
 	TreeSetActive(null)
@@ -631,29 +652,59 @@ function Authorization() {
 	clearInterval(timeout)
 
 	var inputName, inputPass
-
-	mount('#view',
-		h('div.container',
-
-			'Вы авторизованы как ' + ls('auth.name'),
+	var login = cookie('Inopc-Login')
+		? h('div',
+			h('span', 'Вы вошли как ' + cookie('Inopc-Login')),
+			'&emsp;',
 			h('button', {
 				innerHTML: 'Выход',
 				onclick: function () {
-					console.log('name', inputName.value, 'pass', inputPass.value)
+					ask({ method: 'logout', body: { Token: cookie('Inopc-Access-Token') } }, function (json) {
+						if (json.Done) {
+							// Перезагрузка открытых в данный момент компонентов
+							location.reload()
+						}
+					})
 				}
-			}),
+			})
+		)
+		: h('div',
+			h('span', 'Вы не вошли в систему')
+		)
 
+	mount('#view',
+		h('div.container',
+			login,
 			h('h3', 'Введите данные своей учётной записи, чтобы выполнить повторную авторизацию'),
+
 			h('span', 'Имя учётной записи'),
 			inputName = h('input', { type: 'text', name: 'login' }),
 			h('span', 'Пароль'),
 			inputPass = h('input', { type: 'password', name: 'password' }),
+
 			h('button', {
 				innerHTML: 'Вход',
 				onclick: function () {
 					console.log('name', inputName.value, 'pass', inputPass.value)
+					ask({ method: 'login', body: { Login: inputName.value, Password: inputPass.value } }, function (json) {
+						if (json.Found) {
+							// Перезагрузка открытых в данный момент компонентов
+							location.reload()
+						}
+						if (json.Unknown) {
+							// Сообщение о ошибке аутентификации
+							alert('Учётная запись не найдена либо пароль не совпадает')
+						}
+					})
 				}
 			})
 		)
 	)
+}
+
+var ACCESSTYPES = {
+	GUEST: 0,
+	READ: 1,
+	WRITE: 2,
+	FULL: 3,
 }
