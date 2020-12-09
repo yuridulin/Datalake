@@ -1,4 +1,4 @@
-﻿namespace iNOPC.Server.Web
+﻿namespace iNOPC.Server.Models
 {
 	public enum AccessTypes
 	{

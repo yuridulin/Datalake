@@ -56,9 +56,9 @@ namespace iNOPC.Server
 
                     // поиск
 
-                    lock (Storage.Drivers)
+                    lock (Program.Configuration)
                     {
-                        var driver = Storage.Drivers.FirstOrDefault(x => x.Name == driverName);
+                        var driver = Program.Configuration.Drivers.FirstOrDefault(x => x.Name == driverName);
                         if (driver == null)
                         {
                             result = 1;
@@ -175,26 +175,29 @@ namespace iNOPC.Server
 
         public static void CleanOldTags()
         {
-            foreach (var driver in Storage.Drivers)
+            lock (Program.Configuration)
             {
-                foreach (var device in driver.Devices)
+                foreach (var driver in Program.Configuration.Drivers)
                 {
-                    var fieldsToRemove = Tags.Keys.Where(x => x.Contains(driver.Name + "." + device.Name + ".")).ToList();
-                    var fields = device.Fields().Keys.ToList();
-
-                    foreach (var field in fields)
+                    foreach (var device in driver.Devices)
                     {
-                        if (fieldsToRemove.Contains(field))
+                        var fieldsToRemove = Tags.Keys.Where(x => x.Contains(driver.Name + "." + device.Name + ".")).ToList();
+                        var fields = device.Fields().Keys.ToList();
+
+                        foreach (var field in fields)
                         {
-                            fieldsToRemove.Remove(field);
+                            if (fieldsToRemove.Contains(field))
+                            {
+                                fieldsToRemove.Remove(field);
+                            }
                         }
-                    }
 
-                    foreach (var field in fieldsToRemove)
-                    {
-                        var address = Tags[field];
-                        RemoveTag(address);
-                        Tags.Remove(field);
+                        foreach (var field in fieldsToRemove)
+                        {
+                            var address = Tags[field];
+                            RemoveTag(address);
+                            Tags.Remove(field);
+                        }
                     }
                 }
             }

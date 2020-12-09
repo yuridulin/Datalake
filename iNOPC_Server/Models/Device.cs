@@ -38,7 +38,7 @@ namespace iNOPC.Server.Models
         public void Start()
         {
             // Получение типа драйвера из сборки
-            var driver = Storage.Drivers.FirstOrDefault(x => x.Name == DriverName);
+            var driver = Program.Configuration.Drivers.FirstOrDefault(x => x.Name == DriverName);
             if (driver == null)
             {
                 Log("Драйвер " + DriverName + " не найден", LogType.ERROR);
@@ -166,7 +166,7 @@ namespace iNOPC.Server.Models
         public string GetConfigurationPage()
         {
             // Получение типа драйвера из сборки
-            var driver = Storage.Drivers.FirstOrDefault(x => x.Name == DriverName);
+            var driver = Program.Configuration.Drivers.FirstOrDefault(x => x.Name == DriverName);
             if (driver == null)
             {
                 Log("Драйвер " + DriverName + " не найден", LogType.ERROR);

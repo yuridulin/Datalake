@@ -81,7 +81,7 @@ function BuildTree(json) {
 						title: 'Нажмите, чтобы перейти к настройке сервера',
 						onclick: function () {
 							TreeSetActive(this)
-							DriverCreate()
+							Settings()
 						}
 					},
 					h('i.ic.ic-menu'),
@@ -651,8 +651,8 @@ function Authorization() {
 	ID = 0
 	clearInterval(timeout)
 
-	var inputName, inputPass
-	var login = cookie('Inopc-Login')
+	var login, pass
+	var loginPanel = cookie('Inopc-Login')
 		? h('div',
 			h('span', 'Вы вошли как ' + cookie('Inopc-Login')),
 			'&emsp;',
@@ -674,26 +674,25 @@ function Authorization() {
 
 	mount('#view',
 		h('div.container',
-			login,
+			loginPanel,
 			h('h3', 'Введите данные своей учётной записи, чтобы выполнить повторную авторизацию'),
 
 			h('span', 'Имя учётной записи'),
-			inputName = h('input', { type: 'text', name: 'login' }),
+			login = h('input', { type: 'text', name: 'login' }),
 			h('span', 'Пароль'),
-			inputPass = h('input', { type: 'password', name: 'password' }),
+			pass = h('input', { type: 'password', name: 'password' }),
 
 			h('button', {
 				innerHTML: 'Вход',
 				onclick: function () {
-					console.log('name', inputName.value, 'pass', inputPass.value)
-					ask({ method: 'login', body: { Login: inputName.value, Password: inputPass.value } }, function (json) {
-						if (json.Found) {
+					ask({ method: 'login', body: { Login: login.value, Password: pass.value } }, function (json) {
+						if (json.Yes) {
 							// Перезагрузка открытых в данный момент компонентов
 							location.reload()
 						}
-						if (json.Unknown) {
+						if (json.No) {
 							// Сообщение о ошибке аутентификации
-							alert('Учётная запись не найдена либо пароль не совпадает')
+							alert(json.No)
 						}
 					})
 				}

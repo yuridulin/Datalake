@@ -14,17 +14,7 @@ namespace iNOPC.Server.Web
 {
     public class Http
     {
-        public static List<Session> Sessions { get; set; } = new List<Session>();
-
-        public static List<User> Users { get; set; } = new List<User> 
-        { 
-            new User
-			{
-                Login = "admin",
-                Password = "pass123",
-                AccessType = AccessTypes.WRITE,
-			},
-        };
+        public static List<Session> Sessions = new List<Session>();
 
         public static async Task Start()
         {
@@ -172,12 +162,19 @@ namespace iNOPC.Server.Web
 
         static object Login(string body, ref HttpListenerResponse response)
 		{
-            var user = JsonConvert.DeserializeObject<User>(body);
-            var auth = Users.Where(x => x.Login == user.Login && x.Password == user.Password).FirstOrDefault();
+            var user = JsonConvert.DeserializeObject<LoginPass>(body);
+
+            var auth = Program.Configuration.Access
+                .Where(x => x.Login == user.Login)
+                .FirstOrDefault();
 
             if (auth == null)
 			{
-                return new { Unknown = true };
+                return new { No = "Указанная учетная запись не найдена" };
+			}
+            else if (auth.Hash != user.Hash)
+			{
+                return new { No = "Введенный пароль не подходит" };
 			}
             else
 			{
@@ -194,7 +191,7 @@ namespace iNOPC.Server.Web
                 response.Headers.Add("Set-Cookie", "Inopc-Access-Token=" + session.Token);
                 response.Headers.Add("Inopc-Access-Type", session != null ? ((int)session.AccessType).ToString() : "0");
 
-                return new { Found = true };
+                return new { Yes = true };
             }
 		}
 
@@ -216,7 +213,7 @@ namespace iNOPC.Server.Web
 
         static object Tree()
         {
-            return Storage.Drivers
+            return Program.Configuration.Drivers
                 .Select(driver => new
                 {
                     driver.Id,
@@ -246,9 +243,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                return Storage.Drivers
+                return Program.Configuration.Drivers
                     .Select(x => new
                     {
                         x.Id,
@@ -264,9 +261,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                return Storage.Drivers
+                return Program.Configuration.Drivers
                     .Where(x => x.Id == data.Id)
                     .Select(x => x.Devices
                         .Select(y => new
@@ -284,9 +281,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                var driver = Storage.Drivers.FirstOrDefault(x => x.Id == data.Id);
+                var driver = Program.Configuration.Drivers.FirstOrDefault(x => x.Id == data.Id);
                 if (driver != null)
                 {
                     return driver.Logs.Select(x => new
@@ -330,9 +327,9 @@ namespace iNOPC.Server.Web
             if (string.IsNullOrEmpty(data.Name)) return new { Error = "Не указано наименование драйвера" };
             if (string.IsNullOrEmpty(data.Path)) return new { Error = "Не указан путь к DLL сборке драйвера" };
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                if (Storage.Drivers.Count(x => x.Name == data.Name) > 0)
+                if (Program.Configuration.Drivers.Count(x => x.Name == data.Name) > 0)
                 {
                     return new { Error = "Уже существует драйвер с таким именем" };
                 }
@@ -341,13 +338,13 @@ namespace iNOPC.Server.Web
                     // Добавление нового драйвера
                     var driver = new Driver
                     {
-                        Id = ++Storage.NextId,
+                        Id = ++Program.Configuration.NextId,
                         Name = data.Name,
                         Path = Program.Base + @"\Drivers\" + data.Path + ".dll",
                     };
 
-                    Storage.Drivers.Add(driver);
-                    Storage.Save();
+                    Program.Configuration.Drivers.Add(driver);
+                    Program.Configuration.SaveToFile();
 
                     driver.Load();
 
@@ -363,16 +360,16 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<DriverForm>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                var driver = Storage.Drivers.FirstOrDefault(x => x.Id == data.Id);
+                var driver = Program.Configuration.Drivers.FirstOrDefault(x => x.Id == data.Id);
 
                 if (driver != null)
                 {
                     driver.Name = data.Name;
                     driver.Path = Program.Base + @"\Drivers\" + data.Path + ".dll";
 
-                    Storage.Save();
+                    Program.Configuration.SaveToFile();
                     driver.Load();
 
                     WebSocket.Broadcast("tree");
@@ -389,15 +386,15 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                var driver = Storage.Drivers.FirstOrDefault(x => x.Id == data.Id);
+                var driver = Program.Configuration.Drivers.FirstOrDefault(x => x.Id == data.Id);
 
                 if (driver != null)
                 {
                     foreach (var device in driver.Devices) device.Stop();
-                    Storage.Drivers.Remove(driver);
-                    Storage.Save();
+                    Program.Configuration.Drivers.Remove(driver);
+                    Program.Configuration.SaveToFile();
 
                     WebSocket.Broadcast("tree");
                     WebSocket.Broadcast("driver:" + driver.Id);
@@ -413,9 +410,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                var driver = Storage.Drivers.FirstOrDefault(x => x.Id == data.Id);
+                var driver = Program.Configuration.Drivers.FirstOrDefault(x => x.Id == data.Id);
 
                 if (driver != null)
                 {
@@ -434,9 +431,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                foreach (var driver in Storage.Drivers)
+                foreach (var driver in Program.Configuration.Drivers)
                 {
                     var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
 
@@ -459,9 +456,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                foreach (var driver in Storage.Drivers)
+                foreach (var driver in Program.Configuration.Drivers)
                 {
                     var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
                     if (device != null)
@@ -478,7 +475,7 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            foreach (var driver in Storage.Drivers)
+            foreach (var driver in Program.Configuration.Drivers)
             {
                 var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
                 if (device != null)
@@ -506,9 +503,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                foreach (var driver in Storage.Drivers)
+                foreach (var driver in Program.Configuration.Drivers)
                 {
                     foreach (var device in driver.Devices)
                     {
@@ -527,16 +524,16 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                var driver = Storage.Drivers.FirstOrDefault(x => x.Id == data.Id);
+                var driver = Program.Configuration.Drivers.FirstOrDefault(x => x.Id == data.Id);
 
                 if (driver != null)
                 {
                     var device = new Device
                     {
-                        Id = ++Storage.NextId,
-                        Name = "New_Device_" + Storage.NextId,
+                        Id = ++Program.Configuration.NextId,
+                        Name = "New_Device_" + Program.Configuration.NextId,
                         AutoStart = false,
                         Configuration = driver.DefaultConfiguratuon,
                         DriverId = driver.Id,
@@ -545,7 +542,7 @@ namespace iNOPC.Server.Web
 
                     driver.Devices.Add(device);
 
-                    Storage.Save();
+                    Program.Configuration.SaveToFile();
 
                     WebSocket.Broadcast("tree");
                     WebSocket.Broadcast("driver.devices:" + driver.Id);
@@ -563,9 +560,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<DeviceForm>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                foreach (var driver in Storage.Drivers)
+                foreach (var driver in Program.Configuration.Drivers)
                 {
                     var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
                     if (device != null)
@@ -577,7 +574,7 @@ namespace iNOPC.Server.Web
                         device.AutoStart = data.AutoStart;
                         device.Configuration = data.Configuration;
 
-                        Storage.Save();
+                        Program.Configuration.SaveToFile();
 
                         if (active || device.AutoStart) device.Start();
 
@@ -596,9 +593,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                foreach (var driver in Storage.Drivers)
+                foreach (var driver in Program.Configuration.Drivers)
                 {
                     var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
                     if (device != null)
@@ -606,7 +603,7 @@ namespace iNOPC.Server.Web
                         device.Stop();
                         driver.Devices.Remove(device);
 
-                        Storage.Save();
+                        Program.Configuration.SaveToFile();
 
                         WebSocket.Broadcast("tree");
                         WebSocket.Broadcast("driver.devices:" + driver.Id);
@@ -623,9 +620,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                foreach (var driver in Storage.Drivers)
+                foreach (var driver in Program.Configuration.Drivers)
                 {
                     var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
 
@@ -648,9 +645,9 @@ namespace iNOPC.Server.Web
         {
             var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
-            lock (Storage.Drivers)
+            lock (Program.Configuration.Drivers)
             {
-                foreach (var driver in Storage.Drivers)
+                foreach (var driver in Program.Configuration.Drivers)
                 {
                     var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
 

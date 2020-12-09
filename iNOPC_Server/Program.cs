@@ -2,16 +2,17 @@
 using iNOPC.Server.Web;
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.ServiceProcess;
 using System.Threading.Tasks;
 
 namespace iNOPC.Server
 {
-    class Program
+	class Program
     {
         public static string Base { get; set; } = AppDomain.CurrentDomain.BaseDirectory;
+
+        public static Configuration Configuration { get; set; } = new Configuration();
 
         static void Main()
         {
@@ -54,15 +55,17 @@ namespace iNOPC.Server
             OPC.StartServer();
 
             // Загружаем конфиг
-            Storage.Load();
+            Configuration.RestoreFromFile();
             OPC.RefreshAllClients();
         }
 
         public static void Stop()
         {
             // Сохраняем конфигурацию
-            Storage.Save();
-            foreach (var driver in Storage.Drivers)
+            Configuration.SaveToFile();
+
+            // Останавливаем запущенные модули
+            foreach (var driver in Configuration.Drivers)
             {
                 foreach (var device in driver.Devices.Where(x => x.Active))
                 {

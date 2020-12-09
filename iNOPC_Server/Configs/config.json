@@ -1,1 +1,10 @@
-[]
+{
+	"Drivers": [],
+	"Access": [
+		{
+			"Login": "test",
+			"Hash": "VYsukVQMy6iX4tPHjSJ1U2HOTt0=",
+			"AccessType": 2
+		}
+	]
+}
