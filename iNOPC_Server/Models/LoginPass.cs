@@ -1,4 +1,5 @@
-﻿using System;
+﻿using iNOPC.Server.Models;
+using System;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -9,6 +10,8 @@ namespace iNOPC.Server.Web
 		public string Login { get; set; }
 
 		public string Password { get; set; }
+
+		public AccessType AccessType { get; set; } = AccessType.GUEST;
 
 		public string Hash
 		{

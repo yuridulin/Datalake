@@ -62,6 +62,8 @@ function connectToServer() {
 function ask(parameters, callback) {
 	var xhr = new XMLHttpRequest()
 	xhr.open('POST', location.origin + '/' + parameters.method, true)
+	xhr.setRequestHeader('Inopc-Access-Type', accessType)
+	xhr.setRequestHeader('Inopc-Access-Token', ls('Inopc-Access-Token'))
 	xhr.onreadystatechange = function () {
 
 		// Ожидание ответа сервера
@@ -69,13 +71,19 @@ function ask(parameters, callback) {
 		if (xhr.status != 200) return console.log('ask err: xhr return ' + xhr.status + ' [' + xhr.statusText + ']')
 
 		// Получение данных авторизации
+		localStorage.setItem('Inopc-Access-Token', xhr.getResponseHeader('Inopc-Access-Token'))
 		accessType = +(xhr.getResponseHeader('Inopc-Access-Type') || '0')
-		accessName = xhr.getResponseHeader('Inopc-Access-Type') || null
+		login = xhr.getResponseHeader('Inopc-Login')
 		AuthPanel()
 
 		// Получение результата запроса
 		var json = {}
-		try { json = JSON.parse(xhr.responseText) } catch (e) { console.log('ask err: not json [' + xhr.responseText + ']') }
+		try { json = JSON.parse(xhr.responseText) } catch (e) { return console.log('ask err: not json [' + xhr.responseText + ']') }
+
+		if (json.Error) alert('Ошибка: ' + json.Error)
+		if (json.Warning) alert(json.Warning)
+		if (json.Done) alert(json.Done)
+
 		if (!callback) return
 		callback.call(null, json)
 	}

@@ -90,17 +90,47 @@ namespace iNOPC.Server.Web
                 else
                 {
                     // авторизация запроса по токену, хранящемуся в куках. Если запрос - аутентификация, то обработчик перезапишет это значение
-                    var token = request.Cookies["Inopc-Access-Token"]?.Value ?? null;
-                    var session = Sessions.FirstOrDefault(x => token != null && x.Token == token && x.Expire > DateTime.Now);
-                    Console.WriteLine(token + "" + (session == null));
-                    response.Headers.Set("Inopc-Access-Type", session != null ? ((int)session.AccessType).ToString() : "0");
+                    if (url != "login")
+					{
+                        // Так как токен перезаписывается при каждом запросе, сразу устанавливаем header с пришедшим
+                        // Запросы login и logout обрабатываются отдельно
+                        var token = request.Headers.Get("Inopc-Access-Token");
+                        response.Headers.Add("Inopc-Access-Token", token);
 
-                    responseString = JsonConvert.SerializeObject(Action(url, requestBody, ref response));
+                        var session = Sessions.FirstOrDefault(x => token != null && x.Token == token && x.Expire > DateTime.Now);
+                        if (session != null)
+						{
+                            // Пользователь авторизован по сессионному токену
+                            response.Headers.Add("Inopc-Access-Type", ((int)session.AccessType).ToString());
+                            response.Headers.Add("Inopc-Login", session.Login);
+
+                            Console.WriteLine(url + " > " + session.Token + " = " + session.Login + "|" + session.AccessType);
+                        }
+                        else if (Program.Configuration.Access.Count != 0)
+						{
+                            // Пользователь не авторизован, выдаётся гостевой доступ
+                            response.Headers.Add("Inopc-Access-Type", ((int)AccessType.GUEST).ToString());
+                            response.Headers.Add("Inopc-Login", "guest");
+
+                            Console.WriteLine(url + " > no token = guest|GUEST");
+                        }
+                        else
+						{
+                            // Ни одна учётная запись не создана, выдается специальное разрешение FIRST для создания первой учётной записи
+                            response.Headers.Add("Inopc-Access-Type", ((int)AccessType.FIRST).ToString());
+                            response.Headers.Add("Inopc-Login", "first");
+
+                            Console.WriteLine(url + " > no token = first|FULL");
+                        }
+                    }
+
                     response.ContentType = "application/json";
+                    responseString = JsonConvert.SerializeObject(Action(url, requestBody, ref response));
                 }
             }
             catch (Exception e)
             {
+                response.ContentType = "application/json";
                 responseString = JsonConvert.SerializeObject(new { Error = e.Message, e.StackTrace });
             }
 
@@ -125,6 +155,9 @@ namespace iNOPC.Server.Web
                 {
                     case "login": return Login(body, ref resp);
                     case "logout": return Logout(body, ref resp);
+                    case "users": return Users();
+                    case "user.create": return UserCreate(body);
+                    case "user.delete": return UserDelete(body);
 
                     case "tree": return Tree();
 
@@ -169,17 +202,18 @@ namespace iNOPC.Server.Web
                 .FirstOrDefault();
 
             if (auth == null)
-			{
-                return new { No = "Указанная учетная запись не найдена" };
-			}
+            {
+                return new { Warning = "Указанная учетная запись не найдена" };
+            }
             else if (auth.Hash != user.Hash)
-			{
-                return new { No = "Введенный пароль не подходит" };
-			}
+            {
+                return new { Warning = "Введенный пароль не подходит" };
+            }
             else
-			{
+            {
                 var session = new Session
                 {
+                    Login = auth.Login,
                     Token = new Random().Next().ToString(),
                     AccessType = auth.AccessType,
                     Expire = DateTime.Now.AddDays(7),
@@ -187,11 +221,15 @@ namespace iNOPC.Server.Web
 
                 Sessions.Add(session);
 
-                response.Headers.Add("Set-Cookie", "Inopc-Login=" + user.Login);
-                response.Headers.Add("Set-Cookie", "Inopc-Access-Token=" + session.Token);
-                response.Headers.Add("Inopc-Access-Type", session != null ? ((int)session.AccessType).ToString() : "0");
+                // Записываем в куки клиента его сессионный токен
+                response.Headers.Add("Inopc-Access-Token", session.Token);
 
-                return new { Yes = true };
+                // Авторизовываем, чтобы после перезагрузки вебки клиент сразу вошел
+                // честно говоря лишняя деталь на случай, когда вместо полного релоада будут перегружаться конкретные компоненты вебки
+                //response.Headers.Add("Inopc-Login", user.Login);
+                //response.Headers.Add("Inopc-Access-Type", ((int)session.AccessType).ToString());
+
+                return new { Done = "Вход успешно выполнен" };
             }
 		}
 
@@ -205,11 +243,78 @@ namespace iNOPC.Server.Web
                 Sessions.Remove(old);
 			}
 
-            response.Headers.Add("Set-Cookie", "Inopc-Login=x; Max-Age=-1");
-            response.Headers.Add("Set-Cookie", "Inopc-Access-Token=x; Max-Age=-1");
-
-            return new { Done = true };
+            return new { Done = "Выход произведён успешно" };
 		}
+
+        static object Users()
+		{
+            lock (Program.Configuration)
+			{
+                return Program.Configuration.Access
+                    .Select(x => new
+                    {
+                        x.Login,
+                        x.AccessType,
+                    });
+			}
+		}
+
+        static object UserCreate(string body)
+		{
+            try
+            {
+                var user = JsonConvert.DeserializeObject<LoginPass>(body);
+                var access = new AccessRecord
+                {
+                    Login = user.Login,
+                    AccessType = user.AccessType,
+                    Hash = user.Hash,
+                };
+
+                lock (Program.Configuration)
+                {
+                    var another = Program.Configuration.Access
+                        .FirstOrDefault(x => x.Login == access.Login);
+
+                    if (another != null) return new { Warning = "Такой пользователь уже существует" };
+
+                    Program.Configuration.Access.Add(access);
+                    Program.Configuration.SaveToFile();
+                }
+
+                return new { Done = "Пользователь успешно добавлен" };
+            }
+            catch (Exception e)
+			{
+                return new { Error = e.Message };
+			}
+		}
+
+        static object UserDelete(string body)
+        {
+            try
+            {
+                var user = JsonConvert.DeserializeObject<LoginPass>(body);
+
+                lock (Program.Configuration)
+                {
+                    var access = Program.Configuration.Access
+                        .FirstOrDefault(x => x.Login == user.Login);
+
+                    if (access == null) return new { Warning = "Такой пользователь не существует" };
+
+                    Program.Configuration.Access.Remove(access);
+                    Program.Configuration.SaveToFile();
+                }
+
+                return new { Done = "Пользователь успешно удалён" };
+            }
+            catch (Exception e)
+            {
+                return new { Error = e.Message };
+            }
+        }
+
 
         static object Tree()
         {

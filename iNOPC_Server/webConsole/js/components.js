@@ -1,6 +1,7 @@
 var ID = 0
 var accessType = 0
-var accessName = null
+var login = null
+
 
 var LogTypes = {
 	0: 'Информация',
@@ -11,11 +12,15 @@ var LogTypes = {
 
 function Home() {
 
-	ID = 0
 	mount('#view', 'подключаемся...')
-	clearInterval(timeout)
 
 	ask({ method: 'tree' }, function (json) {
+
+		// первый вход - перенаправление на страницу настроек
+		if (accessType == ACCESSTYPE.FIRST) return First()
+
+		if (accessType == ACCESSTYPE.GUEST) return Login()
+
 		BuildTree(json)
 		mount('#view',
 			h('table.datatable',
@@ -74,7 +79,7 @@ function Tree() {
 
 function BuildTree(json) {
 	mount('#tree', h('div',
-		accessType < ACCESSTYPES.WRITE ? '' : 
+		accessType < ACCESSTYPE.WRITE ? '' : 
 			h('div.node',
 				h('div.node-caption',
 					{
@@ -88,7 +93,9 @@ function BuildTree(json) {
 					h('span', 'Настройки')
 				)
 			),
-		json.map(function (driver) {
+
+		accessType < ACCESSTYPE.READ ? '' :
+			json.map(function (driver) {
 			return h('div.node' + (ls(driver.Id) == 'open' ? '.open' : ''),
 				h('div.node-caption',
 					h('i.ic.ic-expand-' + (ls(driver.Id) == 'open' ? 'less' : 'more'), {
@@ -134,7 +141,7 @@ function BuildTree(json) {
 				)
 			)
 		}),
-		h('div.node',
+		accessType < ACCESSTYPE.WRITE ? '' : h('div.node',
 			h('div.node-caption',
 				h('i.ic.ic-plus'),
 				h('span', {
@@ -158,7 +165,6 @@ function TreeSetActive(el) {
 
 	el.parentNode.parentNode.className += ' active'
 }
-
 
 
 function Driver(id) {
@@ -602,10 +608,12 @@ function DeviceSave(id) {
 
 function Settings() {
 
-	TreeSetActive(null)
-
 	ID = 0
 	clearInterval(timeout)
+
+	if (accessType == ACCESSTYPE.GUEST || accessType == ACCESSTYPE.READ) {
+		return mount('#view', h('div.container', 'Нет доступа'))
+	}
 
 	mount('#view',
 		h('div.container',
@@ -625,85 +633,197 @@ function Settings() {
 					})
 				}
 			})
+		),
+		h('div#users')
+	)
+
+	UsersTable()
+}
+
+function UsersTable() {
+
+	if (accessType < ACCESSTYPE.FULL) return ''
+
+	var login, pass, access
+
+	ask({ method: 'users' }, function (json) {
+		if (!$('#users')) return
+		mount('#users',
+			h('div.container',
+				h('table',
+					h('tr',
+						h('th', 'Учётная запись'),
+						h('th', 'Доступ'),
+						h('th', { colspan: 2 }, 'Управление')
+					),
+					json.map(function (user) {
+						return h('tr',
+							h('td', user.Login),
+							h('td', AccessType(user.AccessType)),
+							h('td',
+								h('button', {
+									innerHTML: 'Удалить',
+									onclick: function () {
+										ask({ method: 'user.delete', body: { Login: user.Login } }, function (json) {
+											if (json.Done) UsersTable()
+										})
+									}
+								}),
+							)
+						)
+					}),
+					h('tr',
+						h('td',
+							login = h('input', {
+								type: 'text',
+								placeholder: 'логин...',
+								readonly: true,
+								onfocus: function () {
+									this.removeAttribute('readonly')
+								}
+							})
+						),
+						h('td',
+							pass = h('input', {
+								type: 'password',
+								placeholder: 'пароль...',
+								readonly: true,
+								onfocus: function () {
+									this.removeAttribute('readonly')
+								}
+							})
+						),
+						h('td',
+							access = h('select',
+								h('option', { innerHTML: AccessType(ACCESSTYPE.READ), value: ACCESSTYPE.READ }),
+								h('option', { innerHTML: AccessType(ACCESSTYPE.WRITE), value: ACCESSTYPE.WRITE }),
+								h('option', { innerHTML: AccessType(ACCESSTYPE.FULL), value: ACCESSTYPE.FULL }),
+							)
+						),
+						h('td',
+							h('button', {
+								innerHTML: 'Добавить',
+								onclick: function () {
+									var body = {
+										Login: login.value,
+										Password: pass.value,
+										AccessType: access.value
+									}
+
+									ask({ method: 'user.create', body: body }, function (json) {
+										if (json.Done) UsersTable()
+									})
+								}
+							})
+						)
+					)
+				)
+			)
+		)
+	})
+}
+
+
+function First() {
+	var _pass
+	mount('#view',
+		h('container',
+			h('h3', 'Первоначальная настройка'),
+			h('p', 'Введите пароль для создания первой учётной записи с полным доступом'),
+			_pass = h('input', {
+				type: 'password',
+				placeholder: 'пароль...'
+			}),
+			h('button', 'Сохранить', {
+				onclick: function () {
+					var _body = {
+						Login: 'admin',
+						Password: _pass.value,
+						AccessType: ACCESSTYPE.FULL
+					}
+					ask({ method: 'user.create', body: _body }, function (json) {
+						if (json.Done) {
+							ask({ method: 'login', body: _body }, function (json) {
+								if (json.Done) location.reload()
+							})
+						}
+					})
+				}
+			})
 		)
 	)
 }
 
 function AuthPanel() {
 	mount('#auth',
+		accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST ? '' :
 		h('div.panel-el',
 			{
-				title: 'Нажмите, чтобы изменить уровень доступа',
-				onclick: function () {
-					Authorization()
-				}
+				title: 'Нажмите, чтобы выйти из учётной записи',
+				onclick: Login
 			},
 			h('i.ic.ic-person'),
-			h('span', accessType == 3 ? 'Полный доступ' : accessType == 2 ? 'Доступ для записи' : accessType == 1 ? 'Доступ для чтения' : 'Гостевой доступ')
+			h('span', login)
 		)
 	)
 }
 
-function Authorization() {
-
-	TreeSetActive(null)
-
-	ID = 0
-	clearInterval(timeout)
-
-	var login, pass
-	var loginPanel = cookie('Inopc-Login')
-		? h('div',
-			h('span', 'Вы вошли как ' + cookie('Inopc-Login')),
-			'&emsp;',
-			h('button', {
-				innerHTML: 'Выход',
-				onclick: function () {
-					ask({ method: 'logout', body: { Token: cookie('Inopc-Access-Token') } }, function (json) {
-						if (json.Done) {
-							// Перезагрузка открытых в данный момент компонентов
-							location.reload()
-						}
-					})
-				}
-			})
-		)
-		: h('div',
-			h('span', 'Вы не вошли в систему')
-		)
-
+function Login() {
+	var _login, _pass
 	mount('#view',
-		h('div.container',
-			loginPanel,
-			h('h3', 'Введите данные своей учётной записи, чтобы выполнить повторную авторизацию'),
+		accessType > ACCESSTYPE.GUEST
+			? h('div.container',
+				h('p', 'Вы вошли как ' + login),
+				h('button', 'Выйти', {
+					onclick: function () {
+						ask({ method: 'logout', body: { Token: ls('Inopc-Access-Token') } }, function (json) {
+							if (json.Done) {
+								localStorage.removeItem('Inopc-Access-Token')
+								location.reload()
+							}
+						})
+					}
+				})
+			)
+			: h('div.container',
+				h('p', 'Вы не вошли в учетную запись. Выполните вход:'),
 
-			h('span', 'Имя учётной записи'),
-			login = h('input', { type: 'text', name: 'login' }),
-			h('span', 'Пароль'),
-			pass = h('input', { type: 'password', name: 'password' }),
+				h('span', 'Имя учётной записи'),
+				_login = h('input', { type: 'text', name: 'login' }),
+				h('span', 'Пароль'),
+				_pass = h('input', { type: 'password', name: 'password' }),
 
-			h('button', {
-				innerHTML: 'Вход',
-				onclick: function () {
-					ask({ method: 'login', body: { Login: login.value, Password: pass.value } }, function (json) {
-						if (json.Yes) {
-							// Перезагрузка открытых в данный момент компонентов
-							location.reload()
+				h('button', {
+					innerHTML: 'Вход',
+					onclick: function () {
+						var _body = {
+							Login: _login.value,
+							Password: _pass.value
 						}
-						if (json.No) {
-							// Сообщение о ошибке аутентификации
-							alert(json.No)
-						}
-					})
-				}
-			})
-		)
+						ask({ method: 'login', body: _body }, function (json) {
+							if (json.Done) location.reload()
+						})
+					}
+				})
+			)
 	)
 }
 
-var ACCESSTYPES = {
+var ACCESSTYPE = {
 	GUEST: 0,
 	READ: 1,
 	WRITE: 2,
 	FULL: 3,
+	FIRST: 4,
+}
+
+function AccessType(t) {
+	switch (t) {
+		case ACCESSTYPE.FIRST: return 'Первый запуск'
+		case ACCESSTYPE.GUEST: return 'Гость'
+		case ACCESSTYPE.READ: return 'Доступ на чтение'
+		case ACCESSTYPE.WRITE: return 'Доступ на запись'
+		case ACCESSTYPE.FULL: return 'Полный доступ'
+		default: return 'Тип не найден'
+	}
 }

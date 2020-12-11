@@ -6,6 +6,6 @@
 
 		public string Hash { get; set; }
 
-		public AccessTypes AccessType { get; set; }
+		public AccessType AccessType { get; set; }
 	}
 }

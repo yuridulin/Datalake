@@ -75,7 +75,7 @@
     <Compile Include="OPC\OPC.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Models\AccessTypes.cs" />
+    <Compile Include="Models\AccessType.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Models\LoginPass.cs" />
     <Compile Include="Web\RequestTypes\DeviceForm.cs" />
