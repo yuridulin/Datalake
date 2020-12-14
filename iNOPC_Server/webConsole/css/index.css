@@ -126,6 +126,15 @@ div.value > * {
 	border: 1px solid #eee;
 }
 
+.container > span {
+	padding: 2px;
+}
+
+.container span.value {
+	font-weight: 500;
+	padding-right: 10px;
+}
+
 	.container input,
 	.container select {
 		margin-right: .8em;

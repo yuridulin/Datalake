@@ -41,13 +41,13 @@ function Home() {
 										Driver(driver.Id)
 									}
 								}),
-								h('td', 
-									h('i.ic.ic-' + (device.IsActive ? 'play' : 'pause'), {
+								h('td',
+									h('i.ic.ic-' + (device.IsActive ? 'play' : 'pause'), AUTH() ? {
 										title: 'Нажмите для ' + (device.IsActive ? 'завершения' : 'запуска') + ' опроса данных',
 										onclick: function () {
 											ask({ method: 'device.' + (device.IsActive ? 'stop' : 'start'), body: { Id: device.Id } }, Home)
 										}
-									}),
+									} : {}),
 									h('span', {
 										innerHTML: device.Name,
 										title: 'Нажмите для перехода к устройству',
@@ -79,8 +79,9 @@ function Tree() {
 }
 
 function BuildTree(json) {
+	console.log(accessType, )
 	mount('#tree', h('div',
-		accessType < ACCESSTYPE.WRITE ? '' : 
+		accessType == ACCESSTYPE.FULL ? 
 			h('div.node', { route: 'settings' },
 				h('div.node-caption',
 					{
@@ -93,9 +94,9 @@ function BuildTree(json) {
 					h('i.ic.ic-menu'),
 					h('span', 'Настройки')
 				)
-			),
+			) : '',
 
-		accessType < ACCESSTYPE.READ ? '' :
+		accessType == ACCESSTYPE.READ || AUTH() ?
 			json.map(function (driver) {
 				return h('div.node' + (ls(driver.Id) == 'open' ? '.open' : ''), { route: 'driver|' + driver.Id },
 					h('div.node-caption',
@@ -124,12 +125,12 @@ function BuildTree(json) {
 						driver.Devices.map(function (device) {
 							return h('div.node', { route: 'device|' + device.Id },
 								h('div.node-caption',
-									h('i.ic.' + (device.IsActive ? 'ic-play' : 'ic-pause'), {
+									h('i.ic.' + (device.IsActive ? 'ic-play' : 'ic-pause'), AUTH() ? {
 										onclick: function () {
 											if (device.IsActive) ask({ method: 'device.stop', body: { Id: device.Id } })
 											else ask({ method: 'device.start', body: { Id: device.Id } })
 										}
-									}),
+									} : { }),
 									h('span', device.Name, (device.HasError ? h('i.ic.ic-warning.ic-inline') : ''), {
 										onclick: function () {
 											TreeSetActive('device|' + device.Id)
@@ -141,8 +142,10 @@ function BuildTree(json) {
 						})
 					)
 				)
-		}),
-		accessType < ACCESSTYPE.WRITE ? '' : h('div.node', { route: 'driver-create' },
+			})
+			: '',
+
+		AUTH() ? h('div.node', { route: 'driver-create' },
 			h('div.node-caption',
 				h('i.ic.ic-plus'),
 				h('span', {
@@ -153,7 +156,7 @@ function BuildTree(json) {
 					}
 				})
 			)
-		)
+		) : ''
 	))
 
 	TreeSetActive(route)
@@ -179,35 +182,48 @@ function Driver(id) {
 		var name, path
 		mount('#view',
 			h('div.container',
+
 				h('span', 'Имя'),
-				name = h('input', { type: 'text', value: driver.Name }),
+
+				AUTH()
+					? h('input', { type: 'text', value: driver.Name })
+					: h('span.value', driver.Name),
 
 				h('span', 'Тип'),
-				path = h('select',
-					driver.Dlls.map(function (x) {
-						return x == driver.Path ? h('option', x, { selected: true }) : h('option', x)
-					})
-				),
 
-				h('button', {
-					innerHTML: 'Перезагрузить',
-					onclick: function () {
-						ask({ method: 'driver.reload', body: { Id: id } })
-					}
-				}),
-				h('button', {
-					innerHTML: 'Сохранить',
-					onclick: function () {
-						ask({ method: 'driver.update', body: { Id: id, Name: name.value, Path: path.value } })
-					}
-				}),
-				h('button', {
-					innerHTML: 'Удалить',
-					onclick: function () {
-						if (!confirm('Драйвер будет удален из конфигурации без возможности восстановления. Продолжить?')) return
-						ask({ method: 'driver.delete', body: { Id: id } }, Home)
-					}
-				})
+				AUTH()
+					? h('select',
+						driver.Dlls.map(function (x) {
+							return x == driver.Path ? h('option', x, { selected: true }) : h('option', x)
+						})
+					)
+					: h('span.value', driver.Path),
+
+				AUTH()
+					? h('button', {
+						innerHTML: 'Перезагрузить',
+						onclick: function () {
+							ask({ method: 'driver.reload', body: { Id: id } })
+						}
+					})
+					: '',
+				AUTH()
+					? h('button', {
+						innerHTML: 'Сохранить',
+						onclick: function () {
+							ask({ method: 'driver.update', body: { Id: id, Name: name.value, Path: path.value } })
+						}
+					})
+					: '',
+				AUTH()
+					? h('button', {
+						innerHTML: 'Удалить',
+						onclick: function () {
+							if (!confirm('Драйвер будет удален из конфигурации без возможности восстановления. Продолжить?')) return
+							ask({ method: 'driver.delete', body: { Id: id } }, Home)
+						}
+					})
+					: ''
 			),
 
 			h('div.container',
@@ -253,7 +269,7 @@ function DriverDevices(id) {
 		mount('#driver-devices',
 			h('div.devices', devices.map(function (device) {
 				return h('div',
-					h('i.ic.ic-' + (device.IsActive ? 'play' : 'pause'), {
+					h('i.ic.ic-' + (device.IsActive ? 'play' : 'pause'), AUTH() ? {
 						onclick: function () {
 							if (!device.IsActive) {
 								ask({ method: 'device.start', body: { Id: device.Id } })
@@ -261,7 +277,7 @@ function DriverDevices(id) {
 								ask({ method: 'device.stop', body: { Id: device.Id } })
 							}
 						}
-					}),
+					} : { }),
 					h('span', {
 						innerHTML: device.Name,
 						onclick: function () {
@@ -269,22 +285,23 @@ function DriverDevices(id) {
 						}
 					})
 				)
-			})
-			),
-			h('button', {
+			})),
+			AUTH() ? h('button', {
 				innerHTML: 'Добавить устройство',
 				onclick: function () {
 					ask({ method: 'device.create', body: { Id: id } }, function () {
 						DriverDevices(id)
 					})
 				}
-			})
+			}) : ''
 		)
 	})
 }
 
 function DriverCreate() {
 	clearInterval(timeout)
+	if (!AUTH()) return
+
 	ask({ method: 'driver.createform' }, function (data) {
 		ID = 0
 		var name, path
@@ -292,7 +309,7 @@ function DriverCreate() {
 			h('div.container',
 
 				h('span', 'Dll сборка'),
-				path = h('select', 
+				path = h('select',
 					data.map(function (x) {
 						return h('option', x)
 					})
@@ -306,7 +323,7 @@ function DriverCreate() {
 					h('button', {
 						innerHTML: 'Добавить',
 						onclick: function () {
-							ask({ method: 'driver.create', body: { Name: name.value, Path: path.value }}, function (data) {
+							ask({ method: 'driver.create', body: { Name: name.value, Path: path.value } }, function (data) {
 								if (data.Error) alert(data.Error)
 								else if (data.Id) Driver(data.Id);
 							});
@@ -344,46 +361,61 @@ function Device(id) {
 		mount('#view',
 			h('div.container',
 				h('span', 'Имя'),
-				deviceName = h('input', { value: device.Name }),
+				deviceName = AUTH()
+					? h('input', { value: device.Name })
+					: h('span.value', device.Name),
 
-				h('span', 'Автостарт'),
-				deviceAutoStart = h('input', device.AutoStart ? { type: 'checkbox', checked: true } : { type: 'checkbox' }),
+				AUTH()
+					? h('span', 'Автостарт')
+					: '',
 
-				h('button', {
-					innerHTML: 'Старт',
-					onclick: function () {
-						ask({ method: 'device.start', body: { Id: id } }, function () {
-							timeout = setInterval(function () {
+				deviceAutoStart = AUTH()
+					? h('input', device.AutoStart ? { type: 'checkbox', checked: true } : { type: 'checkbox' })
+					: '',
+
+				AUTH()
+					? h('button', {
+						innerHTML: 'Старт',
+						onclick: function () {
+							ask({ method: 'device.start', body: { Id: id } }, function () {
+								timeout = setInterval(function () {
+									DeviceFields(id)
+								}, 1000)
+							})
+						}
+					})
+					: '',
+				AUTH()
+					? h('button', {
+						innerHTML: 'Стоп',
+						onclick: function () {
+							ask({ method: 'device.stop', body: { Id: id } }, function () {
+								clearInterval(timeout)
 								DeviceFields(id)
-							}, 1000)
-						})
-					}
-				}),
-				h('button', {
-					innerHTML: 'Стоп',
-					onclick: function () {
-						ask({ method: 'device.stop', body: { Id: id } }, function () {
-							clearInterval(timeout)
-							DeviceFields(id)
-						})
-					}
-				}),
-				h('button', {
-					innerHTML: 'Сохранить',
-					onclick: function () {
-						DeviceSave(id)
-					}
-				}),
-				h('button', {
-					innerHTML: 'Удалить',
-					onclick: function () {
-						if (!confirm('Устройство будет удалено из конфигурации без возможности восстановления. Продолжить?')) return
-						ask({ method: 'device.delete', body: { Id: id } }, Home)
-					}
-				})
+							})
+						}
+					})
+					: '',
+				AUTH()
+					? h('button', {
+						innerHTML: 'Сохранить',
+						onclick: function () {
+							DeviceSave(id)
+						}
+					})
+					: '',
+				AUTH()
+					? h('button', {
+						innerHTML: 'Удалить',
+						onclick: function () {
+							if (!confirm('Устройство будет удалено из конфигурации без возможности восстановления. Продолжить?')) return
+							ask({ method: 'device.delete', body: { Id: id } }, Home)
+						}
+					})
+					: ''
 			),
 
-			h('div.container',
+			AUTH() ? h('div.container',
 				h('div',
 					h('span.container-expand-button',
 						{
@@ -407,7 +439,7 @@ function Device(id) {
 					},
 					h('div#device-configuration.sub')
 				)
-			),
+			) : '',
 
 			h('div.container',
 				h('div',
@@ -520,10 +552,10 @@ function Device(id) {
 }
 
 function DeviceConfiguration(id) {
-
+	if (!AUTH()) return
 	ask({ method: 'device.configuration', body: { Id: id } }, function (page) {
+		if (!AUTH()) return
 		mount('#device-configuration', h('div.form', page))
-
 		$('#device-configuration').querySelectorAll('script').forEach(function (el) {
 			(1, eval)(el.innerHTML)
 		})
@@ -573,6 +605,7 @@ function DeviceFields(id) {
 }
 
 function DeviceSave(id) {
+	if (!AUTH()) return
 	var config = {}
 	$('#device-configuration .form').querySelectorAll('div[type]').forEach(function (el) {
 
@@ -833,4 +866,8 @@ function AccessType(t) {
 		case ACCESSTYPE.FULL: return 'Полный доступ'
 		default: return 'Тип не найден'
 	}
+}
+
+function AUTH() {
+	return accessType == ACCESSTYPE.WRITE || accessType == ACCESSTYPE.FULL
 }
