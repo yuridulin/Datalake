@@ -78,6 +78,7 @@
     <Compile Include="Models\AccessType.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Models\LoginPass.cs" />
+    <Compile Include="Web\Requester.cs" />
     <Compile Include="Web\RequestTypes\DeviceForm.cs" />
     <Compile Include="Web\RequestTypes\DeviceLogs.cs" />
     <Compile Include="Web\RequestTypes\DriverForm.cs" />
