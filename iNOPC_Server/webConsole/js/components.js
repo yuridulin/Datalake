@@ -1,6 +1,7 @@
 var ID = 0
 var accessType = 0
 var login = null
+var route = ''
 
 
 var LogTypes = {
@@ -80,12 +81,12 @@ function Tree() {
 function BuildTree(json) {
 	mount('#tree', h('div',
 		accessType < ACCESSTYPE.WRITE ? '' : 
-			h('div.node',
+			h('div.node', { route: 'settings' },
 				h('div.node-caption',
 					{
 						title: 'Нажмите, чтобы перейти к настройке сервера',
 						onclick: function () {
-							TreeSetActive(this)
+							TreeSetActive('settings')
 							Settings()
 						}
 					},
@@ -96,74 +97,76 @@ function BuildTree(json) {
 
 		accessType < ACCESSTYPE.READ ? '' :
 			json.map(function (driver) {
-			return h('div.node' + (ls(driver.Id) == 'open' ? '.open' : ''),
-				h('div.node-caption',
-					h('i.ic.ic-expand-' + (ls(driver.Id) == 'open' ? 'less' : 'more'), {
-						onclick: function () {
-							if (this.className.indexOf('less') > -1) {
-								ls(driver.Id, 'close')
-								this.className = 'ic ic-expand-more'
-								this.parentNode.parentNode.className = 'node'
+				return h('div.node' + (ls(driver.Id) == 'open' ? '.open' : ''), { route: 'driver|' + driver.Id },
+					h('div.node-caption',
+						h('i.ic.ic-expand-' + (ls(driver.Id) == 'open' ? 'less' : 'more'), {
+							onclick: function () {
+								if (this.className.indexOf('less') > -1) {
+									ls(driver.Id, 'close')
+									this.className = 'ic ic-expand-more'
+									this.parentNode.parentNode.className = 'node'
+								}
+								else {
+									ls(driver.Id, 'open')
+									this.className = 'ic ic-expand-less'
+									this.parentNode.parentNode.className = 'node open'
+								}
 							}
-							else {
-								ls(driver.Id, 'open')
-								this.className = 'ic ic-expand-less'
-								this.parentNode.parentNode.className = 'node open'
+						}),
+						h('span', driver.Name, (driver.HasError ? h('i.ic.ic-warning.ic-inline') : ''), {
+							onclick: function () {
+								TreeSetActive('driver|' + driver.Id)
+								Driver(driver.Id)
 							}
-						}
-					}),
-					h('span', driver.Name, (driver.HasError ? h('i.ic.ic-warning.ic-inline') : ''), {
-						onclick: function () {
-							TreeSetActive(this)
-							Driver(driver.Id)
-						}
-					}),
-				),
-				h('div.node-body',
-					driver.Devices.map(function (device) {
-						return h('div.node',
-							h('div.node-caption',
-								h('i.ic.' + (device.IsActive ? 'ic-play' : 'ic-pause'), {
-									onclick: function () {
-										if (device.IsActive) ask({ method: 'device.stop', body: { Id: device.Id } })
-										else ask({ method: 'device.start', body: { Id: device.Id } })
-									}
-								}),
-								h('span', device.Name, (device.HasError ? h('i.ic.ic-warning.ic-inline') : ''), {
-									onclick: function () {
-										TreeSetActive(this)
-										Device(device.Id)
-									}
-								})
+						}),
+					),
+					h('div.node-body',
+						driver.Devices.map(function (device) {
+							return h('div.node', { route: 'device|' + device.Id },
+								h('div.node-caption',
+									h('i.ic.' + (device.IsActive ? 'ic-play' : 'ic-pause'), {
+										onclick: function () {
+											if (device.IsActive) ask({ method: 'device.stop', body: { Id: device.Id } })
+											else ask({ method: 'device.start', body: { Id: device.Id } })
+										}
+									}),
+									h('span', device.Name, (device.HasError ? h('i.ic.ic-warning.ic-inline') : ''), {
+										onclick: function () {
+											TreeSetActive('device|' + device.Id)
+											Device(device.Id)
+										}
+									})
+								)
 							)
-						)
-					})
+						})
+					)
 				)
-			)
 		}),
-		accessType < ACCESSTYPE.WRITE ? '' : h('div.node',
+		accessType < ACCESSTYPE.WRITE ? '' : h('div.node', { route: 'driver-create' },
 			h('div.node-caption',
 				h('i.ic.ic-plus'),
 				h('span', {
 					innerHTML: 'Добавить драйвер',
 					onclick: function () {
-						TreeSetActive(this)
+						TreeSetActive('driver-create')
 						DriverCreate()
 					}
 				})
 			)
 		)
 	))
+
+	TreeSetActive(route)
 }
 
-function TreeSetActive(el) {
+function TreeSetActive(r) {
 
-	var old = document.querySelector('.tree .active')
-	if (old) old.className = old.className.replace('active', '')
+	var old = document.querySelector('.active')
+	if (old) old.classList.remove('active')
 
-	if (!el) return
-
-	el.parentNode.parentNode.className += ' active'
+	route = r
+	var el = document.querySelector('[route="' + r + '"]')
+	if (el) el.classList.add('active')
 }
 
 
@@ -757,14 +760,18 @@ function First() {
 function AuthPanel() {
 	mount('#auth',
 		accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST ? '' :
-		h('div.panel-el',
-			{
-				title: 'Нажмите, чтобы выйти из учётной записи',
-				onclick: Login
-			},
-			h('i.ic.ic-person'),
-			h('span', login)
-		)
+			h('div.panel-el',
+				{
+					route: 'auth',
+					title: 'Нажмите, чтобы выйти из учётной записи',
+					onclick: function () {
+						TreeSetActive('auth')
+						Login()
+					}
+				},
+				h('i.ic.ic-person'),
+				h('span', login)
+			)
 	)
 }
 

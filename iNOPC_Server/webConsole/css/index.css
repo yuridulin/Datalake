@@ -13,6 +13,10 @@ body {
 	cursor: pointer;
 }
 
+	.panel-el.active {
+		background: #b0e2ff;
+	}
+
 .panel-el:hover {
 	background: #ddd;
 }

@@ -104,7 +104,7 @@ namespace iNOPC.Server.Web
                             response.Headers.Add("Inopc-Access-Type", ((int)session.AccessType).ToString());
                             response.Headers.Add("Inopc-Login", session.Login);
 
-                            Console.WriteLine(url + " > " + session.Token + " = " + session.Login + "|" + session.AccessType);
+                            //Console.WriteLine(url + " > " + session.Token + " = " + session.Login + "|" + session.AccessType);
                         }
                         else if (Program.Configuration.Access.Count != 0)
 						{
@@ -112,7 +112,7 @@ namespace iNOPC.Server.Web
                             response.Headers.Add("Inopc-Access-Type", ((int)AccessType.GUEST).ToString());
                             response.Headers.Add("Inopc-Login", "guest");
 
-                            Console.WriteLine(url + " > no token = guest|GUEST");
+                            //Console.WriteLine(url + " > no token = guest|GUEST");
                         }
                         else
 						{
@@ -120,7 +120,7 @@ namespace iNOPC.Server.Web
                             response.Headers.Add("Inopc-Access-Type", ((int)AccessType.FIRST).ToString());
                             response.Headers.Add("Inopc-Login", "first");
 
-                            Console.WriteLine(url + " > no token = first|FULL");
+                            //Console.WriteLine(url + " > no token = first|FULL");
                         }
                     }
 
