@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Configuration.cs" />
+    <Compile Include="Models\Configurations\V1.cs" />
     <Compile Include="Models\Device.cs" />
     <Compile Include="Models\Driver.cs" />
     <Compile Include="OPC\OPC.cs" />

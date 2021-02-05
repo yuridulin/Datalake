@@ -21,8 +21,7 @@ namespace iNOPC.Server
 
             if (alreadyWorking)
             {
-                Err("Уже существует другой запущенный экземпляр сервера.");
-                Console.WriteLine("Уже существует другой запущенный экземпляр сервера. Нажмите Enter для выхода.");
+                Log("Уже существует другой запущенный экземпляр сервера.");
                 Console.ReadLine();
                 return;
             }
@@ -31,7 +30,7 @@ namespace iNOPC.Server
             { 
                 Start();
 
-                Console.WriteLine("Сервер запущен. Нажмите Enter для выхода.");
+                Log("Сервер запущен");
                 Console.ReadLine();
 
                 Stop();
@@ -80,11 +79,14 @@ namespace iNOPC.Server
             // Глушим вебку
             WebSocket.Stop();
             Http.Stop();
+
+            Log("Сервер остановлен");
         }
 
-        public static void Err(string text = "Runtime error")
+        public static void Log(string text = "Runtime error")
         {
             EventLog.WriteEntry("iNOPC_Server", text);
+            Console.WriteLine(DateTime.Now + " > " + text);
         }
     }
 

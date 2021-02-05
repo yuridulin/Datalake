@@ -125,7 +125,7 @@ namespace iNOPC.Server.Models
 
                 if (type == LogType.ERROR)
                 {
-                    Program.Err("Error: " + text + "\nDriver: " + Name);
+                    Program.Log("Error: " + text + "\nDriver: " + Name);
                     WebSocket.Broadcast("tree");
                     WebSocket.Broadcast("driver.devices:" + DriverId);
                 }
