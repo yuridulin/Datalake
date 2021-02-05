@@ -6,12 +6,13 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace iNOPC.Drivers.IEC_104
 {
-    public class Driver : IDriver
+	public class Driver : IDriver
     {
         public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
 
@@ -28,7 +29,7 @@ namespace iNOPC.Drivers.IEC_104
 
             // Очистка предыдущего подключения
             try { Conn?.Close(); Conn = null; } catch { }
-            LostConnection = true;
+            ConnectionPreviousStatus = false;
 
             // чтение конфигурации
             try
@@ -45,7 +46,17 @@ namespace iNOPC.Drivers.IEC_104
             {
                 foreach (var field in Configuration.NamedFields)
                 {
-                    Fields.Add(field.Name, 0);
+                    switch (field.Type)
+					{
+                        case "Bool":
+                            Fields.Add(field.Name, false);
+                            break;
+
+                        case "Float":
+                            Fields.Add(field.Name, 0F);
+                            break;
+                    }
+                    
                 }
             }
             catch (Exception e)
@@ -62,6 +73,8 @@ namespace iNOPC.Drivers.IEC_104
                     T1 = Configuration.TimeoutT1, 
                     T2 = Configuration.TimeoutT2, 
                     T3 = Configuration.TimeoutT3,
+                    K = 18,
+                    W = 8,
                 };
 
                 Conn = new Connection(Configuration.Host, Configuration.Port, apci, new ApplicationLayerParameters { })
@@ -89,6 +102,8 @@ namespace iNOPC.Drivers.IEC_104
 
             IsActive = true;
 
+            Thread = new Thread(Manage);
+
             ConnectionTimer = new Timer(Configuration.ReconnectTimeout * 1000);
             ConnectionTimer.Elapsed += (s, e) => CheckConnection();
             ConnectionTimer.Start();
@@ -113,9 +128,9 @@ namespace iNOPC.Drivers.IEC_104
 
             IsActive = false;
 
-            ConnectionTimer.Stop();
-            InterrogationTimer.Stop();
-            ClockTimer.Stop();
+            try { ConnectionTimer.Stop(); } catch { }
+            try { InterrogationTimer.Stop(); } catch { }
+            try { ClockTimer.Stop(); } catch { }
             try { Conn.Close(); } catch { }
 
             ClearFields();
@@ -150,45 +165,69 @@ namespace iNOPC.Drivers.IEC_104
             WinLogEvent("Запрос на запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
 
             // Отправление управляющей команды к серверу
-            if (Conn.IsRunning)
+            Task.Run(() => 
             {
-                try
+                // Отслеживание количества попыток записи
+                byte counter = 0;
+
+                // Условие на прекращение записи после 5 фэйлов
+                while (counter < 5)
                 {
-                    bool command = true;
+                    if (Conn.IsRunning)
+                    {
+                        try
+                        {
+                            bool command = true;
 
-                    if (value.GetType().Equals(typeof(bool)))
-                    {
-                        command = (bool)value;
-                    }
-                    else if (value.GetType().Equals(typeof(int)))
-                    {
-                        command = (int)value == 1;
-                    }
-                    else if (value.GetType().Equals(typeof(float)))
-                    {
-                        command = (float)value == 1;
-                    }
-                    else if (value.GetType().Equals(typeof(double)))
-                    {
-                        command = (double)value == 1;
-                    }
+                            if (value.GetType().Equals(typeof(bool)))
+                            {
+                                command = (bool)value;
+                                Conn.SendControlCommand(CauseOfTransmission.ACTIVATION, 1, new SingleCommand(address, command, false, 0));
+                            }
+                            else if (value.GetType().Equals(typeof(int)))
+                            {
+                                command = (int)value == 1;
+                            }
+                            else if (value.GetType().Equals(typeof(float)))
+                            {
+                                command = (float)value == 1;
+                            }
+                            else if (value.GetType().Equals(typeof(double)))
+                            {
+                                command = (double)value == 1;
+                            }
 
-                    Conn.SendControlCommand(CauseOfTransmission.ACTIVATION, 1, new SingleCommand(address, command, false, 0));
-
-                    LogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
-                    WinLogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
+                            LogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
+                            WinLogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
+                            counter = 6;
+                        }
+                        catch (Exception e)
+                        {
+                            Err("Ошибка при записи: " + e.Message);
+                            counter++;
+                        }
+                    }
+                    else
+                    {
+                        Task.Delay(100).Wait();
+                        counter++;
+                    }
                 }
-                catch (Exception e)
-                {
-                    Err("Ошибка при записи: " + e.Message);
+
+                if (counter != 6)
+				{
+                    LogEvent("Запись не удалась [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
+                    WinLogEvent("Запись не удалась [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
                 }
-            }
+            });
         }
 
 
         // Реализация получения данных
 
         Configuration Configuration { get; set; }
+
+        Thread Thread { get; set; }
 
         Timer ConnectionTimer { get; set; }
 
@@ -198,59 +237,46 @@ namespace iNOPC.Drivers.IEC_104
 
         Connection Conn { get; set; }
 
-        bool LostConnection { get; set; }
+        bool ConnectionPreviousStatus { get; set; }
 
         bool IsActive { get; set; } = false;
+
+        void Manage()
+		{
+
+		}
 
         void CheckConnection()
         {
             if (!IsActive) return;
 
+            // Проверяем состояние подключения. Если в порядке, выходим
             if (Conn.IsRunning)
             {
-                ChangeToOnline();
                 return;
             }
 
+            // Если подключения нет, выполняем сброс и реконнект
+            if (ConnectionPreviousStatus)
+			{
+                ClearFields();
+                LogEvent("Нет подключения", LogType.ERROR);
+                ConnectionPreviousStatus = false;
+            }
             try { Conn.Close(); } catch { }
-            try 
-            { 
-                Conn.Connect();
+            try  { Conn.Connect(); } catch { }
 
-                if (Conn.IsRunning)
-                {
-                    ChangeToOnline();
-                }
-            } 
-            catch (Exception e)
+            if (Conn.IsRunning)
             {
-                ChangeToOffline(e);
-            }
+                LogEvent("Подключение установлено");
+                Task.Run(SendInterrogation);
+                ConnectionPreviousStatus = true;
 
-            void ChangeToOnline()
-            {
-                if (LostConnection)
+                lock (Fields)
                 {
-                    LostConnection = false;
-                    LogEvent("Подключение установлено");
-                    Task.Run(SendInterrogation);
-
-                    lock (Fields)
-                    {
-                        Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
-                        Fields["Connection"] = Conn.IsRunning;
-                        UpdateEvent();
-                    }
-                }
-            }
-
-            void ChangeToOffline(Exception e)
-            {
-                if (!LostConnection)
-                {
-                    LostConnection = true;
-                    ClearFields();
-                    LogEvent("Подключение не установлено: " + e.Message, LogType.ERROR);
+                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Connection"] = Conn.IsRunning;
+                    UpdateEvent();
                 }
             }
         }

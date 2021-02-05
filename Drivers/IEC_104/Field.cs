@@ -5,5 +5,7 @@
         public int Address;
 
         public string Name;
+
+        public string Type;
     }
 }

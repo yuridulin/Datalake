@@ -1,5 +1,6 @@
 ﻿using iNOPC.Library;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace iNOPC.Drivers.IEC_104
@@ -66,11 +67,23 @@ namespace iNOPC.Drivers.IEC_104
 
             string NamedFieldString(Field field)
             {
+                string select = "<span>Тип</span>"
+                    + "<select name='" + nameof(field.Type) + "'>"
+                    + Option("Bool")
+                    + Option("Float")
+                    + "</select>";
+
                 return "<p>"
                     + Html.Input("Адрес", nameof(field.Address), field.Address)
                     + Html.Input("Имя", nameof(field.Name), field.Name)
+                    + select
                     + "<button onclick='_del(this)'>Удалить</button>"
                     + "</p>";
+
+                string Option(string type, string name = null)
+                {
+                    return "<option" + (type == field.Type ? " selected" : "") + " value='" + type + "'>" + (name ?? type) + "</option>";
+                }
             }
         }
     }
