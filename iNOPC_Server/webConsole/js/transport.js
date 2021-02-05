@@ -81,9 +81,9 @@ function ask(parameters, callback) {
 		try { json = JSON.parse(xhr.responseText) } catch (e) { return console.log('ask err: not json [' + xhr.responseText + ']') }
 
 		if (accessType != ACCESSTYPE.FIRST) {
-			if (json.Error) alert('Ошибка: ' + json.Error)
-			if (json.Warning) alert(json.Warning)
-			if (json.Done) alert(json.Done)
+			if (json.Error) console.log('Ошибка: ' + json.Error)
+			if (json.Warning) console.log(json.Warning)
+			if (json.Done) console.log(json.Done)
 		}
 
 		if (!callback) return

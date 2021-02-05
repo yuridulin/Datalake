@@ -192,9 +192,9 @@ function Driver(id) {
 				h('span', 'Тип'),
 
 				AUTH()
-					? h('select',
+					? h('select', { disabled: true },
 						driver.Dlls.map(function (x) {
-							return x == driver.Path ? h('option', x, { selected: true }) : h('option', x)
+							return x == driver.Path ? h('option', x, { selected: true }) : ''
 						})
 					)
 					: h('span.value', driver.Path),
