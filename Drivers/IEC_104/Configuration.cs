@@ -13,11 +13,11 @@ namespace iNOPC.Drivers.IEC_104
 
         public int ConnectionTimeoutT0 { get; set; } = 10;
 
-        public int TimeoutT1 { get; set; } = 2;
+        public int TimeoutT1 { get; set; } = 15;
 
-        public int TimeoutT2 { get; set; } = 5;
+        public int TimeoutT2 { get; set; } = 10;
 
-        public int TimeoutT3 { get; set; } = 10;
+        public int TimeoutT3 { get; set; } = 20;
 
         public int ReconnectTimeout { get; set; } = 10;
 

@@ -7,7 +7,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
 {
     public class Configuration
     {
-        public int CyclicTimeout { get; set; }
+        public int CyclicTimeout { get; set; } = 10000;
 
         public byte SlaveId { get; set; } = 0;
 
@@ -19,19 +19,19 @@ namespace iNOPC.Drivers.MODBUS_RTU
 
         public bool OldRegisterFirst { get; set; } = false;
 
-        public string PortName { get; set; }
+        public string PortName { get; set; } = "COM1";
 
-        public int BaudRate { get; set; }
+        public int BaudRate { get; set; } = 9600;
 
-        public byte Parity { get; set; }
+        public byte Parity { get; set; } = 0;
 
-        public byte DataBits { get; set; }
+        public byte DataBits { get; set; } = 8;
 
-        public byte StopBits { get; set; }
+        public byte StopBits { get; set; } = 1;
 
-        public int ReadTimeout { get; set; }
+        public int ReadTimeout { get; set; } = 1000;
 
-        public int WriteTimeout { get; set; }
+        public int WriteTimeout { get; set; } = 1000;
 
         public List<Field> Fields { get; set; } = new List<Field>();
 

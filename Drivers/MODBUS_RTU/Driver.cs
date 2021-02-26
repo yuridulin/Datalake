@@ -23,7 +23,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
         {
             LogEvent("Запуск ...");
 
-            try { Port.Close(); } catch (Exception) { }
+            try { Port?.Close(); } catch (Exception) { }
             Port = new SerialPort();
             Port.DataReceived += (s, e) => Receive = true;
             Port.ErrorReceived += (s, e) => ComError(e.EventType.ToString());
@@ -52,7 +52,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
             // подготовка пакетов для запроса
             try
             {
-                Packages.Clear();
+                Packages = new List<Package>();
                 CreatePackages();
             }
             catch (Exception e)
