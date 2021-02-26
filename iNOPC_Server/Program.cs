@@ -28,15 +28,18 @@ namespace iNOPC.Server
 
             if (Environment.UserInteractive)
             {
+#if DEBUG
+                Start();
+#else
                 // Запуск в качестве exe регистрирует службу, а потом идёт на отдых
-
                 Log("Производится настройка...");
                 OPC.InitDCOM();
                 Log("Настройка DCOM выполнена. Создана служба iNOPC. После запуска службы сервер готов к работе.");
                 Log("Адрес веб-консоли для доступа к серверу: http://localhost:81");
                 Log("Нажмите Enter для выхода.");
+#endif
 
-                Console.ReadLine();
+				Console.ReadLine();
             }
             else
             {
