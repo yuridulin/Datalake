@@ -1,11 +1,10 @@
 ﻿using iNOPC.Library;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 
 namespace iNOPC.Drivers.IEC_104
 {
-    public class Configuration
+	public class Configuration
     {
         public string Host { get; set; } = "192.168.1.1";
 
@@ -19,6 +18,8 @@ namespace iNOPC.Drivers.IEC_104
 
         public int TimeoutT3 { get; set; } = 20;
 
+        public int ReceiveTimeout { get; set; } = 1000;
+
         public int ReconnectTimeout { get; set; } = 10;
 
         public int InterrogationTimeout { get; set; } = 30;
@@ -26,6 +27,8 @@ namespace iNOPC.Drivers.IEC_104
         public int SyncClockTimeout { get; set; } = 60;
 
         public bool UseInterrogation { get; set; } = true;
+
+        public bool DebugOutput { get; set; } = false;
 
         public List<Field> NamedFields { get; set; } = new List<Field>();
 
@@ -39,10 +42,12 @@ namespace iNOPC.Drivers.IEC_104
                 Html.Value("Адрес устройства", nameof(config.Host), config.Host) +
                 Html.Value("TCP порт", nameof(config.Port), config.Port) +
                 Html.Value("Режим прослушки", nameof(config.UseInterrogation), config.UseInterrogation) +
+                Html.Value("Выводить данные для отладки", nameof(config.DebugOutput), config.DebugOutput) +
                 Html.Value("T0, с", nameof(config.ConnectionTimeoutT0), config.ConnectionTimeoutT0) +
                 Html.Value("T1, с", nameof(config.TimeoutT1), config.TimeoutT1) +
                 Html.Value("T2, с", nameof(config.TimeoutT2), config.TimeoutT2) +
                 Html.Value("T3, с", nameof(config.TimeoutT3), config.TimeoutT3) +
+                Html.Value("Таймаут ожидания получения данных, мс", nameof(config.ReceiveTimeout), config.ReceiveTimeout) +
                 Html.Value("Таймаут переподключения, с", nameof(config.ReconnectTimeout), config.ReconnectTimeout) +
                 Html.Value("Таймаут команды для синхр. времени, с", nameof(config.SyncClockTimeout), config.SyncClockTimeout) +
                 Html.Value("Таймаут цикличного опроса, с", nameof(config.InterrogationTimeout), config.InterrogationTimeout);

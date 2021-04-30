@@ -73,17 +73,17 @@ namespace iNOPC.Drivers.IEC_104
                     T1 = Configuration.TimeoutT1, 
                     T2 = Configuration.TimeoutT2, 
                     T3 = Configuration.TimeoutT3,
-                    K = 18,
+                    K = 12,
                     W = 8,
                 };
 
                 Conn = new Connection(Configuration.Host, Configuration.Port, apci, new ApplicationLayerParameters { })
                 {
-                    DebugOutput = false,
+                    DebugOutput = Configuration.DebugOutput,
                     Autostart = true,
+                    ReceiveTimeout = Configuration.ReceiveTimeout,
                 };
 
-                //Conn.SetConnectTimeout(Configuration.ConnectionTimeoutT0); // отдельный метод для установки Т0, и сюда нужно передавать мс
                 Conn.SetASDUReceivedHandler(AsduReceivedHandler, null);
                 Conn.SetReceivedRawMessageHandler(RawMessageHandler, "RX");
                 Conn.SetSentRawMessageHandler(RawMessageHandler, "TX");

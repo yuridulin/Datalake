@@ -32,7 +32,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="lib60870, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="lib60870, Version=2.1.7523.15599, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\iNOPC_Server\lib60870.dll</HintPath>
     </Reference>
