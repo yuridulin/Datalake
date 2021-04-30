@@ -27,10 +27,6 @@ namespace iNOPC.Drivers.IEC_104
             LogEvent("Запуск ...");
             Fields = new Dictionary<string, object>();
 
-            // Очистка предыдущего подключения
-            try { Conn?.Close(); Conn = null; } catch { }
-            ConnectionPreviousStatus = false;
-
             // чтение конфигурации
             try
             {
@@ -64,45 +60,9 @@ namespace iNOPC.Drivers.IEC_104
                 return Err("Ошибка при создании заданных полей: " + e.Message);
             }
 
-            // запуск опроса
-            try
-            {
-                var apci = new APCIParameters
-                { 
-                    T0 = Configuration.ConnectionTimeoutT0, // задаётся в конфиге в секундах
-                    T1 = Configuration.TimeoutT1, 
-                    T2 = Configuration.TimeoutT2, 
-                    T3 = Configuration.TimeoutT3,
-                    K = 12,
-                    W = 8,
-                };
-
-                Conn = new Connection(Configuration.Host, Configuration.Port, apci, new ApplicationLayerParameters { })
-                {
-                    DebugOutput = Configuration.DebugOutput,
-                    Autostart = true,
-                    ReceiveTimeout = Configuration.ReceiveTimeout,
-                };
-
-                Conn.SetASDUReceivedHandler(AsduReceivedHandler, null);
-                Conn.SetReceivedRawMessageHandler(RawMessageHandler, "RX");
-                Conn.SetSentRawMessageHandler(RawMessageHandler, "TX");
-            }
-            catch (Exception e)
-            {
-                return Err("Подключение не создано: " + e.Message);
-            }
-
-            lock (Fields)
-            {
-                Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
-                Fields["Connection"] = false;
-            }
-            UpdateEvent();
-
             IsActive = true;
-
-            Thread = new Thread(Manage);
+            ConnectionPreviousStatus = true;
+            ResetConnection();
 
             ConnectionTimer = new Timer(Configuration.ReconnectTimeout * 1000);
             ConnectionTimer.Elapsed += (s, e) => CheckConnection();
@@ -227,8 +187,6 @@ namespace iNOPC.Drivers.IEC_104
 
         Configuration Configuration { get; set; }
 
-        Thread Thread { get; set; }
-
         Timer ConnectionTimer { get; set; }
 
         Timer InterrogationTimer { get; set; }
@@ -241,10 +199,49 @@ namespace iNOPC.Drivers.IEC_104
 
         bool IsActive { get; set; } = false;
 
-        void Manage()
+        void ResetConnection()
 		{
+            // Очистка предыдущего подключения
+            try { Conn?.Close(); Conn = null; } catch { }
 
-		}
+            // запуск опроса
+            try
+            {
+                var apci = new APCIParameters
+                {
+                    T0 = Configuration.ConnectionTimeoutT0, // задаётся в конфиге в секундах
+                    T1 = Configuration.TimeoutT1,
+                    T2 = Configuration.TimeoutT2,
+                    T3 = Configuration.TimeoutT3,
+                    K = 12,
+                    W = 8,
+                };
+
+                Conn = new Connection(Configuration.Host, Configuration.Port, apci, new ApplicationLayerParameters { })
+                {
+                    DebugOutput = Configuration.DebugOutput,
+                    ReceiveTimeout = Configuration.ReceiveTimeout,
+                    Autostart = true,
+                };
+
+                Conn.SetASDUReceivedHandler(AsduReceivedHandler, null);
+                Conn.SetReceivedRawMessageHandler(RawMessageHandler, "RX");
+                Conn.SetSentRawMessageHandler(RawMessageHandler, "TX");
+            }
+            catch (Exception e)
+            {
+                Err("Подключение не создано: " + e.Message);
+            }
+			finally
+			{
+                lock (Fields)
+                {
+                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Connection"] = false;
+                }
+                UpdateEvent();
+            }
+        }
 
         void CheckConnection()
         {
@@ -263,8 +260,7 @@ namespace iNOPC.Drivers.IEC_104
                 LogEvent("Нет подключения", LogType.ERROR);
                 ConnectionPreviousStatus = false;
             }
-            try { Conn.Close(); } catch { }
-            try  { Conn.Connect(); } catch { }
+            ResetConnection();
 
             if (Conn.IsRunning)
             {
