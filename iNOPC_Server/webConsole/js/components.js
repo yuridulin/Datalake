@@ -14,6 +14,7 @@ var LogTypes = {
 function Home() {
 
 	mount('#view', 'подключаемся...')
+	ID = 0
 
 	ask({ method: 'tree' }, function (json) {
 
@@ -79,7 +80,6 @@ function Tree() {
 }
 
 function BuildTree(json) {
-	console.log(accessType, )
 	mount('#tree', h('div',
 		accessType == ACCESSTYPE.FULL ? 
 			h('div.node', { route: 'settings' },
@@ -176,9 +176,11 @@ function TreeSetActive(r) {
 function Driver(id) {
 	clearInterval(timeout)
 	mount('#view', 'выполняется запрос...')
+	ID = id
+
 	ask({ method: 'driver', body: { Id: id } }, function (driver) {
 		if (!driver.Name) return mount('#view', 'Ошибка получения данных с сервера')
-		ID = id
+		
 		var name, path
 		mount('#view',
 			h('div.container',
@@ -346,6 +348,7 @@ var timeout = 0
 function Device(id) {
 
 	lastLog = ''
+	ID = id
 
 	var x1, x2, x3, logsDetailed, logsWarnings
 
@@ -356,7 +359,6 @@ function Device(id) {
 	mount('#view', 'выполняется запрос...')
 	ask({ method: 'device', body: { Id: id } }, function (device) {
 		if (!device.Name) return mount('#view', 'Ошибка получения данных с сервера')
-		ID = id
 		
 		mount('#view',
 			h('div.container',
@@ -678,8 +680,8 @@ function Settings() {
 
 function UsersTable() {
 
+	ID = 0
 	if (accessType < ACCESSTYPE.FULL) return ''
-
 	var login, pass, access
 
 	ask({ method: 'users' }, function (json) {
@@ -761,6 +763,7 @@ function UsersTable() {
 
 
 function First() {
+	ID = 0
 	var _pass
 	mount('#view',
 		h('container',
@@ -809,7 +812,11 @@ function AuthPanel() {
 }
 
 function Login() {
+	clearInterval(timeout)
+	ID = 0
 	var _login, _pass
+
+	if (accessType == ACCESSTYPE.GUEST) Tree()
 	mount('#view',
 		accessType > ACCESSTYPE.GUEST
 			? h('div.container',
