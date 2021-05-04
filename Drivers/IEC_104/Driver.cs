@@ -12,7 +12,7 @@ using Timer = System.Timers.Timer;
 
 namespace iNOPC.Drivers.IEC_104
 {
-	public class Driver : IDriver
+    public class Driver : IDriver
     {
         public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
 
@@ -25,7 +25,6 @@ namespace iNOPC.Drivers.IEC_104
         public bool Start(string jsonConfig)
         {
             LogEvent("Запуск ...");
-            Fields = new Dictionary<string, object>();
 
             // чтение конфигурации
             try
@@ -38,12 +37,13 @@ namespace iNOPC.Drivers.IEC_104
             }
 
             // Создание полей, ранее заданных в конфиге
+            Fields = new Dictionary<string, object>();
             try
             {
                 foreach (var field in Configuration.NamedFields)
                 {
                     switch (field.Type)
-					{
+                    {
                         case "Bool":
                             Fields.Add(field.Name, false);
                             break;
@@ -52,7 +52,7 @@ namespace iNOPC.Drivers.IEC_104
                             Fields.Add(field.Name, 0F);
                             break;
                     }
-                    
+
                 }
             }
             catch (Exception e)
@@ -60,25 +60,41 @@ namespace iNOPC.Drivers.IEC_104
                 return Err("Ошибка при создании заданных полей: " + e.Message);
             }
 
-            IsActive = true;
-            ConnectionPreviousStatus = true;
-            ResetConnection();
-
+            // Настройка таймеров
             ConnectionTimer = new Timer(Configuration.ReconnectTimeout * 1000);
             ConnectionTimer.Elapsed += (s, e) => CheckConnection();
-            ConnectionTimer.Start();
 
             InterrogationTimer = new Timer(Configuration.InterrogationTimeout * 1000);
             InterrogationTimer.Elapsed += (s, e) => SendInterrogation();
-            InterrogationTimer.Start();
 
             ClockTimer = new Timer(Configuration.SyncClockTimeout * 1000);
             ClockTimer.Elapsed += (s, e) => SyncClock();
+
+            //try
+            //{
+            //    ResetConnection();
+            //}
+            //catch (Exception e)
+            //{
+            //    return Err("Подключение не создано: " + e.Message);
+            //}
+
+            //lock (Fields)
+            //{
+            //    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+            //    Fields["Connection"] = false;
+            //}
+            //UpdateEvent();
+
+            // запуск опроса
+            IsActive = true;
+            ConnectionPreviousStatus = false;
+            ConnectionTimer.Start();
+            InterrogationTimer.Start();
             ClockTimer.Start();
 
-            Task.Run(CheckConnection);
-
             LogEvent("Мониторинг запущен");
+            Task.Run(CheckConnection);
             return true;
         }
 
@@ -125,7 +141,7 @@ namespace iNOPC.Drivers.IEC_104
             WinLogEvent("Запрос на запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
 
             // Отправление управляющей команды к серверу
-            Task.Run(() => 
+            Task.Run(() =>
             {
                 // Отслеживание количества попыток записи
                 byte counter = 0;
@@ -175,7 +191,7 @@ namespace iNOPC.Drivers.IEC_104
                 }
 
                 if (counter != 6)
-				{
+                {
                     LogEvent("Запись не удалась [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
                     WinLogEvent("Запись не удалась [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
                 }
@@ -199,14 +215,15 @@ namespace iNOPC.Drivers.IEC_104
 
         bool IsActive { get; set; } = false;
 
-        void ResetConnection()
+        bool ResetConnection()
 		{
-            // Очистка предыдущего подключения
-            try { Conn?.Close(); Conn = null; } catch { }
-
-            // запуск опроса
             try
             {
+                // Очистка предыдущего подключения
+                try { Conn?.Close(); } catch { }
+                try { Conn = null; } catch { }
+                //
+
                 var apci = new APCIParameters
                 {
                     T0 = Configuration.ConnectionTimeoutT0, // задаётся в конфиге в секундах
@@ -220,96 +237,134 @@ namespace iNOPC.Drivers.IEC_104
                 Conn = new Connection(Configuration.Host, Configuration.Port, apci, new ApplicationLayerParameters { })
                 {
                     DebugOutput = Configuration.DebugOutput,
-                    ReceiveTimeout = Configuration.ReceiveTimeout,
                     Autostart = true,
+                    ReceiveTimeout = Configuration.ReceiveTimeout,
                 };
 
                 Conn.SetASDUReceivedHandler(AsduReceivedHandler, null);
                 Conn.SetReceivedRawMessageHandler(RawMessageHandler, "RX");
                 Conn.SetSentRawMessageHandler(RawMessageHandler, "TX");
+                Conn.Connect();
+
+				lock (Fields)
+				{
+					Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+					Fields["Connection"] = true;
+				}
+				UpdateEvent();
+
+				return true;
             }
             catch (Exception e)
-            {
-                Err("Подключение не создано: " + e.Message);
-            }
-			finally
 			{
-                lock (Fields)
-                {
-                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
-                    Fields["Connection"] = false;
-                }
-                UpdateEvent();
+                return Err("Ошибка при инициализации: " + e.Message);
             }
         }
 
         void CheckConnection()
         {
+            bool isResetDoneRight = true;
+
             if (!IsActive) return;
 
             // Проверяем состояние подключения. Если в порядке, выходим
-            if (Conn.IsRunning)
+            if (Conn == null)
             {
-                return;
+                if (ConnectionPreviousStatus)
+                {
+                    LogEvent("Нет подключения", LogType.ERROR);
+                    ConnectionPreviousStatus = false;
+                }
+                isResetDoneRight = ResetConnection();
             }
+
+            if (!Conn.IsRunning)
+            {
+                if (ConnectionPreviousStatus)
+                {
+                    LogEvent("Подключение не активно", LogType.ERROR);
+                    ConnectionPreviousStatus = false;
+                }
+                isResetDoneRight = ResetConnection();
+            }
+
+            if (isResetDoneRight && !ConnectionPreviousStatus)
+            {
+                LogEvent("Подключение активно", LogType.REGULAR);
+                ConnectionPreviousStatus = true;
+                Task.Run(SendInterrogation);
+            }
+
 
             // Если подключения нет, выполняем сброс и реконнект
-            if (ConnectionPreviousStatus)
-			{
-                ClearFields();
-                LogEvent("Нет подключения", LogType.ERROR);
-                ConnectionPreviousStatus = false;
-            }
-            ResetConnection();
+            //if (ConnectionPreviousStatus)
+            //{
+            //    ClearFields();
+            //    LogEvent("Нет подключения", LogType.ERROR);
+            //    ConnectionPreviousStatus = false;
+            //}
+            //try { Conn.Close(); } catch { }
+            //try { Conn.Connect(); } catch { }
+            //Conn.Close(); Conn.Connect();
 
-            if (Conn.IsRunning)
-            {
-                LogEvent("Подключение установлено");
-                Task.Run(SendInterrogation);
-                ConnectionPreviousStatus = true;
+            //if (Conn.IsRunning)
+            //{
+            //    LogEvent("Подключение установлено");
+            //    Task.Run(SendInterrogation);
+            //    ConnectionPreviousStatus = true;
 
-                lock (Fields)
-                {
-                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
-                    Fields["Connection"] = Conn.IsRunning;
-                    UpdateEvent();
-                }
-            }
+            //    lock (Fields)
+            //    {
+            //        Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+            //        Fields["Connection"] = Conn.IsRunning;
+            //        UpdateEvent();
+            //    }
+            //}
         }
 
         void SendInterrogation()
         {
             if (!IsActive) return;
 
-            if (Conn.IsRunning)
+            try
             {
-                if (Configuration.UseInterrogation)
-                { 
-                    Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
-
-                    //Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
-                }
-                else
-                {
-                    foreach (var field in Configuration.NamedFields)
+                //if (Conn.IsRunning)
+                //{
+                    if (Configuration.UseInterrogation)
                     {
-                        Conn.SendReadCommand(1, field.Address);
-
-                        //Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
+                        Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
+                        Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
                     }
-                }
+                    else
+                    {
+                        foreach (var field in Configuration.NamedFields)
+                        {
+                            Conn.SendReadCommand(1, field.Address);
+                            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
+                        }
+                    }
+                //}
+            }
+            catch (Exception e)
+			{
+                Err("Ошибка при опросе: " + e.Message);
             }
         }
 
         void SyncClock()
         {
             if (!IsActive) return;
-
-            if (Conn.IsRunning)
+            try
             {
-                Conn.SendClockSyncCommand(1, new CP56Time2a(DateTime.Now));
-
-                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > CLOCK: Ca [" + 1 + "]");
+                if (Conn.IsRunning)
+                {
+                    Conn.SendClockSyncCommand(1, new CP56Time2a(DateTime.Now));
+                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > CLOCK: Ca [" + 1 + "]");
+                }
+            }
+            catch (Exception e)
+			{
+                Err("Ошибка при синхронизации времени: " + e.Message);
             }
         }
 
@@ -354,7 +409,7 @@ namespace iNOPC.Drivers.IEC_104
         {
             if (!IsActive) return false;
 
-            //Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " < ASDU: Ca [" + asdu.Ca + "] Cot [" + asdu.Cot + "] Oa [" + asdu.Oa + "]");
+            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " < ASDU: Ca [" + asdu.Ca + "] Cot [" + asdu.Cot + "] Oa [" + asdu.Oa + "]");
 
             try
             {
@@ -460,7 +515,10 @@ namespace iNOPC.Drivers.IEC_104
                     }
                 }
             }
-            catch { }
+            catch (Exception e)
+            {
+                Err("Ошибка при обработке входящего ASDU" + e.Message);
+            }
 
             lock (Fields)
             {
