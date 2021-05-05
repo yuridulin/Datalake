@@ -2,6 +2,7 @@ var ID = 0
 var accessType = 0
 var login = null
 var route = ''
+var currentPage = ''
 
 
 var LogTypes = {
@@ -13,6 +14,7 @@ var LogTypes = {
 
 function Home() {
 
+	if (currentPage == 'first' || currentPage == 'login') return
 	mount('#view', 'подключаемся...')
 	ID = 0
 
@@ -74,6 +76,7 @@ function Offline() {
 }
 
 function Tree() {
+	if (accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST) return
 	ask({ method: 'tree' }, function (json) {
 		BuildTree(json)
     })
@@ -646,6 +649,9 @@ function DeviceSave(id) {
 
 function Settings() {
 
+	if (currentPage == 'settings') return
+	currentPage = 'settings'
+
 	ID = 0
 	clearInterval(timeout)
 
@@ -679,6 +685,9 @@ function Settings() {
 }
 
 function UsersTable() {
+
+	if (currentPage == 'users') return
+	currentPage = 'users'
 
 	ID = 0
 	if (accessType < ACCESSTYPE.FULL) return ''
@@ -763,6 +772,10 @@ function UsersTable() {
 
 
 function First() {
+
+	if (currentPage == 'first') return
+	currentPage = 'first'
+
 	ID = 0
 	var _pass
 	mount('#view',
@@ -812,11 +825,15 @@ function AuthPanel() {
 }
 
 function Login() {
+
+	if (currentPage == 'login') return
+	currentPage = 'login'
+
 	clearInterval(timeout)
 	ID = 0
 	var _login, _pass
 
-	if (accessType == ACCESSTYPE.GUEST) Tree()
+	//if (accessType == ACCESSTYPE.GUEST) Tree()
 	mount('#view',
 		accessType > ACCESSTYPE.GUEST
 			? h('div.container',

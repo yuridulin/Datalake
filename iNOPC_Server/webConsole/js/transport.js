@@ -35,6 +35,7 @@ function connectToServer() {
 
 		switch (method) {
 			case 'tree':
+				if (currentPage == 'first' || currentPage == 'login') return
 				if (ID == 0) Home()
 				else Tree()
 				break
