@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using iNOPC.Library;
 using iNOPC.Server.Web;
-using iNOPC.Library;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace iNOPC.Server.Models
 {
-    public class Device
+	public class Device
     {
         // Параметры конфигурации
 
@@ -149,7 +149,7 @@ namespace iNOPC.Server.Models
 
             foreach (var field in fields)
             {
-                OPC.Write(DriverName + '.' + Name + '.' + field.Key, field.Value);
+                OPC.Write(DriverName + '.' + Name + '.' + field.Key, field.Value.Value, field.Value.Quality);
             }
 
             WebSocket.Broadcast("device.fields:" + Id);
@@ -182,16 +182,16 @@ namespace iNOPC.Server.Models
             return (string)driver.ConfigurationPage.Invoke(null, new object[] { Configuration });
         }
 
-        public Dictionary<string, object> Fields()
+        public Dictionary<string, DefField> Fields()
         {
             if (InnerDriver != null)
             {
                 lock (InnerDriver.Fields)
                 {
-                    return InnerDriver.Fields.ToDictionary(x => x.Key, x => x.Value);
+                    return InnerDriver.Fields.ToDictionary(x => x.Key, x => x.Value ?? new DefField());
                 }
             }
-            else return new Dictionary<string, object>();
+            else return new Dictionary<string, DefField>();
         }
     }
 }

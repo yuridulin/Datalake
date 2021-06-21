@@ -4,12 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using iNOPC.Server.Models;
-using Microsoft.Win32;
 
 namespace iNOPC.Server
 {
-    public static class OPC
+	public static class OPC
     {
         public const string ServerName = "iNOPC";
 
@@ -161,15 +159,15 @@ namespace iNOPC.Server
             Write(path, null);
         }
 
-        public static void Write(string path, object value = null)
+        public static void Write(string path, object value = null, ushort quality = 0)
         {
             if (Tags.ContainsKey(path))
             {
-                UpdateTag(Tags[path], value, 192);
+                UpdateTag(Tags[path], value, quality);
             }
             else
             {
-                Tags[path] = CreateTag(path, value, 192, true);
+                Tags[path] = CreateTag(path, value, quality, true);
             }
         }
 

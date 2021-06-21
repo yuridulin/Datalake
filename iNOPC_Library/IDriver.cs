@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace iNOPC.Library
 {
-    public interface IDriver
+	public interface IDriver
     {
         event LogEvent LogEvent;
 
@@ -11,7 +10,7 @@ namespace iNOPC.Library
 
         event WinLogEvent WinLogEvent;
 
-        Dictionary<string, object> Fields { get; set; }
+        Dictionary<string, DefField> Fields { get; set; }
 
         bool Start(string jsonConfiguration);
 

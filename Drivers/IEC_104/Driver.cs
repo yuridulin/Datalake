@@ -6,15 +6,14 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Timer = System.Timers.Timer;
 
 namespace iNOPC.Drivers.IEC_104
 {
-    public class Driver : IDriver
+	public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -37,7 +36,7 @@ namespace iNOPC.Drivers.IEC_104
             }
 
             // Создание полей, ранее заданных в конфиге
-            Fields = new Dictionary<string, object>();
+            Fields = new Dictionary<string, DefField>();
             try
             {
                 foreach (var field in Configuration.NamedFields)
@@ -45,14 +44,13 @@ namespace iNOPC.Drivers.IEC_104
                     switch (field.Type)
                     {
                         case "Bool":
-                            Fields.Add(field.Name, false);
+                            Fields.Add(field.Name, new DefField { Value = false });
                             break;
 
                         case "Float":
-                            Fields.Add(field.Name, 0F);
+                            Fields.Add(field.Name, new DefField { Value = 0F });
                             break;
                     }
-
                 }
             }
             catch (Exception e)
@@ -222,7 +220,6 @@ namespace iNOPC.Drivers.IEC_104
                 // Очистка предыдущего подключения
                 try { Conn?.Close(); } catch { }
                 try { Conn = null; } catch { }
-                //
 
                 var apci = new APCIParameters
                 {
@@ -248,8 +245,9 @@ namespace iNOPC.Drivers.IEC_104
 
 				lock (Fields)
 				{
-					Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
-					Fields["Connection"] = true;
+					Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
+					Fields["Connection"] = new DefField { Value = true, Quality = 192 };
+                    Fields["BytesCount"] = new DefField { Value = 0, Quality = 192 };
 				}
 				UpdateEvent();
 
@@ -374,12 +372,15 @@ namespace iNOPC.Drivers.IEC_104
             {
                 foreach (var field in Fields.Keys.ToArray())
                 {
-                    if (field != "Time" && field != "Connection") Fields[field] = null;
+                    if (!new[] { "Time", "Connection", "BytesCount" }.Contains(field))
+                    { 
+                        Fields[field].Quality = 0;
+                    }
                 }
             }
 
-            Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
-            Fields["Connection"] = Conn.IsRunning;
+            Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+            Fields["Connection"].Value = Conn.IsRunning;
 
             UpdateEvent();
         }
@@ -522,8 +523,8 @@ namespace iNOPC.Drivers.IEC_104
 
             lock (Fields)
             {
-                Fields["BytesCount"] = BytesCount;
-                Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                Fields["BytesCount"].Value = BytesCount;
+                Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
             }
             UpdateEvent();
 
@@ -540,7 +541,8 @@ namespace iNOPC.Drivers.IEC_104
                 {
                     lock (Fields)
                     {
-                        Fields[field.Name] = value;
+                        Fields[field.Name].Value = value;
+                        Fields[field.Name].Quality = 192;
                     }
                     return;
                 }
@@ -548,7 +550,11 @@ namespace iNOPC.Drivers.IEC_104
 
             lock (Fields)
             {
-                Fields["" + address] = value;
+                Fields["" + address].Value = new DefField
+                {
+                    Value = value,
+                    Quality = 192
+                };
             }
         }
 
