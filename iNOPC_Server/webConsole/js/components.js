@@ -530,7 +530,8 @@ function Device(id) {
 					h('table',
 						h('tr',
 							h('th', { style: { width: '12em' }}, 'Параметр'),
-							h('th', 'Значение'),
+							h('th', { style: { width: '18em' }}, 'Значение'),
+							h('th', 'Качество'),
 						)
 					),
 					h('div#device-fields.sub')
@@ -599,8 +600,9 @@ function DeviceFields(id) {
 			h('table',
 				Object.keys(fields).map(function (key) {
 					return h('tr',
-						h('td', { style: { width: '12em' } }, key),
-						h('td', fields[key])
+						h('td', { style: { width: '12em' }}, key),
+						h('td', { style: { width: '18em' }}, fields[key].Value),
+						h('td', fields[key].Quality)
 					)
 				})
 			)
