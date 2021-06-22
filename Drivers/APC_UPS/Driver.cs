@@ -13,7 +13,7 @@ namespace iNOPC.Drivers.APC
 {
     public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -46,6 +46,25 @@ namespace iNOPC.Drivers.APC
                 LogEvent("Не удалось определить имя процесса ApcUpsD по строке \"" + Configuration.Exe + "\": " + e.Message, LogType.ERROR);
                 return false;
             }
+
+            // Определение полей
+            var stats = new Stats();
+            Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
+            Fields["ACTIVE"] = new DefField { Value = stats.ACTIVE, Quality = 0 };
+            Fields["STATUS"] = new DefField { Value = stats.STATUS, Quality = 0 };
+            Fields["SELFTEST"] = new DefField { Value = stats.SELFTEST, Quality = 0 };
+            Fields["LASTXFER"] = new DefField { Value = stats.LASTXFER, Quality = 0 };
+            Fields["DATE"] = new DefField { Value = stats.DATE.ToString("dd.MM.yyyy HH:mm:ss"), Quality = 0 };
+            Fields["LASTSTEST"] = new DefField { Value = stats.LASTSTEST, Quality = 0 };
+            Fields["TONBATT"] = new DefField { Value = stats.TONBATT, Quality = 0 };
+            Fields["XOFFBATT"] = new DefField { Value = stats.XOFFBATT, Quality = 0 };
+            Fields["XONBATT"] = new DefField { Value = stats.XONBATT, Quality = 0 };
+            Fields["BCHARGE"] = new DefField { Value = stats.BCHARGE, Quality = 0 };
+            Fields["LOADPCT"] = new DefField { Value = stats.LOADPCT, Quality = 0 };
+            Fields["ITEMP"] = new DefField { Value = stats.ITEMP, Quality = 0 };
+            Fields["LINEV"] = new DefField { Value = stats.LINEV, Quality = 0 };
+            Fields["OUTPUTV"] = new DefField { Value = stats.OUTPUTV, Quality = 0 };
+            Fields["TIMELEFT"] = new DefField { Value = stats.TIMELEFT, Quality = 0 };
 
             Timer = new Timer(Configuration.Timeout);
             Timer.Elapsed += (s, e) => LoadData();
@@ -323,22 +342,23 @@ namespace iNOPC.Drivers.APC
             // Обновление OPC полей
             lock (Fields)
             {
-                Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
-                Fields["ACTIVE"] = stats.ACTIVE;
-                Fields["STATUS"] = stats.STATUS;
-                Fields["SELFTEST"] = stats.SELFTEST;
-                Fields["LASTXFER"] = stats.LASTXFER;
-                Fields["DATE"] = stats.DATE.ToString("dd.MM.yyyy HH:mm:ss");
-                Fields["LASTSTEST"] = stats.LASTSTEST;
-                Fields["TONBATT"] = stats.TONBATT;
-                Fields["XOFFBATT"] = stats.XOFFBATT;
-                Fields["XONBATT"] = stats.XONBATT;
-                Fields["BCHARGE"] = stats.BCHARGE;
-                Fields["LOADPCT"] = stats.LOADPCT;
-                Fields["ITEMP"] = stats.ITEMP;
-                Fields["LINEV"] = stats.LINEV;
-                Fields["OUTPUTV"] = stats.OUTPUTV;
-                Fields["TIMELEFT"] = stats.TIMELEFT;
+                Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+                Fields["ACTIVE"].Value = stats.ACTIVE;
+                Fields["STATUS"].Value = stats.STATUS;
+                Fields["SELFTEST"].Value = stats.SELFTEST;
+                Fields["LASTXFER"].Value = stats.LASTXFER;
+                Fields["DATE"].Value = stats.DATE.ToString("dd.MM.yyyy HH:mm:ss");
+                Fields["LASTSTEST"].Value = stats.LASTSTEST;
+                Fields["TONBATT"].Value = stats.TONBATT;
+                Fields["XOFFBATT"].Value = stats.XOFFBATT;
+                Fields["XONBATT"].Value = stats.XONBATT;
+                Fields["BCHARGE"].Value = stats.BCHARGE;
+                Fields["LOADPCT"].Value = stats.LOADPCT;
+                Fields["ITEMP"].Value = stats.ITEMP;
+                Fields["LINEV"].Value = stats.LINEV;
+                Fields["OUTPUTV"].Value = stats.OUTPUTV;
+                Fields["TIMELEFT"].Value = stats.TIMELEFT;
+                foreach (var key in Fields.Keys) Fields[key].Quality = 192;
             }
 
             UpdateEvent();
@@ -353,8 +373,8 @@ namespace iNOPC.Drivers.APC
 
         void LoadError()
 		{
-            Fields["ACTIVE"] = Stats.ACTIVE = false;
-            Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+            Fields["ACTIVE"].Value = Stats.ACTIVE = false;
+            Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
             UpdateEvent();
         }
     }

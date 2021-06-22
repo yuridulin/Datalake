@@ -37,6 +37,11 @@ namespace iNOPC.Drivers.IEC_104
 
             // Создание полей, ранее заданных в конфиге
             Fields = new Dictionary<string, DefField>();
+
+            Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
+            Fields["Connection"] = new DefField { Value = false, Quality = 192 };
+            Fields["BytesCount"] = new DefField { Value = 0, Quality = 192 };
+
             try
             {
                 foreach (var field in Configuration.NamedFields)
@@ -44,11 +49,11 @@ namespace iNOPC.Drivers.IEC_104
                     switch (field.Type)
                     {
                         case "Bool":
-                            Fields.Add(field.Name, new DefField { Value = false });
+                            Fields.Add(field.Name, new DefField { Value = false, Quality = 0 });
                             break;
 
                         case "Float":
-                            Fields.Add(field.Name, new DefField { Value = 0F });
+                            Fields.Add(field.Name, new DefField { Value = 0F, Quality = 0 });
                             break;
                     }
                 }
@@ -102,12 +107,14 @@ namespace iNOPC.Drivers.IEC_104
 
             IsActive = false;
 
-            try { ConnectionTimer.Stop(); } catch { }
-            try { InterrogationTimer.Stop(); } catch { }
-            try { ClockTimer.Stop(); } catch { }
-            try { Conn.Close(); } catch { }
+            try { ConnectionTimer.Stop(); } catch (Exception e) { Err("ConnectionTimer.Stop: " + e.Message); }
+            try { InterrogationTimer.Stop(); } catch (Exception e) { Err("InterrogationTimer.Stop: " + e.Message); }
+            try { ClockTimer.Stop(); } catch (Exception e) { Err("ClockTimer.Stop: " + e.Message); }
+            try { Conn.Close(); } catch (Exception e) { Err("Conn.Close: " + e.Message); }
+            try { Conn = null; } catch (Exception e) { Err("Conn = null: " + e.Message); }
 
             ClearFields();
+
             LogEvent("Мониторинг остановлен");
         }
 
@@ -215,6 +222,8 @@ namespace iNOPC.Drivers.IEC_104
 
         bool ResetConnection()
 		{
+            if (!IsActive) return false;
+
             try
             {
                 // Очистка предыдущего подключения
@@ -276,7 +285,7 @@ namespace iNOPC.Drivers.IEC_104
                 isResetDoneRight = ResetConnection();
             }
 
-            if (!Conn.IsRunning)
+            else if (!Conn.IsRunning)
             {
                 if (ConnectionPreviousStatus)
                 {
@@ -379,8 +388,9 @@ namespace iNOPC.Drivers.IEC_104
                 }
             }
 
-            Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
-            Fields["Connection"].Value = Conn.IsRunning;
+            Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
+            Fields["Connection"] = new DefField { Value = Conn?.IsRunning ?? false, Quality = 192 };
+            Fields["BytesCount"] = new DefField { Value = 0, Quality = 192 };
 
             UpdateEvent();
         }

@@ -11,7 +11,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
 {
     public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -39,7 +39,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
             }
             else if (!Fields.ContainsKey("Time"))
             {
-                Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
+                Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 });
             }
 
             UpdateEvent();
@@ -225,8 +225,8 @@ namespace iNOPC.Drivers.MODBUS_TCP
             foreach (Package package in Packages) package.Construct();
 
             Fields.Clear();
-            Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
-            foreach (Field field in Configuration.Fields) Fields.Add(field.Name, 0F);
+            Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
+            foreach (Field field in Configuration.Fields) Fields.Add(field.Name, new DefField { Value = 0F, Quality = 0 });
         }
 
         byte GetRegistersCount(string type)
@@ -331,7 +331,8 @@ namespace iNOPC.Drivers.MODBUS_TCP
                                     {
                                         if (Fields.ContainsKey(part.FieldName))
                                         {
-                                            Fields[part.FieldName] = part.Value;
+                                            Fields[part.FieldName].Value = part.Value;
+                                            Fields[part.FieldName].Quality = 192;
                                         }
                                     }
                                 }
@@ -348,7 +349,7 @@ namespace iNOPC.Drivers.MODBUS_TCP
                             hasErr = true;
                         }
                     }
-                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
                 }
             }
 
