@@ -551,8 +551,11 @@ namespace iNOPC.Drivers.IEC_104
                 {
                     lock (Fields)
                     {
-                        Fields[field.Name].Value = value;
-                        Fields[field.Name].Quality = 192;
+                        Fields[field.Name] = new DefField
+                        {
+                            Value = value,
+                            Quality = 192,
+                        };
                     }
                     return;
                 }
@@ -560,7 +563,7 @@ namespace iNOPC.Drivers.IEC_104
 
             lock (Fields)
             {
-                Fields["" + address].Value = new DefField
+                Fields["" + address] = new DefField
                 {
                     Value = value,
                     Quality = 192
