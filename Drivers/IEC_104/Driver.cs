@@ -122,11 +122,13 @@ namespace iNOPC.Drivers.IEC_104
         {
             // Поиск адреса поля по имени в списке именованных полей
             int address = 0;
+            string type = "bool";
             foreach (var field in Configuration.NamedFields)
             {
                 if (field.Name == fieldName)
                 {
                     address = field.Address;
+                    type = field.Type;
                     break;
                 }
             }
@@ -158,29 +160,47 @@ namespace iNOPC.Drivers.IEC_104
                     {
                         try
                         {
-                            bool command = true;
+                            switch (type)
+							{
+                                case "Bool":
+                                    if (value.GetType().Equals(typeof(bool)))
+									{
+                                        Conn.SendControlCommand(CauseOfTransmission.ACTIVATION, 1, new SingleCommand(address, (bool)value, false, 0));
+                                    }
+                                    else if (bool.TryParse(value.ToString(), out bool v1))
+                                    {
+                                        Conn.SendControlCommand(CauseOfTransmission.ACTIVATION, 1, new SingleCommand(address, v1, false, 0));
+                                    }
+                                    else if (decimal.TryParse(value.ToString(), out decimal v2) && (v2 == 0 || v2 == 1))
+									{
+                                        Conn.SendControlCommand(CauseOfTransmission.ACTIVATION, 1, new SingleCommand(address, v2 != 0, false, 0));
+                                    }
+                                    else
+									{
+                                        LogEvent("Не удалось записать значение bool [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
+                                        WinLogEvent("Не удалось определить команду на запись [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
+                                    }
+                                    break;
+                                case "Float":
+                                    if (decimal.TryParse(value.ToString(), out decimal v3))
+									{
+                                        Conn.SendControlCommand(CauseOfTransmission.ACTIVATION, 1, new SetpointCommandShort(address, (float)v3, new SetpointCommandQualifier(0)));
+                                        LogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
+                                        WinLogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
+                                    }
+                                    else
+									{
+                                        LogEvent("Не удалось записать значение float [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
+                                        WinLogEvent("Не удалось определить команду на запись [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
+                                    }
+                                    break;
+                                default:
+                                    LogEvent("Не удалось определить команду на запись [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
+                                    WinLogEvent("Не удалось определить команду на запись [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
+                                    break;
+                            }
 
-                            if (value.GetType().Equals(typeof(bool)))
-                            {
-                                command = (bool)value;
-                                Conn.SendControlCommand(CauseOfTransmission.ACTIVATION, 1, new SingleCommand(address, command, false, 0));
-                            }
-                            else if (value.GetType().Equals(typeof(int)))
-                            {
-                                command = (int)value == 1;
-                            }
-                            else if (value.GetType().Equals(typeof(float)))
-                            {
-                                command = (float)value == 1;
-                            }
-                            else if (value.GetType().Equals(typeof(double)))
-                            {
-                                command = (double)value == 1;
-                            }
-
-                            LogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
-                            WinLogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
-                            counter = 6;
+							counter = 6;
                         }
                         catch (Exception e)
                         {
