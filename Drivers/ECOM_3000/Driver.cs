@@ -24,12 +24,12 @@ namespace iNOPC.Drivers.ECOM_3000
         {
             LogEvent("Запуск ...");
             Fields.Clear();
-            Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") });
+            Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 });
 
             for (int k = 1; k < 270; k++)
             {
-                Fields.Add("Hour." + k, new DefField { Value = 0 });
-                Fields.Add("Day." + k, new DefField { Value = 0 });
+                Fields.Add("Hour.B" + k, new DefField { Value = 0, Quality = 0 });
+                Fields.Add("Day.B" + k, new DefField { Value = 0, Quality = 0 });
             }
 
             // чтение конфигурации
@@ -77,8 +77,6 @@ namespace iNOPC.Drivers.ECOM_3000
 
         Timer Timer { get; set; }
 
-        string Url { get; set; }
-
         void LoadData(bool firstStart)
         {
             var date = DateTime.Now;
@@ -89,7 +87,7 @@ namespace iNOPC.Drivers.ECOM_3000
             {
                 if (date.Minute == 3 || firstStart)
                 {
-                    string url = Url + "&interval=main" + "&t1=" + date.AddHours(-1).ToString("yyyyMMddHH0000.000") + "&t2=" + date.AddHours(-1).ToString("yyyyMMddHH3000.000");
+                    string url = Configuration.Url + "&interval=main" + "&t1=" + date.AddHours(-1).ToString("yyyyMMddHH0000.000") + "&t2=" + date.AddHours(-1).ToString("yyyyMMddHH3000.000");
 
                     try
                     {
@@ -113,8 +111,11 @@ namespace iNOPC.Drivers.ECOM_3000
                                         string name = parts[0].Trim();
                                         float value = float.TryParse(parts[2].Trim().Replace(".", ","), out float f) ? f : 0;
 
-                                        if (Fields.ContainsKey(name))
-                                            Fields[name].Value = Convert.ToSingle(value) + value;
+                                        if (Fields.ContainsKey("Hour." + name))
+                                        {
+                                            Fields["Hour." + name].Value = Convert.ToSingle(value) + value;
+                                            Fields["Hour." + name].Quality = 192;
+                                        }
                                     }
                                 }
 
@@ -134,7 +135,7 @@ namespace iNOPC.Drivers.ECOM_3000
                     if (date.Hour == 0 || firstStart)
                     {
                         date = date.AddDays(-1);
-                        url = Url + "&interval=day" + "&t1=" + date.ToString("yyyyMMdd000000.000") + "&t2=" + date.ToString("yyyyMMdd235959.000");
+                        url = Configuration.Url + "&interval=day" + "&t1=" + date.ToString("yyyyMMdd000000.000") + "&t2=" + date.ToString("yyyyMMdd235959.000");
 
                         try
                         {
@@ -158,7 +159,11 @@ namespace iNOPC.Drivers.ECOM_3000
                                             string name = parts[0].Trim();
                                             float value = float.TryParse(parts[2].Trim().Replace(".", ","), out float f) ? f : 0;
 
-                                            if (Fields.ContainsKey(name)) Fields[name].Value = value;
+                                            if (Fields.ContainsKey("Day." + name))
+                                            { 
+                                                Fields["Day." + name].Value = value; 
+                                                Fields["Day." + name].Quality = 192;
+                                            }
                                         }
                                     }
 
