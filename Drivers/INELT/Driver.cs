@@ -375,6 +375,10 @@ namespace iNOPC.Drivers.INELT
                     Fields["LINEV"].Value = lastValues.LINEV;
                     Fields["OUTPUTV"].Value = lastValues.OUTPUTV;
                     Fields["TIMELEFT"].Value = lastValues.TIMELEFT;
+                    foreach (var value in Fields.Values)
+					{
+                        value.Quality = 192;
+					}
                 }
                 UpdateEvent();
 
