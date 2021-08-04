@@ -13,7 +13,7 @@ namespace iNOPC.Drivers.MARK_602
 
         public int DataBits { get; set; } = 8;
 
-        public int Parity { get; set; } = 1;
+        public int Parity { get; set; } = 0;
 
         public int StopBits { get; set; } = 1;
 
@@ -21,7 +21,7 @@ namespace iNOPC.Drivers.MARK_602
 
         public int WriteTimeout { get; set; } = 500;
 
-        public byte NetworkAddress { get; set; } = 1;
+        public byte NetworkAddress { get; set; } = 0;
 
         public static string GetPage(string json)
         {

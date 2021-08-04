@@ -162,6 +162,7 @@ namespace iNOPC.Drivers.METRAN_900
                 lock (Fields)
                 {
                     Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Time"].Quality = 192;
                 }
 
                 int timeout = Convert.ToInt32(Configuration.Timeout - (DateTime.Now - ExchangeStartDate).TotalMilliseconds);
@@ -187,6 +188,7 @@ namespace iNOPC.Drivers.METRAN_900
                     Fields["DATE"].Value = StartDate
                         .AddSeconds(BitConverter.ToInt32(new[] { _bytes[1], _bytes[2], _bytes[3], _bytes[4], }, 0))
                         .ToString("dd.MM.yyyy HH:mm:ss");
+                    Fields["DATE"].Quality = 192;
 
                     for (int i = 0; i < 12; i++)
                     {
@@ -216,6 +218,7 @@ namespace iNOPC.Drivers.METRAN_900
                         float value = float.Parse(b + "," + (int)Math.Round(a / 0.31, 0));
 
                         Fields["K" + (i + 1)].Value = value;
+                        Fields["K" + (i + 1)].Quality = 192;
 
                     }
                 }

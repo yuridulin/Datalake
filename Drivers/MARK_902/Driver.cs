@@ -289,6 +289,7 @@ namespace iNOPC.Drivers.MARK_902
 
         void Prepare()
         {
+            Fields.Clear();
             Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") });
             foreach (var def in DefaultFields)
             {
@@ -336,6 +337,7 @@ namespace iNOPC.Drivers.MARK_902
                     lock (Fields)
                     {
                         Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+                        Fields["Time"].Quality = 192;
                     }
 
                     UpdateEvent();
@@ -441,6 +443,7 @@ namespace iNOPC.Drivers.MARK_902
                 lock (Fields)
                 {
                     Fields[field.Name].Value = Math.Round(value * field.Ratio, 5);
+                    Fields[field.Name].Quality = 192;
                 }
             }
         }

@@ -104,24 +104,28 @@ namespace iNOPC.Drivers.SOSNA_002
         {
             var date = DateTime.Now.ToString("HH:mm:ss");
 
-            Fields.Add("Time", new DefField { Value = date });
+            lock (Fields)
+            {
+                Fields.Clear();
+                Fields.Add("Time", new DefField { Value = date });
 
-            Fields.Add("s1_dt", new DefField { Value = date });
-            Fields.Add("s1_k1", new DefField { Value = 0F });
-            Fields.Add("s1_k2", new DefField { Value = 0F });
-            Fields.Add("s1_k3", new DefField { Value = 0F });
+                Fields.Add("s1_dt", new DefField { Value = date });
+                Fields.Add("s1_k1", new DefField { Value = 0F });
+                Fields.Add("s1_k2", new DefField { Value = 0F });
+                Fields.Add("s1_k3", new DefField { Value = 0F });
 
-            Fields.Add("s2_dt", new DefField { Value = date });
-            Fields.Add("s2_k1", new DefField { Value = 0F });
-            Fields.Add("s2_k2", new DefField { Value = 0F });
-            Fields.Add("s2_k3", new DefField { Value = 0F });
-            Fields.Add("s2_k4", new DefField { Value = 0F });
+                Fields.Add("s2_dt", new DefField { Value = date });
+                Fields.Add("s2_k1", new DefField { Value = 0F });
+                Fields.Add("s2_k2", new DefField { Value = 0F });
+                Fields.Add("s2_k3", new DefField { Value = 0F });
+                Fields.Add("s2_k4", new DefField { Value = 0F });
 
-            Fields.Add("s3_dt", new DefField { Value = date });
-            Fields.Add("s3_k1", new DefField { Value = 0F });
-            Fields.Add("s3_k2", new DefField { Value = 0F });
-            Fields.Add("s3_k3", new DefField { Value = 0F });
-            Fields.Add("s3_k4", new DefField { Value = 0F });
+                Fields.Add("s3_dt", new DefField { Value = date });
+                Fields.Add("s3_k1", new DefField { Value = 0F });
+                Fields.Add("s3_k2", new DefField { Value = 0F });
+                Fields.Add("s3_k3", new DefField { Value = 0F });
+                Fields.Add("s3_k4", new DefField { Value = 0F });
+            }
 
             Port = new SerialPort();
             Port.DataReceived += (s, e) => GetAnswer();
@@ -222,29 +226,43 @@ namespace iNOPC.Drivers.SOSNA_002
                         if (deviceNumber == 1 && values.Length == 4)
                         {
                             Fields["s1_dt"].Value = DateTime.Now.ToString("HH:mm:ss");
+                            Fields["s1_dt"].Quality = 192;
                             Fields["s1_k1"].Value = Number(values[1]);
+                            Fields["s1_k1"].Quality = 192;
                             Fields["s1_k2"].Value = Number(values[2]);
+                            Fields["s1_k2"].Quality = 192;
                             Fields["s1_k3"].Value = Number(values[3]);
+                            Fields["s1_k3"].Quality = 192;
                             LogEvent("Получены значения для канала " + deviceNumber, LogType.DETAILED);
                             tryCount = 0;
                         }
                         else if (deviceNumber == 2 && values.Length == 5)
                         {
                             Fields["s2_dt"].Value = DateTime.Now.ToString("HH:mm:ss");
+                            Fields["s2_dt"].Quality = 192;
                             Fields["s2_k1"].Value = Number(values[1]);
+                            Fields["s2_k1"].Quality = 192;
                             Fields["s2_k2"].Value = Number(values[2]);
+                            Fields["s2_k2"].Quality = 192;
                             Fields["s2_k3"].Value = Number(values[3]);
+                            Fields["s2_k3"].Quality = 192;
                             Fields["s2_k4"].Value = Number(values[4]);
+                            Fields["s2_k4"].Quality = 192;
                             LogEvent("Получены значения для канала " + deviceNumber, LogType.DETAILED);
                             tryCount = 0;
                         }
                         else if (deviceNumber == 3 && values.Length == 5)
                         {
                             Fields["s3_dt"].Value = DateTime.Now.ToString("HH:mm:ss");
+                            Fields["s3_dt"].Quality = 192;
                             Fields["s3_k1"].Value = Number(values[1]);
+                            Fields["s3_k1"].Quality = 192;
                             Fields["s3_k2"].Value = Number(values[2]);
+                            Fields["s3_k2"].Quality = 192;
                             Fields["s3_k3"].Value = Number(values[3]);
+                            Fields["s3_k3"].Quality = 192;
                             Fields["s3_k4"].Value = Number(values[4]);
+                            Fields["s3_k4"].Quality = 192;
                             LogEvent("Получены значения для канала " + deviceNumber, LogType.DETAILED);
                             tryCount = 0;
                         }
@@ -261,6 +279,7 @@ namespace iNOPC.Drivers.SOSNA_002
                         }
 
                         Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+                        Fields["Time"].Quality = 192;
                     }
 
                     UpdateEvent();

@@ -21,7 +21,7 @@ namespace iNOPC.Drivers.SOSNA_002
 
         public int WriteTimeout { get; set; } = 1000;
 
-        public string GetPage(string json)
+        public static string GetPage(string json)
         {
             var config = JsonConvert.DeserializeObject<Configuration>(json);
 
