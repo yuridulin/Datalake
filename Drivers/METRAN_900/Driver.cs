@@ -10,7 +10,7 @@ namespace iNOPC.Drivers.METRAN_900
 {
     public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -22,22 +22,22 @@ namespace iNOPC.Drivers.METRAN_900
         {
             LogEvent("Запуск ...");
 
-            Fields = new Dictionary<string, object>
+            Fields = new Dictionary<string, DefField>
             {
-                { "Time", DateTime.Now.ToString("HH:mm:ss") },
-                { "DATE", "" },
-                { "K1", 0F },
-                { "K2", 0F },
-                { "K3", 0F },
-                { "K4", 0F },
-                { "K5", 0F },
-                { "K6", 0F },
-                { "K7", 0F },
-                { "K8", 0F },
-                { "K9", 0F },
-                { "K10", 0F },
-                { "K11", 0F },
-                { "K12", 0F },
+                { "Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") }},
+                { "DATE", new DefField { Value = "" }},
+                { "K1", new DefField { Value = 0F }},
+                { "K2", new DefField { Value = 0F }},
+                { "K3", new DefField { Value = 0F }},
+                { "K4", new DefField { Value = 0F }},
+                { "K5", new DefField { Value = 0F } },
+                { "K6", new DefField { Value = 0F }},
+                { "K7", new DefField { Value = 0F }},
+                { "K8", new DefField { Value = 0F }},
+                { "K9", new DefField { Value = 0F }},
+                { "K10", new DefField { Value = 0F }},
+                { "K11", new DefField { Value = 0F }},
+                { "K12", new DefField { Value = 0F }},
             };
 
             try { Port.Close(); } catch (Exception) { }
@@ -161,7 +161,7 @@ namespace iNOPC.Drivers.METRAN_900
 
                 lock (Fields)
                 {
-                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
                 }
 
                 int timeout = Convert.ToInt32(Configuration.Timeout - (DateTime.Now - ExchangeStartDate).TotalMilliseconds);
@@ -184,7 +184,7 @@ namespace iNOPC.Drivers.METRAN_900
 
                     if (_bytesToRead != 33) return;
 
-                    Fields["DATE"] = StartDate
+                    Fields["DATE"].Value = StartDate
                         .AddSeconds(BitConverter.ToInt32(new[] { _bytes[1], _bytes[2], _bytes[3], _bytes[4], }, 0))
                         .ToString("dd.MM.yyyy HH:mm:ss");
 
@@ -215,7 +215,7 @@ namespace iNOPC.Drivers.METRAN_900
 
                         float value = float.Parse(b + "," + (int)Math.Round(a / 0.31, 0));
 
-                        Fields["K" + (i + 1)] = value;
+                        Fields["K" + (i + 1)].Value = value;
 
                     }
                 }

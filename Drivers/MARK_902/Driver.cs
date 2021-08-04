@@ -11,7 +11,7 @@ namespace iNOPC.Drivers.MARK_902
 {
     public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -289,10 +289,10 @@ namespace iNOPC.Drivers.MARK_902
 
         void Prepare()
         {
-            Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
+            Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") });
             foreach (var def in DefaultFields)
             {
-                Fields.Add(def.Name, 0F);
+                Fields.Add(def.Name, new DefField { Value = 0F });
             }
 
             Port = new SerialPort();
@@ -335,7 +335,7 @@ namespace iNOPC.Drivers.MARK_902
 
                     lock (Fields)
                     {
-                        Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                        Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
                     }
 
                     UpdateEvent();
@@ -440,7 +440,7 @@ namespace iNOPC.Drivers.MARK_902
 
                 lock (Fields)
                 {
-                    Fields[field.Name] = Math.Round(value * field.Ratio, 5);
+                    Fields[field.Name].Value = Math.Round(value * field.Ratio, 5);
                 }
             }
         }

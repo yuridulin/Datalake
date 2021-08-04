@@ -9,7 +9,7 @@ namespace iNOPC.Drivers.ISTOK
 {
     public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -97,24 +97,24 @@ namespace iNOPC.Drivers.ISTOK
 
         void BuildFields()
         {
-            Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
+            Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") });
 
             var parameters = new string[] { "Q", "G", "H", "dP", "T", "P", "V", "R" };
 
-            Fields.Add("Current.ColdSource.T", 0F);
-            Fields.Add("Current.ColdSource.P", 0F);
-            Fields.Add("Current.ColdSource.Patm", 0F);
-            Fields.Add("Current.ColdSource.H", 0F);
+            Fields.Add("Current.ColdSource.T", new DefField { Value = 0F });
+            Fields.Add("Current.ColdSource.P", new DefField { Value = 0F });
+            Fields.Add("Current.ColdSource.Patm", new DefField { Value = 0F });
+            Fields.Add("Current.ColdSource.H", new DefField { Value = 0F });
 
             for (byte k = 0; k < 4; k++)
                 for (byte i = 0; i < parameters.Length; i++)
-                    Fields.Add("Current.Points." + k + "." + parameters[i], 0F);
+                    Fields.Add("Current.Points." + k + "." + parameters[i], new DefField { Value = 0F });
 
             for (byte k = 0; k < 11; k++)
-                Fields.Add("Current.Channels." + k, 0F);
+                Fields.Add("Current.Channels." + k, new DefField { Value = 0F });
 
             for (byte k = 0; k < 4; k++)
-                Fields.Add("Current.Groups." + k, 0F);
+                Fields.Add("Current.Groups." + k, new DefField { Value = 0F });
 
 
             // часовые
@@ -123,14 +123,14 @@ namespace iNOPC.Drivers.ISTOK
 
             for (byte k = 0; k < 4; k++)
                 for (byte i = 0; i < parameters.Length; i++)
-                    Fields.Add("Hour." + k + "." + parameters[i], 0F);
+                    Fields.Add("Hour." + k + "." + parameters[i], new DefField { Value = 0F });
 
 
             // суточные
 
             for (byte k = 0; k < 4; k++)
                 for (byte i = 0; i < parameters.Length; i++)
-                    Fields.Add("Day." + k + "." + parameters[i], 0F);
+                    Fields.Add("Day." + k + "." + parameters[i], new DefField { Value = 0F });
         }
 
         void ThreadTick()
@@ -187,7 +187,7 @@ namespace iNOPC.Drivers.ISTOK
 
                         ReadCurrentValues();
 
-                        Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                        Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
                     }
 
                     UpdateEvent();

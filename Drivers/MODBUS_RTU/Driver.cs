@@ -11,7 +11,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
 {
     public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -44,7 +44,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
             }
             if (!Fields.ContainsKey("Time"))
             {
-                Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
+                Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") });
             }
 
             UpdateEvent();
@@ -223,8 +223,8 @@ namespace iNOPC.Drivers.MODBUS_RTU
             foreach (var package in Packages) package.Construct();
 
             Fields.Clear();
-            Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
-            foreach (var field in Configuration.Fields) Fields.Add(field.Name, 0F);
+            Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") });
+            foreach (var field in Configuration.Fields) Fields.Add(field.Name, new DefField { Value = 0F });
         }
 
         void TrancievePackages()
@@ -320,7 +320,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
                                         {
                                             if (Fields.ContainsKey(part.FieldName))
                                             {
-                                                Fields[part.FieldName] = part.Value;
+                                                Fields[part.FieldName].Value = part.Value;
                                             }
                                         }
                                     }
@@ -342,7 +342,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
 
                 lock (Fields)
                 {
-                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
                 }
                 UpdateEvent();
 

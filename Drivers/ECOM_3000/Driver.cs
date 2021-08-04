@@ -18,18 +18,18 @@ namespace iNOPC.Drivers.ECOM_3000
 
         public event WinLogEvent WinLogEvent;
 
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public bool Start(string jsonConfig)
         {
             LogEvent("Запуск ...");
             Fields.Clear();
-            Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
+            Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") });
 
             for (int k = 1; k < 270; k++)
             {
-                Fields.Add("Hour." + k, 0);
-                Fields.Add("Day." + k, 0);
+                Fields.Add("Hour." + k, new DefField { Value = 0 });
+                Fields.Add("Day." + k, new DefField { Value = 0 });
             }
 
             // чтение конфигурации
@@ -102,7 +102,7 @@ namespace iNOPC.Drivers.ECOM_3000
                                 string[] rows = raw.Split('\n');
 
                                 foreach (var key in Fields.Keys)
-                                    if (key.Contains("Hour.")) Fields[key] = 0;
+                                    if (key.Contains("Hour.")) Fields[key].Value = 0;
 
                                 foreach (string row in rows)
                                 {
@@ -114,11 +114,11 @@ namespace iNOPC.Drivers.ECOM_3000
                                         float value = float.TryParse(parts[2].Trim().Replace(".", ","), out float f) ? f : 0;
 
                                         if (Fields.ContainsKey(name))
-                                            Fields[name] = Convert.ToSingle(value) + value;
+                                            Fields[name].Value = Convert.ToSingle(value) + value;
                                     }
                                 }
 
-                                Fields["Time"] = date.ToString("dd.MM.yyyy HH:mm:ss");
+                                Fields["Time"].Value = date.ToString("dd.MM.yyyy HH:mm:ss");
                             }
                         }
                         else
@@ -147,7 +147,7 @@ namespace iNOPC.Drivers.ECOM_3000
                                     string[] rows = raw.Split('\n');
 
                                     foreach (var key in Fields.Keys)
-                                        if (key.Contains("Day.")) Fields[key] = 0;
+                                        if (key.Contains("Day.")) Fields[key].Value = 0;
 
                                     foreach (string row in rows)
                                     {
@@ -158,11 +158,11 @@ namespace iNOPC.Drivers.ECOM_3000
                                             string name = parts[0].Trim();
                                             float value = float.TryParse(parts[2].Trim().Replace(".", ","), out float f) ? f : 0;
 
-                                            if (Fields.ContainsKey(name)) Fields[name] = value;
+                                            if (Fields.ContainsKey(name)) Fields[name].Value = value;
                                         }
                                     }
 
-                                    Fields["Time"] = date.ToString("dd.MM.yyyy HH:mm:ss");
+                                    Fields["Time"].Value = date.ToString("dd.MM.yyyy HH:mm:ss");
                                 }
                             }
                             else
