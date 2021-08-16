@@ -161,13 +161,16 @@ namespace iNOPC.Server
 
         public static void Write(string path, object value = null, ushort quality = 0)
         {
-            if (Tags.ContainsKey(path))
+            lock (Tags)
             {
-                UpdateTag(Tags[path], value, quality);
-            }
-            else
-            {
-                Tags[path] = CreateTag(path, value, quality, true);
+                if (Tags.ContainsKey(path))
+                {
+                    UpdateTag(Tags[path], value, quality);
+                }
+                else
+                {
+                    Tags[path] = CreateTag(path, value, quality, true);
+                }
             }
         }
 

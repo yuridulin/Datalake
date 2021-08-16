@@ -28,8 +28,8 @@ namespace iNOPC.Drivers.ECOM_3000
 
             for (int k = 1; k < 270; k++)
             {
-                Fields.Add("Hour.B" + k, new DefField { Value = 0, Quality = 0 });
-                Fields.Add("Day.B" + k, new DefField { Value = 0, Quality = 0 });
+                Fields.Add("Hour.B" + k, new DefField { Value = 0, Quality = 192 });
+                Fields.Add("Day.B" + k, new DefField { Value = 0, Quality = 192 });
             }
 
             // чтение конфигурации
@@ -113,13 +113,11 @@ namespace iNOPC.Drivers.ECOM_3000
 
                                         if (Fields.ContainsKey("Hour." + name))
                                         {
-                                            Fields["Hour." + name].Value = Convert.ToSingle(value) + value;
+                                            Fields["Hour." + name].Value = Convert.ToSingle(Fields["Hour." + name].Value) + value;
                                             Fields["Hour." + name].Quality = 192;
                                         }
                                     }
                                 }
-
-                                Fields["Time"].Value = date.ToString("dd.MM.yyyy HH:mm:ss");
                             }
                         }
                         else
@@ -166,8 +164,6 @@ namespace iNOPC.Drivers.ECOM_3000
                                             }
                                         }
                                     }
-
-                                    Fields["Time"].Value = date.ToString("dd.MM.yyyy HH:mm:ss");
                                 }
                             }
                             else
@@ -188,6 +184,9 @@ namespace iNOPC.Drivers.ECOM_3000
             {
                 LogEvent("Ошибка при получении данных [" + e.Message + "]", LogType.ERROR);
             }
+
+            Fields["Time"].Value = date.ToString("dd.MM.yyyy HH:mm:ss");
+            Fields["Time"].Quality = 192;
         }
 
         string GetHtml(string url)
