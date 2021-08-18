@@ -75,22 +75,6 @@ namespace iNOPC.Drivers.IEC_104
             ClockTimer = new Timer(Configuration.SyncClockTimeout * 1000);
             ClockTimer.Elapsed += (s, e) => SyncClock();
 
-            //try
-            //{
-            //    ResetConnection();
-            //}
-            //catch (Exception e)
-            //{
-            //    return Err("Подключение не создано: " + e.Message);
-            //}
-
-            //lock (Fields)
-            //{
-            //    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
-            //    Fields["Connection"] = false;
-            //}
-            //UpdateEvent();
-
             // запуск опроса
             IsActive = true;
             ConnectionPreviousStatus = false;
