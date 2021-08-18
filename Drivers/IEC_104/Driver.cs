@@ -35,14 +35,15 @@ namespace iNOPC.Drivers.IEC_104
                 return Err("Конфигурация не прочитана: " + e.Message);
             }
 
-            // Создание полей, ранее заданных в конфиге
-            Fields = new Dictionary<string, DefField>();
+			// Создание полей, ранее заданных в конфиге
+			Fields = new Dictionary<string, DefField>
+			{
+				["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 },
+				["Connection"] = new DefField { Value = false, Quality = 192 },
+				["BytesCount"] = new DefField { Value = 0, Quality = 192 }
+			};
 
-            Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
-            Fields["Connection"] = new DefField { Value = false, Quality = 192 };
-            Fields["BytesCount"] = new DefField { Value = 0, Quality = 192 };
-
-            try
+			try
             {
                 foreach (var field in Configuration.NamedFields)
                 {
@@ -62,6 +63,7 @@ namespace iNOPC.Drivers.IEC_104
             {
                 return Err("Ошибка при создании заданных полей: " + e.Message);
             }
+            UpdateEvent();
 
             // Настройка таймеров
             ConnectionTimer = new Timer(Configuration.ReconnectTimeout * 1000);
@@ -113,7 +115,7 @@ namespace iNOPC.Drivers.IEC_104
             try { Conn.Close(); } catch (Exception e) { Err("Conn.Close: " + e.Message); }
             try { Conn = null; } catch (Exception e) { Err("Conn = null: " + e.Message); }
 
-            ClearFields();
+            ClearFields(true);
 
             LogEvent("Мониторинг остановлен");
         }
@@ -267,20 +269,15 @@ namespace iNOPC.Drivers.IEC_104
                     ReceiveTimeout = Configuration.ReceiveTimeout,
                 };
 
+                Conn.SetConnectionHandler(ConnectionHandler, null);
                 Conn.SetASDUReceivedHandler(AsduReceivedHandler, null);
                 Conn.SetReceivedRawMessageHandler(RawMessageHandler, "RX");
                 Conn.SetSentRawMessageHandler(RawMessageHandler, "TX");
                 Conn.Connect();
 
-				lock (Fields)
-				{
-					Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
-					Fields["Connection"] = new DefField { Value = true, Quality = 192 };
-                    Fields["BytesCount"] = new DefField { Value = 0, Quality = 192 };
-				}
-				UpdateEvent();
+                ClearFields();
 
-				return true;
+                return true;
             }
             catch (Exception e)
 			{
@@ -301,6 +298,7 @@ namespace iNOPC.Drivers.IEC_104
                 {
                     LogEvent("Нет подключения", LogType.ERROR);
                     ConnectionPreviousStatus = false;
+                    ClearFields();
                 }
                 isResetDoneRight = ResetConnection();
             }
@@ -311,6 +309,7 @@ namespace iNOPC.Drivers.IEC_104
                 {
                     LogEvent("Подключение не активно", LogType.ERROR);
                     ConnectionPreviousStatus = false;
+                    ClearFields();
                 }
                 isResetDoneRight = ResetConnection();
             }
@@ -321,32 +320,6 @@ namespace iNOPC.Drivers.IEC_104
                 ConnectionPreviousStatus = true;
                 Task.Run(SendInterrogation);
             }
-
-
-            // Если подключения нет, выполняем сброс и реконнект
-            //if (ConnectionPreviousStatus)
-            //{
-            //    ClearFields();
-            //    LogEvent("Нет подключения", LogType.ERROR);
-            //    ConnectionPreviousStatus = false;
-            //}
-            //try { Conn.Close(); } catch { }
-            //try { Conn.Connect(); } catch { }
-            //Conn.Close(); Conn.Connect();
-
-            //if (Conn.IsRunning)
-            //{
-            //    LogEvent("Подключение установлено");
-            //    Task.Run(SendInterrogation);
-            //    ConnectionPreviousStatus = true;
-
-            //    lock (Fields)
-            //    {
-            //        Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
-            //        Fields["Connection"] = Conn.IsRunning;
-            //        UpdateEvent();
-            //    }
-            //}
         }
 
         void SendInterrogation()
@@ -355,22 +328,19 @@ namespace iNOPC.Drivers.IEC_104
 
             try
             {
-                //if (Conn.IsRunning)
-                //{
-                    if (Configuration.UseInterrogation)
+                if (Configuration.UseInterrogation)
+                {
+                    Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
+                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
+                }
+                else
+                {
+                    foreach (var field in Configuration.NamedFields)
                     {
-                        Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
-                        Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
+                        Conn.SendReadCommand(1, field.Address);
+                        Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
                     }
-                    else
-                    {
-                        foreach (var field in Configuration.NamedFields)
-                        {
-                            Conn.SendReadCommand(1, field.Address);
-                            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
-                        }
-                    }
-                //}
+                }
             }
             catch (Exception e)
 			{
@@ -395,13 +365,13 @@ namespace iNOPC.Drivers.IEC_104
             }
         }
 
-        void ClearFields()
+        void ClearFields(bool all = false)
         {
             lock (Fields)
             {
                 foreach (var field in Fields.Keys.ToArray())
                 {
-                    if (!new[] { "Time", "Connection", "BytesCount" }.Contains(field))
+                    if (all || !new[] { "Time", "Connection", "BytesCount" }.Contains(field))
                     { 
                         Fields[field].Quality = 0;
                     }
@@ -417,6 +387,11 @@ namespace iNOPC.Drivers.IEC_104
 
         long BytesCount = 0;
 
+        void ConnectionHandler(object parameter, ConnectionEvent connectionEvent)
+		{
+            //Console.WriteLine("\t" + Helpers.BytesToString(message.Take(messageSize).ToArray()));
+        }
+
         bool RawMessageHandler(object parameter, byte[] message, int messageSize)
         {
             if (!IsActive) return false;
@@ -431,7 +406,6 @@ namespace iNOPC.Drivers.IEC_104
             }
 
             LogEvent(parameter + ": " + Helpers.BytesToString(message.Take(messageSize).ToArray()), LogType.DETAILED);
-            //Console.WriteLine("\t" + Helpers.BytesToString(message.Take(messageSize).ToArray()));
 
             return true;
         }
