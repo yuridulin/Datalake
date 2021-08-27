@@ -573,7 +573,7 @@ function DeviceLogs(id) {
 		mount('#device-logs', h('table'))
 		logs.forEach(function (x) {
 			DeviceLog(id, x)
-        })
+		})
 	})
 }
 
@@ -581,8 +581,11 @@ function DeviceLog(id, log) {
 	if (ls(id + '.logs.detailed') == 'false' && log.Type == 1) return
 	if (ls(id + '.logs.warnings') == 'false' && log.Type == 2) return
 
-	var table = document.getElementById('device-logs').querySelector('table')
+	var div = document.getElementById('device-logs')
+	var table = div.querySelector('table')
 	if (!table) return
+
+	var needScroll = div.scrollHeight < (div.getBoundingClientRect().height + div.scrollTop)
 
 	table.appendChild(
 		h('tr',
@@ -591,6 +594,8 @@ function DeviceLog(id, log) {
 			h('td', log.Text)
 		)
 	)
+
+	if (needScroll) div.scrollTop = div.scrollHeight
 }
 
 function DeviceFields(id) {
