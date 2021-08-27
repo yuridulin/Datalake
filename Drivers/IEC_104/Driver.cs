@@ -96,7 +96,7 @@ namespace iNOPC.Drivers.IEC_104
             try { ConnectionTimer.Stop(); } catch (Exception e) { Err("ConnectionTimer.Stop: " + e.Message); }
             try { InterrogationTimer.Stop(); } catch (Exception e) { Err("InterrogationTimer.Stop: " + e.Message); }
             try { ClockTimer.Stop(); } catch (Exception e) { Err("ClockTimer.Stop: " + e.Message); }
-            try { Conn.Close(); } catch (Exception e) { Err("Conn.Close: " + e.Message); }
+            try { Conn?.Close(); } catch (Exception e) { Err("Conn.Close: " + e.Message); }
             try { Conn = null; } catch (Exception e) { Err("Conn = null: " + e.Message); }
 
             ClearFields(true);
@@ -312,19 +312,26 @@ namespace iNOPC.Drivers.IEC_104
 
             try
             {
-                if (Configuration.UseInterrogation)
+                if (Conn?.IsRunning ?? false)
                 {
-                    Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
-                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
-                }
-                else
-                {
-                    foreach (var field in Configuration.NamedFields)
+                    if (Configuration.UseInterrogation)
                     {
-                        Conn.SendReadCommand(1, field.Address);
-                        Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
+                        Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
+                        Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
+                    }
+                    else
+                    {
+                        foreach (var field in Configuration.NamedFields)
+                        {
+                            Conn.SendReadCommand(1, field.Address);
+                            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
+                        }
                     }
                 }
+                else
+				{
+                    LogEvent("Опрос не выполнен, подключение не доступно", LogType.WARNING);
+				}
             }
             catch (Exception e)
 			{
