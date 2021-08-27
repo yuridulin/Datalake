@@ -321,6 +321,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
                                             if (Fields.ContainsKey(part.FieldName))
                                             {
                                                 Fields[part.FieldName].Value = part.Value;
+                                                Fields[part.FieldName].Quality = 192;
                                             }
                                         }
                                     }
