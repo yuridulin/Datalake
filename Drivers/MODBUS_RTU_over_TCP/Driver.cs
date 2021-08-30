@@ -6,12 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MODBUS_RTU_over_TCP
 {
 	public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -39,7 +40,7 @@ namespace MODBUS_RTU_over_TCP
             }
             else if (!Fields.ContainsKey("Time"))
             {
-                Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
+                Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 });
             }
 
             UpdateEvent();
@@ -56,12 +57,6 @@ namespace MODBUS_RTU_over_TCP
 
             try
             {
-                if (Thread != null)
-                {
-                    Thread.Abort();
-                    Thread = null;
-                }
-
                 Active = true;
                 ErrCount = 0;
 
@@ -90,17 +85,18 @@ namespace MODBUS_RTU_over_TCP
 
             Active = false;
 
-            if (Thread != null)
-            {
-                Thread.Abort();
-                Thread = null;
-            }
+            try { Stream?.Close(); } catch (Exception) { }
+            try { Stream = null; } catch (Exception) { }
+            try { Client?.Close(); } catch (Exception) { }
+            try { Client = null; } catch (Exception) { }
+            try { Thread?.Abort(); } catch (Exception) { }
+            try { Thread = null; } catch (Exception) { }
 
-            if (Client != null && Client.Connected)
-            {
-                Client.Close();
-                Client = null;
-            }
+            foreach (var field in Fields)
+			{
+                if (field.Key != "Time") field.Value.Quality = 0;
+			}
+            UpdateEvent();
 
             LogEvent("Мониторинг остановлен");
         }
@@ -226,8 +222,8 @@ namespace MODBUS_RTU_over_TCP
             foreach (var package in Packages) package.Construct();
 
             Fields.Clear();
-            Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
-            foreach (var field in Configuration.Fields) Fields.Add(field.Name, 0F);
+            Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 });
+            foreach (var field in Configuration.Fields) Fields.Add(field.Name, new DefField { Value = 0F, Quality = 0 });
         }
 
         byte GetRegistersCount(string type)
@@ -261,6 +257,11 @@ namespace MODBUS_RTU_over_TCP
             {
                 if (Client?.Connected != true)
                 {
+                    foreach (var f in Fields)
+					{
+                        if (f.Key != "Time") f.Value.Quality = 0;
+					}
+
                     try
                     {
                         Client?.Close();
@@ -313,10 +314,12 @@ namespace MODBUS_RTU_over_TCP
                             LogEvent("Tx: " + Helpers.BytesToString(command), LogType.DETAILED);
 
                             DateTime d = DateTime.Now;
-                            while ((DateTime.Now - d).TotalSeconds < 2 && !Stream.DataAvailable)
+                            while (Active && (DateTime.Now - d).TotalSeconds < 2 && !Stream.DataAvailable)
                             {
                                 Thread.Sleep(10);
                             }
+
+                            if (!Active) return;
 
                             if (Stream.DataAvailable)
                             {
@@ -332,7 +335,8 @@ namespace MODBUS_RTU_over_TCP
                                     {
                                         if (Fields.ContainsKey(part.FieldName))
                                         {
-                                            Fields[part.FieldName] = part.Value;
+                                            Fields[part.FieldName].Value = part.Value;
+                                            Fields[part.FieldName].Quality = 192;
                                         }
                                     }
                                 }
@@ -349,7 +353,7 @@ namespace MODBUS_RTU_over_TCP
                             hasErr = true;
                         }
                     }
-                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
                 }
             }
 
@@ -364,7 +368,10 @@ namespace MODBUS_RTU_over_TCP
             double ms = (DateTime.Now - RequestStart).TotalMilliseconds;
 
             int timeout = Convert.ToInt32(Configuration.CyclicTimeout - ms);
-            if (timeout > 0) Thread.Sleep(timeout);
+            if (timeout > 0)
+            {
+                Task.Delay(timeout).Wait();
+            }
         }
 
         void Reconnect()
