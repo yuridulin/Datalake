@@ -497,6 +497,11 @@ namespace iNOPC.Server.Web
                     driver.Name = data.Name;
                     driver.Path = Program.Base + @"\Drivers\" + data.Path + ".dll";
 
+                    foreach (var device in driver.Devices)
+					{
+                        device.DriverName = data.Name;
+					}
+
                     Program.Configuration.SaveToFile();
                     driver.Load();
 
