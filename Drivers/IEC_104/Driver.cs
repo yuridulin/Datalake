@@ -1,5 +1,4 @@
 ﻿using iNOPC.Library;
-using lib60870;
 using lib60870.CS101;
 using lib60870.CS104;
 using Newtonsoft.Json;
@@ -25,6 +24,11 @@ namespace iNOPC.Drivers.IEC_104
         {
             LogEvent("Запуск ...");
 
+            // Очистка предыдущего подключения
+            try { Conn?.Close(); } catch { }
+            try { Conn = null; } catch { }
+            ClearFields();
+
             // чтение конфигурации
             try
             {
@@ -34,6 +38,26 @@ namespace iNOPC.Drivers.IEC_104
             {
                 return Err("Конфигурация не прочитана: " + e.Message);
             }
+
+            // Создание нового подключения
+            var apci = new APCIParameters
+            {
+                T0 = Configuration.ConnectionTimeoutT0, // задаётся в конфиге в секундах
+                T1 = Configuration.TimeoutT1,
+                T2 = Configuration.TimeoutT2,
+                T3 = Configuration.TimeoutT3,
+                K = 12,
+                W = 8,
+            };
+
+            var alp = new ApplicationLayerParameters { };
+
+            Conn = new Connection(Configuration.Host, Configuration.Port, apci, alp);
+            Conn.SetConnectionHandler(ConnectionHandler, null);
+            Conn.SetASDUReceivedHandler(AsduReceivedHandler, null);
+            Conn.SetReceivedRawMessageHandler(RawMessageHandler, "RX");
+            Conn.SetSentRawMessageHandler(RawMessageHandler, "TX");
+            Conn.ReceiveTimeout = Configuration.ReceiveTimeout;
 
 			// Создание полей, ранее заданных в конфиге
 			Fields = new Dictionary<string, DefField>
@@ -65,25 +89,26 @@ namespace iNOPC.Drivers.IEC_104
             }
             UpdateEvent();
 
-            // Настройка таймеров
-            ConnectionTimer = new Timer(Configuration.ReconnectTimeout * 1000);
-            ConnectionTimer.Elapsed += (s, e) => CheckConnection();
+            // Определение дополнительных таймеров
+            InterrogationTimer = new Timer(Configuration.InterrogationDelay * 1000);
+            InterrogationTimer.Elapsed += (s, e) =>
+            {
+                SendInterrogation();
+            };
 
-            InterrogationTimer = new Timer(Configuration.InterrogationTimeout * 1000);
-            InterrogationTimer.Elapsed += (s, e) => SendInterrogation();
+            ReconnectTimer = new Timer(Configuration.ReconnectTimeout * 1000);
+            ReconnectTimer.Elapsed += (s, e) =>
+            {
+                LogEvent("Срабатывание таймера переподключения", LogType.WARNING);
+                Reconnect();
+            };
 
-            ClockTimer = new Timer(Configuration.SyncClockTimeout * 1000);
-            ClockTimer.Elapsed += (s, e) => SyncClock();
-
-            // запуск опроса
+            // Запуск обмена данными
             IsActive = true;
-            ConnectionPreviousStatus = false;
-            ConnectionTimer.Start();
-            InterrogationTimer.Start();
-            ClockTimer.Start();
-
             LogEvent("Мониторинг запущен");
-            Task.Run(CheckConnection);
+
+            Task.Run(Reconnect);
+
             return true;
         }
 
@@ -93,11 +118,14 @@ namespace iNOPC.Drivers.IEC_104
 
             IsActive = false;
 
-            try { ConnectionTimer.Stop(); } catch (Exception e) { Err("ConnectionTimer.Stop: " + e.Message); }
-            try { InterrogationTimer.Stop(); } catch (Exception e) { Err("InterrogationTimer.Stop: " + e.Message); }
-            try { ClockTimer.Stop(); } catch (Exception e) { Err("ClockTimer.Stop: " + e.Message); }
-            try { Conn?.Close(); } catch (Exception e) { Err("Conn.Close: " + e.Message); }
-            try { Conn = null; } catch (Exception e) { Err("Conn = null: " + e.Message); }
+            try { InterrogationTimer?.Stop(); } catch (Exception) { }
+            try { InterrogationTimer = null; } catch (Exception) { }
+
+            try { ReconnectTimer?.Stop(); } catch (Exception) { }
+            try { ReconnectTimer = null; } catch (Exception) { }
+
+            try { Conn?.Close(); } catch (Exception) { }
+            try { Conn = null; } catch (Exception) { }
 
             ClearFields(true);
 
@@ -214,147 +242,13 @@ namespace iNOPC.Drivers.IEC_104
 
         Configuration Configuration { get; set; }
 
-        Timer ConnectionTimer { get; set; }
+        Connection Conn { get; set; }
 
         Timer InterrogationTimer { get; set; }
 
-        Timer ClockTimer { get; set; }
-
-        Connection Conn { get; set; }
-
-        bool ConnectionPreviousStatus { get; set; }
+        Timer ReconnectTimer { get; set; }
 
         bool IsActive { get; set; } = false;
-
-        bool ResetConnection()
-		{
-            if (!IsActive) return false;
-
-            try
-            {
-                // Очистка предыдущего подключения
-                try { Conn?.Close(); } catch { }
-                try { Conn = null; } catch { }
-
-                var apci = new APCIParameters
-                {
-                    T0 = Configuration.ConnectionTimeoutT0, // задаётся в конфиге в секундах
-                    T1 = Configuration.TimeoutT1,
-                    T2 = Configuration.TimeoutT2,
-                    T3 = Configuration.TimeoutT3,
-                    K = 12,
-                    W = 8,
-                };
-
-                Conn = new Connection(Configuration.Host, Configuration.Port, apci, new ApplicationLayerParameters { })
-                {
-                    DebugOutput = Configuration.DebugOutput,
-                    Autostart = true,
-                    ReceiveTimeout = Configuration.ReceiveTimeout,
-                };
-
-                Conn.SetConnectionHandler(ConnectionHandler, null);
-                Conn.SetASDUReceivedHandler(AsduReceivedHandler, null);
-                Conn.SetReceivedRawMessageHandler(RawMessageHandler, "RX");
-                Conn.SetSentRawMessageHandler(RawMessageHandler, "TX");
-                Conn.Connect();
-
-                ClearFields();
-
-                return true;
-            }
-            catch (Exception e)
-			{
-                return Err("Ошибка при инициализации: " + e.Message);
-            }
-        }
-
-        void CheckConnection()
-        {
-            bool isResetDoneRight = true;
-
-            if (!IsActive) return;
-
-            // Проверяем состояние подключения. Если в порядке, выходим
-            if (Conn == null)
-            {
-                if (ConnectionPreviousStatus)
-                {
-                    LogEvent("Нет подключения", LogType.ERROR);
-                    ConnectionPreviousStatus = false;
-                    ClearFields();
-                }
-                isResetDoneRight = ResetConnection();
-            }
-
-            else if (!Conn.IsRunning)
-            {
-                if (ConnectionPreviousStatus)
-                {
-                    LogEvent("Подключение не активно", LogType.ERROR);
-                    ConnectionPreviousStatus = false;
-                    ClearFields();
-                }
-                isResetDoneRight = ResetConnection();
-            }
-
-            if (isResetDoneRight && !ConnectionPreviousStatus)
-            {
-                LogEvent("Подключение активно", LogType.REGULAR);
-                ConnectionPreviousStatus = true;
-                Task.Run(SendInterrogation);
-            }
-        }
-
-        void SendInterrogation()
-        {
-            if (!IsActive) return;
-
-            try
-            {
-                if (Conn?.IsRunning ?? false)
-                {
-                    if (Configuration.UseInterrogation)
-                    {
-                        Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
-                        Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > INTERROGATION: Cot [" + 6 + "] Ca [" + 1 + "] Qoi [" + 20 + "]");
-                    }
-                    else
-                    {
-                        foreach (var field in Configuration.NamedFields)
-                        {
-                            Conn.SendReadCommand(1, field.Address);
-                            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > READ: Ca [" + 1 + "] Ioa [" + field.Address + "]");
-                        }
-                    }
-                }
-                else
-				{
-                    LogEvent("Опрос не выполнен, подключение не доступно", LogType.WARNING);
-				}
-            }
-            catch (Exception e)
-			{
-                Err("Ошибка при опросе: " + e.Message);
-            }
-        }
-
-        void SyncClock()
-        {
-            if (!IsActive) return;
-            try
-            {
-                if (Conn.IsRunning)
-                {
-                    Conn.SendClockSyncCommand(1, new CP56Time2a(DateTime.Now));
-                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " > CLOCK: Ca [" + 1 + "]");
-                }
-            }
-            catch (Exception e)
-			{
-                Err("Ошибка при синхронизации времени: " + e.Message);
-            }
-        }
 
         void ClearFields(bool all = false)
         {
@@ -378,9 +272,49 @@ namespace iNOPC.Drivers.IEC_104
 
         long BytesCount = 0;
 
+        void Reconnect()
+		{
+            try { Conn.Connect(); } catch (Exception) { }
+        }
+
+        string LastConnectionEvent { get; set; }
+
         void ConnectionHandler(object parameter, ConnectionEvent connectionEvent)
 		{
-            //Console.WriteLine("\t" + Helpers.BytesToString(message.Take(messageSize).ToArray()));
+            LastConnectionEvent = connectionEvent.ToString();
+            LogEvent("Состояние подключения: " + LastConnectionEvent, LogType.WARNING);
+
+            if (!IsActive) return;
+
+            if (LastConnectionEvent == "CONNECT_FAILED")
+            {
+                ClearFields();
+                if (!ReconnectTimer.Enabled)
+                {
+                    LogEvent("Запуск таймера переподключения", LogType.WARNING);
+                    ReconnectTimer.Start();
+                }
+            }
+
+            if (LastConnectionEvent == "CLOSED")
+            {
+                ClearFields();
+                if (!ReconnectTimer.Enabled)
+                {
+                    LogEvent("Запуск таймера переподключения", LogType.WARNING);
+                    InterrogationTimer.Stop();
+                    ReconnectTimer.Start();
+                }
+            }
+
+            if (LastConnectionEvent == "OPENED")
+            {
+                if (ReconnectTimer.Enabled)
+                {
+                    LogEvent("Остановка таймера переподключения", LogType.WARNING);
+                    ReconnectTimer.Stop();
+                }
+            }
         }
 
         bool RawMessageHandler(object parameter, byte[] message, int messageSize)
@@ -401,14 +335,31 @@ namespace iNOPC.Drivers.IEC_104
             return true;
         }
 
+        void SendInterrogation()
+		{
+            if (!IsActive) return;
+            LogEvent("Цикличный опрос", LogType.WARNING);
+
+            if (Configuration.UseInterrogation)
+            {
+                Conn.SendInterrogationCommand(CauseOfTransmission.ACTIVATION, 1, 20);
+            }
+            else
+            {
+                foreach (var field in Configuration.NamedFields)
+                {
+                    Conn.SendReadCommand(1, field.Address);
+                }
+            }
+        }
+
         bool AsduReceivedHandler(object parameter, ASDU asdu)
         {
             if (!IsActive) return false;
 
-            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " < ASDU: Ca [" + asdu.Ca + "] Cot [" + asdu.Cot + "] Oa [" + asdu.Oa + "]");
-
             try
             {
+                // значения
                 if (asdu.TypeId == TypeID.M_ME_TC_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
@@ -416,6 +367,8 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (MeasuredValueShortWithCP24Time2a)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.Value);
                     }
+
+                    LogEvent("Получено ASDU: M_ME_TC_1", LogType.WARNING);
                 }
                 else if (asdu.TypeId == TypeID.M_ME_TE_1)
                 {
@@ -424,6 +377,8 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (MeasuredValueScaledWithCP56Time2a)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.ScaledValue);
                     }
+
+                    LogEvent("Получено ASDU: M_ME_TE_1", LogType.WARNING);
                 }
                 else if (asdu.TypeId == TypeID.M_ME_TF_1)
                 {
@@ -432,8 +387,9 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (MeasuredValueShortWithCP56Time2a)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.Value);
                     }
-                }
 
+                    LogEvent("Получено ASDU: M_ME_TF_1", LogType.WARNING);
+                }
                 else if (asdu.TypeId == TypeID.M_ME_NB_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
@@ -441,6 +397,8 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (MeasuredValueScaled)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.ScaledValue);
                     }
+
+                    LogEvent("Получено ASDU: M_ME_NB_1", LogType.WARNING);
                 }
                 else if (asdu.TypeId == TypeID.M_ME_NC_1)
                 {
@@ -449,6 +407,8 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (MeasuredValueShort)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.Value);
                     }
+
+                    LogEvent("Получено ASDU: M_ME_NC_1", LogType.WARNING);
                 }
                 else if (asdu.TypeId == TypeID.M_ME_ND_1)
                 {
@@ -457,8 +417,9 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (MeasuredValueNormalizedWithoutQuality)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.NormalizedValue);
                     }
-                }
 
+                    LogEvent("Получено ASDU: M_ME_ND_1", LogType.WARNING);
+                }
                 else if (asdu.TypeId == TypeID.M_SP_NA_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
@@ -466,6 +427,8 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (SinglePointInformation)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.Value);
                     }
+
+                    LogEvent("Получено ASDU: M_SP_NA_1", LogType.WARNING);
                 }
                 else if (asdu.TypeId == TypeID.M_SP_TB_1)
                 {
@@ -474,8 +437,9 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (SinglePointWithCP56Time2a)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.Value);
                     }
-                }
 
+                    LogEvent("Получено ASDU: M_SP_TB_1", LogType.WARNING);
+                }
                 else if (asdu.TypeId == TypeID.C_SC_NA_1)
                 {
                     for (int i = 0; i < asdu.NumberOfElements; i++)
@@ -483,15 +447,30 @@ namespace iNOPC.Drivers.IEC_104
                         var val = (SingleCommand)asdu.GetElement(i);
                         WriteValue(val.ObjectAddress, val.State);
                     }
+
+                    LogEvent("Получено ASDU: C_SC_NA_1", LogType.WARNING);
                 }
+
+                // старт опроса
+                else if (asdu.TypeId == TypeID.M_EI_NA_1)
+				{
+                    LogEvent("Инициализация окончена", LogType.WARNING);
+
+                    InterrogationTimer.Start();
+                    Task.Run(SendInterrogation);
+                }
+
+                // команды
                 else if (asdu.TypeId == TypeID.C_CS_NA_1)
                 {
                     LogEvent("Получена команда синхронизации времени", LogType.WARNING);
                 }
                 else if (asdu.TypeId == TypeID.C_IC_NA_1)
                 {
-                    LogEvent("Получена команда опроса", LogType.WARNING);
+                    //LogEvent("Получена команда опроса", LogType.WARNING);
                 }
+
+                // то, для чего обработчик не задан
                 else
                 {
                     bool found = false;
