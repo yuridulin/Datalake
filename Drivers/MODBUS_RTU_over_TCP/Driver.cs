@@ -3,10 +3,13 @@ using MODBUS_RTU_over_TCP.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace MODBUS_RTU_over_TCP
 {
@@ -62,10 +65,7 @@ namespace MODBUS_RTU_over_TCP
 
                 Thread = new Thread(() =>
                 {
-                    while (Active)
-                    {
-                        Monitoring();
-                    }
+                    while (Active) Monitoring();
                 });
                 Thread.Start();
 
@@ -116,7 +116,11 @@ namespace MODBUS_RTU_over_TCP
 
         NetworkStream Stream { get; set; }
 
+        TcpListener Listener { get; set; }
+
         Thread Thread { get; set; }
+
+        Thread Thread2 { get; set; }
 
         List<Package> Packages { get; set; } = new List<Package>();
 
@@ -253,6 +257,8 @@ namespace MODBUS_RTU_over_TCP
 
         bool Connect()
         {
+            if (!Active) return false;
+
             try
             {
                 if (Client?.Connected != true)
@@ -260,7 +266,8 @@ namespace MODBUS_RTU_over_TCP
                     foreach (var f in Fields)
 					{
                         if (f.Key != "Time") f.Value.Quality = 0;
-					}
+                    }
+                    UpdateEvent();
 
                     try
                     {
@@ -281,6 +288,9 @@ namespace MODBUS_RTU_over_TCP
                             Stream = Client.GetStream();
                         }
                     }
+
+                    Listener = new TcpListener(IPAddress.Loopback, Configuration.Port);
+                    Listener.Start();
                 }
 
                 if (Client?.Connected == true && Stream != null) return true;
@@ -302,69 +312,73 @@ namespace MODBUS_RTU_over_TCP
 
             if (isConnected)
             {
-                lock (Fields)
+                foreach (Package package in Packages)
                 {
-                    foreach (Package package in Packages)
+                    if (!Active) break;
+                    try
                     {
-                        if (!Active) break;
-                        try
+                        // Запись команды
+                        byte[] command = package.Trancieve;
+                        Stream.Write(command, 0, command.Length);
+                        LogEvent("Tx: " + Helpers.BytesToString(command), LogType.DETAILED);
+
+                        // Задание на считывание ответа с ожиданием
+                        byte[] answer = new byte[package.ReceiveLength];
+                        var task = Stream.ReadAsync(answer, 0, package.ReceiveLength);
+
+                        // Ожидание ответа (либо 2 секунды до продолжения)
+                        DateTime d = DateTime.Now;
+                        while (Active && (DateTime.Now - d).TotalSeconds < 2 && !task.IsCompleted)
                         {
-                            byte[] command = package.Trancieve;
-                            Stream.Write(command, 0, command.Length);
-                            LogEvent("Tx: " + Helpers.BytesToString(command), LogType.DETAILED);
+                            Task.Delay(100).Wait();
+                        }
 
-                            DateTime d = DateTime.Now;
-                            while (Active && (DateTime.Now - d).TotalSeconds < 2 && !Stream.DataAvailable)
+                        // Разбор ответа
+                        if (task.IsCompleted)
+						{
+                            LogEvent("Rx: " + Helpers.BytesToString(answer), LogType.DETAILED);
+                            if (command[0] == answer[0] && command[1] == answer[1])
                             {
-                                Thread.Sleep(10);
-                            }
-
-                            if (!Active) return;
-
-                            if (Stream.DataAvailable)
-                            {
-                                int receiveLength = package.ReceiveLength;
-                                byte[] answer = new byte[receiveLength];
-                                Stream.Read(answer, 0, receiveLength);
-                                LogEvent("Rx: " + Helpers.BytesToString(answer), LogType.DETAILED);
-
-                                if (command[0] == answer[0] && command[1] == answer[1])
+                                package.Receive(answer);
+                                foreach (PackagePart part in package.Parts)
                                 {
-                                    package.Receive(answer);
-                                    foreach (PackagePart part in package.Parts)
+                                    if (Fields.ContainsKey(part.FieldName))
                                     {
-                                        if (Fields.ContainsKey(part.FieldName))
-                                        {
-                                            Fields[part.FieldName].Value = part.Value;
-                                            Fields[part.FieldName].Quality = 192;
-                                        }
+                                        Fields[part.FieldName].Value = part.Value;
+                                        Fields[part.FieldName].Quality = 192;
                                     }
                                 }
                             }
-                            else
-                            {
-                                LogEvent("Данные не вернулись по таймауту", LogType.DETAILED);
-                                hasErr = true;
-                            }
                         }
-                        catch (Exception e)
+                        else
                         {
-                            LogEvent("Ошибка при опросе значений: " + e.Message + "\n" + e.StackTrace, LogType.DETAILED);
+                            try { task.Dispose(); } catch { }
+                            LogEvent("Данные не вернулись по таймауту", LogType.DETAILED);
                             hasErr = true;
                         }
                     }
-                    Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+                    catch (Exception e)
+                    {
+                        LogEvent("Ошибка при опросе значений: " + e.Message + "\n" + e.StackTrace, LogType.DETAILED);
+                        hasErr = true;
+                    }
                 }
             }
 
             if (hasErr) ErrCount++; else ErrCount = 0;
             if (ErrCount > 5)
             {
-                Reconnect();
+                try { Client.Close(); } catch { }
+                try { Client = null; } catch { }
+                try { Stream = null; } catch { }
                 return;
             }
 
-            if (!hasErr) UpdateEvent();
+            if (!hasErr)
+            {
+                Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+                UpdateEvent();
+            }
             double ms = (DateTime.Now - RequestStart).TotalMilliseconds;
 
             int timeout = Convert.ToInt32(Configuration.CyclicTimeout - ms);
@@ -372,17 +386,6 @@ namespace MODBUS_RTU_over_TCP
             {
                 Task.Delay(timeout).Wait();
             }
-        }
-
-        void Reconnect()
-        {
-            try
-            {
-                Client.Close();
-                Client = null;
-                Stream = null;
-            }
-            catch { }
         }
 
         bool Err(string text)
