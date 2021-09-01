@@ -95,6 +95,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
+    <None Include="plan.md" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\iNOPC_Library\iNOPC_Library.csproj">

@@ -552,6 +552,7 @@ function Device(id) {
 
 		clearInterval(timeout)
 		timeout = setInterval(function () {
+			DeviceLogsClean()
 			DeviceFields(id)
 		}, 1000)
 	})
@@ -596,6 +597,21 @@ function DeviceLog(id, log) {
 	)
 
 	if (needScroll) div.scrollTop = div.scrollHeight
+}
+
+function DeviceLogsClean() {
+	var div = document.getElementById('device-logs')
+	var table = div.querySelector('table')
+	var rows = table.getElementsByTagName('tr')
+	console.log(rows.length)
+
+	if (rows.length >= 100) {
+		var i = rows.length - 100
+		while (i >= 0) {
+			table.removeChild(rows[i])
+			i--
+		}
+	}
 }
 
 function DeviceFields(id) {

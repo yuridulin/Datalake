@@ -112,7 +112,7 @@ namespace iNOPC.Server.Models
         {
             lock (Logs)
             {
-                if (Logs.Count >= 1500)
+                if (Logs.Count >= 100)
                 {
                     Logs.RemoveAt(0);
                 }
