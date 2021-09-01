@@ -8,7 +8,7 @@ namespace iNOPC.Drivers.TestDriver
 {
     public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -20,7 +20,7 @@ namespace iNOPC.Drivers.TestDriver
         {
             LogEvent("Запуск...");
 
-            Fields = new Dictionary<string, object>();
+            Fields = new Dictionary<string, DefField>();
 
             try
             {
@@ -34,14 +34,16 @@ namespace iNOPC.Drivers.TestDriver
 
             foreach (var field in Configuration.Fields)
             {
-                Fields.Add(field.Name, null);
+                Fields.Add(field.Name, new DefField { Value = null, Quality = 0 });
             }
 
             Timer = new Timer(Configuration.Tick);
             Timer.Elapsed += (s, e) => Update();
             Timer.Start();
 
-            Fields["Connection"] = true;
+            Fields["Connection"] = new DefField { Value = true, Quality = 192 };
+            Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
+            UpdateEvent();
 
             LogEvent("Мониторинг активен");
 
@@ -52,7 +54,7 @@ namespace iNOPC.Drivers.TestDriver
         {
             LogEvent("Остановка...");
 
-            Fields["Connection"] = false;
+            Fields["Connection"] = new DefField { Value = false, Quality = 192 };
 
             try
             {
@@ -65,7 +67,7 @@ namespace iNOPC.Drivers.TestDriver
 
         public void Write(string fieldName, object value)
         {
-            Fields[fieldName] = value;
+            Fields[fieldName].Value = value;
             WinLogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
         }
 
@@ -79,11 +81,14 @@ namespace iNOPC.Drivers.TestDriver
 
             foreach (var field in Configuration.Fields)
             {
-                Fields[field.Name] = r.Next();
+                Fields[field.Name].Value = r.Next();
+                Fields[field.Name].Quality = 192;
             }
 
-            Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+            Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+            Fields["Time"].Value = 192;
 
+            LogEvent("Очередной опрос");
             UpdateEvent();
         }
     }
