@@ -293,6 +293,8 @@ namespace iNOPC.Drivers.IEC_104
                 {
                     LogEvent("Запуск таймера переподключения", LogType.WARNING);
                     ReconnectTimer.Start();
+                    Fields["Connection"].Value = false;
+                    UpdateEvent();
                 }
             }
 
@@ -304,6 +306,8 @@ namespace iNOPC.Drivers.IEC_104
                     LogEvent("Запуск таймера переподключения", LogType.WARNING);
                     InterrogationTimer.Stop();
                     ReconnectTimer.Start();
+                    Fields["Connection"].Value = false;
+                    UpdateEvent();
                 }
             }
 
@@ -313,6 +317,8 @@ namespace iNOPC.Drivers.IEC_104
                 {
                     LogEvent("Остановка таймера переподключения", LogType.WARNING);
                     ReconnectTimer.Stop();
+                    Fields["Connection"].Value = true;
+                    UpdateEvent();
                 }
             }
         }
@@ -497,6 +503,7 @@ namespace iNOPC.Drivers.IEC_104
 
             lock (Fields)
             {
+                Fields["Connection"].Value = true;
                 Fields["BytesCount"].Value = BytesCount;
                 Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
             }
