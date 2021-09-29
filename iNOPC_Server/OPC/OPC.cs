@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace iNOPC.Server
 {
@@ -116,8 +117,10 @@ namespace iNOPC.Server
 
                 process.StandardInput.WriteLine("sc delete VST_OPC");
                 process.StandardInput.WriteLine("sc delete iNOPC");
-                process.StandardInput.WriteLine("sc create iNOPC binPath=\"" + pathToExe + "\" DisplayName=\"iNOPC\" start=auto && exit");
-                process.WaitForExit();
+                process.StandardInput.WriteLine("sc create iNOPC binPath= \"" + pathToExe + "\" DisplayName= \"iNOPC\" start= auto && exit");
+
+                Task.Delay(5000).Wait();
+                process.Close();
 
                 // Создание записи в DCOM 1
                 File.WriteAllText("C:\\dcom.reg", 
