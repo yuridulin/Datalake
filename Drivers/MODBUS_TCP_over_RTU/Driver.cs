@@ -9,7 +9,7 @@ namespace iNOPC.Drivers.PR20_RS485
 {
 	public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -42,7 +42,7 @@ namespace iNOPC.Drivers.PR20_RS485
             }
             if (!Fields.ContainsKey("Time"))
             {
-                Fields.Add("Time", DateTime.Now.ToString("HH:mm:ss"));
+                Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 });
             }
 
             UpdateEvent();
@@ -180,7 +180,7 @@ namespace iNOPC.Drivers.PR20_RS485
 
                 lock (Fields)
                 {
-                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
                 }
                 UpdateEvent();
 

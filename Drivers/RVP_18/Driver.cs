@@ -9,7 +9,7 @@ namespace RVP_18
 {
 	public class Driver : IDriver
 	{
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
 		public event LogEvent LogEvent;
 		public event UpdateEvent UpdateEvent;

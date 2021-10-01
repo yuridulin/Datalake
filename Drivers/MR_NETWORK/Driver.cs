@@ -10,7 +10,7 @@ namespace iNOPC.Drivers.MR_NETWORK
 {
     public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -102,9 +102,9 @@ namespace iNOPC.Drivers.MR_NETWORK
 
         void CreateFields()
         {
-            Fields = new Dictionary<string, object>
+            Fields = new Dictionary<string, DefField>
             {
-                { "Time", DateTime.Now.ToString("HH:mm:ss") }
+                { "Time", new DefField { Quality = 192, Value = DateTime.Now.ToString("HH:mm:ss") } }
             };
 
             Port = new SerialPort();
@@ -169,15 +169,16 @@ namespace iNOPC.Drivers.MR_NETWORK
                     {
                         if (Fields.ContainsKey(field.Name))
                         {
-                            Fields[field.Name] = field.Value;
+                            Fields[field.Name].Value = field.Value;
+                            Fields[field.Name].Quality = 192;
                         }
                         else
                         {
-                            Fields.Add(field.Name, field.Value);
+                            Fields.Add(field.Name, new DefField { Value = field.Value, Quality = 192 });
                         }
                     }
 
-                    Fields["Time"] = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
                 }
 
                 UpdateEvent();

@@ -10,7 +10,7 @@ namespace iNOPC.Drivers.ENERGOMERA_CE303
 {
     public class Driver : IDriver
     {
-        public Dictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;
 
@@ -186,6 +186,7 @@ namespace iNOPC.Drivers.ENERGOMERA_CE303
             }
 
             Write("Time", DateTime.Now.ToString("HH:mm:ss"));
+            foreach (var field in Fields) field.Value.Quality = 0;
             UpdateEvent();
         }
 
@@ -251,11 +252,29 @@ namespace iNOPC.Drivers.ENERGOMERA_CE303
             {
                 if (Fields.ContainsKey(name))
                 {
-                    Fields[name] = value;
+                    if (Fields[name] != null)
+					{
+                        Fields[name].Value = value;
+                        Fields[name].Quality = 192;
+                    }
+                    else
+					{
+                        Fields[name] = new DefField
+                        {
+                            Name = name,
+                            Value = value,
+                            Quality = 192,
+                        };
+					}
                 }
                 else
                 {
-                    Fields.Add(name, value);
+                    Fields.Add(name, new DefField
+                    {
+                        Name = name,
+                        Value = value,
+                        Quality = 192,
+                    });
                 }
             }
         }
