@@ -69,10 +69,10 @@ namespace iNOPC.Server.Web
                             break;
                     }
                 }
-                else
+                else if (url.StartsWith("api"))
                 {
                     // авторизация запроса по токену, хранящемуся в куках. Если запрос - аутентификация, то обработчик перезапишет это значение
-                    if (url != "login")
+                    if (url != "api\\login")
                     {
                         // Так как токен перезаписывается при каждом запросе, сразу устанавливаем header с пришедшим
                         // Запросы login и logout обрабатываются отдельно
@@ -105,6 +105,11 @@ namespace iNOPC.Server.Web
                     Response.ContentType = "application/json";
                     responseString = JsonConvert.SerializeObject(Action(url, requestBody));
                 }
+                else
+				{
+                    Response.ContentType = "application/json";
+                    responseString = JsonConvert.SerializeObject(new { Error = "NotFound" });
+                }
             }
             catch (Exception e)
             {
@@ -131,37 +136,37 @@ namespace iNOPC.Server.Web
             {
                 switch (methodName)
                 {
-                    case "login": return Login(body);
-                    case "logout": return Logout(body);
-                    case "users": return Users();
-                    case "user.create": return UserCreate(body);
-                    case "user.delete": return UserDelete(body);
+                    case "api\\login": return Login(body);
+                    case "api\\logout": return Logout(body);
+                    case "api\\users": return Users();
+                    case "api\\user.create": return UserCreate(body);
+                    case "api\\user.delete": return UserDelete(body);
 
-                    case "tree": return Tree();
+                    case "api\\tree": return Tree();
 
-                    case "opc.dcom": return OpcDcom();
-                    case "opc.clean": return OpcClean();
+                    case "api\\opc.dcom": return OpcDcom();
+                    case "api\\opc.clean": return OpcClean();
 
-                    case "driver": return Driver(body);
-                    case "driver.devices": return DriverDevices(body);
-                    case "driver.logs": return DriverLogs(body);
-                    case "driver.createform": return DriverCreateForm();
-                    case "driver.create": return DriverCreate(body);
-                    case "driver.update": return DriverUpdate(body);
-                    case "driver.delete": return DriverDelete(body);
-                    case "driver.reload": return DriverReload(body);
+                    case "api\\driver": return Driver(body);
+                    case "api\\driver.devices": return DriverDevices(body);
+                    case "api\\driver.logs": return DriverLogs(body);
+                    case "api\\driver.createform": return DriverCreateForm();
+                    case "api\\driver.create": return DriverCreate(body);
+                    case "api\\driver.update": return DriverUpdate(body);
+                    case "api\\driver.delete": return DriverDelete(body);
+                    case "api\\driver.reload": return DriverReload(body);
 
-                    case "device": return Device(body);
-                    case "device.create": return DeviceCreate(body);
-                    case "device.update": return DeviceUpdate(body);
-                    case "device.delete": return DeviceDelete(body);
-                    case "device.fields": return DeviceFields(body);
-                    case "device.logs": return DeviceLogs(body);
-                    case "device.configuration": return DeviceConfiguration(body);
-                    case "device.start": return DeviceStart(body);
-                    case "device.stop": return DeviceStop(body);
+                    case "api\\device": return Device(body);
+                    case "api\\device.create": return DeviceCreate(body);
+                    case "api\\device.update": return DeviceUpdate(body);
+                    case "api\\device.delete": return DeviceDelete(body);
+                    case "api\\device.fields": return DeviceFields(body);
+                    case "api\\device.logs": return DeviceLogs(body);
+                    case "api\\device.configuration": return DeviceConfiguration(body);
+                    case "api\\device.start": return DeviceStart(body);
+                    case "api\\device.stop": return DeviceStop(body);
 
-                    default: return new { Error = "Запрошенный метод не существует", StackTrace = "Web.Controller.Action" };
+                    default: return new { Error = "Запрошенный метод не существует", Method = methodName, Body = body, StackTrace = "Web.Controller.Action" };
                 }
             }
             catch (Exception e)
@@ -471,9 +476,6 @@ namespace iNOPC.Server.Web
 
                     driver.Load();
 
-                    WebSocket.Broadcast("tree");
-                    WebSocket.Broadcast("driver:" + driver.Id);
-
                     return new { driver.Id };
                 }
             }
@@ -505,9 +507,6 @@ namespace iNOPC.Server.Web
                     Program.Configuration.SaveToFile();
                     driver.Load();
 
-                    WebSocket.Broadcast("tree");
-                    WebSocket.Broadcast("driver:" + driver.Id);
-
                     return true;
                 }
             }
@@ -534,9 +533,6 @@ namespace iNOPC.Server.Web
                     Program.Configuration.Drivers.Remove(driver);
                     Program.Configuration.SaveToFile();
 
-                    WebSocket.Broadcast("tree");
-                    WebSocket.Broadcast("driver:" + driver.Id);
-
                     return true;
                 }
             }
@@ -560,9 +556,6 @@ namespace iNOPC.Server.Web
                 if (driver != null)
                 {
                     var reload = driver.Load();
-
-                    WebSocket.Broadcast("tree");
-                    WebSocket.Broadcast("driver:" + driver.Id);
                     return reload;
                 }
             }
@@ -712,9 +705,6 @@ namespace iNOPC.Server.Web
 
                     Program.Configuration.SaveToFile();
 
-                    WebSocket.Broadcast("tree");
-                    WebSocket.Broadcast("driver.devices:" + driver.Id);
-
                     return new { device.Id };
                 }
                 else
@@ -751,9 +741,6 @@ namespace iNOPC.Server.Web
 
                         if (active || device.AutoStart) device.Start();
 
-                        WebSocket.Broadcast("tree");
-                        WebSocket.Broadcast("driver.devices:" + driver.Id);
-
                         return true;
                     }
                 }
@@ -783,9 +770,6 @@ namespace iNOPC.Server.Web
 
                         Program.Configuration.SaveToFile();
 
-                        WebSocket.Broadcast("tree");
-                        WebSocket.Broadcast("driver.devices:" + driver.Id);
-
                         return true;
                     }
                 }
@@ -813,9 +797,6 @@ namespace iNOPC.Server.Web
                     {
                         device.Start();
 
-                        WebSocket.Broadcast("tree");
-                        WebSocket.Broadcast("driver.devices:" + driver.Id);
-
                         return true;
                     }
                 }
@@ -842,9 +823,6 @@ namespace iNOPC.Server.Web
                     if (device != null)
                     {
                         device.Stop();
-
-                        WebSocket.Broadcast("tree");
-                        WebSocket.Broadcast("driver.devices:" + driver.Id);
 
                         return true;
                     }

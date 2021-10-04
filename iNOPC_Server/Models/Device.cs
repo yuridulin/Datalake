@@ -75,9 +75,6 @@ namespace iNOPC.Server.Models
             try
             {
                 Active = InnerDriver.Start(Configuration);
-
-                WebSocket.Broadcast("tree");
-                WebSocket.Broadcast("driver.devices:" + DriverId);
             }
             catch (Exception e)
             {
@@ -98,9 +95,6 @@ namespace iNOPC.Server.Models
                 InnerDriver?.Stop();
 
                 Active = false;
-
-                WebSocket.Broadcast("tree");
-                WebSocket.Broadcast("driver.updated:" + DriverId);
             }
             catch (Exception e)
             {
@@ -126,15 +120,7 @@ namespace iNOPC.Server.Models
                 if (type == LogType.ERROR)
                 {
                     Program.Log("Error: " + text + "\nDriver: " + Name);
-                    WebSocket.Broadcast("tree");
-                    WebSocket.Broadcast("driver.devices:" + DriverId);
                 }
-
-                WebSocket.Log(Id, new {
-                    Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"),
-                    Text = text,
-                    Type = type
-                });
             }
         }
 
@@ -151,8 +137,6 @@ namespace iNOPC.Server.Models
             {
                 OPC.Write(DriverName + '.' + Name + '.' + field.Key, field.Value.Value, field.Value.Quality);
             }
-
-            WebSocket.Broadcast("device.fields:" + Id);
         }
 
         public void Write(string fieldName, object value)

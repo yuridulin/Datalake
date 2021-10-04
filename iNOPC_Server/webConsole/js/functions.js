@@ -1,19 +1,7 @@
-function isArray(obj) {
-	return (Object.prototype.toString.call(obj) === '[object Array]')
-}
-
-function isNode(obj) {
-	return (obj.tagName && typeof obj === 'object')
-}
-
-function isProps(obj) {
-	return (!obj.length && obj.toString() === '[object Object]')
-}
-
-function isPrimitive(obj) {
-	return (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean')
-}
-
+/**
+ * Создание тега html с любым уровнем вложенности (реализация hyperscript)
+ * @param {string} tagNameRaw Наименование html тега
+ */
 function h(tagNameRaw) {
 
 	var className = [], id, tag = ''
@@ -72,6 +60,22 @@ function h(tagNameRaw) {
 		else if (isPrimitive(prop)) {
 			elem.insertAdjacentHTML('beforeend', String(prop))
 		}
+
+		function isArray(obj) {
+			return (Object.prototype.toString.call(obj) === '[object Array]')
+		}
+
+		function isNode(obj) {
+			return (obj.tagName && typeof obj === 'object')
+		}
+
+		function isProps(obj) {
+			return (!obj.length && obj.toString() === '[object Object]')
+		}
+
+		function isPrimitive(obj) {
+			return (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean')
+		}
 	}
 
 	for (var i = 1; i < arguments.length; i++) {
@@ -81,13 +85,17 @@ function h(tagNameRaw) {
 	return elem
 }
 
+/**
+ * Замещение содержимого тега по селектору на переданное в аргументах
+ * @param {string} selector Селектор css
+ */
 function mount(selector) {
 	var el = document.querySelector(selector)
 	if (!el) return console.error('Не найден объект по селектору "' + selector + '"')
 	el.innerHTML = ''
 	for (var i = 1; i < arguments.length; i++) {
 		var x = arguments[i]
-		if (isNode(x)) {
+		if (x.tagName) {
 			el.appendChild(x)
 		} else {
 			el.insertAdjacentHTML('beforeEnd', String(x))
@@ -97,6 +105,11 @@ function mount(selector) {
 	
 }
 
+/**
+ * Считывание/запись параметров через local Storage
+ * @param {string} name
+ * @param {string} value
+ */
 function ls(name, value) {
 	if (value) {
 		localStorage.setItem(name, value)
@@ -106,32 +119,40 @@ function ls(name, value) {
 	}
 }
 
-function cookie(name, value, options) {
-	if (value) {
-		options = options || {};
-		var expires = options.expires;
-		options.SameSite = "Lax"
-		if (typeof expires == "number" && expires) {
-			var d = new Date();
-			d.setTime(d.getTime() + expires * 1000);
-			expires = options.expires = d;
-		}
-		if (expires && expires.toUTCString) options.expires = expires.toUTCString();
-		value = encodeURIComponent(value);
-		var updatedCookie = name + "=" + value;
-		for (var propName in options) {
-			updatedCookie += "; " + propName;
-			var propValue = options[propName];
-			if (propValue !== true) updatedCookie += "=" + propValue;
-		}
-		document.cookie = updatedCookie;
-	}
-	else {
-		var matches = document.cookie.match(new RegExp("(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"));
-		return matches ? decodeURIComponent(matches[1]) : undefined;
-	}
-}
+/**
+ * Обращение к серверу за конкретной информацией с авторизацией каждого запроса
+ * @param {{ method: string, body: object }} parameters Объект с данными, передаваемыми на сервер
+ * @param {(json: object) => void} callback Обработчик, в который передается результат запроса
+ */
+function ask(parameters, callback) {
+	var xhr = new XMLHttpRequest()
+	xhr.open('POST', location.origin + '/' + parameters.method, true)
+	xhr.setRequestHeader('Inopc-Access-Type', accessType)
+	xhr.setRequestHeader('Inopc-Access-Token', ls('Inopc-Access-Token'))
+	xhr.onreadystatechange = function () {
 
-function $(selector) {
-	return document.querySelector(selector)
+		// Ожидание ответа сервера
+		if (xhr.readyState != 4) return
+		if (xhr.status != 200) return console.log('ask err: xhr return ' + xhr.status + ' [' + xhr.statusText + ']')
+
+		// Получение данных авторизации
+		localStorage.setItem('Inopc-Access-Token', xhr.getResponseHeader('Inopc-Access-Token'))
+		accessType = +(xhr.getResponseHeader('Inopc-Access-Type') || '0')
+		login = xhr.getResponseHeader('Inopc-Login')
+		AuthPanel()
+
+		// Получение результата запроса
+		var json = {}
+		try { json = JSON.parse(xhr.responseText) } catch (e) { return console.log('ask err: not json [' + xhr.responseText + ']') }
+
+		if (accessType != ACCESSTYPE.FIRST) {
+			if (json.Error) console.log('Ошибка: ' + json.Error)
+			if (json.Warning) console.log(json.Warning)
+			if (json.Done) console.log(json.Done)
+		}
+
+		if (!callback) return
+		callback.call(null, json)
+	}
+	xhr.send(JSON.stringify(parameters.body || {}))
 }

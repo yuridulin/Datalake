@@ -86,8 +86,6 @@
     <Compile Include="Web\RequestTypes\IdOnly.cs" />
     <Compile Include="Models\AccessRecord.cs" />
     <Compile Include="Web\Session.cs" />
-    <Compile Include="Web\WebSocket.cs" />
-    <Compile Include="Web\WebSocketReceiver.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -131,9 +129,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="webConsole\js\transport.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="webConsole\lib\superfine.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
