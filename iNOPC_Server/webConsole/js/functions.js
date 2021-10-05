@@ -101,8 +101,6 @@ function mount(selector) {
 			el.insertAdjacentHTML('beforeEnd', String(x))
 		}
 	}
-	
-	
 }
 
 /**
@@ -112,6 +110,7 @@ function mount(selector) {
  */
 function ls(name, value) {
 	if (value) {
+		localStorage.removeItem(name)
 		localStorage.setItem(name, value)
 	}
 	else {
@@ -133,6 +132,7 @@ function ask(parameters, callback) {
 
 		// Ожидание ответа сервера
 		if (xhr.readyState != 4) return
+		if (xhr.status == 0) return Offline()
 		if (xhr.status != 200) return console.log('ask err: xhr return ' + xhr.status + ' [' + xhr.statusText + ']')
 
 		// Получение данных авторизации
@@ -146,13 +146,15 @@ function ask(parameters, callback) {
 		try { json = JSON.parse(xhr.responseText) } catch (e) { return console.log('ask err: not json [' + xhr.responseText + ']') }
 
 		if (accessType != ACCESSTYPE.FIRST) {
-			if (json.Error) console.log('Ошибка: ' + json.Error)
-			if (json.Warning) console.log(json.Warning)
+			if (json.Error) return mount('#view', 'Ошибка: ' + json.Error)
+			if (json.Warning) return mount('#view', json.Warning)
 			if (json.Done) console.log(json.Done)
+
+			if (!callback) return
+			callback.call(null, json)
 		}
 
-		if (!callback) return
-		callback.call(null, json)
+		
 	}
 	xhr.send(JSON.stringify(parameters.body || {}))
 }

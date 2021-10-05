@@ -21,6 +21,10 @@ body {
 	background: #ddd;
 }
 
+.panel-el button {
+	margin-left: 1em;
+}
+
 .panel {
 	position: fixed;
 	top: 0;
@@ -57,10 +61,18 @@ body {
 	cursor: pointer;
 	padding: 0.3em;
 	position: relative;
+	color: #000;
+	text-decoration: none;
+	display: block;
 }
 
 	.node > .node-caption:hover {
 		background: #ddd;
+	}
+
+	.node > .node-caption a {
+		color: #000;
+		text-decoration: none;
 	}
 
 .node-body {
