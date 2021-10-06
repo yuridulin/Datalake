@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>iNOPC.Drivers.MODBUS_TCP</RootNamespace>
-    <AssemblyName>MODBUS_TCP</AssemblyName>
+    <AssemblyName>MODBUS_TCP_v1.2</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

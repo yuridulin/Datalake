@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Elemer_IRT5501M1</RootNamespace>
-    <AssemblyName>Elemer_IRT5501M1</AssemblyName>
+    <AssemblyName>Elemer_IRT5501M1_v1.1</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

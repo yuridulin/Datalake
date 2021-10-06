@@ -11,6 +11,8 @@ namespace iNOPC.Drivers.MARK_902
 {
     public class Driver : IDriver
     {
+        public string Version { get; } = typeof(Driver).Assembly.GetName().Version.ToString();
+
         public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public event LogEvent LogEvent;

@@ -10,8 +10,10 @@ using System.Timers;
 namespace iNOPC.Drivers.Elemer_IRT5501M1
 {
 	public class Driver : IDriver
-	{
-		public Dictionary<string, DefField> Fields { get; set; }
+    {
+        public string Version { get; } = typeof(Driver).Assembly.GetName().Version.ToString();
+
+        public Dictionary<string, DefField> Fields { get; set; }
 
 		public event LogEvent LogEvent;
 		public event UpdateEvent UpdateEvent;

@@ -12,6 +12,8 @@ namespace iNOPC.Library
 
         Dictionary<string, DefField> Fields { get; set; }
 
+        string Version { get; }
+
         bool Start(string jsonConfiguration);
 
         void Stop();

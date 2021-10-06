@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>iNOPC.Drivers.SOSNA_002</RootNamespace>
-    <AssemblyName>SOSNA_002</AssemblyName>
+    <AssemblyName>SOSNA_002_v1.2</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

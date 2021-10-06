@@ -12,6 +12,8 @@ namespace iNOPC.Drivers.ECOM_3000
 {
     public class Driver : IDriver
     {
+        public string Version { get; } = typeof(Driver).Assembly.GetName().Version.ToString();
+
         public event LogEvent LogEvent;
 
         public event UpdateEvent UpdateEvent;

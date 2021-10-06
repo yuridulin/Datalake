@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>iNOPC.Drivers.MODBUS_RTU</RootNamespace>
-    <AssemblyName>MODBUS_RTU</AssemblyName>
+    <AssemblyName>MODBUS_RTU_v1.2</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
