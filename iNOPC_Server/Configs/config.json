@@ -1,30 +1,5 @@
 {
-	"Drivers": [
-		{
-			"Name": "test_driver",
-			"Path": "C:\\iNOPC\\\\Drivers\\TestDriver.dll",
-			"Devices": [
-				{
-					"Name": "test_device",
-					"Active": false,
-					"AutoStart": false,
-					"Configuration": "{\"Tick\":\"5000\",\"Fields\":[]}"
-				}
-			]
-		},
-		{
-			"Name": "iec",
-			"Path": "C:\\iNOPC\\\\Drivers\\IEC_104.dll",
-			"Devices": [
-				{
-					"Name": "test",
-					"Active": false,
-					"AutoStart": false,
-					"Configuration": "{\"Host\":\"172.22.32.19\",\"Port\":\"2404\",\"UseInterrogation\":true,\"ConnectionTimeoutT0\":\"15\",\"TimeoutT1\":\"10\",\"TimeoutT2\":\"20\",\"TimeoutT3\":\"30\",\"ReconnectTimeout\":\"10\",\"SyncClockTimeout\":\"60\",\"InterrogationTimeout\":\"30\",\"NamedFields\":[]}"
-				}
-			]
-		}
-	],
+	"Drivers": [],
 	"Access": [],
 	"Version": "1"
 }

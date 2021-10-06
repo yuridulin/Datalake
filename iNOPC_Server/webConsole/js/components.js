@@ -4,12 +4,13 @@ var login = null
 var route = ''
 var currentPage = ''
 
-var reconnectInterval = 0
+var reconnectTimeout = 0
 
 var hash = ''
 
 var routes = {
 	'home': Home,
+	'user': Login,
 	'settings': Settings,
 	'driver': function (args) {
 		return Driver(args[1])
@@ -21,7 +22,9 @@ var routes = {
 }
 
 window.onload = function () {
+	console.log('start checking connection')
 	ask({ method: 'api/check ' }, function () {
+		console.log('check done, go to first navigate')
 		navigate()
 	})
 }
@@ -31,15 +34,17 @@ window.onhashchange = function () {
 }
 
 function navigate() {
-	var _hash = location.hash.replace('#', '')
-	if (_hash != hash) {
-		hash = _hash
+	var new_hash = location.hash.replace('#', '')
+	if (new_hash != hash) {
+		console.log('navigate to ' + new_hash)
+		hash = new_hash
 		var parts = hash.split('/').filter(function (x) { return x != '' })
 		if (routes[parts[0]]) {
 			routes[parts[0]](parts)
 		}
 		Tree()
 	} else if (hash == '') {
+		console.log('navigate to home (default)')
 		go('home')
 		Tree()
 	}
@@ -107,13 +112,14 @@ function Offline() {
 	mount('#auth', '')
 	mount('#tree', '')
 	mount('#view', 'Нет связи с OPC сервером')
-	clearInterval(inverval)
+	clearInterval(deviceInverval)
+	clearTimeout(reconnectTimeout)
 
-	setTimeout(function () {
+	reconnectTimeout = setTimeout(function () {
 		ask({ method: 'api/check' }, function () {
 			navigate()
 		})
-	}, 2000)
+	}, 5000)
 }
 
 function Tree() {
@@ -357,6 +363,7 @@ function DriverCreate() {
 var deviceName
 var deviceAutoStart
 var inverval = 0
+var deviceInverval = 0
 
 function Device(id) {
 
@@ -368,6 +375,8 @@ function Device(id) {
 	if (ls(id + '.logs') == null) {
 		ls(id + '.logs', 'open')
 	}
+
+	ls('device.' + id + '.last', undefined)
 
 	ask({ method: 'api/device', body: { Id: id } }, function (device) {
 		if (!device.Name) return mount('#view', 'Ошибка получения данных с сервера')
@@ -392,9 +401,7 @@ function Device(id) {
 						innerHTML: 'Старт',
 						onclick: function () {
 							ask({ method: 'api/device.start', body: { Id: id } }, function () {
-								inverval = setInterval(function () {
-									DeviceFields(id)
-								}, 1000)
+								Device(id)
 							})
 						}
 					})
@@ -404,8 +411,7 @@ function Device(id) {
 						innerHTML: 'Стоп',
 						onclick: function () {
 							ask({ method: 'api/device.stop', body: { Id: id } }, function () {
-								clearInterval(inverval)
-								DeviceFields(id)
+								Device(id)
 							})
 						}
 					})
@@ -505,12 +511,12 @@ function Device(id) {
 					}),
 					h('table',
 						h('tr',
-							h('th', { style: { width: '10em' }}, 'Дата'),
-							h('th', { style: { width: '7.5em' }}, 'Тип'),
+							h('th', { style: { width: '14em' }}, 'Дата'),
+							h('th', { style: { width: '8em' }}, 'Тип'),
 							h('th', 'Сообщение'),
 						)
 					),
-					h('div#device-logs.sub')
+					h('div#device-logs.sub', h('table'))
 				)
 			),
 
@@ -559,9 +565,9 @@ function Device(id) {
 		DeviceLogs(id)
 		DeviceFields(id)
 
-		clearInterval(inverval)
-		inverval = setInterval(function () {
-			DeviceLogsClean()
+		clearInterval(deviceInverval)
+		deviceInverval = setInterval(function () {
+			DeviceLogs(id)
 			DeviceFields(id)
 		}, 1000)
 	})
@@ -579,17 +585,19 @@ function DeviceConfiguration(id) {
 }
 
 function DeviceLogs(id) {
-	ask({ method: 'api/device.logs', body: { Id: id } }, function (logs) {
-		mount('#device-logs', h('table'))
+	ask({ method: 'api/device.logs', body: { Id: id, Last: ls("device." + id + ".last") } }, function (logs) {
+		if (logs.length == 0) return
+		ls("device." + id + ".last", logs[logs.length - 1].Id)
 		logs.forEach(function (x) {
 			DeviceLog(id, x)
 		})
+		DeviceLogsClean()
 	})
 }
 
 function DeviceLog(id, log) {
-	if (ls(id + '.logs.detailed') == 'false' && log.Type == 1) return
-	if (ls(id + '.logs.warnings') == 'false' && log.Type == 2) return
+	if ((ls(id + '.logs.detailed') == 'false' || ls(id + '.logs.detailed') == null) && log.Type == 1) return
+	if ((ls(id + '.logs.warnings') == 'false' || ls(id + '.logs.warnings') == null) && log.Type == 2) return
 
 	var div = document.getElementById('device-logs')
 	var table = div.querySelector('table')
@@ -599,8 +607,8 @@ function DeviceLog(id, log) {
 
 	table.appendChild(
 		h('tr',
-			h('td', { style: { width: '10em' } }, log.Date),
-			h('td.type' + log.Type, { style: { width: '7.5em' } }, LogTypes[log.Type]),
+			h('td', { style: { width: '14em' } }, log.Date),
+			h('td.type' + log.Type, { style: { width: '8em' } }, LogTypes[log.Type]),
 			h('td', log.Text)
 		)
 	)
@@ -638,7 +646,6 @@ function DeviceFields(id) {
 			)
 		)
 	})
-	
 }
 
 function DeviceSave(id) {
@@ -806,22 +813,18 @@ function UsersTable() {
 function AuthPanel() {
 	mount('#auth',
 		accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST
-			? h('div.panel-el',
+			? h('a.panel-el',
 				{
+					href: '#/user',
 					title: 'Нажмите, чтобы зайти под учётной записью',
-					onclick: function () {
-						Login()
-					}
 				},
 				h('span', 'Вход не выполнен'),
-				h('button', 'Войти', { onclick: Login })
+				h('button', 'Войти')
 			)
-			: h('div.panel-el',
+			: h('a.panel-el',
 				{
+					href: '#/user',
 					title: 'Нажмите, чтобы выйти из учётной записи',
-					onclick: function () {
-						Login()
-					}
 				},
 				h('i.ic.ic-person'),
 				h('span', login)

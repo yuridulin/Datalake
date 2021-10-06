@@ -31,6 +31,8 @@ namespace iNOPC.Server.Models
 
         private IDriver InnerDriver { get; set; } = null;
 
+        public uint LastLogId { get; set; } = 0;
+
 
         // Методы взаимодействия
 
@@ -109,8 +111,10 @@ namespace iNOPC.Server.Models
                 {
                     Logs.RemoveAt(0);
                 }
+
                 Logs.Add(new Log
                 {
+                    Id = ++LastLogId,
                     Date = DateTime.Now,
                     Text = text,
                     Type = type
@@ -120,6 +124,11 @@ namespace iNOPC.Server.Models
                 {
                     Program.Log("Error: " + text + "\nDriver: " + Name);
                 }
+
+                if (LastLogId == uint.MaxValue)
+				{
+                    LastLogId = 0;
+				}
             }
         }
 

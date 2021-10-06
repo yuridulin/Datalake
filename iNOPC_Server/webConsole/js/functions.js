@@ -109,9 +109,11 @@ function mount(selector) {
  * @param {string} value
  */
 function ls(name, value) {
-	if (value) {
+	if (arguments.length == 2) {
 		localStorage.removeItem(name)
-		localStorage.setItem(name, value)
+		if (value !== undefined) {
+			localStorage.setItem(name, value)
+		}
 	}
 	else {
 		return localStorage.getItem(name)
@@ -121,7 +123,7 @@ function ls(name, value) {
 /**
  * Обращение к серверу за конкретной информацией с авторизацией каждого запроса
  * @param {{ method: string, body: object }} parameters Объект с данными, передаваемыми на сервер
- * @param {(json: object) => void} callback Обработчик, в который передается результат запроса
+ * @param { (json: object) => void } callback Обработчик, в который передается результат запроса
  */
 function ask(parameters, callback) {
 	var xhr = new XMLHttpRequest()
@@ -141,20 +143,19 @@ function ask(parameters, callback) {
 		login = xhr.getResponseHeader('Inopc-Login')
 		AuthPanel()
 
+		// Определение необходимости перезагрузки области навигации
+		
+
 		// Получение результата запроса
 		var json = {}
 		try { json = JSON.parse(xhr.responseText) } catch (e) { return console.log('ask err: not json [' + xhr.responseText + ']') }
 
-		if (accessType != ACCESSTYPE.FIRST) {
-			if (json.Error) return mount('#view', 'Ошибка: ' + json.Error)
-			if (json.Warning) return mount('#view', json.Warning)
-			if (json.Done) console.log(json.Done)
+		if (json.Error) return mount('#view', 'Ошибка: ' + json.Error)
+		if (json.Warning) return mount('#view', json.Warning)
+		if (json.Done) console.log(json.Done)
 
-			if (!callback) return
-			callback.call(null, json)
-		}
-
-		
+		if (!callback) return
+		callback.call(null, json)
 	}
 	xhr.send(JSON.stringify(parameters.body || {}))
 }

@@ -21,6 +21,12 @@ body {
 	background: #ddd;
 }
 
+a.panel-el {
+	text-decoration: none;
+	display: block;
+	color: #000;
+}
+
 .panel-el button {
 	margin-left: 1em;
 }

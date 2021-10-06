@@ -4,6 +4,6 @@
     {
         public int Id { get; set; }
 
-        public string Last { get; set; }
+        public uint? Last { get; set; }
     }
 }

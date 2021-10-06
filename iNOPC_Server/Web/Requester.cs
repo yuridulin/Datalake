@@ -3,7 +3,6 @@ using iNOPC.Server.Models;
 using iNOPC.Server.Web.RequestTypes;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -617,23 +616,31 @@ namespace iNOPC.Server.Web
                 return new { Warning = "Нет доступа" };
             }
 
-            var data = JsonConvert.DeserializeObject<IdOnly>(body);
+            var data = JsonConvert.DeserializeObject<DeviceLogs>(body);
 
             foreach (var driver in Program.Configuration.Drivers)
             {
                 var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
                 if (device != null)
                 {
-                    List<Log> logs;
+                    Log[] logs;
 
                     lock (device.Logs)
                     {
-                        logs = device.Logs.ToList();
+                        logs = device.Logs
+                            .ToArray();
                     }
+
+                    if (data.Last.HasValue)
+					{
+                        var i = Array.LastIndexOf(logs.Select(x => x.Id).ToArray(), data.Last.Value);
+                        logs = logs.Skip(i + 1).ToArray();
+					}
 
                     return logs.Select(x => new
                     {
-                        Date = x.Date.ToString("dd.MM.yyyy HH:mm:ss"),
+                        x.Id,
+                        Date = x.Date.ToString("dd.MM.yyyy HH:mm:ss.fff"),
                         x.Text,
                         x.Type
                     });
