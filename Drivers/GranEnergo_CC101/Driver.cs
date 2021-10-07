@@ -34,7 +34,6 @@ namespace GranEnergo_CC101
 			try
 			{
 				Fields.Clear();
-				Fields.Add("Time", new DefField { Name = "Time", Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 });
 			}
 			catch
 			{
@@ -139,11 +138,38 @@ namespace GranEnergo_CC101
 			catch (Exception e)
 			{
 				LogEvent("Текущие значения: " + e.Message, LogType.ERROR);
+				Bad("Current.P");
+				Bad("Current.Q");
+				Bad("Current.U");
+				Bad("Current.I");
+				Bad("Current.kP");
+				Bad("Current.F");
 				IsExchangeRunning = false;
 				return;
 			}
 
-			// получение часовых
+			// получение данных за сутки
+			try
+			{
+				byte[] command = new byte[] { 0x00, 0x03, 0x2A, 0x00, 0x00, 0x00, 0x03, 0x4C };
+				stream.Write(command, 0, command.Length);
+				LogEvent("TX: " + Helpers.BytesToString(command), LogType.DETAILED);
+
+				byte[] buffer = new byte[22];
+				stream.Read(buffer, 0, buffer.Length);
+				LogEvent("RX: " + Helpers.BytesToString(buffer), LogType.DETAILED);
+
+				Value("LastDay.E", 7.5 * BitConverter.ToInt16(new byte[] { buffer[4], buffer[5] }, 0));
+			}
+			catch (Exception e)
+			{
+				LogEvent("Суточные значения: " + e.Message, LogType.ERROR);
+				Bad("LastDay.E");
+				IsExchangeRunning = false;
+				return;
+			}
+
+			// получение данных за месяц
 			try
 			{
 
@@ -151,18 +177,6 @@ namespace GranEnergo_CC101
 			catch (Exception e)
 			{
 				LogEvent("Часовые значения: " + e.Message, LogType.ERROR);
-				IsExchangeRunning = false;
-				return;
-			}
-
-			// получение суточных
-			try
-			{
-
-			}
-			catch (Exception e)
-			{
-				LogEvent("Суточные значения: " + e.Message, LogType.ERROR);
 				IsExchangeRunning = false;
 				return;
 			}
@@ -188,6 +202,20 @@ namespace GranEnergo_CC101
 				else
 				{
 					Fields.Add(name, new DefField { Name = name, Quality = 192, Value = value });
+				}
+			}
+		}
+
+		void Bad(string name)
+		{
+			lock (Fields)
+			{
+				foreach (var kv in Fields)
+				{
+					if (kv.Key != "Name")
+					{
+						kv.Value.Quality = 0;
+					}
 				}
 			}
 		}
