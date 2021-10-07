@@ -3,6 +3,7 @@ using iNOPC.Server.Models;
 using iNOPC.Server.Web.RequestTypes;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -11,8 +12,8 @@ using System.Text;
 namespace iNOPC.Server.Web
 {
 	public class Requester
-	{
-		AccessType AccessType { get; set; } = AccessType.GUEST;
+    {
+        AccessType AccessType { get; set; } = AccessType.GUEST;
 
         HttpListenerRequest Request { get; set; }
 
@@ -20,7 +21,7 @@ namespace iNOPC.Server.Web
 
 
         public void CreateResponse(HttpListenerContext context)
-		{
+        {
             Request = context.Request;
             Response = context.Response;
 
@@ -128,7 +129,7 @@ namespace iNOPC.Server.Web
         {
             try
             {
-                switch (methodName.Replace("api\\", ""))
+                switch (methodName)
                 {
                     case "login": return Login(body);
                     case "logout": return Logout(body);
@@ -160,9 +161,7 @@ namespace iNOPC.Server.Web
                     case "device.start": return DeviceStart(body);
                     case "device.stop": return DeviceStop(body);
 
-                    case "check": return new { Check = true };
-
-                    default: return new { Error = "Запрошенный метод не существует", StackTrace = "Web.Controller.Action", methodName, body };
+                    default: return new { Error = "Запрошенный метод не существует", StackTrace = "Web.Controller.Action" };
                 }
             }
             catch (Exception e)
@@ -203,8 +202,12 @@ namespace iNOPC.Server.Web
                 }
 
                 // Записываем в куки клиента его сессионный токен
-                Response.Headers.Remove("Inopc-Access-Token");
                 Response.Headers.Add("Inopc-Access-Token", session.Token);
+
+                // Авторизовываем, чтобы после перезагрузки вебки клиент сразу вошел
+                // честно говоря лишняя деталь на случай, когда вместо полного релоада будут перегружаться конкретные компоненты вебки
+                //response.Headers.Add("Inopc-Login", user.Login);
+                //response.Headers.Add("Inopc-Access-Type", ((int)session.AccessType).ToString());
 
                 return new { Done = "Вход успешно выполнен" };
             }
@@ -229,9 +232,9 @@ namespace iNOPC.Server.Web
         object Users()
         {
             if (AccessType != AccessType.FULL)
-			{
+            {
                 return new { Warning = "Нет доступа" };
-			}
+            }
 
             lock (Program.Configuration)
             {
@@ -468,6 +471,9 @@ namespace iNOPC.Server.Web
 
                     driver.Load();
 
+                    WebSocket.Broadcast("tree");
+                    WebSocket.Broadcast("driver:" + driver.Id);
+
                     return new { driver.Id };
                 }
             }
@@ -492,12 +498,15 @@ namespace iNOPC.Server.Web
                     driver.Path = Program.Base + @"\Drivers\" + data.Path + ".dll";
 
                     foreach (var device in driver.Devices)
-					{
+                    {
                         device.DriverName = data.Name;
-					}
+                    }
 
                     Program.Configuration.SaveToFile();
                     driver.Load();
+
+                    WebSocket.Broadcast("tree");
+                    WebSocket.Broadcast("driver:" + driver.Id);
 
                     return true;
                 }
@@ -525,6 +534,9 @@ namespace iNOPC.Server.Web
                     Program.Configuration.Drivers.Remove(driver);
                     Program.Configuration.SaveToFile();
 
+                    WebSocket.Broadcast("tree");
+                    WebSocket.Broadcast("driver:" + driver.Id);
+
                     return true;
                 }
             }
@@ -548,6 +560,9 @@ namespace iNOPC.Server.Web
                 if (driver != null)
                 {
                     var reload = driver.Load();
+
+                    WebSocket.Broadcast("tree");
+                    WebSocket.Broadcast("driver:" + driver.Id);
                     return reload;
                 }
             }
@@ -616,31 +631,23 @@ namespace iNOPC.Server.Web
                 return new { Warning = "Нет доступа" };
             }
 
-            var data = JsonConvert.DeserializeObject<DeviceLogs>(body);
+            var data = JsonConvert.DeserializeObject<IdOnly>(body);
 
             foreach (var driver in Program.Configuration.Drivers)
             {
                 var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
                 if (device != null)
                 {
-                    Log[] logs;
+                    List<Log> logs;
 
                     lock (device.Logs)
                     {
-                        logs = device.Logs
-                            .ToArray();
+                        logs = device.Logs.ToList();
                     }
-
-                    if (data.Last.HasValue)
-					{
-                        var i = Array.LastIndexOf(logs.Select(x => x.Id).ToArray(), data.Last.Value);
-                        logs = logs.Skip(i + 1).ToArray();
-					}
 
                     return logs.Select(x => new
                     {
-                        x.Id,
-                        Date = x.Date.ToString("dd.MM.yyyy HH:mm:ss.fff"),
+                        Date = x.Date.ToString("dd.MM.yyyy HH:mm:ss"),
                         x.Text,
                         x.Type
                     });
@@ -653,7 +660,7 @@ namespace iNOPC.Server.Web
         object DeviceConfiguration(string body)
         {
             if (AccessType != AccessType.WRITE && AccessType != AccessType.FULL)
-			{
+            {
                 return new { Warning = "Нет доступа" };
             }
 
@@ -705,6 +712,9 @@ namespace iNOPC.Server.Web
 
                     Program.Configuration.SaveToFile();
 
+                    WebSocket.Broadcast("tree");
+                    WebSocket.Broadcast("driver.devices:" + driver.Id);
+
                     return new { device.Id };
                 }
                 else
@@ -741,6 +751,9 @@ namespace iNOPC.Server.Web
 
                         if (active || device.AutoStart) device.Start();
 
+                        WebSocket.Broadcast("tree");
+                        WebSocket.Broadcast("driver.devices:" + driver.Id);
+
                         return true;
                     }
                 }
@@ -770,6 +783,9 @@ namespace iNOPC.Server.Web
 
                         Program.Configuration.SaveToFile();
 
+                        WebSocket.Broadcast("tree");
+                        WebSocket.Broadcast("driver.devices:" + driver.Id);
+
                         return true;
                     }
                 }
@@ -797,6 +813,9 @@ namespace iNOPC.Server.Web
                     {
                         device.Start();
 
+                        WebSocket.Broadcast("tree");
+                        WebSocket.Broadcast("driver.devices:" + driver.Id);
+
                         return true;
                     }
                 }
@@ -823,6 +842,9 @@ namespace iNOPC.Server.Web
                     if (device != null)
                     {
                         device.Stop();
+
+                        WebSocket.Broadcast("tree");
+                        WebSocket.Broadcast("driver.devices:" + driver.Id);
 
                         return true;
                     }

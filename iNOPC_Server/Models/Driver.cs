@@ -1,14 +1,15 @@
-﻿using iNOPC.Library;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using iNOPC.Server.Web;
+using iNOPC.Library;
+using Newtonsoft.Json;
 
 namespace iNOPC.Server.Models
 {
-	public class Driver
+    public class Driver
     {
         // Параметры конфигурации
 
@@ -84,6 +85,7 @@ namespace iNOPC.Server.Models
                 }
 
                 // завершаем перезагрузку драйвера
+                Update();
                 return true;
             }
             catch (Exception e)
@@ -91,6 +93,13 @@ namespace iNOPC.Server.Models
                 Log(e.Message, LogType.ERROR);
                 return false;
             }
+        }
+
+        public void Update()
+        {
+            WebSocket.Broadcast("tree");
+            WebSocket.Broadcast("driver.devices:" + Id);
+            WebSocket.Broadcast("driver.logs:" + Id);
         }
 
         public void Log(string text, LogType type = LogType.REGULAR)
@@ -110,7 +119,10 @@ namespace iNOPC.Server.Models
             if (type == LogType.ERROR)
             {
                 Program.Log("Error: " + text + "\nDriver: " + Name);
+                WebSocket.Broadcast("tree");
             }
+
+            WebSocket.Broadcast("driver.logs:" + Id);
         }
     }
 }

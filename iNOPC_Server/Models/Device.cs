@@ -1,4 +1,5 @@
 ﻿using iNOPC.Library;
+using iNOPC.Server.Web;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,7 +7,7 @@ using System.Linq;
 
 namespace iNOPC.Server.Models
 {
-	public class Device
+    public class Device
     {
         // Параметры конфигурации
 
@@ -30,8 +31,6 @@ namespace iNOPC.Server.Models
         public List<Log> Logs { get; set; } = new List<Log>();
 
         private IDriver InnerDriver { get; set; } = null;
-
-        public uint LastLogId { get; set; } = 0;
 
 
         // Методы взаимодействия
@@ -76,6 +75,9 @@ namespace iNOPC.Server.Models
             try
             {
                 Active = InnerDriver.Start(Configuration);
+
+                WebSocket.Broadcast("tree");
+                WebSocket.Broadcast("driver.devices:" + DriverId);
             }
             catch (Exception e)
             {
@@ -96,6 +98,9 @@ namespace iNOPC.Server.Models
                 InnerDriver?.Stop();
 
                 Active = false;
+
+                WebSocket.Broadcast("tree");
+                WebSocket.Broadcast("driver.updated:" + DriverId);
             }
             catch (Exception e)
             {
@@ -111,10 +116,8 @@ namespace iNOPC.Server.Models
                 {
                     Logs.RemoveAt(0);
                 }
-
                 Logs.Add(new Log
                 {
-                    Id = ++LastLogId,
                     Date = DateTime.Now,
                     Text = text,
                     Type = type
@@ -123,12 +126,16 @@ namespace iNOPC.Server.Models
                 if (type == LogType.ERROR)
                 {
                     Program.Log("Error: " + text + "\nDriver: " + Name);
+                    WebSocket.Broadcast("tree");
+                    WebSocket.Broadcast("driver.devices:" + DriverId);
                 }
 
-                if (LastLogId == uint.MaxValue)
-				{
-                    LastLogId = 0;
-				}
+                WebSocket.Log(Id, new
+                {
+                    Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"),
+                    Text = text,
+                    Type = type
+                });
             }
         }
 
@@ -145,13 +152,15 @@ namespace iNOPC.Server.Models
             {
                 OPC.Write(DriverName + '.' + Name + '.' + field.Key, field.Value.Value, field.Value.Quality);
             }
+
+            WebSocket.Broadcast("device.fields:" + Id);
         }
 
         public void Write(string fieldName, object value)
         {
             if (!Active) return;
             if (InnerDriver == null) return;
-            
+
             InnerDriver.Write(fieldName, value);
         }
 

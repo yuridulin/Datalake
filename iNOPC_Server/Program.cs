@@ -56,6 +56,7 @@ namespace iNOPC.Server
         {
             // Стартуем необходимые сервисы
             Task.Run(Http.Start);
+            WebSocket.Start();
             OPC.StartServer();
 
             // Загружаем конфиг
@@ -82,6 +83,7 @@ namespace iNOPC.Server
             OPC.UninitWTOPCsvr();
 
             // Глушим вебку
+            WebSocket.Stop();
             Http.Stop();
 
             Log("Сервер остановлен");

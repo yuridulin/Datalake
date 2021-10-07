@@ -4,55 +4,6 @@ var login = null
 var route = ''
 var currentPage = ''
 
-var reconnectTimeout = 0
-
-var hash = ''
-
-var routes = {
-	'home': Home,
-	'user': Login,
-	'settings': Settings,
-	'driver': function (args) {
-		return Driver(args[1])
-	},
-	'device': function (args) {
-		return Device(args[1])
-	},
-	'createdriver': DriverCreate
-}
-
-window.onload = function () {
-	console.log('start checking connection')
-	ask({ method: 'api/check ' }, function () {
-		console.log('check done, go to first navigate')
-		navigate()
-	})
-}
-
-window.onhashchange = function () {
-	navigate()
-}
-
-function navigate() {
-	var new_hash = location.hash.replace('#', '')
-	if (new_hash != hash) {
-		console.log('navigate to ' + new_hash)
-		hash = new_hash
-		var parts = hash.split('/').filter(function (x) { return x != '' })
-		if (routes[parts[0]]) {
-			routes[parts[0]](parts)
-		}
-		Tree()
-	} else if (hash == '') {
-		console.log('navigate to home (default)')
-		go('home')
-		Tree()
-	}
-}
-
-function go(route) {
-	location.hash = '#/' + route
-}
 
 var LogTypes = {
 	0: 'Информация',
@@ -62,15 +13,24 @@ var LogTypes = {
 }
 
 function Home() {
-	// первый вход - перенаправление на страницу настроек
-	if (accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST) return Login()
 
-	ask({ method: 'api/tree' }, function (json) {
+	if (currentPage == 'first' || currentPage == 'login') return
+	mount('#view', 'подключаемся...')
+	ID = 0
+
+	ask({ method: 'tree' }, function (json) {
+
+		// первый вход - перенаправление на страницу настроек
+		if (accessType == ACCESSTYPE.FIRST) return First()
+
+		if (accessType == ACCESSTYPE.GUEST) return Login()
+
+		BuildTree(json)
 		mount('#view',
 			h('table.datatable',
 				h('thead',
 					h('tr',
-						h('th', { style: { width: '15em' }}, 'Драйвер'),
+						h('th', { style: { width: '15em' } }, 'Драйвер'),
 						h('th', 'Устройство')
 					)
 				),
@@ -88,7 +48,7 @@ function Home() {
 									h('i.ic.ic-' + (device.IsActive ? 'play' : 'pause'), AUTH() ? {
 										title: 'Нажмите для ' + (device.IsActive ? 'завершения' : 'запуска') + ' опроса данных',
 										onclick: function () {
-											ask({ method: 'api/device.' + (device.IsActive ? 'stop' : 'start'), body: { Id: device.Id } }, Home)
+											ask({ method: 'device.' + (device.IsActive ? 'stop' : 'start'), body: { Id: device.Id } }, Home)
 										}
 									} : {}),
 									h('span', {
@@ -109,97 +69,121 @@ function Home() {
 }
 
 function Offline() {
-	mount('#auth', '')
+	ID = 0
 	mount('#tree', '')
 	mount('#view', 'Нет связи с OPC сервером')
-	clearInterval(deviceInverval)
-	clearTimeout(reconnectTimeout)
-
-	reconnectTimeout = setTimeout(function () {
-		ask({ method: 'api/check' }, function () {
-			navigate()
-		})
-	}, 5000)
+	clearInterval(timeout)
 }
 
 function Tree() {
 	if (accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST) return
-
-	ask({ method: 'api/tree' }, function (json) {
-		mount('#tree', h('div',
-			accessType == ACCESSTYPE.FULL ?
-				h('div.node',
-					h('a.node-caption',
-						{
-							href: '#/settings/',
-							title: 'Нажмите, чтобы перейти к настройке сервера'
-						},
-						h('i.ic.ic-menu'),
-						h('span', 'Настройки')
-					)
-				) : '',
-
-			accessType == ACCESSTYPE.READ || AUTH() ?
-				json.map(function (driver) {
-					return h('div.node' + (ls(driver.Id) == 'open' ? '.open' : ''),
-						h('div.node-caption',
-							h('i.ic.ic-expand-' + (ls(driver.Id) == 'open' ? 'less' : 'more'), {
-								onclick: function () {
-									if (this.className.indexOf('less') > -1) {
-										ls(driver.Id, 'close')
-										this.className = 'ic ic-expand-more'
-										this.parentNode.parentNode.className = 'node'
-									}
-									else {
-										ls(driver.Id, 'open')
-										this.className = 'ic ic-expand-less'
-										this.parentNode.parentNode.className = 'node open'
-									}
-								}
-							}),
-							h('a', { href: '#/driver/' + driver.Id }, driver.Name, (driver.HasError ? h('i.ic.ic-warning.ic-inline') : '')),
-						),
-						h('div.node-body',
-							driver.Devices.map(function (device) {
-								return h('div.node',
-									h('div.node-caption',
-										h('i.ic.' + (device.IsActive ? 'ic-play' : 'ic-pause'), AUTH() ? {
-											onclick: function () {
-												if (device.IsActive) ask({ method: 'api/device.stop', body: { Id: device.Id } })
-												else ask({ method: 'api/device.start', body: { Id: device.Id } })
-											}
-										} : {}),
-										h('a', { href: '#/device/' + device.Id }, device.Name, (device.HasError ? h('i.ic.ic-warning.ic-inline') : ''))
-									)
-								)
-							})
-						)
-					)
-				})
-				: '',
-
-			AUTH() ? h('div.node',
-				h('div.node-caption',
-					h('i.ic.ic-plus'),
-					h('a', {
-						innerHTML: 'Добавить драйвер',
-						href: '#/createdriver'
-					})
-				)
-			) : ''
-		))
+	ask({ method: 'tree' }, function (json) {
+		BuildTree(json)
 	})
+}
+
+function BuildTree(json) {
+	mount('#tree', h('div',
+		accessType == ACCESSTYPE.FULL ?
+			h('div.node', { route: 'settings' },
+				h('div.node-caption',
+					{
+						title: 'Нажмите, чтобы перейти к настройке сервера',
+						onclick: function () {
+							TreeSetActive('settings')
+							Settings()
+						}
+					},
+					h('i.ic.ic-menu'),
+					h('span', 'Настройки')
+				)
+			) : '',
+
+		accessType == ACCESSTYPE.READ || AUTH() ?
+			json.map(function (driver) {
+				return h('div.node' + (ls(driver.Id) == 'open' ? '.open' : ''), { route: 'driver|' + driver.Id },
+					h('div.node-caption',
+						h('i.ic.ic-expand-' + (ls(driver.Id) == 'open' ? 'less' : 'more'), {
+							onclick: function () {
+								if (this.className.indexOf('less') > -1) {
+									ls(driver.Id, 'close')
+									this.className = 'ic ic-expand-more'
+									this.parentNode.parentNode.className = 'node'
+								}
+								else {
+									ls(driver.Id, 'open')
+									this.className = 'ic ic-expand-less'
+									this.parentNode.parentNode.className = 'node open'
+								}
+							}
+						}),
+						h('span', driver.Name, (driver.HasError ? h('i.ic.ic-warning.ic-inline') : ''), {
+							onclick: function () {
+								TreeSetActive('driver|' + driver.Id)
+								Driver(driver.Id)
+							}
+						}),
+					),
+					h('div.node-body',
+						driver.Devices.map(function (device) {
+							return h('div.node', { route: 'device|' + device.Id },
+								h('div.node-caption',
+									h('i.ic.' + (device.IsActive ? 'ic-play' : 'ic-pause'), AUTH() ? {
+										onclick: function () {
+											if (device.IsActive) ask({ method: 'device.stop', body: { Id: device.Id } })
+											else ask({ method: 'device.start', body: { Id: device.Id } })
+										}
+									} : {}),
+									h('span', device.Name, (device.HasError ? h('i.ic.ic-warning.ic-inline') : ''), {
+										onclick: function () {
+											TreeSetActive('device|' + device.Id)
+											Device(device.Id)
+										}
+									})
+								)
+							)
+						})
+					)
+				)
+			})
+			: '',
+
+		AUTH() ? h('div.node', { route: 'driver-create' },
+			h('div.node-caption',
+				h('i.ic.ic-plus'),
+				h('span', {
+					innerHTML: 'Добавить драйвер',
+					onclick: function () {
+						TreeSetActive('driver-create')
+						DriverCreate()
+					}
+				})
+			)
+		) : ''
+	))
+
+	TreeSetActive(route)
+}
+
+function TreeSetActive(r) {
+
+	var old = document.querySelector('.active')
+	if (old) old.classList.remove('active')
+
+	route = r
+	var el = document.querySelector('[route="' + r + '"]')
+	if (el) el.classList.add('active')
 }
 
 
 function Driver(id) {
-	clearInterval(inverval)
+	clearInterval(timeout)
+	mount('#view', 'выполняется запрос...')
 	ID = id
 
-	ask({ method: 'api/driver', body: { Id: id } }, function (driver) {
-		if (driver.Warning) return mount('#view', driver.Warning)
+	ask({ method: 'driver', body: { Id: id } }, function (driver) {
 		if (!driver.Name) return mount('#view', 'Ошибка получения данных с сервера')
-		
+
 		var name, path
 		mount('#view',
 			h('div.container',
@@ -224,7 +208,7 @@ function Driver(id) {
 					? h('button', {
 						innerHTML: 'Перезагрузить',
 						onclick: function () {
-							ask({ method: 'api/driver.reload', body: { Id: id } })
+							ask({ method: 'driver.reload', body: { Id: id } })
 						}
 					})
 					: '',
@@ -232,7 +216,7 @@ function Driver(id) {
 					? h('button', {
 						innerHTML: 'Сохранить',
 						onclick: function () {
-							ask({ method: 'api/driver.update', body: { Id: id, Name: name.value, Path: path.value } })
+							ask({ method: 'driver.update', body: { Id: id, Name: name.value, Path: path.value } })
 						}
 					})
 					: '',
@@ -241,7 +225,7 @@ function Driver(id) {
 						innerHTML: 'Удалить',
 						onclick: function () {
 							if (!confirm('Драйвер будет удален из конфигурации без возможности восстановления. Продолжить?')) return
-							ask({ method: 'api/driver.delete', body: { Id: id } }, Home)
+							ask({ method: 'driver.delete', body: { Id: id } }, Home)
 						}
 					})
 					: ''
@@ -251,8 +235,8 @@ function Driver(id) {
 				h('div.container-caption', 'Логи'),
 				h('table',
 					h('tr',
-						h('th', { style: { width: '10em' }}, 'Дата'),
-						h('th', { style: { width: '7.5em' }}, 'Тип'),
+						h('th', { style: { width: '10em' } }, 'Дата'),
+						h('th', { style: { width: '7.5em' } }, 'Тип'),
 						h('th', 'Сообщение'),
 					)
 				),
@@ -270,7 +254,7 @@ function Driver(id) {
 }
 
 function DriverLogs(id) {
-	ask({ method: 'api/driver.logs', body: { Id: id } }, function (logs) {
+	ask({ method: 'driver.logs', body: { Id: id } }, function (logs) {
 		mount('#driver-logs',
 			h('table', logs
 				.map(function (x) {
@@ -282,23 +266,23 @@ function DriverLogs(id) {
 				})
 			)
 		)
-    })
+	})
 }
 
 function DriverDevices(id) {
-	ask({ method: 'api/driver.devices', body: { Id: id } }, function (devices) {
+	ask({ method: 'driver.devices', body: { Id: id } }, function (devices) {
 		mount('#driver-devices',
 			h('div.devices', devices.map(function (device) {
 				return h('div',
 					h('i.ic.ic-' + (device.IsActive ? 'play' : 'pause'), AUTH() ? {
 						onclick: function () {
 							if (!device.IsActive) {
-								ask({ method: 'api/device.start', body: { Id: device.Id } })
+								ask({ method: 'device.start', body: { Id: device.Id } })
 							} else {
-								ask({ method: 'api/device.stop', body: { Id: device.Id } })
+								ask({ method: 'device.stop', body: { Id: device.Id } })
 							}
 						}
-					} : { }),
+					} : {}),
 					h('span', {
 						innerHTML: device.Name,
 						onclick: function () {
@@ -310,7 +294,7 @@ function DriverDevices(id) {
 			AUTH() ? h('button', {
 				innerHTML: 'Добавить устройство',
 				onclick: function () {
-					ask({ method: 'api/device.create', body: { Id: id } }, function () {
+					ask({ method: 'device.create', body: { Id: id } }, function () {
 						DriverDevices(id)
 					})
 				}
@@ -320,10 +304,10 @@ function DriverDevices(id) {
 }
 
 function DriverCreate() {
-	clearInterval(inverval)
+	clearInterval(timeout)
 	if (!AUTH()) return
 
-	ask({ method: 'api/driver.createform' }, function (data) {
+	ask({ method: 'driver.createform' }, function (data) {
 		ID = 0
 		var name, path
 		mount('#view',
@@ -344,7 +328,7 @@ function DriverCreate() {
 					h('button', {
 						innerHTML: 'Добавить',
 						onclick: function () {
-							ask({ method: 'api/driver.create', body: { Name: name.value, Path: path.value } }, function (data) {
+							ask({ method: 'driver.create', body: { Name: name.value, Path: path.value } }, function (data) {
 								if (data.Error) alert(data.Error)
 								else if (data.Id) Driver(data.Id);
 							});
@@ -362,8 +346,7 @@ function DriverCreate() {
 
 var deviceName
 var deviceAutoStart
-var inverval = 0
-var deviceInverval = 0
+var timeout = 0
 
 function Device(id) {
 
@@ -376,11 +359,10 @@ function Device(id) {
 		ls(id + '.logs', 'open')
 	}
 
-	ls('device.' + id + '.last', undefined)
-
-	ask({ method: 'api/device', body: { Id: id } }, function (device) {
+	mount('#view', 'выполняется запрос...')
+	ask({ method: 'device', body: { Id: id } }, function (device) {
 		if (!device.Name) return mount('#view', 'Ошибка получения данных с сервера')
-		
+
 		mount('#view',
 			h('div.container',
 				h('span', 'Имя'),
@@ -400,8 +382,10 @@ function Device(id) {
 					? h('button', {
 						innerHTML: 'Старт',
 						onclick: function () {
-							ask({ method: 'api/device.start', body: { Id: id } }, function () {
-								Device(id)
+							ask({ method: 'device.start', body: { Id: id } }, function () {
+								timeout = setInterval(function () {
+									DeviceFields(id)
+								}, 1000)
 							})
 						}
 					})
@@ -410,8 +394,9 @@ function Device(id) {
 					? h('button', {
 						innerHTML: 'Стоп',
 						onclick: function () {
-							ask({ method: 'api/device.stop', body: { Id: id } }, function () {
-								Device(id)
+							ask({ method: 'device.stop', body: { Id: id } }, function () {
+								clearInterval(timeout)
+								DeviceFields(id)
 							})
 						}
 					})
@@ -429,7 +414,7 @@ function Device(id) {
 						innerHTML: 'Удалить',
 						onclick: function () {
 							if (!confirm('Устройство будет удалено из конфигурации без возможности восстановления. Продолжить?')) return
-							ask({ method: 'api/device.delete', body: { Id: id } }, Home)
+							ask({ method: 'device.delete', body: { Id: id } }, Home)
 						}
 					})
 					: ''
@@ -484,7 +469,7 @@ function Device(id) {
 						}
 					},
 					h('label',
-						logsDetailed = h('input', { 
+						logsDetailed = h('input', {
 							type: 'checkbox',
 							onchange: function () {
 								ls(id + '.logs.detailed', this.checked ? 'true' : 'false')
@@ -494,7 +479,7 @@ function Device(id) {
 						'детали'
 					),
 					h('label',
-						logsWarnings = h('input', { 
+						logsWarnings = h('input', {
 							type: 'checkbox',
 							onchange: function () {
 								ls(id + '.logs.warnings', this.checked ? 'true' : 'false')
@@ -507,16 +492,16 @@ function Device(id) {
 						innerHTML: 'Очистить',
 						onclick: function () {
 							mount('#device-logs', h('table'))
-                        }
+						}
 					}),
 					h('table',
 						h('tr',
-							h('th', { style: { width: '14em' }}, 'Дата'),
-							h('th', { style: { width: '8em' }}, 'Тип'),
+							h('th', { style: { width: '10em' } }, 'Дата'),
+							h('th', { style: { width: '7.5em' } }, 'Тип'),
 							h('th', 'Сообщение'),
 						)
 					),
-					h('div#device-logs.sub', h('table'))
+					h('div#device-logs.sub')
 				)
 			),
 
@@ -544,8 +529,8 @@ function Device(id) {
 					},
 					h('table',
 						h('tr',
-							h('th', { style: { width: '12em' }}, 'Параметр'),
-							h('th', { style: { width: '18em' }}, 'Значение'),
+							h('th', { style: { width: '12em' } }, 'Параметр'),
+							h('th', { style: { width: '18em' } }, 'Значение'),
 							h('th', 'Качество'),
 						)
 					),
@@ -565,9 +550,9 @@ function Device(id) {
 		DeviceLogs(id)
 		DeviceFields(id)
 
-		clearInterval(deviceInverval)
-		deviceInverval = setInterval(function () {
-			DeviceLogs(id)
+		clearInterval(timeout)
+		timeout = setInterval(function () {
+			DeviceLogsClean()
 			DeviceFields(id)
 		}, 1000)
 	})
@@ -575,29 +560,27 @@ function Device(id) {
 
 function DeviceConfiguration(id) {
 	if (!AUTH()) return
-	ask({ method: 'api/device.configuration', body: { Id: id } }, function (page) {
+	ask({ method: 'device.configuration', body: { Id: id } }, function (page) {
 		if (!AUTH()) return
 		mount('#device-configuration', h('div.form', page))
-		document.getElementById('device-configuration').querySelectorAll('script').forEach(function (el) {
+		$('#device-configuration').querySelectorAll('script').forEach(function (el) {
 			(1, eval)(el.innerHTML)
 		})
 	})
 }
 
 function DeviceLogs(id) {
-	ask({ method: 'api/device.logs', body: { Id: id, Last: ls("device." + id + ".last") } }, function (logs) {
-		if (logs.length == 0) return
-		ls("device." + id + ".last", logs[logs.length - 1].Id)
+	ask({ method: 'device.logs', body: { Id: id } }, function (logs) {
+		mount('#device-logs', h('table'))
 		logs.forEach(function (x) {
 			DeviceLog(id, x)
 		})
-		DeviceLogsClean()
 	})
 }
 
 function DeviceLog(id, log) {
-	if ((ls(id + '.logs.detailed') == 'false' || ls(id + '.logs.detailed') == null) && log.Type == 1) return
-	if ((ls(id + '.logs.warnings') == 'false' || ls(id + '.logs.warnings') == null) && log.Type == 2) return
+	if (ls(id + '.logs.detailed') == 'false' && log.Type == 1) return
+	if (ls(id + '.logs.warnings') == 'false' && log.Type == 2) return
 
 	var div = document.getElementById('device-logs')
 	var table = div.querySelector('table')
@@ -607,8 +590,8 @@ function DeviceLog(id, log) {
 
 	table.appendChild(
 		h('tr',
-			h('td', { style: { width: '14em' } }, log.Date),
-			h('td.type' + log.Type, { style: { width: '8em' } }, LogTypes[log.Type]),
+			h('td', { style: { width: '10em' } }, log.Date),
+			h('td.type' + log.Type, { style: { width: '7.5em' } }, LogTypes[log.Type]),
 			h('td', log.Text)
 		)
 	)
@@ -632,26 +615,27 @@ function DeviceLogsClean() {
 }
 
 function DeviceFields(id) {
-	ask({ method: 'api/device.fields', body: { Id: id } }, function (fields) {
+	ask({ method: 'device.fields', body: { Id: id } }, function (fields) {
 		if (ID != id) return
-		mount('#device-fields', 
+		mount('#device-fields',
 			h('table',
 				Object.keys(fields).map(function (key) {
 					return h('tr',
-						h('td', { style: { width: '12em' }}, key),
-						h('td', { style: { width: '18em' }}, fields[key].Value),
+						h('td', { style: { width: '12em' } }, key),
+						h('td', { style: { width: '18em' } }, fields[key].Value),
 						h('td', fields[key].Quality)
 					)
 				})
 			)
 		)
 	})
+
 }
 
 function DeviceSave(id) {
 	if (!AUTH()) return
 	var config = {}
-	document.querySelector('#device-configuration .form').querySelectorAll('div[type]').forEach(function (el) {
+	$('#device-configuration .form').querySelectorAll('div[type]').forEach(function (el) {
 
 		if (el.getAttribute('type') == 'value') {
 			var input = el.querySelector('input')
@@ -680,7 +664,7 @@ function DeviceSave(id) {
 	}
 
 	// оправка формы на сервер
-	ask({ method: 'api/device.update', body: form }, function () {
+	ask({ method: 'device.update', body: form }, function () {
 		alert('Устройство сохранено')
 	})
 }
@@ -692,7 +676,7 @@ function Settings() {
 	currentPage = 'settings'
 
 	ID = 0
-	clearInterval(inverval)
+	clearInterval(timeout)
 
 	if (accessType == ACCESSTYPE.GUEST || accessType == ACCESSTYPE.READ) {
 		return mount('#view', h('div.container', 'Нет доступа'))
@@ -703,7 +687,7 @@ function Settings() {
 			h('button', {
 				innerHTML: 'Создать службу и инициализировать DCOM',
 				onclick: function () {
-					ask({ method: 'api/opc.dcom' }, function (data) {
+					ask({ method: 'opc.dcom' }, function (data) {
 						if (data) alert('Инициализация DCOM выполнена')
 					})
 				}
@@ -711,7 +695,7 @@ function Settings() {
 			h('button', {
 				innerHTML: 'Реинициализация OPC тегов',
 				onclick: function () {
-					ask({ method: 'api/opc.clean' }, function (data) {
+					ask({ method: 'opc.clean' }, function (data) {
 						if (data) alert('Реинициализация OPC тегов выполнена')
 					})
 				}
@@ -732,8 +716,8 @@ function UsersTable() {
 	if (accessType < ACCESSTYPE.FULL) return ''
 	var login, pass, access
 
-	ask({ method: 'api/users' }, function (json) {
-		if (!document.getElementById('users')) return
+	ask({ method: 'users' }, function (json) {
+		if (!$('#users')) return
 		mount('#users',
 			h('div.container',
 				h('table',
@@ -750,7 +734,7 @@ function UsersTable() {
 								h('button', {
 									innerHTML: 'Удалить',
 									onclick: function () {
-										ask({ method: 'api/user.delete', body: { Login: user.Login } }, function (json) {
+										ask({ method: 'user.delete', body: { Login: user.Login } }, function (json) {
 											if (json.Done) UsersTable()
 										})
 									}
@@ -796,7 +780,7 @@ function UsersTable() {
 										AccessType: access.value
 									}
 
-									ask({ method: 'api/user.create', body: body }, function (json) {
+									ask({ method: 'user.create', body: body }, function (json) {
 										if (json.Done) UsersTable()
 									})
 								}
@@ -810,21 +794,52 @@ function UsersTable() {
 }
 
 
+function First() {
+
+	if (currentPage == 'first') return
+	currentPage = 'first'
+
+	ID = 0
+	var _pass
+	mount('#view',
+		h('container',
+			h('h3', 'Первоначальная настройка'),
+			h('p', 'Введите пароль для создания первой учётной записи с полным доступом'),
+			_pass = h('input', {
+				type: 'password',
+				placeholder: 'пароль...'
+			}),
+			h('button', 'Сохранить', {
+				onclick: function () {
+					var _body = {
+						Login: 'admin',
+						Password: _pass.value,
+						AccessType: ACCESSTYPE.FULL
+					}
+					ask({ method: 'user.create', body: _body }, function (json) {
+						if (json.Done) {
+							ask({ method: 'login', body: _body }, function (json) {
+								if (json.Done) location.reload()
+							})
+						}
+					})
+				}
+			})
+		)
+	)
+}
+
 function AuthPanel() {
 	mount('#auth',
-		accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST
-			? h('a.panel-el',
+		accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST ? '' :
+			h('div.panel-el',
 				{
-					href: '#/user',
-					title: 'Нажмите, чтобы зайти под учётной записью',
-				},
-				h('span', 'Вход не выполнен'),
-				h('button', 'Войти')
-			)
-			: h('a.panel-el',
-				{
-					href: '#/user',
+					route: 'auth',
 					title: 'Нажмите, чтобы выйти из учётной записи',
+					onclick: function () {
+						TreeSetActive('auth')
+						Login()
+					}
 				},
 				h('i.ic.ic-person'),
 				h('span', login)
@@ -834,39 +849,30 @@ function AuthPanel() {
 
 function Login() {
 
+	if (currentPage == 'login') return
+	currentPage = 'login'
+
+	clearInterval(timeout)
+	ID = 0
 	var _login, _pass
 
-	if (accessType == ACCESSTYPE.FIRST) {
-		mount('#view',
-			h('container',
-				h('h3', 'Первоначальная настройка'),
-				h('p', 'Введите пароль для создания первой учётной записи с полным доступом'),
-				_pass = h('input', {
-					type: 'password',
-					placeholder: 'пароль...'
-				}),
-				h('button', 'Сохранить', {
+	//if (accessType == ACCESSTYPE.GUEST) Tree()
+	mount('#view',
+		accessType > ACCESSTYPE.GUEST
+			? h('div.container',
+				h('p', 'Вы вошли как ' + login),
+				h('button', 'Выйти', {
 					onclick: function () {
-						var _body = {
-							Login: 'admin',
-							Password: _pass.value,
-							AccessType: ACCESSTYPE.FULL
-						}
-						ask({ method: 'api/user.create', body: _body }, function (json) {
+						ask({ method: 'logout', body: { Token: ls('Inopc-Access-Token') } }, function (json) {
 							if (json.Done) {
-								ask({ method: 'api/login', body: _body }, function (json) {
-									if (json.Done) location.reload()
-								})
+								localStorage.removeItem('Inopc-Access-Token')
+								location.reload()
 							}
 						})
 					}
 				})
 			)
-		)
-	}
-	else if (accessType == ACCESSTYPE.GUEST) {
-		mount('#view',
-			h('div.container',
+			: h('div.container',
 				h('p', 'Вы не вошли в учетную запись. Выполните вход:'),
 
 				h('span', 'Имя учётной записи'),
@@ -881,31 +887,13 @@ function Login() {
 							Login: _login.value,
 							Password: _pass.value
 						}
-						ask({ method: 'api/login', body: _body }, function (json) {
+						ask({ method: 'login', body: _body }, function (json) {
 							if (json.Done) location.reload()
 						})
 					}
 				})
 			)
-		)
-	}
-	else {
-		mount('#view',
-			h('div.container',
-				h('p', 'Вы вошли как ' + login),
-				h('button', 'Выйти', {
-					onclick: function () {
-						ask({ method: 'api/logout', body: { Token: ls('Inopc-Access-Token') } }, function (json) {
-							if (json.Done) {
-								localStorage.removeItem('Inopc-Access-Token')
-								location.reload()
-							}
-						})
-					}
-				})
-			)
-		)
-	}
+	)
 }
 
 var ACCESSTYPE = {
