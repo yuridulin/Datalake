@@ -98,6 +98,7 @@ namespace GranEnergo_CC101
 			TcpClient client;
 			NetworkStream stream;
 
+			// получение подключения
 			try
 			{
 				client = new TcpClient();
@@ -114,110 +115,102 @@ namespace GranEnergo_CC101
 				return;
 			}
 
-			// получение мгновенных
+			// настройка соединения
 			try
 			{
-				byte[] command = new byte[] { 0x00, 0x04, 0x2E, 0x00, 0x00, 0x01, 0x33, 0x39 };
-				stream.Write(command, 0, command.Length);
-				LogEvent("TX: " + Helpers.BytesToString(command), LogType.DETAILED);
+				byte[] b;
+				// идентификационный номер
+				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x44 }, 8);
 
-				byte[] buffer = new byte[30];
-				stream.Read(buffer, 0, buffer.Length);
-				LogEvent("RX: " + Helpers.BytesToString(buffer), LogType.DETAILED);
+				// архив событий состояния прибора
+				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x0F, 0x00, 0x00, 0x00, 0x0F, 0x47 }, 15);
 
-				Value("Current.P",  BitConverter.ToSingle(new byte[] { buffer[4], buffer[5], buffer[6], buffer[7], }, 0));
-				Value("Current.Q",  BitConverter.ToSingle(new byte[] { buffer[8], buffer[9], buffer[10], buffer[11], }, 0));
-				Value("Current.U",  BitConverter.ToSingle(new byte[] { buffer[12], buffer[13], buffer[14], buffer[15], }, 0));
-				Value("Current.I",  BitConverter.ToSingle(new byte[] { buffer[16], buffer[17], buffer[18], buffer[19], }, 0));
-				Value("Current.kP", BitConverter.ToSingle(new byte[] { buffer[20], buffer[21], buffer[22], buffer[23], }, 0));
-				Value("Current.F",  BitConverter.ToSingle(new byte[] { buffer[24], buffer[25], buffer[26], buffer[27], }, 0));
+				// архив событий состояния фаз
+				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x0E, 0x00, 0x00, 0x00, 0xF3, 0x46 }, 15);
 
-				Value("Time", DateTime.Now.ToString("HH:mm:ss"));
+				// квадрант, тариф, сезон и ресурс батареи
+				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x21, 0x00, 0x00, 0x00, 0x27, 0x4E }, 10);
+
+				// идентификационный номер
+				b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x44 }, 8);
+
+				// все мгновенные значения
+				b = ReadAndWrite(new byte[] { 0x00, 0x04, 0x2E, 0x00, 0x00, 0x01, 0x33, 0x39 }, 30);
+				Value("Current.P", BitConverter.ToSingle(new byte[] { b[4], b[5], b[6], b[7], }, 0));
+				Value("Current.Q", BitConverter.ToSingle(new byte[] { b[8], b[9], b[10], b[11], }, 0));
+				Value("Current.U", BitConverter.ToSingle(new byte[] { b[12], b[13], b[14], b[15], }, 0));
+				Value("Current.I", BitConverter.ToSingle(new byte[] { b[16], b[17], b[18], b[19], }, 0));
+				Value("Current.kP", BitConverter.ToSingle(new byte[] { b[20], b[21], b[22], b[23], }, 0));
+				Value("Current.F", BitConverter.ToSingle(new byte[] { b[24], b[25], b[26], b[27], }, 0));
+
+				// архив событий состояния фаз
+				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x22, 0x00, 0x00, 0x00, 0x63, 0x4E }, 24);
+
+				// текущее значение даты и времени
+				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x22, 0x00, 0x00, 0x00, 0x63, 0x4E }, 24);
+
+				// накопленная энергия за последние сутки
+				b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x2A, 0x00, 0x00, 0x00, 0x03, 0x4C }, 30);
+				Value("LastDay.E", 7.5 * BitConverter.ToInt16(new byte[] { b[4], b[5] }, 0));
+
+				// накопленная энергия за последний месяц
+				b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x2A, 0x00, 0x00, 0x00, 0x03, 0x4C }, 22);
+				Value("LastMonth.E", 7.5 * BitConverter.ToInt16(new byte[] { b[4], b[5] }, 0));
+			}
+			catch (Exception e)
+			{
+				LogEvent("Ошибка при получении данных: " + e.Message, LogType.ERROR);
+				lock (Fields)
+				{
+					foreach (var field in Fields) field.Value.Quality = 0;
+				}
+			}
+			finally
+			{
+				IsExchangeRunning = false;
+
+				try { stream.Close(); } catch { }
+				try { client.Close(); } catch { }
+
+				lock (Fields)
+				{
+					Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+					Fields["Time"].Quality = 192;
+				}
 				UpdateEvent();
 			}
-			catch (Exception e)
-			{
-				LogEvent("Текущие значения: " + e.Message, LogType.ERROR);
-				Bad("Current.P");
-				Bad("Current.Q");
-				Bad("Current.U");
-				Bad("Current.I");
-				Bad("Current.kP");
-				Bad("Current.F");
-				IsExchangeRunning = false;
-				return;
-			}
 
-			// получение данных за сутки
-			try
+			byte[] ReadAndWrite(byte[] command, int size)
 			{
-				byte[] command = new byte[] { 0x00, 0x03, 0x2A, 0x00, 0x00, 0x00, 0x03, 0x4C };
 				stream.Write(command, 0, command.Length);
 				LogEvent("TX: " + Helpers.BytesToString(command), LogType.DETAILED);
 
-				byte[] buffer = new byte[22];
+				Task.Delay(100).Wait();
+
+				byte[] buffer = new byte[size];
 				stream.Read(buffer, 0, buffer.Length);
 				LogEvent("RX: " + Helpers.BytesToString(buffer), LogType.DETAILED);
 
-				Value("LastDay.E", 7.5 * BitConverter.ToInt16(new byte[] { buffer[4], buffer[5] }, 0));
-			}
-			catch (Exception e)
-			{
-				LogEvent("Суточные значения: " + e.Message, LogType.ERROR);
-				Bad("LastDay.E");
-				IsExchangeRunning = false;
-				return;
+				return buffer;
 			}
 
-			// получение данных за месяц
-			try
+			void Value(string name, object value)
 			{
-
-			}
-			catch (Exception e)
-			{
-				LogEvent("Часовые значения: " + e.Message, LogType.ERROR);
-				IsExchangeRunning = false;
-				return;
-			}
-
-			try
-			{
-				stream.Close();
-				client.Close();
-			} catch { }
-
-			IsExchangeRunning = false;
-		}
-
-		void Value(string name, object value)
-		{
-			lock (Fields)
-			{
-				if (Fields.ContainsKey(name))
+				lock (Fields)
 				{
-					Fields[name].Quality = 192;
-					Fields[name].Value = value;
-				}
-				else
-				{
-					Fields.Add(name, new DefField { Name = name, Quality = 192, Value = value });
-				}
-			}
-		}
-
-		void Bad(string name)
-		{
-			lock (Fields)
-			{
-				foreach (var kv in Fields)
-				{
-					if (kv.Key != "Name")
+					if (Fields.ContainsKey(name))
 					{
-						kv.Value.Quality = 0;
+						Fields[name].Quality = 192;
+						Fields[name].Value = value;
+					}
+					else
+					{
+						Fields.Add(name, new DefField { Name = name, Quality = 192, Value = value });
 					}
 				}
 			}
 		}
+
+		
 	}
 }
