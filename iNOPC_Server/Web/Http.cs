@@ -15,7 +15,7 @@ namespace iNOPC.Server.Web
         public static async Task Start()
         {
             Listener = new HttpListener();
-            Listener.Prefixes.Add("http://*:81/");
+            Listener.Prefixes.Add("http://*:" + Program.Configuration.Settings.WebConsolePort + "/");
             Listener.Start();
 
             while (true)

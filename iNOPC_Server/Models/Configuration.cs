@@ -15,12 +15,15 @@ namespace iNOPC.Server.Models
 
 		public List<AccessRecord> Access { get; set; } = new List<AccessRecord>();
 
+		public Settings Settings { get; set; } = new Settings();
+
 		public int NextId { get; set; } = 0;
 
 		public void RestoreFromFile()
 		{
 			string raw;
 
+			// чтение из файла
 			try
 			{
 				raw = File.ReadAllText(Path);
@@ -31,33 +34,49 @@ namespace iNOPC.Server.Models
 				return;
 			}
 
+			// попытка прочесть версию конфига
 			try
 			{
-				var drivers = JsonConvert.DeserializeObject<List<Driver>>(raw);
+				var version = JsonConvert.DeserializeObject<V0>(raw);
 
-				Drivers = drivers;
-				Access = new List<AccessRecord>();
+				switch (version.Version)
+				{
+					case "1":
+						var v1 = JsonConvert.DeserializeObject<V1>(raw);
+						Drivers = v1.Drivers;
+						Access = v1.Access;
+						Settings = new Settings();
+						Preprocess();
+						break;
 
-				Preprocess();
-				return;
+					case "2":
+						var v2 = JsonConvert.DeserializeObject<V2>(raw);
+						Drivers = v2.Drivers;
+						Access = v2.Access;
+						Settings = v2.Settings;
+						Preprocess();
+						break;
+
+					default:
+						Program.Log("Неизвестный формат конфигурации! " + version.Version);
+						break;
+				}
 			}
 			catch
-			{ /* Если произошла ошибка, то конфиг более новый либо битый */ }
-
-			try
 			{
-				var conf = JsonConvert.DeserializeObject<V1>(raw);
-
-				Drivers = conf.Drivers;
-				Access = conf.Access;
-				
-				Preprocess();
-				return;
-			}
-			catch (Exception e)
-			{
-				Program.Log("Не удалось преобразовать конфигурацию к виду V1 \"" + Path + "\": " + e.Message);
-				return;
+				// обработка V0 (конфиг является массивом драйверов)
+				try
+				{
+					var drivers = JsonConvert.DeserializeObject<List<Driver>>(raw);
+					Drivers = drivers;
+					Access = new List<AccessRecord>();
+					Settings = new Settings();
+					Preprocess();
+				}
+				catch (Exception e)
+				{
+					Program.Log("Неизвестный формат конфигурации: " + e.Message);
+				}
 			}
 
 			void Preprocess()
@@ -77,7 +96,7 @@ namespace iNOPC.Server.Models
 							device.DriverName = driver.Name;
 						}
 
-						driver.Load();
+						//driver.Load();
 					}
 
 					Program.Log("Конфигурация загружена");
@@ -86,12 +105,30 @@ namespace iNOPC.Server.Models
 				{
 					Program.Log("Не удалось прочесть конфигурацию из файла \"" + Path + "\": " + e.Message);
 				}
+
+				try
+				{
+					File.WriteAllText(Program.Base + "\\webConsole\\js\\settings.js", 
+						"var _httpPort = " + Settings.WebConsolePort + "\nvar _wsPort = " + Settings.WebConsoleSocketPort);
+				}
+				catch (Exception e)
+				{
+					Program.Log("Не удалось записать конфигурацию в веб-консоль по адресу \"" + Program.Base + "\\webConsole\\js\\settings.js\": " + e.Message);
+				}
+			}
+		}
+
+		public void Start()
+		{
+			foreach (var driver in Drivers)
+			{
+				driver.Load();
 			}
 		}
 
 		public void SaveToFile()
 		{
-			// Конфиг сохраняется как V1
+			// Конфиг сохраняется как V2
 			try
 			{
 				File.WriteAllText(Path, JsonConvert.SerializeObject(new
@@ -112,8 +149,9 @@ namespace iNOPC.Server.Models
 								.ToList()
 						})
 						.ToList(),
+					Settings,
 					Access,
-					Version = "1",
+					Version = "2",
 				}));
 			}
 			catch (Exception e)

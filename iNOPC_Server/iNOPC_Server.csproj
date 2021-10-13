@@ -70,9 +70,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Configuration.cs" />
+    <Compile Include="Models\Configurations\V0.cs" />
+    <Compile Include="Models\Configurations\V2.cs" />
     <Compile Include="Models\Configurations\V1.cs" />
     <Compile Include="Models\Device.cs" />
     <Compile Include="Models\Driver.cs" />
+    <Compile Include="Models\Settings.cs" />
     <Compile Include="OPC\OPC.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -122,6 +125,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="webConsole\index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="webConsole\js\settings.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="webConsole\js\components.js">

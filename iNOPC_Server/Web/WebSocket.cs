@@ -1,16 +1,15 @@
-﻿using iNOPC.Library;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using WebSocketSharp.Server;
 
 namespace iNOPC.Server.Web
 {
-    public class WebSocket
+	public class WebSocket
     {
         private static WebSocketServer Server { get; set; }
 
         public static void Start()
         {
-            Server = new WebSocketServer(82);
+            Server = new WebSocketServer(Program.Configuration.Settings.WebConsoleSocketPort);
             Server.AddWebSocketService<WebSocketReceiver>("/");
             Server.Start();
         }

@@ -10,15 +10,15 @@ namespace iNOPC.Server
 {
 	public static class OPC
     {
-        public const string ServerName = "iNOPC";
-
-        public const string CLSID = "{4537357b-3739-3334-432d-303637382d34}";
-
         public const string Pass = "JVRPS53R5V64226N62H4";
 
         private static WriteNotificationDelegate _WriteOutDelegate;
 
         private static UnknownItemDelegate _UnknownItemDelegate;
+
+        public static string ServerName => Program.Configuration?.Settings?.Name ?? "iNOPC";
+
+        public static string CLSID => Program.Configuration?.Settings?.CLSID ?? "{4537357b-9999-3334-432d-303637382d34}";
 
         public static Dictionary<string, uint> Tags { get; set; } = new Dictionary<string, uint>();
 
@@ -88,7 +88,7 @@ namespace iNOPC.Server
 
         public static void InitDCOM()
         {
-            string pathToExe = Environment.CurrentDirectory + "\\iNOPC_Server.exe";
+            string pathToExe = Environment.CurrentDirectory + "\\" + AppDomain.CurrentDomain.FriendlyName + "iNOPC_Server.exe";
 
             RequestDisconnect();
             UnregisterServer(CLSID, ServerName);
@@ -102,30 +102,33 @@ namespace iNOPC.Server
                 Process process;
 
                 // Пересоздание службы
-                process = new Process
+                if (Program.Configuration.Settings.RegisterAsService)
                 {
-                    StartInfo = new ProcessStartInfo
-					{
-                        FileName = "cmd.exe",
-                        CreateNoWindow = true,
-                        RedirectStandardInput = true,
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false,
-                    },
-                };
-                process.Start();
+                    process = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = "cmd.exe",
+                            CreateNoWindow = true,
+                            RedirectStandardInput = true,
+                            RedirectStandardOutput = true,
+                            UseShellExecute = false,
+                        },
+                    };
+                    process.Start();
 
-                process.StandardInput.WriteLine("sc delete VST_OPC");
-                process.StandardInput.WriteLine("sc delete iNOPC");
-                process.StandardInput.WriteLine("sc create iNOPC binPath= \"" + pathToExe + "\" DisplayName= \"iNOPC\" start= auto && exit");
+                    process.StandardInput.WriteLine("sc delete VST_OPC");
+                    process.StandardInput.WriteLine("sc delete iNOPC");
+                    process.StandardInput.WriteLine("sc create iNOPC binPath= \"" + pathToExe + "\" DisplayName= \"iNOPC\" start= auto && exit");
 
-                Task.Delay(5000).Wait();
-                process.Close();
+                    Task.Delay(5000).Wait();
+                    process.Close();
+                }
 
                 // Создание записи в DCOM 1
                 File.WriteAllText("C:\\dcom.reg", 
                     "Windows Registry Editor Version 5.00\n\n" +
-                    "[HKEY_CLASSES_ROOT\\AppID\\{3335347b-3337-3735-622d-333733392d33}]\n" +
+                    "[HKEY_CLASSES_ROOT\\AppID\\" + Program.Configuration.Settings.CLSID + "]\n" +
                     "@=\"iNOPC\"\n" +
                     "\"AuthenticationLevel\"=dword:00000001\n" +
                     "\"LocalService\"=\"iNOPC\"\n" +
@@ -137,9 +140,9 @@ namespace iNOPC.Server
                 // Создание записи в DCOM 2
                 File.WriteAllText("C:\\dcom.reg",
                     "Windows Registry Editor Version 5.00\n\n" +
-                    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes\\AppID\\iNOPC_Server.exe]\n" +
-                    "@=\"iNOPC_Server.exe\"\n" +
-                    "\"AppID\"=\"{3335347b-3337-3735-622d-333733392d33}\"\n" +
+                    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes\\AppID\\" + AppDomain.CurrentDomain.FriendlyName + "]\n" +
+                    "@=\"" + AppDomain.CurrentDomain.FriendlyName + "\"\n" +
+                    "\"AppID\"=\"" + Program.Configuration.Settings.CLSID + "\"\n" +
                     "\"LocalService\"=\"iNOPC\"\n" +
                     "\"ServiceParameters\"=\"-Service\"\n\n");
 

@@ -197,9 +197,10 @@ function Driver(id) {
 				h('span', 'Тип'),
 
 				AUTH()
-					? path = h('select', { disabled: true },
+					? path = h('select',
+						h('option', { value: '' }, 'не определён'),
 						driver.Dlls.map(function (x) {
-							return x == driver.Path ? h('option', x, { selected: true }) : ''
+							return x == driver.Path ? h('option', x, { selected: true }) : h('option', x)
 						})
 					)
 					: h('span.value', driver.Path),
@@ -563,7 +564,7 @@ function DeviceConfiguration(id) {
 	ask({ method: 'device.configuration', body: { Id: id } }, function (page) {
 		if (!AUTH()) return
 		mount('#device-configuration', h('div.form', page))
-		$('#device-configuration').querySelectorAll('script').forEach(function (el) {
+		document.getElementById('device-configuration').querySelectorAll('script').forEach(function (el) {
 			(1, eval)(el.innerHTML)
 		})
 	})
@@ -635,7 +636,7 @@ function DeviceFields(id) {
 function DeviceSave(id) {
 	if (!AUTH()) return
 	var config = {}
-	$('#device-configuration .form').querySelectorAll('div[type]').forEach(function (el) {
+	document.querySelector('#device-configuration .form').querySelectorAll('div[type]').forEach(function (el) {
 
 		if (el.getAttribute('type') == 'value') {
 			var input = el.querySelector('input')
@@ -717,7 +718,7 @@ function UsersTable() {
 	var login, pass, access
 
 	ask({ method: 'users' }, function (json) {
-		if (!$('#users')) return
+		if (!document.getElementById('users')) return
 		mount('#users',
 			h('div.container',
 				h('table',

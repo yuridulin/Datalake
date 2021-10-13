@@ -16,17 +16,18 @@ namespace iNOPC.Server
 
         static void Main()
         {
+            
             // Проверка на наличие ранее запущенного экземпляра сервера
-            bool alreadyWorking = Process.GetProcesses().Where(x => x.ProcessName.Contains("iNOPC")).Count() > 1;
+            bool alreadyWorking = Process.GetProcesses().Count(x => x.ProcessName == AppDomain.CurrentDomain.FriendlyName) > 1;
 
-            if (alreadyWorking)
-            {
-                Log("Уже существует другой запущенный экземпляр сервера.");
-                Console.ReadLine();
-                return;
-            }
+			if (alreadyWorking)
+			{
+				Log("Уже существует другой запущенный экземпляр сервера.");
+				Console.ReadLine();
+				return;
+			}
 
-            if (Environment.UserInteractive)
+			if (Environment.UserInteractive)
             {
 #if DEBUG
                 Start();
@@ -35,7 +36,7 @@ namespace iNOPC.Server
                 Log("Производится настройка...");
                 OPC.InitDCOM();
                 Log("Настройка DCOM выполнена. Создана служба iNOPC. После запуска службы сервер готов к работе.");
-                Log("Адрес веб-консоли для доступа к серверу: http://localhost:81");
+                Log("Адрес веб-консоли для доступа к серверу: http://localhost:" + Configuration.Settings.WebConsolePort + "");
                 Log("Нажмите Enter для выхода.");
 #endif
 
@@ -55,12 +56,13 @@ namespace iNOPC.Server
         public static void Start()
         {
             // Стартуем необходимые сервисы
+            Configuration.RestoreFromFile();
             Task.Run(Http.Start);
             WebSocket.Start();
             OPC.StartServer();
 
             // Загружаем конфиг
-            Configuration.RestoreFromFile();
+            Configuration.Start();
             OPC.RefreshAllClients();
         }
 

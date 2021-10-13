@@ -1,5 +1,5 @@
 var ws
-var wsAddress = 'ws://' + location.hostname + ':82/'
+var wsAddress = 'ws://' + location.hostname + ':' + _wsPort + '/'
 
 function connectToServer() {
 	ws = new WebSocket(wsAddress)
@@ -189,7 +189,6 @@ function ask(parameters, callback) {
 
 		// Ожидание ответа сервера
 		if (xhr.readyState != 4) return
-		//if (xhr.status == 0) return Offline()
 		if (xhr.status != 200) return console.log('ask err: xhr return ' + xhr.status + ' [' + xhr.statusText + ']')
 
 		// Получение данных авторизации
@@ -203,8 +202,8 @@ function ask(parameters, callback) {
 		try { json = JSON.parse(xhr.responseText) } catch (e) { return console.log('ask err: not json [' + xhr.responseText + ']') }
 
 		if (accessType != ACCESSTYPE.FIRST) {
-			if (json.Error) return mount('#view', 'Ошибка: ' + json.Error)
-			if (json.Warning) return mount('#view', json.Warning)
+			if (json.Error) mount('#view', 'Ошибка: ' + json.Error)
+			if (json.Warning) mount('#view', json.Warning)
 			if (json.Done) console.log(json.Done)
 		}
 
