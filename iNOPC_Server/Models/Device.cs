@@ -2,12 +2,11 @@
 using iNOPC.Server.Web;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace iNOPC.Server.Models
 {
-    public class Device
+	public class Device
     {
         // Параметры конфигурации
 
@@ -62,7 +61,6 @@ namespace iNOPC.Server.Models
                     // Так как объект только создан, вешаем обработчики событий
                     InnerDriver.LogEvent += Log;
                     InnerDriver.UpdateEvent += Update;
-                    InnerDriver.WinLogEvent += WinLog;
                 }
             }
             catch (Exception e)
@@ -137,11 +135,6 @@ namespace iNOPC.Server.Models
                     Type = type
                 });
             }
-        }
-
-        public void WinLog(string text)
-        {
-            EventLog.WriteEntry("iNOPC_Server", DriverName + "." + Name + ": " + text, EventLogEntryType.Information);
         }
 
         public void Update()

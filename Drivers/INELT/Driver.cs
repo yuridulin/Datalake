@@ -22,8 +22,6 @@ namespace iNOPC.Drivers.INELT
 
         public event UpdateEvent UpdateEvent;
 
-        public event WinLogEvent WinLogEvent;
-
         public bool Start(string jsonConfig)
         {
             LogEvent("Запуск ...");
@@ -111,7 +109,6 @@ namespace iNOPC.Drivers.INELT
         {
             // какая ещё запись в сраный инэлт
             LogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]", LogType.DETAILED);
-            WinLogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
         }
 
 

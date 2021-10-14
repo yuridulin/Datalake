@@ -20,8 +20,6 @@ namespace iNOPC.Drivers.IEC_104
 
         public event UpdateEvent UpdateEvent;
 
-        public event WinLogEvent WinLogEvent;
-
         public bool Start(string jsonConfig)
         {
             LogEvent("Запуск ...");
@@ -161,7 +159,6 @@ namespace iNOPC.Drivers.IEC_104
 
             // Определение типа записываемого поля
             LogEvent("Запрос на запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
-            WinLogEvent("Запрос на запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
 
             // Отправление управляющей команды к серверу
             Task.Run(() =>
@@ -194,7 +191,6 @@ namespace iNOPC.Drivers.IEC_104
                                     else
 									{
                                         LogEvent("Не удалось записать значение bool [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
-                                        WinLogEvent("Не удалось определить команду на запись [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
                                     }
                                     break;
                                 case "Float":
@@ -202,17 +198,14 @@ namespace iNOPC.Drivers.IEC_104
 									{
                                         Conn.SendControlCommand(CauseOfTransmission.ACTIVATION, 1, new SetpointCommandShort(address, (float)v3, new SetpointCommandQualifier(0)));
                                         LogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
-                                        WinLogEvent("Успешная запись [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
                                     }
                                     else
 									{
                                         LogEvent("Не удалось записать значение float [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
-                                        WinLogEvent("Не удалось определить команду на запись [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
                                     }
                                     break;
                                 default:
                                     LogEvent("Не удалось определить команду на запись [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
-                                    WinLogEvent("Не удалось определить команду на запись [" + fieldName + "], значение [" + value + "], значение как строка [" + value.ToString() + "], тип значения [" + value.GetType() + "]");
                                     break;
                             }
 
@@ -234,7 +227,6 @@ namespace iNOPC.Drivers.IEC_104
                 if (counter != 6)
                 {
                     LogEvent("Запись не удалась [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
-                    WinLogEvent("Запись не удалась [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
                 }
             });
         }

@@ -8,8 +8,6 @@ namespace iNOPC.Library
 
         event UpdateEvent UpdateEvent;
 
-        event WinLogEvent WinLogEvent;
-
         Dictionary<string, DefField> Fields { get; set; }
 
         string Version { get; }

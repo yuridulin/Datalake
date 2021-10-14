@@ -16,8 +16,6 @@ namespace iNOPC.Drivers.TestDriver
 
         public event UpdateEvent UpdateEvent;
 
-        public event WinLogEvent WinLogEvent;
-
         public bool Start(string jsonConfig)
         {
             LogEvent("Запуск...");
@@ -70,7 +68,7 @@ namespace iNOPC.Drivers.TestDriver
         public void Write(string fieldName, object value)
         {
             Fields[fieldName].Value = value;
-            WinLogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
+            LogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]", LogType.DETAILED);
         }
 
         Configuration Configuration { get; set; } = new Configuration();

@@ -16,8 +16,8 @@ namespace iNOPC.Drivers.Elemer_IRT5501M1
         public Dictionary<string, DefField> Fields { get; set; }
 
 		public event LogEvent LogEvent;
+
 		public event UpdateEvent UpdateEvent;
-		public event WinLogEvent WinLogEvent;
 
 		public bool Start(string jsonConfiguration)
 		{

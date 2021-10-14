@@ -18,8 +18,6 @@ namespace iNOPC.Drivers.ECOM_3000
 
         public event UpdateEvent UpdateEvent;
 
-        public event WinLogEvent WinLogEvent;
-
         public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
         public bool Start(string jsonConfig)
@@ -69,7 +67,6 @@ namespace iNOPC.Drivers.ECOM_3000
         {
             // Определение типа записываемого поля
             LogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]", LogType.DETAILED);
-            WinLogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
         }
 
 

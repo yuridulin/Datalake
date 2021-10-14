@@ -18,8 +18,6 @@ namespace iNOPC.Drivers.MARK_602
 
         public event UpdateEvent UpdateEvent;
 
-        public event WinLogEvent WinLogEvent;
-
         public bool Start(string jsonConfig)
         {
             LogEvent("Запуск ...");
@@ -83,7 +81,6 @@ namespace iNOPC.Drivers.MARK_602
         public void Write(string fieldName, object value)
         {
             LogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]", LogType.DETAILED);
-            WinLogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
         }
 
 

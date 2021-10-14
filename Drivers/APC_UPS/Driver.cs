@@ -21,8 +21,6 @@ namespace iNOPC.Drivers.APC
 
         public event UpdateEvent UpdateEvent;
 
-        public event WinLogEvent WinLogEvent;
-
         public bool Start(string jsonConfig)
         {
             LogEvent("Запуск ...");
@@ -92,7 +90,7 @@ namespace iNOPC.Drivers.APC
         {
             // Определение типа записываемого поля
             LogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]", LogType.DETAILED);
-            WinLogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
+            //WinLogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]");
         }
 
 
@@ -156,7 +154,7 @@ namespace iNOPC.Drivers.APC
             {
                 Process.Start(Configuration.Exe);
                 LogEvent("Перезапуск процесса ApcUpsD \"" + Configuration.Exe + "\"", LogType.ERROR);
-                WinLogEvent("Перезапуск процесса ApcUpsD \"" + Configuration.Exe + "\"");
+                //WinLogEvent("Перезапуск процесса ApcUpsD \"" + Configuration.Exe + "\"");
             }
 
             // Создаем подключение к серверу данных и читаем вывод из консоли
