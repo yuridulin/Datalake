@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>GranEnergo_CC101</RootNamespace>
-    <AssemblyName>GranEnergo_CC101_v1.1</AssemblyName>
+    <AssemblyName>GranEnergo_CC101_v1.2</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

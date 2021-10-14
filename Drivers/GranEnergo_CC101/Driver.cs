@@ -46,12 +46,8 @@ namespace GranEnergo_CC101
 
 				if (Configuration.CurrentValuesInterval > 0 && Configuration.CurrentValuesInterval < interval) 
 					interval = Configuration.CurrentValuesInterval;
-				if (Configuration.DaysValuesInterval > 0 && Configuration.DaysValuesInterval < interval) 
-					interval = Configuration.DaysValuesInterval;
-				if (Configuration.MonthValuesInterval > 0 && Configuration.MonthValuesInterval < interval) 
-					interval = Configuration.MonthValuesInterval;
 
-				ExchangeTimer = new Timer(interval * 1000 * 60);
+				ExchangeTimer = new Timer(interval * 1000);
 				ExchangeTimer.Elapsed += (s, e) => { Exchange(); };
 			}
 			catch
@@ -59,6 +55,9 @@ namespace GranEnergo_CC101
 				LogEvent("Конфигурация не прочитана из json", LogType.ERROR);
 				return false;
 			}
+
+			LastCurrent = DateTime.MinValue;
+			LastDay = DateTime.MinValue;
 
 			IsDriverActive = true;
 			IsExchangeRunning = false;
@@ -99,8 +98,6 @@ namespace GranEnergo_CC101
 
 		DateTime LastDay { get; set; } = DateTime.MinValue;
 
-		DateTime LastMonth { get; set; } = DateTime.MinValue;
-
 		void Exchange()
 		{
 			if (!IsDriverActive) return;
@@ -109,29 +106,24 @@ namespace GranEnergo_CC101
 			IsExchangeRunning = true;
 
 			// определение необходимости опроса прибора
-			bool needCurrent = false, needDay = false, needMonth = false;
+			bool needCurrent = false, needDay = false;
 			DateTime now = DateTime.Now;
 
-			if (Configuration.CurrentValuesInterval > 0 && (now - LastCurrent).TotalMinutes > Configuration.CurrentValuesInterval)
+			if (Configuration.CurrentValuesInterval > 0 && (now - LastCurrent).TotalSeconds > Configuration.CurrentValuesInterval)
 			{
 				LastCurrent = now;
 				needCurrent = true;
 				LogEvent("Чтение текущих значений", LogType.DETAILED);
 			}
-			if (Configuration.DaysValuesInterval > 0 && (now - LastDay).TotalMinutes > Configuration.DaysValuesInterval)
+			if (now.Date != LastDay.Date && now.TimeOfDay >= DateTime.Parse("01.01.2000 03:00:00").TimeOfDay)
 			{
 				LastDay = now;
 				needDay = true;
-				LogEvent("Чтение значений за сутки", LogType.DETAILED);
-			}
-			if (Configuration.MonthValuesInterval > 0 && (now - LastMonth).TotalMinutes > Configuration.MonthValuesInterval)
-			{
-				LastMonth = now;
-				needMonth = true;
-				LogEvent("Чтение значений за месяц", LogType.DETAILED);
+				if (Configuration.CheckDayValues) LogEvent("Чтение значений за сутки", LogType.DETAILED);
+				if (Configuration.CheckMonthValues) LogEvent("Чтение значений за месяц", LogType.DETAILED);
 			}
 
-			if (!needCurrent && !needDay && !needMonth)
+			if (!needCurrent && !needDay)
 			{
 				IsExchangeRunning = false;
 				lock (Fields)
@@ -180,14 +172,14 @@ namespace GranEnergo_CC101
 					Value("Current.F", BitConverter.ToSingle(new byte[] { b[24], b[25], b[26], b[27], }, 0));
 				}
 
-				if (needDay)
+				if (needDay && Configuration.CheckDayValues)
 				{
 					// накопленная энергия за последние сутки
 					b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x2A, 0x00, 0x00, 0x00, 0x03, 0x4C }, 22);
 					Value("LastDay.E", 7.5 / 10000 * BitConverter.ToInt32(new byte[] { b[4], b[5], b[6], b[7] }, 0));
 				}
 
-				if (needMonth)
+				if (needDay && Configuration.CheckMonthValues)
 				{
 					// накопленная энергия за последний месяц
 					b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x2B, 0x00, 0x00, 0x00, 0x03, 0x4C }, 22);
@@ -237,7 +229,7 @@ namespace GranEnergo_CC101
 				stream.Write(command, 0, command.Length);
 				LogEvent("TX: " + Helpers.BytesToString(command), LogType.DETAILED);
 
-				Task.Delay(100).Wait();
+				Task.Delay(Configuration.PacketTimeout).Wait();
 
 				byte[] buffer = new byte[size];
 				stream.Read(buffer, 0, buffer.Length);
