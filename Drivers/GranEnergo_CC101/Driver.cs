@@ -42,11 +42,16 @@ namespace GranEnergo_CC101
 
 			try
 			{
-				int interval = 10 * 1000;
-				if (Configuration.CurrentValuesInterval > 0 && Configuration.CurrentValuesInterval < interval) interval = Configuration.CurrentValuesInterval;
-				if (Configuration.DaysValuesInterval > 0 && Configuration.DaysValuesInterval < interval) interval = Configuration.DaysValuesInterval;
-				if (Configuration.MonthValuesInterval > 0 && Configuration.MonthValuesInterval < interval) interval = Configuration.MonthValuesInterval;
-				ExchangeTimer = new Timer(interval);
+				int interval = 10;
+
+				if (Configuration.CurrentValuesInterval > 0 && Configuration.CurrentValuesInterval < interval) 
+					interval = Configuration.CurrentValuesInterval;
+				if (Configuration.DaysValuesInterval > 0 && Configuration.DaysValuesInterval < interval) 
+					interval = Configuration.DaysValuesInterval;
+				if (Configuration.MonthValuesInterval > 0 && Configuration.MonthValuesInterval < interval) 
+					interval = Configuration.MonthValuesInterval;
+
+				ExchangeTimer = new Timer(interval * 1000 * 60);
 				ExchangeTimer.Elapsed += (s, e) => { Exchange(); };
 			}
 			catch
@@ -90,11 +95,11 @@ namespace GranEnergo_CC101
 
 		bool IsExchangeRunning { get; set; }
 
-		DateTime LastCurrent { get; set; }
+		DateTime LastCurrent { get; set; } = DateTime.MinValue;
 
-		DateTime LastDay { get; set; }
+		DateTime LastDay { get; set; } = DateTime.MinValue;
 
-		DateTime LastMonth { get; set; }
+		DateTime LastMonth { get; set; } = DateTime.MinValue;
 
 		void Exchange()
 		{
@@ -106,24 +111,29 @@ namespace GranEnergo_CC101
 			// определение необходимости опроса прибора
 			bool needCurrent = false, needDay = false, needMonth = false;
 			DateTime now = DateTime.Now;
-			if ((now - LastCurrent).TotalMinutes > Configuration.CurrentValuesInterval)
+
+			if (Configuration.CurrentValuesInterval > 0 && (now - LastCurrent).TotalMinutes > Configuration.CurrentValuesInterval)
 			{
 				LastCurrent = now;
 				needCurrent = true;
+				LogEvent("Чтение текущих значений", LogType.DETAILED);
 			}
-			if ((now - LastDay).TotalMinutes > Configuration.DaysValuesInterval)
+			if (Configuration.DaysValuesInterval > 0 && (now - LastDay).TotalMinutes > Configuration.DaysValuesInterval)
 			{
 				LastDay = now;
 				needDay = true;
+				LogEvent("Чтение значений за сутки", LogType.DETAILED);
 			}
-			if ((now - LastMonth).TotalMinutes > Configuration.MonthValuesInterval)
+			if (Configuration.MonthValuesInterval > 0 && (now - LastMonth).TotalMinutes > Configuration.MonthValuesInterval)
 			{
 				LastMonth = now;
 				needMonth = true;
+				LogEvent("Чтение значений за месяц", LogType.DETAILED);
 			}
 
 			if (!needCurrent && !needDay && !needMonth)
 			{
+				IsExchangeRunning = false;
 				lock (Fields)
 				{
 					Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
@@ -187,6 +197,9 @@ namespace GranEnergo_CC101
 				// идентификационный номер
 				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x44 }, 8);
 
+				// текущее значение даты и времени
+				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x22, 0x00, 0x00, 0x00, 0x63, 0x4E }, 24);
+
 				// архив событий состояния прибора
 				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x0F, 0x00, 0x00, 0x00, 0x0F, 0x47 }, 15);
 
@@ -195,15 +208,6 @@ namespace GranEnergo_CC101
 
 				// квадрант, тариф, сезон и ресурс батареи
 				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x21, 0x00, 0x00, 0x00, 0x27, 0x4E }, 10);
-
-				// идентификационный номер
-				//b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x44 }, 8);
-
-				// архив событий состояния фаз
-				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x22, 0x00, 0x00, 0x00, 0x63, 0x4E }, 24);
-
-				// текущее значение даты и времени
-				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x22, 0x00, 0x00, 0x00, 0x63, 0x4E }, 24);
 			}
 			catch (Exception e)
 			{
