@@ -16,7 +16,6 @@ namespace GranEnergo_CC101
 
 		public event LogEvent LogEvent;
 		public event UpdateEvent UpdateEvent;
-		public event WinLogEvent WinLogEvent;
 
 		public bool Start(string jsonConfiguration)
 		{
@@ -43,7 +42,11 @@ namespace GranEnergo_CC101
 
 			try
 			{
-				ExchangeTimer = new Timer(Configuration.ExchangeIntervalMs);
+				int interval = 10 * 1000;
+				if (Configuration.CurrentValuesInterval > 0 && Configuration.CurrentValuesInterval < interval) interval = Configuration.CurrentValuesInterval;
+				if (Configuration.DaysValuesInterval > 0 && Configuration.DaysValuesInterval < interval) interval = Configuration.DaysValuesInterval;
+				if (Configuration.MonthValuesInterval > 0 && Configuration.MonthValuesInterval < interval) interval = Configuration.MonthValuesInterval;
+				ExchangeTimer = new Timer(interval);
 				ExchangeTimer.Elapsed += (s, e) => { Exchange(); };
 			}
 			catch
@@ -51,7 +54,6 @@ namespace GranEnergo_CC101
 				LogEvent("Конфигурация не прочитана из json", LogType.ERROR);
 				return false;
 			}
-
 
 			IsDriverActive = true;
 			IsExchangeRunning = false;
@@ -88,12 +90,48 @@ namespace GranEnergo_CC101
 
 		bool IsExchangeRunning { get; set; }
 
+		DateTime LastCurrent { get; set; }
+
+		DateTime LastDay { get; set; }
+
+		DateTime LastMonth { get; set; }
+
 		void Exchange()
 		{
 			if (!IsDriverActive) return;
 			if (IsExchangeRunning) return;
 
 			IsExchangeRunning = true;
+
+			// определение необходимости опроса прибора
+			bool needCurrent = false, needDay = false, needMonth = false;
+			DateTime now = DateTime.Now;
+			if ((now - LastCurrent).TotalMinutes > Configuration.CurrentValuesInterval)
+			{
+				LastCurrent = now;
+				needCurrent = true;
+			}
+			if ((now - LastDay).TotalMinutes > Configuration.DaysValuesInterval)
+			{
+				LastDay = now;
+				needDay = true;
+			}
+			if ((now - LastMonth).TotalMinutes > Configuration.MonthValuesInterval)
+			{
+				LastMonth = now;
+				needMonth = true;
+			}
+
+			if (!needCurrent && !needDay && !needMonth)
+			{
+				lock (Fields)
+				{
+					Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+					Fields["Time"].Quality = 192;
+				}
+				UpdateEvent();
+				return;
+			}
 
 			TcpClient client;
 			NetworkStream stream;
@@ -119,6 +157,33 @@ namespace GranEnergo_CC101
 			try
 			{
 				byte[] b;
+
+				if (needCurrent)
+				{
+					// все мгновенные значения
+					b = ReadAndWrite(new byte[] { 0x00, 0x04, 0x2E, 0x00, 0x00, 0x01, 0x33, 0x39 }, 30);
+					Value("Current.P", BitConverter.ToSingle(new byte[] { b[4], b[5], b[6], b[7], }, 0));
+					Value("Current.Q", BitConverter.ToSingle(new byte[] { b[8], b[9], b[10], b[11], }, 0));
+					Value("Current.U", BitConverter.ToSingle(new byte[] { b[12], b[13], b[14], b[15], }, 0));
+					Value("Current.I", BitConverter.ToSingle(new byte[] { b[16], b[17], b[18], b[19], }, 0));
+					Value("Current.kP", BitConverter.ToSingle(new byte[] { b[20], b[21], b[22], b[23], }, 0));
+					Value("Current.F", BitConverter.ToSingle(new byte[] { b[24], b[25], b[26], b[27], }, 0));
+				}
+
+				if (needDay)
+				{
+					// накопленная энергия за последние сутки
+					b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x2A, 0x00, 0x00, 0x00, 0x03, 0x4C }, 22);
+					Value("LastDay.E", 7.5 / 10000 * BitConverter.ToInt32(new byte[] { b[4], b[5], b[6], b[7] }, 0));
+				}
+
+				if (needMonth)
+				{
+					// накопленная энергия за последний месяц
+					b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x2B, 0x00, 0x00, 0x00, 0x03, 0x4C }, 22);
+					Value("LastMonth.E", 7.5 / 10000 * BitConverter.ToInt32(new byte[] { b[4], b[5], b[6], b[7] }, 0));
+				}
+
 				// идентификационный номер
 				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x44 }, 8);
 
@@ -132,30 +197,13 @@ namespace GranEnergo_CC101
 				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x21, 0x00, 0x00, 0x00, 0x27, 0x4E }, 10);
 
 				// идентификационный номер
-				b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x44 }, 8);
-
-				// все мгновенные значения
-				b = ReadAndWrite(new byte[] { 0x00, 0x04, 0x2E, 0x00, 0x00, 0x01, 0x33, 0x39 }, 30);
-				Value("Current.P", BitConverter.ToSingle(new byte[] { b[4], b[5], b[6], b[7], }, 0));
-				Value("Current.Q", BitConverter.ToSingle(new byte[] { b[8], b[9], b[10], b[11], }, 0));
-				Value("Current.U", BitConverter.ToSingle(new byte[] { b[12], b[13], b[14], b[15], }, 0));
-				Value("Current.I", BitConverter.ToSingle(new byte[] { b[16], b[17], b[18], b[19], }, 0));
-				Value("Current.kP", BitConverter.ToSingle(new byte[] { b[20], b[21], b[22], b[23], }, 0));
-				Value("Current.F", BitConverter.ToSingle(new byte[] { b[24], b[25], b[26], b[27], }, 0));
+				//b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x44 }, 8);
 
 				// архив событий состояния фаз
 				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x22, 0x00, 0x00, 0x00, 0x63, 0x4E }, 24);
 
 				// текущее значение даты и времени
 				//ReadAndWrite(new byte[] { 0x00, 0x03, 0x22, 0x00, 0x00, 0x00, 0x63, 0x4E }, 24);
-
-				// накопленная энергия за последние сутки
-				b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x2A, 0x00, 0x00, 0x00, 0x03, 0x4C }, 30);
-				Value("LastDay.E", 7.5 * BitConverter.ToInt16(new byte[] { b[4], b[5] }, 0));
-
-				// накопленная энергия за последний месяц
-				b = ReadAndWrite(new byte[] { 0x00, 0x03, 0x2A, 0x00, 0x00, 0x00, 0x03, 0x4C }, 22);
-				Value("LastMonth.E", 7.5 * BitConverter.ToInt16(new byte[] { b[4], b[5] }, 0));
 			}
 			catch (Exception e)
 			{
@@ -210,7 +258,5 @@ namespace GranEnergo_CC101
 				}
 			}
 		}
-
-		
 	}
 }
