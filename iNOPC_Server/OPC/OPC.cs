@@ -88,7 +88,7 @@ namespace iNOPC.Server
 
         public static void InitDCOM()
         {
-            string pathToExe = Environment.CurrentDirectory + "\\" + AppDomain.CurrentDomain.FriendlyName + "iNOPC_Server.exe";
+            string pathToExe = Environment.CurrentDirectory + "\\" + AppDomain.CurrentDomain.FriendlyName;
 
             RequestDisconnect();
             UnregisterServer(CLSID, ServerName);
