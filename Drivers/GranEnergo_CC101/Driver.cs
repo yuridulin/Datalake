@@ -58,6 +58,7 @@ namespace GranEnergo_CC101
 
 			LastCurrent = DateTime.MinValue;
 			LastDay = DateTime.MinValue;
+			LastMonth = DateTime.MinValue;
 
 			IsDriverActive = true;
 			IsExchangeRunning = false;
@@ -76,6 +77,14 @@ namespace GranEnergo_CC101
 
 			IsDriverActive = false;
 			try { ExchangeTimer.Stop(); } catch { }
+			lock (Fields)
+			{
+				foreach (var field in Fields)
+				{
+					field.Value.Quality = 0;
+				}
+			}
+			UpdateEvent();
 
 			LogEvent("Мониторинг остановлен", LogType.REGULAR);
 		}
@@ -229,11 +238,7 @@ namespace GranEnergo_CC101
 				try { stream.Close(); } catch { }
 				try { client.Close(); } catch { }
 
-				lock (Fields)
-				{
-					Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
-					Fields["Time"].Quality = 192;
-				}
+				Value("Time", DateTime.Now.ToString("HH:mm:ss"));
 				UpdateEvent();
 			}
 
