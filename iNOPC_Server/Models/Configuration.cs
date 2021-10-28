@@ -47,6 +47,7 @@ namespace iNOPC.Server.Models
 						Access = v1.Access;
 						Settings = new Settings();
 						Preprocess();
+						SaveToFile();
 						break;
 
 					case "2":
@@ -72,6 +73,7 @@ namespace iNOPC.Server.Models
 					Access = new List<AccessRecord>();
 					Settings = new Settings();
 					Preprocess();
+					SaveToFile();
 				}
 				catch (Exception e)
 				{

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -18,7 +19,9 @@ namespace iNOPC.Server
 
         public static string ServerName => Program.Configuration?.Settings?.Name ?? "iNOPC";
 
-        public static string CLSID => Program.Configuration?.Settings?.CLSID ?? "{4537357b-9999-3334-432d-303637382d34}";
+        public static string ExeName => AppDomain.CurrentDomain.FriendlyName;
+
+        public static string CLSID => Program.Configuration?.Settings?.CLSID ?? "{4537357b-3739-3334-432d-303637382d34}";
 
         public static Dictionary<string, uint> Tags { get; set; } = new Dictionary<string, uint>();
 
@@ -88,7 +91,9 @@ namespace iNOPC.Server
 
         public static void InitDCOM()
         {
-            string pathToExe = Environment.CurrentDirectory + "\\" + AppDomain.CurrentDomain.FriendlyName;
+            Console.WriteLine("Инициализация DCOM запущена");
+
+            string pathToExe = Environment.CurrentDirectory + "\\" + ExeName;
 
             RequestDisconnect();
             UnregisterServer(CLSID, ServerName);
@@ -104,6 +109,7 @@ namespace iNOPC.Server
                 // Пересоздание службы
                 if (Program.Configuration.Settings.RegisterAsService)
                 {
+                    Console.WriteLine("Создание службы запущено");
                     process = new Process
                     {
                         StartInfo = new ProcessStartInfo
@@ -119,43 +125,78 @@ namespace iNOPC.Server
 
                     process.StandardInput.WriteLine("sc delete VST_OPC");
                     process.StandardInput.WriteLine("sc delete iNOPC");
-                    process.StandardInput.WriteLine("sc create iNOPC binPath= \"" + pathToExe + "\" DisplayName= \"iNOPC\" start= auto && exit");
+                    process.StandardInput.WriteLine("sc create iNOPC binPath= \"" + pathToExe + "\" DisplayName= \"" + Program.Configuration.Settings.Name + "\" start= auto && exit");
 
                     Task.Delay(5000).Wait();
-                    process.Close();
+                    process.Close(); Console.WriteLine("Создание службы завершено");
+                }
+                else
+                {
+                    Console.WriteLine("Создание службы не требуется");
                 }
 
-                // Создание записи в DCOM 1
-                File.WriteAllText("C:\\dcom.reg", 
-                    "Windows Registry Editor Version 5.00\n\n" +
-                    "[HKEY_CLASSES_ROOT\\AppID\\" + Program.Configuration.Settings.CLSID + "]\n" +
-                    "@=\"iNOPC\"\n" +
-                    "\"AuthenticationLevel\"=dword:00000001\n" +
-                    "\"LocalService\"=\"iNOPC\"\n" +
-                    "\"ServiceParameters\"=\"-Service\"\n\n");
+                // ищем AppID для продолжения регистрации
+                string appID = null;
+                using (var view = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+                {
+                    using (var clsid = view.OpenSubKey(@"Software\Classes\WOW6432Node\CLSID\", false))
+                    {
+                        foreach (var name in clsid.GetSubKeyNames())
+                        {
+                            var sub = clsid.OpenSubKey(name);
+                            if (sub.GetValue(string.Empty)?.ToString() == ServerName)
+                            {
+                                appID = sub.GetValue("AppID").ToString();
+                                break;
+                            }
+                        }
+                    }
+                }
 
-                process = Process.Start("regedit.exe", "/s C:\\dcom.reg");
-                process.WaitForExit();
+                // добавляем записи для доступа к серверу в режиме службы
+                Console.WriteLine("AppID   = " + appID);
+                Console.WriteLine("Имя exe = " + ExeName);
+                if (appID != null)
+                {
+                    using (var view = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
+                    {
+                        using (var route = view.OpenSubKey("AppID", true))
+                        {
+                            // удаляем хвосты
+                            foreach (var name in route.GetSubKeyNames())
+							{
+                                string defValue = route.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
+                                if (name == appID || name == ExeName || defValue == appID || defValue == ExeName)
+								{
+                                    route.DeleteSubKeyTree(name);
+								}
+							}
 
-                // Создание записи в DCOM 2
-                File.WriteAllText("C:\\dcom.reg",
-                    "Windows Registry Editor Version 5.00\n\n" +
-                    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes\\AppID\\" + AppDomain.CurrentDomain.FriendlyName + "]\n" +
-                    "@=\"" + AppDomain.CurrentDomain.FriendlyName + "\"\n" +
-                    "\"AppID\"=\"" + Program.Configuration.Settings.CLSID + "\"\n" +
-                    "\"LocalService\"=\"iNOPC\"\n" +
-                    "\"ServiceParameters\"=\"-Service\"\n\n");
+                            // новая запись
+                            route.CreateSubKey(appID);
+                            var record = route.OpenSubKey(appID, true);
+                            record.SetValue(string.Empty, ServerName);
+                            record.SetValue("AuthenticationLevel", 1);
+                            record.SetValue("LocalService", ServerName);
+                            record.SetValue("ServiceParameters", "-Service");
 
-                process = Process.Start("regedit.exe", "/s C:\\dcom.reg");
-                process.WaitForExit();
+                            // новая запись
+                            route.CreateSubKey(AppDomain.CurrentDomain.FriendlyName);
+                            record = route.OpenSubKey(AppDomain.CurrentDomain.FriendlyName, true);
+                            record.SetValue(string.Empty, AppDomain.CurrentDomain.FriendlyName);
+                            record.SetValue("AppID", appID);
+                            record.SetValue("LocalService", ServerName);
+                            record.SetValue("ServiceParameters", "-Service");
+                        }
+                    }
+                }
 
-                // Удаление временного файла
-                File.Delete("C:\\dcom.reg");
+                Console.WriteLine("Инициализация DCOM завершена");
             }
             catch (Exception e)
-			{
-                Console.WriteLine("Ошибка при создании записей в реестре: " + e.Message);
-			}
+            {
+                Console.WriteLine("Ошибка при инициализация DCOM: " + e.Message);
+            }
 
             RefreshAllClients();
         }
