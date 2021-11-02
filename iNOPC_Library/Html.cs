@@ -25,5 +25,23 @@
 
             return "<span>" + desc + "</span><input name='" + name + "' type='text' value='" + value + "' />";
         }
+
+        public static string V(string name, object value, string width = null)
+		{
+            var type = value.GetType();
+            string w = width == null ? "" : " style='width: " + width + "' ";
+
+            if (type.Equals(typeof(byte)) || type.Equals(typeof(int)) || type.Equals(typeof(uint)) || type.Equals(typeof(ushort)))
+            {
+                return "<input v name='" + name + "' type='number' value='" + value + "' " + w + "/>";
+            }
+
+            if (type.Equals(typeof(bool)))
+            {
+                return "<input v name='" + name + "' type='checkbox' " + ((bool)value ? "checked" : "") + " " + w + "/>";
+            }
+
+            return "<input v name='" + name + "' type='text' value='" + value + "' " + w + "/>";
+        }
     }
 }

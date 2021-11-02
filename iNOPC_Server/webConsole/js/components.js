@@ -636,7 +636,8 @@ function DeviceFields(id) {
 function DeviceSave(id) {
 	if (!AUTH()) return
 	var config = {}
-	document.querySelector('#device-configuration .form').querySelectorAll('div[type]').forEach(function (el) {
+	var form = document.querySelector('#device-configuration .form')
+	form.querySelectorAll('div[type]').forEach(function (el) {
 
 		if (el.getAttribute('type') == 'value') {
 			var input = el.querySelector('input')
@@ -657,7 +658,11 @@ function DeviceSave(id) {
 		}
 	})
 
-	var form = {
+	form.querySelectorAll('input[v]').forEach(function (input) {
+		config[input.name] = input.type == 'checkbox' ? input.checked : input.value
+	})
+
+	var body = {
 		Id: id,
 		Name: deviceName.value,
 		AutoStart: deviceAutoStart.checked,
@@ -665,7 +670,7 @@ function DeviceSave(id) {
 	}
 
 	// оправка формы на сервер
-	ask({ method: 'device.update', body: form }, function () {
+	ask({ method: 'device.update', body: body }, function () {
 		alert('Устройство сохранено')
 	})
 }
