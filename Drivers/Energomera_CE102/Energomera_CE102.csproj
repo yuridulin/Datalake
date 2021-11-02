@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Energomera_CE102</RootNamespace>
-    <AssemblyName>Energomera_CE102_v1.0</AssemblyName>
+    <AssemblyName>Energomera_CE102_v1.1</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Configuration.cs" />
     <Compile Include="Driver.cs" />
+    <Compile Include="Models\Field.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
