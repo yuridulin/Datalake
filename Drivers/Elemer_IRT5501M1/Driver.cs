@@ -144,39 +144,33 @@ namespace iNOPC.Drivers.Elemer_IRT5501M1
 
                     if (IsReceived)
                     {
-                        if (Port.BytesToRead < 15)
+                        int toRead = Port.BytesToRead;
+
+                        byte[] tx = new byte[toRead];
+                        Port.Read(tx, 0, toRead);
+
+                        try
                         {
-                            LogEvent("Пришло другое кол-во байт: " + Port.BytesToRead, LogType.WARNING);
-                            try { Port.Read(new byte[Port.BytesToRead], 0, Port.BytesToRead); } catch { }
-                        }
-                        else
-                        {
-                            byte[] tx = new byte[15];
-                            Port.Read(tx, 0, 15);
+                            string raw = Encoding.ASCII.GetString(tx);
+                            LogEvent("Ответ: " + raw, LogType.DETAILED);
 
-                            try
-                            {
-                                string raw = Encoding.ASCII.GetString(tx);
-                                LogEvent("Ответ: " + raw, LogType.DETAILED);
+                            raw = raw.Substring(raw.IndexOf(';') + 1);
+                            raw = raw.Substring(0, raw.IndexOf(';'));
+                            LogEvent("Разобранный ответ: " + raw, LogType.DETAILED);
 
-                                raw = raw.Substring(raw.IndexOf(';') + 1);
-                                raw = raw.Substring(0, raw.IndexOf(';'));
-                                LogEvent("Разобранный ответ: " + raw, LogType.DETAILED);
+                            float value = Convert.ToSingle(raw.Replace('.', ','));
+                            LogEvent("Значение: " + value, LogType.DETAILED);
 
-                                float value = Convert.ToSingle(raw.Replace('.', ','));
-                                LogEvent("Значение: " + value, LogType.DETAILED);
-
-                                lock (Fields)
-								{
-                                    Fields["Channel1"].Value = value;
-                                    Fields["Channel1"].Quality = 192;
-                                }
-                            }
-                            catch (Exception e)
+                            lock (Fields)
 							{
-                                Err("Ошибка при разборе ответа: " + e.Message);
-							}
+                                Fields["Channel1"].Value = value;
+                                Fields["Channel1"].Quality = 192;
+                            }
                         }
+                        catch (Exception e)
+						{
+                            Err("Ошибка при разборе ответа: " + e.Message);
+						}
                     }
                     else
 					{
