@@ -25,8 +25,7 @@ namespace iNOPC.Drivers.IEC_104
             LogEvent("Запуск ...");
 
             // Очистка предыдущего подключения
-            try { Conn?.Close(); } catch { }
-            try { Conn = null; } catch { }
+            DisposeTimers();
             ClearFields();
 
             // чтение конфигурации
@@ -117,16 +116,7 @@ namespace iNOPC.Drivers.IEC_104
             LogEvent("Мониторинг останавливается...");
 
             IsActive = false;
-
-            try { InterrogationTimer?.Stop(); } catch (Exception) { }
-            try { InterrogationTimer = null; } catch (Exception) { }
-
-            try { ReconnectTimer?.Stop(); } catch (Exception) { }
-            try { ReconnectTimer = null; } catch (Exception) { }
-
-            try { Conn?.Close(); } catch (Exception) { }
-            try { Conn = null; } catch (Exception) { }
-
+            DisposeTimers();
             ClearFields(true);
 
             LogEvent("Мониторинг остановлен");
@@ -534,6 +524,20 @@ namespace iNOPC.Drivers.IEC_104
                     Quality = 192
                 };
             }
+        }
+
+        void DisposeTimers()
+		{
+            try { InterrogationTimer?.Stop(); } catch { }
+            try { InterrogationTimer?.Dispose(); } catch { }
+            try { InterrogationTimer = null; } catch { }
+
+            try { ReconnectTimer?.Stop(); } catch { }
+            try { ReconnectTimer?.Dispose(); } catch { }
+            try { ReconnectTimer = null; } catch { }
+
+            try { Conn?.Close(); } catch { }
+            try { Conn = null; } catch { }
         }
 
         private bool Err(string text)
