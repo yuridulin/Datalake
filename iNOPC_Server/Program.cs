@@ -10,36 +10,28 @@ namespace iNOPC.Server
 {
 	class Program
     {
-        public static string Base { get; set; } = AppDomain.CurrentDomain.BaseDirectory;
+        public static string Base => AppDomain.CurrentDomain.BaseDirectory;
+
+        public static string ExeName => AppDomain.CurrentDomain.FriendlyName;
 
         public static Configuration Configuration { get; set; } = new Configuration();
 
         static void Main()
         {
-            
             // Проверка на наличие ранее запущенного экземпляра сервера
-            bool alreadyWorking = Process.GetProcesses().Count(x => x.ProcessName == AppDomain.CurrentDomain.FriendlyName) > 1;
+            bool alreadyWorking = Process.GetProcesses().Count(x => x.ProcessName == ExeName) > 1;
 
 			if (alreadyWorking)
 			{
-				Log("Уже существует другой запущенный экземпляр сервера.");
+				Log("Уже существует другой запущенный экземпляр сервера.\nСервер не будет запущен.\nНажмите Enter для выхода.");
 				Console.ReadLine();
 				return;
 			}
 
 			if (Environment.UserInteractive)
             {
-#if DEBUG
                 Start();
-#else
-                // Запуск в качестве exe регистрирует службу, а потом идёт на отдых
-                Log("Производится настройка...");
-                OPC.InitDCOM();
-                Log("Настройка DCOM выполнена. Создана служба iNOPC. После запуска службы сервер готов к работе.");
-                Log("Адрес веб-консоли для доступа к серверу: http://localhost:" + Configuration.Settings.WebConsolePort + "");
-                Log("Нажмите Enter для выхода.");
-#endif
-
+                Log("Сервер запущен\nАдрес веб-консоли для доступа к серверу: http://localhost:" + Configuration.Settings.WebConsolePort + "\nНажмите Enter для выхода.");
 				Console.ReadLine();
             }
             else

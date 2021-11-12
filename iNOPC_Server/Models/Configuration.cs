@@ -9,7 +9,7 @@ namespace iNOPC.Server.Models
 {
 	public class Configuration
 	{
-		static string Path { get; set; } = Program.Base + @"\Configs\config.json";
+		static string Path { get; set; } = Program.Base + @"Configs\config.json";
 
 		public List<Driver> Drivers { get; set; } = new List<Driver>();
 
@@ -110,7 +110,7 @@ namespace iNOPC.Server.Models
 
 				try
 				{
-					File.WriteAllText(Program.Base + "\\webConsole\\js\\settings.js", 
+					File.WriteAllText(Program.Base + "webConsole\\js\\settings.js", 
 						"var _httpPort = " + Settings.WebConsolePort + "\nvar _wsPort = " + Settings.WebConsoleSocketPort);
 				}
 				catch (Exception e)

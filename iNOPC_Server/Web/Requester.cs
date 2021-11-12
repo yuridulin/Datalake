@@ -1,13 +1,16 @@
 ﻿using iNOPC.Library;
 using iNOPC.Server.Models;
 using iNOPC.Server.Web.RequestTypes;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace iNOPC.Server.Web
 {
@@ -139,8 +142,12 @@ namespace iNOPC.Server.Web
 
                     case "tree": return Tree();
 
-                    case "opc.dcom": return OpcDcom();
+                    case "settings": return Settings();
+                    case "opc.install": return OpcInstallDcom();
+                    case "opc.uninstall": return OpcUninstallDcom();
                     case "opc.clean": return OpcClean();
+                    case "service.create": return ServiceCreate();
+                    case "service.remove": return ServiceRemove();
 
                     case "driver": return Driver(body);
                     case "driver.devices": return DriverDevices(body);
@@ -321,14 +328,73 @@ namespace iNOPC.Server.Web
                 });
         }
 
-        object OpcDcom()
+
+        object Settings()
+		{
+            bool foundInDCOM = false;
+            string path = "";
+
+            using (var view = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
+            {
+                using (var route = view.OpenSubKey("AppID", true))
+                {
+                    foreach (var name in route.GetSubKeyNames())
+                    {
+                        string defValue = route.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
+                        if (name == Program.ExeName || defValue == Program.ExeName || name == OPC.ServerName || defValue == OPC.ServerName)
+                        {
+                            foundInDCOM = true;
+                        }
+                    }
+                }
+            }
+
+            using (var view = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                using (var service = view.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\iNOPC", false))
+                {
+                    if (service != null)
+                    {
+                        path = service.GetValue("ImagePath").ToString();
+                    }
+                }
+            }
+
+            return new
+            {
+                OpcStatus = foundInDCOM ? "сервер зарегистрирован" : "сервер не зарегистрирован",
+                ServiceStatus = path == "" 
+                    ? "не установлена"
+                    : path == Program.Base + Program.ExeName
+                        ? "установлена для этого сервера"
+                        : "установлена для другого сервера",
+                InitPath = Program.Base + Program.ExeName,
+                ServicePath = path == ""
+                    ? "не задан"
+                    : path,
+            };
+        }
+
+        object OpcInstallDcom()
         {
             if (AccessType != AccessType.FULL)
             {
                 return new { Warning = "Нет доступа" };
             }
 
-            OPC.InitDCOM();
+            OPC.InstallDCOM();
+
+            return new { Done = true };
+        }
+
+        object OpcUninstallDcom()
+		{
+            if (AccessType != AccessType.FULL)
+            {
+                return new { Warning = "Нет доступа" };
+            }
+
+            OPC.UninstallDCOM();
 
             return new { Done = true };
         }
@@ -344,6 +410,73 @@ namespace iNOPC.Server.Web
 
             return new { Done = true };
         }
+
+        object ServiceCreate()
+        {
+            ServiceRemove();
+
+            using (var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    CreateNoWindow = true,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                },
+            })
+            {
+                process.Start();
+                process.StandardInput.WriteLine("sc create " + OPC.ServerName + " binPath= \"" + Program.Base + Program.ExeName + "\" DisplayName= \"" + OPC.ServerName + "\" start= auto && exit");
+
+                Task.Delay(5000).Wait();
+
+                process.Close();
+            }
+
+            Program.Log("Служба успешно создана");
+            return "Служба успешно создана";
+        }
+
+        object ServiceRemove()
+        {
+            // Удаление записи в реестре
+            // Нужно, потому что при удалении из оснастки служба всего лишь помечается на удаление после перезагрузки
+            using (var view = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                using (var service = view.OpenSubKey(@"SYSTEM\CurrentControlSet\Services", true))
+                {
+                    service.DeleteSubKeyTree("iNOPC");
+                }
+            }
+
+            // Удаление записи в оснастке
+            using (var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    CreateNoWindow = true,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                },
+            })
+            {
+                process.Start();
+                process.StandardInput.WriteLine("net stop iNOPC & sc delete iNOPC");
+
+                Task.Delay(5000).Wait();
+
+                process.Close();
+            }
+
+            // После этого служба должна быть удалена
+            Program.Log("Служба успешно удалена");
+            return "Служба успешно удалена";
+        }
+
 
         object Driver(string body)
         {

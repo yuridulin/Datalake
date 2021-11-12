@@ -688,29 +688,71 @@ function Settings() {
 		return mount('#view', h('div.container', 'Нет доступа'))
 	}
 
-	mount('#view',
-		h('div.container',
-			h('button', {
-				innerHTML: 'Создать службу и инициализировать DCOM',
-				onclick: function () {
-					ask({ method: 'opc.dcom' }, function (data) {
-						if (data) alert('Инициализация DCOM выполнена')
-					})
-				}
-			}),
-			h('button', {
-				innerHTML: 'Реинициализация OPC тегов',
-				onclick: function () {
-					ask({ method: 'opc.clean' }, function (data) {
-						if (data) alert('Реинициализация OPC тегов выполнена')
-					})
-				}
-			})
-		),
-		h('div#users')
-	)
+	ask({ method: 'settings' }, function (json) {
+		mount('#view',
+			h('div.container',
+				h('h3', 'DCOM'),
+				h('span', 'Состояние: ' + json.OpcStatus),
+				h('br'),
+				h('button', {
+					innerHTML: 'Зарегистрировать сервер в DCOM',
+					onclick: function () {
+						ask({ method: 'opc.install' }, function (data) {
+							if (data) alert('Регистрация DCOM выполнена')
+							Settings()
+						})
+					}
+				}),
+				h('button', {
+					innerHTML: 'Отменить регистрацию сервера в DCOM',
+					onclick: function () {
+						ask({ method: 'opc.uninstall' }, function (data) {
+							if (data) alert('Регистрация DCOM отменена')
+							Settings()
+						})
+					}
+				}),
+				h('button', {
+					innerHTML: 'Пересоздать OPC теги',
+					onclick: function () {
+						ask({ method: 'opc.clean' }, function (data) {
+							if (data) alert('Реинициализация OPC тегов выполнена')
+							Settings()
+						})
+					}
+				})
+			),
+			h('div.container',
+				h('h3', 'Служба'),
+				h('span', 'Состояние: ' + json.ServiceStatus, { title: 'Путь к исполняемому файлу: ' + json.ServicePath }),
+				h('br'),
+				h('button', {
+					innerHTML: 'Создать службу',
+					onclick: function () {
+						ask({ method: 'service.create' }, function (data) {
+							if (data) alert(data)
+							Settings()
+						})
+					}
+				}),
+				h('button', {
+					innerHTML: 'Удалить службу',
+					onclick: function () {
+						ask({ method: 'service.remove' }, function (data) {
+							if (data) alert(data)
+							Settings()
+						})
+					}
+				})
+			),
+			h('div.container',
+				h('h3', 'Учётные записи'),
+				h('div#users')
+			)
+		)
 
-	UsersTable()
+		UsersTable()
+	})
 }
 
 function UsersTable() {

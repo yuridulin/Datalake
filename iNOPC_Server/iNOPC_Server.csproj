@@ -57,6 +57,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -73,6 +74,7 @@
     <Compile Include="Models\Configurations\V0.cs" />
     <Compile Include="Models\Configurations\V2.cs" />
     <Compile Include="Models\Configurations\V1.cs" />
+    <Compile Include="Models\Defence.cs" />
     <Compile Include="Models\Device.cs" />
     <Compile Include="Models\Driver.cs" />
     <Compile Include="Models\Settings.cs" />

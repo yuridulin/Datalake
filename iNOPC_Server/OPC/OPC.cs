@@ -1,27 +1,20 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace iNOPC.Server
 {
 	public static class OPC
     {
+        public const string ServerName = "iNOPC";
         public const string Pass = "JVRPS53R5V64226N62H4";
+        public const string CLSID = "{4537357b-3739-3334-432d-303637382d34}";
+        public const string APPID = "{3335347b-3337-3735-622d-333733392d33}";
 
         private static WriteNotificationDelegate _WriteOutDelegate;
-
         private static UnknownItemDelegate _UnknownItemDelegate;
-
-        public static string ServerName => Program.Configuration?.Settings?.Name ?? "iNOPC";
-
-        public static string ExeName => AppDomain.CurrentDomain.FriendlyName;
-
-        public static string CLSID => Program.Configuration?.Settings?.CLSID ?? "{4537357b-3739-3334-432d-303637382d34}";
 
         public static Dictionary<string, uint> Tags { get; set; } = new Dictionary<string, uint>();
 
@@ -42,7 +35,6 @@ namespace iNOPC.Server
         public static void WriteOut(uint item, ref object value, ref uint result)
         {
             // Функция записи OPC тега
-
             foreach (var keyValue in Tags)
             {
                 if (keyValue.Value == item)
@@ -89,115 +81,104 @@ namespace iNOPC.Server
             UninitWTOPCsvr();
         }
 
-        public static void InitDCOM()
+        public static void UninstallDCOM(bool silent = false)
         {
-            Console.WriteLine("Инициализация DCOM запущена");
-
-            string pathToExe = Environment.CurrentDirectory + "\\" + ExeName;
-
-            RequestDisconnect();
-            UnregisterServer(CLSID, ServerName);
-            UpdateRegistry(CLSID, ServerName, ServerName, pathToExe);
-            SetVendorInfo("iNOPC RUP Vitebskenergo");
-            InitWTOPCsvr(CLSID, 1000);
-            Deactivate30MinTimer(Pass);
+            if (!silent) Program.Log("Отмена регистрации в DCOM...");
 
             try
             {
-                Process process;
-
-                // Пересоздание службы
-                if (Program.Configuration.Settings.RegisterAsService)
+                // нужно найти и удалить все упоминания iNOPC в реестре
+                using (var view = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
                 {
-                    Console.WriteLine("Создание службы запущено");
-                    process = new Process
+                    using (var route = view.OpenSubKey("AppID", true))
                     {
-                        StartInfo = new ProcessStartInfo
+                        // удаляем хвосты
+                        foreach (var name in route.GetSubKeyNames())
                         {
-                            FileName = "cmd.exe",
-                            CreateNoWindow = true,
-                            RedirectStandardInput = true,
-                            RedirectStandardOutput = true,
-                            UseShellExecute = false,
-                        },
-                    };
-                    process.Start();
-
-                    process.StandardInput.WriteLine("sc delete VST_OPC");
-                    process.StandardInput.WriteLine("sc delete iNOPC");
-                    process.StandardInput.WriteLine("sc create iNOPC binPath= \"" + pathToExe + "\" DisplayName= \"" + Program.Configuration.Settings.Name + "\" start= auto && exit");
-
-                    Task.Delay(5000).Wait();
-                    process.Close(); Console.WriteLine("Создание службы завершено");
-                }
-                else
-                {
-                    Console.WriteLine("Создание службы не требуется");
-                }
-
-                // ищем AppID для продолжения регистрации
-                string appID = null;
-                using (var view = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
-                {
-                    using (var clsid = view.OpenSubKey(@"Software\Classes\WOW6432Node\CLSID\", false))
-                    {
-                        foreach (var name in clsid.GetSubKeyNames())
-                        {
-                            var sub = clsid.OpenSubKey(name);
-                            if (sub.GetValue(string.Empty)?.ToString() == ServerName)
+                            string defValue = route.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
+                            if (name == Program.ExeName || defValue == Program.ExeName || name == ServerName || defValue == ServerName)
                             {
-                                appID = sub.GetValue("AppID").ToString();
-                                break;
+                                route.DeleteSubKeyTree(name);
                             }
                         }
                     }
-                }
 
-                // добавляем записи для доступа к серверу в режиме службы
-                Console.WriteLine("AppID   = " + appID);
-                Console.WriteLine("Имя exe = " + ExeName);
-                if (appID != null)
-                {
-                    using (var view = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
+                    using (var route = view.OpenSubKey("WOW6432Node\\CLSID", true))
                     {
-                        using (var route = view.OpenSubKey("AppID", true))
+                        // удаляем хвосты
+                        foreach (var name in route.GetSubKeyNames())
                         {
-                            // удаляем хвосты
-                            foreach (var name in route.GetSubKeyNames())
-							{
-                                string defValue = route.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
-                                if (name == appID || name == ExeName || defValue == appID || defValue == ExeName)
-								{
-                                    route.DeleteSubKeyTree(name);
-								}
-							}
+                            string defValue = route.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
+                            if (name == Program.ExeName || defValue == Program.ExeName || name == ServerName || defValue == ServerName)
+                            {
+                                route.DeleteSubKeyTree(name);
+                            }
+                        }
+                    }
 
-                            // новая запись
-                            route.CreateSubKey(appID);
-                            var record = route.OpenSubKey(appID, true);
-                            record.SetValue(string.Empty, ServerName);
-                            record.SetValue("AuthenticationLevel", 1);
-                            record.SetValue("LocalService", ServerName);
-                            record.SetValue("ServiceParameters", "-Service");
-
-                            // новая запись
-                            route.CreateSubKey(AppDomain.CurrentDomain.FriendlyName);
-                            record = route.OpenSubKey(AppDomain.CurrentDomain.FriendlyName, true);
-                            record.SetValue(string.Empty, AppDomain.CurrentDomain.FriendlyName);
-                            record.SetValue("AppID", appID);
-                            record.SetValue("LocalService", ServerName);
-                            record.SetValue("ServiceParameters", "-Service");
+                    // удаляем хвосты
+                    foreach (var name in view.GetSubKeyNames())
+                    {
+                        string defValue = view.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
+                        if (name == Program.ExeName || defValue == Program.ExeName || name == ServerName || defValue == ServerName)
+                        {
+                            view.DeleteSubKeyTree(name);
                         }
                     }
                 }
 
-                Console.WriteLine("Инициализация DCOM завершена");
+                if (!silent) Program.Log("Регистрация в DCOM отменена");
             }
             catch (Exception e)
-            {
-                Console.WriteLine("Ошибка при инициализация DCOM: " + e.Message);
+			{
+                Program.Log("Ошибка при отмене регистрации в DCOM: " + e.Message);
             }
+        }
 
+        public static void InstallDCOM()
+        {
+            Program.Log("Регистрация в DCOM ...");
+
+            UninstallDCOM(true);
+
+            RequestDisconnect();
+            UnregisterServer(CLSID, ServerName);
+            UpdateRegistry(CLSID, ServerName, ServerName, Environment.CurrentDirectory + "\\" + Program.ExeName);
+            SetVendorInfo("iNOPC RUP Vitebskenergo");
+
+			try
+			{
+				using (var view = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
+				{
+					using (var route = view.OpenSubKey("AppID", true))
+					{
+						// новая запись
+						route.CreateSubKey(APPID);
+						var record = route.OpenSubKey(APPID, true);
+						record.SetValue(string.Empty, ServerName);
+						record.SetValue("AuthenticationLevel", 1);
+						record.SetValue("LocalService", ServerName);
+						record.SetValue("ServiceParameters", "-Service");
+
+						// новая запись
+						route.CreateSubKey(Program.ExeName);
+						record = route.OpenSubKey(Program.ExeName, true);
+						record.SetValue(string.Empty, Program.ExeName);
+						record.SetValue("AppID", APPID);
+						record.SetValue("LocalService", ServerName);
+						record.SetValue("ServiceParameters", "-Service");
+					}
+				}
+
+				Program.Log("Сервер зарегистрирован в DCOM");
+			}
+			catch (Exception e)
+			{
+				Program.Log("Ошибка при регистрации в DCOM: " + e.Message);
+			}
+
+			InitWTOPCsvr(CLSID, 1000);
+            Deactivate30MinTimer(Pass);
             RefreshAllClients();
         }
 
