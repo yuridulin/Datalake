@@ -33,6 +33,15 @@ namespace GranEnergo_CC101
 			try
 			{
 				Fields.Clear();
+				Fields.Add("Time", new DefField { Quality = 0, Value = DateTime.Now.ToString("HH:mm:ss") });
+				Fields.Add("Current.P", new DefField { Quality = 0, Value = 0F });
+				Fields.Add("Current.Q", new DefField { Quality = 0, Value = 0F });
+				Fields.Add("Current.U", new DefField { Quality = 0, Value = 0F });
+				Fields.Add("Current.I", new DefField { Quality = 0, Value = 0F });
+				Fields.Add("Current.kP", new DefField { Quality = 0, Value = 0F });
+				Fields.Add("Current.F", new DefField { Quality = 0, Value = 0F });
+				Fields.Add("LastDay.E", new DefField { Quality = 0, Value = 0F });
+				Fields.Add("LastMonth.E", new DefField { Quality = 0, Value = 0F });
 			}
 			catch
 			{
@@ -47,6 +56,9 @@ namespace GranEnergo_CC101
 				if (Configuration.CurrentValuesInterval > 0 && Configuration.CurrentValuesInterval < interval) 
 					interval = Configuration.CurrentValuesInterval;
 
+				try { ExchangeTimer?.Stop(); } catch { }
+				try { ExchangeTimer?.Dispose(); } catch { }
+				try { ExchangeTimer = null; } catch { }
 				ExchangeTimer = new Timer(interval * 1000);
 				ExchangeTimer.Elapsed += (s, e) => { Exchange(); };
 			}
@@ -76,7 +88,11 @@ namespace GranEnergo_CC101
 			LogEvent("Остановка мониторинга...", LogType.REGULAR);
 
 			IsDriverActive = false;
-			try { ExchangeTimer.Stop(); } catch { }
+
+			try { ExchangeTimer?.Stop(); } catch { }
+			try { ExchangeTimer?.Dispose(); } catch { }
+			try { ExchangeTimer = null; } catch { }
+
 			lock (Fields)
 			{
 				foreach (var field in Fields)
@@ -139,11 +155,7 @@ namespace GranEnergo_CC101
 			if (!needCurrent && !needDay && !needMonth)
 			{
 				IsExchangeRunning = false;
-				lock (Fields)
-				{
-					Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
-					Fields["Time"].Quality = 192;
-				}
+				Value("Time", DateTime.Now.ToString("HH:mm:ss"));
 				UpdateEvent();
 				return;
 			}
@@ -156,6 +168,7 @@ namespace GranEnergo_CC101
 			{
 				client = new TcpClient();
 				client.Connect(Configuration.Ip, Configuration.Port);
+				client.Client.ReceiveTimeout = Configuration.PacketTimeout + 10;
 
 				stream = client.GetStream();
 
@@ -193,7 +206,7 @@ namespace GranEnergo_CC101
 					// накопленная энергия за последние сутки
 					if (ReadAndWrite(new byte[] { 0x00, 0x03, 0x2A, 0x00, 0x00, 0x00, 0x03, 0x4C }, 22, out b))
 					{
-						Value("LastDay.E", 7.5 / 10000 * BitConverter.ToInt32(new byte[] { b[4], b[5], b[6], b[7] }, 0));
+						Value("LastDay.E", (float)(7.5 / 10000 * BitConverter.ToInt32(new byte[] { b[4], b[5], b[6], b[7] }, 0)));
 						LastDay = now;
 					}
 				}
@@ -203,7 +216,7 @@ namespace GranEnergo_CC101
 					// накопленная энергия за последний месяц
 					if (ReadAndWrite(new byte[] { 0x00, 0x03, 0x2B, 0x00, 0x00, 0x00, 0xFF, 0x4D }, 22, out b))
 					{
-						Value("LastMonth.E", 7.5 / 10000 * BitConverter.ToInt32(new byte[] { b[4], b[5], b[6], b[7] }, 0));
+						Value("LastMonth.E", (float)(7.5 / 10000 * BitConverter.ToInt32(new byte[] { b[4], b[5], b[6], b[7] }, 0)));
 						LastMonth = now;
 					}
 				}
@@ -257,19 +270,12 @@ namespace GranEnergo_CC101
 				return buffer[size - 1] != 0x00 && buffer[size - 2] != 0x00;
 			}
 
-			void Value(string name, object value)
+			void Value(string name, object value, ushort quality = 192)
 			{
 				lock (Fields)
 				{
-					if (Fields.ContainsKey(name))
-					{
-						Fields[name].Quality = 192;
-						Fields[name].Value = value;
-					}
-					else
-					{
-						Fields.Add(name, new DefField { Name = name, Quality = 192, Value = value });
-					}
+					Fields[name].Quality = quality;
+					Fields[name].Value = value;
 				}
 			}
 		}
