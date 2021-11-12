@@ -37,7 +37,7 @@ namespace Energomera_CE102
 				ExchangeTimer = new Timer(5000);
 				ExchangeTimer.Elapsed += (s, e) => { Exchange(); };
 
-				Timeouts = new DateTime[] { DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue };
+				Timeouts = new DateTime[] { DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, /*DateTime.MinValue*/ };
 
 				DeviceNumber = BitConverter.GetBytes(Configuration.DeviceNumber);
 				StationNumber = BitConverter.GetBytes(Configuration.StationNumber);
@@ -111,7 +111,7 @@ namespace Energomera_CE102
 				Configuration.CheckCurrentData && (now - Timeouts[1]).TotalMinutes > Configuration.CurrentInterval,
 				Configuration.CheckDailyData && (now - Timeouts[2]).TotalMinutes > Configuration.DailyInterval,
 				Configuration.CheckMonthlyData && (now - Timeouts[3]).TotalMinutes > Configuration.MonthlyInterval,
-				Configuration.CheckPower && (now - Timeouts[4]).TotalMinutes > Configuration.PowerInterval
+				//Configuration.CheckPower && (now - Timeouts[4]).TotalMinutes > Configuration.PowerInterval
 			};
 			if (!reasons[0] && !reasons[1] && !reasons[2] && !reasons[3] && !reasons[4])
 			{
@@ -171,9 +171,19 @@ namespace Energomera_CE102
 				// текущее значение
 				if (reasons[1])
 				{
-					if (ReadAndWrite(Command54(new byte[] { 0xD0, 0x05, 0x02 }, new byte[] { 0x00, 0x18, 0x00, 0x00, 0x03, 0x01 }), 20, out b))
+					//if (ReadAndWrite(Command54(new byte[] { 0xD0, 0x05, 0x02 }, new byte[] { 0x00, 0x18, 0x00, 0x00, 0x03, 0x01 }), 20, out b))
+					//{
+					//	Value("CurrentEnergy", BitConverter.ToInt32(new byte[] { b[13], b[14], b[15], b[16] }, 0) * 0.01);
+					//	Timeouts[1] = now;
+					//}
+					//else if (Configuration.SetBadQuality)
+					//{
+					//	Value("CurrentEnergy", 0, 0);
+					//}
+
+					if (ReadAndWrite(Command48(new byte[] { 0xD1, 0x01, 0x31, 0x00 }), 15, out b))
 					{
-						Value("CurrentEnergy", BitConverter.ToInt32(new byte[] { b[13], b[14], b[15], b[16] }, 0) * 0.01);
+						Value("CurrentEnergy", BitConverter.ToInt32(new byte[] { b[9], b[10], b[11], b[12] }, 0) * 0.01);
 						Timeouts[1] = now;
 					}
 					else if (Configuration.SetBadQuality)
@@ -185,9 +195,19 @@ namespace Energomera_CE102
 				// энергия за сутки
 				if (reasons[2])
 				{
-					if (ReadAndWrite(Command54(new byte[] { 0xD0, 0x06, 0x02 }, new byte[] { 0x00, 0x28, 0x00, 0x00, 0x03, 0x01, 0x01 }), 20, out b))
+					//if (ReadAndWrite(Command54(new byte[] { 0xD0, 0x06, 0x02 }, new byte[] { 0x00, 0x28, 0x00, 0x00, 0x03, 0x01, 0x01 }), 20, out b))
+					//{
+					//	Value("EnergyLastDay", BitConverter.ToInt32(new byte[] { b[13], b[14], b[15], b[16] }, 0) * 0.01);
+					//	Timeouts[2] = now;
+					//}
+					//else if (Configuration.SetBadQuality)
+					//{
+					//	Value("EnergyLastDay", 0, 0);
+					//}
+
+					if (ReadAndWrite(Command48(new byte[] { 0xD1, 0x01, 0x2F, 0x01 }), 15, out b))
 					{
-						Value("EnergyLastDay", BitConverter.ToInt32(new byte[] { b[13], b[14], b[15], b[16] }, 0) * 0.01);
+						Value("EnergyLastDay", BitConverter.ToInt32(new byte[] { b[9], b[10], b[11], b[12] }, 0) * 0.01);
 						Timeouts[2] = now;
 					}
 					else if (Configuration.SetBadQuality)
@@ -199,9 +219,19 @@ namespace Energomera_CE102
 				// энергия за месяц
 				if (reasons[3])
 				{
-					if (ReadAndWrite(Command54(new byte[] { 0xD0, 0x05, 0x02 }, new byte[] { 0x00, 0x48, 0x00, 0x00, 0x03, 0x11 }), 20, out b))
+					//if (ReadAndWrite(Command54(new byte[] { 0xD0, 0x05, 0x02 }, new byte[] { 0x00, 0x48, 0x00, 0x00, 0x03, 0x11 }), 20, out b))
+					//{
+					//	Value("EnergyLastMonth", BitConverter.ToInt32(new byte[] { b[13], b[14], b[15], b[16] }, 0) * 0.01);
+					//	Timeouts[3] = now;
+					//}
+					//else if (Configuration.SetBadQuality)
+					//{
+					//	Value("EnergyLastMonth", 0, 0);
+					//}
+
+					if (ReadAndWrite(Command48(new byte[] { 0xD1, 0x01, 0x31, 0x01 }), 15, out b))
 					{
-						Value("EnergyLastMonth", BitConverter.ToInt32(new byte[] { b[13], b[14], b[15], b[16] }, 0) * 0.01);
+						Value("EnergyLastMonth", BitConverter.ToInt32(new byte[] { b[9], b[10], b[11], b[12] }, 0) * 0.01);
 						Timeouts[3] = now;
 					}
 					else if (Configuration.SetBadQuality)
@@ -210,19 +240,29 @@ namespace Energomera_CE102
 					}
 				}
 
-				// энергия за месяц
-				if (reasons[4])
-				{
-					if (ReadAndWrite(Command54(new byte[] { 0xD0, 0x05, 0x02 }, new byte[] { 0x00, 0x48, 0x00, 0x00, 0x03, 0x11 }), 20, out b))
-					{
-						Value("CurrentPower", BitConverter.ToInt32(new byte[] { b[13], b[14], b[15], b[16] }, 0) * 0.01);
-						Timeouts[4] = now;
-					}
-					else if (Configuration.SetBadQuality)
-					{
-						Value("CurrentPower", 0, 0);
-					}
-				}
+				// текущая мощность
+				//if (reasons[4])
+				//{
+				//	//if (ReadAndWrite(Command54(new byte[] { 0xD0, 0x05, 0x02 }, new byte[] { 0x00, 0x48, 0x00, 0x00, 0x03, 0x11 }), 20, out b))
+				//	//{
+				//	//	Value("CurrentPower", BitConverter.ToInt32(new byte[] { b[13], b[14], b[15], b[16] }, 0) * 0.01);
+				//	//	Timeouts[4] = now;
+				//	//}
+				//	//else if (Configuration.SetBadQuality)
+				//	//{
+				//	//	Value("CurrentPower", 0, 0);
+				//	//}
+
+				//	if (ReadAndWrite(Command48(new byte[] { 0xD1, 0x01, 0x32, 0x1F }), 14, out b))
+				//	{
+				//		Value("CurrentPower", BitConverter.ToInt32(new byte[] { b[9], b[10], b[11], b[12] }, 0) * 0.01);
+				//		Timeouts[4] = now;
+				//	}
+				//	else if (Configuration.SetBadQuality)
+				//	{
+				//		Value("CurrentPower", 0, 0);
+				//	}
+				//}
 			}
 			catch (Exception e)
 			{

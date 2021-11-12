@@ -1,7 +1,5 @@
-﻿using Energomera_CE102.Models;
-using iNOPC.Library;
+﻿using iNOPC.Library;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
 namespace Energomera_CE102
 {
@@ -31,7 +29,7 @@ namespace Energomera_CE102
 
         public bool CheckCurrentData { get; set; } = true;
 
-        public bool CheckPower { get; set; } = true;
+        //public bool CheckPower { get; set; } = true;
 
         public bool CheckDateTime { get; set; } = true;
 
@@ -41,7 +39,7 @@ namespace Energomera_CE102
 
         public int CurrentInterval { get; set; } = 10;
 
-        public int PowerInterval { get; set; } = 10;
+        //public int PowerInterval { get; set; } = 10;
 
         public int DateTimeInterval { get; set; } = 10;
 
@@ -67,11 +65,11 @@ namespace Energomera_CE102
                     + Html.V(nameof(DateTimeInterval), config.DateTimeInterval, "5em") 
                     + "</span></div>"
 
-                    + "<div><label style='width: 35em'>"
-                    + Html.V(nameof(CheckPower), config.CheckPower) 
-                    + "Мощность активная, кВт</label><span>Интервал опроса, мин: " 
-                    + Html.V(nameof(PowerInterval), config.PowerInterval, "5em") 
-                    + "</span></div>"
+                    //+ "<div><label style='width: 35em'>"
+                    //+ Html.V(nameof(CheckPower), config.CheckPower) 
+                    //+ "Мощность активная, кВт</label><span>Интервал опроса, мин: " 
+                    //+ Html.V(nameof(PowerInterval), config.PowerInterval, "5em") 
+                    //+ "</span></div>"
 
                     + "<div><label style='width: 35em'>" 
                     + Html.V(nameof(CheckCurrentData), config.CheckCurrentData) 
