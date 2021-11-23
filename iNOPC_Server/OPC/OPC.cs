@@ -206,28 +206,15 @@ namespace iNOPC.Server
         {
             lock (Program.Configuration)
             {
+                foreach (var tag in Tags)
+				{
+                    RemoveTag(tag.Value);
+                    Tags.Remove(tag.Key);
+				}
+
                 foreach (var driver in Program.Configuration.Drivers)
                 {
-                    foreach (var device in driver.Devices)
-                    {
-                        var fieldsToRemove = Tags.Keys.Where(x => x.Contains(driver.Name + "." + device.Name + ".")).ToList();
-                        var fields = device.Fields().Keys.ToList();
-
-                        foreach (var field in fields)
-                        {
-                            if (fieldsToRemove.Contains(field))
-                            {
-                                fieldsToRemove.Remove(field);
-                            }
-                        }
-
-                        foreach (var field in fieldsToRemove)
-                        {
-                            var address = Tags[field];
-                            RemoveTag(address);
-                            Tags.Remove(field);
-                        }
-                    }
+                    driver.Load();
                 }
             }
         }
