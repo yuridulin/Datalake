@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Timers;
@@ -34,7 +35,9 @@ namespace Energomera_CE102
 			{
 				Fields.Clear();
 
-				ExchangeTimer = new Timer(5000);
+				var minTick = new[] { 2, Configuration.DateTimeInterval, Configuration.CurrentInterval, Configuration.DailyInterval, Configuration.MonthlyInterval }.Min() * 60000;
+
+				ExchangeTimer = new Timer(minTick);
 				ExchangeTimer.Elapsed += (s, e) => { Exchange(); };
 
 				Timeouts = new DateTime[] { DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, /*DateTime.MinValue*/ };
@@ -95,6 +98,9 @@ namespace Energomera_CE102
 
 		void Exchange()
 		{
+			LogEvent("Очередной тик таймера", LogType.DETAILED);
+			LogEvent("Флаг IsExchangeRunning = " + IsExchangeRunning.ToString(), LogType.DETAILED);
+
 			if (!IsDriverActive) return;
 			if (IsExchangeRunning) return;
 
@@ -107,14 +113,21 @@ namespace Energomera_CE102
 			DateTime now = DateTime.Now;
 			bool[] reasons = new bool[]
 			{
-				Configuration.CheckDateTime && (now - Timeouts[0]).TotalMinutes > Configuration.DateTimeInterval,
-				Configuration.CheckCurrentData && (now - Timeouts[1]).TotalMinutes > Configuration.CurrentInterval,
-				Configuration.CheckDailyData && (now - Timeouts[2]).TotalMinutes > Configuration.DailyInterval,
-				Configuration.CheckMonthlyData && (now - Timeouts[3]).TotalMinutes > Configuration.MonthlyInterval,
+				Configuration.CheckDateTime && (now - Timeouts[0]).TotalMinutes >= Configuration.DateTimeInterval,
+				Configuration.CheckCurrentData && (now - Timeouts[1]).TotalMinutes >= Configuration.CurrentInterval,
+				Configuration.CheckDailyData && (now - Timeouts[2]).TotalMinutes >= Configuration.DailyInterval,
+				Configuration.CheckMonthlyData && (now - Timeouts[3]).TotalMinutes >= Configuration.MonthlyInterval,
 				//Configuration.CheckPower && (now - Timeouts[4]).TotalMinutes > Configuration.PowerInterval
 			};
+
+			for (int i = 0; i < reasons.Length; i++)
+			{
+				LogEvent("Флаг [" + i + "] = " + Timeouts[i].ToString("dd.MM.yyyy HH:mm:ss") + " | " + (reasons[i] ? "yes" : "no"), LogType.DETAILED);
+			}
+
 			if (!reasons[0] && !reasons[1] && !reasons[2] && !reasons[3] && !reasons[4])
 			{
+				LogEvent("Нет необходимости в опросе", LogType.DETAILED);
 				IsExchangeRunning = false;
 				return;
 			}
@@ -157,6 +170,7 @@ namespace Energomera_CE102
 				// дата и время
 				if (reasons[0])
 				{
+					LogEvent("Получение даты и времени", LogType.DETAILED);
 					if (ReadAndWrite(Command48(new byte[] { 0xD0, 0x01, 0x20 }), 18, out b))
 					{
 						Value("DeviceTime", new DateTime(2000 + Hex(b[15]), Hex(b[14]), Hex(b[13]), Hex(b[11]), Hex(b[10]), Hex(b[9])).ToString("dd.MM.yyyy HH:mm:ss"));
@@ -181,6 +195,7 @@ namespace Energomera_CE102
 					//	Value("CurrentEnergy", 0, 0);
 					//}
 
+					LogEvent("Получение текущего значения энергии", LogType.DETAILED);
 					if (ReadAndWrite(Command48(new byte[] { 0xD1, 0x01, 0x31, 0x00 }), 15, out b))
 					{
 						Value("CurrentEnergy", BitConverter.ToInt32(new byte[] { b[9], b[10], b[11], b[12] }, 0) * 0.01);
@@ -205,6 +220,7 @@ namespace Energomera_CE102
 					//	Value("EnergyLastDay", 0, 0);
 					//}
 
+					LogEvent("Получение значения энергии на конец суток", LogType.DETAILED);
 					if (ReadAndWrite(Command48(new byte[] { 0xD1, 0x01, 0x2F, 0x01 }), 15, out b))
 					{
 						Value("EnergyLastDay", BitConverter.ToInt32(new byte[] { b[9], b[10], b[11], b[12] }, 0) * 0.01);
@@ -229,6 +245,7 @@ namespace Energomera_CE102
 					//	Value("EnergyLastMonth", 0, 0);
 					//}
 
+					LogEvent("Получение значения энергии на конец месяца", LogType.DETAILED);
 					if (ReadAndWrite(Command48(new byte[] { 0xD1, 0x01, 0x31, 0x01 }), 15, out b))
 					{
 						Value("EnergyLastMonth", BitConverter.ToInt32(new byte[] { b[9], b[10], b[11], b[12] }, 0) * 0.01);
