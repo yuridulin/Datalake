@@ -193,9 +193,13 @@ function ask(parameters, callback) {
 
 		// Получение данных авторизации
 		localStorage.setItem('Inopc-Access-Token', xhr.getResponseHeader('Inopc-Access-Token'))
-		accessType = +(xhr.getResponseHeader('Inopc-Access-Type') || '0')
-		login = xhr.getResponseHeader('Inopc-Login')
+		accessType = +(xhr.getResponseHeader('Inopc-Access-Type') || (ACCESSTYPE.GUEST + ''))
+		loginName = xhr.getResponseHeader('Inopc-Login')
 		AuthPanel()
+
+		// Получение данных по лицензии
+		licenseMode = +(xhr.getResponseHeader('Inopc-License') || (LICENSEMODE.EXPIREDTRIAL + ''))
+		Logo()
 
 		// Получение результата запроса
 		var json = {}

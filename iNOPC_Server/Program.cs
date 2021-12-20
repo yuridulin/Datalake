@@ -52,6 +52,7 @@ namespace iNOPC.Server
             Task.Run(Http.Start);
             WebSocket.Start();
             OPC.StartServer();
+            Defence.Set();
 
             // Загружаем конфиг
             Configuration.Start();
@@ -59,6 +60,17 @@ namespace iNOPC.Server
         }
 
         public static void Stop()
+        {
+            SweetStop();
+
+            // Глушим вебку
+            WebSocket.Stop();
+            Http.Stop();
+
+            Log("Сервер остановлен");
+        }
+
+        public static void SweetStop()
         {
             // Сохраняем конфигурацию
             Configuration.SaveToFile();
@@ -75,12 +87,6 @@ namespace iNOPC.Server
             // Глушим OPC сервер
             OPC.RequestDisconnect();
             OPC.UninitWTOPCsvr();
-
-            // Глушим вебку
-            WebSocket.Stop();
-            Http.Stop();
-
-            Log("Сервер остановлен");
         }
 
         public static void Log(string text = "Runtime error")

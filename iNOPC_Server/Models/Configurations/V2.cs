@@ -10,6 +10,8 @@ namespace iNOPC.Server.Models.Configurations
 
 		public Settings Settings { get; set; } = new Settings();
 
+		public string Key { get; set; } = "";
+
 		public string Version { get; set; }
 	}
 }

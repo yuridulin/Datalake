@@ -17,6 +17,8 @@ namespace iNOPC.Server.Models
 
 		public Settings Settings { get; set; } = new Settings();
 
+		public string Key { get; set; } = "";
+
 		public int NextId { get; set; } = 0;
 
 		public void RestoreFromFile()
@@ -46,6 +48,7 @@ namespace iNOPC.Server.Models
 						Drivers = v1.Drivers;
 						Access = v1.Access;
 						Settings = new Settings();
+						Key = "";
 						Preprocess();
 						SaveToFile();
 						break;
@@ -55,6 +58,7 @@ namespace iNOPC.Server.Models
 						Drivers = v2.Drivers;
 						Access = v2.Access;
 						Settings = v2.Settings;
+						Key = v2.Key;
 						Preprocess();
 						break;
 
@@ -153,6 +157,7 @@ namespace iNOPC.Server.Models
 						.ToList(),
 					Settings,
 					Access,
+					Key,
 					Version = "2",
 				}));
 			}

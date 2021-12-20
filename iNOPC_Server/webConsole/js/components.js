@@ -1,15 +1,25 @@
 var ID = 0
 var accessType = 0
-var login = null
+var loginName = null
 var route = ''
 var currentPage = ''
+var licenseMode = 0
 
 
-var LogTypes = {
-	0: 'Информация',
-	1: 'Детали',
-	2: 'Внимание',
-	3: 'Ошибка'
+
+
+
+
+function Logo() {
+	if (licenseMode == LICENSEMODE.LICENSED) {
+		mount('#logo', 'iNOPC webConsole', h('sup', '&ensp;'))
+	}
+	else if (licenseMode == LICENSEMODE.ACTIVETRIAL) {
+		mount('#logo', 'iNOPC webConsole', h('sup', 'trial'))
+	}
+	else {
+		mount('#logo', 'iNOPC webConsole', h('sup.error', 'trial'))
+    }
 }
 
 function Home() {
@@ -688,8 +698,30 @@ function Settings() {
 		return mount('#view', h('div.container', 'Нет доступа'))
 	}
 
+	var _key
+
 	ask({ method: 'settings' }, function (json) {
 		mount('#view',
+			h('div.container',
+				h('h3', 'Лицензирование'),
+				h('span', 'Состояние: ' + json.LicenseStatus),
+				h('br'),
+				h('span', { style: { display: 'inline-block', width: '16em' } }, 'Идентификатор сервера: '),
+				h('input', { disabled: true, style: { width: '40em' }, value: json.LicenseId }),
+				h('br'),
+				h('span', { style: { display: 'inline-block', width: '16em' } }, 'Лицензионный ключ: '),
+				_key = h('input', { value: json.LicenseKey, style: { width: '40em' } }),
+				h('br'),
+				h('button', {
+					innerHTML: 'Сохранить ключ',
+					onclick: function () {
+						ask({ method: 'opc.license', body: { key: _key.value } }, function (data) {
+							if (data.Done) alert('Ключ сохранён')
+							Settings()
+						})
+					}
+				})
+			),
 			h('div.container',
 				h('h3', 'DCOM'),
 				h('span', 'Состояние: ' + json.OpcStatus),
@@ -698,7 +730,7 @@ function Settings() {
 					innerHTML: 'Зарегистрировать сервер в DCOM',
 					onclick: function () {
 						ask({ method: 'opc.install' }, function (data) {
-							if (data) alert('Регистрация DCOM выполнена')
+							if (data.Done) alert('Регистрация DCOM выполнена')
 							Settings()
 						})
 					}
@@ -707,7 +739,7 @@ function Settings() {
 					innerHTML: 'Отменить регистрацию сервера в DCOM',
 					onclick: function () {
 						ask({ method: 'opc.uninstall' }, function (data) {
-							if (data) alert('Регистрация DCOM отменена')
+							if (data.Done) alert('Регистрация DCOM отменена')
 							Settings()
 						})
 					}
@@ -716,7 +748,7 @@ function Settings() {
 					innerHTML: 'Пересоздать OPC теги',
 					onclick: function () {
 						ask({ method: 'opc.clean' }, function (data) {
-							if (data) alert('Реинициализация OPC тегов выполнена')
+							if (data.Done) alert('Реинициализация OPC тегов выполнена')
 							Settings()
 						})
 					}
@@ -730,7 +762,7 @@ function Settings() {
 					innerHTML: 'Создать службу',
 					onclick: function () {
 						ask({ method: 'service.create' }, function (data) {
-							if (data) alert(data)
+							if (data.Done) alert(data.Done)
 							Settings()
 						})
 					}
@@ -739,7 +771,7 @@ function Settings() {
 					innerHTML: 'Удалить службу',
 					onclick: function () {
 						ask({ method: 'service.remove' }, function (data) {
-							if (data) alert(data)
+							if (data.Done) alert(data.Done)
 							Settings()
 						})
 					}
@@ -890,7 +922,7 @@ function AuthPanel() {
 					}
 				},
 				h('i.ic.ic-person'),
-				h('span', login)
+				h('span', loginName)
 			)
 	)
 }
@@ -908,7 +940,7 @@ function Login() {
 	mount('#view',
 		accessType > ACCESSTYPE.GUEST
 			? h('div.container',
-				h('p', 'Вы вошли как ' + login),
+				h('p', 'Вы вошли как ' + loginName),
 				h('button', 'Выйти', {
 					onclick: function () {
 						ask({ method: 'logout', body: { Token: ls('Inopc-Access-Token') } }, function (json) {
@@ -944,14 +976,6 @@ function Login() {
 	)
 }
 
-var ACCESSTYPE = {
-	GUEST: 0,
-	READ: 1,
-	WRITE: 2,
-	FULL: 3,
-	FIRST: 4,
-}
-
 function AccessType(t) {
 	switch (t) {
 		case ACCESSTYPE.FIRST: return 'Первый запуск'
@@ -965,4 +989,28 @@ function AccessType(t) {
 
 function AUTH() {
 	return accessType == ACCESSTYPE.WRITE || accessType == ACCESSTYPE.FULL
+}
+
+
+// enum 
+
+var ACCESSTYPE = {
+	GUEST: 0,
+	READ: 1,
+	WRITE: 2,
+	FULL: 3,
+	FIRST: 4
+}
+
+var LICENSEMODE = {
+	ACTIVETRIAL: 0,
+	EXPIREDTRIAL: 1,
+	LICENSED: 2
+}
+
+var LogTypes = {
+	0: 'Информация',
+	1: 'Детали',
+	2: 'Внимание',
+	3: 'Ошибка'
 }

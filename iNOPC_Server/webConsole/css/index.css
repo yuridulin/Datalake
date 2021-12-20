@@ -31,6 +31,14 @@ a.panel-el {
 	margin-left: 1em;
 }
 
+#logo sup {
+	color: #00a0ff;
+}
+
+#logo sup.error {
+	color: #f03232;
+}
+
 .panel {
 	position: fixed;
 	top: 0;

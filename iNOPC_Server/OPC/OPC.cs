@@ -90,41 +90,53 @@ namespace iNOPC.Server
                 // нужно найти и удалить все упоминания iNOPC в реестре
                 using (var view = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
                 {
-                    using (var route = view.OpenSubKey("AppID", true))
+                    try
                     {
-                        // удаляем хвосты
-                        foreach (var name in route.GetSubKeyNames())
+                        using (var route = view.OpenSubKey("AppID", true))
                         {
-                            string defValue = route.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
-                            if (name == Program.ExeName || defValue == Program.ExeName || name == ServerName || defValue == ServerName)
+                            // удаляем хвосты
+                            foreach (var name in route.GetSubKeyNames())
                             {
-                                route.DeleteSubKeyTree(name);
+                                string defValue = route.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
+                                if (name == Program.ExeName || defValue == Program.ExeName || name == ServerName || defValue == ServerName)
+                                {
+                                    route.DeleteSubKeyTree(name);
+                                }
                             }
                         }
                     }
+                    catch { }
 
-                    using (var route = view.OpenSubKey("WOW6432Node\\CLSID", true))
+                    try
                     {
-                        // удаляем хвосты
-                        foreach (var name in route.GetSubKeyNames())
+                        using (var route = view.OpenSubKey("WOW6432Node\\CLSID", true))
                         {
-                            string defValue = route.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
-                            if (name == Program.ExeName || defValue == Program.ExeName || name == ServerName || defValue == ServerName)
+                            // удаляем хвосты
+                            foreach (var name in route.GetSubKeyNames())
                             {
-                                route.DeleteSubKeyTree(name);
+                                string defValue = route.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
+                                if (name == Program.ExeName || defValue == Program.ExeName || name == ServerName || defValue == ServerName)
+                                {
+                                    route.DeleteSubKeyTree(name);
+                                }
                             }
                         }
                     }
+                    catch { }
 
                     // удаляем хвосты
-                    foreach (var name in view.GetSubKeyNames())
+                    try
                     {
-                        string defValue = view.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
-                        if (name == Program.ExeName || defValue == Program.ExeName || name == ServerName || defValue == ServerName)
+                        foreach (var name in view.GetSubKeyNames())
                         {
-                            view.DeleteSubKeyTree(name);
+                            string defValue = view.OpenSubKey(name)?.GetValue(string.Empty)?.ToString() ?? null;
+                            if (name == Program.ExeName || defValue == Program.ExeName || name == ServerName || defValue == ServerName)
+                            {
+                                view.DeleteSubKeyTree(name);
+                            }
                         }
                     }
+                    catch { }
                 }
 
                 if (!silent) Program.Log("Регистрация в DCOM отменена");

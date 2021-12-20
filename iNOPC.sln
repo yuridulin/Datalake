@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29209.62
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iNOPC_Server", "iNOPC_Server\iNOPC_Server.csproj", "{01FD46C0-4CD5-4573-BE2F-6BD84E88892A}"
 EndProject
@@ -56,6 +56,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RVP_18", "Test\RVP_18\RVP_18.csproj", "{A8435443-1706-4968-8021-999E0A84B999}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Energomera_CE102", "Drivers\Energomera_CE102\Energomera_CE102.csproj", "{AD731868-9A28-438A-A640-EC25B3921591}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iNOPC_Keygen", "iNOPC_Keygen\iNOPC_Keygen.csproj", "{2A5E3649-406F-4D49-A92C-C6FE39222E13}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -163,6 +165,10 @@ Global
 		{AD731868-9A28-438A-A640-EC25B3921591}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AD731868-9A28-438A-A640-EC25B3921591}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AD731868-9A28-438A-A640-EC25B3921591}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A5E3649-406F-4D49-A92C-C6FE39222E13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A5E3649-406F-4D49-A92C-C6FE39222E13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A5E3649-406F-4D49-A92C-C6FE39222E13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A5E3649-406F-4D49-A92C-C6FE39222E13}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

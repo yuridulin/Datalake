@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace iNOPC.Server.Web
 {
-	public class Requester
+    public class Requester
     {
         AccessType AccessType { get; set; } = AccessType.GUEST;
 
@@ -106,7 +106,16 @@ namespace iNOPC.Server.Web
                     }
 
                     Response.ContentType = "application/json";
-                    responseString = JsonConvert.SerializeObject(Action(url, requestBody));
+                    Response.Headers.Add("Inopc-License", ((int)Defence.License).ToString());
+
+                    if (Defence.License == LicenseMode.ExpiredTrial)
+                    {
+                        responseString = JsonConvert.SerializeObject(new { Error = "Триал-период завершён" });
+                    }
+                    else
+                    {
+                        responseString = JsonConvert.SerializeObject(Action(url, requestBody));
+                    }
                 }
             }
             catch (Exception e)
@@ -146,6 +155,7 @@ namespace iNOPC.Server.Web
                     case "opc.install": return OpcInstallDcom();
                     case "opc.uninstall": return OpcUninstallDcom();
                     case "opc.clean": return OpcClean();
+                    case "opc.license": return OpcLicense(body);
                     case "service.create": return ServiceCreate();
                     case "service.remove": return ServiceRemove();
 
@@ -369,6 +379,13 @@ namespace iNOPC.Server.Web
                         ? "установлена для этого сервера"
                         : "установлена для другого сервера",
                 InitPath = Program.Base + Program.ExeName,
+                LicenseStatus = Defence.License == LicenseMode.Licensed 
+                    ? "лицензия активна"
+                    : Defence.License == LicenseMode.ActiveTrial
+                        ? "триал-период активен"
+                        : "триал-период завершён",
+                LicenseKey = Program.Configuration.Key,
+                LicenseId = Defence.GetUniqueHardwareId(),
                 ServicePath = path == ""
                     ? "не задан"
                     : path,
@@ -411,6 +428,25 @@ namespace iNOPC.Server.Web
             return new { Done = true };
         }
 
+        object OpcLicense(string body)
+        {
+            if (AccessType != AccessType.FULL)
+            {
+                return new { Warning = "Нет доступа" };
+            }
+
+            var data = JsonConvert.DeserializeObject<License>(body);
+
+            lock (Program.Configuration)
+            {
+                Program.Configuration.Key = data.Key;
+                Program.Configuration.SaveToFile();
+                Task.Delay(1500).Wait();
+
+                return new { Done = "Ключ успешно сохранён" };
+            }
+        }
+
         object ServiceCreate()
         {
             ServiceRemove();
@@ -436,20 +472,24 @@ namespace iNOPC.Server.Web
             }
 
             Program.Log("Служба успешно создана");
-            return "Служба успешно создана";
+            return new { Done = "Служба успешно создана" };
         }
 
         object ServiceRemove()
         {
             // Удаление записи в реестре
             // Нужно, потому что при удалении из оснастки служба всего лишь помечается на удаление после перезагрузки
-            using (var view = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            try
             {
-                using (var service = view.OpenSubKey(@"SYSTEM\CurrentControlSet\Services", true))
+                using (var view = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
                 {
-                    service.DeleteSubKeyTree("iNOPC");
+                    using (var service = view.OpenSubKey(@"SYSTEM\CurrentControlSet\Services", true))
+                    {
+                        service.DeleteSubKeyTree("iNOPC");
+                    }
                 }
             }
+            catch { }
 
             // Удаление записи в оснастке
             using (var process = new Process
@@ -474,7 +514,7 @@ namespace iNOPC.Server.Web
 
             // После этого служба должна быть удалена
             Program.Log("Служба успешно удалена");
-            return "Служба успешно удалена";
+            return new { Done = "Служба успешно удалена" };
         }
 
 
