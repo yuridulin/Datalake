@@ -50,6 +50,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
                 Html.Value("Кол-во стоповых бит", nameof(config.StopBits), config.StopBits) +
                 Html.Value("Таймаут на чтение, мс", nameof(config.ReadTimeout), config.ReadTimeout) +
                 Html.Value("Таймаут на запись, мс", nameof(config.WriteTimeout), config.WriteTimeout) +
+                Html.Value("Ожидание ответа, мс", nameof(config.ReceiveTimeout), config.ReceiveTimeout) +
                 Html.Value("Адрес устройства", nameof(config.SlaveId), config.SlaveId) +
                 Html.Value("Использование групповых запросов", nameof(config.Multicast), config.Multicast) +
                 Html.Value("Старшим битом вперед", nameof(config.OldByteFirst), config.OldByteFirst) +

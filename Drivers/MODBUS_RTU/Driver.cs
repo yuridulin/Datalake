@@ -44,7 +44,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
             }
             if (!Fields.ContainsKey("Time"))
             {
-                Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") });
+                Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 });
             }
 
             UpdateEvent();
@@ -343,6 +343,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
                 lock (Fields)
                 {
                     Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+                    Fields["Time"].Quality = 192;
                 }
                 UpdateEvent();
 
