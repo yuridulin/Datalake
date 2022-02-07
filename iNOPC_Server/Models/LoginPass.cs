@@ -1,11 +1,11 @@
-﻿using iNOPC.Server.Models;
+﻿using iNOPC.Server.Models.Configurations;
 using System;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace iNOPC.Server.Web
 {
-	public class LoginPass
+    public class LoginPass
 	{
 		public string Login { get; set; }
 

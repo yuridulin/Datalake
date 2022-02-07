@@ -1,4 +1,5 @@
 ﻿using iNOPC.Library;
+using iNOPC.Server.Database;
 using iNOPC.Server.Web;
 using System;
 using System.Collections.Generic;
@@ -145,6 +146,8 @@ namespace iNOPC.Server.Models
             {
                 OPC.Write(DriverName + '.' + Name + '.' + field.Key, field.Value.Value, field.Value.Quality);
             }
+
+            Database.Storage.Add(this, fields);
 
             WebSocket.Broadcast("device.fields:" + Id);
         }

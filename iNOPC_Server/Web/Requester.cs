@@ -1,5 +1,6 @@
 ﻿using iNOPC.Library;
 using iNOPC.Server.Models;
+using iNOPC.Server.Models.Configurations;
 using iNOPC.Server.Web.RequestTypes;
 using Microsoft.Win32;
 using Newtonsoft.Json;
@@ -177,6 +178,7 @@ namespace iNOPC.Server.Web
                     case "device.configuration": return DeviceConfiguration(body);
                     case "device.start": return DeviceStart(body);
                     case "device.stop": return DeviceStop(body);
+                    case "device.history": return DeviceHistory(body);
 
                     default: return new { Error = "Запрошенный метод не существует", StackTrace = "Web.Controller.Action" };
                 }
@@ -385,7 +387,7 @@ namespace iNOPC.Server.Web
                         ? "триал-период активен"
                         : "триал-период завершён",
                 LicenseKey = Program.Configuration.Key,
-                LicenseId = Defence.GetUniqueHardwareId(),
+                LicenseId = Defence.UniqueHardwareId,
                 ServicePath = path == ""
                     ? "не задан"
                     : path,
@@ -1020,6 +1022,30 @@ namespace iNOPC.Server.Web
                         WebSocket.Broadcast("driver.devices:" + driver.Id);
 
                         return true;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        object DeviceHistory(string body)
+        {
+            if (AccessType != AccessType.READ && AccessType != AccessType.WRITE && AccessType != AccessType.FULL)
+            {
+                return new { Warning = "Нет доступа" };
+            }
+
+            var data = JsonConvert.DeserializeObject<IdOnly>(body);
+
+            lock (Program.Configuration.Drivers)
+            {
+                foreach (var driver in Program.Configuration.Drivers)
+                {
+                    var device = driver.Devices.FirstOrDefault(x => x.Id == data.Id);
+                    if (device != null)
+                    {
+                        return device.Fields();
                     }
                 }
             }

@@ -1,4 +1,5 @@
-﻿using iNOPC.Server.Models;
+﻿using iNOPC.Server.Database;
+using iNOPC.Server.Models;
 using iNOPC.Server.Web;
 using System;
 using System.Diagnostics;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace iNOPC.Server
 {
-	class Program
+    class Program
     {
         public static string Base => AppDomain.CurrentDomain.BaseDirectory;
 
@@ -53,6 +54,7 @@ namespace iNOPC.Server
             WebSocket.Start();
             OPC.StartServer();
             Defence.Set();
+            Storage.Start();
 
             // Загружаем конфиг
             Configuration.Start();
@@ -83,6 +85,7 @@ namespace iNOPC.Server
                     device.Stop();
                 }
             }
+            Storage.Stop();
 
             // Глушим OPC сервер
             OPC.RequestDisconnect();

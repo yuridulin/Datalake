@@ -1,4 +1,4 @@
-﻿namespace iNOPC.Server.Models
+﻿namespace iNOPC.Server.Models.Configurations
 {
 	public class AccessRecord
 	{

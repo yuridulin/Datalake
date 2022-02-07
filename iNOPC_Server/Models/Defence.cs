@@ -14,16 +14,17 @@ namespace iNOPC.Server.Models
 
         public static void Set()
         {
+            UniqueHardwareId = GetUniqueHardwareId();
             ProgramStart = DateTime.Now;
 
-            Timer = new Timer(1000);
+            Timer = new Timer(5000);
             Timer.Elapsed += (s, e) => Check();
             Timer.Start();
-
-            Task.Run(Check);
         }
 
-        public static string GetUniqueHardwareId()
+        public static string UniqueHardwareId { get; set; }
+
+        static string GetUniqueHardwareId()
         {
             var sb = new StringBuilder();
 
@@ -66,7 +67,7 @@ namespace iNOPC.Server.Models
 
         private static void Check()
         {
-            if (Enc(GetUniqueHardwareId(), "SecretKeyiNOPC") == Program.Configuration.Key)
+            if (Enc(UniqueHardwareId, "SecretKeyiNOPC") == Program.Configuration.Key)
             {
                 License = LicenseMode.Licensed;
                 Timer.Stop();

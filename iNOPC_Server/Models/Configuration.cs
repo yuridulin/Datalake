@@ -17,6 +17,8 @@ namespace iNOPC.Server.Models
 
 		public Settings Settings { get; set; } = new Settings();
 
+		public DatabaseSettings Database { get; set; } = new DatabaseSettings();
+
 		public string Key { get; set; } = "";
 
 		public int NextId { get; set; } = 0;
@@ -47,10 +49,6 @@ namespace iNOPC.Server.Models
 						var v1 = JsonConvert.DeserializeObject<V1>(raw);
 						Drivers = v1.Drivers;
 						Access = v1.Access;
-						Settings = new Settings();
-						Key = "";
-						Preprocess();
-						SaveToFile();
 						break;
 
 					case "2":
@@ -59,12 +57,20 @@ namespace iNOPC.Server.Models
 						Access = v2.Access;
 						Settings = v2.Settings;
 						Key = v2.Key;
-						Preprocess();
+						break;
+
+					case "3":
+						var v3 = JsonConvert.DeserializeObject<V3>(raw);
+						Drivers = v3.Drivers;
+						Access = v3.Access;
+						Settings = v3.Settings;
+						Database = v3.Database;
+						Key = v3.Key;
 						break;
 
 					default:
 						Program.Log("Неизвестный формат конфигурации! " + version.Version);
-						break;
+						return;
 				}
 			}
 			catch
@@ -74,16 +80,15 @@ namespace iNOPC.Server.Models
 				{
 					var drivers = JsonConvert.DeserializeObject<List<Driver>>(raw);
 					Drivers = drivers;
-					Access = new List<AccessRecord>();
-					Settings = new Settings();
-					Preprocess();
-					SaveToFile();
 				}
 				catch (Exception e)
 				{
 					Program.Log("Неизвестный формат конфигурации: " + e.Message);
 				}
 			}
+
+			Preprocess();
+			SaveToFile();
 
 			void Preprocess()
 			{
@@ -155,10 +160,11 @@ namespace iNOPC.Server.Models
 								.ToList()
 						})
 						.ToList(),
-					Settings,
 					Access,
+					Settings,
+					Database,
 					Key,
-					Version = "2",
+					Version = "3",
 				}));
 			}
 			catch (Exception e)

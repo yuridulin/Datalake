@@ -1,9 +1,9 @@
-﻿using iNOPC.Server.Models;
+﻿using iNOPC.Server.Models.Configurations;
 using System;
 
 namespace iNOPC.Server.Web
 {
-	public class Session
+    public class Session
 	{
 		public string Login { get; set; }
 

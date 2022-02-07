@@ -52,6 +52,9 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="linq2db, Version=3.6.0.0, Culture=neutral, PublicKeyToken=e41013125f9e410a, processorArchitecture=MSIL">
+      <HintPath>..\packages\linq2db.3.6.0\lib\net45\linq2db.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -70,18 +73,23 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database\DatabaseContext.cs" />
+    <Compile Include="Database\Storage.cs" />
+    <Compile Include="Database\Models\Point.cs" />
     <Compile Include="Models\Configuration.cs" />
+    <Compile Include="Models\Configurations\DatabaseSettings.cs" />
     <Compile Include="Models\Configurations\V0.cs" />
+    <Compile Include="Models\Configurations\V3.cs" />
     <Compile Include="Models\Configurations\V2.cs" />
     <Compile Include="Models\Configurations\V1.cs" />
     <Compile Include="Models\Defence.cs" />
     <Compile Include="Models\Device.cs" />
     <Compile Include="Models\Driver.cs" />
-    <Compile Include="Models\Settings.cs" />
+    <Compile Include="Models\Configurations\Settings.cs" />
     <Compile Include="OPC\OPC.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Models\AccessType.cs" />
+    <Compile Include="Models\Configurations\AccessType.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Models\LoginPass.cs" />
     <Compile Include="Web\Requester.cs" />
@@ -89,7 +97,7 @@
     <Compile Include="Web\RequestTypes\DeviceLogs.cs" />
     <Compile Include="Web\RequestTypes\DriverForm.cs" />
     <Compile Include="Web\RequestTypes\IdOnly.cs" />
-    <Compile Include="Models\AccessRecord.cs" />
+    <Compile Include="Models\Configurations\AccessRecord.cs" />
     <Compile Include="Web\RequestTypes\License.cs" />
     <Compile Include="Web\Session.cs" />
     <Compile Include="Web\WebSocket.cs" />
