@@ -22,11 +22,11 @@ namespace iNOPC.Server.Models
 
         // Рабочие параметры
 
-        public long Id { get; set; } = 0;
+        public double Id { get; set; } = 0;
 
         public string DriverName { get; set; }
 
-        public long DriverId { get; set; }
+        public double DriverId { get; set; }
 
         public List<Log> Logs { get; set; } = new List<Log>();
 

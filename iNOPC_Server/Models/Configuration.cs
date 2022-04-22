@@ -90,7 +90,7 @@ namespace iNOPC.Server.Models
 
 			void Preprocess()
 			{
-				long nextId = DateTime.Now.AddHours(-1).Ticks;
+				double nextId = DateTime.Now.AddHours(-1).ToOADate();
 
 				try
 				{

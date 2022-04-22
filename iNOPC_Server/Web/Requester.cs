@@ -747,6 +747,7 @@ namespace iNOPC.Server.Web
             return false;
         }
 
+
         object Device(string body)
         {
             if (AccessType != AccessType.READ && AccessType != AccessType.WRITE && AccessType != AccessType.FULL)
