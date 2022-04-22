@@ -18,7 +18,7 @@ namespace iNOPC.Server.Web
 
         public static void Broadcast(string method) => Server.WebSocketServices.Broadcast(method);
 
-        public static void Log(int id, object log)
+        public static void Log(long id, object log)
         {
             Server.WebSocketServices.Broadcast("device.logs:" + id + "|" + JsonConvert.SerializeObject(log));
         }

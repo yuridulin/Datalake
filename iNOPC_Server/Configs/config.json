@@ -2,11 +2,15 @@
 	"Drivers": [],
 	"Settings": {
 		"WebConsolePort": 81,
-		"WebConsoleSocketPort": 82,
-		"Name": "iNOPC",
-		"CLSID": "{4537357b-3739-3334-432d-303637382d34}",
-		"RegisterAsService": false
+		"WebConsoleSocketPort": 82
 	},
 	"Access": [],
-	"Version": "2"
+	"Database": {
+		"UseDatabase": false,
+		"ServerName": "localhost\\SQLEXPRESS",
+		"User": "inopc",
+		"Password": "inopc",
+		"StoreIntervalS": 5
+	},
+	"Version": "3"
 }

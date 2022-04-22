@@ -398,7 +398,7 @@ namespace iNOPC.Drivers.INELT
         void Log(string message)
         {
             LogEvent(message);
-            EventLog.WriteEntry("apcupsd", "UPS \"" + Configuration.Name + "\": " + message, EventLogEntryType.Error);
+            //EventLog.WriteEntry("apcupsd", "UPS \"" + Configuration.Name + "\": " + message, EventLogEntryType.Error);
         }
 
         void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)

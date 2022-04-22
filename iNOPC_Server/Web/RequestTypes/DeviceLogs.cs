@@ -2,7 +2,7 @@
 {
     public class DeviceLogs
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         public uint? Last { get; set; }
     }

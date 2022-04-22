@@ -634,9 +634,11 @@ namespace iNOPC.Server.Web
                 else
                 {
                     // Добавление нового драйвера
+
+                    long id = DateTime.Now.Ticks;
                     var driver = new Driver
                     {
-                        Id = ++Program.Configuration.NextId,
+                        Id = id,
                         Name = data.Name,
                         Path = Program.Base + @"\Drivers\" + data.Path + ".dll",
                     };
@@ -647,9 +649,9 @@ namespace iNOPC.Server.Web
                     driver.Load();
 
                     WebSocket.Broadcast("tree");
-                    WebSocket.Broadcast("driver:" + driver.Id);
+                    WebSocket.Broadcast("driver:" + id);
 
-                    return new { driver.Id };
+                    return new { id };
                 }
             }
         }
@@ -873,10 +875,11 @@ namespace iNOPC.Server.Web
 
                 if (driver != null)
                 {
+                    long id = DateTime.Now.Ticks;
                     var device = new Device
                     {
-                        Id = ++Program.Configuration.NextId,
-                        Name = "New_Device_" + Program.Configuration.NextId,
+                        Id = id,
+                        Name = "New_Device_" + id,
                         AutoStart = false,
                         Configuration = driver.DefaultConfiguratuon,
                         DriverId = driver.Id,
@@ -1031,12 +1034,12 @@ namespace iNOPC.Server.Web
 
         object DeviceHistory(string body)
         {
-            if (AccessType != AccessType.READ && AccessType != AccessType.WRITE && AccessType != AccessType.FULL)
+            if (AccessType == AccessType.GUEST || AccessType == AccessType.FIRST)
             {
                 return new { Warning = "Нет доступа" };
             }
 
-            var data = JsonConvert.DeserializeObject<IdOnly>(body);
+            var data = JsonConvert.DeserializeObject<History>(body);
 
             lock (Program.Configuration.Drivers)
             {

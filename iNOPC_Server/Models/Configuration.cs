@@ -21,8 +21,6 @@ namespace iNOPC.Server.Models
 
 		public string Key { get; set; } = "";
 
-		public int NextId { get; set; } = 0;
-
 		public void RestoreFromFile()
 		{
 			string raw;
@@ -92,22 +90,19 @@ namespace iNOPC.Server.Models
 
 			void Preprocess()
 			{
+				long nextId = DateTime.Now.AddHours(-1).Ticks;
+
 				try
 				{
-					NextId = 0;
-
 					foreach (var driver in Drivers)
 					{
-						driver.Id = +NextId;
-
+						driver.Id = driver.Id == 0 ? nextId++ : driver.Id;
 						foreach (var device in driver.Devices)
 						{
-							device.Id = ++NextId;
+							device.Id = device.Id == 0 ? nextId++ : device.Id;
 							device.DriverId = driver.Id;
 							device.DriverName = driver.Name;
 						}
-
-						//driver.Load();
 					}
 
 					Program.Log("Конфигурация загружена");
@@ -139,7 +134,7 @@ namespace iNOPC.Server.Models
 
 		public void SaveToFile()
 		{
-			// Конфиг сохраняется как V2
+			// Конфиг сохраняется как последняя версия
 			try
 			{
 				File.WriteAllText(Path, JsonConvert.SerializeObject(new
@@ -147,11 +142,13 @@ namespace iNOPC.Server.Models
 					Drivers = Drivers
 						.Select(driver => new
 						{
+							driver.Id,
 							driver.Name,
 							driver.Path,
 							Devices = driver.Devices
 								.Select(device => new
 								{
+									device.Id,
 									device.Name,
 									device.Active,
 									device.AutoStart,

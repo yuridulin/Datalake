@@ -359,7 +359,13 @@ namespace iNOPC.Drivers.MODBUS_TCP
                 return;
             }
 
-            if (!hasErr) UpdateEvent();
+            UpdateEvent();
+
+            if (Configuration.ForceDisconnect)
+            {
+                Reconnect();
+            }
+
             double ms = (DateTime.Now - RequestStart).TotalMilliseconds;
 
             int timeout = Convert.ToInt32(Configuration.CyclicTimeout - ms);

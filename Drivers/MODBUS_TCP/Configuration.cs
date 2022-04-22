@@ -20,6 +20,8 @@ namespace iNOPC.Drivers.MODBUS_TCP
 
 		public bool OldRegisterFirst { get; set; } = false;
 
+        public bool ForceDisconnect { get; set; } = false;
+
         public List<Field> Fields { get; set; } = new List<Field>();
 
         public static string GetPage(string json)
@@ -34,7 +36,8 @@ namespace iNOPC.Drivers.MODBUS_TCP
                 Html.Value("TCP порт", nameof(config.Port), config.Port) +
                 Html.Value("Использование групповых запросов", nameof(config.Multicast), config.Multicast) +
                 Html.Value("Старшим битом вперед", nameof(config.OldByteFirst), config.OldByteFirst) +
-                Html.Value("Старшим регистром вперед", nameof(config.OldRegisterFirst), config.OldRegisterFirst);
+                Html.Value("Старшим регистром вперед", nameof(config.OldRegisterFirst), config.OldRegisterFirst) + 
+                Html.Value("Принудительный дисконнект после соединения", nameof(config.ForceDisconnect), config.ForceDisconnect);
 
             html += "<div type='array' name='" + nameof(config.Fields) + "'>"
                 + "<span>Запрашиваемые поля</span>"

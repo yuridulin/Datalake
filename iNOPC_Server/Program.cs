@@ -53,7 +53,9 @@ namespace iNOPC.Server
             Task.Run(Http.Start);
             WebSocket.Start();
             OPC.StartServer();
+#if !DEBUG
             Defence.Set();
+#endif
             Storage.Start();
 
             // Загружаем конфиг
@@ -94,7 +96,6 @@ namespace iNOPC.Server
 
         public static void Log(string text = "Runtime error")
         {
-            EventLog.WriteEntry("iNOPC_Server", text);
             Console.WriteLine(DateTime.Now + " > " + text);
         }
     }

@@ -223,7 +223,19 @@ namespace iNOPC.Drivers.MODBUS_RTU
 
             Fields.Clear();
             Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss") });
-            foreach (var field in Configuration.Fields) Fields.Add(field.Name, new DefField { Value = 0F });
+            foreach (var field in Configuration.Fields) 
+            {
+                switch (field.Type)
+                {
+                    case "Date": 
+                        Fields.Add(field.Name, new DefField { Value = "" });
+                        break;
+
+                    default:
+                        Fields.Add(field.Name, new DefField { Value = 0F });
+                        break;
+                }
+            }
         }
 
         void TrancievePackages()

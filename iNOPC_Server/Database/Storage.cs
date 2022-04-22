@@ -4,6 +4,7 @@ using iNOPC.Server.Models;
 using LinqToDB;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Timers;
 
 namespace iNOPC.Server.Database
@@ -70,6 +71,28 @@ namespace iNOPC.Server.Database
                         ValueType = field.Value.Value?.GetType()?.ToString() ?? "String",
                     });
                 }
+            }
+        }
+
+        public static List<DefField> Get(string deviceName, string driverName, DateTime start, DateTime end, bool isChangedOnly)
+        {
+            using (var db = new DatabaseContext())
+            {
+                var fields = db.Points
+                    .Where(x => x.Driver == driverName && x.Device == deviceName)
+                    .Where(x => x.TimeStamp >= start && x.TimeStamp <= end)
+                    .Select(x => new DefField
+                    {
+                        Name = x.Field,
+                        Quality = (ushort)x.Quality,
+                        Value = x.ValueType == "System.Int32" ? (object)int.Parse(x.ValueString) 
+                            : x.ValueString == "System.Boolean" ? (object)bool.Parse(x.ValueString)
+                            : x.ValueString == "System.String" ? (object)x.ValueString 
+                            : null,
+                    })
+                    .ToList();
+
+                return fields;
             }
         }
     }
