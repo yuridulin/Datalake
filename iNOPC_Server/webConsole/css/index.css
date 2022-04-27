@@ -294,6 +294,37 @@ div.closed {
 }
 
 
+
+/*#region Fields */
+
+.fields {
+	display: table;
+	border-collapse: collapse;
+}
+
+.fields > div {
+	display: table-row;
+}
+
+.fields > div > span,
+.fields > div > b {
+	display: table-cell;
+	padding: .2em .5em;
+	border: 1px solid #ccc;
+}
+
+.fields > div > b {
+	font-weight: 500;
+}
+
+.fields > div button {
+	width: 100%;
+}
+
+/*#endregion */
+
+
+
 .ic {
 	display: inline-block;
 	overflow: hidden;

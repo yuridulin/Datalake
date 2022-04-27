@@ -6,7 +6,9 @@ using System.Runtime.InteropServices;
 
 namespace iNOPC.Server
 {
-	public static class OPC
+    public delegate void TagUpdated(string path, object value = null);
+
+    public static class OPC
     {
         public const string ServerName = "iNOPC";
         public const string Pass = "JVRPS53R5V64226N62H4";
@@ -15,6 +17,8 @@ namespace iNOPC.Server
 
         private static WriteNotificationDelegate _WriteOutDelegate;
         private static UnknownItemDelegate _UnknownItemDelegate;
+
+        public static event TagUpdated TagUpdated;
 
         public static Dictionary<string, uint> Tags { get; set; } = new Dictionary<string, uint>();
 
@@ -199,6 +203,15 @@ namespace iNOPC.Server
             Write(path, null);
         }
 
+        public static object Read(string path)
+        {
+            if (!Tags.ContainsKey(path)) return 0;
+
+            object v = 0;
+            ReadTag(Tags[path], ref v);
+            return v;
+        }
+
         public static void Write(string path, object value = null, ushort quality = 0)
         {
             lock (Tags)
@@ -212,6 +225,8 @@ namespace iNOPC.Server
                     Tags[path] = CreateTag(path, value, quality, true);
                 }
             }
+
+            TagUpdated(path, value);
         }
 
         public static void CleanOldTags()

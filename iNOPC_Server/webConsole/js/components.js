@@ -158,6 +158,19 @@ function BuildTree(json) {
 			})
 			: '',
 
+		h('div.node', { route: 'math' },
+			h('div.node-caption',
+				h('i.ic.ic-edit'),
+				h('span', {
+					innerHTML: 'Математика',
+					onclick: function () {
+						TreeSetActive('math'),
+						MathPage()
+                    }
+                })
+			)
+		),
+
 		AUTH() ? h('div.node', { route: 'driver-create' },
 			h('div.node-caption',
 				h('i.ic.ic-plus'),
@@ -991,6 +1004,168 @@ function AUTH() {
 	return accessType == ACCESSTYPE.WRITE || accessType == ACCESSTYPE.FULL
 }
 
+function MathPage() {
+	ask({ method: 'math.fields' }, function (/**@type{MathField[]}*/json) {
+		mount('#view',
+			h('div', { className: 'container' },
+				h('h3', 'Список тегов с математикой'),
+				h('div', { className: 'fields' },
+					h('div',
+						h('b', 'Тег', { style: { width: '10em' } }),
+						h('b', 'Тип', { style: { width: '10em' } }),
+						h('b', 'Значение', { style: { width: '10em' } }),
+						h('b', { style: { width: '10em' } },
+							h('button', {
+								innerHTML: 'Добавить тег',
+								onclick: function () {
+									ask({ method: 'math.create' }, function (json) {
+										if (json.Error) alert(json.Error)
+										if (json.Done) {
+											MathPage()
+										}
+									})
+								}
+							})
+						)
+					),
+					json.map(mathfield => h('div',
+						h('span', mathfield.Name),
+						h('span', mathfield.Type),
+						h('span', { name: 'math.' + mathfield.Name }),
+						h('span',
+							h('button', {
+								innerHTML: 'Изменить',
+								onclick: function () {
+									MathField(mathfield)
+								}
+							})
+						)
+					))
+				)
+			)
+		)
+
+		clearInterval(timeout)
+		timeout = setInterval(function () {
+			MathValues()
+		}, 1000)
+
+		MathValues()
+    })
+}
+
+function MathValues() {
+	ask({ method: 'math.values' }, function (/**@type{MathValue[]}*/json) {
+		json.forEach(x => {
+			var el = document.querySelector('[name="math.' + x.Name + '"]')
+			if (el) {
+				try {
+					el.innerHTML = x.Value.toFixed(2)
+				}
+				catch (e) {
+					el.innerHTML = '?'
+                }
+            }
+        })
+	})
+}
+
+/**
+ * @param {MathField} field
+ */
+function MathField(field) {
+	clearInterval(timeout)
+	ask({ method: 'math.form', body: { Name: field.Name } }, function (/**@type{string[]}*/json) {
+		mount('#view',
+			h('div', { className: 'container', id: 'math-tag' },
+				h('button', {
+					innerHTML: 'К списку',
+					onclick: function () {
+						MathPage()
+					}
+				}),
+				h('span', 'Тег'),
+				h('input', { id: 'math-tag-name', value: field.Name }),
+				h('span', 'Тип'),
+				h('select', { id: 'math-tag-type' },
+					Object.keys(MathTypes)
+						.map(k => h('option', MathTypes[k], k == field.Type
+							? { selected: true, value: k }
+							: { value: k }))
+				),
+				h('span', 'Значение по умолч.'),
+				h('input', { id: 'math-tag-def', type: 'number', value: field.DefValue }),
+				h('button', {
+					innerHTML: 'Удалить',
+					onclick: function () {
+						if (!confirm('Подтвердите удаление тега')) return
+						ask({ method: 'math.delete', body: { name: field.Name } }, function (json) {
+							if (json.Error) alert(json.Error)
+							if (json.Done) {
+								alert(json.Done)
+								MathPage()
+							}
+						})
+					}
+				}),
+				h('button', {
+					innerHTML: 'Сохранить',
+					onclick: function () {
+						var form = {
+							OldName: field.Name,
+							Name: document.getElementById('math-tag-name').value,
+							Type: document.getElementById('math-tag-type').value,
+							DefValue: document.getElementById('math-tag-def').value,
+							Fields: Array.from(document.getElementById('math-tag-fields').querySelectorAll('select')).map(el => el.value)
+						}
+						ask({ method: 'math.update', body: form }, function (json) {
+							if (json.Error) alert(json.Error)
+							if (json.Done) {
+								alert('Тег успешно обновлён')
+								MathPage()
+							}
+						})
+					}
+				})
+			),
+			h('div', { className: 'container' },
+				h('div', { className: 'container-data' },
+					h('div', { id: 'math-tag-fields' },
+						field.Fields.map(x => h('div',
+							h('select', json
+								.map(s => h('option', s, s == x ? { selected: true, value: s } : { value: s }))),
+							h('button', {
+								innerHTML: 'Удалить',
+								onclick: function () {
+									this.parentNode.remove()
+								}
+							})
+						))
+					),
+					h('div',
+						h('button', {
+							innerHTML: 'Добавить',
+							onclick: function () {
+								document.getElementById('math-tag-fields').appendChild(
+									h('div',
+										h('select', json.map(s => h('option', s, { value: s }))),
+										h('button', {
+											innerHTML: 'Удалить',
+											onclick: function () {
+												this.parentNode.remove()
+											}
+										})
+									)
+								)
+							}
+						})
+					)
+				)
+			)
+		)
+    })
+}
+
 
 // enum 
 
@@ -1013,4 +1188,13 @@ var LogTypes = {
 	1: 'Детали',
 	2: 'Внимание',
 	3: 'Ошибка'
+}
+
+var MathTypes = {
+	'SUM': 'Сложение',
+	'DIFF': 'Вычитание',
+	'MULT': 'Умножение',
+	'DIV': 'Деление',
+	'CONST': 'Константа',
+	'AVG': 'Среднее арифм.'
 }

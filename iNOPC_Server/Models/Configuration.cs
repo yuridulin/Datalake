@@ -19,7 +19,11 @@ namespace iNOPC.Server.Models
 
 		public DatabaseSettings Database { get; set; } = new DatabaseSettings();
 
+		public List<MathField> MathFields { get; set; } = new List<MathField>();
+
 		public string Key { get; set; } = "";
+
+		public int NextId { get; set; } = 0;
 
 		public void RestoreFromFile()
 		{
@@ -66,6 +70,16 @@ namespace iNOPC.Server.Models
 						Key = v3.Key;
 						break;
 
+					case "4":
+						var v4 = JsonConvert.DeserializeObject<V4>(raw);
+						Drivers = v4.Drivers;
+						Access = v4.Access;
+						Settings = v4.Settings;
+						Database = v4.Database;
+						MathFields = v4.MathFields;
+						Key = v4.Key;
+						break;
+
 					default:
 						Program.Log("Неизвестный формат конфигурации! " + version.Version);
 						return;
@@ -90,16 +104,28 @@ namespace iNOPC.Server.Models
 
 			void Preprocess()
 			{
-				double nextId = DateTime.Now.AddHours(-1).ToOADate();
-
 				try
 				{
+					// прогон для поиска идентификаторов
+					var ids = new List<int> { 1 };
+
 					foreach (var driver in Drivers)
 					{
-						driver.Id = driver.Id == 0 ? nextId++ : driver.Id;
+						if (driver.Id != 0) ids.Add(driver.Id);
 						foreach (var device in driver.Devices)
 						{
-							device.Id = device.Id == 0 ? nextId++ : device.Id;
+							if (device.Id != 0) ids.Add(device.Id);
+						}
+					}
+
+					NextId = (ids?.Max() ?? 0) + 1;
+
+					foreach (var driver in Drivers)
+					{
+						driver.Id = driver.Id == 0 ? NextId++ : driver.Id;
+						foreach (var device in driver.Devices)
+						{
+							device.Id = device.Id == 0 ? NextId++ : device.Id;
 							device.DriverId = driver.Id;
 							device.DriverName = driver.Name;
 						}
@@ -160,8 +186,17 @@ namespace iNOPC.Server.Models
 					Access,
 					Settings,
 					Database,
+					MathFields = MathFields
+						.Select(mathfield => new
+						{
+							mathfield.Name,
+							mathfield.Type,
+							mathfield.Fields,
+							mathfield.DefValue,
+						})
+						.ToList(),
 					Key,
-					Version = "3",
+					Version = "4",
 				}));
 			}
 			catch (Exception e)

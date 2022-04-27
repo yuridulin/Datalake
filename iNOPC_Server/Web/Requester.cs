@@ -180,6 +180,13 @@ namespace iNOPC.Server.Web
                     case "device.stop": return DeviceStop(body);
                     case "device.history": return DeviceHistory(body);
 
+                    case "math.fields": return MathFields();
+                    case "math.values": return MathValues();
+                    case "math.form": return MathForm(body);
+                    case "math.create": return MathTagCreate();
+                    case "math.update": return MathTagUpdate(body);
+                    case "math.delete": return MathTagDelete(body);
+
                     default: return new { Error = "Запрошенный метод не существует", StackTrace = "Web.Controller.Action" };
                 }
             }
@@ -634,11 +641,9 @@ namespace iNOPC.Server.Web
                 else
                 {
                     // Добавление нового драйвера
-
-                    long id = DateTime.Now.Ticks;
                     var driver = new Driver
                     {
-                        Id = id,
+                        Id = Program.Configuration.NextId++,
                         Name = data.Name,
                         Path = Program.Base + @"\Drivers\" + data.Path + ".dll",
                     };
@@ -649,9 +654,9 @@ namespace iNOPC.Server.Web
                     driver.Load();
 
                     WebSocket.Broadcast("tree");
-                    WebSocket.Broadcast("driver:" + id);
+                    WebSocket.Broadcast("driver:" + Program.Configuration.NextId);
 
-                    return new { id };
+                    return new { Program.Configuration.NextId };
                 }
             }
         }
@@ -876,11 +881,10 @@ namespace iNOPC.Server.Web
 
                 if (driver != null)
                 {
-                    long id = DateTime.Now.Ticks;
                     var device = new Device
                     {
-                        Id = id,
-                        Name = "New_Device_" + id,
+                        Id = Program.Configuration.NextId++,
+                        Name = "New_Device_" + Program.Configuration.NextId,
                         AutoStart = false,
                         Configuration = driver.DefaultConfiguratuon,
                         DriverId = driver.Id,
@@ -1055,6 +1059,145 @@ namespace iNOPC.Server.Web
             }
 
             return null;
+        }
+
+
+        object MathFields()
+        {
+            lock (Program.Configuration.MathFields)
+            {
+                return Program.Configuration.MathFields
+                    .Select(x => new
+                    {
+                        x.Name,
+                        x.Type,
+                        x.Fields,
+                        x.DefValue,
+                    });
+            }
+        }
+
+        object MathValues()
+        {
+            lock (Program.Configuration.MathFields)
+            {
+                return Program.Configuration.MathFields
+                    .Select(x => new
+                    {
+                        x.Name,
+                        x.Value,
+                    });
+            }
+        }
+
+        object MathForm(string body)
+        {
+            try
+            {
+                var form = JsonConvert.DeserializeObject<MathFieldForm>(body);
+
+                lock (OPC.Tags)
+                {
+                    return OPC.Tags
+                        .Select(x => x.Key)
+                        .Where(x => x != "Math." + form.Name)
+                        .OrderBy(x => x)
+                        .ToList();
+                }
+            }
+            catch (Exception e)
+            {
+                return new { Error = e.Message };
+            }
+        }
+
+        object MathTagCreate()
+        {
+            try
+            {
+                lock (Program.Configuration.MathFields)
+                {
+                    var field = new MathField
+                    {
+                        Name = "Field" + new Random().Next(),
+                        Type = "SUM",
+                        Fields = new List<string>(),
+                    };
+
+                    while (Program.Configuration.MathFields.Count(x => x.Name == field.Name) > 0)
+                    {
+                        field.Name = "Field" + new Random().Next();
+                    }
+
+                    Program.Configuration.MathFields.Add(field);
+                }
+
+                Program.Configuration.SaveToFile();
+                Maths.Reset();
+
+                return new { Done = true };
+            }
+            catch (Exception e)
+            {
+                return new { Error = e.Message };
+            }
+        }
+
+        object MathTagDelete(string body)
+        {
+            try
+            {
+                var form = JsonConvert.DeserializeObject<MathFieldForm>(body);
+
+                lock (Program.Configuration.MathFields)
+                {
+                    var field = Program.Configuration.MathFields
+                        .FirstOrDefault(x => x.Name == form.Name);
+
+                    if (field == null) return new { Error = "Поле с таким именем не найдено" };
+
+                    Program.Configuration.MathFields.Remove(field);
+                }
+
+                Program.Configuration.SaveToFile();
+                Maths.Reset();
+
+                return new { Done = true };
+            }
+            catch (Exception e)
+            {
+                return new { Error = e.Message };
+            }
+        }
+
+        object MathTagUpdate(string body)
+        {
+            try
+            {
+                var form = JsonConvert.DeserializeObject<MathFieldForm>(body);
+
+                lock (Program.Configuration.MathFields)
+                {
+                    var field = Program.Configuration.MathFields
+                        .FirstOrDefault(x => x.Name == form.OldName);
+
+                    if (field == null) return new { Error = "Поле с таким именем не найдено" };
+
+                    field.Name = form.Name;
+                    field.Type = form.Type;
+                    field.DefValue = form.DefValue;
+                    field.Fields = form.Fields;
+                }
+
+                Program.Configuration.SaveToFile();
+                Maths.Reset();
+
+                return new { Done = true };
+            }
+            catch (Exception e)
+            {
+                return new { Error = e.Message };
+            }
         }
     }
 }

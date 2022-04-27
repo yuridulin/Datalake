@@ -22,7 +22,7 @@ namespace iNOPC.Server.Models
 
         // Рабочие параметры
 
-        public double Id { get; set; } = 0;
+        public int Id { get; set; } = 0;
 
         public Type DriverType { get; set; }
 

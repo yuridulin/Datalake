@@ -88,7 +88,9 @@
     <Compile Include="Database\Models\Point.cs" />
     <Compile Include="Models\Configuration.cs" />
     <Compile Include="Models\Configurations\DatabaseSettings.cs" />
+    <Compile Include="Models\Configurations\MathField.cs" />
     <Compile Include="Models\Configurations\V0.cs" />
+    <Compile Include="Models\Configurations\V4.cs" />
     <Compile Include="Models\Configurations\V3.cs" />
     <Compile Include="Models\Configurations\V2.cs" />
     <Compile Include="Models\Configurations\V1.cs" />
@@ -96,6 +98,7 @@
     <Compile Include="Models\Device.cs" />
     <Compile Include="Models\Driver.cs" />
     <Compile Include="Models\Configurations\Settings.cs" />
+    <Compile Include="Models\Maths.cs" />
     <Compile Include="OPC\OPC.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -110,6 +113,7 @@
     <Compile Include="Web\RequestTypes\IdOnly.cs" />
     <Compile Include="Models\Configurations\AccessRecord.cs" />
     <Compile Include="Web\RequestTypes\License.cs" />
+    <Compile Include="Web\RequestTypes\MathFieldForm.cs" />
     <Compile Include="Web\Session.cs" />
     <Compile Include="Web\WebSocket.cs" />
     <Compile Include="Web\WebSocketReceiver.cs" />
@@ -165,7 +169,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <TypeScriptCompile Include="webConsole\js\index.d.ts" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>

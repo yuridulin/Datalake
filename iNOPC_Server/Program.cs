@@ -57,6 +57,7 @@ namespace iNOPC.Server
             Defence.Set();
 #endif
             Storage.Start();
+            Maths.Start();
 
             // Загружаем конфиг
             Configuration.Start();

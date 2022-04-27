@@ -135,8 +135,6 @@ namespace iNOPC.Drivers.PowerCounters
                 sr.Close();
                 res.Close();
 
-                Console.WriteLine("Url: " + url + "\nRaw: " + raw);
-
                 return raw;
             }
             catch (Exception e)
