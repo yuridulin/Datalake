@@ -5,12 +5,12 @@ namespace Test.Models
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct ColdSource
     {
-        public double t;
+        public float t;
 
-        public double P;
+        public float P;
 
-        public double Patm;
+        public float Patm;
 
-        public double h;
+        public float h;
     }
 }

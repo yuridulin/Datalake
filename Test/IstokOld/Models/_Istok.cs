@@ -19,7 +19,8 @@ namespace Test.Models
 
 
         [DllImport("Models\\IstokTM2.dll", CallingConvention = CallingConvention.StdCall)]
-        public static extern byte ReadDateTime(byte nDevice, out DateTime aDateTime);
+        public static extern byte ReadDateTime(byte nDevice, out double aDateTime);
+
 
         [DllImport("Models\\IstokTM2.dll", CallingConvention = CallingConvention.StdCall)]
         public static extern byte ReadOperativeData(byte nDevice, out Operative aOperativeData);

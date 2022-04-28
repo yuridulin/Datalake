@@ -5,20 +5,20 @@ namespace Test.Models
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct Point
     {
-        public double Q;
+        public float Q;
 
-        public double G;
+        public float G;
 
-        public double h;
+        public float h;
 
-        public double dP;
+        public float dP;
 
-        public double t;
+        public float t;
 
-        public double P;
+        public float P;
 
-        public double V;
+        public float V;
 
-        public double r;
+        public float r;
     }
 }
