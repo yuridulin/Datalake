@@ -146,7 +146,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
 
             if (Configuration.Multicast)
             {
-                Configuration.Fields = Configuration.Fields.OrderBy(x => x.Address).ToList();
+                Configuration.Fields = Configuration.Fields.Where(x => x.IsActive).OrderBy(x => x.Address).ToList();
 
                 while (Configuration.Fields.Count(x => !x.Checked) > 0)
                 {
@@ -155,7 +155,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
                     Package package = null;
                     byte length = 0;
 
-                    for (int k = 0; k < Math.Min(fields.Length, 61); k++)
+                    for (int k = 0; k < Math.Min(fields.Length, Configuration.MaxFieldsInGroup); k++)
                     {
                         if (k == 0 || (fields[k].Address == fields[k - 1].Address + length))
                         {
@@ -192,7 +192,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
             }
             else
             {
-                foreach (var field in Configuration.Fields.Where(x => !x.Checked))
+                foreach (var field in Configuration.Fields.Where(x => x.IsActive).Where(x => !x.Checked).OrderBy(x => x.Address))
                 {
                     Packages.Add(new Package
                     {
@@ -343,6 +343,8 @@ namespace iNOPC.Drivers.MODBUS_RTU
                                 LogEvent("Rx: ничего не вернулось, таймаут " + Configuration.ReceiveTimeout + " мс", LogType.DETAILED);
                                 errorsCounter++;
                             }
+
+                            Thread.Sleep(5);
                         }
                         catch (Exception e)
                         {
@@ -359,7 +361,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
                 }
                 UpdateEvent();
 
-                int timeout = Convert.ToInt32(Configuration.CyclicTimeout - (DateTime.Now - Date).TotalMilliseconds);
+                int timeout = Convert.ToInt32((Configuration.CyclicTimeout * 1000) - (DateTime.Now - Date).TotalMilliseconds);
                 if (timeout > 0) Thread.Sleep(timeout);
 
                 if (errorsCounter > 20)

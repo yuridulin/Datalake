@@ -2,6 +2,7 @@
 using iNOPC.Library;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace iNOPC.Drivers.MODBUS_RTU
 {
@@ -33,6 +34,8 @@ namespace iNOPC.Drivers.MODBUS_RTU
 
         public int WriteTimeout { get; set; } = 1000;
 
+        public int MaxFieldsInGroup { get; set; } = 10;
+
         public List<Field> Fields { get; set; } = new List<Field>();
 
         public static string GetPage(string json)
@@ -42,7 +45,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
             string html = "";
 
             html +=
-                Html.Value("Интервал опроса, мс", nameof(config.CyclicTimeout), config.CyclicTimeout) +
+                Html.Value("Интервал опроса, с", nameof(config.CyclicTimeout), config.CyclicTimeout) +
                 Html.Value("COM порт", nameof(config.PortName), config.PortName) +
                 Html.Value("Скорость", nameof(config.BaudRate), config.BaudRate) +
                 Html.Value("Кол-во бит данных", nameof(config.DataBits), config.DataBits) +
@@ -53,6 +56,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
                 Html.Value("Ожидание ответа, мс", nameof(config.ReceiveTimeout), config.ReceiveTimeout) +
                 Html.Value("Адрес устройства", nameof(config.SlaveId), config.SlaveId) +
                 Html.Value("Использование групповых запросов", nameof(config.Multicast), config.Multicast) +
+                Html.Value("Кол-во полей в группе", nameof(config.MaxFieldsInGroup), config.MaxFieldsInGroup) +
                 Html.Value("Старшим битом вперед", nameof(config.OldByteFirst), config.OldByteFirst) +
                 Html.Value("Старшим регистром вперед", nameof(config.OldRegisterFirst), config.OldRegisterFirst);
 
@@ -60,7 +64,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
                 + "<span>Запрашиваемые поля</span>"
                 + "<button onclick='_add(this)'>Добавить</button>";
 
-            foreach (var field in config.Fields)
+            foreach (var field in config.Fields.OrderBy(x => x.Address))
             {
                 html += NamedFieldString(field);
             }
@@ -77,10 +81,12 @@ namespace iNOPC.Drivers.MODBUS_RTU
             string NamedFieldString(Field field)
             {
                 return "<p>"
+                    + Html.Input("Вкл.", nameof(field.IsActive), field.IsActive)
                     + Html.Input("Имя", nameof(field.Name), field.Name)
                     + Html.Input("Тип", nameof(field.Type), field.Type)
                     + Html.Input("Команда", nameof(field.CommandCode), field.CommandCode)
                     + Html.Input("Адрес", nameof(field.Address), field.Address)
+                    + Html.Input("Текст", nameof(field.Description), field.Description)
                     + "<button onclick='_del(this)'>Удалить</button>"
                     + "</p>";
             }
