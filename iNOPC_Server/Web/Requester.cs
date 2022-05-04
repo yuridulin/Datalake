@@ -180,12 +180,12 @@ namespace iNOPC.Server.Web
                     case "device.stop": return DeviceStop(body);
                     case "device.history": return DeviceHistory(body);
 
-                    case "math.fields": return MathFields();
-                    case "math.values": return MathValues();
-                    case "math.form": return MathForm(body);
-                    case "math.create": return MathTagCreate();
-                    case "math.update": return MathTagUpdate(body);
-                    case "math.delete": return MathTagDelete(body);
+                    case "calc.fields": return CalcFields();
+                    case "calc.values": return CalcValues();
+                    case "calc.form": return CalcForm(body);
+                    case "calc.create": return CalcTagCreate();
+                    case "calc.update": return CalcTagUpdate(body);
+                    case "calc.delete": return CalcTagDelete(body);
 
                     default: return new { Error = "Запрошенный метод не существует", StackTrace = "Web.Controller.Action" };
                 }
@@ -195,6 +195,8 @@ namespace iNOPC.Server.Web
                 return new { Error = e.Message, e.StackTrace };
             }
         }
+
+        #region Authentication
 
         object Login(string body)
         {
@@ -325,6 +327,9 @@ namespace iNOPC.Server.Web
             return new { Done = "Пользователь успешно удалён" };
         }
 
+        #endregion
+
+        #region Settings & Structure
 
         object Tree()
         {
@@ -346,7 +351,6 @@ namespace iNOPC.Server.Web
                     }),
                 });
         }
-
 
         object Settings()
 		{
@@ -526,6 +530,9 @@ namespace iNOPC.Server.Web
             return new { Done = "Служба успешно удалена" };
         }
 
+        #endregion
+
+        #region Drivers
 
         object Driver(string body)
         {
@@ -752,6 +759,9 @@ namespace iNOPC.Server.Web
             return false;
         }
 
+        #endregion
+
+        #region Devices
 
         object Device(string body)
         {
@@ -1061,46 +1071,51 @@ namespace iNOPC.Server.Web
             return null;
         }
 
+        #endregion
 
-        object MathFields()
+        #region Formula Calculation
+
+        object CalcFields()
         {
-            lock (Program.Configuration.MathFields)
+            lock (Program.Configuration.Formulars)
             {
-                return Program.Configuration.MathFields
+                return Program.Configuration.Formulars
                     .Select(x => new
                     {
                         x.Name,
-                        x.Type,
+                        x.Description,
+                        x.Formula,
+                        x.Interval,
                         x.Fields,
-                        x.DefValue,
                     });
             }
         }
 
-        object MathValues()
+        object CalcValues()
         {
-            lock (Program.Configuration.MathFields)
+            lock (Program.Configuration.Formulars)
             {
-                return Program.Configuration.MathFields
+                return Program.Configuration.Formulars
                     .Select(x => new
                     {
                         x.Name,
                         x.Value,
+                        x.Error,
                     });
             }
         }
 
-        object MathForm(string body)
+        object CalcForm(string body)
         {
             try
             {
-                var form = JsonConvert.DeserializeObject<MathFieldForm>(body);
+                var form = JsonConvert.DeserializeObject<FormulaForm>(body);
 
                 lock (OPC.Tags)
                 {
                     return OPC.Tags
                         .Select(x => x.Key)
-                        .Where(x => x != "Math." + form.Name)
+                        .Where(x => x != form.Name)
                         .OrderBy(x => x)
                         .ToList();
                 }
@@ -1111,29 +1126,30 @@ namespace iNOPC.Server.Web
             }
         }
 
-        object MathTagCreate()
+        object CalcTagCreate()
         {
             try
             {
-                lock (Program.Configuration.MathFields)
+                lock (Program.Configuration.Formulars)
                 {
-                    var field = new MathField
+                    var f = new Formular
                     {
                         Name = "Field" + new Random().Next(),
-                        Type = "SUM",
-                        Fields = new List<string>(),
+                        Interval = 5,
+                        Fields = new Dictionary<string, string>(),
                     };
 
-                    while (Program.Configuration.MathFields.Count(x => x.Name == field.Name) > 0)
+                    while (Program.Configuration.Formulars.Count(x => x.Name == f.Name) > 0)
                     {
-                        field.Name = "Field" + new Random().Next();
+                        f.Name = "Field" + new Random().Next();
                     }
 
-                    Program.Configuration.MathFields.Add(field);
+                    f.Set();
+                    Program.Configuration.Formulars.Add(f);
                 }
 
                 Program.Configuration.SaveToFile();
-                Maths.Reset();
+                Calculator.Reset();
 
                 return new { Done = true };
             }
@@ -1143,24 +1159,25 @@ namespace iNOPC.Server.Web
             }
         }
 
-        object MathTagDelete(string body)
+        object CalcTagDelete(string body)
         {
             try
             {
-                var form = JsonConvert.DeserializeObject<MathFieldForm>(body);
+                var form = JsonConvert.DeserializeObject<FormulaForm>(body);
 
-                lock (Program.Configuration.MathFields)
+                lock (Program.Configuration.Formulars)
                 {
-                    var field = Program.Configuration.MathFields
+                    var field = Program.Configuration.Formulars
                         .FirstOrDefault(x => x.Name == form.Name);
 
                     if (field == null) return new { Error = "Поле с таким именем не найдено" };
 
-                    Program.Configuration.MathFields.Remove(field);
+                    Program.Configuration.Formulars.Remove(field);
+                    OPC.Remove(form.Name);
                 }
 
                 Program.Configuration.SaveToFile();
-                Maths.Reset();
+                Calculator.Reset();
 
                 return new { Done = true };
             }
@@ -1170,27 +1187,35 @@ namespace iNOPC.Server.Web
             }
         }
 
-        object MathTagUpdate(string body)
+        object CalcTagUpdate(string body)
         {
             try
             {
-                var form = JsonConvert.DeserializeObject<MathFieldForm>(body);
+                var form = JsonConvert.DeserializeObject<FormulaForm>(body);
 
-                lock (Program.Configuration.MathFields)
+                lock (Program.Configuration.Formulars)
                 {
-                    var field = Program.Configuration.MathFields
+                    var field = Program.Configuration.Formulars
                         .FirstOrDefault(x => x.Name == form.OldName);
 
-                    if (field == null) return new { Error = "Поле с таким именем не найдено" };
+                    if (field == null) return new { Error = "Тег не найден" };
+                    if (Program.Configuration.Formulars.Count(x => x.Name == form.Name) > 0) return new { Error = "Тег с таким именем уже существует" };
+                    if (form.Interval <= 0) return new { Error = "Интервал расчёта должен быть положительным кол-вом секунд" };
 
                     field.Name = form.Name;
-                    field.Type = form.Type;
-                    field.DefValue = form.DefValue;
+                    field.Description = form.Description;
+                    field.Formula = form.Formula;
+                    field.Interval = form.Interval;
                     field.Fields = form.Fields;
+
+                    if (form.OldName != form.Name)
+                    {
+                        OPC.RemoveTag(OPC.Tags[form.OldName]);
+                    }
                 }
 
                 Program.Configuration.SaveToFile();
-                Maths.Reset();
+                Calculator.Reset();
 
                 return new { Done = true };
             }
@@ -1199,5 +1224,7 @@ namespace iNOPC.Server.Web
                 return new { Error = e.Message };
             }
         }
+
+        #endregion
     }
 }

@@ -205,6 +205,10 @@ function ask(parameters, callback) {
 		var json = {}
 		try { json = JSON.parse(xhr.responseText) } catch (e) { return console.log('ask err: not json [' + xhr.responseText + ']') }
 
+		if (accessType == ACCESSTYPE.GUEST) {
+			mount('#tree', '')
+        }
+
 		if (accessType != ACCESSTYPE.FIRST) {
 			if (json.Error) mount('#view', 'Ошибка: ' + json.Error)
 			if (json.Warning) mount('#view', json.Warning)

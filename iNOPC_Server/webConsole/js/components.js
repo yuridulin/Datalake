@@ -5,8 +5,14 @@ var route = ''
 var currentPage = ''
 var licenseMode = 0
 
+var deviceName
+var deviceAutoStart
+var interval = 0
 
-
+var unsetTimers = function () {
+	ID = 0
+	clearInterval(interval)
+}
 
 
 
@@ -24,15 +30,14 @@ function Logo() {
 
 function Home() {
 
+	unsetTimers()
 	if (currentPage == 'first' || currentPage == 'login') return
 	mount('#view', 'подключаемся...')
-	ID = 0
 
 	ask({ method: 'tree' }, function (json) {
 
 		// первый вход - перенаправление на страницу настроек
 		if (accessType == ACCESSTYPE.FIRST) return First()
-
 		if (accessType == ACCESSTYPE.GUEST) return Login()
 
 		BuildTree(json)
@@ -79,20 +84,25 @@ function Home() {
 }
 
 function Offline() {
-	ID = 0
+	unsetTimers()
 	mount('#tree', '')
 	mount('#view', 'Нет связи с OPC сервером')
-	clearInterval(timeout)
 }
 
 function Tree() {
-	if (accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST) return
-	ask({ method: 'tree' }, function (json) {
-		BuildTree(json)
-	})
+	console.log('tree', accessType)
+	if (accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST) {
+		mount('#view', '')
+	}
+	else {
+		ask({ method: 'tree' }, function (json) {
+			BuildTree(json)
+		})
+	}
 }
 
 function BuildTree(json) {
+	console.log('build tree', accessType)
 	mount('#tree', h('div',
 		accessType == ACCESSTYPE.FULL ?
 			h('div.node', { route: 'settings' },
@@ -165,7 +175,7 @@ function BuildTree(json) {
 					innerHTML: 'Математика',
 					onclick: function () {
 						TreeSetActive('math'),
-						MathPage()
+						CalcPage()
                     }
                 })
 			)
@@ -189,7 +199,6 @@ function BuildTree(json) {
 }
 
 function TreeSetActive(r) {
-
 	var old = document.querySelector('.active')
 	if (old) old.classList.remove('active')
 
@@ -200,8 +209,11 @@ function TreeSetActive(r) {
 
 
 function Driver(id) {
-	clearInterval(timeout)
+
+	unsetTimers()
+
 	mount('#view', 'выполняется запрос...')
+	
 	ID = id
 
 	ask({ method: 'driver', body: { Id: id } }, function (driver) {
@@ -328,11 +340,11 @@ function DriverDevices(id) {
 }
 
 function DriverCreate() {
-	clearInterval(timeout)
+
+	unsetTimers()
 	if (!AUTH()) return
 
 	ask({ method: 'driver.createform' }, function (data) {
-		ID = 0
 		var name, path
 		mount('#view',
 			h('div.container',
@@ -368,15 +380,11 @@ function DriverCreate() {
 	})
 }
 
-var deviceName
-var deviceAutoStart
-var timeout = 0
 
 function Device(id) {
 
-	lastLog = ''
+	unsetTimers()
 	ID = id
-
 	var x1, x2, x3, logsDetailed, logsWarnings
 
 	if (ls(id + '.logs') == null) {
@@ -407,7 +415,7 @@ function Device(id) {
 						innerHTML: 'Старт',
 						onclick: function () {
 							ask({ method: 'device.start', body: { Id: id } }, function () {
-								timeout = setInterval(function () {
+								interval = setInterval(function () {
 									DeviceFields(id)
 								}, 1000)
 							})
@@ -419,7 +427,7 @@ function Device(id) {
 						innerHTML: 'Стоп',
 						onclick: function () {
 							ask({ method: 'device.stop', body: { Id: id } }, function () {
-								clearInterval(timeout)
+								clearInterval(interval)
 								DeviceFields(id)
 							})
 						}
@@ -574,8 +582,8 @@ function Device(id) {
 		DeviceLogs(id)
 		DeviceFields(id)
 
-		clearInterval(timeout)
-		timeout = setInterval(function () {
+		clearInterval(interval)
+		interval = setInterval(function () {
 			DeviceLogsClean()
 			DeviceFields(id)
 		}, 1000)
@@ -627,7 +635,6 @@ function DeviceLogsClean() {
 	var div = document.getElementById('device-logs')
 	var table = div.querySelector('table')
 	var rows = table.getElementsByTagName('tr')
-	console.log(rows.length)
 
 	if (rows.length >= 100) {
 		var i = rows.length - 100
@@ -701,11 +708,9 @@ function DeviceSave(id) {
 
 function Settings() {
 
+	unsetTimers()
 	if (currentPage == 'settings') return
 	currentPage = 'settings'
-
-	ID = 0
-	clearInterval(timeout)
 
 	if (accessType == ACCESSTYPE.GUEST || accessType == ACCESSTYPE.READ) {
 		return mount('#view', h('div.container', 'Нет доступа'))
@@ -802,10 +807,10 @@ function Settings() {
 
 function UsersTable() {
 
+	unsetTimers()
 	if (currentPage == 'users') return
 	currentPage = 'users'
 
-	ID = 0
 	if (accessType < ACCESSTYPE.FULL) return ''
 	var login, pass, access
 
@@ -889,10 +894,10 @@ function UsersTable() {
 
 function First() {
 
+	unsetTimers()
 	if (currentPage == 'first') return
 	currentPage = 'first'
 
-	ID = 0
 	var _pass
 	mount('#view',
 		h('container',
@@ -942,14 +947,12 @@ function AuthPanel() {
 
 function Login() {
 
+	unsetTimers()
 	if (currentPage == 'login') return
 	currentPage = 'login'
 
-	clearInterval(timeout)
-	ID = 0
 	var _login, _pass
 
-	//if (accessType == ACCESSTYPE.GUEST) Tree()
 	mount('#view',
 		accessType > ACCESSTYPE.GUEST
 			? h('div.container',
@@ -1004,39 +1007,41 @@ function AUTH() {
 	return accessType == ACCESSTYPE.WRITE || accessType == ACCESSTYPE.FULL
 }
 
-function MathPage() {
-	ask({ method: 'math.fields' }, function (/**@type{MathField[]}*/json) {
+
+function CalcPage() {
+	unsetTimers()
+	ask({ method: 'calc.fields' }, function (/**@type{Formular[]}*/json) {
 		mount('#view',
 			h('div', { className: 'container' },
 				h('h3', 'Список тегов с математикой'),
 				h('div', { className: 'fields' },
 					h('div',
 						h('b', 'Тег', { style: { width: '10em' } }),
-						h('b', 'Тип', { style: { width: '10em' } }),
 						h('b', 'Значение', { style: { width: '10em' } }),
+						h('b', 'Ошибки', { style: { width: '30em' } }),
 						h('b', { style: { width: '10em' } },
 							h('button', {
 								innerHTML: 'Добавить тег',
 								onclick: function () {
-									ask({ method: 'math.create' }, function (json) {
+									ask({ method: 'calc.create' }, function (json) {
 										if (json.Error) alert(json.Error)
 										if (json.Done) {
-											MathPage()
+											CalcPage()
 										}
 									})
 								}
 							})
 						)
 					),
-					json.map(mathfield => h('div',
-						h('span', mathfield.Name),
-						h('span', mathfield.Type),
-						h('span', { name: 'math.' + mathfield.Name }),
+					json.map(formular => h('div', { 'data-id': formular.Name },
+						h('span', formular.Name),
+						h('span'),
+						h('span'),
 						h('span',
 							h('button', {
 								innerHTML: 'Изменить',
 								onclick: function () {
-									MathField(mathfield)
+									Formular(formular)
 								}
 							})
 						)
@@ -1045,126 +1050,174 @@ function MathPage() {
 			)
 		)
 
-		clearInterval(timeout)
-		timeout = setInterval(function () {
-			MathValues()
+		interval = setInterval(function () {
+			CalcValues()
 		}, 1000)
 
-		MathValues()
+		CalcValues()
     })
 }
 
-function MathValues() {
-	ask({ method: 'math.values' }, function (/**@type{MathValue[]}*/json) {
+function CalcValues() {
+	ask({ method: 'calc.values' }, function (/**@type{FormularValue[]}*/json) {
 		json.forEach(x => {
-			var el = document.querySelector('[name="math.' + x.Name + '"]')
+			var el = document.querySelector('[data-id="' + x.Name + '"]')
 			if (el) {
+				var cells = el.querySelectorAll('span')
 				try {
-					el.innerHTML = x.Value.toFixed(2)
+					cells[1].innerHTML = x.Value.toFixed(2)
 				}
 				catch (e) {
-					el.innerHTML = '?'
-                }
-            }
+					cells[1].innerHTML = x.Value
+				}
+				cells[2].innerHTML = x.Error
+			}
         })
 	})
 }
 
 /**
- * @param {MathField} field
+ * @param {Formular} field
  */
-function MathField(field) {
-	clearInterval(timeout)
-	ask({ method: 'math.form', body: { Name: field.Name } }, function (/**@type{string[]}*/json) {
+function Formular(field) {
+	unsetTimers()
+	ask({ method: 'calc.form', body: { Name: field.Name } }, function (/**@type{string[]}*/json) {
 		mount('#view',
-			h('div', { className: 'container', id: 'math-tag' },
-				h('button', {
-					innerHTML: 'К списку',
-					onclick: function () {
-						MathPage()
-					}
-				}),
-				h('span', 'Тег'),
-				h('input', { id: 'math-tag-name', value: field.Name }),
-				h('span', 'Тип'),
-				h('select', { id: 'math-tag-type' },
-					Object.keys(MathTypes)
-						.map(k => h('option', MathTypes[k], k == field.Type
-							? { selected: true, value: k }
-							: { value: k }))
-				),
-				h('span', 'Значение по умолч.'),
-				h('input', { id: 'math-tag-def', type: 'number', value: field.DefValue }),
-				h('button', {
-					innerHTML: 'Удалить',
-					onclick: function () {
-						if (!confirm('Подтвердите удаление тега')) return
-						ask({ method: 'math.delete', body: { name: field.Name } }, function (json) {
-							if (json.Error) alert(json.Error)
-							if (json.Done) {
-								alert(json.Done)
-								MathPage()
-							}
-						})
-					}
-				}),
-				h('button', {
-					innerHTML: 'Сохранить',
-					onclick: function () {
-						var form = {
-							OldName: field.Name,
-							Name: document.getElementById('math-tag-name').value,
-							Type: document.getElementById('math-tag-type').value,
-							DefValue: document.getElementById('math-tag-def').value,
-							Fields: Array.from(document.getElementById('math-tag-fields').querySelectorAll('select')).map(el => el.value)
-						}
-						ask({ method: 'math.update', body: form }, function (json) {
-							if (json.Error) alert(json.Error)
-							if (json.Done) {
-								alert('Тег успешно обновлён')
-								MathPage()
-							}
-						})
-					}
-				})
-			),
-			h('div', { className: 'container' },
-				h('div', { className: 'container-data' },
-					h('div', { id: 'math-tag-fields' },
-						field.Fields.map(x => h('div',
-							h('select', json
-								.map(s => h('option', s, s == x ? { selected: true, value: s } : { value: s }))),
+			h('div', { className: 'container', id: 'calc-tag' },
+				h('table', { className: 'form' },
+					h('tr',
+						h('td', { style: { width: '14em' } }, h('span', 'Тег')),
+						h('td', h('input', { id: 'calc-tag-name', value: field.Name }))
+					),
+					h('tr',
+						h('td', h('span', 'Интервал расчёта, с')),
+						h('td', h('input', { id: 'calc-tag-interval', type: 'number', min: 1, max: 604800, step: 1, value: field.Interval }))
+					),
+					h('tr',
+						h('td', h('span', 'Формула')),
+						h('td', h('input', { id: 'calc-tag-formula', value: field.Formula }))
+					),
+					h('tr',
+						h('td', h('span', 'Описание')),
+						h('td', h('textarea', {
+							id: 'calc-tag-desc', oninput: function () {
+								this.style.height = 0
+								this.style.height = this.scrollHeight + 'px'
+							}}, field.Description))
+					),
+					h('tr',
+						h('td', { colspan: 2 }, 
 							h('button', {
 								innerHTML: 'Удалить',
 								onclick: function () {
-									this.parentNode.remove()
+									if (!confirm('Подтвердите удаление тега')) return
+									ask({ method: 'calc.delete', body: { name: field.Name } }, function (json) {
+										if (json.Error) alert(json.Error)
+										if (json.Done) {
+											alert(json.Done)
+											CalcPage()
+										}
+									})
+								}
+							}),
+							h('button', {
+								innerHTML: 'Сохранить',
+								onclick: function () {
+									/**@type{Formular}*/
+									var form = {
+										OldName: field.Name,
+										Name: document.getElementById('calc-tag-name').value,
+										Interval: document.getElementById('calc-tag-interval').value,
+										Description: document.getElementById('calc-tag-desc').value,
+										Formula: document.getElementById('calc-tag-formula').value,
+										Fields: {}
+									}
+
+									document.getElementById('calc-tag-fields').querySelectorAll('div').forEach(el => {
+										console.log(el)
+										if (!el.querySelector('input')) return
+										form.Fields[el.querySelector('input').value] = el.querySelector('select').value
+									})
+
+									console.log(form.Fields)
+
+									ask({ method: 'calc.update', body: form }, function (json) {
+										if (json.Error) alert(json.Error)
+										if (json.Done) {
+											alert('Тег успешно обновлён')
+											CalcPage()
+										}
+									})
+								}
+							}),
+							h('button', {
+								innerHTML: 'Закрыть',
+								onclick: function () {
+									CalcPage()
 								}
 							})
-						))
-					),
+						)
+					)
+				)
+			),
+			h('div', { className: 'container' },
+				h('div', { className: 'fields', id: 'calc-tag-fields' },
 					h('div',
-						h('button', {
-							innerHTML: 'Добавить',
-							onclick: function () {
-								document.getElementById('math-tag-fields').appendChild(
-									h('div',
-										h('select', json.map(s => h('option', s, { value: s }))),
-										h('button', {
-											innerHTML: 'Удалить',
-											onclick: function () {
-												this.parentNode.remove()
-											}
-										})
+						h('b', { style: { width: '15em' } }, 'Наименование переменной'),
+						h('b', { style: { width: '25em' } }, 'Привязанный OPC тег'),
+						h('b', { style: { width: '8em' } },
+							h('button', {
+								innerHTML: 'Добавить',
+								onclick: function () {
+									document.getElementById('calc-tag-fields').insertAdjacentElement('beforeend', 
+										h('div',
+											h('span',
+												h('input', { value: 'x' + Math.random() })
+											),
+											h('span',
+												h('select', json.map(s => h('option', s, { value: s })))
+											),
+											h('span',
+												h('button', {
+													innerHTML: 'Удалить',
+													onclick: function () {
+														this.parentNode.parentNode.remove()
+													}
+												})
+											)
+										)
 									)
+								}
+							})
+						)
+					),
+					Object.keys(field.Fields).map(x =>
+						h('div',
+							h('span',
+								h('input', { value: x })
+							),
+							h('span',
+								h('select', json
+									.map(s => h('option', s, s == field.Fields[x] ? { selected: true, value: s } : { value: s }))
 								)
-							}
-						})
+							),
+							h('span',
+								h('button', {
+									innerHTML: 'Удалить',
+									onclick: function () {
+										this.parentNode.parentNode.remove()
+									}
+								})
+							)
+						)
 					)
 				)
 			)
 		)
-    })
+		document.getElementById('calc-tag-desc').oninput()
+	})
 }
+
 
 
 // enum 

@@ -19,7 +19,7 @@ namespace iNOPC.Server.Models
 
 		public DatabaseSettings Database { get; set; } = new DatabaseSettings();
 
-		public List<MathField> MathFields { get; set; } = new List<MathField>();
+		public List<Formular> Formulars { get; set; } = new List<Formular>();
 
 		public string Key { get; set; } = "";
 
@@ -76,7 +76,7 @@ namespace iNOPC.Server.Models
 						Access = v4.Access;
 						Settings = v4.Settings;
 						Database = v4.Database;
-						MathFields = v4.MathFields;
+						Formulars = v4.Formulars;
 						Key = v4.Key;
 						break;
 
@@ -186,13 +186,14 @@ namespace iNOPC.Server.Models
 					Access,
 					Settings,
 					Database,
-					MathFields = MathFields
-						.Select(mathfield => new
+					Formulars = Formulars
+						.Select(f => new
 						{
-							mathfield.Name,
-							mathfield.Type,
-							mathfield.Fields,
-							mathfield.DefValue,
+							f.Name,
+							f.Description,
+							f.Formula,
+							f.Interval,
+							f.Fields,
 						})
 						.ToList(),
 					Key,

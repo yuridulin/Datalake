@@ -6,8 +6,6 @@ using System.Runtime.InteropServices;
 
 namespace iNOPC.Server
 {
-    public delegate void TagUpdated(string path, object value = null);
-
     public static class OPC
     {
         public const string ServerName = "iNOPC";
@@ -17,8 +15,6 @@ namespace iNOPC.Server
 
         private static WriteNotificationDelegate _WriteOutDelegate;
         private static UnknownItemDelegate _UnknownItemDelegate;
-
-        public static event TagUpdated TagUpdated;
 
         public static Dictionary<string, uint> Tags { get; set; } = new Dictionary<string, uint>();
 
@@ -36,6 +32,12 @@ namespace iNOPC.Server
             EnableWriteNotification(_WriteOutDelegate, false);
         }
 
+        /// <summary>
+        /// Команда на изменение значения извне
+        /// </summary>
+        /// <param name="item">Путь к тегу</param>
+        /// <param name="value">Значение</param>
+        /// <param name="result">Результат: 1 (драйвер не найден), 2 (устройство не найдено), 0 (команда передана устройству)</param>
         public static void WriteOut(uint item, ref object value, ref uint result)
         {
             // Функция записи OPC тега
@@ -203,6 +205,11 @@ namespace iNOPC.Server
             Write(path, null);
         }
 
+        /// <summary>
+        /// Чтение тега из OPC
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static object Read(string path)
         {
             if (!Tags.ContainsKey(path)) return 0;
@@ -212,21 +219,44 @@ namespace iNOPC.Server
             return v;
         }
 
+        /// <summary>
+        /// Запись нового значения в OPC
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="value"></param>
+        /// <param name="quality"></param>
         public static void Write(string path, object value = null, ushort quality = 0)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                lock (Tags)
+                {
+                    if (Tags.ContainsKey(path))
+                    {
+                        UpdateTag(Tags[path], value, quality);
+                    }
+                    else
+                    {
+                        Tags[path] = CreateTag(path, value, quality, true);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Удаление тега из OPC
+        /// </summary>
+        /// <param name="path"></param>
+        public static void Remove(string path)
         {
             lock (Tags)
             {
                 if (Tags.ContainsKey(path))
                 {
-                    UpdateTag(Tags[path], value, quality);
-                }
-                else
-                {
-                    Tags[path] = CreateTag(path, value, quality, true);
+                    RemoveTag(Tags[path]);
+                    Tags.Remove(path);
                 }
             }
-
-            TagUpdated(path, value);
         }
 
         public static void CleanOldTags()

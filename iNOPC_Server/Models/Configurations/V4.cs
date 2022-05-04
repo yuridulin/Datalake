@@ -12,7 +12,7 @@ namespace iNOPC.Server.Models.Configurations
 
 		public DatabaseSettings Database { get; set; } = new DatabaseSettings();
 
-		public List<MathField> MathFields { get; set; } = new List<MathField>();
+		public List<Formular> Formulars { get; set; } = new List<Formular>();
 
 		public string Key { get; set; } = "";
 

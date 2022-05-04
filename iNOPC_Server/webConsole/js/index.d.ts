@@ -1,11 +1,13 @@
-﻿type MathField = {
+﻿type Formular = {
     Name: string
-    Type: string
-    Fields: string[]
-    DefValue: number
+    Description: string
+    Interval: number
+    Formula: string
+    Fields: { [key: string]: string }
 }
 
-type MathValue = {
+type FormularValue = {
     Name: string
     Value: number
+    Error: string
 }
