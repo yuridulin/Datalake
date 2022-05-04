@@ -81,7 +81,7 @@ namespace iNOPC.Drivers.TestDriver
 
             foreach (var field in Configuration.Fields)
             {
-                Fields[field.Name].Value = r.Next();
+                Fields[field.Name].Value = r.Next(0, 9999999);
                 Fields[field.Name].Quality = 192;
             }
 
