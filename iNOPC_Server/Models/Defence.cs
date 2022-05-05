@@ -3,17 +3,18 @@ using System.Linq;
 using System.Management;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
 
 namespace iNOPC.Server.Models
 {
     class Defence
     {
-        public static LicenseMode License { get; set; } = LicenseMode.ActiveTrial;
+        public static LicenseMode License { get; set; } = LicenseMode.Debug;
 
         public static void Set()
         {
+            License = LicenseMode.ActiveTrial;
+
             UniqueHardwareId = GetUniqueHardwareId();
             ProgramStart = DateTime.Now;
 
@@ -105,5 +106,6 @@ namespace iNOPC.Server.Models
         ActiveTrial,
         ExpiredTrial,
         Licensed,
+        Debug,
     }
 }

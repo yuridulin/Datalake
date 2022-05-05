@@ -23,6 +23,9 @@ function Logo() {
 	else if (licenseMode == LICENSEMODE.ACTIVETRIAL) {
 		mount('#logo', 'iNOPC webConsole', h('sup', 'trial'))
 	}
+	else if (licenseMode == LICENSEMODE.DEBUG) {
+		mount('#logo', 'iNOPC webConsole', h('sup', 'debug'))
+	}
 	else {
 		mount('#logo', 'iNOPC webConsole', h('sup.error', 'trial'))
     }
@@ -90,7 +93,6 @@ function Offline() {
 }
 
 function Tree() {
-	console.log('tree', accessType)
 	if (accessType == ACCESSTYPE.FIRST || accessType == ACCESSTYPE.GUEST) {
 		mount('#view', '')
 	}
@@ -102,7 +104,6 @@ function Tree() {
 }
 
 function BuildTree(json) {
-	console.log('build tree', accessType)
 	mount('#tree', h('div',
 		accessType == ACCESSTYPE.FULL ?
 			h('div.node', { route: 'settings' },
@@ -118,6 +119,21 @@ function BuildTree(json) {
 					h('span', 'Настройки')
 				)
 			) : '',
+
+		h('div.node', { route: 'calc' },
+			h('div.node-caption', {
+				title: 'Нажмите, чтобы перейти к списку тегов, рассчитываемых по математическим формулам',
+			},
+				h('i.ic.ic-calc'),
+				h('span', {
+					innerHTML: 'Вычисляемые теги',
+					onclick: function () {
+						TreeSetActive('calc'),
+						CalcPage()
+					}
+				})
+			)
+		),
 
 		accessType == ACCESSTYPE.READ || AUTH() ?
 			json.map(function (driver) {
@@ -168,21 +184,10 @@ function BuildTree(json) {
 			})
 			: '',
 
-		h('div.node', { route: 'math' },
-			h('div.node-caption',
-				h('i.ic.ic-edit'),
-				h('span', {
-					innerHTML: 'Математика',
-					onclick: function () {
-						TreeSetActive('math'),
-						CalcPage()
-                    }
-                })
-			)
-		),
-
 		AUTH() ? h('div.node', { route: 'driver-create' },
-			h('div.node-caption',
+			h('div.node-caption', {
+				title: 'Нажмите, чтобы перейти к добавлению нового драйвера',
+			},
 				h('i.ic.ic-plus'),
 				h('span', {
 					innerHTML: 'Добавить драйвер',
@@ -192,7 +197,26 @@ function BuildTree(json) {
 					}
 				})
 			)
-		) : ''
+		) : '',
+
+		h('div.node', { route: 'driver-create' },
+			h('div.node-caption', {
+				title: 'Нажмите, чтобы перейти к добавлению нового драйвера',
+			},
+				h('i.ic.ic-help'),
+				h('span', {
+					innerHTML: 'Справка',
+					onclick: function () {
+						var a = document.createElement('a')
+						a.style.display = 'none'
+						a.href = './help.html'
+						a.target = '_blank'
+						document.body.appendChild(a)
+						a.click()
+					}
+				})
+			)
+		)
 	))
 
 	TreeSetActive(route)
@@ -721,25 +745,35 @@ function Settings() {
 	ask({ method: 'settings' }, function (json) {
 		mount('#view',
 			h('div.container',
-				h('h3', 'Лицензирование'),
-				h('span', 'Состояние: ' + json.LicenseStatus),
-				h('br'),
-				h('span', { style: { display: 'inline-block', width: '16em' } }, 'Идентификатор сервера: '),
-				h('input', { disabled: true, style: { width: '40em' }, value: json.LicenseId }),
-				h('br'),
-				h('span', { style: { display: 'inline-block', width: '16em' } }, 'Лицензионный ключ: '),
-				_key = h('input', { value: json.LicenseKey, style: { width: '40em' } }),
-				h('br'),
-				h('button', {
-					innerHTML: 'Сохранить ключ',
-					onclick: function () {
-						ask({ method: 'opc.license', body: { key: _key.value } }, function (data) {
-							if (data.Done) alert('Ключ сохранён')
-							Settings()
-						})
-					}
-				})
+				h('h3', 'Версия сервера'),
+				h('span', 'v.' + json.Version)
 			),
+			licenseMode == LICENSEMODE.DEBUG
+				? h('div.container',
+					h('h3', 'Лицензирование'),
+					h('span', 'Состояние: ' + json.LicenseStatus)
+				)
+				: h('div.container',
+					h('h3', 'Лицензирование'),
+					h('span', 'Состояние: ' + json.LicenseStatus),
+					h('br'),
+					h('span', { style: { display: 'inline-block', width: '16em' } }, 'Идентификатор сервера: '),
+					h('input', { disabled: true, style: { width: '40em' }, value: json.LicenseId }),
+					h('br'),
+					h('span', { style: { display: 'inline-block', width: '16em' } }, 'Лицензионный ключ: '),
+					_key = h('input', { value: json.LicenseKey, style: { width: '40em' } }),
+					h('br'),
+					h('button', {
+						innerHTML: 'Сохранить ключ',
+						onclick: function () {
+							ask({ method: 'opc.license', body: { key: _key.value } }, function (data) {
+								if (data.Done) alert('Ключ сохранён')
+								Settings()
+							})
+						}
+					})
+				),
+			
 			h('div.container',
 				h('h3', 'DCOM'),
 				h('span', 'Состояние: ' + json.OpcStatus),
@@ -1010,27 +1044,31 @@ function AUTH() {
 
 function CalcPage() {
 	unsetTimers()
+	if (accessType == ACCESSTYPE.GUEST || accessType == ACCESSTYPE.FIRST) return mount('#view', h('div.container', 'Нет доступа'))
+	
 	ask({ method: 'calc.fields' }, function (/**@type{Formular[]}*/json) {
 		mount('#view',
 			h('div', { className: 'container' },
-				h('h3', 'Список тегов с математикой'),
+				h('h3', 'Список вычисляемых тегов'),
 				h('div', { className: 'fields' },
 					h('div',
 						h('b', 'Тег', { style: { width: '10em' } }),
 						h('b', 'Значение', { style: { width: '10em' } }),
 						h('b', 'Ошибки', { style: { width: '30em' } }),
 						h('b', { style: { width: '10em' } },
-							h('button', {
-								innerHTML: 'Добавить тег',
-								onclick: function () {
-									ask({ method: 'calc.create' }, function (json) {
-										if (json.Error) alert(json.Error)
-										if (json.Done) {
-											CalcPage()
-										}
-									})
-								}
-							})
+							accessType == ACCESSTYPE.WRITE || accessType == ACCESSTYPE.FULL
+								? h('button', {
+									innerHTML: 'Добавить тег',
+									onclick: function () {
+										ask({ method: 'calc.create' }, function (json) {
+											if (json.Error) alert(json.Error)
+											if (json.Done) {
+												CalcPage()
+											}
+										})
+									}
+								})
+								: ''
 						)
 					),
 					json.map(formular => h('div', { 'data-id': formular.Name },
@@ -1038,8 +1076,8 @@ function CalcPage() {
 						h('span'),
 						h('span'),
 						h('span',
-							h('button', {
-								innerHTML: 'Изменить',
+							 h('button', {
+								innerHTML: accessType == ACCESSTYPE.READ ? 'Просмотреть' : 'Изменить',
 								onclick: function () {
 									Formular(formular)
 								}
@@ -1081,140 +1119,185 @@ function CalcValues() {
  */
 function Formular(field) {
 	unsetTimers()
+	if (accessType == ACCESSTYPE.GUEST || accessType == ACCESSTYPE.FIRST) return mount('#view', h('div.container', 'Нет доступа'))
 	ask({ method: 'calc.form', body: { Name: field.Name } }, function (/**@type{string[]}*/json) {
 		mount('#view',
-			h('div', { className: 'container', id: 'calc-tag' },
-				h('table', { className: 'form' },
-					h('tr',
-						h('td', { style: { width: '14em' } }, h('span', 'Тег')),
-						h('td', h('input', { id: 'calc-tag-name', value: field.Name }))
-					),
-					h('tr',
-						h('td', h('span', 'Интервал расчёта, с')),
-						h('td', h('input', { id: 'calc-tag-interval', type: 'number', min: 1, max: 604800, step: 1, value: field.Interval }))
-					),
-					h('tr',
-						h('td', h('span', 'Формула')),
-						h('td', h('input', { id: 'calc-tag-formula', value: field.Formula }))
-					),
-					h('tr',
-						h('td', h('span', 'Описание')),
-						h('td', h('textarea', {
-							id: 'calc-tag-desc', oninput: function () {
-								this.style.height = 0
-								this.style.height = this.scrollHeight + 'px'
-							}}, field.Description))
-					),
-					h('tr',
-						h('td', { colspan: 2 }, 
-							h('button', {
-								innerHTML: 'Удалить',
-								onclick: function () {
-									if (!confirm('Подтвердите удаление тега')) return
-									ask({ method: 'calc.delete', body: { name: field.Name } }, function (json) {
-										if (json.Error) alert(json.Error)
-										if (json.Done) {
-											alert(json.Done)
-											CalcPage()
-										}
-									})
-								}
-							}),
-							h('button', {
-								innerHTML: 'Сохранить',
-								onclick: function () {
-									/**@type{Formular}*/
-									var form = {
-										OldName: field.Name,
-										Name: document.getElementById('calc-tag-name').value,
-										Interval: document.getElementById('calc-tag-interval').value,
-										Description: document.getElementById('calc-tag-desc').value,
-										Formula: document.getElementById('calc-tag-formula').value,
-										Fields: {}
-									}
-
-									document.getElementById('calc-tag-fields').querySelectorAll('div').forEach(el => {
-										console.log(el)
-										if (!el.querySelector('input')) return
-										form.Fields[el.querySelector('input').value] = el.querySelector('select').value
-									})
-
-									console.log(form.Fields)
-
-									ask({ method: 'calc.update', body: form }, function (json) {
-										if (json.Error) alert(json.Error)
-										if (json.Done) {
-											alert('Тег успешно обновлён')
-											CalcPage()
-										}
-									})
-								}
-							}),
-							h('button', {
-								innerHTML: 'Закрыть',
-								onclick: function () {
-									CalcPage()
-								}
-							})
-						)
-					)
-				)
-			),
-			h('div', { className: 'container' },
-				h('div', { className: 'fields', id: 'calc-tag-fields' },
-					h('div',
-						h('b', { style: { width: '15em' } }, 'Наименование переменной'),
-						h('b', { style: { width: '25em' } }, 'Привязанный OPC тег'),
-						h('b', { style: { width: '8em' } },
-							h('button', {
-								innerHTML: 'Добавить',
-								onclick: function () {
-									document.getElementById('calc-tag-fields').insertAdjacentElement('beforeend', 
-										h('div',
-											h('span',
-												h('input', { value: 'x' + Math.random() })
-											),
-											h('span',
-												h('select', json.map(s => h('option', s, { value: s })))
-											),
-											h('span',
-												h('button', {
-													innerHTML: 'Удалить',
-													onclick: function () {
-														this.parentNode.parentNode.remove()
-													}
-												})
-											)
-										)
-									)
-								}
-							})
-						)
-					),
-					Object.keys(field.Fields).map(x =>
-						h('div',
-							h('span',
-								h('input', { value: x })
-							),
-							h('span',
-								h('select', json
-									.map(s => h('option', s, s == field.Fields[x] ? { selected: true, value: s } : { value: s }))
-								)
-							),
-							h('span',
+			accessType == ACCESSTYPE.WRITE || accessType == ACCESSTYPE.FULL
+				? h('div', { className: 'container', id: 'calc-tag' },
+					h('table', { className: 'form' },
+						h('tr',
+							h('td', { style: { width: '14em' } }, h('span', 'Тег')),
+							h('td', h('input', { id: 'calc-tag-name', value: field.Name }))
+						),
+						h('tr',
+							h('td', h('span', 'Интервал расчёта, с')),
+							h('td', h('input', { id: 'calc-tag-interval', type: 'number', min: 1, max: 604800, step: 1, value: field.Interval }))
+						),
+						h('tr',
+							h('td', h('span', 'Формула')),
+							h('td', h('input', { id: 'calc-tag-formula', value: field.Formula }))
+						),
+						h('tr',
+							h('td', h('span', 'Описание')),
+							h('td', h('textarea', {
+								id: 'calc-tag-desc', oninput: function () {
+									this.style.height = 0
+									this.style.height = this.scrollHeight + 'px'
+								}}, field.Description))
+						),
+						h('tr',
+							h('td', { colspan: 2 }, 
 								h('button', {
 									innerHTML: 'Удалить',
 									onclick: function () {
-										this.parentNode.parentNode.remove()
+										if (!confirm('Подтвердите удаление тега')) return
+										ask({ method: 'calc.delete', body: { name: field.Name } }, function (json) {
+											if (json.Error) alert(json.Error)
+											if (json.Done) {
+												alert('Тег успешно удалён')
+												CalcPage()
+											}
+										})
+									}
+								}),
+								h('button', {
+									innerHTML: 'Сохранить',
+									onclick: function () {
+										/**@type{Formular}*/
+										var form = {
+											OldName: field.Name,
+											Name: document.getElementById('calc-tag-name').value,
+											Interval: document.getElementById('calc-tag-interval').value,
+											Description: document.getElementById('calc-tag-desc').value,
+											Formula: document.getElementById('calc-tag-formula').value,
+											Fields: {}
+										}
+
+										document.getElementById('calc-tag-fields').querySelectorAll('div').forEach(el => {
+											if (!el.querySelector('input')) return
+											form.Fields[el.querySelector('input').value] = el.querySelector('select').value
+										})
+
+										ask({ method: 'calc.update', body: form }, function (json) {
+											if (json.Error) alert(json.Error)
+											if (json.Done) {
+												alert('Тег успешно обновлён')
+												CalcPage()
+											}
+										})
+									}
+								}),
+								h('button', {
+									innerHTML: 'Закрыть',
+									onclick: function () {
+										CalcPage()
 									}
 								})
 							)
 						)
 					)
 				)
-			)
+				: h('div', { className: 'container', },
+					h('table', { className: 'form' },
+						h('tr',
+							h('td', { style: { width: '14em' } }, h('span', 'Тег')),
+							h('td', field.Name)
+						),
+						h('tr',
+							h('td', h('span', 'Интервал расчёта')),
+							h('td', field.Interval + 'c')
+						),
+						h('tr',
+							h('td', h('span', 'Формула')),
+							h('td', h('pre', field.Formula))
+						),
+						h('tr',
+							h('td', h('span', 'Описание')),
+							h('td', field.Description)
+						),
+						h('tr',
+							h('td', { colspan: 2 },
+								h('button', {
+									innerHTML: 'Закрыть',
+									onclick: function () {
+										CalcPage()
+									}
+								})
+							)
+						)
+					)
+				),
+			accessType == ACCESSTYPE.WRITE || accessType == ACCESSTYPE.FULL
+				? h('div', { className: 'container' },
+					h('div', { className: 'fields', id: 'calc-tag-fields' },
+						h('div',
+							h('b', { style: { width: '15em' } }, 'Наименование переменной'),
+							h('b', { style: { width: '25em' } }, 'Привязанный OPC тег'),
+							h('b', { style: { width: '8em' } },
+								h('button', {
+									innerHTML: 'Добавить',
+									onclick: function () {
+										document.getElementById('calc-tag-fields').insertAdjacentElement('beforeend', 
+											h('div',
+												h('span',
+													h('input', { value: 'x' + Math.random() })
+												),
+												h('span',
+													h('select', json.map(s => h('option', s, { value: s })))
+												),
+												h('span',
+													h('button', {
+														innerHTML: 'Удалить',
+														onclick: function () {
+															this.parentNode.parentNode.remove()
+														}
+													})
+												)
+											)
+										)
+									}
+								})
+							)
+						),
+						Object.keys(field.Fields).map(x =>
+							h('div',
+								h('span',
+									h('input', { value: x })
+								),
+								h('span',
+									h('select', json
+										.map(s => h('option', s, s == field.Fields[x] ? { selected: true, value: s } : { value: s }))
+									)
+								),
+								h('span',
+									h('button', {
+										innerHTML: 'Удалить',
+										onclick: function () {
+											this.parentNode.parentNode.remove()
+										}
+									})
+								)
+							)
+						)
+					)
+					)
+				: h('div', { className: 'container' },
+					h('div', { className: 'fields' },
+						h('div',
+							h('b', { style: { width: '15em' } }, 'Наименование переменной'),
+							h('b', { style: { width: '25em' } }, 'Привязанный OPC тег')
+						),
+						Object.keys(field.Fields).map(x =>
+							h('div',
+								h('span', x),
+								h('span', field.Fields[x])
+							)
+						)
+					)
+				)
 		)
-		document.getElementById('calc-tag-desc').oninput()
+
+		try { document.getElementById('calc-tag-desc').oninput() } catch (e) { }
 	})
 }
 
@@ -1233,7 +1316,8 @@ var ACCESSTYPE = {
 var LICENSEMODE = {
 	ACTIVETRIAL: 0,
 	EXPIREDTRIAL: 1,
-	LICENSED: 2
+	LICENSED: 2,
+	DEBUG: 3,
 }
 
 var LogTypes = {

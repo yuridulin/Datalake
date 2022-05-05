@@ -46,30 +46,37 @@ namespace iNOPC.Server.Web
                 url = "index.html";
             }
 
-            string responseString;
+            string responseString = "";
+            byte[] responseBytes = new byte[0];
             try
             {
-                if (File.Exists(Http.Base + url))
+                string filePath = (Http.Base + url).Replace(@"\\", "\\");
+                Console.WriteLine(filePath);
+                if (File.Exists(filePath))
                 {
-                    responseString = File.ReadAllText(Http.Base + url);
-
                     var type = url.Substring(url.LastIndexOf('.') + 1);
                     switch (type)
                     {
-                        case "css":
-                            Response.ContentType = "text/css";
-                            break;
                         case "png":
+                            responseBytes = File.ReadAllBytes(filePath);
                             Response.ContentType = "image/png";
                             break;
+                        case "ico":
+                            responseBytes = File.ReadAllBytes(filePath);
+                            Response.ContentType = "image/x-icon";
+                            break;
+
                         case "html":
+                            responseString = File.ReadAllText(filePath);
                             Response.ContentType = "text/html";
                             break;
-                        case "js":
-                            Response.ContentType = "application/javascript";
+                        case "css":
+                            responseString = File.ReadAllText(filePath);
+                            Response.ContentType = "text/css";
                             break;
-                        case "ico":
-                            Response.ContentType = "image/x-icon";
+                        case "js":
+                            responseString = File.ReadAllText(filePath);
+                            Response.ContentType = "application/javascript";
                             break;
                     }
                 }
@@ -128,7 +135,7 @@ namespace iNOPC.Server.Web
 
             // Отправка ответа клиенту
 
-            var buffer = Encoding.UTF8.GetBytes(responseString);
+            var buffer = responseBytes.Length == 0 ? Encoding.UTF8.GetBytes(responseString) : responseBytes;
             Response.StatusCode = 200;
             Response.ContentLength64 = buffer.Length;
             using (var output = Response.OutputStream)
@@ -385,6 +392,7 @@ namespace iNOPC.Server.Web
 
             return new
             {
+                Version = typeof(Program).Assembly.GetName().Version.ToString(),
                 OpcStatus = foundInDCOM ? "сервер зарегистрирован" : "сервер не зарегистрирован",
                 ServiceStatus = path == "" 
                     ? "не установлена"
@@ -392,7 +400,7 @@ namespace iNOPC.Server.Web
                         ? "установлена для этого сервера"
                         : "установлена для другого сервера",
                 InitPath = Program.Base + Program.ExeName,
-                LicenseStatus = Defence.License == LicenseMode.Licensed 
+                LicenseStatus = Defence.License == LicenseMode.Licensed || Defence.License == LicenseMode.Debug
                     ? "лицензия активна"
                     : Defence.License == LicenseMode.ActiveTrial
                         ? "триал-период активен"
@@ -1139,7 +1147,7 @@ namespace iNOPC.Server.Web
                         Fields = new Dictionary<string, string>(),
                     };
 
-                    while (Program.Configuration.Formulars.Count(x => x.Name == f.Name) > 0)
+                    while (Program.Configuration.Formulars.Count(x => x.Name == f.Name) > 0 || OPC.Tags.ContainsKey(f.Name))
                     {
                         f.Name = "Field" + new Random().Next();
                     }
@@ -1198,9 +1206,12 @@ namespace iNOPC.Server.Web
                     var field = Program.Configuration.Formulars
                         .FirstOrDefault(x => x.Name == form.OldName);
 
-                    if (field == null) return new { Error = "Тег не найден" };
-                    if (Program.Configuration.Formulars.Count(x => x.Name == form.Name) > 0) return new { Error = "Тег с таким именем уже существует" };
-                    if (form.Interval <= 0) return new { Error = "Интервал расчёта должен быть положительным кол-вом секунд" };
+                    if (field == null)
+                        return new { Error = "Тег не найден" };
+                    if (form.OldName != form.Name && OPC.Tags.ContainsKey(form.Name))
+                        return new { Error = "Тег с таким именем уже существует" };
+                    if (form.Interval <= 0)
+                        return new { Error = "Интервал расчёта должен быть положительным кол-вом секунд" };
 
                     field.Name = form.Name;
                     field.Description = form.Description;
@@ -1210,7 +1221,7 @@ namespace iNOPC.Server.Web
 
                     if (form.OldName != form.Name)
                     {
-                        OPC.RemoveTag(OPC.Tags[form.OldName]);
+                        OPC.Remove(form.OldName);
                     }
                 }
 
