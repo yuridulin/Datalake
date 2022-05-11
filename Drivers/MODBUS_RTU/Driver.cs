@@ -255,12 +255,8 @@ namespace iNOPC.Drivers.MODBUS_RTU
                     catch (Exception e)
                     {
                         Err("COM-порт не открыт: " + e.Message + "\n" + e.StackTrace);
-                        try
-                        {
-                            Port.Close();
-                            Thread.Sleep(1000);
-                        }
-                        catch (Exception) { }
+                        try { Port?.Close(); } catch (Exception) { }
+                        Thread.Sleep(1000);
                     }
                 }
 
@@ -361,22 +357,18 @@ namespace iNOPC.Drivers.MODBUS_RTU
                 }
                 UpdateEvent();
 
-                int timeout = Convert.ToInt32((Configuration.CyclicTimeout * 1000) - (DateTime.Now - Date).TotalMilliseconds);
-                if (timeout > 0) Thread.Sleep(timeout);
-
-                if (errorsCounter > 20)
+                if (errorsCounter > 20 || Configuration.UseStaticConnection)
                 {
-                    Port.Close();
+                    try { Port?.Close(); } catch (Exception) { }
                     errorsCounter = 0;
                     Thread.Sleep(1000);
                 }
+
+                int timeout = Convert.ToInt32((Configuration.CyclicTimeout * 1000) - (DateTime.Now - Date).TotalMilliseconds);
+                if (timeout > 0) Thread.Sleep(timeout);
             }
 
-            try
-            {
-                Port.Close();
-            }
-            catch (Exception) { }
+            try { Port?.Close(); } catch (Exception) { }
         }
 
         void ComError(string errorName)

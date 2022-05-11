@@ -36,6 +36,8 @@ namespace iNOPC.Drivers.MODBUS_RTU
 
         public int MaxFieldsInGroup { get; set; } = 10;
 
+        public bool UseStaticConnection { get; set; } = false;
+
         public List<Field> Fields { get; set; } = new List<Field>();
 
         public static string GetPage(string json)
@@ -58,7 +60,8 @@ namespace iNOPC.Drivers.MODBUS_RTU
                 Html.Value("Использование групповых запросов", nameof(config.Multicast), config.Multicast) +
                 Html.Value("Кол-во полей в группе", nameof(config.MaxFieldsInGroup), config.MaxFieldsInGroup) +
                 Html.Value("Старшим битом вперед", nameof(config.OldByteFirst), config.OldByteFirst) +
-                Html.Value("Старшим регистром вперед", nameof(config.OldRegisterFirst), config.OldRegisterFirst);
+                Html.Value("Старшим регистром вперед", nameof(config.OldRegisterFirst), config.OldRegisterFirst) +
+                Html.Value("Переподключаться каждый раз", nameof(config.UseStaticConnection), config.UseStaticConnection);
 
             html += "<div type='array' name='" + nameof(config.Fields) + "'>"
                 + "<span>Запрашиваемые поля</span>"
