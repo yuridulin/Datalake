@@ -9,18 +9,18 @@ using System.Threading.Tasks;
 
 namespace iNOPC.Server
 {
-    class Program
-    {
-        public static string Base => AppDomain.CurrentDomain.BaseDirectory;
+	class Program
+	{
+		public static string Base => AppDomain.CurrentDomain.BaseDirectory;
 
-        public static string ExeName => AppDomain.CurrentDomain.FriendlyName;
+		public static string ExeName => AppDomain.CurrentDomain.FriendlyName;
 
-        public static Configuration Configuration { get; set; } = new Configuration();
+		public static Configuration Configuration { get; set; } = new Configuration();
 
-        static void Main()
-        {
-            // Проверка на наличие ранее запущенного экземпляра сервера
-            bool alreadyWorking = Process.GetProcesses().Count(x => x.ProcessName == ExeName) > 1;
+		static void Main()
+		{
+			// Проверка на наличие ранее запущенного экземпляра сервера
+			bool alreadyWorking = Process.GetProcesses().Count(x => x.ProcessName == ExeName) > 1;
 
 			if (alreadyWorking)
 			{
@@ -30,92 +30,92 @@ namespace iNOPC.Server
 			}
 
 			if (Environment.UserInteractive)
-            {
-                Start();
-                Log("Сервер запущен\nАдрес веб-консоли для доступа к серверу: http://localhost:" + Configuration.Settings.WebConsolePort + "\nНажмите Enter для выхода.");
+			{
+				Start();
+				Log("Сервер запущен\nАдрес веб-консоли для доступа к серверу: http://localhost:" + Configuration.Settings.WebConsolePort + "\nНажмите Enter для выхода.");
 				Console.ReadLine();
-            }
-            else
-            {
-                // Запуск в качестве службы. Старт и стоп в службе автоматизированы.
-                // После старта программа останется в работе, даже если все действия будут выполнены, и завершится по команде стоп
-                using (var service = new Service())
-                {
-                    ServiceBase.Run(service);
-                }
-            }
-        }
+			}
+			else
+			{
+				// Запуск в качестве службы. Старт и стоп в службе автоматизированы.
+				// После старта программа останется в работе, даже если все действия будут выполнены, и завершится по команде стоп
+				using (var service = new Service())
+				{
+					ServiceBase.Run(service);
+				}
+			}
+		}
 
-        public static void Start()
-        {
-            // Стартуем необходимые сервисы
-            Configuration.RestoreFromFile();
-            Task.Run(Http.Start);
-            WebSocket.Start();
-            OPC.StartServer();
+		public static void Start()
+		{
+			// Стартуем необходимые сервисы
+			Configuration.RestoreFromFile();
+			Task.Run(Http.Start);
+			WebSocket.Start();
+			OPC.StartServer();
 #if !DEBUG
-            Defence.Set();
+			Defence.Set();
 #endif
-            Storage.Start();
-            Calculator.Start();
+			Storage.Start();
+			Calculator.Start();
 
-            // Загружаем конфиг
-            Configuration.Start();
-            OPC.RefreshAllClients();
-        }
+			// Загружаем конфиг
+			Configuration.Start();
+			OPC.RefreshAllClients();
+		}
 
-        public static void Stop()
-        {
-            SweetStop();
+		public static void Stop()
+		{
+			SweetStop();
 
-            // Глушим вебку
-            WebSocket.Stop();
-            Http.Stop();
+			// Глушим вебку
+			WebSocket.Stop();
+			Http.Stop();
 
-            Log("Сервер остановлен");
-        }
+			Log("Сервер остановлен");
+		}
 
-        public static void SweetStop()
-        {
-            // Сохраняем конфигурацию
-            Configuration.SaveToFile();
+		public static void SweetStop()
+		{
+			// Сохраняем конфигурацию
+			Configuration.SaveToFile();
 
-            // Останавливаем запущенные модули
-            foreach (var driver in Configuration.Drivers)
-            {
-                foreach (var device in driver.Devices.Where(x => x.Active))
-                {
-                    device.Stop();
-                }
-            }
-            Storage.Stop();
+			// Останавливаем запущенные модули
+			foreach (var driver in Configuration.Drivers)
+			{
+				foreach (var device in driver.Devices.Where(x => x.Active))
+				{
+					device.Stop();
+				}
+			}
+			Storage.Stop();
 
-            // Глушим OPC сервер
-            OPC.RequestDisconnect();
-            OPC.UninitWTOPCsvr();
-        }
+			// Глушим OPC сервер
+			OPC.RequestDisconnect();
+			OPC.UninitWTOPCsvr();
+		}
 
-        public static void Log(string text = "Runtime error")
-        {
-            Console.WriteLine(DateTime.Now + " > " + text);
-        }
-    }
+		public static void Log(string text = "Runtime error")
+		{
+			Console.WriteLine(DateTime.Now + " > " + text);
+		}
+	}
 
-    public class Service : ServiceBase
-    {
-        public Service()
-        {
-            ServiceName = "iNOPC_Server";
-        }
+	public class Service : ServiceBase
+	{
+		public Service()
+		{
+			ServiceName = "iNOPC_Server";
+		}
 
-        protected override void OnStart(string[] args)
-        {
-            Program.Start();
-        }
+		protected override void OnStart(string[] args)
+		{
+			Program.Start();
+		}
 
-        protected override void OnStop()
-        {
-            Program.Stop();
-        }
-    }
+		protected override void OnStop()
+		{
+			Program.Stop();
+		}
+	}
 }

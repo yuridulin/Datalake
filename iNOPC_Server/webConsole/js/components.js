@@ -28,7 +28,7 @@ function Logo() {
 	}
 	else {
 		mount('#logo', 'iNOPC webConsole', h('sup.error', 'trial'))
-    }
+	}
 }
 
 function Home() {
@@ -348,6 +348,14 @@ function DriverDevices(id) {
 						onclick: function () {
 							Device(device.Id)
 						}
+					}),
+					h('button', {
+						innerHTML: 'Копировать',
+						onclick: function () {
+							ask({ method: 'device.copy', body: { Id: device.Id } }, function () {
+								DriverDevices(id)
+							})
+						}
 					})
 				)
 			})),
@@ -585,9 +593,9 @@ function Device(id) {
 					},
 					h('table',
 						h('tr',
-							h('th', { style: { width: '12em' } }, 'Параметр'),
+							h('th', 'Параметр'),
 							h('th', { style: { width: '18em' } }, 'Значение'),
-							h('th', 'Качество'),
+							h('th', { style: { width: '12em' } }, 'Качество'),
 						)
 					),
 					h('div#device-fields.sub')
@@ -676,9 +684,9 @@ function DeviceFields(id) {
 			h('table',
 				Object.keys(fields).map(function (key) {
 					return h('tr',
-						h('td', { style: { width: '12em' } }, key),
+						h('td', key),
 						h('td', { style: { width: '18em' } }, fields[key].Value),
-						h('td', fields[key].Quality)
+						h('td', { style: { width: '12em' } }, fields[key].Quality)
 					)
 				})
 			)
@@ -1093,7 +1101,7 @@ function CalcPage() {
 		}, 1000)
 
 		CalcValues()
-    })
+	})
 }
 
 function CalcValues() {
@@ -1110,7 +1118,7 @@ function CalcValues() {
 				}
 				cells[2].innerHTML = x.Error
 			}
-        })
+		})
 	})
 }
 
