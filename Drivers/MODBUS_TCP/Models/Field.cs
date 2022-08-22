@@ -1,17 +1,21 @@
 ﻿namespace iNOPC.Drivers.MODBUS_TCP.Models
 {
-    public class Field
-    {
-        public string Name { get; set; } = "";
+	public class Field
+	{
+		public string Name { get; set; } = "";
 
-        public object Value { get; set; } = 0;
+		public object Value { get; set; } = 0;
 
-        public string Type { get; set; } = "";
+		public string Type { get; set; } = "";
 
-        public ushort Address { get; set; } = 0;
+		public string Address { get; set; } = "0x";
 
-        public ushort Scale { get; set; } = 1;
+		public ushort AddressDec { get; set; } = 0;
 
-        public bool Checked { get; set; } = false;
-    }
+		public float Scale { get; set; } = 1;
+
+		public bool IsActive { get; set; } = false;
+
+		public bool Checked { get; set; } = false;
+	}
 }

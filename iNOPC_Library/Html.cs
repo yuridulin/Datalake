@@ -7,23 +7,25 @@
             return "<div type='value'>" + Input(desc, name, value) + "</div>";
         }
 
-        public static string Input(string desc, string name, object value)
+        public static string Input(string desc, string name, object value, int percentWidth = 0)
         {
             var type = value.GetType();
 
+            string style = percentWidth == 0 ? "" : "style='width: " + percentWidth + "%;'";
+
             // Одиночные кавычки, иначе разрывается строка в исполняемой js функции. Приходящие строки тоже нужно экранировать, если там есть двойные кавычки.
             // Можно добавить ``. Это поможет, но не будет работать в некоторых старых браузерах
-            if (type.Equals(typeof(byte)) || type.Equals(typeof(int)) || type.Equals(typeof(uint)) || type.Equals(typeof(ushort)))
+            if (type.Equals(typeof(byte)) || type.Equals(typeof(int)) || type.Equals(typeof(uint)) || type.Equals(typeof(ushort)) || type.Equals(typeof(float)))
             {
-                return "<span>" + desc + "</span><input name='" + name + "' type='number' value='" + value + "' />";
+                return "<span>" + desc + "</span><input name='" + name + "' type='number' value='" + value.ToString().Replace(",", ".") + "' " + style + " />";
             }
 
             if (type.Equals(typeof(bool)))
             {
-                return "<span>" + desc + "</span><input name='" + name + "' type='checkbox' " + ((bool)value ? "checked" : "") + " />";
+                return "<span>" + desc + "</span><input name='" + name + "' type='checkbox' " + ((bool)value ? "checked" : "") + " " + style + " />";
             }
 
-            return "<span>" + desc + "</span><input name='" + name + "' type='text' value='" + value + "' />";
+            return "<span>" + desc + "</span><input name='" + name + "' type='text' value='" + value + "' " + style + " />";
         }
 
         public static string V(string name, object value, string width = null)
