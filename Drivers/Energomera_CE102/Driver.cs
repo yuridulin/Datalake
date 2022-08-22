@@ -37,6 +37,11 @@ namespace Energomera_CE102
 
 				var minTick = new[] { 2, Configuration.DateTimeInterval, Configuration.CurrentInterval, Configuration.DailyInterval, Configuration.MonthlyInterval }.Min() * 60000;
 
+				try { Stream?.Close(); Stream = null; } catch { }
+				try { Client?.Close(); Client = null; } catch { }
+				try { ExchangeTimer?.Stop(); } catch { }
+				try { ExchangeTimer?.Dispose(); } catch { }
+				try { ExchangeTimer = null; } catch { }
 				ExchangeTimer = new Timer(minTick);
 				ExchangeTimer.Elapsed += (s, e) => { Exchange(); };
 
@@ -52,7 +57,8 @@ namespace Energomera_CE102
 				return false;
 			}
 
-			IsDriverActive = true;
+			IsDriverActive = true; 
+			IsExchangeRunning = false;
 			ExchangeTimer.Start();
 
 			LogEvent("Мониторинг запущен", LogType.REGULAR);
@@ -67,7 +73,24 @@ namespace Energomera_CE102
 			LogEvent("Остановка мониторинга...", LogType.REGULAR);
 
 			IsDriverActive = false;
-			try { ExchangeTimer.Stop(); } catch { }
+
+			try { Stream?.Close(); Stream = null; } catch { }
+			try { Client?.Close(); Client = null; } catch { }
+			try { ExchangeTimer?.Stop(); } catch { }
+			try { ExchangeTimer?.Dispose(); } catch { }
+			try { ExchangeTimer = null; } catch { }
+
+			if (Configuration.SetBadQuality)
+			{
+				lock (Fields)
+				{
+					foreach (var field in Fields)
+					{
+						field.Value.Quality = 0;
+					}
+				}
+				UpdateEvent();
+			}
 
 			LogEvent("Мониторинг остановлен", LogType.REGULAR);
 		}
@@ -85,6 +108,8 @@ namespace Energomera_CE102
 
 		bool IsDriverActive { get; set; }
 
+		bool IsExchangeRunning { get; set; }
+
 		byte[] DeviceNumber { get; set; }
 
 		byte[] StationNumber { get; set; }
@@ -101,12 +126,13 @@ namespace Energomera_CE102
 		{
 			LogEvent("Очередной тик таймера", LogType.DETAILED);
 
-			if (!IsDriverActive) return;
+			if (!IsDriverActive) return; 
+			if (IsExchangeRunning) return;
 
 			try { Stream?.Close(); Stream = null; } catch { }
 			try { Client?.Close(); Client = null; } catch { }
 
-			//IsExchangeRunning = true;
+			IsExchangeRunning = true;
 
 			// Расчёт необходимости получения данных за этот тик
 			DateTime now = DateTime.Now;
@@ -125,6 +151,9 @@ namespace Energomera_CE102
 
 			if (!reasons[0] && !reasons[1] && !reasons[2] && !reasons[3] && !reasons[4])
 			{
+				IsExchangeRunning = false;
+				Value("Time", DateTime.Now.ToString("HH:mm:ss"));
+				UpdateEvent();
 				LogEvent("Нет необходимости в опросе", LogType.DETAILED);
 				return;
 			}
@@ -142,14 +171,23 @@ namespace Energomera_CE102
 			catch (Exception e)
 			{
 				LogEvent("TCP: " + e.Message, LogType.ERROR);
+				IsExchangeRunning = false;
 				return;
 			}
 
-			if (!IsDriverActive) return;
+			if (!IsDriverActive)
+			{
+				IsExchangeRunning = false;
+				return;
+			}
 
 			// задержка после подключения
 			Task.Delay(Configuration.ExchangeDelay).Wait();
-			if (!IsDriverActive) return;
+			if (!IsDriverActive)
+			{
+				IsExchangeRunning = false;
+				return;
+			}
 
 			// получение данных
 			try
@@ -228,9 +266,9 @@ namespace Energomera_CE102
 
 				Value("Time", DateTime.Now.ToString("HH:mm:ss"));
 				if (IsDriverActive) UpdateEvent();
+				IsExchangeRunning = false;
 			}
 
-			
 			void Value(string name, object value, ushort quality = 192)
 			{
 				lock (Fields)
