@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.2.32616.157
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32901.82
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iNOPC_Server", "iNOPC_Server\iNOPC_Server.csproj", "{01FD46C0-4CD5-4573-BE2F-6BD84E88892A}"
 EndProject
@@ -64,6 +64,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IstokTM2", "Drivers\IstokTM2\IstokTM2.csproj", "{B988AD0B-3644-4F90-80D0-E039199ACDBA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SNMP_test", "SNMP_test\SNMP_test.csproj", "{5934EC27-2B69-4F41-8C39-3B92CD58548A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NB_IoT", "Drivers\NB_IoT\NB_IoT.csproj", "{CBAE0BDC-805D-4F30-91F8-F60957B8D005}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -187,6 +189,10 @@ Global
 		{5934EC27-2B69-4F41-8C39-3B92CD58548A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5934EC27-2B69-4F41-8C39-3B92CD58548A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5934EC27-2B69-4F41-8C39-3B92CD58548A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBAE0BDC-805D-4F30-91F8-F60957B8D005}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBAE0BDC-805D-4F30-91F8-F60957B8D005}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBAE0BDC-805D-4F30-91F8-F60957B8D005}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBAE0BDC-805D-4F30-91F8-F60957B8D005}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -218,6 +224,7 @@ Global
 		{F81AD4E6-2262-42BE-96F8-CA8E89A105D9} = {824C3B9C-C897-4A5A-92B0-0433E143D67F}
 		{B988AD0B-3644-4F90-80D0-E039199ACDBA} = {824C3B9C-C897-4A5A-92B0-0433E143D67F}
 		{5934EC27-2B69-4F41-8C39-3B92CD58548A} = {196B0030-3CB3-479B-8599-ACE3E707EB37}
+		{CBAE0BDC-805D-4F30-91F8-F60957B8D005} = {824C3B9C-C897-4A5A-92B0-0433E143D67F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C0EA1C33-38D2-4707-81C3-B73ECDB3ABB3}
