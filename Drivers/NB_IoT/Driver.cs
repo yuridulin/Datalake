@@ -5,9 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace iNOPC.Drivers.NB_IoT
 {
@@ -35,16 +34,19 @@ namespace iNOPC.Drivers.NB_IoT
 				return Err("Конфигурация не прочитана: " + e.Message + "\n" + e.StackTrace);
 			}
 
-			Fields.Clear();
-			Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 });
+			SetBadQuality();
 
-			UpdateEvent();
+			BadQualityChecker = new Timer(1000);
+			BadQualityChecker.Elapsed += BadQualityChecker_Elapsed;
+
+			LastUpdateTime = DateTime.MinValue;
 
 			try
 			{
 				IsActive = true;
 
 				Task.Run(Listen);
+				BadQualityChecker.Start();
 
 				LogEvent("Мониторинг запущен");
 
@@ -61,14 +63,22 @@ namespace iNOPC.Drivers.NB_IoT
 			LogEvent("Остановка ...");
 
 			IsActive = false;
-			Listener.Stop();
+
+			try
+			{
+				Listener.Stop();
+				BadQualityChecker.Stop();
+			}
+			catch { }
+
+			SetBadQuality();
 
 			LogEvent("Мониторинг остановлен");
 		}
 
 		public void Write(string fieldName, object value)
 		{
-			throw new System.NotImplementedException();
+			throw new NotImplementedException();
 		}
 
 		// Реализация получения данных
@@ -77,12 +87,64 @@ namespace iNOPC.Drivers.NB_IoT
 
 		TcpListener Listener { get; set; }
 
+		Timer BadQualityChecker { get; set; }
+
 		bool IsActive { get; set; } = false;
 
 		bool Err(string text)
 		{
 			LogEvent(text, LogType.ERROR);
 			return false;
+		}
+
+		void SetBadQuality(string name = null)
+		{
+			lock (Fields)
+			{
+				if (string.IsNullOrEmpty(name))
+				{
+					foreach (var v in Fields.Values)
+					{
+						v.Quality = 0;
+					}
+				}
+				else if (Fields.ContainsKey(name))
+				{
+					Fields[ name ].Quality = 0;
+				}
+			}
+
+			SetValue("Time", DateTime.Now.ToString("HH:mm:ss"));
+		}
+
+		void SetValue(string name, object value, ushort quality = 192)
+		{
+			lock (Fields)
+			{
+				if (Fields.ContainsKey(name))
+				{
+					Fields[ name ].Value = value;
+					Fields[ name ].Quality = quality;
+				}
+				else
+				{
+					Fields.Add(name, new DefField { Value = value, Quality = quality });
+				}
+			}
+
+			UpdateEvent();
+		}
+
+		void BadQualityChecker_Elapsed(object sender, ElapsedEventArgs e)
+		{
+			if (LastUpdateTime == DateTime.MinValue) return;
+
+			if ((DateTime.Now - LastUpdateTime).TotalMinutes >= Configuration.MinutesForGoodValues)
+			{
+				SetBadQuality(); 
+				LastUpdateTime = DateTime.MinValue;
+				LogEvent("Данные признаны недостоверными по таймауту", LogType.WARNING);
+			}
 		}
 
 		void Listen()
@@ -99,16 +161,22 @@ namespace iNOPC.Drivers.NB_IoT
 					LogEvent("Подключен клиент. Выполнение запроса...");
 
 					var stream = client.GetStream();
-					var bytes = new List<byte>();
+
+					//var buffer = new List<byte>();
+					byte[] bytes = new byte[7];
+
 					bool isReadingDone = Task
 						.Run(() => 
 						{
-							while (stream.DataAvailable)
-							{
-								int b = stream.ReadByte();
-								if (b < 0) break;
-								bytes.Add((byte)b);
-							}
+							// Чтение произвольного количества байт
+							//while (stream.DataAvailable)
+							//{
+							//	int b = stream.ReadByte();
+							//	if (b < 0) break;
+							//	buffer.Add((byte)b);
+							//}
+
+							stream.Read(bytes, 0, 7);
 						})
 						.Wait(TimeSpan.FromSeconds(3));
 
@@ -117,18 +185,89 @@ namespace iNOPC.Drivers.NB_IoT
 						LogEvent("Чтение потока прервано по таймауту");
 					}
 
-					LogEvent("Получено: " + Helpers.BytesToString(bytes.ToArray()));
+					//ParseValue(buffer.ToArray());
+					ParseValue(bytes);
+
+					//LogEvent("Получено: " + Helpers.BytesToString(buffer.ToArray()));
+					LogEvent("Получено: " + Helpers.BytesToString(bytes));
 
 					stream.Close();
 					client.Close();
 
 					LogEvent("Клиент отключён");
 				}
-				catch
+				catch (ArgumentNullException e)
 				{
-					LogEvent("Ошибка в задаче Listener", LogType.ERROR);
+					LogEvent("Ошибка ArgumentNullException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+				}
+				catch (ArgumentOutOfRangeException e)
+				{
+					LogEvent("Ошибка ArgumentOutOfRangeException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+				}
+				catch (IOException e)
+				{
+					LogEvent("Ошибка IOException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+				}
+				catch (ObjectDisposedException e)
+				{
+					LogEvent("Ошибка ObjectDisposedException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+				}
+				catch (SocketException e)
+				{
+					if (IsActive) LogEvent("Ошибка SocketException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+				}
+				catch (InvalidOperationException e)
+				{
+					LogEvent("Ошибка InvalidOperationException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+				}
+				catch (AggregateException e)
+				{
+					LogEvent("Ошибка AggregateException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
 				}
 			}
 		}
+
+		void ParseValue(byte[] packet)
+		{
+			byte address = packet[ 1 ];
+			uint dateUint = BitConverter.ToUInt32(new[] { packet[ 3 ], packet[ 4 ], packet[ 5 ], packet[ 6 ] }, 0);
+			DateTime date = ToDateTime(dateUint);
+
+			SetValue(address + ".Date", date.ToString("dd.MM.yyyy HH:mm:ss"));
+			SetValue(address + ".Value", packet[ 6 ]);
+
+			LastUpdateTime = DateTime.Now;
+		}
+
+		DateTime ToDateTime(uint value)
+		{
+			int RTC_MODE2_CLOCK_SECOND_Pos = 0;
+			int RTC_MODE2_CLOCK_SECOND_Msk = 0x3F << RTC_MODE2_CLOCK_SECOND_Pos;
+
+			int RTC_MODE2_CLOCK_MINUTE_Pos = 6;
+			int RTC_MODE2_CLOCK_MINUTE_Msk = 0x3F << RTC_MODE2_CLOCK_MINUTE_Pos;
+
+			int RTC_MODE2_CLOCK_HOUR_Pos = 12;
+			int RTC_MODE2_CLOCK_HOUR_Msk = 0x1F << RTC_MODE2_CLOCK_HOUR_Pos;
+
+			int RTC_MODE2_CLOCK_DAY_Pos = 17;
+			int RTC_MODE2_CLOCK_DAY_Msk = 0x1F << RTC_MODE2_CLOCK_DAY_Pos;
+
+			int RTC_MODE2_CLOCK_MONTH_Pos = 22;
+			int RTC_MODE2_CLOCK_MONTH_Msk = 0xF << RTC_MODE2_CLOCK_MONTH_Pos;
+
+			int RTC_MODE2_CLOCK_YEAR_Pos = 26;
+			int RTC_MODE2_CLOCK_YEAR_Msk = 0x3F << RTC_MODE2_CLOCK_YEAR_Pos;
+
+			int year = (int)((value & RTC_MODE2_CLOCK_YEAR_Msk) >> RTC_MODE2_CLOCK_YEAR_Pos) + 2000;
+			int month = (int)((value & RTC_MODE2_CLOCK_MONTH_Msk) >> RTC_MODE2_CLOCK_MONTH_Pos);
+			int day = (int)((value & RTC_MODE2_CLOCK_DAY_Msk) >> RTC_MODE2_CLOCK_DAY_Pos);
+			int hour = (int)((value & RTC_MODE2_CLOCK_HOUR_Msk) >> RTC_MODE2_CLOCK_HOUR_Pos);
+			int minute = (int)((value & RTC_MODE2_CLOCK_MINUTE_Msk) >> RTC_MODE2_CLOCK_MINUTE_Pos);
+			int second = (int)((value & RTC_MODE2_CLOCK_SECOND_Msk) >> RTC_MODE2_CLOCK_SECOND_Pos);
+			return new DateTime(year, month, day, hour, minute, second);
+		}
+
+		DateTime LastUpdateTime { get; set; }
 	}
 }
