@@ -198,31 +198,31 @@ namespace iNOPC.Drivers.NB_IoT
 				}
 				catch (ArgumentNullException e)
 				{
-					LogEvent("Ошибка ArgumentNullException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+					LogEvent("Ошибка ArgumentNullException в задаче Listen: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
 				}
 				catch (ArgumentOutOfRangeException e)
 				{
-					LogEvent("Ошибка ArgumentOutOfRangeException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+					LogEvent("Ошибка ArgumentOutOfRangeException в задаче Listen: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
 				}
 				catch (IOException e)
 				{
-					LogEvent("Ошибка IOException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+					LogEvent("Ошибка IOException в задаче Listen: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
 				}
 				catch (ObjectDisposedException e)
 				{
-					LogEvent("Ошибка ObjectDisposedException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+					LogEvent("Ошибка ObjectDisposedException в задаче Listen: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
 				}
 				catch (SocketException e)
 				{
-					if (IsActive) LogEvent("Ошибка SocketException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+					if (IsActive) LogEvent("Ошибка SocketException в задаче Listen: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
 				}
 				catch (InvalidOperationException e)
 				{
-					LogEvent("Ошибка InvalidOperationException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+					LogEvent("Ошибка InvalidOperationException в задаче Listen: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
 				}
 				catch (AggregateException e)
 				{
-					LogEvent("Ошибка AggregateException в задаче Listener: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+					LogEvent("Ошибка AggregateException в задаче Listen: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
 				}
 			}
 		}
