@@ -229,14 +229,35 @@ namespace iNOPC.Drivers.NB_IoT
 
 		void ParseValue(byte[] packet)
 		{
-			byte address = packet[ 1 ];
-			uint dateUint = BitConverter.ToUInt32(new[] { packet[ 3 ], packet[ 4 ], packet[ 5 ], packet[ 6 ] }, 0);
-			DateTime date = ToDateTime(dateUint);
+			switch (packet[0])
+			{
+				case 1:
+					byte address = packet[ 1 ];
+					uint dateUint = BitConverter.ToUInt32(new[] { packet[ 3 ], packet[ 4 ], packet[ 5 ], packet[ 6 ] }, 0);
+					DateTime date = ToDateTime(dateUint);
 
-			SetValue(address + ".Date", date.ToString("dd.MM.yyyy HH:mm:ss"));
-			SetValue(address + ".Value", packet[ 6 ]);
+					SetValue(address + ".Date", date.ToString("dd.MM.yyyy HH:mm:ss"));
+					SetValue(address + ".Value", packet[ 6 ]);
 
-			LastUpdateTime = DateTime.Now;
+					LastUpdateTime = DateTime.Now;
+					break;
+
+				case 2:
+					SetValue(packet[ 1 ] + ".Bit1", packet[ 2 ] & 00000001);
+					SetValue(packet[ 1 ] + ".Bit2", packet[ 2 ] & 00000010);
+					SetValue(packet[ 1 ] + ".Bit3", packet[ 2 ] & 00000100);
+					SetValue(packet[ 1 ] + ".Bit4", packet[ 2 ] & 00001000);
+					SetValue(packet[ 1 ] + ".Bit5", packet[ 2 ] & 00010000);
+					SetValue(packet[ 1 ] + ".Bit6", packet[ 2 ] & 00100000);
+
+					LastUpdateTime = DateTime.Now;
+					break;
+
+				default:
+					LogEvent("Получен пакет, тип которого не распознан", LogType.WARNING);
+					break;
+			}
+			
 		}
 
 		DateTime ToDateTime(uint value)
