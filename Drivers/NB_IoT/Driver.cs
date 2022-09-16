@@ -245,6 +245,7 @@ namespace iNOPC.Drivers.NB_IoT
 
 				case 2:
 					BitArray bits = new BitArray(new byte[] { packet[ 2 ] });
+					//(b >> bitNumber) & 1
 					SetValue(packet[ 1 ] + ".Bit1", bits[ 5 ]);
 					SetValue(packet[ 1 ] + ".Bit2", bits[ 4 ]);
 					SetValue(packet[ 1 ] + ".Bit3", bits[ 3 ]);
