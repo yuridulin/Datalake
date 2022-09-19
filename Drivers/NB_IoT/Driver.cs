@@ -186,11 +186,12 @@ namespace iNOPC.Drivers.NB_IoT
 						LogEvent("Чтение потока прервано по таймауту");
 					}
 
+					LogEvent("Получено: " + Helpers.BytesToString(bytes));
+
 					//ParseValue(buffer.ToArray());
 					ParseValue(bytes);
 
 					//LogEvent("Получено: " + Helpers.BytesToString(buffer.ToArray()));
-					LogEvent("Получено: " + Helpers.BytesToString(bytes));
 
 					stream.Close();
 					client.Close();
@@ -234,7 +235,7 @@ namespace iNOPC.Drivers.NB_IoT
 			{
 				case 1:
 					byte address = packet[ 1 ];
-					uint dateUint = BitConverter.ToUInt32(new[] { packet[ 3 ], packet[ 4 ], packet[ 5 ], packet[ 6 ] }, 0);
+					uint dateUint = BitConverter.ToUInt32(new[] { packet[ 2 ], packet[ 3 ], packet[ 4 ], packet[ 5 ] }, 0);
 					DateTime date = ToDateTime(dateUint);
 
 					SetValue(address + ".Date", date.ToString("dd.MM.yyyy HH:mm:ss"));
