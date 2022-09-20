@@ -38,6 +38,8 @@ namespace SmartMetering
 			Receiver = new Timer(Configuration.ExchangeDelaySeconds * 1000);
 			Receiver.Elapsed += (s, e) => Receive();
 
+			ConstructGroupTx();
+
 			try
 			{
 				IsActive = true;
@@ -90,6 +92,10 @@ namespace SmartMetering
 
 		byte[] RX { get; set; }
 
+		string GroupTx { get; set; }
+
+		string[] GroupNames { get; set; }
+
 		bool Err(string text)
 		{
 			LogEvent(text, LogType.ERROR);
@@ -134,6 +140,44 @@ namespace SmartMetering
 			UpdateEvent();
 		}
 
+		void ConstructGroupTx()
+		{
+			GroupTx = "0A 00";
+			var names = new List<string>();
+
+			if (Configuration.CheckAmperage)
+			{
+				GroupTx += " 16 1C";
+				names.Add("Now.Amperage.A"); names.Add("Now.Amperage.B"); names.Add("Now.Amperage.C");
+			}
+			if (Configuration.CheckVoltage)
+			{
+				GroupTx += " 18 1C";
+				if (names.Count > 0) names.Add(null);
+				names.Add("Now.Voltage.A"); names.Add("Now.Voltage.B"); names.Add("Now.Voltage.C");
+			}
+			if (Configuration.CheckFreq)
+			{
+				GroupTx += " 1A 1C";
+				if (names.Count > 0) names.Add(null);
+				names.Add("Now.Freq.A"); names.Add("Now.Freq.B"); names.Add("Now.Freq.C");
+			}
+			if (Configuration.CheckActivePower)
+			{
+				GroupTx += " 0E 1E";
+				if (names.Count > 0) names.Add(null);
+				names.Add("Now.Power.Active.Summ"); names.Add("Now.Power.Active.A"); names.Add("Now.Power.Active.B"); names.Add("Now.Power.Active.C");
+			}
+			if (Configuration.CheckReactivePower)
+			{
+				GroupTx += " 10 1C";
+				if (names.Count > 0) names.Add(null);
+				names.Add("Now.Power.Reactive.Summ"); names.Add("Now.Power.Reactive.A"); names.Add("Now.Power.Reactive.B"); names.Add("Now.Power.Reactive.C");
+			}
+
+			GroupNames = names.ToArray();
+		}
+
 		void Receive()
 		{
 			if (!IsActive) return;
@@ -145,49 +189,23 @@ namespace SmartMetering
 
 				Stream = client.GetStream();
 
-				// Поиск в сети
-				//Get("06 00 03");
-
 				// Текущее время
 				Get("04 00 01", new string[] { "Now.DateTime" }, 0);
 
-				// Текущее накопление энергии - общая
-				//Get("0A 00 01 02 00", new string[] { "Power.Current.Value" }, 0.0001);
+				if (GroupNames.Length > 0)
+				{
+					// Общий запрос на получение текущих данных
+					Get(GroupTx, GroupNames, 0.01);
+				}
 
-				// Полная мощность (группа)
-				//Get("0A 00 0D 1E", new string[] { "Now.Power.Full.Summ", "Now.Power.Full.A", "Now.Power.Full.B", "Now.Power.Full.C" }, 0.0001);
+				if (Configuration.CheckHistory)
+				{
+					// Энергия за прошлый день - сумма
+					Get("0B 00 05 02 00 01 01", new string[] { "Day.Power.Full.Summ" }, 0.00001);
 
-				// Активная мощность (группа)
-				//Get("0A 00 0E 1E", new string[] { "Now.Power.Active.Summ", "Now.Power.Active.A", "Now.Power.Active.B", "Now.Power.Active.C" }, 0.0001);
-
-				// Реактивная мощность (группа)
-				//Get("0A 00 10 1E", new string[] { "Now.Power.Reactive.Summ", "Now.Power.Reactive.A", "Now.Power.Reactive.B", "Now.Power.Reactive.C" }, 0.0001);
-
-				// Ток (группа)
-				//Get("0A 00 16 1C", new string[] { "Now.Amperage.Summ", "Now.Amperage.A", "Now.Amperage.B", "Now.Amperage.C" }, 0.01);
-
-				// Напряжение (группа)
-				//Get("0A 00 18 1C", new string[] { "Now.Voltage.Summ", "Now.Voltage.A", "Now.Voltage.B", "Now.Voltage.C" }, 0.01);
-
-				// Частота (группа)
-				//Get("0A 00 1A 1C", new string[] { "Now.Freq.Summ", "Now.Freq.A", "Now.Freq.B", "Now.Freq.C" }, 0.01);
-
-				// Большой запрос
-				Get("0A 00 0D 1E 0E 1E 10 1E 16 1C 18 1C 1A 1C", new string[] 
-				{ 
-					"Now.Power.Full.Summ", "Now.Power.Full.A", "Now.Power.Full.B", "Now.Power.Full.C",
-					null, "Now.Power.Active.Summ", "Now.Power.Active.A", "Now.Power.Active.B", "Now.Power.Active.C",
-					null, "Now.Power.Reactive.Summ", "Now.Power.Reactive.A", "Now.Power.Reactive.B", "Now.Power.Reactive.C",
-					null, "Now.Amperage.A", "Now.Amperage.B", "Now.Amperage.C",
-					null, "Now.Voltage.A", "Now.Voltage.B", "Now.Voltage.C",
-					null, "Now.Freq.A", "Now.Freq.B", "Now.Freq.C",
-				}, 0.01);
-
-				// Энергия за прошлый день - сумма
-				Get("0B 00 05 02 00 01 01", new string[] { "Day.Power.Full.Summ" }, 0.00001);
-
-				// Энергия за прошлый месяц - сумма
-				Get("0B 00 09 02 00 01 01", new string[] { "Month.Power.Full.Summ" }, 0.0000001);
+					// Энергия за прошлый месяц - сумма
+					Get("0B 00 09 02 00 01 01", new string[] { "Month.Power.Full.Summ" }, 0.0000001);
+				}
 
 				client.Close();
 			}
@@ -231,7 +249,7 @@ namespace SmartMetering
 			LogEvent("TX: " + Helpers.BytesToString(tx).Replace("C0", "").Trim(), LogType.DETAILED);
 
 			byte[] rx = new byte[ 50 ];
-			Task.Run(() => { read = Stream.Read(rx, 0, rx.Length); }).Wait(TimeSpan.FromSeconds(2));
+			Task.Run(() => { read = Stream.Read(rx, 0, rx.Length); }).Wait(TimeSpan.FromSeconds(Configuration.RxTimeoutSeconds));
 
 			string answer = Helpers.BytesToString(rx);
 
