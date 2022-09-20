@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>iNOPC.Drivers.NB_IoT</RootNamespace>
-    <AssemblyName>NB_IoT_v1.3</AssemblyName>
+    <AssemblyName>NB_IoT_v1.4</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

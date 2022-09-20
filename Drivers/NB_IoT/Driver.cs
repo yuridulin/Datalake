@@ -163,20 +163,11 @@ namespace iNOPC.Drivers.NB_IoT
 
 					var stream = client.GetStream();
 
-					//var buffer = new List<byte>();
 					byte[] bytes = new byte[7];
 
 					bool isReadingDone = Task
 						.Run(() => 
 						{
-							// Чтение произвольного количества байт
-							//while (stream.DataAvailable)
-							//{
-							//	int b = stream.ReadByte();
-							//	if (b < 0) break;
-							//	buffer.Add((byte)b);
-							//}
-
 							stream.Read(bytes, 0, 7);
 						})
 						.Wait(TimeSpan.FromSeconds(3));
@@ -187,11 +178,7 @@ namespace iNOPC.Drivers.NB_IoT
 					}
 
 					LogEvent("Получено: " + Helpers.BytesToString(bytes));
-
-					//ParseValue(buffer.ToArray());
 					ParseValue(bytes);
-
-					//LogEvent("Получено: " + Helpers.BytesToString(buffer.ToArray()));
 
 					stream.Close();
 					client.Close();
@@ -246,13 +233,18 @@ namespace iNOPC.Drivers.NB_IoT
 
 				case 2:
 					BitArray bits = new BitArray(new byte[] { packet[ 2 ] });
-					//(b >> bitNumber) & 1
-					SetValue(packet[ 1 ] + ".Bit1", bits[ 5 ]);
-					SetValue(packet[ 1 ] + ".Bit2", bits[ 4 ]);
-					SetValue(packet[ 1 ] + ".Bit3", bits[ 3 ]);
-					SetValue(packet[ 1 ] + ".Bit4", bits[ 2 ]);
-					SetValue(packet[ 1 ] + ".Bit5", bits[ 1 ]);
-					SetValue(packet[ 1 ] + ".Bit6", bits[ 0 ]);
+					SetValue("1.Value", bits[ 5 ]);
+					SetValue("1.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+					SetValue("2.Value", bits[ 4 ]);
+					SetValue("2.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+					SetValue("3.Value", bits[ 3 ]);
+					SetValue("3.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+					SetValue("4.Value", bits[ 2 ]);
+					SetValue("4.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+					SetValue("5.Value", bits[ 1 ]);
+					SetValue("5.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+					SetValue("6.Value", bits[ 0 ]);
+					SetValue("6.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
 
 					LastUpdateTime = DateTime.Now;
 					break;
