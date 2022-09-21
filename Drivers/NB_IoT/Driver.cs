@@ -163,12 +163,13 @@ namespace iNOPC.Drivers.NB_IoT
 
 					var stream = client.GetStream();
 
-					byte[] bytes = new byte[7];
+					byte[] bytes = new byte[1024];
+					int count = 0;
 
 					bool isReadingDone = Task
 						.Run(() => 
 						{
-							stream.Read(bytes, 0, 7);
+							count = stream.Read(bytes, 0, 1024);
 						})
 						.Wait(TimeSpan.FromSeconds(3));
 
@@ -178,7 +179,7 @@ namespace iNOPC.Drivers.NB_IoT
 					}
 
 					LogEvent("Получено: " + Helpers.BytesToString(bytes));
-					ParseValue(bytes);
+					ParseValue(bytes, count);
 
 					stream.Close();
 					client.Close();
@@ -216,43 +217,45 @@ namespace iNOPC.Drivers.NB_IoT
 			}
 		}
 
-		void ParseValue(byte[] packet)
+		void ParseValue(byte[] packet, int length)
 		{
-			switch (packet[0])
+			if (packet[0] == 1)
 			{
-				case 1:
-					byte address = packet[ 1 ];
-					uint dateUint = BitConverter.ToUInt32(new[] { packet[ 2 ], packet[ 3 ], packet[ 4 ], packet[ 5 ] }, 0);
+				for (int i = 0; i <= length; i += 7)
+				{
+					if (packet[ i ] != 1) break;
+
+					byte address = packet[ i + 1 ];
+					uint dateUint = BitConverter.ToUInt32(new[] { packet[ i + 2 ], packet[ i + 3 ], packet[ i + 4 ], packet[ i + 5 ] }, 0);
 					DateTime date = ToDateTime(dateUint);
 
 					SetValue(address + ".Date", date.ToString("dd.MM.yyyy HH:mm:ss"));
-					SetValue(address + ".Value", packet[ 6 ]);
-
-					LastUpdateTime = DateTime.Now;
-					break;
-
-				case 2:
-					BitArray bits = new BitArray(new byte[] { packet[ 2 ] });
-					SetValue("1.Value", bits[ 5 ]);
-					SetValue("1.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-					SetValue("2.Value", bits[ 4 ]);
-					SetValue("2.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-					SetValue("3.Value", bits[ 3 ]);
-					SetValue("3.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-					SetValue("4.Value", bits[ 2 ]);
-					SetValue("4.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-					SetValue("5.Value", bits[ 1 ]);
-					SetValue("5.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-					SetValue("6.Value", bits[ 0 ]);
-					SetValue("6.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-
-					LastUpdateTime = DateTime.Now;
-					break;
-
-				default:
-					LogEvent("Получен пакет, тип которого не распознан", LogType.WARNING);
-					break;
+					SetValue(address + ".Value", packet[ i + 6 ]);
+				}
 			}
+
+			else if (packet[0] == 2)
+			{
+				BitArray bits = new BitArray(new byte[] { packet[ 2 ] });
+				SetValue("1.Value", bits[ 5 ]);
+				SetValue("1.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+				SetValue("2.Value", bits[ 4 ]);
+				SetValue("2.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+				SetValue("3.Value", bits[ 3 ]);
+				SetValue("3.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+				SetValue("4.Value", bits[ 2 ]);
+				SetValue("4.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+				SetValue("5.Value", bits[ 1 ]);
+				SetValue("5.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+				SetValue("6.Value", bits[ 0 ]);
+				SetValue("6.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+			}
+			else
+			{
+				LogEvent("Получен пакет, тип которого не распознан", LogType.WARNING);
+			}
+
+			LastUpdateTime = DateTime.Now;
 		}
 
 		DateTime ToDateTime(uint value)
