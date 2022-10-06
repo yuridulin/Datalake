@@ -236,19 +236,14 @@ namespace iNOPC.Drivers.NB_IoT
 
 			else if (packet[0] == 2)
 			{
-				BitArray bits = new BitArray(new byte[] { packet[ 2 ] });
-				SetValue("1.Value", bits[ 5 ]);
-				SetValue("1.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-				SetValue("2.Value", bits[ 4 ]);
-				SetValue("2.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-				SetValue("3.Value", bits[ 3 ]);
-				SetValue("3.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-				SetValue("4.Value", bits[ 2 ]);
-				SetValue("4.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-				SetValue("5.Value", bits[ 1 ]);
-				SetValue("5.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-				SetValue("6.Value", bits[ 0 ]);
-				SetValue("6.Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+				var nOfValues = packet[ 1 ];
+				for (byte i = 0; i < nOfValues; i++)
+				{
+					byte DO = packet[ 2 + 2 * i ];
+					byte value = packet[ 3 + 2 * i ];
+					SetValue(DO + ".Value", value == 1);
+					SetValue(DO + ".Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+				}
 			}
 			else
 			{
