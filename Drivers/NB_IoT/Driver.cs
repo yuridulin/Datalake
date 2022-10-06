@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -178,7 +179,7 @@ namespace iNOPC.Drivers.NB_IoT
 						LogEvent("Чтение потока прервано по таймауту");
 					}
 
-					LogEvent("Получено: " + Helpers.BytesToString(bytes));
+					LogEvent("Получено: " + Helpers.BytesToString(bytes.Take(count).ToArray()));
 					ParseValue(bytes, count);
 
 					stream.Close();
