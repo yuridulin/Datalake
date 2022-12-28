@@ -1,53 +1,78 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace iNOPC.Drivers.TestDriver
 {
-    public class Configuration
-    {
-        public int Tick { get; set; } = 1000;
+	public class Configuration
+	{
+		public int Tick { get; set; } = 1000;
 
-        public List<Field> Fields { get; set; } = new List<Field>();
+		public List<Field> Fields { get; set; } = new List<Field>();
 
-        public static string GetPage(string json)
-        {
-            var config = JsonConvert.DeserializeObject<Configuration>(json);
+		public List<BoolField> Bools { get; set; } = new List<BoolField>();
 
-            string html = "";
+		public static string GetPage(string json)
+		{
+			var config = JsonConvert.DeserializeObject<Configuration>(json);
 
-            html += "<div type='value'><span>Тик таймера, мс</span><input name='Tick' type='number' value='" + config.Tick + "' /></div>";
-            html += "<div type='array' name='Fields'>"
-                + "<span>Поля</span>"
-                + "<button onclick='_add(this)'>+</button>";
+			string html = "";
 
-            foreach (var field in config.Fields)
-            {
-                html += "<p>"
-                 + "<span>Имя</span><input name='Name' type='text' value='" + field.Name + "' />"
-                 + "<span>Адрес</span><input name='Address' type='number' value='" + field.Address + "' />"
-                 + "<button onclick='_del(this)'>X</button>" 
-                 + "</p>";
-            }
+			html += "<div type='value'><span>Тик таймера, мс</span><input name='Tick' type='number' value='" + config.Tick + "' /></div>";
+			html += "<div type='array' name='Fields'>"
+				+ "<span>Численные параметры</span>"
+				+ "<button onclick='_add(this)'>+</button>" +
+				string.Join("", config.Fields.Select(x => NumberHtml(x)).ToArray()) +
+				"</div>";
 
-            html += "</div>";
+			html += "<div type='array' name='Bools'>" +
+				"<span>Логические параметры</span>" +
+				"<button onclick='_add2(this)'>+</button>" +
+				string.Join("", config.Bools.Select(x => BoolHtml(x)).ToArray()) +
+				"</div>";
 
-            html += @"<script>
-                function _add(button) {
-                    button.insertAdjacentHTML('afterEnd', ""<p>Имя: <input name='Name' type='text' value='' />Адрес: <input name='Address' type='number' value='0' /><button onclick='_del(this)'>X</button></p>"")
-                }
-                function _del(button) {
-                    button.parentNode.parentNode.removeChild(button.parentNode)
-                }
-            </script>";
+			html += @"<script>
+				function _add(button) {
+					button.insertAdjacentHTML('afterEnd', """ + NumberHtml(new Field()) + @""")
+				}
+				function _add2(button) {
+					button.insertAdjacentHTML('afterEnd', """ + BoolHtml(new BoolField()) + @""")
+				}
+				function _del(button) {
+					button.parentNode.parentNode.removeChild(button.parentNode)
+				}
+			</script>";
 
-            return html;
-        }
-    }
+			return html;
 
-    public class Field
-    {
-        public string Name { get; set; } = "";
+			string NumberHtml(Field field)
+			{
+				return "<p>" +
+					"<span>Имя</span><input name='Name' type='text' value='" + field.Name + "' />" +
+					"<span>Адрес</span><input name='Address' type='number' value='" + field.Address + "' />" +
+					"<button onclick='_del(this)'>X</button>" +
+					"</p>";
+			}
 
-        public int Address { get; set; } = 0;
-    }
+			string BoolHtml(BoolField field)
+			{
+				return "<p>" +
+					"<span>Имя</span><input name='Name' type='text' value='" + field.Name + "' />" +
+					"<button onclick='_del(this)'>X</button>" +
+					"</p>";
+			}
+		}
+	}
+
+	public class Field
+	{
+		public string Name { get; set; } = "";
+
+		public int Address { get; set; } = 0;
+	}
+
+	public class BoolField
+	{
+		public string Name { get; set; } = "";
+	}
 }

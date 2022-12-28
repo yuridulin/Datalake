@@ -6,90 +6,101 @@ using System.Timers;
 
 namespace iNOPC.Drivers.TestDriver
 {
-    public class Driver : IDriver
-    {
-        public string Version { get; } = typeof(Driver).Assembly.GetName().Version.ToString();
+	public class Driver : IDriver
+	{
+		public string Version { get; } = typeof(Driver).Assembly.GetName().Version.ToString();
 
-        public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
+		public Dictionary<string, DefField> Fields { get; set; } = new Dictionary<string, DefField>();
 
-        public event LogEvent LogEvent;
+		public event LogEvent LogEvent;
 
-        public event UpdateEvent UpdateEvent;
+		public event UpdateEvent UpdateEvent;
 
-        public bool Start(string jsonConfig)
-        {
-            LogEvent("Запуск...");
+		public bool Start(string jsonConfig)
+		{
+			LogEvent("Запуск...");
 
-            Fields = new Dictionary<string, DefField>();
+			Fields = new Dictionary<string, DefField>();
 
-            try
-            {
-                Configuration = JsonConvert.DeserializeObject<Configuration>(jsonConfig);
-            }
-            catch (Exception e)
-            {
-                LogEvent("Конфигурация не прочитана: " + e.Message, LogType.ERROR);
-                return false;
-            }
+			try
+			{
+				Configuration = JsonConvert.DeserializeObject<Configuration>(jsonConfig);
+			}
+			catch (Exception e)
+			{
+				LogEvent("Конфигурация не прочитана: " + e.Message, LogType.ERROR);
+				return false;
+			}
 
-            foreach (var field in Configuration.Fields)
-            {
-                Fields.Add(field.Name, new DefField { Value = null, Quality = 0 });
-            }
+			foreach (var field in Configuration.Fields)
+			{
+				Fields.Add(field.Name, new DefField { Value = null, Quality = 0 });
+			}
 
-            Timer = new Timer(Configuration.Tick);
-            Timer.Elapsed += (s, e) => Update();
-            Timer.Start();
+			foreach (var field in Configuration.Bools)
+			{
+				Fields.Add(field.Name, new DefField { Value = false, Quality = 0 });
+			}
 
-            Fields["Connection"] = new DefField { Value = true, Quality = 192 };
-            Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
-            UpdateEvent();
+			Timer = new Timer(Configuration.Tick);
+			Timer.Elapsed += (s, e) => Update();
+			Timer.Start();
 
-            LogEvent("Мониторинг активен");
+			Fields["Connection"] = new DefField { Value = true, Quality = 192 };
+			Fields["Time"] = new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 };
+			UpdateEvent();
 
-            return true;
-        }
+			LogEvent("Мониторинг активен");
 
-        public void Stop()
-        {
-            LogEvent("Остановка...");
+			return true;
+		}
 
-            Fields["Connection"] = new DefField { Value = false, Quality = 192 };
+		public void Stop()
+		{
+			LogEvent("Остановка...");
 
-            try
-            {
-                Timer?.Stop();
-                Timer = null;
-            } catch { }
+			Fields["Connection"] = new DefField { Value = false, Quality = 192 };
 
-            LogEvent("Мониторинг остановлен");
-        }
+			try
+			{
+				Timer?.Stop();
+				Timer = null;
+			} catch { }
 
-        public void Write(string fieldName, object value)
-        {
-            Fields[fieldName].Value = value;
-            LogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]", LogType.DETAILED);
-        }
+			LogEvent("Мониторинг остановлен");
+		}
 
-        Configuration Configuration { get; set; } = new Configuration();
+		public void Write(string fieldName, object value)
+		{
+			Fields[fieldName].Value = value;
+			LogEvent("Событие записи в поле [" + fieldName + "], значение [" + value + "], тип значения [" + value.GetType() + "]", LogType.DETAILED);
+		}
 
-        Timer Timer { get; set; }
+		Configuration Configuration { get; set; } = new Configuration();
 
-        void Update()
-        {
-            var r = new Random();
+		Timer Timer { get; set; }
 
-            foreach (var field in Configuration.Fields)
-            {
-                Fields[field.Name].Value = r.Next(0, 9999999);
-                Fields[field.Name].Quality = 192;
-            }
+		void Update()
+		{
+			var r = new Random();
 
-            Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
-            Fields["Time"].Value = 192;
+			foreach (var field in Configuration.Fields)
+			{
+				Fields[field.Name].Value = r.Next(0, 9999999);
+				Fields[field.Name].Quality = 192;
+			}
 
-            LogEvent("Очередной опрос");
-            UpdateEvent();
-        }
-    }
+			foreach (var field in Configuration.Bools)
+			{
+				Fields[field.Name].Value = r.Next(0, 2) == 1;
+				Fields[field.Name].Quality = 192;
+			}
+
+			Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+			Fields["Time"].Value = 192;
+
+			LogEvent("Очередной опрос");
+			UpdateEvent();
+		}
+	}
 }
