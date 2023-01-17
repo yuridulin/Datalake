@@ -137,7 +137,7 @@ namespace iNOPC.Drivers.ECOM_3000
 
 								Fields["IsActive"].Value = true;
 								Fields["IsActive"].Quality = 192;
-								Fields["SuccessTime"].Value = date.ToString("dd.MM.yyyy HH:mm:ss"); ;
+								Fields["SuccessTime"].Value = DateTime.Now.ToString("HH:mm:ss");
 								Fields["SuccessTime"].Quality = 192;
 							}
 						}
@@ -204,7 +204,7 @@ namespace iNOPC.Drivers.ECOM_3000
 
 									Fields["IsActive"].Value = true;
 									Fields["IsActive"].Quality = 192;
-									Fields["SuccessTime"].Value = date.ToString("dd.MM.yyyy HH:mm:ss"); ;
+									Fields["SuccessTime"].Value = DateTime.Now.ToString("HH:mm:ss");
 									Fields["SuccessTime"].Quality = 192;
 								}
 							}
