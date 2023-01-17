@@ -25,6 +25,7 @@ namespace iNOPC.Drivers.ECOM_3000
 			LogEvent("Запуск ...");
 			Fields.Clear();
 			Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 0 });
+			Fields.Add("SuccessTime", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 0 });
 			Fields.Add("IsActive", new DefField { Value = false, Quality = 0 });
 
 			for (int k = 1; k < 270; k++)
@@ -69,7 +70,7 @@ namespace iNOPC.Drivers.ECOM_3000
 						field.Quality = 0;
 					}
 					Fields["Time"].Value = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
-					Fields["Active"].Value = false;
+					Fields["IsActive"].Value = false;
 				}
 
 				UpdateEvent();
@@ -136,6 +137,8 @@ namespace iNOPC.Drivers.ECOM_3000
 
 								Fields["IsActive"].Value = true;
 								Fields["IsActive"].Quality = 192;
+								Fields["SuccessTime"].Value = date.ToString("dd.MM.yyyy HH:mm:ss"); ;
+								Fields["SuccessTime"].Quality = 192;
 							}
 						}
 						else
@@ -146,6 +149,8 @@ namespace iNOPC.Drivers.ECOM_3000
 							{
 								Fields["IsActive"].Value = false;
 								Fields["IsActive"].Quality = 192;
+								Fields["SuccessTime"].Value = "";
+								Fields["SuccessTime"].Quality = 192;
 							}
 						}
 					}
@@ -156,7 +161,9 @@ namespace iNOPC.Drivers.ECOM_3000
 						lock (Fields)
 						{
 							Fields["IsActive"].Value = false;
-							Fields["IsActive"].Quality = 192;
+							Fields["IsActive"].Quality = 192; 
+							Fields["SuccessTime"].Value = "";
+							Fields["SuccessTime"].Quality = 192;
 						}
 					}
 
@@ -197,6 +204,8 @@ namespace iNOPC.Drivers.ECOM_3000
 
 									Fields["IsActive"].Value = true;
 									Fields["IsActive"].Quality = 192;
+									Fields["SuccessTime"].Value = date.ToString("dd.MM.yyyy HH:mm:ss"); ;
+									Fields["SuccessTime"].Quality = 192;
 								}
 							}
 							else
@@ -207,6 +216,8 @@ namespace iNOPC.Drivers.ECOM_3000
 								{
 									Fields["IsActive"].Value = false;
 									Fields["IsActive"].Quality = 192;
+									Fields["SuccessTime"].Value = "";
+									Fields["SuccessTime"].Quality = 192;
 								}
 							}
 						}
@@ -218,6 +229,8 @@ namespace iNOPC.Drivers.ECOM_3000
 							{
 								Fields["IsActive"].Value = false;
 								Fields["IsActive"].Quality = 192;
+								Fields["SuccessTime"].Value = "";
+								Fields["SuccessTime"].Quality = 192;
 							}
 						}
 					}
@@ -231,6 +244,8 @@ namespace iNOPC.Drivers.ECOM_3000
 				{
 					Fields["IsActive"].Value = false;
 					Fields["IsActive"].Quality = 192;
+					Fields["SuccessTime"].Value = "";
+					Fields["SuccessTime"].Quality = 192;
 				}
 			}
 			finally
