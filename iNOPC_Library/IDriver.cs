@@ -3,19 +3,19 @@
 namespace iNOPC.Library
 {
 	public interface IDriver
-    {
-        event LogEvent LogEvent;
+	{
+		event LogEvent LogEvent;
 
-        event UpdateEvent UpdateEvent;
+		event UpdateEvent UpdateEvent;
 
-        Dictionary<string, DefField> Fields { get; set; }
+		Dictionary<string, DefField> Fields { get; set; }
 
-        string Version { get; }
+		string Version { get; }
 
-        bool Start(string jsonConfiguration);
+		bool Start(string jsonConfiguration);
 
-        void Stop();
+		void Stop();
 
-        void Write(string fieldName, object value);
-    }
+		void Write(string fieldName, object value);
+	}
 }

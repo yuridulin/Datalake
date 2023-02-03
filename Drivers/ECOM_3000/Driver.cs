@@ -235,6 +235,11 @@ namespace iNOPC.Drivers.ECOM_3000
 						}
 					}
 				}
+				else
+				{
+					Fields["SuccessTime"].Value = DateTime.Now.ToString("HH:mm:ss");
+					Fields["SuccessTime"].Quality = 192;
+				}
 			}
 			catch (Exception e)
 			{
