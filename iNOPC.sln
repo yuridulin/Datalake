@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32901.82
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iNOPC_Server", "iNOPC_Server\iNOPC_Server.csproj", "{01FD46C0-4CD5-4573-BE2F-6BD84E88892A}"
 EndProject
@@ -72,6 +72,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ASK_Binary", "Drivers\ASK_Binary\ASK_Binary.csproj", "{52F87991-A146-4D68-8B1C-2084F2F7DCE8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test_TCP_Console", "Drivers\Test_TCP_Console\Test_TCP_Console.csproj", "{E2C2CA94-AA7E-4735-8FA6-D3CF418FE882}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TEM_104", "Drivers\TEM_104\TEM_104.csproj", "{0AABDD94-060A-4E28-9B3E-B6E47E40BB69}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SKU_02", "Drivers\SKU_02\SKU_02.csproj", "{8321FE17-5E0A-4423-936A-3D29912621C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -211,6 +215,14 @@ Global
 		{E2C2CA94-AA7E-4735-8FA6-D3CF418FE882}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2C2CA94-AA7E-4735-8FA6-D3CF418FE882}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2C2CA94-AA7E-4735-8FA6-D3CF418FE882}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AABDD94-060A-4E28-9B3E-B6E47E40BB69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AABDD94-060A-4E28-9B3E-B6E47E40BB69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AABDD94-060A-4E28-9B3E-B6E47E40BB69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AABDD94-060A-4E28-9B3E-B6E47E40BB69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8321FE17-5E0A-4423-936A-3D29912621C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8321FE17-5E0A-4423-936A-3D29912621C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8321FE17-5E0A-4423-936A-3D29912621C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8321FE17-5E0A-4423-936A-3D29912621C7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -246,6 +258,8 @@ Global
 		{D5911759-8A1B-4A1B-9659-54FB24563F3B} = {824C3B9C-C897-4A5A-92B0-0433E143D67F}
 		{52F87991-A146-4D68-8B1C-2084F2F7DCE8} = {824C3B9C-C897-4A5A-92B0-0433E143D67F}
 		{E2C2CA94-AA7E-4735-8FA6-D3CF418FE882} = {824C3B9C-C897-4A5A-92B0-0433E143D67F}
+		{0AABDD94-060A-4E28-9B3E-B6E47E40BB69} = {824C3B9C-C897-4A5A-92B0-0433E143D67F}
+		{8321FE17-5E0A-4423-936A-3D29912621C7} = {824C3B9C-C897-4A5A-92B0-0433E143D67F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C0EA1C33-38D2-4707-81C3-B73ECDB3ABB3}
