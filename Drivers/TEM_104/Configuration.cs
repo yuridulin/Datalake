@@ -15,6 +15,8 @@ namespace iNOPC.Drivers.TEM_104
 
 		public byte DeviceId { get; set; } = 1;
 
+		public bool SetBadQualityWhenError { get; set; } = false;
+
 		public static string GetPage(string json)
 		{
 			var config = JsonConvert.DeserializeObject<Configuration>(json);
@@ -27,6 +29,7 @@ namespace iNOPC.Drivers.TEM_104
 				Html.Value("TCP порт", nameof(config.Port), config.Port) +
 				Html.Value("Номер устройства", nameof(config.DeviceId), config.DeviceId) +
 				Html.Value("Ожидание ответа на команду (с)", nameof(config.RxTimeoutSeconds), config.RxTimeoutSeconds) +
+				Html.Value("Сбрасывать значения при ошибке", nameof(config.SetBadQualityWhenError), config.SetBadQualityWhenError) +
 				"";
 
 			return html;

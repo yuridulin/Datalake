@@ -154,7 +154,7 @@ namespace iNOPC.Drivers.Energomera_CE301_ver12
 			catch (Exception e)
 			{
 				LogEvent("Ошибка: " + e.Message, LogType.ERROR);
-				SetBadQuality();
+				if (Configuration.SetBadQualityWhenError) SetBadQuality();
 				SetValue("Time", DateTime.Now.ToString("HH:mm:ss"), 192);
 				UpdateEvent();
 			}

@@ -78,7 +78,8 @@ namespace MODBUS_RTU_over_TCP
                 return "<p>"
                     + Html.Input("Имя", nameof(field.Name), field.Name)
                     + select
-                    + Html.Input("Адрес", nameof(field.Address), field.Address)
+					+ Html.Input("Команда", nameof(field.CommandCode), field.CommandCode)
+					+ Html.Input("Адрес", nameof(field.Address), field.Address)
                     + "<button onclick='_del(this)'>Удалить</button>"
                     + "</p>";
 

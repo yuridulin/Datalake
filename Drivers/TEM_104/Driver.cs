@@ -160,7 +160,7 @@ namespace iNOPC.Drivers.TEM_104
 			catch (Exception e)
 			{
 				LogEvent("Ошибка: " + e.Message, LogType.ERROR);
-				SetBadQuality();
+				if (Configuration.SetBadQualityWhenError) SetBadQuality();
 				SetValue("Time", DateTime.Now.ToString("HH:mm:ss"), 192);
 				UpdateEvent();
 			}
@@ -208,7 +208,7 @@ namespace iNOPC.Drivers.TEM_104
 			byte[] tx = WithCRC(request);
 
 			ByteExchange(tx);
-			if (RX.Length == 0) return;
+			if (RX.Length == 0) throw new Exception("Ответ не пришел");
 
 			if (!IsActive) throw new Exception("Опрос прерван");
 

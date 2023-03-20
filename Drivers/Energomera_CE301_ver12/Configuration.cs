@@ -21,6 +21,8 @@ namespace iNOPC.Drivers.Energomera_CE301_ver12
 
 		public bool IsReadingPowerParams { get; set; } = true;
 
+		public bool SetBadQualityWhenError { get; set; } = true;
+
 		public static string GetPage(string json)
 		{
 			var config = JsonConvert.DeserializeObject<Configuration>(json);
@@ -36,6 +38,7 @@ namespace iNOPC.Drivers.Energomera_CE301_ver12
 				Html.Value("Программный контроль четности 7-E-1", nameof(config.Is7E1), config.Is7E1) +
 				Html.Value("Получение счетчиков энергии", nameof(config.IsReadingEnergyAndData), config.IsReadingEnergyAndData) +
 				Html.Value("Получение параметров сети", nameof(config.IsReadingPowerParams), config.IsReadingPowerParams) +
+				Html.Value("Сбрасывать значения при ошибке", nameof(config.SetBadQualityWhenError), config.SetBadQualityWhenError) +
 				"";
 
 			return html;

@@ -12,7 +12,7 @@
 
         public string HexAddress { get; set; } = "0x0000";
 
-        public byte CommandCode { get; set; } = 0;
+        public byte CommandCode { get; set; } = 3;
 
         public bool Checked { get; set; } = false;
     }
