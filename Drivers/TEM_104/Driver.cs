@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -134,25 +135,36 @@ namespace iNOPC.Drivers.TEM_104
 		{
 			if (!IsActive) return;
 
+			var client = new TcpClient();
+
 			try
 			{
-				var client = new TcpClient();
 				client.Connect(Configuration.Endpoint, Configuration.Port);
 
 				Stream = client.GetStream();
 
-				if (Establish())
+				var model = Establish();
+				if (!string.IsNullOrEmpty(model))
 				{
-					Get("22 00 08", new [] { "Temp1", "Temp2" });
-					Get("22 10 08", new [] { "Pressure1", "Pressure2" });
-					Get("22 20 08", new [] { "Ro1", "Ro2" });
-					Get("22 30 08", new [] { "Hent1", "Hent2" });
-					Get("22 40 08", new [] { "Rshv1", "Rshv2" });
-					Get("22 50 08", new [] { "Rshm1", "Rshm12" });
-					Get("22 60 08", new [] { "Pwr1", "Pwr2" });
+					LogEvent("Модель: " + model, LogType.WARNING);
+					if (model == "TEM-104")
+					{
+						Get("22 00 08", new[] { "Temp1", "Temp2" });
+						Get("22 10 08", new[] { "Pressure1", "Pressure2" });
+						Get("22 20 08", new[] { "Ro1", "Ro2" });
+						Get("22 30 08", new[] { "Hent1", "Hent2" });
+						Get("22 40 08", new[] { "Rshv1", "Rshv2" });
+						Get("22 50 08", new[] { "Rshm1", "Rshm12" });
+						Get("22 60 08", new[] { "Pwr1", "Pwr2" });
+					}
+					else if (model == "TEM104-1")
+					{
+						Get("00 B8 18", new[] { "Rshv1", "Rshm1", "Temp1", "Temp2", "Pressure1", "Pressure2" });
+						//Get("00 BC 04", new[] { "Rshm1" });
+						//Get("00 C0 08", new[] { "Temp1", "Temp2" });
+						//Get("00 C8 08", new[] { "Pressure1", "Pressure2" });
+					}
 				}
-
-				client.Close();
 
 				SetValue("Time", DateTime.Now.ToString("HH:mm:ss"), 192);
 				UpdateEvent();
@@ -164,9 +176,14 @@ namespace iNOPC.Drivers.TEM_104
 				SetValue("Time", DateTime.Now.ToString("HH:mm:ss"), 192);
 				UpdateEvent();
 			}
+			finally
+			{
+				Stream?.Close();
+				client?.Close();
+			}
 		}
 
-		bool Establish()
+		string Establish()
 		{
 			byte[] request = new byte[]
 			{
@@ -182,9 +199,10 @@ namespace iNOPC.Drivers.TEM_104
 
 			ByteExchange(tx);
 
-			if (RX.Length == 0) return false;
-			if (RX[0] != 0xAA) return false;
-			return true;
+			if (RX.Length == 0) return string.Empty;
+			if (RX[0] != 0xAA) return string.Empty;
+
+			return Encoding.UTF8.GetString(RX.Skip(6).Take(RX.Length - 7).ToArray());
 		}
 
 		void Get(string start, string[] names)
@@ -209,7 +227,6 @@ namespace iNOPC.Drivers.TEM_104
 
 			ByteExchange(tx);
 			if (RX.Length == 0) throw new Exception("Ответ не пришел");
-
 			if (!IsActive) throw new Exception("Опрос прерван");
 
 			for (int i = 0; i < names.Length; i++)
@@ -251,6 +268,10 @@ namespace iNOPC.Drivers.TEM_104
 				RX = new byte[0];
 				LogEvent(e.Message, LogType.ERROR);
 				Stream.Flush();
+			}
+			finally
+			{
+				Task.Delay(500).Wait();
 			}
 		}
 
