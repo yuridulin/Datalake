@@ -1,5 +1,4 @@
-﻿using iNOPC.Server.Database;
-using iNOPC.Server.Models;
+﻿using iNOPC.Server.Models;
 using iNOPC.Server.Web;
 using System;
 using System.Diagnostics;
@@ -56,7 +55,6 @@ namespace iNOPC.Server
 #if !DEBUG
 			Defence.Set();
 #endif
-			Storage.Start();
 			Calculator.Start();
 
 			// Загружаем конфиг
@@ -88,7 +86,6 @@ namespace iNOPC.Server
 					device.Stop();
 				}
 			}
-			Storage.Stop();
 
 			// Глушим OPC сервер
 			OPC.RequestDisconnect();

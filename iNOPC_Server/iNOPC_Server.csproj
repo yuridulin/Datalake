@@ -86,11 +86,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Database\DatabaseContext.cs" />
-    <Compile Include="Database\Storage.cs" />
-    <Compile Include="Database\Models\Point.cs" />
     <Compile Include="Models\Configuration.cs" />
-    <Compile Include="Models\Configurations\DatabaseSettings.cs" />
     <Compile Include="Models\Configurations\Formular.cs" />
     <Compile Include="Models\Configurations\V0.cs" />
     <Compile Include="Models\Configurations\V4.cs" />

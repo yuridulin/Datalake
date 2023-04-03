@@ -10,8 +10,6 @@ namespace iNOPC.Server.Models.Configurations
 
 		public Settings Settings { get; set; } = new Settings();
 
-		public DatabaseSettings Database { get; set; } = new DatabaseSettings();
-
 		public List<Formular> Formulars { get; set; } = new List<Formular>();
 
 		public string Key { get; set; } = "";

@@ -17,8 +17,6 @@ namespace iNOPC.Server.Models
 
 		public Settings Settings { get; set; } = new Settings();
 
-		public DatabaseSettings Database { get; set; } = new DatabaseSettings();
-
 		public List<Formular> Formulars { get; set; } = new List<Formular>();
 
 		public string Key { get; set; } = "";
@@ -66,7 +64,6 @@ namespace iNOPC.Server.Models
 						Drivers = v3.Drivers;
 						Access = v3.Access;
 						Settings = v3.Settings;
-						Database = v3.Database;
 						Key = v3.Key;
 						break;
 
@@ -75,7 +72,6 @@ namespace iNOPC.Server.Models
 						Drivers = v4.Drivers;
 						Access = v4.Access;
 						Settings = v4.Settings;
-						Database = v4.Database;
 						Formulars = v4.Formulars;
 						Key = v4.Key;
 						break;
@@ -185,7 +181,6 @@ namespace iNOPC.Server.Models
 						.ToList(),
 					Access,
 					Settings,
-					Database,
 					Formulars = Formulars
 						.Select(f => new
 						{
