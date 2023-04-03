@@ -130,7 +130,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
-    <None Include="plan.md" />
     <None Include="Redist\OPC Core Components Redistributable %28x64%29 3.00.107.msi">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

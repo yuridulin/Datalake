@@ -266,17 +266,9 @@ namespace iNOPC.Server.Web
 					case "ttf":
 						type = "font/ttf";
 						break;
-					default:
-						type = "text/html";
-						break;
 				}
 			}
 			else
-			{
-				filePath += ".html";
-			}
-
-			if (type == "text/html")
 			{
 				filePath = basePath + "index.html";
 			}
