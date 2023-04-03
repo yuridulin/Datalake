@@ -182,7 +182,7 @@ function ls(name, value) {
  */
 function ask(parameters, callback) {
 	var xhr = new XMLHttpRequest()
-	xhr.open('POST', location.origin + '/' + parameters.method, true)
+	xhr.open('POST', location.origin + '/api/' + parameters.method, true)
 	xhr.setRequestHeader('Inopc-Access-Type', accessType)
 	xhr.setRequestHeader('Inopc-Access-Token', ls('Inopc-Access-Token'))
 	xhr.onreadystatechange = function () {

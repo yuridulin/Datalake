@@ -106,9 +106,15 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Models\Configurations\AccessType.cs" />
+    <Compile Include="Web\Api\AuthController.cs" />
+    <Compile Include="Web\Api\DevicesController.cs" />
+    <Compile Include="Web\Api\FormularsController.cs" />
+    <Compile Include="Web\Api\DriversController.cs" />
+    <Compile Include="Web\Api\SettingsController.cs" />
+    <Compile Include="Web\Controller.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Models\LoginPass.cs" />
-    <Compile Include="Web\Requester.cs" />
+    <Compile Include="Web\Router.cs" />
     <Compile Include="Web\RequestTypes\DeviceForm.cs" />
     <Compile Include="Web\RequestTypes\DeviceLogs.cs" />
     <Compile Include="Web\RequestTypes\DriverForm.cs" />
@@ -117,6 +123,7 @@
     <Compile Include="Models\Configurations\AccessRecord.cs" />
     <Compile Include="Web\RequestTypes\License.cs" />
     <Compile Include="Web\RequestTypes\FormulaForm.cs" />
+    <Compile Include="Web\ResponseModel.cs" />
     <Compile Include="Web\Session.cs" />
     <Compile Include="Web\WebSocket.cs" />
     <Compile Include="Web\WebSocketReceiver.cs" />

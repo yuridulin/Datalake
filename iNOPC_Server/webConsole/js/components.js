@@ -37,7 +37,7 @@ function Home() {
 	if (currentPage == 'first' || currentPage == 'login') return
 	mount('#view', 'подключаемся...')
 
-	ask({ method: 'tree' }, function (json) {
+	ask({ method: 'settings/tree' }, function (json) {
 
 		// первый вход - перенаправление на страницу настроек
 		if (accessType == ACCESSTYPE.FIRST) return First()
@@ -66,7 +66,7 @@ function Home() {
 									h('i.ic.ic-' + (device.IsActive ? 'play' : 'pause'), AUTH() ? {
 										title: 'Нажмите для ' + (device.IsActive ? 'завершения' : 'запуска') + ' опроса данных',
 										onclick: function () {
-											ask({ method: 'device.' + (device.IsActive ? 'stop' : 'start'), body: { Id: device.Id } }, Home)
+											ask({ method: 'devices/' + (device.IsActive ? 'stop' : 'start'), body: { Id: device.Id } }, Home)
 										}
 									} : {}),
 									h('span', {
@@ -97,7 +97,7 @@ function Tree() {
 		mount('#view', '')
 	}
 	else {
-		ask({ method: 'tree' }, function (json) {
+		ask({ method: 'settings/tree' }, function (json) {
 			BuildTree(json)
 		})
 	}
@@ -166,8 +166,8 @@ function BuildTree(json) {
 								h('div.node-caption',
 									h('i.ic.' + (device.IsActive ? 'ic-play' : 'ic-pause'), AUTH() ? {
 										onclick: function () {
-											if (device.IsActive) ask({ method: 'device.stop', body: { Id: device.Id } })
-											else ask({ method: 'device.start', body: { Id: device.Id } })
+											if (device.IsActive) ask({ method: 'devices/stop', body: { Id: device.Id } })
+											else ask({ method: 'devices/start', body: { Id: device.Id } })
 										}
 									} : {}),
 									h('span', device.Name, (device.HasError ? h('i.ic.ic-warning.ic-inline') : ''), {
@@ -240,7 +240,7 @@ function Driver(id) {
 	
 	ID = id
 
-	ask({ method: 'driver', body: { Id: id } }, function (driver) {
+	ask({ method: 'drivers/read', body: { Id: id } }, function (driver) {
 		if (!driver.Name) return mount('#view', 'Ошибка получения данных с сервера')
 
 		var name, path
@@ -268,7 +268,7 @@ function Driver(id) {
 					? h('button', {
 						innerHTML: 'Перезагрузить',
 						onclick: function () {
-							ask({ method: 'driver.reload', body: { Id: id } })
+							ask({ method: 'drivers/reload', body: { Id: id } })
 						}
 					})
 					: '',
@@ -276,7 +276,7 @@ function Driver(id) {
 					? h('button', {
 						innerHTML: 'Сохранить',
 						onclick: function () {
-							ask({ method: 'driver.update', body: { Id: id, Name: name.value, Path: path.value } })
+							ask({ method: 'drivers/update', body: { Id: id, Name: name.value, Path: path.value } })
 						}
 					})
 					: '',
@@ -285,7 +285,7 @@ function Driver(id) {
 						innerHTML: 'Удалить',
 						onclick: function () {
 							if (!confirm('Драйвер будет удален из конфигурации без возможности восстановления. Продолжить?')) return
-							ask({ method: 'driver.delete', body: { Id: id } }, Home)
+							ask({ method: 'drivers/delete', body: { Id: id } }, Home)
 						}
 					})
 					: ''
@@ -314,7 +314,7 @@ function Driver(id) {
 }
 
 function DriverLogs(id) {
-	ask({ method: 'driver.logs', body: { Id: id } }, function (logs) {
+	ask({ method: 'drivers/logs', body: { Id: id } }, function (logs) {
 		mount('#driver-logs',
 			h('table', logs
 				.map(function (x) {
@@ -330,16 +330,16 @@ function DriverLogs(id) {
 }
 
 function DriverDevices(id) {
-	ask({ method: 'driver.devices', body: { Id: id } }, function (devices) {
+	ask({ method: 'drivers/devices', body: { Id: id } }, function (devices) {
 		mount('#driver-devices',
 			h('div.devices', devices.map(function (device) {
 				return h('div',
 					h('i.ic.ic-' + (device.IsActive ? 'play' : 'pause'), AUTH() ? {
 						onclick: function () {
 							if (!device.IsActive) {
-								ask({ method: 'device.start', body: { Id: device.Id } })
+								ask({ method: 'devices/start', body: { Id: device.Id } })
 							} else {
-								ask({ method: 'device.stop', body: { Id: device.Id } })
+								ask({ method: 'devices/stop', body: { Id: device.Id } })
 							}
 						}
 					} : {}),
@@ -352,7 +352,7 @@ function DriverDevices(id) {
 					h('button', {
 						innerHTML: 'Копировать',
 						onclick: function () {
-							ask({ method: 'device.copy', body: { Id: device.Id } }, function () {
+							ask({ method: 'devices/copy', body: { Id: device.Id } }, function () {
 								DriverDevices(id)
 							})
 						}
@@ -362,7 +362,7 @@ function DriverDevices(id) {
 			AUTH() ? h('button', {
 				innerHTML: 'Добавить устройство',
 				onclick: function () {
-					ask({ method: 'device.create', body: { Id: id } }, function () {
+					ask({ method: 'devices/create', body: { Id: id } }, function () {
 						DriverDevices(id)
 					})
 				}
@@ -376,7 +376,7 @@ function DriverCreate() {
 	unsetTimers()
 	if (!AUTH()) return
 
-	ask({ method: 'driver.createform' }, function (data) {
+	ask({ method: 'drivers/createform' }, function (data) {
 		var name, path
 		mount('#view',
 			h('div.container',
@@ -396,7 +396,7 @@ function DriverCreate() {
 					h('button', {
 						innerHTML: 'Добавить',
 						onclick: function () {
-							ask({ method: 'driver.create', body: { Name: name.value, Path: path.value } }, function (data) {
+							ask({ method: 'drivers/create', body: { Name: name.value, Path: path.value } }, function (data) {
 								if (data.Error) alert(data.Error)
 								else if (data.Id) Driver(data.Id);
 							});
@@ -424,7 +424,7 @@ function Device(id) {
 	}
 
 	mount('#view', 'выполняется запрос...')
-	ask({ method: 'device', body: { Id: id } }, function (device) {
+	ask({ method: 'devices/read', body: { Id: id } }, function (device) {
 		if (!device.Name) return mount('#view', 'Ошибка получения данных с сервера')
 
 		mount('#view',
@@ -446,7 +446,7 @@ function Device(id) {
 					? h('button', {
 						innerHTML: 'Старт',
 						onclick: function () {
-							ask({ method: 'device.start', body: { Id: id } }, function () {
+							ask({ method: 'devices/start', body: { Id: id } }, function () {
 								interval = setInterval(function () {
 									DeviceFields(id)
 								}, 1000)
@@ -458,7 +458,7 @@ function Device(id) {
 					? h('button', {
 						innerHTML: 'Стоп',
 						onclick: function () {
-							ask({ method: 'device.stop', body: { Id: id } }, function () {
+							ask({ method: 'devices/stop', body: { Id: id } }, function () {
 								clearInterval(interval)
 								DeviceFields(id)
 							})
@@ -478,7 +478,7 @@ function Device(id) {
 						innerHTML: 'Удалить',
 						onclick: function () {
 							if (!confirm('Устройство будет удалено из конфигурации без возможности восстановления. Продолжить?')) return
-							ask({ method: 'device.delete', body: { Id: id } }, Home)
+							ask({ method: 'devices/delete', body: { Id: id } }, Home)
 						}
 					})
 					: ''
@@ -624,7 +624,7 @@ function Device(id) {
 
 function DeviceConfiguration(id) {
 	if (!AUTH()) return
-	ask({ method: 'device.configuration', body: { Id: id } }, function (page) {
+	ask({ method: 'devices/configuration', body: { Id: id } }, function (page) {
 		if (!AUTH()) return
 		mount('#device-configuration', h('div.form', page))
 		document.getElementById('device-configuration').querySelectorAll('script').forEach(function (el) {
@@ -634,7 +634,7 @@ function DeviceConfiguration(id) {
 }
 
 function DeviceLogs(id) {
-	ask({ method: 'device.logs', body: { Id: id } }, function (logs) {
+	ask({ method: 'devices/logs', body: { Id: id } }, function (logs) {
 		mount('#device-logs', h('table'))
 		logs.forEach(function (x) {
 			DeviceLog(id, x)
@@ -678,7 +678,7 @@ function DeviceLogsClean() {
 }
 
 function DeviceFields(id) {
-	ask({ method: 'device.fields', body: { Id: id } }, function (fields) {
+	ask({ method: 'devices/fields', body: { Id: id } }, function (fields) {
 		if (ID != id) return
 		mount('#device-fields',
 			h('table',
@@ -732,7 +732,7 @@ function DeviceSave(id) {
 	}
 
 	// оправка формы на сервер
-	ask({ method: 'device.update', body: body }, function () {
+	ask({ method: 'devices/update', body: body }, function () {
 		alert('Устройство сохранено')
 	})
 }
@@ -750,7 +750,7 @@ function Settings() {
 
 	var _key
 
-	ask({ method: 'settings' }, function (json) {
+	ask({ method: 'settings/settings' }, function (json) {
 		mount('#view',
 			h('div.container',
 				h('h3', 'Версия сервера'),
@@ -774,7 +774,7 @@ function Settings() {
 					h('button', {
 						innerHTML: 'Сохранить ключ',
 						onclick: function () {
-							ask({ method: 'opc.license', body: { key: _key.value } }, function (data) {
+							ask({ method: 'settings/OpcLicense', body: { key: _key.value } }, function (data) {
 								if (data.Done) alert('Ключ сохранён')
 								Settings()
 							})
@@ -789,7 +789,7 @@ function Settings() {
 				h('button', {
 					innerHTML: 'Зарегистрировать сервер в DCOM',
 					onclick: function () {
-						ask({ method: 'opc.install' }, function (data) {
+						ask({ method: 'settings/OpcIstallDcom' }, function (data) {
 							if (data.Done) alert('Регистрация DCOM выполнена')
 							Settings()
 						})
@@ -798,7 +798,7 @@ function Settings() {
 				h('button', {
 					innerHTML: 'Отменить регистрацию сервера в DCOM',
 					onclick: function () {
-						ask({ method: 'opc.uninstall' }, function (data) {
+						ask({ method: 'settings/OpcUninstallDcom' }, function (data) {
 							if (data.Done) alert('Регистрация DCOM отменена')
 							Settings()
 						})
@@ -807,7 +807,7 @@ function Settings() {
 				h('button', {
 					innerHTML: 'Пересоздать OPC теги',
 					onclick: function () {
-						ask({ method: 'opc.clean' }, function (data) {
+						ask({ method: 'settings/OpcClean' }, function (data) {
 							if (data.Done) alert('Реинициализация OPC тегов выполнена')
 							Settings()
 						})
@@ -821,7 +821,7 @@ function Settings() {
 				h('button', {
 					innerHTML: 'Создать службу',
 					onclick: function () {
-						ask({ method: 'service.create' }, function (data) {
+						ask({ method: 'settings/ServiceCreate' }, function (data) {
 							if (data.Done) alert(data.Done)
 							Settings()
 						})
@@ -830,7 +830,7 @@ function Settings() {
 				h('button', {
 					innerHTML: 'Удалить службу',
 					onclick: function () {
-						ask({ method: 'service.remove' }, function (data) {
+						ask({ method: 'settings/ServiceRemove' }, function (data) {
 							if (data.Done) alert(data.Done)
 							Settings()
 						})
@@ -856,7 +856,7 @@ function UsersTable() {
 	if (accessType < ACCESSTYPE.FULL) return ''
 	var login, pass, access
 
-	ask({ method: 'users' }, function (json) {
+	ask({ method: 'auth/users' }, function (json) {
 		if (!document.getElementById('users')) return
 		mount('#users',
 			h('div.container',
@@ -874,7 +874,7 @@ function UsersTable() {
 								h('button', {
 									innerHTML: 'Удалить',
 									onclick: function () {
-										ask({ method: 'user.delete', body: { Login: user.Login } }, function (json) {
+										ask({ method: 'auth/delete', body: { Login: user.Login } }, function (json) {
 											if (json.Done) UsersTable()
 										})
 									}
@@ -920,7 +920,7 @@ function UsersTable() {
 										AccessType: access.value
 									}
 
-									ask({ method: 'user.create', body: body }, function (json) {
+									ask({ method: 'auth/create', body: body }, function (json) {
 										if (json.Done) UsersTable()
 									})
 								}
@@ -956,9 +956,9 @@ function First() {
 						Password: _pass.value,
 						AccessType: ACCESSTYPE.FULL
 					}
-					ask({ method: 'user.create', body: _body }, function (json) {
+					ask({ method: 'auth/create', body: _body }, function (json) {
 						if (json.Done) {
-							ask({ method: 'login', body: _body }, function (json) {
+							ask({ method: 'auth/login', body: _body }, function (json) {
 								if (json.Done) location.reload()
 							})
 						}
@@ -1001,7 +1001,7 @@ function Login() {
 				h('p', 'Вы вошли как ' + loginName),
 				h('button', 'Выйти', {
 					onclick: function () {
-						ask({ method: 'logout', body: { Token: ls('Inopc-Access-Token') } }, function (json) {
+						ask({ method: 'auth/logout', body: { Token: ls('Inopc-Access-Token') } }, function (json) {
 							if (json.Done) {
 								localStorage.removeItem('Inopc-Access-Token')
 								location.reload()
@@ -1025,7 +1025,7 @@ function Login() {
 							Login: _login.value,
 							Password: _pass.value
 						}
-						ask({ method: 'login', body: _body }, function (json) {
+						ask({ method: 'auth/login', body: _body }, function (json) {
 							if (json.Done) location.reload()
 						})
 					}
@@ -1054,7 +1054,7 @@ function CalcPage() {
 	unsetTimers()
 	if (accessType == ACCESSTYPE.GUEST || accessType == ACCESSTYPE.FIRST) return mount('#view', h('div.container', 'Нет доступа'))
 	
-	ask({ method: 'calc.fields' }, function (/**@type{Formular[]}*/json) {
+	ask({ method: 'formulars/fields' }, function (/**@type{Formular[]}*/json) {
 		mount('#view',
 			h('div', { className: 'container' },
 				h('h3', 'Список вычисляемых тегов'),
@@ -1068,7 +1068,7 @@ function CalcPage() {
 								? h('button', {
 									innerHTML: 'Добавить тег',
 									onclick: function () {
-										ask({ method: 'calc.create' }, function (json) {
+										ask({ method: 'formulars/create' }, function (json) {
 											if (json.Error) alert(json.Error)
 											if (json.Done) {
 												CalcPage()
@@ -1105,7 +1105,7 @@ function CalcPage() {
 }
 
 function CalcValues() {
-	ask({ method: 'calc.values' }, function (/**@type{FormularValue[]}*/json) {
+	ask({ method: 'formulars/values' }, function (/**@type{FormularValue[]}*/json) {
 		json.forEach(x => {
 			var el = document.querySelector('[data-id="' + x.Name + '"]')
 			if (el) {
@@ -1128,7 +1128,7 @@ function CalcValues() {
 function Formular(field) {
 	unsetTimers()
 	if (accessType == ACCESSTYPE.GUEST || accessType == ACCESSTYPE.FIRST) return mount('#view', h('div.container', 'Нет доступа'))
-	ask({ method: 'calc.form', body: { Name: field.Name } }, function (/**@type{string[]}*/json) {
+	ask({ method: 'formulars/form', body: { Name: field.Name } }, function (/**@type{string[]}*/json) {
 		mount('#view',
 			accessType == ACCESSTYPE.WRITE || accessType == ACCESSTYPE.FULL
 				? h('div', { className: 'container', id: 'calc-tag' },
@@ -1159,7 +1159,7 @@ function Formular(field) {
 									innerHTML: 'Удалить',
 									onclick: function () {
 										if (!confirm('Подтвердите удаление тега')) return
-										ask({ method: 'calc.delete', body: { name: field.Name } }, function (json) {
+										ask({ method: 'formulars/delete', body: { name: field.Name } }, function (json) {
 											if (json.Error) alert(json.Error)
 											if (json.Done) {
 												alert('Тег успешно удалён')
@@ -1186,7 +1186,7 @@ function Formular(field) {
 											form.Fields[el.querySelector('input').value] = el.querySelector('select').value
 										})
 
-										ask({ method: 'calc.update', body: form }, function (json) {
+										ask({ method: 'formulars/update', body: form }, function (json) {
 											if (json.Error) alert(json.Error)
 											if (json.Done) {
 												alert('Тег успешно обновлён')
