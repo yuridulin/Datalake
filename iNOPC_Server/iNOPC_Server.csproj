@@ -98,6 +98,7 @@
     <Compile Include="Models\Driver.cs" />
     <Compile Include="Models\Configurations\Settings.cs" />
     <Compile Include="Models\Calculator.cs" />
+    <Compile Include="Storage\Tag.cs" />
     <Compile Include="Storage\OPC.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -107,9 +108,11 @@
     <Compile Include="Web\Api\FormularsController.cs" />
     <Compile Include="Web\Api\DriversController.cs" />
     <Compile Include="Web\Api\SettingsController.cs" />
+    <Compile Include="Web\Api\StorageController.cs" />
     <Compile Include="Web\Controller.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Models\LoginPass.cs" />
+    <Compile Include="Web\RequestTypes\DatalakeRequest.cs" />
     <Compile Include="Web\Router.cs" />
     <Compile Include="Web\RequestTypes\DeviceForm.cs" />
     <Compile Include="Web\RequestTypes\DeviceLogs.cs" />

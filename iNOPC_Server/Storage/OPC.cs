@@ -16,7 +16,7 @@ namespace iNOPC.Server.Storage
 		private static WriteNotificationDelegate _WriteOutDelegate;
 		private static UnknownItemDelegate _UnknownItemDelegate;
 
-		public static Dictionary<string, uint> Tags { get; set; } = new Dictionary<string, uint>();
+		public static Dictionary<string, Tag> Tags { get; set; } = new Dictionary<string, Tag>();
 
 		public static Dictionary<string, object> DefaultFields { get; set; } = new Dictionary<string, object>();
 
@@ -43,7 +43,7 @@ namespace iNOPC.Server.Storage
 			// Функция записи OPC тега
 			foreach (var keyValue in Tags)
 			{
-				if (keyValue.Value == item)
+				if (keyValue.Value.TagHandle == item)
 				{
 					// найдено имя тега, который будет изменяться
 					// надо найти, в какой инстанс какого драйвера надо передать сигнал
@@ -215,7 +215,7 @@ namespace iNOPC.Server.Storage
 			if (!Tags.ContainsKey(path)) return 0;
 
 			object v = 0;
-			ReadTag(Tags[path], ref v);
+			ReadTag(Tags[path].TagHandle, ref v);
 			return v;
 		}
 
@@ -233,11 +233,17 @@ namespace iNOPC.Server.Storage
 				{
 					if (Tags.ContainsKey(path))
 					{
-						UpdateTag(Tags[path], value, quality);
+						UpdateTag(Tags[path].TagHandle, value, quality);
 					}
 					else
 					{
-						Tags[path] = CreateTag(path, value, quality, true);
+						Tags[path] = new Tag
+						{
+							Name = path,
+							Value = value,
+							Quality = quality,
+							TagHandle = CreateTag(path, value, quality, true)
+						};
 					}
 				}
 			}
@@ -253,7 +259,7 @@ namespace iNOPC.Server.Storage
 			{
 				if (Tags.ContainsKey(path))
 				{
-					RemoveTag(Tags[path]);
+					RemoveTag(Tags[path].TagHandle);
 					Tags.Remove(path);
 				}
 			}
@@ -265,14 +271,26 @@ namespace iNOPC.Server.Storage
 			{
 				foreach (var tag in Tags)
 				{
-					RemoveTag(tag.Value);
-					Tags.Remove(tag.Key);
+					RemoveTag(tag.Value.TagHandle);
 				}
+
+				Tags.Clear();
 
 				foreach (var driver in Program.Configuration.Drivers)
 				{
 					driver.Load();
 				}
+			}
+		}
+
+		public static Tag[] GetTagsByNames(string[] names)
+		{
+			lock (Tags)
+			{
+				return Tags
+					.Where(x => names.Length == 0 || names.Contains(x.Key))
+					.Select(x => x.Value)
+					.ToArray();
 			}
 		}
 
