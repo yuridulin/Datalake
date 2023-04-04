@@ -98,7 +98,7 @@
     <Compile Include="Models\Driver.cs" />
     <Compile Include="Models\Configurations\Settings.cs" />
     <Compile Include="Models\Calculator.cs" />
-    <Compile Include="OPC\OPC.cs" />
+    <Compile Include="Storage\OPC.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Models\Configurations\AccessType.cs" />

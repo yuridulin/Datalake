@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using iNOPC.Server.Storage;
 
 namespace iNOPC.Server.Web.Api
 {

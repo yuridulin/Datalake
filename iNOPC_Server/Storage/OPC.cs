@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace iNOPC.Server
+namespace iNOPC.Server.Storage
 {
 	public static class OPC
 	{

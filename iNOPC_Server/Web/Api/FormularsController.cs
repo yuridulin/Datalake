@@ -1,5 +1,6 @@
 ﻿using iNOPC.Server.Models;
 using iNOPC.Server.Models.Configurations;
+using iNOPC.Server.Storage;
 using iNOPC.Server.Web.RequestTypes;
 using System;
 using System.Collections.Generic;
