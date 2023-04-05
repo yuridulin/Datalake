@@ -81,6 +81,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Energomera_CE301_ver12", "D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Datalake", "Datalake\Datalake.csproj", "{79524D3B-7A2D-427C-98D3-FF972D3EABBF}"
 EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "datalakeclient", "DatalakeClient\datalakeclient.esproj", "{BA012892-CFBB-4210-B551-6A42611BD14C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -235,6 +237,12 @@ Global
 		{79524D3B-7A2D-427C-98D3-FF972D3EABBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{79524D3B-7A2D-427C-98D3-FF972D3EABBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{79524D3B-7A2D-427C-98D3-FF972D3EABBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA012892-CFBB-4210-B551-6A42611BD14C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA012892-CFBB-4210-B551-6A42611BD14C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA012892-CFBB-4210-B551-6A42611BD14C}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{BA012892-CFBB-4210-B551-6A42611BD14C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA012892-CFBB-4210-B551-6A42611BD14C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA012892-CFBB-4210-B551-6A42611BD14C}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
