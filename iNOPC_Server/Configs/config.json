@@ -3,7 +3,7 @@
 		{
 			"Id": 2,
 			"Name": "Test",
-			"Path": "C:\\iNOPC\\\\Drivers\\TestDriver_v1.2.dll",
+			"Path": "C:\\iNOPC\\\\Drivers\\TestDriver_v1.3.dll",
 			"Devices": [
 				{
 					"Id": 3,
@@ -26,17 +26,10 @@
 		"WebConsolePort": 81,
 		"WebConsoleSocketPort": 82
 	},
-	"Database": {
-		"UseDatabase": false,
-		"ServerName": "localhost\\SQLEXPRESS",
-		"User": "inopc",
-		"Password": "inopc",
-		"StoreIntervalS": 5
-	},
 	"Formulars": [
 		{
 			"Name": "Calc1",
-			"Description": "Тестовый вычисляемый тег",
+			"Description": "Calc 1",
 			"Formula": "3.1415 + x1",
 			"Interval": 2,
 			"Fields": {
@@ -45,7 +38,7 @@
 		},
 		{
 			"Name": "CalcTags.Calc2",
-			"Description": "Тестовый вычисляемый тег, использующий переменные и встроенные функции",
+			"Description": "Calc 2",
 			"Formula": "x1 - ( x2 * 0.25 ) - Max( x3, Pow( 10, 4 ) ) + m1",
 			"Interval": 5,
 			"Fields": {
@@ -57,7 +50,7 @@
 		},
 		{
 			"Name": "Calc3",
-			"Description": "Вычисляемый тег с ошибкой в формуле",
+			"Description": "Calc 3",
 			"Formula": "x1 + x2)",
 			"Interval": 2,
 			"Fields": {}

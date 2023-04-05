@@ -42,7 +42,7 @@ namespace iNOPC.Server.Models.Configurations
 						args.Result = 0;
 					}
 
-					Program.Log("Параметр " + name + " = " + args.Result);
+					///Program.Log("Параметр " + name + " = " + args.Result);
 				};
 			}
 			else
@@ -57,7 +57,7 @@ namespace iNOPC.Server.Models.Configurations
 
 		public void Calculate(DateTime date)
 		{
-			Program.Log("Расчёт тега " + Name);
+			//Program.Log("Расчёт тега " + Name);
 
 			if ((date - LastCalc).TotalSeconds < Interval) return;
 
@@ -101,7 +101,7 @@ namespace iNOPC.Server.Models.Configurations
 			LastCalc = date;
 			Value = result;
 
-			Program.Log("Значение тега " + Value + ", тип " + Value.GetType().ToString());
+			//Program.Log("Значение тега " + Value + ", тип " + Value.GetType().ToString());
 
 			OPC.Write(Name, result, quality);
 		}

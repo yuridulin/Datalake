@@ -79,6 +79,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpConsole", "Test\TcpConso
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Energomera_CE301_ver12", "Drivers\Energomera_CE301_ver12\Energomera_CE301_ver12.csproj", "{8E3228A9-9D32-49DA-A111-3ED5FF079832}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Datalake", "Datalake\Datalake.csproj", "{79524D3B-7A2D-427C-98D3-FF972D3EABBF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -229,6 +231,10 @@ Global
 		{8E3228A9-9D32-49DA-A111-3ED5FF079832}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E3228A9-9D32-49DA-A111-3ED5FF079832}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8E3228A9-9D32-49DA-A111-3ED5FF079832}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79524D3B-7A2D-427C-98D3-FF972D3EABBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79524D3B-7A2D-427C-98D3-FF972D3EABBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79524D3B-7A2D-427C-98D3-FF972D3EABBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79524D3B-7A2D-427C-98D3-FF972D3EABBF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

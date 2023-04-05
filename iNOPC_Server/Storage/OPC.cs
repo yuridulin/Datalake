@@ -234,6 +234,8 @@ namespace iNOPC.Server.Storage
 					if (Tags.ContainsKey(path))
 					{
 						UpdateTag(Tags[path].TagHandle, value, quality);
+						Tags[path].Value = value;
+						Tags[path].Quality = quality;
 					}
 					else
 					{

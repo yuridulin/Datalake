@@ -135,6 +135,21 @@ function BuildTree(json) {
 			)
 		),
 
+		h('div.node', { route: 'values' },
+			h('div.node-caption', {
+				title: 'Нажмите для перехода к просмотру дерева тегов сервера'
+			},
+				h('i.ic.ic-values'),
+				h('span', {
+					innerHTML: 'Значения',
+					onclick: function () {
+						TreeSetActive('values')
+						Values()
+					}
+				})
+			)
+		),
+
 		accessType == ACCESSTYPE.READ || AUTH() ?
 			json.map(function (driver) {
 				return h('div.node' + (ls(driver.Id) == 'open' ? '.open' : ''), { route: 'driver|' + driver.Id },
@@ -1307,6 +1322,40 @@ function Formular(field) {
 
 		try { document.getElementById('calc-tag-desc').oninput() } catch (e) { }
 	})
+}
+
+
+function Values() {
+
+	unsetTimers()
+	if (accessType == ACCESSTYPE.GUEST || accessType == ACCESSTYPE.FIRST) return mount('#view', h('div.container', 'Нет доступа'))
+
+	mount('#view',
+		h('table', { style: { width: '100%' } },
+			h('thead',
+				h('tr',
+					h('th', 'Name'),
+					h('th', 'Value', { style: { width: '25em' } }),
+					h('th', 'Quality', { style: { width: '10em' } }),
+				),
+			),
+			h('tbody#values', ValuesTick())
+		)
+	)
+
+	function ValuesTick() {
+		ask({ method: 'storage/read', body: { Tags: [] } }, json => {
+			mount('#values',
+				json.Tags.map(x => h('tr',
+					h('td', x.Name),
+					h('td', x.Value),
+					h('td', x.Quality)
+				))
+			)
+		})
+	}
+
+	interval = setInterval(ValuesTick, 5000)
 }
 
 

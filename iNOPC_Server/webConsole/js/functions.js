@@ -149,12 +149,23 @@ function mount(selector) {
 	if (!el) return console.error('Не найден объект по селектору "' + selector + '"')
 	el.innerHTML = ''
 	for (var i = 1; i < arguments.length; i++) {
-		var x = arguments[i]
-		if (x.tagName) {
-			el.appendChild(x)
+		parse(el, arguments[i])
+	}
+
+	function parse(el, arg) {
+		if (arg.tagName) {
+			el.appendChild(arg)
+		} else if (isArray(arg)) {
+			for (var i = 0; i < arg.length; i++) {
+				parse(el, arg[i])
+			}
 		} else {
-			el.insertAdjacentHTML('beforeEnd', String(x))
+			el.insertAdjacentHTML('beforeEnd', String(arg))
 		}
+	}
+
+	function isArray(obj) {
+		return (Object.prototype.toString.call(obj) === '[object Array]')
 	}
 }
 
