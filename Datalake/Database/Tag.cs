@@ -12,6 +12,9 @@ namespace Datalake.Database
 		public string Description { get; set; } = string.Empty;
 
 		[Column]
-		public string Source { get; set; } = string.Empty;
+		public int SourceId { get; set; }
+
+		[Column]
+		public short Interval { get; set; }
 	}
 }

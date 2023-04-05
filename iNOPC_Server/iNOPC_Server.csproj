@@ -112,6 +112,7 @@
     <Compile Include="Web\Controller.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Models\LoginPass.cs" />
+    <Compile Include="Web\RequestTypes\DatalakeResponse.cs" />
     <Compile Include="Web\RequestTypes\DatalakeRequest.cs" />
     <Compile Include="Web\Router.cs" />
     <Compile Include="Web\RequestTypes\DeviceForm.cs" />

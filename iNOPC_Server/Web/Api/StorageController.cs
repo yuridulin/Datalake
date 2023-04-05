@@ -9,7 +9,7 @@ namespace iNOPC.Server.Web.Api
 		{
 			var tags = Storage.OPC.GetTagsByNames(req.Tags);
 
-			return new
+			return new DatalakeResponse
 			{
 				Timestamp = DateTime.Now,
 				Tags = tags,

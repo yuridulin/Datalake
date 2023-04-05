@@ -1,5 +1,4 @@
-﻿using Datalake.Workers;
-using LinqToDB.Data;
+﻿using LinqToDB.Data;
 using System;
 using System.Diagnostics;
 using System.ServiceProcess;
@@ -40,7 +39,8 @@ namespace Datalake
 
 			TokenSource = new CancellationTokenSource();
 
-			Task.Run(() => CollectorWorker.Start(TokenSource.Token));
+			Task.Run(() => Web.Http.Start());
+			Task.Run(() => Collector.CollectorWorker.Start(TokenSource.Token));
 		}
 
 		public static void Stop()
