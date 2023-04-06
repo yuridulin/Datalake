@@ -13,10 +13,10 @@ namespace Datalake.Database
 		public DateTime Date { get; set; }
 
 		[Column]
-		public string Text { get; set; }
+		public string Text { get; set; } = null;
 
 		[Column]
-		public decimal? Number { get; set; }
+		public decimal? Number { get; set; } = null;
 
 		[Column]
 		public short Quality { get; set; }

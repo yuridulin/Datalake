@@ -10,13 +10,13 @@
 
 		public decimal? GetNumber()
 		{
-			if (decimal.TryParse(Value.ToString(), out decimal d)) return d;
+			if (decimal.TryParse(Value?.ToString(), out decimal d)) return d;
 			else return null;
 		}
 
 		public string GetText()
 		{
-			return Value.ToString();
+			return Value?.ToString();
 		}
 	}
 }

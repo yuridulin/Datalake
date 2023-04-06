@@ -15,6 +15,10 @@ namespace Datalake.Database
 		public int SourceId { get; set; }
 
 		[Column]
+		public string SourceItem { get; set; }
+
+		[Column]
 		public short Interval { get; set; }
+
 	}
 }

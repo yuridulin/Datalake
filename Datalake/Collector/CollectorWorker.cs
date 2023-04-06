@@ -58,6 +58,7 @@ namespace Datalake.Collector
 							.Select(x => new SourceItem
 							{
 								TagName = x.TagName,
+								ItemName = x.SourceItem,
 								Interval = TimeSpan.FromSeconds(x.Interval)
 							})
 							.ToList()

@@ -24,32 +24,43 @@ namespace Datalake.Collector.Models
 			var now = DateTime.Now;
 			var tagsToUpdate = Tags
 				.Where(x => x.IsTimed(now))
-				.Select(x => x.TagName)
+				.ToList();
+
+			var items = tagsToUpdate
+				.Select(x => x.ItemName)
+				.Distinct()
 				.ToArray();
 
 			try
 			{
 				IsActive = true;
 
-				var res = AskInopc(tagsToUpdate, Address);
+				var res = AskInopc(items, Address);
 
 				using (var db = new DatabaseContext())
 				{
-					foreach (var item in res.Tags)
+					foreach (var tag in tagsToUpdate)
 					{
+						var value = res.Tags.FirstOrDefault(x => x.Name == tag.ItemName);
+						if (value == null)
+						{
+							Console.WriteLine($"Не найден тег по адресу: {tag.ItemName}");
+							continue;
+						}
+
 						db.TagsLive
-							.Where(x => x.TagName == item.Name)
-							.Set(x => x.Text, item.GetText())
-							.Set(x => x.Number, item.GetNumber())
-							.Set(x => x.Quality, (short)item.Quality)
+							.Where(x => x.TagName == tag.TagName)
+							.Set(x => x.Text, value.GetText())
+							.Set(x => x.Number, value.GetNumber())
+							.Set(x => x.Quality, (short)value.Quality)
 							.Set(x => x.Date, res.Timestamp)
 							.Update();
 
 						db.TagsHistory
-							.Value(x => x.TagName, item.Name)
-							.Value(x => x.Text, item.GetText())
-							.Value(x => x.Number, item.GetNumber())
-							.Value(x => x.Quality, (short)item.Quality)
+							.Value(x => x.TagName, tag.TagName)
+							.Value(x => x.Text, value.GetText())
+							.Value(x => x.Number, value.GetNumber())
+							.Value(x => x.Quality, (short)value.Quality)
 							.Value(x => x.Date, res.Timestamp)
 							.Insert();
 					}
@@ -61,7 +72,7 @@ namespace Datalake.Collector.Models
 			}
 			finally
 			{
-				foreach (var tag in Tags.Where(x => tagsToUpdate.Contains(x.TagName)))
+				foreach (var tag in tagsToUpdate)
 				{
 					tag.Reset(now);
 				}

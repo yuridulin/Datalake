@@ -58,6 +58,12 @@ namespace Datalake.Web
 				}
 			}
 
+			#if DEBUG
+			Response.AddHeader("Access-Control-Allow-Origin", "*");
+			Response.AddHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+			Response.AddHeader("Access-Control-Allow-Headers", "x-requested-with, Content-Type, origin, authorization, accept, x-access-token");
+			#endif
+
 			// Отправка ответа клиенту
 			Response.StatusCode = res.StatusCode;
 			Response.ContentType = res.ContentType;

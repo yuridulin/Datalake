@@ -6,6 +6,8 @@ namespace Datalake.Collector.Models
 	{
 		public string TagName { get; set; }
 
+		public string ItemName { get; set; }
+
 		public TimeSpan Interval { get; set; }
 
 

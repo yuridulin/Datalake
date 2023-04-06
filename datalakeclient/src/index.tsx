@@ -1,14 +1,31 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
+import { RouterProvider } from 'react-router-dom'
+import router from './router/router'
+import axios from 'axios'
+import { notification } from 'antd'
 
-const root = ReactDOM.createRoot(
-	document.getElementById('root') as HTMLElement
+axios.defaults.baseURL = 'http://localhost:83/api'
+axios.interceptors.response.use(
+	res => {
+		if (res.data.Done) {
+			notification.info({ placement: 'bottomLeft', message: res.data.Done })
+		}
+		if (res.data.Error) {
+			notification.error({ placement: 'bottomLeft', message: res.data.Error })
+		}
+		return res
+	},
+	err => {
+		notification.error({ placement: 'bottomLeft', message: err.message })
+		return Promise.reject(err)
+	}
 )
 
-root.render(
-	<React.StrictMode>
-		<App />
-	</React.StrictMode>
-)
+ReactDOM
+	.createRoot(document.getElementById('root') as HTMLElement)
+	.render(
+		<React.StrictMode>
+			<RouterProvider router={router} />
+		</React.StrictMode>
+	)
