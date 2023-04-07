@@ -40,6 +40,8 @@ namespace Datalake.Collector
 				var lastUpdate = db.GetUpdateDate();
 				if (lastUpdate == StoredUpdate) return;
 
+				Console.WriteLine("Выполняется пересборка пакетов обновления");
+
 				var tags = db.Tags
 					.ToList();
 

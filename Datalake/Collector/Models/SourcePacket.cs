@@ -26,10 +26,14 @@ namespace Datalake.Collector.Models
 				.Where(x => x.IsTimed(now))
 				.ToList();
 
+			if (tagsToUpdate.Count == 0) return;
+
 			var items = tagsToUpdate
 				.Select(x => x.ItemName)
 				.Distinct()
 				.ToArray();
+
+			Console.WriteLine("Обновление тегов: " + string.Join(", ", tagsToUpdate.Select(x => x.TagName)));
 
 			try
 			{
@@ -47,6 +51,8 @@ namespace Datalake.Collector.Models
 							Console.WriteLine($"Не найден тег по адресу: {tag.ItemName}");
 							continue;
 						}
+
+						Console.WriteLine($"Запись тега {tag.TagName}: {value.Value}");
 
 						db.TagsLive
 							.Where(x => x.TagName == tag.TagName)
