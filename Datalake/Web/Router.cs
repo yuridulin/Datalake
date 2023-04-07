@@ -141,20 +141,30 @@ namespace Datalake.Web
 					{
 						if (jsonParams.ContainsKey(p.Name.ToLower()))
 						{
+							var jsonParam = jsonParams[p.Name.ToLower()];
+							var jsonType = jsonParam.GetType();
+
 							try
 							{
-								var param = Convert.ChangeType(jsonParams[p.Name.ToLower()], p.ParameterType);
-								invokeParams.Add(param);
+								if (jsonType == typeof(JObject))
+								{
+									var param = (jsonParam as JObject).ToObject(p.ParameterType);
+									invokeParams.Add(param);
+								}
+								else if (jsonType == typeof(JArray))
+								{
+									var param = (jsonParam as JArray).ToObject(p.ParameterType);
+									invokeParams.Add(param);
+								}
+								else
+								{
+									var param = Convert.ChangeType(jsonParam, p.ParameterType);
+									invokeParams.Add(param);
+								}
 							}
 							catch
 							{
-								try
-								{
-									var param = (jsonParams[p.Name.ToLower()] as JObject).ToObject(p.ParameterType);
-									invokeParams.Add(param);
-								}
-								catch
-								{ }
+								Console.WriteLine("Не получилось определить JSON тип: " + jsonType);
 							}
 						}
 					}

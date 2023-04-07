@@ -104,9 +104,12 @@
     <Compile Include="Web\Api\SourcesController.cs" />
     <Compile Include="Web\Api\ConfigController.cs" />
     <Compile Include="Web\Api\TagsController.cs" />
+    <Compile Include="Web\Api\ValuesController.cs" />
     <Compile Include="Web\Models\Controller.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Web\Models\Answer.cs" />
+    <Compile Include="Web\Models\TagValue.cs" />
+    <Compile Include="Web\Models\TagValuesRange.cs" />
     <Compile Include="Web\Router.cs" />
     <Compile Include="Collector\CollectorWorker.cs" />
   </ItemGroup>

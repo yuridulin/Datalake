@@ -6,6 +6,9 @@ namespace Datalake.Database
 	[Table(Name = "TagsHistory")]
 	public class TagHistory
 	{
+		[Column, Identity]
+		public long Id { get; set; }
+
 		[Column]
 		public string TagName { get; set; }
 
