@@ -23,7 +23,7 @@ export default function Tree() {
 			: <div className="tree">
 				<div className="tree-item">
 					<i className="material-icons">pin</i>
-					<NavLink to="/values">Значения</NavLink>
+					<NavLink to="/">Значения</NavLink>
 				</div>
 				<div className="tree-item">
 					<i className="material-icons">style</i>

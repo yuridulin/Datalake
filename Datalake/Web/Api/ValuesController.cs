@@ -22,6 +22,8 @@ namespace Datalake.Web.Api
 
 		public object History(string[] tags, DateTime old, DateTime young, int resolution)
 		{
+			Console.WriteLine($"History for [{string.Join(", ", tags)}] from {old} to {young} with {resolution}");
+
 			using (var db = new DatabaseContext())
 			{
 				// Выгружаем из базы записанные значения в диапазоне old .. young
@@ -43,6 +45,8 @@ namespace Datalake.Web.Api
 					.Where(x => x.Date <= young)
 					.ToList();
 
+				Console.WriteLine("Stored: " + data.Count);
+
 				var previousIds = db.TagsHistory
 					.Where(x => tags.Contains(x.TagName))
 					.Where(x => x.Date <= old)
@@ -62,6 +66,7 @@ namespace Datalake.Web.Api
 						Values = g
 							.Select(x => new TagValue
 							{
+								Id = x.Id,
 								Date = x.Date,
 								Number = x.Number,
 								Text = x.Text
@@ -70,6 +75,8 @@ namespace Datalake.Web.Api
 					})
 					.ToList();
 
+				Console.WriteLine("Series: " + series.Count);
+
 				foreach (var range in series)
 				{
 					var previous = previousValues.FirstOrDefault(x => x.TagName == range.TagName);
@@ -77,6 +84,7 @@ namespace Datalake.Web.Api
 					{
 						range.Values.Insert(0, new TagValue
 						{
+							Id = previous.Id,
 							Date = old,
 							Number = previous.Number,
 							Text = previous.Text
@@ -114,6 +122,7 @@ namespace Datalake.Web.Api
 
 							intervalValues.Add(new TagValue
 							{
+								Id = (long)i,
 								Date = stepDate,
 								Text = value.Text,
 								Number = value.Number,
@@ -121,6 +130,8 @@ namespace Datalake.Web.Api
 						}
 
 						range.Values = intervalValues;
+
+						Console.WriteLine($"Range for {range.TagName} has {range.Values.Count}");
 					}
 
 					return series;

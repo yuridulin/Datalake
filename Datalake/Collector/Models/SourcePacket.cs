@@ -78,9 +78,10 @@ namespace Datalake.Collector.Models
 			}
 			finally
 			{
-				foreach (var tag in tagsToUpdate)
+				var tagNames = tagsToUpdate.Select(x => x.TagName).ToList();
+				foreach (var tag in Tags)
 				{
-					tag.Reset(now);
+					if (tagNames.Contains(tag.TagName)) tag.Reset(now);
 				}
 
 				IsActive = false;
@@ -98,7 +99,7 @@ namespace Datalake.Collector.Models
 
 			web.ContentType = "application/json";
 			web.Method = "POST";
-			web.Timeout = 5000;
+			web.Timeout = 1000;
 
 			using (var streamWriter = new StreamWriter(web.GetRequestStream()))
 			{

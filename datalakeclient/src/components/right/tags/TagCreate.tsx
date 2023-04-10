@@ -62,7 +62,7 @@ export default function TagCreate({ visible, setVisible, loadTable }: {
 			></Select>
 			<div>Путь к данным в источнике</div>
 			<Input value={form.SourceItem} onChange={e => setForm({ ...form, SourceItem: e.target.value })} />
-			<div>Интервал опроса (0, если только по изменению)</div>
+			<div>Интервал опроса в секундах (0, если только по изменению)</div>
 			<InputNumber value={form.Interval} onChange={value => setForm({ ...form, Interval: Number(value) })} />
 		</Modal>
 	)

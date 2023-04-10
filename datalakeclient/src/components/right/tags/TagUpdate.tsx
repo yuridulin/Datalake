@@ -102,7 +102,7 @@ export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 			<div className="form-caption">Путь к данным в источнике</div>
 			<Input value={form.SourceItem} onChange={e => setForm({ ...form, SourceItem: e.target.value })} />
 
-			<div className="form-caption">Интервал опроса (0, если только по изменению)</div>
+			<div className="form-caption">Интервал опроса в секундах (0, если только по изменению)</div>
 			<InputNumber value={form.Interval} onChange={value => setForm({ ...form, Interval: Number(value) })} />
 		</Modal>
 	)

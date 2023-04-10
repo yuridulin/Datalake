@@ -5,7 +5,7 @@ export default class tagsApi {
 
 	static async list() {
 		let res = await axios.post('tags/list')
-		return res.data
+		return res.data as Tag[]
 	}
 
 	static async create(form: Tag) {

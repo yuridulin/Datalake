@@ -4,6 +4,9 @@ import { RouterProvider } from 'react-router-dom'
 import router from './router/router'
 import axios from 'axios'
 import { notification } from 'antd'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
 
 axios.defaults.baseURL = 'http://localhost:83/api'
 axios.interceptors.response.use(
