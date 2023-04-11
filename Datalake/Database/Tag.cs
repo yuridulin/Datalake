@@ -19,6 +19,5 @@ namespace Datalake.Database
 
 		[Column]
 		public short Interval { get; set; }
-
 	}
 }

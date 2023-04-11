@@ -12,8 +12,16 @@ export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 }) {
 
 	const [ form, setForm ] = useState({ TagName: tagName, Description: '', SourceId: 0, SourceItem: '', Interval: 0 })
-
 	const [ sources, setSources ] = useState({ default: '', options: [] as { value: string, label: string }[] })
+
+	const [ getSources, isSourcesLoading ] = useFetching(async () => {
+		let res = await sourcesApi.list()
+		if (res) {
+			let options = res.map(x => ({ value: String(x.Id), label: x.Name }))
+			setSources({ default: String(form.SourceId), options })
+			console.log(sources)
+		}
+	})
 
 	const [ update ] = useFetching(async () => {
 		let res = await tagsApi.update(form)
@@ -33,18 +41,12 @@ export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 
 	const [ load ] = useFetching(async () => {
 		let res = await tagsApi.read(tagName)
-		if (res) setForm(res)
-	})
-
-	const [ getSources, isSourcesLoading ] = useFetching(async () => {
-		let res = await sourcesApi.list()
 		if (res) {
-			let options = res.map(x => ({ value: String(x.Id), label: x.Name }))
-			setSources({ default: String(form.SourceId), options })
-			console.log(sources)
+			setForm(res)
+			getSources()
 		}
 	})
-
+	
 	const prepare = () => {
 		if (visible) {
 			load()
