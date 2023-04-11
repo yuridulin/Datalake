@@ -8,11 +8,25 @@ namespace Datalake.Web.Api
 {
 	public class TagsController : Controller
 	{
-		public Tag[] List()
+		public object List()
 		{
 			using (var db = new DatabaseContext())
 			{
-				return db.Tags.ToArray();
+				var sources = db.Sources.ToList();
+
+				return db.Tags
+					.Select(x => new
+					{
+						x.TagName,
+						x.TagType,
+						x.Description,
+						x.SourceId,
+						x.SourceItem,
+						x.Interval,
+						Source = sources.DefaultIfEmpty(new Source { Name = "?" }).FirstOrDefault(s => s.Id == x.SourceId).Name,
+
+					})
+					.ToList();
 			}
 		}
 

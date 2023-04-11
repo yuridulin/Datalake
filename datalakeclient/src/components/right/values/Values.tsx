@@ -5,6 +5,7 @@ import { useInterval } from "../../../hooks/useInterval"
 import { Navigate } from "react-router-dom"
 import router from "../../../router/router"
 import { ValueRange } from "../../../@types/valueRange"
+import TagType from "../../small/TagType"
 
 export default function Values() {
 
@@ -39,10 +40,7 @@ export default function Values() {
 					<tr key={x.TagName} onClick={() => router.navigate(`/values/${x.TagName}`)}>
 						<td>{x.TagName}</td>
 						<td>
-							{x.TagType === 0 ? 'Строка' 
-							: x.TagType === 1 ? 'Число'
-							: x.TagType === 2 ? 'Дискрет'
-							: 'Неизвестен'}
+							<TagType tagType={x.TagType} />
 						</td>
 						{x.Values.length > 0
 						? <>

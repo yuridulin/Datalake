@@ -6,6 +6,7 @@ import { Button, DatePicker, Select } from "antd"
 import dayjs from "dayjs"
 import locale from 'antd/es/date-picker/locale/ru_RU'
 import { ValueRange } from "../../../@types/valueRange"
+import TagType from "../../small/TagType"
 
 export default function ValueHistory() {
 
@@ -40,13 +41,8 @@ export default function ValueHistory() {
 		:
 		<div>
 			<div style={{ marginBottom: '.5em' }}>
-				<span style={{ border: '1px solid #eee', padding: '2px .5em', borderRadius: '.5em', marginRight: '.5em' }}>
-					{range.TagType === 0 ? 'S'
-					: range.TagType === 1 ? 'N'
-					: range.TagType === 2 ? 'B'
-					: '?'}
-				</span>
-				<b style={{ fontWeight: '500' }}>{tagName}</b>
+				<b style={{ fontWeight: '500', marginRight: '.5em' }}>{tagName}</b>
+				<TagType tagType={range.TagType} />
 			</div>
 			<div>
 				<span style={{ marginRight: '.5em' }}>История с</span>

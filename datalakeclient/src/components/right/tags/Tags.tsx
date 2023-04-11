@@ -5,6 +5,7 @@ import { Tag } from "../../../@types/tag"
 import { Button } from 'antd'
 import TagCreate from "./TagCreate"
 import TagUpdate from "./TagUpdate"
+import TagType from "../../small/TagType"
 
 export default function Tags() {
 
@@ -32,16 +33,20 @@ export default function Tags() {
 					<thead>
 						<tr>
 							<th>Имя</th>
-							<th>Описание</th>
+							<th>Тип</th>
 							<th>Источник</th>
+							<th>Описание</th>
 						</tr>
 					</thead>
 					<tbody>
 					{tags.map(x =>
 						<tr onClick={() => { setId(x.TagName); setIsUpdate(true) }}>
 							<td>{x.TagName}</td>
+							<td>
+								<TagType tagType={x.TagType} />
+							</td>
+							<td>{x.Source}</td>
 							<td>{x.Description}</td>
-							<td>{x.SourceId}</td>
 						</tr>
 					)}
 					</tbody>

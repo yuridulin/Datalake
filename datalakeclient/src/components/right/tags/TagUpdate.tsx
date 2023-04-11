@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useFetching } from "../../../hooks/useFetching";
 import tagsApi from "../../../api/tagsApi";
 import sourcesApi from "../../../api/sourcesApi";
+import { Tag } from "../../../@types/tag";
 
 export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 	tagName: string
@@ -11,7 +12,7 @@ export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 	loadTable: (x?: any) => void
 }) {
 
-	const [ form, setForm ] = useState({ TagName: tagName, Description: '', SourceId: 0, SourceItem: '', Interval: 0 })
+	const [ form, setForm ] = useState({} as Tag)
 	const [ sources, setSources ] = useState({ default: '', options: [] as { value: string, label: string }[] })
 
 	const [ getSources, isSourcesLoading ] = useFetching(async () => {
@@ -83,6 +84,14 @@ export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 				value={form.TagName}
 				onChange={e => setForm({ ...form, TagName: e.target.value })}
 			/>
+
+			<div className="form-caption">Тип</div>
+			<Select
+				options={[{ value: 0, label: 'строка' }, { value: 1, label: 'число' }, { value: 2, label: 'дискрет' }]}
+				value={form.TagType}
+				onChange={value => setForm({ ...form, TagType: value })}
+				style={{ width: '100%' }}
+			></Select>
 			
 			<div className="form-caption">Описание</div>
 			<Input.TextArea

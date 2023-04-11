@@ -50,6 +50,7 @@ code {
 	bottom: 0;
 	padding: 1em;
 	background-color: #fefefe;
+	overflow-y: scroll;
 }
 
 
@@ -166,6 +167,7 @@ code {
 .view-table {
 	border-collapse: collapse;
 	width: 70em;
+	max-width: 100%;
 	font-size: .9em;
 }
 
