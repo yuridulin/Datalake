@@ -125,12 +125,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collector\CollectorExtensions.cs" />
     <Compile Include="Database\Settings.cs" />
     <Compile Include="Database\Source.cs" />
     <Compile Include="Database\Tag.cs" />
+    <Compile Include="Database\Enums\TagHistoryUse.cs" />
     <Compile Include="Database\TagLive.cs" />
     <Compile Include="Database\TagHistory.cs" />
-    <Compile Include="Database\TagType.cs" />
+    <Compile Include="Database\Enums\TagQuality.cs" />
+    <Compile Include="Database\Enums\TagType.cs" />
     <Compile Include="Database\_DatabaseContext.cs" />
     <Compile Include="Collector\Models\InopcTag.cs" />
     <Compile Include="Collector\Models\DatalakeRequest.cs" />
@@ -146,8 +149,8 @@
     <Compile Include="Web\Models\Controller.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Web\Models\Answer.cs" />
-    <Compile Include="Web\Models\TagValue.cs" />
-    <Compile Include="Web\Models\TagValuesRange.cs" />
+    <Compile Include="Collector\Models\TagValue.cs" />
+    <Compile Include="Collector\Models\TagValuesRange.cs" />
     <Compile Include="Web\Router.cs" />
     <Compile Include="Collector\CollectorWorker.cs" />
   </ItemGroup>

@@ -1,4 +1,4 @@
-﻿namespace Datalake.Database
+﻿namespace Datalake.Database.Enums
 {
 	public enum TagType
 	{

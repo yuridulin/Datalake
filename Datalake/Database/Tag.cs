@@ -1,4 +1,5 @@
-﻿using LinqToDB.Mapping;
+﻿using Datalake.Database.Enums;
+using LinqToDB.Mapping;
 
 namespace Datalake.Database
 {

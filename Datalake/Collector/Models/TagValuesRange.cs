@@ -1,7 +1,7 @@
-﻿using Datalake.Database;
+﻿using Datalake.Database.Enums;
 using System.Collections.Generic;
 
-namespace Datalake.Web.Models
+namespace Datalake.Collector.Models
 {
 	public class TagValuesRange
 	{

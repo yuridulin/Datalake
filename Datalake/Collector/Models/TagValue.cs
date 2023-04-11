@@ -1,7 +1,7 @@
-﻿using Datalake.Database;
+﻿using Datalake.Database.Enums;
 using System;
 
-namespace Datalake.Web.Models
+namespace Datalake.Collector.Models
 {
 	public class TagValue
 	{
@@ -11,6 +11,6 @@ namespace Datalake.Web.Models
 
 		public object Value { get; set; }
 
-		public short Quality { get; set; }
+		public TagQuality Quality { get; set; }
 	}
 }

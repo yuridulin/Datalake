@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Enums;
 using Datalake.Web.Models;
 using LinqToDB;
 using System;
@@ -48,7 +49,7 @@ namespace Datalake.Web.Api
 				db.TagsLive
 					.Value(x => x.TagName, tagName)
 					.Value(x => x.Date, DateTime.Now)
-					.Value(x => x.Quality, (short)0)
+					.Value(x => x.Quality, TagQuality.Bad)
 					.Insert();
 
 				db.SetUpdateDate();

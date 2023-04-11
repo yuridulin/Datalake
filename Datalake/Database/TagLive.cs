@@ -1,4 +1,5 @@
-﻿using LinqToDB.Mapping;
+﻿using Datalake.Database.Enums;
+using LinqToDB.Mapping;
 using System;
 
 namespace Datalake.Database
@@ -13,13 +14,13 @@ namespace Datalake.Database
 		public DateTime Date { get; set; }
 
 		[Column]
-		public string Text { get; set; } = null;
+		public string Text { get; set; }
 
 		[Column]
-		public decimal? Number { get; set; } = null;
+		public decimal? Number { get; set; }
 
 		[Column]
-		public short Quality { get; set; }
+		public TagQuality Quality { get; set; }
 
 		public object Value(TagType type)
 		{

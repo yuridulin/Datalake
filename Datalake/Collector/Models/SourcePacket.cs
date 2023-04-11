@@ -54,27 +54,13 @@ namespace Datalake.Collector.Models
 
 						Console.WriteLine($"Запись тега {tag.TagName}: {value.Value}");
 
-						db.TagsLive
-							.Where(x => x.TagName == tag.TagName)
-							.Set(x => x.Text, value.GetText())
-							.Set(x => x.Number, value.GetNumber())
-							.Set(x => x.Quality, (short)value.Quality)
-							.Set(x => x.Date, res.Timestamp)
-							.Update();
-
-						db.TagsHistory
-							.Value(x => x.TagName, tag.TagName)
-							.Value(x => x.Text, value.GetText())
-							.Value(x => x.Number, value.GetNumber())
-							.Value(x => x.Quality, (short)value.Quality)
-							.Value(x => x.Date, res.Timestamp)
-							.Insert();
+						db.WriteToHistory(tag.TagName, res.Timestamp, value.GetText(), value.GetNumber(), (short)value.Quality);
 					}
 				}
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Collector error: " + ex.Message);
+				Console.WriteLine(DateTime.Now + " [" + nameof(CollectorWorker) + "] " + ex.ToString());
 			}
 			finally
 			{
