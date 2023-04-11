@@ -12,5 +12,7 @@ namespace Datalake.Collector.Models
 		public object Value { get; set; }
 
 		public TagQuality Quality { get; set; }
+
+		public TagHistoryUse Using { get; set; }
 	}
 }

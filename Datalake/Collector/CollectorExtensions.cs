@@ -137,7 +137,8 @@ namespace Datalake.Collector
 							Id = 0,
 							Date = v.Date,
 							Value = v.Value(x.TagType),
-							Quality = v.Quality
+							Quality = v.Quality,
+							Using = TagHistoryUse.Basic
 						})
 						.ToList()
 				})
@@ -158,7 +159,7 @@ namespace Datalake.Collector
 
 			do
 			{
-				string tableName = $"TagHistory_{seek:yyyy_MM_dd}";
+				string tableName = $"TagsHistory_{seek:yyyy_MM_dd}";
 
 				var table = db.GetTable<TagHistory>().TableName(tableName);
 
@@ -169,8 +170,6 @@ namespace Datalake.Collector
 					.Where(x => x.Using == TagHistoryUse.Basic)
 					.OrderBy(x => x.Date)
 					.ToList();
-
-				data.AddRange(chunk);
 
 				if (seek == old.Date)
 				{
@@ -200,10 +199,12 @@ namespace Datalake.Collector
 						})
 						.ToList();
 
-					data.AddRange(chunk);
+					data.AddRange(previousValues);
 				}
 
-				seek.AddDays(1);
+				data.AddRange(chunk);
+
+				seek = seek.AddDays(1);
 			}
 			while (seek <= young);
 
@@ -220,7 +221,8 @@ namespace Datalake.Collector
 							Id = x.Id,
 							Date = x.Date,
 							Value = x.Value(tag.TagType),
-							Quality = x.Quality
+							Quality = x.Quality,
+							Using = x.Using,
 						})
 						.ToList()
 				})
@@ -259,7 +261,8 @@ namespace Datalake.Collector
 							Id = (long)i,
 							Date = stepDate,
 							Value = value.Value,
-							Quality = value.Quality
+							Quality = value.Quality,
+							Using = value.Using
 						});
 					}
 
