@@ -1,8 +1,6 @@
 export interface Value {
 	Id: number
-	TagName: string
 	Date: date
-	Text: string
-	Number: number
+	Value: string | number | boolean
 	Quality: number
 }

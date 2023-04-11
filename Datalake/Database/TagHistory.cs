@@ -23,5 +23,15 @@ namespace Datalake.Database
 
 		[Column]
 		public short Quality { get; set; }
+
+		public object Value(TagType type)
+		{
+			switch (type)
+			{
+				case TagType.Number: return Number;
+				case TagType.Boolean: return Number != 0;
+				default: return Text;
+			}
+		}
 	}
 }

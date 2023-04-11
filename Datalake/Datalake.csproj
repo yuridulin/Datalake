@@ -130,6 +130,7 @@
     <Compile Include="Database\Tag.cs" />
     <Compile Include="Database\TagLive.cs" />
     <Compile Include="Database\TagHistory.cs" />
+    <Compile Include="Database\TagType.cs" />
     <Compile Include="Database\_DatabaseContext.cs" />
     <Compile Include="Collector\Models\InopcTag.cs" />
     <Compile Include="Collector\Models\DatalakeRequest.cs" />

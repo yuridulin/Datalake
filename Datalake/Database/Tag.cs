@@ -19,5 +19,8 @@ namespace Datalake.Database
 
 		[Column]
 		public short Interval { get; set; }
+
+		[Column]
+		public TagType TagType { get; set; }
 	}
 }

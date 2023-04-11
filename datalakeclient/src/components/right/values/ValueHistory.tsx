@@ -17,7 +17,7 @@ export default function ValueHistory() {
 		young: dayjs(new Date()).format(dateFormat),
 		resolution: 0
 	})
-	const [ range, setRange ] = useState({ TagName: '', Values: [] } as ValueRange)
+	const [ range, setRange ] = useState({ TagName: '', TagType: 0, Values: [] } as ValueRange)
 
 	const resolutions = [
 		{ value: 0, label: 'по изменению' },
@@ -27,7 +27,7 @@ export default function ValueHistory() {
 
 	const [ load, , error ] = useFetching(async () => {
 		let data = await valuesApi.history({ tags: [tagName || ''], ...form })
-		if (data) setRange(data[0])
+		if (data && data.length > 0) setRange(data[0])
 	})
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -39,7 +39,15 @@ export default function ValueHistory() {
 		<Navigate to="/offline" />
 		:
 		<div>
-			<div>Тег {tagName}</div>
+			<div style={{ marginBottom: '.5em' }}>
+				<span style={{ border: '1px solid #eee', padding: '2px .5em', borderRadius: '.5em', marginRight: '.5em' }}>
+					{range.TagType === 0 ? 'S'
+					: range.TagType === 1 ? 'N'
+					: range.TagType === 2 ? 'B'
+					: '?'}
+				</span>
+				<b style={{ fontWeight: '500' }}>{tagName}</b>
+			</div>
 			<div>
 				<span style={{ marginRight: '.5em' }}>История с</span>
 				<DatePicker
@@ -70,17 +78,15 @@ export default function ValueHistory() {
 				<thead>
 					<tr>
 						<th>Дата</th>
-						<th>Строковое значение</th>
-						<th>Числовое значение</th>
+						<th>Значение</th>
 						<th>Качество</th>
 					</tr>
 				</thead>
 				<tbody>
-					{range.Values.map(x => 
+					{range.Values.map(x =>
 					<tr key={x.Id}>
-						<td>{x.Date}</td>
-						<td>{x.Text}</td>
-						<td>{x.Number}</td>
+						<td>{dayjs(x.Date).format('DD.MM.YYYY HH:mm:ss')}</td>
+						<td>{x.Value}</td>
 						<td>{x.Quality}</td>
 					</tr>
 					)}

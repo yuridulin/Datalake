@@ -12,18 +12,38 @@ namespace Datalake.Web.Api
 		{
 			using (var db = new DatabaseContext())
 			{
+				var dbTags = db.Tags
+					.Where(x => tags.Length == 0 || tags.Contains(x.TagName))
+					.ToList();
+
 				var values = db.TagsLive
 					.Where(x => tags.Length == 0 || tags.Contains(x.TagName))
 					.ToList();
 
-				return values;
+				var series = dbTags
+					.Select(x => new TagValuesRange
+					{
+						TagType = x.TagType,
+						TagName = x.TagName,
+						Values = values
+							.Where(v => x.TagName == v.TagName)
+							.Select(v => new TagValue
+							{
+								Id = 0,
+								Date = v.Date,
+								Value = v.Value(x.TagType),
+								Quality = v.Quality
+							})
+							.ToList()
+					})
+					.ToList();
+
+				return series;
 			}
 		}
 
 		public object History(string[] tags, DateTime old, DateTime young, int resolution)
 		{
-			Console.WriteLine($"History for [{string.Join(", ", tags)}] from {old} to {young} with {resolution}");
-
 			using (var db = new DatabaseContext())
 			{
 				// Выгружаем из базы записанные значения в диапазоне old .. young
@@ -39,13 +59,16 @@ namespace Datalake.Web.Api
 				 * При создании новой суточной таблицы так же делать стартовые значения всех тегов
 				 */
 
+				var dbTags = db.Tags
+					.Where(x => tags.Contains(x.TagName))
+					.ToList();
+
 				var data = db.TagsHistory
 					.Where(x => tags.Contains(x.TagName))
 					.Where(x => x.Date > old)
 					.Where(x => x.Date <= young)
+					.OrderBy(x => x.Date)
 					.ToList();
-
-				Console.WriteLine("Stored: " + data.Count);
 
 				var previousIds = db.TagsHistory
 					.Where(x => tags.Contains(x.TagName))
@@ -58,38 +81,47 @@ namespace Datalake.Web.Api
 					.Where(x => previousIds.Contains(x.Id))
 					.ToList();
 
-				var series = data
-					.GroupBy(x => x.TagName)
-					.Select(g => new TagValuesRange
-					{
-						TagName = g.Key,
-						Values = g
-							.Select(x => new TagValue
-							{
-								Id = x.Id,
-								Date = x.Date,
-								Number = x.Number,
-								Text = x.Text
-							})
-							.ToList()
-					})
-					.ToList();
+				var series = new List<TagValuesRange>();
 
-				Console.WriteLine("Series: " + series.Count);
-
-				foreach (var range in series)
+				foreach (var tag in dbTags)
 				{
+					Console.WriteLine($"Тег {tag.TagName} типа {tag.TagType}");
+
+					var range = new TagValuesRange
+					{
+						TagName = tag.TagName,
+						TagType = tag.TagType,
+						Values = new List<TagValue>()
+					};
+
 					var previous = previousValues.FirstOrDefault(x => x.TagName == range.TagName);
 					if (previous != null)
 					{
-						range.Values.Insert(0, new TagValue
+						range.Values.Add(new TagValue
 						{
 							Id = previous.Id,
-							Date = old,
-							Number = previous.Number,
-							Text = previous.Text
+							Date = previous.Date,
+							Value = previous.Value(range.TagType),
+							Quality = previous.Quality
 						});
+
+						Console.WriteLine($"+ [{previous.Id}] {previous.Date}");
 					}
+
+					foreach (var x in data.Where(x => x.TagName == range.TagName))
+					{
+						range.Values.Add(new TagValue
+						{
+							Id = x.Id,
+							Date = x.Date,
+							Value = x.Value(range.TagType),
+							Quality = x.Quality
+						});
+
+						Console.WriteLine($"+ [{x.Id}] {x.Date}");
+					}
+
+					series.Add(range);
 				}
 
 				if (resolution == 0)
@@ -124,14 +156,12 @@ namespace Datalake.Web.Api
 							{
 								Id = (long)i,
 								Date = stepDate,
-								Text = value.Text,
-								Number = value.Number,
+								Value = value.Value,
+								Quality = value.Quality
 							});
 						}
 
 						range.Values = intervalValues;
-
-						Console.WriteLine($"Range for {range.TagName} has {range.Values.Count}");
 					}
 
 					return series;

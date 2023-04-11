@@ -16,7 +16,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Create(string tagName, string description, int sourceId, string sourceItem, short interval)
+		public object Create(string tagName, string description, int sourceId, string sourceItem, short interval, byte tagType)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -28,6 +28,7 @@ namespace Datalake.Web.Api
 					.Value(x => x.SourceId, sourceId)
 					.Value(x => x.SourceItem, sourceItem)
 					.Value(x => x.Interval, interval)
+					.Value(x => x.TagType, (TagType)tagType)
 					.Insert();
 
 				db.TagsLive
@@ -54,7 +55,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Update(string tagName, string description, int sourceId, short interval)
+		public object Update(string tagName, string description, int sourceId, short interval, byte tagType)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -65,6 +66,7 @@ namespace Datalake.Web.Api
 					.Set(x => x.Description, description)
 					.Set(x => x.SourceId, sourceId)
 					.Set(x => x.Interval, interval)
+					.Set(x => x.TagType, (TagType)tagType)
 					.Update();
 
 				db.SetUpdateDate();

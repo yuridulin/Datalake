@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Datalake.Database;
+using System;
 
 namespace Datalake.Web.Models
 {
@@ -8,8 +9,8 @@ namespace Datalake.Web.Models
 
 		public DateTime Date { get; set; }
 
-		public string Text { get; set; }
+		public object Value { get; set; }
 
-		public decimal? Number { get; set; }
+		public short Quality { get; set; }
 	}
 }
