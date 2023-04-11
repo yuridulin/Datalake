@@ -40,7 +40,7 @@ export default function Tags() {
 					</thead>
 					<tbody>
 					{tags.map(x =>
-						<tr onClick={() => { setId(x.TagName); setIsUpdate(true) }}>
+						<tr key={x.TagName} onClick={() => { setId(x.TagName); setIsUpdate(true) }}>
 							<td>{x.TagName}</td>
 							<td>
 								<TagType tagType={x.TagType} />
