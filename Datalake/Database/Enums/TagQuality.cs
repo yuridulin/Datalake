@@ -6,5 +6,6 @@
 		Bad_NoConnect = 4,
 		Good = 192,
 		Good_ManualWrite = 216,
+		Unknown = -1,
 	}
 }

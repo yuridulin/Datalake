@@ -1,4 +1,7 @@
-﻿namespace Datalake.Collector.Models
+﻿using Datalake.Database.Enums;
+using System;
+
+namespace Datalake.Collector.Models
 {
 	public class InopcTag
 	{
@@ -17,6 +20,14 @@
 		public string GetText()
 		{
 			return Value?.ToString();
+		}
+
+		public TagQuality GetQuality()
+		{
+			if (!Enum.IsDefined(typeof(TagQuality), Quality))
+				return TagQuality.Unknown;
+
+			return (TagQuality)Quality;
 		}
 	}
 }

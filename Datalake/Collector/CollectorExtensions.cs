@@ -11,7 +11,7 @@ namespace Datalake.Collector
 {
 	public static class CollectorExtensions
 	{
-		public static void WriteToHistory(this DatabaseContext db, string tagName, DateTime date, string text, decimal? number, short quality)
+		public static void WriteToHistory(this DatabaseContext db, string tagName, DateTime date, string text, decimal? number, TagQuality quality)
 		{
 			string currentHistoryTableName = $"TagsHistory_{DateTime.Today:yyyy_MM_dd}";
 
@@ -23,7 +23,7 @@ namespace Datalake.Collector
 					.Set(x => x.Date, date)
 					.Set(x => x.Text, text)
 					.Set(x => x.Number, number)
-					.Set(x => x.Quality, (TagQuality)quality)
+					.Set(x => x.Quality, quality)
 					.Update();
 
 				// Запись в таблицу "Сегодня"
@@ -109,7 +109,7 @@ namespace Datalake.Collector
 					.Value(x => x.Date, date)
 					.Value(x => x.Text, text)
 					.Value(x => x.Number, number)
-					.Value(x => x.Quality, (TagQuality)quality)
+					.Value(x => x.Quality, quality)
 					.Value(x => x.Using, TagHistoryUse.Basic)
 					.Insert();
 			}

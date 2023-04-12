@@ -1,4 +1,6 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Enums;
+using Google.Protobuf.WellKnownTypes;
 using LinqToDB;
 using Newtonsoft.Json;
 using System;
@@ -46,15 +48,16 @@ namespace Datalake.Collector.Models
 					foreach (var tag in tagsToUpdate)
 					{
 						var value = res.Tags.FirstOrDefault(x => x.Name == tag.ItemName);
-						if (value == null)
+						if (value != null)
 						{
-							Console.WriteLine($"Не найден тег по адресу: {tag.ItemName}");
-							continue;
+							db.WriteToHistory(tag.TagName, res.Timestamp, value.GetText(), value.GetNumber(), (TagQuality)value.Quality);
+							Console.WriteLine($"Запись тега {tag.TagName}: {value.Value}");
 						}
-
-						Console.WriteLine($"Запись тега {tag.TagName}: {value.Value}");
-
-						db.WriteToHistory(tag.TagName, res.Timestamp, value.GetText(), value.GetNumber(), (short)value.Quality);
+						else
+						{
+							db.WriteToHistory(tag.TagName, res.Timestamp, null, null, TagQuality.Bad_NoConnect);
+							Console.WriteLine($"Не найден тег по адресу: {tag.ItemName}");
+						}
 					}
 				}
 			}
@@ -81,24 +84,37 @@ namespace Datalake.Collector.Models
 				Tags = tags
 			};
 
-			var web = (HttpWebRequest)WebRequest.Create("http://" + address + ":81/api/storage/read");
-
-			web.ContentType = "application/json";
-			web.Method = "POST";
-			web.Timeout = 1000;
-
-			using (var streamWriter = new StreamWriter(web.GetRequestStream()))
-			{
-				string json = JsonConvert.SerializeObject(req);
-				streamWriter.Write(json);
-			}
-
 			DatalakeResponse res;
-			var webRes = (HttpWebResponse)web.GetResponse();
-			using (var streamReader = new StreamReader(webRes.GetResponseStream()))
+
+			try
 			{
-				string json = streamReader.ReadToEnd();
-				res = JsonConvert.DeserializeObject<DatalakeResponse>(json);
+				var web = (HttpWebRequest)WebRequest.Create("http://" + address + ":81/api/storage/read");
+
+				web.ContentType = "application/json";
+				web.Method = "POST";
+				web.Timeout = 1000;
+
+				using (var streamWriter = new StreamWriter(web.GetRequestStream()))
+				{
+					string json = JsonConvert.SerializeObject(req);
+					streamWriter.Write(json);
+				}
+
+				var webRes = (HttpWebResponse)web.GetResponse();
+				using (var streamReader = new StreamReader(webRes.GetResponseStream()))
+				{
+					string json = streamReader.ReadToEnd();
+					res = JsonConvert.DeserializeObject<DatalakeResponse>(json);
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(DateTime.Now + " [" + nameof(CollectorWorker) + "] " + ex.ToString());
+				res = new DatalakeResponse
+				{
+					Timestamp= DateTime.Now,
+					Tags = new InopcTag[0]
+				};
 			}
 
 			return res;

@@ -27,7 +27,7 @@ namespace Datalake.Database
 			switch (type)
 			{
 				case TagType.Number: return Number;
-				case TagType.Boolean: return Number != 0;
+				case TagType.Boolean: return Number.HasValue && Number.Value != 0;
 				default: return Text;
 			}
 		}
