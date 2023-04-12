@@ -7,6 +7,8 @@ import dayjs from "dayjs"
 import locale from 'antd/es/date-picker/locale/ru_RU'
 import { ValueRange } from "../../../@types/valueRange"
 import TagType from "../../small/TagType"
+import TagValue from "../../small/TagValue"
+import TagQuality from "../../small/TagQuality"
 
 export default function ValueHistory() {
 
@@ -82,8 +84,12 @@ export default function ValueHistory() {
 					{range.Values.map(x =>
 					<tr key={x.Id}>
 						<td>{dayjs(x.Date).format('DD.MM.YYYY HH:mm:ss')}</td>
-						<td>{x.Value}</td>
-						<td>{x.Quality}</td>
+						<td>
+							<TagValue value={x.Value} />
+						</td>
+						<td>
+							<TagQuality quality={x.Quality} />
+						</td>
 					</tr>
 					)}
 				</tbody>

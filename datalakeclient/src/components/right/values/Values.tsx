@@ -6,6 +6,8 @@ import { Navigate } from "react-router-dom"
 import router from "../../../router/router"
 import { ValueRange } from "../../../@types/valueRange"
 import TagType from "../../small/TagType"
+import TagValue from "../../small/TagValue"
+import TagQuality from "../../small/TagQuality"
 
 export default function Values() {
 
@@ -44,12 +46,20 @@ export default function Values() {
 						</td>
 						{x.Values.length > 0
 						? <>
-							<td>{x.Values[0].Value}</td>
-							<td>{x.Values[0].Quality}</td>
+							<td>
+								<TagValue value={x.Values[0].Value} />
+							</td>
+							<td>
+								<TagQuality quality={x.Values[0].Quality} />
+							</td>
 						</> 
 						: <>
-							<td>?</td>
-							<td>0</td>
+							<td>
+								<TagValue value={''} />
+							</td>
+							<td>
+								<TagQuality quality={0} />
+							</td>
 						</>
 						}
 					</tr>
