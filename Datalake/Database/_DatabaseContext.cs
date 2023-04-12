@@ -36,7 +36,7 @@ namespace Datalake.Database
 			}
 			else
 			{
-				this.Settings
+				Settings
 					.Set(x => x.LastUpdate, DateTime.Now)
 					.Update();
 			}

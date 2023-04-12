@@ -1,4 +1,5 @@
-﻿using Datalake.Database;
+﻿using Datalake.Collector.Models;
+using Datalake.Database;
 using Datalake.Web.Models;
 using LinqToDB;
 using System.Linq;
@@ -11,8 +12,29 @@ namespace Datalake.Web.Api
 		{
 			using (var db = new DatabaseContext())
 			{
-				return db.Sources.ToList();
+				return db.Sources
+					.OrderBy(x => x.Name)
+					.ToList();
 			}
+		}
+
+		public object Items(int id)
+		{
+			string address;
+
+			using (var db = new DatabaseContext())
+			{
+				var source = db.Sources.FirstOrDefault(x => x.Id == id);
+				if (source == null) return new { Error = "Источник не найден." };
+				address = source.Address;
+			}
+
+			var res = SourcePacket.AskInopc(new string[0], address);
+
+			return res.Tags
+				.Select(x => x.Name)
+				.OrderBy(x => x)
+				.ToList();
 		}
 
 		public object Create(string name, string address)

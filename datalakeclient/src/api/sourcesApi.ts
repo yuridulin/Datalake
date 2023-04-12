@@ -8,6 +8,11 @@ export default class sourcesApi {
 		return res.data as Source[]
 	}
 
+	static async items(id: number) {
+		let res = await axios.post('sources/items', { id })
+		return res.data as string[]
+	}
+
 	static async create(form: Source) {
 		let res = await axios.post('sources/create', form)
 		return res.data

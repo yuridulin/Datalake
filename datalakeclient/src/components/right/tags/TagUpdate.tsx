@@ -1,4 +1,4 @@
-import { Modal, Input, Select, InputNumber, Popconfirm, Button } from "antd";
+import { Modal, Input, Select, InputNumber, Popconfirm, Button, AutoComplete } from "antd";
 import { useEffect, useState } from "react";
 import { useFetching } from "../../../hooks/useFetching";
 import tagsApi from "../../../api/tagsApi";
@@ -12,16 +12,23 @@ export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 	loadTable: (x?: any) => void
 }) {
 
-	const [ form, setForm ] = useState({} as Tag)
-	const [ sources, setSources ] = useState({ default: '', options: [] as { value: string, label: string }[] })
+	const [ form, setForm ] = useState({ SourceItem: '' } as Tag)
+	const [ sources, setSources ] = useState([] as { value: number, label: string }[])
+	const [ items, setItems ] = useState([] as { value: string }[])
 
 	const [ getSources, isSourcesLoading ] = useFetching(async () => {
 		let res = await sourcesApi.list()
 		if (res) {
-			let options = res.map(x => ({ value: String(x.Id), label: x.Name }))
-			setSources({ default: String(form.SourceId), options })
-			console.log(sources)
+			let options = res.map(x => ({ value: x.Id, label: x.Name }))
+			setSources(options)
 		}
+	})
+
+	const [ getItems ] = useFetching(async () => {
+		console.log('getItems: ' + form.SourceId)
+		if (form.SourceId === 0) return
+		let res = await sourcesApi.items(form.SourceId)
+		if (res) setItems(res.map(x => ({ value: x })))
 	})
 
 	const [ update ] = useFetching(async () => {
@@ -43,8 +50,8 @@ export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 	const [ load ] = useFetching(async () => {
 		let res = await tagsApi.read(tagName)
 		if (res) {
-			setForm(res)
 			getSources()
+			setForm(res)
 		}
 	})
 	
@@ -57,6 +64,9 @@ export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => { prepare() }, [visible])
+
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect(() => { if (visible && !!form.SourceId && form.SourceId !== 0) getItems() }, [visible, form.SourceId])
 
 	return (
 		<Modal
@@ -103,15 +113,20 @@ export default function TagUpdate({ tagName, visible, setVisible, loadTable }: {
 
 			<div className="form-caption">Используемый источник</div>
 			<Select
-				options={sources.options}
+				options={sources}
 				loading={isSourcesLoading}
-				value={sources.default}
-				onChange={value => { setForm({ ...form, SourceId: Number(value) }); setSources({ ...sources, default: value }) }}
+				value={form.SourceId}
+				onChange={value => setForm({ ...form, SourceId: value })}
 				style={{ width: '100%' }}
 			></Select>
 
 			<div className="form-caption">Путь к данным в источнике</div>
-			<Input value={form.SourceItem} onChange={e => setForm({ ...form, SourceItem: e.target.value })} />
+			<AutoComplete
+				value={form.SourceItem}
+				options={items}
+				onChange={value => setForm({ ...form, SourceItem: value })}
+				style={{ width: '100%' }}
+			/>
 
 			<div className="form-caption">Интервал опроса в секундах (0, если только по изменению)</div>
 			<InputNumber value={form.Interval} onChange={value => setForm({ ...form, Interval: Number(value) })} />

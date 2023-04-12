@@ -74,7 +74,7 @@ namespace Datalake.Collector.Models
 			}
 		}
 
-		DatalakeResponse AskInopc(string[] tags, string address)
+		public static DatalakeResponse AskInopc(string[] tags, string address)
 		{
 			DatalakeRequest req = new DatalakeRequest
 			{

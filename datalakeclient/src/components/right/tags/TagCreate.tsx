@@ -1,6 +1,5 @@
-import { Modal, Input, Select, InputNumber } from "antd"
+import { Modal, Input, Select, InputNumber, AutoComplete } from "antd"
 import { useState, useEffect } from "react"
-import { Source } from "../../../@types/source"
 import sourcesApi from "../../../api/sourcesApi"
 import tagsApi from "../../../api/tagsApi"
 import { useFetching } from "../../../hooks/useFetching"
@@ -13,8 +12,8 @@ export default function TagCreate({ visible, setVisible, loadTable }: {
 }) {
 
 	const [ form, setForm ] = useState({ SourceId: 0 } as Tag)
-
-	const [ sources, setSources ] = useState([] as Source[])
+	const [ sources, setSources ] = useState([] as { value: number, label: string }[])
+	const [ items, setItems ] = useState([] as { value: string }[])
 
 	const [ create ] = useFetching(async () => {
 		let res = await tagsApi.create(form)
@@ -27,13 +26,22 @@ export default function TagCreate({ visible, setVisible, loadTable }: {
 	const [ getSources, isSourcesLoading ] = useFetching(async () => {
 		let res = await sourcesApi.list()
 		if (res) {
-			setSources(res)
-			console.log(sources)
+			setSources(res.map(x => ({ value: x.Id, label: x.Name })))
 		}
 	})
 
+	const [ getItems ] = useFetching(async () => {
+		console.log('getItems: ' + form.SourceId)
+		if (form.SourceId === 0) return
+		let res = await sourcesApi.items(form.SourceId)
+		if (res) setItems(res.map(x => ({ value: x })))
+	})
+
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => { if (visible) getSources() }, [visible])
+	useEffect(() => { if (!visible) return; setForm({ TagName: '', TagType: 0,  Description: '', Interval: 0, Source: '', SourceId: 0, SourceItem: '' }); getSources() }, [visible])
+	
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect(() => { if (visible && !!form.SourceId && form.SourceId !== 0) getItems() }, [visible, form.SourceId])
 
 	return (
 		<Modal
@@ -65,14 +73,19 @@ export default function TagCreate({ visible, setVisible, loadTable }: {
 
 			<div className="form-caption">Используемый источник</div>
 			<Select
-				options={sources.map(x => ({ value: String(x.Id), label: x.Name }))}
+				options={sources}
 				loading={isSourcesLoading}
-				onChange={value => setForm({ ...form, SourceId: Number(value) })}
+				onChange={value => setForm({ ...form, SourceId: value })}
 				style={{ width: '100%' }}
 			></Select>
 
 			<div className="form-caption">Путь к данным в источнике</div>
-			<Input value={form.SourceItem} onChange={e => setForm({ ...form, SourceItem: e.target.value })} />
+			<AutoComplete
+				value={form.SourceItem}
+				options={items}
+				onChange={value => setForm({ ...form, SourceItem: value })}
+				style={{ width: '100%' }}
+			/>
 
 			<div className="form-caption">Интервал опроса в секундах (0, если только по изменению)</div>
 			<InputNumber value={form.Interval} onChange={value => setForm({ ...form, Interval: Number(value) })} />

@@ -28,7 +28,6 @@ namespace Datalake.Collector
 			}
 		}
 
-
 		public static List<SourcePacket> Packets { get; set; } = new List<SourcePacket>();
 
 		public static DateTime StoredUpdate { get; set; } = DateTime.MinValue;

@@ -25,8 +25,8 @@ namespace Datalake.Web.Api
 						x.SourceItem,
 						x.Interval,
 						Source = sources.DefaultIfEmpty(new Source { Name = "?" }).FirstOrDefault(s => s.Id == x.SourceId).Name,
-
 					})
+					.OrderBy(x => x.TagName)
 					.ToList();
 			}
 		}
@@ -70,7 +70,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Update(string tagName, string description, int sourceId, short interval, byte tagType)
+		public object Update(string tagName, string description, int sourceId, string sourceItem, short interval, byte tagType)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -80,6 +80,7 @@ namespace Datalake.Web.Api
 					.Where(x => x.TagName == tagName)
 					.Set(x => x.Description, description)
 					.Set(x => x.SourceId, sourceId)
+					.Set(x => x.SourceItem, sourceItem)
 					.Set(x => x.Interval, interval)
 					.Set(x => x.TagType, (TagType)tagType)
 					.Update();
