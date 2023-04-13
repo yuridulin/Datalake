@@ -231,6 +231,15 @@ namespace Datalake.Collector
 			if (resolution == 0)
 			{
 				// Выдача массива значений по изменению
+				int id = 0;
+
+				foreach (var range in series)
+				{
+					foreach (var value in range.Values)
+					{
+						value.Id = id++;
+					}
+				}
 
 				return series;
 			}
