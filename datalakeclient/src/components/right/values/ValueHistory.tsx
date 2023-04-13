@@ -16,8 +16,8 @@ export default function ValueHistory() {
 
 	const { tagName } = useParams()
 	const [ form, setForm ] = useState({ 
-		old: dayjs(new Date()).add(-10, 'minute').format(dateFormat),
-		young: dayjs(new Date()).format(dateFormat),
+		old: dayjs(new Date()).add(-10, 'minute').toDate(),
+		young: new Date(),
 		resolution: 0
 	})
 	const [ range, setRange ] = useState({ TagName: '', TagType: 0, Values: [] } as ValueRange)
@@ -29,7 +29,12 @@ export default function ValueHistory() {
 	]
 
 	const [ load, , error ] = useFetching(async () => {
-		let data = await valuesApi.history({ tags: [tagName || ''], ...form })
+		let data = await valuesApi.history({ 
+			tags: [tagName || ''],
+			young: dayjs(form.young).format(dateFormat),
+			old: dayjs(form.old).format(dateFormat),
+			resolution: form.resolution
+		})
 		if (data && data.length > 0) setRange(data[0])
 	})
 
@@ -53,7 +58,7 @@ export default function ValueHistory() {
 					locale={locale}
 					format={dateFormat}
 					defaultValue={dayjs(form.old)}
-					onOk={e => setForm({ ...form, old: e.format(dateFormat) })}
+					onOk={e => setForm({ ...form, old: e.toDate() })}
 				/>
 				<span style={{ marginRight: '.5em', marginLeft: '.5em' }}>по</span>
 				<DatePicker
@@ -61,7 +66,7 @@ export default function ValueHistory() {
 					locale={locale}
 					format={dateFormat}
 					defaultValue={dayjs(form.young)}
-					onOk={e => setForm({ ...form, young: e.format(dateFormat) })}
+					onOk={e => setForm({ ...form, young: e.toDate() })}
 				/>
 				<Select
 					style={{ marginRight: '.5em', marginLeft: '.5em', width: '10em' }}
