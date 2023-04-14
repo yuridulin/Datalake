@@ -94,17 +94,25 @@ namespace Datalake.Collector.Models
 				web.Method = "POST";
 				web.Timeout = 1000;
 
-				using (var streamWriter = new StreamWriter(web.GetRequestStream()))
-				{
-					string json = JsonConvert.SerializeObject(req);
-					streamWriter.Write(json);
+				using (var stream =  web.GetRequestStream())
+				{ 
+					using (var streamWriter = new StreamWriter(stream))
+					{
+						string json = JsonConvert.SerializeObject(req);
+						streamWriter.Write(json);
+					}
 				}
 
-				var webRes = (HttpWebResponse)web.GetResponse();
-				using (var streamReader = new StreamReader(webRes.GetResponseStream()))
+				using (var response = (HttpWebResponse)web.GetResponse())
 				{
-					string json = streamReader.ReadToEnd();
-					res = JsonConvert.DeserializeObject<DatalakeResponse>(json);
+					using (var stream = response.GetResponseStream())
+					{
+						using (var streamReader = new StreamReader(stream))
+						{
+							string json = streamReader.ReadToEnd();
+							res = JsonConvert.DeserializeObject<DatalakeResponse>(json);
+						}
+					}
 				}
 			}
 			catch (Exception ex)
@@ -112,7 +120,7 @@ namespace Datalake.Collector.Models
 				Console.WriteLine(DateTime.Now + " [" + nameof(CollectorWorker) + "] " + ex.ToString());
 				res = new DatalakeResponse
 				{
-					Timestamp= DateTime.Now,
+					Timestamp = DateTime.Now,
 					Tags = new InopcTag[0]
 				};
 			}
