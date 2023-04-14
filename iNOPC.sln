@@ -91,6 +91,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logger Agent", "Logger\Logg
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logger Library", "Logger\Logger Library\Logger Library.csproj", "{83EB29B2-09C1-492D-8726-F93A5A387D44}"
 EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "logger_webclient", "Logger\Logger_WebClient\logger_webclient.esproj", "{695DA380-9D98-4E90-9727-78B39A11E76D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -263,6 +265,12 @@ Global
 		{83EB29B2-09C1-492D-8726-F93A5A387D44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83EB29B2-09C1-492D-8726-F93A5A387D44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{83EB29B2-09C1-492D-8726-F93A5A387D44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{695DA380-9D98-4E90-9727-78B39A11E76D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{695DA380-9D98-4E90-9727-78B39A11E76D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{695DA380-9D98-4E90-9727-78B39A11E76D}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{695DA380-9D98-4E90-9727-78B39A11E76D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{695DA380-9D98-4E90-9727-78B39A11E76D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{695DA380-9D98-4E90-9727-78B39A11E76D}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -304,6 +312,7 @@ Global
 		{A3D4FC40-DB67-44B3-BF47-C576A0C32DE3} = {059C4233-88A3-4D2A-A36E-575A9B1064C0}
 		{5D182386-FC0A-4ACE-B7E9-194432E40043} = {059C4233-88A3-4D2A-A36E-575A9B1064C0}
 		{83EB29B2-09C1-492D-8726-F93A5A387D44} = {059C4233-88A3-4D2A-A36E-575A9B1064C0}
+		{695DA380-9D98-4E90-9727-78B39A11E76D} = {059C4233-88A3-4D2A-A36E-575A9B1064C0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C0EA1C33-38D2-4707-81C3-B73ECDB3ABB3}
