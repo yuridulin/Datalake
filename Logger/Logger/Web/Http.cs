@@ -10,7 +10,7 @@ namespace Logger.Web
 		public static async Task Start()
 		{
 			Listener = new HttpListener();
-			Listener.Prefixes.Add("http://*:83/");
+			Listener.Prefixes.Add("http://*:4330/");
 			Listener.Start();
 
 			while (true)
