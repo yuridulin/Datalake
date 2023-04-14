@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Logger.Database;
+using System;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,6 +32,11 @@ namespace Logger
 		public static void Start()
 		{
 			TokenSource = new CancellationTokenSource();
+
+			using (var db = new DatabaseContext())
+			{
+				db.Setup();
+			}
 
 			Task.Run(() => Web.Http.Start());
 			Task.Run(() => Logs.LogsWorker.Start(TokenSource.Token));
