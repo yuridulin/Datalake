@@ -1,0 +1,202 @@
+body {
+	margin: 0;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+@font-face {
+	font-family: 'Material Icons';
+	font-style: normal;
+	font-weight: 400;
+	src: local('Material Icons'), local('MaterialIcons-Regular'), url(MaterialIcons-Regular.ttf) format('truetype');
+}
+
+.material-icons {
+	font-family: 'Material Icons';
+	font-weight: normal;
+	font-style: normal;
+	display: inline-block;
+	line-height: 1em;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+code {
+	font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+
+.left {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 25em;
+	bottom: 0;
+	padding: 1em;
+	z-index: 1;
+}
+
+.right {
+	position: fixed;
+	left: 26em;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	padding: 1em;
+	background-color: #fefefe;
+	overflow-y: scroll;
+}
+
+
+.title {
+	margin-bottom: 1em;
+	font-weight: 500;
+	font-size: large;
+	color: #4096ff;
+	text-decoration: none;
+}
+
+
+
+.offline {
+	padding: 1em;
+}
+
+
+.tree {
+	position: absolute;
+	top: 4em;
+	bottom: 0;
+	left: 0;
+	width: 25em;
+	overflow-y: auto;
+	padding-right: 1px;
+}
+
+.tree-block {
+	margin-bottom: 1em;
+}
+
+.tree-sub {
+	display: none;
+}
+
+.tree-sub.tree-sub-opened {
+	display: inherit;
+}
+
+.tree-item {
+	display: table;
+	width: 100%;
+	user-select: none;
+}
+
+.tree-item:hover {
+	background: #e7f0ff;
+}
+
+.tree-item i {
+	display: table-cell;
+	text-align: right;
+	padding: .35em .25em;
+	vertical-align: middle;
+	font-size: 1.3em;
+}
+
+.tree-item span,
+.tree-item a {
+	display: table-cell;
+	text-align: left;
+	padding: .35em .25em;
+	color: #000;
+	text-decoration: none;
+}
+
+.tree-item span {
+	font-weight: 500;
+}
+
+.tree-item:hover i {
+	color: #0074d5;
+	cursor: pointer;
+}
+
+.tree-item:hover span,
+.tree-item:hover a {
+	color: #0074d5;
+	cursor: pointer;
+}
+
+.tree .tree-item i {
+	width: 2.25em;
+}
+
+.tree .tree-sub .tree-item i {
+	width: 3.5em;
+}
+
+.tree .tree-sub .tree-sub .tree-item i {
+	width: 4.75em;
+}
+
+.tree .tree-sub .tree-sub .tree-sub .tree-item i {
+	width: 6em;
+}
+
+.tree .tree-sub .tree-sub .tree-sub .tree-sub .tree-item i {
+	width: 7.25em;
+}
+
+.tree .tree-sub .tree-sub .tree-sub .tree-sub .tree-sub .tree-item i {
+	width: 8.5em;
+}
+
+.tree-item:has(.active) a,
+.tree-item:has(.active) i,
+.tree-item:has(.active) span {
+	color: #0074d5;
+}
+
+
+.table {
+	display: table;
+	border-collapse: collapse;
+	width: 70em;
+	max-width: 100%;
+	font-size: .9em;
+}
+
+.table-header {
+	display: table-row;
+}
+
+.table-header > * {
+	display: table-cell;
+	padding: .5em .3em;
+	border-bottom: 1px solid #eee;
+	font-weight: 500;
+	text-align: left;
+}
+
+.table-row {
+	display: table-row;
+	text-decoration: none;
+	color: #000;
+}
+
+.table-row > * {
+	display: table-cell;
+	padding: .5em .3em;
+}
+
+.table-row:hover {
+	color: #4096ff;
+	cursor: pointer;
+}
+

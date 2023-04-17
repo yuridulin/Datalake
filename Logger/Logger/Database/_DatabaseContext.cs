@@ -1,6 +1,5 @@
 ﻿using LinqToDB;
 using LinqToDB.Data;
-using System;
 using System.Linq;
 
 namespace Logger.Database
@@ -12,6 +11,12 @@ namespace Logger.Database
 		public ITable<LogEntry> Logs
 			=> this.GetTable<LogEntry>();
 
+		public ITable<Agent> Agents
+			=> this.GetTable<Agent>();
+
+		public ITable<Preset> Presets
+			=> this.GetTable<Preset>();
+
 		public void Setup()
 		{
 			var provider = DataProvider.GetSchemaProvider();
@@ -20,6 +25,16 @@ namespace Logger.Database
 			if (!schema.Tables.Any(x => x.TableName == Logs.TableName))
 			{
 				this.CreateTable<LogEntry>();
+			}
+
+			if (!schema.Tables.Any(x => x.TableName == Agents.TableName))
+			{
+				this.CreateTable<Agent>();
+			}
+
+			if (!schema.Tables.Any(x => x.TableName == Presets.TableName))
+			{
+				this.CreateTable<Preset>();
 			}
 		}
 	}
