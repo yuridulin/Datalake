@@ -164,39 +164,5 @@ code {
 }
 
 
-.table {
-	display: table;
-	border-collapse: collapse;
-	width: 70em;
-	max-width: 100%;
-	font-size: .9em;
-}
 
-.table-header {
-	display: table-row;
-}
-
-.table-header > * {
-	display: table-cell;
-	padding: .5em .3em;
-	border-bottom: 1px solid #eee;
-	font-weight: 500;
-	text-align: left;
-}
-
-.table-row {
-	display: table-row;
-	text-decoration: none;
-	color: #000;
-}
-
-.table-row > * {
-	display: table-cell;
-	padding: .5em .3em;
-}
-
-.table-row:hover {
-	color: #4096ff;
-	cursor: pointer;
-}
 

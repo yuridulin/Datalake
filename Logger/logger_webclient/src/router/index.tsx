@@ -1,11 +1,11 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 import App from '../routes/App'
 import Offline from '../routes/left/Offline'
-import Filters from '../routes/right/filters/Filters'
 import Presets from '../routes/right/presets/Presets'
 import AgentList from '../routes/right/agents/AgentList'
 import AgentCreate from '../routes/right/agents/AgentCreate'
 import AgentDetails from '../routes/right/agents/AgentDetails'
+import FilterList from '../routes/right/filters/FilterList'
 
 const router = createBrowserRouter([
 	{
@@ -31,7 +31,20 @@ const router = createBrowserRouter([
 			},
 			{
 				path: 'filters',
-				element: <Filters />
+				children: [
+					{
+						path: 'create',
+
+					},
+					{
+						path: 'details/:machineName',
+
+					},
+					{
+						path: '',
+						element: <FilterList />
+					}
+				]
 			},
 			{
 				path: 'presets',

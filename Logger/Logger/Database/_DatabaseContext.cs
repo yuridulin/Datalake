@@ -17,6 +17,9 @@ namespace Logger.Database
 		public ITable<Preset> Presets
 			=> this.GetTable<Preset>();
 
+		public ITable<Filter> Filters
+			=> this.GetTable<Filter>();
+
 		public void Setup()
 		{
 			var provider = DataProvider.GetSchemaProvider();
@@ -35,6 +38,11 @@ namespace Logger.Database
 			if (!schema.Tables.Any(x => x.TableName == Presets.TableName))
 			{
 				this.CreateTable<Preset>();
+			}
+
+			if (!schema.Tables.Any(x => x.TableName == Filters.TableName))
+			{
+				this.CreateTable<Filter>();
 			}
 		}
 	}

@@ -7,6 +7,7 @@ import Header from "../../../components/header/Header"
 import { PlusOutlined } from "@ant-design/icons"
 import router from "../../../router"
 import MyIcon from "../../../components/myIcon/MyIcon"
+import ViewTable from "../../../components/viewTable/ViewTable"
 
 export default function AgentList() {
 
@@ -28,14 +29,10 @@ export default function AgentList() {
 					Добавить
 				</Button>
 			</Header>
-			<div className="table">
-				<div className="table-header">
-					<div style={{ width: '3em' }}></div>
-					<div>Имя</div>
-					<div>Описание</div>
-				</div>
+
+			<ViewTable headers={['', 'Имя', 'Описание']}>
 				{agents.map(x =>
-					<Link key={x.MachineName} to={`/agents/details/${x.MachineName}`} className="table-row">
+					<Link key={x.MachineName} to={`/agents/details/${x.MachineName}`}>
 						<div>
 							{x.IsOnline
 								? <MyIcon icon="play_arrow" title="Онлайн" color="done" />
@@ -47,7 +44,7 @@ export default function AgentList() {
 						<div>{x.Description}</div>
 					</Link>
 				)}
-			</div>
+			</ViewTable>
 		</>
 	)
 }
