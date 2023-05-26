@@ -1,4 +1,4 @@
-﻿using Datalake.Collector.Models;
+﻿using Datalake.Collector;
 using Datalake.Database;
 using Datalake.Web.Models;
 using LinqToDB;
@@ -29,7 +29,7 @@ namespace Datalake.Web.Api
 				address = source.Address;
 			}
 
-			var res = SourcePacket.AskInopc(new string[0], address);
+			var res = CollectorWorker.AskInopc(new string[0], address);
 
 			return res.Tags
 				.Select(x => x.Name)

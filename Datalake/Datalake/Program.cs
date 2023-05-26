@@ -1,4 +1,5 @@
-﻿using LinqToDB.Data;
+﻿using Datalake.Database;
+using LinqToDB.Data;
 using System;
 using System.Diagnostics;
 using System.ServiceProcess;
@@ -18,6 +19,7 @@ namespace Datalake
 			if (Environment.UserInteractive)
 			{
 				Start();
+				Console.WriteLine(nameof(Datalake) + " работает.");
 				Console.ReadLine();
 				Stop();
 			}
@@ -39,6 +41,7 @@ namespace Datalake
 
 			TokenSource = new CancellationTokenSource();
 
+			using (var db = new DatabaseContext()) db.Recreate();
 			Task.Run(() => Web.Http.Start());
 			Task.Run(() => Collector.CollectorWorker.Start(TokenSource.Token));
 		}

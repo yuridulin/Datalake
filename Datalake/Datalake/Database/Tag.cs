@@ -1,39 +1,95 @@
 ﻿using Datalake.Database.Enums;
 using LinqToDB.Mapping;
+using System;
 
 namespace Datalake.Database
 {
 	[Table(Name = "Tags")]
 	public class Tag
 	{
-		[Column, PrimaryKey]
-		public string TagName { get; set; } = string.Empty;
+		[Column, PrimaryKey, Identity]
+		public int Id { get; set; }
+
+		[Column, NotNull]
+		public string Name { get; set; } = string.Empty;
 
 		[Column]
 		public string Description { get; set; } = string.Empty;
 
-		[Column]
+		[Column, NotNull]
 		public int SourceId { get; set; }
 
 		[Column]
 		public string SourceItem { get; set; }
 
-		[Column]
+		[Column, NotNull]
 		public short Interval { get; set; }
 
-		[Column]
-		public TagType TagType { get; set; }
+		[Column, NotNull]
+		public TagType Type { get; set; }
 
-		[Column]
+
+		// для числовых значений
+
+		[Column, NotNull]
+		public bool IsScaling { get; set; } = false;
+
+		[Column, NotNull]
 		public decimal MinEU { get; set; } = 0;
 
-		[Column]
+		[Column, NotNull]
 		public decimal MaxEU { get; set; } = 100;
 
-		[Column]
-		public decimal MinScale { get; set; } = decimal.MinValue;
+		[Column, NotNull]
+		public decimal MinRaw { get; set; } = decimal.MinValue;
 
-		[Column]
-		public decimal MaxScale { get; set; } = decimal.MaxValue;
+		[Column, NotNull]
+		public decimal MaxRaw { get; set; } = decimal.MaxValue;
+
+
+		// логика обновления
+
+		TimeSpan UpdateInterval = TimeSpan.Zero;
+
+		DateTime LastUpdate = DateTime.MinValue;
+
+		public void Prepare()
+		{
+			UpdateInterval = TimeSpan.FromSeconds(Interval);
+			LastUpdate = DateTime.MinValue;
+		}
+
+		public bool IsNeedToUpdate(DateTime now)
+		{
+			return UpdateInterval == TimeSpan.Zero || (now - LastUpdate >= UpdateInterval);
+		}
+
+		public void SetAsUpdated(DateTime now)
+		{
+			LastUpdate = now;
+		}
+
+		public (string, decimal?, decimal?, TagQuality) FromRaw(object value, ushort quality)
+		{
+			string text = value?.ToString();
+
+			decimal? raw = null;
+			if (decimal.TryParse(value?.ToString(), out decimal d))
+			{
+				raw = d;
+			}
+
+			decimal? number = raw;
+			if (Type == TagType.Number && raw.HasValue && IsScaling)
+			{
+				number = ((raw.Value - MinRaw) / (MaxRaw - MinRaw)) * (MaxEU - MinEU);
+			}
+
+			TagQuality tagQuality = !Enum.IsDefined(typeof(TagQuality), quality)
+				? TagQuality.Unknown
+				: (TagQuality)quality;
+
+			return (text, raw, number, tagQuality);
+		}
 	}
 }

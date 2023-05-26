@@ -1,7 +1,7 @@
 ﻿using Datalake.Database.Enums;
 using System;
 
-namespace Datalake.Collector.Models
+namespace Datalake.Database.Models
 {
 	public class TagValue
 	{
