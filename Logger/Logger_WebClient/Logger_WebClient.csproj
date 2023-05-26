@@ -151,6 +151,7 @@
     <Content Include="Views\Stations\Edit.cshtml" />
     <Content Include="Views\Stations\Index.cshtml" />
     <Content Include="Views\Stations\Online.cshtml" />
+    <None Include="Properties\PublishProfiles\DEVELOP.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
