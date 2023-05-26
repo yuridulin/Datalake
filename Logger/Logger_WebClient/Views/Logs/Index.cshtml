@@ -1,0 +1,77 @@
+﻿@using (var db = new DatabaseContext())
+{
+	var query = from w in db.Rel_Log_WebView
+				from r in db.LogsReactions.LeftJoin(x => x.LogId == w.LogId && x.Username == User.Identity.Name)
+				from l in db.Logs.InnerJoin(x => x.Id == w.LogId)
+				where r.Username == null
+				orderby l.TimeStamp descending
+				select l;
+
+	var logs = query
+		.Take(30)
+		.ToList();
+
+	var filters = db.LogsFilters
+		.ToDictionary(x => x.Id, x => x.Name);
+
+	<div class="view-caption" id="caption" form="@Url.Action("SetAllAsViewed", "Logs")">
+		<div>
+			<b>Непрочтённые сообщения</b>
+		</div>
+		<div>
+			@if (logs.Count > 0)
+			{
+				<button class="button" onclick="submit('#caption')">Отметить все как прочитанные</button>
+				<button class="button" onclick="submit('#logs')">Отметить видимые как прочитанные</button>
+			}
+			<button class="button" onclick="go('logs')">Обновить</button>
+		</div>
+	</div>
+	<div class="view-table-header">
+		<div>
+			<span style="width: 9em;">Время</span>
+			<span style="width: 10em;">Станция</span>
+			<span style="width: 9em;">Тип</span>
+			<span style="width: 15em;">Фильтр</span>
+			<span>Сообщение</span>
+		</div>
+	</div>
+	<div class="view-table-body" id="logs" form="@Url.Action("SetSeenAsViewed", "Logs")">
+		@if (logs.Count == 0)
+		{
+			<i>Сообщений нет</i>
+		}
+		else
+		{
+			string val;
+			foreach (var x in logs)
+			{
+				<a href="#/logs/details/@x.Id">
+					<input type="hidden" name="LogsId[]" value="@x.Id" />
+					<span style="width: 9em;">
+						<span>@x.TimeStamp.ToString("dd.MM.yyyy HH:mm:ss")</span>
+					</span>
+					<span style="width: 10em;">
+						<span>@x.Endpoint</span>
+					</span>
+					<span style="width: 9em;">
+						<span>@x.Type</span>
+					</span>
+					<span style="width: 15em;">
+						<span>@(filters.TryGetValue(x.LogFilterId, out val) ? val : "?")</span>
+					</span>
+					<span>
+						@if (x.Message.Length > 60)
+						{
+							<span>@x.Message.Substring(0, 60) ...</span>
+						}
+						else
+						{
+							<span>@x.Message</span>
+						}
+					</span>
+				</a>
+			}
+		}
+	</div>
+}

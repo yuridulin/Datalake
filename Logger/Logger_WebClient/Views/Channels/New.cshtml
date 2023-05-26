@@ -1,0 +1,30 @@
+﻿@{ 
+	var channel = new Channel();
+}
+
+<div form="@Url.Action("Create", "Channels")">
+	<div>
+		<div>
+			<span>Имя</span>
+		</div>
+		<div>
+			<input name="@nameof(channel.Name)" type="text" />
+		</div>
+	</div>
+	<div>
+		<div>
+			<span>Тип</span>
+		</div>
+		<div>
+			<select name="@nameof(channel.Type)">
+				<option value="web">Веб-консоль</option>
+				<option value="telegram">Telegram</option>
+			</select>
+		</div>
+	</div>
+
+	<div>
+		<button onclick="submit()">Сохранить</button>
+		<button onclick="go('@Url.Action("", "")')">Отмена</button>
+	</div>
+</div>

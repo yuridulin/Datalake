@@ -1,0 +1,102 @@
+﻿@model int
+
+@using (var db = new DatabaseContext())
+{
+	var config = db.StationsConfigs
+		.Where(x => x.Id == Model)
+		.FirstOrDefault();
+
+	if (config == null)
+	{
+		<div class="error">
+			Конфигурация <b>№@Model</b> не найдена
+		</div>
+		return;
+	}
+
+	var stations = db.Stations
+		.Where(x => x.StationConfigId == config.Id)
+		.ToList();
+
+	var fQuery = from rel in db.Rel_StationConfig_LogFilter.Where(x => x.StationConfigId == config.Id)
+				 from f in db.LogsFilters.InnerJoin(x => x.Id == rel.LogFilterId)
+				 select new { f.Id, f.Name };
+
+	var filters = fQuery.ToList();
+
+	var pQuery = from rel in db.Rel_StationConfig_ActionPing.Where(x => x.StationConfigId == config.Id)
+				 from p in db.ActionsPings.InnerJoin(x => x.Id == rel.PingActionId)
+				 select new { p.Id, p.Name };
+
+	var pings = pQuery.ToList();
+
+	var sQuery = from rel in db.Rel_StationConfig_ActionSql.Where(x => x.StationConfigId == config.Id)
+				 from s in db.ActionsSql.InnerJoin(x => x.Id == rel.ActionSqlId)
+				 select new { s.Id, s.Name };
+
+	var sql = sQuery.ToList();
+
+	<div class="view-caption">
+		<div>
+			<b>Просмотр конфигурации @config.Name</b>
+		</div>
+		<div>
+			<a href="#/configs/edit/@config.Id" class="button">Изменить</a>
+			<a href="#/configs" class="button">К списку</a>
+		</div>
+	</div>
+
+	<div class="view-body">
+		<div class="view-info">
+			<div>@config.Description</div>
+			<div>
+				@if (filters.Count == 0)
+				{
+					<div>Без фильтров</div>
+				}
+				else
+				{
+					<div>Фильтры:</div>
+					<div>
+						@foreach (var x in filters)
+						{
+							<a class="button" href="#/filters/details/@x.Id">@x.Name</a>
+						}
+					</div>
+				}
+			</div>
+			<div>
+				@if (pings.Count == 0)
+				{
+					<div>Без проверок ping</div>
+				}
+				else
+				{
+					<div>Ping проверки:</div>
+					<div>
+						@foreach (var x in pings)
+						{
+							<a class="button" href="#/pings/details/@x.Id">@x.Name</a>
+						}
+					</div>
+				}
+			</div>
+			<div>
+				@if (sql.Count == 0)
+				{
+					<div>Без Sql процедур</div>
+				}
+				else
+				{
+					<div>Sql процедуры:</div>
+					<div>
+						@foreach (var x in sql)
+						{
+							<a class="button" href="#/sql/details/@x.Id">@x.Name</a>
+						}
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

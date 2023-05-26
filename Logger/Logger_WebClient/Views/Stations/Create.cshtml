@@ -1,0 +1,27 @@
+﻿@{ 
+	var station = new Station();
+}
+
+<div class="view-caption">
+	<div>
+		<b>Добавление станции</b>
+	</div>
+	<div>
+		<button class="button" onclick="go('@Url.Action("", "stations")')">Отмена</button>
+	</div>
+</div>
+
+<div class="view-body" form="@Url.Action("DoCreate", "Stations")">
+	<div class="view-form-field">
+		<div class="view-form-field-name">
+			<span>Сетевое имя компьютера (без указания домена)</span>
+		</div>
+		<div>
+			<input name="@nameof(station.Endpoint)" type="text" />
+		</div>
+	</div>
+
+	<div class="view-form-buttons">
+		<button class="button" onclick="submit()">Сохранить</button>
+	</div>
+</div>

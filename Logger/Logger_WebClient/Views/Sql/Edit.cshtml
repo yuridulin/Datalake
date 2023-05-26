@@ -1,0 +1,146 @@
+﻿@model int
+
+@using (var db = new DatabaseContext())
+{
+	var sql = db.ActionsSql
+		.FirstOrDefault(x => x.Id == Model);
+
+	if (sql == null)
+	{
+		<div class="error">
+			Sql процедура <b>№@Model</b> не найдена
+		</div>
+		return;
+	}
+
+	var comparers = sql.Comparers();
+
+	var defComparer = new ActionsSqlComparer();
+
+	<div class="view-caption">
+		<div>
+			<b>Редактирование Sql процедуры @sql.Name</b>
+		</div>
+		<div>
+			<a class="button" onclick="modal('#delete')">Удалить</a>
+			<a class="button" href="#/pings">К списку</a>
+		</div>
+	</div>
+
+	<div class="view-body">
+		<div form="@Url.Action("DoEdit", "Sql")">
+			<input type="hidden" name="@nameof(sql.Id)" value="@sql.Id" />
+			<input type="hidden" name="@nameof(sql.ComparersJson)" value="@sql.ComparersJson" id="comparersJson" />
+			<div class="view-form-field">
+				<div class="view-form-field-name">
+					<span>Название</span>
+				</div>
+				<div>
+					<input name="@nameof(sql.Name)" value="@sql.Name" />
+				</div>
+			</div>
+			<div class="view-form-field">
+				<div class="view-form-field-name">
+					<span>Тип базы данных</span>
+				</div>
+				<div>
+					<select name="@nameof(sql.DatabaseType)">
+						<option value="SQL Server" @(sql.DatabaseType == "SQL Server" ? "selected" : "")>SQL Server</option>
+						<option value="PostgreSQL" @(sql.DatabaseType == "PostgreSQL" ? "selected" : "")>PostgreSQL</option>
+					</select>
+				</div>
+			</div>
+			<div class="view-form-field">
+				<div class="view-form-field-name">
+					<span>Строка подключения</span>
+				</div>
+				<div>
+					<input name="@nameof(sql.ConnectionString)" value="@sql.ConnectionString" />
+				</div>
+			</div>
+			<div class="view-form-field">
+				<div class="view-form-field-name">
+					<span>Тайм-аут выполнения в секундах</span>
+				</div>
+				<div>
+					<input type="number" min="1" step="1" name="@nameof(sql.CommandTimeout)" value="@sql.CommandTimeout" />
+				</div>
+			</div>
+			<div class="view-form-field">
+				<div class="view-form-field-name">
+					<span>Выполняемый код</span>
+				</div>
+				<div>
+					<input name="@nameof(sql.CommandCode)" value="@sql.CommandCode" />
+				</div>
+			</div>
+			<div class="view-form-field">
+				<div class="view-form-field-name">
+					<span>Интервал выполнения в секундах</span>
+				</div>
+				<div>
+					<input type="number" min="1" step="1" name="@nameof(sql.Interval)" value="@sql.Interval" />
+				</div>
+			</div>
+		</div>
+		<div class="view-form-field">
+			<div class="view-form-field-name">
+				<span>Логика</span>
+			</div>
+			<div>
+				<div id="comparers">
+					@foreach (var comparer in comparers)
+					{
+						<div class="comparer">
+							<input name="@nameof(comparer.Parameter)" value="@comparer.Parameter" style="width: 10em;" />
+							<select name="@nameof(comparer.Comparer)" style="width: 12em;">
+								<option value="==">Равно</option>
+								<option value="!=">Не равно</option>
+								<option value=">">Больше</option>
+								<option value=">=">Больше или равно</option>
+								<option value="<">Меньше</option>
+								<option value="<=">Меньше или равно</option>
+							</select>
+							<input name="@nameof(comparer.Value)" value="@comparer.Value" style="width: 10em;" />
+							<input name="@nameof(comparer.RepeatInterval)" type="number" min="0" step="1" value="@comparer.RepeatInterval" style="width: 5em;" />
+							<input name="@nameof(comparer.Template)" value="@comparer.Template"  style="width: calc(100% - 44em); min-width: 20em;"/>
+							<button class="button" onclick="removeComparer(this)">Удалить</button>
+						</div>
+					}
+				</div>
+				<button class="button" onclick="addComparer()">Добавить правило</button>
+			</div>
+		</div>
+
+		<div id="comparersTemplate" style="display: none;" class="comparer">
+			<input name="@nameof(defComparer.Parameter)" value="@defComparer.Parameter" style="width: 10em;" />
+			<select name="@nameof(defComparer.Comparer)" style="width: 12em;">
+				<option value="==">Равно</option>
+				<option value="!=">Не равно</option>
+				<option value=">">Больше</option>
+				<option value=">=">Больше или равно</option>
+				<option value="<">Меньше</option>
+				<option value="<=">Меньше или равно</option>
+			</select>
+			<input name="@nameof(defComparer.Value)" value="@defComparer.Value" style="width: 10em;" />
+			<input name="@nameof(defComparer.Template)" value="@defComparer.Template" style="width: calc(100% - 39em); min-width: 20em;" />
+			<button class="button" onclick="removeComparer(this)">Удалить</button>
+		</div>
+
+		<div class="view-form-buttons">
+			<button class="button" onclick="computeComparers();submit()">Сохранить</button>
+		</div>
+	</div>
+
+	<div class="modal-group" id="delete">
+		<div class="overlay"></div>
+		<div class="modal" id="delete-form" form="@Url.Action("DoDelete", "Sql")">
+			<input type="hidden" name="@nameof(sql.Id)" value="@sql.Id" />
+			<div>Вы уверены, что хотите удалить эту Sql процедуру?</div>
+			<div class="view-form-buttons">
+				<button class="button" onclick="submit('#delete-form')">Удалить</button>
+				<button class="button" onclick="modal()">Отмена</button>
+			</div>
+		</div>
+	</div>
+}

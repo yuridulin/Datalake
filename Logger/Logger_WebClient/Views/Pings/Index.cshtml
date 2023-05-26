@@ -1,0 +1,37 @@
+﻿@using (var db = new DatabaseContext())
+{
+	var pings = db.ActionsPings
+		.ToList();
+
+	<div class="view-caption">
+		<div>
+			<b>Список Ping проверок</b>
+		</div>
+		<div>
+			<a href="#/pings/create" class="button">Добавить</a>
+		</div>
+	</div>
+	<div class="view-table-header">
+		<div>
+			<span style="width: 30%;">Название</span>
+			<span>Цель проверки</span>
+			<span style="width: 10em;">Таймаут</span>
+		</div>
+	</div>
+	<div class="view-table-body">
+		@foreach (var x in pings)
+		{
+			<a href="#/pings/details/@x.Id">
+				<span style="width: 30%;">
+					<span>@x.Name</span>
+				</span>
+				<span>
+					<span>@x.Target</span>
+				</span>
+				<span style="width: 10em;">
+					<span>@x.Target</span>
+				</span>
+			</a>
+		}
+	</div>
+}

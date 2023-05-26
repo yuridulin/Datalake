@@ -1,0 +1,85 @@
+﻿@model int
+
+@using (var db = new DatabaseContext())
+{
+	var ping = db.ActionsPings
+		.FirstOrDefault(x => x.Id == Model);
+
+	if (ping == null)
+	{
+		<div class="error">
+			Ping проверка <b>№@Model</b> не найдена
+		</div>
+		return;
+	}
+
+	<div class="view-caption">
+		<div>
+			<b>Редактирование Ping проверки @ping.Name</b>
+		</div>
+		<div>
+			<a class="button" onclick="modal('#delete')">Удалить</a>
+			<a class="button" href="#/pings">К списку</a>
+		</div>
+	</div>
+
+	<div class="view-body" form="@Url.Action("DoEdit", "Pings")">
+		<input type="hidden" name="@nameof(ping.Id)" value="@ping.Id" />
+		<div class="view-form-field">
+			<div class="view-form-field-name">
+				<span>Название</span>
+			</div>
+			<div>
+				<input name="@nameof(ping.Name)" value="@ping.Name" />
+			</div>
+		</div>
+		<div class="view-form-field">
+			<div class="view-form-field-name">
+				<span>Цель</span>
+			</div>
+			<div>
+				<input name="@nameof(ping.Target)" value="@ping.Target" />
+			</div>
+		</div>
+		<div class="view-form-field">
+			<div class="view-form-field-name">
+				<span>Интервал проверки</span>
+			</div>
+			<div>
+				<input type="number" min="1" step="1" name="@nameof(ping.Interval)" value="@ping.Interval" />
+			</div>
+		</div>
+		<div class="view-form-field">
+			<div class="view-form-field-name">
+				<span>Кол-во ошибок подряд до сообщения</span>
+			</div>
+			<div>
+				<input type="number" min="1" step="1" name="@nameof(ping.Value)" value="@ping.Value" />
+			</div>
+		</div>
+		<div class="view-form-field">
+			<div class="view-form-field-name">
+				<span>Шаблон сообщения</span>
+			</div>
+			<div>
+				<textarea name="@nameof(ping.Template)">@ping.Template</textarea>
+			</div>
+		</div>
+
+		<div class="view-form-buttons">
+			<button class="button" onclick="submit()">Сохранить</button>
+		</div>
+	</div>
+
+	<div class="modal-group" id="delete">
+		<div class="overlay"></div>
+		<div class="modal" id="delete-form" form="@Url.Action("DoDelete", "Pings")">
+			<input type="hidden" name="@nameof(ping.Id)" value="@ping.Id" />
+			<div>Вы уверены, что хотите удалить эту Ping проверку?</div>
+			<div class="view-form-buttons">
+				<button class="button" onclick="submit('#delete-form')">Удалить</button>
+				<button class="button" onclick="modal()">Отмена</button>
+			</div>
+		</div>
+	</div>
+}

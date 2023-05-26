@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta charset="utf-8" />
+	<title>Logger webClient</title>
+</head>
+<body>
+	<nav>
+		<a href="/">Главная</a>
+		<a href="/agents.html" style="font-weight: bold;">Агенты</a>
+		<a href="/logs/">Сообщения</a>
+	</nav>
+
+	<div id="view"></div>
+
+	<script>
+		fetch('/api/agent/list')
+			.then(res => res.json())
+			.then(json => renderAgents(json))
+
+		function renderAgents(agents) {
+			let view = document.getElementById('view')
+
+			view.innerHTML = agents
+				.map(agent => {
+					return `<div class="agent" data-id="${agent.Id}">
+						<div>${agent.Endpoint}</div>
+						<div>${agent.LastTimeAlive}</div>
+						<div>${agent.Description}</div>
+					</div>`
+				})
+				.join('\n')
+		}
+	</script>
+</body>
+</html>

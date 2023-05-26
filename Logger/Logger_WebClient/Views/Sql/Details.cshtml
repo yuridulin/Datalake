@@ -1,0 +1,99 @@
+﻿@model int
+
+@using (var db = new DatabaseContext())
+{
+	var sql = db.ActionsSql
+		.Where(x => x.Id == Model)
+		.FirstOrDefault();
+
+	if (sql == null)
+	{
+		<div class="error">
+			Sql процедура <b>№@Model</b> не найдена
+		</div>
+		return;
+	}
+
+	var query = from rel in db.Rel_StationConfig_ActionSql.Where(x => x.ActionSqlId == sql.Id)
+				from x in db.StationsConfigs.InnerJoin(x => x.Id == rel.StationConfigId)
+				select new { x.Id, x.Name };
+
+	var configs = query.ToList();
+
+	var comparers = sql.Comparers();
+
+	<div class="view-caption">
+		<div>
+			<b>Просмотр Sql процедуры @sql.Name</b>
+		</div>
+		<div>
+			<a href="#/sql/edit/@sql.Id" class="button">Изменить</a>
+			<a href="#/sql" class="button">К списку</a>
+		</div>
+	</div>
+
+	<div class="view-body">
+		<div class="view-info">
+			<div>Тип базы: <b>@sql.DatabaseType</b></div>
+			<div>Строка подключения: <b>@sql.ConnectionString</b> с таймаутом в <b>@sql.CommandTimeout</b> секунд</div>
+			<div>Выполняемый код: <b>@sql.CommandCode</b> каждые <b>@sql.Interval</b> секунд</div>
+			<div>
+				@if (configs.Count == 0)
+				{
+					<div>Не используется ни в одной конфигурации</div>
+				}
+				else
+				{
+					<div>Конфигурации</div>
+					<div>
+						@foreach (var x in configs)
+						{
+							<a class="button" href="#/configs/details/@x.Id">@x.Name</a>
+						}
+					</div>
+				}
+			</div>
+			<div>
+				@if (comparers.Count == 0)
+				{
+					<div>Сравнения не заданы</div>
+				}
+				else
+				{
+					<div>Используемые сравнения:</div>
+					<div style="padding-left: 2em;">
+						@foreach (var x in comparers)
+						{
+							<div>
+								Если 
+								<b>
+									@("@")@x.Parameter
+									@switch (x.Comparer)
+									{
+										case "==":<text>равно</text> break;
+										case "!=": <text>не равно</text> break;
+										case ">": <text>больше</text>break;
+										case ">=": <text>больше или равно</text>break;
+										case "<": <text>меньше</text>break;
+										case "<=": <text>меньше или равно</text>break;
+									}
+									@(string.IsNullOrEmpty(x.Value) ? "предыдущему значению" : x.Value)
+								</b>,
+								то 
+								@if (x.RepeatInterval > 0)
+								{
+									<text>каждые <b>@x.RepeatInterval</b> секунд</text>
+								}
+								else
+								{
+									<text>однократно</text>
+								}
+								сообщение: <b>@x.Template</b>
+							</div>
+						}
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

@@ -1,0 +1,55 @@
+﻿@model int
+
+@using (var db = new DatabaseContext())
+{
+	var ping = db.ActionsPings
+		.Where(x => x.Id == Model)
+		.FirstOrDefault();
+
+	if (ping == null)
+	{
+		<div class="error">
+			Ping проверка <b>№@Model</b> не найдена
+		</div>
+		return;
+	}
+
+	var query = from rel in db.Rel_StationConfig_ActionPing.Where(x => x.PingActionId == ping.Id)
+				from x in db.StationsConfigs.InnerJoin(x => x.Id == rel.StationConfigId)
+				select new { x.Id, x.Name };
+
+	var configs = query.ToList();
+
+	<div class="view-caption">
+		<div>
+			<b>Просмотр Ping проверки @ping.Name</b>
+		</div>
+		<div>
+			<a href="#/pings/edit/@ping.Id" class="button">Изменить</a>
+			<a href="#/pings" class="button">К списку</a>
+		</div>
+	</div>
+
+	<div class="view-body">
+		<div class="view-info">
+			<div>Объект <b>@ping.Target</b> опрашивается каждые <b>@ping.Interval</b> секунд</div>
+			<div>После <b>@ping.Value</b> ошибок подряд создается сообщение <b>@ping.Template</b></div>
+			<div>
+				@if (configs.Count == 0)
+				{
+					<div>Не используется ни в одной конфигурации</div>
+				}
+				else
+				{
+					<div>Конфигурации:</div>
+					<div>
+						@foreach (var x in configs)
+						{
+							<a class="button" href="#/configs/details/@x.Id">@x.Name</a>
+						}
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

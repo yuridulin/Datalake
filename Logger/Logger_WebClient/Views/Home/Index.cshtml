@@ -1,0 +1,26 @@
+﻿@{ 
+	var r = new Random().Next();
+}
+<!DOCTYPE html>
+
+<html>
+<head>
+	<meta name="viewport" content="width=device-width" />
+	<title>Logger</title>
+	<link rel="stylesheet" href="~/Content/index.css?@r" />
+</head>
+<body>
+	<a class="panel" href="#/">
+		<span>Logger</span>
+	</a>
+
+	<div class="tree">
+		@Html.Action("Tree", "Home")
+	</div>
+
+	<div class="view"></div>
+
+	<script>var host = '@Url.Action("", "")'</script>
+	<script src="~/Content/index.js?@r"></script>
+</body>
+</html>

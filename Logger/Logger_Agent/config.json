@@ -1,0 +1,6 @@
+{
+	"Server": "10.178.9.91",
+	"Port": 4330,
+	"ReplyUrl": "stations\\reply",
+	"ReplyIntervalSeconds": 10
+}

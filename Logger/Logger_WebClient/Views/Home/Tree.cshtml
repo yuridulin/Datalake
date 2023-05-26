@@ -1,0 +1,72 @@
+﻿@using (var db = new DatabaseContext())
+{
+	<div class="tree-block">
+		<div class="tree-item">
+			<span class="tree-caption">
+				<i class="material-icons" onclick="go('/')">table_chart</i>
+				<a href="#/">Лента сообщений</a>
+			</span>
+		</div>
+	</div>
+
+	<br />
+	<div class="tree-block">
+		<div class="tree-block">
+			<div class="tree-item">
+				<span class="tree-caption">
+					<i class="material-icons" onclick="go('/stations')">desktop_windows</i>
+					<a href="#/stations">Станции</a>
+				</span>
+				<span>
+					<i class="material-icons">expand_more</i>
+				</span>
+			</div>
+			<div class="tree-sub tree-sub-opened">
+				<div class="tree-item">
+					<span class="tree-caption">
+						<i class="material-icons" onclick="go('/stations-online')">play_circle</i>
+						<a href="#/stations/online">Онлайн</a>
+					</span>
+				</div>
+			</div>
+		</div>
+		<div class="tree-item">
+			<span class="tree-caption">
+				<i class="material-icons" onclick="go('/configs')">feed</i>
+				<a href="#/configs">Конфигурации</a>
+			</span>
+		</div>
+	</div>
+
+	<br />
+	<div class="tree-block">
+		<div class="tree-item">
+			<span class="tree-caption">
+				<i class="material-icons" onclick="go('/filters')">filter_alt</i>
+				<a href="#/filters">Фильтры</a>
+			</span>
+		</div>
+		<div class="tree-item">
+			<span class="tree-caption">
+				<i class="material-icons" onclick="go('/pings')">network_ping</i>
+				<a href="#/pings">Ping проверки</a>
+			</span>
+		</div>
+		<div class="tree-item">
+			<span class="tree-caption">
+				<i class="material-icons" onclick="go('/sql')">dns</i>
+				<a href="#/sql">Sql процедуры</a>
+			</span>
+		</div>
+	</div>
+
+	<br />
+	<div class="tree-block">
+		<div class="tree-item">
+			<span class="tree-caption">
+				<i class="material-icons" onclick="go('/channels')">rss_feed</i>
+				<a href="#/channels">Оповещения</a>
+			</span>
+		</div>
+	</div>
+}

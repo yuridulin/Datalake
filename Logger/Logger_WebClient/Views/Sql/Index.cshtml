@@ -1,0 +1,37 @@
+﻿@using (var db = new DatabaseContext())
+{
+	var sql = db.ActionsSql
+		.ToList();
+
+	<div class="view-caption">
+		<div>
+			<b>Список Ping проверок</b>
+		</div>
+		<div>
+			<a href="#/sql/create" class="button">Добавить</a>
+		</div>
+	</div>
+	<div class="view-table-header">
+		<div>
+			<span>Название</span>
+			<span style="width: 30%;">Описание</span>
+			<span style="width: 12em;">Кол-во отслеживаний</span>
+		</div>
+	</div>
+	<div class="view-table-body">
+		@foreach (var x in sql)
+		{
+			<a href="#/sql/details/@x.Id">
+				<span>
+					<span>@x.Name</span>
+				</span>
+				<span style="width: 30%;">
+					<span>@x.Description</span>
+				</span>
+				<span style="width: 12em;">
+					<span>@x.Comparers().Count</span>
+				</span>
+			</a>
+		}
+	</div>
+}

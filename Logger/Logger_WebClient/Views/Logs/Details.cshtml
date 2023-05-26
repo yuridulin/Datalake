@@ -1,0 +1,88 @@
+﻿@model int
+
+@using (var db = new DatabaseContext())
+{
+	var log = db.Logs
+		.Where(x => x.Id == Model)
+		.FirstOrDefault();
+
+	if (log == null)
+	{
+		<div class="error">
+			Сообщение <b>№@Model</b> не найдено
+		</div>
+		return;
+	}
+
+	var filter = db.LogsFilters
+		.Where(x => x.Id == log.LogFilterId)
+		.FirstOrDefault();
+
+	var station = db.Stations
+		.Where(x => x.Endpoint == log.Endpoint)
+		.FirstOrDefault();
+
+	var reaction = db.LogsReactions
+		.Where(x => x.LogId == log.Id && x.Username == User.Identity.Name)
+		.Count();
+
+	<div class="view-caption">
+		<div>
+			<b>Сообщение №@log.Id</b>
+		</div>
+		<div>
+			<button class="button" onclick="go('@Url.Action("", "logs")')">К списку</button>
+		</div>
+	</div>
+
+	<div class="view-body" form="@Url.Action("SetAsViewed", "Logs", new { Id = log.Id })">
+		<div class="view-info">
+			<div>
+				@log.TimeStamp.ToString("d MMMM yyyy HH:mm:ss")
+				@log.Type
+			</div>
+			<pre class="view-text">
+				@log.Message.Trim()
+			</pre>
+			@if (station != null)
+			{
+				<div>Станция: <a class="button" href="#/stations/details/@station.Endpoint">@station.Endpoint</a></div>
+			}
+			else
+			{
+				<div>Станция не найдена</div>
+			}
+			@if (filter != null)
+			{
+				<div>Фильтр: <a class="button" href="#/filters/details/@filter.Id">@filter.Name</a></div>
+			}
+			else
+			{
+				<div>Фильтр не найден</div>
+			}
+			<div>
+				Журнал: @log.Journal
+			</div>
+			<div>
+				Источник: @log.Source
+			</div>
+			<div>
+				Категория: @log.Category
+			</div>
+			<div>
+				EventId: @log.EventId
+			</div>
+			<div>
+				Пользователь: @log.Username
+			</div>
+
+		</div>
+
+		@if (reaction == 0)
+		{
+			<div class="view-form-buttons">
+				<button class="button" onclick="submit()">Отметить прочитанным</button>
+			</div>
+		}
+	</div>
+}
