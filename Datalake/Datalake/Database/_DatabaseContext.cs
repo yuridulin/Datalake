@@ -54,37 +54,37 @@ namespace Datalake.Database
 
 			if (!dbSchema.Tables.Any(t => t.TableName == TagsLive.TableName))
 			{
-				this.GetTable<TagLive>();
+				this.CreateTable<TagLive>();
 			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Sources.TableName))
 			{
-				this.GetTable<Source>();
+				this.CreateTable<Source>();
 			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Settings.TableName))
 			{
-				this.GetTable<Settings>();
+				this.CreateTable<Settings>();
 			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Blocks.TableName))
 			{
-				this.GetTable<Block>();
+				this.CreateTable<Block>();
 			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Tag_Input.TableName))
 			{
-				this.GetTable<Rel_Tag_Input>();
+				this.CreateTable<Rel_Tag_Input>();
 			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Block_Tag.TableName))
 			{
-				this.GetTable<Rel_Block_Tag>();
+				this.CreateTable<Rel_Block_Tag>();
 			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Block_Child.TableName))
 			{
-				this.GetTable<Rel_Block_Child>();
+				this.CreateTable<Rel_Block_Child>();
 			}
 		}
 
