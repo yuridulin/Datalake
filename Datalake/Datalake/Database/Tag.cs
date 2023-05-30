@@ -1,6 +1,7 @@
 ﻿using Datalake.Database.Enums;
 using LinqToDB.Mapping;
 using System;
+using System.Collections.Generic;
 
 namespace Datalake.Database
 {
@@ -17,16 +18,16 @@ namespace Datalake.Database
 		public string Description { get; set; } = string.Empty;
 
 		[Column, NotNull]
-		public int SourceId { get; set; }
+		public int SourceId { get; set; } = 0;
 
 		[Column]
 		public string SourceItem { get; set; }
 
 		[Column, NotNull]
-		public short Interval { get; set; }
+		public short Interval { get; set; } = 0;
 
 		[Column, NotNull]
-		public TagType Type { get; set; }
+		public TagType Type { get; set; } = TagType.String;
 
 
 		// для числовых значений
@@ -45,6 +46,14 @@ namespace Datalake.Database
 
 		[Column, NotNull]
 		public decimal MaxRaw { get; set; } = decimal.MaxValue;
+
+
+		// для вычисляемых тегов
+
+		[Column, NotNull]
+		public string Formula { get; set; } = string.Empty;
+
+		public Dictionary<string, Tag> Inputs { get; set; } = new Dictionary<string, Tag>();
 
 
 		// логика обновления

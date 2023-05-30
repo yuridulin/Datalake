@@ -32,7 +32,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Create(string tagName, string description, int sourceId, string sourceItem, short interval, byte tagType)
+		public object Create(string tagName)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -40,11 +40,16 @@ namespace Datalake.Web.Api
 
 				var id = db.Tags
 					.Value(x => x.Name, tagName)
-					.Value(x => x.Description, description)
-					.Value(x => x.SourceId, sourceId)
-					.Value(x => x.SourceItem, sourceItem)
-					.Value(x => x.Interval, interval)
-					.Value(x => x.Type, (TagType)tagType)
+					.Value(x => x.Description, string.Empty)
+					.Value(x => x.SourceId, 0)
+					.Value(x => x.SourceItem, string.Empty)
+					.Value(x => x.Interval, 0)
+					.Value(x => x.Type, TagType.String)
+					.Value(x => x.IsScaling, false)
+					.Value(x => x.MinRaw, 0)
+					.Value(x => x.MaxRaw, 0)
+					.Value(x => x.MinEU, 0)
+					.Value(x => x.MaxEU, 0)
 					.InsertWithInt32Identity();
 
 				if (id.HasValue)

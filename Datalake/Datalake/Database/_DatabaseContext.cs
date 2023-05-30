@@ -27,8 +27,17 @@ namespace Datalake.Database
 		public ITable<Settings> Settings
 			=> this.GetTable<Settings>();
 
-		public ITable<Object> Objects
-			=> this.GetTable<Object>();
+		public ITable<Block> Blocks
+			=> this.GetTable<Block>();
+
+		public ITable<Rel_Tag_Input> Rel_Tag_Input
+			=> this.GetTable<Rel_Tag_Input>();
+
+		public ITable<Rel_Block_Tag> Rel_Block_Tag
+			=> this.GetTable<Rel_Block_Tag>();
+
+		public ITable<Rel_Block_Child> Rel_Block_Child
+			=> this.GetTable<Rel_Block_Child>();
 
 
 		// методы расширения для взаимодействия с базой
@@ -37,25 +46,45 @@ namespace Datalake.Database
 		{
 			var sp = DataProvider.GetSchemaProvider();
 			var dbSchema = sp.GetSchema(this);
-			if (!dbSchema.Tables.Any(t => t.TableName == "Tags"))
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Tags.TableName))
 			{
 				this.CreateTable<Tag>();
 			}
-			if (!dbSchema.Tables.Any(t => t.TableName == "TagsLive"))
+
+			if (!dbSchema.Tables.Any(t => t.TableName == TagsLive.TableName))
 			{
-				this.CreateTable<TagLive>();
+				this.GetTable<TagLive>();
 			}
-			if (!dbSchema.Tables.Any(t => t.TableName == "Sources"))
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Sources.TableName))
 			{
-				this.CreateTable<Source>();
+				this.GetTable<Source>();
 			}
-			if (!dbSchema.Tables.Any(t => t.TableName == "Settings"))
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Settings.TableName))
 			{
-				this.CreateTable<Settings>();
+				this.GetTable<Settings>();
 			}
-			if (!dbSchema.Tables.Any(t => t.TableName == "Objects"))
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Blocks.TableName))
 			{
-				this.CreateTable<Object>();
+				this.GetTable<Block>();
+			}
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Tag_Input.TableName))
+			{
+				this.GetTable<Rel_Tag_Input>();
+			}
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Block_Tag.TableName))
+			{
+				this.GetTable<Rel_Block_Tag>();
+			}
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Block_Child.TableName))
+			{
+				this.GetTable<Rel_Block_Child>();
 			}
 		}
 

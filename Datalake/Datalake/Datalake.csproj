@@ -36,7 +36,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>C:\Dist\INOPC\Datalake\</OutputPath>
+    <OutputPath>..\..\..\..\Dist\Datalake\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -45,7 +45,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\..\..\Dist\Datalake\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -54,11 +54,12 @@
     <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Database\ObjectInput.cs" />
-    <Compile Include="Database\ObjectOutput.cs" />
+    <Compile Include="Database\Rel_Block_Child.cs" />
+    <Compile Include="Database\Rel_Block_Tag.cs" />
+    <Compile Include="Database\Rel_Tag_Input.cs" />
     <Compile Include="Database\Settings.cs" />
     <Compile Include="Database\Source.cs" />
-    <Compile Include="Database\Object.cs" />
+    <Compile Include="Database\Block.cs" />
     <Compile Include="Database\Tag.cs" />
     <Compile Include="Database\Enums\TagHistoryUse.cs" />
     <Compile Include="Database\TagLive.cs" />
@@ -71,6 +72,7 @@
     <Compile Include="Collector\Models\DatalakeResponse.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Web\Api\BlocksController.cs" />
     <Compile Include="Web\Api\SourcesController.cs" />
     <Compile Include="Web\Api\ConfigController.cs" />
     <Compile Include="Web\Api\TagsController.cs" />
@@ -106,6 +108,9 @@
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Bcl.AsyncInterfaces.7.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="NCalc, Version=1.3.8.0, Culture=neutral, PublicKeyToken=973cde3f1cafed03, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\ncalc.1.3.8\lib\NCalc.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
