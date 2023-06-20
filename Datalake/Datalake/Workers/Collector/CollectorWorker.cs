@@ -1,16 +1,13 @@
-﻿using Datalake.Collector.Models;
-using Datalake.Database;
+﻿using Datalake.Database;
 using Datalake.Database.Enums;
-using Newtonsoft.Json;
+using Datalake.Web;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Datalake.Collector
+namespace Datalake.Workers.Collector
 {
 	public class CollectorWorker
 	{
@@ -45,10 +42,10 @@ namespace Datalake.Collector
 
 				Console.WriteLine("Выполняется пересборка пакетов обновления");
 
-				var tags = db.Tags.ToList();
 				var sources = db.Sources.ToList();
+				var tags = db.Tags.Where(x => sources.Select(s => s.Id).Contains(x.SourceId)).ToList();
 
-				foreach (var tag in tags) tag.Prepare();
+				foreach (var tag in tags) tag.PrepareToCollect();
 
 				Packets = sources
 					.ToDictionary(x => x.Address, x => tags.Where(t => t.SourceId == x.Id).ToList());
@@ -78,7 +75,7 @@ namespace Datalake.Collector
 
 				try
 				{
-					var res = AskInopc(items, packet.Key);
+					var res = Inopc.AskInopc(items, packet.Key);
 
 					using (var db = new DatabaseContext())
 					{
@@ -117,7 +114,7 @@ namespace Datalake.Collector
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine(DateTime.Now + " [" + nameof(CollectorWorker) + "] " + ex.ToString());
+					Console.WriteLine(DateTime.Now + " [" + nameof(CalculatorWorker) + "] " + ex.ToString());
 				}
 				finally
 				{
@@ -127,57 +124,6 @@ namespace Datalake.Collector
 					}
 				}
 			}
-		}
-
-		public static DatalakeResponse AskInopc(string[] tags, string address)
-		{
-			DatalakeRequest req = new DatalakeRequest
-			{
-				Tags = tags
-			};
-
-			DatalakeResponse res;
-
-			try
-			{
-				var web = (HttpWebRequest)WebRequest.Create("http://" + address + ":81/api/storage/read");
-
-				web.ContentType = "application/json";
-				web.Method = "POST";
-				web.Timeout = 1000;
-
-				using (var stream = web.GetRequestStream())
-				{
-					using (var streamWriter = new StreamWriter(stream))
-					{
-						string json = JsonConvert.SerializeObject(req);
-						streamWriter.Write(json);
-					}
-				}
-
-				using (var response = (HttpWebResponse)web.GetResponse())
-				{
-					using (var stream = response.GetResponseStream())
-					{
-						using (var streamReader = new StreamReader(stream))
-						{
-							string json = streamReader.ReadToEnd();
-							res = JsonConvert.DeserializeObject<DatalakeResponse>(json);
-						}
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine(DateTime.Now + " [" + nameof(CollectorWorker) + "] " + ex.ToString());
-				res = new DatalakeResponse
-				{
-					Timestamp = DateTime.Now,
-					Tags = new InopcTag[0]
-				};
-			}
-
-			return res;
 		}
 	}
 }

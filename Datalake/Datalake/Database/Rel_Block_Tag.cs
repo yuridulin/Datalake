@@ -1,4 +1,5 @@
-﻿using LinqToDB.Mapping;
+﻿using Datalake.Database.Enums;
+using LinqToDB.Mapping;
 
 namespace Datalake.Database
 {
@@ -13,5 +14,8 @@ namespace Datalake.Database
 
 		[Column]
 		public string Name { get; set; }
+
+		[Column]
+		public BlockTagType Type { get; set; } = BlockTagType.Relation;
 	}
 }

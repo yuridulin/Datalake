@@ -1,4 +1,4 @@
-﻿namespace Datalake.Collector.Models
+﻿namespace Datalake.Workers.Collector.Models
 {
 	public class DatalakeRequest
 	{

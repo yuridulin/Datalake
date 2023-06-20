@@ -30,17 +30,19 @@ namespace Datalake.Database
 		public ITable<Block> Blocks
 			=> this.GetTable<Block>();
 
+		public ITable<ProgramLog> ProgramLog
+			=> this.GetTable<ProgramLog>();
+
 		public ITable<Rel_Tag_Input> Rel_Tag_Input
 			=> this.GetTable<Rel_Tag_Input>();
 
 		public ITable<Rel_Block_Tag> Rel_Block_Tag
 			=> this.GetTable<Rel_Block_Tag>();
 
-		public ITable<Rel_Block_Child> Rel_Block_Child
-			=> this.GetTable<Rel_Block_Child>();
-
 
 		// методы расширения для взаимодействия с базой
+
+		public Dictionary<int, TagLive> Live = new Dictionary<int, TagLive>();
 
 		public void Recreate()
 		{
@@ -72,6 +74,11 @@ namespace Datalake.Database
 				this.CreateTable<Block>();
 			}
 
+			if (!dbSchema.Tables.Any(t => t.TableName == ProgramLog.TableName))
+			{
+				this.CreateTable<ProgramLog>();
+			}
+
 			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Tag_Input.TableName))
 			{
 				this.CreateTable<Rel_Tag_Input>();
@@ -82,9 +89,9 @@ namespace Datalake.Database
 				this.CreateTable<Rel_Block_Tag>();
 			}
 
-			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Block_Child.TableName))
+			foreach (var tag in TagsLive)
 			{
-				this.CreateTable<Rel_Block_Child>();
+				Live[tag.TagId] = tag;
 			}
 		}
 
@@ -287,7 +294,7 @@ namespace Datalake.Database
 
 			try
 			{
-				// Запись в таблицу текущих значений
+				// Запись в таблицу текущих значений в базе
 				TagsLive
 					.Where(x => x.TagId == tag.TagId)
 					.Set(x => x.Date, tag.Date)
@@ -295,6 +302,9 @@ namespace Datalake.Database
 					.Set(x => x.Number, tag.Number)
 					.Set(x => x.Quality, tag.Quality)
 					.Update();
+
+				// Запись в таблицу текущих значений в памяти (нужно для оптимизации вычисления вычисляемых тегов)
+				Live[tag.TagId] = tag;
 
 				// Запись в таблицу "Сегодня"
 				Write(currentHistoryTableName);

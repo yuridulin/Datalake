@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Datalake.Web
 {
-	public class Http
+	public class Server
 	{
 		static HttpListener Listener { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using Datalake.Database.Enums;
 using LinqToDB.Mapping;
+using NCalc;
 using System;
 using System.Collections.Generic;
 
@@ -30,7 +31,7 @@ namespace Datalake.Database
 		public TagType Type { get; set; } = TagType.String;
 
 
-		// для числовых значений
+		// для числовых значений (шкалирование производится при записи нового значения)
 
 		[Column, NotNull]
 		public bool IsScaling { get; set; } = false;
@@ -48,21 +49,22 @@ namespace Datalake.Database
 		public decimal MaxRaw { get; set; } = decimal.MaxValue;
 
 
-		// для вычисляемых тегов
+		// для вычисляемых тегов (вычисление - в модуле CalculatorWorker)
+
+		[Column, NotNull]
+		public bool IsCalculating { get; set; } = false;
 
 		[Column, NotNull]
 		public string Formula { get; set; } = string.Empty;
 
-		public Dictionary<string, Tag> Inputs { get; set; } = new Dictionary<string, Tag>();
 
-
-		// логика обновления
+		// логика обновления оригинального значения
 
 		TimeSpan UpdateInterval = TimeSpan.Zero;
 
 		DateTime LastUpdate = DateTime.MinValue;
 
-		public void Prepare()
+		public void PrepareToCollect()
 		{
 			UpdateInterval = TimeSpan.FromSeconds(Interval);
 			LastUpdate = DateTime.MinValue;
@@ -88,6 +90,7 @@ namespace Datalake.Database
 				raw = d;
 			}
 
+			// вычисление значения на основе шкалирования
 			decimal? number = raw;
 			if (Type == TagType.Number && raw.HasValue && IsScaling)
 			{
@@ -99,6 +102,82 @@ namespace Datalake.Database
 				: (TagQuality)quality;
 
 			return (text, raw, number, tagQuality);
+		}
+
+
+		// логика обновления вычисляемого значения
+
+		public Dictionary<string, int> Inputs { get; set; } = new Dictionary<string, int>();
+
+		Expression Expression { get; set; }
+
+		public void PrepareToCalc()
+		{
+			if (!string.IsNullOrEmpty(Formula))
+			{
+				Expression = new Expression(Formula);
+				Expression.EvaluateParameter += (name, args) =>
+				{
+					if (Inputs.ContainsKey(name))
+					{
+						// переменная определена
+						args.Result = Cache.Read(Inputs[name]) ?? 0;
+					}
+					else
+					{
+						// переменная не определена
+						args.Result = 0;
+					}
+				};
+			}
+			else
+			{
+				Expression = null;
+			}
+		}
+
+		public (string, decimal?, decimal?, TagQuality) Calculate()
+		{
+			object result;
+			string err = string.Empty;
+
+			ushort quality = 0;
+			if (Expression == null)
+			{
+				err = "Формула пуста";
+				result = 0;
+				quality = 0;
+			}
+			else
+			{
+				try
+				{
+					result = Expression.Evaluate();
+					err = "";
+
+					if (Expression.HasErrors())
+					{
+						err = Expression.Error;
+						result = 0;
+						quality = 0;
+					}
+					else if (result.GetType() == typeof(string))
+					{
+						err = result.ToString();
+						result = 0;
+						quality = 0;
+					}
+				}
+				catch (Exception e)
+				{
+					err = e.Message;
+					result = 0;
+					quality = 0;
+				}
+			}
+
+			if (string.IsNullOrEmpty(err)) Console.WriteLine(err);
+			return FromRaw(result, quality);
 		}
 	}
 }
