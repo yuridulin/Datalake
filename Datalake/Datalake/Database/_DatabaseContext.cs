@@ -169,13 +169,18 @@ namespace Datalake.Database
 
 				var table = this.GetTable<TagHistory>().TableName(tableName);
 
-				var chunk = table
-					.Where(x => ids.Contains(x.TagId))
-					.Where(x => x.Date >= old)
-					.Where(x => x.Date <= young)
-					.Where(x => x.Using == TagHistoryUse.Basic)
-					.OrderBy(x => x.Date)
-					.ToList();
+				List<TagHistory> chunk;
+				try
+				{
+					chunk = table
+						.Where(x => ids.Contains(x.TagId))
+						.Where(x => x.Date >= old)
+						.Where(x => x.Date <= young)
+						.Where(x => x.Using == TagHistoryUse.Basic)
+						.OrderBy(x => x.Date)
+						.ToList();
+				}
+				catch { continue; }
 
 				if (seek == old.Date)
 				{

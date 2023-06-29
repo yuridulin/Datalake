@@ -36,15 +36,39 @@ namespace Datalake.Web.Api
 				.ToList();
 		}
 
-		public object Create(string name, string address)
+		public object Tags(int id)
 		{
 			using (var db = new DatabaseContext())
 			{
-				if (db.Sources.Any(x => x.Name == name)) return new { Error = "Уже существует источник с таким именем." };
+				var source = db.Sources.FirstOrDefault(x => x.Id == id);
+				if (source == null) return new { Error = "Источник не найден." };
 
+				var res = Inopc.AskInopc(new string[0], source.Address);
+
+				var items = res.Tags
+					.Select(x => x.Name)
+					.OrderBy(x => x)
+					.ToList();
+
+				var tags = db.Tags
+					.Where(x => items.Contains(x.SourceItem))
+					.ToList();
+
+				return items.Select(x => new
+				{
+					Item = x,
+					Tag = tags.FirstOrDefault(t => t.SourceItem == x)
+				});
+			}
+		}
+
+		public object Create()
+		{
+			using (var db = new DatabaseContext())
+			{
 				db.Sources
-					.Value(x => x.Name, name)
-					.Value(x => x.Address, address)
+					.Value(x => x.Name, "Новый источник данных")
+					.Value(x => x.Address, string.Empty)
 					.Insert();
 
 				return new { Done = "Источник успешно добавлен." };
@@ -68,7 +92,7 @@ namespace Datalake.Web.Api
 			using (var db = new DatabaseContext())
 			{
 				if (!db.Sources.Any(x => x.Id == id)) return new { Error = "Источник не найден." };
-				if (db.Sources.Any(x => x.Name == name)) return new { Error = "Уже существует источник с таким именем." };
+				if (db.Sources.Where(x => x.Id != id).Any(x => x.Name == name)) return new { Error = "Уже существует источник с таким именем." };
 
 				db.Sources
 					.Where(x => x.Id == id)

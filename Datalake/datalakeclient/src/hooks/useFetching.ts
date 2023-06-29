@@ -10,6 +10,7 @@ export const useFetching = (callback: { (x?: any): Promise<void> }) => {
 			await callback(x)
 		}
 		catch (e) {
+			console.log(e)
 			setError((e as Error).message)
 		}
 		finally {

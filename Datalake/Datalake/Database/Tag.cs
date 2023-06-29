@@ -43,10 +43,10 @@ namespace Datalake.Database
 		public decimal MaxEU { get; set; } = 100;
 
 		[Column, NotNull]
-		public decimal MinRaw { get; set; } = decimal.MinValue;
+		public decimal MinRaw { get; set; } = 0;
 
 		[Column, NotNull]
-		public decimal MaxRaw { get; set; } = decimal.MaxValue;
+		public decimal MaxRaw { get; set; } = 100;
 
 
 		// для вычисляемых тегов (вычисление - в модуле CalculatorWorker)
@@ -94,7 +94,7 @@ namespace Datalake.Database
 			decimal? number = raw;
 			if (Type == TagType.Number && raw.HasValue && IsScaling)
 			{
-				number = ((raw.Value - MinRaw) / (MaxRaw - MinRaw)) * (MaxEU - MinEU);
+				number = raw.Value * ((MaxEU - MinEU) / (MaxRaw - MinRaw));
 			}
 
 			TagQuality tagQuality = !Enum.IsDefined(typeof(TagQuality), quality)
@@ -139,9 +139,9 @@ namespace Datalake.Database
 		public (string, decimal?, decimal?, TagQuality) Calculate()
 		{
 			object result;
-			string err = string.Empty;
-
 			ushort quality = 0;
+			string err;
+
 			if (Expression == null)
 			{
 				err = "Формула пуста";

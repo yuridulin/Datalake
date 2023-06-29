@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import Tree from './left/Tree';
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { UpdateContext } from '../context/updateContext';
-import Title from './left/Title';
 
-function App() {
+export default function App() {
 
 	const [ lastUpdate, setUpdate ] = useState<Date>(new Date())
 
@@ -14,14 +13,12 @@ function App() {
 			setUpdate
 		}}>
 			<div className="left">
-				<Title />
+				<Link to="/" className="title">Datalake</Link>
 				<Tree />
 			</div>
 			<div className="right">
 				<Outlet />
 			</div>
 		</UpdateContext.Provider>
-	);
+	)
 }
-
-export default App

@@ -1,8 +1,9 @@
 import { TagType } from "./valueRange"
 
 export interface Tag {
-	TagName: string
-	TagType: TagType
+	Id: number
+	Name: string
+	Type: TagType
 	Description: string
 	SourceId: number
 	SourceItem: string

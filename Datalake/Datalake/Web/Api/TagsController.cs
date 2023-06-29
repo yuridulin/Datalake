@@ -32,6 +32,11 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		public object Types()
+		{
+			return Enum.GetValues(typeof(TagType)).Cast<TagType>().ToDictionary(x => (int)x, x => x.ToString());
+		}
+
 		public object Create(string tagName)
 		{
 			using (var db = new DatabaseContext())
@@ -68,6 +73,39 @@ namespace Datalake.Web.Api
 				{
 					return new { Done = "Ошибка при добавлении тега." };
 				}
+			}
+		}
+
+		public object CreateFromSource(int sourceId, string sourceItem)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var name = sourceItem.Replace('.', '_');
+				bool created = false;
+				int i = 1;
+
+				do
+				{
+					if (db.Tags.Any(x => x.Name == name))
+					{
+						name = sourceItem + "_" + i++;
+					}
+					else
+					{
+						var tag = new Tag
+						{
+							Name = name,
+							SourceId = sourceId,
+							SourceItem = sourceItem,
+						};
+
+						db.Insert(tag);
+						created = true;
+					}
+				}
+				while (!created);
+
+				return new { Done = true };
 			}
 		}
 

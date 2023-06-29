@@ -1,8 +1,8 @@
 import { Navigate } from 'react-router-dom'
-import { useInterval } from '../../hooks/useInterval'
-import { useFetching } from '../../hooks/useFetching'
+import { useInterval } from '../hooks/useInterval'
+import { useFetching } from '../hooks/useFetching'
 import { useState } from 'react'
-import appApi from '../../api/appApi'
+import appApi from '../api/appApi'
 
 export default function Offline() {
 

@@ -1,6 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Web.Models;
-using System.Collections.Generic;
+using System;
 using System.Linq;
 
 namespace Datalake.Web.Api
@@ -15,32 +15,15 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Tree()
+		public object Statistic()
 		{
 			using (var db = new DatabaseContext())
 			{
-				var sources = db.Sources
-					.ToList();
+				var TotalTagsCount = db.Tags.Count();
+				var TotalSourcesCount = db.Sources.Count();
+				var WritesInMinute = db.TagsLive.ToList().Where(x => (DateTime.Now - x.Date) < TimeSpan.FromMinutes(1)).Count();
 
-				var blocks = db.Blocks
-					.ToList();
-
-				return new
-				{
-					sources,
-					blocks = Children(0, blocks),
-				};
-			}
-
-			List<Block> Children(int id, List<Block> all)
-			{
-				var children = all
-					.Where(x => x.ParentId == id)
-					.ToList();
-
-				foreach (var child in children) child.Children = Children(child.Id, all);
-
-				return children;
+				return new { TotalTagsCount, TotalSourcesCount, WritesInMinute };
 			}
 		}
 	}
