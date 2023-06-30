@@ -3,6 +3,7 @@ using LinqToDB.Mapping;
 using NCalc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Datalake.Database
 {
@@ -19,16 +20,19 @@ namespace Datalake.Database
 		public string Description { get; set; } = string.Empty;
 
 		[Column, NotNull]
-		public int SourceId { get; set; } = 0;
-
-		[Column]
-		public string SourceItem { get; set; }
+		public TagType Type { get; set; } = TagType.String;
 
 		[Column, NotNull]
 		public short Interval { get; set; } = 0;
 
+
+		// для значений, получаемых из источника
+
 		[Column, NotNull]
-		public TagType Type { get; set; } = TagType.String;
+		public int SourceId { get; set; } = 0;
+
+		[Column]
+		public string SourceItem { get; set; }
 
 
 		// для числовых значений (шкалирование производится при записи нового значения)
@@ -97,7 +101,7 @@ namespace Datalake.Database
 				number = raw.Value * ((MaxEU - MinEU) / (MaxRaw - MinRaw));
 			}
 
-			TagQuality tagQuality = !Enum.IsDefined(typeof(TagQuality), quality)
+			TagQuality tagQuality = !Enum.IsDefined(typeof(TagQuality), (int)quality)
 				? TagQuality.Unknown
 				: (TagQuality)quality;
 
@@ -107,7 +111,7 @@ namespace Datalake.Database
 
 		// логика обновления вычисляемого значения
 
-		public Dictionary<string, int> Inputs { get; set; } = new Dictionary<string, int>();
+		public List<Rel_Tag_Input> Inputs { get; set; } = new List<Rel_Tag_Input>();
 
 		Expression Expression { get; set; }
 
@@ -118,10 +122,11 @@ namespace Datalake.Database
 				Expression = new Expression(Formula);
 				Expression.EvaluateParameter += (name, args) =>
 				{
-					if (Inputs.ContainsKey(name))
+					var input = Inputs.FirstOrDefault(x => x.VariableName == name);
+					if (input != null)
 					{
 						// переменная определена
-						args.Result = Cache.Read(Inputs[name]) ?? 0;
+						args.Result = Cache.Read(input.InputTagId) ?? 0;
 					}
 					else
 					{

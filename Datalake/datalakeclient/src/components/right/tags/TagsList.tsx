@@ -29,7 +29,7 @@ export default function Tags() {
 			? <div>Произошла ошибка</div>
 			: <>
 				<Header
-					left={<Button onClick={createTag}>Добавить тег</Button>}
+					right={<Button onClick={createTag}>Добавить тег</Button>}
 				>Список тегов</Header>
 				<div className="table">
 					<div className="table-header">

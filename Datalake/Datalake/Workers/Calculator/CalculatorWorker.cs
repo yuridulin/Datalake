@@ -35,6 +35,8 @@ namespace Datalake.Workers.Collector
 		{
 			using (var db = new DatabaseContext())
 			{
+				var inputs = db.Rel_Tag_Input.ToList();
+
 				var lastUpdate = db.GetUpdateDate();
 				if (lastUpdate == StoredUpdate) return;
 
@@ -44,7 +46,11 @@ namespace Datalake.Workers.Collector
 					.Where(x => x.IsCalculating)
 					.ToList();
 
-				foreach (var tag in Tags) tag.PrepareToCalc();
+				foreach (var tag in Tags)
+				{
+					tag.Inputs = inputs.Where(x => x.TagId == tag.Id).ToList();
+					tag.PrepareToCalc();
+				}
 
 				StoredUpdate = lastUpdate;
 			}

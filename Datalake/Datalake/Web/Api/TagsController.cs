@@ -37,6 +37,23 @@ namespace Datalake.Web.Api
 			return Enum.GetValues(typeof(TagType)).Cast<TagType>().ToDictionary(x => (int)x, x => x.ToString());
 		}
 
+		public object Inputs(int id)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var outputs = db.Rel_Tag_Input
+					.Where(x => x.InputTagId == id)
+					.Select(x => x.TagId)
+					.ToList();
+
+				return db.Tags
+					.Where(x => x.Id != id)
+					.Where(x => !outputs.Contains(x.Id))
+					.Select(x => new { x.Id, x.Name })
+					.ToList();
+			}
+		}
+
 		public object Create(string tagName)
 		{
 			using (var db = new DatabaseContext())
@@ -105,8 +122,10 @@ namespace Datalake.Web.Api
 				}
 				while (!created);
 
-				return new { Done = true };
+				db.SetUpdateDate();
 			}
+
+			return new { Done = true };
 		}
 
 		public object Read(int id)
@@ -117,25 +136,49 @@ namespace Datalake.Web.Api
 
 				if (tag == null) return new { Error = "Тег не найден." };
 
+				tag.Inputs = db.Rel_Tag_Input
+					.Where(x => x.TagId == id)
+					.ToList();
+
 				return tag;
 			}
 		}
 
-		public object Update(int id, string tagName, string description, int sourceId, string sourceItem, short interval, byte tagType)
+		public object Update(Tag tag)
 		{
 			using (var db = new DatabaseContext())
 			{
-				if (!db.Tags.Any(x => x.Name == tagName)) return new { Error = "Тег не найден." };
+				if (!db.Tags.Any(x => x.Name == tag.Name)) return new { Error = "Тег не найден." };
 
 				db.Tags
-					.Where(x => x.Id == id)
-					.Set(x => x.Name, tagName)
-					.Set(x => x.Description, description)
-					.Set(x => x.SourceId, sourceId)
-					.Set(x => x.SourceItem, sourceItem)
-					.Set(x => x.Interval, interval)
-					.Set(x => x.Type, (TagType)tagType)
+					.Where(x => x.Id == tag.Id)
+					.Set(x => x.Name, tag.Name)
+					.Set(x => x.Description, tag.Description)
+					.Set(x => x.SourceId, tag.SourceId)
+					.Set(x => x.SourceItem, tag.SourceItem)
+					.Set(x => x.Interval, tag.Interval)
+					.Set(x => x.Type, tag.Type)
+					.Set(x => x.IsScaling, tag.IsScaling)
+					.Set(x => x.MinRaw, tag.MinRaw)
+					.Set(x => x.MaxRaw, tag.MaxRaw)
+					.Set(x => x.MinEU, tag.MinEU)
+					.Set(x => x.MaxEU, tag.MaxEU)
+					.Set(x => x.IsCalculating, tag.IsCalculating)
+					.Set(x => x.Formula, tag.Formula)
 					.Update();
+
+				db.Rel_Tag_Input
+					.Where(x => x.TagId == tag.Id)
+					.Delete();
+
+				foreach (var input in tag.Inputs)
+				{
+					db.Rel_Tag_Input
+						.Value(x => x.TagId, tag.Id)
+						.Value(x => x.InputTagId, input.InputTagId)
+						.Value(x => x.VariableName, input.VariableName)
+						.Insert();
+				}
 
 				db.SetUpdateDate();
 

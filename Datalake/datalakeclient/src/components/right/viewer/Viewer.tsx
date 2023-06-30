@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react"
 import { useFetching } from "../../../hooks/useFetching"
 import { Navigate } from "react-router-dom"
-import { Select } from "antd"
+import { Button, ConfigProvider, DatePicker, Radio, Select } from "antd"
 import axios from "axios"
 import { Tag } from "../../../@types/tag"
+import 'dayjs/locale/ru';
+import locale from 'antd/locale/ru_RU'
+import { PlayCircleOutlined } from "@ant-design/icons"
+import { useInterval } from "../../../hooks/useInterval"
+import { FlatHistoryValue } from "../../../@types/FlatHistoryValue"
+import TagQuality from "../../small/TagQuality"
+import TagType from "../../small/TagType"
 
 export default function Viewer() {
 
 	const [ tags, setTags ] = useState([] as Tag[])
+	const [ values, setValues ] = useState([] as FlatHistoryValue[])
 	const [ options, setOptions ] = useState([] as { key: number, value: string}[])
+	const [ settings, setSettings ] = useState({ tags: [], live: true, resolution: 0, young: new Date(), old: new Date() })
 
 	const [ readTags, , error ] = useFetching(async () => {
 		let res = await axios.get('tags/list')
@@ -17,11 +26,15 @@ export default function Viewer() {
 	})
 
 	const [ getValues ] = useFetching(async () => {
-		//let res = await axios.post('tags/values')
+		let res = await axios.post('values/flathistory', settings)
+		setValues(res.data)
 	})
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => { readTags() }, [])
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect(() => { getValues() }, [settings])
+	useInterval(() => { if (settings.live) getValues() }, 1000)
 
 	return (
 		error
@@ -33,11 +46,60 @@ export default function Viewer() {
 				<Select 
 					mode="tags"
 					style={{ width: '100%' }}
-					onChange={getValues}
+					onChange={values => setSettings({ ...settings, tags: values })}
 					tokenSeparators={[',', ';', ' ']}
 					placeholder="Выберите теги для просмотра..."
 					options={options}
 				/>
+			</div>
+			<br />
+			<div>
+				<Radio.Group value={settings.live} onChange={e => setSettings({ ...settings, live: e.target.value })}>
+					<Radio.Button value={true}>Текущие</Radio.Button>
+					<Radio.Button value={false}>Архивные</Radio.Button>
+				</Radio.Group>
+
+				<div style={{ display: settings.live ? 'none' : 'inline' }}>
+					&emsp;
+					<ConfigProvider locale={locale}>
+						<DatePicker.RangePicker
+							showTime={{ format: 'HH:mm' }}
+							format="YYYY-MM-DD HH:mm"
+							placeholder={['Начало', 'Конец']}
+							onChange={values => setSettings({ ...settings, old: values?.[0]?.toDate() ?? new Date(), young: values?.[1]?.toDate() ?? new Date() })}
+						/>
+					</ConfigProvider>
+					&emsp;
+					<Select
+						style={{ width: '12em' }}
+						value={settings.resolution}
+						onChange={v => setSettings({ ...settings, resolution: v })}
+						options={[
+							{ value: 0, label: 'по изменению' },
+							{ value: 1000, label: 'по секундам' },
+							{ value: 60000, label: 'по минутам' },
+							{ value: 360000, label: 'по часам' },
+							{ value: 86400000, label: 'по суткам' },
+						]}
+					></Select>
+					&emsp;
+					<Button icon={<PlayCircleOutlined />} onClick={getValues}></Button>
+				</div>
+			</div>
+			<br />
+			<div className="table">
+				<div className="table-header">
+					<span>Время</span>
+					<span>Тег</span>
+					<span>Значение</span>
+					<span>Качество</span>
+				</div>
+				{values.map(x => <div key={x.Id}>
+					<span>{x.Date}</span>
+					<span>{x.TagName}</span>
+					<span>{x.Value}</span>
+					<span><TagQuality quality={x.Quality} /></span>
+				</div>)}
 			</div>
 		</>
 	)

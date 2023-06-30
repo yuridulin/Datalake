@@ -8,6 +8,6 @@ type HeaderProps = {
 export default function FormRow({ title, children }: HeaderProps) {
 	return <div className="form-row">
 		<span>{title}</span>
-		{children}
+		<div>{children}</div>
 	</div>
 }
