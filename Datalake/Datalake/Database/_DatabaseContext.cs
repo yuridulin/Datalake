@@ -112,6 +112,18 @@ namespace Datalake.Database
 			}
 		}
 
+		public void Log(string module, string message, ProgramLogType type = ProgramLogType.Error)
+		{
+			ProgramLog
+				.Value(x => x.Module, module)
+				.Value(x => x.Message, message)
+				.Value(x => x.Timestamp, DateTime.Now)
+				.Value(x => x.Type, type)
+				.Insert();
+
+			Console.WriteLine("{0} {1} {2}\n\t{3}", DateTime.Now, module, type, message);
+		}
+
 		public DateTime GetUpdateDate()
 		{
 			return Settings.FirstOrDefault()?.LastUpdate ?? DateTime.MinValue;
@@ -179,43 +191,48 @@ namespace Datalake.Database
 						.Where(x => x.Using == TagHistoryUse.Basic)
 						.OrderBy(x => x.Date)
 						.ToList();
-				}
-				catch { continue; }
 
-				if (seek == old.Date)
+					if (seek == old.Date)
+					{
+						// Проверка, нужно ли загружать начальные значения
+						var notInitiatedTags = tags
+							.Where(x => !chunk.Any(v => v.Date == old))
+							.ToList();
+
+						var previousIds = table
+							.Where(x => ids.Contains(x.TagId))
+							.Where(x => x.Date <= old)
+							.GroupBy(x => x.TagId)
+							.Select(g => g.Select(x => x.Id).Max())
+							.ToList();
+
+						var previousValues = table
+							.Where(x => previousIds.Contains(x.Id))
+							.Select(x => new TagHistory
+							{
+								Id = x.Id,
+								TagId = x.TagId,
+								Date = old,
+								Text = x.Text,
+								Number = x.Number,
+								Quality = x.Quality,
+								Using = TagHistoryUse.Initial
+							})
+							.ToList();
+
+						data.AddRange(previousValues);
+					}
+
+					data.AddRange(chunk);
+				}
+				catch
 				{
-					// Проверка, нужно ли загружать начальные значения
-					var notInitiatedTags = tags
-						.Where(x => !chunk.Any(v => v.Date == old))
-						.ToList();
-
-					var previousIds = table
-						.Where(x => ids.Contains(x.TagId))
-						.Where(x => x.Date <= old)
-						.GroupBy(x => x.TagId)
-						.Select(g => g.Select(x => x.Id).Max())
-						.ToList();
-
-					var previousValues = table
-						.Where(x => previousIds.Contains(x.Id))
-						.Select(x => new TagHistory
-						{
-							Id = x.Id,
-							TagId = x.TagId,
-							Date = old,
-							Text = x.Text,
-							Number = x.Number,
-							Quality = x.Quality,
-							Using = TagHistoryUse.Initial
-						})
-						.ToList();
-
-					data.AddRange(previousValues);
+					Console.WriteLine("Таблица не найдена");
 				}
-
-				data.AddRange(chunk);
-
-				seek = seek.AddDays(1);
+				finally
+				{
+					seek = seek.AddDays(1);
+				}
 			}
 			while (seek <= young);
 

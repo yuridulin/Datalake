@@ -15,7 +15,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Statistic()
+		public object Statistic(DateTime last)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -23,7 +23,10 @@ namespace Datalake.Web.Api
 				var TotalSourcesCount = db.Sources.Count();
 				var WritesInMinute = db.TagsLive.ToList().Where(x => (DateTime.Now - x.Date) < TimeSpan.FromMinutes(1)).Count();
 
-				return new { TotalTagsCount, TotalSourcesCount, WritesInMinute };
+				var Logs = db.ProgramLog.Where(x => x.Timestamp > last).ToList();
+				if (Logs.Any()) { last = Logs.OrderByDescending(x => x.Timestamp).Select(x => x.Timestamp).First(); }
+
+				return new { TotalTagsCount, TotalSourcesCount, WritesInMinute, Logs, Last = last };
 			}
 		}
 	}

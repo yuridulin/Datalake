@@ -10,7 +10,6 @@ import { PlayCircleOutlined } from "@ant-design/icons"
 import { useInterval } from "../../../hooks/useInterval"
 import { FlatHistoryValue } from "../../../@types/FlatHistoryValue"
 import TagQuality from "../../small/TagQuality"
-import TagType from "../../small/TagType"
 
 export default function Viewer() {
 
@@ -25,7 +24,17 @@ export default function Viewer() {
 		setOptions(res.data.map((x: Tag) => ({ key: x.Id, value: x.Name })))
 	})
 
-	const [ getValues ] = useFetching(async () => {
+	const getValues = () => {
+		if (settings.tags.length === 0) return console.log('Нечего спрашивать')
+		if (settings.live || (settings.young >= new Date())) {
+			loadValues()
+		}
+		else {
+			console.log('Незачем спрашивать, вся история отдана')
+		}
+	}
+
+	const [ loadValues ] = useFetching(async () => {
 		let res = await axios.post('values/flathistory', settings)
 		setValues(res.data)
 	})
@@ -83,10 +92,11 @@ export default function Viewer() {
 						]}
 					></Select>
 					&emsp;
-					<Button icon={<PlayCircleOutlined />} onClick={getValues}></Button>
+					<Button icon={<PlayCircleOutlined />} onClick={loadValues}></Button>
 				</div>
 			</div>
 			<br />
+			{settings.tags.length > 0 &&
 			<div className="table">
 				<div className="table-header">
 					<span>Время</span>
@@ -94,13 +104,13 @@ export default function Viewer() {
 					<span>Значение</span>
 					<span>Качество</span>
 				</div>
-				{values.map(x => <div key={x.Id}>
+				{values.map(x => <div className="table-row" key={x.Id}>
 					<span>{x.Date}</span>
 					<span>{x.TagName}</span>
 					<span>{x.Value}</span>
 					<span><TagQuality quality={x.Quality} /></span>
 				</div>)}
-			</div>
+			</div>}
 		</>
 	)
 }

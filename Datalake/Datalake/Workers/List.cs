@@ -7,7 +7,7 @@ namespace Datalake.Workers
 	{
 		public static void Start(CancellationToken token)
 		{
-			Task.Run(() => Collector.CalculatorWorker.Start(token));
+			Task.Run(() => Calculator.CalculatorWorker.Start(token));
 			Task.Run(() => Collector.CollectorWorker.Start(token));
 		}
 	}

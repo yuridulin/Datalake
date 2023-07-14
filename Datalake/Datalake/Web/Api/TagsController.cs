@@ -116,7 +116,14 @@ namespace Datalake.Web.Api
 							SourceItem = sourceItem,
 						};
 
-						db.Insert(tag);
+						var id = db.InsertWithInt32Identity(tag);
+
+						db.TagsLive
+							.Value(x => x.TagId, id)
+							.Value(x => x.Date, DateTime.Now)
+							.Value(x => x.Quality, TagQuality.Bad)
+							.Insert();
+
 						created = true;
 					}
 				}
