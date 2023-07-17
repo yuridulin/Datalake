@@ -54,42 +54,27 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Create(string tagName)
+		public object Create()
 		{
 			using (var db = new DatabaseContext())
 			{
-				if (db.Tags.Any(x => x.Name == tagName)) return new { Error = "Уже существует такой тег. Введите другое имя тега." };
+				string name = db.Tags.OrderByDescending(x => x.Name).Select(x => x.Name).FirstOrDefault() ?? "New_tag_1";
+				int number = int.TryParse(name.Replace("New_tag_", ""), out int i) ? i : 1;
+				name = "New_tag_" + number;
 
-				var id = db.Tags
-					.Value(x => x.Name, tagName)
-					.Value(x => x.Description, string.Empty)
-					.Value(x => x.SourceId, 0)
-					.Value(x => x.SourceItem, string.Empty)
-					.Value(x => x.Interval, 0)
-					.Value(x => x.Type, TagType.String)
-					.Value(x => x.IsScaling, false)
-					.Value(x => x.MinRaw, 0)
-					.Value(x => x.MaxRaw, 0)
-					.Value(x => x.MinEU, 0)
-					.Value(x => x.MaxEU, 0)
-					.InsertWithInt32Identity();
+				var tag = new Tag { Name = name };
 
-				if (id.HasValue)
-				{
-					db.TagsLive
-						.Value(x => x.TagId, id.Value)
-						.Value(x => x.Date, DateTime.Now)
-						.Value(x => x.Quality, TagQuality.Bad)
-						.Insert();
+				var id = db.InsertWithInt32Identity(tag);
 
-					db.SetUpdateDate();
+				db.TagsLive
+					.Value(x => x.TagId, id)
+					.Value(x => x.Date, DateTime.Now)
+					.Value(x => x.Quality, TagQuality.Bad)
+					.Insert();
 
-					return new { Done = "Тег успешно добавлен." };
-				}
-				else
-				{
-					return new { Done = "Ошибка при добавлении тега." };
-				}
+				db.SetUpdateDate();
+
+				return Done("Тег успешно добавлен.");
 			}
 		}
 
@@ -156,6 +141,8 @@ namespace Datalake.Web.Api
 			using (var db = new DatabaseContext())
 			{
 				if (!db.Tags.Any(x => x.Name == tag.Name)) return new { Error = "Тег не найден." };
+				if (tag.Name.Contains(' ')) return Error("В имени тега не разрешены пробелы");
+				if (tag.SourceItem.Contains(' ')) return Error("В адресе значения не разрешены пробелы");
 
 				db.Tags
 					.Where(x => x.Id == tag.Id)

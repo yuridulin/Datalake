@@ -32,7 +32,7 @@ namespace Datalake.Database
 		public int SourceId { get; set; } = 0;
 
 		[Column]
-		public string SourceItem { get; set; }
+		public string SourceItem { get; set; } = string.Empty;
 
 
 		// для числовых значений (шкалирование производится при записи нового значения)
@@ -58,7 +58,7 @@ namespace Datalake.Database
 		[Column, NotNull]
 		public bool IsCalculating { get; set; } = false;
 
-		[Column, NotNull]
+		[Column]
 		public string Formula { get; set; } = string.Empty;
 
 
