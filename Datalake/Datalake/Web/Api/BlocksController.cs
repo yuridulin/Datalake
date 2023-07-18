@@ -1,6 +1,7 @@
 ﻿using Datalake.Database;
 using Datalake.Web.Models;
 using LinqToDB;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -35,11 +36,74 @@ namespace Datalake.Web.Api
 
 				if (block == null) return new { Error = "Не найден объект по Id = " + Id };
 
+				block.Properties = JsonConvert.DeserializeObject<Dictionary<string, string>>(block.PropertiesRaw);
+
+				block.Tags = db.Rel_Block_Tag
+					.Where(x => x.BlockId == Id)
+					.OrderBy(x => x.Type)
+					.ThenBy(x => x.Name)
+					.ToList();
+
 				block.Children = db.Blocks
 					.Where(x => x.ParentId == block.Id)
+					.OrderBy(x => x.Name)
 					.ToList();
 				
 				return block;
+			}
+		}
+
+		public object Parents(int Id)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var list = db.Blocks.Where(x => x.Id != Id).ToList();
+				var excluded = new List<int>();
+
+				Process(Id);
+
+				void Process(int blockId)
+				{
+					var children = list
+						.Where(x => x.ParentId == blockId)
+						.Select(x => x.Id)
+						.ToList();
+
+					excluded.AddRange(children);
+
+					foreach (var child in children)
+					{
+						Process(child);
+					}
+				}
+
+				return list.Select(x => x.Id).Except(excluded);
+			}
+		}
+
+		public object Values(int Id)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var query = from r in db.Rel_Block_Tag.Where(x => x.BlockId == Id)
+							from l in db.TagsLive.LeftJoin(x => x.TagId == r.TagId)
+							from t in db.Tags.LeftJoin(x => x.Id == r.TagId)
+							select new
+							{
+								r.Name,
+								r.Type,
+								ValueType = t.Type,
+								Value = l,
+							};
+
+				return query
+					.ToList()
+					.Select(x => new
+					{
+						x.Name,
+						Value = x.Value.Value(x.ValueType),
+
+					});
 			}
 		}
 
@@ -60,24 +124,24 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Update(Block block, List<Rel_Block_Tag> tags)
+		public object Update(Block block)
 		{
 			using (var db = new DatabaseContext())
 			{
-				if (db.Blocks.Any(x => x.Id == block.Id)) return Error("Объект с Id = " + block.Id + " не найден");
+				if (!db.Blocks.Any(x => x.Id == block.Id)) return Error("Объект с Id = " + block.Id + " не найден");
 
 				db.Blocks
 					.Where(x => x.Id == block.Id)
 					.Set(x => x.Name, block.Name)
 					.Set(x => x.Description, block.Description)
-					.Set(x => x.PropertiesRaw, block.PropertiesRaw)
+					.Set(x => x.PropertiesRaw, JsonConvert.SerializeObject(block.Properties))
 					.Update();
 
 				db.Rel_Block_Tag
 					.Where(x => x.BlockId == block.Id)
 					.Delete();
 
-				foreach (var tag in tags)
+				foreach (var tag in block.Tags)
 				{
 					db.Rel_Block_Tag
 						.Value(x => x.BlockId, block.Id)

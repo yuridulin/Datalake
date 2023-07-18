@@ -2,10 +2,11 @@ import { useEffect, useState } from "react"
 import { useUpdateContext } from "../../context/updateContext"
 import { useInterval } from "../../hooks/useInterval"
 import axios from "axios"
-import { Block } from "../../@types/block"
-import TreeSub, { TreeSubProps } from "../small/TreeSub"
+import { BlockType } from "../../@types/BlockType"
 import { useFetching } from "../../hooks/useFetching"
 import { Navigate } from "react-router-dom"
+import TreeSub, { TreeSubProps } from "../small/TreeSub"
+import TreeItem from "../small/TreeItem"
 
 export default function Tree() {
 
@@ -14,13 +15,14 @@ export default function Tree() {
 
 	const [ load,, error ] = useFetching(async ()=> {
 		let res = await axios.get('blocks/list')
-		setBlocks(res.data.map((x: Block) => blockToTree(x)))
+		setBlocks(res.data.map((x: BlockType) => blockToTree(x)))
 	})
 
-	function blockToTree(block: Block): TreeSubProps {
+	function blockToTree(block: BlockType): TreeSubProps {
 		return {
+			id: String(block.Id),
 			icon: 'data_object',
-			link: '/blocks/' + block.Id,
+			to: '/blocks/view/' + block.Id,
 			text: block.Name,
 			elements: block.Children.map(x => blockToTree(x))
 		}
@@ -34,12 +36,13 @@ export default function Tree() {
 		error
 		? <Navigate to="/offline" />
 		: <div className="tree">
-			<TreeSub icon="dashboard" text="Панель состояния" link="/" />
-			<TreeSub icon="slideshow" text="Просмотр значений" link="/viewer" />
+			<TreeItem to="/" icon="dashboard" text="Панель состояния" />
+			<TreeItem to="/viewer" icon="slideshow" text="Просмотр значений" />
 			<br />
-			<TreeSub icon="input" text="Источники" link="/sources" />
-			<TreeSub icon="inventory" text="Теги" link="/tags" />
-			<TreeSub icon="data_object" text="Объекты" link="/blocks" elements={blocks} />
+			<TreeItem to="/sources" icon="input" text="Источники" />
+			<TreeItem to="/tags" icon="inventory" text="Теги" />
+			<br />
+			<TreeSub id="0" icon="data_object" text="Объекты" to="/blocks" elements={blocks} />
 		</div>
 	)
 }

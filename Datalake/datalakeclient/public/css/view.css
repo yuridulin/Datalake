@@ -8,6 +8,10 @@
 	display: table-cell;
 }
 
+.header button + button {
+	margin-left: .5em;
+}
+
 .header-left {
 	text-align: left;
 	width: 12em;
@@ -15,6 +19,15 @@
 
 .header-right {
 	text-align: right;
+}
+
+.header-center {
+	text-align: center;
+}
+
+.header-center i {
+	font-size: 1.3em;
+	vertical-align: middle;
 }
 
 .table {
@@ -90,8 +103,4 @@
 	display: block;
 	font-size: .9em;
 	margin-bottom: .25em;
-}
-
-.form-row > div {
-	display: flex;
 }

@@ -27,19 +27,9 @@ namespace Datalake.Database
 
 		// поля для маппинга
 
-		public Dictionary<string, string> Properties 
-		{
-			get
-			{
-				return JsonConvert.DeserializeObject<Dictionary<string, string>>(PropertiesRaw);
-			}
-			set
-			{
-				PropertiesRaw = JsonConvert.SerializeObject(value);
-			}
-		}
+		public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
 
-		public Dictionary<BlockTagType, List<Tag>> Tags { get; set; } = new Dictionary<BlockTagType, List<Tag>>();
+		public List<Rel_Block_Tag> Tags { get; set; } = new List<Rel_Block_Tag>();
 
 		public List<Block> Children { get; set; } = new List<Block>();
 

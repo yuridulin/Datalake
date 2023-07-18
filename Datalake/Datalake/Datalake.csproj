@@ -54,7 +54,7 @@
     <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Cache.cs" />
+    <Compile Include="Workers\Cache\CacheWorker.cs" />
     <Compile Include="Database\Enums\BlockTagType.cs" />
     <Compile Include="Database\Enums\ProgramLogType.cs" />
     <Compile Include="Database\Models\FlatTagValue.cs" />

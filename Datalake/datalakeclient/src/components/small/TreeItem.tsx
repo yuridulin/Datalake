@@ -2,23 +2,19 @@ import { NavLink } from "react-router-dom"
 
 type TreeItemProps = {
 	icon: string
-	link: string | null
+	to: string
 	text: string
-	withArrow: boolean
+	open?: boolean
+	toggle?: React.MouseEventHandler
 }
 
-export default function TreeItem({ icon, link = null, text, withArrow = false }: TreeItemProps) {
+export default function TreeItem({ icon, to, text, open, toggle }: TreeItemProps) {
+
 	return (
-		link
-		? <NavLink to={link} className="tree-item">
-			{withArrow && <i className="material-icons tree-arrow">chevron_right</i>}
+		<NavLink to={to} className="tree-item">
 			{icon && <i className="material-icons">{icon}</i>}
 			<span>{text}</span>
+			{(!!toggle) && <i className="material-icons tree-arrow" onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(e); }}>{open ? 'expand_more' : 'chevron_right'}</i>}
 		</NavLink>
-		: <span className="tree-item">
-			{withArrow && <i className="material-icons tree-arrow">chevron_right</i>}
-			{icon && <i className="material-icons">{icon}</i>}
-			<span>{text}</span>
-		</span>
 	)
 }

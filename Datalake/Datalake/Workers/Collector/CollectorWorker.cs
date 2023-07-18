@@ -1,7 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Enums;
 using Datalake.Web;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Datalake.Workers.Collector
 {
-	public class CollectorWorker
+	public static class CollectorWorker
 	{
 		public static async Task Start(CancellationToken token)
 		{
@@ -33,12 +32,12 @@ namespace Datalake.Workers.Collector
 		{
 			using (var db = new DatabaseContext())
 			{
+				var lastUpdate = db.GetUpdateDate();
+				if (lastUpdate == StoredUpdate) return;
+
 				try
 				{
 					db.Log(Name, "Выполняется пересборка пакетов обновления", ProgramLogType.Warning);
-
-					var lastUpdate = db.GetUpdateDate();
-					if (lastUpdate == StoredUpdate) return;
 
 					var sources = db.Sources.ToList();
 					var tags = db.Tags.Where(x => sources.Select(s => s.Id).Contains(x.SourceId)).ToList();

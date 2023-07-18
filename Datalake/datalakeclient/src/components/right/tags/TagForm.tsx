@@ -123,11 +123,11 @@ export default function TagForm() {
 						<Checkbox checked={tag.IsScaling} onChange={e => setTag({ ...tag, IsScaling: e.target.checked })}>Преобразование по шкалам</Checkbox>
 					</FormRow>
 					<div style={{ display: tag.IsScaling ? 'block' : 'none'}}>
-						<FormRow title="Шкала реальных значений">
+						<FormRow title="Шкала реальных значений" style={{ display: 'flex' }}>
 							<InputNumber addonBefore="Min" value={tag.MinEU} onChange={v => setTag({ ...tag, MinEU: Number(v) })} />
 							<InputNumber addonBefore="Max" value={tag.MaxEU} onChange={v => setTag({ ...tag, MaxEU: Number(v) })} />
 						</FormRow>
-						<FormRow title="Шкала преобразованных значений">
+						<FormRow title="Шкала преобразованных значений" style={{ display: 'flex' }}>
 							<InputNumber addonBefore="Min" value={tag.MinRaw} onChange={v => setTag({ ...tag, MinRaw: Number(v) })} />
 							<InputNumber addonBefore="Max" value={tag.MaxRaw} onChange={v => setTag({ ...tag, MaxRaw: Number(v) })} />
 						</FormRow>
@@ -144,9 +144,9 @@ export default function TagForm() {
 						<Input value={tag.Formula} onChange={e => setTag({...tag, Formula: e.target.value })} />
 					</FormRow>
 					<div>
-						<FormRow title="Входные параметры формулы"></FormRow>
+						<FormRow title="Входные параметры формулы">
 						{tag.Inputs && tag.Inputs.map((x, index) => (
-							<FormRow key={index}>
+							<div key={index} style={{ marginBottom: '.25em', display: 'grid', gridTemplateColumns: '3fr 2fr 1fr' }}>
 								<Input
 									value={x.VariableName}
 									onChange={e => setTag({ 
@@ -164,8 +164,9 @@ export default function TagForm() {
 									})}
 								></Select>
 								<Button icon={<DeleteOutlined />} onClick={() => removeParam(index)}></Button>
-							</FormRow>
+							</div>
 						))}
+						</FormRow>
 						<Button icon={<AppstoreAddOutlined />} onClick={addParam}></Button>
 					</div>
 				</div>

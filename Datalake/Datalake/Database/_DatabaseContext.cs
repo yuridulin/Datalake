@@ -1,5 +1,6 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Database.Models;
+using Datalake.Workers.Cache;
 using LinqToDB;
 using LinqToDB.Data;
 using System;
@@ -41,8 +42,6 @@ namespace Datalake.Database
 
 
 		// методы расширения для взаимодействия с базой
-
-		public Dictionary<int, TagLive> Live = new Dictionary<int, TagLive>();
 
 		public void Recreate()
 		{
@@ -91,7 +90,7 @@ namespace Datalake.Database
 
 			foreach (var tag in TagsLive)
 			{
-				Live[tag.TagId] = tag;
+				CacheWorker.Live[tag.TagId] = tag;
 			}
 		}
 
@@ -326,7 +325,7 @@ namespace Datalake.Database
 					.Update();
 
 				// Запись в таблицу текущих значений в памяти (нужно для оптимизации вычисления вычисляемых тегов)
-				Live[tag.TagId] = tag;
+				CacheWorker.Live[tag.TagId] = tag;
 
 				// Запись в таблицу "Сегодня"
 				Write(currentHistoryTableName);

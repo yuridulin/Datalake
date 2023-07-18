@@ -1,7 +1,7 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Models;
 using Datalake.Web.Models;
-using Datalake.Workers;
+using Datalake.Workers.Cache;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +18,11 @@ namespace Datalake.Web.Api
 
 				return model;
 			}
+		}
+
+		public object LiveById(int[] id)
+		{
+			return id.ToDictionary(x => x, x => CacheWorker.Read(x));
 		}
 
 		public object History(string[] tags, DateTime old, DateTime young, int resolution)
@@ -57,7 +62,7 @@ namespace Datalake.Web.Api
 					}
 				}
 
-				return flat.OrderByDescending(x => x.Date).ThenBy(x => x.TagName).ToList();
+				return flat.OrderBy(x => x.TagName).ThenByDescending(x => x.Date).ToList();
 			}
 		}
 	}

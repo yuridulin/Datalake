@@ -1,4 +1,5 @@
 ﻿using Datalake.Database.Enums;
+using Datalake.Workers.Cache;
 using LinqToDB.Mapping;
 using NCalc;
 using System;
@@ -126,7 +127,7 @@ namespace Datalake.Database
 					if (input != null)
 					{
 						// переменная определена
-						args.Result = Cache.Read(input.InputTagId) ?? 0;
+						args.Result = CacheWorker.Read(input.InputTagId) ?? 0;
 					}
 					else
 					{
@@ -144,7 +145,7 @@ namespace Datalake.Database
 		public (string, decimal?, decimal?, TagQuality) Calculate()
 		{
 			object result;
-			ushort quality = 0;
+			ushort quality = 192;
 			string err;
 
 			if (Expression == null)

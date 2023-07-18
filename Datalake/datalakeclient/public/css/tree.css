@@ -40,28 +40,32 @@
 	width: 1.75em;
 }
 
+.tree-item i + i {
+	padding: 0;
+}
+
 .tree-item:hover > * {
 	color: #0074d5;
 	cursor: pointer;
 }
 
-.tree .tree-sub .tree-item .tree-arrow {
+.tree .tree-sub .tree-item i:first-child {
 	width: 3.5em;
 }
 
-.tree .tree-sub .tree-sub .tree-item .tree-arrow {
+.tree .tree-sub .tree-sub .tree-item i:first-child {
 	width: 4.75em;
 }
 
-.tree .tree-sub .tree-sub .tree-sub .tree-item .tree-arrow {
+.tree .tree-sub .tree-sub .tree-sub .tree-item i:first-child {
 	width: 6em;
 }
 
-.tree .tree-sub .tree-sub .tree-sub .tree-sub .tree-item .tree-arrow {
+.tree .tree-sub .tree-sub .tree-sub .tree-sub .tree-item i:first-child {
 	width: 7.25em;
 }
 
-.tree .tree-sub .tree-sub .tree-sub .tree-sub .tree-sub .tree-item .tree-arrow {
+.tree .tree-sub .tree-sub .tree-sub .tree-sub .tree-sub .tree-item i:first-child {
 	width: 8.5em;
 }
 

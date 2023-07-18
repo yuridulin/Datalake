@@ -140,7 +140,6 @@ namespace Datalake.Web.Api
 		{
 			using (var db = new DatabaseContext())
 			{
-				if (!db.Tags.Any(x => x.Name == tag.Name)) return new { Error = "Тег не найден." };
 				if (tag.Name.Contains(' ')) return Error("В имени тега не разрешены пробелы");
 				if (tag.SourceItem.Contains(' ')) return Error("В адресе значения не разрешены пробелы");
 
@@ -189,6 +188,14 @@ namespace Datalake.Web.Api
 					.Delete();
 
 				db.TagsLive
+					.Where(x => x.TagId == id)
+					.Delete();
+
+				db.Rel_Tag_Input
+					.Where(x => x.InputTagId == id || x.TagId == id)
+					.Delete();
+
+				db.Rel_Block_Tag
 					.Where(x => x.TagId == id)
 					.Delete();
 

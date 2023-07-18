@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Datalake.Workers.Calculator
 {
-	public class CalculatorWorker
+	public static class CalculatorWorker
 	{
 		public static async Task Start(CancellationToken token)
 		{
@@ -28,20 +29,20 @@ namespace Datalake.Workers.Calculator
 		{
 			using (var db = new DatabaseContext())
 			{
+				var lastUpdate = db.GetUpdateDate();
+				if (lastUpdate == StoredUpdate) return;
+
 				try
 				{
-					db.Log("Calc", "Выполняется обновление списка тегов", Database.Enums.ProgramLogType.Warning);
+					db.Log("Calc", "Выполняется обновление списка тегов", ProgramLogType.Warning);
 
 					var inputs = db.Rel_Tag_Input.ToList();
-
-					var lastUpdate = db.GetUpdateDate();
-					if (lastUpdate == StoredUpdate) return;
 
 					Tags = db.Tags
 						.Where(x => x.IsCalculating)
 						.ToList();
 
-					db.Log("Calc", "Количество вычисляемых тегов: " + Tags.Count, Database.Enums.ProgramLogType.Trace);
+					db.Log("Calc", "Количество вычисляемых тегов: " + Tags.Count, ProgramLogType.Trace);
 
 					foreach (var tag in Tags)
 					{
@@ -53,11 +54,11 @@ namespace Datalake.Workers.Calculator
 				}
 				catch (Exception ex)
 				{
-					db.Log("Calc", ex.Message, Database.Enums.ProgramLogType.Error);
+					db.Log("Calc", ex.Message, ProgramLogType.Error);
 				}
 				finally
 				{
-					db.Log("Calc", "Обновление списка тегов завершено", Database.Enums.ProgramLogType.Warning);
+					db.Log("Calc", "Обновление списка тегов завершено", ProgramLogType.Warning);
 				}
 			}
 		}
@@ -68,15 +69,15 @@ namespace Datalake.Workers.Calculator
 			{
 				try
 				{
-					db.Log("Calc", "Выполняется расчёт значений", Database.Enums.ProgramLogType.Trace);
+					db.Log("Calc", "Выполняется расчёт значений", ProgramLogType.Trace);
 
 					foreach (var tag in Tags)
 					{
-						db.Log("Calc", "Расчёт тега [" + tag + "]", Database.Enums.ProgramLogType.Trace);
+						db.Log("Calc", "Расчёт тега [" + tag.Name + "]", ProgramLogType.Trace);
 
 						var (text, raw, number, quality) = tag.Calculate();
 
-						db.Log("Calc", "Новое значение тега [" + tag + "] = RAW:" + raw, Database.Enums.ProgramLogType.Trace);
+						db.Log("Calc", "Новое значение тега [" + tag.Name + "] = RAW:" + raw, ProgramLogType.Trace);
 
 						db.WriteToHistory(new TagHistory
 						{
@@ -88,16 +89,16 @@ namespace Datalake.Workers.Calculator
 							Quality = quality,
 						});
 
-						db.Log("Calc", "Значение тега [" + tag + "] сохранено в базе", Database.Enums.ProgramLogType.Trace);
+						db.Log("Calc", "Значение тега [" + tag.Name + "] сохранено в базе", ProgramLogType.Trace);
 					}
 				}
 				catch (Exception ex)
 				{
-					db.Log("Calc", ex.Message, Database.Enums.ProgramLogType.Error);
+					db.Log("Calc", ex.Message, ProgramLogType.Error);
 				}
 				finally
 				{
-					db.Log("Calc", "Расчёт значений завершен", Database.Enums.ProgramLogType.Trace);
+					db.Log("Calc", "Расчёт значений завершен", ProgramLogType.Trace);
 				}
 			}
 		}
