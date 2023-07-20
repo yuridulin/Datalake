@@ -111,12 +111,11 @@ export default function TagForm() {
 					<InputNumber value={tag.Interval} onChange={value => setTag({ ...tag, Interval: Number(value) })} />
 				</FormRow>
 				<FormRow title="Тип">
-					<Select
-						options={[{ value: 0, label: 'строка' }, { value: 1, label: 'число' }, { value: 2, label: 'дискрет' }]}
-						value={tag.Type}
-						onChange={value => setTag({ ...tag, Type: value })}
-						style={{ width: '100%' }}
-					></Select>
+					<Radio.Group buttonStyle="solid" value={tag.Type} onChange={e => setTag({...tag, Type: e.target.value })}>
+						<Radio.Button value={0}>Строка</Radio.Button>
+						<Radio.Button value={1}>Число</Radio.Button>
+						<Radio.Button value={2}>Дискрет</Radio.Button>
+					</Radio.Group>
 				</FormRow>
 				<div style={{ display: tag.Type === 1 ? 'block' : 'none'}}>
 					<FormRow>
