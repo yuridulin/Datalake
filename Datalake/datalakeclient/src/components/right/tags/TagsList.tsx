@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react"
 import { useFetching } from "../../../hooks/useFetching"
 import { Tag } from "../../../@types/tag"
-import { Button } from 'antd'
+import { Button, Input } from 'antd'
 import TagType from "../../small/TagType"
 import axios from "axios"
 import Header from "../../small/Header"
 import { NavLink } from "react-router-dom"
+import FormRow from "../../small/FormRow"
 
 export default function Tags() {
 
 	const [ tags, setTags ] = useState([] as Tag[])
+	const [ search, setSearch ] = useState('')
 
 	const [ load,, error ] = useFetching(async () => {
 		let res = await axios.post('tags/list')
@@ -23,6 +25,7 @@ export default function Tags() {
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => { load() }, [])
+	//useEffect(() => { }, [search])
 
 	return (
 		error
@@ -31,6 +34,9 @@ export default function Tags() {
 				<Header
 					right={<Button onClick={createTag}>Добавить тег</Button>}
 				>Список тегов</Header>
+				<FormRow title="Поиск">
+					<Input value={search} onChange={e => setSearch(e.target.value)} placeholder="введите поисковый запрос..." />
+				</FormRow>
 				<div className="table">
 					<div className="table-header">
 						<span>Имя</span>
@@ -38,7 +44,7 @@ export default function Tags() {
 						<span>Источник</span>
 						<span>Описание</span>
 					</div>
-					{tags.map(x =>
+					{tags.filter(x => (x.Description + x.Name + x.SourceItem).toLowerCase().trim().includes(search.toLowerCase())).map(x =>
 						<NavLink className="table-row" to={'/tags/' + x.Id} key={x.Id}>
 							<span>{x.Name}</span>
 							<span>
