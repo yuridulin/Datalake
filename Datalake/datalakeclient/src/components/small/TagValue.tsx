@@ -1,4 +1,4 @@
-export default function TagValue({ value }: { value: string | number | boolean }) {
+export default function TagValueElement({ value }: { value?: string | number | boolean }) {
 	
 	let type = Object.prototype.toString.call(value)
 

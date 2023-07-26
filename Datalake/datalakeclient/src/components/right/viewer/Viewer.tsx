@@ -3,26 +3,26 @@ import { useFetching } from "../../../hooks/useFetching"
 import { Navigate } from "react-router-dom"
 import { Button, ConfigProvider, DatePicker, Radio, Select } from "antd"
 import axios from "axios"
-import { Tag } from "../../../@types/tag"
 import 'dayjs/locale/ru';
 import locale from 'antd/locale/ru_RU'
 import { PlayCircleOutlined } from "@ant-design/icons"
 import { useInterval } from "../../../hooks/useInterval"
-import { FlatHistoryValue } from "../../../@types/FlatHistoryValue"
 import TagQuality from "../../small/TagQuality"
-import TagValue from "../../small/TagValue"
+import TagValueElement from "../../small/TagValue"
+import { Tag } from "../../../@types/Tag"
+import { TagValue } from "../../../@types/TagValue"
 
 export default function Viewer() {
 
 	const [ tags, setTags ] = useState([] as Tag[])
-	const [ values, setValues ] = useState([] as FlatHistoryValue[])
-	const [ options, setOptions ] = useState([] as { key: number, value: string}[])
+	const [ values, setValues ] = useState([] as TagValue[])
+	const [ options, setOptions ] = useState([] as { value: number, label: string }[])
 	const [ settings, setSettings ] = useState({ tags: [], live: true, resolution: 0, young: new Date(), old: new Date() })
 
 	const [ readTags, , error ] = useFetching(async () => {
 		let res = await axios.get('tags/list')
 		setTags(res.data)
-		setOptions(res.data.map((x: Tag) => ({ key: x.Id, value: x.Name })))
+		setOptions(res.data.map((x: Tag) => ({ value: x.Id, label: x.Name })))
 	})
 
 	const getValues = () => {
@@ -36,7 +36,7 @@ export default function Viewer() {
 	}
 
 	const [ loadValues ] = useFetching(async () => {
-		let res = await axios.post('values/flathistory', settings)
+		let res = await axios.post('tags/' + (settings.live ? 'live' : 'history'), settings)
 		setValues(res.data)
 	})
 
@@ -106,9 +106,9 @@ export default function Viewer() {
 					<span>Качество</span>
 				</div>
 				{values.map((x, i) => <div className="table-row" key={i}>
-					<span>{x.Date}</span>
+					<span>{x.Date.toString()}</span>
 					<span>{x.TagName}</span>
-					<span><TagValue value={x.Value} /></span>
+					<span><TagValueElement value={x.Value} /></span>
 					<span><TagQuality quality={x.Quality} /></span>
 				</div>)}
 			</div>}

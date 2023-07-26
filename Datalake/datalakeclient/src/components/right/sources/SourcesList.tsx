@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useFetching } from "../../../hooks/useFetching"
-import { SourceType } from "../../../@types/source"
+import { TagSource } from "../../../@types/Source"
 import { NavLink, Navigate } from "react-router-dom"
 import { Button } from "antd"
 import axios from "axios"
@@ -8,7 +8,7 @@ import Header from "../../small/Header"
 
 export default function SourcesList() {
 
-	const [ list, setList ] = useState([] as SourceType[])
+	const [ list, setList ] = useState([] as TagSource[])
 
 	const [ loadList,, error ] = useFetching(async () => {
 		const res = await axios.get('sources/list')

@@ -29,7 +29,7 @@ namespace Datalake.Database
 		[Column, DataType(DataType.Byte)]
 		public TagHistoryUse Using { get; set; }
 
-		// методы
+		// свойства
 
 		public object Value
 		{

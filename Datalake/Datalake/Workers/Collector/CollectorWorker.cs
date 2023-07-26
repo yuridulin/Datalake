@@ -128,7 +128,7 @@ namespace Datalake.Workers.Collector
 			{
 				using (var db = new DatabaseContext())
 				{
-					db.WriteToHistory(values);
+					db.WriteHistory(values);
 				}
 			}
 

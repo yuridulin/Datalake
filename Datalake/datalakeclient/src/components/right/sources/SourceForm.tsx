@@ -1,6 +1,6 @@
 import { Button, Input, Popconfirm } from "antd"
 import { useState, useEffect } from "react"
-import { SourceType } from "../../../@types/source"
+import { TagSource } from "../../../@types/Source"
 import { useFetching } from "../../../hooks/useFetching"
 import { Navigate, useParams } from "react-router-dom"
 import router from "../../../router/router"
@@ -9,11 +9,11 @@ import Header from "../../small/Header"
 import FormRow from "../../small/FormRow"
 import SourceItems from "./SourceItems"
 
-export default function Source() {
+export default function SourceForm() {
 
 	const { id } = useParams();
 
-	const [ source, setSource ] = useState({} as SourceType)
+	const [ source, setSource ] = useState({} as TagSource)
 	const [ name, setName ] = useState('')
 
 	const [ read, , error ] = useFetching(async () => {

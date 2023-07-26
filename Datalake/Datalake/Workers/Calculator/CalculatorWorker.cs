@@ -75,7 +75,7 @@ namespace Datalake.Workers.Calculator
 			{
 				using (var db = new DatabaseContext())
 				{
-					db.WriteToHistory(values);
+					db.WriteHistory(values);
 				}
 			}
 

@@ -7,7 +7,7 @@ import { BlockType } from "../../../@types/BlockType";
 import { useFetching } from "../../../hooks/useFetching";
 import axios from "axios";
 import router from "../../../router/router";
-import { Tag } from "../../../@types/tag";
+import { Tag } from "../../../@types/Tag";
 import { Rel_Block_Type } from "../../../@types/Rel_Block_Tag";
 
 export default function BlockForm() {

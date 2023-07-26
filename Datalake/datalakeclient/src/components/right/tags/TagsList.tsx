@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useFetching } from "../../../hooks/useFetching"
-import { Tag } from "../../../@types/tag"
+import { Tag } from "../../../@types/Tag"
 import { Button, Input } from 'antd'
 import TagType from "../../small/TagType"
 import axios from "axios"

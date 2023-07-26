@@ -1,5 +1,5 @@
-import { TagInput } from "./tagInput"
-import { TagType } from "./valueRange"
+import { Rel_Tag_Input } from "./Rel_Tag_Input"
+import { TagType } from "./TagType"
 
 export interface Tag {
 	Id: number
@@ -19,5 +19,5 @@ export interface Tag {
 
 	IsCalculating: boolean
 	Formula: string
-	Inputs: TagInput[]
+	Inputs: Rel_Tag_Input[]
 }

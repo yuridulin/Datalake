@@ -3,6 +3,7 @@ using Datalake.Database.Enums;
 using Datalake.Web.Models;
 using LinqToDB;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Datalake.Web.Api
@@ -50,6 +51,59 @@ namespace Datalake.Web.Api
 					.Where(x => x.Id != id)
 					.Where(x => !outputs.Contains(x.Id))
 					.Select(x => new { x.Id, x.Name })
+					.ToList();
+			}
+		}
+
+		public List<TagValue> Live(int[] tags)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var dbtags = db.Tags
+					.Where(x => tags.Contains(x.Id))
+					.ToDictionary(x => x.Id, x => x);
+
+				return tags
+					.Select(x => new
+					{
+						Tag = dbtags[x],
+						Value = Cache.Read(x),
+					})
+					.Select(x => new TagValue
+					{
+						TagId = x.Tag.Id,
+						TagName = x.Tag.Name,
+						Type = x.Tag.Type,
+						Date = x.Value.Date,
+						Value = x.Value.Value,
+						Quality = x.Value.Quality,
+						Using = x.Value.Using,
+					})
+					.ToList();
+			}
+		}
+
+		public List<TagValue> History(int[] tags, DateTime old, DateTime young, int resolution)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var dbtags = db.Tags
+					.Where(x => tags.Contains(x.Id))
+					.ToDictionary(x => x.Id, x => x);
+
+				var data = db.ReadHistory(tags, old, young, resolution);
+
+				return data
+					.Select(x => new TagValue
+					{
+						TagId = x.TagId,
+						TagName = dbtags[x.TagId].Name,
+						Date = x.Date,
+						Using = x.Using,
+						Quality = x.Quality,
+						Type = x.Type,
+						Value = x.Value,
+					})
 					.ToList();
 			}
 		}

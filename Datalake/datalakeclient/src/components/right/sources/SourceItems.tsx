@@ -2,7 +2,7 @@ import { Button } from "antd"
 import { useState, useEffect } from "react"
 import { useFetching } from "../../../hooks/useFetching"
 import axios from "axios"
-import { Tag } from "../../../@types/tag"
+import { Tag } from "../../../@types/Tag"
 import { PlusCircleOutlined } from "@ant-design/icons"
 import { NavLink } from "react-router-dom"
 

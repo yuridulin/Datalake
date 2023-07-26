@@ -2,6 +2,7 @@
 using Datalake.Web.Models;
 using LinqToDB;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -81,16 +82,62 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Values(int Id)
+		public List<TagValue> Live(int Id)
 		{
 			using (var db = new DatabaseContext())
 			{
-				return db.Rel_Block_Tag
+				var tags = db.Rel_Block_Tag
 					.Where(x => x.BlockId == Id)
+					.ToDictionary(x => x.TagId, x => x.Name);
+
+				var dbtags = db.Tags
+					.Where(x => tags.Keys.Contains(x.Id))
+					.ToDictionary(x => x.Id, x => x);
+
+				return tags.Keys
 					.Select(x => new
 					{
-						x.Name,
-						Value = Cache.Read(x.TagId),
+						Tag = dbtags[x],
+						Value = Cache.Read(x),
+					})
+					.Select(x => new TagValue
+					{
+						TagId = x.Tag.Id,
+						TagName = tags[x.Tag.Id],
+						Type = x.Tag.Type,
+						Date = x.Value.Date,
+						Value = x.Value.Value,
+						Quality = x.Value.Quality,
+						Using = x.Value.Using,
+					})
+					.ToList();
+			}
+		}
+
+		public List<TagValue> History(int Id, DateTime old, DateTime young, int resolution)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var tags = db.Rel_Block_Tag
+					.Where(x => x.BlockId == Id)
+					.ToDictionary(x => x.TagId, x => x.Name);
+
+				var dbtags = db.Tags
+					.Where(x => tags.Keys.Contains(x.Id))
+					.ToDictionary(x => x.Id, x => x);
+
+				var data = db.ReadHistory(tags.Keys.ToArray(), old, young, resolution);
+
+				return data
+					.Select(x => new TagValue
+					{
+						TagId = x.TagId,
+						TagName = tags[x.TagId],
+						Date = x.Date,
+						Using = x.Using,
+						Quality = x.Quality,
+						Type = x.Type,
+						Value = x.Value,
 					})
 					.ToList();
 			}

@@ -1,5 +1,4 @@
 ﻿using Datalake.Database.Enums;
-using Datalake.Database.Models;
 using LinqToDB;
 using LinqToDB.Data;
 using System;
@@ -64,67 +63,61 @@ namespace Datalake.Database
 			}
 
 			CreateCache();
-		}
 
-		void CreateCache()
-		{
-			var tags = Tags
-				.ToList();
-
-			var provider = DataProvider.GetSchemaProvider();
-			var schema = provider.GetSchema(this);
-
-			var last = schema.Tables
-				.Where(x => x.TableName.StartsWith("TagsHistory_"))
-				.OrderByDescending(x => x.TableName)
-				.Select(x => x.TableName)
-				.FirstOrDefault();
-
-			if (last == null)
+			void CreateCache()
 			{
-				Cache.Live = tags
-					.ToDictionary(x => x.Id, x => DefaultValue(x));
-			}
-			else
-			{
-				var table = this.GetTable<TagHistory>().TableName(last);
-
-				var values = table
-					.ToList()
-					.GroupBy(x => x.TagId)
-					.Select(g => new
-					{
-						Id = g.Key,
-						Value = g.OrderByDescending(x => x.Date).FirstOrDefault()
-					})
+				var tags = Tags
 					.ToList();
 
-				Cache.Live = tags
-					.ToDictionary(x => x.Id, x => values.FirstOrDefault(v => v.Id == x.Id)?.Value ?? DefaultValue(x));
+				var provider = DataProvider.GetSchemaProvider();
+				var schema = provider.GetSchema(this);
+
+				var last = schema.Tables
+					.Where(x => x.TableName.StartsWith("TagsHistory_"))
+					.OrderByDescending(x => x.TableName)
+					.Select(x => x.TableName)
+					.FirstOrDefault();
+
+				if (last == null)
+				{
+					Cache.Live = tags
+						.ToDictionary(x => x.Id, x => DefaultValue(x));
+				}
+				else
+				{
+					var table = this.GetTable<TagHistory>().TableName(last);
+
+					var values = table
+						.ToList()
+						.GroupBy(x => x.TagId)
+						.Select(g => new
+						{
+							Id = g.Key,
+							Value = g.OrderByDescending(x => x.Date).FirstOrDefault()
+						})
+						.ToList();
+
+					Cache.Live = tags
+						.ToDictionary(x => x.Id, x => values.FirstOrDefault(v => v.Id == x.Id)?.Value ?? DefaultValue(x));
+				}
+
+				Cache.Update();
+
+				TagHistory DefaultValue(Tag tag) => new TagHistory
+				{
+					TagId = tag.Id,
+					Date = DateTime.Now,
+					Number = null,
+					Quality = 0,
+					Text = null,
+					Type = tag.Type,
+					Using = TagHistoryUse.Initial
+				};
 			}
-
-			Cache.Update();
-
-			TagHistory DefaultValue(Tag tag) => new TagHistory
-			{
-				TagId = tag.Id,
-				Date = DateTime.Now,
-				Number = null,
-				Quality = 0,
-				Text = null,
-				Type = tag.Type,
-				Using = TagHistoryUse.Initial
-			};
 		}
 
-		public List<TagValuesRange> ReadHistory(string[] tagNames, DateTime old, DateTime young, int resolution)
+		public List<TagHistory> ReadHistory(int[] identifiers, DateTime old, DateTime young, int resolution = 0)
 		{
-			var tags = Tags
-				.Where(x => tagNames.Contains(x.Name))
-				.ToList();
-
-			var ids = tags.Select(x => x.Id).ToList();
-
 			DateTime seek = old.Date;
 
 			var data = new List<TagHistory>();
@@ -135,10 +128,10 @@ namespace Datalake.Database
 
 				var table = this.GetTable<TagHistory>().TableName(tableName);
 
-				if (table != null)
+				try
 				{
 					var chunk = table
-						.Where(x => ids.Contains(x.TagId))
+						.Where(x => identifiers.Contains(x.TagId))
 						.Where(x => x.Date >= old)
 						.Where(x => x.Date <= young)
 						.Where(x => x.Using == TagHistoryUse.Basic)
@@ -148,7 +141,8 @@ namespace Datalake.Database
 					if (seek == old.Date)
 					{
 						var previousValues = table
-							.Where(x => ids.Contains(x.TagId))
+							.Where(x => identifiers.Contains(x.TagId))
+							.AsEnumerable()
 							.GroupBy(x => x.TagId)
 							.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
 							.ToList();
@@ -164,73 +158,43 @@ namespace Datalake.Database
 
 					data.AddRange(chunk);
 				}
-				
+				catch { }
+
 				seek = seek.AddDays(1);
 			}
 			while (seek <= young);
 
-			var series = tags
-				.Select(tag => new TagValuesRange
-				{
-					TagName = tag.Name,
-					TagType = tag.Type,
-					Values = data
-						.Where(x => x.TagId == tag.Id)
-						.OrderBy(x => x.Date)
-						.Select(x => new TagValue
-						{
-							Date = x.Date,
-							Value = x.Value,
-							Quality = x.Quality,
-							Using = x.Using,
-						})
-						.ToList()
-				})
-				.ToList();
-
-			if (resolution == 0)
-			{
-				return series;
-			}
-			else
+			if (resolution > 0)
 			{
 				// Разбивка значений в массив с заданным шагом
-
 				var timeRange = (young - old).TotalMilliseconds;
+				var history = new List<TagHistory>();
+				DateTime stepDate;
 
-				foreach (var range in series)
+				for (double i = 0; i < timeRange; i += resolution)
 				{
-					var intervalValues = new List<TagValue>();
+					stepDate = old.AddMilliseconds(i);
 
-					DateTime stepDate;
-					TagValue stepValue = range.Values.First();
-
-					for (double i = 0; i < timeRange; i += resolution)
+					foreach (var id in identifiers)
 					{
-						stepDate = old.AddMilliseconds(i);
-
-						var value = range.Values
+						var value = data
+							.Where(x => x.TagId == id)
 							.Where(x => x.Date <= stepDate)
 							.OrderByDescending(x => x.Date)
 							.First();
 
-						intervalValues.Add(new TagValue
-						{
-							Date = stepDate,
-							Value = value.Value,
-							Quality = value.Quality,
-							Using = value.Using
-						});
+						value.Date = stepDate;
+						history.Add(value);
 					}
-
-					range.Values = intervalValues;
 				}
 
-				return series;
+				data = history;
 			}
+
+			return data;
 		}
 
-		public void WriteToHistory(List<TagHistory> values)
+		public void WriteHistory(List<TagHistory> values)
 		{
 			string currentHistoryTableName = $"TagsHistory_{DateTime.Today:yyyy_MM_dd}";
 

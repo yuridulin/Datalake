@@ -3,20 +3,20 @@ import { useFetching } from "../../../hooks/useFetching"
 import axios from "axios"
 import { Navigate } from "react-router-dom"
 import { useInterval } from "../../../hooks/useInterval"
-import { ProgramLog } from "../../../@types/ProgramLog"
+import { Log } from "../../../@types/Log"
 import ProgramLogType from "../../small/ProgramLogType"
 
 type StatsType = {
 	TotalTagsCount: number,
 	TotalSourcesCount: number,
 	WritesInMinute: number,
-	Logs: ProgramLog[],
+	Logs: Log[],
 	Last: Date
 }
 
 export default function Dashboard() {
 
-	const [ stats, setStats ] = useState({ Logs: [] as ProgramLog[], Last: new Date() } as StatsType)
+	const [ stats, setStats ] = useState({ Logs: [] as Log[], Last: new Date() } as StatsType)
 
 	const [ update,, error ] = useFetching(async () => {
 		let res = await axios.post('config/statistic', { Last: stats.Last })

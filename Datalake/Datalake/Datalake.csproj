@@ -56,7 +56,6 @@
   <ItemGroup>
     <Compile Include="Cache.cs" />
     <Compile Include="Database\Enums\BlockTagType.cs" />
-    <Compile Include="Database\Models\FlatTagValue.cs" />
     <Compile Include="Database\Rel_Block_Tag.cs" />
     <Compile Include="Database\Rel_Tag_Input.cs" />
     <Compile Include="Database\Source.cs" />
@@ -66,6 +65,7 @@
     <Compile Include="Database\TagHistory.cs" />
     <Compile Include="Database\Enums\TagQuality.cs" />
     <Compile Include="Database\Enums\TagType.cs" />
+    <Compile Include="Web\Models\TagValue.cs" />
     <Compile Include="Database\_DatabaseContext.cs" />
     <Compile Include="Web\Inopc.cs" />
     <Compile Include="Workers\Calculator\CalculatorWorker.cs" />
@@ -78,12 +78,9 @@
     <Compile Include="Web\Api\SourcesController.cs" />
     <Compile Include="Web\Api\ConfigController.cs" />
     <Compile Include="Web\Api\TagsController.cs" />
-    <Compile Include="Web\Api\ValuesController.cs" />
     <Compile Include="Web\Models\Controller.cs" />
     <Compile Include="Web\Server.cs" />
     <Compile Include="Web\Models\Answer.cs" />
-    <Compile Include="Database\Models\TagValue.cs" />
-    <Compile Include="Database\Models\TagValuesRange.cs" />
     <Compile Include="Web\Router.cs" />
     <Compile Include="Workers\Collector\CollectorWorker.cs" />
     <Compile Include="Workers\List.cs" />

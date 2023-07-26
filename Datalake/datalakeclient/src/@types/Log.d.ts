@@ -1,11 +1,11 @@
-export interface ProgramLog {
+export interface Log {
 	Date: Date
 	Module: string
 	Message: string
-	ProgramLogType: ProgramLogType;
+	ProgramLogType: LogType;
 }
 
-export enum ProgramLogType {
+export enum LogType {
 	Trace = 0,
 	Information = 1,
 	Success = 2,

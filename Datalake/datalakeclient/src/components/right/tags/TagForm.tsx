@@ -1,9 +1,9 @@
 import { Input, Select, InputNumber, Popconfirm, Button, AutoComplete, Radio, Checkbox } from "antd";
 import { useEffect, useState } from "react";
 import { useFetching } from "../../../hooks/useFetching";
-import { Tag } from "../../../@types/tag";
+import { Tag } from "../../../@types/Tag";
 import axios from "axios";
-import { SourceType } from "../../../@types/source";
+import { TagSource } from "../../../@types/Source";
 import { Navigate, useParams } from "react-router-dom";
 import Header from "../../small/Header";
 import router from "../../../router/router";
@@ -67,7 +67,7 @@ export default function TagForm() {
 		setInputs([...res.data.map((x: Tag) => ({ value: x.Id, label: x.Name })), { value: 0, label: '?'} ])
 
 		res = await axios.post('sources/list')
-		setSources([ ...res.data.map((x: SourceType) => ({ value: x.Id, label: x.Name })), { value: 0, label: '?'} ])
+		setSources([ ...res.data.map((x: TagSource) => ({ value: x.Id, label: x.Name })), { value: 0, label: '?'} ])
 	})
 	
 	// eslint-disable-next-line react-hooks/exhaustive-deps

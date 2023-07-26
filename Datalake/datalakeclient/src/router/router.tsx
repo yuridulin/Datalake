@@ -4,12 +4,12 @@ import Offline from '../components/Offline'
 import Dashboard from '../components/right/dashboard/Dashboard'
 import Viewer from '../components/right/viewer/Viewer'
 import SourcesList from '../components/right/sources/SourcesList'
-import Source from '../components/right/sources/Source'
 import BlocksList from '../components/right/blocks/BlocksList'
 import TagsList from '../components/right/tags/TagsList'
 import TagForm from '../components/right/tags/TagForm'
 import BlockForm from '../components/right/blocks/BlockForm'
 import BlockView from '../components/right/blocks/BlockView'
+import SourceForm from '../components/right/sources/SourceForm'
 
 const router = createBrowserRouter([
 	{
@@ -33,7 +33,7 @@ const router = createBrowserRouter([
 					},
 					{
 						path: '/sources/:id',
-						element: <Source />
+						element: <SourceForm />
 					},
 				]
 			},

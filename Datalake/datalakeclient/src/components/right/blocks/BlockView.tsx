@@ -8,19 +8,17 @@ import axios, { AxiosResponse } from "axios";
 import router from "../../../router/router";
 import { useInterval } from "../../../hooks/useInterval";
 import FormRow from "../../small/FormRow";
-import { TagHistory } from "../../../@types/TagHistory";
+import { TagValue } from "../../../@types/TagValue";
 
 export default function BlockView() {
 
 	const { id } = useParams()
 	const [ block, setBlock ] = useState({} as BlockType)
-	const [ tags, setTags ] = useState([] as number[])
 	const [ values, setValues ] = useState([] as { id: number, name: string, type: string, value: any }[])
 
 	const [ load, loading, errLoad ] = useFetching(async () => {
 		let res = await axios.post('blocks/read', { id: id }) as AxiosResponse<BlockType, any>
 		setBlock(res.data)
-		setTags(res.data.Tags.map(x => x.TagId))
 		setValues(res.data.Tags.map(x => ({
 			id: x.TagId,
 			name: x.Name,
@@ -30,8 +28,8 @@ export default function BlockView() {
 	})
 
 	const [ getValues ] = useFetching(async () => {
-		let res = await axios.post('values/liveById', { id: tags })
-		let newValues = res.data as { [key: number]: TagHistory }
+		let res = await axios.post('blocks/live', { id: id })
+		let newValues = res.data as { [key: number]: TagValue }
 		setValues(values.map(v => ({
 			id: v.id,
 			name: v.name,
@@ -44,7 +42,7 @@ export default function BlockView() {
 	useEffect(() => { !!id && load() }, [id])
 	
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => { !!id && tags.length > 0 && getValues() }, [tags])
+	useEffect(() => { !!id && (block?.Tags?.length ?? 0) > 0 && getValues() }, [block])
 	useInterval(function () { !!id && getValues() }, 1000)
 
 	return (

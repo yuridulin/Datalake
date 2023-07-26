@@ -1,11 +1,9 @@
-export interface TagHistory {
+export interface TagValue {
 	TagId: number
+	TagName: string
 	Date: Date
-	Text: string
-	Number?: number
 	Quality: 0 | 4 | 192 | 216 | -1
 	Type: 0 | 1 | 2 | 3
 	Using: 0 | 1
-	TagName: string
 	Value?: string | number| boolean
 }
