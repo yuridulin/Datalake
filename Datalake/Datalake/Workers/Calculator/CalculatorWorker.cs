@@ -1,5 +1,7 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Enums;
+using Datalake.Workers.Logs;
+using Datalake.Workers.Logs.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,80 +29,57 @@ namespace Datalake.Workers.Calculator
 
 		static void Rebuild()
 		{
+			if (Cache.LastUpdate == StoredUpdate) return;
+
 			using (var db = new DatabaseContext())
 			{
-				var lastUpdate = db.GetUpdateDate();
-				if (lastUpdate == StoredUpdate) return;
+				var inputs = db.Rel_Tag_Input.ToList();
 
-				try
+				Tags = db.Tags
+					.Where(x => x.IsCalculating)
+					.ToList();
+
+				foreach (var tag in Tags)
 				{
-					db.Log("Calc", "Выполняется обновление списка тегов", ProgramLogType.Warning);
-
-					var inputs = db.Rel_Tag_Input.ToList();
-
-					Tags = db.Tags
-						.Where(x => x.IsCalculating)
-						.ToList();
-
-					db.Log("Calc", "Количество вычисляемых тегов: " + Tags.Count, ProgramLogType.Trace);
-
-					foreach (var tag in Tags)
-					{
-						tag.Inputs = inputs.Where(x => x.TagId == tag.Id).ToList();
-						tag.PrepareToCalc();
-					}
-
-					StoredUpdate = lastUpdate;
+					tag.Inputs = inputs.Where(x => x.TagId == tag.Id).ToList();
+					tag.PrepareToCalc();
 				}
-				catch (Exception ex)
-				{
-					db.Log("Calc", ex.Message, ProgramLogType.Error);
-				}
-				finally
-				{
-					db.Log("Calc", "Обновление списка тегов завершено", ProgramLogType.Warning);
-				}
+
+				StoredUpdate = Cache.LastUpdate;
 			}
 		}
 
 		static void Update()
 		{
-			using (var db = new DatabaseContext())
+			var values = new List<TagHistory>();
+
+			foreach (var tag in Tags)
 			{
-				try
+				var (text, number, quality) = tag.Calculate();
+
+				var value = new TagHistory
 				{
-					db.Log("Calc", "Выполняется расчёт значений", ProgramLogType.Trace);
+					TagId = tag.Id,
+					Date = DateTime.Now,
+					Text = text,
+					Number = number,
+					Quality = quality,
+					Type = tag.Type,
+					Using = TagHistoryUse.Basic,
+				};
 
-					foreach (var tag in Tags)
-					{
-						db.Log("Calc", "Расчёт тега [" + tag.Name + "]", ProgramLogType.Trace);
+				if (Cache.IsNew(value)) values.Add(value);
+			}
 
-						var (text, raw, number, quality) = tag.Calculate();
-
-						db.Log("Calc", "Новое значение тега [" + tag.Name + "] = RAW:" + raw, ProgramLogType.Trace);
-
-						db.WriteToHistory(new TagHistory
-						{
-							TagId = tag.Id,
-							Date = DateTime.Now,
-							Text = text,
-							Raw = raw,
-							Number = number,
-							Quality = quality,
-						});
-
-						db.Log("Calc", "Значение тега [" + tag.Name + "] сохранено в базе", ProgramLogType.Trace);
-					}
-				}
-				catch (Exception ex)
+			if (values.Count > 0)
+			{
+				using (var db = new DatabaseContext())
 				{
-					db.Log("Calc", ex.Message, ProgramLogType.Error);
-				}
-				finally
-				{
-					db.Log("Calc", "Расчёт значений завершен", ProgramLogType.Trace);
+					db.WriteToHistory(values);
 				}
 			}
+
+			LogsWorker.Add("Calc", "Вычислено новых значений: " + values.Count, LogType.Trace);
 		}
 	}
 }

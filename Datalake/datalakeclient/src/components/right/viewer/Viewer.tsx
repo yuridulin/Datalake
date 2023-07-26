@@ -10,6 +10,7 @@ import { PlayCircleOutlined } from "@ant-design/icons"
 import { useInterval } from "../../../hooks/useInterval"
 import { FlatHistoryValue } from "../../../@types/FlatHistoryValue"
 import TagQuality from "../../small/TagQuality"
+import TagValue from "../../small/TagValue"
 
 export default function Viewer() {
 
@@ -104,10 +105,10 @@ export default function Viewer() {
 					<span>Значение</span>
 					<span>Качество</span>
 				</div>
-				{values.map(x => <div className="table-row" key={x.Id}>
+				{values.map((x, i) => <div className="table-row" key={i}>
 					<span>{x.Date}</span>
 					<span>{x.TagName}</span>
-					<span>{x.Value}</span>
+					<span><TagValue value={x.Value} /></span>
 					<span><TagQuality quality={x.Quality} /></span>
 				</div>)}
 			</div>}

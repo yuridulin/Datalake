@@ -66,13 +66,18 @@ namespace Datalake.Web.Api
 
 				var id = db.InsertWithInt32Identity(tag);
 
-				db.TagsLive
-					.Value(x => x.TagId, id)
-					.Value(x => x.Date, DateTime.Now)
-					.Value(x => x.Quality, TagQuality.Bad)
-					.Insert();
+				Cache.Write(new TagHistory
+				{
+					Date = DateTime.Now,
+					Number = 0,
+					Type = tag.Type,
+					Quality = TagQuality.Bad,
+					Text = string.Empty,
+					TagId = id,
+					Using = TagHistoryUse.Initial,
+				});
 
-				db.SetUpdateDate();
+				Cache.Update();
 
 				return Done("Тег успешно добавлен.");
 			}
@@ -103,18 +108,23 @@ namespace Datalake.Web.Api
 
 						var id = db.InsertWithInt32Identity(tag);
 
-						db.TagsLive
-							.Value(x => x.TagId, id)
-							.Value(x => x.Date, DateTime.Now)
-							.Value(x => x.Quality, TagQuality.Bad)
-							.Insert();
+						Cache.Write(new TagHistory
+						{
+							Date = DateTime.Now,
+							Number = 0,
+							Type = tag.Type,
+							Quality = TagQuality.Bad,
+							Text = string.Empty,
+							TagId = id,
+							Using = TagHistoryUse.Initial,
+						});
 
 						created = true;
 					}
 				}
 				while (!created);
 
-				db.SetUpdateDate();
+				Cache.Update();
 			}
 
 			return new { Done = true };
@@ -173,7 +183,7 @@ namespace Datalake.Web.Api
 						.Insert();
 				}
 
-				db.SetUpdateDate();
+				Cache.Update();
 
 				return new { Done = "Тег успешно сохранён." };
 			}
@@ -187,10 +197,6 @@ namespace Datalake.Web.Api
 					.Where(x => x.Id == id)
 					.Delete();
 
-				db.TagsLive
-					.Where(x => x.TagId == id)
-					.Delete();
-
 				db.Rel_Tag_Input
 					.Where(x => x.InputTagId == id || x.TagId == id)
 					.Delete();
@@ -199,7 +205,7 @@ namespace Datalake.Web.Api
 					.Where(x => x.TagId == id)
 					.Delete();
 
-				db.SetUpdateDate();
+				Cache.Update();
 
 				return new { Done = "Тег успешно удалён." };
 			}

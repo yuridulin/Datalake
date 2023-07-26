@@ -1,5 +1,5 @@
 ﻿using Datalake.Database.Enums;
-using Datalake.Workers.Cache;
+using LinqToDB;
 using LinqToDB.Mapping;
 using NCalc;
 using System;
@@ -42,16 +42,16 @@ namespace Datalake.Database
 		public bool IsScaling { get; set; } = false;
 
 		[Column, NotNull]
-		public decimal MinEU { get; set; } = 0;
+		public float MinEU { get; set; } = 0;
 
 		[Column, NotNull]
-		public decimal MaxEU { get; set; } = 100;
+		public float MaxEU { get; set; } = 100;
 
 		[Column, NotNull]
-		public decimal MinRaw { get; set; } = 0;
+		public float MinRaw { get; set; } = 0;
 
 		[Column, NotNull]
-		public decimal MaxRaw { get; set; } = 100;
+		public float MaxRaw { get; set; } = 100;
 
 
 		// для вычисляемых тегов (вычисление - в модуле CalculatorWorker)
@@ -85,18 +85,22 @@ namespace Datalake.Database
 			LastUpdate = now;
 		}
 
-		public (string, decimal?, decimal?, TagQuality) FromRaw(object value, ushort quality)
+		public (string, float?, TagQuality) FromRaw(object value, ushort quality)
 		{
-			string text = value?.ToString();
+			string text = null;
+			if (Type == TagType.String)
+			{
+				text = value?.ToString();
+			}
 
-			decimal? raw = null;
-			if (decimal.TryParse(value?.ToString(), out decimal d))
+			float? raw = null;
+			if (float.TryParse(value?.ToString(), out float d))
 			{
 				raw = d;
 			}
 
 			// вычисление значения на основе шкалирования
-			decimal? number = raw;
+			float? number = raw;
 			if (Type == TagType.Number && raw.HasValue && IsScaling)
 			{
 				number = raw.Value * ((MaxEU - MinEU) / (MaxRaw - MinRaw));
@@ -106,7 +110,7 @@ namespace Datalake.Database
 				? TagQuality.Unknown
 				: (TagQuality)quality;
 
-			return (text, raw, number, tagQuality);
+			return (text, number, tagQuality);
 		}
 
 
@@ -127,7 +131,7 @@ namespace Datalake.Database
 					if (input != null)
 					{
 						// переменная определена
-						args.Result = CacheWorker.Read(input.InputTagId) ?? 0;
+						args.Result = Cache.Read(input.InputTagId)?.Value ?? 0;
 					}
 					else
 					{
@@ -142,7 +146,7 @@ namespace Datalake.Database
 			}
 		}
 
-		public (string, decimal?, decimal?, TagQuality) Calculate()
+		public (string, float?, TagQuality) Calculate()
 		{
 			object result;
 			ushort quality = 192;

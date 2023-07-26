@@ -5,8 +5,6 @@ namespace Datalake.Database.Models
 {
 	public class TagValue
 	{
-		public long Id { get; set; }
-
 		public DateTime Date { get; set; }
 
 		public object Value { get; set; }

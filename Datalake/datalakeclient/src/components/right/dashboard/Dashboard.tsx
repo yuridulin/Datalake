@@ -57,8 +57,8 @@ export default function Dashboard() {
 						<span>Сообщение</span>
 						<span>Тип</span>
 					</div>
-					{stats.Logs.map(x => <div className="table-row" key={x.Id}>
-						<span>{x.Timestamp.toString()}</span>
+					{stats.Logs.map((x, i) => <div className="table-row" key={i}>
+						<span>{x.Date.toString()}</span>
 						<span>{x.Module}</span>
 						<span>{x.Message}</span>
 						<span><ProgramLogType type={x.ProgramLogType} /></span>

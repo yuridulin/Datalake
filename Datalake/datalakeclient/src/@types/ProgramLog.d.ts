@@ -1,7 +1,6 @@
 export interface ProgramLog {
-	Id: number
+	Date: Date
 	Module: string
-	Timestamp: Date
 	Message: string
 	ProgramLogType: ProgramLogType;
 }

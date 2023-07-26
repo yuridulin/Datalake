@@ -54,19 +54,15 @@
     <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Workers\Cache\CacheWorker.cs" />
+    <Compile Include="Cache.cs" />
     <Compile Include="Database\Enums\BlockTagType.cs" />
-    <Compile Include="Database\Enums\ProgramLogType.cs" />
     <Compile Include="Database\Models\FlatTagValue.cs" />
-    <Compile Include="Database\ProgramLog.cs" />
     <Compile Include="Database\Rel_Block_Tag.cs" />
     <Compile Include="Database\Rel_Tag_Input.cs" />
-    <Compile Include="Database\Settings.cs" />
     <Compile Include="Database\Source.cs" />
     <Compile Include="Database\Block.cs" />
     <Compile Include="Database\Tag.cs" />
     <Compile Include="Database\Enums\TagHistoryUse.cs" />
-    <Compile Include="Database\TagLive.cs" />
     <Compile Include="Database\TagHistory.cs" />
     <Compile Include="Database\Enums\TagQuality.cs" />
     <Compile Include="Database\Enums\TagType.cs" />
@@ -91,6 +87,9 @@
     <Compile Include="Web\Router.cs" />
     <Compile Include="Workers\Collector\CollectorWorker.cs" />
     <Compile Include="Workers\List.cs" />
+    <Compile Include="Workers\Logs\LogsWorker.cs" />
+    <Compile Include="Workers\Logs\Models\Log.cs" />
+    <Compile Include="Workers\Logs\Models\LogType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

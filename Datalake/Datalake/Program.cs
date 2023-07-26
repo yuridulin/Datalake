@@ -1,5 +1,7 @@
 ﻿using Datalake.Database;
 using Datalake.Workers;
+using Datalake.Workers.Logs;
+using Datalake.Workers.Logs.Models;
 using LinqToDB.Data;
 using System;
 using System.Diagnostics;
@@ -20,7 +22,7 @@ namespace Datalake
 			if (Environment.UserInteractive)
 			{
 				Start();
-				Console.WriteLine(nameof(Datalake) + " работает.");
+				LogsWorker.Add(nameof(Datalake), "Запуск", LogType.Warning);
 				Console.ReadLine();
 				Stop();
 			}

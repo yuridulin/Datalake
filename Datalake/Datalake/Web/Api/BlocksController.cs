@@ -85,25 +85,14 @@ namespace Datalake.Web.Api
 		{
 			using (var db = new DatabaseContext())
 			{
-				var query = from r in db.Rel_Block_Tag.Where(x => x.BlockId == Id)
-							from l in db.TagsLive.LeftJoin(x => x.TagId == r.TagId)
-							from t in db.Tags.LeftJoin(x => x.Id == r.TagId)
-							select new
-							{
-								r.Name,
-								r.Type,
-								ValueType = t.Type,
-								Value = l,
-							};
-
-				return query
-					.ToList()
+				return db.Rel_Block_Tag
+					.Where(x => x.BlockId == Id)
 					.Select(x => new
 					{
 						x.Name,
-						Value = x.Value.Value(x.ValueType),
-
-					});
+						Value = Cache.Read(x.TagId),
+					})
+					.ToList();
 			}
 		}
 
@@ -118,7 +107,7 @@ namespace Datalake.Web.Api
 					.Value(x => x.PropertiesRaw, "{}")
 					.Insert();
 
-				db.SetUpdateDate();
+				Cache.Update();
 
 				return Done("Объект создан");
 			}
@@ -151,7 +140,7 @@ namespace Datalake.Web.Api
 						.Insert();
 				}
 
-				db.SetUpdateDate();
+				Cache.Update();
 
 				return Done("Объект сохранён");
 			}
@@ -166,7 +155,7 @@ namespace Datalake.Web.Api
 					.Set(x => x.ParentId, ParentId)
 					.Update();
 
-				db.SetUpdateDate();
+				Cache.Update();
 
 				return Done("Объект перемещён");
 			}
@@ -185,7 +174,7 @@ namespace Datalake.Web.Api
 					.Set(x => x.ParentId, 0)
 					.Update();
 
-				db.SetUpdateDate();
+				Cache.Update();
 
 				return Done("Объект удалён");
 			}

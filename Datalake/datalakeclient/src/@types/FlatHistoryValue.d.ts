@@ -1,5 +1,4 @@
 export interface FlatHistoryValue {
-	Id: number
 	Date: date
 	TagName: string
 	Value: string | number | boolean

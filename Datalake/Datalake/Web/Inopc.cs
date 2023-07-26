@@ -1,4 +1,6 @@
 ﻿using Datalake.Workers.Collector.Models;
+using Datalake.Workers.Logs;
+using Datalake.Workers.Logs.Models;
 using Newtonsoft.Json;
 using System;
 using System.IO;
@@ -48,7 +50,7 @@ namespace Datalake.Web
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(DateTime.Now + " [" + nameof(Inopc) + "] " + ex.ToString());
+				LogsWorker.Add("Inopc", "Запрос к " + address + ": " + ex.Message, LogType.Error);
 				res = new DatalakeResponse
 				{
 					Timestamp = DateTime.Now,

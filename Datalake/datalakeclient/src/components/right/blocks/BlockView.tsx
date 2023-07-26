@@ -8,13 +8,14 @@ import axios, { AxiosResponse } from "axios";
 import router from "../../../router/router";
 import { useInterval } from "../../../hooks/useInterval";
 import FormRow from "../../small/FormRow";
+import { TagHistory } from "../../../@types/TagHistory";
 
 export default function BlockView() {
 
 	const { id } = useParams()
 	const [ block, setBlock ] = useState({} as BlockType)
 	const [ tags, setTags ] = useState([] as number[])
-	const [ values, setValues ] = useState([] as { id: number, name: string, type: string, value: string }[])
+	const [ values, setValues ] = useState([] as { id: number, name: string, type: string, value: any }[])
 
 	const [ load, loading, errLoad ] = useFetching(async () => {
 		let res = await axios.post('blocks/read', { id: id }) as AxiosResponse<BlockType, any>
@@ -30,12 +31,12 @@ export default function BlockView() {
 
 	const [ getValues ] = useFetching(async () => {
 		let res = await axios.post('values/liveById', { id: tags })
-		let newValues = res.data as { [key: number]: string }
+		let newValues = res.data as { [key: number]: TagHistory }
 		setValues(values.map(v => ({
 			id: v.id,
 			name: v.name,
 			type: v.type,
-			value: newValues[v.id]
+			value: newValues[v.id].Value
 		})))
 	})
 

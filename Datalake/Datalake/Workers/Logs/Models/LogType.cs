@@ -1,6 +1,6 @@
-﻿namespace Datalake.Database.Enums
+﻿namespace Datalake.Workers.Logs.Models
 {
-	public enum ProgramLogType
+	public enum LogType
 	{
 		Trace,
 		Information,

@@ -1,6 +1,8 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Enums;
 using Datalake.Web;
+using Datalake.Workers.Logs;
+using Datalake.Workers.Logs.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,135 +32,107 @@ namespace Datalake.Workers.Collector
 
 		static void Rebuild()
 		{
+			if (Cache.LastUpdate <= StoredUpdate) return;
+
+			LogsWorker.Add(Name, "Выполняется пересборка пакетов обновления", LogType.Warning);
+
 			using (var db = new DatabaseContext())
 			{
-				var lastUpdate = db.GetUpdateDate();
-				if (lastUpdate == StoredUpdate) return;
+				var sources = db.Sources.ToList();
+				var tags = db.Tags.Where(x => sources.Select(s => s.Id).Contains(x.SourceId)).ToList();
 
-				try
-				{
-					db.Log(Name, "Выполняется пересборка пакетов обновления", ProgramLogType.Warning);
+				foreach (var tag in tags) tag.PrepareToCollect();
 
-					var sources = db.Sources.ToList();
-					var tags = db.Tags.Where(x => sources.Select(s => s.Id).Contains(x.SourceId)).ToList();
+				Packets = sources
+					.ToDictionary(x => x.Address, x => tags.Where(t => t.SourceId == x.Id).ToList());
 
-					db.Log(Name, "Количество тегов: " + tags.Count, ProgramLogType.Trace);
+				StoredUpdate = Cache.LastUpdate;
 
-					foreach (var tag in tags) tag.PrepareToCollect();
-
-					Packets = sources
-						.ToDictionary(x => x.Address, x => tags.Where(t => t.SourceId == x.Id).ToList());
-
-					db.Log(Name, "Количество пакетов обновления: " + Packets.Count, ProgramLogType.Trace);
-
-					StoredUpdate = lastUpdate;
-				}
-				catch (Exception ex)
-				{
-					db.Log(Name, ex.Message, ProgramLogType.Error);
-				}
-				finally
-				{
-					db.Log(Name, "Пересборка пакетов обновления завершена", ProgramLogType.Warning);
-				}
+				LogsWorker.Add(Name, "Найдено тегов: " + tags.Count, LogType.Trace);
+				LogsWorker.Add(Name, "Новое количество пакетов обновления: " + Packets.Count, LogType.Trace);
 			}
 		}
 
 		static void Update()
 		{
-			using (var db = new DatabaseContext())
+			LogsWorker.Add(Name, "Обновление", LogType.Trace);
+
+			var values = new List<TagHistory>();
+
+			foreach (var packet in Packets)
 			{
-				try
-				{
-					db.Log(Name, "Запущено обновление тегов", ProgramLogType.Trace);
+				var now = DateTime.Now;
+				var tagsToUpdate = packet.Value
+					.Where(x => x.IsNeedToUpdate(now))
+					.ToList();
 
-					foreach (var packet in Packets)
+				if (tagsToUpdate.Count == 0) continue;
+
+				var ids = tagsToUpdate
+					.Select(x => x.Id)
+					.ToList();
+
+				var items = tagsToUpdate
+					.Select(x => x.SourceItem)
+					.Distinct()
+					.ToArray();
+
+				var res = Inopc.AskInopc(items, packet.Key);
+
+				LogsWorker.Add(Name, "Запрос к серверу: " + packet.Key + ", ожидается " + tagsToUpdate.Count + ", получено " + res.Tags.Length, LogType.Trace);
+
+				foreach (var tag in tagsToUpdate)
+				{
+					TagHistory value;
+					var inopcTag = res.Tags.FirstOrDefault(x => x.Name == tag.SourceItem);
+
+					if (inopcTag != null)
 					{
-						var now = DateTime.Now;
-						var tagsToUpdate = packet.Value
-							.Where(x => x.IsNeedToUpdate(now))
-							.ToList();
+						var (text, number, quality) = tag.FromRaw(inopcTag.Value, inopcTag.Quality);
 
-						db.Log(Name, "Количество тегов, ожидающих обновления: " + tagsToUpdate.Count, ProgramLogType.Trace);
-
-						if (tagsToUpdate.Count == 0) continue;
-
-						var ids = tagsToUpdate
-							.Select(x => x.Id)
-							.ToList();
-						var items = tagsToUpdate
-							.Select(x => x.SourceItem)
-							.Distinct()
-							.ToArray();
-
-						try
+						value = new TagHistory
 						{
-							db.Log(Name, "Запрос к серверу: " + packet.Key, ProgramLogType.Trace);
-
-							var res = Inopc.AskInopc(items, packet.Key);
-
-							db.Log(Name, "Количество полученных от сервера значений: " + res.Tags.Length, ProgramLogType.Trace);
-
-							foreach (var tag in tagsToUpdate)
-							{
-								var inopcTag = res.Tags.FirstOrDefault(x => x.Name == tag.SourceItem);
-
-								if (inopcTag != null)
-								{
-									var (text, raw, number, quality) = tag.FromRaw(inopcTag.Value, inopcTag.Quality);
-
-									db.WriteToHistory(new TagHistory
-									{
-										TagId = tag.Id,
-										Date = res.Timestamp,
-										Text = text,
-										Raw = raw,
-										Number = number,
-										Quality = quality,
-									});
-
-									db.Log(Name, "Записано новое значение тега [" + tag.Name + "]: " + raw, ProgramLogType.Trace);
-								}
-								else
-								{
-									db.WriteToHistory(new TagHistory
-									{
-										TagId = tag.Id,
-										Date = res.Timestamp,
-										Text = null,
-										Number = null,
-										Raw = null,
-										Quality = TagQuality.Bad_NoConnect
-									});
-
-									db.Log(Name, "Новое значение тега [" + tag.Name + "] не найдено", ProgramLogType.Warning);
-								}
-
-							}
-
-						}
-						catch (Exception ex)
-						{
-							db.Log(Name, ex.Message, ProgramLogType.Error);
-						}
-						finally
-						{
-							foreach (var tag in packet.Value)
-							{
-								if (ids.Contains(tag.Id)) tag.SetAsUpdated(now);
-							}
-						}
+							TagId = tag.Id,
+							Date = res.Timestamp,
+							Text = text,
+							Number = number,
+							Quality = quality,
+							Type = tag.Type,
+							Using = TagHistoryUse.Basic,
+						};
 					}
+					else
+					{
+						value = new TagHistory
+						{
+							TagId = tag.Id,
+							Date = res.Timestamp,
+							Text = null,
+							Number = null,
+							Quality = TagQuality.Bad_NoConnect,
+							Type = tag.Type,
+							Using = TagHistoryUse.Basic,
+						};
+					}
+
+					if (Cache.IsNew(value)) values.Add(value);
 				}
-				catch (Exception ex)
+
+				foreach (var tag in packet.Value)
 				{
-					db.Log(Name, ex.Message, ProgramLogType.Error);
-				}
-				finally
-				{
-					db.Log(Name, "Обновление тегов завершено", ProgramLogType.Trace);
+					if (ids.Contains(tag.Id)) tag.SetAsUpdated(now);
 				}
 			}
+
+			if (values.Count > 0)
+			{
+				using (var db = new DatabaseContext())
+				{
+					db.WriteToHistory(values);
+				}
+			}
+
+			LogsWorker.Add(Name, "Записано значений: " + values.Count, LogType.Trace);
 		}
 	}
 }
