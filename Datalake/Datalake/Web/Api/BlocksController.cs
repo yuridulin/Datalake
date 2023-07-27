@@ -106,7 +106,7 @@ namespace Datalake.Web.Api
 						TagName = tags[x.Tag.Id],
 						Type = x.Tag.Type,
 						Date = x.Value.Date,
-						Value = x.Value.Value,
+						Value = x.Value.Value(),
 						Quality = x.Value.Quality,
 						Using = x.Value.Using,
 					})
@@ -137,7 +137,7 @@ namespace Datalake.Web.Api
 						Using = x.Using,
 						Quality = x.Quality,
 						Type = x.Type,
-						Value = x.Value,
+						Value = x.Value(),
 					})
 					.ToList();
 			}

@@ -131,7 +131,7 @@ namespace Datalake.Database
 					if (input != null)
 					{
 						// переменная определена
-						args.Result = Cache.Read(input.InputTagId)?.Value ?? 0;
+						args.Result = Cache.Read(input.InputTagId)?.Value() ?? 0;
 					}
 					else
 					{

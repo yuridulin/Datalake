@@ -9,6 +9,7 @@ import router from "../../../router/router";
 import { useInterval } from "../../../hooks/useInterval";
 import FormRow from "../../small/FormRow";
 import { TagValue } from "../../../@types/TagValue";
+import TagValueElement from "../../small/TagValue";
 
 export default function BlockView() {
 
@@ -29,12 +30,14 @@ export default function BlockView() {
 
 	const [ getValues ] = useFetching(async () => {
 		let res = await axios.post('blocks/live', { id: id })
-		let newValues = res.data as { [key: number]: TagValue }
+		let newValues = res.data as TagValue[]
+		console.log(values)
+		console.log(newValues)
 		setValues(values.map(v => ({
 			id: v.id,
 			name: v.name,
 			type: v.type,
-			value: newValues[v.id].Value
+			value: newValues.filter(x => x.TagId === v.id)[0].Value
 		})))
 	})
 
@@ -76,7 +79,7 @@ export default function BlockView() {
 					{values.map((v, i) => (
 						<div key={i} className="table-row">
 							<span>{v.name}</span>
-							<span>{v.value}</span>
+							<span><TagValueElement value={v.value} /></span>
 							<span>{v.type}</span>
 						</div>
 					))}

@@ -2,10 +2,10 @@ export default function TagValueElement({ value }: { value?: string | number | b
 	
 	let type = Object.prototype.toString.call(value)
 
-	if (type === '[object Boolean]') return (<div style={{ color: '#1d39c4' }}>{value ? 'TRUE' : 'FALSE'}</div>)
-	if (type === '[object Number]') return (<div style={{ color: '#d4380d' }}>{value}</div>)
+	if (type === '[object Boolean]') return (<div style={{ color: '#1d39c4' }}><b>{value ? 'TRUE' : 'FALSE'}</b></div>)
+	if (type === '[object Number]') return (<div style={{ color: '#d4380d' }}><b>{value}</b></div>)
 
 	return (
-		<div style={{ color: '#389e0d' }}>{value}</div>
+		<div style={{ color: '#389e0d' }}><b>{value}</b></div>
 	)
 }

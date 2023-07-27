@@ -31,16 +31,13 @@ namespace Datalake.Database
 
 		// свойства
 
-		public object Value
+		public object Value() 
 		{
-			get
+			switch (Type)
 			{
-				switch (Type)
-				{
-					case TagType.Number: return Number;
-					case TagType.Boolean: return Number.HasValue && Number.Value != 0;
-					default: return Text;
-				}
+				case TagType.Number: return Number;
+				case TagType.Boolean: return Number.HasValue && Number.Value != 0;
+				default: return Text;
 			}
 		}
 	}
