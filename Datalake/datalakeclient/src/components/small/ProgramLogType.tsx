@@ -1,28 +1,17 @@
 import { Tag } from "antd";
+import { LogType } from "../../@types/enums/LogType";
 
-export default function ProgramLogType({ type }: { type: number }) {
-	
-	if (type === 0) return (
-		<Tag color="green">отладка</Tag>
-	)
+const colors = {
+	0: 'green',
+	1: 'volcano',
+	2: 'geekblue',
+	3: 'geekblue',
+	4: 'inherit',
+}
 
-	if (type === 1) return (
-		<Tag color="volcano">информация</Tag>
-	)
-
-	if (type === 2) return (
-		<Tag color="geekblue">успех</Tag>
-	)
-
-	if (type === 3) return (
-		<Tag color="geekblue">предупреждение</Tag>
-	)
-
-	if (type === 4) return (
-		<Tag color="geekblue">ошибка</Tag>
-	)
+export default function ProgramLogType({ type }: { type: keyof typeof LogType }) {
 
 	return (
-		<Tag>?</Tag>
+		<Tag color={colors[type]}>{LogType[type]}</Tag>
 	)
 }

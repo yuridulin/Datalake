@@ -7,7 +7,7 @@ import 'dayjs/locale/ru';
 import locale from 'antd/locale/ru_RU'
 import { PlayCircleOutlined } from "@ant-design/icons"
 import { useInterval } from "../../../hooks/useInterval"
-import TagQuality from "../../small/TagQuality"
+import Quality from "../../small/Quality"
 import TagValueElement from "../../small/TagValue"
 import { Tag } from "../../../@types/Tag"
 import { TagValue } from "../../../@types/TagValue"
@@ -109,7 +109,7 @@ export default function Viewer() {
 					<span>{x.Date.toString()}</span>
 					<span>{x.TagName}</span>
 					<span><TagValueElement value={x.Value} /></span>
-					<span><TagQuality quality={x.Quality} /></span>
+					<span><Quality quality={x.Quality} /></span>
 				</div>)}
 			</div>}
 		</>

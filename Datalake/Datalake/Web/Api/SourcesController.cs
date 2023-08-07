@@ -1,6 +1,8 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Enums;
 using Datalake.Web.Models;
 using LinqToDB;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Datalake.Web.Api
@@ -19,21 +21,27 @@ namespace Datalake.Web.Api
 
 		public object Items(int id)
 		{
-			string address;
+			Source source;
 
 			using (var db = new DatabaseContext())
 			{
-				var source = db.Sources.FirstOrDefault(x => x.Id == id);
+				source = db.Sources.FirstOrDefault(x => x.Id == id);
 				if (source == null) return new { Error = "Источник не найден." };
-				address = source.Address;
 			}
 
-			var res = Inopc.AskInopc(new string[0], address);
+			switch (source.Type)
+			{
+				case SourceType.Inopc:
+					var res = Inopc.AskInopc(new string[0], source.Address);
+					return res.Tags.Select(x => x.Name).ToList();
 
-			return res.Tags
-				.Select(x => x.Name)
-				.OrderBy(x => x)
-				.ToList();
+				case SourceType.Datalake:
+					var list = DatalakeNode.AskNode(new string[0], source.Address);
+					return list;
+
+				default:
+					return new List<string>();
+			}
 		}
 
 		public object Tags(int id)

@@ -5,6 +5,7 @@ import { NavLink, Navigate } from "react-router-dom"
 import { Button } from "antd"
 import axios from "axios"
 import Header from "../../small/Header"
+import { SourceType } from "../../../@types/enums/SourceType"
 
 export default function SourcesList() {
 
@@ -37,11 +38,13 @@ export default function SourcesList() {
 			: <div className="table">
 				<div className="table-header">
 					<span>Имя</span>
+					<span>Тип</span>
 					<span>Адрес</span>
 				</div>
 				{list.map(x => 
 					<NavLink className="table-row" to={'/sources/' + x.Id} key={x.Id}>
 						<span>{x.Name}</span>
+						<span>{SourceType[x.Type]}</span>
 						<span>{x.Address}</span>
 					</NavLink>
 				)}

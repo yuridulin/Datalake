@@ -61,7 +61,7 @@ export default function Dashboard() {
 						<span>{x.Date.toString()}</span>
 						<span>{x.Module}</span>
 						<span>{x.Message}</span>
-						<span><ProgramLogType type={x.ProgramLogType} /></span>
+						<span><ProgramLogType type={x.Type} /></span>
 					</div>)}
 				</div>
 			</>

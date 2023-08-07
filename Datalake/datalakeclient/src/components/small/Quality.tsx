@@ -1,7 +1,8 @@
 import { CheckOutlined, DisconnectOutlined, EditOutlined, WarningOutlined } from "@ant-design/icons";
 import { ReactElement } from "react";
+import { TagQuality } from "../../@types/enums/TagQuality";
 
-export default function TagQuality({ quality }: { quality: number }) {
+export default function Quality({ quality }: { quality: keyof typeof TagQuality }) {
 	
 	const qualityEnum: { [key: number]: ReactElement } = {
 		0: <WarningOutlined title="Значение не достоверно" />,

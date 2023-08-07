@@ -1,6 +1,8 @@
+import { BlockTagType } from "./enums/BlockTagType"
+
 export interface Rel_Block_Type {
 	BlockId: number
 	TagId: number
 	Name: string
-	Type: 0 | 1 | 2
+	Type: keyof typeof BlockTagType
 }
