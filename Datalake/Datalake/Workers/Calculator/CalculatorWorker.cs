@@ -14,12 +14,31 @@ namespace Datalake.Workers.Calculator
 	{
 		public static async Task Start(CancellationToken token)
 		{
-			while (!token.IsCancellationRequested)
+			using (var db = new DatabaseContext())
 			{
-				Rebuild();
-				Update();
+				while (!token.IsCancellationRequested)
+				{
+					if (Cache.LastUpdate > StoredUpdate)
+					{
+						var inputs = db.Rel_Tag_Input.ToList();
 
-				await Task.Delay(1000);
+						Tags = db.Tags
+							.Where(x => x.IsCalculating)
+							.ToList();
+
+						foreach (var tag in Tags)
+						{
+							tag.Inputs = inputs.Where(x => x.TagId == tag.Id).ToList();
+							tag.PrepareToCalc();
+						}
+
+						StoredUpdate = Cache.LastUpdate;
+					}
+
+					Update(db);
+
+					await Task.Delay(1000);
+				}
 			}
 		}
 
@@ -27,29 +46,7 @@ namespace Datalake.Workers.Calculator
 
 		static List<Tag> Tags { get; set; } = new List<Tag>();
 
-		static void Rebuild()
-		{
-			if (Cache.LastUpdate == StoredUpdate) return;
-
-			using (var db = new DatabaseContext())
-			{
-				var inputs = db.Rel_Tag_Input.ToList();
-
-				Tags = db.Tags
-					.Where(x => x.IsCalculating)
-					.ToList();
-
-				foreach (var tag in Tags)
-				{
-					tag.Inputs = inputs.Where(x => x.TagId == tag.Id).ToList();
-					tag.PrepareToCalc();
-				}
-
-				StoredUpdate = Cache.LastUpdate;
-			}
-		}
-
-		static void Update()
+		static void Update(DatabaseContext db)
 		{
 			var values = new List<TagHistory>();
 
@@ -73,13 +70,9 @@ namespace Datalake.Workers.Calculator
 
 			if (values.Count > 0)
 			{
-				using (var db = new DatabaseContext())
-				{
-					db.WriteHistory(values);
-				}
+				db.WriteHistory(values);
+				LogsWorker.Add("Calc", "Вычислено значений: " + values.Count, LogType.Trace);
 			}
-
-			LogsWorker.Add("Calc", "Вычислено новых значений: " + values.Count, LogType.Trace);
 		}
 	}
 }

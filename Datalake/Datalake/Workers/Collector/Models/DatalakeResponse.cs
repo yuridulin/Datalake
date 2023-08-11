@@ -6,6 +6,6 @@ namespace Datalake.Workers.Collector.Models
 	{
 		public DateTime Timestamp { get; set; }
 
-		public InopcTag[] Tags { get; set; }
+		public InputTag[] Tags { get; set; }
 	}
 }

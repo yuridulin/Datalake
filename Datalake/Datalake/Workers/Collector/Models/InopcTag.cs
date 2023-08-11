@@ -1,6 +1,6 @@
 ﻿namespace Datalake.Workers.Collector.Models
 {
-	public class InopcTag
+	public class InputTag
 	{
 		public string Name { get; set; } = "";
 

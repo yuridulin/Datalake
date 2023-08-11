@@ -59,15 +59,43 @@ namespace Datalake.Web.Api
 		{
 			using (var db = new DatabaseContext())
 			{
-				var dbtags = db.Tags
-					.Where(x => tags.Contains(x.Id))
-					.ToDictionary(x => x.Id, x => x);
+				var dbTags = tags.Length == 0
+					? db.Tags.ToList()
+					: db.Tags.Where(x => tags.Contains(x.Id)).ToList();
 
-				return tags
+				return dbTags
 					.Select(x => new
 					{
-						Tag = dbtags[x],
-						Value = Cache.Read(x),
+						Tag = x,
+						Value = Cache.Read(x.Id),
+					})
+					.Select(x => new TagValue
+					{
+						TagId = x.Tag.Id,
+						TagName = x.Tag.Name,
+						Type = x.Tag.Type,
+						Date = x.Value.Date,
+						Value = x.Value.Value(),
+						Quality = x.Value.Quality,
+						Using = x.Value.Using,
+					})
+					.ToList();
+			}
+		}
+
+		public List<TagValue> LiveByNames(string[] tags)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var dbTags = tags.Length == 0
+					? db.Tags.ToList()
+					: db.Tags.Where(x => tags.Contains(x.Name)).ToList();
+
+				return dbTags
+					.Select(x => new
+					{
+						Tag = x,
+						Value = Cache.Read(x.Id),
 					})
 					.Select(x => new TagValue
 					{

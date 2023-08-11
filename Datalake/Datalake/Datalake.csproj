@@ -66,10 +66,9 @@
     <Compile Include="Database\TagHistory.cs" />
     <Compile Include="Database\Enums\TagQuality.cs" />
     <Compile Include="Database\Enums\TagType.cs" />
-    <Compile Include="Web\DatalakeNode.cs" />
     <Compile Include="Web\Models\TagValue.cs" />
     <Compile Include="Database\_DatabaseContext.cs" />
-    <Compile Include="Web\Inopc.cs" />
+    <Compile Include="Web\Collector.cs" />
     <Compile Include="Workers\Calculator\CalculatorWorker.cs" />
     <Compile Include="Workers\Collector\Models\InopcTag.cs" />
     <Compile Include="Workers\Collector\Models\DatalakeRequest.cs" />

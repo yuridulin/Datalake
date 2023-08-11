@@ -6,6 +6,8 @@ namespace Datalake
 {
 	public static class Cache
 	{
+		public static List<string> Tables { get; set; } = new List<string>();
+
 		public static Dictionary<int, TagHistory> Live { get; set; } = new Dictionary<int, TagHistory>();
 
 		public static void Update() => LastUpdate = DateTime.Now;

@@ -30,7 +30,7 @@ namespace Datalake.Database
 			=> this.GetTable<Rel_Block_Tag>();
 
 
-		// методы расширения для взаимодействия с базой
+		// методы
 
 		public void Recreate()
 		{
@@ -61,6 +61,11 @@ namespace Datalake.Database
 			{
 				this.CreateTable<Rel_Block_Tag>();
 			}
+
+			Cache.Tables = dbSchema.Tables
+				.Where(t => t.TableName.StartsWith("TagsHistory_"))
+				.Select(t => t.TableName)
+				.ToList();
 
 			CreateCache();
 
@@ -126,39 +131,42 @@ namespace Datalake.Database
 			{
 				string tableName = $"TagsHistory_{seek:yyyy_MM_dd}";
 
-				var table = this.GetTable<TagHistory>().TableName(tableName);
-
-				try
+				if (Cache.Tables.Contains(tableName))
 				{
-					var chunk = table
-						.Where(x => identifiers.Contains(x.TagId))
-						.Where(x => x.Date >= old)
-						.Where(x => x.Date <= young)
-						.Where(x => x.Using == TagHistoryUse.Basic)
-						.OrderBy(x => x.Date)
-						.ToList();
+					var table = this.GetTable<TagHistory>().TableName(tableName);
 
-					if (seek == old.Date)
+					try
 					{
-						var previousValues = table
+						var chunk = table
 							.Where(x => identifiers.Contains(x.TagId))
-							.AsEnumerable()
-							.GroupBy(x => x.TagId)
-							.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
+							.Where(x => x.Date >= old)
+							.Where(x => x.Date <= young)
+							.Where(x => x.Using == TagHistoryUse.Basic)
+							.OrderBy(x => x.Date)
 							.ToList();
 
-						foreach (var value in previousValues)
+						if (seek == old.Date)
 						{
-							value.Date = old;
-							value.Using = TagHistoryUse.Initial;
+							var previousValues = table
+								.Where(x => identifiers.Contains(x.TagId))
+								.AsEnumerable()
+								.GroupBy(x => x.TagId)
+								.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
+								.ToList();
+
+							foreach (var value in previousValues)
+							{
+								value.Date = old;
+								value.Using = TagHistoryUse.Initial;
+							}
+
+							data.AddRange(previousValues);
 						}
 
-						data.AddRange(previousValues);
+						data.AddRange(chunk);
 					}
-
-					data.AddRange(chunk);
+					catch { }
 				}
-				catch { }
 
 				seek = seek.AddDays(1);
 			}
@@ -166,7 +174,6 @@ namespace Datalake.Database
 
 			if (resolution > 0)
 			{
-				// Разбивка значений в массив с заданным шагом
 				var timeRange = (young - old).TotalMilliseconds;
 				var history = new List<TagHistory>();
 				DateTime stepDate;
@@ -198,8 +205,6 @@ namespace Datalake.Database
 		{
 			string currentHistoryTableName = $"TagsHistory_{DateTime.Today:yyyy_MM_dd}";
 
-			var provider = DataProvider.GetSchemaProvider();
-			var schema = provider.GetSchema(this);
 			ITable<TagHistory> current;
 
 			foreach (var value in values)
@@ -207,27 +212,24 @@ namespace Datalake.Database
 				Cache.Write(value);
 			}
 
-			if (!schema.Tables.Any(x => x.TableName == currentHistoryTableName))
+			if (!Cache.Tables.Any(x => x == currentHistoryTableName))
 			{
 				this.CreateTable<TagHistory>(currentHistoryTableName);
-
-				// Нужно попробовать прочитать предыдущие значения, чтобы вставить их в новую таблицу
-				// Это - оптимизация для быстрого получения исходного значения при выборке среза
 
 				var tags = Tags
 					.Select(x => x.Id)
 					.ToList();
 
-				var previous = schema.Tables
-					.Where(x => x.TableName.StartsWith("TagsHistory_") && x.TableName != currentHistoryTableName)
-					.OrderByDescending(x => x.TableName)
+				var previous = Cache.Tables
+					.Where(x => x.StartsWith("TagsHistory_") && x != currentHistoryTableName)
+					.OrderByDescending(x => x)
 					.FirstOrDefault();
 
 				var initialValues = new List<TagHistory>();
 
 				if (previous != null)
 				{
-					var previousTable = this.GetTable<TagHistory>().TableName(previous.TableName);
+					var previousTable = this.GetTable<TagHistory>().TableName(previous);
 
 					var lastValues = previousTable
 						.GroupBy(x => x.TagId)

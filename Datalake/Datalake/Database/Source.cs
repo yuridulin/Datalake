@@ -1,7 +1,10 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Web;
-using Datalake.Workers;
+using Datalake.Workers.Collector.Models;
+using Datalake.Workers.Logs;
+using Datalake.Workers.Logs.Models;
 using LinqToDB.Mapping;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,29 +27,117 @@ namespace Datalake.Database
 
 		// реализация
 
-		public List<string> GetItems()
+		public List<Tag> Tags { get; set; } = new List<Tag>();
+
+		public DatalakeResponse GetItems()
 		{
-			if (Type == SourceType.Inopc)
-			{
-				var res = Inopc.AskInopc(new string[0], Address);
+			DatalakeResponse res;
 
-				return res.Tags
-					.Select(x => x.Name)
-					.OrderBy(x => x)
-					.ToList();
-			}
-			else if (Type == SourceType.Datalake)
+			switch (Type)
 			{
-				var res = Inopc.AskInopc(new string[0], Address);
+				case SourceType.Inopc:
+					res = Collector.AskInopc(new string[0], Address);
+					break;
 
-				return res.Tags
-					.Select(x => x.Name)
-					.OrderBy(x => x)
-					.ToList();
+				case SourceType.Datalake:
+					res = Collector.AskDatalake(new string[0], Address);
+					break;
+
+				default:
+					res = new DatalakeResponse { Tags = new InputTag[0] };
+					break;
 			}
-			else
+
+			return res;
+		}
+
+		public void Rebuild(DatabaseContext db)
+		{
+			Tags = db.Tags
+				.Where(x => Id == x.SourceId)
+				.ToList();
+
+			foreach (var tag in Tags)
 			{
-				return new List<string>();
+				tag.PrepareToCollect();
+			}
+		}
+
+		public void Update(DatabaseContext db)
+		{
+			var now = DateTime.Now;
+
+			var tagsToUpdate = Tags
+				.Where(x => x.IsNeedToUpdate(now))
+				.ToList();
+
+			if (tagsToUpdate.Count == 0) return;
+
+			DatalakeResponse res;
+
+			switch (Type)
+			{
+				case SourceType.Inopc:
+					res = Collector.AskInopc(tagsToUpdate.Select(x => x.SourceItem).ToArray(), Address);
+					break;
+
+				case SourceType.Datalake:
+					res = Collector.AskDatalake(tagsToUpdate.Select(x => x.SourceItem).ToArray(), Address);
+					break;
+
+				default:
+					tagsToUpdate.ForEach(tag => tag.SetAsUpdated(now));
+					return;
+			}
+
+			var values = new List<TagHistory>();
+
+			foreach (var tag in tagsToUpdate)
+			{
+				TagHistory value;
+				var input = res.Tags.FirstOrDefault(x => x.Name == tag.SourceItem);
+
+				if (input != null)
+				{
+					var (text, number, quality) = tag.FromRaw(input.Value, input.Quality);
+
+					value = new TagHistory
+					{
+						TagId = tag.Id,
+						Date = res.Timestamp,
+						Text = text,
+						Number = number,
+						Quality = quality,
+						Type = tag.Type,
+						Using = TagHistoryUse.Basic,
+					};
+				}
+				else
+				{
+					value = new TagHistory
+					{
+						TagId = tag.Id,
+						Date = res.Timestamp,
+						Text = null,
+						Number = null,
+						Quality = TagQuality.Bad_NoConnect,
+						Type = tag.Type,
+						Using = TagHistoryUse.Basic,
+					};
+				}
+
+				if (Cache.IsNew(value)) values.Add(value);
+			}
+
+			if (values.Count > 0)
+			{
+				db.WriteHistory(values);
+				LogsWorker.Add("Collector", Name + ", новых значений: " + values.Count, LogType.Trace);
+			}
+
+			foreach (var tag in tagsToUpdate)
+			{
+				tag.SetAsUpdated(now);
 			}
 		}
 	}
