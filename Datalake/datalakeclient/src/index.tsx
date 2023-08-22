@@ -5,7 +5,7 @@ import router from './router/router'
 import axios from 'axios'
 import { notification } from 'antd'
 
-axios.defaults.baseURL = 'http://localhost:83/api'
+axios.defaults.baseURL = window.location.protocol + '//' + window.location.hostname + ':83/api'
 axios.interceptors.response.use(
 	res => {
 		if (res.data.Done) {

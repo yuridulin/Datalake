@@ -5,8 +5,9 @@ import axios from "axios"
 import { Tag } from "../../../@types/Tag"
 import { PlusCircleOutlined } from "@ant-design/icons"
 import { NavLink } from "react-router-dom"
+import { SourceType } from "../../../@types/enums/SourceType"
 
-export default function SourceItems({ id }: { id: number }) {
+export default function SourceItems({ type, id }: { type: keyof typeof SourceType, id: number }) {
 
 	const [ items, setItems ] = useState([] as { Item: string, Tag?: Tag }[])
 

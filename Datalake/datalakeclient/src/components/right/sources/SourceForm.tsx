@@ -1,4 +1,4 @@
-import { Button, Input, Popconfirm } from "antd"
+import { Button, Input, Popconfirm, Radio } from "antd"
 import { useState, useEffect } from "react"
 import { TagSource } from "../../../@types/Source"
 import { useFetching } from "../../../hooks/useFetching"
@@ -8,6 +8,7 @@ import axios from "axios"
 import Header from "../../small/Header"
 import FormRow from "../../small/FormRow"
 import SourceItems from "./SourceItems"
+import { SourceType } from "../../../@types/enums/SourceType"
 
 export default function SourceForm() {
 
@@ -53,10 +54,17 @@ export default function SourceForm() {
 			<FormRow title="Имя">
 				<Input value={source.Name} onChange={e => setSource({ ...source, Name: e.target.value })} />
 			</FormRow>
+			<FormRow title="Тип источника">
+				<Radio.Group buttonStyle="solid" value={source.Type} onChange={e => setSource({...source, Type: e.target.value })}>
+					{Object.keys(SourceType).map(x => 
+						<Radio.Button value={Number(x)}>{SourceType[Number(x)]}</Radio.Button>
+					)}
+				</Radio.Group>
+			</FormRow>
 			<FormRow title="Адрес">
 				<Input value={source.Address} onChange={e => setSource({ ...source, Address: e.target.value })} />
 			</FormRow>
-			<SourceItems id={source.Id} />
+			<SourceItems type={source.Type} id={source.Id} />
 		</>
 	)
 }
