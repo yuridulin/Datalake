@@ -136,6 +136,31 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		public List<TagValue> HistoryByNames(string[] tags, DateTime old, DateTime young, int resolution)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var dbtags = db.Tags
+					.Where(x => tags.Contains(x.Name))
+					.ToDictionary(x => x.Id, x => x);
+
+				var data = db.ReadHistory(dbtags.Keys.ToArray(), old, young, resolution);
+
+				return data
+					.Select(x => new TagValue
+					{
+						TagId = x.TagId,
+						TagName = dbtags[x.TagId].Name,
+						Date = x.Date,
+						Using = x.Using,
+						Quality = x.Quality,
+						Type = x.Type,
+						Value = x.Value(),
+					})
+					.ToList();
+			}
+		}
+
 		public object Create()
 		{
 			using (var db = new DatabaseContext())
