@@ -291,7 +291,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
 							{
 								byte[] answer = new byte[Port.BytesToRead];
 								Port.Read(answer, 0, answer.Length);
-								LogEvent("Rx: " + Helpers.BytesToString(answer));
+								LogEvent("Rx: " + Helpers.BytesToString(answer), LogType.DETAILED);
 
 								byte[] _package = answer.ToList().GetRange(0, answer.Length - 2).ToArray();
 								byte[] _crc = BitConverter.GetBytes(Package.CRC(_package, _package.Length));
