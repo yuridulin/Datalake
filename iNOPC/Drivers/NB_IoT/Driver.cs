@@ -1,12 +1,14 @@
 ﻿using iNOPC.Library;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -112,7 +114,7 @@ namespace iNOPC.Drivers.NB_IoT
 				}
 				else if (Fields.ContainsKey(name))
 				{
-					Fields[ name ].Quality = 0;
+					Fields[name].Quality = 0;
 				}
 			}
 
@@ -125,8 +127,8 @@ namespace iNOPC.Drivers.NB_IoT
 			{
 				if (Fields.ContainsKey(name))
 				{
-					Fields[ name ].Value = value;
-					Fields[ name ].Quality = quality;
+					Fields[name].Value = value;
+					Fields[name].Quality = quality;
 				}
 				else
 				{
@@ -179,8 +181,12 @@ namespace iNOPC.Drivers.NB_IoT
 						LogEvent("Чтение потока прервано по таймауту");
 					}
 
-					LogEvent("Получено: " + Helpers.BytesToString(bytes.Take(count).ToArray()));
-					ParseValue(bytes, count);
+					bytes = bytes.Take(count).ToArray();
+					LogEvent("Получено: " + Helpers.BytesToString(bytes), LogType.DETAILED);
+					ParseValue(bytes);
+
+					bytes = Encoding.UTF8.GetBytes("<!OK>");
+					stream.Write(bytes, 0, bytes.Length);
 
 					stream.Close();
 					client.Close();
@@ -218,69 +224,37 @@ namespace iNOPC.Drivers.NB_IoT
 			}
 		}
 
-		void ParseValue(byte[] packet, int length)
+		void ParseValue(byte[] packet)
 		{
-			if (packet[0] == 1)
+			try
 			{
-				for (int i = 0; i <= length; i += 7)
-				{
-					if (packet[ i ] != 1) break;
+				var json = JsonConvert.DeserializeObject<Answer>(Encoding.UTF8.GetString(packet));
 
-					byte address = packet[ i + 1 ];
-					uint dateUint = BitConverter.ToUInt32(new[] { packet[ i + 2 ], packet[ i + 3 ], packet[ i + 4 ], packet[ i + 5 ] }, 0);
-					DateTime date = ToDateTime(dateUint);
+				SetValue("Message.DeviceType", json.Message.dev);
+				SetValue("Message.DeviceIMEI", json.Message.imei);
+				SetValue("Message.PacketNum", json.Message.num);
 
-					SetValue(address + ".Date", date.ToString("dd.MM.yyyy HH:mm:ss"));
-					SetValue(address + ".Value", packet[ i + 6 ]);
-				}
+				SetValue("Telemetry.Date", new DateTime(1970, 1, 1).AddSeconds(json.Telemetry.date).ToString("dd.MM.yyyy HH:mm:ss"));
+				SetValue("Telemetry.RSSI", json.Telemetry.rssi);
+				SetValue("Telemetry.BatteryCharge", json.Telemetry.bat_mv);
+				SetValue("Telemetry.Temperature", json.Telemetry.temp);
+				SetValue("Telemetry.ResistConductorA", json.Telemetry.raw);
+				SetValue("Telemetry.ResistInsulationA", json.Telemetry.rai);
+				SetValue("Telemetry.ResistConductorC", json.Telemetry.rbw);
+				SetValue("Telemetry.ResistInsulationB", json.Telemetry.rbi);
+				SetValue("Telemetry.ResistConductorC", json.Telemetry.rcw);
+				SetValue("Telemetry.ResistInsulationC", json.Telemetry.rci);
+				SetValue("Telemetry.ResistConductorD", json.Telemetry.rdw);
+				SetValue("Telemetry.ResistInsulationD", json.Telemetry.rdi);
+				SetValue("Telemetry.Input1", json.Telemetry.di1);
+				SetValue("Telemetry.Input2", json.Telemetry.di2);
 			}
-
-			else if (packet[0] == 2)
+			catch (Exception e)
 			{
-				var nOfValues = packet[ 1 ];
-				for (byte i = 0; i < nOfValues; i++)
-				{
-					byte DO = packet[ 2 + 2 * i ];
-					byte value = packet[ 3 + 2 * i ];
-					SetValue(DO + ".Value", value == 1);
-					SetValue(DO + ".Date", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-				}
-			}
-			else
-			{
-				LogEvent("Получен пакет, тип которого не распознан", LogType.WARNING);
+				LogEvent("JSON не прочитан: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
 			}
 
 			LastUpdateTime = DateTime.Now;
-		}
-
-		DateTime ToDateTime(uint value)
-		{
-			int RTC_MODE2_CLOCK_SECOND_Pos = 0;
-			int RTC_MODE2_CLOCK_SECOND_Msk = 0x3F << RTC_MODE2_CLOCK_SECOND_Pos;
-
-			int RTC_MODE2_CLOCK_MINUTE_Pos = 6;
-			int RTC_MODE2_CLOCK_MINUTE_Msk = 0x3F << RTC_MODE2_CLOCK_MINUTE_Pos;
-
-			int RTC_MODE2_CLOCK_HOUR_Pos = 12;
-			int RTC_MODE2_CLOCK_HOUR_Msk = 0x1F << RTC_MODE2_CLOCK_HOUR_Pos;
-
-			int RTC_MODE2_CLOCK_DAY_Pos = 17;
-			int RTC_MODE2_CLOCK_DAY_Msk = 0x1F << RTC_MODE2_CLOCK_DAY_Pos;
-
-			int RTC_MODE2_CLOCK_MONTH_Pos = 22;
-			int RTC_MODE2_CLOCK_MONTH_Msk = 0xF << RTC_MODE2_CLOCK_MONTH_Pos;
-
-			int RTC_MODE2_CLOCK_YEAR_Pos = 26;
-			int RTC_MODE2_CLOCK_YEAR_Msk = 0x3F << RTC_MODE2_CLOCK_YEAR_Pos;
-
-			int year = (int)((value & RTC_MODE2_CLOCK_YEAR_Msk) >> RTC_MODE2_CLOCK_YEAR_Pos) + 2000;
-			int month = (int)((value & RTC_MODE2_CLOCK_MONTH_Msk) >> RTC_MODE2_CLOCK_MONTH_Pos);
-			int day = (int)((value & RTC_MODE2_CLOCK_DAY_Msk) >> RTC_MODE2_CLOCK_DAY_Pos);
-			int hour = (int)((value & RTC_MODE2_CLOCK_HOUR_Msk) >> RTC_MODE2_CLOCK_HOUR_Pos);
-			int minute = (int)((value & RTC_MODE2_CLOCK_MINUTE_Msk) >> RTC_MODE2_CLOCK_MINUTE_Pos);
-			int second = (int)((value & RTC_MODE2_CLOCK_SECOND_Msk) >> RTC_MODE2_CLOCK_SECOND_Pos);
-			return new DateTime(year, month, day, hour, minute, second);
 		}
 
 		DateTime LastUpdateTime { get; set; }

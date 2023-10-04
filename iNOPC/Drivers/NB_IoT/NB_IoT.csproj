@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>iNOPC.Drivers.NB_IoT</RootNamespace>
-    <AssemblyName>NB_IoT_v1.7</AssemblyName>
+    <AssemblyName>NB_IoT_v2.0</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -44,18 +44,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Answer.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Driver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\iNOPC_Library\iNOPC_Library.csproj">
-      <Project>{8676c42d-6751-4a67-bc23-00484bbd60cb}</Project>
-      <Name>iNOPC_Library</Name>
-    </ProjectReference>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\..\iNOPC_Library\iNOPC_Library.csproj">
+      <Project>{8676C42D-6751-4A67-BC23-00484BBD60CB}</Project>
+      <Name>iNOPC_Library</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
