@@ -64,6 +64,7 @@ namespace iNOPC.Drivers.MT01
 			Active = false;
 			try { Thread?.Abort(); } catch (Exception) { }
 			SetBadQuality();
+			UpdateEvent();
 
 			LogEvent("Мониторинг остановлен");
 		}
