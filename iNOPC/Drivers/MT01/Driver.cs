@@ -36,11 +36,7 @@ namespace iNOPC.Drivers.MT01
 				return Err("Конфигурация не прочитана: " + e.Message);
 			}
 
-			if (!Fields.ContainsKey("Time"))
-			{
-				Fields.Add("Time", new DefField { Value = DateTime.Now.ToString("HH:mm:ss"), Quality = 192 });
-			}
-
+			SetValue("Time", DateTime.Now.ToString("HH:mm:ss"));
 			UpdateEvent();
 
 			Active = true;
@@ -67,6 +63,7 @@ namespace iNOPC.Drivers.MT01
 
 			Active = false;
 			try { Thread?.Abort(); } catch (Exception) { }
+			SetBadQuality();
 
 			LogEvent("Мониторинг остановлен");
 		}
@@ -222,6 +219,7 @@ namespace iNOPC.Drivers.MT01
 			catch (Exception e)
 			{
 				LogEvent("Ошибка: " + e.Message, LogType.ERROR);
+				SetBadQuality();
 				SetValue("Time", DateTime.Now.ToString("HH:mm:ss"), 192);
 			}
 			finally
@@ -246,6 +244,17 @@ namespace iNOPC.Drivers.MT01
 				else
 				{
 					Fields.Add(name, new DefField { Value = value, Quality = quality });
+				}
+			}
+		}
+
+		void SetBadQuality()
+		{
+			lock (Fields)
+			{
+				foreach (var field in Fields)
+				{
+					field.Value.Quality = 0;
 				}
 			}
 		}
