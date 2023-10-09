@@ -2,10 +2,13 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO.Ports;
+using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
 
 namespace iNOPC.Drivers.MT01
 {
@@ -22,15 +25,6 @@ namespace iNOPC.Drivers.MT01
 		public bool Start(string jsonConfig)
 		{
 			LogEvent("Запуск ...");
-
-			try { Port?.Close(); } catch (Exception) { }
-			Port = new SerialPort();
-			Port.DataReceived += (s, e) =>
-			{
-				BytesReceived = Port.BytesToRead;
-				Receive = true;
-			};
-			Port.ErrorReceived += (s, e) => ComError(e.EventType.ToString());
 
 			// чтение конфигурации
 			try
@@ -49,29 +43,17 @@ namespace iNOPC.Drivers.MT01
 
 			UpdateEvent();
 
-			// установка начальных значений
-			try
-			{
-				Port.PortName = "COM" + Configuration.Port;
-				Port.BaudRate = Configuration.BaudRate;
-				Port.DataBits = Configuration.DataBits;
-				Port.Parity = (Parity)Configuration.Parity;
-				Port.StopBits = (StopBits)Configuration.StopBits;
-			}
-			catch (Exception e)
-			{
-				return Err("Параметры COM порта не установлены: " + e.Message + "\n" + e.StackTrace);
-			}
-
 			Active = true;
 
-			if (Thread != null)
+			Thread = new Thread(() =>
 			{
-				Thread.Abort();
-				Thread = null;
-			}
-
-			Thread = new Thread(TrancievePackages);
+				while (Active)
+				{
+					LogEvent("Опрос начат", LogType.DETAILED);
+					Work();
+					LogEvent("Опрос завершен", LogType.DETAILED);
+				}
+			});
 			Thread.Start();
 
 			LogEvent("Мониторинг запущен");
@@ -84,7 +66,7 @@ namespace iNOPC.Drivers.MT01
 			LogEvent("Остановка ...");
 
 			Active = false;
-			try { Port.Close(); } catch (Exception) { }
+			try { Thread?.Abort(); } catch (Exception) { }
 
 			LogEvent("Мониторинг остановлен");
 		}
@@ -99,197 +81,173 @@ namespace iNOPC.Drivers.MT01
 
 		Configuration Configuration { get; set; }
 
-		SerialPort Port { get; set; }
+		Stream Stream { get; set; }
 
 		Thread Thread { get; set; }
 
-		DateTime Date { get; set; }
-
-		DateTime PackageDate { get; set; }
-
 		bool Active { get; set; } = false;
 
-		bool Receive { get; set; } = false;
+		byte[] Answer { get; set; }
 
-		int BytesReceived { get; set; } = 0;
-
-		int ErrorsCount { get; set; } = 0;
-
-		void TrancievePackages()
+		void Work()
 		{
-			while (Active)
+			if (!Active)
 			{
-				Date = DateTime.Now;
+				LogEvent("Опрос прерван из-за прекращения работы", LogType.DETAILED);
+				return;
+			}
 
-				if (!Port.IsOpen)
+			var start = DateTime.Now;
+			var client = new TcpClient();
+
+			try
+			{
+				if (!client.ConnectAsync(Configuration.Endpoint, Configuration.Port).Wait(Configuration.ReceiveTimeoutInMilliseconds))
 				{
-					try
-					{
-						Port.Open();
-					}
-					catch (Exception e)
-					{
-						Err("COM-порт не открыт: " + e.Message + "\n" + e.StackTrace);
-						try { Port?.Close(); } catch (Exception) { }
-						Thread.Sleep(1000);
-					}
+					throw new Exception($"Не удалось подключиться к {Configuration.Endpoint}:{Configuration.Port} за {Configuration.ReceiveTimeoutInMilliseconds} мс");
 				}
+
+				Stream = client.GetStream();
 
 				var receivedValues = new Dictionary<string, object>();
 
-				if (Port.IsOpen)
+				if (Configuration.CheckCurrent)
 				{
-					ErrorsCount = 0;
-
-					if (Configuration.CheckCurrent)
+					if (Exchange(0x01, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
 					{
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x01, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4);
-							receivedValues.Add("Energy.Now", BitConverter.ToUInt32(data, 0));
-						}
-
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x14, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4);
-							receivedValues.Add("DeviceTime", UnixTimeStampToDateTime(BitConverter.ToUInt32(data, 0)).ToString("dd.MM.yyyy HH:mm:ss"));
-						}
+						receivedValues.Add("Energy.Now", BitConverter.ToUInt32(Answer, 0));
 					}
 
-					if (Configuration.CheckParams)
+					if (Exchange(0x0E, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
 					{
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x02, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 24);
-							receivedValues.Add("Line.Power.A.Active", BitConverter.ToUInt32(data, 0));
-							receivedValues.Add("Line.Power.A.Reactive", BitConverter.ToUInt32(data, 4));
-							receivedValues.Add("Line.Power.B.Active", BitConverter.ToUInt32(data, 8));
-							receivedValues.Add("Line.Power.B.Reactive", BitConverter.ToUInt32(data, 12));
-							receivedValues.Add("Line.Power.C.Active", BitConverter.ToUInt32(data, 16));
-							receivedValues.Add("Line.Power.C.Reactive", BitConverter.ToUInt32(data, 20));
-						}
-
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x03, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12);
-							receivedValues.Add("Line.U.A", BitConverter.ToUInt32(data, 0));
-							receivedValues.Add("Line.U.B", BitConverter.ToUInt32(data, 4));
-							receivedValues.Add("Line.U.C", BitConverter.ToUInt32(data, 8));
-						}
-
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x04, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12);
-							receivedValues.Add("Line.I.A", BitConverter.ToUInt32(data, 0));
-							receivedValues.Add("Line.I.B", BitConverter.ToUInt32(data, 4));
-							receivedValues.Add("Line.I.C", BitConverter.ToUInt32(data, 8));
-						}
-
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x05, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12);
-							receivedValues.Add("Line.PowerCoef.A", BitConverter.ToUInt32(data, 0));
-							receivedValues.Add("Line.PowerCoef.B", BitConverter.ToUInt32(data, 4));
-							receivedValues.Add("Line.PowerCoef.C", BitConverter.ToUInt32(data, 8));
-						}
-
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x06, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12);
-							receivedValues.Add("Line.Frequency.A", BitConverter.ToUInt32(data, 0));
-							receivedValues.Add("Line.Frequency.B", BitConverter.ToUInt32(data, 4));
-							receivedValues.Add("Line.Frequency.C", BitConverter.ToUInt32(data, 8));
-						}
-					}
-
-					if (Configuration.CheckInfo)
-					{
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x07, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4);
-							receivedValues.Add("Info.DeviceType", Encoding.UTF8.GetString(data));
-						}
-
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x08, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4);
-							receivedValues.Add("Info.SerialNumber", BitConverter.ToUInt32(data, 0));
-						}
-
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x09, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4);
-							receivedValues.Add("Info.ManufactureDate", new DateTime(2000 + data[3], data[2], data[1]).ToString("dd.MM.yyyy"));
-						}
-
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x0A, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4);
-							receivedValues.Add("Info.SoftVersion", data[0] + "." + data[1] + "." + data[2] + "." + data[3]);
-						}
-
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x0B, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4);
-							receivedValues.Add("Info.Address", data[0]);
-						}
-					}
-
-					if (Configuration.CheckDay)
-					{
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x11, new byte[] { 0x2, 0x0, 0x0, 0x0 }, 10);
-							receivedValues.Add("Energy.Day", BitConverter.ToUInt32(data, 6));
-						}
-					}
-
-					if (Configuration.CheckMonth)
-					{
-						if (Active && (ErrorsCount < 3))
-						{
-							byte[] data = Exchange(0x12, new byte[] { 0x2, 0x0, 0x0, 0x0 }, 10);
-							receivedValues.Add("Energy.Day", BitConverter.ToUInt32(data, 6));
-						}
+						receivedValues.Add("DeviceTime", new DateTime(1970, 1, 1).AddSeconds(BitConverter.ToUInt32(Answer, 0)).ToString("dd.MM.yyyy HH:mm:ss"));
 					}
 				}
 
-				if (ErrorsCount >= 3)
+				if (Configuration.CheckParams)
 				{
-					try { Port?.Close(); } catch (Exception) { }
-					ErrorsCount = 0;
-					Thread.Sleep(1000);
-				}
-				else
-				{
-					lock (Fields)
+					if (Exchange(0x02, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 24))
 					{
-						Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
-						Fields["Time"].Quality = 192;
-
-						foreach (var value in receivedValues)
-						{
-							Fields[value.Key].Value = value.Value;
-							Fields[value.Key].Quality = 192;
-						}
+						receivedValues.Add("Line.Power.A.Active", BitConverter.ToInt32(Answer, 0) / 1f);
+						receivedValues.Add("Line.Power.A.Reactive", BitConverter.ToInt32(Answer, 4) / 1f);
+						receivedValues.Add("Line.Power.B.Active", BitConverter.ToInt32(Answer, 8) / 1f);
+						receivedValues.Add("Line.Power.B.Reactive", BitConverter.ToInt32(Answer, 12) / 1f);
+						receivedValues.Add("Line.Power.C.Active", BitConverter.ToInt32(Answer, 16) / 1f);
+						receivedValues.Add("Line.Power.C.Reactive", BitConverter.ToInt32(Answer, 20) / 1f);
 					}
 
-					UpdateEvent();
+					if (Exchange(0x03, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12))
+					{
+						receivedValues.Add("Line.U.A", BitConverter.ToUInt32(Answer, 0) / 10f);
+						receivedValues.Add("Line.U.B", BitConverter.ToUInt32(Answer, 4) / 10f);
+						receivedValues.Add("Line.U.C", BitConverter.ToUInt32(Answer, 8) / 10f);
+					}
+
+					if (Exchange(0x04, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12))
+					{
+						receivedValues.Add("Line.I.A", BitConverter.ToUInt32(Answer, 0) / 1000f);
+						receivedValues.Add("Line.I.B", BitConverter.ToUInt32(Answer, 4) / 1000f);
+						receivedValues.Add("Line.I.C", BitConverter.ToUInt32(Answer, 8) / 1000f);
+					}
+
+					if (Exchange(0x05, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12))
+					{
+						receivedValues.Add("Line.PowerCoef.A", BitConverter.ToUInt32(Answer, 0) / 100f);
+						receivedValues.Add("Line.PowerCoef.B", BitConverter.ToUInt32(Answer, 4) / 100f);
+						receivedValues.Add("Line.PowerCoef.C", BitConverter.ToUInt32(Answer, 8) / 100f);
+					}
+
+					if (Exchange(0x06, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12))
+					{
+						receivedValues.Add("Line.Frequency.A", BitConverter.ToUInt32(Answer, 0) / 100f);
+						receivedValues.Add("Line.Frequency.B", BitConverter.ToUInt32(Answer, 4) / 100f);
+						receivedValues.Add("Line.Frequency.C", BitConverter.ToUInt32(Answer, 8) / 100f);
+					}
 				}
 
-				int timeout = Convert.ToInt32((Configuration.CyclicIntervalInSeconds * 1000) - (DateTime.Now - Date).TotalMilliseconds);
-				if (timeout > 0) Thread.Sleep(timeout);
+				if (Configuration.CheckInfo)
+				{
+					if (Exchange(0x07, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
+					{
+						receivedValues.Add("Info.DeviceType", Encoding.UTF8.GetString(Answer));
+					}
 
-				try { Port?.Close(); } catch (Exception) { }
+					if (Exchange(0x08, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
+					{
+						receivedValues.Add("Info.SerialNumber", BitConverter.ToUInt32(Answer, 0));
+					}
+
+					if (Exchange(0x09, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
+					{
+						receivedValues.Add("Info.ManufactureDate", new DateTime(2000 + Answer[3], Answer[2], Answer[1]).ToString("dd.MM.yyyy"));
+					}
+
+					if (Exchange(0x0A, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
+					{
+						receivedValues.Add("Info.SoftVersion", Answer[0] + "." + Answer[1] + "." + Answer[2] + "." + Answer[3]);
+					}
+
+					if (Exchange(0x0B, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
+					{
+						receivedValues.Add("Info.Address", Answer[0]);
+					}
+				}
+
+				if (Configuration.CheckDay)
+				{
+					if (Exchange(0x11, new byte[] { 0x2, 0x0, 0x0, 0x0 }, 10))
+					{
+						receivedValues.Add("Energy.Day", BitConverter.ToUInt32(Answer, 6));
+					}
+				}
+
+				if (Configuration.CheckMonth)
+				{
+					if (Exchange(0x12, new byte[] { 0x2, 0x0, 0x0, 0x0 }, 10))
+					{
+						receivedValues.Add("Energy.Month", BitConverter.ToUInt32(Answer, 6));
+					}
+				}
+
+				lock (Fields)
+				{
+					SetValue("Time", DateTime.Now.ToString("HH:mm:ss"), 192);
+
+					foreach (var value in receivedValues)
+					{
+						SetValue(value.Key, value.Value, 192);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				LogEvent("Ошибка: " + e.Message, LogType.ERROR);
+				SetValue("Time", DateTime.Now.ToString("HH:mm:ss"), 192);
+			}
+			finally
+			{
+				Stream?.Close();
+				client?.Close();
+				UpdateEvent();
+
+				Task.Delay((int)Math.Max(1, Configuration.CyclicIntervalInSeconds * 1000 - (DateTime.Now - start).TotalMilliseconds)).Wait();
 			}
 		}
 
-		void ComError(string errorName)
+		void SetValue(string name, object value, ushort quality = 192)
 		{
-			LogEvent("COM: " + errorName, LogType.DETAILED);
-			Port.BaseStream.Flush();
-			Port.DiscardInBuffer();
-			Port.DiscardOutBuffer();
+			lock (Fields)
+			{
+				if (Fields.ContainsKey(name))
+				{
+					Fields[name].Value = value;
+					Fields[name].Quality = quality;
+				}
+				else
+				{
+					Fields.Add(name, new DefField { Value = value, Quality = quality });
+				}
+			}
 		}
 
 		bool Err(string text)
@@ -328,81 +286,61 @@ namespace iNOPC.Drivers.MT01
 			return crc;
 		}
 
-		byte[] Exchange(byte command, byte[] data, byte len)
+		bool Exchange(byte command, byte[] data, byte len)
 		{
-			byte[] answer = new byte[0];
+			if (!Active) return false;
 
-			if (!Active) return new byte[0];
-			if (ErrorsCount > 3)
-			{
-				try { Port?.Close(); } catch (Exception) { }
-				return new byte[0];
-			}
 			try
 			{
-				Receive = false;
-				BytesReceived = 0;
-				PackageDate = DateTime.Now;
-
 				byte crc = CRC(new byte[] { Configuration.Address, 0x1, command, data[0], data[1], data[2], data[3] });
 				byte[] tx = new byte[] { Configuration.Address, 0x1, command, data[0], data[1], data[2], data[3], crc };
-				Port.Write(tx, 0, tx.Length);
+
+				Stream.Write(tx, 0, tx.Length);
 				LogEvent("Tx: " + Helpers.BytesToString(tx), LogType.DETAILED);
 
-				while ((!Receive || BytesReceived < len) && (DateTime.Now - PackageDate).TotalMilliseconds < Configuration.ReceiveTimeoutInMilliseconds)
-				{
-					Thread.Sleep(1);
-				}
+				int read = 0;
+				byte[] rx = new byte[256];
+				Task.Run(() => { read = Stream.Read(rx, 0, rx.Length); }).Wait(TimeSpan.FromSeconds(Configuration.ReceiveTimeoutInMilliseconds));
 
-				if (Receive)
+				if (read > 0)
 				{
-					byte[] rx = new byte[Port.BytesToRead];
-					Port.Read(rx, 0, rx.Length);
+					rx = rx.Take(read).ToArray();
 					LogEvent("Rx: " + Helpers.BytesToString(rx), LogType.DETAILED);
 
 					// Проверка длины посылки
-					if (rx.Length != len)
+					if (rx.Length < len + 4)
 					{
-						LogEvent("длина ответа не совпадает: пришло " + rx.Length + ", ожидается " + len + " байт", LogType.DETAILED);
+						LogEvent("длина ответа не совпадает: пришло " + rx.Length + ", ожидается " + (len + 4) + " байт", LogType.DETAILED);
+						return false;
 					}
 					// Проверка контрольной суммы
 					else if (CRC(rx.Take(rx.Length - 1).ToArray()) != rx[rx.Length - 1])
 					{
 						LogEvent("CRC не совпадает с расчетным", LogType.DETAILED);
+						return false;
 					}
 					// Если все норм, выполняется разбор ответа
 					else
 					{
-						answer = new byte[len - 4];
-						for (int i = 0; i < answer.Length; i++)
+						Answer = new byte[len];
+						for (int i = 0; i < len; i++)
 						{
-							answer[i] = rx[i + 3];
+							Answer[i] = rx[i + 3];
 						}
+						return true;
 					}
 				}
 				else
 				{
 					LogEvent("Rx: ничего не вернулось, таймаут " + Configuration.ReceiveTimeoutInMilliseconds + " мс", LogType.DETAILED);
-					ErrorsCount++;
+					return false;
 				}
-
-				Thread.Sleep(5);
 			}
 			catch (Exception e)
 			{
-				LogEvent("Ошибка при опросе значений: " + e.Message + "\n" + e.StackTrace, LogType.DETAILED);
-				ErrorsCount++;
+				LogEvent("Ошибка при опросе значений: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+				return false;
 			}
-
-			return answer;
-		}
-
-		DateTime UnixTimeStampToDateTime(double unixTimeStamp)
-		{
-			// Unix timestamp is seconds past epoch
-			DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-			dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
-			return dateTime;
 		}
 	}
 }
