@@ -186,7 +186,7 @@ namespace Datalake.Web.Api
 
 				Cache.Update();
 
-				return Done("Тег успешно добавлен.");
+				return Done("Тег добавлен");
 			}
 		}
 
@@ -194,48 +194,43 @@ namespace Datalake.Web.Api
 		{
 			using (var db = new DatabaseContext())
 			{
-				var name = sourceItem.Replace('.', '_');
-				bool created = false;
-				int i = 1;
-
-				do
+				var source = db.Sources.FirstOrDefault(x => x.Id == sourceId);
+				if (source == null)
 				{
-					if (db.Tags.Any(x => x.Name == name))
-					{
-						name = sourceItem + "_" + i++;
-					}
-					else
-					{
-						var tag = new Tag
-						{
-							Name = name,
-							Type = (TagType)sourceType,
-							SourceId = sourceId,
-							SourceItem = sourceItem,
-						};
-
-						var id = db.InsertWithInt32Identity(tag);
-
-						Cache.Write(new TagHistory
-						{
-							Date = DateTime.Now,
-							Number = 0,
-							Type = tag.Type,
-							Quality = TagQuality.Bad,
-							Text = string.Empty,
-							TagId = id,
-							Using = TagHistoryUse.Initial,
-						});
-
-						created = true;
-					}
+					return Error("Источник не найден");
 				}
-				while (!created);
+
+				string name = source.Name + "." + sourceItem;
+				if (db.Tags.Any(x => x.Name == name))
+				{
+					return Error("Уже существует тег с таким именем");
+				}
+
+				var tag = new Tag
+				{
+					Name = name,
+					Type = (TagType)sourceType,
+					SourceId = sourceId,
+					SourceItem = sourceItem,
+				};
+
+				var id = db.InsertWithInt32Identity(tag);
+
+				Cache.Write(new TagHistory
+				{
+					Date = DateTime.Now,
+					Number = 0,
+					Type = tag.Type,
+					Quality = TagQuality.Bad,
+					Text = string.Empty,
+					TagId = id,
+					Using = TagHistoryUse.Initial,
+				});
 
 				Cache.Update();
 			}
 
-			return new { Done = true };
+			return Done("Тег добавлен");
 		}
 
 		public object Read(int id)
