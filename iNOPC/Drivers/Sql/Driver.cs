@@ -108,6 +108,7 @@ namespace Sql
 					conn.Close();
 				}
 
+				Value("Time", DateTime.Now.ToString("HH:mm:ss"));
 				LogEvent("Запрос выполнен");
 				UpdateEvent();
 			}
