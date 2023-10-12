@@ -89,30 +89,57 @@ namespace Datalake.Database
 
 		public (string, float?, TagQuality) FromRaw(object value, ushort quality)
 		{
-			string text = null;
-			if (Type == TagType.String)
+			try
 			{
-				text = value?.ToString();
-			}
+				string text = null;
+				float? number = null;
 
-			float? raw = null;
-			if (float.TryParse(value?.ToString(), out float d))
+				if (Type == TagType.String)
+				{
+					if (value is string v)
+					{
+						text = v;
+						number = null;
+					}
+				}
+
+				if (Type == TagType.Boolean)
+				{
+					if (value is bool v)
+					{
+						text = v ? "true" : "false";
+						number = v ? 1 : 0;
+					}
+				}
+
+				if (Type == TagType.Number)
+				{
+					float? raw = null;
+					if (float.TryParse(value?.ToString(), out float d))
+					{
+						raw = d;
+					}
+
+					number = raw;
+
+					// вычисление значения на основе шкалирования
+					if (Type == TagType.Number && raw.HasValue && IsScaling)
+					{
+						number = raw.Value * ((MaxEU - MinEU) / (MaxRaw - MinRaw));
+					}
+				}
+
+				TagQuality tagQuality = !Enum.IsDefined(typeof(TagQuality), (int)quality)
+					? TagQuality.Unknown
+					: (TagQuality)quality;
+
+				return (text, number, tagQuality);
+			}
+			catch (Exception ex)
 			{
-				raw = d;
+				LogsWorker.Add("Collector", "FromRaw: " + ex.Message, LogType.Trace);
+				return (null, null, TagQuality.Unknown);
 			}
-
-			// вычисление значения на основе шкалирования
-			float? number = raw;
-			if (Type == TagType.Number && raw.HasValue && IsScaling)
-			{
-				number = raw.Value * ((MaxEU - MinEU) / (MaxRaw - MinRaw));
-			}
-
-			TagQuality tagQuality = !Enum.IsDefined(typeof(TagQuality), (int)quality)
-				? TagQuality.Unknown
-				: (TagQuality)quality;
-
-			return (text, number, tagQuality);
 		}
 
 
