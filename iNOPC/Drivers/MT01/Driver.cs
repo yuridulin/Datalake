@@ -239,7 +239,6 @@ namespace iNOPC.Drivers.MT01
 							events.Add(e);
 
 							var name = "Energy.Events.Event" + (i / 7);
-							LogEvent("Событие №" + (i / 7));
 
 							receivedValues.Add(name + ".Date", e.Date.ToString("dd.MM.yyyy HH:mm:ss"));
 							receivedValues.Add(name + ".Text", e.OpcText());
