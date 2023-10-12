@@ -296,7 +296,20 @@ namespace iNOPC.Server.Storage
 
 				foreach (var tag in tags)
 				{
-					tag.Type = tag.Value.GetType();
+					var type = tag.Value.GetType();
+
+					if (type == typeof(string))
+					{
+						tag.Type = TagType.String;
+					}
+					else if (type == typeof(bool))
+					{
+						tag.Type = TagType.Boolean;
+					}
+					else
+					{
+						tag.Type = TagType.Number;
+					}
 				}
 
 				return tags;

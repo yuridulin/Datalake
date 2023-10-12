@@ -39,17 +39,18 @@ namespace Datalake.Web.Api
 				if (source == null) return new { Error = "Источник не найден." };
 
 				var res = source.GetItems();
-				var items = res.Tags.Select(x => x.Name).ToList();
+				var items = res.Tags.Select(x => new { x.Name, x.Type }).ToList();
 
 				var tags = db.Tags
 					.Where(x => x.SourceId == id)
-					.Where(x => items.Contains(x.SourceItem))
+					.Where(x => items.Select(y => y.Name).Contains(x.SourceItem))
 					.ToList();
 
 				return items.Select(x => new
 				{
-					Item = x,
-					Tag = tags.FirstOrDefault(t => t.SourceItem == x)
+					Item = x.Name,
+					Type = x.Type,
+					Tag = tags.FirstOrDefault(t => t.SourceItem == x.Name)
 				});
 			}
 		}

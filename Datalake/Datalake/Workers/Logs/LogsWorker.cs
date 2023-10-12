@@ -32,6 +32,7 @@ namespace Datalake.Workers.Logs
 			{
 				File.AppendAllLines(Path(), Logs.Select(x => x.ToText()));
 				Logs.Clear();
+				Console.Clear();
 			}
 		}
 

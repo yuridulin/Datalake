@@ -188,10 +188,13 @@ namespace Datalake.Database
 							.Where(x => x.TagId == id)
 							.Where(x => x.Date <= stepDate)
 							.OrderByDescending(x => x.Date)
-							.First();
+							.FirstOrDefault();
 
-						value.Date = stepDate;
-						history.Add(value);
+						if (value != null)
+						{
+							value.Date = stepDate;
+							history.Add(value);
+						}
 					}
 				}
 

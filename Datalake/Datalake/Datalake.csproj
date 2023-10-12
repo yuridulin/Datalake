@@ -70,7 +70,7 @@
     <Compile Include="Database\_DatabaseContext.cs" />
     <Compile Include="Web\Collector.cs" />
     <Compile Include="Workers\Calculator\CalculatorWorker.cs" />
-    <Compile Include="Workers\Collector\Models\InopcTag.cs" />
+    <Compile Include="Workers\Collector\Models\InputTag.cs" />
     <Compile Include="Workers\Collector\Models\DatalakeRequest.cs" />
     <Compile Include="Workers\Collector\Models\DatalakeResponse.cs" />
     <Compile Include="Program.cs" />

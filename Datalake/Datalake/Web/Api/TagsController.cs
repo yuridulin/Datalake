@@ -190,7 +190,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object CreateFromSource(int sourceId, string sourceItem)
+		public object CreateFromSource(int sourceId, string sourceItem, int sourceType)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -209,6 +209,7 @@ namespace Datalake.Web.Api
 						var tag = new Tag
 						{
 							Name = name,
+							Type = (TagType)sourceType,
 							SourceId = sourceId,
 							SourceItem = sourceItem,
 						};

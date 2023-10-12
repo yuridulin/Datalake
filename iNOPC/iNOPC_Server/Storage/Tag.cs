@@ -7,6 +7,6 @@ namespace iNOPC.Server.Storage
 	{
 		public uint TagHandle { get; set; } = 0;
 
-		public Type Type { get; set; }
+		public TagType Type { get; set; }
 	}
 }
