@@ -1,6 +1,8 @@
-﻿using iNOPC.Library;
+﻿using iNOPC.Drivers.MT01.Models;
+using iNOPC.Library;
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -87,6 +89,8 @@ namespace iNOPC.Drivers.MT01
 
 		byte[] Answer { get; set; }
 
+		DateTime LastEvent { get; set; } = DateTime.MinValue;
+
 		void Work()
 		{
 			if (!Active)
@@ -111,11 +115,13 @@ namespace iNOPC.Drivers.MT01
 
 				if (Configuration.CheckCurrent)
 				{
+					LogEvent("Запрос: текущая энергия", LogType.DETAILED);
 					if (Exchange(0x01, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
 					{
 						receivedValues.Add("Energy.Now", BitConverter.ToUInt32(Answer, 0));
 					}
 
+					LogEvent("Запрос: время с прибора", LogType.DETAILED);
 					if (Exchange(0x0E, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
 					{
 						receivedValues.Add("DeviceTime", new DateTime(1970, 1, 1).AddSeconds(BitConverter.ToUInt32(Answer, 0)).ToString("dd.MM.yyyy HH:mm:ss"));
@@ -124,6 +130,7 @@ namespace iNOPC.Drivers.MT01
 
 				if (Configuration.CheckParams)
 				{
+					LogEvent("Запрос: энергия по фазам", LogType.DETAILED);
 					if (Exchange(0x02, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 24))
 					{
 						receivedValues.Add("Line.Power.A.Active", BitConverter.ToInt32(Answer, 0) / 1f);
@@ -134,6 +141,7 @@ namespace iNOPC.Drivers.MT01
 						receivedValues.Add("Line.Power.C.Reactive", BitConverter.ToInt32(Answer, 20) / 1f);
 					}
 
+					LogEvent("Запрос: напряжение по фазам", LogType.DETAILED);
 					if (Exchange(0x03, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12))
 					{
 						receivedValues.Add("Line.U.A", BitConverter.ToUInt32(Answer, 0) / 10f);
@@ -141,6 +149,7 @@ namespace iNOPC.Drivers.MT01
 						receivedValues.Add("Line.U.C", BitConverter.ToUInt32(Answer, 8) / 10f);
 					}
 
+					LogEvent("Запрос: ток по фазам", LogType.DETAILED);
 					if (Exchange(0x04, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12))
 					{
 						receivedValues.Add("Line.I.A", BitConverter.ToUInt32(Answer, 0) / 1000f);
@@ -148,6 +157,7 @@ namespace iNOPC.Drivers.MT01
 						receivedValues.Add("Line.I.C", BitConverter.ToUInt32(Answer, 8) / 1000f);
 					}
 
+					LogEvent("Запрос: коэффициенты мощности по фазам", LogType.DETAILED);
 					if (Exchange(0x05, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12))
 					{
 						receivedValues.Add("Line.PowerCoef.A", BitConverter.ToUInt32(Answer, 0) / 100f);
@@ -155,6 +165,7 @@ namespace iNOPC.Drivers.MT01
 						receivedValues.Add("Line.PowerCoef.C", BitConverter.ToUInt32(Answer, 8) / 100f);
 					}
 
+					LogEvent("Запрос: частота по фазам", LogType.DETAILED);
 					if (Exchange(0x06, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 12))
 					{
 						receivedValues.Add("Line.Frequency.A", BitConverter.ToUInt32(Answer, 0) / 100f);
@@ -165,26 +176,31 @@ namespace iNOPC.Drivers.MT01
 
 				if (Configuration.CheckInfo)
 				{
+					LogEvent("Запрос: тип устройства", LogType.DETAILED);
 					if (Exchange(0x07, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
 					{
 						receivedValues.Add("Info.DeviceType", Encoding.UTF8.GetString(Answer));
 					}
 
+					LogEvent("Запрос: серийный номер устройства", LogType.DETAILED);
 					if (Exchange(0x08, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
 					{
 						receivedValues.Add("Info.SerialNumber", BitConverter.ToUInt32(Answer, 0));
 					}
 
+					LogEvent("Запрос: дата изготовления прибора", LogType.DETAILED);
 					if (Exchange(0x09, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
 					{
 						receivedValues.Add("Info.ManufactureDate", new DateTime(2000 + Answer[3], Answer[2], Answer[1]).ToString("dd.MM.yyyy"));
 					}
 
+					LogEvent("Запрос: версия прошивки прибора", LogType.DETAILED);
 					if (Exchange(0x0A, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
 					{
 						receivedValues.Add("Info.SoftVersion", Answer[0] + "." + Answer[1] + "." + Answer[2] + "." + Answer[3]);
 					}
 
+					LogEvent("Запрос: сетевой адрес прибора", LogType.DETAILED);
 					if (Exchange(0x0B, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 4))
 					{
 						receivedValues.Add("Info.Address", Answer[0]);
@@ -193,6 +209,7 @@ namespace iNOPC.Drivers.MT01
 
 				if (Configuration.CheckDay)
 				{
+					LogEvent("Запрос: энергия за последние сутки", LogType.DETAILED);
 					if (Exchange(0x11, new byte[] { 0x2, 0x0, 0x0, 0x0 }, 10))
 					{
 						receivedValues.Add("Energy.Day", BitConverter.ToUInt32(Answer, 6));
@@ -201,9 +218,42 @@ namespace iNOPC.Drivers.MT01
 
 				if (Configuration.CheckMonth)
 				{
+					LogEvent("Запрос: энергия за последний месяц", LogType.DETAILED);
 					if (Exchange(0x12, new byte[] { 0x2, 0x0, 0x0, 0x0 }, 10))
 					{
 						receivedValues.Add("Energy.Month", BitConverter.ToUInt32(Answer, 6));
+					}
+				}
+
+				if (Configuration.CheckLogs)
+				{
+					LogEvent("Запрос: события", LogType.DETAILED);
+					if (Exchange(0x15, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 245))
+					{
+						var events = new List<Event>();
+
+						for (int i = 0; i < Answer.Length; i+=7)
+						{
+							var e = new Event(Answer, i);
+
+							events.Add(e);
+
+							var name = "Energy.Events.Event" + (i / 7);
+							LogEvent("Событие №" + (i / 7));
+
+							receivedValues.Add(name + ".Date", e.Date.ToString("dd.MM.yyyy HH:mm:ss"));
+							receivedValues.Add(name + ".Text", e.OpcText());
+						}
+
+						if (LastEvent > DateTime.MinValue)
+						{
+							foreach (var e in events.Where(x => x.Date > LastEvent))
+							{
+								LogEvent("Получено событие \"" + e.LogText() + "\" от " + e.Date.ToString("dd.MM.yyyy HH:mm:ss"), LogType.WARNING);
+							}
+						}
+
+						LastEvent = events.Select(x => x.Date).Max();
 					}
 				}
 
@@ -317,10 +367,43 @@ namespace iNOPC.Drivers.MT01
 					rx = rx.Take(read).ToArray();
 					LogEvent("Rx: " + Helpers.BytesToString(rx), LogType.DETAILED);
 
+					// Проверка наличия кода ошибки в ответе
+					if (rx.Length == 5)
+					{
+						var bits = new BitArray(new byte[] { rx[1] });
+						if (bits[7])
+						{
+							int x = 256 - rx[3];
+							switch (x)
+							{
+								case 2:
+									LogEvent("Получен код ошибки: ошибка подсчёта контрольной суммы", LogType.ERROR);
+									break;
+								case 3:
+									LogEvent("Получен код ошибки: команда не существует", LogType.ERROR);
+									break;
+								case 5:
+									LogEvent("Получен код ошибки: запрашиваемый архив пуст", LogType.ERROR);
+									break;
+								case 9:
+									LogEvent("Получен код ошибки: некорректная дата в запросе", LogType.ERROR);
+									break;
+								case 10:
+									LogEvent("Получен код ошибки: запрошенная дата за границами записей архивов", LogType.ERROR);
+									break;
+								default:
+									LogEvent("Получен код ошибки: " + x, LogType.ERROR);
+									break;
+							}
+
+							return false;
+						}
+					}
+
 					// Проверка длины посылки
 					if (rx.Length < len + 4)
 					{
-						LogEvent("длина ответа не совпадает: пришло " + rx.Length + ", ожидается " + (len + 4) + " байт", LogType.DETAILED);
+						LogEvent("Длина ответа не совпадает: пришло " + rx.Length + ", ожидается " + (len + 4) + " байт", LogType.DETAILED);
 						return false;
 					}
 					// Проверка контрольной суммы

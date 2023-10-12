@@ -25,6 +25,8 @@ namespace iNOPC.Drivers.MT01
 
 		public bool CheckMonth { get; set; } = true;
 
+		public bool CheckLogs { get; set; } = true;
+
 		public static string GetPage(string json)
 		{
 			var config = JsonConvert.DeserializeObject<Configuration>(json);
@@ -44,6 +46,7 @@ namespace iNOPC.Drivers.MT01
 				Html.Value("Справочная информация", nameof(config.CheckInfo), config.CheckInfo) +
 				Html.Value("Срез за сутки", nameof(config.CheckDay), config.CheckDay) +
 				Html.Value("Срез за месяц", nameof(config.CheckMonth), config.CheckMonth) +
+				Html.Value("События", nameof(config.CheckLogs), config.CheckLogs) +
 				"</div>" +
 				"";
 
