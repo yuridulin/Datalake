@@ -289,10 +289,17 @@ namespace iNOPC.Server.Storage
 		{
 			lock (Tags)
 			{
-				return Tags
+				var tags = Tags
 					.Where(x => names.Length == 0 || names.Contains(x.Key))
 					.Select(x => x.Value)
 					.ToArray();
+
+				foreach (var tag in tags)
+				{
+					tag.Type = tag.Value.GetType();
+				}
+
+				return tags;
 			}
 		}
 
