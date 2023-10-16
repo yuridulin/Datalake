@@ -228,17 +228,24 @@ namespace iNOPC.Drivers.MT01
 				if (Configuration.CheckLogs)
 				{
 					LogEvent("Запрос: события", LogType.DETAILED);
-					if (Exchange(0x15, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 350))
+					if (Exchange(0x15, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 250))
 					{
 						var events = new List<Event>();
 
 						for (int i = 0; i < Answer.Length; i+=10)
 						{
-							var e = new Event(Answer, i);
+							try
+							{
+								var e = new Event(Answer, i);
 
-							events.Add(e);
+								events.Add(e);
 
-							receivedValues.Add("Energy.Events.Event" + (i / 10), e.LogText());
+								receivedValues.Add("Energy.Events.Event" + (i / 10), e.LogText());
+							}
+							catch (Exception ex)
+							{
+								LogEvent("Ошибка при разборе события: " + ex.Message, LogType.WARNING);
+							}
 						}
 
 						if (LastEvent > DateTime.MinValue)

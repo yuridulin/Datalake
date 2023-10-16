@@ -6,13 +6,8 @@ namespace iNOPC.Drivers.MT01.Models
 	{
 		public Event(byte[] bytes, int start)
 		{
-			Date = new DateTime(2000 + bytes[start + 5], bytes[start + 4], bytes[start + 3]);
-			Date.AddHours(bytes[start + 2]);
-			Date.AddMinutes(bytes[start + 1]);
-			Date.AddSeconds(bytes[start]);
-
+			Date = new DateTime(2000 + bytes[start + 5], bytes[start + 4], bytes[start + 3], bytes[start + 2], bytes[start + 1], bytes[start]);
 			Code = bytes[start + 6];
-
 			Value = BitConverter.ToUInt16(bytes, start + 7) / 10f;
 		}
 
