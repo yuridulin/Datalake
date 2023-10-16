@@ -228,27 +228,24 @@ namespace iNOPC.Drivers.MT01
 				if (Configuration.CheckLogs)
 				{
 					LogEvent("Запрос: события", LogType.DETAILED);
-					if (Exchange(0x15, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 245))
+					if (Exchange(0x15, new byte[] { 0x0, 0x0, 0x0, 0x0 }, 350))
 					{
 						var events = new List<Event>();
 
-						for (int i = 0; i < Answer.Length; i+=7)
+						for (int i = 0; i < Answer.Length; i+=10)
 						{
 							var e = new Event(Answer, i);
 
 							events.Add(e);
 
-							var name = "Energy.Events.Event" + (i / 7);
-
-							receivedValues.Add(name + ".Date", e.Date.ToString("dd.MM.yyyy HH:mm:ss"));
-							receivedValues.Add(name + ".Text", e.OpcText());
+							receivedValues.Add("Energy.Events.Event" + (i / 10), e.LogText());
 						}
 
 						if (LastEvent > DateTime.MinValue)
 						{
 							foreach (var e in events.Where(x => x.Date > LastEvent))
 							{
-								LogEvent("Получено событие \"" + e.LogText() + "\" от " + e.Date.ToString("dd.MM.yyyy HH:mm:ss"), LogType.WARNING);
+								LogEvent("Получено событие \"" + e.LogText(), LogType.WARNING);
 							}
 						}
 
@@ -345,7 +342,7 @@ namespace iNOPC.Drivers.MT01
 			return crc;
 		}
 
-		bool Exchange(byte command, byte[] data, byte len)
+		bool Exchange(byte command, byte[] data, short len)
 		{
 			if (!Active) return false;
 
