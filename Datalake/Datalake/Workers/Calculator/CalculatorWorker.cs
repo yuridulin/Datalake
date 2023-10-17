@@ -18,24 +18,31 @@ namespace Datalake.Workers.Calculator
 			{
 				while (!token.IsCancellationRequested)
 				{
-					if (Cache.LastUpdate > StoredUpdate)
+					try
 					{
-						var inputs = db.Rel_Tag_Input.ToList();
-
-						Tags = db.Tags
-							.Where(x => x.IsCalculating)
-							.ToList();
-
-						foreach (var tag in Tags)
+						if (Cache.LastUpdate > StoredUpdate)
 						{
-							tag.Inputs = inputs.Where(x => x.TagId == tag.Id).ToList();
-							tag.PrepareToCalc();
+							var inputs = db.Rel_Tag_Input.ToList();
+
+							Tags = db.Tags
+								.Where(x => x.IsCalculating)
+								.ToList();
+
+							foreach (var tag in Tags)
+							{
+								tag.Inputs = inputs.Where(x => x.TagId == tag.Id).ToList();
+								tag.PrepareToCalc();
+							}
+
+							StoredUpdate = Cache.LastUpdate;
 						}
 
-						StoredUpdate = Cache.LastUpdate;
+						Update(db);
 					}
-
-					Update(db);
+					catch (Exception ex)
+					{
+						LogsWorker.Add("Calculator", "Loop error: " + ex.Message, LogType.Error);
+					}
 
 					await Task.Delay(1000);
 				}

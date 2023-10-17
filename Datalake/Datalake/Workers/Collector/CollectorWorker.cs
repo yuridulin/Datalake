@@ -1,4 +1,6 @@
 ﻿using Datalake.Database;
+using Datalake.Workers.Logs;
+using Datalake.Workers.Logs.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,21 +13,28 @@ namespace Datalake.Workers.Collector
 	{
 		public static async Task Start(CancellationToken token)
 		{
-			using (var db = new DatabaseContext())
+			while (!token.IsCancellationRequested)
 			{
-				while (!token.IsCancellationRequested)
+				try
 				{
-					if (Cache.LastUpdate > StoredUpdate)
+					using (var db = new DatabaseContext())
 					{
-						Sources = db.Sources.ToList();
-						Sources.ForEach(source => source.Rebuild(db));
-						StoredUpdate = Cache.LastUpdate;
+						if (Cache.LastUpdate > StoredUpdate)
+						{
+							Sources = db.Sources.ToList();
+							Sources.ForEach(source => source.Rebuild(db));
+							StoredUpdate = Cache.LastUpdate;
+						}
+
+						Sources.ForEach(source => source.Update(db));
 					}
-
-					Sources.ForEach(source => source.Update(db));
-
-					await Task.Delay(1000);
 				}
+				catch (Exception ex)
+				{
+					LogsWorker.Add("Collector", "Loop error: " + ex.Message, LogType.Error);
+				}
+
+				await Task.Delay(1000);
 			}
 		}
 
