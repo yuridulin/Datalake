@@ -18,7 +18,14 @@ namespace Datalake.Workers.Logs
 
 			while (!token.IsCancellationRequested)
 			{
-				Write();
+				try
+				{
+					Write();
+				}
+				catch (Exception ex)
+				{
+					Add("Logs", "Loop error: " + ex.Message, LogType.Error);
+				}
 
 				await Task.Delay(5000);
 			}
