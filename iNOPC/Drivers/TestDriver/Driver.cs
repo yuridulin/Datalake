@@ -97,7 +97,7 @@ namespace iNOPC.Drivers.TestDriver
 			}
 
 			Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
-			Fields["Time"].Value = 192;
+			Fields["Time"].Quality = 192;
 
 			LogEvent("Очередной опрос");
 			UpdateEvent();
