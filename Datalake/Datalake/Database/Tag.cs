@@ -84,7 +84,7 @@ namespace Datalake.Database
 		public void SetAsUpdated(DateTime now)
 		{
 			LastUpdate = now;
-			LogsWorker.Add("Collector", "PrepareToCollect: LastUpdate " + LastUpdate, LogType.Trace);
+			LogsWorker.Add("Collector", "SetAsUpdated: LastUpdate " + LastUpdate, LogType.Trace);
 		}
 
 		public (string, float?, TagQuality) FromRaw(object value, ushort quality)
