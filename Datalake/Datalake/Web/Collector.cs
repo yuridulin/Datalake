@@ -28,7 +28,7 @@ namespace Datalake.Web
 
 				web.ContentType = "application/json";
 				web.Method = "POST";
-				web.Timeout = 1000;
+				web.Timeout = 2000;
 
 				using (var stream = web.GetRequestStream())
 				{
@@ -74,7 +74,7 @@ namespace Datalake.Web
 
 				web.ContentType = "application/json";
 				web.Method = "POST";
-				web.Timeout = 10000;
+				web.Timeout = 2000;
 
 				using (var stream = web.GetRequestStream())
 				{
@@ -110,7 +110,8 @@ namespace Datalake.Web
 					{
 						Name = x.TagName,
 						Quality = (ushort)x.Quality,
-						Value = x.Value
+						Value = x.Value,
+						Type = x.Type,
 					})
 					.ToArray()
 			};

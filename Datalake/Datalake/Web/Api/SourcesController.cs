@@ -49,7 +49,7 @@ namespace Datalake.Web.Api
 				return items.Select(x => new
 				{
 					Item = x.Name,
-					Type = x.Type,
+					Type = (int)x.Type,
 					Tag = tags.FirstOrDefault(t => t.SourceItem == x.Name)
 				});
 			}

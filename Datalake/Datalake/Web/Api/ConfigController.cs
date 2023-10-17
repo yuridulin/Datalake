@@ -1,6 +1,5 @@
 ﻿using Datalake.Database;
 using Datalake.Web.Models;
-using Datalake.Workers.Logs;
 using System;
 using System.Linq;
 
@@ -21,9 +20,7 @@ namespace Datalake.Web.Api
 				var TotalSourcesCount = db.Sources.Count();
 				var WritesInMinute = Cache.Live.Values.Where(x => (DateTime.Now - x.Date) < TimeSpan.FromMinutes(1)).Count();
 
-				var Logs = LogsWorker.Read();
-
-				return new { TotalTagsCount, TotalSourcesCount, WritesInMinute, Logs, Last = last };
+				return new { TotalTagsCount, TotalSourcesCount, WritesInMinute, Logs = new string[0], Last = last };
 			}
 		}
 	}
