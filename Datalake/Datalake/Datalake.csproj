@@ -66,9 +66,11 @@
     <Compile Include="Database\TagHistory.cs" />
     <Compile Include="Database\Enums\TagQuality.cs" />
     <Compile Include="Database\Enums\TagType.cs" />
+    <Compile Include="Web\Api\ConsoleController.cs" />
     <Compile Include="Web\Models\TagValue.cs" />
     <Compile Include="Database\_DatabaseContext.cs" />
     <Compile Include="Web\Collector.cs" />
+    <Compile Include="Web\Models\TreeItem.cs" />
     <Compile Include="Workers\Calculator\CalculatorWorker.cs" />
     <Compile Include="Workers\Collector\Models\InputTag.cs" />
     <Compile Include="Workers\Collector\Models\DatalakeRequest.cs" />
