@@ -18,7 +18,7 @@ namespace Datalake.Web.Api
 			{
 				var TotalTagsCount = db.Tags.Count();
 				var TotalSourcesCount = db.Sources.Count();
-				var WritesInMinute = Cache.Live.Values.Where(x => (DateTime.Now - x.Date) < TimeSpan.FromMinutes(1)).Count();
+				var WritesInMinute = Cache.Live.Values.ToList().Where(x => (DateTime.Now - x.Date) < TimeSpan.FromMinutes(1)).Count();
 
 				return new { TotalTagsCount, TotalSourcesCount, WritesInMinute, Logs = new string[0], Last = last };
 			}
