@@ -3,6 +3,7 @@ using Datalake.Workers;
 using Datalake.Workers.Logs;
 using Datalake.Workers.Logs.Models;
 using LinqToDB.Data;
+using LinqToDB.Common;
 using System;
 using System.Diagnostics;
 using System.ServiceProcess;
@@ -40,8 +41,10 @@ namespace Datalake
 			#if DEBUG
 			DataConnection.TurnTraceSwitchOn();
 			DataConnection.WriteTraceLine = (s, s1, s2) => Debug.WriteLine(s + " | " + s1 + " | " + s2);
+			Configuration.Linq.GenerateExpressionTest = true;
 			#endif
 
+			Configuration.Linq.GuardGrouping = false; // чтение последних значений для записи Initial при создании таблицы
 			TokenSource = new CancellationTokenSource();
 
 			using (var db = new DatabaseContext()) db.Recreate();

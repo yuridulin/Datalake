@@ -234,9 +234,13 @@ namespace Datalake.Database
 				{
 					var previousTable = this.GetTable<TagHistory>().TableName(previous);
 
-					var lastValues = previousTable
+					var previousWritedTags = previousTable
 						.GroupBy(x => x.TagId)
-						.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
+						.Select(g => g
+							.OrderByDescending(x => x.Date)
+							.FirstOrDefault() ?? new TagHistory { Number = null, Text = null }
+						)
+						.ToList()
 						.Select(x => new TagHistory
 						{
 							Date = DateTime.Today,
@@ -249,7 +253,7 @@ namespace Datalake.Database
 						})
 						.ToList();
 
-					initialValues.AddRange(lastValues);
+					initialValues.AddRange(previousWritedTags);
 				}
 
 				var notFoundTags = tags
@@ -270,6 +274,8 @@ namespace Datalake.Database
 
 				current = this.GetTable<TagHistory>().TableName(currentHistoryTableName);
 				current.BulkCopy(initialValues);
+
+				Cache.Tables.Add(currentHistoryTableName);
 			}
 			else
 			{
