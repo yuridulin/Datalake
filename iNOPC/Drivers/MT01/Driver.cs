@@ -81,6 +81,8 @@ namespace iNOPC.Drivers.MT01
 
 		Configuration Configuration { get; set; }
 
+		TcpClient Client { get; set; }
+
 		Stream Stream { get; set; }
 
 		Thread Thread { get; set; }
@@ -100,16 +102,16 @@ namespace iNOPC.Drivers.MT01
 			}
 
 			var start = DateTime.Now;
-			var client = new TcpClient();
+			Client = new TcpClient();
 
 			try
 			{
-				if (!client.ConnectAsync(Configuration.Endpoint, Configuration.Port).Wait(Configuration.ReceiveTimeoutInMilliseconds))
+				if (!Client.ConnectAsync(Configuration.Endpoint, Configuration.Port).Wait(Configuration.ReceiveTimeoutInMilliseconds))
 				{
 					throw new Exception($"Не удалось подключиться к {Configuration.Endpoint}:{Configuration.Port} за {Configuration.ReceiveTimeoutInMilliseconds} мс");
 				}
 
-				Stream = client.GetStream();
+				Stream = Client.GetStream();
 
 				var receivedValues = new Dictionary<string, object>();
 
@@ -279,7 +281,7 @@ namespace iNOPC.Drivers.MT01
 			finally
 			{
 				Stream?.Close();
-				client?.Close();
+				Client?.Close();
 				UpdateEvent();
 
 				Task.Delay((int)Math.Max(1, Configuration.CyclicIntervalInSeconds * 1000 - (DateTime.Now - start).TotalMilliseconds)).Wait();
@@ -352,6 +354,7 @@ namespace iNOPC.Drivers.MT01
 		bool Exchange(byte command, byte[] data, short len)
 		{
 			if (!Active) return false;
+			if (!Client.Connected) return false;
 
 			try
 			{
@@ -432,9 +435,9 @@ namespace iNOPC.Drivers.MT01
 					return false;
 				}
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
-				LogEvent("Ошибка при опросе значений: " + e.Message + "\n" + e.StackTrace, LogType.ERROR);
+				LogEvent("Проблема с подключением", LogType.ERROR);
 				return false;
 			}
 		}
