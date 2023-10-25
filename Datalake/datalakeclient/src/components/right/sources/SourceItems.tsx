@@ -31,7 +31,7 @@ export default function SourceItems({ type, id }: { type: keyof typeof SourceTyp
 		: <>
 			<div className="table">
 				<div className="table-caption">Доступные значения с этого источника данных</div>
-				{items.map(x => <div className="table-row">
+				{items.map((x, i) => <div className="table-row" key={i}>
 					<span>{x.Item}</span>
 					<span><TagType tagType={x.Type} /></span>
 					{!!x.Tag

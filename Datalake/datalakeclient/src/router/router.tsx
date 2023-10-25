@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, matchRoutes, useLocation } from 'react-router-dom'
 import App from '../components/App'
 import Offline from '../components/Offline'
 import Dashboard from '../components/right/dashboard/Dashboard'
@@ -10,6 +10,7 @@ import TagForm from '../components/right/tags/TagForm'
 import BlockForm from '../components/right/blocks/BlockForm'
 import BlockView from '../components/right/blocks/BlockView'
 import SourceForm from '../components/right/sources/SourceForm'
+import TagSelectedForm from '../components/right/tags/TagSelectedForm'
 
 const router = createBrowserRouter([
 	{
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
 					{
 						path: '/tags/',
 						element: <TagsList />,
+					},
+					{
+						path: '/tags/selected/',
+						element: <TagSelectedForm />
 					},
 					{
 						path: '/tags/:id',

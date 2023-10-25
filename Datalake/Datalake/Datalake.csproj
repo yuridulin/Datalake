@@ -67,6 +67,10 @@
     <Compile Include="Database\Enums\TagQuality.cs" />
     <Compile Include="Database\Enums\TagType.cs" />
     <Compile Include="Web\Api\ConsoleController.cs" />
+    <Compile Include="Web\Models\AggFunc.cs" />
+    <Compile Include="Web\Models\HistoryValue.cs" />
+    <Compile Include="Web\Models\HistoryResponse.cs" />
+    <Compile Include="Web\Models\HistoryRequest.cs" />
     <Compile Include="Web\Models\TagValue.cs" />
     <Compile Include="Database\_DatabaseContext.cs" />
     <Compile Include="Web\Collector.cs" />

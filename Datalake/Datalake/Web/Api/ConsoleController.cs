@@ -8,7 +8,7 @@ namespace Datalake.Web.Api
 {
 	public class ConsoleController : Controller
 	{
-		public object Tree()
+		public List<TreeItem> Tree()
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -23,13 +23,15 @@ namespace Datalake.Web.Api
 					{
 						Id = x.Id,
 						Name = x.Name,
+						FullName = x.Name,
 						Type = TreeType.Source,
 						Items = GetSubItems(tags
 							.Where(t => t.SourceId == x.Id)
-							.Select(t => new Tag
+							.Select(t => new TreeItem
 							{
 								Id = t.Id,
 								Name = t.Name.Replace(x.Name + '.', ""),
+								FullName = t.Name,
 							})
 							.ToList()),
 					})
@@ -37,6 +39,12 @@ namespace Datalake.Web.Api
 
 				var withoutSource = tags
 					.Where(t => !sources.Select(x => x.Id).Contains(t.SourceId))
+					.Select(x => new TreeItem
+					{
+						Id= x.Id,
+						Name = x.Name,
+						FullName = x.Name,
+					})
 					.ToList();
 
 				if (withoutSource.Count > 0)
@@ -53,38 +61,45 @@ namespace Datalake.Web.Api
 				return tree;
 			}
 
-			List<TreeItem> GetSubItems(List<Tag> tags)
+			List<TreeItem> GetSubItems(List<TreeItem> tags)
 			{
-				var subs =  tags
-					.Select(x => x.Name.Contains('.') ? x.Name.Substring(0, x.Name.IndexOf('.')) : x.Name)
-					.Distinct()
-					.Select(x => new TreeItem
+				var subs = tags
+					.GroupBy(x => x.Name.Contains('.') ? x.Name.Substring(0, x.Name.IndexOf('.')) : x.Name)
+					.Select(g => new TreeItem
 					{
-						Name = x,
+						Name = g.Key,
+						FullName = g.FirstOrDefault()?.FullName ?? g.Key,
 					})
 					.ToList();
 
 				foreach (var item in subs)
 				{
+					var tag = tags.FirstOrDefault(x => x.Name == item.Name);
+
 					var included = tags
 						.Where(x => x.Name.StartsWith(item.Name + '.'))
-						.Select(x => new Tag
+						.Select(x => new TreeItem
 						{
 							Id = x.Id,
 							Name = x.Name.Replace(item.Name + '.', ""),
+							FullName = x.FullName,
 						})
 						.ToList();
 
 					if (included.Count == 0)
 					{
-						item.Id = tags.FirstOrDefault(x => x.Name == item.Name).Id;
+						item.Id = tag?.Id ?? item.Id;
+						item.FullName = tag?.FullName ?? item.FullName;
 						item.Type = TreeType.Tag;
 					}
 					else
 					{
+						item.FullName = tag?.FullName ?? item.FullName;
+						item.FullName = item.FullName.Substring(0, item.FullName.LastIndexOf(item.Name)) + item.Name;
 						item.Type = TreeType.TagGroup;
 					}
 
+					item.Name = tag?.Name ?? item.Name;
 					item.Items = GetSubItems(included);
 				}
 

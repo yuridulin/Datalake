@@ -8,6 +8,8 @@ namespace Datalake.Web.Models
 
 		public string Name { get; set; }
 
+		public string FullName { get; set; }
+
 		public TreeType Type { get; set; }
 
 		public List<TreeItem> Items { get; set; } = new List<TreeItem>();
@@ -15,10 +17,10 @@ namespace Datalake.Web.Models
 
 	public enum TreeType
 	{
-		Source,
-		TagGroup,
-		Tag,
-		Block,
-		Link,
+		Source = 0,
+		TagGroup = 1,
+		Tag = 2,
+		Block = 3,
+		Link = 4,
 	}
 }

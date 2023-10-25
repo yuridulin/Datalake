@@ -57,7 +57,7 @@ export default function SourceForm() {
 			<FormRow title="Тип источника">
 				<Radio.Group buttonStyle="solid" value={source.Type} onChange={e => setSource({...source, Type: e.target.value })}>
 					{Object.keys(SourceType).map(x => 
-						<Radio.Button value={Number(x)}>{SourceType[Number(x)]}</Radio.Button>
+						<Radio.Button key={x} value={Number(x)}>{SourceType[Number(x)]}</Radio.Button>
 					)}
 				</Radio.Group>
 			</FormRow>

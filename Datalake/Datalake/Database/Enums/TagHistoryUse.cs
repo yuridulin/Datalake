@@ -4,5 +4,6 @@
 	{
 		Initial = 0,
 		Basic = 1,
+		Aggregated = 2,
 	}
 }

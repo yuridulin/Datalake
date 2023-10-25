@@ -33,7 +33,7 @@ export default function Dashboard() {
 	})
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => { console.log(stats); update() }, [])
+	useEffect(() => { update() }, [])
 	useInterval(update, 5000)
 
 	return (
