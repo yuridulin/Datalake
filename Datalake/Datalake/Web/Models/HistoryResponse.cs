@@ -5,6 +5,8 @@ namespace Datalake.Web.Models
 {
 	public class HistoryResponse
 	{
+		public int Id { get; set; }
+
 		public string TagName { get; set; }
 
 		public TagType Type { get; set; }

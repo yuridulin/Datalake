@@ -57,13 +57,18 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public List<TagValue> Live(int[] tags)
+		public List<HistoryResponse> Live(int[] id = null, string[] names = null)
 		{
 			using (var db = new DatabaseContext())
 			{
-				var dbTags = tags.Length == 0
+				id = id ?? db.Tags
+					.Where(x => names == null || names.Contains(x.Name))
+					.Select(x => x.Id)
+					.ToArray();
+
+				var dbTags = id.Length == 0
 					? db.Tags.ToList()
-					: db.Tags.Where(x => tags.Contains(x.Id)).ToList();
+					: db.Tags.Where(x => id.Contains(x.Id)).ToList();
 
 				return dbTags
 					.Select(x => new
@@ -71,43 +76,22 @@ namespace Datalake.Web.Api
 						Tag = x,
 						Value = Cache.Read(x.Id),
 					})
-					.Select(x => new TagValue
+					.Select(x => new HistoryResponse
 					{
-						TagId = x.Tag.Id,
+						Id = x.Tag.Id,
 						TagName = x.Tag.Name,
 						Type = x.Tag.Type,
-						Date = x.Value.Date,
-						Value = x.Value.Value(),
-						Quality = x.Value.Quality,
-						Using = x.Value.Using,
-					})
-					.ToList();
-			}
-		}
-
-		public List<TagValue> LiveByNames(string[] tags)
-		{
-			using (var db = new DatabaseContext())
-			{
-				var dbTags = tags.Length == 0
-					? db.Tags.ToList()
-					: db.Tags.Where(x => tags.Contains(x.Name)).ToList();
-
-				return dbTags
-					.Select(x => new
-					{
-						Tag = x,
-						Value = Cache.Read(x.Id),
-					})
-					.Select(x => new TagValue
-					{
-						TagId = x.Tag.Id,
-						TagName = x.Tag.Name,
-						Type = x.Tag.Type,
-						Date = x.Value.Date,
-						Value = x.Value.Value(),
-						Quality = x.Value.Quality,
-						Using = x.Value.Using,
+						Func = AggFunc.List,
+						Values = new List<HistoryValue>
+						{
+							new HistoryValue
+							{
+								Date = x.Value.Date,
+								Value = x.Value.Value(),
+								Quality = x.Value.Quality,
+								Using = x.Value.Using,
+							}
+						}
 					})
 					.ToList();
 			}
@@ -125,89 +109,102 @@ namespace Datalake.Web.Api
 						.Where(x => set.Tags.Count == 0 || set.Tags.Contains(x.Name))
 						.ToList();
 
-					var data = db.ReadHistory(tags.Select(x => x.Id).ToArray(), set.Old ?? DateTime.Today.AddMonths(-1), set.Young ?? DateTime.Now, set.Resolution);
-
-					foreach (var item in data.GroupBy(x => x.TagId))
+					if (!set.Old.HasValue && !set.Young.HasValue)
 					{
-						var tag = tags.FirstOrDefault(x => x.Id == item.Key);
-						if (tag == null) continue;
+						response.AddRange(Live(names: set.Tags.ToArray()));
+					}
+					else
+					{
+						var young = set.Young ?? DateTime.Now;
+						var old = set.Old ?? young.Date;
 
-						if (set.Func == AggFunc.List)
+						var data = db.ReadHistory(tags.Select(x => x.Id).ToArray(), old, young, Math.Max(0, set.Resolution));
+
+						foreach (var item in data.GroupBy(x => x.TagId))
 						{
-							response.Add(new HistoryResponse
-							{
-								TagName = tag.Name,
-								Type = tag.Type,
-								Func = set.Func,
-								Values = item
-									.Select(x => new HistoryValue
-									{
-										Date = x.Date,
-										Quality = x.Quality,
-										Using = x.Using,
-										Value = x.Value(),
-									})
-									.ToList(),
-							});
-						}
-						else
-						{
-							var values = item
-								.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
-								.Select(x => x.Value() as float?)
-								.ToList();
+							var tag = tags.FirstOrDefault(x => x.Id == item.Key);
+							if (tag == null) continue;
 
-							if (values.Count > 0)
+							if (set.Func == AggFunc.List)
 							{
-								float? value = 0;
-								try
-								{
-									switch (set.Func)
-									{
-										case AggFunc.Sum: value = values.Sum(); break;
-										case AggFunc.Avg: value = values.Average(); break;
-										case AggFunc.Min: value = values.Min(); break;
-										case AggFunc.Max: value = values.Max(); break;
-									}
-								}
-								catch (Exception ex)
-								{
-									LogsWorker.Add("Api", "Aggregation " + set.Func + " on tag [\"" + tag.Name + "\"]: " + ex.Message, Workers.Logs.Models.LogType.Error);
-								}
-
 								response.Add(new HistoryResponse
 								{
+									Id = tag.Id,
 									TagName = tag.Name,
 									Type = tag.Type,
 									Func = set.Func,
-									Values = new List<HistoryValue>
-									{
-										new HistoryValue
+									Values = item
+										.Select(x => new HistoryValue
 										{
-											Quality = TagQuality.Good,
-											Using = TagHistoryUse.Aggregated,
-											Value = value,
-										}
-									}
+											Date = x.Date,
+											Quality = x.Quality,
+											Using = x.Using,
+											Value = x.Value(),
+										})
+										.ToList(),
 								});
 							}
 							else
 							{
-								response.Add(new HistoryResponse
+								var values = item
+									.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
+									.Select(x => x.Value() as float?)
+									.ToList();
+
+								if (values.Count > 0)
 								{
-									TagName = tag.Name,
-									Type = tag.Type,
-									Func = set.Func,
-									Values = new List<HistoryValue>
+									float? value = 0;
+									try
 									{
-										new HistoryValue
+										switch (set.Func)
 										{
-											Quality = TagQuality.Bad_NoValues,
-											Using = TagHistoryUse.Aggregated,
-											Value = 0,
+											case AggFunc.Sum: value = values.Sum(); break;
+											case AggFunc.Avg: value = values.Average(); break;
+											case AggFunc.Min: value = values.Min(); break;
+											case AggFunc.Max: value = values.Max(); break;
 										}
 									}
-								});
+									catch (Exception ex)
+									{
+										LogsWorker.Add("Api", "Aggregation " + set.Func + " on tag [\"" + tag.Name + "\"]: " + ex.Message, Workers.Logs.Models.LogType.Error);
+									}
+
+									response.Add(new HistoryResponse
+									{
+										Id = tag.Id,
+										TagName = tag.Name,
+										Type = tag.Type,
+										Func = set.Func,
+										Values = new List<HistoryValue>
+										{
+											new HistoryValue
+											{
+												Quality = TagQuality.Good,
+												Using = TagHistoryUse.Aggregated,
+												Value = value,
+											}
+										}
+									});
+								}
+								else
+								{
+									response.Add(new HistoryResponse
+									{
+										Id = tag.Id,
+										TagName = tag.Name,
+										Type = tag.Type,
+										Func = set.Func,
+										Values = new List<HistoryValue>
+										{
+											new HistoryValue
+											{
+												Quality = TagQuality.Bad_NoValues,
+												Using = TagHistoryUse.Aggregated,
+												Value = 0,
+											}
+										}
+									});
+								}
 							}
 						}
 					}
