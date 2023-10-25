@@ -167,6 +167,10 @@ namespace Datalake.Web
 								Console.WriteLine("Не получилось определить JSON тип: " + jsonType);
 							}
 						}
+						else if (p.DefaultValue != DBNull.Value)
+						{
+							invokeParams.Add(p.DefaultValue);
+						}
 					}
 
 					result = action.Invoke(instance, invokeParams.ToArray());
