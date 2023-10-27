@@ -10,7 +10,7 @@ copy-project:
     - buildopc
 
   script:
-    - xcopy /s .\Datalake "C:\app" /K /D /H /Y
+    - xcopy /s .\Datalake\Datalake "C:\app\Datalake" /K /D /H /Y
 
   only:
     - /^\d+.\d+.\d+$/
