@@ -51,5 +51,7 @@ deploy-datalake:
     - cd C:\Dist\Datalake
     - Datalake.exe
 
+  when: always
+  
   only:
     - /^\d+.\d+.\d+$/
