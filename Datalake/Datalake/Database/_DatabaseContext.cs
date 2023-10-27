@@ -9,7 +9,13 @@ namespace Datalake.Database
 {
 	public class DatabaseContext : DataConnection
 	{
-		public DatabaseContext() : base("Default") { }
+		#if DEBUG
+		static string connString = "Debug";
+		#else
+		string connString = "Release";
+		#endif
+
+		public DatabaseContext() : base(connString) { }
 
 		public ITable<Tag> Tags
 			=> this.GetTable<Tag>();
