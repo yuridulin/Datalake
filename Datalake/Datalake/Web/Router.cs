@@ -1,4 +1,5 @@
 ﻿using Datalake.Web.Models;
+using Datalake.Workers.Logs;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -49,6 +50,7 @@ namespace Datalake.Web
 				}
 				catch (Exception e)
 				{
+					LogsWorker.Add("Router", "Error: " + e.Message + "\n" + e.StackTrace, Workers.Logs.Models.LogType.Error);
 					res = new Answer
 					{
 						StatusCode = 200,
@@ -77,7 +79,7 @@ namespace Datalake.Web
 
 		Answer Action(string methodName, string body, WindowsPrincipal user)
 		{
-			Console.WriteLine($"[HTTP API] {methodName}");
+			LogsWorker.Add("Router", $"[HTTP API] {methodName}", Workers.Logs.Models.LogType.Trace);
 
 			if (Request.HttpMethod == "OPTIONS")
 			{
@@ -200,7 +202,7 @@ namespace Datalake.Web
 
 		Answer Document(string filename)
 		{
-			Console.WriteLine($"[HTTP DOC] {filename}");
+			LogsWorker.Add("Router", $"[HTTP DOC] {filename}", Workers.Logs.Models.LogType.Trace);
 
 			string basePath = AppDomain.CurrentDomain.BaseDirectory + "\\Content\\";
 			string filePath = (basePath + filename.Replace("/", "\\")).Replace(@"\\", "\\");
