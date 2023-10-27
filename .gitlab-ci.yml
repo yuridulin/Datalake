@@ -36,8 +36,7 @@ build-datalake:
     - msbuild /t:Restore
     - msbuild /t:Build /p:Configuration=Release
 
-  when:
-    always
+  when: always
 
   only:
     - /^\d+.\d+.\d+$/
@@ -48,8 +47,8 @@ deploy-datalake:
   tags:
     - buildopc
 
-  when:
-    always
+  when: delayed
+  start_in: 1 minutes
     
   script:
     - sc start Datalake
