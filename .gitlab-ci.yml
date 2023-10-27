@@ -49,7 +49,7 @@ deploy-datalake:
 
   script:
     - cd C:\Dist\Datalake
-    - Datalake.exe
+    - start Datalake.exe
 
   when: always
   
