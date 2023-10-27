@@ -1,5 +1,6 @@
 stages:
   - copy
+  - kill
   - build
   - deploy
 
@@ -15,6 +16,15 @@ copy-project:
   only:
     - /^\d+.\d+.\d+$/
 
+kill-previous:
+  stage: kill
+
+  tags:
+    - buildopc
+
+  script:
+    - taskkill /f /im Datalake.exe
+
 build-datalake:
   stage: build
 
@@ -25,6 +35,8 @@ build-datalake:
     - cd C:\app\Datalake
     - msbuild /t:Restore
     - msbuild /t:Build /p:Configuration=Release
+  
+  when: always
 
   only:
     - /^\d+.\d+.\d+$/
@@ -36,7 +48,6 @@ deploy-datalake:
     - buildopc
 
   script:
-    - tasklist | findstr /i "Datalake.exe" && taskkill /f /im Datalake.exe
     - cd C:\Dist\Datalake
     - Datalake.exe
 
