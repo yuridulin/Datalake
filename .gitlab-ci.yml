@@ -24,6 +24,8 @@ kill-previous:
 
   script:
     - taskkill /f /im Datalake.exe
+  
+  allow_failure: true
 
 build-datalake:
   stage: build
@@ -36,8 +38,6 @@ build-datalake:
     - msbuild /t:Restore
     - msbuild /t:Build /p:Configuration=Release
 
-  when: always
-
   only:
     - /^\d+.\d+.\d+$/
 
@@ -46,9 +46,6 @@ deploy-datalake:
 
   tags:
     - buildopc
-
-  when: delayed
-  start_in: 1 minutes
     
   script:
     - sc start Datalake
