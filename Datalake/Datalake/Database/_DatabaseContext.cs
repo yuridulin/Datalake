@@ -12,7 +12,7 @@ namespace Datalake.Database
 		#if DEBUG
 		static string connString = "Debug";
 		#else
-		string connString = "Release";
+		static string connString = "Release";
 		#endif
 
 		public DatabaseContext() : base(connString) { }
