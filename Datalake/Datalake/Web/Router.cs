@@ -134,55 +134,55 @@ namespace Datalake.Web
 						.ToList()
 						.Select(x => new { Key = x.Key.ToLower(), x.Value })
 						.ToDictionary(x => x.Key, x => x.Value);
-
-					var invokeParams = new List<object>();
-
-					foreach (var p in methodParams)
-					{
-						if (jsonParams.ContainsKey(p.Name.ToLower()))
-						{
-							var jsonParam = jsonParams[p.Name.ToLower()];
-							var jsonType = jsonParam.GetType();
-
-							try
-							{
-								if (jsonType == typeof(JObject))
-								{
-									var param = (jsonParam as JObject).ToObject(p.ParameterType);
-									invokeParams.Add(param);
-								}
-								else if (jsonType == typeof(JArray))
-								{
-									var param = (jsonParam as JArray).ToObject(p.ParameterType);
-									invokeParams.Add(param);
-								}
-								else
-								{
-									var param = Convert.ChangeType(jsonParam, p.ParameterType);
-									invokeParams.Add(param);
-								}
-							}
-							catch
-							{
-								Console.WriteLine("Не получилось определить JSON тип: " + jsonType);
-							}
-						}
-						else if (p.DefaultValue != DBNull.Value)
-						{
-							invokeParams.Add(p.DefaultValue);
-						}
-					}
-
-					result = action.Invoke(instance, invokeParams.ToArray());
 				}
 				else
 				{
-					result = action.Invoke(instance, null);
+					jsonParams = new Dictionary<string, object>();
 				}
+
+				var invokeParams = new List<object>();
+
+				foreach (var p in methodParams)
+				{
+					if (jsonParams.ContainsKey(p.Name.ToLower()))
+					{
+						var jsonParam = jsonParams[p.Name.ToLower()];
+						var jsonType = jsonParam.GetType();
+
+						try
+						{
+							if (jsonType == typeof(JObject))
+							{
+								var param = (jsonParam as JObject).ToObject(p.ParameterType);
+								invokeParams.Add(param);
+							}
+							else if (jsonType == typeof(JArray))
+							{
+								var param = (jsonParam as JArray).ToObject(p.ParameterType);
+								invokeParams.Add(param);
+							}
+							else
+							{
+								var param = Convert.ChangeType(jsonParam, p.ParameterType);
+								invokeParams.Add(param);
+							}
+						}
+						catch
+						{
+							Console.WriteLine("Не получилось определить JSON тип: " + jsonType);
+						}
+					}
+					else if (p.DefaultValue != DBNull.Value)
+					{
+						invokeParams.Add(p.DefaultValue);
+					}
+				}
+
+				result = action.Invoke(instance, invokeParams.ToArray());
 			}
 			else
 			{
-				result = action.Invoke(instance, null);
+				result = action.Invoke(instance, new object[0]);
 			}
 
 			if (attrib != null)
