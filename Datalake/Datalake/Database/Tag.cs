@@ -1,11 +1,8 @@
 ﻿using Datalake.Database.Enums;
-using Datalake.Workers.Logs;
-using Datalake.Workers.Logs.Models;
 using LinqToDB.Mapping;
 using NCalc;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Datalake.Database
@@ -72,19 +69,16 @@ namespace Datalake.Database
 		public void PrepareToCollect()
 		{
 			LastUpdate = DateTime.MinValue;
-			LogsWorker.Add("Collector", "PrepareToCollect: LastUpdate " + LastUpdate, LogType.Trace);
 		}
 
 		public bool IsNeedToUpdate(DateTime now)
 		{
-			LogsWorker.Add("Collector", "IsNeedToUpdate: now " + now + " LastUpdate " + LastUpdate + " interval " + Interval + " result " + (Interval <= 0 || ((now - LastUpdate).TotalSeconds >= Interval)), LogType.Trace);
 			return Interval <= 0 || ((now - LastUpdate).TotalSeconds >= Interval);
 		}
 
 		public void SetAsUpdated(DateTime now)
 		{
 			LastUpdate = now;
-			LogsWorker.Add("Collector", "SetAsUpdated: LastUpdate " + LastUpdate, LogType.Trace);
 		}
 
 		public (string, float?, TagQuality) FromRaw(object value, ushort quality)
@@ -135,9 +129,8 @@ namespace Datalake.Database
 
 				return (text, number, tagQuality);
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
-				LogsWorker.Add("Collector", "FromRaw: " + ex.Message, LogType.Trace);
 				return (null, null, TagQuality.Unknown);
 			}
 		}
