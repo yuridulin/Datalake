@@ -1,0 +1,44 @@
+stages:
+  - copy
+  - build
+  - deploy
+
+copy-project:
+  stage: copy
+
+  tags:
+    - buildopc
+
+  script:
+    - xcopy /s .\Datalake "C:\app" /K /D /H /Y
+
+  only:
+    - /^\d+.\d+.\d+$/
+
+build-datalake:
+  stage: build
+
+  tags:
+    - buildopc
+
+  script:
+    - cd C:\app\Datalake
+    - msbuild /t:Restore
+    - msbuild /t:Build /p:Configuration=Release
+
+  only:
+    - /^\d+.\d+.\d+$/
+
+deploy-datalake:
+  stage: deploy
+
+  tags:
+    - buildopc
+
+  script:
+    - taskkill /f /im datalake.exe
+    - cd C:\Dist\Datalake
+    - Datalake.exe
+
+  only:
+    - /^\d+.\d+.\d+$/
