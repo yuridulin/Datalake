@@ -6,32 +6,27 @@ stages:
 
 copy-project:
   stage: copy
-
+  only: [tags]
   tags:
     - buildopc
-
   script:
     - xcopy /s .\Datalake\Datalake "C:\app\Datalake" /K /D /H /Y
 
 kill-previous:
   stage: kill
-
+  only: [tags]
+  when: on_success
+  allow_failure: true
   tags:
     - buildopc
-
-  when: on_success
-
   script:
     - taskkill /f /im Datalake.exe
-  
-  allow_failure: true
 
 build-datalake:
   stage: build
-
+  only: [tags]
   tags:
     - buildopc
-
   script:
     - cd C:\app\Datalake
     - msbuild /t:Restore
@@ -39,9 +34,8 @@ build-datalake:
 
 deploy-datalake:
   stage: deploy
-
+  only: [tags]
   tags:
     - buildopc
-    
   script:
     - sc start Datalake
