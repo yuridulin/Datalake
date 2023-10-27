@@ -182,6 +182,7 @@
     <Error Condition="!Exists('..\..\packages\linq2db.PostgreSQL.5.2.2\build\linq2db.PostgreSQL.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\linq2db.PostgreSQL.5.2.2\build\linq2db.PostgreSQL.props'))" />
   </Target>
   <PropertyGroup>
-    <PostBuildEvent>xcopy /E /Y C:\Work\DataSphere\Datalake\datalakeclient\build C:\Dist\Datalake\Content</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
