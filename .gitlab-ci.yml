@@ -13,14 +13,13 @@ copy-project:
   script:
     - xcopy /s .\Datalake\Datalake "C:\app\Datalake" /K /D /H /Y
 
-  only:
-    - /^\d+.\d+.\d+$/
-
 kill-previous:
   stage: kill
 
   tags:
     - buildopc
+
+  when: on_success
 
   script:
     - taskkill /f /im Datalake.exe
@@ -38,9 +37,6 @@ build-datalake:
     - msbuild /t:Restore
     - msbuild /t:Build /p:Configuration=Release
 
-  only:
-    - /^\d+.\d+.\d+$/
-
 deploy-datalake:
   stage: deploy
 
@@ -49,6 +45,3 @@ deploy-datalake:
     
   script:
     - sc start Datalake
-  
-  only:
-    - /^\d+.\d+.\d+$/
