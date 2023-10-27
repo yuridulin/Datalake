@@ -66,11 +66,11 @@ namespace Datalake.Web
 
 		public static DatalakeResponse AskDatalake(string[] tags, string address)
 		{
-			var res = new List<TagValue>();
+			var res = new List<HistoryResponse>();
 
 			try
 			{
-				var web = (HttpWebRequest)WebRequest.Create("http://" + address + ":83/api/tags/liveByNames");
+				var web = (HttpWebRequest)WebRequest.Create("http://" + address + ":83/api/tags/live");
 
 				web.ContentType = "application/json";
 				web.Method = "POST";
@@ -92,7 +92,7 @@ namespace Datalake.Web
 						using (var streamReader = new StreamReader(stream))
 						{
 							string json = streamReader.ReadToEnd();
-							res = JsonConvert.DeserializeObject<List<TagValue>>(json);
+							res = JsonConvert.DeserializeObject<List<HistoryResponse>>(json);
 						}
 					}
 				}
@@ -102,18 +102,22 @@ namespace Datalake.Web
 				LogsWorker.Add("DatalakeNode", "Запрос к " + address + ": " + ex.Message, LogType.Error);
 			}
 
+			var inputs = new List<InputTag>();
+			foreach (var tag in res)
+			{
+				inputs.AddRange(tag.Values.Select(x => new InputTag
+				{
+					Name = tag.TagName,
+					Quality = (ushort)x.Quality,
+					Value = x.Value,
+					Type = tag.Type,
+				}));
+			}
+
 			return new DatalakeResponse
 			{
 				Timestamp = DateTime.Now,
-				Tags = res
-					.Select(x => new InputTag
-					{
-						Name = x.TagName,
-						Quality = (ushort)x.Quality,
-						Value = x.Value,
-						Type = x.Type,
-					})
-					.ToArray()
+				Tags = inputs.ToArray()
 			};
 		}
 	}
