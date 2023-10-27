@@ -36,8 +36,7 @@ deploy-datalake:
     - buildopc
 
   script:
-    - tasklist /FI "IMAGENAME eq datalake.exe" | find /I /N "datalake.exe"
-    - if "%ERRORLEVEL%"=="0" taskkill /f /im datalake.exe
+    - tasklist | findstr /i "Datalake.exe" && taskkill /f /im Datalake.exe
     - cd C:\Dist\Datalake
     - Datalake.exe
 
