@@ -48,8 +48,7 @@ deploy-datalake:
     - buildopc
 
   script:
-    - cd C:\Dist\Datalake
-    - start Datalake.exe
+    - sc start Datalake
 
   when: always
   
