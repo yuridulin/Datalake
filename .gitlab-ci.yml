@@ -35,8 +35,9 @@ build-datalake:
     - cd C:\app\Datalake
     - msbuild /t:Restore
     - msbuild /t:Build /p:Configuration=Release
-  
-  when: always
+
+  when:
+    always
 
   only:
     - /^\d+.\d+.\d+$/
@@ -49,8 +50,6 @@ deploy-datalake:
 
   script:
     - sc start Datalake
-
-  when: always
   
   only:
     - /^\d+.\d+.\d+$/
