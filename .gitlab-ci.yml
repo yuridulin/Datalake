@@ -48,6 +48,9 @@ deploy-datalake:
   tags:
     - buildopc
 
+  when:
+    always
+    
   script:
     - sc start Datalake
   
