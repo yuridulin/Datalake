@@ -5,25 +5,23 @@ import axios from "axios"
 import { useFetching } from "../../hooks/useFetching"
 import { NavLink, Navigate, useLocation, useNavigate } from "react-router-dom"
 import { TreeItem } from "../../@types/TreeItem"
-import { Tree } from 'antd'
+import { Dropdown, Tree } from 'antd'
 import type { DataNode } from 'antd/es/tree'
 import { TreeType } from "../../@types/enums/treeType"
 import router from "../../router/router"
+import { BlockType } from "../../@types/BlockType"
+import { items } from "./TreeContextMenu"
 
 export default function TreeContainer() {
 
 	const location = useLocation()
 	const navigate = useNavigate()
-	const { lastUpdate, setCheckedTags } = useUpdateContext()
+	const { lastUpdate, setUpdate, setCheckedTags } = useUpdateContext()
 	const [ elements, setElements ] = useState([] as TreeItem[])
 	const [ treeData, setTreeData ] = useState([] as DataNode[])
+	const [ blocks, setBlocks ] = useState([] as DataNode[])
 
-	const [ load,, error ] = useFetching(async () => {
-		let res = await axios.get('console/tree')
-		setElements(getElements(res.data))
-		setTreeData(treeItemToDataNode(res.data))
-	})
-
+	// рекурсивные функции для сбора дерева
 	function getElements(treeItems: TreeItem[]): TreeItem[] {
 		let items = [ ...treeItems ]
 		treeItems.forEach(x => items = [ ...items, ...getElements(x.Items) ])
@@ -31,16 +29,32 @@ export default function TreeContainer() {
 	}
 	
 	function treeItemToDataNode(treeItems: TreeItem[]): DataNode[] {
-		return treeItems.map(x => ({
+		return treeItems.filter(x => x.Type !== TreeType.Link).map(x => ({
 			title: x.Name,
 			key: x.FullName,
 			children: treeItemToDataNode(x.Items),
 		}))
 	}
 
+	function blockToDataNode(blocks: BlockType[]): DataNode[] {
+		return blocks.map(x => ({
+			title: x.Name,
+			key: x.Id,
+			children: blockToDataNode(x.Children)
+		}))
+	}
+
+	// контекстное меню
+
+	const [ loadLink ] = useFetching(async (url: string) => {
+		let res = await axios.get(url)
+		if (res.data.Done) setUpdate(new Date())
+	})
+
+	// компонент дерева
+
 	const [expandedKeys, setExpandedKeys] = useState<React.Key[]>()
 	const [checkedKeys, setCheckedKeys] = useState<React.Key[]>([])
-	const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([])
 	const [autoExpandParent, setAutoExpandParent] = useState<boolean>(true)
 
 	const onExpand = (expandedKeysValue: React.Key[]) => {
@@ -62,13 +76,12 @@ export default function TreeContainer() {
 		}
 	}
 
-	const onSelect = (selectedKeysValue: React.Key[], info: any) => {
-		console.log('onSelect', info);
-		setSelectedKeys(selectedKeysValue);
-	}
+	// рендер-функции
 
 	const TreeElement = (nodeData: DataNode) => {
-		let el = elements.filter(x => x.FullName === nodeData.key)[0]
+		let currents = elements.filter(x => x.FullName === nodeData.key)
+		if (currents.length === 0) return
+		let el = currents[0]
 		
 		if (el.Type === TreeType.TagGroup) {
 			return <span className="tree-el">{el.Name}</span>
@@ -83,27 +96,54 @@ export default function TreeContainer() {
 		}
 	}
 
+	const BlockElement = (nodeData: DataNode) => {
+		return <NavLink className="tree-el" to={`/blocks/${nodeData.key}`}>{String(nodeData.title)}</NavLink>
+	}
+
+	// загрузка данных
+
+	const [ loadTags,, error ] = useFetching(async () => {
+		let res = await axios.get('console/tree')
+		let items = getElements(res.data)
+		setElements(items)
+		setTreeData(treeItemToDataNode(res.data))
+	})
+
+	const [ loadBlocks ] = useFetching(async () => {
+		let res = await axios.get('blocks/list')
+		setBlocks(blockToDataNode(res.data as BlockType[]))
+	})
+
+	function loader() {
+		loadTags()
+		loadBlocks()
+	}
+
 	// eslint-disable-next-line
-	useEffect(() => { load() }, [lastUpdate])
-	useInterval(load, 10000)
+	useEffect(loader, [lastUpdate])
+	useInterval(loader, 10000)
 
 	return (
 		error
 		? <Navigate to="/offline" />
-		: <div className="tree">
-			<Tree
-				checkable
-				onExpand={onExpand}
-				// инициализация ранее открытых элементов, работает только вот так. Хранение в localStorage
-				expandedKeys={expandedKeys ?? localStorage.getItem('expandedKeys')?.split('|') ?? []}
-				autoExpandParent={autoExpandParent}
-				onCheck={(checked) => onCheck(checked as React.Key[])}
-				checkedKeys={checkedKeys}
-				onSelect={onSelect}
-				selectedKeys={selectedKeys}
-				treeData={treeData}
-				titleRender={TreeElement}
+		: <Dropdown menu={{ items: items, onClick: e => loadLink(e.key) }} trigger={['contextMenu']}>
+			<div className="tree">
+				<Tree
+					checkable
+					onExpand={onExpand}
+					// инициализация ранее открытых элементов, работает только вот так. Хранение в localStorage
+					expandedKeys={expandedKeys ?? localStorage.getItem('expandedKeys')?.split('|') ?? []}
+					autoExpandParent={autoExpandParent}
+					onCheck={(checked) => onCheck(checked as React.Key[])}
+					checkedKeys={checkedKeys}
+					treeData={treeData}
+					titleRender={TreeElement}
 				/>
-		</div>
+				<Tree
+					treeData={blocks}
+					titleRender={BlockElement}
+				/>
+			</div>
+		</Dropdown>
 	)
 }

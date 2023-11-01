@@ -12,3 +12,10 @@
 	padding: 0 .25em;
 	color: black;
 }
+
+/* грязный хак, который показывает выбранный роут после перезагрузки страницы */
+.ant-tree-node-content-wrapper:has(> .ant-tree-title > .active) {
+	background-color: #e6f4ff;
+	min-height: 24px;
+	line-height: 24px;
+}

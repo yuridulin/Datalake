@@ -9,6 +9,7 @@ import Header from "../../small/Header"
 import FormRow from "../../small/FormRow"
 import SourceItems from "./SourceItems"
 import { SourceType } from "../../../@types/enums/SourceType"
+import { API } from "../../../router/api"
 
 export default function SourceForm() {
 
@@ -18,17 +19,22 @@ export default function SourceForm() {
 	const [ name, setName ] = useState('')
 
 	const [ read, , error ] = useFetching(async () => {
-		let res = await axios.post('sources/read/', { id })
+		let res = await axios.post(API.sources.readById, { id })
 		setSource(res.data)
 		setName(res.data.Name)
 	})
 
 	const [ update ] = useFetching(async () => {
-		axios.post('sources/update/' + id, source).then(() => router.navigate('/sources'))
+		axios.post(API.sources.update, source).then(() => router.navigate('/sources'))
 	})
 
 	const [ del ] = useFetching(async () => {
-		axios.post('sources/delete/' + id, source).then(() => router.navigate('/sources'))
+		axios.post(API.sources.del, source).then(() => router.navigate('/sources'))
+	})
+
+	const [ createTag ] = useFetching(async () => {
+		let res = await axios.post(API.tags.create, { sourceId: source.Id })
+		if (res.data.Done) read()
 	})
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,6 +70,9 @@ export default function SourceForm() {
 			<FormRow title="Адрес">
 				<Input value={source.Address} onChange={e => setSource({ ...source, Address: e.target.value })} />
 			</FormRow>
+			<Button onClick={createTag}>Добавить тег</Button>
+			<br />
+			<br />
 			<SourceItems type={source.Type} id={source.Id} />
 		</>
 	)

@@ -14,7 +14,7 @@ export default function TagSelectedForm() {
 
 	const [ load ] = useFetching(async() => {
 		if (checkedTags.length === 0) return
-		let res = await axios.post(API.getTagsByName, { names: checkedTags })
+		let res = await axios.post(API.tags.getFlatList, { names: checkedTags })
 		if (res.data) {
 			setTags(res.data)
 		}
