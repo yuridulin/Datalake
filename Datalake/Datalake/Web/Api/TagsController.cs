@@ -57,20 +57,20 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public List<HistoryResponse> Live(int[] id = null, string[] names = null)
+		public List<HistoryResponse> Live(LiveRequest request)
 		{
 			using (var db = new DatabaseContext())
 			{
-				id = id ?? db.Tags
-					.Where(x => names == null || names.Contains(x.Name))
+				request.Tags = request.Tags ?? db.Tags
+					.Where(x => request.TagNames.Count == 0 || request.TagNames.Contains(x.Name))
 					.Select(x => x.Id)
-					.ToArray();
+					.ToList();
 
-				var dbTags = id.Length == 0
+				var tags = request.Tags.Count == 0
 					? db.Tags.ToList()
-					: db.Tags.Where(x => id.Contains(x.Id)).ToList();
+					: db.Tags.Where(x => request.Tags.Contains(x.Id)).ToList();
 
-				return dbTags
+				return tags
 					.Select(x => new
 					{
 						Tag = x,
@@ -105,16 +105,21 @@ namespace Datalake.Web.Api
 
 				foreach (var set in request)
 				{
-					var tags = db.Tags
-						.Where(x => set.Tags.Count == 0 || set.Tags.Contains(x.Name))
-						.ToList();
-
 					if (!set.Old.HasValue && !set.Young.HasValue)
 					{
-						response.AddRange(Live(names: set.Tags.ToArray()));
+						response.AddRange(Live(set));
 					}
 					else
 					{
+						set.Tags = set.Tags ?? db.Tags
+							.Where(x => set.TagNames.Count == 0 || set.TagNames.Contains(x.Name))
+							.Select(x => x.Id)
+							.ToList();
+
+						var tags = set.Tags.Count == 0
+							? db.Tags.ToList()
+							: db.Tags.Where(x => set.Tags.Contains(x.Id)).ToList();
+
 						var young = set.Young ?? DateTime.Now;
 						var old = set.Old ?? young.Date;
 
@@ -218,20 +223,26 @@ namespace Datalake.Web.Api
 		{
 			using (var db = new DatabaseContext())
 			{
-				string name = db.Tags.OrderByDescending(x => x.Name).Select(x => x.Name).FirstOrDefault() ?? "New_tag_1";
-				int number = int.TryParse(name.Replace("New_tag_", ""), out int i) ? i : 1;
-				name = "New_tag_" + number;
+				var tag = new Tag { Name = "INSERTING" };
+				var id = db.InsertWithInt32Identity(tag);
 
-				var tag = new Tag { Name = name };
+				tag.Name = "Tag_" + id;
 
 				if (sourceId > 0)
 				{
-					if (!db.Sources.Any(x => x.Id == sourceId)) return Error("Источник не найден");
+					var source = db.Sources.FirstOrDefault(x => x.Id == sourceId) ?? new Source { Name = "Unknown", Address = "", Id = sourceId };
 
 					tag.SourceId = sourceId;
+					tag.SourceItem = "";
+					tag.Name = source.Name + "." + tag.Name;
 				}
 
-				var id = db.InsertWithInt32Identity(tag);
+				db.Tags
+					.Where(x => x.Id == id)
+					.Set(x => x.Name, tag.Name)
+					.Set(x => x.SourceId, tag.SourceId)
+					.Set(x => x.SourceItem, tag.SourceItem)
+					.Update();
 
 				Cache.Write(new TagHistory
 				{

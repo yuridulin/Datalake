@@ -82,7 +82,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public List<TagValue> Live(int Id)
+		public List<HistoryResponse> Live(int Id)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -100,21 +100,27 @@ namespace Datalake.Web.Api
 						Tag = dbtags[x],
 						Value = Cache.Read(x),
 					})
-					.Select(x => new TagValue
+					.Select(x => new HistoryResponse
 					{
-						TagId = x.Tag.Id,
+						Id = x.Tag.Id,
 						TagName = tags[x.Tag.Id],
 						Type = x.Tag.Type,
-						Date = x.Value.Date,
-						Value = x.Value.Value(),
-						Quality = x.Value.Quality,
-						Using = x.Value.Using,
+						Values = new List<HistoryValue>
+						{
+							new HistoryValue
+							{
+								Date = x.Value.Date,
+								Value = x.Value.Value(),
+								Quality = x.Value.Quality,
+								Using = x.Value.Using,
+							}
+						}
 					})
 					.ToList();
 			}
 		}
 
-		public List<TagValue> History(int Id, DateTime old, DateTime young, int resolution)
+		public List<HistoryResponse> History(int Id, DateTime? old, DateTime? young, int resolution = 0)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -126,18 +132,24 @@ namespace Datalake.Web.Api
 					.Where(x => tags.Keys.Contains(x.Id))
 					.ToDictionary(x => x.Id, x => x);
 
-				var data = db.ReadHistory(tags.Keys.ToArray(), old, young, resolution);
+				var data = db.ReadHistory(tags.Keys.ToArray(), old ?? young?.Date ?? DateTime.Today, young ?? DateTime.Now, resolution);
 
 				return data
-					.Select(x => new TagValue
+					.GroupBy(x => x.TagId)
+					.Select(g => new HistoryResponse
 					{
-						TagId = x.TagId,
-						TagName = tags[x.TagId],
-						Date = x.Date,
-						Using = x.Using,
-						Quality = x.Quality,
-						Type = x.Type,
-						Value = x.Value(),
+						Id = g.Key,
+						TagName = tags[g.Key],
+						Type = dbtags[g.Key].Type,
+						Values = g
+							.Select(x => new HistoryValue
+							{
+								Date = x.Date,
+								Using = x.Using,
+								Quality = x.Quality,
+								Value = x.Value(),
+							})
+							.ToList()
 					})
 					.ToList();
 			}

@@ -28,6 +28,33 @@ type Tag = {
 }
 ```
 
+### Данные для получения информации о текущих значениях тегов
+```ts
+type LiveRequest = {
+
+	// Массив идентификаторов тегов
+	// Если он пустой, используется массив имён
+	Tags: number[],
+
+	// Массив имён тегов
+	// Не используется, если указаны идентификаторы
+	// Если пустой - будут выбраны все теги
+	TagNames: string[]
+}
+```
+
+### Данные для получения информации о архивных значениях тегов
+```ts
+type HistoryRequest = {
+	Tags: number[],
+	TagNames: string[],
+	Old: Date,
+	Young: Date,
+	Resolution: number,
+	Func: AggFunc,
+}
+```
+
 ### Часть истории значений тега
 ```ts
 type HistoryResponse = {
@@ -149,21 +176,13 @@ TreeItem[]
 
 
 
-
 # Текущие значения тегов
 
 `POST http://<адрес сервера>:83/api/tags/live`
 
 ### Передаваемые данные
 ```ts
-// Массив идентификаторов тегов
-// Если он пустой, используется массив имён
-id?: number[]
-
-// Массив имён тегов
-// Не используется, если указаны идентификаторы
-// Если пустой - будут выбраны все теги
-names: string[]
+Request: LiveRequest
 ```
 
 ### Получаемые данные
@@ -194,13 +213,7 @@ HistoryResponse[]
 
 ### Передаваемые данные
 ```ts
-request: {
-	tags: string[],
-	old: Date,
-	young: Date,
-	resolution: number,
-	func: AggFunc
-}[]
+Request: HistoryRequest[]
 ```
 
 ### Получаемые данные
@@ -251,6 +264,6 @@ resolution: number
 
 Получаемые данные
 ```ts
-TagValue[]
+HistoryResponse[]
 ```
 
