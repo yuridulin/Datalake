@@ -214,7 +214,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Create()
+		public object Create(int sourceId = 0)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -223,6 +223,13 @@ namespace Datalake.Web.Api
 				name = "New_tag_" + number;
 
 				var tag = new Tag { Name = name };
+
+				if (sourceId > 0)
+				{
+					if (!db.Sources.Any(x => x.Id == sourceId)) return Error("Источник не найден");
+
+					tag.SourceId = sourceId;
+				}
 
 				var id = db.InsertWithInt32Identity(tag);
 
