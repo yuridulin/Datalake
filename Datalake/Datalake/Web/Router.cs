@@ -143,9 +143,12 @@ namespace Datalake.Web
 				}
 
 				var invokeParams = new List<object>();
+				var missedParams = new Dictionary<string, Type>();
 
 				foreach (var p in methodParams)
 				{
+					var paramType = Nullable.GetUnderlyingType(p.ParameterType) ?? p.ParameterType;
+
 					if (jsonParams.ContainsKey(p.Name.ToLower()))
 					{
 						var jsonParam = jsonParams[p.Name.ToLower()];
@@ -165,7 +168,7 @@ namespace Datalake.Web
 							}
 							else
 							{
-								var paramType = Nullable.GetUnderlyingType(p.ParameterType) ?? p.ParameterType;
+								
 								var param = Convert.ChangeType(jsonParam, paramType);
 								invokeParams.Add(param);
 							}
@@ -173,15 +176,34 @@ namespace Datalake.Web
 						catch
 						{
 							Console.WriteLine("Не получилось определить JSON тип: " + jsonType);
+							missedParams.Add(p.Name, paramType);
 						}
 					}
 					else if (p.DefaultValue != DBNull.Value)
 					{
 						invokeParams.Add(p.DefaultValue);
 					}
+					else
+					{
+						missedParams.Add(p.Name, paramType);
+					}
 				}
 
-				result = action.Invoke(instance, invokeParams.ToArray());
+				if (missedParams.Count > 0)
+				{
+					string err = "\"Ожидаются, но не переданы параметры: ";
+
+					foreach (var kv in missedParams)
+					{
+						err += "\n" + kv.Key + " : " + kv.Value;
+					}
+
+					throw new Exception(err);
+				}
+				else
+				{
+					result = action.Invoke(instance, invokeParams.ToArray());
+				}
 			}
 			else
 			{
