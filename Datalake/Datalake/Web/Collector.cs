@@ -80,7 +80,7 @@ namespace Datalake.Web
 				{
 					using (var streamWriter = new StreamWriter(stream))
 					{
-						string json = JsonConvert.SerializeObject(new { tags });
+						string json = JsonConvert.SerializeObject(new { Request = new LiveRequest { TagNames = tags.ToList() } });
 						streamWriter.Write(json);
 					}
 				}
