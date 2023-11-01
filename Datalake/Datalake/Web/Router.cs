@@ -149,7 +149,7 @@ namespace Datalake.Web
 					if (jsonParams.ContainsKey(p.Name.ToLower()))
 					{
 						var jsonParam = jsonParams[p.Name.ToLower()];
-						var jsonType = jsonParam.GetType();
+						var jsonType = Nullable.GetUnderlyingType(jsonParam.GetType()) ?? jsonParam.GetType();
 
 						try
 						{
@@ -165,7 +165,8 @@ namespace Datalake.Web
 							}
 							else
 							{
-								var param = Convert.ChangeType(jsonParam, p.ParameterType);
+								var paramType = Nullable.GetUnderlyingType(p.ParameterType) ?? p.ParameterType;
+								var param = Convert.ChangeType(jsonParam, paramType);
 								invokeParams.Add(param);
 							}
 						}
