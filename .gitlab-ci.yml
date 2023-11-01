@@ -1,7 +1,8 @@
 stages:
   - copy
   - kill
-  - build
+  - build server
+  - build webconsole
   - deploy
 
 copy-project:
@@ -11,6 +12,7 @@ copy-project:
     - buildopc
   script:
     - xcopy /s .\Datalake\Datalake "C:\app\Datalake" /K /D /H /Y
+    - xcopy /s .\Datalake\datalakeclient "C:\app\datalakeclient" /K /D /H /Y
 
 kill-previous:
   stage: kill
@@ -22,8 +24,8 @@ kill-previous:
   script:
     - taskkill /f /im Datalake.exe
 
-build-datalake:
-  stage: build
+build-server:
+  stage: build server
   only: [tags]
   tags:
     - buildopc
@@ -32,7 +34,18 @@ build-datalake:
     - msbuild /t:Restore
     - msbuild /t:Build /p:Configuration=Release
 
-deploy-datalake:
+build-webconsole:
+  stage: build webconsole
+  only: [tags]
+  tags:
+    - buildopc
+  script:
+    - cd C:\app\datalakeclient
+    - npm install
+    - npm run build
+    - xcopy /s .\build "C:\Dist\Datalake\Content" /K /D /H /Y
+
+deploy-server:
   stage: deploy
   only: [tags]
   tags:
