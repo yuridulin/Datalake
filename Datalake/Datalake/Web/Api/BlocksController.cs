@@ -10,7 +10,7 @@ namespace Datalake.Web.Api
 {
 	public class BlocksController : Controller
 	{
-		public object List()
+		public Result List()
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -25,17 +25,17 @@ namespace Datalake.Web.Api
 					block.LoadChildren(blocks);
 				}
 
-				return top;
+				return Data(top);
 			}
 		}
 
-		public object Read(int Id)
+		public Result Read(int Id)
 		{
 			using (var db = new DatabaseContext())
 			{
 				var block = db.Blocks.FirstOrDefault(x => x.Id == Id);
 
-				if (block == null) return new { Error = "Не найден объект по Id = " + Id };
+				if (block == null) return Error("Не найден объект по Id = " + Id);
 
 				block.Properties = JsonConvert.DeserializeObject<Dictionary<string, string>>(block.PropertiesRaw);
 
@@ -50,11 +50,11 @@ namespace Datalake.Web.Api
 					.OrderBy(x => x.Name)
 					.ToList();
 				
-				return block;
+				return Data(block);
 			}
 		}
 
-		public object Parents(int Id)
+		public Result Parents(int Id)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -78,11 +78,11 @@ namespace Datalake.Web.Api
 					}
 				}
 
-				return list.Select(x => x.Id).Except(excluded);
+				return Data(list.Select(x => x.Id).Except(excluded));
 			}
 		}
 
-		public List<HistoryResponse> Live(int Id)
+		public Result Live(int Id)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -94,7 +94,7 @@ namespace Datalake.Web.Api
 					.Where(x => tags.Keys.Contains(x.Id))
 					.ToDictionary(x => x.Id, x => x);
 
-				return tags.Keys
+				return Data(tags.Keys
 					.Select(x => new
 					{
 						Tag = dbtags[x],
@@ -116,11 +116,11 @@ namespace Datalake.Web.Api
 							}
 						}
 					})
-					.ToList();
+					.ToList());
 			}
 		}
 
-		public List<HistoryResponse> History(int Id, DateTime? old, DateTime? young, int resolution = 0)
+		public Result History(int Id, DateTime? old, DateTime? young, int resolution = 0)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -134,7 +134,7 @@ namespace Datalake.Web.Api
 
 				var data = db.ReadHistory(tags.Keys.ToArray(), old ?? young?.Date ?? DateTime.Today, young ?? DateTime.Now, resolution);
 
-				return data
+				return Data(data
 					.GroupBy(x => x.TagId)
 					.Select(g => new HistoryResponse
 					{
@@ -151,11 +151,11 @@ namespace Datalake.Web.Api
 							})
 							.ToList()
 					})
-					.ToList();
+					.ToList());
 			}
 		}
 
-		public object Create(int ParentId)
+		public Result Create(int ParentId)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -172,7 +172,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Update(Block block)
+		public Result Update(Block block)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -205,7 +205,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Move(int Id, int ParentId)
+		public Result Move(int Id, int ParentId)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -220,7 +220,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Delete(int Id)
+		public Result Delete(int Id)
 		{
 			using (var db = new DatabaseContext())
 			{

@@ -68,6 +68,7 @@
     <Compile Include="Database\Enums\TagType.cs" />
     <Compile Include="Web\Api\ConsoleController.cs" />
     <Compile Include="Web\Models\AggFunc.cs" />
+    <Compile Include="Web\Models\Result.cs" />
     <Compile Include="Web\Models\LiveRequest.cs" />
     <Compile Include="Web\Models\HistoryValue.cs" />
     <Compile Include="Web\Models\HistoryResponse.cs" />

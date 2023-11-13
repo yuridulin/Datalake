@@ -8,7 +8,7 @@ namespace Datalake.Web.Api
 {
 	public class ConsoleController : Controller
 	{
-		public List<TreeItem> Tree()
+		public Result Tree()
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -58,7 +58,7 @@ namespace Datalake.Web.Api
 					});
 				}
 
-				return tree;
+				return Data(tree);
 			}
 
 			List<TreeItem> GetSubItems(List<TreeItem> tags)

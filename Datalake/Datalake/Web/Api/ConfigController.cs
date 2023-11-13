@@ -7,12 +7,12 @@ namespace Datalake.Web.Api
 {
 	public class ConfigController : Controller
 	{
-		public object LastUpdate()
+		public Result LastUpdate()
 		{
-			return Cache.LastUpdate;
+			return Data(Cache.LastUpdate);
 		}
 
-		public object Statistic(DateTime last)
+		public Result Statistic(DateTime last)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -20,7 +20,7 @@ namespace Datalake.Web.Api
 				var TotalSourcesCount = db.Sources.Count();
 				var WritesInMinute = Cache.Live.Values.ToList().Where(x => (DateTime.Now - x.Date) < TimeSpan.FromMinutes(1)).Count();
 
-				return new { TotalTagsCount, TotalSourcesCount, WritesInMinute, Logs = new string[0], Last = last };
+				return Data(new { TotalTagsCount, TotalSourcesCount, WritesInMinute, Logs = new string[0], Last = last });
 			}
 		}
 	}

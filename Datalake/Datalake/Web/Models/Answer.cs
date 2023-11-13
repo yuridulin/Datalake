@@ -1,10 +1,11 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 
 namespace Datalake.Web.Models
 {
 	internal class Answer
 	{
-		public int StatusCode { get; set; } = 501;
+		public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.NotImplemented;
 
 		public string ContentType { get; set; } = "text/html";
 

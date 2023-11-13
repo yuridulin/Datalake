@@ -11,13 +11,13 @@ namespace Datalake.Web.Api
 {
 	public class TagsController : Controller
 	{
-		public object List(string[] names = null)
+		public Result List(string[] names = null)
 		{
 			using (var db = new DatabaseContext())
 			{
 				var sources = db.Sources.ToList();
 
-				return db.Tags
+				var list = db.Tags
 					.Where(x => names == null || names.Contains(x.Name))
 					.Select(x => new
 					{
@@ -32,15 +32,19 @@ namespace Datalake.Web.Api
 					})
 					.OrderBy(x => x.Name)
 					.ToList();
+
+				return Data(list);
 			}
 		}
 
-		public object Types()
+		public Result Types()
 		{
-			return Enum.GetValues(typeof(TagType)).Cast<TagType>().ToDictionary(x => (int)x, x => x.ToString());
+			var types = Enum.GetValues(typeof(TagType)).Cast<TagType>().ToDictionary(x => (int)x, x => x.ToString());
+
+			return Data(types);
 		}
 
-		public object Inputs(int id)
+		public Result Inputs(int id)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -49,15 +53,17 @@ namespace Datalake.Web.Api
 					.Select(x => x.TagId)
 					.ToList();
 
-				return db.Tags
+				var list = db.Tags
 					.Where(x => x.Id != id)
 					.Where(x => !outputs.Contains(x.Id))
 					.Select(x => new { x.Id, x.Name })
 					.ToList();
+
+				return Data(list);
 			}
 		}
 
-		public List<HistoryResponse> Live(LiveRequest request)
+		public Result Live(LiveRequest request)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -70,7 +76,7 @@ namespace Datalake.Web.Api
 					? db.Tags.ToList()
 					: db.Tags.Where(x => request.Tags.Contains(x.Id)).ToList();
 
-				return tags
+				var live = tags
 					.Select(x => new
 					{
 						Tag = x,
@@ -94,10 +100,12 @@ namespace Datalake.Web.Api
 						}
 					})
 					.ToList();
+
+				return Data(live);
 			}
 		}
 
-		public List<HistoryResponse> History(List<HistoryRequest> request)
+		public Result History(List<HistoryRequest> request)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -107,7 +115,7 @@ namespace Datalake.Web.Api
 				{
 					if (!set.Old.HasValue && !set.Young.HasValue)
 					{
-						response.AddRange(Live(set));
+						response.AddRange((List<HistoryResponse>)Live(set).Data);
 					}
 					else
 					{
@@ -215,11 +223,11 @@ namespace Datalake.Web.Api
 					}
 				}
 
-				return response;
+				return Data(response);
 			}
 		}
 
-		public object Create(int sourceId = 0)
+		public Result Create(int sourceId = 0)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -261,7 +269,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object CreateFromSource(int sourceId, string sourceItem, int sourceType)
+		public Result CreateFromSource(int sourceId, string sourceItem, int sourceType)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -304,23 +312,23 @@ namespace Datalake.Web.Api
 			return Done("Тег добавлен");
 		}
 
-		public object Read(int id)
+		public Result Read(int id)
 		{
 			using (var db = new DatabaseContext())
 			{
 				var tag = db.Tags.FirstOrDefault(x => x.Id == id);
 
-				if (tag == null) return new { Error = "Тег не найден." };
+				if (tag == null) return Error("Тег не найден.");
 
 				tag.Inputs = db.Rel_Tag_Input
 					.Where(x => x.TagId == id)
 					.ToList();
 
-				return tag;
+				return Data(tag);
 			}
 		}
 
-		public object Write(int id, object value = null, DateTime? date = null, bool good = true)
+		public Result Write(int id, object value = null, DateTime? date = null, bool good = true)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -351,7 +359,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
-		public object Update(Tag tag)
+		public Result Update(Tag tag)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -390,11 +398,11 @@ namespace Datalake.Web.Api
 
 				Cache.Update();
 
-				return new { Done = "Тег успешно сохранён." };
+				return Done("Тег успешно сохранён.");
 			}
 		}
 
-		public object Delete(int id)
+		public Result Delete(int id)
 		{
 			using (var db = new DatabaseContext())
 			{
@@ -412,7 +420,7 @@ namespace Datalake.Web.Api
 
 				Cache.Update();
 
-				return new { Done = "Тег успешно удалён." };
+				return Done("Тег успешно удалён.");
 			}
 		}
 	}

@@ -11,10 +11,12 @@ namespace Datalake.Web.Models
 
 		public WindowsPrincipal User { get; set; } = null;
 
-		public object Done(string text) => new { Done = text };
+		public Result Data(object data) => new Result { Data = data };
 
-		public object Warning(string text) => new { Warning = text };
+		public Result Done(string data) => new Result { Done = data };
 
-		public object Error(string text) => new { Error = text };
+		public Result Warning(string data) => new Result { Warning = data };
+
+		public Result Error(string data) => new Result { Error = data };
 	}
 }

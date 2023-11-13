@@ -53,7 +53,7 @@ namespace Datalake.Web
 					LogsWorker.Add("Router", "Error: " + e.Message + "\n" + e.StackTrace, Workers.Logs.Models.LogType.Error);
 					res = new Answer
 					{
-						StatusCode = 200,
+						StatusCode = HttpStatusCode.InternalServerError,
 						ContentType = "application/json",
 						String = JsonConvert.SerializeObject(new { Error = e.Message, e.StackTrace })
 					};
@@ -67,7 +67,7 @@ namespace Datalake.Web
 			#endif
 
 			// Отправка ответа клиенту
-			Response.StatusCode = res.StatusCode;
+			Response.StatusCode = (int)res.StatusCode;
 			Response.ContentType = res.ContentType;
 			Response.ContentLength64 = res.Bytes.Length;
 			using (var output = Response.OutputStream)
@@ -85,7 +85,7 @@ namespace Datalake.Web
 			{
 				return new Answer
 				{
-					StatusCode = 200,
+					StatusCode = HttpStatusCode.OK,
 					ContentType = "application/json",
 					String = JsonConvert.SerializeObject(new { })
 				};
@@ -98,7 +98,7 @@ namespace Datalake.Web
 			{
 				return new Answer
 				{
-					StatusCode = 501,
+					StatusCode = HttpStatusCode.NotImplemented,
 					ContentType = "application/json",
 					String = JsonConvert.SerializeObject(new { Error = "Контроллер " + methodParts[0] + " не найден" })
 				};
@@ -114,7 +114,7 @@ namespace Datalake.Web
 			{
 				return new Answer
 				{
-					StatusCode = 501,
+					StatusCode = HttpStatusCode.NotImplemented,
 					ContentType = "application/json",
 					String = JsonConvert.SerializeObject(new { Error = "Метод " + methodParts[1] + " не найден" })
 				};
@@ -207,7 +207,7 @@ namespace Datalake.Web
 			}
 			else
 			{
-				result = action.Invoke(instance, new object[0]);
+				result = (Result)action.Invoke(instance, new object[0]);
 			}
 
 			if (attrib != null)
@@ -215,11 +215,13 @@ namespace Datalake.Web
 				result = ((Task<object>)result).Result;
 			}
 
+			Result answer = (Result)result;
+
 			return new Answer
 			{
-				StatusCode = 200,
+				StatusCode = answer.StatusCode,
 				ContentType = "application/json",
-				String = JsonConvert.SerializeObject(result),
+				String = answer.ToJson(),
 			};
 		}
 
@@ -269,7 +271,7 @@ namespace Datalake.Web
 
 				return new Answer
 				{
-					StatusCode = 200,
+					StatusCode = HttpStatusCode.OK,
 					ContentType = type,
 					Bytes = result
 				};
@@ -278,7 +280,7 @@ namespace Datalake.Web
 			{
 				return new Answer
 				{
-					StatusCode = 404,
+					StatusCode = HttpStatusCode.NotFound,
 				};
 			}
 		}
