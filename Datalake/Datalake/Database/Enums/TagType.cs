@@ -6,5 +6,6 @@
 		Number,
 		Boolean,
 		Computed,
+		Manual,
 	}
 }

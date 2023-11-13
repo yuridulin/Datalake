@@ -320,6 +320,37 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		public object Write(int id, object value = null, DateTime? date = null, bool good = true)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var tag = db.Tags.FirstOrDefault(x => x.Id == id);
+				if (tag == null)
+				{
+					return Error("Тег не найден по id [" + id + "]");
+				}
+
+				var d = date ?? DateTime.Now;
+				var (text, number, q) = tag.FromRaw(value, (ushort)(good ? TagQuality.Good_ManualWrite : TagQuality.Bad_ManualWrite));
+
+				db.WriteHistory(new List<TagHistory>
+				{
+					new TagHistory
+					{
+						Date = d,
+						Text = text,
+						Number = number,
+						Quality = q,
+						TagId = tag.Id,
+						Type = tag.Type,
+						Using = TagHistoryUse.Basic,
+					}
+				});
+
+				return Done($"Значение {value} записано в {tag.Type} тег {tag.Name} с временем {d} и качеством {q}");
+			}
+		}
+
 		public object Update(Tag tag)
 		{
 			using (var db = new DatabaseContext())

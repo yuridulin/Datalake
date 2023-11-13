@@ -55,6 +55,7 @@ namespace Datalake.Database
 		{
 			Tags = db.Tags
 				.Where(x => Id == x.SourceId)
+				.Where(x => x.Type == TagType.String || x.Type == TagType.Number || x.Type == TagType.Boolean)
 				.ToList();
 
 			foreach (var tag in Tags)
