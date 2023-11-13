@@ -195,6 +195,36 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Запись значения в тег",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Id\": 2,\r\n    \"Value\": \"xxx\",\r\n    \"Good\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:83/api/tags/write",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "83",
+					"path": [
+						"api",
+						"tags",
+						"write"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
