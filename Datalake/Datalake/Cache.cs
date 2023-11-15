@@ -33,7 +33,24 @@ namespace Datalake
 		{
 			lock (Live)
 			{
-				Live[value.TagId] = value;
+				if (Live[value.TagId].Date <= value.Date)
+				{
+					Live[value.TagId] = value;
+				}
+			}
+		}
+
+		public static void WriteMany(List<TagHistory> values)
+		{
+			lock (Live)
+			{
+				foreach (var value in values)
+				{
+					if (Live[value.TagId].Date <= value.Date)
+					{
+						Live[value.TagId] = value;
+					}
+				}
 			}
 		}
 	}
