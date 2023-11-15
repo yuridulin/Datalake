@@ -341,18 +341,15 @@ namespace Datalake.Web.Api
 				var d = date ?? DateTime.Now;
 				var (text, number, q) = tag.FromRaw(value, (ushort)(good ? TagQuality.Good_ManualWrite : TagQuality.Bad_ManualWrite));
 
-				db.WriteHistory(new List<TagHistory>
+				db.WriteManual(new TagHistory
 				{
-					new TagHistory
-					{
-						Date = d,
-						Text = text,
-						Number = number,
-						Quality = q,
-						TagId = tag.Id,
-						Type = tag.Type,
-						Using = TagHistoryUse.Basic,
-					}
+					Date = d,
+					Text = text,
+					Number = number,
+					Quality = q,
+					TagId = tag.Id,
+					Type = tag.Type,
+					Using = TagHistoryUse.Basic,
 				});
 
 				return Done($"Значение {value} записано в {tag.Type} тег {tag.Name} с временем {d} и качеством {q}");
