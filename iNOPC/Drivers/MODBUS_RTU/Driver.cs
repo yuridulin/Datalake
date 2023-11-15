@@ -185,6 +185,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
 								FieldName = fields[k].Name,
 								Length = length,
 								Type = fields[k].Type,
+								Scale = fields[k].Scale,
 							});
 
 							fields[k].Checked = true;
@@ -216,6 +217,7 @@ namespace iNOPC.Drivers.MODBUS_RTU
 								FieldName = field.Name,
 								Length = GetRegistersCount(field.Type),
 								Type = field.Type,
+								Scale = field.Scale,
 							}
 						},
 					});

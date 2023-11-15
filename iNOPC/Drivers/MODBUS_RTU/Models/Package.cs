@@ -99,38 +99,39 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 						case "Date":
 							if (OldRegisterFirst)
 							{
-								toValue = OldByteFirst ? new[]
-								{
-								valueBytes[3],
-								valueBytes[2],
-								valueBytes[1],
-								valueBytes[0],
-							} :
-								new[]
-								{
-
-								valueBytes[2],
-								valueBytes[3],
-								valueBytes[0],
-								valueBytes[1],
-								};
+								toValue = OldByteFirst 
+									? new[]
+									{
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
+									}
+									: new[]
+									{
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
+									};
 							}
 							else
 							{
-								toValue = OldByteFirst ? new[]
-								{
-								valueBytes[1],
-								valueBytes[0],
-								valueBytes[3],
-								valueBytes[2],
-							} :
-								new[]
-								{
-								valueBytes[0],
-								valueBytes[1],
-								valueBytes[2],
-								valueBytes[3],
-								};
+								toValue = OldByteFirst 
+									? new[]
+									{
+										valueBytes[1],
+										valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
+									}
+									: new[]
+									{
+										valueBytes[0],
+										valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
+									};
 							}
 
 							value = (new DateTime(1970, 1, 1, 3, 0, 0, 0, DateTimeKind.Utc) + TimeSpan.FromSeconds(BitConverter.ToInt32(toValue, 0))).ToString("HH:mm:ss");
@@ -146,13 +147,13 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[1],
-									valueBytes[0],
+										valueBytes[1],
+										valueBytes[0],
 									}
 									: new[]
 									{
-									valueBytes[0],
-									valueBytes[1],
+										valueBytes[0],
+										valueBytes[1],
 									};
 							}
 							else
@@ -160,17 +161,19 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[1],
-									valueBytes[0],
+										valueBytes[1],
+										valueBytes[0],
 									}
 									: new[]
 									{
-									valueBytes[0],
-									valueBytes[1],
+										valueBytes[0],
+										valueBytes[1],
 									};
 							}
 
-							value = BitConverter.ToInt16(toValue, 0);
+							var _int16 = BitConverter.ToInt16(toValue, 0);
+							value = part.Scale != 0 ? (_int16 / part.Scale) : _int16;
+
 							break;
 
 						case "UInt16":
@@ -179,13 +182,13 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[1],
-									valueBytes[0],
+										valueBytes[1],
+										valueBytes[0],
 									}
 									: new[]
 									{
-									valueBytes[0],
-									valueBytes[1],
+										valueBytes[0],
+										valueBytes[1],
 									};
 							}
 							else
@@ -193,17 +196,18 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[1],
-									valueBytes[0],
+										valueBytes[1],
+										valueBytes[0],
 									}
 									: new[]
 									{
-									valueBytes[0],
-									valueBytes[1],
+										valueBytes[0],
+										valueBytes[1],
 									};
 							}
 
-							value = BitConverter.ToUInt16(toValue, 0);
+							var _uint16 = BitConverter.ToUInt16(toValue, 0);
+							value = part.Scale != 0 ? (_uint16 / part.Scale) : _uint16;
 							break;
 
 						case "Int":
@@ -212,17 +216,17 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[3],
-									valueBytes[2],
-									valueBytes[1],
-									valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
 									}
 									: new[]
 									{
-									valueBytes[2],
-									valueBytes[3],
-									valueBytes[0],
-									valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
 									};
 							}
 							else
@@ -230,21 +234,22 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[1],
-									valueBytes[0],
-									valueBytes[3],
-									valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
 									}
 									: new[]
 									{
-									valueBytes[0],
-									valueBytes[1],
-									valueBytes[2],
-									valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
 									};
 							}
 
-							value = BitConverter.ToInt32(toValue, 0);
+							var _int32 = BitConverter.ToInt32(toValue, 0);
+							value = part.Scale != 0 ? (_int32 / part.Scale) : _int32;
 							break;
 
 						case "UInt32":
@@ -253,17 +258,17 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[3],
-									valueBytes[2],
-									valueBytes[1],
-									valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
 									}
 									: new[]
 									{
-									valueBytes[2],
-									valueBytes[3],
-									valueBytes[0],
-									valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
 									};
 							}
 							else
@@ -271,187 +276,196 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[1],
-									valueBytes[0],
-									valueBytes[3],
-									valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
 									}
 									: new[]
 									{
-									valueBytes[0],
-									valueBytes[1],
-									valueBytes[2],
-									valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
 									};
 							}
 
-							value = BitConverter.ToUInt32(toValue, 0);
+							var _uint32 = BitConverter.ToUInt32(toValue, 0);
+							value = part.Scale != 0 ? (_uint32 / part.Scale) : _uint32;
 							break;
 
 						case "Long":
 							if (OldRegisterFirst)
 							{
-								toValue = OldByteFirst ? new[]
-								{
-								valueBytes[7],
-								valueBytes[6],
-								valueBytes[5],
-								valueBytes[4],
-								valueBytes[3],
-								valueBytes[2],
-								valueBytes[1],
-								valueBytes[0],
-							} :
-								new[]
-								{
-								valueBytes[6],
-								valueBytes[7],
-								valueBytes[4],
-								valueBytes[5],
-								valueBytes[2],
-								valueBytes[3],
-								valueBytes[0],
-								valueBytes[1],
-								};
+								toValue = OldByteFirst
+									? new[]
+									{
+										valueBytes[7],
+										valueBytes[6],
+										valueBytes[5],
+										valueBytes[4],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
+									}
+									: new[]
+									{
+										valueBytes[6],
+										valueBytes[7],
+										valueBytes[4],
+										valueBytes[5],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
+									};
 							}
 							else
 							{
-								toValue = OldByteFirst ? new[]
-								{
-								valueBytes[1],
-								valueBytes[0],
-								valueBytes[3],
-								valueBytes[2],
-								valueBytes[5],
-								valueBytes[4],
-								valueBytes[7],
-								valueBytes[6],
-							} :
-								new[]
-								{
-								valueBytes[0],
-								valueBytes[1],
-								valueBytes[2],
-								valueBytes[3],
-								valueBytes[4],
-								valueBytes[5],
-								valueBytes[6],
-								valueBytes[7],
-								};
+								toValue = OldByteFirst
+									? new[]
+									{
+										valueBytes[1],
+										valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[5],
+										valueBytes[4],
+										valueBytes[7],
+										valueBytes[6],
+									}
+									: new[]
+									{
+										valueBytes[0],
+										valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[4],
+										valueBytes[5],
+										valueBytes[6],
+										valueBytes[7],
+									};
 							}
 
-							part.Value = BitConverter.ToInt64(toValue, 0);
+							var _int64 = BitConverter.ToInt64(toValue, 0);
+							value = part.Scale != 0 ? (_int64 / part.Scale) : _int64;
 							break;
-
 
 						case "UInt64":
 							if (OldRegisterFirst)
 							{
-								toValue = OldByteFirst ? new[]
-								{
-								valueBytes[7],
-								valueBytes[6],
-								valueBytes[5],
-								valueBytes[4],
-								valueBytes[3],
-								valueBytes[2],
-								valueBytes[1],
-								valueBytes[0],
-							} :
-								new[]
-								{
-								valueBytes[6],
-								valueBytes[7],
-								valueBytes[4],
-								valueBytes[5],
-								valueBytes[2],
-								valueBytes[3],
-								valueBytes[0],
-								valueBytes[1],
-								};
+								toValue = OldByteFirst
+									? new[]
+									{
+										valueBytes[7],
+										valueBytes[6],
+										valueBytes[5],
+										valueBytes[4],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
+									}
+									: new[]
+									{
+										valueBytes[6],
+										valueBytes[7],
+										valueBytes[4],
+										valueBytes[5],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
+									};
 							}
 							else
 							{
-								toValue = OldByteFirst ? new[]
-								{
-								valueBytes[1],
-								valueBytes[0],
-								valueBytes[3],
-								valueBytes[2],
-								valueBytes[5],
-								valueBytes[4],
-								valueBytes[7],
-								valueBytes[6],
-							} :
-								new[]
-								{
-								valueBytes[0],
-								valueBytes[1],
-								valueBytes[2],
-								valueBytes[3],
-								valueBytes[4],
-								valueBytes[5],
-								valueBytes[6],
-								valueBytes[7],
-								};
+								toValue = OldByteFirst
+									? new[]
+									{
+										valueBytes[1],
+										valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[5],
+										valueBytes[4],
+										valueBytes[7],
+										valueBytes[6],
+									}
+									: new[]
+									{
+										valueBytes[0],
+										valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[4],
+										valueBytes[5],
+										valueBytes[6],
+										valueBytes[7],
+									};
 							}
 
-							value = BitConverter.ToUInt64(toValue, 0);
+							var _uint64 = BitConverter.ToUInt64(toValue, 0);
+							value = part.Scale != 0 ? (_uint64 / part.Scale) : _uint64;
 							break;
 
 						case "Double":
 							if (OldRegisterFirst)
 							{
-								toValue = OldByteFirst ? new[]
-								{
-								valueBytes[7],
-								valueBytes[6],
-								valueBytes[5],
-								valueBytes[4],
-								valueBytes[3],
-								valueBytes[2],
-								valueBytes[1],
-								valueBytes[0],
-							} :
-								new[]
-								{
-								valueBytes[6],
-								valueBytes[7],
-								valueBytes[4],
-								valueBytes[5],
-								valueBytes[2],
-								valueBytes[3],
-								valueBytes[0],
-								valueBytes[1],
-								};
+								toValue = OldByteFirst
+									? new[]
+									{
+										valueBytes[7],
+										valueBytes[6],
+										valueBytes[5],
+										valueBytes[4],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
+									}
+									: new[]
+									{
+										valueBytes[6],
+										valueBytes[7],
+										valueBytes[4],
+										valueBytes[5],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
+									};
 							}
 							else
 							{
-								toValue = OldByteFirst ? new[]
-								{
-								valueBytes[1],
-								valueBytes[0],
-								valueBytes[3],
-								valueBytes[2],
-								valueBytes[5],
-								valueBytes[4],
-								valueBytes[7],
-								valueBytes[6],
-							} :
-								new[]
-								{
-								valueBytes[0],
-								valueBytes[1],
-								valueBytes[2],
-								valueBytes[3],
-								valueBytes[4],
-								valueBytes[5],
-								valueBytes[6],
-								valueBytes[7],
-								};
+								toValue = OldByteFirst
+									? new[]
+									{
+										valueBytes[1],
+										valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[5],
+										valueBytes[4],
+										valueBytes[7],
+										valueBytes[6],
+									}
+									: new[]
+									{
+										valueBytes[0],
+										valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[4],
+										valueBytes[5],
+										valueBytes[6],
+										valueBytes[7],
+									};
 							}
 
-							value = BitConverter.ToDouble(toValue, 0);
+							var _double = BitConverter.ToDouble(toValue, 0);
+							value = part.Scale != 0 ? (_double / part.Scale) : _double;
 							break;
 
 						case "Single":
@@ -460,17 +474,17 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[3],
-									valueBytes[2],
-									valueBytes[1],
-									valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
 									}
 									: new[]
 									{
-									valueBytes[2],
-									valueBytes[3],
-									valueBytes[0],
-									valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
 									};
 							}
 							else
@@ -478,21 +492,22 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[1],
-									valueBytes[0],
-									valueBytes[3],
-									valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
 									}
 									: new[]
 									{
-									valueBytes[0],
-									valueBytes[1],
-									valueBytes[2],
-									valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
 									};
 							}
 
-							value = BitConverter.ToSingle(toValue, 0);
+							var _single = BitConverter.ToSingle(toValue, 0);
+							value = part.Scale != 0 ? (_single / part.Scale) : _single;
 							break;
 
 						case "Int.Int":
@@ -503,17 +518,17 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[3],
-									valueBytes[2],
-									valueBytes[1],
-									valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
 									}
 									: new[]
 									{
-									valueBytes[2],
-									valueBytes[3],
-									valueBytes[0],
-									valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
 									};
 							}
 							else
@@ -521,17 +536,17 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[1],
-									valueBytes[0],
-									valueBytes[3],
-									valueBytes[2],
+										valueBytes[1],
+										valueBytes[0],
+										valueBytes[3],
+										valueBytes[2],
 									}
 									: new[]
 									{
-									valueBytes[0],
-									valueBytes[1],
-									valueBytes[2],
-									valueBytes[3],
+										valueBytes[0],
+										valueBytes[1],
+										valueBytes[2],
+										valueBytes[3],
 									};
 							}
 
@@ -542,17 +557,17 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[7],
-									valueBytes[6],
-									valueBytes[5],
-									valueBytes[4],
+										valueBytes[7],
+										valueBytes[6],
+										valueBytes[5],
+										valueBytes[4],
 									}
 									: new[]
 									{
-									valueBytes[6],
-									valueBytes[7],
-									valueBytes[4],
-									valueBytes[5],
+										valueBytes[6],
+										valueBytes[7],
+										valueBytes[4],
+										valueBytes[5],
 									};
 							}
 							else
@@ -560,23 +575,24 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 								toValue = OldByteFirst
 									? new[]
 									{
-									valueBytes[5],
-									valueBytes[4],
-									valueBytes[7],
-									valueBytes[6],
+										valueBytes[5],
+										valueBytes[4],
+										valueBytes[7],
+										valueBytes[6],
 									}
 									: new[]
 									{
-									valueBytes[4],
-									valueBytes[5],
-									valueBytes[6],
-									valueBytes[7],
+										valueBytes[4],
+										valueBytes[5],
+										valueBytes[6],
+										valueBytes[7],
 									};
 							}
 
 							first = BitConverter.ToInt32(toValue, 0);
 
-							value = Convert.ToDouble(first.ToString() + "," + second.ToString());
+							var _value = Convert.ToDouble(first.ToString() + "," + second.ToString());
+							value = part.Scale != 0 ? (_value / part.Scale) : _value;
 							break;
 
 						case "AKVT_BCD":
@@ -598,7 +614,7 @@ namespace iNOPC.Drivers.MODBUS_RTU.Models
 							if (b0[1]) bcd /= 1000;
 							if (b0[0]) bcd /= 100;
 
-							value = bcd;
+							value = part.Scale != 0 ? (bcd / part.Scale) : bcd;
 							break;
 					}
 
