@@ -3,6 +3,7 @@ using LinqToDB;
 using LinqToDB.Data;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Datalake.Database
@@ -131,6 +132,14 @@ namespace Datalake.Database
 
 		string GetTableName(DateTime date) => TagsHistoryName + date.ToString("yyyy_MM_dd");
 
+		List<DateTime> GetStoredDays(DateTime defaultDate)
+		{
+			return Cache.Tables
+				//.Select(x => DateTime.TryParse(x.Replace(TagsHistoryName, ""), out DateTime d) ? d : defaultDate)
+				.Select(x => DateTime.ParseExact(x.Replace(TagsHistoryName, ""), "yyyy_MM_dd", new CultureInfo("ru-RU")))
+				.ToList();
+		}
+
 		public ITable<TagHistory> GetHistoryTable(DateTime seekDate)
 		{
 			string historyTableName = GetTableName(seekDate);
@@ -152,8 +161,7 @@ namespace Datalake.Database
 				 */
 				var newTable = this.CreateTable<TagHistory>(historyTableName);
 
-				var previousDate = Cache.Tables
-					.Select(x => DateTime.TryParse(x.Replace(TagsHistoryName, ""), out DateTime d) ? d : seekDate)
+				var previousDate = GetStoredDays(seekDate)
 					.OrderByDescending(x => x)
 					.DefaultIfEmpty(seekDate)
 					.FirstOrDefault();
@@ -355,8 +363,9 @@ namespace Datalake.Database
 
 			if (!values.Any(x => x.Date > value.Date))
 			{
-				var nextTablesDates = Cache.Tables
-					.Select(x => DateTime.TryParse(x.Replace(TagsHistoryName, ""), out DateTime d) ? d : value.Date)
+				var dates = GetStoredDays(value.Date);
+
+				var nextTablesDates = dates
 					.Where(x => x > value.Date)
 					.OrderBy(x => x)
 					.ToList();

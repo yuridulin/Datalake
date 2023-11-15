@@ -10,9 +10,10 @@ namespace Datalake
 
 		public static Dictionary<int, TagHistory> Live { get; set; } = new Dictionary<int, TagHistory>();
 
-		public static void Update() => LastUpdate = DateTime.Now;
+		public static DateTime LastUpdate { get; set; } = DateTime.MinValue;
 
-		public static DateTime LastUpdate { get; set; }
+
+		public static void Update() => LastUpdate = DateTime.Now;
 
 		public static TagHistory Read(int tagId)
 		{
