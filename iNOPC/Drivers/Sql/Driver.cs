@@ -3,6 +3,8 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data.Odbc;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace Sql
@@ -44,6 +46,8 @@ namespace Sql
 
 			LogEvent("Мониторинг активен");
 
+			Task.Run(Update);
+
 			return true;
 		}
 
@@ -79,6 +83,14 @@ namespace Sql
 
 			try
 			{
+				string sql = Configuration.Code
+					.Replace("@AggHourStart", $"'{DateTime.Now:yyyyMMdd HH:00:05}'")
+					.Replace("@AggHourEnd", $"'{DateTime.Now.AddHours(-1):yyyyMMdd HH:00:05}'")
+					.Replace("@AggDayStart", $"'{DateTime.Now:yyyyMMdd 00:00:05}'")
+					.Replace("@AggDayEnd", $"'{DateTime.Now.AddDays(-1):yyyyMMdd 00:00:05}'");
+
+				LogEvent("SQL: " + sql, LogType.DETAILED);
+
 				using (var conn = new OdbcConnection())
 				{
 					conn.ConnectionString = "Driver={SQL Server}; " +
@@ -91,7 +103,7 @@ namespace Sql
 					using (var command = new OdbcCommand())
 					{
 						command.Connection = conn;
-						command.CommandText = Configuration.Code;
+						command.CommandText = sql;
 
 						using (var reader = command.ExecuteReader())
 						{
