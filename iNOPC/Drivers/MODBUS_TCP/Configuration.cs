@@ -82,10 +82,10 @@ namespace iNOPC.Drivers.MODBUS_TCP
 
 				return "<p>" 
 					+ Html.Input("Вкл.", nameof(field.IsActive), field.IsActive)
-					+ Html.Input("Имя", nameof(field.Name), field.Name, 30)
+					+ Html.Input("Имя", nameof(field.Name), field.Name, "width: 30%;")
 					+ select
-					+ Html.Input("Адрес", nameof(field.Address), field.Address, 10)
-					+ Html.Input("Делитель", nameof(field.Scale), field.Scale, 10)
+					+ Html.Input("Адрес", nameof(field.Address), field.Address, "width: 10%;")
+					+ Html.Input("Делитель", nameof(field.Scale), field.Scale, "width: 10%;")
 					+ "<button onclick='_copy(this)'>Копир.</button>"
 					+ "<button onclick='_del(this)'>Удалить</button>"
 					+ "</p>";
