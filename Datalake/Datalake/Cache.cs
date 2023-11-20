@@ -34,7 +34,11 @@ namespace Datalake
 		{
 			lock (Live)
 			{
-				if (Live[value.TagId].Date <= value.Date)
+				if (!Live.ContainsKey(value.TagId))
+				{
+					Live.Add(value.TagId, value);
+				}
+				else if (Live[value.TagId].Date <= value.Date)
 				{
 					Live[value.TagId] = value;
 				}
