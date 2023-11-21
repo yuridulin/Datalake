@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import TreeContainer from './left/TreeContainer';
+//import TreeContainer from './left/TreeContainer';
 import { Link, Outlet } from 'react-router-dom';
 import { UpdateContext } from '../context/updateContext';
+import { AppMenu } from './left/AppMenu';
 
 export default function App() {
 
@@ -17,7 +18,8 @@ export default function App() {
 		}}>
 			<div className="left">
 				<Link to="/" className="title">Datalake</Link>
-				<TreeContainer />
+				{/* <TreeContainer /> */}
+				<AppMenu />
 			</div>
 			<div className="right">
 				<Outlet />

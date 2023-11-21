@@ -1,0 +1,29 @@
+.app-menu {
+	margin-top: 1em;
+}
+
+
+.app-menu a {
+	display: block;
+	padding: .5em;
+	padding-left: 1em;
+	text-decoration: none;
+	color: #000;
+}
+
+.app-menu a.active {
+	color: #0074d5;
+}
+
+.app-menu a:hover {
+	color: #0074d5;
+	background-color: #e7f0ff;
+}
+
+.app-menu-block {
+	margin-bottom: .5em;
+}
+
+.app-menu-sub > a {
+	padding-left: 2.5em;
+}
