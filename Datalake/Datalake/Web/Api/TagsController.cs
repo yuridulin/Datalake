@@ -19,17 +19,32 @@ namespace Datalake.Web.Api
 
 				var list = db.Tags
 					.Where(x => names == null || names.Contains(x.Name))
-					.Select(x => new
-					{
-						x.Id,
-						x.Name,
-						x.Type,
-						x.Description,
-						x.SourceId,
-						x.SourceItem,
-						x.Interval,
-						Source = sources.DefaultIfEmpty(new Source { Name = "?" }).FirstOrDefault(s => s.Id == x.SourceId).Name,
-					})
+					.OrderBy(x => x.Name)
+					.ToList();
+
+				return Data(list);
+			}
+		}
+
+		public Result CalculatedList()
+		{
+			using (var db = new DatabaseContext())
+			{
+				var list = db.Tags
+					.Where(x => x.SourceId == CustomSourcesIdentity.Calculated)
+					.OrderBy(x => x.Name)
+					.ToList();
+
+				return Data(list);
+			}
+		}
+
+		public Result ManualList()
+		{
+			using (var db = new DatabaseContext())
+			{
+				var list = db.Tags
+					.Where(x => x.SourceId == CustomSourcesIdentity.Manual)
 					.OrderBy(x => x.Name)
 					.ToList();
 
@@ -235,12 +250,12 @@ namespace Datalake.Web.Api
 				var id = db.InsertWithInt32Identity(tag);
 
 				tag.Name = "Tag_" + id;
+				tag.SourceId = sourceId;
 
 				if (sourceId > 0)
 				{
 					var source = db.Sources.FirstOrDefault(x => x.Id == sourceId) ?? new Source { Name = "Unknown", Address = "", Id = sourceId };
 
-					tag.SourceId = sourceId;
 					tag.SourceItem = "";
 					tag.Name = source.Name + "." + tag.Name;
 				}
