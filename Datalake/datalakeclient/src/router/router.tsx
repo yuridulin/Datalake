@@ -1,4 +1,4 @@
-import { createBrowserRouter, matchRoutes, useLocation } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import App from '../components/App'
 import Offline from '../components/Offline'
 import Dashboard from '../components/right/dashboard/Dashboard'
@@ -11,6 +11,7 @@ import BlockForm from '../components/right/blocks/BlockForm'
 import BlockView from '../components/right/blocks/BlockView'
 import SourceForm from '../components/right/sources/SourceForm'
 import TagSelectedForm from '../components/right/tags/TagSelectedForm'
+import Manual from '../components/right/manual/Manual'
 
 const router = createBrowserRouter([
 	{
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
 						element: <TagSelectedForm />
 					},
 					{
+						path: '/tags/manual/',
+						element: <Manual />
+					},
+					{
 						path: '/tags/:id',
 						element: <TagForm />
 					},
@@ -72,7 +77,8 @@ const router = createBrowserRouter([
 					}
 				]
 			}
-		]
+		],
+		errorElement: <div>Этот раздел ещё не реализован</div>
 	},
 	{
 		path: '/offline',
