@@ -10,7 +10,7 @@ import { Tag } from "../../../@types/Tag";
 import { ManualId } from "../../../@types/enums/CustomSourcesIdentity";
 import { useUpdateContext } from "../../../context/updateContext";
 
-export default function Manual() {
+export default function TagsManualList() {
 
 	const { setUpdate } = useUpdateContext()
 	const [ tags, setTags ] = useState([] as Tag[])

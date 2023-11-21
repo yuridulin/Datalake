@@ -11,7 +11,8 @@ import BlockForm from '../components/right/blocks/BlockForm'
 import BlockView from '../components/right/blocks/BlockView'
 import SourceForm from '../components/right/sources/SourceForm'
 import TagSelectedForm from '../components/right/tags/TagSelectedForm'
-import Manual from '../components/right/manual/Manual'
+import TagsManualList from '../components/right/tags/TagsManualList'
+import TagsCalculatedList from '../components/right/tags/TagsCalculatedList'
 
 const router = createBrowserRouter([
 	{
@@ -52,7 +53,11 @@ const router = createBrowserRouter([
 					},
 					{
 						path: '/tags/manual/',
-						element: <Manual />
+						element: <TagsManualList />
+					},
+					{
+						path: '/tags/calc/',
+						element: <TagsCalculatedList />
 					},
 					{
 						path: '/tags/:id',
