@@ -259,6 +259,14 @@ namespace Datalake.Web.Api
 					tag.SourceItem = "";
 					tag.Name = source.Name + "." + tag.Name;
 				}
+				else if (sourceId == CustomSourcesIdentity.Manual)
+				{
+					tag.Name = "Manual" + tag.Name;
+				}
+				else if (sourceId == CustomSourcesIdentity.Calculated)
+				{
+					tag.Name = "Calc" + tag.Name;
+				}
 
 				db.Tags
 					.Where(x => x.Id == id)
