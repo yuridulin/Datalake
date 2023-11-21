@@ -9,6 +9,7 @@ import Header from "../../small/Header";
 import router from "../../../router/router";
 import FormRow from "../../small/FormRow";
 import { AppstoreAddOutlined, DeleteOutlined } from "@ant-design/icons";
+import { CalculatedId, ManualId } from "../../../@types/enums/CustomSourcesIdentity";
 
 export default function TagForm() {
 
@@ -133,12 +134,19 @@ export default function TagForm() {
 					</div>
 				</div>
 				<FormRow title="Способ получения">
-					<Radio.Group buttonStyle="solid" value={tag.IsCalculating} onChange={e => setTag({...tag, IsCalculating: e.target.value })}>
-						<Radio.Button value={true}>Вычисляемый</Radio.Button>
-						<Radio.Button value={false}>Из источника</Radio.Button>
+					<Radio.Group
+						buttonStyle="solid"
+						value={tag.SourceId}
+						onChange={e => setTag({...tag,
+							IsCalculating: e.target.value === CalculatedId,
+							SourceId: e.target.value })}
+					>
+						<Radio.Button value={ManualId}>Мануальный</Radio.Button>
+						<Radio.Button value={CalculatedId}>Вычисляемый</Radio.Button>
+						<Radio.Button value={0}>Из источника</Radio.Button>
 					</Radio.Group>
 				</FormRow>
-				<div style={{ display: tag.IsCalculating ? 'block' : 'none' }}>
+				<div style={{ display: tag.SourceId === CalculatedId ? 'block' : 'none' }}>
 					<FormRow title="Формула для вычисления">
 						<Input value={tag.Formula} onChange={e => setTag({...tag, Formula: e.target.value })} />
 					</FormRow>
@@ -169,7 +177,7 @@ export default function TagForm() {
 						<Button icon={<AppstoreAddOutlined />} onClick={addParam}></Button>
 					</div>
 				</div>
-				<div style={{ display: !tag.IsCalculating ? 'block' : 'none'}}>
+				<div style={{ display: tag.SourceId >= 0 ? 'block' : 'none'}}>
 					<FormRow title="Используемый источник">
 						<Select
 							options={sources}
