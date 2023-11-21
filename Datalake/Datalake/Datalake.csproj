@@ -56,6 +56,7 @@
   <ItemGroup>
     <Compile Include="Cache.cs" />
     <Compile Include="Database\Enums\BlockTagType.cs" />
+    <Compile Include="Database\Enums\CustomSourcesIdentity.cs" />
     <Compile Include="Database\Enums\SourceType.cs" />
     <Compile Include="Database\Rel_Block_Tag.cs" />
     <Compile Include="Database\Rel_Tag_Input.cs" />
