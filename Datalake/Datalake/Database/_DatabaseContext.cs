@@ -231,8 +231,9 @@ namespace Datalake.Database
 		{
 			DateTime seek = old.Date;
 
-			var data = new List<TagHistory>();
+			var values = new List<TagHistory>();
 
+			// выгружаем записи из базы
 			do
 			{
 				string tableName = GetTableName(seek);
@@ -243,35 +244,49 @@ namespace Datalake.Database
 
 					try
 					{
-						var chunk = table
+						// собираем все подходящие значения
+						values.AddRange(table
 							.Where(x => identifiers.Contains(x.TagId))
 							.Where(x => x.Date >= old)
 							.Where(x => x.Date <= young)
 							.Where(x => x.Using == TagHistoryUse.Basic)
 							.OrderBy(x => x.Date)
-							.ToList();
+							.ToList());
 
-						var min = chunk.Select(x => x.Date).Min();
-
-						if (seek == old.Date && min > old)
+						// если это первая таблица в списке, собираем начальные значения
+						if (seek == old.Date)
 						{
-							var previousValues = table
+							var initial = table
 								.Where(x => identifiers.Contains(x.TagId))
-								.AsEnumerable()
-								.GroupBy(x => x.TagId)
-								.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
+								.Where(x => x.Using == TagHistoryUse.Initial)
 								.ToList();
 
-							foreach (var value in previousValues)
+							foreach (var value in initial)
 							{
-								value.Date = old;
-								value.Using = TagHistoryUse.Initial;
+								if (value.Date < old)
+								{
+									// обрезаем значение по временному окну, т.е. по old
+									value.Date = old;
+								}
+								else if (value.Date > old)
+								{
+									// если мы обнаружили, что initial был уже после old, это значит, что тег был создан после old
+									// для него мы делаем заглушку
+									values.Add(new TagHistory
+									{
+										TagId = value.TagId,
+										Date = old,
+										Text = null,
+										Number = null,
+										Type = value.Type,
+										Quality = TagQuality.Bad,
+										Using = TagHistoryUse.NotFound,
+									});
+								}
 							}
 
-							data.AddRange(previousValues);
+							values.AddRange(initial);
 						}
-
-						data.AddRange(chunk);
 					}
 					catch { }
 				}
@@ -280,10 +295,30 @@ namespace Datalake.Database
 			}
 			while (seek <= young);
 
+			// для тегов, по которым мы ничего не нашли, ставим заглушки
+			var lostIdentifiers = identifiers.Except(values.Select(x => x.TagId)).ToList();
+
+			if (lostIdentifiers.Count > 0)
+			{
+				var lostTags = Tags.Where(x => lostIdentifiers.Contains(x.Id)).ToList();
+
+				values.AddRange(lostTags.Select(x => new TagHistory
+				{
+					TagId = x.Id,
+					Date = old,
+					Text = null,
+					Number = null,
+					Type = x.Type,
+					Quality = TagQuality.Bad,
+					Using = TagHistoryUse.NotFound,
+				}));
+			}
+
+			// выполняем протяжку, если необходимо
 			if (resolution > 0)
 			{
 				var timeRange = (young - old).TotalMilliseconds;
-				var history = new List<TagHistory>();
+				var continuous = new List<TagHistory>();
 				DateTime stepDate;
 
 				for (double i = 0; i < timeRange; i += resolution)
@@ -292,7 +327,7 @@ namespace Datalake.Database
 
 					foreach (var id in identifiers)
 					{
-						var value = data
+						var value = values
 							.Where(x => x.TagId == id)
 							.Where(x => x.Date <= stepDate)
 							.OrderByDescending(x => x.Date)
@@ -300,10 +335,9 @@ namespace Datalake.Database
 
 						if (value != null)
 						{
-
 							if (value.Date != stepDate)
 							{
-								history.Add(new TagHistory
+								continuous.Add(new TagHistory
 								{
 									TagId = id,
 									Date = stepDate,
@@ -316,16 +350,16 @@ namespace Datalake.Database
 							}
 							else
 							{
-								history.Add(value);
+								continuous.Add(value);
 							}
 						}
 					}
 				}
 
-				data = history;
+				values = continuous;
 			}
 
-			return data;
+			return values;
 		}
 
 		public void WriteHistory(List<TagHistory> values)
