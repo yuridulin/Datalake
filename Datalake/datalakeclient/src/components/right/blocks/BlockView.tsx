@@ -9,7 +9,7 @@ import router from "../../../router/router";
 import { useInterval } from "../../../hooks/useInterval";
 import FormRow from "../../small/FormRow";
 import { TagValue } from "../../../@types/TagValue";
-import TagValueElement from "../../small/TagValue";
+import TagValueElement from "../../small/TagValueEl";
 
 export default function BlockView() {
 

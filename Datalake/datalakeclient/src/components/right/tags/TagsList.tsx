@@ -1,60 +1,91 @@
 import { useEffect, useState } from "react"
-import { useFetching } from "../../../hooks/useFetching"
 import { Tag } from "../../../@types/Tag"
 import { Button, Input } from 'antd'
-import TagType from "../../small/TagType"
+import TagType from "../../small/TagTypeEl"
 import axios from "axios"
 import Header from "../../small/Header"
 import { NavLink } from "react-router-dom"
 import FormRow from "../../small/FormRow"
+import { TagSource } from "../../../@types/Source"
+import { API } from "../../../router/api"
+import { CalculatedId, ManualId } from "../../../@types/enums/CustomSourcesIdentity"
 
 export default function Tags() {
 
 	const [ tags, setTags ] = useState([] as Tag[])
+	const [ sources, setSources ] = useState([] as TagSource[])
 	const [ search, setSearch ] = useState('')
 
-	const [ load,, error ] = useFetching(async () => {
-		let res = await axios.post('tags/list')
-		setTags(res.data)
-	})
+	function load() {
+		axios.post(API.tags.getFlatList).then(res => setTags(res.data))
+		axios.post(API.sources.list).then(res => setSources(res.data))
+	}
 
-	const [ createTag ] = useFetching(async () => {
-		let res = await axios.post('tags/create')
-		if (res.data.Done) load()
-	})
+	function createTag() { 
+		axios.post(API.tags.create).then(res => res.data.Done && load())
+	}
+
+	const SourceEl = ({ id }: { id: number}) => {
+		if (id === ManualId) {
+			return <NavLink to={`/tags/manual/`}>
+				<Button>Мануальный</Button>
+			</NavLink>
+		}
+		else if (id === CalculatedId) {
+			return <NavLink to={`/tags/calc/`}>
+				<Button>Вычисляемый</Button>
+			</NavLink>
+		}
+		else {
+			let finded = sources.filter(x => x.Id === id)
+			if (finded.length > 0) {
+				return <NavLink to={`/sources/${finded[0].Id}`}>
+					<Button>{finded[0].Name}</Button>
+				</NavLink>
+			}
+			else {
+				return <span>?</span>
+			}
+		}
+	}
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => { load() }, [])
 	//useEffect(() => { }, [search])
 
 	return (
-		error
-			? <div>Произошла ошибка</div>
-			: <>
-				<Header
-					right={<Button onClick={createTag}>Добавить тег</Button>}
-				>Список тегов</Header>
-				<FormRow title="Поиск">
-					<Input value={search} onChange={e => setSearch(e.target.value)} placeholder="введите поисковый запрос..." />
-				</FormRow>
-				<div className="table">
-					<div className="table-header">
-						<span>Имя</span>
-						<span>Тип</span>
-						<span>Источник</span>
-						<span>Описание</span>
+		<>
+			<Header
+				right={<Button onClick={createTag}>Добавить тег</Button>}
+			>Список тегов</Header>
+			{tags.length > 0 
+				? <>
+					<FormRow title="Поиск">
+						<Input value={search} onChange={e => setSearch(e.target.value)} placeholder="введите поисковый запрос..." />
+					</FormRow>
+					<div className="table">
+						<div className="table-header">
+							<span>Имя</span>
+							<span>Тип</span>
+							<span>Источник</span>
+							<span>Описание</span>
+						</div>
+						{tags.filter(x => (x.Description + x.Name + x.SourceItem).toLowerCase().trim().includes(search.toLowerCase())).map(x =>
+							<div className="table-row" key={x.Id}>
+								<span>
+									<NavLink to={'/tags/' + x.Id}>
+										<Button>{x.Name}</Button>
+									</NavLink>
+								</span>
+								<span><TagType tagType={x.Type} /></span>
+								<span><SourceEl id={x.SourceId} /></span>
+								<span>{x.Description}</span>
+							</div>
+						)}
 					</div>
-					{tags.filter(x => (x.Description + x.Name + x.SourceItem).toLowerCase().trim().includes(search.toLowerCase())).map(x =>
-						<NavLink className="table-row" to={'/tags/' + x.Id} key={x.Id}>
-							<span>{x.Name}</span>
-							<span>
-								<TagType tagType={x.Type} />
-							</span>
-							<span>{x.Source}</span>
-							<span>{x.Description}</span>
-						</NavLink>
-					)}
-				</div>
-			</>
+				</>
+				: <i>Не создано ни одного тега</i>
+			}
+		</>
 	)
 }

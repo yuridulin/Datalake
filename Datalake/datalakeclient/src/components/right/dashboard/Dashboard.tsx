@@ -4,22 +4,25 @@ import axios from "axios"
 import { Navigate } from "react-router-dom"
 import { useInterval } from "../../../hooks/useInterval"
 import { Log } from "../../../@types/Log"
-import ProgramLogType from "../../small/ProgramLogType"
+import { API } from "../../../router/api"
 
 type StatsType = {
 	TotalTagsCount: number,
 	TotalSourcesCount: number,
 	WritesInMinute: number,
 	Logs: Log[],
-	Last: Date
+	Last: Date,
 }
 
 export default function Dashboard() {
 
-	const [ stats, setStats ] = useState({ Logs: [] as Log[], Last: new Date() } as StatsType)
+	const [ stats, setStats ] = useState({ 
+		Logs: [] as Log[],
+		Last: new Date(),
+	} as StatsType)
 
 	const [ update,, error ] = useFetching(async () => {
-		let res = await axios.post('config/statistic', { Last: stats.Last })
+		let res = await axios.post(API.config.stats, { Last: stats.Last })
 		let newStats = res.data as StatsType
 		let logs =  [ ...stats.Logs, ...newStats.Logs ]
 		if (logs.length > 50) logs = logs.slice(-50)
@@ -40,17 +43,24 @@ export default function Dashboard() {
 		error
 			? <Navigate to="/offline" />
 			: <>
-				<div>
-					Кол-во тегов: {stats.TotalTagsCount}
-				</div>
-				<div>
-					Кол-во источников: {stats.TotalSourcesCount}
-				</div>
-				<div>
-					Записей в минуту: {stats.WritesInMinute}
-				</div>
+				<table>
+					<tbody>
+						<tr>
+							<td>Кол-во тегов:</td>
+							<td>{stats.TotalTagsCount}</td>
+						</tr>
+						<tr>
+							<td>Кол-во источников:</td>
+							<td>{stats.TotalSourcesCount}</td>
+						</tr>
+						<tr>
+							<td>Записей в минуту:</td>
+							<td>{stats.WritesInMinute}</td>
+						</tr>
+					</tbody>
+				</table>
 
-				<div className="table">
+				{/* <div className="table">
 					<div className="table-header">
 						<span>Время</span>
 						<span>Модуль</span>
@@ -61,9 +71,9 @@ export default function Dashboard() {
 						<span>{x.Date.toString()}</span>
 						<span>{x.Module}</span>
 						<span>{x.Message}</span>
-						<span><ProgramLogType type={x.Type} /></span>
+						<span><LogTypeEl type={x.Type} /></span>
 					</div>)}
-				</div>
+				</div> */}
 			</>
 	)
 }

@@ -3,48 +3,54 @@ import { useFetching } from "../../../hooks/useFetching"
 import { Navigate } from "react-router-dom"
 import { Button, ConfigProvider, DatePicker, Radio, Select } from "antd"
 import axios from "axios"
-import 'dayjs/locale/ru';
+import 'dayjs/locale/ru'
 import locale from 'antd/locale/ru_RU'
 import { PlayCircleOutlined } from "@ant-design/icons"
 import { useInterval } from "../../../hooks/useInterval"
-import Quality from "../../small/Quality"
-import TagValueElement from "../../small/TagValue"
 import { Tag } from "../../../@types/Tag"
-import { TagValue } from "../../../@types/TagValue"
+import { HistoryRequest } from "../../../@types/HistoryRequest"
+import { API } from "../../../router/api"
+import { HistoryResponse } from "../../../@types/HistoryResponse"
+import LiveTable from "./LiveTable"
+import HistoryTable from "./HistoryTable"
 
 export default function Viewer() {
 
 	const [ tags, setTags ] = useState([] as Tag[])
-	const [ values, setValues ] = useState([] as TagValue[])
+	const [ responses, setResponses ] = useState([] as HistoryResponse[])
 	const [ options, setOptions ] = useState([] as { value: number, label: string }[])
-	const [ settings, setSettings ] = useState({ tags: [], live: true, resolution: 0, young: new Date(), old: new Date() })
+	const [ live, setLive ] = useState(true)
+	const [ settings, setSettings ] = useState({ 
+		Tags: [] as number[],
+		TagNames: [] as string[],
+		Resolution: 0,
+		Young: new Date(),
+		Old: new Date(),
+	} as HistoryRequest)
 
 	const [ readTags, , error ] = useFetching(async () => {
-		let res = await axios.get('tags/list')
+		let res = await axios.get(API.tags.getFlatList)
 		setTags(res.data)
 		setOptions(res.data.map((x: Tag) => ({ value: x.Id, label: x.Name })))
 	})
 
 	const getValues = () => {
-		if (settings.tags.length === 0) return console.log('Нечего спрашивать')
-		if (settings.live || (settings.young >= new Date())) {
-			loadValues()
-		}
-		else {
-			console.log('Незачем спрашивать, вся история отдана')
-		}
+		if (settings.Tags && settings.Tags.length === 0) return console.log('Нечего спрашивать')
+		loadValues()
 	}
 
-	const [ loadValues ] = useFetching(async () => {
-		let res = await axios.post('tags/' + (settings.live ? 'live' : 'history'), settings)
-		setValues(res.data)
+	const [ loadValues,, loadErr ] = useFetching(async () => {
+		let res = live 
+			? await axios.post(API.tags.getLiveValues, { request: settings })
+			: await axios.post(API.tags.getHistoryValues, { request: [settings] })
+		setResponses(res.data as HistoryResponse[])
 	})
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => { readTags() }, [])
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => { getValues() }, [settings])
-	useInterval(() => { if (settings.live) getValues() }, 1000)
+	useEffect(() => { getValues() }, [settings, live])
+	useInterval(() => { if (live) getValues() }, 1000)
 
 	return (
 		error
@@ -56,7 +62,7 @@ export default function Viewer() {
 				<Select 
 					mode="tags"
 					style={{ width: '100%' }}
-					onChange={values => setSettings({ ...settings, tags: values })}
+					onChange={values => setSettings({ ...settings, Tags: values })}
 					tokenSeparators={[',', ';', ' ']}
 					placeholder="Выберите теги для просмотра..."
 					options={options}
@@ -64,26 +70,26 @@ export default function Viewer() {
 			</div>
 			<br />
 			<div>
-				<Radio.Group value={settings.live} onChange={e => setSettings({ ...settings, live: e.target.value })}>
+				<Radio.Group value={live} onChange={e => setLive(e.target.value)}>
 					<Radio.Button value={true}>Текущие</Radio.Button>
 					<Radio.Button value={false}>Архивные</Radio.Button>
 				</Radio.Group>
 
-				<div style={{ display: settings.live ? 'none' : 'inline' }}>
+				<div style={{ display: live ? 'none' : 'inline' }}>
 					&emsp;
 					<ConfigProvider locale={locale}>
 						<DatePicker.RangePicker
 							showTime={{ format: 'HH:mm' }}
 							format="YYYY-MM-DD HH:mm"
 							placeholder={['Начало', 'Конец']}
-							onChange={values => setSettings({ ...settings, old: values?.[0]?.toDate() ?? new Date(), young: values?.[1]?.toDate() ?? new Date() })}
+							onChange={values => setSettings({ ...settings, Old: values?.[0]?.toDate() ?? new Date(), Young: values?.[1]?.toDate() ?? new Date() })}
 						/>
 					</ConfigProvider>
 					&emsp;
 					<Select
 						style={{ width: '12em' }}
-						value={settings.resolution}
-						onChange={v => setSettings({ ...settings, resolution: v })}
+						value={settings.Resolution}
+						onChange={v => setSettings({ ...settings, Resolution: v })}
 						options={[
 							{ value: 0, label: 'по изменению' },
 							{ value: 1000, label: 'по секундам' },
@@ -97,21 +103,11 @@ export default function Viewer() {
 				</div>
 			</div>
 			<br />
-			{settings.tags.length > 0 &&
-			<div className="table">
-				<div className="table-header">
-					<span>Время</span>
-					<span>Тег</span>
-					<span>Значение</span>
-					<span>Качество</span>
-				</div>
-				{values.map((x, i) => <div className="table-row" key={i}>
-					<span>{x.Date.toString()}</span>
-					<span>{x.TagName}</span>
-					<span><TagValueElement value={x.Value} /></span>
-					<span><Quality quality={x.Quality} /></span>
-				</div>)}
-			</div>}
+			{loadErr
+			? <div>Ошибка</div>
+			: live 
+				? <LiveTable responses={responses} />
+				: <HistoryTable responses={responses} />}
 		</>
 	)
 }

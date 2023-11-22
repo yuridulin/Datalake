@@ -2,7 +2,7 @@ import { Button, Input } from "antd";
 import Header from "../../small/Header";
 import FormRow from "../../small/FormRow";
 import { NavLink } from "react-router-dom";
-import TagType from "../../small/TagType";
+import TagType from "../../small/TagTypeEl";
 import axios from "axios";
 import { API } from "../../../router/api";
 import { useEffect, useState } from "react";

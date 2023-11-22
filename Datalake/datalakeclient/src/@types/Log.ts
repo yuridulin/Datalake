@@ -1,8 +1,8 @@
-import { LogType } from "./enums/LogType";
+import { LogType } from "./enums/LogType"
 
 export interface Log {
 	Date: Date
 	Module: string
 	Message: string
-	Type: keyof typeof LogType;
+	Type: LogType
 }

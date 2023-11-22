@@ -6,11 +6,12 @@ import { Tag } from "../../../@types/Tag"
 import { PlusCircleOutlined } from "@ant-design/icons"
 import { NavLink } from "react-router-dom"
 import { SourceType } from "../../../@types/enums/SourceType"
-import TagType from "../../small/TagType"
+import TagTypeEl from "../../small/TagTypeEl"
+import { TagType } from "../../../@types/enums/TagType"
 
-export default function SourceItems({ type, id }: { type: keyof typeof SourceType, id: number }) {
+export default function SourceItems({ type, id }: { type: SourceType, id: number }) {
 
-	const [ items, setItems ] = useState([] as { Item: string, Type: keyof typeof TagType, Tag?: Tag }[])
+	const [ items, setItems ] = useState([] as { Item: string, Type: TagType, Tag?: Tag }[])
 
 	const [ read, , error ] = useFetching(async () => {
 		let res = await axios.post('sources/tags/', { id })
@@ -20,7 +21,7 @@ export default function SourceItems({ type, id }: { type: keyof typeof SourceTyp
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => { !!id && read() }, [id])
 
-	const createTag = async (item: string, type: keyof typeof TagType) => {
+	const createTag = async (item: string, type: TagType) => {
 		let res = await axios.post('tags/createFromSource', { SourceId: id, SourceItem: item, SourceType: type })
 		if (res.data.Done) read()
 	}
@@ -33,7 +34,7 @@ export default function SourceItems({ type, id }: { type: keyof typeof SourceTyp
 				<div className="table-caption">Доступные значения с этого источника данных</div>
 				{items.map((x, i) => <div className="table-row" key={i}>
 					<span>{x.Item}</span>
-					<span><TagType tagType={x.Type} /></span>
+					<span><TagTypeEl tagType={x.Type} /></span>
 					{!!x.Tag
 					? <span>
 						<NavLink to={'/tags/' + x.Tag.Id}>

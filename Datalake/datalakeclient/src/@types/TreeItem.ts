@@ -1,4 +1,4 @@
-import { TreeType } from "./enums/treeType"
+import { TreeType } from "./enums/TreeType"
 
 export interface TreeItem {
 	Id: number

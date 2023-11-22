@@ -1,6 +1,7 @@
 import { Tag } from "antd";
+import { TagType } from "../../@types/enums/TagType";
 
-export default function TagType({ tagType }: { tagType: number }) {
+export default function TagTypeEl({ tagType }: { tagType: TagType }) {
 	
 	if (tagType === 0) return (
 		<Tag color="green">строка</Tag>

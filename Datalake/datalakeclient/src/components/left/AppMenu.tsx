@@ -8,6 +8,7 @@ import { useInterval } from "../../hooks/useInterval"
 import { useUpdateContext } from "../../context/updateContext"
 import { BlockType } from "../../@types/BlockType"
 import { ManualId } from "../../@types/enums/CustomSourcesIdentity";
+import router from "../../router/router";
 
 export function AppMenu() {
 
@@ -17,8 +18,8 @@ export function AppMenu() {
 	const [ blocks, setBlocks ] = useState([] as BlockType[])
 
 	function load() {
-		axios.get(API.sources.list).then(res => setSources(res.data))
-		axios.get(API.blocks.list).then(res => setBlocks(res.data))
+		axios.get(API.sources.list).then(res => setSources(res.data)).catch(() => router.navigate('/offline'))
+		axios.get(API.blocks.list).then(res => setBlocks(res.data)).catch(() => router.navigate('/offline'))
 	}
 
 	useEffect(load, [lastUpdate])

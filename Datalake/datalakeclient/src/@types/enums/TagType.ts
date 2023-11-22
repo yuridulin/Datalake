@@ -1,6 +1,14 @@
-export const TagType = {
-	0: 'строка',
-	1: 'число',
-	2: 'дискрет',
-	3: 'вычисляемое',
+export enum TagType {
+	String = 0,
+	Number = 1,
+	Boolean = 2,
+}
+
+export function TagTypeDescription(type: TagType) {
+	switch (type) {
+		case TagType.String: return 'строка'
+		case TagType.Number: return 'число'
+		case TagType.Boolean: return 'дискрет'
+		default: return '?'
+	}
 }

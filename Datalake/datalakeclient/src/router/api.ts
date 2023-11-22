@@ -4,6 +4,8 @@ export const API = {
 		create: 'tags/create',
 		getCalculatedTags: 'tags/calculatedList',
 		getManualTags: 'tags/manualList',
+		getLiveValues: 'tags/live',
+		getHistoryValues: 'tags/history',
 	},
 	sources: {
 		list: 'sources/list',
@@ -15,5 +17,8 @@ export const API = {
 	blocks: {
 		list: 'blocks/list',
 		create: 'blocks/create',
+	},
+	config: {
+		stats: 'config/statistic'
 	}
 }

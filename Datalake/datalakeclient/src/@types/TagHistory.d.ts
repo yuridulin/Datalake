@@ -1,4 +1,4 @@
-import { TagType } from "./enums/TagType"
+import { TagTypeDescription } from "./enums/TagTypeDescription"
 import { TagQuality } from "./enums/TagQuality"
 import { TagHistoryUse } from "./enums/TagHistoryUse"
 
@@ -7,9 +7,9 @@ export interface TagHistory {
 	Date: Date
 	Text: string
 	Number?: number
-	Quality: keyof typeof TagQuality
-	Type: keyof typeof TagType
-	Using: keyof typeof TagHistoryUse
+	Quality: TagQuality
+	Type: TagType
+	Using: TagHistoryUse
 	TagName: string
 	Value?: string | number| boolean
 }

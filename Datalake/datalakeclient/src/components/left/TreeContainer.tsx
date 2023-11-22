@@ -7,7 +7,7 @@ import { NavLink, Navigate, useLocation, useNavigate } from "react-router-dom"
 import { TreeItem } from "../../@types/TreeItem"
 import { Dropdown, Tree } from 'antd'
 import type { DataNode } from 'antd/es/tree'
-import { TreeType } from "../../@types/enums/treeType"
+import { TreeType } from "../../@types/enums/TreeType"
 import router from "../../router/router"
 import { BlockType } from "../../@types/BlockType"
 import { items } from "./TreeContextMenu"
