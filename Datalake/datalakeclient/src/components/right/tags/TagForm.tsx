@@ -108,9 +108,6 @@ export default function TagForm() {
 						onChange={e => setTag({ ...tag, Description: e.target.value })}
 					/>
 				</FormRow>
-				<FormRow title="Интервал обновления в секундах (0, если только по изменению)">
-					<InputNumber value={tag.Interval} onChange={value => setTag({ ...tag, Interval: Number(value) })} />
-				</FormRow>
 				<FormRow title="Тип">
 					<Radio.Group buttonStyle="solid" value={tag.Type} onChange={e => setTag({...tag, Type: e.target.value })}>
 						<Radio.Button value={0}>Строка</Radio.Button>
@@ -146,6 +143,11 @@ export default function TagForm() {
 						<Radio.Button value={0}>Из источника</Radio.Button>
 					</Radio.Group>
 				</FormRow>
+				<div style={{ display: tag.SourceId !== ManualId ? 'block': 'none' }}>
+					<FormRow title="Интервал обновления в секундах (0, если только по изменению)">
+						<InputNumber value={tag.Interval} onChange={value => setTag({ ...tag, Interval: Number(value) })} />
+					</FormRow>
+				</div>
 				<div style={{ display: tag.SourceId === CalculatedId ? 'block' : 'none' }}>
 					<FormRow title="Формула для вычисления">
 						<Input value={tag.Formula} onChange={e => setTag({...tag, Formula: e.target.value })} />
