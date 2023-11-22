@@ -300,13 +300,24 @@ namespace Datalake.Database
 
 						if (value != null)
 						{
+
 							if (value.Date != stepDate)
 							{
-								value.Date = stepDate;
-								value.Using = TagHistoryUse.Continuous;
+								history.Add(new TagHistory
+								{
+									TagId = id,
+									Date = stepDate,
+									Text = value.Text,
+									Number = value.Number,
+									Type = value.Type,
+									Quality = value.Quality,
+									Using = TagHistoryUse.Continuous,
+								});
 							}
-
-							history.Add(value);
+							else
+							{
+								history.Add(value);
+							}
 						}
 					}
 				}
