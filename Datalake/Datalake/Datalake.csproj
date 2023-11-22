@@ -75,7 +75,6 @@
     <Compile Include="Models\HistoryValue.cs" />
     <Compile Include="Models\HistoryResponse.cs" />
     <Compile Include="Models\HistoryRequest.cs" />
-    <Compile Include="Models\TagValue.cs" />
     <Compile Include="Database\_DatabaseContext.cs" />
     <Compile Include="Web\Collector.cs" />
     <Compile Include="Models\TreeItem.cs" />
