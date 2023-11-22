@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Datalake.Web.Models
+namespace Datalake.Models
 {
 	public class LiveRequest
 	{

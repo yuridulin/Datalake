@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Datalake.Enums;
+using System;
 
-namespace Datalake.Web.Models
+namespace Datalake.Models
 {
 	public class HistoryRequest : LiveRequest
 	{

@@ -1,7 +1,8 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Enums;
+using Datalake.Enums;
+using Datalake.Models;
 using Datalake.Web.Models;
-using Datalake.Workers.Logs;
+using Datalake.Workers;
 using LinqToDB;
 using System;
 using System.Collections.Generic;
@@ -194,7 +195,7 @@ namespace Datalake.Web.Api
 									}
 									catch (Exception ex)
 									{
-										LogsWorker.Add("Api", "Aggregation " + set.Func + " on tag [\"" + tag.Name + "\"]: " + ex.Message, Workers.Logs.Models.LogType.Error);
+										LogsWorker.Add("Api", "Aggregation " + set.Func + " on tag [\"" + tag.Name + "\"]: " + ex.Message, LogType.Error);
 									}
 
 									response.Add(new HistoryResponse

@@ -1,6 +1,6 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Enums;
 
-namespace Datalake.Workers.Collector.Models
+namespace Datalake.Models
 {
 	public class InputTag
 	{

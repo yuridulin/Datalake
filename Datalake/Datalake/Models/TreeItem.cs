@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Datalake.Enums;
+using System.Collections.Generic;
 
-namespace Datalake.Web.Models
+namespace Datalake.Models
 {
 	public class TreeItem
 	{
@@ -13,14 +14,5 @@ namespace Datalake.Web.Models
 		public TreeType Type { get; set; }
 
 		public List<TreeItem> Items { get; set; } = new List<TreeItem>();
-	}
-
-	public enum TreeType
-	{
-		Source = 0,
-		TagGroup = 1,
-		Tag = 2,
-		Block = 3,
-		Link = 4,
 	}
 }

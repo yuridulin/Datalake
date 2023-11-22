@@ -1,7 +1,6 @@
-﻿using Datalake.Web.Models;
-using Datalake.Workers.Collector.Models;
-using Datalake.Workers.Logs;
-using Datalake.Workers.Logs.Models;
+﻿using Datalake.Enums;
+using Datalake.Models;
+using Datalake.Workers;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

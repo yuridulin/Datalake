@@ -1,4 +1,4 @@
-﻿namespace Datalake.Workers.Logs.Models
+﻿namespace Datalake.Enums
 {
 	public enum LogType
 	{

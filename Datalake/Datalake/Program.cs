@@ -1,9 +1,8 @@
 ﻿using Datalake.Database;
+using Datalake.Enums;
 using Datalake.Workers;
-using Datalake.Workers.Logs;
-using Datalake.Workers.Logs.Models;
-using LinqToDB.Data;
 using LinqToDB.Common;
+using LinqToDB.Data;
 using System;
 using System.Diagnostics;
 using System.ServiceProcess;
@@ -48,8 +47,8 @@ namespace Datalake
 			TokenSource = new CancellationTokenSource();
 
 			using (var db = new DatabaseContext()) db.Recreate();
+			WorkersList.Start(TokenSource.Token);
 			Task.Run(() => Web.Server.Start());
-			List.Start(TokenSource.Token);
 		}
 
 		public static void Stop()

@@ -1,4 +1,4 @@
-﻿namespace Datalake.Database.Enums
+﻿namespace Datalake.Enums
 {
 	public static class CustomSourcesIdentity
 	{

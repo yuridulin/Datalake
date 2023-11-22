@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Enums;
 using LinqToDB;
 using LinqToDB.Mapping;
 using System;

@@ -1,14 +1,12 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Enums;
-using Datalake.Workers.Logs;
-using Datalake.Workers.Logs.Models;
+using Datalake.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Datalake.Workers.Calculator
+namespace Datalake.Workers
 {
 	public static class CalculatorWorker
 	{

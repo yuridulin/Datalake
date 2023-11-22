@@ -1,4 +1,6 @@
 ﻿using Datalake.Database;
+using Datalake.Enums;
+using Datalake.Models;
 using Datalake.Web.Models;
 using System;
 using System.Collections.Generic;

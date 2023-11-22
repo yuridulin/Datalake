@@ -1,8 +1,7 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Enums;
+using Datalake.Models;
 using Datalake.Web;
-using Datalake.Workers.Collector.Models;
-using Datalake.Workers.Logs;
-using Datalake.Workers.Logs.Models;
+using Datalake.Workers;
 using LinqToDB.Mapping;
 using System;
 using System.Collections.Generic;

@@ -1,6 +1,4 @@
-﻿using Datalake.Database.Enums;
-using LinqToDB.Mapping;
-using Newtonsoft.Json;
+﻿using LinqToDB.Mapping;
 using System.Collections.Generic;
 using System.Linq;
 

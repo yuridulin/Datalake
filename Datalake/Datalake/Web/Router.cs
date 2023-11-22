@@ -1,5 +1,7 @@
-﻿using Datalake.Web.Models;
-using Datalake.Workers.Logs;
+﻿using Datalake.Enums;
+using Datalake.Models;
+using Datalake.Web.Models;
+using Datalake.Workers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -50,7 +52,7 @@ namespace Datalake.Web
 				}
 				catch (Exception e)
 				{
-					LogsWorker.Add("Router", "Error: " + e.Message + "\n" + e.StackTrace, Workers.Logs.Models.LogType.Error);
+					LogsWorker.Add("Router", "Error: " + e.Message + "\n" + e.StackTrace, LogType.Error);
 					res = new Answer
 					{
 						StatusCode = HttpStatusCode.InternalServerError,
@@ -79,7 +81,7 @@ namespace Datalake.Web
 
 		Answer Action(string methodName, string body, WindowsPrincipal user)
 		{
-			LogsWorker.Add("Router", $"[HTTP API] {methodName}", Workers.Logs.Models.LogType.Trace);
+			LogsWorker.Add("Router", $"[HTTP API] {methodName}", LogType.Trace);
 
 			if (Request.HttpMethod == "OPTIONS")
 			{
@@ -227,7 +229,7 @@ namespace Datalake.Web
 
 		Answer Document(string filename)
 		{
-			LogsWorker.Add("Router", $"[HTTP DOC] {filename}", Workers.Logs.Models.LogType.Trace);
+			LogsWorker.Add("Router", $"[HTTP DOC] {filename}", LogType.Trace);
 
 			string basePath = AppDomain.CurrentDomain.BaseDirectory + "\\Content\\";
 			string filePath = (basePath + filename.Replace("/", "\\")).Replace(@"\\", "\\");
