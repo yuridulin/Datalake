@@ -51,6 +51,7 @@ namespace Datalake.Database
 			else
 			{
 				Tags.Where(x => x.IsCalculating).Set(x => x.SourceId, CustomSourcesIdentity.Calculated).Update();
+				Tags.Where(x => x.Name == "INSERTING").Delete();
 			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Sources.TableName))
