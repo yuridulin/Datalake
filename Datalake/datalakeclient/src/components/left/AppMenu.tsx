@@ -7,7 +7,7 @@ import { useState, useEffect } from "react"
 import { useInterval } from "../../hooks/useInterval"
 import { useUpdateContext } from "../../context/updateContext"
 import { BlockType } from "../../@types/BlockType"
-import { ManualId } from "../../@types/enums/CustomSourcesIdentity";
+import { CalculatedId, ManualId } from "../../@types/enums/CustomSourcesIdentity";
 import router from "../../router/router";
 
 export function AppMenu() {
@@ -48,7 +48,7 @@ export function AppMenu() {
 				{[
 					...sources.map(x => <NavLink key={x.Id} to={`/sources/${x.Id}`}>{x.Name}</NavLink>)
 					,<NavLink key={ManualId} to={'/tags/manual/'}>Мануальные теги</NavLink>
-					/* ,<NavLink to={CalculatedId}>Вычисляемые теги</NavLink> */
+					,<NavLink key={CalculatedId} to={'/tags/calc/'}>Вычисляемые теги</NavLink>
 				]}
 			</div>
 		</div>
