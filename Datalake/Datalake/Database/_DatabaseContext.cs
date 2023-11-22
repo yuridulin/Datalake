@@ -48,6 +48,10 @@ namespace Datalake.Database
 			{
 				this.CreateTable<Tag>();
 			}
+			else
+			{
+				Tags.Where(x => x.IsCalculating).Set(x => x.SourceId, CustomSourcesIdentity.Calculated).Update();
+			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Sources.TableName))
 			{

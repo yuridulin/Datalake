@@ -25,7 +25,7 @@ namespace Datalake.Workers.Calculator
 							var inputs = db.Rel_Tag_Input.ToList();
 
 							Tags = db.Tags
-								.Where(x => x.IsCalculating)
+								.Where(x => x.SourceId == CustomSourcesIdentity.Calculated)
 								.ToList();
 
 							foreach (var tag in Tags)
