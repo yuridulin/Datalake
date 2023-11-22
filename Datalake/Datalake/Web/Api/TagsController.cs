@@ -283,15 +283,18 @@ namespace Datalake.Web.Api
 					.Set(x => x.SourceItem, tag.SourceItem)
 					.Update();
 
-				Cache.Write(new TagHistory
+				db.WriteHistory(new List<TagHistory>
 				{
-					Date = DateTime.Now,
-					Number = 0,
-					Type = tag.Type,
-					Quality = TagQuality.Bad,
-					Text = string.Empty,
-					TagId = id,
-					Using = TagHistoryUse.Initial,
+					new TagHistory
+					{
+						Date = DateTime.Now,
+						Number = 0,
+						Type = tag.Type,
+						Quality = TagQuality.Bad,
+						Text = string.Empty,
+						TagId = id,
+						Using = TagHistoryUse.Initial,
+					}
 				});
 
 				Cache.Update();
