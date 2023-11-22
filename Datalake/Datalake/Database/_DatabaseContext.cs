@@ -256,11 +256,11 @@ namespace Datalake.Database
 						if (seek == old.Date && min > old)
 						{
 							var previousValues = table
-									.Where(x => identifiers.Contains(x.TagId))
-									.AsEnumerable()
-									.GroupBy(x => x.TagId)
-									.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
-									.ToList();
+								.Where(x => identifiers.Contains(x.TagId))
+								.AsEnumerable()
+								.GroupBy(x => x.TagId)
+								.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
+								.ToList();
 
 							foreach (var value in previousValues)
 							{
