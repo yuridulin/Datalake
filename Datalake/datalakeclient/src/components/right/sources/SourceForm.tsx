@@ -40,6 +40,8 @@ export default function SourceForm() {
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => { read() }, [id])
 
+	console.log()
+
 	return (
 		error
 		? <Navigate to='/offline' />
@@ -62,7 +64,7 @@ export default function SourceForm() {
 			</FormRow>
 			<FormRow title="Тип источника">
 				<Radio.Group buttonStyle="solid" value={source.Type} onChange={e => setSource({...source, Type: e.target.value })}>
-					{Object.keys(SourceType).map(x => 
+					{Object.values(SourceType).filter(x => !(x as string).length).map(x => 
 						<Radio.Button key={x} value={Number(x)}>{SourceType[Number(x)]}</Radio.Button>
 					)}
 				</Radio.Group>
