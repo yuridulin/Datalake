@@ -176,6 +176,7 @@ namespace Datalake.Web.Api
 												Using = x.Using,
 												Value = x.Value(),
 											})
+											.OrderBy(x => x.Date)
 											.ToList(),
 									});
 								}
