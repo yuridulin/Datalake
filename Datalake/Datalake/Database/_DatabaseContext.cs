@@ -258,7 +258,9 @@ namespace Datalake.Database
 						{
 							var initial = table
 								.Where(x => identifiers.Contains(x.TagId))
-								.Where(x => x.Using == TagHistoryUse.Initial)
+								.Where(x => x.Date < old)
+								.GroupBy(x => x.TagId)
+								.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
 								.ToList();
 
 							foreach (var value in initial)
@@ -267,6 +269,7 @@ namespace Datalake.Database
 								{
 									// обрезаем значение по временному окну, т.е. по old
 									value.Date = old;
+									value.Using = TagHistoryUse.Continuous;
 								}
 								else if (value.Date > old)
 								{
