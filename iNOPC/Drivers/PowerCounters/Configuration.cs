@@ -3,23 +3,23 @@ using Newtonsoft.Json;
 
 namespace iNOPC.Drivers.PowerCounters
 {
-    public class Configuration
-    {
-        public int CyclicTimeout { get; set; } = 1;
+	public class Configuration
+	{
+		public int CyclicTimeout { get; set; } = 1;
 
-        public string Link { get; set; } = "http://block-state.energo.net/";
+		public string Link { get; set; } = "http://block-state.energo.net/";
 
-        public static string GetPage(string json)
-        {
-            var config = JsonConvert.DeserializeObject<Configuration>(json);
+		public static string GetPage(string json)
+		{
+			var config = JsonConvert.DeserializeObject<Configuration>(json);
 
-            string html = "";
+			string html = "";
 
-            html +=
-                Html.Value("Интервал опроса, мин", nameof(config.CyclicTimeout), config.CyclicTimeout) +
-                Html.Value("Ссылка для получения данных", nameof(config.Link), config.Link);
+			html +=
+				Html.Value("Интервал опроса, мин", nameof(config.CyclicTimeout), config.CyclicTimeout) +
+				Html.Value("Ссылка для получения данных", nameof(config.Link), config.Link);
 
-            return html;
-        }
-    }
+			return html;
+		}
+	}
 }

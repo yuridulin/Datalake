@@ -97,9 +97,7 @@ namespace iNOPC.Server.Models
 
 		public void Update()
 		{
-			WebSocket.Broadcast("tree");
-			WebSocket.Broadcast("driver.devices:" + Id);
-			WebSocket.Broadcast("driver.logs:" + Id);
+			Http.Update();
 		}
 
 		public void Log(string text, LogType type = LogType.REGULAR)
@@ -119,10 +117,9 @@ namespace iNOPC.Server.Models
 			if (type == LogType.ERROR)
 			{
 				Program.Log("Error: " + text + "\nDriver: " + Name);
-				WebSocket.Broadcast("tree");
 			}
 
-			WebSocket.Broadcast("driver.logs:" + Id);
+			Http.Update();
 		}
 	}
 }

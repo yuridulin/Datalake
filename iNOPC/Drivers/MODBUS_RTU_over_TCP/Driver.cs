@@ -3,13 +3,10 @@ using MODBUS_RTU_over_TCP.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 
 namespace MODBUS_RTU_over_TCP
 {

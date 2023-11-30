@@ -2,25 +2,25 @@
 
 namespace iNOPC.Drivers.IstokTM2
 {
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct ComPort
-    {
-        public byte Number;
+	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+	public struct ComPort
+	{
+		public byte Number;
 
-        public uint BaudRate;
+		public uint BaudRate;
 
-        public byte StopBits;
+		public byte StopBits;
 
-        public byte Parity;
+		public byte Parity;
 
-        public ushort Timeout;
+		public ushort Timeout;
 
-        public byte CTS;
+		public byte CTS;
 
-        public byte RTS;
+		public byte RTS;
 
-        public byte DSR;
+		public byte DSR;
 
-        public byte DTR;
-    }
+		public byte DTR;
+	}
 }

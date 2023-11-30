@@ -2,23 +2,23 @@
 
 namespace iNOPC.Drivers.IstokTM2
 {
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct Point
-    {
-        public double Q;
+	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+	public struct Point
+	{
+		public double Q;
 
-        public double G;
+		public double G;
 
-        public double h;
+		public double h;
 
-        public double dP;
+		public double dP;
 
-        public double t;
+		public double t;
 
-        public double P;
+		public double P;
 
-        public double V;
+		public double V;
 
-        public double r;
-    }
+		public double r;
+	}
 }

@@ -1,16 +1,16 @@
 {
 	"Drivers": [
 		{
-			"Id": 2,
-			"Name": "Test",
-			"Path": "C:\\iNOPC\\\\Drivers\\TestDriver_v1.3.dll",
+			"Id": 1,
+			"Name": "Excel",
+			"Path": "C:\\Dist\\iNOPC\\\\Drivers\\ExcelReader_v1.0.dll",
 			"Devices": [
 				{
-					"Id": 3,
-					"Name": "Device1",
-					"Active": true,
+					"Id": 2,
+					"Name": "File1",
+					"Active": false,
 					"AutoStart": true,
-					"Configuration": "{\"Tick\":\"1000\",\"Fields\":[{\"Name\":\"f3\",\"Address\":\"0\"},{\"Name\":\"f2\",\"Address\":\"0\"},{\"Name\":\"f1\",\"Address\":\"0\"}]}"
+					"Configuration": "{\"FilePath\":\"\",\"MinutesReadInterval\":\"1\",\"IsActive\":true,\"Row\":\"4\",\"Column\":\"4\",\"Name\":\"x4\"}"
 				}
 			]
 		}
@@ -26,36 +26,7 @@
 		"WebConsolePort": 81,
 		"WebConsoleSocketPort": 82
 	},
-	"Formulars": [
-		{
-			"Name": "Calc1",
-			"Description": "Calc 1",
-			"Formula": "3.1415 + x1",
-			"Interval": 2,
-			"Fields": {
-				"x1": "Test.Device1.f1"
-			}
-		},
-		{
-			"Name": "CalcTags.Calc2",
-			"Description": "Calc 2",
-			"Formula": "x1 - ( x2 * 0.25 ) - Max( x3, Pow( 10, 4 ) ) + m1",
-			"Interval": 5,
-			"Fields": {
-				"x1": "Test.Device1.f1",
-				"x2": "Test.Device1.f2",
-				"x3": "Test.Device1.f3",
-				"m4": "Calc1"
-			}
-		},
-		{
-			"Name": "Calc3",
-			"Description": "Calc 3",
-			"Formula": "x1 + x2)",
-			"Interval": 2,
-			"Fields": {}
-		}
-	],
+	"Formulars": [],
 	"Key": "",
 	"Version": "4"
 }

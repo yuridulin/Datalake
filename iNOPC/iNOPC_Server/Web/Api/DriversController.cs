@@ -40,8 +40,7 @@ namespace iNOPC.Server.Web.Api
 
 					driver.Load();
 
-					WebSocket.Broadcast("tree");
-					WebSocket.Broadcast("driver:" + Program.Configuration.NextId);
+					Http.Update();
 
 					return new { Program.Configuration.NextId };
 				}
@@ -93,8 +92,7 @@ namespace iNOPC.Server.Web.Api
 					Program.Configuration.SaveToFile();
 					driver.Load();
 
-					WebSocket.Broadcast("tree");
-					WebSocket.Broadcast("driver:" + driver.Id);
+					Http.Update();
 
 					return true;
 				}
@@ -120,8 +118,7 @@ namespace iNOPC.Server.Web.Api
 					Program.Configuration.Drivers.Remove(driver);
 					Program.Configuration.SaveToFile();
 
-					WebSocket.Broadcast("tree");
-					WebSocket.Broadcast("driver:" + driver.Id);
+					Http.Update();
 
 					return true;
 				}
@@ -145,8 +142,7 @@ namespace iNOPC.Server.Web.Api
 				{
 					var reload = driver.Load();
 
-					WebSocket.Broadcast("tree");
-					WebSocket.Broadcast("driver:" + driver.Id);
+					Http.Update();
 					return reload;
 				}
 			}

@@ -51,7 +51,6 @@ namespace iNOPC.Server
 			// Стартуем необходимые сервисы
 			Configuration.RestoreFromFile();
 			Task.Run(Http.Start);
-			WebSocket.Start();
 			OPC.StartServer();
 #if !DEBUG
 			Defence.Set();
@@ -68,7 +67,6 @@ namespace iNOPC.Server
 			SweetStop();
 
 			// Глушим вебку
-			WebSocket.Stop();
 			Http.Stop();
 
 			Log("Сервер остановлен");

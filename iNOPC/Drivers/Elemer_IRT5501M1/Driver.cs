@@ -10,10 +10,10 @@ using System.Timers;
 namespace iNOPC.Drivers.Elemer_IRT5501M1
 {
 	public class Driver : IDriver
-    {
-        public string Version { get; } = typeof(Driver).Assembly.GetName().Version.ToString();
+	{
+		public string Version { get; } = typeof(Driver).Assembly.GetName().Version.ToString();
 
-        public Dictionary<string, DefField> Fields { get; set; }
+		public Dictionary<string, DefField> Fields { get; set; }
 
 		public event LogEvent LogEvent;
 
@@ -21,182 +21,182 @@ namespace iNOPC.Drivers.Elemer_IRT5501M1
 
 		public bool Start(string jsonConfiguration)
 		{
-            LogEvent("Запуск ...");
+			LogEvent("Запуск ...");
 
-            try { Port?.Close(); } catch { }
-            Port = new SerialPort();
-            Port.DataReceived += (s, e) => IsReceived = true;
-            Port.ErrorReceived += (s, e) => LogEvent("COM error: " + e.EventType.ToString(), LogType.ERROR);
+			try { Port?.Close(); } catch { }
+			Port = new SerialPort();
+			Port.DataReceived += (s, e) => IsReceived = true;
+			Port.ErrorReceived += (s, e) => LogEvent("COM error: " + e.EventType.ToString(), LogType.ERROR);
 
-            // чтение конфигурации
-            try
-            {
-                Configuration = JsonConvert.DeserializeObject<Configuration>(jsonConfiguration);
-            }
-            catch (Exception e)
-            {
-                return Err("Конфигурация не прочитана: " + e.Message);
-            }
+			// чтение конфигурации
+			try
+			{
+				Configuration = JsonConvert.DeserializeObject<Configuration>(jsonConfiguration);
+			}
+			catch (Exception e)
+			{
+				return Err("Конфигурация не прочитана: " + e.Message);
+			}
 
-            // подготовка пакетов для запроса
-            Fields = new Dictionary<string, DefField>
-            {
-                { "Time", new DefField { Quality = 192, Value = DateTime.Now.ToString("HH:mm:ss") } },
-                { "Channel1", new DefField { Quality = 0, Value = 0F } },
-            };
-            UpdateEvent();
+			// подготовка пакетов для запроса
+			Fields = new Dictionary<string, DefField>
+			{
+				{ "Time", new DefField { Quality = 192, Value = DateTime.Now.ToString("HH:mm:ss") } },
+				{ "Channel1", new DefField { Quality = 0, Value = 0F } },
+			};
+			UpdateEvent();
 
-            // установка начальных значений
-            try
-            {
-                Port.PortName = Configuration.PortName;
-                Port.BaudRate = Configuration.BaudRate;
-                Port.DataBits = Configuration.DataBits;
-                Port.Parity = (Parity)Configuration.Parity;
-                Port.StopBits = (StopBits)Configuration.StopBits;
-            }
-            catch (Exception e)
-            {
-                return Err("Параметры COM порта не установлены: " + e.Message + "\n" + e.StackTrace);
-            }
+			// установка начальных значений
+			try
+			{
+				Port.PortName = Configuration.PortName;
+				Port.BaudRate = Configuration.BaudRate;
+				Port.DataBits = Configuration.DataBits;
+				Port.Parity = (Parity)Configuration.Parity;
+				Port.StopBits = (StopBits)Configuration.StopBits;
+			}
+			catch (Exception e)
+			{
+				return Err("Параметры COM порта не установлены: " + e.Message + "\n" + e.StackTrace);
+			}
 
-            IsActive = true;
+			IsActive = true;
 
-            ExchangeTimer = new Timer(Configuration.Timeout);
-            ExchangeTimer.Elapsed += (s, e) => Exchange();
-            ExchangeTimer.Start();
+			ExchangeTimer = new Timer(Configuration.Timeout);
+			ExchangeTimer.Elapsed += (s, e) => Exchange();
+			ExchangeTimer.Start();
 
-            LogEvent("Мониторинг запущен");
+			LogEvent("Мониторинг запущен");
 
-            Task.Run(Exchange);
+			Task.Run(Exchange);
 
-            return true;
-        }
+			return true;
+		}
 
 		public void Stop()
 		{
-            LogEvent("Остановка ...");
+			LogEvent("Остановка ...");
 
-            IsActive = false;
-            try { ExchangeTimer?.Stop(); } catch { }
-            try { ExchangeTimer = null; } catch { }
-            try { Port?.Close(); } catch { }
-            try { Port = null; } catch { }
+			IsActive = false;
+			try { ExchangeTimer?.Stop(); } catch { }
+			try { ExchangeTimer = null; } catch { }
+			try { Port?.Close(); } catch { }
+			try { Port = null; } catch { }
 
-            lock (Fields)
+			lock (Fields)
 			{
-                Fields["Channel1"].Quality = 0;
-            }
-            UpdateEvent();
+				Fields["Channel1"].Quality = 0;
+			}
+			UpdateEvent();
 
-            LogEvent("Мониторинг остановлен");
-        }
+			LogEvent("Мониторинг остановлен");
+		}
 
 		public void Write(string fieldName, object value)
 		{
 			LogEvent("Запись не поддерживается", LogType.ERROR);
 		}
 
-        // realization
+		// realization
 
-        Configuration Configuration { get; set; }
+		Configuration Configuration { get; set; }
 
-        SerialPort Port { get; set; }
+		SerialPort Port { get; set; }
 
-        Timer ExchangeTimer { get; set; }
+		Timer ExchangeTimer { get; set; }
 
-        bool IsReceived { get; set; }
+		bool IsReceived { get; set; }
 
-        bool IsActive { get; set; }
+		bool IsActive { get; set; }
 
-        void Exchange()
+		void Exchange()
 		{
-            if (!IsActive) return;
+			if (!IsActive) return;
 
-            try
+			try
 			{
-                if (!Port.IsOpen)
+				if (!Port.IsOpen)
 				{
-                    try
-                    {
-                        Port.Open();
-                    }
-                    catch (Exception e)
-                    {
-                        Err("Reconnect: " + e.Message + "\n" + e.StackTrace);
-                        try { Port.Close(); } catch { }
-                        return;
-                    }
-                }
-
-                if (Port.IsOpen)
-				{
-                    IsReceived = false;
-
-                    Port.Write(new byte[] { 0xFF, 0x3A, 0x31, 0x3B, 0x31, 0x3B, 0x30, 0x3B, 0x37, 0x36, 0x32, 0x37, 0x0D }, 0, 13);
-
-                    DateTime reqTime = DateTime.Now;
-
-                    while (IsActive && ((DateTime.Now - reqTime).TotalMilliseconds <= Math.Min(2000, 0.75 * Configuration.Timeout) || !IsReceived))
+					try
 					{
-                        Task.Delay(100).Wait();
+						Port.Open();
+					}
+					catch (Exception e)
+					{
+						Err("Reconnect: " + e.Message + "\n" + e.StackTrace);
+						try { Port.Close(); } catch { }
+						return;
+					}
+				}
+
+				if (Port.IsOpen)
+				{
+					IsReceived = false;
+
+					Port.Write(new byte[] { 0xFF, 0x3A, 0x31, 0x3B, 0x31, 0x3B, 0x30, 0x3B, 0x37, 0x36, 0x32, 0x37, 0x0D }, 0, 13);
+
+					DateTime reqTime = DateTime.Now;
+
+					while (IsActive && ((DateTime.Now - reqTime).TotalMilliseconds <= Math.Min(2000, 0.75 * Configuration.Timeout) || !IsReceived))
+					{
+						Task.Delay(100).Wait();
 					}
 
-                    if (IsReceived)
-                    {
-                        int toRead = Port.BytesToRead;
-
-                        byte[] tx = new byte[toRead];
-                        Port.Read(tx, 0, toRead);
-
-                        try
-                        {
-                            string raw = Encoding.ASCII.GetString(tx);
-                            LogEvent("Ответ: " + raw, LogType.DETAILED);
-
-                            raw = raw.Substring(raw.IndexOf(';') + 1);
-                            raw = raw.Substring(0, raw.IndexOf(';'));
-                            LogEvent("Разобранный ответ: " + raw, LogType.DETAILED);
-
-                            float value = Convert.ToSingle(raw.Replace('.', ','));
-                            LogEvent("Значение: " + value, LogType.DETAILED);
-
-                            lock (Fields)
-							{
-                                Fields["Channel1"].Value = value;
-                                Fields["Channel1"].Quality = 192;
-                            }
-                        }
-                        catch (Exception e)
-						{
-                            Err("Ошибка при разборе ответа: " + e.Message);
-						}
-                    }
-                    else
+					if (IsReceived)
 					{
-                        LogEvent("Ответ не вернулся по таймауту", LogType.WARNING);
-                    }
+						int toRead = Port.BytesToRead;
+
+						byte[] tx = new byte[toRead];
+						Port.Read(tx, 0, toRead);
+
+						try
+						{
+							string raw = Encoding.ASCII.GetString(tx);
+							LogEvent("Ответ: " + raw, LogType.DETAILED);
+
+							raw = raw.Substring(raw.IndexOf(';') + 1);
+							raw = raw.Substring(0, raw.IndexOf(';'));
+							LogEvent("Разобранный ответ: " + raw, LogType.DETAILED);
+
+							float value = Convert.ToSingle(raw.Replace('.', ','));
+							LogEvent("Значение: " + value, LogType.DETAILED);
+
+							lock (Fields)
+							{
+								Fields["Channel1"].Value = value;
+								Fields["Channel1"].Quality = 192;
+							}
+						}
+						catch (Exception e)
+						{
+							Err("Ошибка при разборе ответа: " + e.Message);
+						}
+					}
+					else
+					{
+						LogEvent("Ответ не вернулся по таймауту", LogType.WARNING);
+					}
 				}
-            }
-            catch (Exception e)
+			}
+			catch (Exception e)
 			{
-                if (!IsActive) return;
-                Err("Ошибка при обмене: " + e.Message + "\n" + e.StackTrace);
+				if (!IsActive) return;
+				Err("Ошибка при обмене: " + e.Message + "\n" + e.StackTrace);
 			}
 
-            lock (Fields)
+			lock (Fields)
 			{
-                Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
-                Fields["Time"].Quality = 192;
-            }
+				Fields["Time"].Value = DateTime.Now.ToString("HH:mm:ss");
+				Fields["Time"].Quality = 192;
+			}
 
-            UpdateEvent();
-        }
-
-        bool Err(string message)
-		{
-            LogEvent(message, LogType.ERROR);
-            return false;
+			UpdateEvent();
 		}
-    }
+
+		bool Err(string message)
+		{
+			LogEvent(message, LogType.ERROR);
+			return false;
+		}
+	}
 }

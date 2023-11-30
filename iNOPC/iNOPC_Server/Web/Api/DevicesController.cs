@@ -36,8 +36,7 @@ namespace iNOPC.Server.Web.Api
 
 					Program.Configuration.SaveToFile();
 
-					WebSocket.Broadcast("tree");
-					WebSocket.Broadcast("driver.devices:" + driver.Id);
+					Http.Update();
 
 					return new { device.Id };
 				}
@@ -101,8 +100,7 @@ namespace iNOPC.Server.Web.Api
 
 						if (active || device.AutoStart) device.Start();
 
-						WebSocket.Broadcast("tree");
-						WebSocket.Broadcast("driver.devices:" + driver.Id);
+						Http.Update();
 
 						return true;
 					}
@@ -131,8 +129,7 @@ namespace iNOPC.Server.Web.Api
 
 						Program.Configuration.SaveToFile();
 
-						WebSocket.Broadcast("tree");
-						WebSocket.Broadcast("driver.devices:" + driver.Id);
+						Http.Update();
 
 						return true;
 					}
@@ -181,8 +178,7 @@ namespace iNOPC.Server.Web.Api
 
 					Program.Configuration.SaveToFile();
 
-					WebSocket.Broadcast("tree");
-					WebSocket.Broadcast("driver.devices:" + copy.Id);
+					Http.Update();
 
 					return new { copy.Id };
 				}
@@ -287,8 +283,7 @@ namespace iNOPC.Server.Web.Api
 					{
 						device.Start();
 
-						WebSocket.Broadcast("tree");
-						WebSocket.Broadcast("driver.devices:" + driver.Id);
+						Http.Update();
 
 						return true;
 					}
@@ -315,8 +310,7 @@ namespace iNOPC.Server.Web.Api
 					{
 						device.Stop();
 
-						WebSocket.Broadcast("tree");
-						WebSocket.Broadcast("driver.devices:" + driver.Id);
+						Http.Update();
 
 						return true;
 					}

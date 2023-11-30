@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -11,6 +12,8 @@ namespace iNOPC.Server.Web
 		public static List<Session> Sessions = new List<Session>();
 
 		public static string Base { get; set; } = Program.Base + "\\webConsole\\";
+
+		public static DateTime LastUpdate { get; set; } = DateTime.MinValue;
 
 		public static async Task Start()
 		{
@@ -28,6 +31,11 @@ namespace iNOPC.Server.Web
 		public static void Stop()
 		{
 			Listener.Stop();
+		}
+
+		public static void Update()
+		{
+			LastUpdate = DateTime.Now;
 		}
 	}
 }

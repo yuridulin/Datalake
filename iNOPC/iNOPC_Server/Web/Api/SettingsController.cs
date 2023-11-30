@@ -32,6 +32,11 @@ namespace iNOPC.Server.Web.Api
 				});
 		}
 
+		public object LastUpdate()
+		{
+			return Http.LastUpdate.ToString("dd.MM.yyyy HH:mm:ss");
+		}
+
 		public object Settings()
 		{
 			bool foundInDCOM = false;

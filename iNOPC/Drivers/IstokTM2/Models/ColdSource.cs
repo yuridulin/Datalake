@@ -2,15 +2,15 @@
 
 namespace iNOPC.Drivers.IstokTM2
 {
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct ColdSource
-    {
-        public double t;
+	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+	public struct ColdSource
+	{
+		public double t;
 
-        public double P;
+		public double P;
 
-        public double Patm;
+		public double Patm;
 
-        //public double h;
-    }
+		//public double h;
+	}
 }

@@ -1,4 +1,4 @@
-var ws
+/*var ws
 var wsAddress = 'ws://' + location.hostname + ':' + _wsPort + '/'
 
 function connectToServer() {
@@ -51,7 +51,21 @@ function connectToServer() {
 				break
 		}
 	}
-}
+}*/
+
+var lastUpdate = '01.01.0001 00:00:00'
+var isOffline = true
+
+setInterval(function () {
+	var previous = isOffline ? true : false
+	ask({ method: 'settings/lastUpdate' }, function (date) {
+		if (previous) Home()
+		else if (date != lastUpdate) {
+			lastUpdate = date
+			Tree()
+		}
+	})
+}, 5000)
 
 /**
  * Создание тега html с любым уровнем вложенности (реализация hyperscript)
@@ -200,6 +214,13 @@ function ask(parameters, callback) {
 
 		// Ожидание ответа сервера
 		if (xhr.readyState != 4) return
+		if (xhr.status == 0) {
+			isOffline = true
+			return Offline()
+		}
+		else {
+			isOffline = false
+		}
 		if (xhr.status != 200) return console.log('ask err: xhr return ' + xhr.status + ' [' + xhr.statusText + ']')
 
 		// Получение данных авторизации

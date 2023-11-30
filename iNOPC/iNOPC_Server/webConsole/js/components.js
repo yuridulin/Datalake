@@ -88,6 +88,7 @@ function Home() {
 
 function Offline() {
 	unsetTimers()
+	currentPage = 'offline'
 	mount('#tree', '')
 	mount('#view', 'Нет связи с OPC сервером')
 }
@@ -714,7 +715,7 @@ function DeviceSave(id) {
 	if (!AUTH()) return
 	var config = {}
 	var form = document.querySelector('#device-configuration .form')
-	form.querySelectorAll('div[type]').forEach(function (el) {
+	form.querySelectorAll('div[type],table[type]').forEach(function (el) {
 
 		if (el.getAttribute('type') == 'value') {
 			var input = el.querySelector('input,select,textarea')
@@ -723,7 +724,7 @@ function DeviceSave(id) {
 
 		else if (el.getAttribute('type') == 'array') {
 			var arr = []
-			var parts = el.querySelectorAll('p')
+			var parts = el.querySelectorAll('p,tr[value]')
 			parts.forEach(function (p) {
 				var x = {}
 				p.querySelectorAll('input,select,textarea').forEach(function (i) {
