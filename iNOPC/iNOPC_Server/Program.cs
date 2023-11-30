@@ -49,14 +49,15 @@ namespace iNOPC.Server
 		public static void Start()
 		{
 			// Стартуем необходимые сервисы
+			AssemblyLoader.Setup();
 			Task.Run(AssemblyLoader.Load);
 			Configuration.RestoreFromFile();
 			Task.Run(Http.Start);
 			OPC.StartServer();
-#if !DEBUG
-			Defence.Set();
-#endif
 			Calculator.Start();
+			#if !DEBUG
+			Defence.Set();
+			#endif
 
 			// Загружаем конфиг
 			Configuration.Start();

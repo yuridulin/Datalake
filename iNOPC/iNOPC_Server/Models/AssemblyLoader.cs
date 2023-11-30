@@ -14,9 +14,6 @@ namespace iNOPC.Server.Models
 
 		public static void Load()
 		{
-			Reload();
-			Setup();
-
 			using (var watcher = new FileSystemWatcher(Path))
 			{
 				watcher.NotifyFilter = NotifyFilters.Attributes
@@ -58,6 +55,7 @@ namespace iNOPC.Server.Models
 
 		public static void Setup()
 		{
+			Reload();
 			AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += ResolveAssembly;
 			AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
 		}
