@@ -17,26 +17,22 @@ namespace iNOPC.Server.Models
 			Reload();
 			Setup();
 
-			Task.Run(() => 
-			{ 
-				using (var watcher = new FileSystemWatcher(Path))
-				{
-					watcher.NotifyFilter = NotifyFilters.Attributes
-						| NotifyFilters.CreationTime
-						| NotifyFilters.DirectoryName
-						| NotifyFilters.FileName
-						| NotifyFilters.Size;
+			using (var watcher = new FileSystemWatcher(Path))
+			{
+				watcher.NotifyFilter = NotifyFilters.Attributes
+					| NotifyFilters.CreationTime
+					| NotifyFilters.DirectoryName
+					| NotifyFilters.FileName
+					| NotifyFilters.Size;
 
-					watcher.Changed += (s, e) => Reload();
-					watcher.Created += (s, e) => Reload();
-					watcher.Deleted += (s, e) => Reload();
-					watcher.Renamed += (s, e) => Reload();
+				watcher.Changed += (s, e) => Reload();
 
-					watcher.Filter = "*.dll";
-					watcher.IncludeSubdirectories = true;
-					watcher.EnableRaisingEvents = true;
-				}
-			});
+				watcher.Filter = "*.dll";
+				watcher.IncludeSubdirectories = true;
+				watcher.EnableRaisingEvents = true;
+
+				Console.ReadLine();
+			}
 		}
 
 		private static void Reload()
@@ -50,7 +46,8 @@ namespace iNOPC.Server.Models
 					Program.Log("Assembly Loader load from " + assemblyName);
 					var file = File.ReadAllBytes(assemblyName);
 					var assembly = Assembly.Load(file);
-					Additional.Add(assembly.FullName, assembly);
+
+					Additional[assembly.FullName] = assembly;
 				}
 				catch (Exception e)
 				{
