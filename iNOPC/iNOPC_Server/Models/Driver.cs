@@ -85,7 +85,8 @@ namespace iNOPC.Server.Models
 				}
 
 				// завершаем перезагрузку драйвера
-				Update();
+				Http.Update();
+
 				return true;
 			}
 			catch (Exception e)
@@ -93,11 +94,6 @@ namespace iNOPC.Server.Models
 				Log(e.Message, LogType.ERROR);
 				return false;
 			}
-		}
-
-		public void Update()
-		{
-			Http.Update();
 		}
 
 		public void Log(string text, LogType type = LogType.REGULAR)
@@ -118,8 +114,6 @@ namespace iNOPC.Server.Models
 			{
 				Program.Log("Error: " + text + "\nDriver: " + Name);
 			}
-
-			Http.Update();
 		}
 	}
 }

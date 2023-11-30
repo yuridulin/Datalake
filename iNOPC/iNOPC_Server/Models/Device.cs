@@ -124,8 +124,6 @@ namespace iNOPC.Server.Models
 				{
 					Program.Log("Error: " + text + "\nDriver: " + Name);
 				}
-
-				Http.Update();
 			}
 		}
 
@@ -137,8 +135,6 @@ namespace iNOPC.Server.Models
 			{
 				OPC.Write(DriverName + '.' + Name + '.' + field.Key, field.Value.Value, field.Value.Quality);
 			}
-
-			Http.Update();
 		}
 
 		public void Write(string fieldName, object value)
