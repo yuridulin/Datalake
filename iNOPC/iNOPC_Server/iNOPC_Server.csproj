@@ -80,6 +80,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\AssemblyLoader.cs" />
     <Compile Include="Models\Configuration.cs" />
     <Compile Include="Models\Configurations\Formular.cs" />
     <Compile Include="Models\Configurations\V0.cs" />

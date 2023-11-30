@@ -49,6 +49,7 @@ namespace iNOPC.Server
 		public static void Start()
 		{
 			// Стартуем необходимые сервисы
+			AssemblyLoader.Load();
 			Configuration.RestoreFromFile();
 			Task.Run(Http.Start);
 			OPC.StartServer();
