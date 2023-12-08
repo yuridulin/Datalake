@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom"
 import './AppMenu.css'
 import axios from "axios"
 import { API } from "../../router/api"
@@ -7,8 +7,7 @@ import { useState, useEffect } from "react"
 import { useInterval } from "../../hooks/useInterval"
 import { useUpdateContext } from "../../context/updateContext"
 import { BlockType } from "../../@types/BlockType"
-import { CalculatedId, ManualId } from "../../@types/enums/CustomSourcesIdentity";
-import router from "../../router/router";
+import { CalculatedId, ManualId } from "../../@types/enums/CustomSourcesIdentity"
 
 export function AppMenu() {
 
@@ -18,8 +17,8 @@ export function AppMenu() {
 	const [ blocks, setBlocks ] = useState([] as BlockType[])
 
 	function load() {
-		axios.get(API.sources.list).then(res => setSources(res.data)).catch(() => router.navigate('/offline'))
-		axios.get(API.blocks.list).then(res => setBlocks(res.data)).catch(() => router.navigate('/offline'))
+		axios.get(API.sources.list).then(res => setSources(res.data))
+		axios.get(API.blocks.list).then(res => setBlocks(res.data))
 	}
 
 	useEffect(load, [lastUpdate])

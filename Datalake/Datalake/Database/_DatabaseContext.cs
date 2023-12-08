@@ -18,6 +18,9 @@ namespace Datalake.Database
 
 		public DatabaseContext() : base(connString) { }
 
+		public ITable<User> Users
+			=> this.GetTable<User>();
+
 		public ITable<Tag> Tags
 			=> this.GetTable<Tag>();
 
@@ -52,6 +55,11 @@ namespace Datalake.Database
 			{
 				Tags.Where(x => x.IsCalculating).Set(x => x.SourceId, CustomSourcesIdentity.Calculated).Update();
 				Tags.Where(x => x.Name == "INSERTING").Delete();
+			}
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Users.TableName))
+			{
+				this.CreateTable<User>();
 			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Sources.TableName))

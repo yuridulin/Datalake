@@ -1,4 +1,8 @@
 export const API = {
+	auth: {
+		login: 'auth/login',
+		logout: 'auth/logout',
+	},
 	tags: {
 		getFlatList: 'tags/list',
 		create: 'tags/create',
@@ -18,7 +22,12 @@ export const API = {
 		list: 'blocks/list',
 		create: 'blocks/create',
 	},
+	console: {
+		tree: 'console/tree',
+	},
 	config: {
-		stats: 'config/statistic'
+		tree: 'config/tree',
+		last: 'config/lastUpdate',
+		stats: 'config/statistic',
 	}
 }

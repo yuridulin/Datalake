@@ -1,6 +1,7 @@
 ﻿using Datalake.Database;
 using Datalake.Enums;
 using Datalake.Models;
+using Datalake.Web.Attributes;
 using Datalake.Web.Models;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace Datalake.Web.Api
 {
 	public class ConsoleController : Controller
 	{
+		[Auth(AccessType.USER)]
 		public Result Tree()
 		{
 			using (var db = new DatabaseContext())

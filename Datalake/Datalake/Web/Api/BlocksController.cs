@@ -1,5 +1,7 @@
 ﻿using Datalake.Database;
+using Datalake.Enums;
 using Datalake.Models;
+using Datalake.Web.Attributes;
 using Datalake.Web.Models;
 using LinqToDB;
 using Newtonsoft.Json;
@@ -11,6 +13,7 @@ namespace Datalake.Web.Api
 {
 	public class BlocksController : Controller
 	{
+		[Auth(AccessType.USER)]
 		public Result List()
 		{
 			using (var db = new DatabaseContext())
@@ -30,6 +33,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Read(int Id)
 		{
 			using (var db = new DatabaseContext())
@@ -55,6 +59,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Parents(int Id)
 		{
 			using (var db = new DatabaseContext())
@@ -83,6 +88,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Live(int Id)
 		{
 			using (var db = new DatabaseContext())
@@ -121,6 +127,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result History(int Id, DateTime? old, DateTime? young, int resolution = 0)
 		{
 			using (var db = new DatabaseContext())
@@ -156,6 +163,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Create(int ParentId)
 		{
 			using (var db = new DatabaseContext())
@@ -173,6 +181,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Update(Block block)
 		{
 			using (var db = new DatabaseContext())
@@ -206,6 +215,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Move(int Id, int ParentId)
 		{
 			using (var db = new DatabaseContext())
@@ -221,6 +231,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Delete(int Id)
 		{
 			using (var db = new DatabaseContext())

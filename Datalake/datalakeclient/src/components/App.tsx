@@ -1,8 +1,8 @@
-import { useState } from 'react';
-//import TreeContainer from './left/TreeContainer';
-import { Link, Outlet } from 'react-router-dom';
-import { UpdateContext } from '../context/updateContext';
-import { AppMenu } from './left/AppMenu';
+import { useState } from 'react'
+import { Link, Outlet } from 'react-router-dom'
+import { UpdateContext } from '../context/updateContext'
+import { AppMenu } from './left/AppMenu'
+import UserPanel from './global/UserPanel'
 
 export default function App() {
 
@@ -10,15 +10,10 @@ export default function App() {
 	const [ checkedTags, setCheckedTags ] = useState<string[]>([])
 
 	return (
-		<UpdateContext.Provider value={{
-			lastUpdate,
-			setUpdate,
-			checkedTags,
-			setCheckedTags,
-		}}>
+		<UpdateContext.Provider value={{ lastUpdate, setUpdate, checkedTags, setCheckedTags, }}>
 			<div className="left">
 				<Link to="/" className="title">Datalake</Link>
-				{/* <TreeContainer /> */}
+				<UserPanel />
 				<AppMenu />
 			</div>
 			<div className="right">

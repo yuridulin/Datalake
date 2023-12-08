@@ -55,7 +55,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Cache.cs" />
+    <Compile Include="Database\User.cs" />
     <Compile Include="Enums\BlockTagType.cs" />
+    <Compile Include="Enums\Headers.cs" />
     <Compile Include="Enums\CustomSourcesIdentity.cs" />
     <Compile Include="Enums\SourceType.cs" />
     <Compile Include="Database\Rel_Block_Tag.cs" />
@@ -68,8 +70,12 @@
     <Compile Include="Enums\TagQuality.cs" />
     <Compile Include="Enums\TagType.cs" />
     <Compile Include="Enums\TreeType.cs" />
+    <Compile Include="Web\Api\AuthController.cs" />
     <Compile Include="Web\Api\ConsoleController.cs" />
     <Compile Include="Enums\AggFunc.cs" />
+    <Compile Include="Enums\AccessType.cs" />
+    <Compile Include="Web\Attributes\AuthAttribute.cs" />
+    <Compile Include="Web\Models\LoginPass.cs" />
     <Compile Include="Web\Models\Result.cs" />
     <Compile Include="Models\LiveRequest.cs" />
     <Compile Include="Models\HistoryValue.cs" />
@@ -78,6 +84,7 @@
     <Compile Include="Database\_DatabaseContext.cs" />
     <Compile Include="Web\Collector.cs" />
     <Compile Include="Models\TreeItem.cs" />
+    <Compile Include="Web\Models\UserSession.cs" />
     <Compile Include="Workers\CalculatorWorker.cs" />
     <Compile Include="Models\InputTag.cs" />
     <Compile Include="Models\DatalakeRequest.cs" />

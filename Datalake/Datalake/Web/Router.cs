@@ -1,5 +1,6 @@
-﻿using Datalake.Enums;
-using Datalake.Models;
+﻿using Datalake.Database;
+using Datalake.Enums;
+using Datalake.Web.Attributes;
 using Datalake.Web.Models;
 using Datalake.Workers;
 using Newtonsoft.Json;
@@ -11,7 +12,6 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Security.Principal;
 using System.Threading.Tasks;
 
 namespace Datalake.Web
@@ -26,6 +26,7 @@ namespace Datalake.Web
 		{
 			Request = context.Request;
 			Response = context.Response;
+			var headers = new Dictionary<string, string>();
 			Answer res;
 
 			var url = Request.Url.LocalPath.Substring(1);
@@ -38,16 +39,65 @@ namespace Datalake.Web
 			}
 			else
 			{
+				// Заголовки, передающие информацию о авторизации
+				#if DEBUG
+				Response.Headers.Add("Access-Control-Allow-Origin", "*");
+				Response.Headers.Add("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+				Response.Headers.Add("Access-Control-Allow-Headers", "x-requested-with, Content-Type, origin, authorization, accept, x-access-token" 
+					+ $", {Headers.LoginHeader}, {Headers.AccessHeader}, {Headers.TokenHeader}");
+				Response.Headers.Add("Access-Control-Expose-Headers", $"{Headers.LoginHeader}, {Headers.AccessHeader}, {Headers.TokenHeader}");
+				#endif
+
 				// Тело запроса, переданное через POST
 				string requestBody = Request.HasEntityBody
 					? new StreamReader(Request.InputStream).ReadToEnd()
 					: "";
 
-				// NTLM идентификация
-				var user = context.User as WindowsPrincipal;
-			
 				try
 				{
+					User user = new User
+					{
+						Name = Request.RemoteEndPoint.Address.ToString(),
+						AccessType = AccessType.NOT,
+					};
+
+					// авторизация запроса по токену, хранящемуся в куках. Если запрос - аутентификация, то обработчик перезапишет это значение
+					var token = Request.Headers.Get(Headers.TokenHeader);
+					headers.Add(Headers.TokenHeader, token);
+
+					var session = Server.Sessions.FirstOrDefault(x => token != null && x.Token == token && x.Expire > DateTime.Now);
+					if (session != null)
+					{
+						// Пользователь авторизован по сессионному токену
+						user.Name = session.Name;
+						user.AccessType = session.AccessType;
+					}
+					else
+					{
+						// Пользователь не авторизован по сессионному токену
+						List<User> users;
+
+						using (var db = new DatabaseContext())
+						{
+							users = db.Users.ToList();
+						}
+
+						if (users.Count == 0)
+						{
+							// Ни одна учётная запись не создана, выдается специальное разрешение FIRST для создания первой учётной записи
+							user.Name = AccessType.FIRST.ToString();
+							user.AccessType = AccessType.FIRST;
+						}
+						else
+						{
+							// Пользователь не авторизован
+							user.AccessType = AccessType.NOT;
+						}
+					}
+
+					headers.Add(Headers.LoginHeader, user.Name);
+					headers.Add(Headers.AccessHeader, ((int)user.AccessType).ToString());
+
 					res = Action(url.Replace("api/", ""), requestBody, user);
 				}
 				catch (Exception e)
@@ -62,11 +112,10 @@ namespace Datalake.Web
 				}
 			}
 
-			#if DEBUG
-			Response.AddHeader("Access-Control-Allow-Origin", "*");
-			Response.AddHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
-			Response.AddHeader("Access-Control-Allow-Headers", "x-requested-with, Content-Type, origin, authorization, accept, x-access-token");
-			#endif
+			foreach (var h in headers)
+			{
+				if (Response.Headers.GetValues(h.Key) == null) Response.Headers.Add(h.Key, h.Value);
+			}
 
 			// Отправка ответа клиенту
 			Response.StatusCode = (int)res.StatusCode;
@@ -79,10 +128,8 @@ namespace Datalake.Web
 			}
 		}
 
-		Answer Action(string methodName, string body, WindowsPrincipal user)
+		Answer Action(string methodName, string body, User user)
 		{
-			LogsWorker.Add("Router", $"[HTTP API] {methodName}", LogType.Trace);
-
 			if (Request.HttpMethod == "OPTIONS")
 			{
 				return new Answer
@@ -92,6 +139,8 @@ namespace Datalake.Web
 					String = JsonConvert.SerializeObject(new { })
 				};
 			}
+
+			LogsWorker.Add("Router", $"[HTTP API] {methodName} as {user.Name} [{user.AccessType}]", LogType.Trace);
 
 			var methodParts = methodName.Split(new[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -120,6 +169,20 @@ namespace Datalake.Web
 					ContentType = "application/json",
 					String = JsonConvert.SerializeObject(new { Error = "Метод " + methodParts[1] + " не найден" })
 				};
+			}
+
+			var auth = (AuthAttribute)action.GetCustomAttribute(typeof(AuthAttribute), false);
+			if (auth != null)
+			{
+				if (!auth.Types.Contains(user.AccessType))
+				{
+					return new Answer
+					{
+						StatusCode = HttpStatusCode.Forbidden,
+						ContentType = "application/json",
+						String = JsonConvert.SerializeObject(new { Error = "Нет доступа" })
+					};
+				}
 			}
 
 			var attType = typeof(AsyncStateMachineAttribute);

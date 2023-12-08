@@ -1,4 +1,6 @@
 ﻿using Datalake.Database;
+using Datalake.Enums;
+using Datalake.Web.Attributes;
 using Datalake.Web.Models;
 using System;
 using System.Linq;
@@ -12,6 +14,7 @@ namespace Datalake.Web.Api
 			return Data(Cache.LastUpdate);
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Statistic(DateTime last)
 		{
 			using (var db = new DatabaseContext())

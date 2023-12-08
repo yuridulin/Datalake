@@ -13,8 +13,13 @@ import SourceForm from '../components/right/sources/SourceForm'
 import TagSelectedForm from '../components/right/tags/TagSelectedForm'
 import TagsManualList from '../components/right/tags/TagsManualList'
 import TagsCalculatedList from '../components/right/tags/TagsCalculatedList'
+import LoginPanel from '../components/global/LoginPanel'
 
 const router = createBrowserRouter([
+	{
+		path: '/login',
+		element: <LoginPanel />
+	},
 	{
 		path: '/',
 		element: <App />,

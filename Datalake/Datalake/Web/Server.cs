@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using Datalake.Web.Models;
+using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Datalake.Web
@@ -6,6 +8,8 @@ namespace Datalake.Web
 	public class Server
 	{
 		static HttpListener Listener { get; set; }
+
+		public static List<UserSession> Sessions { get; set; } = new List<UserSession>();
 
 		public static async Task Start()
 		{

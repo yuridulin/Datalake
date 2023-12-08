@@ -1,5 +1,6 @@
-﻿using System.Net;
-using System.Security.Principal;
+﻿using Datalake.Database;
+using Datalake.Enums;
+using System.Net;
 
 namespace Datalake.Web.Models
 {
@@ -9,13 +10,11 @@ namespace Datalake.Web.Models
 
 		public HttpListenerResponse Response { get; set; } = null;
 
-		public WindowsPrincipal User { get; set; } = null;
+		public User User { get; set; } = new User { Name = string.Empty, AccessType = AccessType.NOT };
 
 		public Result Data(object data) => new Result { Data = data };
 
 		public Result Done(string data) => new Result { Done = data };
-
-		public Result Warning(string data) => new Result { Warning = data };
 
 		public Result Error(string data) => new Result { Error = data };
 	}

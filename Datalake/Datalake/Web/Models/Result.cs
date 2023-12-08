@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Net;
 
 namespace Datalake.Web.Models
@@ -17,6 +18,8 @@ namespace Datalake.Web.Models
 			!string.IsNullOrEmpty(Error) ? HttpStatusCode.InternalServerError
 			: !string.IsNullOrEmpty(Warning) ? HttpStatusCode.InternalServerError
 			: HttpStatusCode.OK;
+
+		public Dictionary<string, string> Headers { get; internal set; }
 
 		public string ToJson()
 		{

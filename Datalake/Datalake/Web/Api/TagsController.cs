@@ -1,6 +1,7 @@
 ﻿using Datalake.Database;
 using Datalake.Enums;
 using Datalake.Models;
+using Datalake.Web.Attributes;
 using Datalake.Web.Models;
 using Datalake.Workers;
 using LinqToDB;
@@ -12,72 +13,7 @@ namespace Datalake.Web.Api
 {
 	public class TagsController : Controller
 	{
-		public Result List(string[] names = null)
-		{
-			using (var db = new DatabaseContext())
-			{
-				var sources = db.Sources.ToList();
-
-				var list = db.Tags
-					.Where(x => names == null || names.Contains(x.Name))
-					.OrderBy(x => x.Name)
-					.ToList();
-
-				return Data(list);
-			}
-		}
-
-		public Result CalculatedList()
-		{
-			using (var db = new DatabaseContext())
-			{
-				var list = db.Tags
-					.Where(x => x.SourceId == CustomSourcesIdentity.Calculated)
-					.OrderBy(x => x.Name)
-					.ToList();
-
-				return Data(list);
-			}
-		}
-
-		public Result ManualList()
-		{
-			using (var db = new DatabaseContext())
-			{
-				var list = db.Tags
-					.Where(x => x.SourceId == CustomSourcesIdentity.Manual)
-					.OrderBy(x => x.Name)
-					.ToList();
-
-				return Data(list);
-			}
-		}
-
-		public Result Types()
-		{
-			var types = Enum.GetValues(typeof(TagType)).Cast<TagType>().ToDictionary(x => (int)x, x => x.ToString());
-
-			return Data(types);
-		}
-
-		public Result Inputs(int id)
-		{
-			using (var db = new DatabaseContext())
-			{
-				var outputs = db.Rel_Tag_Input
-					.Where(x => x.InputTagId == id)
-					.Select(x => x.TagId)
-					.ToList();
-
-				var list = db.Tags
-					.Where(x => x.Id != id)
-					.Where(x => !outputs.Contains(x.Id))
-					.Select(x => new { x.Id, x.Name })
-					.ToList();
-
-				return Data(list);
-			}
-		}
+		// public
 
 		public Result Live(LiveRequest request)
 		{
@@ -251,6 +187,81 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		// user
+
+		[Auth(AccessType.USER)]
+		public Result List(string[] names = null)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var sources = db.Sources.ToList();
+
+				var list = db.Tags
+					.Where(x => names == null || names.Contains(x.Name))
+					.OrderBy(x => x.Name)
+					.ToList();
+
+				return Data(list);
+			}
+		}
+
+		[Auth(AccessType.USER)]
+		public Result CalculatedList()
+		{
+			using (var db = new DatabaseContext())
+			{
+				var list = db.Tags
+					.Where(x => x.SourceId == CustomSourcesIdentity.Calculated)
+					.OrderBy(x => x.Name)
+					.ToList();
+
+				return Data(list);
+			}
+		}
+
+		[Auth(AccessType.USER)]
+		public Result ManualList()
+		{
+			using (var db = new DatabaseContext())
+			{
+				var list = db.Tags
+					.Where(x => x.SourceId == CustomSourcesIdentity.Manual)
+					.OrderBy(x => x.Name)
+					.ToList();
+
+				return Data(list);
+			}
+		}
+
+		[Auth(AccessType.USER)]
+		public Result Types()
+		{
+			var types = Enum.GetValues(typeof(TagType)).Cast<TagType>().ToDictionary(x => (int)x, x => x.ToString());
+
+			return Data(types);
+		}
+
+		[Auth(AccessType.USER)]
+		public Result Inputs(int id)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var outputs = db.Rel_Tag_Input
+					.Where(x => x.InputTagId == id)
+					.Select(x => x.TagId)
+					.ToList();
+
+				var list = db.Tags
+					.Where(x => x.Id != id)
+					.Where(x => !outputs.Contains(x.Id))
+					.Select(x => new { x.Id, x.Name })
+					.ToList();
+
+				return Data(list);
+			}
+		}
+
+		[Auth(AccessType.USER)]
 		public Result Create(int sourceId = 0)
 		{
 			using (var db = new DatabaseContext())
@@ -304,6 +315,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result CreateFromSource(int sourceId, string sourceItem, int sourceType)
 		{
 			using (var db = new DatabaseContext())
@@ -347,6 +359,7 @@ namespace Datalake.Web.Api
 			return Done("Тег добавлен");
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Read(int id)
 		{
 			using (var db = new DatabaseContext())
@@ -363,6 +376,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Write(int id, object value = null, DateTime? date = null, bool good = true)
 		{
 			using (var db = new DatabaseContext())
@@ -391,6 +405,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Update(Tag tag)
 		{
 			using (var db = new DatabaseContext())
@@ -434,6 +449,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Delete(int id)
 		{
 			using (var db = new DatabaseContext())

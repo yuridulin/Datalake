@@ -1,5 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Enums;
+using Datalake.Web.Attributes;
 using Datalake.Web.Models;
 using LinqToDB;
 using System.Linq;
@@ -8,6 +9,7 @@ namespace Datalake.Web.Api
 {
 	public class SourcesController : Controller
 	{
+		[Auth(AccessType.USER)]
 		public Result List()
 		{
 			using (var db = new DatabaseContext())
@@ -18,6 +20,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Items(int id)
 		{
 			using (var db = new DatabaseContext())
@@ -31,6 +34,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Tags(int id)
 		{
 			using (var db = new DatabaseContext())
@@ -55,6 +59,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Create()
 		{
 			using (var db = new DatabaseContext())
@@ -69,6 +74,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Read(int id)
 		{
 			using (var db = new DatabaseContext())
@@ -81,6 +87,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Update(int id, string name, string address, int type)
 		{
 			using (var db = new DatabaseContext())
@@ -99,6 +106,7 @@ namespace Datalake.Web.Api
 			}
 		}
 
+		[Auth(AccessType.USER)]
 		public Result Delete(int id)
 		{
 			using (var db = new DatabaseContext())
