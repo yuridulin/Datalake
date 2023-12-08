@@ -13,6 +13,7 @@ import { API } from "../../../router/api"
 import { HistoryResponse } from "../../../@types/HistoryResponse"
 import LiveTable from "./LiveTable"
 import HistoryTable from "./HistoryTable"
+import dayjs from "dayjs"
 
 export default function Viewer() {
 
@@ -40,9 +41,21 @@ export default function Viewer() {
 	}
 
 	const [ loadValues,, loadErr ] = useFetching(async () => {
+		console.log(settings)
 		let res = live 
-			? await axios.post(API.tags.getLiveValues, { request: settings })
-			: await axios.post(API.tags.getHistoryValues, { request: [settings] })
+			? await axios.post(API.tags.getLiveValues, {
+				request: {
+					Tags: settings.Tags
+				}
+			})
+			: await axios.post(API.tags.getHistoryValues, { 
+				request: [{
+					Tags: settings.Tags,
+					Old: dayjs(settings.Old).format('DD.MM.YYYY hh:mm'),
+					Young: dayjs(settings.Young).format('DD.MM.YYYY hh:mm'),
+					Resolution: settings.Resolution,
+				}]
+			})
 		setResponses(res.data as HistoryResponse[])
 	})
 
@@ -77,12 +90,17 @@ export default function Viewer() {
 
 				<div style={{ display: live ? 'none' : 'inline' }}>
 					&emsp;
-					<ConfigProvider locale={locale}>
+					<ConfigProvider locale={locale} >
 						<DatePicker.RangePicker
 							showTime={{ format: 'HH:mm' }}
+
 							format="YYYY-MM-DD HH:mm"
 							placeholder={['Начало', 'Конец']}
-							onChange={values => setSettings({ ...settings, Old: values?.[0]?.toDate() ?? new Date(), Young: values?.[1]?.toDate() ?? new Date() })}
+							onChange={values => setSettings({ 
+								...settings,
+								Old: values?.[0]?.toDate() ?? new Date(),
+								Young: values?.[1]?.toDate() ?? new Date()
+							})}
 						/>
 					</ConfigProvider>
 					&emsp;
@@ -106,8 +124,8 @@ export default function Viewer() {
 			{loadErr
 			? <div>Ошибка</div>
 			: live 
-				? <LiveTable responses={responses} />
-				: <HistoryTable responses={responses} />}
+				? <LiveTable responses={responses} tags={tags} />
+				: <HistoryTable responses={responses} tags={tags} />}
 		</>
 	)
 }

@@ -44,12 +44,13 @@ export function AppMenu() {
 		<div className="app-menu-block">
 			<NavLink to={'/sources'}>Источники</NavLink>
 			<div className="app-menu-sub">
-				{[
-					...sources.map(x => <NavLink key={x.Id} to={`/sources/${x.Id}`}>{x.Name}</NavLink>)
-					,<NavLink key={ManualId} to={'/tags/manual/'}>Мануальные теги</NavLink>
-					,<NavLink key={CalculatedId} to={'/tags/calc/'}>Вычисляемые теги</NavLink>
-				]}
+				{sources.map(x => <NavLink key={x.Id} to={`/sources/${x.Id}`}>{x.Name}</NavLink>)}
 			</div>
+		</div>
+		
+		<div className="app-menu-block">
+			<NavLink key={ManualId} to={'/tags/manual/'}>Мануальные теги</NavLink>
+			<NavLink key={CalculatedId} to={'/tags/calc/'}>Вычисляемые теги</NavLink>
 		</div>
 		
 		<div className="app-menu-block">

@@ -40,6 +40,8 @@ code {
 	bottom: 0;
 	padding: 1em;
 	z-index: 1;
+	border-right: 1px solid #eee;
+	box-shadow: 0 0 13px 0px #ddd;
 }
 
 .right {

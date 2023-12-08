@@ -1,11 +1,14 @@
+import dayjs from "dayjs"
 import { HistoryResponse } from "../../../@types/HistoryResponse"
+import { Tag } from "../../../@types/Tag"
 import { TagQualityDescription } from "../../../@types/enums/TagQuality"
-import DateStr from "../../small/DateStr"
+import TagQualityEl from "../../small/TagQualityEl"
 import TagValueEl from "../../small/TagValueEl"
 
-export default function HistoryTable({ responses }: { responses: HistoryResponse[] }) {
+export default function HistoryTable({ responses, tags }: { responses: HistoryResponse[], tags: Tag[] }) {
 
 	if (responses.length === 0) return <div>данные не получены</div>
+	if (!tags || tags.length === 0) return <></>
 
 	try {
 		var dates = responses[0].Values.map((x, i) => ({ index: i, date: x.Date }))
@@ -20,11 +23,25 @@ export default function HistoryTable({ responses }: { responses: HistoryResponse
 		return <div className="table">
 			<div className="table-header">
 				<span>Время</span>
-				{responses.map((x, i) => <span key={i}>{x.TagName}</span>)}
+				{responses.map((x, i) => {
+					let tag = tags.filter(t => t.Id === x.Id)[0]
+					return <span key={i} title={tag?.Description ?? ''}>{x.TagName}</span>
+				})}
+			</div>
+			<div className="table-header">
+				<span></span>
+				{responses.map((x, i) => {
+					let tag = tags.filter(t => t.Id === x.Id)[0]
+					return <span key={i}>{tag?.Description ?? ''}</span>
+				})}
 			</div>
 			{model.map((x, i) => <div className="table-row" key={i}>
-				<span><DateStr date={x.date} /></span>
-				{x.values.map((v, j) => <span key={j} title={TagQualityDescription(v.Quality)}><TagValueEl value={v.Value} /></span>)}
+				<span>{dayjs(x.date).format('DD.MM.YYYY hh:mm:ss')}</span>
+				{x.values.map((v, j) => <span key={j} title={TagQualityDescription(v.Quality)}>
+					<TagQualityEl quality={v.Quality} />
+					&emsp;
+					<TagValueEl value={v.Value} />
+				</span>)}
 			</div>)}
 		</div>
 	}
