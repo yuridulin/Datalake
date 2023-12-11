@@ -45,7 +45,7 @@ namespace Datalake
 			Configuration.Linq.GuardGrouping = false; // чтение последних значений для записи Initial при создании таблицы
 			TokenSource = new CancellationTokenSource();
 
-			using (var db = new DatabaseContext()) db.Recreate();
+			using (var db = new DatabaseContext()) db.Migrate();
 			WorkersList.Start(TokenSource.Token);
 			Task.Run(() => Web.Server.Start());
 		}

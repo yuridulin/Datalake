@@ -16,6 +16,8 @@ namespace Datalake.Database
 		static string connString = "Release";
 		#endif
 
+		int CurrentSchemeVersion = 1;
+
 		public DatabaseContext() : base(connString) { }
 
 		public ITable<Settings> Settings
@@ -48,120 +50,77 @@ namespace Datalake.Database
 
 		// методы
 
-		public void Recreate()
+		public void Migrate()
 		{
-			var sp = DataProvider.GetSchemaProvider();
-			var dbSchema = sp.GetSchema(this);
+			int version = GetSchemeVersion();
 
-			if (!dbSchema.Tables.Any(t => t.TableName == Tags.TableName))
+			if (version < CurrentSchemeVersion)
 			{
-				this.CreateTable<Tag>();
-			}
-			else
-			{
-				Tags.Where(x => x.IsCalculating).Set(x => x.SourceId, CustomSourcesIdentity.Calculated).Update();
-				Tags.Where(x => x.Name == "INSERTING").Delete();
+				if (version == 0) version = V1.Migrator.Migrate(this);
 			}
 
-			if (!dbSchema.Tables.Any(t => t.TableName == Logs.TableName))
+			if (version != CurrentSchemeVersion)
 			{
-				this.CreateTable<Log>();
+				throw new Exception("Миграция не выполнена!");
 			}
 
-			Log(new Log
-			{
-				Category = LogCategory.Core,
-				Type = LogType.Information,
-				Text = $"Запуск",
-			});
+			CreateCache();
+		}
 
-			if (!dbSchema.Tables.Any(t => t.TableName == Settings.TableName))
-			{
-				this.CreateTable<Settings>();
-			}
+		void CreateCache()
+		{
+			var tags = Tags
+				.ToList();
 
-			if (!dbSchema.Tables.Any(t => t.TableName == Users.TableName))
-			{
-				this.CreateTable<User>();
-			}
+			var provider = DataProvider.GetSchemaProvider();
+			var schema = provider.GetSchema(this);
 
-			if (!dbSchema.Tables.Any(t => t.TableName == Sources.TableName))
-			{
-				this.CreateTable<Source>();
-			}
-
-			if (!dbSchema.Tables.Any(t => t.TableName == Blocks.TableName))
-			{
-				this.CreateTable<Block>();
-			}
-
-			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Tag_Input.TableName))
-			{
-				this.CreateTable<Rel_Tag_Input>();
-			}
-
-			if (!dbSchema.Tables.Any(t => t.TableName == Rel_Block_Tag.TableName))
-			{
-				this.CreateTable<Rel_Block_Tag>();
-			}
-
-			Cache.Tables = dbSchema.Tables
+			Cache.Tables = schema.Tables
 				.Where(t => t.TableName.StartsWith("TagsHistory_"))
 				.Select(t => t.TableName)
 				.ToList();
 
-			CreateCache();
+			var last = schema.Tables
+				.Where(x => x.TableName.StartsWith("TagsHistory_"))
+				.OrderByDescending(x => x.TableName)
+				.Select(x => x.TableName)
+				.FirstOrDefault();
 
-			void CreateCache()
+			if (last == null)
 			{
-				var tags = Tags
+				Cache.Live = tags
+					.ToDictionary(x => x.Id, x => DefaultValue(x));
+			}
+			else
+			{
+				var table = this.GetTable<TagHistory>().TableName(last);
+
+				var values = table
+					.ToList()
+					.GroupBy(x => x.TagId)
+					.Select(g => new
+					{
+						Id = g.Key,
+						Value = g.OrderByDescending(x => x.Date).FirstOrDefault()
+					})
 					.ToList();
 
-				var provider = DataProvider.GetSchemaProvider();
-				var schema = provider.GetSchema(this);
-
-				var last = schema.Tables
-					.Where(x => x.TableName.StartsWith("TagsHistory_"))
-					.OrderByDescending(x => x.TableName)
-					.Select(x => x.TableName)
-					.FirstOrDefault();
-
-				if (last == null)
-				{
-					Cache.Live = tags
-						.ToDictionary(x => x.Id, x => DefaultValue(x));
-				}
-				else
-				{
-					var table = this.GetTable<TagHistory>().TableName(last);
-
-					var values = table
-						.ToList()
-						.GroupBy(x => x.TagId)
-						.Select(g => new
-						{
-							Id = g.Key,
-							Value = g.OrderByDescending(x => x.Date).FirstOrDefault()
-						})
-						.ToList();
-
-					Cache.Live = tags
-						.ToDictionary(x => x.Id, x => values.FirstOrDefault(v => v.Id == x.Id)?.Value ?? DefaultValue(x));
-				}
-
-				Cache.Update();
-
-				TagHistory DefaultValue(Tag tag) => new TagHistory
-				{
-					TagId = tag.Id,
-					Date = DateTime.Now,
-					Number = null,
-					Quality = 0,
-					Text = null,
-					Type = tag.Type,
-					Using = TagHistoryUse.Initial
-				};
+				Cache.Live = tags
+					.ToDictionary(x => x.Id, x => values.FirstOrDefault(v => v.Id == x.Id)?.Value ?? DefaultValue(x));
 			}
+
+			Cache.Update();
+
+			TagHistory DefaultValue(Tag tag) => new TagHistory
+			{
+				TagId = tag.Id,
+				Date = DateTime.Now,
+				Number = null,
+				Quality = 0,
+				Text = null,
+				Type = tag.Type,
+				Using = TagHistoryUse.Initial
+			};
 		}
 
 		readonly string TagsHistoryName = "TagsHistory_";

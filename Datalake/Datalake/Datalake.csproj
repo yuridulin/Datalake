@@ -67,6 +67,8 @@
     <Compile Include="Database\V0\Tag.cs" />
     <Compile Include="Database\V0\TagHistory.cs" />
     <Compile Include="Database\V0\User.cs" />
+    <Compile Include="Database\V1\User.cs" />
+    <Compile Include="Database\V1\_Migrator.cs" />
     <Compile Include="Enums\BlockTagType.cs" />
     <Compile Include="Enums\Headers.cs" />
     <Compile Include="Enums\CustomSourcesIdentity.cs" />
