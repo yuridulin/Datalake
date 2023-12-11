@@ -172,9 +172,15 @@ namespace Datalake.Web.Api
 			{
 				var user = db.Users
 					.Where(x => x.Name == auth.Name)
-					.ToList();
+					.FirstOrDefault();
 
 				if (user == null) return Error("Такой пользователь не существует");
+
+				if (user.AccessType == AccessType.ADMIN && db.Users.Count(x => x.AccessType == AccessType.ADMIN) == 1)
+					return Error("Попытка удалить последнего администратора");
+
+				if (db.Users.Count() == 1)
+					return Error("Попытка удалить последнюю учётную запись");
 
 				db.Users
 					.Where(x => x.Name == auth.Name)
