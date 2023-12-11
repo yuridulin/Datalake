@@ -1,6 +1,6 @@
-﻿using Datalake.Enums;
+﻿using Datalake.Database;
+using Datalake.Enums;
 using Datalake.Models;
-using Datalake.Workers;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ namespace Datalake.Web
 {
 	public static class Collector
 	{
-		public static DatalakeResponse AskInopc(string[] tags, string address)
+		public static DatalakeResponse AskInopc(DatabaseContext db, string[] tags, string address)
 		{
 			DatalakeRequest req = new DatalakeRequest
 			{
@@ -52,7 +52,14 @@ namespace Datalake.Web
 			}
 			catch (Exception ex)
 			{
-				LogsWorker.Add("Inopc", "Запрос к " + address + ": " + ex.Message, LogType.Error);
+				db.Log(new Log
+				{
+					Category = LogCategory.Api,
+					Type = LogType.Error,
+					Text = $"Нет связи с {address} типа Inopc",
+					Exception = ex,
+				});
+
 				res = new DatalakeResponse
 				{
 					Timestamp = DateTime.Now,
@@ -63,7 +70,7 @@ namespace Datalake.Web
 			return res;
 		}
 
-		public static DatalakeResponse AskDatalake(string[] tags, string address)
+		public static DatalakeResponse AskDatalake(DatabaseContext db, string[] tags, string address)
 		{
 			var res = new List<HistoryResponse>();
 
@@ -98,7 +105,13 @@ namespace Datalake.Web
 			}
 			catch (Exception ex)
 			{
-				LogsWorker.Add("DatalakeNode", "Запрос к " + address + ": " + ex.Message, LogType.Error);
+				db.Log(new Log
+				{
+					Category = LogCategory.Api,
+					Type = LogType.Error,
+					Text = $"Нет связи с источником {address} типа DatalakeNode",
+					Exception = ex,
+				});
 			}
 
 			var inputs = new List<InputTag>();

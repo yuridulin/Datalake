@@ -1,7 +1,6 @@
 ﻿using Datalake.Enums;
 using Datalake.Models;
 using Datalake.Web;
-using Datalake.Workers;
 using LinqToDB.Mapping;
 using System;
 using System.Collections.Generic;
@@ -28,18 +27,18 @@ namespace Datalake.Database
 
 		public List<Tag> Tags { get; set; } = new List<Tag>();
 
-		public DatalakeResponse GetItems()
+		public DatalakeResponse GetItems(DatabaseContext db)
 		{
 			DatalakeResponse res;
 
 			switch (Type)
 			{
 				case SourceType.Inopc:
-					res = Collector.AskInopc(new string[0], Address);
+					res = Collector.AskInopc(db, new string[0], Address);
 					break;
 
 				case SourceType.Datalake:
-					res = Collector.AskDatalake(new string[0], Address);
+					res = Collector.AskDatalake(db, new string[0], Address);
 					break;
 
 				default:
@@ -78,11 +77,11 @@ namespace Datalake.Database
 			switch (Type)
 			{
 				case SourceType.Inopc:
-					res = Collector.AskInopc(tagsToUpdate.Select(x => x.SourceItem).ToArray(), Address);
+					res = Collector.AskInopc(db, tagsToUpdate.Select(x => x.SourceItem).ToArray(), Address);
 					break;
 
 				case SourceType.Datalake:
-					res = Collector.AskDatalake(tagsToUpdate.Select(x => x.SourceItem).ToArray(), Address);
+					res = Collector.AskDatalake(db, tagsToUpdate.Select(x => x.SourceItem).ToArray(), Address);
 					break;
 
 				default:
@@ -132,7 +131,13 @@ namespace Datalake.Database
 			if (values.Count > 0)
 			{
 				db.WriteHistory(values);
-				LogsWorker.Add("Collector", Name + ", новых значений: " + values.Count, LogType.Trace);
+				db.Log(new Log
+				{
+					Category = LogCategory.Collector,
+					Type = LogType.Trace,
+					Ref = Id,
+					Text = $"Новых значений: {values.Count}",
+				});
 			}
 
 			foreach (var tag in tagsToUpdate)

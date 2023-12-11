@@ -22,7 +22,6 @@ namespace Datalake
 			if (Environment.UserInteractive)
 			{
 				Start();
-				LogsWorker.Add(nameof(Datalake), "Запуск", LogType.Warning);
 				Console.ReadLine();
 				Stop();
 			}

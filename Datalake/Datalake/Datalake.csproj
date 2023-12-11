@@ -55,10 +55,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Cache.cs" />
+    <Compile Include="Database\Log.cs" />
+    <Compile Include="Database\Settings.cs" />
     <Compile Include="Database\User.cs" />
     <Compile Include="Enums\BlockTagType.cs" />
     <Compile Include="Enums\Headers.cs" />
     <Compile Include="Enums\CustomSourcesIdentity.cs" />
+    <Compile Include="Enums\LogCategory.cs" />
     <Compile Include="Enums\SourceType.cs" />
     <Compile Include="Database\Rel_Block_Tag.cs" />
     <Compile Include="Database\Rel_Tag_Input.cs" />
@@ -101,8 +104,6 @@
     <Compile Include="Web\Router.cs" />
     <Compile Include="Workers\CollectorWorker.cs" />
     <Compile Include="Workers\_WorkersList.cs" />
-    <Compile Include="Workers\LogsWorker.cs" />
-    <Compile Include="Models\Log.cs" />
     <Compile Include="Enums\LogType.cs" />
   </ItemGroup>
   <ItemGroup>

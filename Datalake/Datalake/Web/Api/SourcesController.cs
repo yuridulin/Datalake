@@ -28,7 +28,7 @@ namespace Datalake.Web.Api
 				var source = db.Sources.FirstOrDefault(x => x.Id == id);
 				if (source == null) return Error("Источник не найден.");
 
-				var res = source.GetItems();
+				var res = source.GetItems(db);
 
 				return Data(res.Tags.Select(x => x.Name).ToList());
 			}
@@ -42,7 +42,7 @@ namespace Datalake.Web.Api
 				var source = db.Sources.FirstOrDefault(x => x.Id == id);
 				if (source == null) return Error("Источник не найден.");
 
-				var res = source.GetItems();
+				var res = source.GetItems(db);
 				var items = res.Tags.Select(x => new { x.Name, x.Type }).ToList();
 
 				var tags = db.Tags

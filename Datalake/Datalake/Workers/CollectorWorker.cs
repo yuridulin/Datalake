@@ -14,9 +14,9 @@ namespace Datalake.Workers
 		{
 			while (!token.IsCancellationRequested)
 			{
-				try
+				using (var db = new DatabaseContext())
 				{
-					using (var db = new DatabaseContext())
+					try
 					{
 						if (Cache.LastUpdate > StoredUpdate)
 						{
@@ -27,12 +27,18 @@ namespace Datalake.Workers
 
 						Sources.ForEach(source => source.Update(db));
 					}
+					catch (Exception ex)
+					{
+						db.Log(new Log
+						{
+							Category = LogCategory.Collector,
+							Type = LogType.Error,
+							Text = "Ошибка в цикле обновления",
+							Exception = ex,
+						});
+					}
 				}
-				catch (Exception ex)
-				{
-					LogsWorker.Add("Collector", "Loop error: " + ex.Message, LogType.Error);
-				}
-
+				
 				await Task.Delay(1000);
 			}
 		}

@@ -18,6 +18,12 @@ namespace Datalake.Database
 
 		public DatabaseContext() : base(connString) { }
 
+		public ITable<Settings> Settings
+			=> this.GetTable<Settings>();
+
+		public ITable<Log> Logs
+			=> this.GetTable<Log>();
+
 		public ITable<User> Users
 			=> this.GetTable<User>();
 
@@ -55,6 +61,23 @@ namespace Datalake.Database
 			{
 				Tags.Where(x => x.IsCalculating).Set(x => x.SourceId, CustomSourcesIdentity.Calculated).Update();
 				Tags.Where(x => x.Name == "INSERTING").Delete();
+			}
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Logs.TableName))
+			{
+				this.CreateTable<Log>();
+			}
+
+			Log(new Log
+			{
+				Category = LogCategory.Core,
+				Type = LogType.Information,
+				Text = $"Запуск",
+			});
+
+			if (!dbSchema.Tables.Any(t => t.TableName == Settings.TableName))
+			{
+				this.CreateTable<Settings>();
 			}
 
 			if (!dbSchema.Tables.Any(t => t.TableName == Users.TableName))
@@ -142,6 +165,33 @@ namespace Datalake.Database
 		}
 
 		readonly string TagsHistoryName = "TagsHistory_";
+
+		int GetSchemeVersion()
+		{
+			try
+			{
+				var version = Settings.Where(x => x.Key == "Version").Select(x => x.Value).FirstOrDefault();
+				if (version == null) return 0;
+
+				return int.TryParse(version, out int v) ? v : 0;
+			}
+			catch { return 0; }
+		}
+
+		public void Log(Log log)
+		{
+			try
+			{
+				log.Date = DateTime.Now;
+				this.Insert(log);
+
+				Console.WriteLine($"{log.Date:dd.MM.yyyy HH:mm:ss} [{log.Category}] {log.Type} : {log.Text}{(log.Ref.HasValue ? $" | Id {log.Ref}" : "")}");
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[LOG] Error : {ex.Message}\n{ex.StackTrace}");
+			}
+		}
 
 		string GetTableName(DateTime date) => TagsHistoryName + date.ToString("yyyy_MM_dd");
 

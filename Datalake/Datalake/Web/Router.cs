@@ -2,11 +2,11 @@
 using Datalake.Enums;
 using Datalake.Web.Attributes;
 using Datalake.Web.Models;
-using Datalake.Workers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -36,6 +36,10 @@ namespace Datalake.Web
 			{
 				// Запрошен статический документ
 				res = Document(url);
+
+				#if DEBUG
+				Debug.WriteLine($"[HTTP] DOC {url} - {res.StatusCode}");
+				#endif
 			}
 			else
 			{
@@ -53,14 +57,14 @@ namespace Datalake.Web
 					? new StreamReader(Request.InputStream).ReadToEnd()
 					: "";
 
+				User user = new User
+				{
+					Name = Request.RemoteEndPoint.Address.ToString(),
+					AccessType = AccessType.NOT,
+				};
+
 				try
 				{
-					User user = new User
-					{
-						Name = Request.RemoteEndPoint.Address.ToString(),
-						AccessType = AccessType.NOT,
-					};
-
 					// авторизация запроса по токену, хранящемуся в куках. Если запрос - аутентификация, то обработчик перезапишет это значение
 					var token = Request.Headers.Get(Headers.TokenHeader);
 					headers.Add(Headers.TokenHeader, token);
@@ -99,16 +103,23 @@ namespace Datalake.Web
 					headers.Add(Headers.AccessHeader, ((int)user.AccessType).ToString());
 
 					res = Action(url.Replace("api/", ""), requestBody, user);
+					
+					#if DEBUG
+					Debug.WriteLine($"[HTTP] API {url} by {user.Name} as {user.AccessType} - {res.StatusCode}");
+					#endif
 				}
 				catch (Exception e)
 				{
-					LogsWorker.Add("Router", "Error: " + e.Message + "\n" + e.StackTrace, LogType.Error);
 					res = new Answer
 					{
 						StatusCode = HttpStatusCode.InternalServerError,
 						ContentType = "application/json",
 						String = JsonConvert.SerializeObject(new { Error = e.Message, e.StackTrace })
 					};
+
+					#if DEBUG
+					Debug.WriteLine($"[HTTP] API {url} by {user.Name} as {user.AccessType} - {res.StatusCode}\nERROR:\n{e.Message}\n{e.StackTrace}");
+					#endif
 				}
 			}
 
@@ -139,8 +150,6 @@ namespace Datalake.Web
 					String = JsonConvert.SerializeObject(new { })
 				};
 			}
-
-			LogsWorker.Add("Router", $"[HTTP API] {methodName} as {user.Name} [{user.AccessType}]", LogType.Trace);
 
 			var methodParts = methodName.Split(new[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -292,7 +301,9 @@ namespace Datalake.Web
 
 		Answer Document(string filename)
 		{
-			LogsWorker.Add("Router", $"[HTTP DOC] {filename}", LogType.Trace);
+			#if DEBUG
+			string message = $"[HTTP] DOC: {filename}";
+			#endif
 
 			string basePath = AppDomain.CurrentDomain.BaseDirectory + "\\Content\\";
 			string filePath = (basePath + filename.Replace("/", "\\")).Replace(@"\\", "\\");

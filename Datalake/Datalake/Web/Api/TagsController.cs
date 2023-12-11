@@ -138,7 +138,14 @@ namespace Datalake.Web.Api
 										}
 										catch (Exception ex)
 										{
-											LogsWorker.Add("Api", "Aggregation " + set.Func + " on tag [\"" + tag.Name + "\"]: " + ex.Message, LogType.Error);
+											db.Log(new Log
+											{
+												Category = LogCategory.Calc,
+												Type = LogType.Error,
+												Ref = tag.Id,
+												Text = $"Ошибка при расчёте значения",
+												Details = ex.Message + "\n" + ex.StackTrace,
+											});
 										}
 
 										response.Add(new HistoryResponse

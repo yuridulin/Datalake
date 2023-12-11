@@ -39,7 +39,13 @@ namespace Datalake.Workers
 					}
 					catch (Exception ex)
 					{
-						LogsWorker.Add("Calculator", "Loop error: " + ex.Message, LogType.Error);
+						db.Log(new Log
+						{
+							Category = LogCategory.Calc,
+							Type = LogType.Error,
+							Text = "Ошибка в цикле расчёта значений",
+							Exception = ex,
+						});
 					}
 
 					await Task.Delay(1000);
@@ -76,7 +82,12 @@ namespace Datalake.Workers
 			if (values.Count > 0)
 			{
 				db.WriteHistory(values);
-				LogsWorker.Add("Calc", "Вычислено значений: " + values.Count, LogType.Trace);
+				db.Log(new Log
+				{
+					Category = LogCategory.Calc,
+					Type = LogType.Trace,
+					Text = $"Вычислено значений: {values.Count}"
+				});
 			}
 		}
 	}
