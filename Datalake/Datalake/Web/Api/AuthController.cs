@@ -10,12 +10,14 @@ namespace Datalake.Web.Api
 {
 	public class AuthController : Controller
 	{
-		public object Login(LoginPass auth)
+		public object Login(string name, string password)
 		{
 			using (var db = new DatabaseContext())
 			{
+				var auth = new LoginPass { Password = password };
+
 				var user = db.Users
-					.Where(x => x.Name == auth.Name)
+					.Where(x => x.Name == name)
 					.FirstOrDefault();
 
 				if (user == null)
@@ -23,7 +25,7 @@ namespace Datalake.Web.Api
 					if (User.AccessType == AccessType.FIRST && db.Users.Count() == 0)
 					{
 						// Если в базе нет пользователей, создаем администратора и авторизовываем его
-						Create(auth);
+						Create(name, password, name, AccessType.ADMIN);
 
 						user = db.Users
 							.Where(x => x.Name == auth.Name)
@@ -86,7 +88,9 @@ namespace Datalake.Web.Api
 				var users = db.Users
 					.Select(x => new
 					{
-						x.Name, x.AccessType,
+						x.Name,
+						x.FullName,
+						x.AccessType,
 					})
 					.ToList();
 
@@ -95,26 +99,69 @@ namespace Datalake.Web.Api
 		}
 
 		[Auth(AccessType.ADMIN, AccessType.FIRST)]
-		public object Create(LoginPass auth)
+		public object Create(string name, string password, string fullName, AccessType access)
 		{
-			var user = new User
-			{
-				Name = auth.Name,
-				AccessType = User.AccessType == AccessType.FIRST ? AccessType.ADMIN : auth.AccessType,
-				Hash = auth.Hash,
-			};
+			var auth = new LoginPass { Password = password };
 
 			using (var db = new DatabaseContext())
 			{
-				if (db.Users.Any(x => x.Name == user.Name)) return Error("Такой пользователь уже существует");
+				if (db.Users.Any(x => x.Name == name)) return Error("Такой пользователь уже существует");
 
 				db.Users
-					.Value(x => x.Name, user.Name)
-					.Value(x => x.AccessType, user.AccessType)
-					.Value(x => x.Hash, user.Hash)
+					.Value(x => x.Name, name)
+					.Value(x => x.FullName, fullName)
+					.Value(x => x.AccessType, access)
+					.Value(x => x.Hash, auth.Hash)
 					.Insert();
 
 				return Done("Пользователь успешно добавлен");
+			}
+		}
+
+		[Auth(AccessType.ADMIN, AccessType.FIRST)]
+		public object Update(string name, string newName = null, string password = null, string fullName = null, AccessType? access = null)
+		{
+			using (var db = new DatabaseContext())
+			{
+				if (!db.Users.Any(x => x.Name == name)) return Error("Такой пользователь не существует");
+
+				if (!string.IsNullOrEmpty(newName))
+				{
+					db.Users
+						.Where(x => x.Name == name)
+						.Set(x => x.Name, newName)
+						.Update();
+
+					name = newName;
+				}
+
+				if (!string.IsNullOrEmpty(password))
+				{
+					var auth = new LoginPass { Password = password };
+
+					db.Users
+						.Where(x => x.Name == name)
+						.Set(x => x.Hash, auth.Hash)
+						.Update();
+				}
+
+				if (!string.IsNullOrEmpty(fullName))
+				{
+					db.Users
+						.Where(x => x.Name == name)
+						.Set(x => x.FullName, fullName)
+						.Update();
+				}
+
+				if (access != null)
+				{
+					db.Users
+						.Where(x => x.Name == name)
+						.Set(x => x.AccessType, access.Value)
+						.Update();
+				}
+
+				return Done("Пользователь успешно сохранён");
 			}
 		}
 

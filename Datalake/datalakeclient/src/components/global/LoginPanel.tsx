@@ -19,7 +19,7 @@ export default function LoginPanel () {
 
 	const onFinish = (values: any) => {
 		console.log(values)
-		axios.post(API.auth.login, { auth: { name: values.username, password: values.password }})
+		axios.post(API.auth.login, { name: values.username, password: values.password })
 			.then(res => {
 				if (res.data.Done) {
 					navigate('/')
