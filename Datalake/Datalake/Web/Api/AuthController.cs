@@ -90,11 +90,11 @@ namespace Datalake.Web.Api
 					{
 						x.Name,
 						x.FullName,
-						x.AccessType,
+						AccessType = (int)x.AccessType,
 					})
 					.ToList();
 
-				return users;
+				return Data(users);
 			}
 		}
 
