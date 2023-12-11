@@ -28,10 +28,6 @@ namespace Datalake.Database
 
 		public Exception Exception
 		{
-			get
-			{
-				return new Exception();
-			}
 			set
 			{
 				Details = value.Message + "\n" + value.StackTrace;
