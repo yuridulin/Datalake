@@ -1,14 +1,6 @@
-﻿using LinqToDB.Mapping;
-
-namespace Datalake.Database
+﻿namespace Datalake.Database
 {
-	[Table(Name = "Settings")]
-	public class Settings
+	public class Settings : V0.Settings
 	{
-		[Column, NotNull]
-		public string Key { get; set; } = string.Empty;
-
-		[Column]
-		public string Value { get; set; }
 	}
 }

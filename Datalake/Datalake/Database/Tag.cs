@@ -1,5 +1,4 @@
 ﻿using Datalake.Enums;
-using LinqToDB.Mapping;
 using NCalc;
 using System;
 using System.Collections.Generic;
@@ -7,61 +6,8 @@ using System.Linq;
 
 namespace Datalake.Database
 {
-	[Table(Name = "Tags")]
-	public class Tag
+	public class Tag : V0.Tag
 	{
-		[Column, PrimaryKey, Identity]
-		public int Id { get; set; }
-
-		[Column, NotNull]
-		public string Name { get; set; } = string.Empty;
-
-		[Column]
-		public string Description { get; set; } = string.Empty;
-
-		[Column, NotNull]
-		public TagType Type { get; set; } = TagType.String;
-
-		[Column, NotNull]
-		public short Interval { get; set; } = 0;
-
-
-		// для значений, получаемых из источника
-
-		[Column, NotNull]
-		public int SourceId { get; set; } = 0;
-
-		[Column]
-		public string SourceItem { get; set; } = string.Empty;
-
-
-		// для числовых значений (шкалирование производится при записи нового значения)
-
-		[Column, NotNull]
-		public bool IsScaling { get; set; } = false;
-
-		[Column, NotNull]
-		public float MinEU { get; set; } = 0;
-
-		[Column, NotNull]
-		public float MaxEU { get; set; } = 100;
-
-		[Column, NotNull]
-		public float MinRaw { get; set; } = 0;
-
-		[Column, NotNull]
-		public float MaxRaw { get; set; } = 100;
-
-
-		// для вычисляемых тегов (вычисление - в модуле CalculatorWorker)
-
-		[Column, NotNull]
-		public bool IsCalculating { get; set; } = false;
-
-		[Column]
-		public string Formula { get; set; } = string.Empty;
-
-
 		// логика обновления оригинального значения
 
 		DateTime LastUpdate { get; set; } = DateTime.MinValue;

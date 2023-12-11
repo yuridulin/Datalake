@@ -1,30 +1,14 @@
 ﻿using Datalake.Enums;
 using Datalake.Models;
 using Datalake.Web;
-using LinqToDB.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Datalake.Database
 {
-	[Table(Name = "Sources")]
-	public class Source
+	public class Source : V0.Source
 	{
-		[Column, Identity]
-		public int Id { get; set; }
-
-		[Column]
-		public string Name { get; set; }
-
-		[Column]
-		public SourceType Type { get; set; }
-
-		[Column]
-		public string Address { get; set; }
-
-		// реализация
-
 		public List<Tag> Tags { get; set; } = new List<Tag>();
 
 		public DatalakeResponse GetItems(DatabaseContext db)

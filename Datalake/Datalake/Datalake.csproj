@@ -58,6 +58,15 @@
     <Compile Include="Database\Log.cs" />
     <Compile Include="Database\Settings.cs" />
     <Compile Include="Database\User.cs" />
+    <Compile Include="Database\V0\Block.cs" />
+    <Compile Include="Database\V0\Log.cs" />
+    <Compile Include="Database\V0\Rel_Block_Tag.cs" />
+    <Compile Include="Database\V0\Rel_Tag_Input.cs" />
+    <Compile Include="Database\V0\Settings.cs" />
+    <Compile Include="Database\V0\Source.cs" />
+    <Compile Include="Database\V0\Tag.cs" />
+    <Compile Include="Database\V0\TagHistory.cs" />
+    <Compile Include="Database\V0\User.cs" />
     <Compile Include="Enums\BlockTagType.cs" />
     <Compile Include="Enums\Headers.cs" />
     <Compile Include="Enums\CustomSourcesIdentity.cs" />
