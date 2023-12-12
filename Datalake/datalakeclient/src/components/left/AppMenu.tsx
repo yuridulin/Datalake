@@ -1,5 +1,4 @@
 import { NavLink } from "react-router-dom"
-import './AppMenu.css'
 import axios from "axios"
 import { API } from "../../router/api"
 import { TagSource } from "../../@types/Source"
@@ -8,6 +7,7 @@ import { useInterval } from "../../hooks/useInterval"
 import { useUpdateContext } from "../../context/updateContext"
 import { BlockType } from "../../@types/BlockType"
 import { CalculatedId, ManualId } from "../../@types/enums/CustomSourcesIdentity"
+import { auth } from "../../etc/auth"
 
 export function AppMenu() {
 
@@ -25,6 +25,9 @@ export function AppMenu() {
 	useInterval(load, 10000)
 
 	return <div className="app-menu">
+		{auth.isAdmin() && 
+			<NavLink to={'/users'}>Пользователи</NavLink>
+		}
 
 		<div className="app-menu-block">
 			<NavLink to={'/'}>Монитор</NavLink>
