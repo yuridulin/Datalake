@@ -14,6 +14,8 @@ import TagSelectedForm from '../components/right/tags/TagSelectedForm'
 import TagsManualList from '../components/right/tags/TagsManualList'
 import TagsCalculatedList from '../components/right/tags/TagsCalculatedList'
 import LoginPanel from '../components/global/LoginPanel'
+import UsersList from '../components/right/users/UsersList'
+import UserForm from '../components/right/users/UserForm'
 
 const router = createBrowserRouter([
 	{
@@ -31,6 +33,19 @@ const router = createBrowserRouter([
 			{
 				path: '/viewer',
 				element: <Viewer />
+			},
+			{
+				path: '/users',
+				children: [
+					{
+						path: '/users/',
+						element: <UsersList />
+					},
+					{
+						path: '/users/:name',
+						element: <UserForm />
+					}
+				]
 			},
 			{
 				path: '/sources',

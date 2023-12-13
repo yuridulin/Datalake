@@ -2,7 +2,7 @@
 
 namespace Datalake.Database
 {
-	public class Log : V0.Log
+	public class Log : V2.Log
 	{
 		public Exception Exception
 		{

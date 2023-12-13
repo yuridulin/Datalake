@@ -16,7 +16,7 @@ namespace Datalake.Database
 		static string connString = "Release";
 		#endif
 
-		int CurrentSchemeVersion = 1;
+		int CurrentSchemeVersion = 2;
 
 		public DatabaseContext() : base(connString) { }
 
@@ -56,13 +56,21 @@ namespace Datalake.Database
 
 			if (version < CurrentSchemeVersion)
 			{
-				if (version == 0) version = V1.Migrator.Migrate(this);
+				if (version == 0) version = SetSchemeVersion(V1.Migrator.Migrate(this));
+				if (version == 1) version = SetSchemeVersion(V2.Migrator.Migrate(this));
 			}
 
 			if (version != CurrentSchemeVersion)
 			{
 				throw new Exception("Миграция не выполнена!");
 			}
+
+			Log(new Log
+			{
+				Category = LogCategory.Database,
+				Type = LogType.Success,
+				Text = $"Схема базы данных приведена к актуальной версии: {version}"
+			});
 
 			CreateCache();
 		}
@@ -133,6 +141,23 @@ namespace Datalake.Database
 				if (version == null) return 0;
 
 				return int.TryParse(version, out int v) ? v : 0;
+			}
+			catch { return 0; }
+		}
+
+		int SetSchemeVersion(int version)
+		{
+			try
+			{
+				if (Settings.Any(x => x.Key == "Version"))
+				{
+					Settings.Where(x => x.Key == "Version").Set(x => x.Value, version.ToString()).Update();
+				}
+				else
+				{
+					Settings.Value(x => x.Key, "Version").Value(x => x.Value, version.ToString()).Insert();
+				}
+				return version;
 			}
 			catch { return 0; }
 		}

@@ -35,13 +35,6 @@ namespace Datalake.Database.V1
 				db.CreateTable<Log>();
 			}
 
-			db.Log(new Log
-			{
-				Category = LogCategory.Core,
-				Type = LogType.Information,
-				Text = $"Запуск",
-			});
-
 			if (!schema.Tables.Any(t => t.TableName == db.Settings.TableName))
 			{
 				db.CreateTable<Settings>();
@@ -55,7 +48,7 @@ namespace Datalake.Database.V1
 			{
 				try
 				{
-					var old = db.Users;
+					var old = db.GetTable<V0.User>();
 					var records = old.Count();
 
 					// из-за специфики linq2db миграция будет через временную таблицу

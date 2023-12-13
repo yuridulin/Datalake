@@ -2,6 +2,11 @@ export const API = {
 	auth: {
 		login: 'auth/login',
 		logout: 'auth/logout',
+		user: 'auth/userinfo',
+		users: 'auth/users',
+		create: 'auth/create',
+		update: 'auth/update',
+		delete: 'auth/delete',
 	},
 	tags: {
 		getFlatList: 'tags/list',
