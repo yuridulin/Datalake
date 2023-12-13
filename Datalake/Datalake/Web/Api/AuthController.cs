@@ -25,7 +25,7 @@ namespace Datalake.Web.Api
 					if (User.AccessType == AccessType.FIRST && db.Users.Count() == 0)
 					{
 						// Если в базе нет пользователей, создаем администратора и авторизовываем его
-						Create(name, password, name, AccessType.ADMIN);
+						Create(name, password, name, (int)AccessType.ADMIN);
 
 						user = db.Users
 							.Where(x => x.Name == auth.Name)
@@ -119,7 +119,7 @@ namespace Datalake.Web.Api
 		}
 
 		[Auth(AccessType.ADMIN, AccessType.FIRST)]
-		public object Create(string name, string password, string fullName, AccessType access)
+		public object Create(string name, string password, string fullName, int accessType)
 		{
 			var auth = new LoginPass { Password = password };
 
@@ -130,7 +130,7 @@ namespace Datalake.Web.Api
 				db.Users
 					.Value(x => x.Name, name)
 					.Value(x => x.FullName, fullName)
-					.Value(x => x.AccessType, access)
+					.Value(x => x.AccessType, (AccessType)accessType)
 					.Value(x => x.Hash, auth.Hash)
 					.Insert();
 
@@ -143,7 +143,8 @@ namespace Datalake.Web.Api
 		{
 			using (var db = new DatabaseContext())
 			{
-				if (!db.Users.Any(x => x.Name == name)) return Error("Такой пользователь не существует");
+				var user = db.Users.FirstOrDefault(x => x.Name == name);
+				if (user == null) return Error("Такой пользователь не существует");
 
 				if (!string.IsNullOrEmpty(newName))
 				{
@@ -175,6 +176,11 @@ namespace Datalake.Web.Api
 
 				if (access != null)
 				{
+					if (user.AccessType == AccessType.ADMIN && access.Value != AccessType.ADMIN && db.Users.Where(x => x.AccessType == AccessType.ADMIN).Count() == 1)
+					{
+						return Error("Попытка удалить последнего администратора");
+					}
+
 					db.Users
 						.Where(x => x.Name == name)
 						.Set(x => x.AccessType, access.Value)
@@ -186,12 +192,12 @@ namespace Datalake.Web.Api
 		}
 
 		[Auth(AccessType.ADMIN)]
-		public object Delete(LoginPass auth)
+		public object Delete(string name)
 		{
 			using (var db = new DatabaseContext())
 			{
 				var user = db.Users
-					.Where(x => x.Name == auth.Name)
+					.Where(x => x.Name == name)
 					.FirstOrDefault();
 
 				if (user == null) return Error("Такой пользователь не существует");
@@ -203,7 +209,7 @@ namespace Datalake.Web.Api
 					return Error("Попытка удалить последнюю учётную запись");
 
 				db.Users
-					.Where(x => x.Name == auth.Name)
+					.Where(x => x.Name == name)
 					.Delete();
 
 				return Done("Пользователь успешно удалён");

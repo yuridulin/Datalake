@@ -2,6 +2,7 @@
 using Datalake.Enums;
 using Datalake.Web.Attributes;
 using Datalake.Web.Models;
+using LinqToDB.Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -226,31 +227,38 @@ namespace Datalake.Web
 					if (jsonParams.ContainsKey(p.Name.ToLower()))
 					{
 						var jsonParam = jsonParams[p.Name.ToLower()];
-						var jsonType = Nullable.GetUnderlyingType(jsonParam.GetType()) ?? jsonParam.GetType();
-
-						try
+						if (jsonParam != null)
 						{
-							if (jsonType == typeof(JObject))
+							var jsonType = Nullable.GetUnderlyingType(jsonParam.GetType()) ?? jsonParam.GetType();
+
+							try
 							{
-								var param = (jsonParam as JObject).ToObject(p.ParameterType);
-								invokeParams.Add(param);
+								if (jsonType == typeof(JObject))
+								{
+									var param = (jsonParam as JObject).ToObject(p.ParameterType);
+									invokeParams.Add(param);
+								}
+								else if (jsonType == typeof(JArray))
+								{
+									var param = (jsonParam as JArray).ToObject(p.ParameterType);
+									invokeParams.Add(param);
+								}
+								else
+								{
+
+									var param = Convert.ChangeType(jsonParam, paramType);
+									invokeParams.Add(param);
+								}
 							}
-							else if (jsonType == typeof(JArray))
+							catch
 							{
-								var param = (jsonParam as JArray).ToObject(p.ParameterType);
-								invokeParams.Add(param);
-							}
-							else
-							{
-								
-								var param = Convert.ChangeType(jsonParam, paramType);
-								invokeParams.Add(param);
+								Console.WriteLine("Не получилось определить JSON тип: " + jsonType);
+								missedParams.Add(p.Name, paramType);
 							}
 						}
-						catch
+						else if (paramType.IsNullable())
 						{
-							Console.WriteLine("Не получилось определить JSON тип: " + jsonType);
-							missedParams.Add(p.Name, paramType);
+							invokeParams.Add(null);
 						}
 					}
 					else if (p.DefaultValue != DBNull.Value)

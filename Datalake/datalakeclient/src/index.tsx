@@ -1,9 +1,9 @@
 import ReactDOM from 'react-dom/client'
-import { RouterProvider } from 'react-router-dom'
 import router from './router/router'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { notification } from 'antd'
 import { accessHeader, auth, loginHeader, tokenHeader } from './etc/auth'
+import Layout from './components/Layout'
 
 // настройка взаимодействия с сервером
 
@@ -63,16 +63,17 @@ axios.interceptors.response.use(
 			return router.navigate('/login')
 		}
 		// сообщения после выполнения действий
+		else if (err.request?.status === 500) {
+			return notification.error({ placement: 'bottomLeft', message: (err.response?.data as any)?.Error })
+		}
+		// сообщения о транспортной ошибке
 		else {
 			console.log('server action error:', err.message)
 			return notification.error({ placement: 'bottomLeft', message: err.message })
-			//return Promise.reject(err)
 		}
 	}
 )
 
 ReactDOM
 	.createRoot(document.getElementById('root') as HTMLElement)
-	.render(
-		<RouterProvider router={router} />
-	)
+	.render(<Layout />)

@@ -16,6 +16,7 @@ import TagsCalculatedList from '../components/right/tags/TagsCalculatedList'
 import LoginPanel from '../components/global/LoginPanel'
 import UsersList from '../components/right/users/UsersList'
 import UserForm from '../components/right/users/UserForm'
+import UserCreate from '../components/right/users/UserCreate'
 
 const router = createBrowserRouter([
 	{
@@ -42,7 +43,11 @@ const router = createBrowserRouter([
 						element: <UsersList />
 					},
 					{
-						path: '/users/:name',
+						path: '/users/create',
+						element: <UserCreate />
+					},
+					{
+						path: '/users/:id',
 						element: <UserForm />
 					}
 				]

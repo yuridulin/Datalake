@@ -41,25 +41,25 @@ export default function LoginPanel () {
 			onFinishFailed={onFinishFailed}
 			autoComplete="off"
 		>
-			<Form.Item<FieldType>
-				label="Имя учётной записи"
-				name="username"
-				rules={[{ required: true, message: 'Имя не введено' }]}
-			>
-				<Input name="username" autoComplete="username" />
-			</Form.Item>
+				<Form.Item<FieldType>
+					label="Имя учётной записи"
+					name="username"
+					rules={[{ required: true, message: 'Имя не введено' }]}
+				>
+					<Input name="username" autoComplete="username" />
+				</Form.Item>
 
-			<Form.Item<FieldType>
-				label="Пароль"
-				name="password"
-				rules={[{ required: true, message: 'Пароль не введён' }]}
-			>
-				<Input.Password name="password" autoComplete="current-password" />
-			</Form.Item>
+				<Form.Item<FieldType>
+					label="Пароль"
+					name="password"
+					rules={[{ required: true, message: 'Пароль не введён' }]}
+				>
+					<Input.Password name="password" autoComplete="password" />
+				</Form.Item>
 
-			<Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-				<Button type="primary" htmlType="submit">Вход</Button>
-			</Form.Item>
+				<Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+					<Button type="primary" htmlType="submit">Вход</Button>
+				</Form.Item>
 		</Form>
 	</div>
 }

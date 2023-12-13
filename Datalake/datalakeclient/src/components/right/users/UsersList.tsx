@@ -6,24 +6,28 @@ import Header from "../../small/Header"
 import { Button, Input } from "antd"
 import FormRow from "../../small/FormRow"
 import { AccessTypeDescription } from "../../../@types/enums/AccessType"
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 
 export default function UsersList() {
 
+	const navigate = useNavigate()
 	const [ users, setUsers ] = useState([] as User[])
 	const [ search, setSearch ] = useState('')
 
+	useEffect(load, [])
 	function load() {
 		axios
 			.post(API.auth.users)
 			.then(res => setUsers(res.data))
 	}
 
-	useEffect(load, [])
+	function create() {
+		navigate('/users/create')
+	}
 
 	return <>
 		<Header
-			right={<Button>Добавить пользователя</Button>}
+			right={<Button onClick={create}>Добавить пользователя</Button>}
 		>Список пользователей</Header>
 		{users.length > 0 && <>
 			<FormRow title="Поиск">

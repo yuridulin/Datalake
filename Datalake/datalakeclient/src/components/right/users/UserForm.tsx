@@ -13,16 +13,18 @@ export default function UserForm() {
 	const navigate = useNavigate()
 	const { id } = useParams()
 	const [ user, setUser ] = useState({} as User)
+	const [ password, setPassword ] = useState(null as string | null)
 
 	useEffect(load, [id])
 
 	function load() {
+		console.log(id)
 		axios.post(API.auth.user, { name: id })
 			.then(res => res.status === 200 && setUser(res.data))
 	}
 
 	function update() {
-		axios.post(API.auth.update, { name: id })
+		axios.post(API.auth.update, { name: id, newName: user.Name, FullName: user.FullName, AccessType: user.AccessType, Password: password })
 			.then(res => res.status === 200 && id !== user.Name && navigate('/users/' + user.Name))
 	}
 
@@ -51,18 +53,23 @@ export default function UserForm() {
 		>
 			Учётная запись: {id}
 		</Header>
-		<FormRow title="Имя учётной записи">
-			<Input value={user.Name} onChange={e => setUser({ ...user, Name: e.target.value })} />
-		</FormRow>
-		<FormRow title="Имя пользователя">
-			<Input value={user.FullName} onChange={e => setUser({ ...user, FullName : e.target.value })} />
-		</FormRow>
-		<FormRow title="Тип учётной записи">
-			<Radio.Group buttonStyle="solid" value={user.AccessType} onChange={e => setUser({...user, AccessType: e.target.value })}>
-				<Radio.Button value={AccessType.NOT}>Отключена</Radio.Button>
-				<Radio.Button value={AccessType.USER}>Пользователь</Radio.Button>
-				<Radio.Button value={AccessType.ADMIN}>Администратор</Radio.Button>
-			</Radio.Group>
-		</FormRow>
+		<form>
+			<FormRow title="Имя учётной записи">
+				<Input value={user.Name} onChange={e => setUser({ ...user, Name: e.target.value })} />
+			</FormRow>
+			<FormRow title="Имя пользователя">
+				<Input value={user.FullName} onChange={e => setUser({ ...user, FullName : e.target.value })} />
+			</FormRow>
+			<FormRow title="Новый пароль">
+				<Input.Password value={password || ''} autoComplete="password" placeholder="Запишите новый пароль, если хотите его изменить" onChange={e => setPassword(e.target.value)} />
+			</FormRow>
+			<FormRow title="Тип учётной записи">
+				<Radio.Group buttonStyle="solid" value={user.AccessType} onChange={e => setUser({...user, AccessType: e.target.value })}>
+					<Radio.Button value={AccessType.NOT}>Отключена</Radio.Button>
+					<Radio.Button value={AccessType.USER}>Пользователь</Radio.Button>
+					<Radio.Button value={AccessType.ADMIN}>Администратор</Radio.Button>
+				</Radio.Group>
+			</FormRow>
+		</form>
 	</>
 }
