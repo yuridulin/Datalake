@@ -81,6 +81,26 @@ namespace Datalake.Web.Api
 		}
 
 		[Auth(AccessType.ADMIN)]
+		public object UserInfo(string name)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var user = db.Users
+					.Select(x => new
+					{
+						x.Name,
+						x.FullName,
+						AccessType = (int)x.AccessType,
+					})
+					.FirstOrDefault(x => x.Name == name);
+
+				if (user == null) return Error("Пользователь не найден");
+
+				return Data(user);
+			}
+		}
+
+		[Auth(AccessType.ADMIN)]
 		public object Users()
 		{
 			using (var db = new DatabaseContext())
