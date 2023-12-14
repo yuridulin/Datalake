@@ -454,6 +454,8 @@ namespace Datalake.Database
 				.Value(x => x.Using, TagHistoryUse.Basic)
 				.Insert();
 
+			Cache.Write(value);
+
 			// проверка, является ли новое значение последним в таблице
 			// если да, мы должны обновить следующие Using = Initial по каскаду до последнего
 
