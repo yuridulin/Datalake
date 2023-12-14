@@ -82,7 +82,7 @@ namespace Datalake.Web.Api
 						var young = set.Young ?? DateTime.Now;
 						var old = set.Old ?? young.Date;
 
-						if (young == old)
+						if (!set.Young.HasValue && !set.Old.HasValue)
 						{
 							response.AddRange((List<HistoryResponse>)Live(set).Data);
 						}
