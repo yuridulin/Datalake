@@ -88,6 +88,12 @@ namespace Datalake.Web.Api
 						}
 						else
 						{
+							if (set.Exact.HasValue)
+							{
+								young = set.Exact.Value;
+								old = set.Exact.Value;
+							}
+
 							var data = db.ReadHistory(tags.Select(x => x.Id).ToArray(), old, young, Math.Max(0, set.Resolution));
 
 							foreach (var item in data.GroupBy(x => x.TagId))
