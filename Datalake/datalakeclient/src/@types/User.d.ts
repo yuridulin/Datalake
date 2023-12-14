@@ -6,4 +6,5 @@ export interface User {
 	AccessType: AccessType
 	Password: string
 	Hash: string
+	StaticHost: string | null
 }

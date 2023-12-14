@@ -2,7 +2,7 @@ import ReactDOM from 'react-dom/client'
 import router from './router/router'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { notification } from 'antd'
-import { accessHeader, auth, loginHeader, tokenHeader } from './etc/auth'
+import { accessHeader, auth, nameHeader, tokenHeader } from './etc/auth'
 import Layout from './components/Layout'
 
 // настройка взаимодействия с сервером
@@ -12,7 +12,7 @@ axios.defaults.baseURL = window.location.protocol + '//' + window.location.hostn
 axios.interceptors.request.use(
 	function (config) {
 		// добавляем информацию о пользователе ко всем запросам
-		config.headers[loginHeader] = auth.name()
+		config.headers[nameHeader] = auth.name()
 		config.headers[tokenHeader] = auth.token()
 		config.headers[accessHeader] = auth.access()
 		return config
@@ -35,7 +35,7 @@ axios.interceptors.response.use(
 		// нормальное развитие событий
 		else {
 			// данные о доступе сохраняем
-			auth.name(res.headers[loginHeader])
+			auth.name(res.headers[nameHeader])
 			auth.token(res.headers[tokenHeader])
 			auth.access(res.headers[accessHeader])
 

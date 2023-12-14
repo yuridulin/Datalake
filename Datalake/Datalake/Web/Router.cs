@@ -49,8 +49,8 @@ namespace Datalake.Web
 				Response.Headers.Add("Access-Control-Allow-Origin", "*");
 				Response.Headers.Add("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
 				Response.Headers.Add("Access-Control-Allow-Headers", "x-requested-with, Content-Type, origin, authorization, accept, x-access-token" 
-					+ $", {Headers.LoginHeader}, {Headers.AccessHeader}, {Headers.TokenHeader}");
-				Response.Headers.Add("Access-Control-Expose-Headers", $"{Headers.LoginHeader}, {Headers.AccessHeader}, {Headers.TokenHeader}");
+					+ $", {Headers.NameHeader}, {Headers.AccessHeader}, {Headers.TokenHeader}");
+				Response.Headers.Add("Access-Control-Expose-Headers", $"{Headers.NameHeader}, {Headers.AccessHeader}, {Headers.TokenHeader}");
 				#endif
 
 				// Тело запроса, переданное через POST
@@ -80,14 +80,26 @@ namespace Datalake.Web
 					else
 					{
 						// Пользователь не авторизован по сессионному токену
-						List<User> users;
+						User stat;
+						int users;
 
 						using (var db = new DatabaseContext())
 						{
-							users = db.Users.ToList();
+							// Поиск пользователя, который прописан как статичный - используется для доступа к API из других сервисов
+							stat = db.Users
+								.FirstOrDefault(x => token != null 
+									&& x.Hash == token 
+									&& x.StaticHost == Request.RemoteEndPoint.Address.ToString());
+							users = db.Users.Count();
 						}
 
-						if (users.Count == 0)
+						if (stat != null)
+						{
+							// Если найден статичный пользователь, авторизуем по его записи в базе
+							user.Name = stat.Name;
+							user.AccessType = stat.AccessType;
+						}
+						else if (users == 0)
 						{
 							// Ни одна учётная запись не создана, выдается специальное разрешение FIRST для создания первой учётной записи
 							user.Name = AccessType.FIRST.ToString();
@@ -100,7 +112,7 @@ namespace Datalake.Web
 						}
 					}
 
-					headers.Add(Headers.LoginHeader, user.Name);
+					headers.Add(Headers.NameHeader, user.Name);
 					headers.Add(Headers.AccessHeader, ((int)user.AccessType).ToString());
 
 					res = Action(url.Replace("api/", ""), requestBody, user);

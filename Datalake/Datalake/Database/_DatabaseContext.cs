@@ -16,7 +16,7 @@ namespace Datalake.Database
 		static string connString = "Release";
 		#endif
 
-		int CurrentSchemeVersion = 2;
+		int CurrentSchemeVersion = V3.Migrator.Version;
 
 		public DatabaseContext() : base(connString) { }
 
@@ -58,6 +58,7 @@ namespace Datalake.Database
 			{
 				if (version == 0) version = SetSchemeVersion(V1.Migrator.Migrate(this));
 				if (version == 1) version = SetSchemeVersion(V2.Migrator.Migrate(this));
+				if (version == 2) version = SetSchemeVersion(V3.Migrator.Migrate(this));
 			}
 
 			if (version != CurrentSchemeVersion)

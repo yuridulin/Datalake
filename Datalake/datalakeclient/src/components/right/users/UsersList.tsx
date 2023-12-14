@@ -37,6 +37,7 @@ export default function UsersList() {
 				<div className="table-header">
 					<span style={{ width: '12em' }}>Логин</span>
 					<span style={{ width: '12em' }}>Уровень доступа</span>
+					<span style={{ width: '12em' }} title="Статичный тип доступа используются для обращения без необходимости логиниться">Тип доступа</span>
 					<span>Имя</span>
 				</div>
 				{users.filter(x => (x.Name + x.FullName + AccessTypeDescription(x.AccessType)).toLowerCase().trim().includes(search.toLowerCase())).map(x =>
@@ -47,6 +48,7 @@ export default function UsersList() {
 							</NavLink>
 						</span>
 						<span>{AccessTypeDescription(x.AccessType)}</span>
+						<span>{!!x.StaticHost ? "статичный" : "базовый"}</span>
 						<span>{x.FullName}</span>
 					</div>
 				)}

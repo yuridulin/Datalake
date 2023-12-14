@@ -13,24 +13,35 @@ export default function UserForm() {
 	const navigate = useNavigate()
 	const { id } = useParams()
 	const [ user, setUser ] = useState({} as User)
-	const [ password, setPassword ] = useState(null as string | null)
+	const [ isStatic, setStatic ] = useState(false)
+	const [ wasStatic, setWasStatic ] = useState(false)
 
 	useEffect(load, [id])
 
 	function load() {
-		console.log(id)
 		axios.post(API.auth.user, { name: id })
-			.then(res => res.status === 200 && setUser(res.data))
+			.then(res => {
+				if (res.status === 200) {
+					setStatic(!!res.data.StaticHost)
+					setWasStatic(!!res.data.StaticHost)
+					setUser(res.data)
+				}
+			})
 	}
 
 	function update() {
-		axios.post(API.auth.update, { name: id, newName: user.Name, FullName: user.FullName, AccessType: user.AccessType, Password: password })
+		axios.post(API.auth.update, { ...user, newName: user.Name })
 			.then(res => res.status === 200 && id !== user.Name && navigate('/users/' + user.Name))
 	}
 
 	function del() {
 		axios.post(API.auth.delete, { name: id })
 			.then(res => res.status === 200 && navigate('/users/'))
+	}
+
+	function generateNewHash() {
+		axios.post(API.auth.update, { name: user.Name, newHash: true })
+			.then(res => res.status == 200 && load())
 	}
 
 	return <>
@@ -60,9 +71,38 @@ export default function UserForm() {
 			<FormRow title="Имя пользователя">
 				<Input value={user.FullName} onChange={e => setUser({ ...user, FullName : e.target.value })} />
 			</FormRow>
-			<FormRow title="Новый пароль">
-				<Input.Password value={password || ''} autoComplete="password" placeholder="Запишите новый пароль, если хотите его изменить" onChange={e => setPassword(e.target.value)} />
+			<FormRow title="Тип доступа">
+				<Radio.Group buttonStyle="solid" value={isStatic} onChange={e => setStatic(e.target.value)}>
+					<Radio.Button value={false}>Базовый</Radio.Button>
+					<Radio.Button value={true}>Статичный</Radio.Button>
+				</Radio.Group>
 			</FormRow>
+			
+			{isStatic
+			? <>
+				<FormRow title="Адрес, с которого разрешен доступ">
+					<Input value={user.StaticHost || ''} onChange={e => setUser({ ...user, StaticHost: e.target.value })} />
+				</FormRow>
+				{wasStatic 
+				? <FormRow title="Ключ для доступа">
+					<Input disabled value={user.Hash} />
+					<div style={{ marginTop: '.5em' }}>
+						<Button type="primary" onClick={() => {navigator.clipboard.writeText(user.Hash)}}>Скопировать</Button>
+						&ensp;
+						<Button onClick={generateNewHash}>Создать новый</Button>
+					</div>
+				</FormRow>
+				: <></>}
+			</>
+			: <FormRow title="Пароль">
+				<Input.Password
+					value={user.Password || ''}
+					autoComplete="password"
+					placeholder={wasStatic ? "Введите пароль" : "Запишите новый пароль, если хотите его изменить"}
+					onChange={e => setUser({ ...user, Password: e.target.value})}
+				/>
+			</FormRow>}
+
 			<FormRow title="Тип учётной записи">
 				<Radio.Group buttonStyle="solid" value={user.AccessType} onChange={e => setUser({...user, AccessType: e.target.value })}>
 					<Radio.Button value={AccessType.NOT}>Отключена</Radio.Button>

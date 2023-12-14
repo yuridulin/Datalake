@@ -12,6 +12,7 @@ export default function UserCreate() {
 
 	const navigate = useNavigate()
 	const [ user, setUser ] = useState({ AccessType: AccessType.NOT } as User)
+	const [ isStatic, setStatic ] = useState(false)
 
 	function create() {
 		axios.post(API.auth.create, user)
@@ -32,9 +33,20 @@ export default function UserCreate() {
 			<FormRow title="Имя пользователя">
 				<Input value={user.FullName} onChange={e => setUser({ ...user, FullName: e.target.value })} />
 			</FormRow>
-			<FormRow title="Пароль">
+			<FormRow title="Тип доступа">
+				<Radio.Group buttonStyle="solid" value={isStatic} onChange={e => setStatic(e.target.value)}>
+					<Radio.Button value={false}>Базовый</Radio.Button>
+					<Radio.Button value={true}>Статичный</Radio.Button>
+				</Radio.Group>
+			</FormRow>
+			{isStatic
+			? <FormRow title="Адрес, с которого разрешен доступ">
+				<Input value={user.StaticHost || ''} onChange={e => setUser({ ...user, StaticHost: e.target.value })} />
+			</FormRow>
+			: <FormRow title="Пароль">
 				<Input.Password value={user.Password} autoComplete="password" onChange={e => setUser({ ...user, Password: e.target.value })} />
 			</FormRow>
+			}
 			<FormRow title="Тип учётной записи">
 				<Radio.Group buttonStyle="solid" value={user.AccessType} onChange={e => setUser({...user, AccessType: e.target.value })}>
 					<Radio.Button value={AccessType.NOT}>Отключена</Radio.Button>

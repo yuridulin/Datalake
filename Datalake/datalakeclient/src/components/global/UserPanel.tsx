@@ -26,7 +26,7 @@ export default function UserPanel () {
 
 	return (token > 0)
 		? <div style={style}>
-			<div>Вы зашли как <b style={{ fontWeight: '500', color: '#0074d5' }}>{String(auth.name())}</b></div>
+			<div>Вы зашли как <b style={{ fontWeight: '500', color: '#33a2ff' }}>{String(auth.name())}</b></div>
 			<Button onClick={logout}>Выход</Button>
 		</div>
 		: <div>Не авторизован</div>

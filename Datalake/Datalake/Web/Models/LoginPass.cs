@@ -1,6 +1,7 @@
 ﻿using Datalake.Enums;
 using System;
 using System.Security.Cryptography;
+using System.Security.Policy;
 using System.Text;
 
 namespace Datalake.Web.Models
@@ -21,6 +22,16 @@ namespace Datalake.Web.Models
 				var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(Password));
 				return Convert.ToBase64String(hash);
 			}
+		}
+
+		public static string RandomHash()
+		{
+			var bytes = new byte[48];
+			using (var rng = new RNGCryptoServiceProvider())
+			{
+				rng.GetBytes(bytes);
+			}
+			return BitConverter.ToString(bytes).Replace("-", "").ToLower();
 		}
 	}
 }
