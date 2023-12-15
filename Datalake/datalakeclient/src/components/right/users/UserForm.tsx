@@ -41,7 +41,7 @@ export default function UserForm() {
 
 	function generateNewHash() {
 		axios.post(API.auth.update, { name: user.Name, newHash: true })
-			.then(res => res.status == 200 && load())
+			.then(res => res.status === 200 && load())
 	}
 
 	return <>

@@ -141,7 +141,7 @@ namespace Datalake.Web.Api
 					}
 					while (oldHashList.Any(x => x == hash));
 				}
-				else if (!string.IsNullOrEmpty(staticHost))
+				else if (!string.IsNullOrEmpty(password))
 				{
 					hash = new LoginPass { Password = password }.Hash;
 				}
