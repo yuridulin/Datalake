@@ -9,20 +9,23 @@ namespace Datalake.Web
 	{
 		static HttpListener Listener { get; set; }
 
+		public static int Port { get; set; } = 83;
+
 		public static List<UserSession> Sessions { get; set; } = new List<UserSession>();
 
 		public static async Task Start()
 		{
 			Listener = new HttpListener();
-			Listener.Prefixes.Add("http://*:83/");
+			Listener.Prefixes.Add($"http://*:{Port}/");
 			Listener.Start();
 
 			while (true)
 			{
 				var ctx = await Listener.GetContextAsync();
-#pragma warning disable CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
+
+				#pragma warning disable CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
 				Task.Run(() => new Router().Resolve(ctx));
-#pragma warning restore CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
+				#pragma warning restore CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
 			}
 		}
 

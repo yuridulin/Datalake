@@ -1,4 +1,5 @@
 ﻿using Datalake.Enums;
+using Datalake.Models;
 using LinqToDB;
 using LinqToDB.Data;
 using System;
@@ -10,15 +11,11 @@ namespace Datalake.Database
 {
 	public class DatabaseContext : DataConnection
 	{
-		#if DEBUG
-		static string connString = "Debug";
-		#else
-		static string connString = "Release";
-		#endif
+		public static int CurrentSchemeVersion = V3.Migrator.Version;
 
-		int CurrentSchemeVersion = V3.Migrator.Version;
+		public static StartupConnection ConnectionSetup { get; set; }
 
-		public DatabaseContext() : base(connString) { }
+		public DatabaseContext() : base(ConnectionSetup.Provider, ConnectionSetup.ConnectionString) { }
 
 		public ITable<Settings> Settings
 			=> this.GetTable<Settings>();

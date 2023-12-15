@@ -88,6 +88,7 @@
     <Compile Include="Enums\TagQuality.cs" />
     <Compile Include="Enums\TagType.cs" />
     <Compile Include="Enums\TreeType.cs" />
+    <Compile Include="Models\StartupOptions.cs" />
     <Compile Include="Web\Api\AuthController.cs" />
     <Compile Include="Web\Api\ConsoleController.cs" />
     <Compile Include="Enums\AggFunc.cs" />
@@ -126,9 +127,15 @@
     <None Include="Datalake API.md" />
     <None Include="Datalake.postman_collection.json" />
     <None Include="packages.config" />
+    <None Include="startupOptions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\empty.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\startup.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="favicon.ico" />
@@ -169,6 +176,7 @@
     <Reference Include="System.Collections.Immutable, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Collections.Immutable.7.0.0\lib\net462\System.Collections.Immutable.dll</HintPath>
     </Reference>
+    <Reference Include="System.Data" />
     <Reference Include="System.Diagnostics.DiagnosticSource, Version=7.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Diagnostics.DiagnosticSource.7.0.2\lib\net462\System.Diagnostics.DiagnosticSource.dll</HintPath>
     </Reference>

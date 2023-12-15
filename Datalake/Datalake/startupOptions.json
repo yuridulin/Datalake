@@ -1,0 +1,13 @@
+{
+	"WebServerPort": 83,
+	"ConnectionStrings": {
+		"Debug": {
+			"Provider": "PostgreSQL",
+			"ConnectionString": "Server=VOID; Port=5432; Database=postgres; User Id=postgres; Password=admin10125+; Pooling=true; MinPoolSize=10; MaxPoolSize=100;"
+		},
+		"Release": {
+			"Provider": "PostgreSQL",
+			"ConnectionString": "Server=10.178.0.177; Port=5432; Database=postgres; User Id=postgres; Password=l7WkEuZG; Pooling=true; MinPoolSize=10; MaxPoolSize=100;"
+		}
+	}
+}

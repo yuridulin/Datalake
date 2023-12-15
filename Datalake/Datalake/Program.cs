@@ -1,10 +1,12 @@
 ﻿using Datalake.Database;
-using Datalake.Enums;
+using Datalake.Models;
 using Datalake.Workers;
 using LinqToDB.Common;
 using LinqToDB.Data;
+using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,11 +38,27 @@ namespace Datalake
 
 		public static void Start()
 		{
-			#if DEBUG
-			DataConnection.TurnTraceSwitchOn();
-			DataConnection.WriteTraceLine = (s, s1, s2) => Debug.WriteLine(s + " | " + s1 + " | " + s2);
-			Configuration.Linq.GenerateExpressionTest = true;
-			#endif
+			try
+			{
+				var startupOptions = JsonConvert.DeserializeObject<StartupOptions>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "startupOptions.json"));
+
+				#if DEBUG
+				DatabaseContext.ConnectionSetup = startupOptions.ConnectionStrings["Debug"];
+				DataConnection.TurnTraceSwitchOn();
+				DataConnection.WriteTraceLine = (s, s1, s2) => Debug.WriteLine(s + " | " + s1 + " | " + s2);
+				//Configuration.Linq.GenerateExpressionTest = true;
+				#else
+				DatabaseContext.ConnectionSetup = startupOptions.ConnectionStrings["Release"];
+				#endif
+
+				Web.Server.Port = startupOptions.WebServerPort;
+				File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "Content\\startup.js", $"const PORT = {startupOptions.WebServerPort};");
+			}
+			catch (Exception ex)
+			{
+				File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "startupError.txt", $"{ex.Message}\n{ex.Source}\n{ex.StackTrace}");
+				throw ex;
+			}
 
 			Configuration.Linq.GuardGrouping = false; // чтение последних значений для записи Initial при создании таблицы
 			TokenSource = new CancellationTokenSource();

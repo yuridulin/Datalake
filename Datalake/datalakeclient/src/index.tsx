@@ -7,7 +7,9 @@ import Layout from './components/Layout'
 
 // настройка взаимодействия с сервером
 
-axios.defaults.baseURL = window.location.protocol + '//' + window.location.hostname + ':83/api'
+declare const PORT: number // переменная, которую создает сервер в отдельном файле
+
+axios.defaults.baseURL = window.location.protocol + '//' + window.location.hostname + ':' + PORT + '/api'
 
 axios.interceptors.request.use(
 	function (config) {
