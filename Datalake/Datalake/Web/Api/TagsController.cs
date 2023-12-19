@@ -208,12 +208,17 @@ namespace Datalake.Web.Api
 			{
 				var sources = db.Sources.ToList();
 
-				var list = db.Tags
+				var tags = db.Tags
 					.Where(x => names == null || names.Contains(x.Name))
 					.OrderBy(x => x.Name)
 					.ToList();
 
-				return Data(list);
+				foreach (var t in tags)
+				{
+					t.Source = sources.FirstOrDefault(x => x.Id == t.SourceId);
+				}
+
+				return Data(tags);
 			}
 		}
 

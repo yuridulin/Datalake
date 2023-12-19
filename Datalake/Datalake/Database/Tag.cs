@@ -8,6 +8,8 @@ namespace Datalake.Database
 {
 	public class Tag : V0.Tag
 	{
+		public Source Source { get; set; }
+
 		// логика обновления оригинального значения
 
 		DateTime LastUpdate { get; set; } = DateTime.MinValue;

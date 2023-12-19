@@ -89,7 +89,7 @@ namespace Datalake.Web
 							stat = db.Users
 								.FirstOrDefault(x => token != null 
 									&& x.Hash == token 
-									&& x.StaticHost == Request.RemoteEndPoint.Address.ToString());
+									/*&& x.StaticHost == Request.RemoteEndPoint.Address.ToString()*/);
 							users = db.Users.Count();
 						}
 

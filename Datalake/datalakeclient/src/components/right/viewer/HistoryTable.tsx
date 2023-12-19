@@ -6,7 +6,8 @@ import TagQualityEl from "../../small/TagQualityEl"
 import TagValueEl from "../../small/TagValueEl"
 
 export default function HistoryTable({ responses, tags }: { responses: HistoryResponse[], tags: Tag[] }) {
-
+	
+	const offset = new Date().getTimezoneOffset()
 	if (responses.length === 0) return <div>данные не получены</div>
 	if (!tags || tags.length === 0) return <></>
 
@@ -36,7 +37,7 @@ export default function HistoryTable({ responses, tags }: { responses: HistoryRe
 				})}
 			</div>
 			{model.map((x, i) => <div className="table-row" key={i}>
-				<span>{dayjs(x.date).format('DD.MM.YYYY hh:mm:ss')}</span>
+				<span>{dayjs(x.date).add(offset, 'minutes').format('DD.MM.YYYY HH:mm:ss')}</span>
 				{x.values.map((v, j) => <span key={j} title={TagQualityDescription(v.Quality)}>
 					<TagQualityEl quality={v.Quality} />
 					&emsp;

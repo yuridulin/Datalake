@@ -17,6 +17,7 @@ import dayjs from "dayjs"
 
 export default function Viewer() {
 
+	const offset = new Date().getTimezoneOffset()
 	const [ tags, setTags ] = useState([] as Tag[])
 	const [ responses, setResponses ] = useState([] as HistoryResponse[])
 	const [ options, setOptions ] = useState([] as { value: number, label: string }[])
@@ -25,8 +26,8 @@ export default function Viewer() {
 		Tags: [] as number[],
 		TagNames: [] as string[],
 		Resolution: 0,
-		Young: new Date(),
-		Old: new Date(),
+		Old: dayjs(dayjs(new Date().setDate(new Date().getDate() - 1)).format('DD.MM.YYYY'), 'DD.MM.YYYY').toDate(),
+		Young: dayjs(dayjs(new Date()).format('DD.MM.YYYY'), 'DD.MM.YYYY').toDate(),
 	} as HistoryRequest)
 
 	const [ readTags, , error ] = useFetching(async () => {
@@ -51,8 +52,8 @@ export default function Viewer() {
 			: await axios.post(API.tags.getHistoryValues, { 
 				request: [{
 					Tags: settings.Tags,
-					Old: dayjs(settings.Old).format('DD.MM.YYYY hh:mm'),
-					Young: dayjs(settings.Young).format('DD.MM.YYYY hh:mm'),
+					Old: dayjs(settings.Old).add(0-offset, 'minute').toISOString(),
+					Young: dayjs(settings.Young).add(0-offset, 'minute').toISOString(),
 					Resolution: settings.Resolution,
 				}]
 			})
@@ -93,8 +94,8 @@ export default function Viewer() {
 					<ConfigProvider locale={locale} >
 						<DatePicker.RangePicker
 							showTime={{ format: 'HH:mm' }}
-
-							format="YYYY-MM-DD HH:mm"
+							defaultValue={[dayjs(settings.Old), dayjs(settings.Young)]}
+							format="DD.MM.YYYY HH:mm"
 							placeholder={['Начало', 'Конец']}
 							onChange={values => setSettings({ 
 								...settings,
