@@ -269,11 +269,10 @@ namespace Datalake.Database
 
 		public List<TagHistory> ReadHistory(int[] identifiers, DateTime old, DateTime young, int resolution = 0)
 		{
-			DateTime seek = old.Date;
-
+			var seek = old.Date;
 			var values = new List<TagHistory>();
 
-			// выгружаем записи из базы
+			// выгружаем текущие значения
 			do
 			{
 				string tableName = GetTableName(seek);
@@ -284,7 +283,6 @@ namespace Datalake.Database
 
 					try
 					{
-						// собираем все подходящие значения
 						values.AddRange(table
 							.Where(x => identifiers.Contains(x.TagId))
 							.Where(x => x.Date >= old)
@@ -292,49 +290,6 @@ namespace Datalake.Database
 							.Where(x => x.Using == TagHistoryUse.Basic)
 							.OrderBy(x => x.Date)
 							.ToList());
-
-						// если это первая таблица в списке, нужны initial
-
-						if (seek == old.Date)
-						{
-							// определяем список тех значений, которым не хватает initial
-							// и грузим их
-							var needs = identifiers.Except(values.Where(x => x.Date == old).Select(x => x.TagId)).ToList();
-
-							var initial = table
-								.Where(x => needs.Contains(x.TagId))
-								.Where(x => x.Date < old)
-								.GroupBy(x => x.TagId)
-								.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
-								.ToList();
-
-							foreach (var value in initial)
-							{
-								if (value.Date < old)
-								{
-									// обрезаем значение по временному окну, т.е. по old
-									value.Date = old;
-									value.Using = TagHistoryUse.Continuous;
-								}
-								else if (value.Date > old)
-								{
-									// если мы обнаружили, что initial был уже после old, это значит, что тег был создан после old
-									// для него мы делаем заглушку
-									values.Add(new TagHistory
-									{
-										TagId = value.TagId,
-										Date = old,
-										Text = null,
-										Number = null,
-										Type = value.Type,
-										Quality = TagQuality.Bad,
-										Using = TagHistoryUse.NotFound,
-									});
-								}
-							}
-
-							values.AddRange(initial);
-						}
 					}
 					catch { }
 				}
@@ -343,23 +298,65 @@ namespace Datalake.Database
 			}
 			while (seek <= young);
 
-			// для тегов, по которым мы ничего не нашли, ставим заглушки
-			var lostIdentifiers = identifiers.Except(values.Select(x => x.TagId)).ToList();
+			// проверяем наличие значений на old
+			var noInit = identifiers
+				.Except(values
+					.Where(x => x.Date == old)
+					.Select(x => x.TagId))
+				.ToList();
 
-			if (lostIdentifiers.Count > 0)
+			if (noInit.Count > 0)
 			{
-				var lostTags = Tags.Where(x => lostIdentifiers.Contains(x.Id)).ToList();
+				// если у нас есть непроинициализированные теги
+				// нужно получить initial значения для них
+				// берем ближайшую в прошлом таблицу
+				var initialDate = GetStoredDays()
+					.Where(x => x.Date <= old)
+					.OrderByDescending(x => x.Date)
+					.FirstOrDefault();
 
-				values.AddRange(lostTags.Select(x => new TagHistory
+				var initialTableName = GetTableName(initialDate);
+
+				if (Cache.Tables.Contains(initialTableName))
 				{
-					TagId = x.Id,
-					Date = old,
-					Text = null,
-					Number = null,
-					Type = x.Type,
-					Quality = TagQuality.Bad,
-					Using = TagHistoryUse.NotFound,
-				}));
+					var initialTable = this.GetTable<TagHistory>().TableName(initialTableName);
+
+					// определяем список тех значений, которым не хватает initial
+					// и грузим их
+
+					var initial = initialTable
+						.Where(x => noInit.Contains(x.TagId))
+						.Where(x => x.Date < old) // отсечение текущих, если initialDate = old
+						.GroupBy(x => x.TagId)
+						.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
+						.ToList();
+
+					foreach (var value in initial)
+					{
+						if (value.Date < old)
+						{
+							// обрезаем значение по временному окну, т.е. по old
+							value.Date = old;
+							value.Using = TagHistoryUse.Continuous;
+						}
+						else if (value.Date > old)
+						{
+							// если мы обнаружили, что initial был уже после old, это значит, что тег был создан после old
+							// для него мы делаем заглушку
+							values.Add(LostTag(value.TagId, value.Type));
+						}
+					}
+
+					values.AddRange(initial);
+				}
+				else
+				{
+					var initialTags = Tags
+						.Where(x => noInit.Contains(x.Id))
+						.ToDictionary(x => x.Id, x => x.Type);
+
+					values.AddRange(initialTags.Select(x => LostTag(x.Key, x.Value)));
+				}
 			}
 
 			// выполняем протяжку, если необходимо
@@ -408,6 +405,17 @@ namespace Datalake.Database
 			}
 
 			return values;
+
+			TagHistory LostTag(int id, TagType type) => new TagHistory
+			{
+				TagId = id,
+				Date = old,
+				Text = null,
+				Number = null,
+				Type = type,
+				Quality = TagQuality.Bad,
+				Using = TagHistoryUse.NotFound,
+			};
 		}
 
 		public void WriteHistory(List<TagHistory> values)
