@@ -293,11 +293,16 @@ namespace Datalake.Database
 							.OrderBy(x => x.Date)
 							.ToList());
 
-						// если это первая таблица в списке, собираем начальные значения
+						// если это первая таблица в списке, нужны initial
+
 						if (seek == old.Date)
 						{
+							// определяем список тех значений, которым не хватает initial
+							// и грузим их
+							var needs = identifiers.Except(values.Where(x => x.Date == old).Select(x => x.TagId)).ToList();
+
 							var initial = table
-								.Where(x => identifiers.Contains(x.TagId))
+								.Where(x => needs.Contains(x.TagId))
 								.Where(x => x.Date < old)
 								.GroupBy(x => x.TagId)
 								.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
