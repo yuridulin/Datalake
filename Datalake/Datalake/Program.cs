@@ -60,6 +60,11 @@ namespace Datalake
 				throw ex;
 			}
 
+			JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+			{
+				DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ"
+			};
+
 			Configuration.Linq.GuardGrouping = false; // чтение последних значений для записи Initial при создании таблицы
 			TokenSource = new CancellationTokenSource();
 
