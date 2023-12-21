@@ -299,13 +299,13 @@ namespace Datalake.Database
 			while (seek <= young);
 
 			// проверяем наличие значений на old
-			var noInit = identifiers
+			var lost = identifiers
 				.Except(values
 					.Where(x => x.Date == old)
 					.Select(x => x.TagId))
 				.ToList();
 
-			if (noInit.Count > 0)
+			if (lost.Count > 0)
 			{
 				// если у нас есть непроинициализированные теги
 				// нужно получить initial значения для них
@@ -325,8 +325,8 @@ namespace Datalake.Database
 					// и грузим их
 
 					var initial = initialTable
-						.Where(x => noInit.Contains(x.TagId))
-						.Where(x => x.Date < old) // отсечение текущих, если initialDate = old
+						.Where(x => lost.Contains(x.TagId))
+						.Where(x => x.Date <= old)
 						.GroupBy(x => x.TagId)
 						.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
 						.ToList();
@@ -349,15 +349,20 @@ namespace Datalake.Database
 
 					values.AddRange(initial);
 				}
-				else
-				{
-					var initialTags = Tags
-						.Where(x => noInit.Contains(x.Id))
-						.ToDictionary(x => x.Id, x => x.Type);
-
-					values.AddRange(initialTags.Select(x => LostTag(x.Key, x.Value)));
-				}
 			}
+
+			// заглушки, если значения так и не были проинициализированы
+			lost = identifiers
+				.Except(values
+					.Where(x => x.Date == old)
+					.Select(x => x.TagId))
+				.ToList();
+
+			var lostTags = Tags
+				.Where(x => lost.Contains(x.Id))
+				.ToDictionary(x => x.Id, x => x.Type);
+
+			values.AddRange(lostTags.Select(x => LostTag(x.Key, x.Value)));
 
 			// выполняем протяжку, если необходимо
 			if (resolution > 0)
@@ -418,6 +423,38 @@ namespace Datalake.Database
 			};
 		}
 
+		public List<TagHistory> ReadStoredHistory(int[] identifiers, DateTime old, DateTime young)
+		{
+			var seek = old;
+			var values = new List<TagHistory>();
+			
+			do
+			{
+				string tableName = GetTableName(seek);
+
+				if (Cache.Tables.Contains(tableName))
+				{
+					var table = this.GetTable<TagHistory>().TableName(tableName);
+
+					try
+					{
+						values.AddRange(table
+							.Where(x => identifiers.Contains(x.TagId))
+							.Where(x => x.Date >= old)
+							.Where(x => x.Date <= young)
+							.OrderBy(x => x.Date)
+							.ToList());
+					}
+					catch { }
+				}
+
+				seek = seek.AddDays(1);
+			}
+			while (seek <= young);
+
+			return values;
+		}
+
 		public void WriteHistory(List<TagHistory> values)
 		{
 			foreach (var g in values.GroupBy(x => x.Date))
@@ -441,18 +478,11 @@ namespace Datalake.Database
 
 			var table = GetHistoryTable(value.Date);
 
-			var values = table
-				.Where(x => x.TagId == value.TagId && x.Date >= value.Date)
-				.ToList();
-
 			// указываем, что предыдущие значения в этой точке времени устарели
-			if (values.Any(x => x.Date == value.Date))
-			{
-				table
-					.Where(x => x.TagId == value.TagId && x.Date == value.Date)
-					.Set(x => x.Using, TagHistoryUse.Outdated)
-					.Update(); 
-			}
+			table
+				.Where(x => x.TagId == value.TagId && x.Date == value.Date)
+				.Set(x => x.Using, TagHistoryUse.Outdated)
+				.Update(); 
 
 			// запись нового значения
 			table
@@ -469,8 +499,7 @@ namespace Datalake.Database
 
 			// проверка, является ли новое значение последним в таблице
 			// если да, мы должны обновить следующие Using = Initial по каскаду до последнего
-
-			if (!values.Any(x => x.Date > value.Date))
+			if (!table.Any(x => x.TagId == value.TagId && x.Date > value.Date))
 			{
 				var dates = GetStoredDays();
 
@@ -490,7 +519,7 @@ namespace Datalake.Database
 						.Take(2)
 						.ToList();
 
-					// проверяем, есть ли Initial значение, если да - обновляем
+					// проверяем, есть ли Initial значение, если да - обновляем, если нет - создаём
 					if (nextTableValues.Any(x => x.Using == TagHistoryUse.Initial))
 					{
 						nextTable
@@ -499,6 +528,18 @@ namespace Datalake.Database
 							.Set(x => x.Text, value.Text)
 							.Set(x => x.Quality, value.Quality)
 							.Update();
+					}
+					else
+					{
+						nextTable
+							.Value(x => x.TagId, value.TagId)
+							.Value(x => x.Date, nextTableDate)
+							.Value(x => x.Number, value.Number)
+							.Value(x => x.Text, value.Text)
+							.Value(x => x.Quality, value.Quality)
+							.Value(x => x.Type, value.Type)
+							.Value(x => x.Using, TagHistoryUse.Initial)
+							.Insert();
 					}
 
 					// проверяем, есть ли Basic записи в этой таблице, если есть - выходим из цикла
