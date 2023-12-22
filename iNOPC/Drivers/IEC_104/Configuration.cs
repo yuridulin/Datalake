@@ -49,7 +49,7 @@ namespace iNOPC.Drivers.IEC_104
 				Html.Value("Таймаут ожидания получения данных, мс", nameof(config.ReceiveTimeout), config.ReceiveTimeout) +
 				Html.Value("Таймаут переподключения, с", nameof(config.ReconnectTimeout), config.ReconnectTimeout) +
 				//Html.Value("Таймаут команды для синхр. времени, с", nameof(config.SyncClockTimeout), config.SyncClockTimeout) +
-				Html.Value("Режим прослушки", nameof(config.UseInterrogation), config.UseInterrogation) +
+				Html.Value("Использовать цикличный опрос всех значений", nameof(config.UseInterrogation), config.UseInterrogation) +
 				Html.Value("Периодичность цикличного опроса, с", nameof(config.InterrogationDelay), config.InterrogationDelay) +
 				"";
 

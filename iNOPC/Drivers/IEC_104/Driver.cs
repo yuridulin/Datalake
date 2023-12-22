@@ -305,6 +305,16 @@ namespace iNOPC.Drivers.IEC_104
 					UpdateEvent();
 				}
 			}
+
+			if (LastConnectionEvent == "STARTDT_CON_RECEIVED")
+			{
+				if (Configuration.UseInterrogation)
+				{
+					LogEvent("Запуск циклического опроса", LogType.WARNING);
+					InterrogationTimer.Start();
+					Task.Run(SendInterrogation);
+				}
+			}
 		}
 
 		bool RawMessageHandler(object parameter, byte[] message, int messageSize)
@@ -320,7 +330,7 @@ namespace iNOPC.Drivers.IEC_104
 				BytesCount += messageSize;
 			}
 
-			LogEvent(parameter + ": " + Helpers.BytesToString(message.Take(messageSize).ToArray()), LogType.DETAILED);
+			//LogEvent(parameter + ": " + Helpers.BytesToString(message.Take(messageSize).ToArray()), LogType.DETAILED);
 
 			return true;
 		}
@@ -358,7 +368,7 @@ namespace iNOPC.Drivers.IEC_104
 						WriteValue(val.ObjectAddress, val.Value);
 					}
 
-					LogEvent("Получено ASDU: M_ME_TC_1", LogType.WARNING);
+					//LogEvent("Получено ASDU: M_ME_TC_1", LogType.WARNING);
 				}
 				else if (asdu.TypeId == TypeID.M_ME_TE_1)
 				{
@@ -368,7 +378,7 @@ namespace iNOPC.Drivers.IEC_104
 						WriteValue(val.ObjectAddress, val.ScaledValue);
 					}
 
-					LogEvent("Получено ASDU: M_ME_TE_1", LogType.WARNING);
+					//LogEvent("Получено ASDU: M_ME_TE_1", LogType.WARNING);
 				}
 				else if (asdu.TypeId == TypeID.M_ME_TF_1)
 				{
@@ -378,7 +388,7 @@ namespace iNOPC.Drivers.IEC_104
 						WriteValue(val.ObjectAddress, val.Value);
 					}
 
-					LogEvent("Получено ASDU: M_ME_TF_1", LogType.WARNING);
+					//LogEvent("Получено ASDU: M_ME_TF_1", LogType.WARNING);
 				}
 				else if (asdu.TypeId == TypeID.M_ME_NB_1)
 				{
@@ -388,7 +398,7 @@ namespace iNOPC.Drivers.IEC_104
 						WriteValue(val.ObjectAddress, val.ScaledValue);
 					}
 
-					LogEvent("Получено ASDU: M_ME_NB_1", LogType.WARNING);
+					//LogEvent("Получено ASDU: M_ME_NB_1", LogType.WARNING);
 				}
 				else if (asdu.TypeId == TypeID.M_ME_NC_1)
 				{
@@ -398,7 +408,7 @@ namespace iNOPC.Drivers.IEC_104
 						WriteValue(val.ObjectAddress, val.Value);
 					}
 
-					LogEvent("Получено ASDU: M_ME_NC_1", LogType.WARNING);
+					//LogEvent("Получено ASDU: M_ME_NC_1", LogType.WARNING);
 				}
 				else if (asdu.TypeId == TypeID.M_ME_ND_1)
 				{
@@ -408,7 +418,7 @@ namespace iNOPC.Drivers.IEC_104
 						WriteValue(val.ObjectAddress, val.NormalizedValue);
 					}
 
-					LogEvent("Получено ASDU: M_ME_ND_1", LogType.WARNING);
+					//LogEvent("Получено ASDU: M_ME_ND_1", LogType.WARNING);
 				}
 				else if (asdu.TypeId == TypeID.M_SP_NA_1)
 				{
@@ -418,7 +428,7 @@ namespace iNOPC.Drivers.IEC_104
 						WriteValue(val.ObjectAddress, val.Value);
 					}
 
-					LogEvent("Получено ASDU: M_SP_NA_1", LogType.WARNING);
+					//LogEvent("Получено ASDU: M_SP_NA_1", LogType.WARNING);
 				}
 				else if (asdu.TypeId == TypeID.M_SP_TB_1)
 				{
@@ -428,7 +438,7 @@ namespace iNOPC.Drivers.IEC_104
 						WriteValue(val.ObjectAddress, val.Value);
 					}
 
-					LogEvent("Получено ASDU: M_SP_TB_1", LogType.WARNING);
+					//LogEvent("Получено ASDU: M_SP_TB_1", LogType.WARNING);
 				}
 				else if (asdu.TypeId == TypeID.C_SC_NA_1)
 				{
@@ -438,7 +448,7 @@ namespace iNOPC.Drivers.IEC_104
 						WriteValue(val.ObjectAddress, val.State);
 					}
 
-					LogEvent("Получено ASDU: C_SC_NA_1", LogType.WARNING);
+					//LogEvent("Получено ASDU: C_SC_NA_1", LogType.WARNING);
 				}
 
 				// старт опроса
@@ -453,7 +463,7 @@ namespace iNOPC.Drivers.IEC_104
 				// команды
 				else if (asdu.TypeId == TypeID.C_CS_NA_1)
 				{
-					LogEvent("Получена команда синхронизации времени", LogType.WARNING);
+					//LogEvent("Получена команда синхронизации времени", LogType.WARNING);
 				}
 				else if (asdu.TypeId == TypeID.C_IC_NA_1)
 				{
@@ -468,7 +478,7 @@ namespace iNOPC.Drivers.IEC_104
 					{
 						if ((int)asdu.TypeId == (int)x)
 						{
-							LogEvent("Получен известный тип данных, для которого не задан обработчик: " + asdu.TypeId, LogType.WARNING);
+							//LogEvent("Получен известный тип данных, для которого не задан обработчик: " + asdu.TypeId, LogType.WARNING);
 							found = true;
 							break;
 						}
@@ -476,7 +486,7 @@ namespace iNOPC.Drivers.IEC_104
 
 					if (!found)
 					{
-						LogEvent("Получен неизвестный тип данных, для которого не задан обработчик: " + asdu.TypeId, LogType.WARNING);
+						//LogEvent("Получен неизвестный тип данных, для которого не задан обработчик: " + asdu.TypeId, LogType.WARNING);
 					}
 				}
 			}
