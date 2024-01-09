@@ -327,6 +327,7 @@ namespace Datalake.Database
 					var initial = initialTable
 						.Where(x => lost.Contains(x.TagId))
 						.Where(x => x.Date <= old)
+						.Where(x => x.Using == TagHistoryUse.Initial || x.Using == TagHistoryUse.Basic)
 						.GroupBy(x => x.TagId)
 						.Select(g => g.OrderByDescending(x => x.Date).FirstOrDefault())
 						.ToList();
