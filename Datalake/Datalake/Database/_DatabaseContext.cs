@@ -107,7 +107,10 @@ namespace Datalake.Database
 					.Select(g => new
 					{
 						Id = g.Key,
-						Value = g.OrderByDescending(x => x.Date).FirstOrDefault()
+						Value = g
+							.Where(x => x.Using == TagHistoryUse.Initial || x.Using == TagHistoryUse.Basic)
+							.OrderByDescending(x => x.Date)
+							.FirstOrDefault()
 					})
 					.ToList();
 
