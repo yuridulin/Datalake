@@ -23,17 +23,14 @@ namespace Datalake.Web.Models
 
 		public string ToJson()
 		{
-			if (Data == null)
-			{
-				if (!string.IsNullOrEmpty(Done)) return JsonConvert.SerializeObject(new { Done });
-				else if (!string.IsNullOrEmpty(Warning)) return JsonConvert.SerializeObject(new { Warning });
-				else if (!string.IsNullOrEmpty(Error)) return JsonConvert.SerializeObject(new { Error });
-				else return JsonConvert.SerializeObject(new { Error = "Unknown reason " });
-			}
-			else
+			if (Data != null && string.IsNullOrEmpty(Done) && string.IsNullOrEmpty(Warning) && string.IsNullOrEmpty(Error))
 			{
 				return JsonConvert.SerializeObject(Data);
 			}
+			else if (!string.IsNullOrEmpty(Done)) return JsonConvert.SerializeObject(new { Done, Data });
+			else if (!string.IsNullOrEmpty(Warning)) return JsonConvert.SerializeObject(new { Warning, Data });
+			else if (!string.IsNullOrEmpty(Error)) return JsonConvert.SerializeObject(new { Error, Data });
+			else return JsonConvert.SerializeObject(new { Error = "Unknown reason", Data });
 		}
 	}
 }

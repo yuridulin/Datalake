@@ -14,8 +14,8 @@ namespace Datalake.Web.Models
 
 		public Result Data(object data) => new Result { Data = data };
 
-		public Result Done(string data) => new Result { Done = data };
+		public Result Done(string text, object data = null) => new Result { Done = text, Data = data };
 
-		public Result Error(string data) => new Result { Error = data };
+		public Result Error(string text, object data = null) => new Result { Error = text, Data = data };
 	}
 }

@@ -64,134 +64,187 @@ namespace Datalake.Web.Api
 
 				foreach (var set in request)
 				{
-					if (!set.Old.HasValue && !set.Young.HasValue)
+					set.Tags = set.Tags ?? db.Tags
+						.Where(x => set.TagNames.Count == 0 || set.TagNames.Contains(x.Name))
+						.Select(x => x.Id)
+						.ToList();
+
+					DateTime old, young;
+
+					// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
+					if (!set.Exact.HasValue && !set.Old.HasValue && !set.Young.HasValue)
 					{
-						response.AddRange((List<HistoryResponse>)Live(set).Data);
+						response.AddRange(Live(set).Data as List<HistoryResponse>);
+						continue;
+					}
+					else if (set.Exact.HasValue)
+					{
+						young = set.Exact.Value;
+						old = set.Exact.Value;
 					}
 					else
 					{
-						set.Tags = set.Tags ?? db.Tags
-							.Where(x => set.TagNames.Count == 0 || set.TagNames.Contains(x.Name))
-							.Select(x => x.Id)
-							.ToList();
+						young = set.Young ?? DateTime.Now;
+						old = set.Old ?? young.Date;
+					}
 
-						var tags = set.Tags.Count == 0
-							? db.Tags.ToList()
-							: db.Tags.Where(x => set.Tags.Contains(x.Id)).ToList();
+					var tags = set.Tags.Count == 0
+						? db.Tags.ToList()
+						: db.Tags.Where(x => set.Tags.Contains(x.Id)).ToList();
 
-						var young = set.Young ?? DateTime.Now;
-						var old = set.Old ?? young.Date;
+					var data = db.ReadHistory(tags.Select(x => x.Id).ToArray(), old, young, Math.Max(0, set.Resolution));
 
-						if (!set.Young.HasValue && !set.Old.HasValue)
+					foreach (var item in data.GroupBy(x => x.TagId))
+					{
+						var tag = tags.FirstOrDefault(x => x.Id == item.Key);
+						if (tag == null) continue;
+
+						if (set.Func == AggFunc.List)
 						{
-							response.AddRange((List<HistoryResponse>)Live(set).Data);
+							response.Add(new HistoryResponse
+							{
+								Id = tag.Id,
+								TagName = tag.Name,
+								Type = tag.Type,
+								Func = set.Func,
+								Values = item
+									.Select(x => new HistoryValue
+									{
+										Date = x.Date,
+										Quality = x.Quality,
+										Using = x.Using,
+										Value = x.Value(),
+									})
+									.OrderBy(x => x.Date)
+									.ToList(),
+							});
 						}
 						else
 						{
-							if (set.Exact.HasValue)
+							var values = item
+								.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
+								.Select(x => x.Value() as float?)
+								.ToList();
+
+							if (values.Count > 0)
 							{
-								young = set.Exact.Value;
-								old = set.Exact.Value;
-							}
-
-							var data = db.ReadHistory(tags.Select(x => x.Id).ToArray(), old, young, Math.Max(0, set.Resolution));
-
-							foreach (var item in data.GroupBy(x => x.TagId))
-							{
-								var tag = tags.FirstOrDefault(x => x.Id == item.Key);
-								if (tag == null) continue;
-
-								if (set.Func == AggFunc.List)
+								float? value = 0;
+								try
 								{
-									response.Add(new HistoryResponse
+									switch (set.Func)
 									{
-										Id = tag.Id,
-										TagName = tag.Name,
-										Type = tag.Type,
-										Func = set.Func,
-										Values = item
-											.Select(x => new HistoryValue
-											{
-												Date = x.Date,
-												Quality = x.Quality,
-												Using = x.Using,
-												Value = x.Value(),
-											})
-											.OrderBy(x => x.Date)
-											.ToList(),
+										case AggFunc.Sum: value = values.Sum(); break;
+										case AggFunc.Avg: value = values.Average(); break;
+										case AggFunc.Min: value = values.Min(); break;
+										case AggFunc.Max: value = values.Max(); break;
+									}
+								}
+								catch (Exception ex)
+								{
+									db.Log(new Log
+									{
+										Category = LogCategory.Calc,
+										Type = LogType.Error,
+										Ref = tag.Id,
+										Text = $"Ошибка при расчёте значения",
+										Details = ex.Message + "\n" + ex.StackTrace,
 									});
 								}
-								else
+
+								response.Add(new HistoryResponse
 								{
-									var values = item
-										.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
-										.Select(x => x.Value() as float?)
-										.ToList();
-
-									if (values.Count > 0)
+									Id = tag.Id,
+									TagName = tag.Name,
+									Type = tag.Type,
+									Func = set.Func,
+									Values = new List<HistoryValue>
 									{
-										float? value = 0;
-										try
+										new HistoryValue
 										{
-											switch (set.Func)
-											{
-												case AggFunc.Sum: value = values.Sum(); break;
-												case AggFunc.Avg: value = values.Average(); break;
-												case AggFunc.Min: value = values.Min(); break;
-												case AggFunc.Max: value = values.Max(); break;
-											}
+											Quality = TagQuality.Good,
+											Using = TagHistoryUse.Aggregated,
+											Value = value,
 										}
-										catch (Exception ex)
-										{
-											db.Log(new Log
-											{
-												Category = LogCategory.Calc,
-												Type = LogType.Error,
-												Ref = tag.Id,
-												Text = $"Ошибка при расчёте значения",
-												Details = ex.Message + "\n" + ex.StackTrace,
-											});
-										}
-
-										response.Add(new HistoryResponse
-										{
-											Id = tag.Id,
-											TagName = tag.Name,
-											Type = tag.Type,
-											Func = set.Func,
-											Values = new List<HistoryValue>
-											{
-												new HistoryValue
-												{
-													Quality = TagQuality.Good,
-													Using = TagHistoryUse.Aggregated,
-													Value = value,
-												}
-											}
-										});
 									}
-									else
+								});
+							}
+							else
+							{
+								response.Add(new HistoryResponse
+								{
+									Id = tag.Id,
+									TagName = tag.Name,
+									Type = tag.Type,
+									Func = set.Func,
+									Values = new List<HistoryValue>
 									{
-										response.Add(new HistoryResponse
+										new HistoryValue
 										{
-											Id = tag.Id,
-											TagName = tag.Name,
-											Type = tag.Type,
-											Func = set.Func,
-											Values = new List<HistoryValue>
-											{
-												new HistoryValue
-												{
-													Quality = TagQuality.Bad_NoValues,
-													Using = TagHistoryUse.Aggregated,
-													Value = 0,
-												}
-											}
-										});
+											Quality = TagQuality.Bad_NoValues,
+											Using = TagHistoryUse.Aggregated,
+											Value = 0,
+										}
 									}
-								}
+								});
 							}
 						}
+					}
+				}
+
+				return Data(response);
+			}
+		}
+
+		public Result Debug(List<HistoryRequest> request)
+		{
+			using (var db = new DatabaseContext())
+			{
+				var response = new List<HistoryResponse>();
+
+				foreach (var set in request)
+				{
+					set.Tags = set.Tags ?? db.Tags
+						.Where(x => set.TagNames.Count == 0 || set.TagNames.Contains(x.Name))
+						.Select(x => x.Id)
+						.ToList();
+
+					var tags = set.Tags.Count == 0
+						? db.Tags.ToList()
+						: db.Tags.Where(x => set.Tags.Contains(x.Id)).ToList();
+
+					var young = set.Young ?? DateTime.Now;
+					var old = set.Old ?? young.Date;
+
+					if (set.Exact.HasValue)
+					{
+						young = set.Exact.Value;
+						old = set.Exact.Value;
+					}
+
+					var data = db.ReadStoredHistory(tags.Select(x => x.Id).ToArray(), old, young);
+
+					foreach (var item in data.GroupBy(x => x.TagId))
+					{
+						var tag = tags.FirstOrDefault(x => x.Id == item.Key);
+						if (tag == null) continue;
+
+						response.Add(new HistoryResponse
+						{
+							Id = tag.Id,
+							TagName = tag.Name,
+							Type = tag.Type,
+							Func = set.Func,
+							Values = item
+								.Select(x => new HistoryValue
+								{
+									Date = x.Date,
+									Quality = x.Quality,
+									Using = x.Using,
+									Value = x.Value(),
+								})
+								.OrderBy(x => x.Date)
+								.ToList(),
+						});
 					}
 				}
 
@@ -328,7 +381,7 @@ namespace Datalake.Web.Api
 
 				Cache.Update();
 
-				return Done("Тег добавлен");
+				return Done("Тег добавлен", id);
 			}
 		}
 
