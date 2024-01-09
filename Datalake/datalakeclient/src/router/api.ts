@@ -15,6 +15,7 @@ export const API = {
 		getManualTags: 'tags/manualList',
 		getLiveValues: 'tags/live',
 		getHistoryValues: 'tags/history',
+		write: 'tags/write',
 	},
 	sources: {
 		list: 'sources/list',

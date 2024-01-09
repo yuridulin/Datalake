@@ -1,14 +1,13 @@
-import { TagSource } from "../../@types/Source"
 import { Button } from "antd"
 import { NavLink } from "react-router-dom"
 import { ManualId, CalculatedId } from "../../@types/enums/CustomSourcesIdentity"
 
 type HeaderProps = {
-	sources: TagSource[]
 	id: number
+	name: string
 }
 
-export default function SourceEl({ sources, id }: HeaderProps) {
+export default function SourceEl({ id, name }: HeaderProps) {
 	if (id === ManualId) {
 		return <NavLink to={`/tags/manual/`}>
 			<Button>Мануальный</Button>
@@ -20,14 +19,8 @@ export default function SourceEl({ sources, id }: HeaderProps) {
 		</NavLink>
 	}
 	else {
-		let finded = sources.filter(x => x.Id === id)
-		if (finded.length > 0) {
-			return <NavLink to={`/sources/${finded[0].Id}`}>
-				<Button>{finded[0].Name}</Button>
-			</NavLink>
-		}
-		else {
-			return <span>?</span>
-		}
+		return <NavLink to={`/sources/${id}`}>
+			<Button>{name}</Button>
+		</NavLink>
 	}
 }
