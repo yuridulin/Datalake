@@ -7,13 +7,13 @@ import 'dayjs/locale/ru'
 import locale from 'antd/locale/ru_RU'
 import { PlayCircleOutlined } from "@ant-design/icons"
 import { useInterval } from "../../../hooks/useInterval"
-import { Tag } from "../../../@types/Tag"
 import { HistoryRequest } from "../../../@types/HistoryRequest"
 import { API } from "../../../router/api"
 import { HistoryResponse } from "../../../@types/HistoryResponse"
 import LiveTable from "./LiveTable"
 import HistoryTable from "./HistoryTable"
 import dayjs from "dayjs"
+import { Tag } from '../../../@types/Tag'
 
 export default function Viewer() {
 
@@ -22,7 +22,7 @@ export default function Viewer() {
 	const [ responses, setResponses ] = useState([] as HistoryResponse[])
 	const [ options, setOptions ] = useState([] as { value: number, label: string }[])
 	const [ live, setLive ] = useState(true)
-	const [ settings, setSettings ] = useState({ 
+	const [ settings, setSettings ] = useState({
 		Tags: [] as number[],
 		TagNames: [] as string[],
 		Resolution: 0,
@@ -43,13 +43,13 @@ export default function Viewer() {
 
 	const [ loadValues,, loadErr ] = useFetching(async () => {
 		console.log(settings)
-		let res = live 
+		let res = live
 			? await axios.post(API.tags.getLiveValues, {
 				request: {
 					Tags: settings.Tags
 				}
 			})
-			: await axios.post(API.tags.getHistoryValues, { 
+			: await axios.post(API.tags.getHistoryValues, {
 				request: [{
 					Tags: settings.Tags,
 					Old: dayjs(settings.Old).add(0-offset, 'minute').toISOString(),
@@ -70,10 +70,10 @@ export default function Viewer() {
 		error
 		? <Navigate to="/offline" />
 		: tags.length === 0
-			? <div><i>не создано ни одного тега</i></div> 
+			? <div><i>не создано ни одного тега</i></div>
 			: <>
 			<div>
-				<Select 
+				<Select
 					mode="tags"
 					style={{ width: '100%' }}
 					onChange={values => setSettings({ ...settings, Tags: values })}
@@ -97,7 +97,7 @@ export default function Viewer() {
 							defaultValue={[dayjs(settings.Old), dayjs(settings.Young)]}
 							format="DD.MM.YYYY HH:mm"
 							placeholder={['Начало', 'Конец']}
-							onChange={values => setSettings({ 
+							onChange={values => setSettings({
 								...settings,
 								Old: values?.[0]?.toDate() ?? new Date(),
 								Young: values?.[1]?.toDate() ?? new Date()
@@ -124,7 +124,7 @@ export default function Viewer() {
 			<br />
 			{loadErr
 			? <div>Ошибка</div>
-			: live 
+			: live
 				? <LiveTable responses={responses} tags={tags} />
 				: <HistoryTable responses={responses} tags={tags} />}
 		</>
