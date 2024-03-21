@@ -1,0 +1,12 @@
+﻿@model Tag[]
+@{
+	ViewData["Title"] = "Home Page";
+}
+
+<div>
+	<h4>Список тегов</h4>
+	@foreach (var tag in Model)
+	{
+		<div>@tag.Name</div>
+	}
+</div>

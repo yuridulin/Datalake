@@ -1,0 +1,14 @@
+﻿using System.Text.Json.Serialization;
+
+namespace DatalakeDb.Enums
+{
+	[JsonConverter(typeof(JsonStringEnumConverter))]
+	public enum AggregationFunc
+	{
+		List = 0,
+		Sum = 1,
+		Avg = 2,
+		Min = 3,
+		Max = 4,
+	}
+}
