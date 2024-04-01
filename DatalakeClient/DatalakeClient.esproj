@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/0.5.271090-alpha">
+  <PropertyGroup>
+    <StartupCommandWorkingDirectory>C:\Work\New\Datalake\DatalakeApp\wwwroot</StartupCommandWorkingDirectory>
+    <StartupCommand>npm run build</StartupCommand>
+    <BuildCommand>npm start</BuildCommand>
+  </PropertyGroup>
+</Project>
