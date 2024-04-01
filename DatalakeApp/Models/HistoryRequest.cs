@@ -1,6 +1,8 @@
-﻿namespace DatalakeApp.Models
+﻿using DatalakeDatabase.Enums;
+
+namespace DatalakeApp.Models
 {
-	/*public class HistoryRequest : LiveRequest
+	public class HistoryRequest : LiveRequest
 	{
 		public DateTime? Old { get; set; }
 
@@ -10,6 +12,6 @@
 
 		public int Resolution { get; set; } = 0;
 
-		public AggFunc Func { get; set; } = AggFunc.List;
-	}*/
+		public AggregationFunc Func { get; set; } = AggregationFunc.List;
+	}
 }

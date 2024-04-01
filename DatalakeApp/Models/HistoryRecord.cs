@@ -1,6 +1,8 @@
-﻿namespace DatalakeApp.Models
+﻿using DatalakeDatabase.Enums;
+
+namespace DatalakeApp.Models
 {
-	/*public class HistoryRecord
+	public class HistoryRecord
 	{
 		public DateTime Date { get; set; } = DateTime.Now;
 
@@ -8,6 +10,6 @@
 
 		public TagQuality Quality { get; set; }
 
-		public TagHistoryUse Using { get; set; }
-	}*/
+		public TagUsing Using { get; set; }
+	}
 }

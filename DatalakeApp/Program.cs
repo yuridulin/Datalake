@@ -57,7 +57,7 @@ namespace DatalakeDatabase
 
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
-				options.UseNpgsql(connectionString);
+				options.UseNpgsql(connectionString, b => b.MigrationsAssembly(nameof(DatalakeApp)));
 			});
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
@@ -126,8 +126,8 @@ namespace DatalakeDatabase
 			context?.Database.Migrate();
 
 			var db = serviceScope?.ServiceProvider.GetRequiredService<DatalakeContext>();
-			/*if (db != null)
-				await db.EnsureDataCreatedAsync();*/
+			if (db != null)
+				await db.EnsureDataCreatedAsync();
 		}
 	}
 }

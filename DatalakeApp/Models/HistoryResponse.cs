@@ -1,6 +1,8 @@
-﻿namespace DatalakeApp.Models
+﻿using DatalakeDatabase.Enums;
+
+namespace DatalakeApp.Models
 {
-	/*public class HistoryResponse
+	public class HistoryResponse
 	{
 		public int Id { get; set; }
 
@@ -8,8 +10,8 @@
 
 		public TagType Type { get; set; }
 
-		public AggFunc Func { get; set; }
+		public AggregationFunc Func { get; set; }
 
 		public HistoryRecord[] Values { get; set; } = [];
-	}*/
+	}
 }

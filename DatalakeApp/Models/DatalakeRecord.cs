@@ -1,6 +1,8 @@
-﻿namespace DatalakeApp.Models
+﻿using DatalakeDatabase.Enums;
+
+namespace DatalakeApp.Models
 {
-	/*public class DatalakeRecord
+	public class DatalakeRecord
 	{
 		public string Name { get; set; } = "";
 
@@ -9,5 +11,5 @@
 		public TagType Type { get; set; }
 
 		public ushort Quality { get; set; } = 0;
-	}*/
+	}
 }

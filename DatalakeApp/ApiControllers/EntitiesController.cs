@@ -106,7 +106,7 @@
 
 			await db.BulkCopyAsync(entity.Fields);
 
-			await db.EntityTags
+			await db.BlockTags
 				.Where(x => x.EntityId == id)
 				.DeleteAsync();
 

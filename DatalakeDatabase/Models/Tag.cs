@@ -1,35 +1,84 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using DatalakeDatabase.Enums;
+using LinqToDB.Mapping;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
+using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
 namespace DatalakeDatabase.Models;
 
+[Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public partial class Tag
 {
-    public int Id { get; set; }
+	const string TableName = "Tags";
 
-    public string Name { get; set; } = null!;
+	// поля в БД
 
-    public string? Description { get; set; }
+	[Key, Identity, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+	public int Id { get; set; }
 
-    public int Type { get; set; }
+	[Column]
+	public Guid GlobalId { get; set; } = Guid.Empty;
 
-    public short Interval { get; set; }
+	[Column]
+	public string Name { get; set; } = null!;
 
-    public int SourceId { get; set; }
+	[Column]
+	public string? Description { get; set; }
 
-    public string? SourceItem { get; set; }
+	[Column]
+	public TagType Type { get; set; }
 
-    public bool IsScaling { get; set; }
+	[Column, NotNull]
+	public DateTime Created { get; set; }
 
-    public float MinEu { get; set; }
+	// специфичные для входящих
 
-    public float MaxEu { get; set; }
+	[Column]
+	public short Interval { get; set; }
 
-    public float MinRaw { get; set; }
+	[Column]
+	public int? SourceId { get; set; }
 
-    public float MaxRaw { get; set; }
+	[Column]
+	public string? SourceItem { get; set; } = string.Empty;
 
-    public bool IsCalculating { get; set; }
+	// специфичные для числовых
 
-    public string? Formula { get; set; }
+	[Column]
+	public bool IsScaling { get; set; } = false;
+
+	[Column]
+	public float MinEu { get; set; } = float.MinValue;
+
+	[Column]
+	public float MaxEu { get; set; } = float.MaxValue;
+
+	[Column]
+	public float MinRaw { get; set; } = float.MinValue;
+
+	[Column]
+	public float MaxRaw { get; set; } = float.MaxValue;
+
+	// специфичные для вычисляемых
+
+	[Column]
+	public bool IsCalculating { get; set; }
+
+	[Column]
+	public string? Formula { get; set; }
+
+	// связи
+
+	[ForeignKey(nameof(SourceId))]
+	[DeleteBehavior(DeleteBehavior.SetNull)]
+	public Source? Source { get; set; } = null!;
+
+	[NotMapped]
+	public ICollection<TagInput> RelationsToInputTags { get; set; } = [];
+
+	public ICollection<BlockTag> RelationsToBlocks { get; set; } = [];
+
+	public ICollection<Block> Blocks { get; set; } = [];
 }

@@ -1,17 +1,19 @@
 ﻿using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore;
-using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
 namespace DatalakeDatabase.Models;
 
 [Keyless, Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Settings
+public class TagHistoryChunk
 {
-	const string TableName = "Settings";
+	const string TableName = "TagHistoryChunks";
 
 	// поля в БД
 
-	[Column, NotNull]
-	public DateTime LastUpdate { get; set; }
+	[Column]
+	public required string Table { get; set; } = string.Empty;
+
+	[Column]
+	public DateTime Date { get; set; } = DateTime.MinValue;
 }

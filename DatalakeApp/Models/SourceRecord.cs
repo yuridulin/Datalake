@@ -1,11 +1,14 @@
-﻿namespace DatalakeApp.Models
+﻿using DatalakeDatabase.Enums;
+using DatalakeDatabase.Models;
+
+namespace DatalakeApp.Models
 {
-	/*public class SourceRecord
+	public class SourceRecord
 	{
 		public string Path { get; set; } = string.Empty;
 
 		public TagType Type { get; set; }
 
 		public Tag? RelatedTag { get; set; }
-	}*/
+	}
 }
