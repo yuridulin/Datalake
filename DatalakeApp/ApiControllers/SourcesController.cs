@@ -12,49 +12,32 @@ namespace DatalakeApp.ApiControllers
 	public class SourcesController(SourcesRepository sourcesRepository, ReceiverService receiverService) : ControllerBase
 	{
 		[HttpPost]
-		public async Task<ActionResult> Create(
+		public async Task<ActionResult<int>> CreateAsync(
 			[FromBody] SourceInfo source)
 		{
-			await sourcesRepository.CreateAsync(source);
+			var id = await sourcesRepository.CreateAsync(source);
 
-			return NoContent();
+			return id;
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<SourceInfo>> Read(
+		public async Task<ActionResult<SourceInfo>> ReadAsync(
 			[FromRoute] int id)
 		{
-			var source = await sourcesRepository.Db.Sources
-				.Where(x => x.Id == id)
-				.Select(x => new SourceInfo
-				{
-					Id = x.Id,
-					Name = x.Name,
-					Address = x.Address,
-					Description = x.Description
-				})
+			return await sourcesRepository.GetSources()
 				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"Источник #{id} не найден");
-
-			return NoContent();
+				?? throw new NotFoundException($"Источник #{id}");
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<SourceInfo[]>> ReadAll()
+		public async Task<ActionResult<SourceInfo[]>> ReadAsync()
 		{
-			var sources = await sourcesRepository.Db.Sources
-				.Select(x => new SourceInfo
-				{
-					Id = x.Id,
-					Name = x.Name,
-				})
+			return await sourcesRepository.GetSources()
 				.ToArrayAsync();
-
-			return Ok(sources);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult> Update(
+		public async Task<ActionResult> UpdateAsync(
 			[FromRoute] int id,
 			[FromBody] SourceInfo source)
 		{
@@ -64,7 +47,7 @@ namespace DatalakeApp.ApiControllers
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> Delete(
+		public async Task<ActionResult> DeleteAsync(
 			[FromRoute] int id)
 		{
 			await sourcesRepository.DeleteAsync(id);
@@ -73,7 +56,7 @@ namespace DatalakeApp.ApiControllers
 		}
 
 		[HttpGet("{id:int}/tags")]
-		public async Task<ActionResult<SourceEntryInfo[]>> GetSourceTags(
+		public async Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
 			[FromRoute] int id)
 		{
 			var source = await sourcesRepository.Db.Sources
@@ -82,9 +65,32 @@ namespace DatalakeApp.ApiControllers
 				.FirstOrDefaultAsync()
 				?? throw new NotFoundException($"Источник #{id} не найден");
 
-			var items = receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
+			var items = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
+			var tags = await sourcesRepository.GetExistTags(id)
+				.ToDictionaryAsync(x => x.Item, x => x);
 
-			return Ok(await sourcesRepository.GetExistTagsAsync(id));
+			// склеить
+			var all = items.Tags
+				.Select(x => new SourceEntryInfo
+				{
+					ItemInfo = new SourceItemInfo
+					{
+						Path = x.Name,
+						Type = x.Type,
+					},
+					TagInfo = tags.TryGetValue(x.Name, out SourceTagInfo? value) ? value : null,
+				})
+				.Union(tags
+					.Where(x => !items.Tags.Select(x => x.Name).Contains(x.Key))
+					.Select(x => new SourceEntryInfo
+					{
+						ItemInfo = null,
+						TagInfo = x.Value,
+					})
+				)
+				.ToArray();
+
+			return all;
 		}
 	}
 }

@@ -80,9 +80,10 @@ namespace DatalakeDatabase.Migrations
 					name: "SourceId",
 					table: "Tags",
 					type: "integer",
-					nullable: true,
+					nullable: false,
 					oldClrType: typeof(int),
-					oldType: "integer");
+					oldType: "integer",
+					oldNullable: true);
 
 			migrationBuilder.AlterColumn<int>(
 					name: "ParentId",

@@ -19,7 +19,12 @@ namespace DatalakeDatabase
 			var builder = WebApplication.CreateBuilder(args);
 
 			builder.Services.AddControllers();
-			builder.Services.AddSwaggerDocument();
+			builder.Services.AddSwaggerDocument(options =>
+			{
+				options.DocumentName = "Datalake App";
+				options.Title = "Datalake App";
+				options.Version = "v1";
+			});
 
 			ConfigureDatabase(builder);
 			ConfigureAuth(builder);

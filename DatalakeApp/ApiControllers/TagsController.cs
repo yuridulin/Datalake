@@ -1,4 +1,5 @@
 ﻿using DatalakeDatabase.ApiModels.Tags;
+using DatalakeDatabase.Exceptions;
 using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
@@ -11,36 +12,34 @@ namespace DatalakeApp.ApiControllers
 	public class TagsController(TagsRepository tagsRepository) : ControllerBase
 	{
 		[HttpPost]
-		public async Task<ActionResult<Tag>> Create(
+		public async Task<ActionResult<int>> CreateAsync(
 			[FromBody] TagInfo tag)
 		{
 			return Ok(await tagsRepository.CreateAsync(tag));
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<Tag>> Read(int id)
+		public async Task<ActionResult<TagInfo>> ReadAsync(int id)
 		{
-			var tag = await tagsRepository.Db.Tags
+			var tag = await tagsRepository.GetTagsWithSources()
 				.Where(x => x.Id == id)
-				.FirstOrDefaultAsync();
-
-			if (tag == null)
-				return BadRequest($"Тег #{id} не найден");
+				.FirstOrDefaultAsync()
+				?? throw new NotFoundException($"Тег #{id}");
 
 			return Ok(tag);
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<Tag[]>> ReadAll()
+		public async Task<ActionResult<Tag[]>> ReadAsync()
 		{
-			var tags = await tagsRepository.Db.Tags
+			var tags = await tagsRepository.GetTagsWithSources()
 				.ToArrayAsync();
 
 			return Ok(tags);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult> Update(
+		public async Task<ActionResult> UpdateAsync(
 			[FromRoute] int id,
 			[FromBody] TagInfo tag)
 		{
@@ -50,7 +49,7 @@ namespace DatalakeApp.ApiControllers
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> Delete(
+		public async Task<ActionResult> DeleteAsync(
 			[FromRoute] int id)
 		{
 			await tagsRepository.DeleteAsync(id);

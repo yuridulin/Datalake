@@ -39,7 +39,7 @@ public partial class Tag
 	public short Interval { get; set; }
 
 	[Column]
-	public int? SourceId { get; set; }
+	public int SourceId { get; set; }
 
 	[Column]
 	public string? SourceItem { get; set; } = string.Empty;

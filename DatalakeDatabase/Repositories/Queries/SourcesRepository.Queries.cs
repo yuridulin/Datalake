@@ -1,26 +1,38 @@
 ﻿using DatalakeDatabase.ApiModels.Sources;
 using LinqToDB;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DatalakeDatabase.Repositories
 {
 	public partial class SourcesRepository
 	{
-		public async Task<SourceTagInfo[]> GetExistTagsAsync(int id)
+		public IQueryable<SourceInfo> GetSources()
 		{
-			return await db.Tags
+			var query = from source in db.Sources
+									select new SourceInfo
+									{
+										Id = source.Id,
+										Name = source.Name,
+										Address = source.Address,
+										Description = source.Description,
+										Type = source.Type,
+									};
+
+			return query;
+		}
+
+		public IQueryable<SourceTagInfo> GetExistTags(int id)
+		{
+			var query = db.Tags
 				.Where(x => x.SourceId == id)
 				.Select(x => new SourceTagInfo
 				{
 					Id = x.Id,
 					Name = x.Name,
 					Type = x.Type,
-				})
-				.ToArrayAsync();
+					Item = x.SourceItem ?? string.Empty,
+				});
+
+			return query;
 		}
 	}
 }

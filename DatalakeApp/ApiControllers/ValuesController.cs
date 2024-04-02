@@ -9,10 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace DatalakeApp.ApiControllers
 {
 	[ApiController]
-	[Route("api/tags/[controller]")]
+	[Route("api/Tags/[controller]")]
 	public class ValuesController(HistoryService historyService, CacheService cacheService) : ControllerBase
 	{
-		public const string LiveUrl = "api/tags/values/live";
+		public const string LiveUrl = "api/Tags/values/live";
 
 		[HttpPost("live")]
 		public async Task<HistoryResponse[]> Live(

@@ -8,6 +8,8 @@ namespace DatalakeDatabase.ApiModels.Sources
 
 		public required string Name { get; set; }
 
+		public required string Item { get; set; }
+
 		public TagType Type { get; set; }
 	}
 }

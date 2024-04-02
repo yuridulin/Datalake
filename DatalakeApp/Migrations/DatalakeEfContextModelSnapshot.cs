@@ -174,7 +174,7 @@ namespace DatalakeDatabase.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("SourceId")
+                    b.Property<int>("SourceId")
                         .HasColumnType("integer");
 
                     b.Property<string>("SourceItem")

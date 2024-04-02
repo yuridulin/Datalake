@@ -5,7 +5,7 @@ using LinqToDB;
 
 namespace DatalakeDatabase.Repositories
 {
-	public class TagsRepository(DatalakeContext db)
+	public partial class TagsRepository(DatalakeContext db)
 	{
 		public DatalakeContext Db => db;
 
@@ -18,14 +18,17 @@ namespace DatalakeDatabase.Repositories
 				.Value(x => x.Name, tagInfo.Name)
 				.Value(x => x.Description, tagInfo.Description)
 				.Value(x => x.Type, tagInfo.Type)
+				.Value(x => x.Interval, tagInfo.Interval ?? 0)
 				.Value(x => x.Created, DateTime.UtcNow)
-				.Value(x => x.SourceId, tagInfo.SourceInfo?.Id)
-				.Value(x => x.SourceItem, tagInfo.SourceInfo?.Item)
+				.Value(x => x.SourceId, tagInfo.SourceInfo.Id)
+				.Value(x => x.SourceItem, tagInfo.SourceInfo.Item)
 				.Value(x => x.IsScaling, tagInfo.MathInfo != null)
 				.Value(x => x.MaxEu, tagInfo.MathInfo?.MaxEu)
 				.Value(x => x.MinEu, tagInfo.MathInfo?.MinEu)
 				.Value(x => x.MaxRaw, tagInfo.MathInfo?.MaxRaw)
 				.Value(x => x.MinRaw, tagInfo.MathInfo?.MinRaw)
+				.Value(x => x.IsCalculating, tagInfo.CalcInfo != null)
+				.Value(x => x.Formula, tagInfo.CalcInfo?.Formula)
 				.InsertWithInt32IdentityAsync();
 
 			if (!id.HasValue)
@@ -52,6 +55,7 @@ namespace DatalakeDatabase.Repositories
 				.Set(x => x.Name, tagInfo.Name)
 				.Set(x => x.Description, tagInfo.Description)
 				.Set(x => x.Type, tagInfo.Type)
+				.Set(x => x.Interval, tagInfo.Interval ?? 0)
 				.Set(x => x.SourceId, tagInfo.SourceInfo?.Id)
 				.Set(x => x.SourceItem, tagInfo.SourceInfo?.Item)
 				.Set(x => x.IsScaling, tagInfo.MathInfo != null)
@@ -59,6 +63,8 @@ namespace DatalakeDatabase.Repositories
 				.Set(x => x.MinEu, tagInfo.MathInfo?.MinEu)
 				.Set(x => x.MaxRaw, tagInfo.MathInfo?.MaxRaw)
 				.Set(x => x.MinRaw, tagInfo.MathInfo?.MinRaw)
+				.Set(x => x.IsCalculating, tagInfo.CalcInfo != null)
+				.Set(x => x.Formula, tagInfo.CalcInfo?.Formula)
 				.UpdateAsync();
 
 			if (count == 0)
@@ -78,9 +84,6 @@ namespace DatalakeDatabase.Repositories
 
 		async Task CreateDefaultTagNameAsync(TagInfo tagInfo)
 		{
-			if (tagInfo.SourceInfo == null) return;
-			if (!string.IsNullOrEmpty(tagInfo.Name)) return;
-
 			if (tagInfo.SourceInfo.Id == (int)CustomSource.Manual)
 			{
 				tagInfo.Name = $"ManualTag{tagInfo.Id}";
@@ -111,19 +114,24 @@ namespace DatalakeDatabase.Repositories
 					?? throw new NotFoundException($"Тег #{tagInfo.Id} не найден");
 
 				if (exist == tagInfo.Name)
-					throw new AlreadyExistException("Уже существует тег с таким именем");
+					throw new AlreadyExistException($"Тег с именем {tagInfo.Name}");
 			}
 
 			if (tagInfo.Name?.Contains(' ') ?? false)
 				throw new InvalidValueException("В имени тега не разрешены пробелы");
 
-			if (tagInfo.SourceInfo?.Id == (int)CustomSource.System)
+			if (tagInfo.SourceInfo.Id == (int)CustomSource.System)
 				throw new ForbiddenException("Запрещено создавать системные теги");
 
-			if (tagInfo.SourceInfo?.Id > 0 && string.IsNullOrEmpty(tagInfo.SourceInfo?.Item))
-				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
+			if (tagInfo.SourceInfo.Id > 0)
+			{
+				if (string.IsNullOrEmpty(tagInfo.SourceInfo.Item))
+					throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
+				if (!tagInfo.Interval.HasValue || tagInfo.Interval.Value >= 0)
+					throw new InvalidValueException("Интервал обновления должен быть неотрицательным целым числом");
+			}
 
-			if (tagInfo.SourceInfo?.Item.Contains(' ') ?? false)
+			if (tagInfo.SourceInfo.Item?.Contains(' ') ?? false)
 				throw new InvalidValueException("В адресе значения не разрешены пробелы");
 		}
 	}

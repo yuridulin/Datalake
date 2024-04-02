@@ -12,9 +12,13 @@ namespace DatalakeDatabase.ApiModels.Tags
 
 		public TagType Type { get; set; }
 
-		public TagSourceInfo? SourceInfo { get; set; }
+		public short? Interval { get; set; }
 
-		public TagMathInfo? MathInfo { get; set; }
+		public required TagSourceInfo SourceInfo { get; set; }
+
+		public TagMathInfo? MathInfo { get; set; } = null;
+
+		public TagCalcInfo? CalcInfo { get; set; } = null;
 
 		public class TagSourceInfo
 		{
@@ -22,9 +26,9 @@ namespace DatalakeDatabase.ApiModels.Tags
 
 			public SourceType Type { get; set; } = SourceType.Datalake;
 
-			public required string Item { get; set; }
+			public string? Item { get; set; }
 
-			public required string Name { get; set; }
+			public string Name { get; set; } = string.Empty;
 		}
 
 		public class TagMathInfo
@@ -36,6 +40,13 @@ namespace DatalakeDatabase.ApiModels.Tags
 			public float MinRaw { get; set; }
 
 			public float MaxRaw { get; set; }
+		}
+
+		public class TagCalcInfo
+		{
+			public string Formula { get; set; } = string.Empty;
+
+			public Dictionary<int, string> Inputs { get; set; } = [];
 		}
 	}
 }
