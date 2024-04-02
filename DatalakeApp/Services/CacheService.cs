@@ -1,5 +1,4 @@
-﻿using DatalakeDatabase.Enums;
-using DatalakeDatabase.Models;
+﻿using DatalakeDatabase.Models;
 
 namespace DatalakeApp.Services
 {

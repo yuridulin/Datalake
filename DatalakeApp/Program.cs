@@ -59,6 +59,7 @@ namespace DatalakeDatabase
 			{
 				options.UseNpgsql(connectionString, b => b.MigrationsAssembly(nameof(DatalakeApp)));
 			});
+
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
 					.UsePostgreSQL(connectionString ?? throw new Exception("Не передана строка подключения к базе данных"))
@@ -114,8 +115,15 @@ namespace DatalakeDatabase
 
 		static void ConfigureServices(WebApplicationBuilder builder)
 		{
+			// постоянные
+			builder.Services.AddSingleton<CacheService>();
+
+			// постоянные в своём окружении
 			builder.Services.AddScoped<ReceiverService>();
 			builder.Services.AddScoped<HistoryService>();
+
+			// временные
+
 		}
 
 		static async void StartWorkWithDatabase(WebApplication app)
