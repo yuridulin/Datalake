@@ -1,5 +1,8 @@
-﻿namespace DatalakeDatabase.Enums;
+﻿using System.Text.Json.Serialization;
 
+namespace DatalakeDatabase.Enums;
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TagUsing
 {
 	/// <summary>
