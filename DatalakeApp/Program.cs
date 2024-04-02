@@ -1,4 +1,5 @@
 using DatalakeApp.Services;
+using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
@@ -123,7 +124,10 @@ namespace DatalakeDatabase
 			builder.Services.AddScoped<HistoryService>();
 
 			// временные
-
+			builder.Services.AddTransient<BlocksRepository>();
+			builder.Services.AddTransient<TagsRepository>();
+			builder.Services.AddTransient<SourcesRepository>();
+			builder.Services.AddTransient<UsersRepository>();
 		}
 
 		static async void StartWorkWithDatabase(WebApplication app)

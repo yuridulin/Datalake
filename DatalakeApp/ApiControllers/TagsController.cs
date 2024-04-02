@@ -1,4 +1,5 @@
-﻿using DatalakeDatabase.Models;
+﻿using DatalakeDatabase.ApiModels.Tags;
+using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ namespace DatalakeApp.ApiControllers
 	{
 		[HttpPost]
 		public async Task<ActionResult<Tag>> Create(
-			[FromBody] Tag tag)
+			[FromBody] TagInfo tag)
 		{
 			return Ok(await tagsRepository.CreateAsync(tag));
 		}
@@ -39,11 +40,13 @@ namespace DatalakeApp.ApiControllers
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<Tag>> Update(
+		public async Task<ActionResult> Update(
 			[FromRoute] int id,
-			[FromBody] Tag tag)
+			[FromBody] TagInfo tag)
 		{
-			return Ok(await tagsRepository.UpdateAsync(id, tag));
+			await tagsRepository.UpdateAsync(id, tag);
+
+			return NoContent();
 		}
 
 		[HttpDelete("{id:int}")]

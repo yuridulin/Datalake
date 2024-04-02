@@ -1,6 +1,6 @@
-﻿using DatalakeDatabase.Enums;
+﻿using DatalakeDatabase.ApiModels.Tags;
+using DatalakeDatabase.Enums;
 using DatalakeDatabase.Exceptions;
-using DatalakeDatabase.Models;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories
@@ -9,97 +9,60 @@ namespace DatalakeDatabase.Repositories
 	{
 		public DatalakeContext Db => db;
 
-		public async Task<Tag> CreateAsync(Tag tag)
+		public async Task<int> CreateAsync(TagInfo tagInfo)
 		{
-			if (string.IsNullOrEmpty(tag.Name))
-			{
-				if (tag.SourceId == (int)CustomSource.System)
-					throw new ForbiddenException("Запрещено создавать системные теги");
-
-				if (tag.SourceId == (int)CustomSource.Manual)
-				{
-					tag.Name = $"ManualTag{tag.Id}";
-				}
-				else if (tag.SourceId == (int)CustomSource.Calculated)
-				{
-					tag.Name = $"CalcTag{tag.Id}";
-				}
-				else if (tag.SourceId > 0)
-				{
-					var source = await db.Sources
-						.Where(x => x.Id == tag.SourceId)
-						.FirstOrDefaultAsync()
-						?? throw new NotFoundException($"Указанный источник #{tag.SourceId} не найден");
-
-					if (string.IsNullOrEmpty(tag.SourceItem))
-						throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
-
-					tag.Name = $"{source.Name}.{tag.SourceItem}";
-				}
-			}
-			else
-			{
-				if (tag.Name.Contains(' '))
-					throw new InvalidValueException("В имени тега не разрешены пробелы");
-				if (tag.SourceItem?.Contains(' ') ?? false)
-					throw new InvalidValueException("В адресе значения не разрешены пробелы");
-				if (await db.Tags.AnyAsync(x => x.Name == tag.Name))
-					throw new AlreadyExistException("Уже существует тег с таким именем");
-			}
+			await CheckTagInfoAsync(tagInfo);
 
 			int? id = await db.Tags
 				.Value(x => x.GlobalId, Guid.NewGuid())
-				.Value(x => x.Name, tag.Name)
-				.Value(x => x.Description, tag.Description)
-				.Value(x => x.Type, tag.Type)
-				.Value(x => x.Created, tag.Created)
-				.Value(x => x.SourceId, tag.SourceId)
-				.Value(x => x.SourceItem, tag.SourceItem)
-				.Value(x => x.IsScaling, tag.IsScaling)
-				.Value(x => x.MaxEu, tag.MaxEu)
-				.Value(x => x.MinEu, tag.MinEu)
-				.Value(x => x.MaxRaw, tag.MaxRaw)
-				.Value(x => x.MinRaw, tag.MinRaw)
+				.Value(x => x.Name, tagInfo.Name)
+				.Value(x => x.Description, tagInfo.Description)
+				.Value(x => x.Type, tagInfo.Type)
+				.Value(x => x.Created, DateTime.UtcNow)
+				.Value(x => x.SourceId, tagInfo.SourceInfo?.Id)
+				.Value(x => x.SourceItem, tagInfo.SourceInfo?.Item)
+				.Value(x => x.IsScaling, tagInfo.MathInfo != null)
+				.Value(x => x.MaxEu, tagInfo.MathInfo?.MaxEu)
+				.Value(x => x.MinEu, tagInfo.MathInfo?.MinEu)
+				.Value(x => x.MaxRaw, tagInfo.MathInfo?.MaxRaw)
+				.Value(x => x.MinRaw, tagInfo.MathInfo?.MinRaw)
 				.InsertWithInt32IdentityAsync();
 
 			if (!id.HasValue)
 				throw new DatabaseException("Не удалось добавить тег");
-			else
-				tag.Id = id.Value;
+			
+			if (string.IsNullOrEmpty(tagInfo.Name))
+			{
+				await CreateDefaultTagNameAsync(tagInfo);
+				await db.Tags
+					.Where(x => x.Id == id.Value)
+					.Set(x => x.Name, tagInfo.Name)
+					.UpdateAsync();
+			}
 
-			return tag;
+			return id.Value;
 		}
 
-		public async Task<Tag> UpdateAsync(int id, Tag tag)
+		public async Task UpdateAsync(int id, TagInfo tagInfo)
 		{
-			if (tag.Name.Contains(' '))
-				throw new InvalidValueException("В имени тега не разрешены пробелы");
-			if (tag.SourceItem?.Contains(' ') ?? false)
-				throw new InvalidValueException("В адресе значения не разрешены пробелы");
-			if (!await db.Tags.AnyAsync(x => x.Id == id))
-				throw new NotFoundException($"Тег #{id} не найден");
-			if (await db.Tags.AnyAsync(x => x.Name == tag.Name))
-				throw new AlreadyExistException("Уже существует тег с таким именем");
+			await CheckTagInfoAsync(tagInfo);
 
 			int count = await db.Tags
 				.Where(x => x.Id == id)
-				.Set(x => x.Name, tag.Name)
-				.Set(x => x.Description, tag.Description)
-				.Set(x => x.Type, tag.Type)
-				.Set(x => x.Created, tag.Created)
-				.Set(x => x.SourceId, tag.SourceId)
-				.Set(x => x.SourceItem, tag.SourceItem)
-				.Set(x => x.IsScaling, tag.IsScaling)
-				.Set(x => x.MaxEu, tag.MaxEu)
-				.Set(x => x.MinEu, tag.MinEu)
-				.Set(x => x.MaxRaw, tag.MaxRaw)
-				.Set(x => x.MinRaw, tag.MinRaw)
+				.Set(x => x.Name, tagInfo.Name)
+				.Set(x => x.Description, tagInfo.Description)
+				.Set(x => x.Type, tagInfo.Type)
+				.Set(x => x.SourceId, tagInfo.SourceInfo?.Id)
+				.Set(x => x.SourceItem, tagInfo.SourceInfo?.Item)
+				.Set(x => x.IsScaling, tagInfo.MathInfo != null)
+				.Set(x => x.MaxEu, tagInfo.MathInfo?.MaxEu)
+				.Set(x => x.MinEu, tagInfo.MathInfo?.MinEu)
+				.Set(x => x.MaxRaw, tagInfo.MathInfo?.MaxRaw)
+				.Set(x => x.MinRaw, tagInfo.MathInfo?.MinRaw)
 				.UpdateAsync();
 
 			if (count == 0)
 				throw new DatabaseException($"Не удалось сохранить тег #{id}");
-
-			return tag;
 		}
 
 		public async Task DeleteAsync(int id)
@@ -110,6 +73,58 @@ namespace DatalakeDatabase.Repositories
 
 			if (count == 0)
 				throw new DatabaseException($"Не удалось удалить тег #{id}");
+		}
+
+
+		async Task CreateDefaultTagNameAsync(TagInfo tagInfo)
+		{
+			if (tagInfo.SourceInfo == null) return;
+			if (!string.IsNullOrEmpty(tagInfo.Name)) return;
+
+			if (tagInfo.SourceInfo.Id == (int)CustomSource.Manual)
+			{
+				tagInfo.Name = $"ManualTag{tagInfo.Id}";
+			}
+			else if (tagInfo.SourceInfo.Id == (int)CustomSource.Calculated)
+			{
+				tagInfo.Name = $"CalcTag{tagInfo.Id}";
+			}
+			else if (tagInfo.SourceInfo.Id > 0)
+			{
+				var source = await db.Sources
+					.Where(x => x.Id == tagInfo.SourceInfo.Id)
+					.FirstOrDefaultAsync()
+					?? throw new NotFoundException($"Указанный источник #{tagInfo.SourceInfo.Id} не найден");
+
+				tagInfo.Name = $"{source.Name}.{tagInfo.SourceInfo.Item}";
+			}
+		}
+
+		async Task CheckTagInfoAsync(TagInfo tagInfo)
+		{
+			if (tagInfo.Id.HasValue)
+			{
+				string exist = await db.Tags
+					.Where(x => x.Id == tagInfo.Id)
+					.Select(x => x.Name)
+					.FirstOrDefaultAsync()
+					?? throw new NotFoundException($"Тег #{tagInfo.Id} не найден");
+
+				if (exist == tagInfo.Name)
+					throw new AlreadyExistException("Уже существует тег с таким именем");
+			}
+
+			if (tagInfo.Name?.Contains(' ') ?? false)
+				throw new InvalidValueException("В имени тега не разрешены пробелы");
+
+			if (tagInfo.SourceInfo?.Id == (int)CustomSource.System)
+				throw new ForbiddenException("Запрещено создавать системные теги");
+
+			if (tagInfo.SourceInfo?.Id > 0 && string.IsNullOrEmpty(tagInfo.SourceInfo?.Item))
+				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
+
+			if (tagInfo.SourceInfo?.Item.Contains(' ') ?? false)
+				throw new InvalidValueException("В адресе значения не разрешены пробелы");
 		}
 	}
 }

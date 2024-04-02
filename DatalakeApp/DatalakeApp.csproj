@@ -23,4 +23,8 @@
     <ProjectReference Include="..\DatalakeDatabase\DatalakeDatabase.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\generated\" />
+  </ItemGroup>
+
 </Project>

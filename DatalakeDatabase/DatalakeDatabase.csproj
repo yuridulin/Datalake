@@ -33,7 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ApiModels\Tags\" />
     <Folder Include="ApiModels\Values\" />
     <Folder Include="ApiModels\Users\" />
   </ItemGroup>
