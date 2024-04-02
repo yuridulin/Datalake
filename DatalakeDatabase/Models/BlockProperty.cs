@@ -21,8 +21,8 @@ public partial class BlockProperty
 	[Column]
 	public int BlockId { get; set; }
 
-	[Column]
-	public string? Name { get; set; }
+	[Column, NotNull]
+	public string Name { get; set; } = string.Empty;
 
 	[Column]
 	public TagType Type { get; set; } = TagType.String;

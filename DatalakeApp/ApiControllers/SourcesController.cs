@@ -1,115 +1,90 @@
-﻿namespace DatalakeApp.ApiControllers
+﻿using DatalakeApp.Services;
+using DatalakeDatabase.ApiModels.Sources;
+using DatalakeDatabase.Exceptions;
+using DatalakeDatabase.Repositories;
+using LinqToDB;
+using Microsoft.AspNetCore.Mvc;
+
+namespace DatalakeApp.ApiControllers
 {
-	/*[Route("api/[controller]")]
+	[Route("api/[controller]")]
 	[ApiController]
-	public class SourcesController(DatalakeContext db, ReceiverService receiverService) : ControllerBase
+	public class SourcesController(SourcesRepository sourcesRepository, ReceiverService receiverService) : ControllerBase
 	{
 		[HttpPost]
-		public async Task<ActionResult<Source>> Create(
-			[FromBody] Source source)
+		public async Task<ActionResult> Create(
+			[FromBody] SourceInfo source)
 		{
-			if (await db.Sources.AnyAsync(x => x.Name == source.Name))
-				return BadRequest("Уже существует источник с таким именем");
+			await sourcesRepository.CreateAsync(source);
 
-			int? id = await db.Sources
-				.Value(x => x.Name, source.Name)
-				.Value(x => x.Address, source.Address)
-				.Value(x => x.Type, source.Type)
-				.InsertWithInt32IdentityAsync();
-
-			if (!id.HasValue)
-				return BadRequest("Не удалось добавить источник");
-
-			return Ok(source);
+			return NoContent();
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<Source>> Read(
+		public async Task<ActionResult<SourceInfo>> Read(
 			[FromRoute] int id)
 		{
-			var source = await db.Sources
-				.FirstOrDefaultAsync(x => x.Id == id);
+			var source = await sourcesRepository.Db.Sources
+				.Where(x => x.Id == id)
+				.Select(x => new SourceInfo
+				{
+					Id = x.Id,
+					Name = x.Name,
+					Address = x.Address,
+					Description = x.Description
+				})
+				.FirstOrDefaultAsync()
+				?? throw new NotFoundException($"Источник #{id} не найден");
 
-			if (source == null)
-				return NotFound($"Источник #{id} не найден");
-
-			return Ok(source);
+			return NoContent();
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<Source[]>> ReadAll()
+		public async Task<ActionResult<SourceInfo[]>> ReadAll()
 		{
-			var sources = await db.Sources
+			var sources = await sourcesRepository.Db.Sources
+				.Select(x => new SourceInfo
+				{
+					Id = x.Id,
+					Name = x.Name,
+				})
 				.ToArrayAsync();
 
 			return Ok(sources);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<Source>> Update(
+		public async Task<ActionResult> Update(
 			[FromRoute] int id,
-			[FromBody] Source source)
+			[FromBody] SourceInfo source)
 		{
-			if (!await db.Sources.AnyAsync(x => x.Id == id))
-				return NotFound($"Источник #{id} не найден");
-			if (await db.Sources.AnyAsync(x => x.Name == source.Name))
-				return BadRequest("Уже существует источник с таким именем");
+			await sourcesRepository.UpdateAsync(id, source);
 
-			int count = await db.Sources
-				.Where(x => x.Id == id)
-				.Set(x => x.Name, source.Name)
-				.Set(x => x.Address, source.Address)
-				.Set(x => x.Type, source.Type)
-				.UpdateAsync();
-
-			if (count == 0)
-				return BadRequest($"Не удалось обновить источник #{id}");
-
-			return source;
+			return NoContent();
 		}
 
 		[HttpDelete("{id:int}")]
 		public async Task<ActionResult> Delete(
 			[FromRoute] int id)
 		{
-			var count = await db.Sources
-				.Where(x => x.Id == id)
-				.DeleteAsync();
+			await sourcesRepository.DeleteAsync(id);
 
-			if (count == 0)
-				return BadRequest($"Не удалось удалить источник #{id}");
-
-			return Ok();
+			return NoContent();
 		}
 
 		[HttpGet("{id:int}/tags")]
-		public async Task<ActionResult<SourceRecord[]>> GetSourceTags(
+		public async Task<ActionResult<SourceEntryInfo[]>> GetSourceTags(
 			[FromRoute] int id)
 		{
-			var source = await db.Sources
+			var source = await sourcesRepository.Db.Sources
 				.Where(x => x.Id == id)
-				.FirstOrDefaultAsync();
+				.Select(x => new { x.Type, x.Address })
+				.FirstOrDefaultAsync()
+				?? throw new NotFoundException($"Источник #{id} не найден");
 
-			if (source == null)
-				return NotFound($"Источник #{id} не найден");
+			var items = receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 
-			var items = await receiverService.GetItemsFromSourceAsync(source);
-
-			var tags = await db.Tags
-					.Where(x => x.SourceId == id)
-					.Where(x => items.Tags.Select(y => y.Name).Contains(x.SourceItem))
-					.ToDictionaryAsync(x => x.SourceItem ?? "", x => x);
-
-			var records = items.Tags
-				.Select(x => new SourceRecord
-				{
-					Path = x.Name,
-					Type = x.Type,
-					RelatedTag = tags.TryGetValue(x.Name, out var t) ? t : null,
-				})
-				.ToArray();
-
-			return Ok();
+			return Ok(await sourcesRepository.GetExistTagsAsync(id));
 		}
-	}*/
+	}
 }

@@ -1,25 +1,26 @@
-﻿namespace DatalakeApp.Services
+﻿using DatalakeApp.ApiControllers;
+using DatalakeApp.Models;
+using DatalakeDatabase.Enums;
+
+namespace DatalakeApp.Services
 {
 	public class ReceiverService
   {
-		/*public async Task<DatalakeResponse> GetItemsFromSourceAsync(Source source)
+		public async Task<DatalakeResponse> GetItemsFromSourceAsync(SourceType type, string? address)
 		{
-			if (source.Type == SourceType.Inopc)
+			if (string.IsNullOrEmpty(address))
 			{
-				if (!string.IsNullOrEmpty(source.Address))
-					return await AskInopc([], source.Address);
+				return new DatalakeResponse
+				{
+					Tags = [],
+					Timestamp = DateTime.UtcNow,
+				};
 			}
 
-			if (source.Type == SourceType.Datalake)
+			return type switch
 			{
-				if (!string.IsNullOrEmpty(source.Address))
-					return await AskDatalake([], source.Address);
-			}
-
-			return new DatalakeResponse
-			{
-				Timestamp = DateTime.Now,
-				Tags = [],
+				SourceType.Inopc => await AskInopc([], address),
+				_ => await AskDatalake([], address),
 			};
 		}
 
@@ -72,6 +73,6 @@
 			};
 
 			return response;
-		}*/
+		}
 	}
 }

@@ -1,19 +1,25 @@
 ﻿using DatalakeDatabase;
+using DatalakeDatabase.Enums;
+using DatalakeDatabase.Models;
+using LinqToDB;
+using LinqToDB.Data;
 
 namespace DatalakeApp.Services
 {
-	public class HistoryService(DatalakeContext db)
+	public class HistoryService(DatalakeContext db, CacheService cache)
 	{
 		public static readonly string NamePrefix = "TagsHistory_";
 		public static readonly string DateMask = "yyyy_MM_dd";
-/*
+
 		#region Манипулирование таблицами
 
-		static string GetTableName(DateOnly date) => NamePrefix + date.ToString(DateMask);
+		public DatalakeContext Db => db;
 
-		public async Task<ITable<TagHistory>> GetHistoryTableAsync(DateOnly date)
+		static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
+
+		public async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime date)
 		{
-			var chunk = await db.Chunks
+			var chunk = await db.TagHistoryChunks
 				.Where(x => x.Date == date)
 				.FirstOrDefaultAsync();
 
@@ -23,7 +29,7 @@ namespace DatalakeApp.Services
 				var newTable = await db.CreateTableAsync<TagHistory>(GetTableName(date));
 
 				// инициализация значений по последним из предыдущей таблицы
-				var previousChunk = await db.Chunks
+				var previousChunk = await db.TagHistoryChunks
 					.Where(x => x.Date < date)
 					.OrderByDescending(x => x)
 					.FirstOrDefaultAsync();
@@ -93,76 +99,20 @@ namespace DatalakeApp.Services
 
 		#region Запись значений
 
-		public async Task WriteLiveValueAsync(TagHistory value)
+		public void WriteLiveValue(TagHistory value)
 		{
-			var existValue = await db.TagsLive
-				.Where(x => x.TagId == value.TagId)
-				.FirstOrDefaultAsync();
-
-			int count = 1;
-
-			if (existValue == null)
-			{
-				count = await db.TagsLive
-					.Value(x => x.TagId, value.TagId)
-					.Value(x => x.Date, value.Date)
-					.Value(x => x.Text, value.Text)
-					.Value(x => x.Number, value.Number)
-					.Value(x => x.Quality, value.Quality)
-					.Value(x => x.Using, value.Using)
-					.InsertAsync();
-			}
-			else if (existValue.Date < value.Date)
-			{
-				count = await db.TagsLive
-					.Where(x => x.TagId == value.TagId)
-					.Set(x => x.Date, value.Date)
-					.Set(x => x.Text, value.Text)
-					.Set(x => x.Number, value.Number)
-					.Set(x => x.Quality, value.Quality)
-					.Set(x => x.Using, value.Using)
-					.UpdateAsync();
-			}
-
-			if (count == 0)
-				throw new Exception($"Не удалось записать текущее значение для тега #{value.TagId}");
+			cache.WriteValue(value);
 		}
 
-		public async Task WriteLiveValuesAsync(IEnumerable<TagHistory> values)
+		public void WriteLiveValues(IEnumerable<TagHistory> values)
 		{
-			var identifiers = values.Select(x => x.TagId).ToHashSet();
-
-			var existValues = await db.TagsLive
-				.Where(x => identifiers.Contains(x.TagId))
-				.ToListAsync();
-
-			int count = 0;
-
-			var result = await db.TagsLive
-				.BulkCopyAsync(values.Where(x => !identifiers.Contains(x.TagId)));
-
-			count += (int)result.RowsCopied;
-
-			foreach (var value in existValues.Where(x => identifiers.Contains(x.TagId)))
-			{
-				count += await db.TagsLive
-					.Where(x => x.TagId == value.TagId)
-					.Set(x => x.Date, value.Date)
-					.Set(x => x.Text, value.Text)
-					.Set(x => x.Number, value.Number)
-					.Set(x => x.Quality, value.Quality)
-					.Set(x => x.Using, value.Using)
-					.UpdateAsync();
-			}
-
-			if (count != values.Count())
-				throw new Exception($"Не удалось записать некоторые текущие значения: {values.Count() - count}");
+			cache.WriteValues(values.ToArray());
 		}
 
 		public async Task WriteHistoryValueAsync(TagHistory record)
 		{
-			var table = await GetHistoryTableAsync(DateOnly.FromDateTime(record.Date));
-			await WriteLiveValueAsync(record);
+			var table = await GetHistoryTableAsync(record.Date);
+			WriteLiveValue(record);
 			await table.BulkCopyAsync([record]);
 		}
 
@@ -170,24 +120,23 @@ namespace DatalakeApp.Services
 		{
 			foreach (var g in records.GroupBy(x => x.Date))
 			{
-				var table = await GetHistoryTableAsync(DateOnly.FromDateTime(g.Key));
+				var table = await GetHistoryTableAsync(g.Key);
 				var values = g.ToList();
-				await WriteLiveValuesAsync(values);
+				WriteLiveValues(values);
 				await table.BulkCopyAsync(values);
 			}
 		}
 
 		public async Task WriteManualHistoryValueAsync(TagHistory record)
 		{
-			*//*
+			/*
 			 * Реализация:
 			 * 1. Определить, существует ли таблица на дату записи. Если нет - пересоздать. Для пересоздания таблицы по хорошему нужен отдельный метод.
 			 * 2. Проверить предыдущие значения в этой точке времени. Если они есть - изменить Using
 			 * 3. Произвести запись
 			 * 4. Проверить, есть ли в этой таблице записи позже записанной. Если их нет - мы должны обновить Initial значение в следующей (из существующих) таблице
-			 *//*
-			var recordDate = DateOnly.FromDateTime(record.Date);
-			var table = await GetHistoryTableAsync(recordDate);
+			 */
+			var table = await GetHistoryTableAsync(record.Date);
 
 			// указываем, что предыдущие значения в этой точке времени устарели
 			await table
@@ -209,8 +158,8 @@ namespace DatalakeApp.Services
 			// если да, мы должны обновить следующие Using = Initial по каскаду до последнего
 			if (!await table.AnyAsync(x => x.TagId == record.TagId && x.Date > record.Date))
 			{
-				List<TagHistoryChunk> nextTablesDates = await db.Chunks
-					.Where(x => x.Date > recordDate)
+				List<TagHistoryChunk> nextTablesDates = await db.TagHistoryChunks
+					.Where(x => x.Date > record.Date)
 					.OrderBy(x => x.Date)
 					.ToListAsync();
 
@@ -239,7 +188,7 @@ namespace DatalakeApp.Services
 					{
 						await nextTable
 							.Value(x => x.TagId, record.TagId)
-							.Value(x => x.Date, next.Date.ToDateTime(TimeOnly.MinValue))
+							.Value(x => x.Date, next.Date)
 							.Value(x => x.Number, record.Number)
 							.Value(x => x.Text, record.Text)
 							.Value(x => x.Quality, record.Quality)
@@ -260,11 +209,9 @@ namespace DatalakeApp.Services
 
 		#region Чтение значений
 
-		public async Task<List<TagHistory>> ReadLiveValuesAsync(int[] identifiers)
+		public List<TagHistory> ReadLiveValues(int[] identifiers)
 		{
-			return await db.TagsLive
-				.Where(x => identifiers.Contains(x.TagId))
-				.ToListAsync();
+			return [.. cache.ReadValues(identifiers)];
 		}
 
 		// TODO если окажется, что этот метод вызывается только при запросе в контроллере API, логику оттуда нужно перенести сюда
@@ -276,13 +223,11 @@ namespace DatalakeApp.Services
 			DateTime young,
 			int resolution = 0)
 		{
-			var oldDate = DateOnly.FromDateTime(old);
-			var youngDate = DateOnly.FromDateTime(young);
-			var seek = oldDate;
+			var seek = old;
 			var values = new List<TagHistory>();
 
-			var tables = await db.Chunks
-				.Where(x => x.Date >= oldDate && x.Date <= youngDate)
+			var tables = await db.TagHistoryChunks
+				.Where(x => x.Date >= old && x.Date <= young)
 				.ToDictionaryAsync(x => x.Date, x => x.Table);
 
 			// выгружаем текущие значения
@@ -306,7 +251,7 @@ namespace DatalakeApp.Services
 
 				seek = seek.AddDays(1);
 			}
-			while (seek <= youngDate);
+			while (seek <= young);
 
 			// проверяем наличие значений на old
 			var lost = identifiers
@@ -321,7 +266,7 @@ namespace DatalakeApp.Services
 				// нужно получить initial значения для них
 				// берем ближайшую в прошлом таблицу
 				var initialDate = tables.Keys
-					.Where(x => x <= oldDate)
+					.Where(x => x <= old)
 					.OrderByDescending(x => x)
 					.FirstOrDefault();
 
@@ -435,6 +380,6 @@ namespace DatalakeApp.Services
 			};
 		}
 
-		#endregion*/
+		#endregion
 	}
 }

@@ -1,8 +1,16 @@
-﻿namespace DatalakeApp.ApiControllers
+﻿using DatalakeApp.Models;
+using DatalakeApp.Services;
+using DatalakeDatabase.Enums;
+using DatalakeDatabase.Extensions;
+using DatalakeDatabase.Models;
+using LinqToDB;
+using Microsoft.AspNetCore.Mvc;
+
+namespace DatalakeApp.ApiControllers
 {
-	/*[ApiController]
+	[ApiController]
 	[Route("api/tags/[controller]")]
-	public class ValuesController(DatalakeContext db, HistoryService historyService) : ControllerBase
+	public class ValuesController(HistoryService historyService, CacheService cacheService) : ControllerBase
 	{
 		public const string LiveUrl = "api/tags/values/live";
 
@@ -10,21 +18,18 @@
 		public async Task<HistoryResponse[]> Live(
 			[FromBody] LiveRequest request)
 		{
-			request.Tags ??= await db.Tags
-				.AsNoTracking()
+			request.Tags ??= await historyService.Db.Tags
 				.Where(x => request.TagNames.Length == 0 || request.TagNames.Contains(x.Name))
 				.Select(x => x.Id)
 				.ToArrayAsync();
 
-			Tag[] tags = await db.Tags
-				.AsNoTracking()
+			Tag[] tags = await historyService.Db.Tags
 				.Where(x => request.Tags.Length == 0 || request.Tags.Contains(x.Id))
 				.ToArrayAsync();
 
-			Dictionary<int, TagHistory> live = await db.TagsLive
-				.AsNoTracking()
-				.Where(x => tags.Select(t => t.Id).Contains(x.TagId))
-				.ToDictionaryAsync(x => x.TagId, x => x);
+			Dictionary<int, TagHistory> live = cacheService
+				.ReadValues(tags.Select(x => x.Id).ToArray())
+				.ToDictionary(x => x.TagId, x => x);
 
 			HistoryResponse[] values = tags
 				.Select(x => new
@@ -37,12 +42,12 @@
 					Id = x.Tag.Id,
 					TagName = x.Tag.Name,
 					Type = x.Tag.Type,
-					Func = AggFunc.List,
+					Func = AggregationFunc.List,
 					Values =
 					[
 						new() {
 							Date = x.Value.Date,
-							Value = x.Value.GetValue(x.Tag.Type),
+							Value = x.Value.GetTypedValue(x.Tag.Type),
 							Quality = x.Value.Quality,
 							Using = x.Value.Using,
 						}
@@ -61,8 +66,7 @@
 
 			foreach (var request in requests)
 			{
-				request.Tags ??= await db.Tags
-					.AsNoTracking()
+				request.Tags ??= await historyService.Db.Tags
 					.Where(x => request.TagNames.Length == 0 || request.TagNames.Contains(x.Name))
 					.Select(x => x.Id)
 					.ToArrayAsync();
@@ -86,8 +90,7 @@
 					old = request.Old ?? young.Date;
 				}
 
-				var tags = await db.Tags
-					.AsNoTracking()
+				var tags = await historyService.Db.Tags
 					.Where(x => request.Tags.Length == 0 || request.Tags.Contains(x.Id))
 					.ToArrayAsync();
 
@@ -103,7 +106,7 @@
 					if (tag == null)
 						continue;
 
-					if (request.Func == AggFunc.List)
+					if (request.Func == AggregationFunc.List)
 					{
 						responses.Add(new HistoryResponse
 						{
@@ -117,16 +120,16 @@
 									Date = x.Date,
 									Quality = x.Quality,
 									Using = x.Using,
-									Value = x.GetValue(tag.Type),
+									Value = x.GetTypedValue(tag.Type),
 								})
 								.OrderBy(x => x.Date)],
 						});
 					}
-					else
+					else if (tag.Type == TagType.Number)
 					{
 						var values = item
 							.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
-							.Select(x => x.GetValue(tag.Type) as float?)
+							.Select(x => x.GetTypedValue(tag.Type) as float?)
 							.ToList();
 
 						if (values.Count > 0)
@@ -136,16 +139,16 @@
 							{
 								switch (request.Func)
 								{
-									case AggFunc.Sum:
+									case AggregationFunc.Sum:
 										value = values.Sum();
 										break;
-									case AggFunc.Avg:
+									case AggregationFunc.Avg:
 										value = values.Average();
 										break;
-									case AggFunc.Min:
+									case AggregationFunc.Min:
 										value = values.Min();
 										break;
-									case AggFunc.Max:
+									case AggregationFunc.Max:
 										value = values.Max();
 										break;
 								}
@@ -199,23 +202,14 @@
 		public async Task<TagHistory> Write(
 			[FromBody] ValueRequest request)
 		{
-			Tag tag = await db.Tags
+			Tag tag = await historyService.Db.Tags
 				.Where(x => request.TagId.HasValue && x.Id == request.TagId
 					|| !string.IsNullOrEmpty(request.TagName) && x.Name == request.TagName)
 				.FirstOrDefaultAsync()
 				?? throw new Exception(request.TagId.HasValue ? $"Тег #{request.TagId} не найден" : $"Тег \"{request.TagName}\" не найден");
 
-			var (text, number, quality) = tag.FromRaw(request.Value, (ushort)(request.TagQuality ?? TagQuality.Unknown));
-
-			var record = new TagHistory
-			{
-				TagId = tag.Id,
-				Date = request.Date,
-				Number = number,
-				Text = text,
-				Quality = quality,
-				Using = TagUsing.Basic,
-			};
+			var record = tag.ToHistory(request.Value, (ushort)(request.TagQuality ?? TagQuality.Unknown));
+			record.Date = request.Date;
 
 			if (tag.SourceId == (int)CustomSource.Manual)
 			{
@@ -232,5 +226,5 @@
 
 			return record;
 		}
-	}*/
+	}
 }

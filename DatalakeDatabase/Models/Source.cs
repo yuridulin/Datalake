@@ -21,6 +21,9 @@ public partial class Source
 	public string Name { get; set; } = string.Empty;
 
 	[Column]
+	public string? Description { get; set; }
+
+	[Column]
 	public SourceType Type { get; set; } = SourceType.Inopc;
 
 	[Column]

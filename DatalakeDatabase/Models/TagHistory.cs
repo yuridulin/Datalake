@@ -26,4 +26,14 @@ public class TagHistory
 
 	[Column, NotNull]
 	public TagUsing Using { get; set; } = TagUsing.Basic;
-  }
+
+	// реализация
+
+	/*public object? GetTypedValue(TagType type) => type switch
+	{
+		TagType.String => Text,
+		TagType.Number => Number,
+		TagType.Boolean => Number.HasValue ? Number != 0 : null,
+		_ => null,
+	};*/
+}

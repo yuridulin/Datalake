@@ -1,8 +1,13 @@
 ﻿using DatalakeDatabase;
+using DatalakeDatabase.Models;
+using LinqToDB;
 
 namespace DatalakeApp.Services
 {
-	public class CollectorWorker(ReceiverService receiverService, IServiceScopeFactory serviceScopeFactory) : BackgroundService
+	public class CollectorWorker(
+		ReceiverService receiverService,
+		CacheService cacheService,
+		IServiceScopeFactory serviceScopeFactory) : BackgroundService
 	{
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
@@ -13,20 +18,24 @@ namespace DatalakeApp.Services
 
 				try
 				{
-					/*var dbLastUpdate = await db.Settings
+					var dbLastUpdate = await db.Settings
 						.Select(x => x.LastUpdate)
-						.FirstAsync();*/
+						.FirstAsync(token: stoppingToken);
 
-					/*if (Cache.LastUpdate > StoredUpdate)
+					if (cacheService.LastUpdate > LastUpdate)
 					{
-						Sources = db.Sources.ToList();
-						Sources.ForEach(source => source.Rebuild(db));
-						StoredUpdate = Cache.LastUpdate;
+						Sources = [.. db.Sources];
+						//Sources.ForEach(source => source.Rebuild(db));
+						LastUpdate = cacheService.LastUpdate;
 					}
 
-					Sources.ForEach(source => source.Update(db));*/
+					foreach (var source in Sources)
+					{
+						await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
+					}
+					//Sources.ForEach(source => source.Update(db));
 				}
-				catch (Exception ex)
+				catch (Exception)
 				{
 				}
 				
@@ -35,5 +44,7 @@ namespace DatalakeApp.Services
 		}
 
 		DateTime LastUpdate { get; set; } = DateTime.MinValue;
+
+		List<Source> Sources { get; set; } = [];
 	}
 }

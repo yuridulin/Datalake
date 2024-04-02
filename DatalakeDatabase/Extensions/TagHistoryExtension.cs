@@ -3,9 +3,9 @@ using DatalakeDatabase.Models;
 
 namespace DatalakeDatabase.Extensions;
 
-internal static class TagHistoryExtension
+public static class TagHistoryExtension
 {
-	public static object? GetValue(this TagHistory tagHistory, TagType type) => type switch
+	public static object? GetTypedValue(this TagHistory tagHistory, TagType type) => type switch
 	{
 		TagType.String => tagHistory.Text,
 		TagType.Number => tagHistory.Number,

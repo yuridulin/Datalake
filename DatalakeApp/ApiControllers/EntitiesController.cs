@@ -1,137 +1,57 @@
-﻿namespace DatalakeApp.ApiControllers
+﻿using DatalakeDatabase.ApiModels.Blocks;
+using DatalakeDatabase.Models;
+using DatalakeDatabase.Repositories;
+using LinqToDB;
+using Microsoft.AspNetCore.Mvc;
+
+namespace DatalakeApp.ApiControllers
 {
-	/*[Route("api/[controller]")]
+	[Route("api/[controller]")]
 	[ApiController]
-	public class EntitiesController(DatalakeContext db) : ControllerBase
+	public class EntitiesController(BlocksRepository blocksRepository) : ControllerBase
 	{
 		[HttpPost]
-		public async Task<ActionResult<Block>> CreateEntityAsync(
-			[FromBody] Block entity)
+		public async Task<ActionResult<int>> CreateEntityAsync(
+			[FromBody] BlockInfo blockInfo)
 		{
-			if (await db.Entities.AnyAsync(x => x.Name == entity.Name))
-				return BadRequest("Сущность с таким именем уже существует");
-
-			var id = await db.Entities
-				.Value(x => x.GlobalId, entity.GlobalId)
-				.Value(x => x.ParentId, entity.ParentId)
-				.Value(x => x.Name, entity.Name)
-				.Value(x => x.Description, entity.Description)
-				.InsertWithInt32IdentityAsync();
-
-			if (!id.HasValue)
-				return BadRequest("Не удалось добавить сущность");
-			else
-				entity.Id = id.Value;
-
-			return Ok(entity);
+			return Ok(await blocksRepository.CreateAsync(blockInfo));
 		}
 
 		[HttpGet]
 		public async Task<ActionResult<Block[]>> ReadEntitiesAsync()
 		{
-			return await db.Entities
+			return await blocksRepository.Db.Blocks
 				.ToArrayAsync();
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<Block>> ReadEntityAsync(
+		public async Task<ActionResult<BlockInfo>> ReadEntityAsync(
 			[FromRoute] int id)
 		{
-			var entity = await db.Entities.SingleOrDefaultAsync(x => x.Id == id);
-
-			if (entity == null)
-				return BadRequest($"Сущность #{id} не найдена");
-
-			entity.Children = await db.Entities
-				.Where(x => x.ParentId == entity.Id)
-				.ToListAsync();
-
-			return entity;
+			return await blocksRepository.GetAsync(id);
 		}
 
 		[HttpGet("tree")]
 		public async Task<ActionResult<Block[]>> ReadEntitiesTreeAsync()
 		{
-			var entities = await db.Entities
-				.ToArrayAsync();
-
-			var top = entities
-				.Where(x => !entities.Select(e => e.Id).ToList().Contains(x.ParentId))
-				.ToArray();
-
-			foreach (var entity in top)
-			{
-				entity.Children = ReadChildren(entity.Id);
-			}
-
-			return entities;
-
-			Block[] ReadChildren(int id)
-			{
-				var children = entities.Where(x => x.ParentId == id).ToArray();
-
-				foreach (var child in children)
-				{
-					child.Children = ReadChildren(child.Id);
-				}
-
-				return children;
-			}
+			return await blocksRepository.GetAsTree();
 		}
 
 		[HttpPut("{id:int}")]
 		public async Task<ActionResult<Block>> UpdateEntityAsync(
 			[FromRoute] int id,
-			[FromBody] Block entity)
+			[FromBody] BlockInfo block)
 		{
-			if (!await db.Entities.AnyAsync(x => x.Id == id))
-				return BadRequest($"Сущность #{id} не найдена");
-			if (await db.Entities.AnyAsync(x => x.Name == entity.Name))
-				return BadRequest("Сущность с таким именем уже существует");
-
-			await db.BeginTransactionAsync();
-
-			int count = 0;
-
-			count += await db.Entities
-				.Where(x => x.Id == id)
-				.Set(x => x.Name, entity.Name)
-				.Set(x => x.Description, entity.Description)
-				.Set(x => x.ParentId, entity.ParentId)
-				.UpdateAsync();
-
-			await db.EntityFields
-				.Where(x => x.EntityId == id)
-				.DeleteAsync();
-
-			await db.BulkCopyAsync(entity.Fields);
-
-			await db.BlockTags
-				.Where(x => x.EntityId == id)
-				.DeleteAsync();
-
-			await db.BulkCopyAsync(entity.Tags);
-
-			await db.CommitTransactionAsync();
-
-			if (count == 0)
-				return BadRequest($"Не удалось обновить сущность #{id}");
-
-			return entity;
+			return Ok(await blocksRepository.UpdateAsync(id, block));
 		}
 
 		[HttpDelete("{id:int}")]
 		public async Task<ActionResult> DeleteEntityAsync(
 			[FromRoute] int id)
 		{
-			var count = await db.Entities
-				.Where(x => x.Id == id)
-				.DeleteAsync();
+			await blocksRepository.DeleteAsync(id);
 
-			if (count == 0)
-				return BadRequest($"Не удалось удалить сущность #{id}");
-
-			return Ok();
+			return NoContent();
 		}
-	}*/
+	}
 }
