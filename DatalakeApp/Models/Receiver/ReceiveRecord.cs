@@ -1,8 +1,8 @@
 ﻿using DatalakeDatabase.Enums;
 
-namespace DatalakeApp.Models
+namespace DatalakeApp.Models.Receiver
 {
-	public class DatalakeRecord
+	public class ReceiveRecord
 	{
 		public string Name { get; set; } = "";
 

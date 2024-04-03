@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DatalakeDatabase.Repositories
+﻿namespace DatalakeDatabase.Repositories
 {
 	public class UsersRepository(DatalakeContext db)
 	{
-		public DatalakeContext Db => db;
 	}
 }

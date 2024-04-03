@@ -20,6 +20,7 @@ namespace DatalakeDatabase.ApiModels.Tags
 
 		public TagCalcInfo? CalcInfo { get; set; } = null;
 
+
 		public class TagSourceInfo
 		{
 			public int Id { get; set; }

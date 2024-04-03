@@ -6,8 +6,6 @@ namespace DatalakeDatabase.Repositories
 {
 	public partial class SourcesRepository(DatalakeContext db)
 	{
-		public DatalakeContext Db => db;
-
 		public async Task<int> CreateAsync(SourceInfo sourceInfo)
 		{
 			if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name))

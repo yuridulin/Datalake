@@ -7,8 +7,6 @@ namespace DatalakeDatabase.Repositories
 {
 	public partial class TagsRepository(DatalakeContext db)
 	{
-		public DatalakeContext Db => db;
-
 		public async Task<int> CreateAsync(TagInfo tagInfo)
 		{
 			await CheckTagInfoAsync(tagInfo);

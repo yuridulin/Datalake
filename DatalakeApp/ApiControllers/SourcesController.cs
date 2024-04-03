@@ -9,7 +9,9 @@ namespace DatalakeApp.ApiControllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class SourcesController(SourcesRepository sourcesRepository, ReceiverService receiverService) : ControllerBase
+	public class SourcesController(
+		SourcesRepository sourcesRepository,
+		ReceiverService receiverService) : ControllerBase
 	{
 		[HttpPost]
 		public async Task<ActionResult<int>> CreateAsync(
@@ -25,7 +27,7 @@ namespace DatalakeApp.ApiControllers
 			[FromRoute] int id)
 		{
 			return await sourcesRepository.GetSources()
-				.FirstOrDefaultAsync()
+				.FirstOrDefaultAsync(x => x.Id == id)
 				?? throw new NotFoundException($"Источник #{id}");
 		}
 
@@ -59,11 +61,11 @@ namespace DatalakeApp.ApiControllers
 		public async Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
 			[FromRoute] int id)
 		{
-			var source = await sourcesRepository.Db.Sources
+			var source = await sourcesRepository.GetSources()
 				.Where(x => x.Id == id)
 				.Select(x => new { x.Type, x.Address })
 				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"Источник #{id} не найден");
+				?? throw new NotFoundException($"Источник #{id}");
 
 			var items = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 			var tags = await sourcesRepository.GetExistTags(id)

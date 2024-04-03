@@ -1,16 +1,17 @@
 ﻿using DatalakeApp.ApiControllers;
-using DatalakeApp.Models;
+using DatalakeApp.Models.Receiver;
+using DatalakeDatabase.ApiModels.Values;
 using DatalakeDatabase.Enums;
 
 namespace DatalakeApp.Services
 {
 	public class ReceiverService
   {
-		public async Task<DatalakeResponse> GetItemsFromSourceAsync(SourceType type, string? address)
+		public async Task<ReceiveResponse> GetItemsFromSourceAsync(SourceType type, string? address)
 		{
 			if (string.IsNullOrEmpty(address))
 			{
-				return new DatalakeResponse
+				return new ReceiveResponse
 				{
 					Tags = [],
 					Timestamp = DateTime.UtcNow,
@@ -24,7 +25,7 @@ namespace DatalakeApp.Services
 			};
 		}
 
-		static async Task<DatalakeResponse> AskInopc(string[] tags, string address)
+		static async Task<ReceiveResponse> AskInopc(string[] tags, string address)
 		{
 			var request = new DatalakeRequest
 			{
@@ -32,9 +33,9 @@ namespace DatalakeApp.Services
 			};
 
 			var answer = await new HttpClient().PostAsJsonAsync("http://" + address + ":81/api/storage/read", request);
-			var response = await answer.Content.ReadFromJsonAsync<DatalakeResponse>();
+			var response = await answer.Content.ReadFromJsonAsync<ReceiveResponse>();
 
-			response ??= new DatalakeResponse
+			response ??= new ReceiveResponse
 			{
 				Timestamp = DateTime.Now,
 				Tags = [],
@@ -43,26 +44,26 @@ namespace DatalakeApp.Services
 			return response;
 		}
 
-		static async Task<DatalakeResponse> AskDatalake(string[] tags, string address)
+		static async Task<ReceiveResponse> AskDatalake(string[] tags, string address)
 		{
 			var request = new
 			{
-				Request = new LiveRequest
+				Request = new ValuesRequest
 				{
 					TagNames = tags,
 				}
 			};
 
 			var answer = await new HttpClient().PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
-			var historyResponse = await answer.Content.ReadFromJsonAsync<List<HistoryResponse>>();
+			var historyResponse = await answer.Content.ReadFromJsonAsync<List<ValuesResponse>>();
 
 			historyResponse ??= [];
 
-			var response = new DatalakeResponse
+			var response = new ReceiveResponse
 			{
 				Timestamp = DateTime.Now,
 				Tags = historyResponse
-					.SelectMany(x => x.Values, (tag, value) => new DatalakeRecord
+					.SelectMany(x => x.Values, (tag, value) => new ReceiveRecord
 					{
 						Name = tag.TagName,
 						Quality = (ushort)value.Quality,

@@ -8,8 +8,6 @@ namespace DatalakeDatabase.Repositories
 {
 	public partial class BlocksRepository(DatalakeContext db)
 	{
-		public DatalakeContext Db => db;
-
 		public async Task<int> CreateAsync(BlockInfo block)
 		{
 			if (await db.Blocks.AnyAsync(x => x.Name == block.Name))

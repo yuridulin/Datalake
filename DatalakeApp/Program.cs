@@ -126,13 +126,13 @@ namespace DatalakeDatabase
 
 			// постоянные в своём окружении
 			builder.Services.AddScoped<ReceiverService>();
-			builder.Services.AddScoped<HistoryService>();
 
 			// временные
 			builder.Services.AddTransient<BlocksRepository>();
 			builder.Services.AddTransient<TagsRepository>();
 			builder.Services.AddTransient<SourcesRepository>();
 			builder.Services.AddTransient<UsersRepository>();
+			builder.Services.AddTransient<ValuesRepository>();
 		}
 
 		static async void StartWorkWithDatabase(WebApplication app)

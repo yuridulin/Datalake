@@ -1,23 +1,24 @@
-﻿using DatalakeDatabase;
+﻿using DatalakeDatabase.ApiModels.History;
+using DatalakeDatabase.ApiModels.Values;
 using DatalakeDatabase.Enums;
+using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;
 using LinqToDB.Data;
 
-namespace DatalakeApp.Services
+namespace DatalakeDatabase.Repositories
 {
-	public class HistoryService(DatalakeContext db, CacheService cache)
+	public class ValuesRepository(DatalakeContext db)
 	{
 		public static readonly string NamePrefix = "TagsHistory_";
 		public static readonly string DateMask = "yyyy_MM_dd";
 
-		#region Манипулирование таблицами
 
-		public DatalakeContext Db => db;
+		#region Манипулирование таблицами
 
 		static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
 
-		public async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime date)
+		async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime date)
 		{
 			var chunk = await db.TagHistoryChunks
 				.Where(x => x.Date == date)
@@ -97,37 +98,55 @@ namespace DatalakeApp.Services
 
 		#endregion
 
+
 		#region Запись значений
 
-		public void WriteLiveValue(TagHistory value)
+		public async Task<List<ValuesResponse>> WriteValuesAsync(ValueWriteRequest[] requests)
 		{
-			cache.WriteValue(value);
+			/*Tag tag = await historyValuesRepository.Db.Tags
+				.Where(x => request.TagId.HasValue && x.Id == request.TagId
+					|| !string.IsNullOrEmpty(request.TagName) && x.Name == request.TagName)
+				.FirstOrDefaultAsync()
+				?? throw new Exception(request.TagId.HasValue ? $"Тег #{request.TagId} не найден" : $"Тег \"{request.TagName}\" не найден");
+
+			var record = tag.ToHistory(request.Value, (ushort)(request.TagQuality ?? TagQuality.Unknown));
+			record.Date = request.Date;
+
+			if (tag.SourceId == (int)CustomSource.Manual)
+			{
+				await historyValuesRepository.WriteManualHistoryValueAsync(record);
+			}
+			else if (tag.SourceId == (int)CustomSource.Calculated)
+			{
+				throw new Exception("Запись в вычисляемые теги не поддерживается");
+			}
+			else
+			{
+				await historyValuesRepository.WriteHistoryValueAsync(record);
+			}
+
+			return record;*/
+
+			return [];
 		}
 
-		public void WriteLiveValues(IEnumerable<TagHistory> values)
-		{
-			cache.WriteValues(values.ToArray());
-		}
-
-		public async Task WriteHistoryValueAsync(TagHistory record)
+		async Task WriteHistoryValueAsync(TagHistory record)
 		{
 			var table = await GetHistoryTableAsync(record.Date);
-			WriteLiveValue(record);
 			await table.BulkCopyAsync([record]);
 		}
 
-		public async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
+		async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
 		{
 			foreach (var g in records.GroupBy(x => x.Date))
 			{
 				var table = await GetHistoryTableAsync(g.Key);
 				var values = g.ToList();
-				WriteLiveValues(values);
 				await table.BulkCopyAsync(values);
 			}
 		}
 
-		public async Task WriteManualHistoryValueAsync(TagHistory record)
+		async Task WriteManualHistoryValueAsync(TagHistory record)
 		{
 			/*
 			 * Реализация:
@@ -207,17 +226,157 @@ namespace DatalakeApp.Services
 
 		#endregion
 
+
 		#region Чтение значений
 
-		public List<TagHistory> ReadLiveValues(int[] identifiers)
+		public async Task<List<ValuesResponse>> GetValuesAsync(ValuesRequest[] requests)
 		{
-			return [.. cache.ReadValues(identifiers)];
+			List<ValuesResponse> responses = [];
+
+			foreach (var request in requests)
+			{
+				request.Tags ??= await db.Tags
+					.Where(x => request.TagNames.Length == 0 || request.TagNames.Contains(x.Name))
+					.Select(x => x.Id)
+					.ToArrayAsync();
+
+				DateTime old, young;
+
+				// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
+				if (!request.Exact.HasValue && !request.Old.HasValue && !request.Young.HasValue)
+				{
+					responses.AddRange(await ReadLiveValuesAsync(request));
+					continue;
+				}
+				else if (request.Exact.HasValue)
+				{
+					young = request.Exact.Value;
+					old = request.Exact.Value;
+				}
+				else
+				{
+					young = request.Young ?? DateTime.Now;
+					old = request.Old ?? young.Date;
+				}
+
+				var tags = await ReadTagsInfoAsync(request.Tags);
+
+				var historyValues = await ReadHistoryValuesAsync(
+					tags.Select(x => x.Id).ToArray(),
+					old,
+					young,
+					Math.Max(0, request.Resolution));
+
+				foreach (var historyValue in historyValues.GroupBy(x => x.TagId))
+				{
+					var tagInfo = tags.FirstOrDefault(x => x.Id == historyValue.Key);
+					if (tagInfo == null)
+						continue;
+
+					if (request.Func == AggregationFunc.List)
+					{
+						responses.Add(new ValuesResponse
+						{
+							Id = tagInfo.Id,
+							TagName = tagInfo.Name,
+							Type = tagInfo.Type,
+							Func = request.Func,
+							Values = [.. historyValue
+								.Select(x => new ValueRecord
+								{
+									Date = x.Date,
+									Quality = x.Quality,
+									Using = x.Using,
+									Value = x.GetTypedValue(tagInfo.Type),
+								})
+								.OrderBy(x => x.Date)],
+						});
+					}
+					else if (tagInfo.Type == TagType.Number)
+					{
+						var values = historyValue
+							.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
+							.Select(x => x.GetTypedValue(tagInfo.Type) as float?)
+							.ToList();
+
+						if (values.Count > 0)
+						{
+							float? value = 0;
+							try
+							{
+								switch (request.Func)
+								{
+									case AggregationFunc.Sum:
+										value = values.Sum();
+										break;
+									case AggregationFunc.Avg:
+										value = values.Average();
+										break;
+									case AggregationFunc.Min:
+										value = values.Min();
+										break;
+									case AggregationFunc.Max:
+										value = values.Max();
+										break;
+								}
+							}
+							catch
+							{
+							}
+
+							responses.Add(new ValuesResponse
+							{
+								Id = tagInfo.Id,
+								TagName = tagInfo.Name,
+								Type = tagInfo.Type,
+								Func = request.Func,
+								Values = [
+										new ValueRecord
+										{
+											Quality = TagQuality.Good,
+											Using = TagUsing.Aggregated,
+											Value = value,
+										}
+									]
+							});
+						}
+						else
+						{
+							responses.Add(new ValuesResponse
+							{
+								Id = tagInfo.Id,
+								TagName = tagInfo.Name,
+								Type = tagInfo.Type,
+								Func = request.Func,
+								Values = [
+										new ValueRecord
+										{
+											Quality = TagQuality.Bad_NoValues,
+											Using = TagUsing.Aggregated,
+											Value = 0,
+										}
+									]
+							});
+						}
+					}
+				}
+			}
+
+			return responses;
 		}
 
-		// TODO если окажется, что этот метод вызывается только при запросе в контроллере API, логику оттуда нужно перенести сюда
-		// Это верно и для остальных методов этого сервиса
-		// Нужно несколько универсальных точек входа и выхода без привязки к деталям
-		public async Task<List<TagHistory>> ReadHistoryValuesAsync(
+		async Task<Tag[]> ReadTagsInfoAsync(int[] id)
+		{
+			return [];
+		}
+
+		async Task<List<ValuesResponse>> ReadLiveValuesAsync(ValuesRequest request)
+		{
+			// live table
+			return [];
+		}
+
+		async Task<List<TagHistory>> ReadHistoryValuesAsync(
 			int[] identifiers,
 			DateTime old,
 			DateTime young,
