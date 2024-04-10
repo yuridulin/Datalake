@@ -1,6 +1,6 @@
 ﻿using DatalakeDatabase.Enums;
 
-namespace DatalakeApp.Services.Collector.Models;
+namespace DatalakeApp.BackgroundSerivces.Collector.Models;
 
 public struct CollectValue
 {

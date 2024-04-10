@@ -1,5 +1,5 @@
-using DatalakeApp.Services.Collector;
-using DatalakeApp.Services.Collector.Collectors.Factory;
+using DatalakeApp.BackgroundSerivces.Collector;
+using DatalakeApp.BackgroundSerivces.Collector.Collectors.Factory;
 using DatalakeApp.Services.Receiver;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
@@ -125,9 +125,7 @@ namespace DatalakeDatabase
 		{
 			// посто€нные
 			builder.Services.AddSingleton<CollectorFactory>();
-
-			// посто€нные в своЄм окружении
-			builder.Services.AddScoped<ReceiverService>();
+			builder.Services.AddSingleton<ReceiverService>();
 
 			// временные
 			builder.Services.AddTransient<BlocksRepository>();

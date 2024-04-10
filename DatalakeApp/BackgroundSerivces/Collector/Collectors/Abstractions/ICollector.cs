@@ -1,6 +1,6 @@
-﻿using DatalakeApp.Services.Collector.Models;
+﻿using DatalakeApp.BackgroundSerivces.Collector.Models;
 
-namespace DatalakeApp.Services.Collector.Collectors.Abstractions;
+namespace DatalakeApp.BackgroundSerivces.Collector.Collectors.Abstractions;
 
 public delegate void CollectEvent(IEnumerable<CollectValue> values);
 
