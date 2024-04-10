@@ -1,5 +1,4 @@
-﻿using DatalakeDatabase.ApiModels.History;
-using DatalakeDatabase.ApiModels.Values;
+﻿using DatalakeDatabase.ApiModels.Values;
 using DatalakeDatabase.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,9 +20,12 @@ namespace DatalakeApp.ApiControllers
 		}
 
 		[HttpPut]
-		public async Task<ValuesResponse> WriteValuesAsync(
-			[FromBody] ValueWriteRequest request)
+		public async Task<List<ValuesResponse>> WriteValuesAsync(
+			[FromBody] ValueWriteRequest[] requests)
 		{
+			var responses = await valuesRepository.WriteValuesAsync(requests);
+
+			return responses;
 		}
 	}
 }

@@ -1,9 +1,8 @@
-﻿namespace DatalakeDatabase.ApiModels.Sources
-{
-	public class SourceEntryInfo
-	{
-		public SourceItemInfo? ItemInfo { get; set; }
+﻿namespace DatalakeDatabase.ApiModels.Sources;
 
-		public SourceTagInfo? TagInfo { get; set; }
-	}
+public class SourceEntryInfo
+{
+	public SourceItemInfo? ItemInfo { get; set; }
+
+	public SourceTagInfo? TagInfo { get; set; }
 }

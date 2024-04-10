@@ -9,7 +9,7 @@ using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribu
 namespace DatalakeDatabase.Models;
 
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public partial class Tag
+public class Tag
 {
 	const string TableName = "Tags";
 
@@ -35,6 +35,9 @@ public partial class Tag
 
 	// специфичные для входящих
 
+	/// <summary>
+	/// Интервал опроса значения в секундах
+	/// </summary>
 	[Column]
 	public short Interval { get; set; }
 

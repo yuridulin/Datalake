@@ -6,7 +6,7 @@ using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribu
 namespace DatalakeDatabase.Models;
 
 [Keyless, Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public partial class TagInput
+public class TagInput
 {
 	public const string TableName = "TagInputs";
 

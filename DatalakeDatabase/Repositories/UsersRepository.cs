@@ -1,6 +1,5 @@
-﻿namespace DatalakeDatabase.Repositories
+﻿namespace DatalakeDatabase.Repositories;
+
+public class UsersRepository(DatalakeContext db)
 {
-	public class UsersRepository(DatalakeContext db)
-	{
-	}
 }

@@ -1,4 +1,6 @@
-using DatalakeApp.Services;
+using DatalakeApp.Services.Collector;
+using DatalakeApp.Services.Collector.Collectors.Factory;
+using DatalakeApp.Services.Receiver;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;
@@ -122,7 +124,7 @@ namespace DatalakeDatabase
 		static void ConfigureServices(WebApplicationBuilder builder)
 		{
 			// постоянные
-			builder.Services.AddSingleton<CacheService>();
+			builder.Services.AddSingleton<CollectorFactory>();
 
 			// постоянные в своём окружении
 			builder.Services.AddScoped<ReceiverService>();
@@ -133,6 +135,9 @@ namespace DatalakeDatabase
 			builder.Services.AddTransient<SourcesRepository>();
 			builder.Services.AddTransient<UsersRepository>();
 			builder.Services.AddTransient<ValuesRepository>();
+
+			// службы
+			builder.Services.AddHostedService<CollectorService>();
 		}
 
 		static async void StartWorkWithDatabase(WebApplication app)

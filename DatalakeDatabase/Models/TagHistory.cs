@@ -1,14 +1,16 @@
 ﻿using DatalakeDatabase.Enums;
 using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
+using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
 namespace DatalakeDatabase.Models;
 
-[Keyless, NotMapped]
+[Keyless, Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public class TagHistory
 {
+	const string TableName = "TagsLive";
+
 	[Column, NotNull]
 	public int TagId { get; set; }
 
@@ -26,14 +28,4 @@ public class TagHistory
 
 	[Column, NotNull]
 	public TagUsing Using { get; set; } = TagUsing.Basic;
-
-	// реализация
-
-	/*public object? GetTypedValue(TagType type) => type switch
-	{
-		TagType.String => Text,
-		TagType.Number => Number,
-		TagType.Boolean => Number.HasValue ? Number != 0 : null,
-		_ => null,
-	};*/
 }

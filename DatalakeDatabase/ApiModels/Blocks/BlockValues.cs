@@ -4,9 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DatalakeDatabase.ApiModels.Blocks
+namespace DatalakeDatabase.ApiModels.Blocks;
+
+public class BlockValues
 {
-	public class BlockValues
-	{
-	}
 }

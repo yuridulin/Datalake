@@ -9,7 +9,7 @@ using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribu
 namespace DatalakeDatabase.Models;
 
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public partial class BlockProperty
+public class BlockProperty
 {
 	const string TableName = "BlockProperties";
 

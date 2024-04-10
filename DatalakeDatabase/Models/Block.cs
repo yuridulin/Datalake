@@ -7,7 +7,7 @@ using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribu
 namespace DatalakeDatabase.Models;
 
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public partial class Block
+public class Block
 {
 	const string TableName = "Blocks";
 

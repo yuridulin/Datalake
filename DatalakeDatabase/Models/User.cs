@@ -6,7 +6,7 @@ using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribu
 namespace DatalakeDatabase.Models;
 
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public partial class User
+public class User
 {
 	const string TableName = "Users";
 
