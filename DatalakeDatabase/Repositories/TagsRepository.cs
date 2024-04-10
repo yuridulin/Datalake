@@ -41,6 +41,15 @@ public partial class TagsRepository(DatalakeContext db)
 				.UpdateAsync();
 		}
 
+		await db.TagsLive
+			.Value(x => x.TagId, id.Value)
+			.Value(x => x.Date, DateTime.UtcNow)
+			.Value(x => x.Quality, TagQuality.Unknown)
+			.Value(x => x.Text, null as string)
+			.Value(x => x.Number, null as float?)
+			.Value(x => x.Using, TagUsing.Initial)
+			.InsertAsync();
+
 		return id.Value;
 	}
 
