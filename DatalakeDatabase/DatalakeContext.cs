@@ -1,4 +1,5 @@
 ﻿using DatalakeDatabase.Enums;
+using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;
 using LinqToDB.Data;
@@ -16,7 +17,8 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			.Select(x => new Source
 			{
 				Id = (int)x,
-				Name = nameof(x),
+				Name = x.ToString(),
+				Description = x.GetDescription(),
 				Type = SourceType.Custom,
 			})
 			.ToArray();
@@ -28,6 +30,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 				int count = await Sources
 					.Value(x => x.Id, source.Id)
 					.Value(x => x.Name, source.Name)
+					.Value(x => x.Description, source.Description)
 					.Value(x => x.Type, source.Type)
 					.InsertAsync();
 
