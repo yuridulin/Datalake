@@ -44,7 +44,7 @@ namespace DatalakeDatabase.Tests.Steps
 				{
 					TagId = Constants.TagId,
 					Date = Constants.BeforeLastWriteDate,
-					Value = Constants.BeforeLastWriteDate,
+					Value = Constants.BeforeLastWriteValue,
 				},
 				new()
 				{
