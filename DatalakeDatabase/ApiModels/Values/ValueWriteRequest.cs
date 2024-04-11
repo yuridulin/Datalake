@@ -10,7 +10,7 @@ public class ValueWriteRequest
 
 	public object? Value { get; set; }
 
-	public DateTime Date { get; set; } = DateTime.Now;
+	public DateTime? Date { get; set; } = DateTime.Now;
 
 	public TagQuality? TagQuality { get; set; }
 }

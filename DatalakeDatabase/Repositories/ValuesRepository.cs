@@ -127,16 +127,19 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					? $"Тег #{writeRequest.TagId} не найден"
 					: $"Тег \"{writeRequest.TagName}\" не найден");
 
+			if (!isSystemCall && (tag.SourceId == (int)CustomSource.Calculated || tag.SourceId == (int)CustomSource.System))
+			{
+				throw new ForbiddenException("Запись в вычисляемые теги не поддерживается");
+			}
+
 			var record = tag.ToHistory(writeRequest.Value, writeRequest.TagQuality);
-			record.Date = writeRequest.Date;
+			record.Date = writeRequest.Date ?? DateTime.UtcNow;
+
+			await UpdateOrCreateLiveValueAsync(record);
 
 			if (tag.SourceId == (int)CustomSource.Manual)
 			{
 				await WriteManualHistoryValueAsync(record);
-			}
-			else if (!isSystemCall && (tag.SourceId == (int)CustomSource.Calculated || tag.SourceId == (int)CustomSource.System))
-			{
-				throw new ForbiddenException("Запись в вычисляемые теги не поддерживается");
 			}
 			else
 			{
@@ -152,14 +155,37 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				Values = [
 					new ValueRecord
 					{
-						Date = writeRequest.Date,
-						Quality = writeRequest.TagQuality ?? TagQuality.Unknown,
+						Date = record.Date,
+						Quality = record.Quality,
 					}
 				]
 			});
 		}
 
 		return responses;
+	}
+
+	async Task UpdateOrCreateLiveValueAsync(TagHistory record)
+	{
+		var lastLive = await db.TagsLive
+			.Where(x => x.TagId == record.TagId)
+			.Select(x => new { x.Date })
+			.FirstOrDefaultAsync();
+
+		if (lastLive != null && lastLive.Date < record.Date)
+		{
+			await db.TagsLive
+				.Where(x => x.TagId == record.TagId)
+				.Set(x => x.Text, record.Text)
+				.Set(x => x.Number, record.Number)
+				.Set(x => x.Date, record.Date)
+				.Set(x => x.Quality, record.Quality)
+				.UpdateAsync();
+		}
+		else
+		{
+			await db.InsertAsync(record);
+		}
 	}
 
 	async Task WriteHistoryValuesAsync(DateTime date, TagHistory[] records)
