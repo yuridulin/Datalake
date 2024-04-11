@@ -37,7 +37,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			// инициализация значений по последним из предыдущей таблицы
 			var previousChunk = await db.TagHistoryChunks
 				.Where(x => x.Date < seekDate)
-				.OrderByDescending(x => x)
+				.OrderByDescending(x => x.Date)
 				.FirstOrDefaultAsync();
 
 			if (previousChunk != null)
@@ -57,7 +57,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				var previousWritedTags = previousWritedRows
 					.Select(x => new TagHistory
 					{
-						Date = DateTime.Today,
+						Date = seekDate.ToDateTime(TimeOnly.MinValue),
 						TagId = x.TagId,
 						Number = x.Number,
 						Text = x.Text,
@@ -74,7 +74,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					.Select(x => new TagHistory
 					{
 						TagId = x,
-						Date = DateTime.Today,
+						Date = seekDate.ToDateTime(TimeOnly.MinValue),
 						Text = null,
 						Number = null,
 						Quality = TagQuality.Bad,
@@ -232,7 +232,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		// проверка, является ли новое значение последним в таблице
 		// если да, мы должны обновить следующие Using = Initial по каскаду до последнего
-		if (!await table.AnyAsync(x => x.TagId == record.TagId && x.Date > record.Date))
+		var valueAfterWrited = await table.Where(x => x.TagId == record.TagId && x.Date > record.Date).ToArrayAsync();
+		if (valueAfterWrited.Length == 0)
 		{
 			List<TagHistoryChunk> nextTablesDates = await db.TagHistoryChunks
 				.Where(x => x.Date > DateOnly.FromDateTime(record.Date))
