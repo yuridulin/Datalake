@@ -134,6 +134,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 			var record = tag.ToHistory(writeRequest.Value, writeRequest.TagQuality);
 			record.Date = writeRequest.Date ?? DateTime.UtcNow;
+			record.Using = TagUsing.Basic;
 
 			await UpdateOrCreateLiveValueAsync(record);
 
@@ -157,6 +158,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					{
 						Date = record.Date,
 						Quality = record.Quality,
+						Value = record.GetTypedValue(tag.Type),
+						Using = record.Using,
 					}
 				]
 			});
