@@ -33,6 +33,7 @@ namespace DatalakeDatabase.Tests.Steps
 
 		public static async Task SeedValues()
 		{
+			DatalakeContext.EnableGroupping();
 			using var db = Setup.CreateDbContext();
 
 			var valuesRepository = new ValuesRepository(db);
