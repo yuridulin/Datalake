@@ -2,12 +2,18 @@
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;
+using LinqToDB.Common;
 using LinqToDB.Data;
 
 namespace DatalakeDatabase;
 
 public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnection(options.Options)
 {
+	public static void EnableGroupping()
+	{
+		Configuration.Linq.GuardGrouping = false;
+	}
+
 	/// <summary>
 	/// Необходимые для работы записи, которые должны быть в базе данных
 	/// </summary>

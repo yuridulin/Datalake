@@ -16,6 +16,7 @@ namespace DatalakeDatabase.Tests.Steps
 
 		public static async Task SeedTest()
 		{
+			DatalakeContext.EnableGroupping();
 			using var db = Setup.CreateDbContext();
 
 			await db.EnsureDataCreatedAsync();

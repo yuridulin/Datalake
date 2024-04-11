@@ -146,6 +146,7 @@ namespace DatalakeDatabase
 			var context = serviceScope?.ServiceProvider.GetRequiredService<DatalakeEfContext>();
 			context?.Database.Migrate();
 
+			DatalakeContext.EnableGroupping();
 			var db = serviceScope?.ServiceProvider.GetRequiredService<DatalakeContext>();
 			if (db != null)
 				await db.EnsureDataCreatedAsync();
