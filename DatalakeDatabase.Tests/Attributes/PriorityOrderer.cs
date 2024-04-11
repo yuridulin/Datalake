@@ -4,9 +4,9 @@ using Xunit.Sdk;
 namespace DatalakeDatabase.Tests.Attributes
 {
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-	public class TestPriorityAttribute : Attribute
+	public class PriorityAttribute : Attribute
 	{
-		public TestPriorityAttribute(int priority)
+		public PriorityAttribute(int priority)
 		{
 			Priority = priority;
 		}
@@ -24,7 +24,7 @@ namespace DatalakeDatabase.Tests.Attributes
 			{
 				int priority = 0;
 
-				foreach (IAttributeInfo attr in testCase.TestMethod.Method.GetCustomAttributes((typeof(TestPriorityAttribute).AssemblyQualifiedName)))
+				foreach (IAttributeInfo attr in testCase.TestMethod.Method.GetCustomAttributes((typeof(PriorityAttribute).AssemblyQualifiedName)))
 					priority = attr.GetNamedArgument<int>("Priority");
 
 				GetOrCreate(sortedMethods, priority).Add(testCase);
