@@ -19,7 +19,7 @@ namespace DatalakeDatabase.Tests.Steps
 					Date = now,
 					TagId = Constants.TagId,
 					TagQuality = Enums.TagQuality.Good,
-					Value = Constants.Value,
+					Value = Constants.LastValue,
 				}
 			]);
 
@@ -28,7 +28,7 @@ namespace DatalakeDatabase.Tests.Steps
 			Assert.Single(response[0].Values);
 			Assert.True(response[0].Values[0].Date == now);
 			Assert.NotNull(response[0].Values[0].Value);
-			Assert.Equal(response[0].Values[0].Value, Constants.Value);
+			Assert.Equal(response[0].Values[0].Value, Constants.LastValue);
 		}
 
 		public static async Task SeedValues()
@@ -43,8 +43,8 @@ namespace DatalakeDatabase.Tests.Steps
 				new()
 				{
 					TagId = Constants.TagId,
-					Date = Constants.SecondWriteDate,
-					Value = Constants.SecondWriteDate,
+					Date = Constants.BeforeLastWriteDate,
+					Value = Constants.BeforeLastWriteDate,
 				},
 				new()
 				{
@@ -61,8 +61,8 @@ namespace DatalakeDatabase.Tests.Steps
 				new()
 				{
 					TagId = Constants.TagId,
-					Date = Constants.ThirdWriteDate,
-					Value = Constants.ThirdWriteValue,
+					Date = Constants.AfterFirstWriteDate,
+					Value = Constants.AfterFirstWriteValue,
 				},
 			];
 
@@ -70,7 +70,7 @@ namespace DatalakeDatabase.Tests.Steps
 
 			var value = await valuesRepository.GetValuesAsync([ new ValuesRequest() { Tags = [Constants.TagId] } ]);
 
-			Assert.Equal(Constants.Value, value[0].Values[0].Value);
+			Assert.Equal(Constants.LastValue, value[0].Values[0].Value);
 		}
 	}
 }

@@ -29,5 +29,8 @@ namespace DatalakeDatabase.Tests
 
 		[Fact, Priority(7)]
 		public static async Task SeedValues() => await Step003_ManualWriteToTag.SeedValues();
+
+		[Fact, Priority(8)]
+		public static async Task ReadExactBetweenFirstAndSecond() => await Step004_HistoryRead.ReadExactBetweenFirstAndSecond();
 	}
 }
