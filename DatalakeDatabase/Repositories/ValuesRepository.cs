@@ -16,22 +16,27 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	#region Манипулирование таблицами
 
-	static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
+	static string GetTableName(DateOnly date) => NamePrefix + date.ToString(DateMask);
 
 	async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime date)
 	{
+		return await GetHistoryTableAsync(DateOnly.FromDateTime(date));
+	}
+
+	async Task<ITable<TagHistory>> GetHistoryTableAsync(DateOnly seekDate)
+	{
 		var chunk = await db.TagHistoryChunks
-			.Where(x => x.Date == date)
+			.Where(x => x.Date == seekDate)
 			.FirstOrDefaultAsync();
 
 		if (chunk == null)
 		{
 			// создание новой таблицы в случае, если её не было
-			var newTable = await db.CreateTableAsync<TagHistory>(GetTableName(date));
+			var newTable = await db.CreateTableAsync<TagHistory>(GetTableName(seekDate));
 
 			// инициализация значений по последним из предыдущей таблицы
 			var previousChunk = await db.TagHistoryChunks
-				.Where(x => x.Date < date)
+				.Where(x => x.Date < seekDate)
 				.OrderByDescending(x => x)
 				.FirstOrDefaultAsync();
 
@@ -84,8 +89,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 			await db.InsertAsync(new TagHistoryChunk
 			{
-				Date = date,
-				Table = GetTableName(date)
+				Date = seekDate,
+				Table = GetTableName(seekDate)
 			});
 
 			return newTable;
@@ -201,7 +206,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		if (!await table.AnyAsync(x => x.TagId == record.TagId && x.Date > record.Date))
 		{
 			List<TagHistoryChunk> nextTablesDates = await db.TagHistoryChunks
-				.Where(x => x.Date > record.Date)
+				.Where(x => x.Date > DateOnly.FromDateTime(record.Date))
 				.OrderBy(x => x.Date)
 				.ToListAsync();
 
@@ -230,7 +235,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				{
 					await nextTable
 						.Value(x => x.TagId, record.TagId)
-						.Value(x => x.Date, next.Date)
+						.Value(x => x.Date, next.Date.ToDateTime(TimeOnly.MinValue))
 						.Value(x => x.Number, record.Number)
 						.Value(x => x.Text, record.Text)
 						.Value(x => x.Quality, record.Quality)
@@ -414,19 +419,21 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		DateTime young,
 		int resolution = 0)
 	{
-		var seek = old;
+		var firstDate = DateOnly.FromDateTime(old);
+		var lastDate = DateOnly.FromDateTime(young);
+		var seekDate = firstDate;
 		var values = new List<TagHistory>();
 
 		var tables = await db.TagHistoryChunks
-			.Where(x => x.Date >= old && x.Date <= young)
+			.Where(x => x.Date >= DateOnly.FromDateTime(old) && x.Date <= DateOnly.FromDateTime(young))
 			.ToDictionaryAsync(x => x.Date, x => x.Table);
 
 		// выгружаем текущие значения
 		do
 		{
-			if (tables.ContainsKey(seek))
+			if (tables.ContainsKey(seekDate))
 			{
-				var table = db.GetTable<TagHistory>().TableName(GetTableName(seek));
+				var table = db.GetTable<TagHistory>().TableName(GetTableName(seekDate));
 
 				try
 				{
@@ -440,9 +447,9 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				catch { }
 			}
 
-			seek = seek.AddDays(1);
+			seekDate = seekDate.AddDays(1);
 		}
-		while (seek <= young);
+		while (seekDate <= lastDate);
 
 		// проверяем наличие значений на old
 		var lost = info.Keys
@@ -457,7 +464,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			// нужно получить initial значения для них
 			// берем ближайшую в прошлом таблицу
 			var initialDate = tables.Keys
-				.Where(x => x <= old)
+				.Where(x => x <= firstDate)
 				.OrderByDescending(x => x)
 				.FirstOrDefault();
 

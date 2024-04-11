@@ -15,5 +15,5 @@ public class TagHistoryChunk
 	public required string Table { get; set; } = string.Empty;
 
 	[Column]
-	public DateTime Date { get; set; } = DateTime.MinValue;
+	public DateOnly Date { get; set; } = DateOnly.MinValue;
 }
