@@ -9,7 +9,7 @@ namespace DatalakeDatabase;
 
 public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnection(options.Options)
 {
-	public static void EnableGroupping()
+	public static void SetupLinqToDB()
 	{
 		Configuration.Linq.GuardGrouping = false;
 	}

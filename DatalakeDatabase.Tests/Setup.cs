@@ -31,7 +31,14 @@ namespace DatalakeDatabase.Tests
 			var options = new DataOptions<DatalakeContext>(
 				new DataOptions()
 					.UsePostgreSQL(ConnectionString)
-					.UseLoggerFactory(new LoggerFactory()));
+					.UseLoggerFactory(
+						LoggerFactory.Create(builder => 
+							builder.AddDebug()
+						)
+					)
+			);
+
+			DatalakeContext.SetupLinqToDB();
 
 			var dbContext = new DatalakeContext(options);
 
