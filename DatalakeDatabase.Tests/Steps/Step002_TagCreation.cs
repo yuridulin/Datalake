@@ -3,9 +3,9 @@ using DatalakeDatabase.Enums;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 
-namespace DatalakeDatabase.Tests.Steps.Step002
+namespace DatalakeDatabase.Tests.Steps
 {
-	public static class TagCreationTests
+	public static class Step002_TagCreation
 	{
 		public static async Task CreateManualTag()
 		{
@@ -15,7 +15,8 @@ namespace DatalakeDatabase.Tests.Steps.Step002
 
 			var request = new TagInfo
 			{
-				Name = "test",
+				Name = Constants.TagName,
+				Type = TagType.Number,
 				SourceInfo = new TagInfo.TagSourceInfo
 				{
 					Id = (int)CustomSource.Manual,
@@ -24,7 +25,7 @@ namespace DatalakeDatabase.Tests.Steps.Step002
 
 			int tagId = await tagsRepository.CreateAsync(request);
 
-			Assert.True(tagId == 1);
+			Assert.True(tagId == Constants.TagId);
 		}
 
 		public static async Task GetManualTag()
@@ -34,11 +35,11 @@ namespace DatalakeDatabase.Tests.Steps.Step002
 			var tagsRepository = new TagsRepository(db);
 
 			var tagInfo = await tagsRepository.GetTagsWithSources()
-				.Where(x => x.Id == 1)
+				.Where(x => x.Id == Constants.TagId)
 				.FirstOrDefaultAsync();
 
 			Assert.NotNull(tagInfo);
-			Assert.True(tagInfo.Name == "test");
+			Assert.True(tagInfo.Name == Constants.TagName);
 
 			Assert.NotNull(tagInfo.SourceInfo);
 			Assert.True(tagInfo.SourceInfo.Id == (int)CustomSource.Manual);
@@ -54,7 +55,7 @@ namespace DatalakeDatabase.Tests.Steps.Step002
 			[
 				new()
 				{
-					Tags = [1]
+					Tags = [Constants.TagId]
 				},
 			]);
 

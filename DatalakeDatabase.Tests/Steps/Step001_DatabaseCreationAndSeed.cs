@@ -2,9 +2,9 @@ using DatalakeDatabase.Enums;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 
-namespace DatalakeDatabase.Tests.Steps.Step001
+namespace DatalakeDatabase.Tests.Steps
 {
-	public static class DatabaseSchemaTests
+	public static class Step001_DatabaseCreationAndSeed
 	{
 		public static async Task CreationTest()
 		{
