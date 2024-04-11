@@ -175,7 +175,11 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			.Select(x => new { x.Date })
 			.FirstOrDefaultAsync();
 
-		if (lastLive != null && lastLive.Date < record.Date)
+		if (lastLive == null)
+		{
+			await db.InsertAsync(record);
+		}
+		else if (lastLive.Date < record.Date)
 		{
 			await db.TagsLive
 				.Where(x => x.TagId == record.TagId)
@@ -184,10 +188,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				.Set(x => x.Date, record.Date)
 				.Set(x => x.Quality, record.Quality)
 				.UpdateAsync();
-		}
-		else
-		{
-			await db.InsertAsync(record);
 		}
 	}
 
