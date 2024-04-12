@@ -62,7 +62,7 @@ public class InopcCollector : CollectorBase
 
 		var response = await _receiverService.AskInopc(tags.Select(x => x.TagName).ToArray(), _address);
 
-		CollectValues?.Invoke(response.Tags
+		CollectValues?.Invoke(this, response.Tags
 			.Select(x => new Models.CollectValue
 			{
 				DateTime = response.Timestamp,
