@@ -1,17 +1,12 @@
 ﻿using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace DatalakeDatabase.Tests.Attributes
+namespace DatalakeApp.Tests.Attributes
 {
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-	public class PriorityAttribute : Attribute
+	public class PriorityAttribute(int priority) : Attribute
 	{
-		public PriorityAttribute(int priority)
-		{
-			Priority = priority;
-		}
-
-		public int Priority { get; private set; }
+		public int Priority { get; private set; } = priority;
 	}
 
 	public class PriorityOrderer : ITestCaseOrderer
