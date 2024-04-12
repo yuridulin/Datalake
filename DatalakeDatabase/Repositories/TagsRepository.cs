@@ -16,7 +16,7 @@ public partial class TagsRepository(DatalakeContext db)
 			.Value(x => x.Name, tagInfo.Name)
 			.Value(x => x.Description, tagInfo.Description)
 			.Value(x => x.Type, tagInfo.Type)
-			.Value(x => x.Interval, tagInfo.Interval ?? 0)
+			.Value(x => x.Interval, tagInfo.IntervalInSeconds ?? 0)
 			.Value(x => x.Created, DateTime.UtcNow)
 			.Value(x => x.SourceId, tagInfo.SourceInfo.Id)
 			.Value(x => x.SourceItem, tagInfo.SourceInfo.Item)
@@ -62,7 +62,7 @@ public partial class TagsRepository(DatalakeContext db)
 			.Set(x => x.Name, tagInfo.Name)
 			.Set(x => x.Description, tagInfo.Description)
 			.Set(x => x.Type, tagInfo.Type)
-			.Set(x => x.Interval, tagInfo.Interval ?? 0)
+			.Set(x => x.Interval, tagInfo.IntervalInSeconds ?? 0)
 			.Set(x => x.SourceId, tagInfo.SourceInfo?.Id)
 			.Set(x => x.SourceItem, tagInfo.SourceInfo?.Item)
 			.Set(x => x.IsScaling, tagInfo.MathInfo != null)
@@ -134,7 +134,7 @@ public partial class TagsRepository(DatalakeContext db)
 		{
 			if (string.IsNullOrEmpty(tagInfo.SourceInfo.Item))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
-			if (!tagInfo.Interval.HasValue || tagInfo.Interval.Value >= 0)
+			if (!tagInfo.IntervalInSeconds.HasValue || tagInfo.IntervalInSeconds.Value >= 0)
 				throw new InvalidValueException("Интервал обновления должен быть неотрицательным целым числом");
 		}
 

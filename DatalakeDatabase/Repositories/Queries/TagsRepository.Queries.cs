@@ -15,7 +15,7 @@ public partial class TagsRepository
 									Id = tag.Id,
 									Name = tag.Name,
 									Description = tag.Description,
-									Interval = tag.Interval,
+									IntervalInSeconds = tag.Interval,
 									Type = tag.Type,
 									SourceInfo = tag.SourceId == (int)CustomSource.System
 										? new TagInfo.TagSourceInfo
