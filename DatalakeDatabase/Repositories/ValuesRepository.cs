@@ -431,15 +431,17 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		else if (names.Length > 0)
 		{
 			var _names = names.Select(x => x.ToLower().Trim()).ToHashSet();
-			query = query.Where(x => _names.Contains(x.Name));
+			query = query.Where(x => _names.Contains(x.Name.ToLower().Trim()));
 		}
 
-		return await query
+		var info = await query
 			.ToDictionaryAsync(x => x.Id, x => new ValueTagInfo
 			{
 				TagName = x.Name,
 				TagType = x.Type,
 			});
+
+		return info;
 	}
 
 	async Task<List<TagHistory>> ReadLiveValuesAsync(
