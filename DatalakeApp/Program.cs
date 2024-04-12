@@ -1,6 +1,7 @@
 using DatalakeApp.BackgroundSerivces.Collector;
 using DatalakeApp.BackgroundSerivces.Collector.Collectors.Factory;
 using DatalakeApp.Services.Receiver;
+using DatalakeDatabase;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;
@@ -12,7 +13,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 
-namespace DatalakeDatabase
+namespace DatalakeApp
 {
 	public class Program
 	{
@@ -116,10 +117,10 @@ namespace DatalakeDatabase
 				.AddAuthorizationBuilder()
 					.AddPolicy("user", policy =>
 						policy.RequireAssertion(context =>
-							context.User.HasClaim(c => (c.Type == "realm_access") && c.Value.Contains("datalake_user"))))
+							context.User.HasClaim(c => c.Type == "realm_access" && c.Value.Contains("datalake_user"))))
 					.AddPolicy("admin", policy =>
 						policy.RequireAssertion(context =>
-							context.User.HasClaim(c => (c.Type == "realm_access") && c.Value.Contains("datalake_admin"))));
+							context.User.HasClaim(c => c.Type == "realm_access" && c.Value.Contains("datalake_admin"))));
 		}
 
 		static void ConfigureServices(WebApplicationBuilder builder)
