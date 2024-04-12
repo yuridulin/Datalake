@@ -1,6 +1,7 @@
 ﻿using DatalakeDatabase.ApiModels.Tags;
 using DatalakeDatabase.Enums;
 using DatalakeDatabase.Exceptions;
+using DatalakeDatabase.Extensions;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
@@ -50,6 +51,8 @@ public partial class TagsRepository(DatalakeContext db)
 			.Value(x => x.Using, TagUsing.Initial)
 			.InsertAsync();
 
+		await db.UpdateAsync();
+
 		return id.Value;
 	}
 
@@ -76,6 +79,8 @@ public partial class TagsRepository(DatalakeContext db)
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось сохранить тег #{id}");
+
+		await db.UpdateAsync();
 	}
 
 	public async Task DeleteAsync(int id)
@@ -86,6 +91,8 @@ public partial class TagsRepository(DatalakeContext db)
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось удалить тег #{id}");
+
+		await db.UpdateAsync();
 	}
 
 

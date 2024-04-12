@@ -1,5 +1,6 @@
 ﻿using DatalakeDatabase.ApiModels.Sources;
 using DatalakeDatabase.Exceptions;
+using DatalakeDatabase.Extensions;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
@@ -23,6 +24,8 @@ public partial class SourcesRepository(DatalakeContext db)
 		if (!id.HasValue)
 			throw new DatabaseException("Не удалось добавить источник");
 
+		await db.UpdateAsync();
+
 		return id.Value;
 	}
 
@@ -43,6 +46,8 @@ public partial class SourcesRepository(DatalakeContext db)
 		if (count == 0)
 			throw new DatabaseException($"Не удалось обновить источник #{id}");
 
+		await db.UpdateAsync();
+
 		return true;
 	}
 
@@ -54,6 +59,8 @@ public partial class SourcesRepository(DatalakeContext db)
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось удалить источник #{id}");
+
+		await db.UpdateAsync();
 
 		return true;
 	}

@@ -48,11 +48,15 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		if (!await Settings.AnyAsync())
 		{
 			int count = await Settings
-				.Value(x => x.LastUpdate, DateTime.Now)
+				.Value(x => x.LastUpdate, DateTime.UtcNow)
 				.InsertAsync();
 
 			if (count == 0)
 				throw new Exception("Не удалось создать строку настроек");
+		}
+		else
+		{
+			await this.UpdateAsync();
 		}
 	}
 

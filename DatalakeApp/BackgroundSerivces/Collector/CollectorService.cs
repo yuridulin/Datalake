@@ -3,6 +3,7 @@ using DatalakeApp.BackgroundSerivces.Collector.Collectors.Factory;
 using DatalakeApp.BackgroundSerivces.Collector.Models;
 using DatalakeDatabase;
 using DatalakeDatabase.ApiModels.Values;
+using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 
@@ -20,9 +21,7 @@ namespace DatalakeApp.BackgroundSerivces.Collector
 				using var scope = serviceScopeFactory.CreateScope();
 				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-				var dbLastUpdate = await db.Settings
-					.Select(x => x.LastUpdate)
-					.FirstAsync(token: stoppingToken);
+				var dbLastUpdate = await db.GetLastUpdateAsync();
 
 				if (dbLastUpdate > LastUpdate)
 				{
