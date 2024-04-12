@@ -110,7 +110,7 @@ public partial class TagsRepository(DatalakeContext db)
 		}
 	}
 
-	async Task CheckTagInfoAsync(TagInfo tagInfo)
+	async Task CheckTagInfoAsync(TagInfo tagInfo, bool isSystemCall = false)
 	{
 		if (tagInfo.Id.HasValue)
 		{
@@ -118,24 +118,33 @@ public partial class TagsRepository(DatalakeContext db)
 				.Where(x => x.Id == tagInfo.Id)
 				.Select(x => x.Name)
 				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"Тег #{tagInfo.Id} не найден");
+				?? throw new NotFoundException($"тег #{tagInfo.Id}");
 
 			if (exist == tagInfo.Name)
-				throw new AlreadyExistException($"Тег с именем {tagInfo.Name}");
+				throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
+		}
+		else
+		{
+			bool existWithSameName = await db.Tags
+				.Where(x => x.Name == tagInfo.Name)
+				.AnyAsync();
+			
+			if (existWithSameName)
+				throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
 		}
 
 		if (tagInfo.Name?.Contains(' ') ?? false)
-			throw new InvalidValueException("В имени тега не разрешены пробелы");
+			throw new InvalidValueException("в имени тега не разрешены пробелы");
 
-		if (tagInfo.SourceInfo.Id == (int)CustomSource.System)
-			throw new ForbiddenException("Запрещено создавать системные теги");
+		if (tagInfo.SourceInfo.Id == (int)CustomSource.System && !isSystemCall)
+			throw new ForbiddenException("создавать системные теги");
 
 		if (tagInfo.SourceInfo.Id > 0)
 		{
 			if (string.IsNullOrEmpty(tagInfo.SourceInfo.Item))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
 			if (!(tagInfo.IntervalInSeconds.HasValue && tagInfo.IntervalInSeconds.Value >= 0))
-				throw new InvalidValueException("Интервал обновления должен быть неотрицательным целым числом");
+				throw new InvalidValueException("интервал обновления должен быть неотрицательным целым числом");
 		}
 
 		if (tagInfo.SourceInfo.Item?.Contains(' ') ?? false)
