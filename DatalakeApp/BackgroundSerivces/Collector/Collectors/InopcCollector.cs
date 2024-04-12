@@ -5,11 +5,12 @@ using Timer = System.Timers.Timer;
 
 namespace DatalakeApp.BackgroundSerivces.Collector.Collectors;
 
-public class InopcCollector : ICollector
+public class InopcCollector : CollectorBase
 {
 	public InopcCollector(
 		ReceiverService receiverService,
-		Source source)
+		Source source,
+		ILogger<InopcCollector> logger) : base(source, logger)
 	{
 		_receiverService = receiverService;
 		_timer = new Timer();
@@ -28,20 +29,25 @@ public class InopcCollector : ICollector
 		_timer.Elapsed += async (s, e) => await Timer_ElapsedAsync();
 	}
 
-	public event CollectEvent CollectValues = null!;
+	public override event CollectEvent? CollectValues;
 
-	public Task Start()
+	public override Task Start()
 	{
 		_timer.Start();
 		Task.Run(Timer_ElapsedAsync);
-		return Task.CompletedTask;
+
+		return base.Start();
 	}
 
-	public Task Stop()
+	public override Task Stop()
 	{
 		_timer.Stop();
-		return Task.CompletedTask;
+
+		return base.Stop();
 	}
+
+
+	#region Реализация
 
 	private readonly ReceiverService _receiverService;
 	private readonly Timer _timer;
@@ -56,7 +62,7 @@ public class InopcCollector : ICollector
 
 		var response = await _receiverService.AskInopc(tags.Select(x => x.TagName).ToArray(), _address);
 
-		CollectValues(response.Tags
+		CollectValues?.Invoke(response.Tags
 			.Select(x => new Models.CollectValue
 			{
 				DateTime = response.Timestamp,
@@ -75,4 +81,6 @@ public class InopcCollector : ICollector
 
 		public TimeSpan Period { get; set; }
 	}
+
+	#endregion
 }

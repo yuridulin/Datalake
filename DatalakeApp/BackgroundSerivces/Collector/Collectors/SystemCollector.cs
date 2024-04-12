@@ -3,22 +3,22 @@ using DatalakeDatabase.Models;
 
 namespace DatalakeApp.BackgroundSerivces.Collector.Collectors;
 
-public class SystemCollector : ICollector
+public class SystemCollector : CollectorBase
 {
-	public SystemCollector(Source source)
+	public SystemCollector(
+		Source source,
+		ILogger<SystemCollector> logger) : base(source, logger)
 	{
 	}
 
-	public int[] Tags { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+	public override event CollectEvent? CollectValues;
 
-	public event CollectEvent CollectValues;
-
-	public Task Start()
+	public override Task Start()
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task Stop()
+	public override Task Stop()
 	{
 		throw new NotImplementedException();
 	}

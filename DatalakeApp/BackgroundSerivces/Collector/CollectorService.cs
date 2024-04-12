@@ -10,7 +10,8 @@ namespace DatalakeApp.BackgroundSerivces.Collector
 {
 	public class CollectorService(
 		CollectorFactory collectorFactory,
-		IServiceScopeFactory serviceScopeFactory) : BackgroundService
+		IServiceScopeFactory serviceScopeFactory,
+		ILogger<CollectorService> logger) : BackgroundService
 	{
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
@@ -47,30 +48,35 @@ namespace DatalakeApp.BackgroundSerivces.Collector
 			}
 		}
 
-		private void X_CollectValuesAsync(IEnumerable<CollectValue> values)
+		private void X_CollectValuesAsync(ICollector collector, IEnumerable<CollectValue> values)
 		{
 			using var scope = serviceScopeFactory.CreateScope();
 			using var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
 
+			
 			Task
 				.Run(async () =>
 				{
+					var writeValues = values
+						.Select(x => new ValueWriteRequest
+						{
+							TagId = x.TagId,
+							TagName = null,
+							Date = x.DateTime,
+							Value = x.Value,
+							TagQuality = x.Quality,
+						})
+						.ToArray();
 					try
 					{
-						await valuesRepository.WriteValuesAsync(values
-							.Select(x => new ValueWriteRequest
-							{
-								TagId = x.TagId,
-								TagName = null,
-								Date = x.DateTime,
-								Value = x.Value,
-								TagQuality = x.Quality,
-							})
-							.ToArray());
+						await valuesRepository.WriteValuesAsync(writeValues);
+						logger.LogDebug("Collect values from {name} of {type} type: {count}", 
+							collector.Name, collector.Type, writeValues.Length);
 					}
-					catch (Exception)
+					catch (Exception ex)
 					{
-
+						logger.LogError("Collect values from {name} of {type} throw: {message}",
+							collector.Name, collector.Type, ex.Message);
 					}
 				})
 				.Wait();
