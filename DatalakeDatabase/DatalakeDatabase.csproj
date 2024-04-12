@@ -24,6 +24,23 @@
     <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.0\contentFiles\any\any\LinqToDB.Templates\PluralizationService.ttinclude" />
     <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.0\contentFiles\any\any\LinqToDB.Templates\T4Model.ttinclude" />
     <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.0\contentFiles\any\any\LinqToDB.Templates\Validation.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\CopyMe.PostgreSQL.tt.txt" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\DataAnnotations.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\DataModel.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\EditableObject.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\Equatable.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\Humanizer.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.PostgreSQL.Tools.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.PostgreSQL.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.Tools.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\MultipleFiles.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\NotifyDataErrorInfo.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\NotifyPropertyChanged.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\ObsoleteAttributes.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\PluralizationService.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\T4Model.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\Validation.ttinclude" />
   </ItemGroup>
 
   <ItemGroup>
