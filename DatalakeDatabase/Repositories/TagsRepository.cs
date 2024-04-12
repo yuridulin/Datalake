@@ -134,7 +134,7 @@ public partial class TagsRepository(DatalakeContext db)
 		{
 			if (string.IsNullOrEmpty(tagInfo.SourceInfo.Item))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
-			if (!tagInfo.IntervalInSeconds.HasValue || tagInfo.IntervalInSeconds.Value >= 0)
+			if (!(tagInfo.IntervalInSeconds.HasValue && tagInfo.IntervalInSeconds.Value >= 0))
 				throw new InvalidValueException("Интервал обновления должен быть неотрицательным целым числом");
 		}
 
