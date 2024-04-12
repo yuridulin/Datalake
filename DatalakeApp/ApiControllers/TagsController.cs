@@ -1,6 +1,5 @@
 ﻿using DatalakeDatabase.ApiModels.Tags;
 using DatalakeDatabase.Exceptions;
-using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +14,7 @@ namespace DatalakeApp.ApiControllers
 		public async Task<ActionResult<int>> CreateAsync(
 			[FromBody] TagInfo tag)
 		{
-			return Ok(await tagsRepository.CreateAsync(tag));
+			return await tagsRepository.CreateAsync(tag);
 		}
 
 		[HttpGet("{id:int}")]
@@ -26,16 +25,16 @@ namespace DatalakeApp.ApiControllers
 				.FirstOrDefaultAsync()
 				?? throw new NotFoundException($"Тег #{id}");
 
-			return Ok(tag);
+			return tag;
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<Tag[]>> ReadAsync()
+		public async Task<ActionResult<TagInfo[]>> ReadAsync()
 		{
 			var tags = await tagsRepository.GetTagsWithSources()
 				.ToArrayAsync();
 
-			return Ok(tags);
+			return tags;
 		}
 
 		[HttpPut("{id:int}")]
