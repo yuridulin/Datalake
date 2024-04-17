@@ -20,6 +20,31 @@ public partial class SourcesRepository
 		return query;
 	}
 
+	public IQueryable<SourceWithTagsInfo> GetSourcesWithTags()
+	{
+		var query = from s in db.Sources
+								from t in db.Tags.LeftJoin(x => x.SourceId == s.Id)
+								group new { s, t } by s into g
+								select new SourceWithTagsInfo
+								{
+									Id = g.Key.Id,
+									Address = g.Key.Address,
+									Name = g.Key.Name,
+									Type = g.Key.Type,
+									Tags = g
+										.Select(x => new SourceTagInfo
+										{
+											Id = x.t.Id,
+											Item = x.t.SourceItem ?? string.Empty,
+											Name = x.t.Name,
+											Type = x.t.Type,
+										})
+										.ToArray(),
+								};
+
+		return query;
+	}
+
 	public IQueryable<SourceTagInfo> GetExistTags(int id)
 	{
 		var query = db.Tags

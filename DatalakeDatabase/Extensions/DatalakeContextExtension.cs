@@ -7,7 +7,7 @@ public static class DatalakeContextExtension
 	public static async Task UpdateAsync(this DatalakeContext db)
 	{
 		await db.Settings
-			.Set(x => x.LastUpdate, DateTime.UtcNow)
+			.Set(x => x.LastUpdate, DateTime.Now)
 			.UpdateAsync();
 	}
 

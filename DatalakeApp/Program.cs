@@ -73,7 +73,8 @@ namespace DatalakeApp
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
 					.UsePostgreSQL(connectionString ?? throw new Exception("Не передана строка подключения к базе данных"))
-					.UseDefaultLogging(provider));
+					//.UseDefaultLogging(provider))
+			);
 		}
 
 		static void ConfigureAuth(WebApplicationBuilder builder)

@@ -15,11 +15,11 @@ public class SystemCollector : CollectorBase
 
 	public override Task Start()
 	{
-		throw new NotImplementedException();
+		return base.Start();
 	}
 
 	public override Task Stop()
 	{
-		throw new NotImplementedException();
+		return base.Stop();
 	}
 }

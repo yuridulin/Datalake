@@ -48,7 +48,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		if (!await Settings.AnyAsync())
 		{
 			int count = await Settings
-				.Value(x => x.LastUpdate, DateTime.UtcNow)
+				.Value(x => x.LastUpdate, DateTime.Now)
 				.InsertAsync();
 
 			if (count == 0)

@@ -7,7 +7,7 @@ using DatalakeDatabase.Enums;
 
 namespace DatalakeApp.Services.Receiver
 {
-	public class ReceiverService
+	public class ReceiverService(ILogger<ReceiverService> logger)
 	{
 		public async Task<ReceiveResponse> GetItemsFromSourceAsync(SourceType type, string? address)
 		{
@@ -16,7 +16,7 @@ namespace DatalakeApp.Services.Receiver
 				return new ReceiveResponse
 				{
 					Tags = [],
-					Timestamp = DateTime.UtcNow,
+					Timestamp = DateTime.Now,
 				};
 			}
 
@@ -34,44 +34,51 @@ namespace DatalakeApp.Services.Receiver
 				Tags = tags
 			};
 
-			var answer = await new HttpClient().PostAsJsonAsync("http://" + address + ":81/api/storage/read", request);
-			var inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>();
-			if (inopcResponse == null)
+			ReceiveResponse response = new()
 			{
-				return new ReceiveResponse
-				{
-					Timestamp = DateTime.UtcNow,
-					Tags = [],
-				};
-			}
-
-			var response = new ReceiveResponse
-			{
-				Timestamp = inopcResponse.Timestamp,
-				Tags = inopcResponse.Tags
-					.Select(x => new ReceiveRecord
-					{
-						Name = x.Name,
-						Quality = x.Quality switch
-						{
-							InopcTagQuality.Good => TagQuality.Good,
-							InopcTagQuality.Good_ManualWrite => TagQuality.Good_ManualWrite,
-							InopcTagQuality.Bad => TagQuality.Bad,
-							InopcTagQuality.Bad_NoConnect => TagQuality.Bad_NoConnect,
-							InopcTagQuality.Bad_NoValues => TagQuality.Bad_NoValues,
-							InopcTagQuality.Bad_ManualWrite => TagQuality.Bad_ManualWrite,
-							_ => TagQuality.Unknown,
-						},
-						Type = x.Type switch
-						{
-							InopcTagType.Boolean => TagType.Boolean,
-							InopcTagType.String => TagType.String,
-							_ => TagType.Number,
-						},
-						Value = x.Value,
-					})
-					.ToArray(),
+				Timestamp = DateTime.Now,
+				Tags = [],
 			};
+
+			try
+			{
+				var answer = await new HttpClient().PostAsJsonAsync("http://" + address + ":81/api/storage/read", request);
+				var inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>();
+				if (inopcResponse != null)
+				{
+					response = new ReceiveResponse
+					{
+						Timestamp = inopcResponse.Timestamp,
+						Tags = inopcResponse.Tags
+							.Select(x => new ReceiveRecord
+							{
+								Name = x.Name,
+								Quality = x.Quality switch
+								{
+									InopcTagQuality.Good => TagQuality.Good,
+									InopcTagQuality.Good_ManualWrite => TagQuality.Good_ManualWrite,
+									InopcTagQuality.Bad => TagQuality.Bad,
+									InopcTagQuality.Bad_NoConnect => TagQuality.Bad_NoConnect,
+									InopcTagQuality.Bad_NoValues => TagQuality.Bad_NoValues,
+									InopcTagQuality.Bad_ManualWrite => TagQuality.Bad_ManualWrite,
+									_ => TagQuality.Unknown,
+								},
+								Type = x.Type switch
+								{
+									InopcTagType.Boolean => TagType.Boolean,
+									InopcTagType.String => TagType.String,
+									_ => TagType.Number,
+								},
+								Value = x.Value,
+							})
+							.ToArray(),
+					};
+				}
+			}
+			catch (Exception)
+			{
+				logger.LogWarning("Receiver hasn't connected to {url}", address);
+			}
 
 			return response;
 		}

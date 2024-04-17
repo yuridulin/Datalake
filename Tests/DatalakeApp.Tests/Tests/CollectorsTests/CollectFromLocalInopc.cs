@@ -31,13 +31,13 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	const string TestTagName = "TestTag1";
 
 	[Fact, Priority(0)]
-	public void Prepare()
+	public void T000_Prepare()
 	{
 		Assert.True(true);
 	}
 
 	[Fact, Priority(1)]
-	public async Task LocalInopcMustBeAvailable()
+	public async Task T001_LocalInopcMustBeAvailable()
 	{
 		var request = new InopcRequest
 		{
@@ -51,7 +51,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	}
 
 	[Fact, Priority(2)]
-	public async Task CreateSourceForLocalInopc()
+	public async Task T002_CreateSourceForLocalInopc()
 	{
 		var body = new SourceInfo
 		{
@@ -65,7 +65,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	}
 
 	[Fact, Priority(3)]
-	public async Task GetItemsListForTestSource()
+	public async Task T003_GetItemsListForTestSource()
 	{
 		var sources = await _httpClient.GetAsync<SourceInfo[]>("api/sources");
 		Assert.NotNull(sources);
@@ -79,7 +79,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	}
 
 	[Fact, Priority(4)]
-	public async Task CreateTestTagForTestSource()
+	public async Task T004_CreateTestTagForTestSource()
 	{
 		var sources = await _httpClient.GetAsync<SourceInfo[]>("api/sources");
 		Assert.NotNull(sources);
@@ -102,7 +102,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	}
 
 	[Fact, Priority(5)]
-	public async Task EnsureValueOfTestTagsUpdatesTwice()
+	public async Task T005_EnsureValueOfTestTagsUpdatesTwice()
 	{
 		await Task.Delay(TimeSpan.FromSeconds(1));
 
@@ -136,7 +136,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	}
 
 	[Fact, Priority(int.MaxValue)]
-	public async Task RemoveTestObjects()
+	public async Task T999_RemoveTestObjects()
 	{
 		var sources = await _httpClient.GetAsync<SourceInfo[]>("api/sources");
 		Assert.NotNull(sources);

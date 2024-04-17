@@ -10,7 +10,7 @@ namespace DatalakeDatabase.Tests.Steps
 			using var db = Setup.CreateDbContext();
 
 			var valuesRepository = new ValuesRepository(db);
-			var now = DateTime.UtcNow;
+			var now = DateTime.Now;
 
 			var response = await valuesRepository.WriteValuesAsync(
 			[
@@ -37,7 +37,7 @@ namespace DatalakeDatabase.Tests.Steps
 			using var db = Setup.CreateDbContext();
 
 			var valuesRepository = new ValuesRepository(db);
-			var now = DateTime.UtcNow;
+			var now = DateTime.Now;
 
 			ValueWriteRequest[] seedResponse =
 			[
