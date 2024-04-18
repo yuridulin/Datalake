@@ -5,12 +5,12 @@ using DatalakeDatabase;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;
-using LinqToDB.AspNet.Logging;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using System.Security.Claims;
 
 namespace DatalakeApp
@@ -33,7 +33,12 @@ namespace DatalakeApp
 			ConfigureAuth(builder);
 			ConfigureServices(builder);
 
+			builder.Host.UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
+			builder.Services.AddLogging(options => options.AddSerilog());
+
 			var app = builder.Build();
+
+			app.UseSerilogRequestLogging();
 
 			StartWorkWithDatabase(app);
 
@@ -66,13 +71,13 @@ namespace DatalakeApp
 
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
-				options.UseNpgsql(connectionString);
+				options
+					.UseNpgsql(connectionString);
 			});
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
 					.UsePostgreSQL(connectionString ?? throw new Exception("Не передана строка подключения к базе данных"))
-					//.UseDefaultLogging(provider))
 			);
 		}
 

@@ -1,7 +1,6 @@
 ﻿using DatalakeApp.BackgroundSerivces.Collector.Collectors.Abstractions;
 using DatalakeApp.Services.Receiver;
 using DatalakeDatabase.Models;
-using Microsoft.Extensions.Logging;
 using Timer = System.Timers.Timer;
 
 namespace DatalakeApp.BackgroundSerivces.Collector.Collectors;
