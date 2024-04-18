@@ -1,0 +1,316 @@
+/* #region App */
+
+body {
+	margin: 0;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+@font-face {
+	font-family: 'Material Icons';
+	font-style: normal;
+	font-weight: 400;
+	src: local('Material Icons'), local('MaterialIcons-Regular'), url(MaterialIcons-Regular.ttf) format('truetype');
+}
+
+.material-icons {
+	font-family: 'Material Icons';
+	font-weight: normal;
+	font-style: normal;
+	display: inline-block;
+	line-height: 1em;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+code {
+	font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.left {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 25em;
+	bottom: 0;
+	padding: 1em;
+	z-index: 1;
+	border-right: 1px solid #eee;
+	box-shadow: 0 0 13px 0px #ddd;
+}
+
+.right {
+	position: fixed;
+	left: 26em;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	padding: 1em;
+	background-color: #fefefe;
+	overflow-y: scroll;
+}
+
+.title {
+	margin-bottom: 1em;
+	font-weight: 500;
+	font-size: large;
+	color: #4096ff;
+	text-decoration: none;
+}
+
+.offline {
+	padding: 1em;
+}
+
+/* #endregion */
+
+/* #region Menu */
+
+.app-menu {
+	margin-top: 1em;
+}
+
+.app-menu a {
+	display: block;
+	padding: .5em;
+	padding-left: 1em;
+	text-decoration: none;
+	color: #000;
+}
+
+.app-menu a.active {
+	color: #0074d5;
+}
+
+.app-menu a:hover {
+	color: #0074d5;
+	background-color: #e7f0ff;
+}
+
+.app-menu-block {
+	margin: .5em 0;
+}
+
+.app-menu-sub > a {
+	padding-left: 2.5em;
+}
+
+/* #endregion */
+
+/* #region Content */
+
+.header {
+	display: table;
+	width: 100%;
+	margin-bottom: 1em;
+}
+
+.header > div {
+	display: table-cell;
+}
+
+.header button + button {
+	margin-left: .5em;
+}
+
+.header-left {
+	text-align: left;
+	width: 12em;
+}
+
+.header-right {
+	text-align: right;
+}
+
+.header-center {
+	text-align: center;
+}
+
+.header-center i {
+	font-size: 1.3em;
+	vertical-align: middle;
+}
+
+.table {
+	display: table;
+	width: 100%;
+	font-size: 0.9em;
+	border: 1px solid #ddd;
+	border-radius: .5em;
+	transition: border-color ease .25s;
+}
+
+.table:hover {
+	border-color: #4096ff;
+}
+
+.table-caption {
+	display: table-caption;
+	padding: 0 .5em .5em;
+}
+
+.table-header {
+	display: table-row;
+	text-decoration: none;
+	color: #000;
+}
+
+.table-header > span {
+	display: table-cell;
+	padding: .5em 1em;
+	text-align: left;
+	font-weight: 500;
+}
+
+.table-row {
+	display: table-row;
+	text-decoration: none;
+	color: #000;
+	border: 1px solid transparent;
+}
+
+.table .table-row + :not(.table-row) span:first-child {
+	border-top-left-radius: .5em;
+}
+
+.table .table-row + :not(.table-row)  span:last-child {
+	border-top-right-radius: .5em;
+}
+
+.table .table-row:last-child span:first-child {
+	border-bottom-left-radius: .5em;
+}
+
+.table .table-row:last-child span:last-child {
+	border-bottom-right-radius: .5em;
+}
+
+.table-row:hover {
+	background: #e7f0ff;
+}
+
+.table-row > span {
+	display: table-cell;
+	padding: .5em 1em;
+	text-align: left;
+	border: 1px solid transparent;
+}
+
+.form-row {
+	margin-bottom: 1em;
+}
+
+.form-row > span {
+	display: block;
+	font-size: .9em;
+	margin-bottom: .25em;
+}
+
+/* #endregion */
+
+@media (prefers-color-scheme: dark) {
+
+	:root {
+		color-scheme: dark;
+	}
+
+	/* #region App */
+	
+	body {
+		background-color: #111;
+		color: white;
+	}
+	
+	.material-icons {
+		font-family: 'Material Icons';
+		font-weight: normal;
+		font-style: normal;
+		display: inline-block;
+		line-height: 1em;
+		-moz-osx-font-smoothing: grayscale;
+		color: white;
+	}
+	
+	
+	.left {
+		background-color: #1c1c1c;
+		color: white;
+		box-shadow: none;
+		border-right: 1px solid #000;
+	}
+	
+	.right {
+		background-color: #111;
+	}
+	
+	.title {
+		color: #33a2ff;
+	}
+
+	/* #endregion */
+
+	/* #region Menu */
+	
+	.app-menu a {
+		color: #fff;
+	}
+	
+	.app-menu a.active {
+		color: #33a2ff !important;
+	}
+	
+	.app-menu a:hover {
+		color: #fff;
+		background-color: #333;
+	}
+
+	/* #endregion */
+
+	/* #region Content */
+
+	.table {
+		border: 1px solid #333;
+		color: #fff;
+	}
+	
+	.table:hover {
+		border-color: #333;
+	}
+		
+	.table-header {
+		color: #fff;
+	}
+	
+	.table-row {
+		color: #eee;
+	}
+	
+	.table-row:hover {
+		background: #333;
+	}
+	
+	.table-row > span {
+		display: table-cell;
+		padding: .5em 1em;
+		text-align: left;
+		border: 1px solid transparent;
+	}
+	
+	.form-row {
+		margin-bottom: 1em;
+	}
+	
+	.form-row > span {
+		display: block;
+		font-size: .9em;
+		margin-bottom: .25em;
+	}
+
+	/* #endregion */
+}
