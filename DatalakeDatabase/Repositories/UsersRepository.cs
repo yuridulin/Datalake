@@ -10,12 +10,10 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class UsersRepository(DatalakeContext db)
 {
-	public async Task<UserAuthInfo> AuthenticateAsync(string username, string password)
+	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
 	{
-		var auth = new UserLoginPass { Password = password };
-
 		var user = await db.Users
-			.Where(x => x.Name.Equals(username, StringComparison.CurrentCultureIgnoreCase) && x.StaticHost == null)
+			.Where(x => x.Name.Equals(loginPass.Name, StringComparison.CurrentCultureIgnoreCase) && x.StaticHost == null)
 			.FirstOrDefaultAsync();
 
 		if (user == null)
@@ -26,10 +24,10 @@ public partial class UsersRepository(DatalakeContext db)
 			{
 				user = await CreateUserAsync(new UserAuthRequest
 				{
-					LoginName = username,
-					Password = password,
-					AccessType = Enums.AccessType.ADMIN,
-					FullName = username,
+					LoginName = loginPass.Name,
+					Password = loginPass.Password,
+					AccessType = AccessType.ADMIN,
+					FullName = loginPass.Name,
 					StaticHost = null,
 				});
 
@@ -44,15 +42,15 @@ public partial class UsersRepository(DatalakeContext db)
 			}
 		}
 
-		if (!user.Hash.Equals(GetHashFromPassword(password)))
+		if (!user.Hash.Equals(GetHashFromPassword(loginPass.Password)))
 		{
 			throw new ForbiddenException(message: "пароль не подходит");
 		}
 
 		return new UserAuthInfo
 		{
-			UserName = username,
-			AccessType = user.AccessType
+			UserName = loginPass.Name,
+			AccessType = user.AccessType,
 		};
 	}
 
@@ -69,7 +67,7 @@ public partial class UsersRepository(DatalakeContext db)
 			throw new InvalidValueException(message: "логин не может быть пустым");
 		}
 
-		var userInfo = await GetUsersAsync()
+		var userInfo = await GetUsers()
 			.Where(x => x.LoginName == loginName)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "пользователь по указанному логину");

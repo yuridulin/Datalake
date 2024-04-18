@@ -1,31 +1,31 @@
 ﻿using DatalakeDatabase.ApiModels.Values;
 using DatalakeDatabase.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace DatalakeApp.ApiControllers
+namespace DatalakeApp.ApiControllers;
+
+[ApiController]
+[Route("api/Tags/[controller]")]
+public class ValuesController(ValuesRepository valuesRepository) : ControllerBase
 {
-	[ApiController]
-	[Route("api/Tags/[controller]")]
-	public class ValuesController(ValuesRepository valuesRepository) : ControllerBase
+	public const string LiveUrl = "api/Tags/values/live";
+
+	[HttpPost]
+	public async Task<List<ValuesResponse>> GetValuesAsync(
+		[BindRequired, FromBody] ValuesRequest[] requests)
 	{
-		public const string LiveUrl = "api/Tags/values/live";
+		var responses = await valuesRepository.GetValuesAsync(requests);
 
-		[HttpPost]
-		public async Task<List<ValuesResponse>> GetValuesAsync(
-			[FromBody] ValuesRequest[] requests)
-		{
-			var responses = await valuesRepository.GetValuesAsync(requests);
+		return responses;
+	}
 
-			return responses;
-		}
+	[HttpPut]
+	public async Task<List<ValuesResponse>> WriteValuesAsync(
+		[BindRequired, FromBody] ValueWriteRequest[] requests)
+	{
+		var responses = await valuesRepository.WriteValuesAsync(requests);
 
-		[HttpPut]
-		public async Task<List<ValuesResponse>> WriteValuesAsync(
-			[FromBody] ValueWriteRequest[] requests)
-		{
-			var responses = await valuesRepository.WriteValuesAsync(requests);
-
-			return responses;
-		}
+		return responses;
 	}
 }
