@@ -5,7 +5,7 @@ namespace DatalakeDatabase.Tests.Steps
 {
 	public static class Step004_HistoryRead
 	{
-		public static async Task ReadExactBetweenFirstAndSecond()
+		public static async Task T4_1_ReadExactBetweenFirstAndSecond()
 		{
 			using var db = Setup.CreateDbContext();
 

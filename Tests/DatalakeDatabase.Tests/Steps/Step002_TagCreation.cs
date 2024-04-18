@@ -7,7 +7,7 @@ namespace DatalakeDatabase.Tests.Steps
 {
 	public static class Step002_TagCreation
 	{
-		public static async Task CreateManualTag()
+		public static async Task T2_1_CreateManualTag()
 		{
 			using var db = Setup.CreateDbContext();
 
@@ -28,7 +28,7 @@ namespace DatalakeDatabase.Tests.Steps
 			Assert.True(tagId == Constants.TagId);
 		}
 
-		public static async Task GetManualTag()
+		public static async Task T2_2_GetManualTag()
 		{
 			using var db = Setup.CreateDbContext();
 
@@ -45,7 +45,7 @@ namespace DatalakeDatabase.Tests.Steps
 			Assert.True(tagInfo.SourceInfo.Id == (int)CustomSource.Manual);
 		}
 
-		public static async Task GetLiveValue()
+		public static async Task T2_3_GetLiveValue()
 		{
 			var db = Setup.CreateDbContext();
 

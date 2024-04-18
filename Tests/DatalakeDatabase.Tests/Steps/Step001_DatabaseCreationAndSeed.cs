@@ -6,7 +6,7 @@ namespace DatalakeDatabase.Tests.Steps
 {
 	public static class Step001_DatabaseCreationAndSeed
 	{
-		public static async Task CreationTest()
+		public static async Task T1_1_CreationTest()
 		{
 			using var context = Setup.CreateEfContext();
 
@@ -14,7 +14,7 @@ namespace DatalakeDatabase.Tests.Steps
 			await context.Database.EnsureCreatedAsync();
 		}
 
-		public static async Task SeedTest()
+		public static async Task T1_2_SeedTest()
 		{
 			DatalakeContext.SetupLinqToDB();
 			using var db = Setup.CreateDbContext();
@@ -27,7 +27,7 @@ namespace DatalakeDatabase.Tests.Steps
 			Assert.Equal(customSources.Length, Enum.GetValues<CustomSource>().Length);
 		}
 
-		public static async Task GetManualSource()
+		public static async Task T1_3_GetManualSource()
 		{
 			using var db = Setup.CreateDbContext();
 

@@ -6,31 +6,31 @@ namespace DatalakeDatabase.Tests
 	[TestCaseOrderer("DatalakeDatabase.Tests.Attributes.PriorityOrderer", "DatalakeDatabase.Tests")]
 	public class Pipeline
 	{
-		[Fact, Priority(0)]
-		public async Task CreationTest() => await Step001_DatabaseCreationAndSeed.CreationTest();
-		
 		[Fact, Priority(1)]
-		public static async Task SeedTest() => await Step001_DatabaseCreationAndSeed.SeedTest();
-
-		[Fact, Priority(2)]
-		public static async Task GetManualSource() => await Step001_DatabaseCreationAndSeed.GetManualSource();
+		public async Task T001_CreationTest() => await Step001_DatabaseCreationAndSeed.T1_1_CreationTest();
 		
-		[Fact, Priority(3)]
-		public static async Task CreateManualTag() => await Step002_TagCreation.CreateManualTag();
+		[Fact, Priority(2)]
+		public static async Task T002_SeedTest() => await Step001_DatabaseCreationAndSeed.T1_2_SeedTest();
 
+		[Fact, Priority(3)]
+		public static async Task T003_GetManualSource() => await Step001_DatabaseCreationAndSeed.T1_3_GetManualSource();
+		
 		[Fact, Priority(4)]
-		public static async Task GetManualTag() => await Step002_TagCreation.GetManualTag();
+		public static async Task T004_CreateManualTag() => await Step002_TagCreation.T2_1_CreateManualTag();
 
 		[Fact, Priority(5)]
-		public static async Task GetLiveValue() => await Step002_TagCreation.GetLiveValue();
+		public static async Task T005_GetManualTag() => await Step002_TagCreation.T2_2_GetManualTag();
 
 		[Fact, Priority(6)]
-		public static async Task WriteToTag() => await Step003_ManualWriteToTag.WriteToTag();
+		public static async Task T006_GetLiveValue() => await Step002_TagCreation.T2_3_GetLiveValue();
 
 		[Fact, Priority(7)]
-		public static async Task SeedValues() => await Step003_ManualWriteToTag.SeedValues();
+		public static async Task T007_WriteToTag() => await Step003_ManualWriteToTag.T021_WriteToTag();
 
 		[Fact, Priority(8)]
-		public static async Task ReadExactBetweenFirstAndSecond() => await Step004_HistoryRead.ReadExactBetweenFirstAndSecond();
+		public static async Task T008_SeedValues() => await Step003_ManualWriteToTag.T3_1_SeedValues();
+
+		[Fact, Priority(9)]
+		public static async Task T009_ReadExactBetweenFirstAndSecond() => await Step004_HistoryRead.T4_1_ReadExactBetweenFirstAndSecond();
 	}
 }

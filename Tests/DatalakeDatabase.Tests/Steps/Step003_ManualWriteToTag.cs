@@ -5,7 +5,7 @@ namespace DatalakeDatabase.Tests.Steps
 {
 	public static class Step003_ManualWriteToTag
 	{
-		public static async Task WriteToTag()
+		public static async Task T021_WriteToTag()
 		{
 			using var db = Setup.CreateDbContext();
 
@@ -31,7 +31,7 @@ namespace DatalakeDatabase.Tests.Steps
 			Assert.Equal(response[0].Values[0].Value, Constants.LastValue);
 		}
 
-		public static async Task SeedValues()
+		public static async Task T3_1_SeedValues()
 		{
 			DatalakeContext.SetupLinqToDB();
 			using var db = Setup.CreateDbContext();

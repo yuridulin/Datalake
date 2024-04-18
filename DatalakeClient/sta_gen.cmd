@@ -1,1 +1,0 @@
-npx swagger-typescript-api --path "http://localhost:5018/swagger/Datalake%20App/swagger.json" --output "./api" --modular --clean-output --extract-request-body --responses
