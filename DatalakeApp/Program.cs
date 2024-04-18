@@ -67,7 +67,6 @@ namespace DatalakeApp
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
 				options.UseNpgsql(connectionString);
-				//options.UseNpgsql(connectionString, b => b.MigrationsAssembly(nameof(DatalakeApp)));
 			});
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
