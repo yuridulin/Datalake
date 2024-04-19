@@ -11,7 +11,7 @@ namespace DatalakeApp.ApiControllers;
 [ApiController]
 public class UsersController(UsersRepository usersRepository) : ControllerBase
 {
-	[HttpPost]
+	[HttpPost("auth")]
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
 		[BindRequired, FromBody] UserLoginPass loginPass)
 	{
@@ -32,7 +32,7 @@ public class UsersController(UsersRepository usersRepository) : ControllerBase
 			.ToArrayAsync();
 	}
 
-	[HttpGet("{name:string}")]
+	[HttpGet("{name}")]
 	public async Task<ActionResult<UserInfo>> ReadAsync(
 		[BindRequired, FromRoute] string name)
 	{
@@ -42,7 +42,7 @@ public class UsersController(UsersRepository usersRepository) : ControllerBase
 			?? throw new NotFoundException($"Учётная запись {name}");
 	}
 
-	[HttpPut("{name:string}")]
+	[HttpPut("{name}")]
 	public async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] string name,
 		[BindRequired, FromBody] UserUpdateRequest userUpdateRequest)
@@ -52,7 +52,7 @@ public class UsersController(UsersRepository usersRepository) : ControllerBase
 		return NoContent();
 	}
 
-	[HttpDelete("{name:string}")]
+	[HttpDelete("{name}")]
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] string name)
 	{
