@@ -70,7 +70,20 @@ public partial class BlocksRepository(DatalakeContext db)
 		return true;
 	}
 
-	public async Task<bool> UpdateRelationsWithTags(int id, BlockInfo.BlockTagInfo[]? tags)
+	public async Task<bool> DeleteAsync(int id)
+	{
+		var count = await db.Blocks
+			.Where(x => x.Id == id)
+			.DeleteAsync();
+
+		if (count == 0)
+			throw new DatabaseException($"Не удалось удалить сущность #{id}");
+
+		return true;
+	}
+
+
+	private async Task<bool> UpdateRelationsWithTags(int id, BlockInfo.BlockTagInfo[]? tags)
 	{
 		await db.BlockTags
 			.Where(x => x.BlockId == id)
@@ -85,18 +98,6 @@ public partial class BlocksRepository(DatalakeContext db)
 				Name = x.Name,
 			}));
 		}
-
-		return true;
-	}
-
-	public async Task<bool> DeleteAsync(int id)
-	{
-		var count = await db.Blocks
-			.Where(x => x.Id == id)
-			.DeleteAsync();
-
-		if (count == 0)
-			throw new DatabaseException($"Не удалось удалить сущность #{id}");
 
 		return true;
 	}
