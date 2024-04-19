@@ -1,5 +1,5 @@
-import { Tag } from "antd"
-import { LogType } from "../../@types/enums/LogType"
+import { Tag } from 'antd'
+import { LogType } from '../../@types/enums/LogType'
 
 const colors = {
 	0: 'green',
@@ -10,8 +10,5 @@ const colors = {
 }
 
 export default function LogTypeEl({ type }: { type: LogType }) {
-
-	return (
-		<Tag color={colors[type]}>{LogType[type]}</Tag>
-	)
+	return <Tag color={colors[type]}>{LogType[type]}</Tag>
 }

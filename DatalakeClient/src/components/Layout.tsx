@@ -1,21 +1,24 @@
+import { ConfigProvider, theme } from 'antd'
 import { useEffect, useState } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { UpdateContext } from '../context/updateContext'
-import { ConfigProvider, theme } from 'antd'
 import router from '../router/router'
 
 export default function Layout() {
-
-	const [ lastUpdate, setUpdate ] = useState<Date>(new Date())
-	const [ checkedTags, setCheckedTags ] = useState<string[]>([])
+	const [lastUpdate, setUpdate] = useState<Date>(new Date())
+	const [checkedTags, setCheckedTags] = useState<string[]>([])
 
 	const { defaultAlgorithm, darkAlgorithm } = theme
 	const [isDarkMode, setIsDarkMode] = useState(false)
 
 	useEffect(() => {
-		setIsDarkMode(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
-		window.matchMedia('(prefers-color-scheme: dark)')
-			.addEventListener('change', event => {
+		setIsDarkMode(
+			window.matchMedia &&
+				window.matchMedia('(prefers-color-scheme: dark)').matches,
+		)
+		window
+			.matchMedia('(prefers-color-scheme: dark)')
+			.addEventListener('change', (event) => {
 				setIsDarkMode(event.matches)
 			})
 	}, [])
@@ -26,7 +29,9 @@ export default function Layout() {
 				algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,
 			}}
 		>
-			<UpdateContext.Provider value={{ lastUpdate, setUpdate, checkedTags, setCheckedTags, }}>
+			<UpdateContext.Provider
+				value={{ lastUpdate, setUpdate, checkedTags, setCheckedTags }}
+			>
 				<RouterProvider router={router} />
 			</UpdateContext.Provider>
 		</ConfigProvider>

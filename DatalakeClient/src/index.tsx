@@ -1,15 +1,21 @@
-import ReactDOM from 'react-dom/client'
-import router from './router/router'
-import axios, { AxiosError, AxiosResponse } from 'axios'
 import { notification } from 'antd'
-import { accessHeader, auth, nameHeader, tokenHeader } from './etc/auth'
+import axios, { AxiosError, AxiosResponse } from 'axios'
+import ReactDOM from 'react-dom/client'
 import Layout from './components/Layout'
+import { accessHeader, auth, nameHeader, tokenHeader } from './etc/auth'
+import router from './router/router'
 
 // настройка взаимодействия с сервером
 
 declare const PORT: number // переменная, которую создает сервер в отдельном файле
 
-axios.defaults.baseURL = window.location.protocol + '//' + window.location.hostname + ':' + PORT + '/api'
+axios.defaults.baseURL =
+	window.location.protocol +
+	'//' +
+	window.location.hostname +
+	':' +
+	PORT +
+	'/api'
 
 axios.interceptors.request.use(
 	function (config) {
@@ -21,7 +27,7 @@ axios.interceptors.request.use(
 	},
 	function (error) {
 		return Promise.reject(error)
-	}
+	},
 )
 
 axios.interceptors.response.use(
@@ -43,10 +49,15 @@ axios.interceptors.response.use(
 
 			// сообщения после выполнения действий
 			if (res.data.Done) {
-				notification.info({ placement: 'bottomLeft', message: res.data.Done })
-			}
-			else if (res.data.Error) {
-				notification.error({ placement: 'bottomLeft', message: res.data.Error })
+				notification.info({
+					placement: 'bottomLeft',
+					message: res.data.Done,
+				})
+			} else if (res.data.Error) {
+				notification.error({
+					placement: 'bottomLeft',
+					message: res.data.Error,
+				})
 			}
 		}
 		return res
@@ -66,16 +77,22 @@ axios.interceptors.response.use(
 		}
 		// сообщения после выполнения действий
 		else if (err.request?.status === 500) {
-			return notification.error({ placement: 'bottomLeft', message: (err.response?.data as any)?.Error })
+			return notification.error({
+				placement: 'bottomLeft',
+				message: (err.response?.data as any)?.Error,
+			})
 		}
 		// сообщения о транспортной ошибке
 		else {
 			console.log('server action error:', err.message)
-			return notification.error({ placement: 'bottomLeft', message: err.message })
+			return notification.error({
+				placement: 'bottomLeft',
+				message: err.message,
+			})
 		}
-	}
+	},
 )
 
-ReactDOM
-	.createRoot(document.getElementById('root') as HTMLElement)
-	.render(<Layout />)
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+	<Layout />,
+)
