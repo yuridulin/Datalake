@@ -1,18 +1,19 @@
 using DatalakeApp.BackgroundSerivces.Collector;
 using DatalakeApp.BackgroundSerivces.Collector.Collectors.Factory;
 using DatalakeApp.Services.Receiver;
+using DatalakeDatabase;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;
-using LinqToDB.AspNet.Logging;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using System.Security.Claims;
 
-namespace DatalakeDatabase
+namespace DatalakeApp
 {
 	public class Program
 	{
@@ -32,7 +33,12 @@ namespace DatalakeDatabase
 			ConfigureAuth(builder);
 			ConfigureServices(builder);
 
+			builder.Host.UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
+			builder.Services.AddLogging(options => options.AddSerilog());
+
 			var app = builder.Build();
+
+			app.UseSerilogRequestLogging();
 
 			StartWorkWithDatabase(app);
 
@@ -65,14 +71,14 @@ namespace DatalakeDatabase
 
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
-				options.UseNpgsql(connectionString);
-				//options.UseNpgsql(connectionString, b => b.MigrationsAssembly(nameof(DatalakeApp)));
+				options
+					.UseNpgsql(connectionString);
 			});
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
 					.UsePostgreSQL(connectionString ?? throw new Exception("Не передана строка подключения к базе данных"))
-					.UseDefaultLogging(provider));
+			);
 		}
 
 		static void ConfigureAuth(WebApplicationBuilder builder)
@@ -116,10 +122,10 @@ namespace DatalakeDatabase
 				.AddAuthorizationBuilder()
 					.AddPolicy("user", policy =>
 						policy.RequireAssertion(context =>
-							context.User.HasClaim(c => (c.Type == "realm_access") && c.Value.Contains("datalake_user"))))
+							context.User.HasClaim(c => c.Type == "realm_access" && c.Value.Contains("datalake_user"))))
 					.AddPolicy("admin", policy =>
 						policy.RequireAssertion(context =>
-							context.User.HasClaim(c => (c.Type == "realm_access") && c.Value.Contains("datalake_admin"))));
+							context.User.HasClaim(c => c.Type == "realm_access" && c.Value.Contains("datalake_admin"))));
 		}
 
 		static void ConfigureServices(WebApplicationBuilder builder)
@@ -146,6 +152,7 @@ namespace DatalakeDatabase
 			var context = serviceScope?.ServiceProvider.GetRequiredService<DatalakeEfContext>();
 			context?.Database.Migrate();
 
+			DatalakeContext.SetupLinqToDB();
 			var db = serviceScope?.ServiceProvider.GetRequiredService<DatalakeContext>();
 			if (db != null)
 				await db.EnsureDataCreatedAsync();

@@ -8,6 +8,13 @@ public partial class BlocksRepository
 	public async Task<BlockTreeInfo[]> GetBlocksAsTreeAsync()
 	{
 		var blocks = await db.Blocks
+			.Select(x => new
+			{
+				x.Id,
+				x.Name,
+				x.Description,
+				x.ParentId,
+			})
 			.ToArrayAsync();
 
 		return ReadChildren(null);
@@ -20,6 +27,7 @@ public partial class BlocksRepository
 				{
 					Id = x.Id,
 					Name = x.Name,
+					Description = x.Description,
 					Children = ReadChildren(x.Id),
 				})
 				.ToArray();

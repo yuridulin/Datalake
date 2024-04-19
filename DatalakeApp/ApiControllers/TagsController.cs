@@ -1,60 +1,59 @@
 ﻿using DatalakeDatabase.ApiModels.Tags;
 using DatalakeDatabase.Exceptions;
-using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace DatalakeApp.ApiControllers
+namespace DatalakeApp.ApiControllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class TagsController(TagsRepository tagsRepository) : ControllerBase
 {
-	[ApiController]
-	[Route("api/[controller]")]
-	public class TagsController(TagsRepository tagsRepository) : ControllerBase
+	[HttpPost]
+	public async Task<ActionResult<int>> CreateAsync(
+		[BindRequired, FromBody] TagInfo tag)
 	{
-		[HttpPost]
-		public async Task<ActionResult<int>> CreateAsync(
-			[FromBody] TagInfo tag)
-		{
-			return Ok(await tagsRepository.CreateAsync(tag));
-		}
+		return await tagsRepository.CreateAsync(tag);
+	}
 
-		[HttpGet("{id:int}")]
-		public async Task<ActionResult<TagInfo>> ReadAsync(int id)
-		{
-			var tag = await tagsRepository.GetTagsWithSources()
-				.Where(x => x.Id == id)
-				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"Тег #{id}");
+	[HttpGet("{id:int}")]
+	public async Task<ActionResult<TagInfo>> ReadAsync(int id)
+	{
+		var tag = await tagsRepository.GetTagsWithSources()
+			.Where(x => x.Id == id)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"Тег #{id}");
 
-			return Ok(tag);
-		}
+		return tag;
+	}
 
-		[HttpGet]
-		public async Task<ActionResult<Tag[]>> ReadAsync()
-		{
-			var tags = await tagsRepository.GetTagsWithSources()
-				.ToArrayAsync();
+	[HttpGet]
+	public async Task<ActionResult<TagInfo[]>> ReadAsync()
+	{
+		var tags = await tagsRepository.GetTagsWithSources()
+			.ToArrayAsync();
 
-			return Ok(tags);
-		}
+		return tags;
+	}
 
-		[HttpPut("{id:int}")]
-		public async Task<ActionResult> UpdateAsync(
-			[FromRoute] int id,
-			[FromBody] TagInfo tag)
-		{
-			await tagsRepository.UpdateAsync(id, tag);
+	[HttpPut("{id:int}")]
+	public async Task<ActionResult> UpdateAsync(
+		[BindRequired, FromRoute] int id,
+		[BindRequired, FromBody] TagInfo tag)
+	{
+		await tagsRepository.UpdateAsync(id, tag);
 
-			return NoContent();
-		}
+		return NoContent();
+	}
 
-		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteAsync(
-			[FromRoute] int id)
-		{
-			await tagsRepository.DeleteAsync(id);
+	[HttpDelete("{id:int}")]
+	public async Task<ActionResult> DeleteAsync(
+		[BindRequired, FromRoute] int id)
+	{
+		await tagsRepository.DeleteAsync(id);
 
-			return NoContent();
-		}
+		return NoContent();
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using DatalakeDatabase.ApiModels.Tags;
 using DatalakeDatabase.Enums;
 using DatalakeDatabase.Exceptions;
+using DatalakeDatabase.Extensions;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
@@ -16,8 +17,8 @@ public partial class TagsRepository(DatalakeContext db)
 			.Value(x => x.Name, tagInfo.Name)
 			.Value(x => x.Description, tagInfo.Description)
 			.Value(x => x.Type, tagInfo.Type)
-			.Value(x => x.Interval, tagInfo.Interval ?? 0)
-			.Value(x => x.Created, DateTime.UtcNow)
+			.Value(x => x.Interval, tagInfo.IntervalInSeconds ?? 0)
+			.Value(x => x.Created, DateTime.Now)
 			.Value(x => x.SourceId, tagInfo.SourceInfo.Id)
 			.Value(x => x.SourceItem, tagInfo.SourceInfo.Item)
 			.Value(x => x.IsScaling, tagInfo.MathInfo != null)
@@ -41,6 +42,17 @@ public partial class TagsRepository(DatalakeContext db)
 				.UpdateAsync();
 		}
 
+		await db.TagsLive
+			.Value(x => x.TagId, id.Value)
+			.Value(x => x.Date, DateTime.Now)
+			.Value(x => x.Quality, TagQuality.Unknown)
+			.Value(x => x.Text, null as string)
+			.Value(x => x.Number, null as float?)
+			.Value(x => x.Using, TagUsing.Initial)
+			.InsertAsync();
+
+		await db.UpdateAsync();
+
 		return id.Value;
 	}
 
@@ -53,7 +65,7 @@ public partial class TagsRepository(DatalakeContext db)
 			.Set(x => x.Name, tagInfo.Name)
 			.Set(x => x.Description, tagInfo.Description)
 			.Set(x => x.Type, tagInfo.Type)
-			.Set(x => x.Interval, tagInfo.Interval ?? 0)
+			.Set(x => x.Interval, tagInfo.IntervalInSeconds ?? 0)
 			.Set(x => x.SourceId, tagInfo.SourceInfo?.Id)
 			.Set(x => x.SourceItem, tagInfo.SourceInfo?.Item)
 			.Set(x => x.IsScaling, tagInfo.MathInfo != null)
@@ -67,6 +79,8 @@ public partial class TagsRepository(DatalakeContext db)
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось сохранить тег #{id}");
+
+		await db.UpdateAsync();
 	}
 
 	public async Task DeleteAsync(int id)
@@ -77,6 +91,8 @@ public partial class TagsRepository(DatalakeContext db)
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось удалить тег #{id}");
+
+		await db.UpdateAsync();
 	}
 
 
@@ -101,7 +117,7 @@ public partial class TagsRepository(DatalakeContext db)
 		}
 	}
 
-	async Task CheckTagInfoAsync(TagInfo tagInfo)
+	async Task CheckTagInfoAsync(TagInfo tagInfo, bool isSystemCall = false)
 	{
 		if (tagInfo.Id.HasValue)
 		{
@@ -109,24 +125,33 @@ public partial class TagsRepository(DatalakeContext db)
 				.Where(x => x.Id == tagInfo.Id)
 				.Select(x => x.Name)
 				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"Тег #{tagInfo.Id} не найден");
+				?? throw new NotFoundException($"тег #{tagInfo.Id}");
 
 			if (exist == tagInfo.Name)
-				throw new AlreadyExistException($"Тег с именем {tagInfo.Name}");
+				throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
+		}
+		else
+		{
+			bool existWithSameName = await db.Tags
+				.Where(x => x.Name == tagInfo.Name)
+				.AnyAsync();
+			
+			if (existWithSameName)
+				throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
 		}
 
 		if (tagInfo.Name?.Contains(' ') ?? false)
-			throw new InvalidValueException("В имени тега не разрешены пробелы");
+			throw new InvalidValueException("в имени тега не разрешены пробелы");
 
-		if (tagInfo.SourceInfo.Id == (int)CustomSource.System)
-			throw new ForbiddenException("Запрещено создавать системные теги");
+		if (tagInfo.SourceInfo.Id == (int)CustomSource.System && !isSystemCall)
+			throw new ForbiddenException("создавать системные теги");
 
 		if (tagInfo.SourceInfo.Id > 0)
 		{
 			if (string.IsNullOrEmpty(tagInfo.SourceInfo.Item))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
-			if (!tagInfo.Interval.HasValue || tagInfo.Interval.Value >= 0)
-				throw new InvalidValueException("Интервал обновления должен быть неотрицательным целым числом");
+			if (!(tagInfo.IntervalInSeconds.HasValue && tagInfo.IntervalInSeconds.Value >= 0))
+				throw new InvalidValueException("интервал обновления должен быть неотрицательным целым числом");
 		}
 
 		if (tagInfo.SourceInfo.Item?.Contains(' ') ?? false)

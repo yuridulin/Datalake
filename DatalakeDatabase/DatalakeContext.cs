@@ -2,12 +2,18 @@
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;
+using LinqToDB.Common;
 using LinqToDB.Data;
 
 namespace DatalakeDatabase;
 
 public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnection(options.Options)
 {
+	public static void SetupLinqToDB()
+	{
+		Configuration.Linq.GuardGrouping = false;
+	}
+
 	/// <summary>
 	/// Необходимые для работы записи, которые должны быть в базе данных
 	/// </summary>
@@ -48,6 +54,10 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			if (count == 0)
 				throw new Exception("Не удалось создать строку настроек");
 		}
+		else
+		{
+			await this.UpdateAsync();
+		}
 	}
 
 	#region Таблицы
@@ -60,6 +70,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 
 	public ITable<BlockTag> BlockTags
 		=> this.GetTable<BlockTag>();
+
+	public ITable<Log> Logs
+		=> this.GetTable<Log>();
 
 	public ITable<Settings> Settings
 		=> this.GetTable<Settings>();

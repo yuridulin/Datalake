@@ -5,47 +5,66 @@ using DatalakeApp.Services.Receiver.Models.Inopc.Enums;
 using DatalakeDatabase.ApiModels.Values;
 using DatalakeDatabase.Enums;
 
-namespace DatalakeApp.Services.Receiver
-{
-	public class ReceiverService
-	{
-		public async Task<ReceiveResponse> GetItemsFromSourceAsync(SourceType type, string? address)
-		{
-			if (string.IsNullOrEmpty(address))
-			{
-				return new ReceiveResponse
-				{
-					Tags = [],
-					Timestamp = DateTime.UtcNow,
-				};
-			}
+namespace DatalakeApp.Services.Receiver;
 
-			return type switch
+public class ReceiverService(ILogger<ReceiverService> logger)
+{
+	CancellationTokenSource cancellationTokenSource = new();
+
+	public async Task<ReceiveResponse> GetItemsFromSourceAsync(SourceType type, string? address)
+	{
+		if (string.IsNullOrEmpty(address))
+		{
+			return new ReceiveResponse
 			{
-				SourceType.Inopc => await AskInopc([], address),
-				_ => await AskDatalake([], address),
+				Tags = [],
+				Timestamp = DateTime.Now,
 			};
 		}
 
-		public async Task<ReceiveResponse> AskInopc(string[] tags, string address)
+		return type switch
 		{
-			var request = new InopcRequest
-			{
-				Tags = tags
-			};
+			SourceType.Inopc => await AskInopc([], address),
+			_ => await AskDatalake([], address),
+		};
+	}
 
-			var answer = await new HttpClient().PostAsJsonAsync("http://" + address + ":81/api/storage/read", request);
-			var inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>();
-			if (inopcResponse == null)
+	public async Task<ReceiveResponse> AskInopc(string[] tags, string address)
+	{
+		logger.LogDebug("Ask iNOPC with address: {address}", address);
+
+		var request = new InopcRequest
+		{
+			Tags = tags
+		};
+
+		ReceiveResponse response = new()
+		{
+			Timestamp = DateTime.Now,
+			Tags = [],
+		};
+
+		using var client = new HttpClient();
+		client.Timeout = TimeSpan.FromSeconds(1);
+
+		InopcResponse? inopcResponse = null;
+
+		try
+		{
+			var answer = await client.PostAsJsonAsync("http://" + address + ":81/api/storage/read", request, cancellationTokenSource.Token);
+			if (answer.IsSuccessStatusCode)
 			{
-				return new ReceiveResponse
-				{
-					Timestamp = DateTime.UtcNow,
-					Tags = [],
-				};
+				inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>();
 			}
+		}
+		catch
+		{
+			logger.LogDebug("Ask iNOPC with address: {address} fail", address);
+		}
 
-			var response = new ReceiveResponse
+		if (inopcResponse != null)
+		{
+			response = new ReceiveResponse
 			{
 				Timestamp = inopcResponse.Timestamp,
 				Tags = inopcResponse.Tags
@@ -72,40 +91,54 @@ namespace DatalakeApp.Services.Receiver
 					})
 					.ToArray(),
 			};
-
-			return response;
 		}
 
-		public async Task<ReceiveResponse> AskDatalake(string[] tags, string address)
+		return response;
+	}
+
+	public async Task<ReceiveResponse> AskDatalake(string[] tags, string address)
+	{
+		logger.LogDebug("Ask datalake with address: {address}", address);
+
+		var request = new
 		{
-			var request = new
+			Request = new ValuesRequest
 			{
-				Request = new ValuesRequest
-				{
-					TagNames = tags,
-				}
-			};
+				TagNames = tags,
+			}
+		};
 
-			var answer = await new HttpClient().PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
-			var historyResponse = await answer.Content.ReadFromJsonAsync<List<ValuesResponse>>();
+		using var client = new HttpClient();
+		client.Timeout = TimeSpan.FromSeconds(1);
 
-			historyResponse ??= [];
+		List<ValuesResponse>? historyResponse = null;
 
-			var response = new ReceiveResponse
-			{
-				Timestamp = DateTime.Now,
-				Tags = historyResponse
-					.SelectMany(x => x.Values, (tag, value) => new ReceiveRecord
-					{
-						Name = tag.TagName,
-						Quality = value.Quality,
-						Value = value.Value,
-						Type = tag.Type,
-					})
-					.ToArray()
-			};
-
-			return response;
+		try
+		{
+			var answer = await client.PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
+			historyResponse = await answer.Content.ReadFromJsonAsync<List<ValuesResponse>>();
 		}
+		catch
+		{
+			logger.LogDebug("Ask datalake with address: {address} fail", address);
+		}
+
+		historyResponse ??= [];
+
+		var response = new ReceiveResponse
+		{
+			Timestamp = DateTime.Now,
+			Tags = historyResponse
+				.SelectMany(x => x.Values, (tag, value) => new ReceiveRecord
+				{
+					Name = tag.TagName,
+					Quality = value.Quality,
+					Value = value.Value,
+					Type = tag.Type,
+				})
+				.ToArray()
+		};
+
+		return response;
 	}
 }

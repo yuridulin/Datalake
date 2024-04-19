@@ -12,7 +12,7 @@ public class TagInfo
 
 	public TagType Type { get; set; }
 
-	public short? Interval { get; set; }
+	public short? IntervalInSeconds { get; set; }
 
 	public required TagSourceInfo SourceInfo { get; set; }
 

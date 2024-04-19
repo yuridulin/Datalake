@@ -1,17 +1,12 @@
 ﻿using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace DatalakeDatabase.Tests.Attributes
+namespace DatalakeApp.Tests.Attributes
 {
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-	public class TestPriorityAttribute : Attribute
+	public class PriorityAttribute(int priority) : Attribute
 	{
-		public TestPriorityAttribute(int priority)
-		{
-			Priority = priority;
-		}
-
-		public int Priority { get; private set; }
+		public int Priority { get; private set; } = priority;
 	}
 
 	public class PriorityOrderer : ITestCaseOrderer
@@ -24,7 +19,7 @@ namespace DatalakeDatabase.Tests.Attributes
 			{
 				int priority = 0;
 
-				foreach (IAttributeInfo attr in testCase.TestMethod.Method.GetCustomAttributes((typeof(TestPriorityAttribute).AssemblyQualifiedName)))
+				foreach (IAttributeInfo attr in testCase.TestMethod.Method.GetCustomAttributes((typeof(PriorityAttribute).AssemblyQualifiedName)))
 					priority = attr.GetNamedArgument<int>("Priority");
 
 				GetOrCreate(sortedMethods, priority).Add(testCase);
@@ -40,9 +35,7 @@ namespace DatalakeDatabase.Tests.Attributes
 
 		static TValue GetOrCreate<TKey, TValue>(IDictionary<TKey, TValue> dictionary, TKey key) where TValue : new()
 		{
-			TValue result;
-
-			if (dictionary.TryGetValue(key, out result))
+			if (dictionary.TryGetValue(key, out TValue? result))
 				return result;
 
 			result = new TValue();

@@ -18,7 +18,7 @@ public static class TagExtension
 	{
 		var history = new TagHistory
 		{
-			Date = DateTime.UtcNow,
+			Date = DateTime.Now,
 			Text = null,
 			Number = null,
 			Quality = quality ?? TagQuality.Unknown,
@@ -26,37 +26,30 @@ public static class TagExtension
 			Using = TagUsing.Basic,
 		};
 
+		string? text = value?.ToString();
+		float? number = string.IsNullOrEmpty(text) ? null : (float.TryParse(value?.ToString(), out float d) ? d : null);
+
 		if (tag.Type == TagType.String)
 		{
-			if (value is string v)
-			{
-				history.Text = v;
-			}
+			history.Text = text;
 		}
 
 		else if (tag.Type == TagType.Boolean)
 		{
-			if (value is bool v)
-			{
-				history.Text = v ? "true" : "false";
-				history.Number = v ? 1 : 0;
-			}
+			history.Text = text == "True" ? "true" : "false";
+			history.Number = number.HasValue ? (number.Value == 1 ? 1 : 0) : 0;
 		}
 
 		else if (tag.Type == TagType.Number)
 		{
-			float? raw = null;
-			if (float.TryParse(value?.ToString(), out float d))
-			{
-				raw = d;
-			}
-
-			history.Number = raw;
-
 			// вычисление значения на основе шкалирования
-			if (tag.Type == TagType.Number && raw.HasValue && tag.IsScaling)
+			if (tag.Type == TagType.Number && number.HasValue && tag.IsScaling)
 			{
-				history.Number = raw.Value * ((tag.MaxEu - tag.MinEu) / (tag.MaxRaw - tag.MinRaw));
+				history.Number = number.Value * ((tag.MaxEu - tag.MinEu) / (tag.MaxRaw - tag.MinRaw));
+			}
+			else
+			{
+				history.Number = number;
 			}
 		}
 

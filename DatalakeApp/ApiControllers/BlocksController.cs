@@ -3,60 +3,60 @@ using DatalakeDatabase.Exceptions;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace DatalakeApp.ApiControllers
+namespace DatalakeApp.ApiControllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class BlocksController(BlocksRepository blocksRepository) : ControllerBase
 {
-	[Route("api/[controller]")]
-	[ApiController]
-	public class BlocksController(BlocksRepository blocksRepository) : ControllerBase
+	[HttpPost]
+	public async Task<ActionResult<int>> CreateAsync(
+		[BindRequired, FromBody] BlockInfo blockInfo)
 	{
-		[HttpPost]
-		public async Task<ActionResult<int>> CreateAsync(
-			[FromBody] BlockInfo blockInfo)
-		{
-			return await blocksRepository.CreateAsync(blockInfo);
-		}
+		return await blocksRepository.CreateAsync(blockInfo);
+	}
 
-		[HttpGet]
-		public async Task<ActionResult<BlockSimpleInfo[]>> ReadAsync()
-		{
-			return await blocksRepository.GetBlocksSimpleInfo()
-				.ToArrayAsync();
-		}
+	[HttpGet]
+	public async Task<ActionResult<BlockSimpleInfo[]>> ReadAsync()
+	{
+		return await blocksRepository.GetBlocksSimpleInfo()
+			.ToArrayAsync();
+	}
 
-		[HttpGet("{id:int}")]
-		public async Task<ActionResult<BlockInfo>> ReadAsync(
-			[FromRoute] int id)
-		{
-			return await blocksRepository.GetBlocksWithAllRelations()
-				.Where(x => x.Id == id)
-				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"Сущность #{id}");
-		}
+	[HttpGet("{id:int}")]
+	public async Task<ActionResult<BlockInfo>> ReadAsync(
+		[BindRequired, FromRoute] int id)
+	{
+		return await blocksRepository.GetBlocksWithAllRelations()
+			.Where(x => x.Id == id)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"Сущность #{id}");
+	}
 
-		[HttpGet("tree")]
-		public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync()
-		{
-			return await blocksRepository.GetBlocksAsTreeAsync();
-		}
+	[HttpGet("tree")]
+	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync()
+	{
+		return await blocksRepository.GetBlocksAsTreeAsync();
+	}
 
-		[HttpPut("{id:int}")]
-		public async Task<ActionResult> UpdateAsync(
-			[FromRoute] int id,
-			[FromBody] BlockInfo block)
-		{
-			await blocksRepository.UpdateAsync(id, block);
+	[HttpPut("{id:int}")]
+	public async Task<ActionResult> UpdateAsync(
+		[BindRequired, FromRoute] int id,
+		[BindRequired, FromBody] BlockInfo block)
+	{
+		await blocksRepository.UpdateAsync(id, block);
 
-			return NoContent();
-		}
+		return NoContent();
+	}
 
-		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteAsync(
-			[FromRoute] int id)
-		{
-			await blocksRepository.DeleteAsync(id);
+	[HttpDelete("{id:int}")]
+	public async Task<ActionResult> DeleteAsync(
+		[BindRequired, FromRoute] int id)
+	{
+		await blocksRepository.DeleteAsync(id);
 
-			return NoContent();
-		}
+		return NoContent();
 	}
 }

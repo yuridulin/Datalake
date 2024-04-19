@@ -17,7 +17,7 @@ namespace DatalakeDatabase.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.3")
+                .HasAnnotation("ProductVersion", "8.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -93,6 +93,38 @@ namespace DatalakeDatabase.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("BlockTags");
+                });
+
+            modelBuilder.Entity("DatalakeDatabase.Models.Log", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("RefId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Logs");
                 });
 
             modelBuilder.Entity("DatalakeDatabase.Models.Settings", b =>
@@ -190,14 +222,39 @@ namespace DatalakeDatabase.Migrations
                     b.ToTable("Tags");
                 });
 
-            modelBuilder.Entity("DatalakeDatabase.Models.TagHistoryChunk", b =>
+            modelBuilder.Entity("DatalakeDatabase.Models.TagHistory", b =>
                 {
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<float?>("Number")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Quality")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Using")
+                        .HasColumnType("integer");
+
+                    b.ToTable("TagsLive");
+                });
+
+            modelBuilder.Entity("DatalakeDatabase.Models.TagHistoryChunk", b =>
+                {
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
                     b.Property<string>("Table")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.HasKey("Date");
 
                     b.ToTable("TagHistoryChunks");
                 });
@@ -278,7 +335,8 @@ namespace DatalakeDatabase.Migrations
                     b.HasOne("DatalakeDatabase.Models.Source", "Source")
                         .WithMany("Tags")
                         .HasForeignKey("SourceId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
 
                     b.Navigation("Source");
                 });

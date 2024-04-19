@@ -11,6 +11,8 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 
 	public virtual DbSet<BlockTag> BlockTags { get; set; }
 
+	public virtual DbSet<Log> Logs { get; set; }
+
 	public virtual DbSet<Settings> Settings { get; set; }
 
 	public virtual DbSet<Source> Sources { get; set; }
