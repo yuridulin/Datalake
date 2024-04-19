@@ -71,6 +71,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	public ITable<BlockTag> BlockTags
 		=> this.GetTable<BlockTag>();
 
+	public ITable<Log> Logs
+		=> this.GetTable<Log>();
+
 	public ITable<Settings> Settings
 		=> this.GetTable<Settings>();
 

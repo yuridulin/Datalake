@@ -1,4 +1,5 @@
-﻿using LinqToDB;
+﻿using DatalakeDatabase.Models;
+using LinqToDB;
 
 namespace DatalakeDatabase.Extensions;
 
@@ -19,5 +20,14 @@ public static class DatalakeContextExtension
 			.FirstOrDefaultAsync();
 
 		return lastUpdate;
+	}
+
+	public static async void Log(this DatalakeContext db, Log log)
+	{
+		try
+		{
+			await db.InsertAsync(log);
+		}
+		catch { }
 	}
 }
