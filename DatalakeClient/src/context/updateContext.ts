@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react"
+import { createContext, useContext } from 'react'
 
 export type UpdateContextType = {
 	lastUpdate: Date
@@ -8,7 +8,7 @@ export type UpdateContextType = {
 	setCheckedTags: (id: string[]) => void
 }
 
-export const UpdateContext = createContext<UpdateContextType>({ 
+export const UpdateContext = createContext<UpdateContextType>({
 	lastUpdate: new Date(),
 	setUpdate: () => {},
 	checkedTags: [],

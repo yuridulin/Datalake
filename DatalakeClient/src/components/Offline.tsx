@@ -1,24 +1,24 @@
-import { Navigate } from 'react-router-dom'
-import { useInterval } from '../hooks/useInterval'
-import { useFetching } from '../hooks/useFetching'
 import { useState } from 'react'
-import axios from 'axios'
-import { API } from '../router/api'
+import { Navigate } from 'react-router-dom'
+import { Api } from '../api/Api'
+import { useFetching } from '../hooks/useFetching'
+import { useInterval } from '../hooks/useInterval'
 
 export default function Offline() {
+	const [online, setOnline] = useState(false)
+	const api = new Api()
 
-	const [ online, setOnline ] = useState(false)
-
-	const [ load ] = useFetching(async () => {
-		let res = await axios.post(API.config.last)
-		setOnline(!!res.data)
+	const [load] = useFetching(async () => {
+		await api.configLast().then((res) => setOnline(!!res.data))
 	})
 
-	useInterval(() => { load() }, 5000)
+	useInterval(() => {
+		load()
+	}, 5000)
 
-	return (
-		online
-			? <Navigate to={'/'} />
-			: <div className="offline">Сервер не отвечает</div>
+	return online ? (
+		<Navigate to={'/'} />
+	) : (
+		<div className='offline'>Сервер не отвечает</div>
 	)
 }

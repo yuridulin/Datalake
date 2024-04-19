@@ -1,4 +1,4 @@
-import { ReactNode } from "react"
+import { ReactNode } from 'react'
 
 type HeaderProps = {
 	title?: ReactNode
@@ -7,8 +7,10 @@ type HeaderProps = {
 }
 
 export default function FormRow({ title, children, style }: HeaderProps) {
-	return <div className="form-row">
-		<span>{title}</span>
-		<div style={style}>{children}</div>
-	</div>
+	return (
+		<div className='form-row'>
+			<span>{title}</span>
+			<div style={style}>{children}</div>
+		</div>
+	)
 }

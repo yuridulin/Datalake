@@ -1,21 +1,12 @@
-import { Tag } from "antd";
-import { TagType } from "../../@types/enums/TagType";
+import { Tag } from 'antd'
+import { TagType } from '../../api/data-contracts'
 
 export default function TagTypeEl({ tagType }: { tagType: TagType }) {
-	
-	if (tagType === 0) return (
-		<Tag color="green">строка</Tag>
-	)
+	if (tagType === TagType.String) return <Tag color='green'>строка</Tag>
 
-	if (tagType === 1) return (
-		<Tag color="volcano">число</Tag>
-	)
+	if (tagType === TagType.Number) return <Tag color='volcano'>число</Tag>
 
-	if (tagType === 2) return (
-		<Tag color="geekblue">дискрет</Tag>
-	)
+	if (tagType === TagType.Boolean) return <Tag color='geekblue'>дискрет</Tag>
 
-	return (
-		<Tag>?</Tag>
-	)
+	return <Tag>?</Tag>
 }

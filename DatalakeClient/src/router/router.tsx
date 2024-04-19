@@ -1,27 +1,27 @@
 import { createBrowserRouter } from 'react-router-dom'
 import App from '../components/App'
 import Offline from '../components/Offline'
-import Dashboard from '../components/right/dashboard/Dashboard'
-import Viewer from '../components/right/viewer/Viewer'
-import SourcesList from '../components/right/sources/SourcesList'
-import BlocksList from '../components/right/blocks/BlocksList'
-import TagsList from '../components/right/tags/TagsList'
-import TagForm from '../components/right/tags/TagForm'
+import LoginPanel from '../components/global/LoginPanel'
 import BlockForm from '../components/right/blocks/BlockForm'
 import BlockView from '../components/right/blocks/BlockView'
+import BlocksList from '../components/right/blocks/BlocksList'
+import Dashboard from '../components/right/dashboard/Dashboard'
 import SourceForm from '../components/right/sources/SourceForm'
+import SourcesList from '../components/right/sources/SourcesList'
+import TagForm from '../components/right/tags/TagForm'
 import TagSelectedForm from '../components/right/tags/TagSelectedForm'
-import TagsManualList from '../components/right/tags/TagsManualList'
 import TagsCalculatedList from '../components/right/tags/TagsCalculatedList'
-import LoginPanel from '../components/global/LoginPanel'
-import UsersList from '../components/right/users/UsersList'
-import UserForm from '../components/right/users/UserForm'
+import TagsList from '../components/right/tags/TagsList'
+import TagsManualList from '../components/right/tags/TagsManualList'
 import UserCreate from '../components/right/users/UserCreate'
+import UserForm from '../components/right/users/UserForm'
+import UsersList from '../components/right/users/UsersList'
+import Viewer from '../components/right/viewer/Viewer'
 
 const router = createBrowserRouter([
 	{
 		path: '/login',
-		element: <LoginPanel />
+		element: <LoginPanel />,
 	},
 	{
 		path: '/',
@@ -29,28 +29,28 @@ const router = createBrowserRouter([
 		children: [
 			{
 				path: '/',
-				element: <Dashboard />
+				element: <Dashboard />,
 			},
 			{
 				path: '/viewer',
-				element: <Viewer />
+				element: <Viewer />,
 			},
 			{
 				path: '/users',
 				children: [
 					{
 						path: '/users/',
-						element: <UsersList />
+						element: <UsersList />,
 					},
 					{
 						path: '/users/create',
-						element: <UserCreate />
+						element: <UserCreate />,
 					},
 					{
 						path: '/users/:id',
-						element: <UserForm />
-					}
-				]
+						element: <UserForm />,
+					},
+				],
 			},
 			{
 				path: '/sources',
@@ -61,9 +61,9 @@ const router = createBrowserRouter([
 					},
 					{
 						path: '/sources/:id',
-						element: <SourceForm />
+						element: <SourceForm />,
 					},
-				]
+				],
 			},
 			{
 				path: '/tags',
@@ -74,46 +74,46 @@ const router = createBrowserRouter([
 					},
 					{
 						path: '/tags/selected/',
-						element: <TagSelectedForm />
+						element: <TagSelectedForm />,
 					},
 					{
 						path: '/tags/manual/',
-						element: <TagsManualList />
+						element: <TagsManualList />,
 					},
 					{
 						path: '/tags/calc/',
-						element: <TagsCalculatedList />
+						element: <TagsCalculatedList />,
 					},
 					{
 						path: '/tags/:id',
-						element: <TagForm />
+						element: <TagForm />,
 					},
-				]
+				],
 			},
 			{
 				path: '/blocks',
 				children: [
 					{
 						path: '/blocks/',
-						element: <BlocksList />
+						element: <BlocksList />,
 					},
 					{
 						path: '/blocks/view/:id',
-						element: <BlockView />
+						element: <BlockView />,
 					},
 					{
 						path: '/blocks/edit/:id',
-						element: <BlockForm />
-					}
-				]
-			}
+						element: <BlockForm />,
+					},
+				],
+			},
 		],
-		errorElement: <div>Этот раздел ещё не реализован</div>
+		errorElement: <div>Этот раздел ещё не реализован</div>,
 	},
 	{
 		path: '/offline',
-		element: <Offline />
-	}
+		element: <Offline />,
+	},
 ])
 
 export default router

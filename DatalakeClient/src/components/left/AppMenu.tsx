@@ -1,66 +1,76 @@
-import { NavLink } from "react-router-dom"
-import axios from "axios"
-import { API } from "../../router/api"
-import { TagSource } from "../../@types/Source"
-import { useState, useEffect } from "react"
-import { useInterval } from "../../hooks/useInterval"
-import { useUpdateContext } from "../../context/updateContext"
-import { BlockType } from "../../@types/BlockType"
-import { CalculatedId, ManualId } from "../../@types/enums/CustomSourcesIdentity"
-import { auth } from "../../etc/auth"
+import { useEffect, useState } from 'react'
+import { NavLink } from 'react-router-dom'
+import { Api } from '../../api/Api'
+import { BlockTreeInfo, SourceInfo } from '../../api/data-contracts'
+import { useUpdateContext } from '../../context/updateContext'
+import { auth } from '../../etc/auth'
+import { CustomSources } from '../../etc/customSources'
+import { useInterval } from '../../hooks/useInterval'
 
 export function AppMenu() {
-
 	const { lastUpdate } = useUpdateContext()
-	
-	const [ sources, setSources ] = useState([] as TagSource[])
-	const [ blocks, setBlocks ] = useState([] as BlockType[])
+
+	const [sources, setSources] = useState([] as SourceInfo[])
+	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 
 	function load() {
-		axios.get(API.sources.list).then(res => setSources(res.data))
-		axios.get(API.blocks.list).then(res => setBlocks(res.data))
+		var api = new Api()
+		api.blocksReadAsTree().then((res) => setBlocks(res.data))
+		api.sourcesReadAll().then((res) => setSources(res.data))
 	}
 
 	useEffect(load, [lastUpdate])
 	useInterval(load, 10000)
 
-	return <div className="app-menu">
-		{auth.isAdmin() && 
-			<NavLink to={'/users'}>Пользователи</NavLink>
-		}
+	return (
+		<div className='app-menu'>
+			{auth.isAdmin() && <NavLink to={'/users'}>Пользователи</NavLink>}
 
-		<div className="app-menu-block">
-			<NavLink to={'/'}>Монитор</NavLink>
-			{/* <div className="app-menu-sub">
+			<div className='app-menu-block'>
+				<NavLink to={'/'}>Монитор</NavLink>
+				{/* <div className="app-menu-sub">
 				<NavLink to={'/logs'}>События</NavLink>
 				<NavLink to={'/settings'}>Администрирование</NavLink>
 			</div> */}
-		</div>
+			</div>
 
-		<div className="app-menu-block">
-			<NavLink to={'/tags'}>Теги</NavLink>
-			<div className="app-menu-sub">
-				<NavLink to={'/viewer'}>Архив</NavLink>
+			<div className='app-menu-block'>
+				<NavLink to={'/tags'}>Теги</NavLink>
+				<div className='app-menu-sub'>
+					<NavLink to={'/viewer'}>Архив</NavLink>
+				</div>
 			</div>
-		</div>
 
-		<div className="app-menu-block">
-			<NavLink to={'/sources'}>Источники</NavLink>
-			<div className="app-menu-sub">
-				{sources.map(x => <NavLink key={x.Id} to={`/sources/${x.Id}`}>{x.Name}</NavLink>)}
+			<div className='app-menu-block'>
+				<NavLink to={'/sources'}>Источники</NavLink>
+				<div className='app-menu-sub'>
+					{sources.map((x) => (
+						<NavLink key={x.id} to={`/sources/${x.id}`}>
+							{x.name}
+						</NavLink>
+					))}
+				</div>
+			</div>
+
+			<div className='app-menu-block'>
+				<NavLink key={CustomSources.Manual} to={'/tags/manual/'}>
+					Мануальные теги
+				</NavLink>
+				<NavLink key={CustomSources.Calculated} to={'/tags/calc/'}>
+					Вычисляемые теги
+				</NavLink>
+			</div>
+
+			<div className='app-menu-block'>
+				<NavLink to={'/blocks'}>Объекты</NavLink>
+				<div className='app-menu-sub'>
+					{blocks.map((x) => (
+						<NavLink key={x.id} to={`/blocks/${x.id}`}>
+							{x.name}
+						</NavLink>
+					))}
+				</div>
 			</div>
 		</div>
-		
-		<div className="app-menu-block">
-			<NavLink key={ManualId} to={'/tags/manual/'}>Мануальные теги</NavLink>
-			<NavLink key={CalculatedId} to={'/tags/calc/'}>Вычисляемые теги</NavLink>
-		</div>
-		
-		<div className="app-menu-block">
-			<NavLink to={'/blocks'}>Объекты</NavLink>
-			<div className="app-menu-sub">
-				{blocks.map(x => <NavLink key={x.Id} to={`/blocks/${x.Id}`}>{x.Name}</NavLink>)}
-			</div>
-		</div>
-	</div>
+	)
 }
