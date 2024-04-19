@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+﻿using DatalakeDatabase.Enums;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
@@ -19,6 +20,9 @@ public class BlockTag
 
 	[Column]
 	public string? Name { get; set; } = string.Empty;
+
+	[Column]
+	public BlockTagRelation Relation { get; set; }
 
 	// связи
 

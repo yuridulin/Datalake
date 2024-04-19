@@ -68,7 +68,12 @@ public partial class BlocksRepository
 										.Select(x => new BlockInfo.BlockPropertyInfo { Id = x.Id, Name = x.Name })
 										.ToArray(),
 									Tags = g
-										.Select(x => new BlockInfo.BlockTagInfo { Id = x.tag.Id, Name = x.block_tag.Name ?? "" })
+										.Select(x => new BlockInfo.BlockTagInfo
+										{
+											Id = x.tag.Id,
+											Name = x.block_tag.Name ?? "",
+											TagType = x.block_tag.Relation,
+										})
 										.ToArray(),
 								};
 

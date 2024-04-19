@@ -1,4 +1,6 @@
-﻿namespace DatalakeDatabase.ApiModels.Blocks;
+﻿using DatalakeDatabase.Enums;
+
+namespace DatalakeDatabase.ApiModels.Blocks;
 
 /// <summary>
 /// Информация о сущности
@@ -67,7 +69,13 @@ public class BlockInfo
 	/// <summary>
 	/// Информация о закреплённом теге
 	/// </summary>
-	public class BlockTagInfo : BlockRelationInfo { }
+	public class BlockTagInfo : BlockRelationInfo
+	{
+		/// <summary>
+		/// Тип значений тега
+		/// </summary>
+		public required BlockTagRelation TagType { get; set; }
+	}
 
 	/// <summary>
 	/// Информация о статическом свойстве сущности
