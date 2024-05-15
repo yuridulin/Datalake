@@ -13,14 +13,16 @@ public partial class UsersRepository(DatalakeContext db)
 	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
 	{
 		var user = await db.Users
-			.Where(x => x.Name.Equals(loginPass.Name, StringComparison.CurrentCultureIgnoreCase) && x.StaticHost == null)
+			.Where(x => x.Name.ToLower().Trim() == loginPass.Name.ToLower().Trim() && x.StaticHost == null)
 			.FirstOrDefaultAsync();
 
 		if (user == null)
 		{
-			bool notHaveUsers = await db.Users.Where(x => string.IsNullOrEmpty(x.StaticHost)).AnyAsync();
+			bool haveAnotherUsers = await db.Users
+				.Where(x => string.IsNullOrEmpty(x.StaticHost))
+				.AnyAsync();
 
-			if (notHaveUsers)
+			if (!haveAnotherUsers)
 			{
 				user = await CreateUserAsync(new UserAuthRequest
 				{
@@ -51,6 +53,7 @@ public partial class UsersRepository(DatalakeContext db)
 		{
 			UserName = loginPass.Name,
 			AccessType = user.AccessType,
+			Token = string.Empty,
 		};
 	}
 
@@ -67,7 +70,7 @@ public partial class UsersRepository(DatalakeContext db)
 			throw new InvalidValueException(message: "логин не может быть пустым");
 		}
 
-		var userInfo = await GetUsers()
+		var userInfo = await GetInfo()
 			.Where(x => x.LoginName == loginName)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "пользователь по указанному логину");

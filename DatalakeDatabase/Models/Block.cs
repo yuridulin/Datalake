@@ -23,7 +23,7 @@ public class Block
 	public int? ParentId { get; set; }
 
 	[Column]
-	public string Name { get; set; } = null!;
+	public string Name { get; set; } = string.Empty;
 
 	[Column]
 	public string? Description { get; set; }

@@ -1,8 +1,10 @@
 ﻿using DatalakeDatabase;
 using DatalakeDatabase.ApiModels.Logs;
+using DatalakeDatabase.Constants;
 using DatalakeDatabase.Extensions;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic;
 
 namespace DatalakeApp.ApiControllers;
 
@@ -14,7 +16,7 @@ public class ConfigController(DatalakeContext db) : ControllerBase
 	public async Task<ActionResult<string>> GetLastUpdateAsync()
 	{
 		var lastUpdate = await db.GetLastUpdateAsync();
-		return lastUpdate.ToString("yyyy-MM-dd HH:mm:ss.fff");
+		return lastUpdate.ToString(DateFormats.HierarchicalWithMilliseconds);
 	}
 
 	[HttpGet("logs")]
@@ -33,7 +35,7 @@ public class ConfigController(DatalakeContext db) : ControllerBase
 			{
 				Id = x.Id,
 				Category = x.Category,
-				Date = x.Date,
+				DateString = x.Date.ToString(DateFormats.Standart),
 				Text = x.Text,
 				Type = x.Type,
 				RefId = x.RefId,

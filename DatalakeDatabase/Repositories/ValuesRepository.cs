@@ -1,4 +1,5 @@
 ﻿using DatalakeDatabase.ApiModels.Values;
+using DatalakeDatabase.Constants;
 using DatalakeDatabase.Enums;
 using DatalakeDatabase.Exceptions;
 using DatalakeDatabase.Extensions;
@@ -7,6 +8,8 @@ using LinqToDB;
 using LinqToDB.Data;
 
 namespace DatalakeDatabase.Repositories;
+
+// TODO: попробовать сделать таблицу Initial значений
 
 public class ValuesRepository(DatalakeContext db) : IDisposable
 {
@@ -107,15 +110,15 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 	#region Запись значений
 
 	/// <summary>
-	/// 
+	/// Запись новых значений, с обновлением текущих при необходимости
 	/// </summary>
-	/// <param name="requests"></param>
-	/// <returns></returns>
+	/// <param name="requests">Список запросов на запись</param>
+	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
-	/// <exception cref="ForbiddenException">Запись в запрещенный к записи тег</exception>
-	public async Task<List<ValuesResponse>> WriteValuesAsync(ValueWriteRequest[] requests, bool isSystemCall = false)
+	public async Task<List<ValuesResponse>> WriteValuesAsync(ValueWriteRequest[] requests)
 	{
 		List<ValuesResponse> responses = [];
+		List<TagHistory> recordsToSimpleWrite = [];
 
 		foreach (var writeRequest in requests)
 		{
@@ -126,11 +129,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				?? throw new NotFoundException(writeRequest.TagId.HasValue 
 					? $"Тег #{writeRequest.TagId} не найден"
 					: $"Тег \"{writeRequest.TagName}\" не найден");
-
-			if (!isSystemCall && (tag.SourceId == (int)CustomSource.Calculated || tag.SourceId == (int)CustomSource.System))
-			{
-				throw new ForbiddenException("Запись в вычисляемые теги не поддерживается");
-			}
 
 			var record = tag.ToHistory(writeRequest.Value, writeRequest.TagQuality);
 			record.Date = writeRequest.Date ?? DateTime.Now;
@@ -144,7 +142,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			}
 			else
 			{
-				await WriteHistoryValueAsync(record);
+				recordsToSimpleWrite.Add(record);
 			}
 
 			responses.Add(new ValuesResponse
@@ -157,6 +155,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					new ValueRecord
 					{
 						Date = record.Date,
+						DateString = record.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 						Quality = record.Quality,
 						Value = record.GetTypedValue(tag.Type),
 						Using = record.Using,
@@ -165,7 +164,25 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			});
 		}
 
+		await WriteHistoryValuesAsync(recordsToSimpleWrite);
+
 		return responses;
+	}
+
+	public async Task InitializeValueAsync(int tagId)
+	{
+		var record = new TagHistory
+		{
+			Date = DateTime.Now,
+			Number = null,
+			Text = null,
+			Quality = TagQuality.Unknown,
+			TagId = tagId,
+			Using = TagUsing.Initial,
+		};
+
+		await UpdateOrCreateLiveValueAsync(record);
+		await WriteHistoryValueAsync(record);
 	}
 
 	async Task UpdateOrCreateLiveValueAsync(TagHistory record)
@@ -192,10 +209,15 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		}
 	}
 
-	async Task WriteHistoryValuesAsync(DateTime date, TagHistory[] records)
+	async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
 	{
-		var table = await GetHistoryTableAsync(date);
-		await table.BulkCopyAsync(records);
+		if (!records.Any()) return;
+
+		foreach (var g in records.GroupBy(x => x.Date.Date))
+		{
+			var table = await GetHistoryTableAsync(g.Key);
+			await table.BulkCopyAsync(records);
+		}
 	}
 
 	async Task WriteHistoryValueAsync(TagHistory record)
@@ -299,6 +321,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 			var info = await ReadTagsInfoAsync(request.Tags!, request.TagNames!);
 
+			DateTime exact = request.Exact ?? DateTime.Now;
 			DateTime old, young;
 			List<TagHistory> databaseValues;
 
@@ -317,11 +340,11 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				}
 				else
 				{
-					young = request.Young ?? DateTime.Now;
+					young = request.Young ?? exact;
 					old = request.Old ?? young.Date;
 				}
 
-				databaseValues = await ReadHistoryValuesAsync(info, old, young, Math.Max(0, request.Resolution));
+				databaseValues = await ReadHistoryValuesAsync(info, old, young, resolution: Math.Max(0, request.Resolution ?? 0));
 			}
 
 			// сборка ответа, агрегация по необходимости
@@ -336,11 +359,12 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 						Id = databaseValueGroup.Key,
 						TagName = tagInfo.TagName,
 						Type = tagInfo.TagType,
-						Func = request.Func,
+						Func = (AggregationFunc)request.Func,
 						Values = [.. databaseValueGroup
 							.Select(x => new ValueRecord
 							{
 								Date = x.Date,
+								DateString = x.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 								Quality = x.Quality,
 								Using = x.Using,
 								Value = x.GetTypedValue(tagInfo.TagType),
@@ -385,10 +409,12 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 							Id = databaseValueGroup.Key,
 							TagName = tagInfo.TagName,
 							Type = tagInfo.TagType,
-							Func = request.Func,
+							Func = request.Func ?? AggregationFunc.List,
 							Values = [
 									new ValueRecord
 									{
+										Date = exact,
+										DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
 										Quality = TagQuality.Good,
 										Using = TagUsing.Aggregated,
 										Value = value,
@@ -403,10 +429,12 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 							Id = databaseValueGroup.Key,
 							TagName = tagInfo.TagName,
 							Type = tagInfo.TagType,
-							Func = request.Func,
+							Func = request.Func ?? AggregationFunc.List,
 							Values = [
 									new ValueRecord
 									{
+										Date = exact,
+										DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
 										Quality = TagQuality.Bad_NoValues,
 										Using = TagUsing.Aggregated,
 										Value = 0,

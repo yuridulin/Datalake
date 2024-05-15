@@ -4,7 +4,7 @@ import {
 	EditOutlined,
 	WarningOutlined,
 } from '@ant-design/icons'
-import { TagQuality } from '../../api/data-contracts'
+import { TagQuality } from '../../api/swagger/data-contracts'
 
 export default function TagQualityEl({ quality }: { quality: TagQuality }) {
 	switch (quality) {

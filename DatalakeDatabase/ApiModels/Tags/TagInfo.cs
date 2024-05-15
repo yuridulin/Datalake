@@ -1,52 +1,70 @@
 ﻿using DatalakeDatabase.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace DatalakeDatabase.ApiModels.Tags;
 
 public class TagInfo
 {
-	public int? Id { get; set; }
+	[Required]
+	public required int Id { get; set; }
 
+	[Required]
 	public required string Name { get; set; }
 
 	public string? Description { get; set; }
 
-	public TagType Type { get; set; }
+	[Required]
+	public required TagType Type { get; set; }
 
-	public short? IntervalInSeconds { get; set; }
+	[Required]
+	public required short IntervalInSeconds { get; set; }
 
+	[Required]
 	public required TagSourceInfo SourceInfo { get; set; }
 
-	public TagMathInfo? MathInfo { get; set; } = null;
+	[Required]
+	public required TagMathInfo MathInfo { get; set; }
 
-	public TagCalcInfo? CalcInfo { get; set; } = null;
+	[Required]
+	public required TagCalcInfo CalcInfo { get; set; }
 
 
 	public class TagSourceInfo
 	{
+		[Required]
 		public int Id { get; set; }
 
-		public SourceType Type { get; set; } = SourceType.Datalake;
+		public SourceType? Type { get; set; } = SourceType.Datalake;
 
 		public string? Item { get; set; }
 
-		public string Name { get; set; } = string.Empty;
+		public string? Name { get; set; } = string.Empty;
 	}
 
 	public class TagMathInfo
 	{
+		[Required]
+		public bool IsScaling { get; set; }
+
+		[Required]
 		public float MinEu { get; set; }
 
+		[Required]
 		public float MaxEu { get; set; }
 
+		[Required]
 		public float MinRaw { get; set; }
 
+		[Required]
 		public float MaxRaw { get; set; }
 	}
 
 	public class TagCalcInfo
 	{
+		[Required]
 		public string Formula { get; set; } = string.Empty;
 
-		public Dictionary<int, string> Inputs { get; set; } = [];
+		[Required]
+		public Dictionary<string, int> Inputs { get; set; } = [];
 	}
 }

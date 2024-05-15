@@ -1,25 +1,13 @@
-import { Button, Input, Modal, Popconfirm, Select } from 'antd'
-import axios from 'axios'
-import { useEffect, useState } from 'react'
-import { NavLink, Navigate, useParams } from 'react-router-dom'
-import { BlockType } from '../../../@types/BlockType'
-import { Rel_Block_Type } from '../../../@types/Rel_Block_Tag'
-import { Tag } from '../../../@types/Tag'
-import { useFetching } from '../../../hooks/useFetching'
-import router from '../../../router/router'
-import FormRow from '../../small/FormRow'
-import Header from '../../small/Header'
-
 export default function BlockForm() {
-	const { id } = useParams()
+	/* const { id } = useParams()
 	const [title, setTitle] = useState('')
-	const [block, setBlock] = useState({} as BlockType)
+	const [block, setBlock] = useState({} as BlockInfo)
 	const [tags, setTags] = useState([] as { label: string; value: number }[])
 
 	const [propModal, setPropModal] = useState({
 		open: false,
 		old: '',
-		key: '',
+		key: 0,
 		value: '',
 	})
 	const [tagModal, setTagModal] = useState({
@@ -35,7 +23,9 @@ export default function BlockForm() {
 		let resTags = await axios.post('tags/list')
 		setBlock(resBlock.data)
 		setTitle(resBlock.data.Name)
-		setTags(resTags.data.map((x: Tag) => ({ value: x.Id, label: x.Name })))
+		setTags(
+			resTags.data.map((x: TagInfo) => ({ value: x.id, label: x.name })),
+		)
 	})
 
 	const RelType = (type: number) => {
@@ -73,27 +63,34 @@ export default function BlockForm() {
 	})
 
 	const [del] = useFetching(async () => {
-		let res = await axios.post('blocks/delete', { Id: block.Id })
+		let res = await axios.post('blocks/delete', { Id: block.id })
 		if (res.data.Done) back()
 	})
 
 	const [create] = useFetching(async () => {
-		let res = await axios.post('blocks/create', { ParentId: block.Id })
+		let res = await axios.post('blocks/create', { ParentId: block.id })
 		if (res.data.Done) load()
 	})
 
 	const setProperty = () => {
-		let props = block.Properties
-		if (propModal.old !== '') delete props[propModal.old]
-		props[propModal.key] = propModal.value
-		setPropModal({ open: false, old: '', key: '', value: '' })
-		setBlock({ ...block, Properties: { ...props } })
+		setPropModal({ open: false, old: '', key: 0, value: '' })
+		setBlock({
+			...block,
+			properties: block.properties.map((p) =>
+				p.id !== propModal.key
+					? p
+					: {
+							...p,
+							value: propModal.value,
+					  },
+			),
+		})
 	}
 
 	const delProperty = () => {
 		let props = block.Properties
 		if (propModal.old !== '') delete props[propModal.old]
-		setPropModal({ open: false, old: '', key: '', value: '' })
+		setPropModal({ open: false, old: '', key: 0, value: '' })
 		setBlock({ ...block, Properties: { ...props } })
 	}
 
@@ -156,17 +153,17 @@ export default function BlockForm() {
 			</Header>
 			<FormRow title='Имя'>
 				<Input
-					value={block.Name}
+					value={block.name}
 					onChange={(e) =>
-						setBlock({ ...block, Name: e.target.value })
+						setBlock({ ...block, name: e.target.value })
 					}
 				/>
 			</FormRow>
 			<FormRow title='Описание'>
 				<Input.TextArea
-					value={block.Description}
+					value={block.description ?? ''}
 					onChange={(e) =>
-						setBlock({ ...block, Description: e.target.value })
+						setBlock({ ...block, description: e.target.value })
 					}
 				/>
 			</FormRow>
@@ -174,9 +171,9 @@ export default function BlockForm() {
 				<Button
 					onClick={() =>
 						router.navigate(
-							block.ParentId === 0
+							block.parent?.id === 0
 								? '/blocks'
-								: '/blocks/' + block.ParentId,
+								: '/blocks/' + block.parent?.id,
 						)
 					}
 				>
@@ -184,53 +181,52 @@ export default function BlockForm() {
 				</Button>
 			</FormRow>
 			<FormRow title='Вложенные блоки'>
-				{block.Children &&
-					block.Children.map((b) => (
+				{block.children &&
+					block.children.map((b) => (
 						<div>
 							<Button
 								onClick={() =>
 									router.navigate(
-										b.Id === 0
+										b.id === 0
 											? '/blocks'
-											: '/blocks/' + b.Id,
+											: '/blocks/' + b.id,
 									)
 								}
 							>
-								{b.Name}
+								{b.name}
 							</Button>
 						</div>
 					))}
 				<Button onClick={create}>Создать</Button>
 			</FormRow>
 			<FormRow title='Свойства'>
-				{block.Properties &&
-					Object.keys(block.Properties).map((prop) => (
-						<div
-							key={prop}
-							className='table-row'
-							style={{
-								display: 'grid',
-								gridTemplateColumns: '1fr 2fr',
-							}}
-							onClick={() =>
-								setPropModal({
-									open: true,
-									old: prop,
-									key: prop,
-									value: block.Properties[prop],
-								})
-							}
-						>
-							<span>{prop}</span>
-							<span>{block.Properties[prop]}</span>
-						</div>
-					))}
+				{block.properties.map((prop) => (
+					<div
+						key={prop.id}
+						className='table-row'
+						style={{
+							display: 'grid',
+							gridTemplateColumns: '1fr 2fr',
+						}}
+						onClick={() =>
+							setPropModal({
+								open: true,
+								old: prop.value,
+								key: prop.id,
+								value: prop.value,
+							})
+						}
+					>
+						<span>{prop.name}</span>
+						<span>{prop.name}</span>
+					</div>
+				))}
 				<Button
 					onClick={() =>
 						setPropModal({
 							open: true,
 							old: '',
-							key: '',
+							key: 0,
 							value: '',
 						})
 					}
@@ -245,8 +241,8 @@ export default function BlockForm() {
 						<span>Название</span>
 						<span>Тег</span>
 					</div>
-					{block.Tags &&
-						block.Tags.map((rel, i) => (
+					{block.tags &&
+						block.tags.map((rel, i) => (
 							<div
 								key={i}
 								className='table-row'
@@ -358,5 +354,7 @@ export default function BlockForm() {
 				</FormRow>
 			</Modal>
 		</>
-	)
+	) */
+
+	return <></>
 }

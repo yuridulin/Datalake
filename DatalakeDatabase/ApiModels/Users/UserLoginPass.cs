@@ -1,8 +1,12 @@
-﻿namespace DatalakeDatabase.ApiModels.Users;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace DatalakeDatabase.ApiModels.Users;
 
 public class UserLoginPass
 {
+	[Required]
 	public required string Name { get; set; }
 
+	[Required]
 	public required string Password { get; set; }
 }

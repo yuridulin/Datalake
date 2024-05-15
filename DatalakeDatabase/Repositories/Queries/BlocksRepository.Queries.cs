@@ -5,7 +5,7 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class BlocksRepository
 {
-	public async Task<BlockTreeInfo[]> GetBlocksAsTreeAsync()
+	public async Task<BlockTreeInfo[]> GetTreeAsync()
 	{
 		var blocks = await db.Blocks
 			.Select(x => new
@@ -35,7 +35,7 @@ public partial class BlocksRepository
 		}
 	}
 
-	public IQueryable<BlockInfo> GetBlocksWithAllRelations()
+	public IQueryable<BlockInfo> GetInfoWithAllRelations()
 	{
 		var query = from block in db.Blocks
 								from property in db.BlockProperties.LeftJoin(x => x.BlockId == block.Id)
@@ -59,13 +59,27 @@ public partial class BlocksRepository
 									Name = g.Key.Name,
 									Description = g.Key.Description,
 									Parent = g.Select(x => x.parent)
-										.Select(x => new BlockInfo.BlockParentInfo { Id = x.Id, Name = x.Name })
+										.Select(x => new BlockInfo.BlockParentInfo
+										{
+											Id = x.Id,
+											Name = x.Name
+										})
 										.FirstOrDefault(),
 									Children = g.Select(x => x.child)
-										.Select(x => new BlockInfo.BlockChildInfo { Id = x.Id, Name = x.Name })
+										.Select(x => new BlockInfo.BlockChildInfo
+										{
+											Id = x.Id,
+											Name = x.Name
+										})
 										.ToArray(),
 									Properties = g.Select(x => x.property)
-										.Select(x => new BlockInfo.BlockPropertyInfo { Id = x.Id, Name = x.Name })
+										.Select(x => new BlockInfo.BlockPropertyInfo
+										{
+											Id = x.Id,
+											Name = x.Name,
+											Type = x.Type,
+											Value = x.Value,
+										})
 										.ToArray(),
 									Tags = g
 										.Select(x => new BlockInfo.BlockTagInfo
@@ -80,7 +94,7 @@ public partial class BlocksRepository
 		return query;
 	}
 
-	public IQueryable<BlockSimpleInfo> GetBlocksSimpleInfo()
+	public IQueryable<BlockSimpleInfo> GetSimpleInfo()
 	{
 		return db.Blocks
 			.Select(x => new BlockSimpleInfo

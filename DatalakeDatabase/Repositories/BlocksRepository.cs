@@ -8,6 +8,34 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class BlocksRepository(DatalakeContext db)
 {
+	public async Task<int> CreateAsync()
+	{
+		int? id;
+
+		try
+		{
+			id = await db.Blocks
+				.Value(x => x.GlobalId, Guid.NewGuid())
+				.Value(x => x.ParentId, 0)
+				.Value(x => x.Name, "INSERTING BLOCK")
+				.Value(x => x.Description, string.Empty)
+				.InsertWithInt32IdentityAsync();
+
+			if (id.HasValue)
+				await db.Blocks
+					.Where(x => x.Id == id.Value)
+					.Set(x => x.Name, "Сущность #" + id.Value)
+					.UpdateAsync();
+
+			return id.Value;
+		}
+		catch
+		{
+			throw new DatabaseException("Не удалось добавить сущность");
+		}
+
+	}
+
 	public async Task<int> CreateAsync(BlockInfo block)
 	{
 		if (await db.Blocks.AnyAsync(x => x.Name == block.Name))

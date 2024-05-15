@@ -13,14 +13,11 @@ namespace DatalakeDatabase.Tests.Steps
 
 			var tagsRepository = new TagsRepository(db);
 
-			var request = new TagInfo
+			var request = new TagCreateRequest
 			{
 				Name = Constants.TagName,
-				Type = TagType.Number,
-				SourceInfo = new TagInfo.TagSourceInfo
-				{
-					Id = (int)CustomSource.Manual,
-				}
+				TagType = TagType.Number,
+				SourceId = (int)CustomSource.Manual,
 			};
 
 			int tagId = await tagsRepository.CreateAsync(request);
@@ -34,7 +31,7 @@ namespace DatalakeDatabase.Tests.Steps
 
 			var tagsRepository = new TagsRepository(db);
 
-			var tagInfo = await tagsRepository.GetTagsWithSources()
+			var tagInfo = await tagsRepository.GetInfoWithSources()
 				.Where(x => x.Id == Constants.TagId)
 				.FirstOrDefaultAsync();
 

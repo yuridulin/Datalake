@@ -18,10 +18,16 @@ public class BlocksController(BlocksRepository blocksRepository) : ControllerBas
 		return await blocksRepository.CreateAsync(blockInfo);
 	}
 
+	[HttpPost("empty")]
+	public async Task<ActionResult<int>> CreateEmptyAsync()
+	{
+		return await blocksRepository.CreateAsync();
+	}
+
 	[HttpGet]
 	public async Task<ActionResult<BlockSimpleInfo[]>> ReadAsync()
 	{
-		return await blocksRepository.GetBlocksSimpleInfo()
+		return await blocksRepository.GetSimpleInfo()
 			.ToArrayAsync();
 	}
 
@@ -29,7 +35,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ControllerBas
 	public async Task<ActionResult<BlockInfo>> ReadAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		return await blocksRepository.GetBlocksWithAllRelations()
+		return await blocksRepository.GetInfoWithAllRelations()
 			.Where(x => x.Id == id)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Сущность #{id}");
@@ -38,7 +44,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ControllerBas
 	[HttpGet("tree")]
 	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync()
 	{
-		return await blocksRepository.GetBlocksAsTreeAsync();
+		return await blocksRepository.GetTreeAsync();
 	}
 
 	[HttpPut("{id:int}")]

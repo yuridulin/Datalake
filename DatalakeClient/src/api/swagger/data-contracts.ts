@@ -12,9 +12,10 @@
 export interface BlockInfo {
 	/** @format int32 */
 	id: number
+	/** @minLength 1 */
 	name: string
-	description?: string
-	parent?: BlockParentInfo
+	description?: string | null
+	parent?: BlockParentInfo | null
 	children: BlockChildInfo[]
 	properties: BlockPropertyInfo[]
 	tags: BlockTagInfo[]
@@ -25,36 +26,91 @@ export type BlockParentInfo = BlockRelationInfo & object
 export interface BlockRelationInfo {
 	/** @format int32 */
 	id: number
+	/** @minLength 1 */
 	name: string
 }
 
 export type BlockChildInfo = BlockRelationInfo & object
 
-export type BlockPropertyInfo = BlockRelationInfo & object
+export type BlockPropertyInfo = BlockRelationInfo & {
+	type: TagType
+	/** @minLength 1 */
+	value: string
+}
 
-export type BlockTagInfo = BlockRelationInfo & object
+export enum TagType {
+	String = 'String',
+	Number = 'Number',
+	Boolean = 'Boolean',
+}
+
+export type BlockTagInfo = BlockRelationInfo & {
+	tagType: BlockTagRelation
+}
+
+export enum BlockTagRelation {
+	Static = 'Static',
+	Input = 'Input',
+	Output = 'Output',
+}
 
 export interface BlockSimpleInfo {
 	/** @format int32 */
 	id: number
+	/** @minLength 1 */
 	name: string
-	description?: string
+	description?: string | null
 }
 
 export interface BlockTreeInfo {
 	/** @format int32 */
 	id: number
+	/** @minLength 1 */
 	name: string
-	description?: string
+	description?: string | null
 	children: BlockTreeInfo[]
+}
+
+export interface LogInfo {
+	/** @format int64 */
+	id: number
+	/** @minLength 1 */
+	dateString: string
+	category: LogCategory
+	type: LogType
+	/** @minLength 1 */
+	text: string
+	/** @format int32 */
+	refId?: number | null
+}
+
+export enum LogCategory {
+	Core = 'Core',
+	Database = 'Database',
+	Collector = 'Collector',
+	Api = 'Api',
+	Calc = 'Calc',
+	Source = 'Source',
+	Tag = 'Tag',
+	Http = 'Http',
+	Users = 'Users',
+}
+
+export enum LogType {
+	Trace = 'Trace',
+	Information = 'Information',
+	Success = 'Success',
+	Warning = 'Warning',
+	Error = 'Error',
 }
 
 export interface SourceInfo {
 	/** @format int32 */
 	id: number
+	/** @minLength 1 */
 	name: string
-	description?: string
-	address?: string
+	description?: string | null
+	address?: string | null
 	type: SourceType
 }
 
@@ -66,50 +122,59 @@ export enum SourceType {
 }
 
 export interface SourceEntryInfo {
-	itemInfo?: SourceItemInfo
-	tagInfo?: SourceTagInfo
+	itemInfo?: SourceItemInfo | null
+	tagInfo?: SourceTagInfo | null
 }
 
 export interface SourceItemInfo {
+	/** @minLength 1 */
 	path: string
 	type: TagType
-}
-
-export enum TagType {
-	String = 'String',
-	Number = 'Number',
-	Boolean = 'Boolean',
 }
 
 export interface SourceTagInfo {
 	/** @format int32 */
 	id: number
+	/** @minLength 1 */
 	name: string
+	/** @minLength 1 */
 	item: string
 	type: TagType
 }
 
+export interface TagCreateRequest {
+	name?: string | null
+	tagType: TagType
+	/** @format int32 */
+	sourceId?: number | null
+	sourceItem?: string | null
+	/** @format int32 */
+	blockId?: number | null
+}
+
 export interface TagInfo {
 	/** @format int32 */
-	id?: number
+	id: number
+	/** @minLength 1 */
 	name: string
-	description?: string
+	description?: string | null
 	type: TagType
-	intervalInSeconds?: number
+	intervalInSeconds: number
 	sourceInfo: TagSourceInfo
-	mathInfo?: TagMathInfo
-	calcInfo?: TagCalcInfo
+	mathInfo: TagMathInfo
+	calcInfo: TagCalcInfo
 }
 
 export interface TagSourceInfo {
 	/** @format int32 */
 	id: number
-	type: SourceType
-	item?: string
-	name: string
+	type?: SourceType | null
+	item?: string | null
+	name?: string | null
 }
 
 export interface TagMathInfo {
+	isScaling: boolean
 	/** @format float */
 	minEu: number
 	/** @format float */
@@ -121,13 +186,25 @@ export interface TagMathInfo {
 }
 
 export interface TagCalcInfo {
+	/** @minLength 1 */
 	formula: string
-	inputs: Record<string, string>
+	inputs: Record<string, number>
+}
+
+export interface TagAsInputInfo {
+	/** @format int32 */
+	id: number
+	/** @minLength 1 */
+	name: string
+	type: TagType
 }
 
 export interface UserAuthInfo {
+	/** @minLength 1 */
 	userName: string
 	accessType: AccessType
+	/** @minLength 1 */
+	token: string
 }
 
 export enum AccessType {
@@ -138,30 +215,46 @@ export enum AccessType {
 }
 
 export interface UserLoginPass {
+	/** @minLength 1 */
 	name: string
+	/** @minLength 1 */
 	password: string
 }
 
 export interface UserAuthRequest {
+	/** @minLength 1 */
 	loginName: string
-	fullName?: string
-	password?: string
-	staticHost?: string
+	fullName?: string | null
+	password?: string | null
+	staticHost?: string | null
 	accessType: AccessType
 }
 
 export interface UserInfo {
+	/** @minLength 1 */
 	loginName: string
-	fullName?: string
+	fullName?: string | null
 	accessType: AccessType
 	isStatic: boolean
 }
 
-export interface UserUpdateRequest {
+export interface UserDetailInfo {
+	/** @minLength 1 */
 	loginName: string
-	staticHost?: string
-	password?: string
-	fullName?: string
+	fullName?: string | null
+	accessType: AccessType
+	isStatic: boolean
+	/** @minLength 1 */
+	hash: string
+	staticHost?: string | null
+}
+
+export interface UserUpdateRequest {
+	/** @minLength 1 */
+	loginName: string
+	staticHost?: string | null
+	password?: string | null
+	fullName?: string | null
 	accessType: AccessType
 	createNewStaticHash: boolean
 }
@@ -169,6 +262,7 @@ export interface UserUpdateRequest {
 export interface ValuesResponse {
 	/** @format int32 */
 	id: number
+	/** @minLength 1 */
 	tagName: string
 	type: TagType
 	func: AggregationFunc
@@ -184,9 +278,14 @@ export enum AggregationFunc {
 }
 
 export interface ValueRecord {
-	/** @format date-time */
+	/**
+	 * @format date-time
+	 * @minLength 1
+	 */
 	date: string
-	value?: any
+	/** @minLength 1 */
+	dateString: string
+	value: any
 	quality: TagQuality
 	using: TagUsing
 }
@@ -211,29 +310,29 @@ export enum TagUsing {
 }
 
 export interface ValuesRequest {
-	tags: number[]
-	tagNames: string[]
+	tags?: number[] | null
+	tagNames?: string[] | null
 	/** @format date-time */
-	old?: string
+	old?: string | null
 	/** @format date-time */
-	young?: string
+	young?: string | null
 	/** @format date-time */
-	exact?: string
+	exact?: string | null
 	/** @format int32 */
-	resolution: number
-	func: AggregationFunc
+	resolution?: number | null
+	func?: AggregationFunc | null
 }
 
 export interface ValueWriteRequest {
 	/** @format int32 */
-	tagId?: number
-	tagName?: string
+	tagId?: number | null
+	tagName?: string | null
 	value?: any
 	/** @format date-time */
-	date?: string
-	tagQuality?: TagQuality
+	date?: string | null
+	tagQuality?: TagQuality | null
 }
 
-export type ValuesGetValuesPayload = ValuesRequest[]
+export type ValuesGetPayload = ValuesRequest[]
 
-export type ValuesWriteValuesPayload = ValueWriteRequest[]
+export type ValuesWritePayload = ValueWriteRequest[]

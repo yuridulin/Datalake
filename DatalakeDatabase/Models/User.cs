@@ -13,16 +13,16 @@ public class User
 	// поля в БД
 
 	[Column, Key]
-	public string Name { get; set; } = null!;
+	public string Name { get; set; } = string.Empty;
 
 	[Column]
-	public string Hash { get; set; } = null!;
+	public string Hash { get; set; } = string.Empty;
 
 	[Column]
 	public AccessType AccessType { get; set; }
 
 	[Column]
-	public string FullName { get; set; } = null!;
+	public string FullName { get; set; } = string.Empty;
 
 	[Column]
 	public string? StaticHost { get; set; }

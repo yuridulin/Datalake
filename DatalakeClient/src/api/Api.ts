@@ -1,435 +1,90 @@
-/* eslint-disable */
-/* tslint:disable */
-/*
- * ---------------------------------------------------------------
- * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
- * ##                                                           ##
- * ## AUTHOR: acacode                                           ##
- * ## SOURCE: https://github.com/acacode/swagger-typescript-api ##
- * ---------------------------------------------------------------
- */
+import { notification } from 'antd'
+import { AxiosError, AxiosResponse } from 'axios'
+import { accessHeader, auth, nameHeader, tokenHeader } from '../etc/auth'
+import router from '../router/router'
+import { Api } from './swagger/Api'
 
-import {
-	BlockInfo,
-	BlockSimpleInfo,
-	BlockTreeInfo,
-	SourceEntryInfo,
-	SourceInfo,
-	TagInfo,
-	UserAuthInfo,
-	UserAuthRequest,
-	UserInfo,
-	UserLoginPass,
-	UserUpdateRequest,
-	ValuesGetValuesPayload,
-	ValuesResponse,
-	ValuesWriteValuesPayload,
-} from './data-contracts'
-import { ContentType, HttpClient, RequestParams } from './http-client'
+const api = new Api()
 
-export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
-	/**
-	 * No description
-	 *
-	 * @tags Blocks
-	 * @name BlocksCreate
-	 * @request POST:/api/Blocks
-	 * @response `200` `number`
-	 */
-	blocksCreate = (blockInfo: BlockInfo, params: RequestParams = {}) =>
-		this.request<number, any>({
-			path: `/api/Blocks`,
-			method: 'POST',
-			body: blockInfo,
-			type: ContentType.Json,
-			format: 'json',
-			...params,
+api.instance.interceptors.request.use(
+	function (config) {
+		console.log('send request:', config.url)
+		// добавляем информацию о пользователе ко всем запросам
+		console.log('send auth info', {
+			nameHeader: auth.name(),
+			tokenHeader: auth.token(),
+			accessHeader: auth.access(),
 		})
-	/**
-	 * No description
-	 *
-	 * @tags Blocks
-	 * @name BlocksReadAll
-	 * @request GET:/api/Blocks
-	 * @response `200` `(BlockSimpleInfo)[]`
-	 */
-	blocksReadAll = (params: RequestParams = {}) =>
-		this.request<BlockSimpleInfo[], any>({
-			path: `/api/Blocks`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Blocks
-	 * @name BlocksRead
-	 * @request GET:/api/Blocks/{id}
-	 * @response `200` `BlockInfo`
-	 */
-	blocksRead = (id: number, params: RequestParams = {}) =>
-		this.request<BlockInfo, any>({
-			path: `/api/Blocks/${id}`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Blocks
-	 * @name BlocksUpdate
-	 * @request PUT:/api/Blocks/{id}
-	 * @response `200` `File | null`
-	 */
-	blocksUpdate = (id: number, block: BlockInfo, params: RequestParams = {}) =>
-		this.request<File | null, any>({
-			path: `/api/Blocks/${id}`,
-			method: 'PUT',
-			body: block,
-			type: ContentType.Json,
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Blocks
-	 * @name BlocksDelete
-	 * @request DELETE:/api/Blocks/{id}
-	 * @response `200` `File | null`
-	 */
-	blocksDelete = (id: number, params: RequestParams = {}) =>
-		this.request<File | null, any>({
-			path: `/api/Blocks/${id}`,
-			method: 'DELETE',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Blocks
-	 * @name BlocksReadAsTree
-	 * @request GET:/api/Blocks/tree
-	 * @response `200` `(BlockTreeInfo)[]`
-	 */
-	blocksReadAsTree = (params: RequestParams = {}) =>
-		this.request<BlockTreeInfo[], any>({
-			path: `/api/Blocks/tree`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Config
-	 * @name ConfigLast
-	 * @request GET:/api/Config/last
-	 * @response `200` `string`
-	 */
-	configLast = (params: RequestParams = {}) =>
-		this.request<string, any>({
-			path: `/api/Config/last`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Sources
-	 * @name SourcesCreate
-	 * @request POST:/api/Sources
-	 * @response `200` `number`
-	 */
-	sourcesCreate = (source: SourceInfo, params: RequestParams = {}) =>
-		this.request<number, any>({
-			path: `/api/Sources`,
-			method: 'POST',
-			body: source,
-			type: ContentType.Json,
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Sources
-	 * @name SourcesReadAll
-	 * @request GET:/api/Sources
-	 * @response `200` `(SourceInfo)[]`
-	 */
-	sourcesReadAll = (params: RequestParams = {}) =>
-		this.request<SourceInfo[], any>({
-			path: `/api/Sources`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Sources
-	 * @name SourcesRead
-	 * @request GET:/api/Sources/{id}
-	 * @response `200` `SourceInfo`
-	 */
-	sourcesRead = (id: number, params: RequestParams = {}) =>
-		this.request<SourceInfo, any>({
-			path: `/api/Sources/${id}`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Sources
-	 * @name SourcesUpdate
-	 * @request PUT:/api/Sources/{id}
-	 * @response `200` `File | null`
-	 */
-	sourcesUpdate = (id: number, source: SourceInfo, params: RequestParams = {}) =>
-		this.request<File | null, any>({
-			path: `/api/Sources/${id}`,
-			method: 'PUT',
-			body: source,
-			type: ContentType.Json,
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Sources
-	 * @name SourcesDelete
-	 * @request DELETE:/api/Sources/{id}
-	 * @response `200` `File | null`
-	 */
-	sourcesDelete = (id: number, params: RequestParams = {}) =>
-		this.request<File | null, any>({
-			path: `/api/Sources/${id}`,
-			method: 'DELETE',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Sources
-	 * @name SourcesGetItemsWithTags
-	 * @request GET:/api/Sources/{id}/tags
-	 * @response `200` `(SourceEntryInfo)[]`
-	 */
-	sourcesGetItemsWithTags = (id: number, params: RequestParams = {}) =>
-		this.request<SourceEntryInfo[], any>({
-			path: `/api/Sources/${id}/tags`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Tags
-	 * @name TagsCreate
-	 * @request POST:/api/Tags
-	 * @response `200` `number`
-	 */
-	tagsCreate = (tag: TagInfo, params: RequestParams = {}) =>
-		this.request<number, any>({
-			path: `/api/Tags`,
-			method: 'POST',
-			body: tag,
-			type: ContentType.Json,
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Tags
-	 * @name TagsReadAll
-	 * @request GET:/api/Tags
-	 * @response `200` `(TagInfo)[]`
-	 */
-	tagsReadAll = (params: RequestParams = {}) =>
-		this.request<TagInfo[], any>({
-			path: `/api/Tags`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Tags
-	 * @name TagsRead
-	 * @request GET:/api/Tags/{id}
-	 * @response `200` `TagInfo`
-	 */
-	tagsRead = (id: number, params: RequestParams = {}) =>
-		this.request<TagInfo, any>({
-			path: `/api/Tags/${id}`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Tags
-	 * @name TagsUpdate
-	 * @request PUT:/api/Tags/{id}
-	 * @response `200` `File | null`
-	 */
-	tagsUpdate = (id: number, tag: TagInfo, params: RequestParams = {}) =>
-		this.request<File | null, any>({
-			path: `/api/Tags/${id}`,
-			method: 'PUT',
-			body: tag,
-			type: ContentType.Json,
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Tags
-	 * @name TagsDelete
-	 * @request DELETE:/api/Tags/{id}
-	 * @response `200` `File | null`
-	 */
-	tagsDelete = (id: number, params: RequestParams = {}) =>
-		this.request<File | null, any>({
-			path: `/api/Tags/${id}`,
-			method: 'DELETE',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Users
-	 * @name UsersAuthenticate
-	 * @request POST:/api/Users/auth
-	 * @response `200` `UserAuthInfo`
-	 */
-	usersAuthenticate = (loginPass: UserLoginPass, params: RequestParams = {}) =>
-		this.request<UserAuthInfo, any>({
-			path: `/api/Users/auth`,
-			method: 'POST',
-			body: loginPass,
-			type: ContentType.Json,
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Users
-	 * @name UsersCreate
-	 * @request POST:/api/Users
-	 * @response `200` `boolean`
-	 */
-	usersCreate = (userAuthRequest: UserAuthRequest, params: RequestParams = {}) =>
-		this.request<boolean, any>({
-			path: `/api/Users`,
-			method: 'POST',
-			body: userAuthRequest,
-			type: ContentType.Json,
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Users
-	 * @name UsersReadAll
-	 * @request GET:/api/Users
-	 * @response `200` `(UserInfo)[]`
-	 */
-	usersReadAll = (params: RequestParams = {}) =>
-		this.request<UserInfo[], any>({
-			path: `/api/Users`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Users
-	 * @name UsersRead
-	 * @request GET:/api/Users/{name}
-	 * @response `200` `UserInfo`
-	 */
-	usersRead = (name: string, params: RequestParams = {}) =>
-		this.request<UserInfo, any>({
-			path: `/api/Users/${name}`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Users
-	 * @name UsersUpdate
-	 * @request PUT:/api/Users/{name}
-	 * @response `200` `File | null`
-	 */
-	usersUpdate = (name: string, userUpdateRequest: UserUpdateRequest, params: RequestParams = {}) =>
-		this.request<File | null, any>({
-			path: `/api/Users/${name}`,
-			method: 'PUT',
-			body: userUpdateRequest,
-			type: ContentType.Json,
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Users
-	 * @name UsersDelete
-	 * @request DELETE:/api/Users/{name}
-	 * @response `200` `File | null`
-	 */
-	usersDelete = (name: string, params: RequestParams = {}) =>
-		this.request<File | null, any>({
-			path: `/api/Users/${name}`,
-			method: 'DELETE',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Values
-	 * @name ValuesGetValues
-	 * @request POST:/api/Tags/Values
-	 * @response `200` `(ValuesResponse)[]`
-	 */
-	valuesGetValues = (requests: ValuesGetValuesPayload, params: RequestParams = {}) =>
-		this.request<ValuesResponse[], any>({
-			path: `/api/Tags/Values`,
-			method: 'POST',
-			body: requests,
-			type: ContentType.Json,
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Values
-	 * @name ValuesWriteValues
-	 * @request PUT:/api/Tags/Values
-	 * @response `200` `(ValuesResponse)[]`
-	 */
-	valuesWriteValues = (requests: ValuesWriteValuesPayload, params: RequestParams = {}) =>
-		this.request<ValuesResponse[], any>({
-			path: `/api/Tags/Values`,
-			method: 'PUT',
-			body: requests,
-			type: ContentType.Json,
-			format: 'json',
-			...params,
-		})
-}
+		config.headers[nameHeader] = auth.name()
+		config.headers[tokenHeader] = auth.token()
+		config.headers[accessHeader] = auth.access()
+		return config
+	},
+	function (error) {
+		return Promise.reject(error)
+	},
+)
+
+api.instance.interceptors.response.use(
+	function (res: AxiosResponse) {
+		// запросы, которые не обрабатываем
+		if (res.config.method === 'OPTIONS') {
+			return res
+		}
+		// переход на логин, если нет доступа
+		else if (res.status === 403) {
+			router.navigate('/login')
+		}
+		// нормальное развитие событий
+		else {
+			console.log('finish request:', res.config.url)
+			console.log('headers', res.headers)
+			// данные о доступе сохраняем
+			auth.name(res.headers[nameHeader])
+			auth.token(res.headers[tokenHeader])
+			auth.access(res.headers[accessHeader])
+			console.log('update auth info', {
+				nameHeader: auth.name(),
+				tokenHeader: auth.token(),
+				accessHeader: auth.access(),
+			})
+
+			// сообщения после выполнения действий
+			if (res.data.Done) {
+				notification.info({
+					placement: 'bottomLeft',
+					message: res.data.Done,
+				})
+			} else if (res.data.Error) {
+				notification.error({
+					placement: 'bottomLeft',
+					message: res.data.Error,
+				})
+			}
+		}
+		return res
+	},
+	function (err: AxiosError) {
+		// переход на ожидание соединения, если не получилось провести запрос
+		if (err.request?.status === 0) {
+			console.log('is offline')
+			return router.navigate('/offline')
+		}
+		// переход на логин, если нет доступа
+		else if (err.response?.status === 403) {
+			console.log('not authorized')
+			return router.navigate('/login')
+		}
+		// сообщения после выполнения действий
+		else {
+			console.log('server action error:', err)
+			console.log('server message:', err.response?.data)
+			return notification.error({
+				placement: 'bottomLeft',
+				message: err.response?.data as any,
+			})
+		}
+	},
+)
+
+export default api

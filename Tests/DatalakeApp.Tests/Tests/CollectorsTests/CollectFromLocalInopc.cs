@@ -87,15 +87,12 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 		var testSource = sources.FirstOrDefault(x => x.Name == TestSourceName);
 		Assert.NotNull(testSource);
 
-		var id = await _httpClient.PostAsync<int>("api/tags", new TagInfo
+		var id = await _httpClient.PostAsync<int>("api/tags", new TagCreateRequest
 		{
 			Name = TestTagName,
-			IntervalInSeconds = 1,
-			SourceInfo = new TagInfo.TagSourceInfo
-			{
-				Id = testSource.Id,
-				Item = TestItemPath,
-			}
+			TagType = TagType.Number,
+			SourceId = testSource.Id,
+			SourceItem = TestItemPath,
 		});
 
 		Assert.True(id > 0);

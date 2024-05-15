@@ -27,7 +27,7 @@ public class SourcesController(
 	public async Task<ActionResult<SourceInfo>> ReadAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		return await sourcesRepository.GetSources()
+		return await sourcesRepository.GetInfo()
 			.FirstOrDefaultAsync(x => x.Id == id)
 			?? throw new NotFoundException($"Источник #{id}");
 	}
@@ -35,7 +35,7 @@ public class SourcesController(
 	[HttpGet]
 	public async Task<ActionResult<SourceInfo[]>> ReadAsync()
 	{
-		return await sourcesRepository.GetSources()
+		return await sourcesRepository.GetInfo()
 			.ToArrayAsync();
 	}
 
@@ -62,7 +62,7 @@ public class SourcesController(
 	public async Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		var source = await sourcesRepository.GetSources()
+		var source = await sourcesRepository.GetInfo()
 			.Where(x => x.Id == id)
 			.Select(x => new { x.Type, x.Address })
 			.FirstOrDefaultAsync()

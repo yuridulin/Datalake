@@ -1,4 +1,5 @@
-﻿using DatalakeDatabase.ApiModels.Users;
+﻿using DatalakeApp.Services.SessionManager;
+using DatalakeDatabase.ApiModels.Users;
 using DatalakeDatabase.Exceptions;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
@@ -9,13 +10,22 @@ namespace DatalakeApp.ApiControllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class UsersController(UsersRepository usersRepository) : ControllerBase
+public class UsersController(
+	UsersRepository usersRepository,
+	SessionManagerService sessionManager) : ControllerBase
 {
 	[HttpPost("auth")]
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
 		[BindRequired, FromBody] UserLoginPass loginPass)
 	{
-		return await usersRepository.AuthenticateAsync(loginPass);
+		var userAuthInfo = await usersRepository.AuthenticateAsync(loginPass);
+
+		var session = sessionManager.OpenSession(userAuthInfo);
+		sessionManager.AddSessionToResponse(session, Response);
+
+		userAuthInfo.Token = session.Token;
+
+		return userAuthInfo;
 	}
 
 	[HttpPost]
@@ -28,7 +38,7 @@ public class UsersController(UsersRepository usersRepository) : ControllerBase
 	[HttpGet]
 	public async Task<ActionResult<UserInfo[]>> ReadAsync()
 	{
-		return await usersRepository.GetUsers()
+		return await usersRepository.GetInfo()
 			.ToArrayAsync();
 	}
 
@@ -36,7 +46,17 @@ public class UsersController(UsersRepository usersRepository) : ControllerBase
 	public async Task<ActionResult<UserInfo>> ReadAsync(
 		[BindRequired, FromRoute] string name)
 	{
-		return await usersRepository.GetUsers()
+		return await usersRepository.GetInfo()
+			.Where(x => x.LoginName == name)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"Учётная запись {name}");
+	}
+
+	[HttpGet("{name}/detailed")]
+	public async Task<ActionResult<UserDetailInfo>> ReadWithDetailsAsync(
+		[BindRequired, FromRoute] string name)
+	{
+		return await usersRepository.GetDetailInfo()
 			.Where(x => x.LoginName == name)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Учётная запись {name}");

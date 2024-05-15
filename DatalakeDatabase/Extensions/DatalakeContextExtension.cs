@@ -5,6 +5,10 @@ namespace DatalakeDatabase.Extensions;
 
 public static class DatalakeContextExtension
 {
+	/// <summary>
+	/// Обновление времени последнего изменения структуры тегов, источников и сущностей в базе данных
+	/// </summary>
+	/// <param name="db">Подключение к базе данных</param>
 	public static async Task UpdateAsync(this DatalakeContext db)
 	{
 		await db.Settings
@@ -22,7 +26,7 @@ public static class DatalakeContextExtension
 		return lastUpdate;
 	}
 
-	public static async void Log(this DatalakeContext db, Log log)
+	public static async Task LogAsync(this DatalakeContext db, Log log)
 	{
 		try
 		{

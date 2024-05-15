@@ -1,13 +1,12 @@
 import { Tag } from 'antd'
-import { LogType } from '../../@types/enums/LogType'
+import { LogType } from '../../api/swagger/data-contracts'
 
-const colors = {
-	0: 'green',
-	1: 'volcano',
-	2: 'geekblue',
-	3: 'geekblue',
-	4: 'inherit',
-}
+const colors = {} as any
+colors[LogType.Error] = 'volcano'
+colors[LogType.Warning] = 'geekblue'
+colors[LogType.Success] = 'green'
+colors[LogType.Information] = 'geekblue'
+colors[LogType.Trace] = 'inherit'
 
 export default function LogTypeEl({ type }: { type: LogType }) {
 	return <Tag color={colors[type]}>{LogType[type]}</Tag>

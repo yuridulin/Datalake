@@ -1,17 +1,25 @@
 using DatalakeApp.BackgroundSerivces.Collector;
 using DatalakeApp.BackgroundSerivces.Collector.Collectors.Factory;
+using DatalakeApp.Constants;
+using DatalakeApp.Middlewares;
 using DatalakeApp.Services.Receiver;
+using DatalakeApp.Services.SessionManager;
 using DatalakeDatabase;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;
+using LinqToDB.AspNet.Logging;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using NJsonSchema.Generation;
 using Serilog;
+using System.Reflection;
 using System.Security.Claims;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace DatalakeApp
 {
@@ -22,19 +30,22 @@ namespace DatalakeApp
 			var builder = WebApplication.CreateBuilder(args);
 
 			builder.Services.AddControllers();
-			builder.Services.AddSwaggerDocument(options =>
+			builder.Services.AddOpenApiDocument((options, services) =>
 			{
 				options.DocumentName = "Datalake App";
 				options.Title = "Datalake App";
-				options.Version = "v1";
+				options.Version = "v" + Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+				options.SchemaSettings.GenerateEnumMappingDescription = true;
+				options.SchemaSettings.UseXmlDocumentation = true;
+				options.SchemaSettings.SchemaProcessors.Add(new XEnumVarnamesNswagSchemaProcessor());
 			});
+
+			builder.Host.UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
+			builder.Services.AddLogging(options => options.AddSerilog());
 
 			ConfigureDatabase(builder);
 			ConfigureAuth(builder);
 			ConfigureServices(builder);
-
-			builder.Host.UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
-			builder.Services.AddLogging(options => options.AddSerilog());
 
 			var app = builder.Build();
 
@@ -54,9 +65,23 @@ namespace DatalakeApp
 			app.UseRouting();
 			app.UseAuthentication();
 			app.UseAuthorization();
-			app.UseCors(policy => policy.AllowAnyOrigin());
+			app.UseCors(policy =>
+			{
+				policy
+					.AllowAnyMethod()
+					.AllowAnyOrigin()
+					.AllowAnyHeader()
+					.WithExposedHeaders([
+						AuthConstants.AccessHeader,
+						AuthConstants.TokenHeader,
+						AuthConstants.NameHeader,
+					]);
+			});
 			app.UseOpenApi();
 			app.UseSwaggerUi();
+			app.UseMiddleware<AuthMiddleware>();
+
+			ConfigureErrorPage(app);
 
 			app.MapControllerRoute(
 				name: "default",
@@ -72,12 +97,19 @@ namespace DatalakeApp
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
 				options
-					.UseNpgsql(connectionString);
+					.UseNpgsql(connectionString)
+#if DEBUG
+					.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddDebug()))
+#endif
+					;
 			});
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
 					.UsePostgreSQL(connectionString ?? throw new Exception("Не передана строка подключения к базе данных"))
+#if DEBUG
+					.UseDefaultLogging(provider)
+#endif
 			);
 		}
 
@@ -133,6 +165,7 @@ namespace DatalakeApp
 			// постоянные
 			builder.Services.AddSingleton<CollectorFactory>();
 			builder.Services.AddSingleton<ReceiverService>();
+			builder.Services.AddSingleton<SessionManagerService>();
 
 			// временные
 			builder.Services.AddTransient<BlocksRepository>();
@@ -140,6 +173,7 @@ namespace DatalakeApp
 			builder.Services.AddTransient<SourcesRepository>();
 			builder.Services.AddTransient<UsersRepository>();
 			builder.Services.AddTransient<ValuesRepository>();
+			builder.Services.AddTransient<AuthMiddleware>();
 
 			// службы
 			builder.Services.AddHostedService<CollectorService>();
@@ -156,6 +190,46 @@ namespace DatalakeApp
 			var db = serviceScope?.ServiceProvider.GetRequiredService<DatalakeContext>();
 			if (db != null)
 				await db.EnsureDataCreatedAsync();
+		}
+
+		static void ConfigureErrorPage(WebApplication app)
+		{
+			/*app.UseExceptionHandler(exceptionHandlerApp =>
+			{
+				exceptionHandlerApp.Run(async context =>
+				{
+					var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+
+					string messsage = exceptionHandlerPathFeature?.Error.ToString()
+						?? "Произошла ошибка";
+
+					context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+					context.Response.ContentType = Text.Plain;
+
+					await context.Response.WriteAsync(messsage);
+				});
+			});*/
+		}
+
+		public class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor
+		{
+			public void Process(SchemaProcessorContext context)
+			{
+				if (context.ContextualType.OriginalType.IsEnum)
+				{
+					if (context.Schema.ExtensionData is not null)
+					{
+						context.Schema.ExtensionData.Add("x-enum-varnames", context.Schema.EnumerationNames.ToArray());
+					}
+					else
+					{
+						context.Schema.ExtensionData = new Dictionary<string, object?>()
+						{
+								{"x-enum-varnames", context.Schema.EnumerationNames.ToArray()}
+						};
+					}
+				}
+			}
 		}
 	}
 }

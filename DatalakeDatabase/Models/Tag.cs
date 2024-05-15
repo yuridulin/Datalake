@@ -19,19 +19,19 @@ public class Tag
 	public int Id { get; set; }
 
 	[Column]
-	public Guid GlobalId { get; set; } = Guid.Empty;
+	public required Guid GlobalId { get; set; }
 
 	[Column]
-	public string Name { get; set; } = null!;
+	public required string Name { get; set; }
 
 	[Column]
 	public string? Description { get; set; }
 
 	[Column]
-	public TagType Type { get; set; }
+	public required TagType Type { get; set; }
 
 	[Column, NotNull]
-	public DateTime Created { get; set; }
+	public required DateTime Created { get; set; }
 
 	// специфичные для входящих
 
@@ -39,10 +39,10 @@ public class Tag
 	/// Интервал опроса значения в секундах
 	/// </summary>
 	[Column]
-	public short Interval { get; set; }
+	public required short Interval { get; set; }
 
 	[Column]
-	public int SourceId { get; set; }
+	public required int SourceId { get; set; }
 
 	[Column]
 	public string? SourceItem { get; set; } = string.Empty;
@@ -50,7 +50,7 @@ public class Tag
 	// специфичные для числовых
 
 	[Column]
-	public bool IsScaling { get; set; } = false;
+	public required bool IsScaling { get; set; } = false;
 
 	[Column]
 	public float MinEu { get; set; } = float.MinValue;
@@ -65,9 +65,6 @@ public class Tag
 	public float MaxRaw { get; set; } = float.MaxValue;
 
 	// специфичные для вычисляемых
-
-	[Column]
-	public bool IsCalculating { get; set; }
 
 	[Column]
 	public string? Formula { get; set; }

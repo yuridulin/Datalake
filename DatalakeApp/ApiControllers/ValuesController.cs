@@ -12,7 +12,7 @@ public class ValuesController(ValuesRepository valuesRepository) : ControllerBas
 	public const string LiveUrl = "api/Tags/values/live";
 
 	[HttpPost]
-	public async Task<List<ValuesResponse>> GetValuesAsync(
+	public async Task<List<ValuesResponse>> GetAsync(
 		[BindRequired, FromBody] ValuesRequest[] requests)
 	{
 		var responses = await valuesRepository.GetValuesAsync(requests);
@@ -21,7 +21,7 @@ public class ValuesController(ValuesRepository valuesRepository) : ControllerBas
 	}
 
 	[HttpPut]
-	public async Task<List<ValuesResponse>> WriteValuesAsync(
+	public async Task<List<ValuesResponse>> WriteAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests)
 	{
 		var responses = await valuesRepository.WriteValuesAsync(requests);

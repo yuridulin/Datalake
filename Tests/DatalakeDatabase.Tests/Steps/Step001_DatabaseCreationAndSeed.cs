@@ -32,7 +32,7 @@ namespace DatalakeDatabase.Tests.Steps
 			using var db = Setup.CreateDbContext();
 
 			var sourcesRepository = new SourcesRepository(db);
-			var sourceInfo = await sourcesRepository.GetSources()
+			var sourceInfo = await sourcesRepository.GetInfo()
 				.Where(x => x.Type == SourceType.Custom && x.Id == (int)CustomSource.Manual)
 				.FirstOrDefaultAsync();
 

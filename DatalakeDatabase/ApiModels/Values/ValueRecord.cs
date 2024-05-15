@@ -1,14 +1,22 @@
 ﻿using DatalakeDatabase.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace DatalakeDatabase.ApiModels.Values;
 
 public class ValueRecord
 {
-	public DateTime Date { get; set; } = DateTime.Now;
+	[Required]
+	public required DateTime Date { get; set; }
 
-	public object? Value { get; set; }
+	[Required]
+	public required string DateString { get; set; }
 
-	public TagQuality Quality { get; set; }
+	[Required]
+	public required object? Value { get; set; }
 
-	public TagUsing Using { get; set; }
+	[Required]
+	public required TagQuality Quality { get; set; }
+
+	[Required]
+	public required TagUsing Using { get; set; }
 }

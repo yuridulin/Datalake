@@ -1,32 +1,29 @@
 import { Button } from 'antd'
-import axios from 'axios'
 import { useEffect, useState } from 'react'
-import { NavLink, Navigate } from 'react-router-dom'
-import { BlockTreeInfo } from '../../../api/data-contracts'
+import { NavLink } from 'react-router-dom'
+import api from '../../../api/api'
+import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
 import { useFetching } from '../../../hooks/useFetching'
 import Header from '../../small/Header'
 
 export default function Dashboard() {
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 
-	const [load, , error] = useFetching(async () => {
-		let res = await axios.post('blocks/list')
-		setBlocks(res.data)
+	const [load] = useFetching(async () => {
+		let res = await api.blocksReadAsTree()
+		if (res.status === 200) setBlocks(res.data)
 	})
 
-	const [createBlock] = useFetching(async () => {
-		let res = await axios.post('blocks/create', { ParentId: 0 })
-		if (res.data.Done) load()
-	})
+	function createBlock() {
+		api.blocksCreateEmpty().then(() => load())
+	}
 
 	useEffect(() => {
 		load()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
-	return error ? (
-		<Navigate to='' />
-	) : (
+	return (
 		<>
 			<Header
 				right={<Button onClick={createBlock}>Добавить блок</Button>}

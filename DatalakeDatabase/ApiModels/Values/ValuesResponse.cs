@@ -1,16 +1,22 @@
 ﻿using DatalakeDatabase.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace DatalakeDatabase.ApiModels.Values;
 
 public class ValuesResponse
 {
-	public int Id { get; set; }
+	[Required]
+	public required int Id { get; set; }
 
-	public string TagName { get; set; } = string.Empty;
+	[Required]
+	public required string TagName { get; set; }
 
-	public TagType Type { get; set; }
+	[Required]
+	public required TagType Type { get; set; }
 
-	public AggregationFunc Func { get; set; }
+	[Required]
+	public required AggregationFunc Func { get; set; }
 
-	public ValueRecord[] Values { get; set; } = [];
+	[Required]
+	public required ValueRecord[] Values { get; set; } = [];
 }

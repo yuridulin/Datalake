@@ -5,7 +5,7 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class SourcesRepository
 {
-	public IQueryable<SourceInfo> GetSources()
+	public IQueryable<SourceInfo> GetInfo()
 	{
 		var query = from source in db.Sources
 								select new SourceInfo
@@ -20,7 +20,7 @@ public partial class SourcesRepository
 		return query;
 	}
 
-	public IQueryable<SourceWithTagsInfo> GetSourcesWithTags()
+	public IQueryable<SourceWithTagsInfo> GetInfoWithTags()
 	{
 		var query = from s in db.Sources
 								from t in db.Tags.LeftJoin(x => x.SourceId == s.Id)

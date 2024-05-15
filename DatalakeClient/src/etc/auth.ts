@@ -1,4 +1,4 @@
-import { AccessType } from '../api/data-contracts'
+import { AccessType } from '../api/swagger/data-contracts'
 
 const nameHeader = 'd-name'
 const tokenHeader = 'd-access-token'

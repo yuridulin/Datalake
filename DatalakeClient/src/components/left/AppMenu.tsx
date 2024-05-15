@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Api } from '../../api/Api'
-import { BlockTreeInfo, SourceInfo } from '../../api/data-contracts'
+import api from '../../api/api'
+import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
 import { auth } from '../../etc/auth'
 import { CustomSources } from '../../etc/customSources'
@@ -14,7 +14,6 @@ export function AppMenu() {
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 
 	function load() {
-		var api = new Api()
 		api.blocksReadAsTree().then((res) => setBlocks(res.data))
 		api.sourcesReadAll().then((res) => setSources(res.data))
 	}

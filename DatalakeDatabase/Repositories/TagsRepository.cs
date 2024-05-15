@@ -2,62 +2,131 @@
 using DatalakeDatabase.Enums;
 using DatalakeDatabase.Exceptions;
 using DatalakeDatabase.Extensions;
+using DatalakeDatabase.Models;
 using LinqToDB;
+using System.Text.RegularExpressions;
 
 namespace DatalakeDatabase.Repositories;
 
 public partial class TagsRepository(DatalakeContext db)
 {
-	public async Task<int> CreateAsync(TagInfo tagInfo)
+	public async Task<int> CreateAsync(TagCreateRequest tagCreateRequest)
 	{
-		await CheckTagInfoAsync(tagInfo);
+		// TODO: проверка разрешения на создание тега
 
-		int? id = await db.Tags
-			.Value(x => x.GlobalId, Guid.NewGuid())
-			.Value(x => x.Name, tagInfo.Name)
-			.Value(x => x.Description, tagInfo.Description)
-			.Value(x => x.Type, tagInfo.Type)
-			.Value(x => x.Interval, tagInfo.IntervalInSeconds ?? 0)
-			.Value(x => x.Created, DateTime.Now)
-			.Value(x => x.SourceId, tagInfo.SourceInfo.Id)
-			.Value(x => x.SourceItem, tagInfo.SourceInfo.Item)
-			.Value(x => x.IsScaling, tagInfo.MathInfo != null)
-			.Value(x => x.MaxEu, tagInfo.MathInfo?.MaxEu)
-			.Value(x => x.MinEu, tagInfo.MathInfo?.MinEu)
-			.Value(x => x.MaxRaw, tagInfo.MathInfo?.MaxRaw)
-			.Value(x => x.MinRaw, tagInfo.MathInfo?.MinRaw)
-			.Value(x => x.IsCalculating, tagInfo.CalcInfo != null)
-			.Value(x => x.Formula, tagInfo.CalcInfo?.Formula)
-			.InsertWithInt32IdentityAsync();
+		if (!tagCreateRequest.SourceId.HasValue && !tagCreateRequest.BlockId.HasValue)
+			throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или родительскую сущность");
+
+		bool needToAddIdInName = string.IsNullOrEmpty(tagCreateRequest.Name);
+		if (!string.IsNullOrEmpty(tagCreateRequest.Name))
+		{
+			tagCreateRequest.Name = WhitespaceFoundRegex().Replace(tagCreateRequest.Name, "");
+
+			if (await db.Tags.AnyAsync(x => x.Name.ToLower() == tagCreateRequest.Name.ToLower()))
+				throw new ForbiddenException(message: "уже существует тег с таким именем");
+		}
+
+		if (tagCreateRequest.SourceId.HasValue)
+		{
+			if (!string.IsNullOrEmpty(tagCreateRequest.SourceItem))
+			{
+				tagCreateRequest.SourceItem = WhitespaceFoundRegex().Replace(tagCreateRequest.SourceItem, "");
+			}
+
+			var source = await db.Sources
+				.Where(x => x.Id == tagCreateRequest.SourceId)
+				.Select(x => new
+				{
+					x.Id,
+					x.Name,
+				})
+				.FirstOrDefaultAsync()
+				?? throw new NotFoundException(message: $"источник #{tagCreateRequest.SourceId}");
+
+			if (string.IsNullOrEmpty(tagCreateRequest.Name))
+			{
+				tagCreateRequest.Name = (source.Id <= 0 ? ((CustomSource)source.Id).ToString() : source.Name) 
+					+ (tagCreateRequest.SourceItem ?? "Tag");
+			}
+		}
+		
+		if (tagCreateRequest.BlockId.HasValue)
+		{
+			var block = await db.Blocks
+				.Where(x => x.Id == tagCreateRequest.BlockId)
+				.Select(x => new
+				{
+					x.Id,
+					x.Name,
+				})
+				.FirstOrDefaultAsync()
+				?? throw new NotFoundException(message: $"сущность #{tagCreateRequest.BlockId}");
+
+			// TODO: проверка разрешения на изменение сущности
+
+			if (string.IsNullOrEmpty(tagCreateRequest.Name))
+			{
+				tagCreateRequest.Name = block.Name + ".Tag";
+			}
+		}
+
+		var transaction = await db.BeginTransactionAsync();
+
+		int? id = await db.InsertWithInt32IdentityAsync(new Tag
+		{
+			Created = DateTime.Now,
+			GlobalId = Guid.NewGuid(),
+			Name = tagCreateRequest.Name!,
+			Type = tagCreateRequest.TagType,
+			Interval = 60,
+			IsScaling = false,
+			SourceId = tagCreateRequest.SourceId ?? (int)CustomSource.Manual,
+			SourceItem = tagCreateRequest.SourceItem,
+		});
 
 		if (!id.HasValue)
-			throw new DatabaseException("Не удалось добавить тег");
-		
-		if (string.IsNullOrEmpty(tagInfo.Name))
+			throw new DatabaseException(message: "не удалось добавить тег");
+
+		if (needToAddIdInName)
 		{
-			await CreateDefaultTagNameAsync(tagInfo);
+			tagCreateRequest.Name += id.Value.ToString();
+
 			await db.Tags
 				.Where(x => x.Id == id.Value)
-				.Set(x => x.Name, tagInfo.Name)
+				.Set(x => x.Name, tagCreateRequest.Name)
 				.UpdateAsync();
 		}
 
-		await db.TagsLive
-			.Value(x => x.TagId, id.Value)
-			.Value(x => x.Date, DateTime.Now)
-			.Value(x => x.Quality, TagQuality.Unknown)
-			.Value(x => x.Text, null as string)
-			.Value(x => x.Number, null as float?)
-			.Value(x => x.Using, TagUsing.Initial)
-			.InsertAsync();
+		await new ValuesRepository(db).InitializeValueAsync(id.Value);
+
+		if (tagCreateRequest.BlockId.HasValue)
+		{
+			await db.BlockTags
+				.Value(x => x.TagId, id.Value)
+				.Value(x => x.BlockId, tagCreateRequest.BlockId)
+				.Value(x => x.Name, tagCreateRequest.Name)
+				.Value(x => x.Relation, BlockTagRelation.Static)
+				.InsertAsync();
+		}
+
+		await db.LogAsync(new Log
+		{
+			Category = LogCategory.Tag,
+			RefId = id.Value,
+			Text = $"Создан тег \"{tagCreateRequest.Name}\"",
+			Type = LogType.Success,
+		});
 
 		await db.UpdateAsync();
+
+		await db.CommitTransactionAsync();
 
 		return id.Value;
 	}
 
 	public async Task UpdateAsync(int id, TagInfo tagInfo)
 	{
+		// TODO: сделать очистку строковых параметров через регулярку, как при создании
 		await CheckTagInfoAsync(tagInfo);
 
 		int count = await db.Tags
@@ -65,15 +134,14 @@ public partial class TagsRepository(DatalakeContext db)
 			.Set(x => x.Name, tagInfo.Name)
 			.Set(x => x.Description, tagInfo.Description)
 			.Set(x => x.Type, tagInfo.Type)
-			.Set(x => x.Interval, tagInfo.IntervalInSeconds ?? 0)
+			.Set(x => x.Interval, tagInfo.IntervalInSeconds)
 			.Set(x => x.SourceId, tagInfo.SourceInfo?.Id)
 			.Set(x => x.SourceItem, tagInfo.SourceInfo?.Item)
-			.Set(x => x.IsScaling, tagInfo.MathInfo != null)
+			.Set(x => x.IsScaling, tagInfo.MathInfo?.IsScaling ?? false)
 			.Set(x => x.MaxEu, tagInfo.MathInfo?.MaxEu)
 			.Set(x => x.MinEu, tagInfo.MathInfo?.MinEu)
 			.Set(x => x.MaxRaw, tagInfo.MathInfo?.MaxRaw)
 			.Set(x => x.MinRaw, tagInfo.MathInfo?.MinRaw)
-			.Set(x => x.IsCalculating, tagInfo.CalcInfo != null)
 			.Set(x => x.Formula, tagInfo.CalcInfo?.Formula)
 			.UpdateAsync();
 
@@ -92,53 +160,29 @@ public partial class TagsRepository(DatalakeContext db)
 		if (count == 0)
 			throw new DatabaseException($"Не удалось удалить тег #{id}");
 
+		// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
+		// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
+
 		await db.UpdateAsync();
 	}
 
-
-	async Task CreateDefaultTagNameAsync(TagInfo tagInfo)
+	private async Task CheckTagInfoAsync(TagInfo tagInfo, bool isSystemCall = false)
 	{
-		if (tagInfo.SourceInfo.Id == (int)CustomSource.Manual)
-		{
-			tagInfo.Name = $"ManualTag{tagInfo.Id}";
-		}
-		else if (tagInfo.SourceInfo.Id == (int)CustomSource.Calculated)
-		{
-			tagInfo.Name = $"CalcTag{tagInfo.Id}";
-		}
-		else if (tagInfo.SourceInfo.Id > 0)
-		{
-			var source = await db.Sources
-				.Where(x => x.Id == tagInfo.SourceInfo.Id)
-				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"Указанный источник #{tagInfo.SourceInfo.Id} не найден");
+		string exist = await db.Tags
+			.Where(x => x.Id == tagInfo.Id)
+			.Select(x => x.Name)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"тег #{tagInfo.Id}");
 
-			tagInfo.Name = $"{source.Name}.{tagInfo.SourceInfo.Item}";
-		}
-	}
+		if (exist == tagInfo.Name)
+			throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
 
-	async Task CheckTagInfoAsync(TagInfo tagInfo, bool isSystemCall = false)
-	{
-		if (tagInfo.Id.HasValue)
-		{
-			string exist = await db.Tags
-				.Where(x => x.Id == tagInfo.Id)
-				.Select(x => x.Name)
-				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"тег #{tagInfo.Id}");
-
-			if (exist == tagInfo.Name)
-				throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
-		}
-		else
-		{
-			bool existWithSameName = await db.Tags
-				.Where(x => x.Name == tagInfo.Name)
-				.AnyAsync();
+		bool existWithSameName = await db.Tags
+			.Where(x => x.Name == tagInfo.Name)
+			.AnyAsync();
 			
-			if (existWithSameName)
-				throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
-		}
+		if (existWithSameName)
+			throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
 
 		if (tagInfo.Name?.Contains(' ') ?? false)
 			throw new InvalidValueException("в имени тега не разрешены пробелы");
@@ -150,11 +194,14 @@ public partial class TagsRepository(DatalakeContext db)
 		{
 			if (string.IsNullOrEmpty(tagInfo.SourceInfo.Item))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
-			if (!(tagInfo.IntervalInSeconds.HasValue && tagInfo.IntervalInSeconds.Value >= 0))
+			if (tagInfo.IntervalInSeconds < 0)
 				throw new InvalidValueException("интервал обновления должен быть неотрицательным целым числом");
 		}
 
 		if (tagInfo.SourceInfo.Item?.Contains(' ') ?? false)
 			throw new InvalidValueException("В адресе значения не разрешены пробелы");
 	}
+
+	[GeneratedRegex(@"\s+")]
+	private static partial Regex WhitespaceFoundRegex();
 }
