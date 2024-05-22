@@ -1,6 +1,6 @@
-﻿using DatalakeApp.BackgroundSerivces.Collector.Collectors.Abstractions;
-using DatalakeApp.BackgroundSerivces.Collector.Collectors.Factory;
-using DatalakeApp.BackgroundSerivces.Collector.Models;
+﻿using DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
+using DatalakeApp.BackgroundServices.Collector.Collectors.Factory;
+using DatalakeApp.BackgroundServices.Collector.Models;
 using DatalakeDatabase;
 using DatalakeDatabase.ApiModels.Values;
 using DatalakeDatabase.Extensions;
@@ -8,7 +8,7 @@ using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 
-namespace DatalakeApp.BackgroundSerivces.Collector;
+namespace DatalakeApp.BackgroundServices.Collector;
 
 public class CollectorService(
 	CollectorFactory collectorFactory,

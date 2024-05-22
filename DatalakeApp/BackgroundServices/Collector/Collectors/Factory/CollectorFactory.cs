@@ -1,9 +1,9 @@
-﻿using DatalakeApp.BackgroundSerivces.Collector.Collectors.Abstractions;
+﻿using DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
 using DatalakeApp.Services.Receiver;
 using DatalakeDatabase.Enums;
 using DatalakeDatabase.Models;
 
-namespace DatalakeApp.BackgroundSerivces.Collector.Collectors.Factory;
+namespace DatalakeApp.BackgroundServices.Collector.Collectors.Factory;
 
 public class CollectorFactory(ReceiverService receiverService)
 {

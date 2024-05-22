@@ -1,9 +1,9 @@
-﻿using DatalakeApp.BackgroundSerivces.Collector.Collectors.Abstractions;
+﻿using DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
 using DatalakeApp.Services.Receiver;
 using DatalakeDatabase.Models;
 using Timer = System.Timers.Timer;
 
-namespace DatalakeApp.BackgroundSerivces.Collector.Collectors;
+namespace DatalakeApp.BackgroundServices.Collector.Collectors;
 
 public class InopcCollector : CollectorBase
 {

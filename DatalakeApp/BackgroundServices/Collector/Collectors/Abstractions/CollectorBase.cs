@@ -1,7 +1,7 @@
 ﻿using DatalakeDatabase.Enums;
 using DatalakeDatabase.Models;
 
-namespace DatalakeApp.BackgroundSerivces.Collector.Collectors.Abstractions;
+namespace DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
 
 public abstract class CollectorBase(Source source, ILogger logger) : ICollector
 {

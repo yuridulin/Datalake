@@ -1,8 +1,8 @@
-﻿using DatalakeApp.BackgroundSerivces.Collector.Collectors.Abstractions;
+﻿using DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
 using DatalakeApp.Services.Receiver;
 using DatalakeDatabase.Models;
 
-namespace DatalakeApp.BackgroundSerivces.Collector.Collectors;
+namespace DatalakeApp.BackgroundServices.Collector.Collectors;
 
 public class DatalakeCollector : CollectorBase
 {

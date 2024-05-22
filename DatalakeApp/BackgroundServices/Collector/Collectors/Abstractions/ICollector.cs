@@ -1,7 +1,7 @@
-﻿using DatalakeApp.BackgroundSerivces.Collector.Models;
+﻿using DatalakeApp.BackgroundServices.Collector.Models;
 using DatalakeDatabase.Enums;
 
-namespace DatalakeApp.BackgroundSerivces.Collector.Collectors.Abstractions;
+namespace DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
 
 public delegate void CollectEvent(ICollector collector, IEnumerable<CollectValue> values);
 
