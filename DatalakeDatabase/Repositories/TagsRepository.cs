@@ -2,9 +2,9 @@
 using DatalakeDatabase.Enums;
 using DatalakeDatabase.Exceptions;
 using DatalakeDatabase.Extensions;
+using DatalakeDatabase.Helpers;
 using DatalakeDatabase.Models;
 using LinqToDB;
-using System.Text.RegularExpressions;
 
 namespace DatalakeDatabase.Repositories;
 
@@ -20,7 +20,7 @@ public partial class TagsRepository(DatalakeContext db)
 		bool needToAddIdInName = string.IsNullOrEmpty(tagCreateRequest.Name);
 		if (!string.IsNullOrEmpty(tagCreateRequest.Name))
 		{
-			tagCreateRequest.Name = WhitespaceFoundRegex().Replace(tagCreateRequest.Name, "");
+			tagCreateRequest.Name = ValueChecker.RemoveWhitespaces(tagCreateRequest.Name, "_");
 
 			#pragma warning disable CA1862
 			if (await db.Tags.AnyAsync(x => x.Name.ToLower() == tagCreateRequest.Name.ToLower()))
@@ -32,7 +32,7 @@ public partial class TagsRepository(DatalakeContext db)
 		{
 			if (!string.IsNullOrEmpty(tagCreateRequest.SourceItem))
 			{
-				tagCreateRequest.SourceItem = WhitespaceFoundRegex().Replace(tagCreateRequest.SourceItem, "");
+				tagCreateRequest.SourceItem = ValueChecker.RemoveWhitespaces(tagCreateRequest.SourceItem);
 			}
 
 			var source = await db.Sources
@@ -48,7 +48,7 @@ public partial class TagsRepository(DatalakeContext db)
 			if (string.IsNullOrEmpty(tagCreateRequest.Name))
 			{
 				tagCreateRequest.Name = (source.Id <= 0 ? ((CustomSource)source.Id).ToString() : source.Name) 
-					+ (tagCreateRequest.SourceItem ?? "Tag");
+					+ "." + (tagCreateRequest.SourceItem ?? "Tag");
 			}
 		}
 		
@@ -128,8 +128,27 @@ public partial class TagsRepository(DatalakeContext db)
 
 	public async Task UpdateAsync(int id, TagInfo tagInfo)
 	{
-		// TODO: сделать очистку строковых параметров через регулярку, как при создании
-		await CheckTagInfoAsync(tagInfo);
+		tagInfo.Name = ValueChecker.RemoveWhitespaces(tagInfo.Name, "_");
+
+		if (!await db.Tags.AnyAsync(x => x.Id == id))
+			throw new NotFoundException($"тег #{tagInfo.Id}");
+
+		if (await db.Tags.AnyAsync(x => x.Id != id && x.Name == tagInfo.Name))
+			throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
+
+		if (tagInfo.SourceInfo.Id > 0)
+		{
+			if (string.IsNullOrEmpty(tagInfo.SourceInfo.Item))
+				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
+			if (tagInfo.IntervalInSeconds < 0)
+				throw new InvalidValueException("интервал обновления должен быть неотрицательным целым числом");
+
+			tagInfo.SourceInfo.Item = ValueChecker.RemoveWhitespaces(tagInfo.SourceInfo.Item);
+		}
+		else
+		{
+			tagInfo.SourceInfo.Item = null;
+		}
 
 		int count = await db.Tags
 			.Where(x => x.Id == id)
@@ -167,43 +186,4 @@ public partial class TagsRepository(DatalakeContext db)
 
 		await db.UpdateAsync();
 	}
-
-	private async Task CheckTagInfoAsync(TagInfo tagInfo, bool isSystemCall = false)
-	{
-		string exist = await db.Tags
-			.Where(x => x.Id == tagInfo.Id)
-			.Select(x => x.Name)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"тег #{tagInfo.Id}");
-
-		if (exist == tagInfo.Name)
-			throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
-
-		bool existWithSameName = await db.Tags
-			.Where(x => x.Name == tagInfo.Name)
-			.AnyAsync();
-			
-		if (existWithSameName)
-			throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
-
-		if (tagInfo.Name?.Contains(' ') ?? false)
-			throw new InvalidValueException("в имени тега не разрешены пробелы");
-
-		if (tagInfo.SourceInfo.Id == (int)CustomSource.System && !isSystemCall)
-			throw new ForbiddenException("создавать системные теги");
-
-		if (tagInfo.SourceInfo.Id > 0)
-		{
-			if (string.IsNullOrEmpty(tagInfo.SourceInfo.Item))
-				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
-			if (tagInfo.IntervalInSeconds < 0)
-				throw new InvalidValueException("интервал обновления должен быть неотрицательным целым числом");
-		}
-
-		if (tagInfo.SourceInfo.Item?.Contains(' ') ?? false)
-			throw new InvalidValueException("В адресе значения не разрешены пробелы");
-	}
-
-	[GeneratedRegex(@"\s+")]
-	private static partial Regex WhitespaceFoundRegex();
 }

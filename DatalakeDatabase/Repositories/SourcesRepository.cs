@@ -1,6 +1,7 @@
 ﻿using DatalakeDatabase.ApiModels.Sources;
 using DatalakeDatabase.Exceptions;
 using DatalakeDatabase.Extensions;
+using DatalakeDatabase.Helpers;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
@@ -20,7 +21,7 @@ public partial class SourcesRepository(DatalakeContext db)
 
 		await db.Sources
 			.Where(x => x.Id == id.Value)
-			.Set(x => x.Name, "Новый источник #" + id.Value)
+			.Set(x => x.Name, ValueChecker.RemoveWhitespaces("Новый источник #" + id.Value, "_"))
 			.UpdateAsync();
 
 		return id.Value;
@@ -28,11 +29,13 @@ public partial class SourcesRepository(DatalakeContext db)
 
 	public async Task<int> CreateAsync(SourceInfo sourceInfo)
 	{
+		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
+
 		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name))
 			throw new AlreadyExistException("Уже существует источник с таким именем");
 
 		if (sourceInfo.Type == Enums.SourceType.Custom)
-			throw new InvalidValueException("Нельзя добавить источник, который не является общедоступным");
+			throw new InvalidValueException("Нельзя добавить системный источник");
 
 		int? id = await db.Sources
 			.Value(x => x.Name, sourceInfo.Name)
@@ -48,9 +51,12 @@ public partial class SourcesRepository(DatalakeContext db)
 
 	public async Task<bool> UpdateAsync(int id, SourceInfo sourceInfo)
 	{
+		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
+
 		if (!await db.Sources.AnyAsync(x => x.Id == id))
 			throw new NotFoundException($"Источник #{id} не найден");
-		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name))
+
+		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name && x.Id != id))
 			throw new AlreadyExistException("Уже существует источник с таким именем");
 
 		int count = await db.Sources
