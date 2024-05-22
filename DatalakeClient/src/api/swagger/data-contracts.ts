@@ -221,7 +221,7 @@ export interface UserLoginPass {
 	password: string
 }
 
-export interface UserAuthRequest {
+export interface UserCreateRequest {
 	/** @minLength 1 */
 	loginName: string
 	fullName?: string | null

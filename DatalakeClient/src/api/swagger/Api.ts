@@ -20,7 +20,7 @@ import {
 	TagCreateRequest,
 	TagInfo,
 	UserAuthInfo,
-	UserAuthRequest,
+	UserCreateRequest,
 	UserDetailInfo,
 	UserInfo,
 	UserLoginPass,
@@ -399,7 +399,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request POST:/api/Users
 	 * @response `200` `boolean`
 	 */
-	usersCreate = (data: UserAuthRequest, params: RequestParams = {}) =>
+	usersCreate = (data: UserCreateRequest, params: RequestParams = {}) =>
 		this.request<boolean, any>({
 			path: `/api/Users`,
 			method: 'POST',
