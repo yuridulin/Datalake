@@ -68,29 +68,26 @@ public class SourcesController(
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Источник #{id}");
 
-		var items = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
-		var tags = await sourcesRepository.GetExistTags(id)
-			.ToDictionaryAsync(x => x.Item, x => x);
+		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
+		var sourceItems = sourceItemsResponse.Tags
+			.DistinctBy(x => x.Name)
+			.ToDictionary(x => x.Name, x => new SourceItemInfo { Path = x.Name, Type = x.Type });
 
-		// склеить
-		var all = items.Tags
-			.Select(x => new SourceEntryInfo
+		var sourceTags = await sourcesRepository.GetExistTags(id)
+			.ToListAsync();
+
+		var all = sourceTags.Select(tag => new SourceEntryInfo
 			{
-				ItemInfo = new SourceItemInfo
-				{
-					Path = x.Name,
-					Type = x.Type,
-				},
-				TagInfo = tags.TryGetValue(x.Name, out SourceTagInfo? value) ? value : null,
+				TagInfo = tag,
+				ItemInfo = sourceItems.TryGetValue(tag.Item, out var itemInfo) ? itemInfo : null,
 			})
-			.Union(tags
-				.Where(x => !items.Tags.Select(x => x.Name).Contains(x.Key))
-				.Select(x => new SourceEntryInfo
+			.Union(sourceItems
+				.Where(itemKeyValue => !sourceTags.Select(tag => tag.Item).Contains(itemKeyValue.Key))
+				.Select(itemKeyValue => new SourceEntryInfo
 				{
-					ItemInfo = null,
-					TagInfo = x.Value,
-				})
-			)
+					TagInfo = null,
+					ItemInfo = itemKeyValue.Value,
+				}))
 			.ToArray();
 
 		return all;
