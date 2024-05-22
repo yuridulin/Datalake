@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/api'
 import { SourceInfo } from '../../../api/swagger/data-contracts'
+import { sourceTypeName } from '../../../api/translators'
 import Header from '../../small/Header'
 
 export default function SourcesList() {
@@ -11,7 +12,7 @@ export default function SourcesList() {
 	const load = () => api.sourcesReadAll().then((res) => setList(res.data))
 
 	const createSource = () => {
-		api.sourcesCreate({} as any).then(load)
+		api.sourcesCreate().then(load)
 	}
 
 	useEffect(() => {
@@ -39,17 +40,19 @@ export default function SourcesList() {
 						<span>Тип</span>
 						<span>Адрес</span>
 					</div>
-					{list.map((x) => (
-						<NavLink
-							className='table-row'
-							to={'/sources/' + x.id}
-							key={x.id}
-						>
-							<span>{x.name}</span>
-							<span>{x.type}</span>
-							<span>{x.address}</span>
-						</NavLink>
-					))}
+					{list
+						.filter((x) => x.id > 0)
+						.map((x) => (
+							<NavLink
+								className='table-row'
+								to={'/sources/' + x.id}
+								key={x.id}
+							>
+								<span>{x.name}</span>
+								<span>{sourceTypeName(x.type)}</span>
+								<span>{x.address}</span>
+							</NavLink>
+						))}
 				</div>
 			)}
 		</>

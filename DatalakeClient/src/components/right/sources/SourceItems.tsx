@@ -1,5 +1,5 @@
 import { PlusCircleOutlined } from '@ant-design/icons'
-import { Button } from 'antd'
+import { Button, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/api'
@@ -9,6 +9,7 @@ import {
 	TagType,
 } from '../../../api/swagger/data-contracts'
 import { useFetching } from '../../../hooks/useFetching'
+import Header from '../../small/Header'
 import TagTypeEl from '../../small/TagTypeEl'
 
 export default function SourceItems({
@@ -42,6 +43,18 @@ export default function SourceItems({
 		})
 	}
 
+	const [createEmptyTag] = useFetching(async () => {
+		api.tagsCreate({
+			name: '',
+			tagType: TagType.String,
+			sourceId: Number(id),
+		}).then((res) => {
+			if (res.data > 0) read()
+		})
+	})
+
+	if (type !== SourceType.Datalake && type !== SourceType.Inopc) return <></>
+
 	return error ? (
 		<div>
 			<i>
@@ -50,13 +63,22 @@ export default function SourceItems({
 		</div>
 	) : (
 		<>
+			<Header
+				right={
+					<>
+						<Button onClick={createEmptyTag}>Добавить тег</Button>
+						<Button onClick={read}>Обновить</Button>
+					</>
+				}
+			>
+				Доступные значения с этого источника данных
+			</Header>
 			<div className='table'>
-				<div className='table-caption'>
-					Доступные значения с этого источника данных
-				</div>
 				{items.map((x, i) => (
 					<div className='table-row' key={i}>
-						<span>{x.itemInfo?.path}</span>
+						<span>
+							{x.itemInfo?.path ?? <Tag>Путь не существует</Tag>}
+						</span>
 						<span>
 							<TagTypeEl
 								tagType={x.itemInfo?.type || TagType.String}

@@ -14,6 +14,14 @@ public class SourcesController(
 	SourcesRepository sourcesRepository,
 	ReceiverService receiverService) : ControllerBase
 {
+	[HttpPost("empty")]
+	public async Task<ActionResult<int>> CreateAsync()
+	{
+		var id = await sourcesRepository.CreateAsync();
+
+		return id;
+	}
+
 	[HttpPost]
 	public async Task<ActionResult<int>> CreateAsync(
 		[BindRequired, FromBody] SourceInfo source)

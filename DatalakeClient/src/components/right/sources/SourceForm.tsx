@@ -2,11 +2,8 @@ import { Button, Input, Popconfirm, Radio } from 'antd'
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import api from '../../../api/api'
-import {
-	SourceInfo,
-	SourceType,
-	TagType,
-} from '../../../api/swagger/data-contracts'
+import { SourceInfo, SourceType } from '../../../api/swagger/data-contracts'
+import { sourceTypeName } from '../../../api/translators'
 import { useFetching } from '../../../hooks/useFetching'
 import router from '../../../router/router'
 import FormRow from '../../small/FormRow'
@@ -34,16 +31,6 @@ export default function SourceForm() {
 
 	const [del] = useFetching(async () => {
 		api.sourcesDelete(Number(id)).then(() => router.navigate('/sources'))
-	})
-
-	const [createTag] = useFetching(async () => {
-		api.tagsCreate({
-			name: '',
-			tagType: TagType.String,
-			sourceId: Number(id),
-		}).then((res) => {
-			if (res.data > 0) read()
-		})
 	})
 
 	useEffect(() => {
@@ -97,26 +84,33 @@ export default function SourceForm() {
 					}
 				>
 					{Object.values(SourceType)
-						.filter((x) => !(x as string).length)
+						.filter((x) => x !== SourceType.Custom)
 						.map((x) => (
 							<Radio.Button key={x} value={x}>
-								{SourceType[x]}
+								{sourceTypeName(x)}
 							</Radio.Button>
 						))}
 				</Radio.Group>
 			</FormRow>
-			<FormRow title='Адрес'>
-				<Input
-					value={source.address ?? ''}
-					onChange={(e) =>
-						setSource({ ...source, address: e.target.value })
-					}
-				/>
-			</FormRow>
-			<Button onClick={createTag}>Добавить тег</Button>
-			<br />
-			<br />
-			<SourceItems type={source.type} id={Number(id)} />
+			{(source.type === SourceType.Datalake ||
+				source.type === SourceType.Inopc) && (
+				<>
+					<FormRow title='Адрес'>
+						<Input
+							value={source.address ?? ''}
+							onChange={(e) =>
+								setSource({
+									...source,
+									address: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
+					<br />
+					<br />
+					<SourceItems type={source.type} id={Number(id)} />
+				</>
+			)}
 		</>
 	)
 }

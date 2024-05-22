@@ -5,7 +5,6 @@ import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
 import { auth } from '../../etc/auth'
 import { CustomSources } from '../../etc/customSources'
-import { useInterval } from '../../hooks/useInterval'
 
 export function AppMenu() {
 	const { lastUpdate } = useUpdateContext()
@@ -19,7 +18,7 @@ export function AppMenu() {
 	}
 
 	useEffect(load, [lastUpdate])
-	useInterval(load, 10000)
+	//useInterval(load, 10000)
 
 	return (
 		<div className='app-menu'>
@@ -43,11 +42,13 @@ export function AppMenu() {
 			<div className='app-menu-block'>
 				<NavLink to={'/sources'}>Источники</NavLink>
 				<div className='app-menu-sub'>
-					{sources.map((x) => (
-						<NavLink key={x.id} to={`/sources/${x.id}`}>
-							{x.name}
-						</NavLink>
-					))}
+					{sources
+						.filter((x) => x.id > 0)
+						.map((x) => (
+							<NavLink key={x.id} to={`/sources/${x.id}`}>
+								{x.name}
+							</NavLink>
+						))}
 				</div>
 			</div>
 

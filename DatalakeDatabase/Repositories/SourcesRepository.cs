@@ -7,6 +7,25 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class SourcesRepository(DatalakeContext db)
 {
+	public async Task<int> CreateAsync()
+	{
+		int? id = await db.Sources
+			.Value(x => x.Name, "INSERTING")
+			.Value(x => x.Address, "")
+			.Value(x => x.Type, Enums.SourceType.Unknown)
+			.InsertWithInt32IdentityAsync();
+
+		if (!id.HasValue)
+			throw new DatabaseException("Не удалось добавить источник");
+
+		await db.Sources
+			.Where(x => x.Id == id.Value)
+			.Set(x => x.Name, "Новый источник #" + id.Value)
+			.UpdateAsync();
+
+		return id.Value;
+	}
+
 	public async Task<int> CreateAsync(SourceInfo sourceInfo)
 	{
 		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name))
@@ -23,8 +42,6 @@ public partial class SourcesRepository(DatalakeContext db)
 
 		if (!id.HasValue)
 			throw new DatabaseException("Не удалось добавить источник");
-
-		await db.UpdateAsync();
 
 		return id.Value;
 	}
@@ -46,8 +63,6 @@ public partial class SourcesRepository(DatalakeContext db)
 		if (count == 0)
 			throw new DatabaseException($"Не удалось обновить источник #{id}");
 
-		await db.UpdateAsync();
-
 		return true;
 	}
 
@@ -59,8 +74,6 @@ public partial class SourcesRepository(DatalakeContext db)
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось удалить источник #{id}");
-
-		await db.UpdateAsync();
 
 		return true;
 	}

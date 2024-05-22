@@ -183,10 +183,25 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Sources
 	 * @name SourcesCreate
+	 * @request POST:/api/Sources/empty
+	 * @response `200` `number`
+	 */
+	sourcesCreate = (params: RequestParams = {}) =>
+		this.request<number, any>({
+			path: `/api/Sources/empty`,
+			method: 'POST',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Sources
+	 * @name SourcesCreate2
 	 * @request POST:/api/Sources
 	 * @response `200` `number`
 	 */
-	sourcesCreate = (data: SourceInfo, params: RequestParams = {}) =>
+	sourcesCreate2 = (data: SourceInfo, params: RequestParams = {}) =>
 		this.request<number, any>({
 			path: `/api/Sources`,
 			method: 'POST',
