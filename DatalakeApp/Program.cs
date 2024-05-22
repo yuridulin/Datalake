@@ -1,10 +1,11 @@
-using DatalakeApp.BackgroundSerivces.Collector;
-using DatalakeApp.BackgroundSerivces.Collector.Collectors.Factory;
+using DatalakeApp.BackgroundServices.Collector;
+using DatalakeApp.BackgroundServices.Collector.Collectors.Factory;
 using DatalakeApp.Constants;
 using DatalakeApp.Middlewares;
 using DatalakeApp.Services.Receiver;
 using DatalakeApp.Services.SessionManager;
 using DatalakeDatabase;
+using DatalakeDatabase.Exceptions.Base;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;
@@ -19,7 +20,6 @@ using NJsonSchema.Generation;
 using Serilog;
 using System.Reflection;
 using System.Security.Claims;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace DatalakeApp
 {
@@ -194,21 +194,32 @@ namespace DatalakeApp
 
 		static void ConfigureErrorPage(WebApplication app)
 		{
-			/*app.UseExceptionHandler(exceptionHandlerApp =>
+			app.UseExceptionHandler(exceptionHandlerApp =>
 			{
 				exceptionHandlerApp.Run(async context =>
 				{
 					var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
 
-					string messsage = exceptionHandlerPathFeature?.Error.ToString()
-						?? "Произошла ошибка";
+					var error = exceptionHandlerPathFeature?.Error;
+					string message;
+
+					if (error is DatalakeException)
+					{
+						message = error.ToString();
+					}
+					else
+					{
+						message = "Ошибка выполнения на сервере" +
+							"\n\n" + // разделитель, по которому клиент отсекает служебную часть сообщения
+							error?.ToString() ?? "error is null";
+					}
 
 					context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-					context.Response.ContentType = Text.Plain;
+					context.Response.ContentType = "text/plain; charset=UTF-8";
 
-					await context.Response.WriteAsync(messsage);
+					await context.Response.WriteAsync(message);
 				});
-			});*/
+			});
 		}
 
 		public class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor
