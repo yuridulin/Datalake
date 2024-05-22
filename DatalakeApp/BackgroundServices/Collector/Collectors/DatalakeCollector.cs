@@ -4,20 +4,23 @@ using DatalakeDatabase.Models;
 
 namespace DatalakeApp.BackgroundServices.Collector.Collectors;
 
-public class DatalakeCollector : CollectorBase
+public class DatalakeCollector(
+	ReceiverService receiverService,
+	Source source,
+	ILogger<DatalakeCollector> logger) : CollectorBase(source, logger)
 {
-	public DatalakeCollector(
-		ReceiverService receiverService,
-		Source source,
-		ILogger<DatalakeCollector> logger) : base(source, logger)
-	{
-		
-	}
-
 	public override event CollectEvent? CollectValues;
 
 	public override Task Start()
 	{
+		CollectValues?.Invoke(this, []);
+		try
+		{
+			if (!string.IsNullOrEmpty(_address))
+				receiverService.AskDatalake([], _address).Wait();
+		}
+		catch { }
+
 		return base.Start();
 	}
 
@@ -25,4 +28,6 @@ public class DatalakeCollector : CollectorBase
 	{
 		return base.Stop();
 	}
+
+	private readonly string? _address = source.Address;
 }

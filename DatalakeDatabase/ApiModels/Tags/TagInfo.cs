@@ -23,10 +23,10 @@ public class TagInfo
 	public required TagSourceInfo SourceInfo { get; set; }
 
 	[Required]
-	public required TagMathInfo MathInfo { get; set; }
+	public required TagMathInfo? MathInfo { get; set; }
 
 	[Required]
-	public required TagCalcInfo CalcInfo { get; set; }
+	public required TagCalcInfo? CalcInfo { get; set; }
 
 
 	public class TagSourceInfo
@@ -61,7 +61,6 @@ public class TagInfo
 
 	public class TagCalcInfo
 	{
-		[Required]
 		public string Formula { get; set; } = string.Empty;
 
 		[Required]

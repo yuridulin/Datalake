@@ -3,18 +3,15 @@ using DatalakeDatabase.Models;
 
 namespace DatalakeApp.BackgroundServices.Collector.Collectors;
 
-public class CalculateCollector : CollectorBase
+public class CalculateCollector(
+	Source source,
+	ILogger<CalculateCollector> logger) : CollectorBase(source, logger)
 {
-	public CalculateCollector(
-		Source source,
-		ILogger<CalculateCollector> logger) : base(source, logger)
-	{
-	}
-
 	public override event CollectEvent? CollectValues;
 
 	public override Task Start()
 	{
+		CollectValues?.Invoke(this, []);
 		return base.Start();
 	}
 
