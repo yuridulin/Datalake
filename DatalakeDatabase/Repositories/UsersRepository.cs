@@ -24,7 +24,7 @@ public partial class UsersRepository(DatalakeContext db)
 
 			if (!haveAnotherUsers)
 			{
-				user = await CreateUserAsync(new UserAuthRequest
+				user = await CreateUserAsync(new UserCreateRequest
 				{
 					LoginName = loginPass.Name,
 					Password = loginPass.Password,
@@ -57,7 +57,7 @@ public partial class UsersRepository(DatalakeContext db)
 		};
 	}
 
-	public async Task<bool> CreateAsync(UserAuthRequest userInfo)
+	public async Task<bool> CreateAsync(UserCreateRequest userInfo)
 	{
 		var user = await CreateUserAsync(userInfo);
 		return user != null;
@@ -159,7 +159,7 @@ public partial class UsersRepository(DatalakeContext db)
 	}
 
 
-	private async Task<User> CreateUserAsync(UserAuthRequest userInfo)
+	private async Task<User> CreateUserAsync(UserCreateRequest userInfo)
 	{
 		string hash;
 

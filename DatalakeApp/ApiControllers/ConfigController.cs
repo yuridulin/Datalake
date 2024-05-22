@@ -4,7 +4,6 @@ using DatalakeDatabase.Constants;
 using DatalakeDatabase.Extensions;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
 
 namespace DatalakeApp.ApiControllers;
 

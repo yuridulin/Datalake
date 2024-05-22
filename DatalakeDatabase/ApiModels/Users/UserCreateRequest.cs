@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DatalakeDatabase.ApiModels.Users;
 
-public class UserAuthRequest
+public class UserCreateRequest
 {
 	[Required]
 	public required string LoginName { get; set; }

@@ -30,7 +30,7 @@ public class UsersController(
 
 	[HttpPost]
 	public async Task<ActionResult<bool>> CreateAsync(
-		[BindRequired, FromBody] UserAuthRequest userAuthRequest)
+		[BindRequired, FromBody] UserCreateRequest userAuthRequest)
 	{
 		return await usersRepository.CreateAsync(userAuthRequest);
 	}

@@ -22,8 +22,10 @@ public partial class TagsRepository(DatalakeContext db)
 		{
 			tagCreateRequest.Name = WhitespaceFoundRegex().Replace(tagCreateRequest.Name, "");
 
+			#pragma warning disable CA1862
 			if (await db.Tags.AnyAsync(x => x.Name.ToLower() == tagCreateRequest.Name.ToLower()))
 				throw new ForbiddenException(message: "уже существует тег с таким именем");
+			#pragma warning restore CA1862
 		}
 
 		if (tagCreateRequest.SourceId.HasValue)
