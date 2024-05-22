@@ -1,10 +1,10 @@
-import { Button, Input, Popconfirm, Radio } from 'antd'
+import { CheckCircleOutlined } from '@ant-design/icons'
+import { Button, Input, Popconfirm, Radio, notification } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '../../../api/api'
 import {
 	AccessType,
-	UserDetailInfo,
 	UserUpdateRequest,
 } from '../../../api/swagger/data-contracts'
 import FormRow from '../../small/FormRow'
@@ -13,7 +13,7 @@ import Header from '../../small/Header'
 export default function UserForm() {
 	const navigate = useNavigate()
 	const { id } = useParams()
-	const [user, setUser] = useState({} as UserDetailInfo)
+	const [user, setUser] = useState({ hash: '' })
 	const [request, setRequest] = useState({} as UserUpdateRequest)
 	const [isStatic, setStatic] = useState(false)
 	const [wasStatic, setWasStatic] = useState(false)
@@ -21,11 +21,11 @@ export default function UserForm() {
 	useEffect(load, [id])
 
 	function load() {
-		if (!!id) return
+		if (!id) return
 		api.usersReadWithDetails(String(id)).then((res) => {
 			setStatic(!!res.data.staticHost)
 			setWasStatic(!!res.data.staticHost)
-			setUser(res.data)
+			setUser({ hash: res.data.hash })
 			setRequest({
 				loginName: res.data.loginName,
 				accessType: res.data.accessType,
@@ -38,9 +38,15 @@ export default function UserForm() {
 	}
 
 	function update() {
-		api.usersUpdate(String(id), request).then(
-			() => id !== user.loginName && navigate('/users/' + user.loginName),
-		)
+		api.usersUpdate(String(id), request).then((res) => {
+			if (res.status >= 300) return
+			notification.success({
+				message: 'Успешно',
+				icon: <CheckCircleOutlined />,
+			})
+			if (id !== request.loginName)
+				navigate('/users/' + request.loginName)
+		})
 	}
 
 	function del() {
@@ -84,17 +90,20 @@ export default function UserForm() {
 			<form>
 				<FormRow title='Имя учётной записи'>
 					<Input
-						value={user.loginName}
+						value={request.loginName}
 						onChange={(e) =>
-							setUser({ ...user, loginName: e.target.value })
+							setRequest({
+								...request,
+								loginName: e.target.value,
+							})
 						}
 					/>
 				</FormRow>
 				<FormRow title='Имя пользователя'>
 					<Input
-						value={user.fullName ?? ''}
+						value={request.fullName ?? ''}
 						onChange={(e) =>
-							setUser({ ...user, fullName: e.target.value })
+							setRequest({ ...request, fullName: e.target.value })
 						}
 					/>
 				</FormRow>
@@ -113,7 +122,7 @@ export default function UserForm() {
 					<>
 						<FormRow title='Адрес, с которого разрешен доступ'>
 							<Input
-								value={user.staticHost || ''}
+								value={request.staticHost || ''}
 								onChange={(e) =>
 									setRequest({
 										...request,
@@ -169,7 +178,7 @@ export default function UserForm() {
 				<FormRow title='Тип учётной записи'>
 					<Radio.Group
 						buttonStyle='solid'
-						value={user.accessType}
+						value={request.accessType}
 						onChange={(e) =>
 							setRequest({
 								...request,

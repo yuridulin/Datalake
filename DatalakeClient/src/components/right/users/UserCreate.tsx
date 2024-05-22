@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../../api/api'
 import {
 	AccessType,
-	UserAuthRequest,
+	UserCreateRequest,
 } from '../../../api/swagger/data-contracts'
 import FormRow from '../../small/FormRow'
 import Header from '../../small/Header'
@@ -15,11 +15,13 @@ export default function UserCreate() {
 		accessType: AccessType.NOT,
 		password: '',
 		staticHost: '',
-	} as UserAuthRequest)
+	} as UserCreateRequest)
 	const [isStatic, setStatic] = useState(false)
 
 	function create() {
-		api.usersCreate(user).then(() => navigate('/users/'))
+		api.usersCreate(user).then(() => {
+			navigate('/users/')
+		})
 	}
 
 	return (
