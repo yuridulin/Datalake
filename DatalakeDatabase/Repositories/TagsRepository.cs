@@ -30,6 +30,9 @@ public partial class TagsRepository(DatalakeContext db)
 
 		if (tagCreateRequest.SourceId.HasValue)
 		{
+			if (tagCreateRequest.SourceId == (int)CustomSource.NotSet)
+				throw new InvalidValueException(message: "необходимо выбрать источник");
+
 			if (!string.IsNullOrEmpty(tagCreateRequest.SourceItem))
 			{
 				tagCreateRequest.SourceItem = ValueChecker.RemoveWhitespaces(tagCreateRequest.SourceItem);

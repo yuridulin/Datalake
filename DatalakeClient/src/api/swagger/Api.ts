@@ -218,10 +218,17 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request GET:/api/Sources
 	 * @response `200` `(SourceInfo)[]`
 	 */
-	sourcesReadAll = (params: RequestParams = {}) =>
+	sourcesReadAll = (
+		query?: {
+			/** @default false */
+			withCustom?: boolean
+		},
+		params: RequestParams = {},
+	) =>
 		this.request<SourceInfo[], any>({
 			path: `/api/Sources`,
 			method: 'GET',
+			query: query,
 			format: 'json',
 			...params,
 		})

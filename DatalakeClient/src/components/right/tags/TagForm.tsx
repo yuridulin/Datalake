@@ -298,7 +298,7 @@ export default function TagForm() {
 			<div
 				style={{
 					display:
-						tag.sourceInfo.id !== CustomSources.Calculated
+						tag.sourceInfo.id === CustomSources.Calculated
 							? 'block'
 							: 'none',
 				}}
@@ -376,7 +376,7 @@ export default function TagForm() {
 					></Button>
 				</div>
 			</div>
-			<div style={{ display: tag.sourceInfo.id > 0 ? 'block' : 'none' }}>
+			<div style={{ display: tag.sourceInfo.id >= 0 ? 'block' : 'none' }}>
 				<FormRow title='Используемый источник'>
 					<Select
 						options={sources}

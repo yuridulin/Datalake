@@ -1,13 +1,17 @@
 ﻿using DatalakeDatabase.ApiModels.Sources;
+using DatalakeDatabase.Enums;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
 
 public partial class SourcesRepository
 {
-	public IQueryable<SourceInfo> GetInfo()
+	public static int[] CustomSourcesId = Enum.GetValues<CustomSource>().Cast<int>().ToArray();
+
+	public IQueryable<SourceInfo> GetInfo(bool withCustom = false)
 	{
 		var query = from source in db.Sources
+								where withCustom || !CustomSourcesId.Contains(source.Id)
 								select new SourceInfo
 								{
 									Id = source.Id,

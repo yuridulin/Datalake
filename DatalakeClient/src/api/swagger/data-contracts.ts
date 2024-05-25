@@ -186,8 +186,7 @@ export interface TagMathInfo {
 }
 
 export interface TagCalcInfo {
-	/** @minLength 1 */
-	formula: string
+	formula?: string
 	inputs: Record<string, number>
 }
 

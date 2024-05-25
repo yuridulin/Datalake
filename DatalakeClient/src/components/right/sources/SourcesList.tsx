@@ -40,19 +40,17 @@ export default function SourcesList() {
 						<span>Тип</span>
 						<span>Адрес</span>
 					</div>
-					{list
-						.filter((x) => x.id > 0)
-						.map((x) => (
-							<NavLink
-								className='table-row'
-								to={'/sources/' + x.id}
-								key={x.id}
-							>
-								<span>{x.name}</span>
-								<span>{sourceTypeName(x.type)}</span>
-								<span>{x.address}</span>
-							</NavLink>
-						))}
+					{list.map((x) => (
+						<NavLink
+							className='table-row'
+							to={'/sources/' + x.id}
+							key={x.id}
+						>
+							<span>{x.name}</span>
+							<span>{sourceTypeName(x.type)}</span>
+							<span>{x.address}</span>
+						</NavLink>
+					))}
 				</div>
 			)}
 		</>

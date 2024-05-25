@@ -41,9 +41,9 @@ public class SourcesController(
 	}
 
 	[HttpGet]
-	public async Task<ActionResult<SourceInfo[]>> ReadAsync()
+	public async Task<ActionResult<SourceInfo[]>> ReadAsync(bool withCustom = false)
 	{
-		return await sourcesRepository.GetInfo()
+		return await sourcesRepository.GetInfo(withCustom)
 			.ToArrayAsync();
 	}
 
