@@ -1,4 +1,5 @@
 ﻿using DatalakeDatabase.ApiModels.Sources;
+using DatalakeDatabase.Enums;
 using DatalakeDatabase.Exceptions;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Helpers;
@@ -74,12 +75,22 @@ public partial class SourcesRepository(DatalakeContext db)
 
 	public async Task<bool> DeleteAsync(int id)
 	{
+		using var transaction = await db.BeginTransactionAsync();
+
 		var count = await db.Sources
 			.Where(x => x.Id == id)
 			.DeleteAsync();
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось удалить источник #{id}");
+
+		// при удалении источника его теги становятся ручными
+		await db.Tags
+			.Where(x => x.SourceId == id)
+			.Set(x => x.SourceId, (int)CustomSource.Manual)
+			.UpdateAsync();
+
+		await transaction.CommitAsync();
 
 		return true;
 	}
