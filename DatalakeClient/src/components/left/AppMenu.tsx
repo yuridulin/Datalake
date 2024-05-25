@@ -4,7 +4,7 @@ import api from '../../api/api'
 import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
 import { auth } from '../../etc/auth'
-import { CustomSources } from '../../etc/customSources'
+import { CustomSource } from '../../etc/customSource'
 
 export function AppMenu() {
 	const { lastUpdate } = useUpdateContext()
@@ -53,10 +53,10 @@ export function AppMenu() {
 			</div>
 
 			<div className='app-menu-block'>
-				<NavLink key={CustomSources.Manual} to={'/tags/manual/'}>
+				<NavLink key={CustomSource.Manual} to={'/tags/manual/'}>
 					Мануальные теги
 				</NavLink>
-				<NavLink key={CustomSources.Calculated} to={'/tags/calc/'}>
+				<NavLink key={CustomSource.Calculated} to={'/tags/calc/'}>
 					Вычисляемые теги
 				</NavLink>
 			</div>

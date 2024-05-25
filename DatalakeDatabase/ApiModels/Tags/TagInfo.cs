@@ -20,50 +20,32 @@ public class TagInfo
 	public required short IntervalInSeconds { get; set; }
 
 	[Required]
-	public required TagSourceInfo SourceInfo { get; set; }
+	public required int SourceId { get; set; }
 
 	[Required]
-	public required TagMathInfo? MathInfo { get; set; }
+	public required SourceType SourceType { get; set; } = SourceType.Datalake;
+
+	public string? SourceItem { get; set; }
+
+	public string? SourceName { get; set; } = string.Empty;
+
+	public string? Formula { get; set; } = string.Empty;
 
 	[Required]
-	public required TagCalcInfo? CalcInfo { get; set; }
+	public required bool IsScaling { get; set; }
 
+	[Required]
+	public required float MinEu { get; set; }
 
-	public class TagSourceInfo
-	{
-		[Required]
-		public int Id { get; set; }
+	[Required]
+	public required float MaxEu { get; set; }
 
-		public SourceType? Type { get; set; } = SourceType.Datalake;
+	[Required]
+	public required float MinRaw { get; set; }
 
-		public string? Item { get; set; }
+	[Required]
+	public required float MaxRaw { get; set; }
 
-		public string? Name { get; set; } = string.Empty;
-	}
-
-	public class TagMathInfo
-	{
-		[Required]
-		public bool IsScaling { get; set; }
-
-		[Required]
-		public float MinEu { get; set; }
-
-		[Required]
-		public float MaxEu { get; set; }
-
-		[Required]
-		public float MinRaw { get; set; }
-
-		[Required]
-		public float MaxRaw { get; set; }
-	}
-
-	public class TagCalcInfo
-	{
-		public string Formula { get; set; } = string.Empty;
-
-		[Required]
-		public Dictionary<string, int> Inputs { get; set; } = [];
-	}
+	[Required]
+	public required Dictionary<string, int> FormulaInputs { get; set; } = [];
 }

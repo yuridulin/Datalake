@@ -2,7 +2,7 @@ import { Button } from 'antd'
 import { useEffect, useState } from 'react'
 import api from '../../../api/api'
 import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
-import { CustomSources } from '../../../etc/customSources'
+import { CustomSource } from '../../../etc/customSource'
 import Header from '../../small/Header'
 import TagsTable from './TagsTable'
 
@@ -10,7 +10,7 @@ export default function TagsManualList() {
 	const [tags, setTags] = useState([] as TagInfo[])
 
 	function load() {
-		api.tagsReadAll({ sources: [CustomSources.Manual] }).then((res) =>
+		api.tagsReadAll({ sourceId: CustomSource.Manual }).then((res) =>
 			setTags(res.data),
 		)
 	}
@@ -18,7 +18,7 @@ export default function TagsManualList() {
 	function createManual() {
 		api.tagsCreate({
 			tagType: TagType.String,
-			sourceId: CustomSources.Manual,
+			sourceId: CustomSource.Manual,
 		}).then(() => load())
 	}
 

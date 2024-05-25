@@ -58,7 +58,12 @@ api.instance.interceptors.response.use(
 			}) */
 
 			// сообщения после выполнения действий
-			if (res.data.Done) {
+			if (res.status === 204) {
+				notification.success({
+					placement: 'bottomLeft',
+					message: 'Успешно',
+				})
+			} else if (res.data.Done) {
 				notification.info({
 					placement: 'bottomLeft',
 					message: res.data.Done,

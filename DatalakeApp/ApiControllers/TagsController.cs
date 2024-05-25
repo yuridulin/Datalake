@@ -43,21 +43,22 @@ public class TagsController(TagsRepository tagsRepository) : ControllerBase
 	/// <summary>
 	/// Получение списка тегов, включая информацию о источниках и настройках получения данных
 	/// </summary>
-	/// <param name="sources">Идентификаторы источников. Если указаны, будут выбраны теги только эти источников</param>
-	/// <param name="tags">Имена тегов, которые нужно получить. Если указаны, все прочие будут исключены из выборки</param>
+	/// <param name="sourceId">Идентификатор источника. Если указан, будут выбраны теги только этого источника</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet]
 	public async Task<ActionResult<TagInfo[]>> ReadAsync(
-		[FromQuery] int[]? sources,
-		[FromQuery] string[]? tags)
+		[FromQuery] int? sourceId)
 	{
 		var query = tagsRepository.GetInfoWithSources();
-		if (sources?.Length > 0)
-			query = query.Where(x => sources.Contains(x.SourceInfo.Id));
-		if (tags?.Length > 0)
-			query = query.Where(x => tags.Select(t => t.ToLower()).Contains(x.Name.ToLower()));
 
-		return await query.ToArrayAsync();
+		if (sourceId.HasValue)
+		{
+			query = query.Where(x => sourceId.Value == x.SourceId);
+		}
+
+		var tags = await query.ToArrayAsync();
+
+		return tags;
 	}
 
 	[HttpGet("inputs")]
@@ -72,7 +73,7 @@ public class TagsController(TagsRepository tagsRepository) : ControllerBase
 	[HttpPut("{id:int}")]
 	public async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int id,
-		[BindRequired, FromBody] TagInfo tag)
+		[BindRequired, FromBody] TagUpdateRequest tag)
 	{
 		await tagsRepository.UpdateAsync(id, tag);
 

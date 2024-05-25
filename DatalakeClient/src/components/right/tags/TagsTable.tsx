@@ -119,16 +119,14 @@ export default function TagsTable({
 					key='SourceId'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
-						(
-							a.sourceInfo?.name ?? String(a.sourceInfo?.id)
-						).localeCompare(
-							b.sourceInfo?.name ?? String(b.sourceInfo?.id),
+						(a.sourceName ?? String(a.sourceId)).localeCompare(
+							b.sourceName ?? String(b.sourceId),
 						)
 					}
 					render={(_, record) => (
 						<SourceEl
-							id={record.sourceInfo?.id ?? 0}
-							name={record.sourceInfo?.name ?? '?'}
+							id={record.sourceId ?? 0}
+							name={record.sourceName ?? '?'}
 						/>
 					)}
 				/>

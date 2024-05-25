@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/api'
 import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
-import { CustomSources } from '../../../etc/customSources'
+import { CustomSource } from '../../../etc/customSource'
 import FormRow from '../../small/FormRow'
 import Header from '../../small/Header'
 import TagTypeEl from '../../small/TagTypeEl'
@@ -13,14 +13,14 @@ export default function TagsCalculatedList() {
 	const [search, setSearch] = useState('')
 
 	function load() {
-		api.tagsReadAll({ sources: [CustomSources.Calculated] }).then((res) =>
+		api.tagsReadAll({ sourceId: CustomSource.Calculated }).then((res) =>
 			setTags(res.data),
 		)
 	}
 
 	function create() {
 		api.tagsCreate({
-			sourceId: CustomSources.Calculated,
+			sourceId: CustomSource.Calculated,
 			tagType: TagType.Number,
 		}).then(() => load())
 	}
@@ -53,7 +53,7 @@ export default function TagsCalculatedList() {
 							(
 								(x.description ?? '') +
 								x.name +
-								(x.sourceInfo.name ?? '')
+								(x.sourceName ?? '')
 							)
 								.toLowerCase()
 								.trim()

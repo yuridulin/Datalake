@@ -129,28 +129,28 @@ public partial class TagsRepository(DatalakeContext db)
 		return id.Value;
 	}
 
-	public async Task UpdateAsync(int id, TagInfo tagInfo)
+	public async Task UpdateAsync(int id, TagUpdateRequest tagInfo)
 	{
 		tagInfo.Name = ValueChecker.RemoveWhitespaces(tagInfo.Name, "_");
 
 		if (!await db.Tags.AnyAsync(x => x.Id == id))
-			throw new NotFoundException($"тег #{tagInfo.Id}");
+			throw new NotFoundException($"тег #{id}");
 
 		if (await db.Tags.AnyAsync(x => x.Id != id && x.Name == tagInfo.Name))
 			throw new AlreadyExistException($"тег с именем {tagInfo.Name}");
 
-		if (tagInfo.SourceInfo.Id > 0)
+		if (tagInfo.SourceId > 0)
 		{
-			if (string.IsNullOrEmpty(tagInfo.SourceInfo.Item))
+			if (string.IsNullOrEmpty(tagInfo.SourceItem))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
 			if (tagInfo.IntervalInSeconds < 0)
 				throw new InvalidValueException("интервал обновления должен быть неотрицательным целым числом");
 
-			tagInfo.SourceInfo.Item = ValueChecker.RemoveWhitespaces(tagInfo.SourceInfo.Item);
+			tagInfo.SourceItem = ValueChecker.RemoveWhitespaces(tagInfo.SourceItem);
 		}
 		else
 		{
-			tagInfo.SourceInfo.Item = null;
+			tagInfo.SourceItem = null;
 		}
 
 		int count = await db.Tags
@@ -159,14 +159,14 @@ public partial class TagsRepository(DatalakeContext db)
 			.Set(x => x.Description, tagInfo.Description)
 			.Set(x => x.Type, tagInfo.Type)
 			.Set(x => x.Interval, tagInfo.IntervalInSeconds)
-			.Set(x => x.SourceId, tagInfo.SourceInfo.Id)
-			.Set(x => x.SourceItem, tagInfo.SourceInfo.Item)
-			.Set(x => x.IsScaling, tagInfo.MathInfo?.IsScaling ?? false)
-			.Set(x => x.MaxEu, tagInfo.MathInfo?.MaxEu ?? float.MaxValue)
-			.Set(x => x.MinEu, tagInfo.MathInfo?.MinEu ?? float.MinValue)
-			.Set(x => x.MaxRaw, tagInfo.MathInfo?.MaxRaw ?? float.MaxValue)
-			.Set(x => x.MinRaw, tagInfo.MathInfo?.MinRaw ?? float.MinValue)
-			.Set(x => x.Formula, tagInfo.CalcInfo?.Formula)
+			.Set(x => x.SourceId, tagInfo.SourceId)
+			.Set(x => x.SourceItem, tagInfo.SourceItem)
+			.Set(x => x.IsScaling, tagInfo.IsScaling)
+			.Set(x => x.MaxEu, tagInfo.MaxEu)
+			.Set(x => x.MinEu, tagInfo.MinEu)
+			.Set(x => x.MaxRaw, tagInfo.MaxRaw)
+			.Set(x => x.MinRaw, tagInfo.MinRaw)
+			.Set(x => x.Formula, tagInfo.Formula)
 			.UpdateAsync();
 
 		if (count == 0)

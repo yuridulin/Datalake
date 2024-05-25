@@ -17,8 +17,11 @@ public class InopcCollector : CollectorBase
 		_timer = new Timer();
 		_address = source.Address ?? throw new InvalidOperationException();
 
+		var items = 
+
 		_itemsToSend = source.Tags
 			.Where(x => !string.IsNullOrEmpty(x.SourceItem))
+			.DistinctBy(x => x.SourceItem)
 			.Select(x => new Item
 			{
 				TagName = x.SourceItem!,
@@ -27,9 +30,10 @@ public class InopcCollector : CollectorBase
 			})
 			.ToList();
 
-		_itemsTagId = source.Tags
+		_itemsTags = source.Tags
 			.Where(x => x.SourceItem != null)
-			.ToDictionary(x => x.SourceItem!, x => x.Id);
+			.GroupBy(x => x.SourceItem)
+			.ToDictionary(g => g.Key!, g => g.Select(x => x.Id).ToArray());
 
 		_timer.Elapsed += async (s, e) => await Timer_ElapsedAsync();
 		_timer.Interval = _itemsToSend
@@ -71,7 +75,7 @@ public class InopcCollector : CollectorBase
 	private readonly Timer _timer;
 	private readonly string _address;
 	private readonly List<Item> _itemsToSend;
-	private readonly Dictionary<string, int> _itemsTagId;
+	private readonly Dictionary<string, int[]> _itemsTags;
 	private ILogger<InopcCollector> _logger;
 
 	private async Task Timer_ElapsedAsync()
@@ -101,17 +105,19 @@ public class InopcCollector : CollectorBase
 		var items = tags.Select(x => x.TagName).ToArray();
 
 		var response = await _receiverService.AskInopc(items, _address);
+		var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
 
 		CollectValues?.Invoke(this, response.Tags
-			.Select(x => new Models.CollectValue
-			{
-				DateTime = response.Timestamp,
-				Name = x.Name,
-				Quality = x.Quality,
-				TagId = _itemsTagId[x.Name],
-				Value = x.Value,
-			})
-		);
+			.SelectMany(item => _itemsTags[item.Name]
+				.Select(id => new Models.CollectValue
+				{
+					DateTime = response.Timestamp,
+					Name = item.Name,
+					Quality = item.Quality,
+					TagId = id,
+					Value = item.Value,
+				})
+			));
 
 		foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
 		{

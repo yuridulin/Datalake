@@ -16,9 +16,11 @@ import {
 	LogInfo,
 	SourceEntryInfo,
 	SourceInfo,
+	SourceItemInfo,
 	TagAsInputInfo,
 	TagCreateRequest,
 	TagInfo,
+	TagUpdateRequest,
 	UserAuthInfo,
 	UserCreateRequest,
 	UserDetailInfo,
@@ -281,13 +283,28 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * No description
 	 *
 	 * @tags Sources
+	 * @name SourcesGetItems
+	 * @request GET:/api/Sources/{id}/items
+	 * @response `200` `(SourceItemInfo)[]`
+	 */
+	sourcesGetItems = (id: number, params: RequestParams = {}) =>
+		this.request<SourceItemInfo[], any>({
+			path: `/api/Sources/${id}/items`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Sources
 	 * @name SourcesGetItemsWithTags
-	 * @request GET:/api/Sources/{id}/tags
+	 * @request GET:/api/Sources/{id}/items-and-tags
 	 * @response `200` `(SourceEntryInfo)[]`
 	 */
 	sourcesGetItemsWithTags = (id: number, params: RequestParams = {}) =>
 		this.request<SourceEntryInfo[], any>({
-			path: `/api/Sources/${id}/tags`,
+			path: `/api/Sources/${id}/items-and-tags`,
 			method: 'GET',
 			format: 'json',
 			...params,
@@ -321,10 +338,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 */
 	tagsReadAll = (
 		query?: {
-			/** Идентификаторы источников. Если указаны, будут выбраны теги только эти источников */
-			sources?: number[] | null
-			/** Имена тегов, которые нужно получить. Если указаны, все прочие будут исключены из выборки */
-			tags?: string[] | null
+			/**
+			 * Идентификатор источника. Если указан, будут выбраны теги только этого источника
+			 * @format int32
+			 */
+			sourceId?: number | null
 		},
 		params: RequestParams = {},
 	) =>
@@ -359,7 +377,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request PUT:/api/Tags/{id}
 	 * @response `200` `File`
 	 */
-	tagsUpdate = (id: number, data: TagInfo, params: RequestParams = {}) =>
+	tagsUpdate = (id: number, data: TagUpdateRequest, params: RequestParams = {}) =>
 		this.request<File, any>({
 			path: `/api/Tags/${id}`,
 			method: 'PUT',

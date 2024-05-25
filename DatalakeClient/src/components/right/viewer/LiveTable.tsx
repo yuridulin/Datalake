@@ -2,7 +2,7 @@ import { Button } from 'antd'
 import dayjs from 'dayjs'
 import api from '../../../api/api'
 import { TagInfo, ValuesResponse } from '../../../api/swagger/data-contracts'
-import { CustomSources } from '../../../etc/customSources'
+import { CustomSource } from '../../../etc/customSource'
 import TagQualityEl from '../../small/TagQualityEl'
 import TagValueEl from '../../small/TagValueEl'
 
@@ -38,7 +38,7 @@ export default function LiveTable({
 						</span>
 						<span>{x.tagName}</span>
 						<span>
-							{tag.sourceInfo?.id === CustomSources.Manual ? (
+							{tag.sourceId === CustomSource.Manual ? (
 								<Button onClick={() => write(tag.id)}>
 									<TagValueEl value={x.values[0].value} />
 								</Button>

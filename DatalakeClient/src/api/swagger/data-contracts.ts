@@ -121,15 +121,15 @@ export enum SourceType {
 	Custom = 'Custom',
 }
 
-export interface SourceEntryInfo {
-	itemInfo?: SourceItemInfo | null
-	tagInfo?: SourceTagInfo | null
-}
-
 export interface SourceItemInfo {
 	/** @minLength 1 */
 	path: string
 	type: TagType
+}
+
+export interface SourceEntryInfo {
+	itemInfo?: SourceItemInfo | null
+	tagInfo?: SourceTagInfo | null
 }
 
 export interface SourceTagInfo {
@@ -160,20 +160,12 @@ export interface TagInfo {
 	description?: string | null
 	type: TagType
 	intervalInSeconds: number
-	sourceInfo: TagSourceInfo
-	mathInfo: TagMathInfo
-	calcInfo: TagCalcInfo
-}
-
-export interface TagSourceInfo {
 	/** @format int32 */
-	id: number
-	type?: SourceType | null
-	item?: string | null
-	name?: string | null
-}
-
-export interface TagMathInfo {
+	sourceId: number
+	sourceType: SourceType
+	sourceItem?: string | null
+	sourceName?: string | null
+	formula?: string | null
 	isScaling: boolean
 	/** @format float */
 	minEu: number
@@ -183,11 +175,7 @@ export interface TagMathInfo {
 	minRaw: number
 	/** @format float */
 	maxRaw: number
-}
-
-export interface TagCalcInfo {
-	formula?: string
-	inputs: Record<string, number>
+	formulaInputs: Record<string, number>
 }
 
 export interface TagAsInputInfo {
@@ -196,6 +184,29 @@ export interface TagAsInputInfo {
 	/** @minLength 1 */
 	name: string
 	type: TagType
+}
+
+export interface TagUpdateRequest {
+	/** @minLength 1 */
+	name: string
+	description?: string | null
+	type: TagType
+	intervalInSeconds: number
+	/** @format int32 */
+	sourceId: number
+	sourceType: SourceType
+	sourceItem?: string | null
+	formula?: string | null
+	isScaling: boolean
+	/** @format float */
+	minEu: number
+	/** @format float */
+	maxEu: number
+	/** @format float */
+	minRaw: number
+	/** @format float */
+	maxRaw: number
+	formulaInputs: Record<string, number>
 }
 
 export interface UserAuthInfo {

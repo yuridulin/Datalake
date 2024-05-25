@@ -6,7 +6,7 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class SourcesRepository
 {
-	public static int[] CustomSourcesId = Enum.GetValues<CustomSource>().Cast<int>().ToArray();
+	static int[] CustomSourcesId = Enum.GetValues<CustomSource>().Cast<int>().ToArray();
 
 	public IQueryable<SourceInfo> GetInfo(bool withCustom = false)
 	{

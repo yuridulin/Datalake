@@ -1,7 +1,6 @@
 ﻿using DatalakeApp.Services.Receiver;
 using DatalakeDatabase.ApiModels.Sources;
 using DatalakeDatabase.Exceptions;
-using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -86,7 +85,7 @@ public class SourcesController(
 		return items;
 	}
 
-	[HttpGet("{id:int}/tags")]
+	[HttpGet("{id:int}/items-and-tags")]
 	public async Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
 		[BindRequired, FromRoute] int id)
 	{

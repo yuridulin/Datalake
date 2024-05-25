@@ -1,6 +1,6 @@
 import { Button } from 'antd'
 import { NavLink } from 'react-router-dom'
-import { CustomSources } from '../../etc/customSources'
+import { CustomSource } from '../../etc/customSource'
 
 type HeaderProps = {
 	id: number
@@ -8,13 +8,13 @@ type HeaderProps = {
 }
 
 export default function SourceEl({ id, name }: HeaderProps) {
-	if (id === CustomSources.Manual) {
+	if (id === CustomSource.Manual) {
 		return (
 			<NavLink to={`/tags/manual/`}>
 				<Button>Мануальный</Button>
 			</NavLink>
 		)
-	} else if (id === CustomSources.Calculated) {
+	} else if (id === CustomSource.Calculated) {
 		return (
 			<NavLink to={`/tags/calc/`}>
 				<Button>Вычисляемый</Button>

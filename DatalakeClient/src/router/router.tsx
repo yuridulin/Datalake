@@ -9,7 +9,6 @@ import Dashboard from '../components/right/dashboard/Dashboard'
 import SourceForm from '../components/right/sources/SourceForm'
 import SourcesList from '../components/right/sources/SourcesList'
 import TagForm from '../components/right/tags/TagForm'
-import TagSelectedForm from '../components/right/tags/TagSelectedForm'
 import TagsCalculatedList from '../components/right/tags/TagsCalculatedList'
 import TagsList from '../components/right/tags/TagsList'
 import TagsManualList from '../components/right/tags/TagsManualList'
@@ -71,10 +70,6 @@ const router = createBrowserRouter([
 					{
 						path: '/tags/',
 						element: <TagsList />,
-					},
-					{
-						path: '/tags/selected/',
-						element: <TagSelectedForm />,
 					},
 					{
 						path: '/tags/manual/',

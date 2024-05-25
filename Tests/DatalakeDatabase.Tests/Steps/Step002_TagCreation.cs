@@ -37,9 +37,7 @@ namespace DatalakeDatabase.Tests.Steps
 
 			Assert.NotNull(tagInfo);
 			Assert.True(tagInfo.Name == Constants.TagName);
-
-			Assert.NotNull(tagInfo.SourceInfo);
-			Assert.True(tagInfo.SourceInfo.Id == (int)CustomSource.Manual);
+			Assert.True(tagInfo.SourceId == (int)CustomSource.Manual);
 		}
 
 		public static async Task T2_3_GetLiveValue()
