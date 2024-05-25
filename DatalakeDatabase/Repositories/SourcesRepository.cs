@@ -2,7 +2,6 @@
 using DatalakeDatabase.Enums;
 using DatalakeDatabase.Exceptions;
 using DatalakeDatabase.Extensions;
-using DatalakeDatabase.Helpers;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
