@@ -9,7 +9,7 @@ public static class DatalakeContextExtension
 	/// Обновление времени последнего изменения структуры тегов, источников и сущностей в базе данных
 	/// </summary>
 	/// <param name="db">Подключение к базе данных</param>
-	public static async Task UpdateAsync(this DatalakeContext db)
+	public static async Task SetLastUpdateToNowAsync(this DatalakeContext db)
 	{
 		await db.Settings
 			.Set(x => x.LastUpdate, DateTime.Now)

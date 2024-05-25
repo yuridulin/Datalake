@@ -56,7 +56,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		}
 		else
 		{
-			await this.UpdateAsync();
+			await this.SetLastUpdateToNowAsync();
 		}
 	}
 

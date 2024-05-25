@@ -11,10 +11,12 @@ public partial class SourcesRepository(DatalakeContext db)
 {
 	public async Task<int> CreateAsync()
 	{
+		var transaction = await db.BeginTransactionAsync();
+
 		int? id = await db.Sources
 			.Value(x => x.Name, "INSERTING")
 			.Value(x => x.Address, "")
-			.Value(x => x.Type, Enums.SourceType.Unknown)
+			.Value(x => x.Type, SourceType.Unknown)
 			.InsertWithInt32IdentityAsync();
 
 		if (!id.HasValue)
@@ -24,6 +26,10 @@ public partial class SourcesRepository(DatalakeContext db)
 			.Where(x => x.Id == id.Value)
 			.Set(x => x.Name, ValueChecker.RemoveWhitespaces("Новый источник #" + id.Value, "_"))
 			.UpdateAsync();
+
+		await db.SetLastUpdateToNowAsync();
+
+		await transaction.CommitAsync();
 
 		return id.Value;
 	}
@@ -35,8 +41,10 @@ public partial class SourcesRepository(DatalakeContext db)
 		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name))
 			throw new AlreadyExistException("Уже существует источник с таким именем");
 
-		if (sourceInfo.Type == Enums.SourceType.Custom)
+		if (sourceInfo.Type == SourceType.Custom)
 			throw new InvalidValueException("Нельзя добавить системный источник");
+
+		var transaction = await db.BeginTransactionAsync();
 
 		int? id = await db.Sources
 			.Value(x => x.Name, sourceInfo.Name)
@@ -46,6 +54,10 @@ public partial class SourcesRepository(DatalakeContext db)
 
 		if (!id.HasValue)
 			throw new DatabaseException("Не удалось добавить источник");
+
+		await db.SetLastUpdateToNowAsync();
+
+		await transaction.CommitAsync();
 
 		return id.Value;
 	}
@@ -60,6 +72,8 @@ public partial class SourcesRepository(DatalakeContext db)
 		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name && x.Id != id))
 			throw new AlreadyExistException("Уже существует источник с таким именем");
 
+		var transaction = await db.BeginTransactionAsync();
+
 		int count = await db.Sources
 			.Where(x => x.Id == id)
 			.Set(x => x.Name, sourceInfo.Name)
@@ -69,6 +83,10 @@ public partial class SourcesRepository(DatalakeContext db)
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось обновить источник #{id}");
+
+		await db.SetLastUpdateToNowAsync();
+
+		await transaction.CommitAsync();
 
 		return true;
 	}
@@ -89,6 +107,8 @@ public partial class SourcesRepository(DatalakeContext db)
 			.Where(x => x.SourceId == id)
 			.Set(x => x.SourceId, (int)CustomSource.Manual)
 			.UpdateAsync();
+
+		await db.SetLastUpdateToNowAsync();
 
 		await transaction.CommitAsync();
 
