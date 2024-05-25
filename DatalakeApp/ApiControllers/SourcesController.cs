@@ -1,6 +1,7 @@
 ﻿using DatalakeApp.Services.Receiver;
 using DatalakeDatabase.ApiModels.Sources;
 using DatalakeDatabase.Exceptions;
+using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -64,6 +65,25 @@ public class SourcesController(
 		await sourcesRepository.DeleteAsync(id);
 
 		return NoContent();
+	}
+
+	[HttpGet("{id:int}/items")]
+	public async Task<ActionResult<SourceItemInfo[]>> GetItemsAsync(
+		[BindRequired, FromRoute] int id)
+	{
+		var source = await sourcesRepository.GetInfo()
+			.Where(x => x.Id == id)
+			.Select(x => new { x.Type, x.Address })
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"Источник #{id}");
+
+		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
+
+		var items = sourceItemsResponse.Tags
+			.Select(x => new SourceItemInfo { Type = x.Type, Path = x.Name })
+			.ToArray();
+
+		return items;
 	}
 
 	[HttpGet("{id:int}/tags")]
