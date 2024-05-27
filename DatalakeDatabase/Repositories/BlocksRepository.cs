@@ -1,5 +1,8 @@
-﻿using DatalakeApiClasses.Models.Blocks;
+﻿using DatalakeApiClasses.Enums;
 using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Blocks;
+using DatalakeApiClasses.Models.Users;
+using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;
 using LinqToDB.Data;
@@ -8,7 +11,31 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class BlocksRepository(DatalakeContext db)
 {
-	public async Task<int> CreateAsync()
+	#region Действия
+
+	public async Task<int> CreateAsync(UserAuthInfo user, BlockInfo? blockInfo = null)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync();
+	}
+
+	public async Task<bool> UpdateAsync(UserAuthInfo user, int id, BlockInfo block)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Block, id);
+		return await UpdateAsync(id, block);
+	}
+
+	public async Task<bool> DeleteAsync(UserAuthInfo user, int id)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Block, id);
+		return await DeleteAsync(id);
+	}
+
+	#endregion
+
+	#region Реализация
+
+	internal async Task<int> CreateAsync()
 	{
 		int? id;
 
@@ -36,7 +63,7 @@ public partial class BlocksRepository(DatalakeContext db)
 
 	}
 
-	public async Task<int> CreateAsync(BlockInfo block)
+	internal async Task<int> CreateAsync(BlockInfo block)
 	{
 		if (await db.Blocks.AnyAsync(x => x.Name == block.Name))
 			throw new AlreadyExistException("Сущность с таким именем уже существует");
@@ -65,7 +92,7 @@ public partial class BlocksRepository(DatalakeContext db)
 		return id ?? throw new DatabaseException("Не удалось добавить сущность");
 	}
 
-	public async Task<bool> UpdateAsync(int id, BlockInfo block)
+	internal async Task<bool> UpdateAsync(int id, BlockInfo block)
 	{
 		if (!await db.Blocks.AnyAsync(x => x.Id == id))
 			throw new NotFoundException($"Сущность #{id} не найдена");
@@ -98,7 +125,7 @@ public partial class BlocksRepository(DatalakeContext db)
 		return true;
 	}
 
-	public async Task<bool> DeleteAsync(int id)
+	internal async Task<bool> DeleteAsync(int id)
 	{
 		var count = await db.Blocks
 			.Where(x => x.Id == id)
@@ -109,7 +136,6 @@ public partial class BlocksRepository(DatalakeContext db)
 
 		return true;
 	}
-
 
 	private async Task<bool> UpdateRelationsWithTags(int id, BlockInfo.BlockTagInfo[]? tags)
 	{
@@ -129,4 +155,6 @@ public partial class BlocksRepository(DatalakeContext db)
 
 		return true;
 	}
+
+	#endregion
 }

@@ -23,7 +23,7 @@ public class UsersController(
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
 
-		userAuthInfo.Token = session.Token;
+		userAuthInfo.Token = session.User.Token;
 
 		return userAuthInfo;
 	}

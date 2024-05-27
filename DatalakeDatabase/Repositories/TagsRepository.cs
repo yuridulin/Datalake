@@ -1,6 +1,7 @@
 ﻿using DatalakeApiClasses.Enums;
 using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Tags;
+using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;
@@ -12,24 +13,25 @@ public partial class TagsRepository(DatalakeContext db)
 {
 	#region Действия
 
-	public async Task<int> CreateAsync(TagCreateRequest tagCreateRequest, Guid userGuid)
+	public async Task<int> CreateAsync(UserAuthInfo user, TagCreateRequest tagCreateRequest)
 	{
-		await db.CheckUserAccessAsync(userGuid, r => r.CanManageTag);
+		AccessScope scope = tagCreateRequest.SourceId.HasValue ? AccessScope.Source
+			: tagCreateRequest.BlockId.HasValue ? AccessScope.Block
+			: AccessScope.Global;
 
+		await db.CheckAccessAsync(user, AccessType.Admin, scope);
 		return await CreateAsync(tagCreateRequest);
 	}
 
-	public async Task UpdateAsync(int id, TagUpdateRequest updateRequest, Guid userGuid)
+	public async Task UpdateAsync(UserAuthInfo user, int id, TagUpdateRequest updateRequest)
 	{
-		await db.CheckUserAccessAsync(userGuid, r => r.CanManageTag, o => o.TagId == id);
-
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Tag, id);
 		await UpdateAsync(id, updateRequest);
 	}
 
-	public async Task DeleteAsync(int id, Guid userGuid)
+	public async Task DeleteAsync(UserAuthInfo user, int id)
 	{
-		await db.CheckUserAccessAsync(userGuid, r => r.CanManageTag, o => o.TagId == id);
-
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Tag, id);
 		await DeleteAsync(id);
 	}
 
@@ -37,7 +39,7 @@ public partial class TagsRepository(DatalakeContext db)
 
 	#region Реализация
 
-	public async Task<int> CreateAsync(TagCreateRequest createRequest)
+	internal async Task<int> CreateAsync(TagCreateRequest createRequest)
 	{
 		// TODO: проверка разрешения на создание тега
 
@@ -156,7 +158,7 @@ public partial class TagsRepository(DatalakeContext db)
 		return id.Value;
 	}
 
-	public async Task UpdateAsync(int id, TagUpdateRequest updateRequest)
+	internal async Task UpdateAsync(int id, TagUpdateRequest updateRequest)
 	{
 		updateRequest.Name = ValueChecker.RemoveWhitespaces(updateRequest.Name, "_");
 
@@ -218,7 +220,7 @@ public partial class TagsRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 	}
 
-	public async Task DeleteAsync(int id)
+	internal async Task DeleteAsync(int id)
 	{
 		var transaction = await db.BeginTransactionAsync();
 

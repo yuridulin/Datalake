@@ -1,6 +1,7 @@
 ﻿using DatalakeApiClasses.Enums;
 using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Users;
+using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;
 using System.Security.Cryptography;
@@ -10,50 +11,37 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class UsersRepository(DatalakeContext db)
 {
+	#region Действия
+
 	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
 	{
 		var user = await db.Users
 			.Where(x => x.Name.ToLower().Trim() == loginPass.Name.ToLower().Trim() && x.StaticHost == null)
-			.FirstOrDefaultAsync();
-
-		if (user == null)
-		{
-			bool haveAnotherUsers = await db.Users
-				.Where(x => string.IsNullOrEmpty(x.StaticHost))
-				.AnyAsync();
-
-			if (!haveAnotherUsers)
-			{
-				user = await CreateUserAsync(new UserCreateRequest
-				{
-					LoginName = loginPass.Name,
-					Password = loginPass.Password,
-					AccessType = AccessType.ADMIN,
-					FullName = loginPass.Name,
-					StaticHost = null,
-				});
-
-				if (user == null)
-				{
-					throw new DatabaseException(message: "не удалось создать учётную запись");
-				}
-			}
-			else
-			{
-				throw new NotFoundException(message: "указанная учётная запись по логину");
-			}
-		}
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "указанная учётная запись по логину");
 
 		if (!user.Hash.Equals(GetHashFromPassword(loginPass.Password)))
 		{
 			throw new ForbiddenException(message: "пароль не подходит");
 		}
 
+		var auth = await db.AuthorizeUserAsync(user.UserGuid);
+
 		return new UserAuthInfo
 		{
+			UserGuid = user.UserGuid,
 			UserName = loginPass.Name,
-			AccessType = user.AccessType,
 			Token = string.Empty,
+			Rights = auth
+				.Select(x => new UserAccessRightsInfo
+				{
+					AccessType = x.AccessType,
+					IsGlobal = x.IsGlobal,
+					BlockId = x.BlockId,
+					SourceId = x.SourceId,
+					TagId = x.TagId,
+				})
+				.ToArray(),
 		};
 	}
 
@@ -125,9 +113,9 @@ public partial class UsersRepository(DatalakeContext db)
 				.Set(x => x.Hash, hash);
 		}
 
-		if (request.AccessType != AccessType.ADMIN
-			&& userInfo.AccessType == AccessType.ADMIN
-			&& !await db.Users.Where(x => x.AccessType == AccessType.ADMIN && x.Name != loginName).AnyAsync())
+		if (request.AccessType != AccessType.Admin
+			&& userInfo.AccessType == AccessType.Admin
+			&& !await db.Users.Where(x => x.AccessType == AccessType.Admin && x.Name != loginName).AnyAsync())
 		{
 			throw new ForbiddenException(message: "удаление последнего администратора");
 		}
@@ -145,8 +133,8 @@ public partial class UsersRepository(DatalakeContext db)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "учётная запись по логину");
 
-		if (accessTypeInfo.AccessType == AccessType.ADMIN
-			&& !await db.Users.Where(x => x.AccessType == AccessType.ADMIN && x.Name != loginName).AnyAsync())
+		if (accessTypeInfo.AccessType == AccessType.Admin
+			&& !await db.Users.Where(x => x.AccessType == AccessType.Admin && x.Name != loginName).AnyAsync())
 		{
 			throw new ForbiddenException(message: "удаление последнего администратора");
 		}
@@ -158,6 +146,9 @@ public partial class UsersRepository(DatalakeContext db)
 		return true;
 	}
 
+	#endregion
+
+	#region Реализация
 
 	private async Task<User> CreateUserAsync(UserCreateRequest userInfo)
 	{
@@ -207,15 +198,6 @@ public partial class UsersRepository(DatalakeContext db)
 		return user;
 	}
 
-	private static string GetHashFromPassword(string password)
-	{
-		if (string.IsNullOrEmpty(password))
-			throw new InvalidValueException(message: "пароль не может быть пустым");
-
-		var hash = SHA1.HashData(Encoding.UTF8.GetBytes(password));
-		return Convert.ToBase64String(hash);
-	}
-
 	private async Task<string> GenerateNewHashForStaticAsync()
 	{
 		string hash;
@@ -241,6 +223,15 @@ public partial class UsersRepository(DatalakeContext db)
 		return hash;
 	}
 
+	private static string GetHashFromPassword(string password)
+	{
+		if (string.IsNullOrEmpty(password))
+			throw new InvalidValueException(message: "пароль не может быть пустым");
+
+		var hash = SHA1.HashData(Encoding.UTF8.GetBytes(password));
+		return Convert.ToBase64String(hash);
+	}
+
 	private static string RandomHash()
 	{
 		using var rng = RandomNumberGenerator.Create();
@@ -251,4 +242,6 @@ public partial class UsersRepository(DatalakeContext db)
 		string refreshToken = Convert.ToBase64String(randomNumber);
 		return refreshToken;
 	}
+
+	#endregion
 }

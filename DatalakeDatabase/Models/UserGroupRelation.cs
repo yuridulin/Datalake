@@ -20,7 +20,7 @@ public class UserGroupRelation
 	public required Guid UserGroupGuid { get; set; }
 
 	[Column, NotNull]
-	public UserGroupAccess AccessType { get; set; }
+	public AccessType AccessType { get; set; }
 
 	// связи
 

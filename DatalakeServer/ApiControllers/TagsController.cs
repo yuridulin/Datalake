@@ -1,6 +1,7 @@
 ﻿using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Tags;
 using DatalakeDatabase.Repositories;
+using DatalakeServer.ApiControllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -9,7 +10,7 @@ namespace DatalakeServer.ApiControllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TagsController(TagsRepository tagsRepository) : ControllerBase
+public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 {
 	/// <summary>
 	/// Создание нового тега
@@ -20,7 +21,9 @@ public class TagsController(TagsRepository tagsRepository) : ControllerBase
 	public async Task<ActionResult<int>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest tagCreateRequest)
 	{
-		return await tagsRepository.CreateAsync(tagCreateRequest);
+		var user = Authenticate();
+
+		return await tagsRepository.CreateAsync(user, tagCreateRequest);
 	}
 
 	/// <summary>
@@ -75,7 +78,9 @@ public class TagsController(TagsRepository tagsRepository) : ControllerBase
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] TagUpdateRequest tag)
 	{
-		await tagsRepository.UpdateAsync(id, tag);
+		var user = Authenticate();
+
+		await tagsRepository.UpdateAsync(user, id, tag);
 
 		return NoContent();
 	}
@@ -84,7 +89,9 @@ public class TagsController(TagsRepository tagsRepository) : ControllerBase
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		await tagsRepository.DeleteAsync(id);
+		var user = Authenticate();
+
+		await tagsRepository.DeleteAsync(user, id);
 
 		return NoContent();
 	}

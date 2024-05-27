@@ -9,8 +9,6 @@ using LinqToDB.Data;
 
 namespace DatalakeDatabase.Repositories;
 
-// TODO: попробовать сделать таблицу Initial значений
-
 public class ValuesRepository(DatalakeContext db) : IDisposable
 {
 	public static readonly string NamePrefix = "TagsHistory_";

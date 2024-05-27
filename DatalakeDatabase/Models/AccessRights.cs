@@ -1,4 +1,4 @@
-﻿using DatalakeApiClasses.Models.Abstractions;
+﻿using DatalakeApiClasses.Enums;
 using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
@@ -9,7 +9,7 @@ using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribu
 namespace DatalakeDatabase.Models;
 
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class AccessRights : IRights
+public class AccessRights
 {
 	const string TableName = "AccessRights";
 
@@ -18,13 +18,14 @@ public class AccessRights : IRights
 	[Key, Identity, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 	public int Id { get; set; }
 
-	#region Keys
-
 	[Column]
 	public Guid? UserGuid { get; set; }
 
 	[Column]
 	public Guid? UserGroupGuid { get; set; }
+
+	[Column, NotNull]
+	public bool IsGlobal { get; set; }
 
 	[Column]
 	public int? TagId { get; set; }
@@ -35,59 +36,8 @@ public class AccessRights : IRights
 	[Column]
 	public int? BlockId { get; set; }
 
-	#endregion
-
-	#region Tags
-
 	[Column]
-	public bool? HasAccessToTag { get; set; }
-
-	[Column]
-	public bool? CanManageTag { get; set; }
-
-	[Column]
-	public bool? CanWriteToTag { get; set; }
-
-	#endregion
-
-	#region Blocks
-
-	[Column]
-	public bool? HasAccessToBlock { get; set; }
-
-	[Column]
-	public bool? CanManageBlock { get; set; }
-
-	[Column]
-	public bool? CanManageBlockTags { get; set; }
-
-	#endregion
-
-	#region Sources
-
-	[Column]
-	public bool? HasAccessToSource { get; set; }
-
-	[Column]
-	public bool? CanManageSource { get; set; }
-
-	[Column]
-	public bool? CanManageSourceTags { get; set; }
-
-	#endregion
-
-	#region Administration 
-
-	[Column]
-	public bool? CanControlAccess { get; set; }
-
-	[Column]
-	public bool? CanViewSystemTags { get; set; }
-
-	[Column]
-	public bool? CanViewLogs { get; set; }
-
-	#endregion
+	public AccessType AccessType { get; set; } = AccessType.NoAccess;
 
 	// связи
 

@@ -1,6 +1,8 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using DatalakeApiClasses.Constants;
+using DatalakeApiClasses.Enums;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
+using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
@@ -57,6 +59,11 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		else
 		{
 			await this.SetLastUpdateToNowAsync();
+		}
+
+		if (!Users.Any())
+		{
+			await new UsersRepository(this).CreateAsync(Defaults.InitialAdmin);
 		}
 	}
 

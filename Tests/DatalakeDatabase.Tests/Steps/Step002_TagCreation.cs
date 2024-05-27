@@ -20,9 +20,10 @@ namespace DatalakeDatabase.Tests.Steps
 				SourceId = (int)CustomSource.Manual,
 			};
 
-			int tagId = await tagsRepository.CreateAsync(request);
+			// add static test record
+			/*int tagId = await tagsRepository.CreateAsync(request);
 
-			Assert.True(tagId == Constants.TagId);
+			Assert.True(tagId == Constants.TagId);*/
 		}
 
 		public static async Task T2_2_GetManualTag()

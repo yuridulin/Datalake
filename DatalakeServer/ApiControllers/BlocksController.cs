@@ -1,6 +1,7 @@
 ﻿using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Blocks;
 using DatalakeDatabase.Repositories;
+using DatalakeServer.ApiControllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -9,19 +10,23 @@ namespace DatalakeServer.ApiControllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class BlocksController(BlocksRepository blocksRepository) : ControllerBase
+public class BlocksController(BlocksRepository blocksRepository) : ApiControllerBase
 {
 	[HttpPost]
 	public async Task<ActionResult<int>> CreateAsync(
 		[BindRequired, FromBody] BlockInfo blockInfo)
 	{
-		return await blocksRepository.CreateAsync(blockInfo);
+		var user = Authenticate();
+
+		return await blocksRepository.CreateAsync(user, blockInfo);
 	}
 
 	[HttpPost("empty")]
 	public async Task<ActionResult<int>> CreateEmptyAsync()
 	{
-		return await blocksRepository.CreateAsync();
+		var user = Authenticate();
+
+		return await blocksRepository.CreateAsync(user);
 	}
 
 	[HttpGet]
@@ -52,7 +57,9 @@ public class BlocksController(BlocksRepository blocksRepository) : ControllerBas
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] BlockInfo block)
 	{
-		await blocksRepository.UpdateAsync(id, block);
+		var user = Authenticate();
+
+		await blocksRepository.UpdateAsync(user, id, block);
 
 		return NoContent();
 	}
@@ -61,7 +68,9 @@ public class BlocksController(BlocksRepository blocksRepository) : ControllerBas
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		await blocksRepository.DeleteAsync(id);
+		var user = Authenticate();
+
+		await blocksRepository.DeleteAsync(user, id);
 
 		return NoContent();
 	}

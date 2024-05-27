@@ -1,10 +1,10 @@
 ﻿using DatalakeApiClasses.Constants;
 using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.Abstractions;
+using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Models;
+using DatalakeDatabase.Repositories;
 using LinqToDB;
-using System.Linq.Expressions;
 
 namespace DatalakeDatabase.Extensions;
 
@@ -49,29 +49,23 @@ public static class DatalakeContextExtension
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="objectWhere">Дополнительные условия проверки</param>
 	/// <returns>Объект разрешений пользователя</returns>
-	public static async Task<IRights> AuthorizeUserAsync(
+	public static async Task<AccessRights[]> AuthorizeUserAsync(
 		this DatalakeContext db,
-		Guid userGuid,
-		Expression<Func<AccessRights, bool>>? objectWhere = null)
+		Guid? userGuid)
 	{
 		var groups = await db.GetUserGroupsAsync(userGuid);
 
-		var rightsArrayQuery = db.AccessRights
-			.Where(x => groups.Select(g => g.Guid).Contains(x.UserGroupGuid.ToString()) || x.UserGuid == userGuid);
+		var rights = await db.AccessRights
+			.Where(x => groups.Select(g => g.Guid).Contains(x.UserGroupGuid.ToString()) || x.UserGuid == userGuid)
+			.Where(x => x.AccessType != AccessType.NotSet)
+			.ToArrayAsync();
 
-		if (objectWhere != null)
-		{
-			rightsArrayQuery = rightsArrayQuery.Where(objectWhere);
-		}
-
-		var rightsArray = await rightsArrayQuery.ToArrayAsync();
-
-		return rightsArray.Merge();
+		return rights;
 	}
 
 	public static async Task<List<UserGroupInfo>> GetUserGroupsAsync(
 		this DatalakeContext db,
-		Guid userGuid)
+		Guid? userGuid)
 	{
 		var groupsTree = await db.GetUserGroupsTreeAsync(userGuid);
 		var groups = new List<UserGroupInfo>();
@@ -93,9 +87,14 @@ public static class DatalakeContextExtension
 
 	public static async Task<UserGroupTreeInfo[]> GetUserGroupsTreeAsync(
 		this DatalakeContext db,
-		Guid userGuid)
+		Guid? userGuid)
 	{
-		var user = await db.Users.FirstOrDefaultAsync(x => x.UserGuid == userGuid);
+		if (userGuid == null)
+			throw new NotFoundException(message: "пользователь без идентификатора");
+
+		var user = await db.Users.FirstOrDefaultAsync(x => x.UserGuid == userGuid)
+			?? throw new NotFoundException(message: "пользователь " + userGuid);
+
 		var groupsQuery = from userGroup in db.UserGroups
 											from rel in db.UserGroupRelations
 											 .Where(x => x.UserGuid == userGuid)
@@ -106,7 +105,7 @@ public static class DatalakeContextExtension
 												Id = g.Key.UserGroupGuid.ToString(),
 												ParentId = g.Key.ParentGroupGuid.ToString(),
 												g.Key.Name,
-												Relations = g.Select(x => x.rel != null ? x.rel.AccessType : UserGroupAccess.Not).ToArray(),
+												Relations = g.Select(x => x.rel != null ? x.rel.AccessType : AccessType.NoAccess).ToArray(),
 											};
 
 		var groups = groupsQuery.ToArray();
@@ -136,12 +135,64 @@ public static class DatalakeContextExtension
 		}
 	}
 
-	public static async Task CheckUserAccessAsync(this DatalakeContext db,
-		Guid userGuid,
-		Func<IRights, bool?> accessRule,
-		Expression<Func<AccessRights, bool>>? objectWhere = null)
+	/// <summary>
+	/// Проверка, есть ли доступ на указанном уровне
+	/// </summary>
+	/// <param name="db">Подключение к базе данных</param>
+	/// <param name="userGuid">Идентификатор пользователя</param>
+	/// <param name="minimalAccess">Уровень доступа, минимально необходимый для предоставления разрешения</param>
+	/// <param name="objectWhere">Условие выбора объектов. Глобальные разрешения пользователя и его групп всегда в списке выбранных</param>
+	/// <exception cref="ForbiddenException">Нет доступа</exception>
+	public static async Task CheckAccessAsync(
+		this DatalakeContext db,
+		UserAuthInfo user,
+		AccessType minimalAccess,
+		AccessScope scope = AccessScope.Global,
+		int targetId = 0)
 	{
-		var userRights = await db.AuthorizeUserAsync(userGuid, objectWhere);
-		userRights.Check(accessRule);
+		var query = user.Rights
+			.Where(x => (int)minimalAccess <= (int)x.AccessType);
+
+		if (scope != AccessScope.Global)
+		{
+			List<int> allowedBlocks = [];
+			int allowedSource = -1;
+			int allowedTag = -1;
+
+			switch (scope)
+			{
+				case AccessScope.Source:
+					allowedSource  = targetId;
+					break;
+
+				case AccessScope.Block:
+					allowedBlocks.AddRange((await new BlocksRepository(db).GetParentsAsync(targetId)).Select(b => b.Id));
+					break;
+
+				case AccessScope.Tag:
+					var sourceQuery = from t in db.Tags.Where(x => x.Id == targetId)
+														from s in db.Sources.InnerJoin(x => x.Id == t.SourceId)
+														select s.Id;
+					allowedSource = await sourceQuery.DefaultIfEmpty(-1).FirstOrDefaultAsync();
+
+					var blocksQuery = from rel in db.BlockTags.Where(x => x.TagId == targetId)
+														from b in db.Blocks.InnerJoin(x => x.Id == rel.BlockId)
+														select b.Id;
+					allowedBlocks.AddRange(await blocksQuery.ToArrayAsync());
+					allowedBlocks.AddRange((await new BlocksRepository(db).GetParentsAsync(targetId)).Select(b => b.Id));
+
+					allowedTag = targetId;
+					break;
+			}
+
+			query = query.Where(x => allowedBlocks.Contains(x.BlockId ?? -1) 
+				|| x.SourceId == allowedSource
+				|| x.TagId == allowedTag);
+		}
+
+		var hasAccess = query.Any();
+
+		if (!hasAccess)
+			throw new ForbiddenException(message: "нет доступа");
 	}
 }

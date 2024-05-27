@@ -1,6 +1,7 @@
 ﻿using DatalakeApiClasses.Enums;
 using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Sources;
+using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Extensions;
 using LinqToDB;
 
@@ -8,7 +9,37 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class SourcesRepository(DatalakeContext db)
 {
-	public async Task<int> CreateAsync()
+	#region Действия
+
+	public async Task<int> CreateAsync(UserAuthInfo user, SourceInfo? sourceInfo = null)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+
+		if (sourceInfo != null)
+			return await CreateAsync(sourceInfo);
+
+		return await CreateAsync();
+	}
+
+	public async Task<bool> UpdateAsync(UserAuthInfo user, int id, SourceInfo sourceInfo)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Source, id);
+
+		return await UpdateAsync(id, sourceInfo);
+	}
+
+	public async Task<bool> DeleteAsync(UserAuthInfo user, int id)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Source, id);
+
+		return await DeleteAsync(id);
+	}
+
+	#endregion
+
+	#region Реализация
+
+	internal async Task<int> CreateAsync()
 	{
 		var transaction = await db.BeginTransactionAsync();
 
@@ -33,7 +64,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		return id.Value;
 	}
 
-	public async Task<int> CreateAsync(SourceInfo sourceInfo)
+	internal async Task<int> CreateAsync(SourceInfo sourceInfo)
 	{
 		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
 
@@ -61,7 +92,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		return id.Value;
 	}
 
-	public async Task<bool> UpdateAsync(int id, SourceInfo sourceInfo)
+	internal async Task<bool> UpdateAsync(int id, SourceInfo sourceInfo)
 	{
 		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
 
@@ -90,7 +121,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		return true;
 	}
 
-	public async Task<bool> DeleteAsync(int id)
+	internal async Task<bool> DeleteAsync(int id)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -113,4 +144,6 @@ public partial class SourcesRepository(DatalakeContext db)
 
 		return true;
 	}
+
+	#endregion
 }

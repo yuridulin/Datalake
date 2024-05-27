@@ -10,7 +10,7 @@ public class SessionManagerService
 
 	public AuthSession? GetExistSession(string token)
 	{
-		var session = Sessions.FirstOrDefault(x => x.Token == token);
+		var session = Sessions.FirstOrDefault(x => x.User.Token == token);
 		if (session == null) return null;
 		if (session.ExpirationTime < DateTime.UtcNow)
 		{
@@ -36,22 +36,20 @@ public class SessionManagerService
 
 	public void AddSessionToResponse(AuthSession session, HttpResponse response)
 	{
-		response.Headers[AuthConstants.TokenHeader] = session.Token;
-		response.Headers[AuthConstants.AccessHeader] = session.AccessType.ToString();
-		response.Headers[AuthConstants.NameHeader] = session.Login;
+		response.Headers[AuthConstants.TokenHeader] = session.User.Token;
+		response.Headers[AuthConstants.NameHeader] = session.User.UserName;
 	}
 
 	public AuthSession OpenSession(UserAuthInfo userAuthInfo)
 	{
-		Sessions.RemoveAll(x => x.Login == userAuthInfo.UserName);
+		Sessions.RemoveAll(x => x.User.UserName == userAuthInfo.UserName);
 
 		var session = new AuthSession
 		{
-			Token = new Random().Next().ToString(),
+			User = userAuthInfo,
 			ExpirationTime = DateTime.UtcNow.AddDays(7), // срок жизни сессии
-			AccessType = userAuthInfo.AccessType,
-			Login = userAuthInfo.UserName,
 		};
+		session.User.Token = new Random().Next().ToString();
 		Sessions.Add(session);
 
 		return session;
@@ -65,7 +63,6 @@ public class SessionManagerService
 			RemoveSession(session);
 		}
 	}
-
 
 	void RemoveSession(AuthSession session)
 	{

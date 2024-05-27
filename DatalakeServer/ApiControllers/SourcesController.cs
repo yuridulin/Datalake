@@ -5,6 +5,7 @@ using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using DatalakeServer.ApiControllers.Base;
 
 namespace DatalakeServer.ApiControllers;
 
@@ -12,12 +13,14 @@ namespace DatalakeServer.ApiControllers;
 [ApiController]
 public class SourcesController(
 	SourcesRepository sourcesRepository,
-	ReceiverService receiverService) : ControllerBase
+	ReceiverService receiverService) : ApiControllerBase
 {
 	[HttpPost("empty")]
 	public async Task<ActionResult<int>> CreateAsync()
 	{
-		var id = await sourcesRepository.CreateAsync();
+		var user = Authenticate();
+
+		var id = await sourcesRepository.CreateAsync(user);
 
 		return id;
 	}
@@ -26,7 +29,8 @@ public class SourcesController(
 	public async Task<ActionResult<int>> CreateAsync(
 		[BindRequired, FromBody] SourceInfo source)
 	{
-		var id = await sourcesRepository.CreateAsync(source);
+		var user = Authenticate();
+		var id = await sourcesRepository.CreateAsync(user, source);
 
 		return id;
 	}
@@ -52,7 +56,8 @@ public class SourcesController(
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] SourceInfo source)
 	{
-		await sourcesRepository.UpdateAsync(id, source);
+		var user = Authenticate();
+		await sourcesRepository.UpdateAsync(user, id, source);
 
 		return NoContent();
 	}
@@ -61,7 +66,8 @@ public class SourcesController(
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		await sourcesRepository.DeleteAsync(id);
+		var user = Authenticate();
+		await sourcesRepository.DeleteAsync(user, id);
 
 		return NoContent();
 	}
