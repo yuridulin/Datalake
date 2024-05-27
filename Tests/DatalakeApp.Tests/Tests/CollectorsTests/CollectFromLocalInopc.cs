@@ -1,10 +1,10 @@
-﻿using DatalakeApp.Services.Receiver.Models.Inopc;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Models.Sources;
+using DatalakeApiClasses.Models.Tags;
+using DatalakeApiClasses.Models.Values;
+using DatalakeApp.Services.Receiver.Models.Inopc;
 using DatalakeApp.Tests.Attributes;
 using DatalakeApp.Tests.Extensions;
-using DatalakeDatabase.ApiModels.Sources;
-using DatalakeDatabase.ApiModels.Tags;
-using DatalakeDatabase.ApiModels.Values;
-using DatalakeDatabase.Enums;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 

@@ -1,4 +1,4 @@
-using DatalakeDatabase.Enums;
+using DatalakeApiClasses.Enums;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 

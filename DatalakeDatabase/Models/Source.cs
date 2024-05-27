@@ -1,4 +1,4 @@
-﻿using DatalakeDatabase.Enums;
+﻿using DatalakeApiClasses.Enums;
 using LinqToDB.Mapping;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -33,4 +33,7 @@ public class Source
 
 	[InverseProperty(nameof(Tag.Source))]
 	public ICollection<Tag> Tags { get; set; } = [];
+
+	[InverseProperty(nameof(AccessRights.Source))]
+	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
 }

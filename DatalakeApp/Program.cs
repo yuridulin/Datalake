@@ -1,3 +1,4 @@
+using DatalakeApiClasses.Exceptions.Base;
 using DatalakeApp.BackgroundServices.Collector;
 using DatalakeApp.BackgroundServices.Collector.Collectors.Factory;
 using DatalakeApp.Constants;
@@ -5,7 +6,6 @@ using DatalakeApp.Middlewares;
 using DatalakeApp.Services.Receiver;
 using DatalakeApp.Services.SessionManager;
 using DatalakeDatabase;
-using DatalakeDatabase.Exceptions.Base;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;

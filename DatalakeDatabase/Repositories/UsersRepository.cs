@@ -1,6 +1,6 @@
-﻿using DatalakeDatabase.ApiModels.Users;
-using DatalakeDatabase.Enums;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Models;
 using LinqToDB;
 using System.Security.Cryptography;
@@ -188,6 +188,7 @@ public partial class UsersRepository(DatalakeContext db)
 
 		var user = new User
 		{
+			UserGuid = Guid.NewGuid(),
 			Name = userInfo.LoginName,
 			FullName = userInfo.FullName ?? userInfo.LoginName,
 			AccessType = userInfo.AccessType,

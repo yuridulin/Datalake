@@ -1,6 +1,6 @@
-﻿using DatalakeApp.Services.Receiver;
-using DatalakeDatabase.ApiModels.Sources;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Sources;
+using DatalakeApp.Services.Receiver;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;

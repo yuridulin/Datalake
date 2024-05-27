@@ -1,6 +1,6 @@
-﻿using DatalakeDatabase;
-using DatalakeDatabase.ApiModels.Logs;
-using DatalakeDatabase.Constants;
+﻿using DatalakeApiClasses.Constants;
+using DatalakeApiClasses.Models.Logs;
+using DatalakeDatabase;
 using DatalakeDatabase.Extensions;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;

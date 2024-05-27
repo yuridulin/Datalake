@@ -1,4 +1,4 @@
-﻿using DatalakeDatabase.ApiModels.Blocks;
+﻿using DatalakeApiClasses.Models.Blocks;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;

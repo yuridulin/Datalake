@@ -1,4 +1,4 @@
-﻿using DatalakeDatabase.Enums;
+﻿using DatalakeApiClasses.Enums;
 using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;

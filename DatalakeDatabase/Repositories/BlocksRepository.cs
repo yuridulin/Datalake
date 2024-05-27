@@ -1,5 +1,5 @@
-﻿using DatalakeDatabase.ApiModels.Blocks;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Models.Blocks;
+using DatalakeApiClasses.Exceptions;
 using DatalakeDatabase.Models;
 using LinqToDB;
 using LinqToDB.Data;

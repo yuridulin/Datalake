@@ -1,9 +1,9 @@
-﻿using DatalakeApp.ApiControllers;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Models.Values;
+using DatalakeApp.ApiControllers;
 using DatalakeApp.Services.Receiver.Models;
 using DatalakeApp.Services.Receiver.Models.Inopc;
 using DatalakeApp.Services.Receiver.Models.Inopc.Enums;
-using DatalakeDatabase.ApiModels.Values;
-using DatalakeDatabase.Enums;
 
 namespace DatalakeApp.Services.Receiver;
 

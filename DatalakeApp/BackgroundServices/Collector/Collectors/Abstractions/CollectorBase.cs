@@ -1,4 +1,4 @@
-﻿using DatalakeDatabase.Enums;
+﻿using DatalakeApiClasses.Enums;
 using DatalakeDatabase.Models;
 
 namespace DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;

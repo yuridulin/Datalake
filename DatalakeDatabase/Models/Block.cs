@@ -39,4 +39,7 @@ public class Block
 	public ICollection<BlockTag> RelationsToTags { get; set; } = [];
 
 	public ICollection<Tag> Tags { get; set; } = [];
+
+	[InverseProperty(nameof(AccessRights.Block))]
+	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
 }

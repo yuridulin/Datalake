@@ -1,6 +1,6 @@
-﻿using DatalakeApp.Constants;
+﻿using DatalakeApiClasses.Models.Users;
+using DatalakeApp.Constants;
 using DatalakeApp.Services.SessionManager.Models;
-using DatalakeDatabase.ApiModels.Users;
 
 namespace DatalakeApp.Services.SessionManager;
 

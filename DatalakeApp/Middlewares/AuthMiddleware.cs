@@ -1,5 +1,5 @@
-﻿using DatalakeApp.Services.SessionManager;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Exceptions;
+using DatalakeApp.Services.SessionManager;
 using System.Text;
 
 namespace DatalakeApp.Middlewares;

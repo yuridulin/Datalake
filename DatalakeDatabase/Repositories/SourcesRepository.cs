@@ -1,6 +1,6 @@
-﻿using DatalakeDatabase.ApiModels.Sources;
-using DatalakeDatabase.Enums;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Sources;
 using DatalakeDatabase.Extensions;
 using LinqToDB;
 

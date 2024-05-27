@@ -1,4 +1,4 @@
-﻿using DatalakeDatabase.Enums;
+﻿using DatalakeApiClasses.Enums;
 using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
@@ -19,7 +19,7 @@ public class Tag
 	public int Id { get; set; }
 
 	[Column]
-	public required Guid GlobalId { get; set; }
+	public required Guid GlobalGuid { get; set; }
 
 	[Column]
 	public required string Name { get; set; }
@@ -81,4 +81,7 @@ public class Tag
 	public ICollection<BlockTag> RelationsToBlocks { get; set; } = [];
 
 	public ICollection<Block> Blocks { get; set; } = [];
+
+	[InverseProperty(nameof(AccessRights.Tag))]
+	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
 }

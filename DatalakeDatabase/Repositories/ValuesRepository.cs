@@ -1,7 +1,7 @@
-﻿using DatalakeDatabase.ApiModels.Values;
-using DatalakeDatabase.Constants;
-using DatalakeDatabase.Enums;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Constants;
+using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Values;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;

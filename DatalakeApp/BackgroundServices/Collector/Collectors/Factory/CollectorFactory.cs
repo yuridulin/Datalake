@@ -1,6 +1,6 @@
-﻿using DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
 using DatalakeApp.Services.Receiver;
-using DatalakeDatabase.Enums;
 using DatalakeDatabase.Models;
 
 namespace DatalakeApp.BackgroundServices.Collector.Collectors.Factory;

@@ -1,4 +1,4 @@
-﻿using DatalakeDatabase.ApiModels.Values;
+﻿using DatalakeApiClasses.Models.Values;
 using DatalakeDatabase.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

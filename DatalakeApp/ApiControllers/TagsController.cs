@@ -1,5 +1,5 @@
-﻿using DatalakeDatabase.ApiModels.Tags;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Tags;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;

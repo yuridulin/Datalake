@@ -1,4 +1,4 @@
-﻿using DatalakeDatabase.Enums;
+﻿using DatalakeApiClasses.Enums;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;
@@ -62,6 +62,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 
 	#region Таблицы
 
+	public ITable<AccessRights> AccessRights
+		=> this.GetTable<AccessRights>();
+
 	public ITable<Block> Blocks
 		=> this.GetTable<Block>();
 
@@ -94,6 +97,12 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 
 	public ITable<User> Users
 		=> this.GetTable<User>();
+
+	public ITable<UserGroup> UserGroups
+		=> this.GetTable<UserGroup>();
+
+	public ITable<UserGroupRelation> UserGroupRelations
+		=> this.GetTable<UserGroupRelation>();
 
 	#endregion
 }

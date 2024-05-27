@@ -1,6 +1,6 @@
-﻿using DatalakeApp.Services.SessionManager;
-using DatalakeDatabase.ApiModels.Users;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Users;
+using DatalakeApp.Services.SessionManager;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;

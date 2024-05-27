@@ -1,5 +1,5 @@
-﻿using DatalakeDatabase.ApiModels.Tags;
-using DatalakeDatabase.Enums;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Models.Tags;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;

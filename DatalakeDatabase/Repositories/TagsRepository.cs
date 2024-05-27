@@ -1,6 +1,6 @@
-﻿using DatalakeDatabase.ApiModels.Tags;
-using DatalakeDatabase.Enums;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Tags;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using LinqToDB;
@@ -80,7 +80,7 @@ public partial class TagsRepository(DatalakeContext db)
 		int? id = await db.InsertWithInt32IdentityAsync(new Tag
 		{
 			Created = DateTime.Now,
-			GlobalId = Guid.NewGuid(),
+			GlobalGuid = Guid.NewGuid(),
 			Name = createRequest.Name!,
 			Type = createRequest.TagType,
 			Interval = 60,

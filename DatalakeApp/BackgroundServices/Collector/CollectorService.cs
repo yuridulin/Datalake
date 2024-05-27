@@ -1,8 +1,8 @@
-﻿using DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
+﻿using DatalakeApiClasses.Models.Values;
+using DatalakeApp.BackgroundServices.Collector.Collectors.Abstractions;
 using DatalakeApp.BackgroundServices.Collector.Collectors.Factory;
 using DatalakeApp.BackgroundServices.Collector.Models;
 using DatalakeDatabase;
-using DatalakeDatabase.ApiModels.Values;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
