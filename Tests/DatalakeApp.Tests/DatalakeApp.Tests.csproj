@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\DatalakeApp\DatalakeApp.csproj" />
+    <ProjectReference Include="..\..\DatalakeApp\DatalakeServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

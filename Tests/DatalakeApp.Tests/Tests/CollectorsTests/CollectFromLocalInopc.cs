@@ -2,13 +2,13 @@
 using DatalakeApiClasses.Models.Sources;
 using DatalakeApiClasses.Models.Tags;
 using DatalakeApiClasses.Models.Values;
-using DatalakeApp.Services.Receiver.Models.Inopc;
-using DatalakeApp.Tests.Attributes;
-using DatalakeApp.Tests.Extensions;
+using DatalakeServer.Services.Receiver.Models.Inopc;
+using DatalakeServer.Tests.Attributes;
+using DatalakeServer.Tests.Extensions;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 
-namespace DatalakeApp.Tests.Tests.CollectorsTests;
+namespace DatalakeServer.Tests.Tests.CollectorsTests;
 
 public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>>
 {
