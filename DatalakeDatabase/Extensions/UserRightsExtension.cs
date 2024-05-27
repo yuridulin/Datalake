@@ -1,4 +1,5 @@
-﻿using DatalakeApiClasses.Models.Abstractions;
+﻿using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Abstractions;
 using DatalakeApiClasses.Models.Users;
 
 namespace DatalakeDatabase.Extensions;
@@ -32,5 +33,19 @@ public static class UserRightsExtension
 		};
 
 		return rights;
+	}
+
+	/// <summary>
+	/// Проверка выбранного разрешения или их комбинации. Выбрасывает ошибку, если действие не разрешено
+	/// </summary>
+	/// <param name="rights">Объект прав пользователя</param>
+	/// <param name="rule">Выбор разрешений для проверки</param>
+	/// <exception cref="ForbiddenException">Ошибка "нет доступа", если выбранные разрешение не равны true</exception>
+	public static void Check(this IRights rights, Func<IRights, bool?> rule)
+	{
+		var value = rule.Invoke(rights);
+
+		if (value == false)
+			throw new ForbiddenException(message: "нет доступа");
 	}
 }

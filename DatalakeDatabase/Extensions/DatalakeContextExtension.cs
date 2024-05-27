@@ -49,7 +49,7 @@ public static class DatalakeContextExtension
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="objectWhere">Дополнительные условия проверки</param>
 	/// <returns>Объект разрешений пользователя</returns>
-	public static async Task<IRights> AuthorizeUser(
+	public static async Task<IRights> AuthorizeUserAsync(
 		this DatalakeContext db,
 		Guid userGuid,
 		Expression<Func<AccessRights, bool>>? objectWhere = null)
@@ -134,5 +134,14 @@ public static class DatalakeContextExtension
 				})
 				.ToArray();
 		}
+	}
+
+	public static async Task CheckUserAccessAsync(this DatalakeContext db,
+		Guid userGuid,
+		Func<IRights, bool?> accessRule,
+		Expression<Func<AccessRights, bool>>? objectWhere = null)
+	{
+		var userRights = await db.AuthorizeUserAsync(userGuid, objectWhere);
+		userRights.Check(accessRule);
 	}
 }

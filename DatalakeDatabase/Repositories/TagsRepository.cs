@@ -10,6 +10,33 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class TagsRepository(DatalakeContext db)
 {
+	#region Действия
+
+	public async Task<int> CreateAsync(TagCreateRequest tagCreateRequest, Guid userGuid)
+	{
+		await db.CheckUserAccessAsync(userGuid, r => r.CanManageTag);
+
+		return await CreateAsync(tagCreateRequest);
+	}
+
+	public async Task UpdateAsync(int id, TagUpdateRequest updateRequest, Guid userGuid)
+	{
+		await db.CheckUserAccessAsync(userGuid, r => r.CanManageTag, o => o.TagId == id);
+
+		await UpdateAsync(id, updateRequest);
+	}
+
+	public async Task DeleteAsync(int id, Guid userGuid)
+	{
+		await db.CheckUserAccessAsync(userGuid, r => r.CanManageTag, o => o.TagId == id);
+
+		await DeleteAsync(id);
+	}
+
+	#endregion
+
+	#region Реализация
+
 	public async Task<int> CreateAsync(TagCreateRequest createRequest)
 	{
 		// TODO: проверка разрешения на создание тега
@@ -209,4 +236,6 @@ public partial class TagsRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 	}
+
+	#endregion
 }
