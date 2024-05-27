@@ -1,5 +1,10 @@
-﻿using DatalakeDatabase.Models;
+﻿using DatalakeApiClasses.Constants;
+using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Models.Abstractions;
+using DatalakeApiClasses.Models.Users;
+using DatalakeDatabase.Models;
 using LinqToDB;
+using System.Linq.Expressions;
 
 namespace DatalakeDatabase.Extensions;
 
@@ -33,5 +38,88 @@ public static class DatalakeContextExtension
 			await db.InsertAsync(log);
 		}
 		catch { }
+	}
+
+	public static async Task<IRights> AuthorizeUser(
+		this DatalakeContext db,
+		Guid userGuid,
+		Expression<Func<AccessRights, bool>>? objectWhere = null)
+	{
+		async Task<UserGroupTreeInfo[]> GetUserGroupsTreeAsync(Guid userGuid)
+		{
+			var user = await db.Users.FirstOrDefaultAsync(x => x.UserGuid == userGuid);
+			var groupsQuery = from userGroup in db.UserGroups
+												from rel in db.UserGroupRelations
+												 .Where(x => x.UserGuid == userGuid)
+												 .LeftJoin(x => x.UserGroupGuid == userGroup.UserGroupGuid)
+												group new { userGroup, rel } by userGroup into g
+												select new
+												{
+													Id = g.Key.UserGroupGuid.ToString(),
+													ParentId = g.Key.ParentGroupGuid.ToString(),
+													g.Key.Name,
+													Relations = g.Select(x => x.rel != null ? x.rel.AccessType : UserGroupAccess.Not).ToArray(),
+												};
+
+			var groups = groupsQuery.ToArray();
+
+			var userGroups = groups.Where(x => x.Relations.Intersect(EnumSet.UserWithAccess).Any()).ToArray();
+
+			return userGroups
+				.Select(x => new UserGroupTreeInfo
+				{
+					Guid = x.Id,
+					Name = x.Name,
+					Children = ReadChildren(x.Id),
+				})
+				.ToArray();
+
+			UserGroupTreeInfo[] ReadChildren(string? id)
+			{
+				return groups
+					.Where(x => x.ParentId == id)
+					.Select(x => new UserGroupTreeInfo
+					{
+						Name = x.Name,
+						Guid = x.Id,
+						Children = ReadChildren(id)
+					})
+					.ToArray();
+			}
+		}
+
+		async Task<List<UserGroupInfo>> GetUserGroupsAsync(Guid userGuid)
+		{
+			var groupsTree = await GetUserGroupsTreeAsync(userGuid);
+			var groups = new List<UserGroupInfo>();
+
+			foreach (var group in groupsTree)
+			{
+				ExtractGroups(group);
+			}
+
+			void ExtractGroups(UserGroupTreeInfo userGroupInfo)
+			{
+				groups.Add(userGroupInfo);
+				foreach (var child in userGroupInfo.Children)
+					ExtractGroups(child);
+			}
+
+			return groups;
+		}
+
+		var groups = await GetUserGroupsAsync(userGuid);
+
+		var rightsArrayQuery = db.AccessRights
+			.Where(x => groups.Select(g => g.Guid).Contains(x.UserGroupGuid.ToString()) || x.UserGuid == userGuid);
+
+		if (objectWhere != null)
+		{
+			rightsArrayQuery = rightsArrayQuery.Where(objectWhere);
+		}
+
+		var rightsArray = await rightsArrayQuery.ToArrayAsync();
+
+		return rightsArray.Merge();
 	}
 }

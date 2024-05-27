@@ -7,6 +7,9 @@ public static class UserRightsExtension
 {
 	public static IRights Merge(this IEnumerable<IRights> rightsArray)
 	{
+		if (!rightsArray.Any())
+			return new UserRights();
+
 		var rights = new UserRights
 		{
 			UserGuid = rightsArray.Select(x => x.UserGuid).FirstOrDefault(),
