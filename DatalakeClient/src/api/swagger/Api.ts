@@ -437,10 +437,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @tags Users
 	 * @name UsersCreate
 	 * @request POST:/api/Users
-	 * @response `200` `boolean`
+	 * @response `200` `string`
 	 */
 	usersCreate = (data: UserCreateRequest, params: RequestParams = {}) =>
-		this.request<boolean, any>({
+		this.request<string, any>({
 			path: `/api/Users`,
 			method: 'POST',
 			body: data,
@@ -468,12 +468,12 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersRead
-	 * @request GET:/api/Users/{name}
+	 * @request GET:/api/Users/{userGuid}
 	 * @response `200` `UserInfo`
 	 */
-	usersRead = (name: string, params: RequestParams = {}) =>
+	usersRead = (userGuid: string, params: RequestParams = {}) =>
 		this.request<UserInfo, any>({
-			path: `/api/Users/${name}`,
+			path: `/api/Users/${userGuid}`,
 			method: 'GET',
 			format: 'json',
 			...params,
@@ -483,12 +483,12 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersUpdate
-	 * @request PUT:/api/Users/{name}
+	 * @request PUT:/api/Users/{userGuid}
 	 * @response `200` `File`
 	 */
-	usersUpdate = (name: string, data: UserUpdateRequest, params: RequestParams = {}) =>
+	usersUpdate = (userGuid: string, data: UserUpdateRequest, params: RequestParams = {}) =>
 		this.request<File, any>({
-			path: `/api/Users/${name}`,
+			path: `/api/Users/${userGuid}`,
 			method: 'PUT',
 			body: data,
 			type: ContentType.Json,
@@ -499,12 +499,12 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersDelete
-	 * @request DELETE:/api/Users/{name}
+	 * @request DELETE:/api/Users/{userGuid}
 	 * @response `200` `File`
 	 */
-	usersDelete = (name: string, params: RequestParams = {}) =>
+	usersDelete = (userGuid: string, params: RequestParams = {}) =>
 		this.request<File, any>({
-			path: `/api/Users/${name}`,
+			path: `/api/Users/${userGuid}`,
 			method: 'DELETE',
 			...params,
 		})
@@ -513,12 +513,12 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersReadWithDetails
-	 * @request GET:/api/Users/{name}/detailed
+	 * @request GET:/api/Users/{userGuid}/detailed
 	 * @response `200` `UserDetailInfo`
 	 */
-	usersReadWithDetails = (name: string, params: RequestParams = {}) =>
+	usersReadWithDetails = (userGuid: string, params: RequestParams = {}) =>
 		this.request<UserDetailInfo, any>({
-			path: `/api/Users/${name}/detailed`,
+			path: `/api/Users/${userGuid}/detailed`,
 			method: 'GET',
 			format: 'json',
 			...params,

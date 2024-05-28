@@ -185,7 +185,8 @@ public static class DatalakeContextExtension
 					break;
 			}
 
-			query = query.Where(x => allowedBlocks.Contains(x.BlockId ?? -1) 
+			query = query.Where(x => x.IsGlobal
+			  || allowedBlocks.Contains(x.BlockId ?? -1)
 				|| x.SourceId == allowedSource
 				|| x.TagId == allowedTag);
 		}

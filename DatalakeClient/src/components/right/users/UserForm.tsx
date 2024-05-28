@@ -44,8 +44,7 @@ export default function UserForm() {
 				message: 'Успешно',
 				icon: <CheckCircleOutlined />,
 			})
-			if (id !== request.loginName)
-				navigate('/users/' + request.loginName)
+			load()
 		})
 	}
 
@@ -186,13 +185,19 @@ export default function UserForm() {
 							})
 						}
 					>
-						<Radio.Button value={AccessType.NOT}>
+						<Radio.Button value={AccessType.NotSet}>
 							Отключена
 						</Radio.Button>
-						<Radio.Button value={AccessType.USER}>
+						<Radio.Button value={AccessType.NoAccess}>
+							Заблокирована
+						</Radio.Button>
+						<Radio.Button value={AccessType.Viewer}>
+							Наблюдатель
+						</Radio.Button>
+						<Radio.Button value={AccessType.User}>
 							Пользователь
 						</Radio.Button>
-						<Radio.Button value={AccessType.ADMIN}>
+						<Radio.Button value={AccessType.Admin}>
 							Администратор
 						</Radio.Button>
 					</Radio.Group>

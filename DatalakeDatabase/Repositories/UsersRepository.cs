@@ -25,14 +25,20 @@ public partial class UsersRepository(DatalakeContext db)
 			throw new ForbiddenException(message: "пароль не подходит");
 		}
 
-		var auth = await db.AuthorizeUserAsync(user.UserGuid);
+		var accessRights = await db.AuthorizeUserAsync(user.UserGuid);
+		var globalAccessType = accessRights
+			.Where(x => x.IsGlobal)
+			.Select(x => (int)x.AccessType)
+			.DefaultIfEmpty((int)AccessType.NoAccess)
+			.Max();
 
 		return new UserAuthInfo
 		{
 			UserGuid = user.UserGuid,
 			UserName = loginPass.Name,
 			Token = string.Empty,
-			Rights = auth
+			GlobalAccessType = (AccessType)globalAccessType,
+			Rights = accessRights
 				.Select(x => new UserAccessRightsInfo
 				{
 					AccessType = x.AccessType,
@@ -45,13 +51,91 @@ public partial class UsersRepository(DatalakeContext db)
 		};
 	}
 
-	public async Task<bool> CreateAsync(UserCreateRequest userInfo)
+	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
 	{
-		var user = await CreateUserAsync(userInfo);
-		return user != null;
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+
+		return await CreateAsync(userInfo);
 	}
 
-	public async Task<bool> UpdateAsync(string loginName, UserUpdateRequest request)
+	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+
+		return await UpdateAsync(userGuid, request);
+	}
+
+	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid userGuid)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+
+		return await DeleteAsync(userGuid);
+	}
+
+	#endregion
+
+	#region Реализация
+
+	internal async Task<Guid> CreateAsync(UserCreateRequest userInfo)
+	{
+		string hash;
+
+		if (string.IsNullOrEmpty(userInfo.LoginName))
+		{
+			throw new InvalidValueException(message: "логин не может быть пустым");
+		}
+
+		if (!string.IsNullOrEmpty(userInfo.StaticHost))
+		{
+			hash = await GenerateNewHashForStaticAsync();
+		}
+		else if (!string.IsNullOrEmpty(userInfo.Password))
+		{
+			hash = GetHashFromPassword(userInfo.Password);
+		}
+		else
+		{
+			throw new InvalidValueException(message: "для учётной записи обязательно наличие или пароля, или адреса сторонней службы");
+		}
+
+		if (await db.Users.AnyAsync(x => x.Name == userInfo.LoginName))
+		{
+			throw new AlreadyExistException(message: "учётная запись с таким логином");
+		}
+
+		var user = new User
+		{
+			UserGuid = Guid.NewGuid(),
+			Name = userInfo.LoginName,
+			FullName = userInfo.FullName ?? userInfo.LoginName,
+			AccessType = userInfo.AccessType,
+			Hash = hash,
+			StaticHost = userInfo.StaticHost,
+		};
+
+		using var transaction = await db.BeginTransactionAsync();
+
+		user = await db.Users
+			.Value(x => x.UserGuid, user.UserGuid)
+			.Value(x => x.Name, user.Name)
+			.Value(x => x.FullName, user.FullName)
+			.Value(x => x.AccessType, user.AccessType)
+			.Value(x => x.Hash, user.Hash)
+			.Value(x => x.StaticHost, user.StaticHost)
+			.InsertWithOutputAsync();
+
+		await db.AccessRights
+			.Value(x => x.UserGuid, user.UserGuid)
+			.Value(x => x.IsGlobal, true)
+			.Value(x => x.AccessType, user.AccessType)
+			.InsertAsync();
+
+		await transaction.CommitAsync();
+
+		return user.UserGuid;
+	}
+
+	internal async Task<bool> UpdateAsync(Guid userGuid, UserUpdateRequest request)
 	{
 		if (string.IsNullOrEmpty(request.LoginName))
 		{
@@ -59,12 +143,12 @@ public partial class UsersRepository(DatalakeContext db)
 		}
 
 		var userInfo = await GetInfo()
-			.Where(x => x.LoginName == loginName)
+			.Where(x => x.UserGuid == userGuid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "пользователь по указанному логину");
 
 		var updateQuery = db.Users
-			.Where(x => x.Name == loginName)
+			.Where(x => x.UserGuid == userGuid)
 			.Set(x => x.Name, request.LoginName)
 			.Set(x => x.FullName, request.FullName)
 			.Set(x => x.AccessType, request.AccessType);
@@ -113,89 +197,30 @@ public partial class UsersRepository(DatalakeContext db)
 				.Set(x => x.Hash, hash);
 		}
 
-		if (request.AccessType != AccessType.Admin
-			&& userInfo.AccessType == AccessType.Admin
-			&& !await db.Users.Where(x => x.AccessType == AccessType.Admin && x.Name != loginName).AnyAsync())
-		{
-			throw new ForbiddenException(message: "удаление последнего администратора");
-		}
-
 		await updateQuery.UpdateAsync();
 
 		return true;
 	}
 
-	public async Task<bool> DeleteAsync(string loginName)
+	internal async Task<bool> DeleteAsync(Guid userGuid)
 	{
-		var accessTypeInfo = await db.Users
-			.Where(x => x.Name == loginName)
-			.Select(x => new { x.AccessType })
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException(message: "учётная запись по логину");
+		using var transaction = await db.BeginTransactionAsync();
 
-		if (accessTypeInfo.AccessType == AccessType.Admin
-			&& !await db.Users.Where(x => x.AccessType == AccessType.Admin && x.Name != loginName).AnyAsync())
-		{
-			throw new ForbiddenException(message: "удаление последнего администратора");
-		}
-
-		await db.Users
-			.Where(x => x.Name == loginName)
+		await db.AccessRights
+			.Where(x => x.UserGuid == userGuid)
 			.DeleteAsync();
 
-		return true;
-	}
-
-	#endregion
-
-	#region Реализация
-
-	private async Task<User> CreateUserAsync(UserCreateRequest userInfo)
-	{
-		string hash;
-
-		if (string.IsNullOrEmpty(userInfo.LoginName))
-		{
-			throw new InvalidValueException(message: "логин не может быть пустым");
-		}
-
-		if (!string.IsNullOrEmpty(userInfo.StaticHost))
-		{
-			hash = await GenerateNewHashForStaticAsync();
-		}
-		else if (!string.IsNullOrEmpty(userInfo.Password))
-		{
-			hash = GetHashFromPassword(userInfo.Password);
-		}
-		else
-		{
-			throw new InvalidValueException(message: "для учётной записи обязательно наличие или пароля, или адреса сторонней службы");
-		}
-
-		if (await db.Users.AnyAsync(x => x.Name == userInfo.LoginName))
-		{
-			throw new AlreadyExistException(message: "учётная запись с таким логином");
-		}
-
-		var user = new User
-		{
-			UserGuid = Guid.NewGuid(),
-			Name = userInfo.LoginName,
-			FullName = userInfo.FullName ?? userInfo.LoginName,
-			AccessType = userInfo.AccessType,
-			Hash = hash,
-			StaticHost = userInfo.StaticHost,
-		};
+		await db.UserGroupRelations
+			.Where(x => x.UserGuid == userGuid)
+			.DeleteAsync();
 
 		await db.Users
-			.Value(x => x.Name, user.Name)
-			.Value(x => x.FullName, user.FullName)
-			.Value(x => x.AccessType, user.AccessType)
-			.Value(x => x.Hash, user.Hash)
-			.Value(x => x.StaticHost, user.StaticHost)
-			.InsertAsync();
+			.Where(x => x.UserGuid == userGuid)
+			.DeleteAsync();
 
-		return user;
+		await transaction.CommitAsync();
+
+		return true;
 	}
 
 	private async Task<string> GenerateNewHashForStaticAsync()

@@ -47,5 +47,5 @@ public class TagInfo
 	public required float MaxRaw { get; set; }
 
 	[Required]
-	public required Dictionary<string, int> FormulaInputs { get; set; } = [];
+	public required TagInputInfo[] FormulaInputs { get; set; } = [];
 }

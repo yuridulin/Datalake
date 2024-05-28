@@ -15,5 +15,8 @@ public class UserAuthInfo
 	public required string Token { get; set; }
 
 	[Required]
+	public required AccessType GlobalAccessType { get; set; }
+
+	[Required]
 	public required UserAccessRightsInfo[] Rights { get; set; }
 }

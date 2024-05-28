@@ -1,5 +1,6 @@
 ﻿using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Users;
+using DatalakeServer.Constants;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DatalakeServer.ApiControllers.Base
@@ -8,9 +9,14 @@ namespace DatalakeServer.ApiControllers.Base
 	{
 		protected UserAuthInfo Authenticate()
 		{
-			var user = (HttpContext.Items.TryGetValue("Session", out var session) ? session : null) ?? throw new ForbiddenException(message: "требуется пройти аутентификацию");
+			if (HttpContext.Items.TryGetValue(AuthConstants.ContextSessionKey, out var session))
+			{
+				if (session == null) throw new ForbiddenException(message: "требуется пройти аутентификацию");
 
-			return (UserAuthInfo)user;
+				return (UserAuthInfo)session;
+			}
+
+			throw new NotFoundException(message: "данные о сессии");
 		}
 	}
 }

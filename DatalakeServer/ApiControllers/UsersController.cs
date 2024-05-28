@@ -5,6 +5,7 @@ using DatalakeDatabase.Repositories;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using DatalakeServer.ApiControllers.Base;
 
 namespace DatalakeServer.ApiControllers;
 
@@ -12,7 +13,7 @@ namespace DatalakeServer.ApiControllers;
 [ApiController]
 public class UsersController(
 	UsersRepository usersRepository,
-	SessionManagerService sessionManager) : ControllerBase
+	SessionManagerService sessionManager) : ApiControllerBase
 {
 	[HttpPost("auth")]
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
@@ -29,10 +30,12 @@ public class UsersController(
 	}
 
 	[HttpPost]
-	public async Task<ActionResult<bool>> CreateAsync(
+	public async Task<ActionResult<Guid>> CreateAsync(
 		[BindRequired, FromBody] UserCreateRequest userAuthRequest)
 	{
-		return await usersRepository.CreateAsync(userAuthRequest);
+		var user = Authenticate();
+
+		return await usersRepository.CreateAsync(user, userAuthRequest);
 	}
 
 	[HttpGet]
@@ -42,41 +45,45 @@ public class UsersController(
 			.ToArrayAsync();
 	}
 
-	[HttpGet("{name}")]
+	[HttpGet("{userGuid}")]
 	public async Task<ActionResult<UserInfo>> ReadAsync(
-		[BindRequired, FromRoute] string name)
+		[BindRequired, FromRoute] Guid userGuid)
 	{
 		return await usersRepository.GetInfo()
-			.Where(x => x.LoginName == name)
+			.Where(x => x.UserGuid == userGuid)
 			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Учётная запись {name}");
+			?? throw new NotFoundException($"Учётная запись {userGuid}");
 	}
 
-	[HttpGet("{name}/detailed")]
+	[HttpGet("{userGuid}/detailed")]
 	public async Task<ActionResult<UserDetailInfo>> ReadWithDetailsAsync(
-		[BindRequired, FromRoute] string name)
+		[BindRequired, FromRoute] Guid userGuid)
 	{
 		return await usersRepository.GetDetailInfo()
-			.Where(x => x.LoginName == name)
+			.Where(x => x.UserGuid == userGuid)
 			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Учётная запись {name}");
+			?? throw new NotFoundException($"Учётная запись {userGuid}");
 	}
 
-	[HttpPut("{name}")]
+	[HttpPut("{userGuid}")]
 	public async Task<ActionResult> UpdateAsync(
-		[BindRequired, FromRoute] string name,
+		[BindRequired, FromRoute] Guid userGuid,
 		[BindRequired, FromBody] UserUpdateRequest userUpdateRequest)
 	{
-		await usersRepository.UpdateAsync(name, userUpdateRequest);
+		var user = Authenticate();
+
+		await usersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
 
 		return NoContent();
 	}
 
-	[HttpDelete("{name}")]
+	[HttpDelete("{userGuid}")]
 	public async Task<ActionResult> DeleteAsync(
-		[BindRequired, FromRoute] string name)
+		[BindRequired, FromRoute] Guid userGuid)
 	{
-		await usersRepository.DeleteAsync(name);
+		var user = Authenticate();
+
+		await usersRepository.DeleteAsync(user, userGuid);
 
 		return NoContent();
 	}

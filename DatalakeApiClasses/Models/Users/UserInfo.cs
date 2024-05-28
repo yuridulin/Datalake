@@ -6,7 +6,7 @@ namespace DatalakeApiClasses.Models.Users;
 public class UserInfo
 {
 	[Required]
-	public required string UserGuid { get; set; }
+	public required Guid UserGuid { get; set; }
 
 	[Required]
 	public required string LoginName { get; set; }

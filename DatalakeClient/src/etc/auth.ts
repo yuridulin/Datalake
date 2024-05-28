@@ -16,9 +16,9 @@ const auth = {
 	access: (_?: AccessType) =>
 		!!_
 			? localStorage.setItem(accessHeader, String(_))
-			: localStorage.getItem(accessHeader) || AccessType.NOT,
+			: localStorage.getItem(accessHeader) || AccessType.NoAccess,
 	isAdmin() {
-		return this.access() === AccessType.ADMIN
+		return this.access() === AccessType.Admin
 	},
 }
 

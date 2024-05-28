@@ -1,4 +1,5 @@
 ﻿using DatalakeApiClasses.Exceptions;
+using DatalakeServer.Constants;
 using DatalakeServer.Services.SessionManager;
 using DatalakeServer.Services.SessionManager.Models;
 using System.Text;
@@ -29,7 +30,7 @@ public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
 			}
 		}
 
-		context.Items.Add("User", authSession?.User);
+		context.Items.Add(AuthConstants.ContextSessionKey, authSession?.User);
 
 		await next.Invoke(context);
 	}
