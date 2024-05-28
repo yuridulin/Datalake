@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Json;
 
-namespace DatalakeApp.Tests.Extensions
+namespace DatalakeServer.Tests.Extensions
 {
 	public static class HttpClientExtension
 	{

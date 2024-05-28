@@ -1,33 +1,35 @@
-﻿using DatalakeDatabase.ApiModels.Users;
+﻿using DatalakeApiClasses.Models.Users;
+using LinqToDB;
 
-namespace DatalakeDatabase.Repositories
+namespace DatalakeDatabase.Repositories;
+
+public partial class UsersRepository
 {
-	public partial class UsersRepository
+	public IQueryable<UserInfo> GetInfo()
 	{
-		public IQueryable<UserInfo> GetInfo()
-		{
-			return db.Users
-				.Select(x => new UserInfo
-				{
-					LoginName = x.Name,
-					FullName = x.FullName,
-					AccessType = x.AccessType,
-					IsStatic = !string.IsNullOrEmpty(x.StaticHost),
-				});
-		}
+		return db.Users
+			.Select(x => new UserInfo
+			{
+				UserGuid = x.UserGuid,
+				LoginName = x.Name,
+				FullName = x.FullName,
+				AccessType = x.AccessType,
+				IsStatic = !string.IsNullOrEmpty(x.StaticHost),
+			});
+	}
 
-		public IQueryable<UserDetailInfo> GetDetailInfo()
-		{
-			return db.Users
-				.Select(x => new UserDetailInfo
-				{
-					AccessType = x.AccessType,
-					Hash = x.Hash,
-					IsStatic = !string.IsNullOrEmpty(x.StaticHost),
-					StaticHost = x.StaticHost,
-					LoginName = x.Name,
-					FullName = x.FullName,
-				});
-		}
+	public IQueryable<UserDetailInfo> GetDetailInfo()
+	{
+		return db.Users
+			.Select(x => new UserDetailInfo
+			{
+				UserGuid = x.UserGuid,
+				AccessType = x.AccessType,
+				Hash = !string.IsNullOrEmpty(x.StaticHost) ? x.Hash : string.Empty,
+				IsStatic = !string.IsNullOrEmpty(x.StaticHost),
+				StaticHost = x.StaticHost,
+				LoginName = x.Name,
+				FullName = x.FullName,
+			});
 	}
 }

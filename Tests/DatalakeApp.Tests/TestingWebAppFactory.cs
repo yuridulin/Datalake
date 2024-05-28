@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 
 
-namespace DatalakeApp.Tests;
+namespace DatalakeServer.Tests;
 
 public class TestingWebAppFactory<TEntryPoint> : WebApplicationFactory<Program> where TEntryPoint : Program
 {

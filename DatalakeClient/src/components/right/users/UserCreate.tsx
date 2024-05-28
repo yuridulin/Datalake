@@ -12,15 +12,15 @@ import Header from '../../small/Header'
 export default function UserCreate() {
 	const navigate = useNavigate()
 	const [user, setUser] = useState({
-		accessType: AccessType.NOT,
+		accessType: AccessType.NotSet,
 		password: '',
 		staticHost: '',
 	} as UserCreateRequest)
 	const [isStatic, setStatic] = useState(false)
 
 	function create() {
-		api.usersCreate(user).then(() => {
-			navigate('/users/')
+		api.usersCreate(user).then((res) => {
+			navigate('/users/' + res.data)
 		})
 	}
 
@@ -95,13 +95,19 @@ export default function UserCreate() {
 							setUser({ ...user, accessType: e.target.value })
 						}
 					>
-						<Radio.Button value={AccessType.NOT}>
+						<Radio.Button value={AccessType.NotSet}>
 							Отключена
 						</Radio.Button>
-						<Radio.Button value={AccessType.USER}>
+						<Radio.Button value={AccessType.NoAccess}>
+							Заблокирована
+						</Radio.Button>
+						<Radio.Button value={AccessType.Viewer}>
+							Наблюдатель
+						</Radio.Button>
+						<Radio.Button value={AccessType.User}>
 							Пользователь
 						</Radio.Button>
-						<Radio.Button value={AccessType.ADMIN}>
+						<Radio.Button value={AccessType.Admin}>
 							Администратор
 						</Radio.Button>
 					</Radio.Group>

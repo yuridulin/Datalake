@@ -1,5 +1,5 @@
-﻿using DatalakeDatabase.ApiModels.Tags;
-using DatalakeDatabase.Enums;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Models.Tags;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
@@ -20,7 +20,13 @@ public partial class TagsRepository
 									Formula = tag.Formula ?? string.Empty,
 									FormulaInputs = db.TagInputs
 										.Where(x => x.TagId == tag.Id)
-										.ToDictionary(x => x.VariableName, x => x.InputTagId),
+										.Select(x => new TagInputInfo
+										{
+											Id = x.InputTagId,
+											Name = x.VariableName,
+											VariableName = x.VariableName,
+										})
+										.ToArray(),
 									IsScaling = tag.IsScaling,
 									MaxEu = tag.MaxEu,
 									MaxRaw = tag.MaxRaw,

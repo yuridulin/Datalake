@@ -21,10 +21,12 @@ export default function UsersList() {
 
 	function AccessTypeDescription(type?: AccessType) {
 		switch (type) {
-			case AccessType.ADMIN:
+			case AccessType.Admin:
 				return 'администратор'
-			case AccessType.USER:
+			case AccessType.User:
 				return 'пользователь'
+			case AccessType.Viewer:
+				return 'наблюдатель'
 			default:
 				return 'нет доступа'
 		}
@@ -76,7 +78,7 @@ export default function UsersList() {
 							.map((x) => (
 								<div className='table-row' key={x.loginName}>
 									<span>
-										<NavLink to={'/users/' + x.loginName}>
+										<NavLink to={'/users/' + x.userGuid}>
 											<Button>{x.loginName}</Button>
 										</NavLink>
 									</span>

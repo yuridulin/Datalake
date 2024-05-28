@@ -1,8 +1,8 @@
-﻿using DatalakeDatabase.ApiModels.Tags;
-using DatalakeDatabase.Enums;
-using DatalakeDatabase.Exceptions;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Exceptions;
+using DatalakeApiClasses.Models.Tags;
+using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Extensions;
-using DatalakeDatabase.Helpers;
 using DatalakeDatabase.Models;
 using LinqToDB;
 using LinqToDB.Data;
@@ -11,7 +11,35 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class TagsRepository(DatalakeContext db)
 {
-	public async Task<int> CreateAsync(TagCreateRequest createRequest)
+	#region Действия
+
+	public async Task<int> CreateAsync(UserAuthInfo user, TagCreateRequest tagCreateRequest)
+	{
+		AccessScope scope = tagCreateRequest.SourceId.HasValue ? AccessScope.Source
+			: tagCreateRequest.BlockId.HasValue ? AccessScope.Block
+			: AccessScope.Global;
+
+		await db.CheckAccessAsync(user, AccessType.Admin, scope);
+		return await CreateAsync(tagCreateRequest);
+	}
+
+	public async Task UpdateAsync(UserAuthInfo user, int id, TagUpdateRequest updateRequest)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Tag, id);
+		await UpdateAsync(id, updateRequest);
+	}
+
+	public async Task DeleteAsync(UserAuthInfo user, int id)
+	{
+		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Tag, id);
+		await DeleteAsync(id);
+	}
+
+	#endregion
+
+	#region Реализация
+
+	internal async Task<int> CreateAsync(TagCreateRequest createRequest)
 	{
 		// TODO: проверка разрешения на создание тега
 
@@ -81,7 +109,7 @@ public partial class TagsRepository(DatalakeContext db)
 		int? id = await db.InsertWithInt32IdentityAsync(new Tag
 		{
 			Created = DateTime.Now,
-			GlobalId = Guid.NewGuid(),
+			GlobalGuid = Guid.NewGuid(),
 			Name = createRequest.Name!,
 			Type = createRequest.TagType,
 			Interval = 60,
@@ -130,7 +158,7 @@ public partial class TagsRepository(DatalakeContext db)
 		return id.Value;
 	}
 
-	public async Task UpdateAsync(int id, TagUpdateRequest updateRequest)
+	internal async Task UpdateAsync(int id, TagUpdateRequest updateRequest)
 	{
 		updateRequest.Name = ValueChecker.RemoveWhitespaces(updateRequest.Name, "_");
 
@@ -192,7 +220,7 @@ public partial class TagsRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 	}
 
-	public async Task DeleteAsync(int id)
+	internal async Task DeleteAsync(int id)
 	{
 		var transaction = await db.BeginTransactionAsync();
 
@@ -210,4 +238,6 @@ public partial class TagsRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 	}
+
+	#endregion
 }

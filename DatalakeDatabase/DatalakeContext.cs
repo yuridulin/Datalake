@@ -1,6 +1,8 @@
-﻿using DatalakeDatabase.Enums;
+﻿using DatalakeApiClasses.Constants;
+using DatalakeApiClasses.Enums;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
+using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
@@ -58,9 +60,17 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		{
 			await this.SetLastUpdateToNowAsync();
 		}
+
+		if (!Users.Any())
+		{
+			await new UsersRepository(this).CreateAsync(Defaults.InitialAdmin);
+		}
 	}
 
 	#region Таблицы
+
+	public ITable<AccessRights> AccessRights
+		=> this.GetTable<AccessRights>();
 
 	public ITable<Block> Blocks
 		=> this.GetTable<Block>();
@@ -94,6 +104,12 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 
 	public ITable<User> Users
 		=> this.GetTable<User>();
+
+	public ITable<UserGroup> UserGroups
+		=> this.GetTable<UserGroup>();
+
+	public ITable<UserGroupRelation> UserGroupRelations
+		=> this.GetTable<UserGroupRelation>();
 
 	#endregion
 }

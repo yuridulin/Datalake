@@ -1,4 +1,4 @@
-﻿using DatalakeDatabase.ApiModels.Values;
+﻿using DatalakeApiClasses.Models.Values;
 using DatalakeDatabase.Repositories;
 
 namespace DatalakeDatabase.Tests.Steps

@@ -22,6 +22,50 @@ namespace DatalakeDatabase.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DatalakeDatabase.Models.AccessRights", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccessType")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BlockId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsGlobal")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("SourceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TagId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("UserGroupGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UserGuid")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlockId");
+
+                    b.HasIndex("SourceId");
+
+                    b.HasIndex("TagId");
+
+                    b.HasIndex("UserGroupGuid");
+
+                    b.HasIndex("UserGuid");
+
+                    b.ToTable("AccessRights");
+                });
+
             modelBuilder.Entity("DatalakeDatabase.Models.Block", b =>
                 {
                     b.Property<int>("Id")
@@ -181,7 +225,7 @@ namespace DatalakeDatabase.Migrations
                     b.Property<string>("Formula")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("GlobalId")
+                    b.Property<Guid>("GlobalGuid")
                         .HasColumnType("uuid");
 
                     b.Property<short>("Interval")
@@ -278,26 +322,102 @@ namespace DatalakeDatabase.Migrations
 
             modelBuilder.Entity("DatalakeDatabase.Models.User", b =>
                 {
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
+                    b.Property<Guid>("UserGuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<int>("AccessType")
                         .HasColumnType("integer");
 
                     b.Property<string>("FullName")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Hash")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("StaticHost")
                         .HasColumnType("text");
 
-                    b.HasKey("Name");
+                    b.HasKey("UserGuid");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("DatalakeDatabase.Models.UserGroup", b =>
+                {
+                    b.Property<Guid>("UserGroupGuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ParentGroupGuid")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserGroupGuid");
+
+                    b.ToTable("UserGroups");
+                });
+
+            modelBuilder.Entity("DatalakeDatabase.Models.UserGroupRelation", b =>
+                {
+                    b.Property<Guid>("UserGroupGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AccessType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserGroupGuid", "UserGuid");
+
+                    b.HasIndex("UserGuid");
+
+                    b.ToTable("UserGroupRelation");
+                });
+
+            modelBuilder.Entity("DatalakeDatabase.Models.AccessRights", b =>
+                {
+                    b.HasOne("DatalakeDatabase.Models.Block", "Block")
+                        .WithMany("AccessRightsList")
+                        .HasForeignKey("BlockId");
+
+                    b.HasOne("DatalakeDatabase.Models.Source", "Source")
+                        .WithMany("AccessRightsList")
+                        .HasForeignKey("SourceId");
+
+                    b.HasOne("DatalakeDatabase.Models.Tag", "Tag")
+                        .WithMany("AccessRightsList")
+                        .HasForeignKey("TagId");
+
+                    b.HasOne("DatalakeDatabase.Models.UserGroup", "UserGroup")
+                        .WithMany("AccessRightsList")
+                        .HasForeignKey("UserGroupGuid");
+
+                    b.HasOne("DatalakeDatabase.Models.User", "User")
+                        .WithMany("AccessRightsList")
+                        .HasForeignKey("UserGuid");
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Source");
+
+                    b.Navigation("Tag");
+
+                    b.Navigation("User");
+
+                    b.Navigation("UserGroup");
                 });
 
             modelBuilder.Entity("DatalakeDatabase.Models.BlockProperty", b =>
@@ -352,8 +472,29 @@ namespace DatalakeDatabase.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("DatalakeDatabase.Models.UserGroupRelation", b =>
+                {
+                    b.HasOne("DatalakeDatabase.Models.User", "User")
+                        .WithMany("GroupsRelations")
+                        .HasForeignKey("UserGroupGuid")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("DatalakeDatabase.Models.UserGroup", "UserGroup")
+                        .WithMany("UsersRelations")
+                        .HasForeignKey("UserGuid")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("UserGroup");
+                });
+
             modelBuilder.Entity("DatalakeDatabase.Models.Block", b =>
                 {
+                    b.Navigation("AccessRightsList");
+
                     b.Navigation("Properties");
 
                     b.Navigation("RelationsToTags");
@@ -361,12 +502,30 @@ namespace DatalakeDatabase.Migrations
 
             modelBuilder.Entity("DatalakeDatabase.Models.Source", b =>
                 {
+                    b.Navigation("AccessRightsList");
+
                     b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("DatalakeDatabase.Models.Tag", b =>
                 {
+                    b.Navigation("AccessRightsList");
+
                     b.Navigation("RelationsToBlocks");
+                });
+
+            modelBuilder.Entity("DatalakeDatabase.Models.User", b =>
+                {
+                    b.Navigation("AccessRightsList");
+
+                    b.Navigation("GroupsRelations");
+                });
+
+            modelBuilder.Entity("DatalakeDatabase.Models.UserGroup", b =>
+                {
+                    b.Navigation("AccessRightsList");
+
+                    b.Navigation("UsersRelations");
                 });
 #pragma warning restore 612, 618
         }

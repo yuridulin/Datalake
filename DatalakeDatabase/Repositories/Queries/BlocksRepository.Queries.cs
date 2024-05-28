@@ -1,4 +1,4 @@
-﻿using DatalakeDatabase.ApiModels.Blocks;
+﻿using DatalakeApiClasses.Models.Blocks;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
@@ -103,5 +103,36 @@ public partial class BlocksRepository
 				Name = x.Name,
 				Description = x.Description,
 			});
+	}
+
+	public async Task<List<BlockSimpleInfo>> GetParentsAsync(int blockId)
+	{
+		var blocks = await db.Blocks
+			.Select(x => new 
+			{
+				x.Id,
+				x.Name,
+				x.Description,
+				x.ParentId,
+			})
+			.ToArrayAsync();
+
+		var parents = new List<BlockSimpleInfo>();
+		int? seekId = blockId;
+
+		do
+		{
+			var block = blocks
+				.Where(x => x.Id == seekId)
+				.FirstOrDefault();
+
+			if (block == null) break;
+
+			parents.Add(new BlockSimpleInfo { Name = block.Name, Id = block.Id });
+			seekId = block.ParentId;
+		}
+		while (seekId != null);
+
+		return parents;
 	}
 }

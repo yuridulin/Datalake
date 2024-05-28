@@ -1,4 +1,5 @@
-﻿using DatalakeDatabase.ApiModels.Values;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Models.Values;
 using DatalakeDatabase.Repositories;
 
 namespace DatalakeDatabase.Tests.Steps
@@ -18,7 +19,7 @@ namespace DatalakeDatabase.Tests.Steps
 				{
 					Date = now,
 					TagId = Constants.TagId,
-					TagQuality = Enums.TagQuality.Good,
+					TagQuality = TagQuality.Good,
 					Value = Constants.LastValue,
 				}
 			]);

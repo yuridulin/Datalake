@@ -90,16 +90,17 @@ api.instance.interceptors.response.use(
 		}
 		// сообщения после выполнения действий
 		else {
-			//console.log('server action error:', err)
-			//console.log('server message:', err.response?.data)
-			if (typeof err.response?.data === typeof String) {
-				let message = err.response?.data as string
-				message = message.substring(0, message.indexOf('\n\n'))
+			console.log('server action error:', err)
+			try {
+				let message = err.request?.responseText as string
+				if (message.indexOf('\n\n') > -1)
+					message = message.substring(0, message.indexOf('\n\n'))
 				return notification.error({
 					placement: 'bottomLeft',
 					message: message,
 				})
-			} else {
+			} catch (e) {
+				console.error(e)
 				return notification.error({
 					placement: 'bottomLeft',
 					message: 'Ошибка выполнения',

@@ -175,7 +175,16 @@ export interface TagInfo {
 	minRaw: number
 	/** @format float */
 	maxRaw: number
-	formulaInputs: Record<string, number>
+	formulaInputs: TagInputInfo[]
+}
+
+export interface TagInputInfo {
+	/** @format int32 */
+	id: number
+	/** @minLength 1 */
+	name: string
+	/** @minLength 1 */
+	variableName: string
 }
 
 export interface TagAsInputInfo {
@@ -206,22 +215,40 @@ export interface TagUpdateRequest {
 	minRaw: number
 	/** @format float */
 	maxRaw: number
-	formulaInputs: Record<string, number>
+	formulaInputs: TagInputInfo[]
 }
 
 export interface UserAuthInfo {
+	/**
+	 * @format guid
+	 * @minLength 1
+	 */
+	userGuid: string
 	/** @minLength 1 */
 	userName: string
-	accessType: AccessType
 	/** @minLength 1 */
 	token: string
+	globalAccessType: AccessType
+	rights: UserAccessRightsInfo[]
 }
 
 export enum AccessType {
-	NOT = 'NOT',
-	USER = 'USER',
-	ADMIN = 'ADMIN',
-	FIRST = 'FIRST',
+	NoAccess = 'NoAccess',
+	Viewer = 'Viewer',
+	User = 'User',
+	Admin = 'Admin',
+	NotSet = 'NotSet',
+}
+
+export interface UserAccessRightsInfo {
+	isGlobal?: boolean
+	/** @format int32 */
+	tagId?: number | null
+	/** @format int32 */
+	sourceId?: number | null
+	/** @format int32 */
+	blockId?: number | null
+	accessType: AccessType
 }
 
 export interface UserLoginPass {
@@ -241,19 +268,27 @@ export interface UserCreateRequest {
 }
 
 export interface UserInfo {
+	/**
+	 * @format guid
+	 * @minLength 1
+	 */
+	userGuid: string
 	/** @minLength 1 */
 	loginName: string
 	fullName?: string | null
 	accessType: AccessType
 	isStatic: boolean
+	userGroups: UserGroupInfo[]
 }
 
-export interface UserDetailInfo {
+export interface UserGroupInfo {
 	/** @minLength 1 */
-	loginName: string
-	fullName?: string | null
-	accessType: AccessType
-	isStatic: boolean
+	guid: string
+	/** @minLength 1 */
+	name: string
+}
+
+export type UserDetailInfo = UserInfo & {
 	/** @minLength 1 */
 	hash: string
 	staticHost?: string | null
