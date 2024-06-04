@@ -17,8 +17,6 @@ public class InopcCollector : CollectorBase
 		_timer = new Timer();
 		_address = source.Address ?? throw new InvalidOperationException();
 
-		var items = 
-
 		_itemsToSend = source.Tags
 			.Where(x => !string.IsNullOrEmpty(x.SourceItem))
 			.DistinctBy(x => x.SourceItem)
@@ -51,7 +49,7 @@ public class InopcCollector : CollectorBase
 	{
 		if (_itemsToSend.Count > 0)
 		{
-			_timer.Start();
+			//_timer.Start();
 			Task.Run(Timer_ElapsedAsync);
 		}
 

@@ -17,7 +17,7 @@ public static class DatalakeContextExtension
 	public static async Task SetLastUpdateToNowAsync(this DatalakeContext db)
 	{
 		await db.Settings
-			.Set(x => x.LastUpdate, DateTime.Now)
+			.Set(x => x.LastUpdate, DateTime.UtcNow)
 			.UpdateAsync();
 	}
 
@@ -63,19 +63,19 @@ public static class DatalakeContextExtension
 		return rights;
 	}
 
-	public static async Task<List<UserGroupInfo>> GetUserGroupsAsync(
+	public static async Task<List<UserGroupsInfo>> GetUserGroupsAsync(
 		this DatalakeContext db,
 		Guid? userGuid)
 	{
 		var groupsTree = await db.GetUserGroupsTreeAsync(userGuid);
-		var groups = new List<UserGroupInfo>();
+		var groups = new List<UserGroupsInfo>();
 
 		foreach (var group in groupsTree)
 		{
 			ExtractGroups(group);
 		}
 
-		void ExtractGroups(UserGroupTreeInfo userGroupInfo)
+		void ExtractGroups(UserGroupsTreeInfo userGroupInfo)
 		{
 			groups.Add(userGroupInfo);
 			foreach (var child in userGroupInfo.Children)
@@ -85,7 +85,7 @@ public static class DatalakeContextExtension
 		return groups;
 	}
 
-	public static async Task<UserGroupTreeInfo[]> GetUserGroupsTreeAsync(
+	public static async Task<UserGroupsTreeInfo[]> GetUserGroupsTreeAsync(
 		this DatalakeContext db,
 		Guid? userGuid)
 	{
@@ -113,7 +113,7 @@ public static class DatalakeContextExtension
 		var userGroups = groups.Where(x => x.Relations.Intersect(EnumSet.UserWithAccess).Any()).ToArray();
 
 		return userGroups
-			.Select(x => new UserGroupTreeInfo
+			.Select(x => new UserGroupsTreeInfo
 			{
 				Guid = x.Id,
 				Name = x.Name,
@@ -121,11 +121,11 @@ public static class DatalakeContextExtension
 			})
 			.ToArray();
 
-		UserGroupTreeInfo[] ReadChildren(string? id)
+		UserGroupsTreeInfo[] ReadChildren(string? id)
 		{
 			return groups
 				.Where(x => x.ParentId == id)
-				.Select(x => new UserGroupTreeInfo
+				.Select(x => new UserGroupsTreeInfo
 				{
 					Name = x.Name,
 					Guid = x.Id,
@@ -133,67 +133,5 @@ public static class DatalakeContextExtension
 				})
 				.ToArray();
 		}
-	}
-
-	/// <summary>
-	/// Проверка, есть ли доступ на указанном уровне
-	/// </summary>
-	/// <param name="db">Подключение к базе данных</param>
-	/// <param name="userGuid">Идентификатор пользователя</param>
-	/// <param name="minimalAccess">Уровень доступа, минимально необходимый для предоставления разрешения</param>
-	/// <param name="objectWhere">Условие выбора объектов. Глобальные разрешения пользователя и его групп всегда в списке выбранных</param>
-	/// <exception cref="ForbiddenException">Нет доступа</exception>
-	public static async Task CheckAccessAsync(
-		this DatalakeContext db,
-		UserAuthInfo user,
-		AccessType minimalAccess,
-		AccessScope scope = AccessScope.Global,
-		int targetId = 0)
-	{
-		var query = user.Rights
-			.Where(x => (int)minimalAccess <= (int)x.AccessType);
-
-		if (scope != AccessScope.Global)
-		{
-			List<int> allowedBlocks = [];
-			int allowedSource = -1;
-			int allowedTag = -1;
-
-			switch (scope)
-			{
-				case AccessScope.Source:
-					allowedSource  = targetId;
-					break;
-
-				case AccessScope.Block:
-					allowedBlocks.AddRange((await new BlocksRepository(db).GetParentsAsync(targetId)).Select(b => b.Id));
-					break;
-
-				case AccessScope.Tag:
-					var sourceQuery = from t in db.Tags.Where(x => x.Id == targetId)
-														from s in db.Sources.InnerJoin(x => x.Id == t.SourceId)
-														select s.Id;
-					allowedSource = await sourceQuery.DefaultIfEmpty(-1).FirstOrDefaultAsync();
-
-					var blocksQuery = from rel in db.BlockTags.Where(x => x.TagId == targetId)
-														from b in db.Blocks.InnerJoin(x => x.Id == rel.BlockId)
-														select b.Id;
-					allowedBlocks.AddRange(await blocksQuery.ToArrayAsync());
-					allowedBlocks.AddRange((await new BlocksRepository(db).GetParentsAsync(targetId)).Select(b => b.Id));
-
-					allowedTag = targetId;
-					break;
-			}
-
-			query = query.Where(x => x.IsGlobal
-			  || allowedBlocks.Contains(x.BlockId ?? -1)
-				|| x.SourceId == allowedSource
-				|| x.TagId == allowedTag);
-		}
-
-		var hasAccess = query.Any();
-
-		if (!hasAccess)
-			throw new ForbiddenException(message: "нет доступа");
 	}
 }

@@ -4,34 +4,43 @@ using DatalakeApiClasses.Models.Tags;
 using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
+using DatalakeDatabase.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace DatalakeDatabase.Repositories;
 
-public partial class TagsRepository(DatalakeContext db)
+public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
 
 	public async Task<int> CreateAsync(UserAuthInfo user, TagCreateRequest tagCreateRequest)
 	{
-		AccessScope scope = tagCreateRequest.SourceId.HasValue ? AccessScope.Source
-			: tagCreateRequest.BlockId.HasValue ? AccessScope.Block
-			: AccessScope.Global;
+		if (tagCreateRequest.SourceId.HasValue)
+		{
+			CheckAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value);
+		}
+		else if (tagCreateRequest.BlockId.HasValue)
+		{
+			await CheckAccessToBlockAsync(db, user, AccessType.Admin, tagCreateRequest.BlockId.Value);
+		}
+		else
+		{
+			CheckGlobalAccess(user, AccessType.Admin);
+		}
 
-		await db.CheckAccessAsync(user, AccessType.Admin, scope);
 		return await CreateAsync(tagCreateRequest);
 	}
 
 	public async Task UpdateAsync(UserAuthInfo user, int id, TagUpdateRequest updateRequest)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Tag, id);
+		await CheckAccessToTagAsync(db, user, AccessType.Admin, id);
 		await UpdateAsync(id, updateRequest);
 	}
 
 	public async Task DeleteAsync(UserAuthInfo user, int id)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Tag, id);
+		await CheckAccessToTagAsync(db, user, AccessType.Admin, id);
 		await DeleteAsync(id);
 	}
 
@@ -104,39 +113,37 @@ public partial class TagsRepository(DatalakeContext db)
 			}
 		}
 
-		var transaction = await db.BeginTransactionAsync();
+		using var transaction = await db.BeginTransactionAsync();
 
-		int? id = await db.InsertWithInt32IdentityAsync(new Tag
+		var tag = new Tag
 		{
 			Created = DateTime.Now,
 			GlobalGuid = Guid.NewGuid(),
-			Name = createRequest.Name!,
-			Type = createRequest.TagType,
 			Interval = 60,
 			IsScaling = false,
+			Name = createRequest.Name!,
 			SourceId = createRequest.SourceId ?? (int)CustomSource.Manual,
+			Type = createRequest.TagType,
 			SourceItem = createRequest.SourceItem,
-		});
-
-		if (!id.HasValue)
-			throw new DatabaseException(message: "не удалось добавить тег");
+		};
+		tag.Id = await db.InsertWithInt32IdentityAsync(tag);
 
 		if (needToAddIdInName)
 		{
-			createRequest.Name += id.Value.ToString();
+			createRequest.Name += tag.Id.ToString();
 
 			await db.Tags
-				.Where(x => x.Id == id.Value)
+				.Where(x => x.Id == tag.Id)
 				.Set(x => x.Name, createRequest.Name)
 				.UpdateAsync();
 		}
 
-		await new ValuesRepository(db).InitializeValueAsync(id.Value);
+		await new ValuesRepository(db).InitializeValueAsync(tag.Id);
 
 		if (createRequest.BlockId.HasValue)
 		{
 			await db.BlockTags
-				.Value(x => x.TagId, id.Value)
+				.Value(x => x.TagId, tag.Id)
 				.Value(x => x.BlockId, createRequest.BlockId)
 				.Value(x => x.Name, createRequest.Name)
 				.Value(x => x.Relation, BlockTagRelation.Static)
@@ -146,16 +153,15 @@ public partial class TagsRepository(DatalakeContext db)
 		await db.LogAsync(new Log
 		{
 			Category = LogCategory.Tag,
-			RefId = id.Value,
+			RefId = tag.Id.ToString(),
 			Text = $"Создан тег \"{createRequest.Name}\"",
 			Type = LogType.Success,
 		});
 
 		await db.SetLastUpdateToNowAsync();
+		await transaction.CommitAsync();
 
-		await db.CommitTransactionAsync();
-
-		return id.Value;
+		return tag.Id;
 	}
 
 	internal async Task UpdateAsync(int id, TagUpdateRequest updateRequest)
@@ -216,7 +222,6 @@ public partial class TagsRepository(DatalakeContext db)
 			}));
 
 		await db.SetLastUpdateToNowAsync();
-
 		await transaction.CommitAsync();
 	}
 
@@ -235,7 +240,6 @@ public partial class TagsRepository(DatalakeContext db)
 		// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
 
 		await db.SetLastUpdateToNowAsync();
-
 		await transaction.CommitAsync();
 	}
 

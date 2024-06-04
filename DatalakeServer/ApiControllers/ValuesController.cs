@@ -9,7 +9,7 @@ namespace DatalakeServer.ApiControllers;
 [Route("api/Tags/[controller]")]
 public class ValuesController(ValuesRepository valuesRepository) : ControllerBase
 {
-	public const string LiveUrl = "api/Tags/values/live";
+	public const string LiveUrl = "api/Tags/values";
 
 	[HttpPost]
 	public async Task<List<ValuesResponse>> GetAsync(

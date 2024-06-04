@@ -24,7 +24,7 @@ public class Log
 	public LogCategory Category { get; set; } = LogCategory.Api;
 
 	[Column]
-	public int? RefId { get; set; }
+	public string? RefId { get; set; }
 
 	[Column, NotNull]
 	public LogType Type { get; set; } = LogType.Information;
