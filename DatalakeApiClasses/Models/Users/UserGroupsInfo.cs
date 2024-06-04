@@ -2,7 +2,7 @@
 
 namespace DatalakeApiClasses.Models.Users;
 
-public class UserGroupInfo
+public class UserGroupsInfo
 {
 	[Required]
 	public required string Guid { get; set; }

@@ -105,7 +105,7 @@ public partial class BlocksRepository
 			});
 	}
 
-	public async Task<List<BlockSimpleInfo>> GetParentsAsync(int blockId)
+	public async Task<List<BlockSimpleInfo>> GetWithParentsAsync(int blockId)
 	{
 		var blocks = await db.Blocks
 			.Select(x => new 

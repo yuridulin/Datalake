@@ -1,5 +1,6 @@
 ﻿using DatalakeApiClasses.Enums;
 using DatalakeApiClasses.Models.Tags;
+using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
 
@@ -7,6 +8,24 @@ namespace DatalakeDatabase.Tests.Steps
 {
 	public static class Step002_TagCreation
 	{
+		public static async Task T2_0_CreateStaticUser()
+		{
+			using var db = Setup.CreateDbContext();
+
+			var usersRepository = new UsersRepository(db);
+
+			var userAuthInfo = await usersRepository.AuthenticateAsync(new UserLoginPass
+			{
+				Name = "admin",
+				Password = "admin",
+			});
+
+			Assert.NotNull(userAuthInfo);
+			Assert.Equal(AccessType.Admin, userAuthInfo.GlobalAccessType);
+
+			Constants.DefaultAdmin = userAuthInfo;
+		}
+
 		public static async Task T2_1_CreateManualTag()
 		{
 			using var db = Setup.CreateDbContext();
@@ -20,10 +39,11 @@ namespace DatalakeDatabase.Tests.Steps
 				SourceId = (int)CustomSource.Manual,
 			};
 
-			// add static test record
-			/*int tagId = await tagsRepository.CreateAsync(request);
+			Assert.NotNull(Constants.DefaultAdmin);
 
-			Assert.True(tagId == Constants.TagId);*/
+			int tagId = await tagsRepository.CreateAsync(Constants.DefaultAdmin, request);
+
+			Assert.True(tagId == Constants.TagId);
 		}
 
 		public static async Task T2_2_GetManualTag()

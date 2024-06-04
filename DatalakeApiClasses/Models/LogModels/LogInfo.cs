@@ -23,5 +23,5 @@ public class LogInfo
 	[Required]
 	public required string Text { get; set; }
 
-	public int? RefId { get; set; }
+	public string? RefId { get; set; }
 }

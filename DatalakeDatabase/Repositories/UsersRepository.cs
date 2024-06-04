@@ -3,13 +3,14 @@ using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
+using DatalakeDatabase.Repositories.Base;
 using LinqToDB;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace DatalakeDatabase.Repositories;
 
-public partial class UsersRepository(DatalakeContext db)
+public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
 
@@ -53,26 +54,27 @@ public partial class UsersRepository(DatalakeContext db)
 
 	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+		CheckGlobalAccess(user, AccessType.Admin);
 
 		return await CreateAsync(userInfo);
 	}
 
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+		CheckGlobalAccess(user, AccessType.Admin);
 
 		return await UpdateAsync(userGuid, request);
 	}
 
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid userGuid)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+		CheckGlobalAccess(user, AccessType.Admin);
 
 		return await DeleteAsync(userGuid);
 	}
 
 	#endregion
+
 
 	#region Реализация
 

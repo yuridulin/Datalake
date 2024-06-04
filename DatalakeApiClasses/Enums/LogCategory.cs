@@ -14,4 +14,5 @@ public enum LogCategory
 	Tag = 60,
 	Http = 70,
 	Users = 80,
+	UserGroups = 90,
 }

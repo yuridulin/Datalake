@@ -20,5 +20,5 @@ public class UserInfo
 	public required bool IsStatic { get; set; }
 
 	[Required]
-	public UserGroupInfo[] UserGroups { get; set; } = [];
+	public UserGroupsInfo[] UserGroups { get; set; } = [];
 }

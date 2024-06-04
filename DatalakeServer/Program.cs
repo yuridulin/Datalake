@@ -172,6 +172,7 @@ namespace DatalakeServer
 			builder.Services.AddTransient<TagsRepository>();
 			builder.Services.AddTransient<SourcesRepository>();
 			builder.Services.AddTransient<UsersRepository>();
+			builder.Services.AddTransient<UserGroupsRepository>();
 			builder.Services.AddTransient<ValuesRepository>();
 			builder.Services.AddTransient<AuthMiddleware>();
 

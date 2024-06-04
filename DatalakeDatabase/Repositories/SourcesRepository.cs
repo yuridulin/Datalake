@@ -3,17 +3,18 @@ using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Sources;
 using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Extensions;
+using DatalakeDatabase.Repositories.Base;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
 
-public partial class SourcesRepository(DatalakeContext db)
+public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
 
 	public async Task<int> CreateAsync(UserAuthInfo user, SourceInfo? sourceInfo = null)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+		CheckGlobalAccess(user, AccessType.Admin);
 
 		if (sourceInfo != null)
 			return await CreateAsync(sourceInfo);
@@ -23,14 +24,14 @@ public partial class SourcesRepository(DatalakeContext db)
 
 	public async Task<bool> UpdateAsync(UserAuthInfo user, int id, SourceInfo sourceInfo)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Source, id);
+		CheckAccessToSource(user, AccessType.Admin, id);
 
 		return await UpdateAsync(id, sourceInfo);
 	}
 
 	public async Task<bool> DeleteAsync(UserAuthInfo user, int id)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Source, id);
+		CheckAccessToSource(user, AccessType.Admin, id);
 
 		return await DeleteAsync(id);
 	}
@@ -58,7 +59,6 @@ public partial class SourcesRepository(DatalakeContext db)
 			.UpdateAsync();
 
 		await db.SetLastUpdateToNowAsync();
-
 		await transaction.CommitAsync();
 
 		return id.Value;
@@ -86,7 +86,6 @@ public partial class SourcesRepository(DatalakeContext db)
 			throw new DatabaseException("Не удалось добавить источник");
 
 		await db.SetLastUpdateToNowAsync();
-
 		await transaction.CommitAsync();
 
 		return id.Value;
@@ -115,7 +114,6 @@ public partial class SourcesRepository(DatalakeContext db)
 			throw new DatabaseException($"Не удалось обновить источник #{id}");
 
 		await db.SetLastUpdateToNowAsync();
-
 		await transaction.CommitAsync();
 
 		return true;
@@ -139,7 +137,6 @@ public partial class SourcesRepository(DatalakeContext db)
 			.UpdateAsync();
 
 		await db.SetLastUpdateToNowAsync();
-
 		await transaction.CommitAsync();
 
 		return true;

@@ -4,30 +4,31 @@ using DatalakeApiClasses.Models.Blocks;
 using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
+using DatalakeDatabase.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace DatalakeDatabase.Repositories;
 
-public partial class BlocksRepository(DatalakeContext db)
+public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
 
 	public async Task<int> CreateAsync(UserAuthInfo user, BlockInfo? blockInfo = null)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Global);
+		CheckGlobalAccess(user, AccessType.Admin);
 		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync();
 	}
 
 	public async Task<bool> UpdateAsync(UserAuthInfo user, int id, BlockInfo block)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Block, id);
+		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
 		return await UpdateAsync(id, block);
 	}
 
 	public async Task<bool> DeleteAsync(UserAuthInfo user, int id)
 	{
-		await db.CheckAccessAsync(user, AccessType.Admin, AccessScope.Block, id);
+		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
 		return await DeleteAsync(id);
 	}
 
@@ -104,7 +105,7 @@ public partial class BlocksRepository(DatalakeContext db)
 				throw new NotFoundException($"Родительская сущность #{block.Parent.Id} не найдена");
 		}
 
-		await db.BeginTransactionAsync();
+		using var transaction = await db.BeginTransactionAsync();
 
 		int count = 0;
 
@@ -116,8 +117,7 @@ public partial class BlocksRepository(DatalakeContext db)
 			.UpdateAsync();
 
 		await UpdateRelationsWithTags(id, block.Tags);
-
-		await db.CommitTransactionAsync();
+		await transaction.CommitAsync();
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось обновить сущность #{id}");
