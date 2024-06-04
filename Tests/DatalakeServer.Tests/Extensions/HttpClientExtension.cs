@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Json;
 
-namespace DatalakeServer.Tests.Extensions
+namespace DatalakeServer.TestRunner.Extensions
 {
 	public static class HttpClientExtension
 	{
@@ -9,7 +9,6 @@ namespace DatalakeServer.Tests.Extensions
 			if (!response.IsSuccessStatusCode)
 				throw new Exception(await response.Content.ReadAsStringAsync());
 		}
-
 
 		public static async Task PostAsync(this HttpClient httpClient, string url, object data)
 		{
@@ -27,7 +26,7 @@ namespace DatalakeServer.Tests.Extensions
 
 			return result;
 		}
-		
+
 
 		public static async Task GetAsync(this HttpClient httpClient, string url)
 		{
