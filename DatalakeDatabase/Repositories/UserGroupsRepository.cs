@@ -55,6 +55,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 		using var transaction = await db.BeginTransactionAsync();
 
 		var group = await db.UserGroups
+			.Value(x => x.UserGroupGuid, Guid.NewGuid())
 			.Value(x => x.Name, request.Name)
 			.Value(x => x.ParentGroupGuid, request.ParentGroupGuid)
 			.Value(x => x.Description, request.Description)
