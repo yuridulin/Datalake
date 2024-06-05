@@ -12,10 +12,12 @@ import TagForm from '../components/right/tags/TagForm'
 import TagsCalculatedList from '../components/right/tags/TagsCalculatedList'
 import TagsList from '../components/right/tags/TagsList'
 import TagsManualList from '../components/right/tags/TagsManualList'
+import UserGroupsTreeList from '../components/right/usergroups/UserGroupsTreeList'
 import UserCreate from '../components/right/users/UserCreate'
 import UserForm from '../components/right/users/UserForm'
 import UsersList from '../components/right/users/UsersList'
 import Viewer from '../components/right/viewer/Viewer'
+import routes from './routes'
 
 const router = createBrowserRouter([
 	{
@@ -49,6 +51,23 @@ const router = createBrowserRouter([
 						path: '/users/:id',
 						element: <UserForm />,
 					},
+				],
+			},
+			{
+				path: routes.UserGroups.root,
+				children: [
+					{
+						path: routes.UserGroups.List,
+						element: <UserGroupsTreeList />,
+					},
+					/* {
+						path: '/user-groups/create',
+						element: <UserCreate />,
+					},
+					{
+						path: '/user-groups/:id',
+						element: <UserForm />,
+					}, */
 				],
 			},
 			{

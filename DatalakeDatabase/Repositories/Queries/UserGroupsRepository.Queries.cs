@@ -27,7 +27,7 @@ public partial class UserGroupsRepository
 
 			foreach (var item in selected)
 			{
-				item.Children = ReadChildren(guid);
+				item.Children = ReadChildren(item.UserGroupGuid);
 			};
 
 			return selected;
@@ -74,6 +74,7 @@ public partial class UserGroupsRepository
 				UserGroupGuid = x.UserGroupGuid,
 				Name = x.Name,
 				Description = x.Description,
+				ParentGroupGuid = x.ParentGroupGuid,
 			});
 	}
 
@@ -89,6 +90,7 @@ public partial class UserGroupsRepository
 									UserGroupGuid = groupping.Key.UserGroupGuid,
 									Name = groupping.Key.Name,
 									Description = groupping.Key.Description,
+									ParentGroupGuid = groupping.Key.ParentGroupGuid,
 									Subgroups = groupping
 										.Select(x => new UserGroupInfo
 										{

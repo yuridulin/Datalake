@@ -227,14 +227,20 @@ export interface CreateUserGroupRequest {
 }
 
 export interface UserGroupInfo {
-	/** @format guid */
-	userGroupGuid?: string
-	name?: string
+	/**
+	 * @format guid
+	 * @minLength 1
+	 */
+	userGroupGuid: string
+	/** @minLength 1 */
+	name: string
 	description?: string | null
+	/** @format guid */
+	parentGroupGuid?: string | null
 }
 
 export type UserGroupTreeInfo = UserGroupInfo & {
-	children?: UserGroupTreeInfo[]
+	children: UserGroupTreeInfo[]
 	/** @format guid */
 	parentGuid?: string | null
 	parent?: UserGroupTreeInfo | null

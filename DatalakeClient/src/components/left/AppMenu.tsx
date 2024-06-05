@@ -5,6 +5,7 @@ import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
 import { auth } from '../../etc/auth'
 import { CustomSource } from '../../etc/customSource'
+import routes from '../../router/routes'
 
 export function AppMenu() {
 	const { lastUpdate } = useUpdateContext()
@@ -26,6 +27,9 @@ export function AppMenu() {
 
 			<div className='app-menu-block'>
 				<NavLink to={'/'}>Монитор</NavLink>
+				<NavLink to={routes.UserGroups.List}>
+					Группы пользователей
+				</NavLink>
 				{/* <div className="app-menu-sub">
 				<NavLink to={'/logs'}>События</NavLink>
 				<NavLink to={'/settings'}>Администрирование</NavLink>
