@@ -38,6 +38,14 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 			?? throw new NotFoundException($"группа {groupGuid}");
 	}
 
+	[HttpGet("tree")]
+	public async Task<ActionResult<UserGroupTreeInfo[]>> ReadAsTreeAsync()
+	{
+		var tree = await userGroupsRepository.GetTreeAsync();
+
+		return tree;
+	}
+
 	[HttpGet("{groupGuid}/detailed")]
 	public async Task<ActionResult<UserGroupDetailedInfo>> ReadWithDetailsAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
