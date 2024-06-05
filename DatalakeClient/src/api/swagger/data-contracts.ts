@@ -80,8 +80,7 @@ export interface LogInfo {
 	type: LogType
 	/** @minLength 1 */
 	text: string
-	/** @format int32 */
-	refId?: number | null
+	refId?: string | null
 }
 
 export enum LogCategory {
@@ -94,6 +93,7 @@ export enum LogCategory {
 	Tag = 'Tag',
 	Http = 'Http',
 	Users = 'Users',
+	UserGroups = 'UserGroups',
 }
 
 export enum LogType {
@@ -218,6 +218,53 @@ export interface TagUpdateRequest {
 	formulaInputs: TagInputInfo[]
 }
 
+export interface CreateUserGroupRequest {
+	/** @minLength 1 */
+	name: string
+	/** @format guid */
+	parentGroupGuid?: string | null
+	description?: string | null
+}
+
+export interface UserGroupInfo {
+	/** @format guid */
+	userGroupGuid?: string
+	name?: string
+	description?: string | null
+}
+
+export type UserGroupTreeInfo = UserGroupInfo & {
+	children?: UserGroupTreeInfo[]
+	/** @format guid */
+	parentGuid?: string | null
+	parent?: UserGroupTreeInfo | null
+}
+
+export type UserGroupDetailedInfo = UserGroupInfo & {
+	users: UserGroupUsersInfo[]
+	subgroups: UserGroupInfo[]
+}
+
+export interface UserGroupUsersInfo {
+	/** @format guid */
+	userGuid?: string
+	accessType?: AccessType
+}
+
+export enum AccessType {
+	NoAccess = 'NoAccess',
+	Viewer = 'Viewer',
+	User = 'User',
+	Admin = 'Admin',
+	NotSet = 'NotSet',
+}
+
+export type UpdateUserGroupRequest = CreateUserGroupRequest & {
+	accessType?: AccessType
+	users: UserGroupUsersInfo[]
+	groups: UserGroupInfo[]
+}
+
 export interface UserAuthInfo {
 	/**
 	 * @format guid
@@ -230,14 +277,6 @@ export interface UserAuthInfo {
 	token: string
 	globalAccessType: AccessType
 	rights: UserAccessRightsInfo[]
-}
-
-export enum AccessType {
-	NoAccess = 'NoAccess',
-	Viewer = 'Viewer',
-	User = 'User',
-	Admin = 'Admin',
-	NotSet = 'NotSet',
 }
 
 export interface UserAccessRightsInfo {
@@ -278,10 +317,10 @@ export interface UserInfo {
 	fullName?: string | null
 	accessType: AccessType
 	isStatic: boolean
-	userGroups: UserGroupInfo[]
+	userGroups: UserGroupsInfo[]
 }
 
-export interface UserGroupInfo {
+export interface UserGroupsInfo {
 	/** @minLength 1 */
 	guid: string
 	/** @minLength 1 */

@@ -13,6 +13,7 @@ import {
 	BlockInfo,
 	BlockSimpleInfo,
 	BlockTreeInfo,
+	CreateUserGroupRequest,
 	LogInfo,
 	SourceEntryInfo,
 	SourceInfo,
@@ -21,9 +22,13 @@ import {
 	TagCreateRequest,
 	TagInfo,
 	TagUpdateRequest,
+	UpdateUserGroupRequest,
 	UserAuthInfo,
 	UserCreateRequest,
 	UserDetailInfo,
+	UserGroupDetailedInfo,
+	UserGroupInfo,
+	UserGroupTreeInfo,
 	UserInfo,
 	UserLoginPass,
 	UserUpdateRequest,
@@ -410,6 +415,113 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	tagsReadPossibleInputs = (params: RequestParams = {}) =>
 		this.request<TagAsInputInfo[], any>({
 			path: `/api/Tags/inputs`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsCreate
+	 * @request POST:/api/UserGroups
+	 * @response `200` `string`
+	 */
+	userGroupsCreate = (data: CreateUserGroupRequest, params: RequestParams = {}) =>
+		this.request<string, any>({
+			path: `/api/UserGroups`,
+			method: 'POST',
+			body: data,
+			type: ContentType.Json,
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsReadAll
+	 * @request GET:/api/UserGroups
+	 * @response `200` `(UserGroupInfo)[]`
+	 */
+	userGroupsReadAll = (params: RequestParams = {}) =>
+		this.request<UserGroupInfo[], any>({
+			path: `/api/UserGroups`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsRead
+	 * @request GET:/api/UserGroups/{groupGuid}
+	 * @response `200` `UserGroupInfo`
+	 */
+	userGroupsRead = (groupGuid: string, params: RequestParams = {}) =>
+		this.request<UserGroupInfo, any>({
+			path: `/api/UserGroups/${groupGuid}`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsUpdate
+	 * @request PUT:/api/UserGroups/{groupGuid}
+	 * @response `200` `File`
+	 */
+	userGroupsUpdate = (groupGuid: string, data: UpdateUserGroupRequest, params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/UserGroups/${groupGuid}`,
+			method: 'PUT',
+			body: data,
+			type: ContentType.Json,
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsDelete
+	 * @request DELETE:/api/UserGroups/{groupGuid}
+	 * @response `200` `File`
+	 */
+	userGroupsDelete = (groupGuid: string, params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/UserGroups/${groupGuid}`,
+			method: 'DELETE',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsReadAsTree
+	 * @request GET:/api/UserGroups/tree
+	 * @response `200` `(UserGroupTreeInfo)[]`
+	 */
+	userGroupsReadAsTree = (params: RequestParams = {}) =>
+		this.request<UserGroupTreeInfo[], any>({
+			path: `/api/UserGroups/tree`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsReadWithDetails
+	 * @request GET:/api/UserGroups/{groupGuid}/detailed
+	 * @response `200` `UserGroupDetailedInfo`
+	 */
+	userGroupsReadWithDetails = (groupGuid: string, params: RequestParams = {}) =>
+		this.request<UserGroupDetailedInfo, any>({
+			path: `/api/UserGroups/${groupGuid}/detailed`,
 			method: 'GET',
 			format: 'json',
 			...params,
