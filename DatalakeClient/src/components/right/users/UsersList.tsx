@@ -1,7 +1,7 @@
 import { Button, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import { AccessType, UserInfo } from '../../../api/swagger/data-contracts'
 import FormRow from '../../small/FormRow'
 import Header from '../../small/Header'

@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/ru'
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import {
 	TagInfo,
 	ValuesRequest,

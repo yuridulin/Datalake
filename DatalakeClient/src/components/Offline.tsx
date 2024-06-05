@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import api from '../api/api'
+import api from '../api/swagger-api'
 import { useInterval } from '../hooks/useInterval'
 
 export default function Offline() {

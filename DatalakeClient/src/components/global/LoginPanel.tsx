@@ -1,6 +1,6 @@
 import { Button, Form, Input } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import api from '../../api/api'
+import api from '../../api/swagger-api'
 import { UserLoginPass } from '../../api/swagger/data-contracts'
 
 const style = {

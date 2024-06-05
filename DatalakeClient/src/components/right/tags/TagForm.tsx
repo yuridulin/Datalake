@@ -11,7 +11,7 @@ import {
 } from 'antd'
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import { TagType, TagUpdateRequest } from '../../../api/swagger/data-contracts'
 import { CustomSource } from '../../../etc/customSource'
 import { useFetching } from '../../../hooks/useFetching'

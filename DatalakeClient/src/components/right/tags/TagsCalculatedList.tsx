@@ -1,7 +1,7 @@
 import { Button, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
 import { CustomSource } from '../../../etc/customSource'
 import FormRow from '../../small/FormRow'

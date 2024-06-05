@@ -1,7 +1,7 @@
 import { Button } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import { SourceInfo } from '../../../api/swagger/data-contracts'
 import { sourceTypeName } from '../../../api/translators'
 import Header from '../../small/Header'

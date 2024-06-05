@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import { TagInfo } from '../../../api/swagger/data-contracts'
 import Header from '../../small/Header'
 import TagsTable from './TagsTable'

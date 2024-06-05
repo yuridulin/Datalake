@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../api/api'
+import api from '../../api/swagger-api'
 import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
 import { auth } from '../../etc/auth'

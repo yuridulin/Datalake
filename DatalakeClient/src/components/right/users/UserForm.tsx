@@ -2,7 +2,7 @@ import { CheckCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Popconfirm, Radio, notification } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import {
 	AccessType,
 	UserUpdateRequest,
