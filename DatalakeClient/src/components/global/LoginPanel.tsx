@@ -1,4 +1,5 @@
-import { Button, Form, Input } from 'antd'
+import { useKeycloak } from '@react-keycloak/web'
+import { Button, Form, Input, Space } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import api from '../../api/swagger-api'
 import { UserLoginPass } from '../../api/swagger/data-contracts'
@@ -10,6 +11,7 @@ const style = {
 
 export default function LoginPanel() {
 	const navigate = useNavigate()
+	const { keycloak } = useKeycloak()
 
 	const onFinish = (values: any) => {
 		api.usersAuthenticate({
@@ -26,17 +28,9 @@ export default function LoginPanel() {
 		console.log('Failed:', errorInfo)
 	}
 
-	const keycloakRedirect = () => {
-		window.location.href =
-			'https://auth-test.energo.net/realms/energo/protocol/openid-connect/auth' +
-			'?response_type=code' +
-			'&client_id=datalake' +
-			'&state=M0RMSEFJNWc4UzV3b19wV09MLWRadllGUjNtSUd1amtpeWFacVlETkdGbVpX' +
-			'&redirect_uri=' +
-			encodeURIComponent(
-				'https://10.208.4.113:32781/api/users/energo-id',
-			) +
-			'&scope=profile%20openid'
+	// после редиректа от keycloak
+	if (keycloak.authenticated) {
+		console.log('profile', keycloak.profile)
 	}
 
 	return (
@@ -67,12 +61,14 @@ export default function LoginPanel() {
 				</Form.Item>
 
 				<Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-					<Button type='primary' htmlType='submit'>
-						Вход
-					</Button>
-					<Button onClick={keycloakRedirect}>
-						Вход через EnergoID
-					</Button>
+					<Space>
+						<Button type='primary' htmlType='submit'>
+							Вход
+						</Button>
+						<Button onClick={() => keycloak.login()}>
+							Вход через EnergoID
+						</Button>
+					</Space>
 				</Form.Item>
 			</Form>
 		</div>

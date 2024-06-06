@@ -14,6 +14,20 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
 
+	public async Task<UserAuthInfo> AuthenticateAsync(UserEnergoIdInfo info)
+	{
+		await Task.Delay(100);
+
+		return new UserAuthInfo
+		{
+			UserGuid = info.EnergoIdGuid,
+			UserName = info.Name,
+			GlobalAccessType = AccessType.NotSet,
+			Rights = [],
+			Token = string.Empty,
+		};
+	}
+
 	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
 	{
 		var user = await db.Users

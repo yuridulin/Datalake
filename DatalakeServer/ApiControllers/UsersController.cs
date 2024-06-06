@@ -1,11 +1,11 @@
 ﻿using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Users;
-using DatalakeServer.Services.SessionManager;
 using DatalakeDatabase.Repositories;
+using DatalakeServer.ApiControllers.Base;
+using DatalakeServer.Services.SessionManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using DatalakeServer.ApiControllers.Base;
 
 namespace DatalakeServer.ApiControllers;
 
@@ -15,12 +15,18 @@ public class UsersController(
 	UsersRepository usersRepository,
 	SessionManagerService sessionManager) : ApiControllerBase
 {
-	[HttpGet("energo-id")]
-	public ActionResult CatchKeycloakRef()
+	[HttpPost("energo-id")]
+	public async Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
+		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
 	{
-		string xxx = "1";
+		var userAuthInfo = await usersRepository.AuthenticateAsync(energoIdInfo);
 
-		return Ok(xxx);
+		var session = sessionManager.OpenSession(userAuthInfo);
+		sessionManager.AddSessionToResponse(session, Response);
+
+		userAuthInfo.Token = session.User.Token;
+
+		return userAuthInfo;
 	}
 
 	[HttpPost("auth")]

@@ -1,6 +1,8 @@
+import { ReactKeycloakProvider } from '@react-keycloak/web'
 import { ConfigProvider, theme } from 'antd'
 import { useEffect, useState } from 'react'
 import { RouterProvider } from 'react-router-dom'
+import keycloak from '../api/keycloak'
 import { UpdateContext } from '../context/updateContext'
 import router from '../router/router'
 
@@ -32,7 +34,9 @@ export default function Layout() {
 			<UpdateContext.Provider
 				value={{ lastUpdate, setUpdate, checkedTags, setCheckedTags }}
 			>
-				<RouterProvider router={router} />
+				<ReactKeycloakProvider authClient={keycloak}>
+					<RouterProvider router={router} />
+				</ReactKeycloakProvider>
 			</UpdateContext.Provider>
 		</ConfigProvider>
 	)
