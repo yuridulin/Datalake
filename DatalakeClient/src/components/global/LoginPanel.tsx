@@ -26,6 +26,19 @@ export default function LoginPanel() {
 		console.log('Failed:', errorInfo)
 	}
 
+	const keycloakRedirect = () => {
+		window.location.href =
+			'https://auth-test.energo.net/realms/energo/protocol/openid-connect/auth' +
+			'?response_type=code' +
+			'&client_id=datalake' +
+			'&state=M0RMSEFJNWc4UzV3b19wV09MLWRadllGUjNtSUd1amtpeWFacVlETkdGbVpX' +
+			'&redirect_uri=' +
+			encodeURIComponent(
+				'https://10.208.4.113:32781/api/users/energo-id',
+			) +
+			'&scope=profile%20openid'
+	}
+
 	return (
 		<div style={style}>
 			<Form
@@ -35,7 +48,7 @@ export default function LoginPanel() {
 				style={{ maxWidth: 600 }}
 				onFinish={onFinish}
 				onFinishFailed={onFinishFailed}
-				autoComplete='off'
+				autoComplete='on'
 			>
 				<Form.Item<UserLoginPass>
 					label='Имя учётной записи'
@@ -56,6 +69,9 @@ export default function LoginPanel() {
 				<Form.Item wrapperCol={{ offset: 8, span: 16 }}>
 					<Button type='primary' htmlType='submit'>
 						Вход
+					</Button>
+					<Button onClick={keycloakRedirect}>
+						Вход через EnergoID
 					</Button>
 				</Form.Item>
 			</Form>

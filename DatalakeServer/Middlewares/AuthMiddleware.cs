@@ -13,7 +13,8 @@ public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
 	public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 	{
 		bool isApi = context.Request.Path.StartsWithSegments("/api");
-		bool isNotAuthApi = !context.Request.Path.StartsWithSegments("/api/users/auth");
+		bool isNotAuthApi = !context.Request.Path.StartsWithSegments("/api/users/auth")
+			&& !context.Request.Path.StartsWithSegments("/api/users/energo-id");
 		bool isMethodInCheckedList = checkingMethods.Contains(context.Request.Method);
 
 		AuthSession? authSession = null;

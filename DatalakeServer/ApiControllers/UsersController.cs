@@ -15,6 +15,14 @@ public class UsersController(
 	UsersRepository usersRepository,
 	SessionManagerService sessionManager) : ApiControllerBase
 {
+	[HttpGet("energo-id")]
+	public ActionResult CatchKeycloakRef()
+	{
+		string xxx = "1";
+
+		return Ok(xxx);
+	}
+
 	[HttpPost("auth")]
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
 		[BindRequired, FromBody] UserLoginPass loginPass)

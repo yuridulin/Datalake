@@ -23,7 +23,7 @@ const columns: ColumnsType<UserGroupRow> = [
 		render(value, record, index) {
 			return (
 				<NavLink to={routeLinks.toUserGroup(record.guid)}>
-					<Button>{record.name}</Button>
+					<Button size='small'>{record.name}</Button>
 				</NavLink>
 			)
 		},

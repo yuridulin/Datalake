@@ -5,6 +5,7 @@ import router from '../router/router'
 import { Api } from './swagger/Api'
 
 const api = new Api({
+	baseURL: 'https://localhost:32781/',
 	validateStatus(status) {
 		return status >= 200 && status < 300
 	},
