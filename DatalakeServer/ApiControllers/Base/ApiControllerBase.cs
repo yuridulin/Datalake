@@ -11,7 +11,8 @@ namespace DatalakeServer.ApiControllers.Base
 		{
 			if (HttpContext.Items.TryGetValue(AuthConstants.ContextSessionKey, out var session))
 			{
-				if (session == null) throw new ForbiddenException(message: "требуется пройти аутентификацию");
+				if (session == null)
+					throw new ForbiddenException(message: "требуется пройти аутентификацию");
 
 				return (UserAuthInfo)session;
 			}

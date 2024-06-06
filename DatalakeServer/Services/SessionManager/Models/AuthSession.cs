@@ -1,5 +1,4 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.Users;
+﻿using DatalakeApiClasses.Models.Users;
 
 namespace DatalakeServer.Services.SessionManager.Models;
 

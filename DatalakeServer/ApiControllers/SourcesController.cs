@@ -1,11 +1,11 @@
 ﻿using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Sources;
-using DatalakeServer.Services.Receiver;
 using DatalakeDatabase.Repositories;
+using DatalakeServer.ApiControllers.Base;
+using DatalakeServer.Services.Receiver;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using DatalakeServer.ApiControllers.Base;
 
 namespace DatalakeServer.ApiControllers;
 
@@ -110,10 +110,10 @@ public class SourcesController(
 			.ToListAsync();
 
 		var all = sourceTags.Select(tag => new SourceEntryInfo
-			{
-				TagInfo = tag,
-				ItemInfo = sourceItems.TryGetValue(tag.Item, out var itemInfo) ? itemInfo : null,
-			})
+		{
+			TagInfo = tag,
+			ItemInfo = sourceItems.TryGetValue(tag.Item, out var itemInfo) ? itemInfo : null,
+		})
 			.Union(sourceItems
 				.Where(itemKeyValue => !sourceTags.Select(tag => tag.Item).Contains(itemKeyValue.Key))
 				.Select(itemKeyValue => new SourceEntryInfo
