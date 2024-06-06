@@ -1,5 +1,5 @@
-﻿using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
-using DatalakeDatabase.Models;
+﻿using DatalakeDatabase.Models;
+using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
 
 namespace DatalakeServer.BackgroundServices.Collector.Collectors;
 

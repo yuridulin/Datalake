@@ -11,7 +11,8 @@ public class SessionManagerService
 	public AuthSession? GetExistSession(string token)
 	{
 		var session = Sessions.FirstOrDefault(x => x.User.Token == token);
-		if (session == null) return null;
+		if (session == null)
+			return null;
 		if (session.ExpirationTime < DateTime.UtcNow)
 		{
 			RemoveSession(session);
@@ -19,7 +20,7 @@ public class SessionManagerService
 		}
 		return session;
 	}
-	
+
 	public AuthSession? GetExistSession(HttpContext context)
 	{
 		var token = context.Request.Headers[AuthConstants.TokenHeader];
@@ -27,7 +28,8 @@ public class SessionManagerService
 		{
 			var tokenValue = token.ToString();
 			var session = GetExistSession(tokenValue);
-			if (session == null) return null;
+			if (session == null)
+				return null;
 			AddSessionToResponse(session, context.Response);
 			return session;
 		}

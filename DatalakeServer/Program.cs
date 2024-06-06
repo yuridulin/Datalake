@@ -1,12 +1,12 @@
 using DatalakeApiClasses.Exceptions.Base;
+using DatalakeDatabase;
+using DatalakeDatabase.Repositories;
 using DatalakeServer.BackgroundServices.Collector;
 using DatalakeServer.BackgroundServices.Collector.Collectors.Factory;
 using DatalakeServer.Constants;
 using DatalakeServer.Middlewares;
 using DatalakeServer.Services.Receiver;
 using DatalakeServer.Services.SessionManager;
-using DatalakeDatabase;
-using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
@@ -78,7 +78,9 @@ namespace DatalakeServer
 					]);
 			});
 			app.UseOpenApi();
+#if DEBUG
 			app.UseSwaggerUi();
+#endif
 			app.UseMiddleware<AuthMiddleware>();
 
 			ConfigureErrorPage(app);
