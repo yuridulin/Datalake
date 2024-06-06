@@ -2,8 +2,7 @@
   <PropertyGroup>
     <StartupCommand>set BROWSER=none&amp;&amp;npm start</StartupCommand>
     <!-- Command to run on project build -->
-    <BuildCommand>
-    </BuildCommand>
+    <BuildCommand>npm run build</BuildCommand>
     <!-- Command to create an optimized build of the project that's ready for publishing -->
     <ProductionBuildCommand>
     </ProductionBuildCommand>

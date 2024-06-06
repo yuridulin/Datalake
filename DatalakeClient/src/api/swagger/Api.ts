@@ -26,6 +26,7 @@ import {
 	UserAuthInfo,
 	UserCreateRequest,
 	UserDetailInfo,
+	UserEnergoIdInfo,
 	UserGroupDetailedInfo,
 	UserGroupInfo,
 	UserGroupTreeInfo,
@@ -523,6 +524,23 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 		this.request<UserGroupDetailedInfo, any>({
 			path: `/api/UserGroups/${groupGuid}/detailed`,
 			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Users
+	 * @name UsersAuthenticateEnergoIdUser
+	 * @request POST:/api/Users/energo-id
+	 * @response `200` `UserAuthInfo`
+	 */
+	usersAuthenticateEnergoIdUser = (data: UserEnergoIdInfo, params: RequestParams = {}) =>
+		this.request<UserAuthInfo, any>({
+			path: `/api/Users/energo-id`,
+			method: 'POST',
+			body: data,
+			type: ContentType.Json,
 			format: 'json',
 			...params,
 		})

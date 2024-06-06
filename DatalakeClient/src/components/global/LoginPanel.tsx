@@ -1,5 +1,6 @@
-import { useKeycloak } from '@react-keycloak/web'
 import { Button, Form, Input, Space } from 'antd'
+import { AxiosResponse } from 'axios'
+import { useKeycloak } from 'keycloak-react-web'
 import { useNavigate } from 'react-router-dom'
 import api from '../../api/swagger-api'
 import { UserLoginPass } from '../../api/swagger/data-contracts'
@@ -17,11 +18,13 @@ export default function LoginPanel() {
 		api.usersAuthenticate({
 			name: values.username,
 			password: values.password,
-		}).then((res) => {
-			if (res.status === 200) {
-				navigate('/')
-			}
-		})
+		}).then(onSuccessAuth)
+	}
+
+	const onSuccessAuth = (res: AxiosResponse) => {
+		if (res.status === 200) {
+			navigate('/')
+		}
 	}
 
 	const onFinishFailed = (errorInfo: any) => {
@@ -30,7 +33,11 @@ export default function LoginPanel() {
 
 	// после редиректа от keycloak
 	if (keycloak.authenticated) {
-		console.log('profile', keycloak.profile)
+		console.log('keycloak', keycloak.idTokenParsed)
+		api.usersAuthenticateEnergoIdUser({
+			energoIdGuid: keycloak.idTokenParsed?.sup,
+			name: keycloak.idTokenParsed?.name,
+		}).then(onSuccessAuth)
 	}
 
 	return (

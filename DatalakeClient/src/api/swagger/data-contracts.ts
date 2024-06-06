@@ -296,6 +296,12 @@ export interface UserAccessRightsInfo {
 	accessType: AccessType
 }
 
+export interface UserEnergoIdInfo {
+	/** @format guid */
+	energoIdGuid?: string
+	name?: string
+}
+
 export interface UserLoginPass {
 	/** @minLength 1 */
 	name: string
