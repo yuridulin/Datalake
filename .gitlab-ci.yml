@@ -44,10 +44,10 @@ deploy-server:
     entrypoint: ["/bin/sh", "-c"]
 
   script:
-    - kubectl delete -n sinus pods -l app=datalake-svc
+    - kubectl delete -n sinus pods -l app=datalake
 
   only:
-    - /^\d+.\d+.\d+$/
+    - /^\d+.\d+.\d+$/û
 
 
 # stages:

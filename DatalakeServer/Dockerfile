@@ -12,8 +12,11 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["/DatalakeServer/DatalakeServer.csproj", "DatalakeServer/"]
 COPY ["/DatalakeDatabase/DatalakeDatabase.csproj", "DatalakeDatabase/"]
+COPY ["/DatalakeClient/datalakeclient.esproj", "DatalakeClient/"]
 COPY ["/DatalakeApiClasses/DatalakeApiClasses.csproj", "DatalakeApiClasses/"]
+#RUN dotnet restore "./DatalakeClient/datalakeclient.esproj"
 RUN dotnet restore "./DatalakeServer/DatalakeServer.csproj"
+#COPY /DatalakeClient/build/* /DatalakeServer/wwwroot
 COPY . .
 WORKDIR "/src/DatalakeServer"
 RUN dotnet build "DatalakeServer.csproj" -c $BUILD_CONFIGURATION -o /app/build
