@@ -9,7 +9,6 @@ using DatalakeServer.Services.Receiver;
 using DatalakeServer.Services.SessionManager;
 using LinqToDB;
 using LinqToDB.AspNet;
-using LinqToDB.AspNet.Logging;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics;
