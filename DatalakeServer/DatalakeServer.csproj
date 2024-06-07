@@ -18,6 +18,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\generated\**" />
+    <Content Remove="wwwroot\generated\**" />
+    <EmbeddedResource Remove="wwwroot\generated\**" />
+    <None Remove="wwwroot\generated\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="linq2db.AspNet" Version="5.4.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
@@ -35,7 +42,7 @@
 
   <ItemGroup>
     <Folder Include="Models\" />
-    <Folder Include="wwwroot\generated\" />
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>
