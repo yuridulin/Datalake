@@ -67,7 +67,7 @@ export default function UsersList() {
 						{users
 							.filter((x) =>
 								(
-									(x.loginName ?? '') +
+									(x.login ?? '') +
 									(x.fullName ?? '') +
 									AccessTypeDescription(x.accessType)
 								)
@@ -76,10 +76,10 @@ export default function UsersList() {
 									.includes(search.toLowerCase()),
 							)
 							.map((x) => (
-								<div className='table-row' key={x.loginName}>
+								<div className='table-row' key={x.login}>
 									<span>
-										<NavLink to={'/users/' + x.userGuid}>
-											<Button>{x.loginName}</Button>
+										<NavLink to={'/users/' + x.guid}>
+											<Button>{x.login}</Button>
 										</NavLink>
 									</span>
 									<span>

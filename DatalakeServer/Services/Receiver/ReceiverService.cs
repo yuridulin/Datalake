@@ -1,16 +1,26 @@
 ﻿using DatalakeApiClasses.Enums;
 using DatalakeApiClasses.Models.Values;
-using DatalakeServer.ApiControllers;
+using DatalakeServer.Controllers;
 using DatalakeServer.Services.Receiver.Models;
 using DatalakeServer.Services.Receiver.Models.Inopc;
 using DatalakeServer.Services.Receiver.Models.Inopc.Enums;
 
 namespace DatalakeServer.Services.Receiver;
 
+/// <summary>
+/// Служба получения данных из источников по сети
+/// </summary>
+/// <param name="logger">Служба сообщений</param>
 public class ReceiverService(ILogger<ReceiverService> logger)
 {
 	CancellationTokenSource cancellationTokenSource = new();
 
+	/// <summary>
+	/// Универсальное получение данных из удаленного источника
+	/// </summary>
+	/// <param name="type">Тип источника данных</param>
+	/// <param name="address">Адрес</param>
+	/// <returns>Ответ с данными</returns>
 	public async Task<ReceiveResponse> GetItemsFromSourceAsync(SourceType type, string? address)
 	{
 		if (string.IsNullOrEmpty(address))
@@ -29,6 +39,12 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		};
 	}
 
+	/// <summary>
+	/// Запрос данных из сервера INOPC
+	/// </summary>
+	/// <param name="tags">Список имен запрашиваемых тегов</param>
+	/// <param name="address">Адрес сервера</param>
+	/// <returns>Ответ с данными</returns>
 	public async Task<ReceiveResponse> AskInopc(string[] tags, string address)
 	{
 		logger.LogDebug("Ask iNOPC with address: {address}", address);
@@ -96,6 +112,12 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		return response;
 	}
 
+	/// <summary>
+	/// Запрос данных из ноды Datalake
+	/// </summary>
+	/// <param name="tags">Список названий запрашиваемых тегов</param>
+	/// <param name="address">Адрес ноды</param>
+	/// <returns>Ответ с данными</returns>
 	public async Task<ReceiveResponse> AskDatalake(string[] tags, string address)
 	{
 		logger.LogDebug("Ask datalake with address: {address}", address);

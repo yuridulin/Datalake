@@ -13,10 +13,10 @@ public class TagCreateRequest
 	/// </summary>
 	public string? Name { get; set; }
 
-	[Required]
 	/// <summary>
 	/// Тип значений тега
 	/// </summary>
+	[Required]
 	public required TagType TagType { get; set; }
 
 	/// <summary>

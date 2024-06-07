@@ -3,10 +3,19 @@ using DatalakeApiClasses.Models.Users;
 using DatalakeServer.Constants;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DatalakeServer.ApiControllers.Base
+namespace DatalakeServer.Controllers.Base
 {
+	/// <summary>
+	/// Базовый контроллер приложения
+	/// </summary>
 	public class ApiControllerBase : ControllerBase
 	{
+		/// <summary>
+		/// Аутентификация пользователя по сессионному токену из запроса
+		/// </summary>
+		/// <returns>Данные о пользователе</returns>
+		/// <exception cref="ForbiddenException">Сессия не открыта</exception>
+		/// <exception cref="NotFoundException">Сессия не найдена</exception>
 		protected UserAuthInfo Authenticate()
 		{
 			if (HttpContext.Items.TryGetValue(AuthConstants.ContextSessionKey, out var session))

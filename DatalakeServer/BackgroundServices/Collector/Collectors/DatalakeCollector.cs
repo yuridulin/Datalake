@@ -4,7 +4,13 @@ using DatalakeServer.Services.Receiver;
 
 namespace DatalakeServer.BackgroundServices.Collector.Collectors;
 
-public class DatalakeCollector(
+/// <summary>
+/// Сборщик данных из ноды Datalake
+/// </summary>
+/// <param name="receiverService">Служба получения данных</param>
+/// <param name="source">Источник</param>
+/// <param name="logger">Служба сообщений</param>
+internal class DatalakeCollector(
 	ReceiverService receiverService,
 	Source source,
 	ILogger<DatalakeCollector> logger) : CollectorBase(source, logger)

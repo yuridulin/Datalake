@@ -16,7 +16,7 @@ namespace DatalakeDatabase.Tests.Steps
 
 			var userAuthInfo = await usersRepository.AuthenticateAsync(new UserLoginPass
 			{
-				Name = "admin",
+				Login = "admin",
 				Password = "admin",
 			});
 

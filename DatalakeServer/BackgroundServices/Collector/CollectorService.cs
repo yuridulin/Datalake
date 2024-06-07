@@ -10,7 +10,7 @@ using LinqToDB;
 
 namespace DatalakeServer.BackgroundServices.Collector;
 
-public class CollectorService(
+internal class CollectorService(
 	CollectorFactory collectorFactory,
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<CollectorService> logger) : BackgroundService

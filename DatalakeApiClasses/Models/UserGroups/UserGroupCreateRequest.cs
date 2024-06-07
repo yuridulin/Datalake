@@ -2,7 +2,10 @@
 
 namespace DatalakeApiClasses.Models.UserGroups;
 
-public class CreateUserGroupRequest
+/// <summary>
+/// Данные запроса для создания группы пользователей
+/// </summary>
+public class UserGroupCreateRequest
 {
 	/// <summary>
 	/// Название. Не может повторяться в рамках родительской группы
@@ -13,7 +16,7 @@ public class CreateUserGroupRequest
 	/// <summary>
 	/// Идентификатор родительской группы
 	/// </summary>
-	public Guid? ParentGroupGuid { get; set; }
+	public Guid? ParentGuid { get; set; }
 
 	/// <summary>
 	/// Описание

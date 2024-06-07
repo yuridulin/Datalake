@@ -3,7 +3,12 @@ using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
 
 namespace DatalakeServer.BackgroundServices.Collector.Collectors;
 
-public class CalculateCollector(
+/// <summary>
+/// Источник данных, выполняющий расчёты по формулам
+/// </summary>
+/// <param name="source">Источник</param>
+/// <param name="logger">Служба сообщений</param>
+internal class CalculateCollector(
 	Source source,
 	ILogger<CalculateCollector> logger) : CollectorBase(source, logger)
 {

@@ -10,8 +10,8 @@ public partial class UsersRepository
 		return db.Users
 			.Select(x => new UserInfo
 			{
-				UserGuid = x.UserGuid,
-				LoginName = x.Name,
+				Guid = x.Guid,
+				Login = x.Login,
 				FullName = x.FullName,
 				AccessType = x.AccessType,
 				IsStatic = !string.IsNullOrEmpty(x.StaticHost),
@@ -23,13 +23,13 @@ public partial class UsersRepository
 		return db.Users
 			.Select(x => new UserDetailInfo
 			{
-				UserGuid = x.UserGuid,
-				AccessType = x.AccessType,
-				Hash = !string.IsNullOrEmpty(x.StaticHost) ? x.Hash : string.Empty,
-				IsStatic = !string.IsNullOrEmpty(x.StaticHost),
-				StaticHost = x.StaticHost,
-				LoginName = x.Name,
+				Guid = x.Guid,
+				Login = x.Login,
 				FullName = x.FullName,
+				AccessType = x.AccessType,
+				IsStatic = !string.IsNullOrEmpty(x.StaticHost),
+				Hash = !string.IsNullOrEmpty(x.StaticHost) ? x.PasswordHash : string.Empty,
+				StaticHost = x.StaticHost,
 			});
 	}
 }

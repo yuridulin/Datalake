@@ -26,11 +26,11 @@ import {
 	UserAuthInfo,
 	UserCreateRequest,
 	UserDetailInfo,
-	UserEnergoIdInfo,
 	UserGroupDetailedInfo,
 	UserGroupInfo,
 	UserGroupTreeInfo,
 	UserInfo,
+	UserKeycloakInfo,
 	UserLoginPass,
 	UserUpdateRequest,
 	ValuesGetPayload,
@@ -535,7 +535,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request POST:/api/Users/energo-id
 	 * @response `200` `UserAuthInfo`
 	 */
-	usersAuthenticateEnergoIdUser = (data: UserEnergoIdInfo, params: RequestParams = {}) =>
+	usersAuthenticateEnergoIdUser = (data: UserKeycloakInfo, params: RequestParams = {}) =>
 		this.request<UserAuthInfo, any>({
 			path: `/api/Users/energo-id`,
 			method: 'POST',

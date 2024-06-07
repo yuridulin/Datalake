@@ -15,22 +15,35 @@ public class User
 	// поля в БД
 
 	[Column, Key, NotNull]
-	public required Guid UserGuid { get; set; }
-
-	[Column, NotNull]
-	public required string Name { get; set; }
-
-	[Column, NotNull]
-	public required string Hash { get; set; }
+	public required Guid Guid { get; set; }
 
 	[Column, NotNull]
 	public required AccessType AccessType { get; set; }
 
+	[Column, NotNull]
+	public UserType Type { get; set; }
+
 	[Column]
 	public string? FullName { get; set; } = string.Empty;
 
+	// для локальных
+
+	[Column, NotNull]
+	public required string Login { get; set; }
+
+	[Column, NotNull]
+	public required string PasswordHash { get; set; }
+
+	// для статичных
+
 	[Column]
 	public string? StaticHost { get; set; }
+
+	// для energoID
+
+	[Column]
+	public Guid? KeycloakGuid { get; set; }
+
 
 	// связи
 

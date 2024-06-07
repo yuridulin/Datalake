@@ -1,20 +1,29 @@
 ﻿using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Sources;
 using DatalakeDatabase.Repositories;
-using DatalakeServer.ApiControllers.Base;
+using DatalakeServer.Controllers.Base;
 using DatalakeServer.Services.Receiver;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace DatalakeServer.ApiControllers;
+namespace DatalakeServer.Controllers;
 
+/// <summary>
+/// Взаимодействие с источниками данных
+/// </summary>
+/// <param name="sourcesRepository">Репозиторий</param>
+/// <param name="receiverService">Служба получения данных с источников</param>
 [Route("api/[controller]")]
 [ApiController]
 public class SourcesController(
 	SourcesRepository sourcesRepository,
 	ReceiverService receiverService) : ApiControllerBase
 {
+	/// <summary>
+	/// Создание источника с информацией по умолчанию
+	/// </summary>
+	/// <returns>Идентификатор источника</returns>
 	[HttpPost("empty")]
 	public async Task<ActionResult<int>> CreateAsync()
 	{
@@ -25,6 +34,11 @@ public class SourcesController(
 		return id;
 	}
 
+	/// <summary>
+	/// Создание источника на основе переданных данных
+	/// </summary>
+	/// <param name="source">Данные нового источника</param>
+	/// <returns>Идентификатор источника</returns>
 	[HttpPost]
 	public async Task<ActionResult<int>> CreateAsync(
 		[BindRequired, FromBody] SourceInfo source)
@@ -35,6 +49,12 @@ public class SourcesController(
 		return id;
 	}
 
+	/// <summary>
+	/// Получение данных о источнике
+	/// </summary>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Данные о источнике</returns>
+	/// <exception cref="NotFoundException">Источник не найден по идентификатору</exception>
 	[HttpGet("{id:int}")]
 	public async Task<ActionResult<SourceInfo>> ReadAsync(
 		[BindRequired, FromRoute] int id)
@@ -44,6 +64,11 @@ public class SourcesController(
 			?? throw new NotFoundException($"Источник #{id}");
 	}
 
+	/// <summary>
+	/// Получение списка источников
+	/// </summary>
+	/// <param name="withCustom">Включить ли в список системные источники</param>
+	/// <returns>Список источников</returns>
 	[HttpGet]
 	public async Task<ActionResult<SourceInfo[]>> ReadAsync(bool withCustom = false)
 	{
@@ -51,6 +76,11 @@ public class SourcesController(
 			.ToArrayAsync();
 	}
 
+	/// <summary>
+	/// Изменение источника
+	/// </summary>
+	/// <param name="id">Идентификатор источника</param>
+	/// <param name="source">Новые данные источника</param>
 	[HttpPut("{id:int}")]
 	public async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int id,
@@ -62,6 +92,10 @@ public class SourcesController(
 		return NoContent();
 	}
 
+	/// <summary>
+	/// Удаление источника
+	/// </summary>
+	/// <param name="id">Идентификатор источника</param>
 	[HttpDelete("{id:int}")]
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
@@ -72,6 +106,12 @@ public class SourcesController(
 		return NoContent();
 	}
 
+	/// <summary>
+	/// Получение доступных значений источника
+	/// </summary>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Список данных источника</returns>
+	/// <exception cref="NotFoundException"></exception>
 	[HttpGet("{id:int}/items")]
 	public async Task<ActionResult<SourceItemInfo[]>> GetItemsAsync(
 		[BindRequired, FromRoute] int id)
@@ -91,6 +131,12 @@ public class SourcesController(
 		return items;
 	}
 
+	/// <summary>
+	/// Получение доступных значений и связанных тегов источника
+	/// </summary>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Список данных источника</returns>
+	/// <exception cref="NotFoundException"></exception>
 	[HttpGet("{id:int}/items-and-tags")]
 	public async Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
 		[BindRequired, FromRoute] int id)

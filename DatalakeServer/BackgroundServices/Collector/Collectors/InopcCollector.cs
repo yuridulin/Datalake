@@ -5,7 +5,7 @@ using Timer = System.Timers.Timer;
 
 namespace DatalakeServer.BackgroundServices.Collector.Collectors;
 
-public class InopcCollector : CollectorBase
+internal class InopcCollector : CollectorBase
 {
 	public InopcCollector(
 		ReceiverService receiverService,

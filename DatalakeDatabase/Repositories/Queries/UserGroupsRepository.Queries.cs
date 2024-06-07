@@ -10,9 +10,9 @@ public partial class UserGroupsRepository
 		var groups = await db.UserGroups
 			.Select(x => new UserGroupTreeInfo
 			{
-				UserGroupGuid = x.UserGroupGuid,
+				Guid = x.Guid,
 				Name = x.Name,
-				ParentGuid = x.ParentGroupGuid,
+				ParentGuid = x.ParentGuid,
 				Description = x.Description,
 			})
 			.ToArrayAsync();
@@ -27,7 +27,7 @@ public partial class UserGroupsRepository
 
 			foreach (var item in selected)
 			{
-				item.Children = ReadChildren(item.UserGroupGuid);
+				item.Children = ReadChildren(item.Guid);
 			};
 
 			return selected;
@@ -39,10 +39,10 @@ public partial class UserGroupsRepository
 		var groups = await db.UserGroups
 			.Select(x => new UserGroupTreeInfo
 			{
-				UserGroupGuid = x.UserGroupGuid,
+				Guid = x.Guid,
 				Name = x.Name,
 				Description = x.Description,
-				ParentGuid = x.ParentGroupGuid,
+				ParentGuid = x.ParentGuid,
 			})
 			.ToArrayAsync();
 
@@ -52,13 +52,13 @@ public partial class UserGroupsRepository
 		do
 		{
 			var group = groups
-				.Where(x => x.UserGroupGuid == groupGuid)
+				.Where(x => x.Guid == groupGuid)
 				.FirstOrDefault();
 
 			if (group == null)
 				break;
 
-			parents.Add(new UserGroupInfo { Name = group.Name, UserGroupGuid = group.UserGroupGuid });
+			parents.Add(new UserGroupInfo { Name = group.Name, Guid = group.Guid });
 			seekGuid = group.ParentGuid;
 		}
 		while (seekGuid != null);
@@ -71,30 +71,30 @@ public partial class UserGroupsRepository
 		return db.UserGroups
 			.Select(x => new UserGroupInfo
 			{
-				UserGroupGuid = x.UserGroupGuid,
+				Guid = x.Guid,
 				Name = x.Name,
 				Description = x.Description,
-				ParentGroupGuid = x.ParentGroupGuid,
+				ParentGroupGuid = x.ParentGuid,
 			});
 	}
 
 	public IQueryable<UserGroupDetailedInfo> GetWithChildsAndUsers()
 	{
 		var query = from g in db.UserGroups
-								from rel in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == g.UserGroupGuid)
-								from u in db.Users.LeftJoin(x => x.UserGuid == rel.UserGuid)
-								from c in db.UserGroups.LeftJoin(x => x.ParentGroupGuid == g.UserGroupGuid)
+								from rel in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == g.Guid)
+								from u in db.Users.LeftJoin(x => x.Guid == rel.UserGuid)
+								from c in db.UserGroups.LeftJoin(x => x.ParentGuid == g.Guid)
 								group new { g, rel, u, c } by g into groupping
 								select new UserGroupDetailedInfo
 								{
-									UserGroupGuid = groupping.Key.UserGroupGuid,
+									Guid = groupping.Key.Guid,
 									Name = groupping.Key.Name,
 									Description = groupping.Key.Description,
-									ParentGroupGuid = groupping.Key.ParentGroupGuid,
+									ParentGroupGuid = groupping.Key.ParentGuid,
 									Subgroups = groupping
 										.Select(x => new UserGroupInfo
 										{
-											UserGroupGuid = x.c.UserGroupGuid,
+											Guid = x.c.Guid,
 											Name = x.c.Name,
 											Description = x.c.Description,
 										})
@@ -102,7 +102,8 @@ public partial class UserGroupsRepository
 									Users = groupping
 										.Select(x => new UserGroupUsersInfo
 										{
-											UserGuid = x.u.UserGuid,
+											Guid = x.u.Guid,
+											FullName = x.u.FullName,
 											AccessType = x.u.AccessType,
 										})
 										.ToArray(),

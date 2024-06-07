@@ -3,7 +3,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DatalakeApiClasses.Models.UserGroups;
 
-public class UpdateUserGroupRequest : CreateUserGroupRequest
+/// <summary>
+/// Данные запроса для изменения группы пользователей
+/// </summary>
+public class UserGroupUpdateRequest : UserGroupCreateRequest
 {
 	/// <summary>
 	/// Базовый уровень доступа участников и под-групп

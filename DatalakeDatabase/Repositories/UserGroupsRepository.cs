@@ -14,11 +14,11 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
 
-	public async Task<Guid> CreateAsync(UserAuthInfo user, CreateUserGroupRequest request)
+	public async Task<Guid> CreateAsync(UserAuthInfo user, UserGroupCreateRequest request)
 	{
-		if (request.ParentGroupGuid.HasValue)
+		if (request.ParentGuid.HasValue)
 		{
-			await CheckAccessToUserGroupAsync(db, user, AccessType.Admin, request.ParentGroupGuid.Value);
+			await CheckAccessToUserGroupAsync(db, user, AccessType.Admin, request.ParentGuid.Value);
 		}
 		else
 		{
@@ -28,7 +28,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 		return await CreateAsync(request);
 	}
 
-	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid groupGuid, UpdateUserGroupRequest request)
+	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
 	{
 		await CheckAccessToUserGroupAsync(db, user, AccessType.Admin, groupGuid);
 
@@ -47,47 +47,47 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 
 	#region Реализация
 
-	internal async Task<Guid> CreateAsync(CreateUserGroupRequest request)
+	internal async Task<Guid> CreateAsync(UserGroupCreateRequest request)
 	{
-		if (await db.UserGroups.AnyAsync(x => x.Name == request.Name && x.ParentGroupGuid == request.ParentGroupGuid))
+		if (await db.UserGroups.AnyAsync(x => x.Name == request.Name && x.ParentGuid == request.ParentGuid))
 			throw new AlreadyExistException(message: "группа " + request.Name);
 
 		using var transaction = await db.BeginTransactionAsync();
 
 		var group = await db.UserGroups
-			.Value(x => x.UserGroupGuid, Guid.NewGuid())
+			.Value(x => x.Guid, Guid.NewGuid())
 			.Value(x => x.Name, request.Name)
-			.Value(x => x.ParentGroupGuid, request.ParentGroupGuid)
+			.Value(x => x.ParentGuid, request.ParentGuid)
 			.Value(x => x.Description, request.Description)
 			.InsertWithOutputAsync();
 
 		await db.AccessRights
-			.Value(x => x.UserGroupGuid, group.UserGroupGuid)
+			.Value(x => x.UserGroupGuid, group.Guid)
 			.Value(x => x.IsGlobal, true)
 			.Value(x => x.AccessType, AccessType.Viewer)
 			.InsertAsync();
 
-		await db.LogAsync(Success(group.UserGroupGuid, $"Создана группа пользователей \"{group.Name}\""));
+		await db.LogAsync(Success(group.Guid, $"Создана группа пользователей \"{group.Name}\""));
 		await db.SetLastUpdateToNowAsync();
 		await transaction.CommitAsync();
 
-		return group.UserGroupGuid;
+		return group.Guid;
 	}
 
-	internal async Task<bool> UpdateAsync(Guid groupGuid, UpdateUserGroupRequest request)
+	internal async Task<bool> UpdateAsync(Guid groupGuid, UserGroupUpdateRequest request)
 	{
 		if (await db.UserGroups.AnyAsync(x => x.Name == request.Name
-			&& x.ParentGroupGuid == request.ParentGroupGuid
-			&& x.UserGroupGuid != groupGuid))
+			&& x.ParentGuid == request.ParentGuid
+			&& x.Guid != groupGuid))
 			throw new AlreadyExistException(message: "группа " + request.Name);
 
 		using var transaction = await db.BeginTransactionAsync();
 
 		await db.UserGroups
-			.Where(x => x.UserGroupGuid == groupGuid)
+			.Where(x => x.Guid == groupGuid)
 			.Set(x => x.Name, request.Name)
 			.Set(x => x.Description, request.Description)
-			.Set(x => x.ParentGroupGuid, request.ParentGroupGuid)
+			.Set(x => x.ParentGuid, request.ParentGuid)
 			.UpdateAsync();
 
 		await db.AccessRights
@@ -102,7 +102,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 		await db.UserGroupRelations
 			.BulkCopyAsync(request.Users.Select(u => new UserGroupRelation
 			{
-				UserGuid = u.UserGuid,
+				UserGuid = u.Guid,
 				UserGroupGuid = groupGuid,
 				AccessType = u.AccessType,
 			}));
@@ -119,7 +119,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 		using var transaction = await db.BeginTransactionAsync();
 
 		var group = await db.UserGroups
-			.FirstOrDefaultAsync(x => x.UserGroupGuid == groupGuid)
+			.FirstOrDefaultAsync(x => x.Guid == groupGuid)
 			?? throw new NotFoundException(message: "группа " + groupGuid);
 
 		await db.AccessRights
@@ -131,7 +131,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 			.DeleteAsync();
 
 		await db.UserGroups
-			.Where(x => x.UserGroupGuid == groupGuid)
+			.Where(x => x.Guid == groupGuid)
 			.DeleteAsync();
 
 		await db.LogAsync(Success(groupGuid, $"Удалена группа пользователей \"{groupGuid}\""));
@@ -155,7 +155,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 		{
 			var groups = await new UserGroupsRepository(db).GetWithParentsAsync(groupGuid);
 			hasAccess = user.Rights
-				.Where(x => groups.Select(g => g.UserGroupGuid).Contains(groupGuid) && (int)minimalAccess <= (int)x.AccessType)
+				.Where(x => groups.Select(g => g.Guid).Contains(groupGuid) && (int)minimalAccess <= (int)x.AccessType)
 				.Any();
 		}
 

@@ -1,13 +1,17 @@
 ﻿using DatalakeApiClasses.Exceptions;
 using DatalakeApiClasses.Models.Tags;
 using DatalakeDatabase.Repositories;
-using DatalakeServer.ApiControllers.Base;
+using DatalakeServer.Controllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace DatalakeServer.ApiControllers;
+namespace DatalakeServer.Controllers;
 
+/// <summary>
+/// Взаимодействие с тегами
+/// </summary>
+/// <param name="tagsRepository">Репозиторий</param>
 [ApiController]
 [Route("api/[controller]")]
 public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
@@ -64,6 +68,10 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 		return tags;
 	}
 
+	/// <summary>
+	/// Получение списка тегов, подходящих для использования в формулах
+	/// </summary>
+	/// <returns>Список тегов</returns>
 	[HttpGet("inputs")]
 	public async Task<ActionResult<TagAsInputInfo[]>> ReadPossibleInputsAsync()
 	{
@@ -73,6 +81,11 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 		return tags;
 	}
 
+	/// <summary>
+	/// Изменение тега
+	/// </summary>
+	/// <param name="id">Идентификатор тега</param>
+	/// <param name="tag">Новые данные тега</param>
 	[HttpPut("{id:int}")]
 	public async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int id,
@@ -85,6 +98,10 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 		return NoContent();
 	}
 
+	/// <summary>
+	/// Удаление тега
+	/// </summary>
+	/// <param name="id">Идентификатор тега</param>
 	[HttpDelete("{id:int}")]
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)

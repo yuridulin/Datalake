@@ -16,10 +16,10 @@ public class UserGroup
 	// поля в БД
 
 	[Column, NotNull, Key, PrimaryKey]
-	public Guid UserGroupGuid { get; set; }
+	public Guid Guid { get; set; }
 
 	[Column]
-	public Guid? ParentGroupGuid { get; set; }
+	public Guid? ParentGuid { get; set; }
 
 	[Column, NotNull]
 	public required string Name { get; set; }

@@ -5,12 +5,20 @@ using DatalakeDatabase.Extensions;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DatalakeServer.ApiControllers;
+namespace DatalakeServer.Controllers;
 
+/// <summary>
+/// Представление системной информации о работе сервера
+/// </summary>
+/// <param name="db">Экземпляр подключения к базе данных</param>
 [Route("api/[controller]")]
 [ApiController]
 public class ConfigController(DatalakeContext db) : ControllerBase
 {
+	/// <summary>
+	/// Получение даты последнего изменения структуры базы данных
+	/// </summary>
+	/// <returns>Дата в строковом виде</returns>
 	[HttpGet("last")]
 	public async Task<ActionResult<string>> GetLastUpdateAsync()
 	{
@@ -18,6 +26,12 @@ public class ConfigController(DatalakeContext db) : ControllerBase
 		return lastUpdate.ToString(DateFormats.HierarchicalWithMilliseconds);
 	}
 
+	/// <summary>
+	/// Получение списка сообщений
+	/// </summary>
+	/// <param name="take">Сколько сообщений получить за этот запрос</param>
+	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества</param>
+	/// <returns></returns>
 	[HttpGet("logs")]
 	public async Task<ActionResult<LogInfo[]>> GetLogsAsync(
 		[FromQuery] int? take,

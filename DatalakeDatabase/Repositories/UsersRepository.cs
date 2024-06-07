@@ -14,56 +14,30 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
 
-	public async Task<UserAuthInfo> AuthenticateAsync(UserEnergoIdInfo info)
+	public async Task<UserAuthInfo> AuthenticateAsync(UserKeycloakInfo info)
 	{
-		await Task.Delay(100);
+		var user = await db.Users
+			.Where(x => x.Type == UserType.Keycloak)
+			.Where(x => x.KeycloakGuid != null && x.KeycloakGuid == info.KeycloakGuid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "указанная учётная запись по guid");
 
-		return new UserAuthInfo
-		{
-			UserGuid = info.EnergoIdGuid,
-			UserName = info.Name,
-			GlobalAccessType = AccessType.NotSet,
-			Rights = [],
-			Token = string.Empty,
-		};
+		return await GetAuthInfo(db, user);
 	}
 
 	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
 	{
 		var user = await db.Users
-			.Where(x => x.Name.ToLower().Trim() == loginPass.Name.ToLower().Trim() && x.StaticHost == null)
+			.Where(x => x.Login.ToLower().Trim() == loginPass.Login.ToLower().Trim() && x.StaticHost == null)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "указанная учётная запись по логину");
 
-		if (!user.Hash.Equals(GetHashFromPassword(loginPass.Password)))
+		if (!user.PasswordHash.Equals(GetHashFromPassword(loginPass.Password)))
 		{
 			throw new ForbiddenException(message: "пароль не подходит");
 		}
 
-		var accessRights = await db.AuthorizeUserAsync(user.UserGuid);
-		var globalAccessType = accessRights
-			.Where(x => x.IsGlobal)
-			.Select(x => (int)x.AccessType)
-			.DefaultIfEmpty((int)AccessType.NoAccess)
-			.Max();
-
-		return new UserAuthInfo
-		{
-			UserGuid = user.UserGuid,
-			UserName = loginPass.Name,
-			Token = string.Empty,
-			GlobalAccessType = (AccessType)globalAccessType,
-			Rights = accessRights
-				.Select(x => new UserAccessRightsInfo
-				{
-					AccessType = x.AccessType,
-					IsGlobal = x.IsGlobal,
-					BlockId = x.BlockId,
-					SourceId = x.SourceId,
-					TagId = x.TagId,
-				})
-				.ToArray(),
-		};
+		return await GetAuthInfo(db, user);
 	}
 
 	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
@@ -96,7 +70,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 	{
 		string hash;
 
-		if (string.IsNullOrEmpty(userInfo.LoginName))
+		if (string.IsNullOrEmpty(userInfo.Login))
 		{
 			throw new InvalidValueException(message: "логин не может быть пустым");
 		}
@@ -114,67 +88,67 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 			throw new InvalidValueException(message: "для учётной записи обязательно наличие или пароля, или адреса сторонней службы");
 		}
 
-		if (await db.Users.AnyAsync(x => x.Name == userInfo.LoginName))
+		if (await db.Users.AnyAsync(x => x.Login == userInfo.Login))
 		{
 			throw new AlreadyExistException(message: "учётная запись с таким логином");
 		}
 
 		var user = new User
 		{
-			UserGuid = Guid.NewGuid(),
-			Name = userInfo.LoginName,
-			FullName = userInfo.FullName ?? userInfo.LoginName,
+			Guid = Guid.NewGuid(),
+			Login = userInfo.Login,
+			FullName = userInfo.FullName ?? userInfo.Login,
 			AccessType = userInfo.AccessType,
-			Hash = hash,
+			PasswordHash = hash,
 			StaticHost = userInfo.StaticHost,
 		};
 
 		using var transaction = await db.BeginTransactionAsync();
 
 		user = await db.Users
-			.Value(x => x.UserGuid, user.UserGuid)
-			.Value(x => x.Name, user.Name)
+			.Value(x => x.Guid, user.Guid)
+			.Value(x => x.Login, user.Login)
 			.Value(x => x.FullName, user.FullName)
 			.Value(x => x.AccessType, user.AccessType)
-			.Value(x => x.Hash, user.Hash)
+			.Value(x => x.PasswordHash, user.PasswordHash)
 			.Value(x => x.StaticHost, user.StaticHost)
 			.InsertWithOutputAsync();
 
 		await db.AccessRights
-			.Value(x => x.UserGuid, user.UserGuid)
+			.Value(x => x.UserGuid, user.Guid)
 			.Value(x => x.IsGlobal, true)
 			.Value(x => x.AccessType, user.AccessType)
 			.InsertAsync();
 
 		await transaction.CommitAsync();
 
-		return user.UserGuid;
+		return user.Guid;
 	}
 
 	internal async Task<bool> UpdateAsync(Guid userGuid, UserUpdateRequest request)
 	{
-		if (string.IsNullOrEmpty(request.LoginName))
+		if (string.IsNullOrEmpty(request.Login))
 		{
 			throw new InvalidValueException(message: "логин не может быть пустым");
 		}
 
 		var userInfo = await GetInfo()
-			.Where(x => x.UserGuid == userGuid)
+			.Where(x => x.Guid == userGuid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "пользователь по указанному логину");
 
 		var updateQuery = db.Users
-			.Where(x => x.UserGuid == userGuid)
-			.Set(x => x.Name, request.LoginName)
+			.Where(x => x.Guid == userGuid)
+			.Set(x => x.Login, request.Login)
 			.Set(x => x.FullName, request.FullName)
 			.Set(x => x.AccessType, request.AccessType);
 
 		bool newHashWasGenerated = false;
 
-		if (!string.IsNullOrEmpty(request.LoginName))
+		if (!string.IsNullOrEmpty(request.Login))
 		{
 			updateQuery
-				.Set(x => x.Name, request.LoginName);
+				.Set(x => x.Login, request.Login);
 		}
 
 		if (!string.IsNullOrEmpty(request.StaticHost))
@@ -183,7 +157,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 
 			updateQuery
 				.Set(x => x.StaticHost, request.StaticHost)
-				.Set(x => x.Hash, hash);
+				.Set(x => x.PasswordHash, hash);
 
 			newHashWasGenerated = true;
 		}
@@ -200,7 +174,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 				string hash = await GenerateNewHashForStaticAsync();
 
 				updateQuery
-					.Set(x => x.Hash, hash);
+					.Set(x => x.PasswordHash, hash);
 			}
 		}
 
@@ -210,7 +184,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 
 			updateQuery
 				.Set(x => x.StaticHost, null as string)
-				.Set(x => x.Hash, hash);
+				.Set(x => x.PasswordHash, hash);
 		}
 
 		await updateQuery.UpdateAsync();
@@ -231,7 +205,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 			.DeleteAsync();
 
 		await db.Users
-			.Where(x => x.UserGuid == userGuid)
+			.Where(x => x.Guid == userGuid)
 			.DeleteAsync();
 
 		await transaction.CommitAsync();
@@ -239,13 +213,14 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 		return true;
 	}
 
+
 	private async Task<string> GenerateNewHashForStaticAsync()
 	{
 		string hash;
 
 		var oldHashList = await db.Users
 				.Where(x => !string.IsNullOrEmpty(x.StaticHost))
-				.Select(x => x.Hash)
+				.Select(x => x.PasswordHash)
 				.ToListAsync();
 
 		int countOfGenerations = 0;
@@ -282,6 +257,34 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 
 		string refreshToken = Convert.ToBase64String(randomNumber);
 		return refreshToken;
+	}
+
+	private static async Task<UserAuthInfo> GetAuthInfo(DatalakeContext db, User user)
+	{
+		var accessRights = await db.AuthorizeUserAsync(user.Guid);
+		var globalAccessType = accessRights
+			.Where(x => x.IsGlobal)
+			.Select(x => (int)x.AccessType)
+			.DefaultIfEmpty((int)AccessType.NoAccess)
+			.Max();
+
+		return new UserAuthInfo
+		{
+			Guid = user.Guid,
+			Login = user.Login,
+			Token = string.Empty,
+			GlobalAccessType = (AccessType)globalAccessType,
+			Rights = accessRights
+				.Select(x => new UserAccessRightsInfo
+				{
+					AccessType = x.AccessType,
+					IsGlobal = x.IsGlobal,
+					BlockId = x.BlockId,
+					SourceId = x.SourceId,
+					TagId = x.TagId,
+				})
+				.ToArray(),
+		};
 	}
 
 	#endregion

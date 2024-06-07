@@ -49,6 +49,9 @@ public class BlockInfo
 	public BlockTagInfo[] Tags { get; set; } = [];
 
 
+	/// <summary>
+	/// Связанный с блоком объект
+	/// </summary>
 	public class BlockRelationInfo
 	{
 		/// <summary>

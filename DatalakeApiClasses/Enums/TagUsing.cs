@@ -2,6 +2,9 @@
 
 namespace DatalakeApiClasses.Enums;
 
+/// <summary>
+/// Характеристика значения
+/// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TagUsing
 {

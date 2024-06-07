@@ -92,18 +92,18 @@ public static class DatalakeContextExtension
 		if (userGuid == null)
 			throw new NotFoundException(message: "пользователь без идентификатора");
 
-		var user = await db.Users.FirstOrDefaultAsync(x => x.UserGuid == userGuid)
+		var user = await db.Users.FirstOrDefaultAsync(x => x.Guid == userGuid)
 			?? throw new NotFoundException(message: "пользователь " + userGuid);
 
 		var groupsQuery = from userGroup in db.UserGroups
 											from rel in db.UserGroupRelations
 											 .Where(x => x.UserGuid == userGuid)
-											 .LeftJoin(x => x.UserGroupGuid == userGroup.UserGroupGuid)
+											 .LeftJoin(x => x.UserGroupGuid == userGroup.Guid)
 											group new { userGroup, rel } by userGroup into g
 											select new
 											{
-												Id = g.Key.UserGroupGuid.ToString(),
-												ParentId = g.Key.ParentGroupGuid.ToString(),
+												Id = g.Key.Guid.ToString(),
+												ParentId = g.Key.ParentGuid.ToString(),
 												g.Key.Name,
 												Relations = g.Select(x => x.rel != null ? x.rel.AccessType : AccessType.NoAccess).ToArray(),
 											};

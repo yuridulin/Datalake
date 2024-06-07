@@ -27,7 +27,7 @@ export default function UserForm() {
 			setWasStatic(!!res.data.staticHost)
 			setUser({ hash: res.data.hash })
 			setRequest({
-				loginName: res.data.loginName,
+				loginName: res.data.login,
 				accessType: res.data.accessType,
 				fullName: res.data.fullName,
 				createNewStaticHash: false,

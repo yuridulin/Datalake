@@ -2,6 +2,9 @@
 
 namespace DatalakeApiClasses.Enums;
 
+/// <summary>
+/// Уровень доступа
+/// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum AccessType
 {

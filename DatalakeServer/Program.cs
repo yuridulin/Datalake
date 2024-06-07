@@ -19,11 +19,21 @@ using NJsonSchema.Generation;
 using Serilog;
 using System.Reflection;
 using System.Security.Claims;
+#if DEBUG
+using LinqToDB.AspNet.Logging;
+#endif
 
 namespace DatalakeServer
 {
+	/// <summary>
+	/// Основной класс приложения
+	/// </summary>
 	public class Program
 	{
+		/// <summary>
+		/// Метод запуска приложения
+		/// </summary>
+		/// <param name="args">Агрументы, с которыми оно запускается</param>
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
@@ -224,7 +234,7 @@ namespace DatalakeServer
 			});
 		}
 
-		public class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor
+		internal class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor
 		{
 			public void Process(SchemaProcessorContext context)
 			{

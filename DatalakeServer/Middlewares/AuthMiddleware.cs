@@ -6,10 +6,19 @@ using System.Text;
 
 namespace DatalakeServer.Middlewares;
 
+/// <summary>
+/// Обработчик, проверяющий аутентификацию
+/// </summary>
+/// <param name="sessionManager">Менеджер сессий доступа</param>
 public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
 {
 	string[] checkingMethods = ["GET", "POST", "PUT", "DELETE"];
 
+	/// <summary>
+	/// Выполнение проверки аутентификации
+	/// </summary>
+	/// <param name="context">Контекст запроса</param>
+	/// <param name="next">Следующий обработчик</param>
 	public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 	{
 		bool isApi = context.Request.Path.StartsWithSegments("/api");

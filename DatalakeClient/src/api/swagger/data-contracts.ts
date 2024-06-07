@@ -222,7 +222,7 @@ export interface CreateUserGroupRequest {
 	/** @minLength 1 */
 	name: string
 	/** @format guid */
-	parentGroupGuid?: string | null
+	parentGuid?: string | null
 	description?: string | null
 }
 
@@ -231,7 +231,7 @@ export interface UserGroupInfo {
 	 * @format guid
 	 * @minLength 1
 	 */
-	userGroupGuid: string
+	guid: string
 	/** @minLength 1 */
 	name: string
 	description?: string | null
@@ -253,8 +253,9 @@ export type UserGroupDetailedInfo = UserGroupInfo & {
 
 export interface UserGroupUsersInfo {
 	/** @format guid */
-	userGuid?: string
+	guid?: string
 	accessType?: AccessType
+	fullName?: string | null
 }
 
 export enum AccessType {
@@ -276,9 +277,9 @@ export interface UserAuthInfo {
 	 * @format guid
 	 * @minLength 1
 	 */
-	userGuid: string
+	guid: string
 	/** @minLength 1 */
-	userName: string
+	login: string
 	/** @minLength 1 */
 	token: string
 	globalAccessType: AccessType
@@ -296,15 +297,21 @@ export interface UserAccessRightsInfo {
 	accessType: AccessType
 }
 
-export interface UserEnergoIdInfo {
-	/** @format guid */
-	energoIdGuid?: string
-	name?: string
+export interface UserKeycloakInfo {
+	/**
+	 * @format guid
+	 * @minLength 1
+	 */
+	keycloakGuid: string
+	/** @minLength 1 */
+	login: string
+	/** @minLength 1 */
+	fullName: string
 }
 
 export interface UserLoginPass {
 	/** @minLength 1 */
-	name: string
+	login: string
 	/** @minLength 1 */
 	password: string
 }
@@ -323,9 +330,9 @@ export interface UserInfo {
 	 * @format guid
 	 * @minLength 1
 	 */
-	userGuid: string
+	guid: string
 	/** @minLength 1 */
-	loginName: string
+	login: string
 	fullName?: string | null
 	accessType: AccessType
 	isStatic: boolean

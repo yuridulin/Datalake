@@ -1,12 +1,25 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace DatalakeApiClasses.Enums
+namespace DatalakeApiClasses.Enums;
+
+/// <summary>
+/// Тип связи тега и блока
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum BlockTagRelation
 {
-	[JsonConverter(typeof(JsonStringEnumConverter))]
-	public enum BlockTagRelation
-	{
-		Static = 0,
-		Input = 1,
-		Output = 2,
-	}
+	/// <summary>
+	/// Статичное закрепление (простое свойство)
+	/// </summary>
+	Static = 0,
+
+	/// <summary>
+	/// Может использоваться как переменная в формулах в пределах локальной области блока
+	/// </summary>
+	Input = 1,
+
+	/// <summary>
+	/// Может использоваться как переменная в других блоках
+	/// </summary>
+	Output = 2,
 }

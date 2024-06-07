@@ -34,7 +34,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 
 	public async Task<(string, string)> Authorization()
 	{
-		var request = new UserLoginPass { Name = "admin", Password = "admin" };
+		var request = new UserLoginPass { Login = "admin", Password = "admin" };
 		var response = await _httpClient.PostAsJsonAsync("api/users/auth", request);
 
 		var token = response.Headers.GetValues(AuthConstants.TokenHeader).First();
