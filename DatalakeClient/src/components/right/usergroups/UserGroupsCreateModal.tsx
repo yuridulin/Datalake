@@ -1,7 +1,7 @@
 import { Button, Form, Input, Modal } from 'antd'
 import { useState } from 'react'
 import api from '../../../api/swagger-api'
-import { CreateUserGroupRequest } from '../../../api/swagger/data-contracts'
+import { UserGroupCreateRequest } from '../../../api/swagger/data-contracts'
 
 interface UserGroupsCreateModalProps {
 	onCreate: () => void
@@ -21,7 +21,7 @@ export default function UserGroupsCreateModal({
 		form.submit()
 	}
 
-	const finishForm = (formData: CreateUserGroupRequest) => {
+	const finishForm = (formData: UserGroupCreateRequest) => {
 		api.userGroupsCreate(formData)
 			.then(() => {
 				closeModal()
@@ -58,7 +58,7 @@ export default function UserGroupsCreateModal({
 					onFinish={finishForm}
 					onFinishFailed={() => setConfirmLoading(false)}
 				>
-					<Form.Item<CreateUserGroupRequest>
+					<Form.Item<UserGroupCreateRequest>
 						label='Наименование группы'
 						name='name'
 						rules={[
@@ -71,7 +71,7 @@ export default function UserGroupsCreateModal({
 						<Input />
 					</Form.Item>
 
-					<Form.Item<CreateUserGroupRequest>
+					<Form.Item<UserGroupCreateRequest>
 						label='Описание'
 						name='description'
 					>

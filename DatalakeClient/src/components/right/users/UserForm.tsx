@@ -27,7 +27,7 @@ export default function UserForm() {
 			setWasStatic(!!res.data.staticHost)
 			setUser({ hash: res.data.hash })
 			setRequest({
-				loginName: res.data.login,
+				login: res.data.login,
 				accessType: res.data.accessType,
 				fullName: res.data.fullName,
 				createNewStaticHash: false,
@@ -89,11 +89,11 @@ export default function UserForm() {
 			<form>
 				<FormRow title='Имя учётной записи'>
 					<Input
-						value={request.loginName}
+						value={request.login}
 						onChange={(e) =>
 							setRequest({
 								...request,
-								loginName: e.target.value,
+								login: e.target.value,
 							})
 						}
 					/>

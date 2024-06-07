@@ -41,11 +41,11 @@ function userGroupToRow(
 ): UserGroupRow {
 	let row = {
 		name: group.name,
-		guid: group.userGroupGuid,
+		guid: group.guid,
 		description: group.description,
 	} as UserGroupRow
 
-	let childs = flat.filter((x) => x.parentGroupGuid === group.userGroupGuid)
+	let childs = flat.filter((x) => x.parentGroupGuid === group.guid)
 	if (childs.length > 0) {
 		row.children = childs.map((x) => userGroupToRow(x, flat))
 	}

@@ -43,9 +43,9 @@ export default function UserCreate() {
 			<form>
 				<FormRow title='Имя учётной записи'>
 					<Input
-						value={user.loginName}
+						value={user.login}
 						onChange={(e) =>
-							setUser({ ...user, loginName: e.target.value })
+							setUser({ ...user, login: e.target.value })
 						}
 					/>
 				</FormRow>

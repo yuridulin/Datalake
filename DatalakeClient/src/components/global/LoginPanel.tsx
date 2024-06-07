@@ -16,7 +16,7 @@ export default function LoginPanel() {
 
 	const onFinish = (values: any) => {
 		api.usersAuthenticate({
-			name: values.username,
+			login: values.username,
 			password: values.password,
 		}).then(onSuccessAuth)
 	}
@@ -35,8 +35,9 @@ export default function LoginPanel() {
 	if (keycloak.authenticated) {
 		console.log('keycloak', keycloak.idTokenParsed)
 		api.usersAuthenticateEnergoIdUser({
-			energoIdGuid: keycloak.idTokenParsed?.sup,
-			name: keycloak.idTokenParsed?.name,
+			keycloakGuid: keycloak.idTokenParsed?.sup,
+			login: keycloak.idTokenParsed?.name,
+			fullName: keycloak.idTokenParsed?.name,
 		}).then(onSuccessAuth)
 	}
 
