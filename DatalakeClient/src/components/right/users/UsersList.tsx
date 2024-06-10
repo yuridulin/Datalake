@@ -71,17 +71,15 @@ export default function UsersList() {
 					</FormRow>
 					<div className='table'>
 						<div className='table-header'>
-							<span style={{ width: '12em' }}>Логин</span>
+							<span style={{ width: '15em' }}>
+								Учетная запись
+							</span>
 							<span style={{ width: '12em' }}>
 								Уровень доступа
 							</span>
-							<span
-								style={{ width: '12em' }}
-								title='Статичный тип доступа используются для обращения без необходимости логиниться'
-							>
+							<span title='Статичный тип доступа используются для обращения без необходимости логиниться'>
 								Тип доступа
 							</span>
-							<span>Имя</span>
 						</div>
 						{users
 							.filter((x) =>
@@ -99,7 +97,7 @@ export default function UsersList() {
 									<span>
 										<NavLink to={'/users/' + x.guid}>
 											<Button size='small'>
-												{x.login}
+												{x.fullName}
 											</Button>
 										</NavLink>
 									</span>
@@ -107,7 +105,6 @@ export default function UsersList() {
 										{AccessTypeDescription(x.accessType)}
 									</span>
 									<span>{UserTypeDescription(x.type)}</span>
-									<span>{x.fullName}</span>
 								</div>
 							))}
 					</div>

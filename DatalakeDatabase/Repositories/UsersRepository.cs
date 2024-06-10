@@ -121,6 +121,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 			.Value(x => x.FullName, user.FullName)
 			.Value(x => x.PasswordHash, user.PasswordHash)
 			.Value(x => x.StaticHost, user.StaticHost)
+			.Value(x => x.EnergoIdGuid, user.EnergoIdGuid)
 			.Value(x => x.Type, user.Type)
 			.InsertWithOutputAsync();
 

@@ -1,10 +1,10 @@
-import { CheckCircleOutlined } from '@ant-design/icons'
-import { Button, Input, Popconfirm, Radio, Select, notification } from 'antd'
+import { Button, Input, Popconfirm, Radio, Select } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import {
 	AccessType,
+	UserEnergoIdInfo,
 	UserType,
 	UserUpdateRequest,
 } from '../../../api/swagger/data-contracts'
@@ -18,9 +18,7 @@ export default function UserForm() {
 	const [user, setUser] = useState({ oldType: UserType.Local, hash: '' })
 	const [request, setRequest] = useState({} as UserUpdateRequest)
 	const [newType, setNewType] = useState(UserType.Local)
-	const [keycloakUsers, setKeycloakUsers] = useState(
-		[] as { value: string; label: string }[],
-	)
+	const [keycloakUsers, setKeycloakUsers] = useState([] as UserEnergoIdInfo[])
 
 	useEffect(load, [id])
 
@@ -41,22 +39,13 @@ export default function UserForm() {
 			})
 		})
 		api.usersGetEnergoIdList({ currentUserGuid: id }).then((res) =>
-			setKeycloakUsers(
-				res.data.map((x) => ({
-					value: x.energoIdGuid,
-					label: x.fullName + ' (' + x.login + ')',
-				})),
-			),
+			setKeycloakUsers(res.data),
 		)
 	}
 
 	function update() {
 		api.usersUpdate(String(id), request).then((res) => {
 			if (res.status >= 300) return
-			notification.success({
-				message: 'Успешно',
-				icon: <CheckCircleOutlined />,
-			})
 			load()
 		})
 	}
@@ -110,26 +99,6 @@ export default function UserForm() {
 				Учётная запись: {id}
 			</Header>
 			<form>
-				<FormRow title='Имя учётной записи'>
-					<Input
-						value={request.login ?? ''}
-						onChange={(e) =>
-							setRequest({
-								...request,
-								login: e.target.value,
-							})
-						}
-					/>
-				</FormRow>
-				<FormRow title='Имя пользователя'>
-					<Input
-						value={request.fullName ?? ''}
-						onChange={(e) =>
-							setRequest({ ...request, fullName: e.target.value })
-						}
-					/>
-				</FormRow>
-
 				<FormRow title='Уровень глобального доступа'>
 					<Radio.Group
 						buttonStyle='solid'
@@ -180,6 +149,28 @@ export default function UserForm() {
 				<div
 					style={{
 						display:
+							newType === UserType.Local ||
+							newType === UserType.Static
+								? 'inherit'
+								: 'none',
+					}}
+				>
+					<FormRow title='Имя учетной записи'>
+						<Input
+							value={request.fullName ?? ''}
+							onChange={(e) =>
+								setRequest({
+									...request,
+									fullName: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
+				</div>
+
+				<div
+					style={{
+						display:
 							newType === UserType.Static ? 'inherit' : 'none',
 					}}
 				>
@@ -225,6 +216,17 @@ export default function UserForm() {
 							newType === UserType.Local ? 'inherit' : 'none',
 					}}
 				>
+					<FormRow title='Имя для входа'>
+						<Input
+							value={request.login ?? ''}
+							onChange={(e) =>
+								setRequest({
+									...request,
+									login: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
 					<FormRow title='Пароль'>
 						<Input.Password
 							value={request.password || ''}
@@ -258,14 +260,24 @@ export default function UserForm() {
 							filterOption={filterOption}
 							value={request.energoIdGuid || ''}
 							placeholder='Укажите учетную запись EnergoID'
-							options={keycloakUsers}
+							options={keycloakUsers.map((x) => ({
+								value: x.energoIdGuid,
+								label: x.fullName + ' (' + x.login + ')',
+							}))}
 							style={{ width: '100%' }}
-							onChange={(value) =>
-								setRequest({
-									...request,
-									energoIdGuid: value,
-								})
-							}
+							onChange={(value) => {
+								let user = keycloakUsers.filter(
+									(x) => x.energoIdGuid === value,
+								)[0]
+								if (!!user) {
+									setRequest({
+										...request,
+										energoIdGuid: value,
+										login: user.login,
+										fullName: user.fullName,
+									})
+								}
+							}}
 						/>
 					</FormRow>
 				</div>

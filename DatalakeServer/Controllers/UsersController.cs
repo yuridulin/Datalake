@@ -36,7 +36,7 @@ public class UsersController(
 			return Array.Empty<UserEnergoIdInfo>();
 
 		var exists = await usersRepository.GetFlatInfo()
-			.Where(x => x.EnergoIdGuid != null && (currentUserGuid == null || x.EnergoIdGuid != currentUserGuid))
+			.Where(x => x.EnergoIdGuid != null && (currentUserGuid == null || x.Guid != currentUserGuid))
 			.Select(x => x.EnergoIdGuid.ToString())
 			.ToArrayAsync();
 

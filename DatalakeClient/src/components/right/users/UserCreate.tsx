@@ -5,6 +5,7 @@ import api from '../../../api/swagger-api'
 import {
 	AccessType,
 	UserCreateRequest,
+	UserEnergoIdInfo,
 	UserType,
 } from '../../../api/swagger/data-contracts'
 import FormRow from '../../small/FormRow'
@@ -18,19 +19,10 @@ export default function UserCreate() {
 		staticHost: '',
 		type: UserType.Local,
 	} as UserCreateRequest)
-	const [keycloakUsers, setKeycloakUsers] = useState(
-		[] as { value: string; label: string }[],
-	)
+	const [keycloakUsers, setKeycloakUsers] = useState([] as UserEnergoIdInfo[])
 
 	function load() {
-		api.usersGetEnergoIdList().then((res) =>
-			setKeycloakUsers(
-				res.data.map((x) => ({
-					value: x.energoIdGuid,
-					label: x.fullName + ' (' + x.login + ')',
-				})),
-			),
-		)
+		api.usersGetEnergoIdList().then((res) => setKeycloakUsers(res.data))
 	}
 
 	function create() {
@@ -68,26 +60,6 @@ export default function UserCreate() {
 				Новая учётная запись
 			</Header>
 			<form>
-				<FormRow title='Имя учётной записи'>
-					<Input
-						value={request.login ?? ''}
-						onChange={(e) =>
-							setRequest({
-								...request,
-								login: e.target.value,
-							})
-						}
-					/>
-				</FormRow>
-				<FormRow title='Имя пользователя'>
-					<Input
-						value={request.fullName ?? ''}
-						onChange={(e) =>
-							setRequest({ ...request, fullName: e.target.value })
-						}
-					/>
-				</FormRow>
-
 				<FormRow title='Уровень глобального доступа'>
 					<Radio.Group
 						buttonStyle='solid'
@@ -140,6 +112,28 @@ export default function UserCreate() {
 				<div
 					style={{
 						display:
+							request.type === UserType.Local ||
+							request.type === UserType.Static
+								? 'inherit'
+								: 'none',
+					}}
+				>
+					<FormRow title='Имя учетной записи'>
+						<Input
+							value={request.fullName ?? ''}
+							onChange={(e) =>
+								setRequest({
+									...request,
+									fullName: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
+				</div>
+
+				<div
+					style={{
+						display:
 							request.type === UserType.Static
 								? 'inherit'
 								: 'none',
@@ -166,11 +160,22 @@ export default function UserCreate() {
 								: 'none',
 					}}
 				>
+					<FormRow title='Имя для входа'>
+						<Input
+							value={request.login ?? ''}
+							onChange={(e) =>
+								setRequest({
+									...request,
+									login: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
 					<FormRow title='Пароль'>
 						<Input.Password
 							value={request.password || ''}
 							autoComplete='password'
-							placeholder={'Введите пароль'}
+							placeholder='Введите пароль'
 							onChange={(e) =>
 								setRequest({
 									...request,
@@ -197,14 +202,24 @@ export default function UserCreate() {
 							filterOption={filterOption}
 							value={request.energoIdGuid || ''}
 							placeholder='Укажите учетную запись EnergoID'
-							options={keycloakUsers}
+							options={keycloakUsers.map((x) => ({
+								value: x.energoIdGuid,
+								label: x.fullName + ' (' + x.login + ')',
+							}))}
 							style={{ width: '100%' }}
-							onChange={(value) =>
-								setRequest({
-									...request,
-									energoIdGuid: value,
-								})
-							}
+							onChange={(value) => {
+								let user = keycloakUsers.filter(
+									(x) => x.energoIdGuid === value,
+								)[0]
+								if (!!user) {
+									setRequest({
+										...request,
+										energoIdGuid: value,
+										login: user.login,
+										fullName: user.fullName,
+									})
+								}
+							}}
 						/>
 					</FormRow>
 				</div>
