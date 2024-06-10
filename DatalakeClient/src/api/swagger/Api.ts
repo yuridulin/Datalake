@@ -24,13 +24,13 @@ import {
 	UserAuthInfo,
 	UserCreateRequest,
 	UserDetailInfo,
+	UserEnergoIdInfo,
 	UserGroupCreateRequest,
 	UserGroupDetailedInfo,
 	UserGroupInfo,
 	UserGroupTreeInfo,
 	UserGroupUpdateRequest,
 	UserInfo,
-	UserKeycloakInfo,
 	UserLoginPass,
 	UserUpdateRequest,
 	ValuesGetPayload,
@@ -568,14 +568,21 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersGetEnergoIdList
-	 * @summary Получение списка пользователей, определенных на сервере Keycloak
+	 * @summary Получение списка пользователей, определенных на сервере EnergoId
 	 * @request GET:/api/Users/energo-id
-	 * @response `200` `(UserKeycloakInfo)[]` Список пользователей
+	 * @response `200` `(UserEnergoIdInfo)[]` Список пользователей
 	 */
-	usersGetEnergoIdList = (params: RequestParams = {}) =>
-		this.request<UserKeycloakInfo[], any>({
+	usersGetEnergoIdList = (
+		query?: {
+			/** @format guid */
+			currentUserGuid?: string | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<UserEnergoIdInfo[], any>({
 			path: `/api/Users/energo-id`,
 			method: 'GET',
+			query: query,
 			format: 'json',
 			...params,
 		})
@@ -584,11 +591,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersAuthenticateEnergoIdUser
-	 * @summary Аутентификация пользователя, прошедшего проверку на сервере Keycloak
+	 * @summary Аутентификация пользователя, прошедшего проверку на сервере EnergoId
 	 * @request POST:/api/Users/energo-id
-	 * @response `200` `UserAuthInfo` Данные о пользователе
+	 * @response `200` `UserAuthInfo` Данные о учетной записи
 	 */
-	usersAuthenticateEnergoIdUser = (data: UserKeycloakInfo, params: RequestParams = {}) =>
+	usersAuthenticateEnergoIdUser = (data: UserEnergoIdInfo, params: RequestParams = {}) =>
 		this.request<UserAuthInfo, any>({
 			path: `/api/Users/energo-id`,
 			method: 'POST',
@@ -604,7 +611,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name UsersAuthenticate
 	 * @summary Аутентификация локального пользователя по связке "имя для входа/пароль"
 	 * @request POST:/api/Users/auth
-	 * @response `200` `UserAuthInfo` Данные о пользователе
+	 * @response `200` `UserAuthInfo` Данные о учетной записи
 	 */
 	usersAuthenticate = (data: UserLoginPass, params: RequestParams = {}) =>
 		this.request<UserAuthInfo, any>({
@@ -612,6 +619,22 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			method: 'POST',
 			body: data,
 			type: ContentType.Json,
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Users
+	 * @name UsersIdentify
+	 * @summary Получение информации о учетной записи на основе текущей сессии
+	 * @request GET:/api/Users/identify
+	 * @response `200` `UserAuthInfo` Данные о учетной записи
+	 */
+	usersIdentify = (params: RequestParams = {}) =>
+		this.request<UserAuthInfo, any>({
+			path: `/api/Users/identify`,
+			method: 'GET',
 			format: 'json',
 			...params,
 		})

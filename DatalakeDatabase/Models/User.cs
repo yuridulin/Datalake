@@ -25,8 +25,8 @@ public class User
 
 	// для локальных
 
-	[Column, NotNull]
-	public required string Login { get; set; }
+	[Column]
+	public string? Login { get; set; }
 
 	[Column]
 	public string? PasswordHash { get; set; }
@@ -36,10 +36,10 @@ public class User
 	[Column]
 	public string? StaticHost { get; set; }
 
-	// для energoID
+	// для EnergoId
 
 	[Column]
-	public Guid? KeycloakGuid { get; set; }
+	public Guid? EnergoIdGuid { get; set; }
 
 
 	// связи

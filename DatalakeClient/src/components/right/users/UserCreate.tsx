@@ -1,28 +1,55 @@
-import { Button, Input, Radio } from 'antd'
-import { useState } from 'react'
+import { Button, Input, Radio, Select } from 'antd'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import {
 	AccessType,
 	UserCreateRequest,
+	UserType,
 } from '../../../api/swagger/data-contracts'
 import FormRow from '../../small/FormRow'
 import Header from '../../small/Header'
 
 export default function UserCreate() {
 	const navigate = useNavigate()
-	const [user, setUser] = useState({
+	const [request, setRequest] = useState({
 		accessType: AccessType.NotSet,
 		password: '',
 		staticHost: '',
+		type: UserType.Local,
 	} as UserCreateRequest)
-	const [isStatic, setStatic] = useState(false)
+	const [keycloakUsers, setKeycloakUsers] = useState(
+		[] as { value: string; label: string }[],
+	)
+
+	function load() {
+		api.usersGetEnergoIdList().then((res) =>
+			setKeycloakUsers(
+				res.data.map((x) => ({
+					value: x.energoIdGuid,
+					label: x.fullName + ' (' + x.login + ')',
+				})),
+			),
+		)
+	}
 
 	function create() {
-		api.usersCreate(user).then((res) => {
+		api.usersCreate(request).then((res) => {
 			navigate('/users/' + res.data)
 		})
 	}
+
+	const onSearch = (value: string) => {
+		console.log('search:', value)
+	}
+
+	// Filter `option.label` match the user type `input`
+	const filterOption = (
+		input: string,
+		option?: { label: string; value: string },
+	) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+
+	useEffect(load, [])
 
 	return (
 		<>
@@ -43,56 +70,33 @@ export default function UserCreate() {
 			<form>
 				<FormRow title='Имя учётной записи'>
 					<Input
-						value={user.login}
+						value={request.login ?? ''}
 						onChange={(e) =>
-							setUser({ ...user, login: e.target.value })
+							setRequest({
+								...request,
+								login: e.target.value,
+							})
 						}
 					/>
 				</FormRow>
 				<FormRow title='Имя пользователя'>
 					<Input
-						value={user.fullName ?? ''}
+						value={request.fullName ?? ''}
 						onChange={(e) =>
-							setUser({ ...user, fullName: e.target.value })
+							setRequest({ ...request, fullName: e.target.value })
 						}
 					/>
 				</FormRow>
-				<FormRow title='Тип доступа'>
+
+				<FormRow title='Уровень глобального доступа'>
 					<Radio.Group
 						buttonStyle='solid'
-						value={isStatic}
-						onChange={(e) => setStatic(e.target.value)}
-					>
-						<Radio.Button value={false}>Базовый</Radio.Button>
-						<Radio.Button value={true}>Статичный</Radio.Button>
-					</Radio.Group>
-				</FormRow>
-				{isStatic ? (
-					<FormRow title='Адрес, с которого разрешен доступ'>
-						<Input
-							value={user.staticHost || ''}
-							onChange={(e) =>
-								setUser({ ...user, staticHost: e.target.value })
-							}
-						/>
-					</FormRow>
-				) : (
-					<FormRow title='Пароль'>
-						<Input.Password
-							value={user.password ?? ''}
-							autoComplete='password'
-							onChange={(e) =>
-								setUser({ ...user, password: e.target.value })
-							}
-						/>
-					</FormRow>
-				)}
-				<FormRow title='Тип учётной записи'>
-					<Radio.Group
-						buttonStyle='solid'
-						value={user.accessType}
+						value={request.accessType}
 						onChange={(e) =>
-							setUser({ ...user, accessType: e.target.value })
+							setRequest({
+								...request,
+								accessType: e.target.value,
+							})
 						}
 					>
 						<Radio.Button value={AccessType.NotSet}>
@@ -112,6 +116,98 @@ export default function UserCreate() {
 						</Radio.Button>
 					</Radio.Group>
 				</FormRow>
+
+				<FormRow title='Тип учетной записи'>
+					<Radio.Group
+						buttonStyle='solid'
+						value={request.type}
+						onChange={(e) =>
+							setRequest({ ...request, type: e.target.value })
+						}
+					>
+						<Radio.Button value={UserType.Static}>
+							Статичная учетная запись
+						</Radio.Button>
+						<Radio.Button value={UserType.Local}>
+							Базовая учетная запись
+						</Radio.Button>
+						<Radio.Button value={UserType.EnergoId}>
+							Учетная запись EnergoID
+						</Radio.Button>
+					</Radio.Group>
+				</FormRow>
+
+				<div
+					style={{
+						display:
+							request.type === UserType.Static
+								? 'inherit'
+								: 'none',
+					}}
+				>
+					<FormRow title='Адрес, с которого разрешен доступ'>
+						<Input
+							value={request.staticHost || ''}
+							onChange={(e) =>
+								setRequest({
+									...request,
+									staticHost: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
+				</div>
+
+				<div
+					style={{
+						display:
+							request.type === UserType.Local
+								? 'inherit'
+								: 'none',
+					}}
+				>
+					<FormRow title='Пароль'>
+						<Input.Password
+							value={request.password || ''}
+							autoComplete='password'
+							placeholder={'Введите пароль'}
+							onChange={(e) =>
+								setRequest({
+									...request,
+									password: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
+				</div>
+
+				<div
+					style={{
+						display:
+							request.type === UserType.EnergoId
+								? 'inherit'
+								: 'none',
+					}}
+				>
+					<FormRow title='Учетная запись на сервере EnergoID'>
+						<Select
+							showSearch
+							optionFilterProp='children'
+							onSearch={onSearch}
+							filterOption={filterOption}
+							value={request.energoIdGuid || ''}
+							placeholder='Укажите учетную запись EnergoID'
+							options={keycloakUsers}
+							style={{ width: '100%' }}
+							onChange={(value) =>
+								setRequest({
+									...request,
+									energoIdGuid: value,
+								})
+							}
+						/>
+					</FormRow>
+				</div>
 			</form>
 		</>
 	)

@@ -21,5 +21,5 @@ public enum UserType
 	/// <summary>
 	/// Учётная запись, доступ к которой идёт по проверке на удалённом Keycloak сервере
 	/// </summary>
-	Keycloak = 3,
+	EnergoId = 3,
 }

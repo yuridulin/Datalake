@@ -488,13 +488,13 @@ export type UserGroupUpdateRequest = UserGroupCreateRequest & {
 }
 
 /** Информация о пользователе, взятая из Keycloak */
-export interface UserKeycloakInfo {
+export interface UserEnergoIdInfo {
 	/**
 	 * Идентификатор пользователя в сервере Keycloak
 	 * @format guid
 	 * @minLength 1
 	 */
-	keycloakGuid: string
+	energoIdGuid: string
 	/**
 	 * Имя для входа
 	 * @minLength 1
@@ -516,17 +516,15 @@ export interface UserAuthInfo {
 	 */
 	guid: string
 	/**
-	 * Имя для входа
+	 * Имя пользователя
 	 * @minLength 1
 	 */
-	login: string
+	fullName: string
 	/**
 	 * Идентификатор сессии
 	 * @minLength 1
 	 */
 	token: string
-	/** Глобальный уровень доступа */
-	globalAccessType: AccessType
 	/** Список правил доступа */
 	rights: UserAccessRightsInfo[]
 }
@@ -570,19 +568,30 @@ export interface UserLoginPass {
 
 /** Данные запроса на создание пользователя */
 export interface UserCreateRequest {
-	/**
-	 * Имя для входа
-	 * @minLength 1
-	 */
-	login: string
+	/** Имя для входа */
+	login?: string | null
 	/** Полное имя пользователя */
 	fullName?: string | null
+	/** Глобальный уровень доступа */
+	accessType: AccessType
+	/** Тип учетной записи */
+	type: UserType
 	/** Используемый пароль */
 	password?: string | null
 	/** Адрес статической точки, откуда будет осуществляться доступ */
 	staticHost?: string | null
-	/** Глобальный уровень доступа */
-	accessType: AccessType
+	/**
+	 * Идентификатор связанной учетной записи в сервере EnergoId
+	 * @format guid
+	 */
+	energoIdGuid?: string | null
+}
+
+/** Тип учётной записи */
+export enum UserType {
+	Local = 'Local',
+	Static = 'Static',
+	EnergoId = 'EnergoId',
 }
 
 /** Информация о пользователе */
@@ -593,31 +602,21 @@ export interface UserInfo {
 	 * @minLength 1
 	 */
 	guid: string
-	/**
-	 * Имя для входа
-	 * @minLength 1
-	 */
-	login: string
+	/** Имя для входа */
+	login?: string | null
 	/** Полное имя */
 	fullName?: string | null
-	/** Глобальные уровень доступа */
+	/** Глобальный уровень доступа */
 	accessType: AccessType
 	/** Тип учётной записи */
 	type: UserType
 	/**
-	 * Идентификатор пользователя в сервере Keycloak
+	 * Идентификатор пользователя в сервере EnergoId
 	 * @format guid
 	 */
-	keycloakGuid?: string | null
+	energoIdGuid?: string | null
 	/** Список групп, в которые входит пользователь */
 	userGroups: UserGroupsInfo[]
-}
-
-/** Тип учётной записи */
-export enum UserType {
-	Local = 'Local',
-	Static = 'Static',
-	Keycloak = 'Keycloak',
 }
 
 /** Информация о принадлежности пользователя к группе */
@@ -645,11 +644,8 @@ export type UserDetailInfo = UserInfo & {
 
 /** Данные запроса для изменения учетной записи */
 export interface UserUpdateRequest {
-	/**
-	 * Новое имя для входа
-	 * @minLength 1
-	 */
-	login: string
+	/** Новое имя для входа */
+	login?: string | null
 	/** Новый адрес статической точки, из которой будет разрешен доступ */
 	staticHost?: string | null
 	/** Новый пароль */
@@ -661,10 +657,12 @@ export interface UserUpdateRequest {
 	/** Нужно ли создать новый ключ для статичной учетной записи */
 	createNewStaticHash: boolean
 	/**
-	 * Идентификатор пользователя в сервере Keycloak
+	 * Идентификатор пользователя в сервере EnergoId
 	 * @format guid
 	 */
-	keycloakGuid?: string | null
+	energoIdGuid?: string | null
+	/** Тип учетной записи */
+	type: UserType
 }
 
 /** Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения */

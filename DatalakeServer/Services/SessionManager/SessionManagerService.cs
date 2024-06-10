@@ -60,7 +60,6 @@ public class SessionManagerService
 	public void AddSessionToResponse(AuthSession session, HttpResponse response)
 	{
 		response.Headers[AuthConstants.TokenHeader] = session.User.Token;
-		response.Headers[AuthConstants.NameHeader] = session.User.Login;
 	}
 
 	/// <summary>
@@ -70,7 +69,7 @@ public class SessionManagerService
 	/// <returns>Информация о сессии</returns>
 	public AuthSession OpenSession(UserAuthInfo userAuthInfo)
 	{
-		Sessions.RemoveAll(x => x.User.Login == userAuthInfo.Login);
+		Sessions.RemoveAll(x => x.User.Guid == userAuthInfo.Guid);
 
 		var session = new AuthSession
 		{

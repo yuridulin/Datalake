@@ -6,6 +6,19 @@ namespace DatalakeDatabase.Repositories;
 
 public partial class UsersRepository
 {
+	public IQueryable<UserFlatInfo> GetFlatInfo()
+	{
+		return db.Users
+			.Select(x => new UserFlatInfo
+			{
+				Guid = x.Guid,
+				Login = x.Login,
+				FullName = x.FullName,
+				EnergoIdGuid = x.EnergoIdGuid,
+				Type = x.Type,
+			});
+	}
+
 	public IQueryable<UserInfo> GetInfo()
 	{
 		var query = from u in db.Users
@@ -20,7 +33,7 @@ public partial class UsersRepository
 									Guid = g.Key.Guid,
 									Type = g.Key.Type,
 									FullName = g.Key.FullName,
-									KeycloakGuid = g.Key.KeycloakGuid,
+									EnergoIdGuid = g.Key.EnergoIdGuid,
 									UserGroups = g
 										.Where(x => x.g != null)
 										.Select(x => new UserGroupsInfo
@@ -55,7 +68,7 @@ public partial class UsersRepository
 									Guid = g.Key.Guid,
 									Type = g.Key.Type,
 									FullName = g.Key.FullName,
-									KeycloakGuid = g.Key.KeycloakGuid,
+									EnergoIdGuid = g.Key.EnergoIdGuid,
 									UserGroups = g
 										.Where(x => x.g != null)
 										.Select(x => new UserGroupsInfo

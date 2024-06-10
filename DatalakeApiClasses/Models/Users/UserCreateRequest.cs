@@ -11,13 +11,24 @@ public class UserCreateRequest
 	/// <summary>
 	/// Имя для входа
 	/// </summary>
-	[Required]
-	public required string Login { get; set; }
+	public string? Login { get; set; }
 
 	/// <summary>
 	/// Полное имя пользователя
 	/// </summary>
 	public string? FullName { get; set; }
+
+	/// <summary>
+	/// Глобальный уровень доступа
+	/// </summary>
+	[Required]
+	public AccessType AccessType { get; set; }
+
+	/// <summary>
+	/// Тип учетной записи
+	/// </summary>
+	[Required]
+	public UserType Type { get; set; }
 
 	/// <summary>
 	/// Используемый пароль
@@ -30,8 +41,7 @@ public class UserCreateRequest
 	public string? StaticHost { get; set; }
 
 	/// <summary>
-	/// Глобальный уровень доступа
+	/// Идентификатор связанной учетной записи в сервере EnergoId
 	/// </summary>
-	[Required]
-	public AccessType AccessType { get; set; }
+	public Guid? EnergoIdGuid { get; set; }
 }

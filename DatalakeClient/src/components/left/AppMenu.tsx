@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom'
 import api from '../../api/swagger-api'
 import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
-import { auth } from '../../etc/auth'
 import { CustomSource } from '../../etc/customSource'
 import routes from '../../router/routes'
 
@@ -23,8 +22,6 @@ export function AppMenu() {
 
 	return (
 		<div className='app-menu'>
-			{auth.isAdmin() && <NavLink to={'/users'}>Пользователи</NavLink>}
-
 			<div className='app-menu-block'>
 				<NavLink to={'/'}>Монитор</NavLink>
 				<NavLink to={routes.Users.List}>Пользователи</NavLink>

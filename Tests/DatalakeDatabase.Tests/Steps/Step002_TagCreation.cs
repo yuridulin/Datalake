@@ -21,7 +21,6 @@ namespace DatalakeDatabase.Tests.Steps
 			});
 
 			Assert.NotNull(userAuthInfo);
-			Assert.Equal(AccessType.Admin, userAuthInfo.GlobalAccessType);
 
 			Constants.DefaultAdmin = userAuthInfo;
 		}

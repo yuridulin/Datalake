@@ -1,25 +1,55 @@
-import { AccessType } from '../api/swagger/data-contracts'
+import { makeAutoObservable } from 'mobx'
+import api from '../api/swagger-api'
 
 const nameHeader = 'd-name'
 const tokenHeader = 'd-access-token'
-const accessHeader = 'd-access-type'
 
-const auth = {
-	name: (_?: string) =>
-		!!_
-			? localStorage.setItem(nameHeader, _)
-			: localStorage.getItem(nameHeader) || '',
-	token: (_?: string) =>
-		!!_
-			? localStorage.setItem(tokenHeader, _)
-			: localStorage.getItem(tokenHeader) || '0',
-	access: (_?: AccessType) =>
-		!!_
-			? localStorage.setItem(accessHeader, String(_))
-			: localStorage.getItem(accessHeader) || AccessType.NoAccess,
-	isAdmin() {
-		return this.access() === AccessType.Admin
-	},
+class Auth {
+	token = ''
+	fullName = ''
+	isAuthenticated = false
+
+	constructor() {
+		makeAutoObservable(this)
+		this.token = localStorage.getItem(tokenHeader) ?? ''
+		this.fullName = localStorage.getItem(nameHeader) ?? ''
+		this.isAuthenticated = !!this.token
+		this.identify()
+	}
+
+	getSessionToken() {
+		return this.token
+	}
+
+	setSessionToken(newToken: string) {
+		if (newToken !== this.token) {
+			this.identify()
+		}
+		this.token = newToken
+		localStorage.setItem(tokenHeader, newToken)
+	}
+
+	identify() {
+		let self = this
+		api.usersIdentify()
+			.then((res) => {
+				self.fullName = res.data.fullName
+				localStorage.setItem(nameHeader, self.fullName)
+			})
+			.catch(this.logout)
+	}
+
+	logout() {
+		this.token = ''
+		this.fullName = ''
+		this.isAuthenticated = false
+		localStorage.removeItem(tokenHeader)
+		localStorage.removeItem(nameHeader)
+	}
+
+	// TODO: проверки разрешений на клиенте ()
 }
 
-export { accessHeader, auth, nameHeader, tokenHeader }
+const auth = new Auth()
+
+export { auth, tokenHeader }

@@ -5,13 +5,13 @@ namespace DatalakeApiClasses.Models.Users;
 /// <summary>
 /// Информация о пользователе, взятая из Keycloak
 /// </summary>
-public class UserKeycloakInfo
+public class UserEnergoIdInfo
 {
 	/// <summary>
 	/// Идентификатор пользователя в сервере Keycloak
 	/// </summary>
 	[Required]
-	public required Guid KeycloakGuid { get; set; }
+	public required Guid EnergoIdGuid { get; set; }
 
 	/// <summary>
 	/// Имя для входа

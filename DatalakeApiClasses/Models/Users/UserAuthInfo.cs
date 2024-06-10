@@ -15,22 +15,16 @@ public class UserAuthInfo
 	public required Guid Guid { get; set; }
 
 	/// <summary>
-	/// Имя для входа
+	/// Имя пользователя
 	/// </summary>
 	[Required]
-	public required string Login { get; set; }
+	public required string FullName { get; set; }
 
 	/// <summary>
 	/// Идентификатор сессии
 	/// </summary>
 	[Required]
 	public required string Token { get; set; }
-
-	/// <summary>
-	/// Глобальный уровень доступа
-	/// </summary>
-	[Required]
-	public required AccessType GlobalAccessType { get; set; }
 
 	/// <summary>
 	/// Список правил доступа

@@ -22,13 +22,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatalakeDatabase.Tests", "T
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A6CA8A29-0C6E-44D5-B61F-1949C3DCF6AA}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{0F60BF1B-1E57-44E8-A0CC-BF8725486E08}"
-EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "DatalakeClient", "DatalakeClient\DatalakeClient.esproj", "{4043FA0A-765B-4DE6-A68A-FEDFA29064AA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatalakeApiClasses", "DatalakeApiClasses\DatalakeApiClasses.csproj", "{0E7C89A8-5649-480E-95D9-57ACFD26A64D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatalakeServer.TestRunner", "Tests\DatalakeServer.Tests\DatalakeServer.TestRunner.csproj", "{BE9369E9-298A-4254-99C0-5EC7F7F19F72}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{CD18AFC1-8965-42AC-8CAA-AB89AB44A8EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -65,8 +65,9 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{B78B7FDA-DB88-42DD-A640-13419342F483} = {CD18AFC1-8965-42AC-8CAA-AB89AB44A8EC}
 		{7FA4938D-47CD-419F-80B9-0D65C02635D0} = {A6CA8A29-0C6E-44D5-B61F-1949C3DCF6AA}
-		{4043FA0A-765B-4DE6-A68A-FEDFA29064AA} = {00000000-0000-0000-0000-000000000000}
+		{4043FA0A-765B-4DE6-A68A-FEDFA29064AA} = {CD18AFC1-8965-42AC-8CAA-AB89AB44A8EC}
 		{BE9369E9-298A-4254-99C0-5EC7F7F19F72} = {A6CA8A29-0C6E-44D5-B61F-1949C3DCF6AA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

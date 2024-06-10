@@ -81,9 +81,7 @@ namespace DatalakeServer
 					.AllowAnyOrigin()
 					.AllowAnyHeader()
 					.WithExposedHeaders([
-						AuthConstants.AccessHeader,
 						AuthConstants.TokenHeader,
-						AuthConstants.NameHeader,
 					]);
 			});
 			app.UseOpenApi();

@@ -22,37 +22,44 @@ public class UsersController(
 	SessionManagerService sessionManager) : ApiControllerBase
 {
 	/// <summary>
-	/// Получение списка пользователей, определенных на сервере Keycloak
+	/// Получение списка пользователей, определенных на сервере EnergoId
 	/// </summary>
 	/// <returns>Список пользователей</returns>
 	[HttpGet("energo-id")]
-	public async Task<ActionResult<UserKeycloakInfo[]>> GetEnergoIdListAsync()
+	public async Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdListAsync(
+		[FromQuery] Guid? currentUserGuid = null)
 	{
 		// TODO: изменить адрес на заданный в БД
 		var users = await new HttpClient().GetFromJsonAsync<EnergoIdUserData[]>("https://api.auth-test.energo.net/api/v1/users");
 
 		if (users == null)
-			return Array.Empty<UserKeycloakInfo>();
+			return Array.Empty<UserEnergoIdInfo>();
+
+		var exists = await usersRepository.GetFlatInfo()
+			.Where(x => x.EnergoIdGuid != null && (currentUserGuid == null || x.EnergoIdGuid != currentUserGuid))
+			.Select(x => x.EnergoIdGuid.ToString())
+			.ToArrayAsync();
 
 		return users
-			.Select(x => new UserKeycloakInfo
+			.ExceptBy(exists, u => u.Sid)
+			.Select(x => new UserEnergoIdInfo
 			{
-				KeycloakGuid = Guid.TryParse(x.Sid, out var guid) ? guid : Guid.Empty,
+				EnergoIdGuid = Guid.TryParse(x.Sid, out var guid) ? guid : Guid.Empty,
 				Login = x.Email,
 				FullName = x.Name,
 			})
-			.Where(x => x.KeycloakGuid != Guid.Empty)
+			.Where(x => x.EnergoIdGuid != Guid.Empty)
 			.ToArray();
 	}
 
 	/// <summary>
-	/// Аутентификация пользователя, прошедшего проверку на сервере Keycloak
+	/// Аутентификация пользователя, прошедшего проверку на сервере EnergoId
 	/// </summary>
 	/// <param name="energoIdInfo">Данные пользователя Keycloak</param>
-	/// <returns>Данные о пользователе</returns>
+	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("energo-id")]
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
-		[BindRequired, FromBody] UserKeycloakInfo energoIdInfo)
+		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
 	{
 		var userAuthInfo = await usersRepository.AuthenticateAsync(energoIdInfo);
 
@@ -68,7 +75,7 @@ public class UsersController(
 	/// Аутентификация локального пользователя по связке "имя для входа/пароль"
 	/// </summary>
 	/// <param name="loginPass">Данные для входа</param>
-	/// <returns>Данные о пользователе</returns>
+	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("auth")]
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
 		[BindRequired, FromBody] UserLoginPass loginPass)
@@ -81,6 +88,18 @@ public class UsersController(
 		userAuthInfo.Token = session.User.Token;
 
 		return userAuthInfo;
+	}
+
+	/// <summary>
+	/// Получение информации о учетной записи на основе текущей сессии
+	/// </summary>
+	/// <returns>Данные о учетной записи</returns>
+	[HttpGet("identify")]
+	public ActionResult<UserAuthInfo> Identify()
+	{
+		var user = Authenticate();
+
+		return user;
 	}
 
 	/// <summary>

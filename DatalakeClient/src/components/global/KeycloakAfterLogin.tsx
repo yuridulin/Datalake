@@ -11,12 +11,12 @@ export default function KeycloakAfterLogin() {
 	if (keycloak.authenticated) {
 		console.log('keycloak', keycloak.idTokenParsed)
 		console.log('request', {
-			keycloakGuid: keycloak.idTokenParsed?.sub,
+			energoIdGuid: keycloak.idTokenParsed?.sub,
 			login: keycloak.idTokenParsed?.email,
 			fullName: keycloak.idTokenParsed?.name,
 		})
 		api.usersAuthenticateEnergoIdUser({
-			keycloakGuid: keycloak.idTokenParsed?.sub ?? '',
+			energoIdGuid: keycloak.idTokenParsed?.sub ?? '',
 			login: keycloak.idTokenParsed?.email,
 			fullName: keycloak.idTokenParsed?.name,
 		})

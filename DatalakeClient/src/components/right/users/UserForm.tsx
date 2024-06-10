@@ -36,13 +36,14 @@ export default function UserForm() {
 				createNewStaticHash: false,
 				password: '',
 				staticHost: res.data.staticHost,
-				keycloakGuid: res.data.keycloakGuid,
+				energoIdGuid: res.data.energoIdGuid,
+				type: res.data.type,
 			})
 		})
-		api.usersGetEnergoIdList().then((res) =>
+		api.usersGetEnergoIdList({ currentUserGuid: id }).then((res) =>
 			setKeycloakUsers(
 				res.data.map((x) => ({
-					value: x.keycloakGuid,
+					value: x.energoIdGuid,
 					label: x.fullName + ' (' + x.login + ')',
 				})),
 			),
@@ -111,7 +112,7 @@ export default function UserForm() {
 			<form>
 				<FormRow title='Имя учётной записи'>
 					<Input
-						value={request.login}
+						value={request.login ?? ''}
 						onChange={(e) =>
 							setRequest({
 								...request,
@@ -170,7 +171,7 @@ export default function UserForm() {
 						<Radio.Button value={UserType.Local}>
 							Базовая учетная запись
 						</Radio.Button>
-						<Radio.Button value={UserType.Keycloak}>
+						<Radio.Button value={UserType.EnergoId}>
 							Учетная запись EnergoID
 						</Radio.Button>
 					</Radio.Group>
@@ -246,7 +247,7 @@ export default function UserForm() {
 				<div
 					style={{
 						display:
-							newType === UserType.Keycloak ? 'inherit' : 'none',
+							newType === UserType.EnergoId ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Учетная запись на сервере EnergoID'>
@@ -255,14 +256,14 @@ export default function UserForm() {
 							optionFilterProp='children'
 							onSearch={onSearch}
 							filterOption={filterOption}
-							value={request.keycloakGuid || ''}
+							value={request.energoIdGuid || ''}
 							placeholder='Укажите учетную запись EnergoID'
 							options={keycloakUsers}
 							style={{ width: '100%' }}
 							onChange={(value) =>
 								setRequest({
 									...request,
-									keycloakGuid: value,
+									energoIdGuid: value,
 								})
 							}
 						/>

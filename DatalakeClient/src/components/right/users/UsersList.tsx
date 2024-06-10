@@ -44,7 +44,7 @@ export default function UsersList() {
 			case UserType.Static:
 				return 'Статичная учётная запись'
 
-			case UserType.Keycloak:
+			case UserType.EnergoId:
 				return 'Учётная запись EnergoID'
 			default:
 				return '?'

@@ -11,8 +11,7 @@ public class UserUpdateRequest
 	/// <summary>
 	/// Новое имя для входа
 	/// </summary>
-	[Required]
-	public required string Login { get; set; }
+	public string? Login { get; set; }
 
 	/// <summary>
 	/// Новый адрес статической точки, из которой будет разрешен доступ
@@ -42,7 +41,13 @@ public class UserUpdateRequest
 	public bool CreateNewStaticHash { get; set; } = false;
 
 	/// <summary>
-	/// Идентификатор пользователя в сервере Keycloak
+	/// Идентификатор пользователя в сервере EnergoId
 	/// </summary>
-	public Guid? KeycloakGuid { get; set; }
+	public Guid? EnergoIdGuid { get; set; }
+
+	/// <summary>
+	/// Тип учетной записи
+	/// </summary>
+	[Required]
+	public UserType Type { get; set; }
 }

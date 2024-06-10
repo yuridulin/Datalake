@@ -4,9 +4,9 @@ using System.ComponentModel.DataAnnotations;
 namespace DatalakeApiClasses.Models.Users;
 
 /// <summary>
-/// Информация о пользователе
+/// Сокращенная информация о пользователе без каких-либо связей
 /// </summary>
-public class UserInfo
+public class UserFlatInfo
 {
 	/// <summary>
 	/// Идентификатор пользователя
@@ -25,12 +25,6 @@ public class UserInfo
 	public string? FullName { get; set; }
 
 	/// <summary>
-	/// Глобальный уровень доступа
-	/// </summary>
-	[Required]
-	public required AccessType AccessType { get; set; }
-
-	/// <summary>
 	/// Тип учётной записи
 	/// </summary>
 	[Required]
@@ -40,10 +34,4 @@ public class UserInfo
 	/// Идентификатор пользователя в сервере EnergoId
 	/// </summary>
 	public Guid? EnergoIdGuid { get; set; }
-
-	/// <summary>
-	/// Список групп, в которые входит пользователь
-	/// </summary>
-	[Required]
-	public UserGroupsInfo[] UserGroups { get; set; } = [];
 }

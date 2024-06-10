@@ -1,6 +1,8 @@
 import { Button } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { observer } from 'mobx-react-lite'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { auth } from '../../etc/auth'
+import routes from '../../router/routes'
 
 const style = {
 	marginTop: '1em',
@@ -10,25 +12,25 @@ const style = {
 	alignItems: 'center',
 }
 
-export default function UserPanel() {
+const UserPanel = () => {
 	const navigate = useNavigate()
-	var token = Number(auth.token())
 
 	function logout() {
-		navigate('/login')
+		navigate(routes.Auth.LoginPage)
 	}
 
-	return token > 0 ? (
+	return auth.isAuthenticated ? (
 		<div style={style}>
 			<div>
-				Вы зашли как{' '}
 				<b style={{ fontWeight: '500', color: '#33a2ff' }}>
-					{String(auth.name())}
+					{auth.fullName}
 				</b>
 			</div>
 			<Button onClick={logout}>Выход</Button>
 		</div>
 	) : (
-		<div>Не авторизован</div>
+		<Navigate to={routes.Auth.LoginPage} />
 	)
 }
+
+export default observer(UserPanel)
