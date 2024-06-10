@@ -487,6 +487,26 @@ export type UserGroupUpdateRequest = UserGroupCreateRequest & {
 	groups: UserGroupInfo[]
 }
 
+/** Информация о пользователе, взятая из Keycloak */
+export interface UserKeycloakInfo {
+	/**
+	 * Идентификатор пользователя в сервере Keycloak
+	 * @format guid
+	 * @minLength 1
+	 */
+	keycloakGuid: string
+	/**
+	 * Имя для входа
+	 * @minLength 1
+	 */
+	login: string
+	/**
+	 * Полное имя пользователя
+	 * @minLength 1
+	 */
+	fullName: string
+}
+
 /** Информация о аутентифицированном пользователе */
 export interface UserAuthInfo {
 	/**
@@ -532,26 +552,6 @@ export interface UserAccessRightsInfo {
 	blockId?: number | null
 	/** Уровень доступа на основе этого правила */
 	accessType: AccessType
-}
-
-/** Информация о пользователе, взятая из Keycloak */
-export interface UserKeycloakInfo {
-	/**
-	 * Идентификатор пользователя в сервере Keycloak
-	 * @format guid
-	 * @minLength 1
-	 */
-	keycloakGuid: string
-	/**
-	 * Имя для входа
-	 * @minLength 1
-	 */
-	login: string
-	/**
-	 * Полное имя пользователя
-	 * @minLength 1
-	 */
-	fullName: string
 }
 
 /** Информация при аутентификации локальной учетной записи */
@@ -602,16 +602,29 @@ export interface UserInfo {
 	fullName?: string | null
 	/** Глобальные уровень доступа */
 	accessType: AccessType
-	/** Является ли учётная запись статичной */
-	isStatic: boolean
+	/** Тип учётной записи */
+	type: UserType
+	/**
+	 * Идентификатор пользователя в сервере Keycloak
+	 * @format guid
+	 */
+	keycloakGuid?: string | null
 	/** Список групп, в которые входит пользователь */
 	userGroups: UserGroupsInfo[]
+}
+
+/** Тип учётной записи */
+export enum UserType {
+	Local = 'Local',
+	Static = 'Static',
+	Keycloak = 'Keycloak',
 }
 
 /** Информация о принадлежности пользователя к группе */
 export interface UserGroupsInfo {
 	/**
 	 * Идентификатор группы
+	 * @format guid
 	 * @minLength 1
 	 */
 	guid: string
@@ -624,11 +637,8 @@ export interface UserGroupsInfo {
 
 /** Расширенная информация о пользователе, включающая данные для аутентификации */
 export type UserDetailInfo = UserInfo & {
-	/**
-	 * Хэш, по которому проверяется доступ
-	 * @minLength 1
-	 */
-	hash: string
+	/** Хэш, по которому проверяется доступ */
+	hash?: string | null
 	/** Адрес статического узла, с которого идёт доступ */
 	staticHost?: string | null
 }
@@ -650,6 +660,11 @@ export interface UserUpdateRequest {
 	accessType: AccessType
 	/** Нужно ли создать новый ключ для статичной учетной записи */
 	createNewStaticHash: boolean
+	/**
+	 * Идентификатор пользователя в сервере Keycloak
+	 * @format guid
+	 */
+	keycloakGuid?: string | null
 }
 
 /** Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения */

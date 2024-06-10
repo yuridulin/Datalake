@@ -1,4 +1,5 @@
-﻿using DatalakeApiClasses.Models.Users;
+﻿using DatalakeApiClasses.Enums;
+using DatalakeApiClasses.Models.Users;
 using LinqToDB;
 
 namespace DatalakeDatabase.Repositories;
@@ -7,29 +8,73 @@ public partial class UsersRepository
 {
 	public IQueryable<UserInfo> GetInfo()
 	{
-		return db.Users
-			.Select(x => new UserInfo
-			{
-				Guid = x.Guid,
-				Login = x.Login,
-				FullName = x.FullName,
-				AccessType = x.AccessType,
-				IsStatic = !string.IsNullOrEmpty(x.StaticHost),
-			});
+		var query = from u in db.Users
+								from rel in db.UserGroupRelations.LeftJoin(x => x.UserGuid == u.Guid)
+								from g in db.UserGroups.LeftJoin(x => x.Guid == rel.UserGroupGuid)
+								from urights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGuid == u.Guid)
+								from grights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGroupGuid == g.Guid)
+								group new { u, g, urights, grights } by u into g
+								select new UserInfo
+								{
+									Login = g.Key.Login,
+									Guid = g.Key.Guid,
+									Type = g.Key.Type,
+									FullName = g.Key.FullName,
+									KeycloakGuid = g.Key.KeycloakGuid,
+									UserGroups = g
+										.Where(x => x.g != null)
+										.Select(x => new UserGroupsInfo
+										{
+											Guid = x.g.Guid,
+											Name = x.g.Name,
+										})
+										.ToArray(),
+									AccessType = (AccessType)g
+										.Select(x => Math.Max(
+											(int)(x.urights != null ? x.urights.AccessType : AccessType.NotSet),
+											(int)(x.urights != null ? x.urights.AccessType : AccessType.NotSet)
+										))
+										.DefaultIfEmpty((int)AccessType.NoAccess)
+										.Max(),
+								};
+
+		return query;
 	}
 
 	public IQueryable<UserDetailInfo> GetDetailInfo()
 	{
-		return db.Users
-			.Select(x => new UserDetailInfo
-			{
-				Guid = x.Guid,
-				Login = x.Login,
-				FullName = x.FullName,
-				AccessType = x.AccessType,
-				IsStatic = !string.IsNullOrEmpty(x.StaticHost),
-				Hash = !string.IsNullOrEmpty(x.StaticHost) ? x.PasswordHash : string.Empty,
-				StaticHost = x.StaticHost,
-			});
+		var query = from u in db.Users
+								from rel in db.UserGroupRelations.LeftJoin(x => x.UserGuid == u.Guid)
+								from g in db.UserGroups.LeftJoin(x => x.Guid == rel.UserGroupGuid)
+								from urights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGuid == u.Guid)
+								from grights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGroupGuid == g.Guid)
+								group new { u, g, urights, grights } by u into g
+								select new UserDetailInfo
+								{
+									Login = g.Key.Login,
+									Guid = g.Key.Guid,
+									Type = g.Key.Type,
+									FullName = g.Key.FullName,
+									KeycloakGuid = g.Key.KeycloakGuid,
+									UserGroups = g
+										.Where(x => x.g != null)
+										.Select(x => new UserGroupsInfo
+										{
+											Guid = x.g.Guid,
+											Name = x.g.Name,
+										})
+										.ToArray(),
+									AccessType = (AccessType)g
+										.Select(x => Math.Max(
+											(int)(x.urights != null ? x.urights.AccessType : AccessType.NotSet),
+											(int)(x.urights != null ? x.urights.AccessType : AccessType.NotSet)
+										))
+										.DefaultIfEmpty((int)AccessType.NoAccess)
+										.Max(),
+									Hash = g.Key.PasswordHash,
+									StaticHost = g.Key.StaticHost,
+								};
+
+		return query;
 	}
 }

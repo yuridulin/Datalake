@@ -28,9 +28,15 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
 	{
 		var user = await db.Users
+			.Where(x => x.Type == UserType.Local)
 			.Where(x => x.Login.ToLower().Trim() == loginPass.Login.ToLower().Trim() && x.StaticHost == null)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "указанная учётная запись по логину");
+
+		if (string.IsNullOrEmpty(user.PasswordHash))
+		{
+			throw new InvalidValueException(message: "пароль не задан");
+		}
 
 		if (!user.PasswordHash.Equals(GetHashFromPassword(loginPass.Password)))
 		{
@@ -98,7 +104,6 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 			Guid = Guid.NewGuid(),
 			Login = userInfo.Login,
 			FullName = userInfo.FullName ?? userInfo.Login,
-			AccessType = userInfo.AccessType,
 			PasswordHash = hash,
 			StaticHost = userInfo.StaticHost,
 		};
@@ -109,7 +114,6 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 			.Value(x => x.Guid, user.Guid)
 			.Value(x => x.Login, user.Login)
 			.Value(x => x.FullName, user.FullName)
-			.Value(x => x.AccessType, user.AccessType)
 			.Value(x => x.PasswordHash, user.PasswordHash)
 			.Value(x => x.StaticHost, user.StaticHost)
 			.InsertWithOutputAsync();
@@ -117,7 +121,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 		await db.AccessRights
 			.Value(x => x.UserGuid, user.Guid)
 			.Value(x => x.IsGlobal, true)
-			.Value(x => x.AccessType, user.AccessType)
+			.Value(x => x.AccessType, userInfo.AccessType)
 			.InsertAsync();
 
 		await transaction.CommitAsync();
@@ -140,8 +144,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 		var updateQuery = db.Users
 			.Where(x => x.Guid == userGuid)
 			.Set(x => x.Login, request.Login)
-			.Set(x => x.FullName, request.FullName)
-			.Set(x => x.AccessType, request.AccessType);
+			.Set(x => x.FullName, request.FullName);
 
 		bool newHashWasGenerated = false;
 
@@ -186,6 +189,11 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 				.Set(x => x.StaticHost, null as string)
 				.Set(x => x.PasswordHash, hash);
 		}
+
+		await db.AccessRights
+			.Where(x => x.UserGuid == userGuid)
+			.Set(x => x.AccessType, request.AccessType)
+			.UpdateAsync();
 
 		await updateQuery.UpdateAsync();
 

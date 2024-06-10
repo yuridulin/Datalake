@@ -4,6 +4,7 @@ import { useKeycloak } from 'keycloak-react-web'
 import { useNavigate } from 'react-router-dom'
 import api from '../../api/swagger-api'
 import { UserLoginPass } from '../../api/swagger/data-contracts'
+import routes from '../../router/routes'
 
 const style = {
 	width: '40em',
@@ -29,16 +30,6 @@ export default function LoginPanel() {
 
 	const onFinishFailed = (errorInfo: any) => {
 		console.log('Failed:', errorInfo)
-	}
-
-	// после редиректа от keycloak
-	if (keycloak.authenticated) {
-		console.log('keycloak', keycloak.idTokenParsed)
-		api.usersAuthenticateEnergoIdUser({
-			keycloakGuid: keycloak.idTokenParsed?.sup,
-			login: keycloak.idTokenParsed?.name,
-			fullName: keycloak.idTokenParsed?.name,
-		}).then(onSuccessAuth)
 	}
 
 	return (
@@ -73,7 +64,15 @@ export default function LoginPanel() {
 						<Button type='primary' htmlType='submit'>
 							Вход
 						</Button>
-						<Button onClick={() => keycloak.login()}>
+						<Button
+							onClick={() =>
+								keycloak.login({
+									redirectUri:
+										window.location.origin +
+										routes.Auth.KeycloakAfterLogin,
+								})
+							}
+						>
 							Вход через EnergoID
 						</Button>
 					</Space>

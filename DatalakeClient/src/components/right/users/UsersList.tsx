@@ -2,7 +2,11 @@ import { Button, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import api from '../../../api/swagger-api'
-import { AccessType, UserInfo } from '../../../api/swagger/data-contracts'
+import {
+	AccessType,
+	UserInfo,
+	UserType,
+} from '../../../api/swagger/data-contracts'
 import FormRow from '../../small/FormRow'
 import Header from '../../small/Header'
 
@@ -29,6 +33,21 @@ export default function UsersList() {
 				return 'наблюдатель'
 			default:
 				return 'нет доступа'
+		}
+	}
+
+	function UserTypeDescription(type: UserType) {
+		switch (type) {
+			case UserType.Local:
+				return 'Локальная учётная запись'
+
+			case UserType.Static:
+				return 'Статичная учётная запись'
+
+			case UserType.Keycloak:
+				return 'Учётная запись EnergoID'
+			default:
+				return '?'
 		}
 	}
 
@@ -79,15 +98,15 @@ export default function UsersList() {
 								<div className='table-row' key={x.login}>
 									<span>
 										<NavLink to={'/users/' + x.guid}>
-											<Button>{x.login}</Button>
+											<Button size='small'>
+												{x.login}
+											</Button>
 										</NavLink>
 									</span>
 									<span>
 										{AccessTypeDescription(x.accessType)}
 									</span>
-									<span>
-										{!!x.isStatic ? 'статичный' : 'базовый'}
-									</span>
+									<span>{UserTypeDescription(x.type)}</span>
 									<span>{x.fullName}</span>
 								</div>
 							))}

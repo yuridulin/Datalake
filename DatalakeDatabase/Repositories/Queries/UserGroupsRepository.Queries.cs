@@ -104,7 +104,7 @@ public partial class UserGroupsRepository
 										{
 											Guid = x.u.Guid,
 											FullName = x.u.FullName,
-											AccessType = x.u.AccessType,
+											AccessType = x.rel.AccessType,
 										})
 										.ToArray(),
 								};

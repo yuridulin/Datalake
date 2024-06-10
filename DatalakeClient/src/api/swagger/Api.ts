@@ -567,6 +567,22 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * No description
 	 *
 	 * @tags Users
+	 * @name UsersGetEnergoIdList
+	 * @summary Получение списка пользователей, определенных на сервере Keycloak
+	 * @request GET:/api/Users/energo-id
+	 * @response `200` `(UserKeycloakInfo)[]` Список пользователей
+	 */
+	usersGetEnergoIdList = (params: RequestParams = {}) =>
+		this.request<UserKeycloakInfo[], any>({
+			path: `/api/Users/energo-id`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Users
 	 * @name UsersAuthenticateEnergoIdUser
 	 * @summary Аутентификация пользователя, прошедшего проверку на сервере Keycloak
 	 * @request POST:/api/Users/energo-id

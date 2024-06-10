@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import App from '../components/App'
 import Offline from '../components/Offline'
+import KeycloakAfterLogin from '../components/global/KeycloakAfterLogin'
 import LoginPanel from '../components/global/LoginPanel'
 import BlockForm from '../components/right/blocks/BlockForm'
 import BlockView from '../components/right/blocks/BlockView'
@@ -21,8 +22,12 @@ import routes from './routes'
 
 const router = createBrowserRouter([
 	{
-		path: '/login',
+		path: routes.Auth.LoginPage,
 		element: <LoginPanel />,
+	},
+	{
+		path: routes.Auth.KeycloakAfterLogin,
+		element: <KeycloakAfterLogin />,
 	},
 	{
 		path: '/',
@@ -37,18 +42,18 @@ const router = createBrowserRouter([
 				element: <Viewer />,
 			},
 			{
-				path: '/users',
+				path: routes.Users.root,
 				children: [
 					{
-						path: '/users/',
+						path: routes.Users.List,
 						element: <UsersList />,
 					},
 					{
-						path: '/users/create',
+						path: routes.Users.Create,
 						element: <UserCreate />,
 					},
 					{
-						path: '/users/:id',
+						path: routes.Users.Form,
 						element: <UserForm />,
 					},
 				],

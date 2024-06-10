@@ -2,6 +2,7 @@
 using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Repositories;
 using DatalakeServer.Controllers.Base;
+using DatalakeServer.Models;
 using DatalakeServer.Services.SessionManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,30 @@ public class UsersController(
 	UsersRepository usersRepository,
 	SessionManagerService sessionManager) : ApiControllerBase
 {
+	/// <summary>
+	/// Получение списка пользователей, определенных на сервере Keycloak
+	/// </summary>
+	/// <returns>Список пользователей</returns>
+	[HttpGet("energo-id")]
+	public async Task<ActionResult<UserKeycloakInfo[]>> GetEnergoIdListAsync()
+	{
+		// TODO: изменить адрес на заданный в БД
+		var users = await new HttpClient().GetFromJsonAsync<EnergoIdUserData[]>("https://api.auth-test.energo.net/api/v1/users");
+
+		if (users == null)
+			return Array.Empty<UserKeycloakInfo>();
+
+		return users
+			.Select(x => new UserKeycloakInfo
+			{
+				KeycloakGuid = Guid.TryParse(x.Sid, out var guid) ? guid : Guid.Empty,
+				Login = x.Email,
+				FullName = x.Name,
+			})
+			.Where(x => x.KeycloakGuid != Guid.Empty)
+			.ToArray();
+	}
+
 	/// <summary>
 	/// Аутентификация пользователя, прошедшего проверку на сервере Keycloak
 	/// </summary>

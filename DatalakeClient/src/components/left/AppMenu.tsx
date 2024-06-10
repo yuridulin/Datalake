@@ -27,13 +27,10 @@ export function AppMenu() {
 
 			<div className='app-menu-block'>
 				<NavLink to={'/'}>Монитор</NavLink>
+				<NavLink to={routes.Users.List}>Пользователи</NavLink>
 				<NavLink to={routes.UserGroups.List}>
 					Группы пользователей
 				</NavLink>
-				{/* <div className="app-menu-sub">
-				<NavLink to={'/logs'}>События</NavLink>
-				<NavLink to={'/settings'}>Администрирование</NavLink>
-			</div> */}
 			</div>
 
 			<div className='app-menu-block'>

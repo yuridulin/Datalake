@@ -18,9 +18,6 @@ public class User
 	public required Guid Guid { get; set; }
 
 	[Column, NotNull]
-	public required AccessType AccessType { get; set; }
-
-	[Column, NotNull]
 	public UserType Type { get; set; }
 
 	[Column]
@@ -31,8 +28,8 @@ public class User
 	[Column, NotNull]
 	public required string Login { get; set; }
 
-	[Column, NotNull]
-	public required string PasswordHash { get; set; }
+	[Column]
+	public string? PasswordHash { get; set; }
 
 	// для статичных
 

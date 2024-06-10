@@ -5,6 +5,7 @@ using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
+using System.Linq;
 
 namespace DatalakeDatabase.Extensions;
 
@@ -47,7 +48,6 @@ public static class DatalakeContextExtension
 	/// </summary>
 	/// <param name="db">Подключение к базе данных</param>
 	/// <param name="userGuid">Идентификатор пользователя</param>
-	/// <param name="objectWhere">Дополнительные условия проверки</param>
 	/// <returns>Объект разрешений пользователя</returns>
 	public static async Task<AccessRights[]> AuthorizeUserAsync(
 		this DatalakeContext db,
@@ -56,7 +56,7 @@ public static class DatalakeContextExtension
 		var groups = await db.GetUserGroupsAsync(userGuid);
 
 		var rights = await db.AccessRights
-			.Where(x => groups.Select(g => g.Guid).Contains(x.UserGroupGuid.ToString()) || x.UserGuid == userGuid)
+			.Where(x => groups.Where(g => g.Guid == x.UserGroupGuid).Any() || x.UserGuid == userGuid)
 			.Where(x => x.AccessType != AccessType.NotSet)
 			.ToArrayAsync();
 
@@ -102,8 +102,8 @@ public static class DatalakeContextExtension
 											group new { userGroup, rel } by userGroup into g
 											select new
 											{
-												Id = g.Key.Guid.ToString(),
-												ParentId = g.Key.ParentGuid.ToString(),
+												Id = g.Key.Guid,
+												ParentId = g.Key.ParentGuid,
 												g.Key.Name,
 												Relations = g.Select(x => x.rel != null ? x.rel.AccessType : AccessType.NoAccess).ToArray(),
 											};
@@ -121,7 +121,7 @@ public static class DatalakeContextExtension
 			})
 			.ToArray();
 
-		UserGroupsTreeInfo[] ReadChildren(string? id)
+		UserGroupsTreeInfo[] ReadChildren(Guid? id)
 		{
 			return groups
 				.Where(x => x.ParentId == id)
