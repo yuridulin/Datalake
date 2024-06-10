@@ -32,10 +32,15 @@ public class UserInfo
 	public required AccessType AccessType { get; set; }
 
 	/// <summary>
-	/// Является ли учётная запись статичной
+	/// Тип учётной записи
 	/// </summary>
 	[Required]
-	public required bool IsStatic { get; set; }
+	public UserType Type { get; set; }
+
+	/// <summary>
+	/// Идентификатор пользователя в сервере Keycloak
+	/// </summary>
+	public Guid? KeycloakGuid { get; set; }
 
 	/// <summary>
 	/// Список групп, в которые входит пользователь

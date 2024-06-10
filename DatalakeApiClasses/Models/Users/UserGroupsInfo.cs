@@ -11,7 +11,7 @@ public class UserGroupsInfo
 	/// Идентификатор группы
 	/// </summary>
 	[Required]
-	public required string Guid { get; set; }
+	public required Guid Guid { get; set; }
 
 	/// <summary>
 	/// Имя группы

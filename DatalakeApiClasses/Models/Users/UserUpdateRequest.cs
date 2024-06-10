@@ -40,4 +40,9 @@ public class UserUpdateRequest
 	/// </summary>
 	[Required]
 	public bool CreateNewStaticHash { get; set; } = false;
+
+	/// <summary>
+	/// Идентификатор пользователя в сервере Keycloak
+	/// </summary>
+	public Guid? KeycloakGuid { get; set; }
 }
