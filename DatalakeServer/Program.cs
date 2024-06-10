@@ -1,15 +1,14 @@
 using DatalakeApiClasses.Exceptions.Base;
+using DatalakeDatabase;
+using DatalakeDatabase.Repositories;
 using DatalakeServer.BackgroundServices.Collector;
 using DatalakeServer.BackgroundServices.Collector.Collectors.Factory;
 using DatalakeServer.Constants;
 using DatalakeServer.Middlewares;
 using DatalakeServer.Services.Receiver;
 using DatalakeServer.Services.SessionManager;
-using DatalakeDatabase;
-using DatalakeDatabase.Repositories;
 using LinqToDB;
 using LinqToDB.AspNet;
-using LinqToDB.AspNet.Logging;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics;
@@ -20,11 +19,21 @@ using NJsonSchema.Generation;
 using Serilog;
 using System.Reflection;
 using System.Security.Claims;
+#if DEBUG
+using LinqToDB.AspNet.Logging;
+#endif
 
 namespace DatalakeServer
 {
+	/// <summary>
+	/// Основной класс приложения
+	/// </summary>
 	public class Program
 	{
+		/// <summary>
+		/// Метод запуска приложения
+		/// </summary>
+		/// <param name="args">Агрументы, с которыми оно запускается</param>
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
@@ -72,13 +81,13 @@ namespace DatalakeServer
 					.AllowAnyOrigin()
 					.AllowAnyHeader()
 					.WithExposedHeaders([
-						AuthConstants.AccessHeader,
 						AuthConstants.TokenHeader,
-						AuthConstants.NameHeader,
 					]);
 			});
 			app.UseOpenApi();
+#if DEBUG
 			app.UseSwaggerUi();
+#endif
 			app.UseMiddleware<AuthMiddleware>();
 
 			ConfigureErrorPage(app);
@@ -223,7 +232,7 @@ namespace DatalakeServer
 			});
 		}
 
-		public class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor
+		internal class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor
 		{
 			public void Process(SchemaProcessorContext context)
 			{

@@ -1,7 +1,7 @@
 import { Button } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
 import { useFetching } from '../../../hooks/useFetching'
 import Header from '../../small/Header'

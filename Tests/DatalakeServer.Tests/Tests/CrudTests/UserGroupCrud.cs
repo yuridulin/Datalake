@@ -21,7 +21,7 @@ public class UserGroupCrud : IClassFixture<TestingWebAppFactory<Program>>
 
 	public async Task<(string, string)> Authorization()
 	{
-		var request = new UserLoginPass { Name = "admin", Password = "admin" };
+		var request = new UserLoginPass { Login = "admin", Password = "admin" };
 		var response = await _httpClient.PostAsJsonAsync("api/users/auth", request);
 
 		var token = response.Headers.GetValues(AuthConstants.TokenHeader).First();
@@ -41,7 +41,7 @@ public class UserGroupCrud : IClassFixture<TestingWebAppFactory<Program>>
 
 		string userGroupName = "TestUserGroup";
 
-		var userGroupGuid = await _httpClient.PostAsync<string>(controller, new CreateUserGroupRequest
+		var userGroupGuid = await _httpClient.PostAsync<string>(controller, new UserGroupCreateRequest
 		{
 			Name = userGroupName,
 		});
@@ -50,7 +50,7 @@ public class UserGroupCrud : IClassFixture<TestingWebAppFactory<Program>>
 		var userGroup = await _httpClient.GetAsync<UserGroupInfo>(controller + "/" + userGroupGuid);
 		Assert.NotNull(userGroup);
 
-		await _httpClient.PutAsync(controller + "/" + userGroupGuid, new UpdateUserGroupRequest
+		await _httpClient.PutAsync(controller + "/" + userGroupGuid, new UserGroupUpdateRequest
 		{
 			Name = userGroupName,
 			Users = [],

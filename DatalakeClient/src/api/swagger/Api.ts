@@ -24,6 +24,12 @@ import {
 	UserAuthInfo,
 	UserCreateRequest,
 	UserDetailInfo,
+	UserEnergoIdInfo,
+	UserGroupCreateRequest,
+	UserGroupDetailedInfo,
+	UserGroupInfo,
+	UserGroupTreeInfo,
+	UserGroupUpdateRequest,
 	UserInfo,
 	UserLoginPass,
 	UserUpdateRequest,
@@ -39,8 +45,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Blocks
 	 * @name BlocksCreate
+	 * @summary Создание нового блока на основании переданной информации
 	 * @request POST:/api/Blocks
-	 * @response `200` `number`
+	 * @response `200` `number` Идентификатор блока
 	 */
 	blocksCreate = (data: BlockInfo, params: RequestParams = {}) =>
 		this.request<number, any>({
@@ -56,8 +63,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Blocks
 	 * @name BlocksReadAll
+	 * @summary Получение списка блоков с базовой информацией о них
 	 * @request GET:/api/Blocks
-	 * @response `200` `(BlockSimpleInfo)[]`
+	 * @response `200` `(BlockSimpleInfo)[]` Список блоков
 	 */
 	blocksReadAll = (params: RequestParams = {}) =>
 		this.request<BlockSimpleInfo[], any>({
@@ -71,8 +79,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Blocks
 	 * @name BlocksCreateEmpty
+	 * @summary Создание нового отдельного блока с информацией по умолчанию
 	 * @request POST:/api/Blocks/empty
-	 * @response `200` `number`
+	 * @response `200` `number` Идентификатор блока
 	 */
 	blocksCreateEmpty = (params: RequestParams = {}) =>
 		this.request<number, any>({
@@ -86,8 +95,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Blocks
 	 * @name BlocksRead
+	 * @summary Получение информации о выбранном блоке
 	 * @request GET:/api/Blocks/{id}
-	 * @response `200` `BlockInfo`
+	 * @response `200` `BlockInfo` Информация о блоке
 	 */
 	blocksRead = (id: number, params: RequestParams = {}) =>
 		this.request<BlockInfo, any>({
@@ -101,6 +111,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Blocks
 	 * @name BlocksUpdate
+	 * @summary Изменение блока
 	 * @request PUT:/api/Blocks/{id}
 	 * @response `200` `File`
 	 */
@@ -117,6 +128,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Blocks
 	 * @name BlocksDelete
+	 * @summary Удаление блока
 	 * @request DELETE:/api/Blocks/{id}
 	 * @response `200` `File`
 	 */
@@ -131,8 +143,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Blocks
 	 * @name BlocksReadAsTree
+	 * @summary Получение иерархической структуры всех блоков
 	 * @request GET:/api/Blocks/tree
-	 * @response `200` `(BlockTreeInfo)[]`
+	 * @response `200` `(BlockTreeInfo)[]` Список обособленных блоков с вложенными блоками
 	 */
 	blocksReadAsTree = (params: RequestParams = {}) =>
 		this.request<BlockTreeInfo[], any>({
@@ -146,8 +159,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Config
 	 * @name ConfigGetLastUpdate
+	 * @summary Получение даты последнего изменения структуры базы данных
 	 * @request GET:/api/Config/last
-	 * @response `200` `string`
+	 * @response `200` `string` Дата в строковом виде
 	 */
 	configGetLastUpdate = (params: RequestParams = {}) =>
 		this.request<string, any>({
@@ -161,14 +175,21 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Config
 	 * @name ConfigGetLogs
+	 * @summary Получение списка сообщений
 	 * @request GET:/api/Config/logs
 	 * @response `200` `(LogInfo)[]`
 	 */
 	configGetLogs = (
 		query?: {
-			/** @format int32 */
+			/**
+			 * Сколько сообщений получить за этот запрос
+			 * @format int32
+			 */
 			take?: number | null
-			/** @format int32 */
+			/**
+			 * Идентификатор сообщения, с которого начать отсчёт количества
+			 * @format int32
+			 */
 			lastId?: number | null
 		},
 		params: RequestParams = {},
@@ -185,8 +206,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Sources
 	 * @name SourcesCreate
+	 * @summary Создание источника с информацией по умолчанию
 	 * @request POST:/api/Sources/empty
-	 * @response `200` `number`
+	 * @response `200` `number` Идентификатор источника
 	 */
 	sourcesCreate = (params: RequestParams = {}) =>
 		this.request<number, any>({
@@ -200,8 +222,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Sources
 	 * @name SourcesCreate2
+	 * @summary Создание источника на основе переданных данных
 	 * @request POST:/api/Sources
-	 * @response `200` `number`
+	 * @response `200` `number` Идентификатор источника
 	 */
 	sourcesCreate2 = (data: SourceInfo, params: RequestParams = {}) =>
 		this.request<number, any>({
@@ -217,12 +240,16 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Sources
 	 * @name SourcesReadAll
+	 * @summary Получение списка источников
 	 * @request GET:/api/Sources
-	 * @response `200` `(SourceInfo)[]`
+	 * @response `200` `(SourceInfo)[]` Список источников
 	 */
 	sourcesReadAll = (
 		query?: {
-			/** @default false */
+			/**
+			 * Включить ли в список системные источники
+			 * @default false
+			 */
 			withCustom?: boolean
 		},
 		params: RequestParams = {},
@@ -239,8 +266,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Sources
 	 * @name SourcesRead
+	 * @summary Получение данных о источнике
 	 * @request GET:/api/Sources/{id}
-	 * @response `200` `SourceInfo`
+	 * @response `200` `SourceInfo` Данные о источнике
 	 */
 	sourcesRead = (id: number, params: RequestParams = {}) =>
 		this.request<SourceInfo, any>({
@@ -254,6 +282,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Sources
 	 * @name SourcesUpdate
+	 * @summary Изменение источника
 	 * @request PUT:/api/Sources/{id}
 	 * @response `200` `File`
 	 */
@@ -270,6 +299,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Sources
 	 * @name SourcesDelete
+	 * @summary Удаление источника
 	 * @request DELETE:/api/Sources/{id}
 	 * @response `200` `File`
 	 */
@@ -284,8 +314,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Sources
 	 * @name SourcesGetItems
+	 * @summary Получение доступных значений источника
 	 * @request GET:/api/Sources/{id}/items
-	 * @response `200` `(SourceItemInfo)[]`
+	 * @response `200` `(SourceItemInfo)[]` Список данных источника
 	 */
 	sourcesGetItems = (id: number, params: RequestParams = {}) =>
 		this.request<SourceItemInfo[], any>({
@@ -299,8 +330,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Sources
 	 * @name SourcesGetItemsWithTags
+	 * @summary Получение доступных значений и связанных тегов источника
 	 * @request GET:/api/Sources/{id}/items-and-tags
-	 * @response `200` `(SourceEntryInfo)[]`
+	 * @response `200` `(SourceEntryInfo)[]` Список данных источника
 	 */
 	sourcesGetItemsWithTags = (id: number, params: RequestParams = {}) =>
 		this.request<SourceEntryInfo[], any>({
@@ -374,6 +406,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Tags
 	 * @name TagsUpdate
+	 * @summary Изменение тега
 	 * @request PUT:/api/Tags/{id}
 	 * @response `200` `File`
 	 */
@@ -390,6 +423,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Tags
 	 * @name TagsDelete
+	 * @summary Удаление тега
 	 * @request DELETE:/api/Tags/{id}
 	 * @response `200` `File`
 	 */
@@ -404,8 +438,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Tags
 	 * @name TagsReadPossibleInputs
+	 * @summary Получение списка тегов, подходящих для использования в формулах
 	 * @request GET:/api/Tags/inputs
-	 * @response `200` `(TagAsInputInfo)[]`
+	 * @response `200` `(TagAsInputInfo)[]` Список тегов
 	 */
 	tagsReadPossibleInputs = (params: RequestParams = {}) =>
 		this.request<TagAsInputInfo[], any>({
@@ -417,10 +452,166 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	/**
 	 * No description
 	 *
+	 * @tags UserGroups
+	 * @name UserGroupsCreate
+	 * @summary Создание новой группы пользователей
+	 * @request POST:/api/UserGroups
+	 * @response `200` `string` Идентификатор новой группы пользователей
+	 */
+	userGroupsCreate = (data: UserGroupCreateRequest, params: RequestParams = {}) =>
+		this.request<string, any>({
+			path: `/api/UserGroups`,
+			method: 'POST',
+			body: data,
+			type: ContentType.Json,
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsReadAll
+	 * @summary Получение плоского списка групп пользователей
+	 * @request GET:/api/UserGroups
+	 * @response `200` `(UserGroupInfo)[]` Список групп
+	 */
+	userGroupsReadAll = (params: RequestParams = {}) =>
+		this.request<UserGroupInfo[], any>({
+			path: `/api/UserGroups`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsRead
+	 * @summary Получение информации о выбранной группе пользователей
+	 * @request GET:/api/UserGroups/{groupGuid}
+	 * @response `200` `UserGroupInfo` Информация о группе
+	 */
+	userGroupsRead = (groupGuid: string, params: RequestParams = {}) =>
+		this.request<UserGroupInfo, any>({
+			path: `/api/UserGroups/${groupGuid}`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsUpdate
+	 * @summary Изменение группы пользователей
+	 * @request PUT:/api/UserGroups/{groupGuid}
+	 * @response `200` `File`
+	 */
+	userGroupsUpdate = (groupGuid: string, data: UserGroupUpdateRequest, params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/UserGroups/${groupGuid}`,
+			method: 'PUT',
+			body: data,
+			type: ContentType.Json,
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsDelete
+	 * @summary Удаление группы пользователей
+	 * @request DELETE:/api/UserGroups/{groupGuid}
+	 * @response `200` `File`
+	 */
+	userGroupsDelete = (groupGuid: string, params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/UserGroups/${groupGuid}`,
+			method: 'DELETE',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsReadAsTree
+	 * @summary Получение иерархической структуры всех групп пользователей
+	 * @request GET:/api/UserGroups/tree
+	 * @response `200` `(UserGroupTreeInfo)[]` Список обособленных групп с вложенными подгруппами
+	 */
+	userGroupsReadAsTree = (params: RequestParams = {}) =>
+		this.request<UserGroupTreeInfo[], any>({
+			path: `/api/UserGroups/tree`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsReadWithDetails
+	 * @summary Получение детализированной информации о группе пользователей
+	 * @request GET:/api/UserGroups/{groupGuid}/detailed
+	 * @response `200` `UserGroupDetailedInfo` Информация о группе с подгруппами и списком пользователей
+	 */
+	userGroupsReadWithDetails = (groupGuid: string, params: RequestParams = {}) =>
+		this.request<UserGroupDetailedInfo, any>({
+			path: `/api/UserGroups/${groupGuid}/detailed`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Users
+	 * @name UsersGetEnergoIdList
+	 * @summary Получение списка пользователей, определенных на сервере EnergoId
+	 * @request GET:/api/Users/energo-id
+	 * @response `200` `(UserEnergoIdInfo)[]` Список пользователей
+	 */
+	usersGetEnergoIdList = (
+		query?: {
+			/** @format guid */
+			currentUserGuid?: string | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<UserEnergoIdInfo[], any>({
+			path: `/api/Users/energo-id`,
+			method: 'GET',
+			query: query,
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Users
+	 * @name UsersAuthenticateEnergoIdUser
+	 * @summary Аутентификация пользователя, прошедшего проверку на сервере EnergoId
+	 * @request POST:/api/Users/energo-id
+	 * @response `200` `UserAuthInfo` Данные о учетной записи
+	 */
+	usersAuthenticateEnergoIdUser = (data: UserEnergoIdInfo, params: RequestParams = {}) =>
+		this.request<UserAuthInfo, any>({
+			path: `/api/Users/energo-id`,
+			method: 'POST',
+			body: data,
+			type: ContentType.Json,
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
 	 * @tags Users
 	 * @name UsersAuthenticate
+	 * @summary Аутентификация локального пользователя по связке "имя для входа/пароль"
 	 * @request POST:/api/Users/auth
-	 * @response `200` `UserAuthInfo`
+	 * @response `200` `UserAuthInfo` Данные о учетной записи
 	 */
 	usersAuthenticate = (data: UserLoginPass, params: RequestParams = {}) =>
 		this.request<UserAuthInfo, any>({
@@ -435,9 +626,26 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * No description
 	 *
 	 * @tags Users
+	 * @name UsersIdentify
+	 * @summary Получение информации о учетной записи на основе текущей сессии
+	 * @request GET:/api/Users/identify
+	 * @response `200` `UserAuthInfo` Данные о учетной записи
+	 */
+	usersIdentify = (params: RequestParams = {}) =>
+		this.request<UserAuthInfo, any>({
+			path: `/api/Users/identify`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Users
 	 * @name UsersCreate
+	 * @summary Создание пользователя на основании переданных данных
 	 * @request POST:/api/Users
-	 * @response `200` `string`
+	 * @response `200` `string` Идентификатор пользователя
 	 */
 	usersCreate = (data: UserCreateRequest, params: RequestParams = {}) =>
 		this.request<string, any>({
@@ -453,8 +661,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersReadAll
+	 * @summary Получение списка пользователей
 	 * @request GET:/api/Users
-	 * @response `200` `(UserInfo)[]`
+	 * @response `200` `(UserInfo)[]` Список пользователей
 	 */
 	usersReadAll = (params: RequestParams = {}) =>
 		this.request<UserInfo[], any>({
@@ -468,8 +677,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersRead
+	 * @summary Получение данных о пользователе
 	 * @request GET:/api/Users/{userGuid}
-	 * @response `200` `UserInfo`
+	 * @response `200` `UserInfo` Данные пользователя
 	 */
 	usersRead = (userGuid: string, params: RequestParams = {}) =>
 		this.request<UserInfo, any>({
@@ -483,6 +693,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersUpdate
+	 * @summary Изменение пользователя
 	 * @request PUT:/api/Users/{userGuid}
 	 * @response `200` `File`
 	 */
@@ -499,6 +710,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersDelete
+	 * @summary Удаление пользователя
 	 * @request DELETE:/api/Users/{userGuid}
 	 * @response `200` `File`
 	 */
@@ -513,8 +725,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Users
 	 * @name UsersReadWithDetails
+	 * @summary Получение детализированной информации о пользователе
 	 * @request GET:/api/Users/{userGuid}/detailed
-	 * @response `200` `UserDetailInfo`
+	 * @response `200` `UserDetailInfo` Данные о пользователе
 	 */
 	usersReadWithDetails = (userGuid: string, params: RequestParams = {}) =>
 		this.request<UserDetailInfo, any>({
@@ -528,8 +741,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Values
 	 * @name ValuesGet
+	 * @summary Получение значений на основании списка запросов
 	 * @request POST:/api/Tags/Values
-	 * @response `200` `(ValuesResponse)[]`
+	 * @response `200` `(ValuesResponse)[]` Список ответов на запросы
 	 */
 	valuesGet = (data: ValuesGetPayload, params: RequestParams = {}) =>
 		this.request<ValuesResponse[], any>({
@@ -545,8 +759,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Values
 	 * @name ValuesWrite
+	 * @summary Запись значений на основании списка запросов
 	 * @request PUT:/api/Tags/Values
-	 * @response `200` `(ValuesResponse)[]`
+	 * @response `200` `(ValuesResponse)[]` Список измененных начений
 	 */
 	valuesWrite = (data: ValuesWritePayload, params: RequestParams = {}) =>
 		this.request<ValuesResponse[], any>({

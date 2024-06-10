@@ -7,19 +7,27 @@ EXPOSE 8080
 EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ENV COMPlus_EnableDiagnostics=0
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Datalake/DatalakeApp.csproj", "Datalake/"]
-RUN dotnet restore "./Datalake/./DatalakeApp.csproj"
+COPY ["/DatalakeServer/DatalakeServer.csproj", "DatalakeServer/"]
+COPY ["/DatalakeDatabase/DatalakeDatabase.csproj", "DatalakeDatabase/"]
+COPY ["/DatalakeClient/datalakeclient.esproj", "DatalakeClient/"]
+COPY ["/DatalakeApiClasses/DatalakeApiClasses.csproj", "DatalakeApiClasses/"]
+#RUN dotnet restore "./DatalakeClient/datalakeclient.esproj"
+RUN dotnet restore "./DatalakeServer/DatalakeServer.csproj"
+#COPY /DatalakeClient/build/* /DatalakeServer/wwwroot
 COPY . .
-WORKDIR "/src/Datalake"
-RUN dotnet build "./DatalakeApp.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/DatalakeServer"
+RUN dotnet build "DatalakeServer.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
+ENV COMPlus_EnableDiagnostics=0
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./DatalakeApp.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "DatalakeServer.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
+ENV COMPlus_EnableDiagnostics=0
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "DatalakeApp.dll"]
+ENTRYPOINT ["dotnet", "DatalakeServer.dll"]

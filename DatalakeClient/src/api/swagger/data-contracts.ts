@@ -9,81 +9,141 @@
  * ---------------------------------------------------------------
  */
 
+/** Информация о сущности */
 export interface BlockInfo {
-	/** @format int32 */
+	/**
+	 * Идентификатор
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Наименование
+	 * @minLength 1
+	 */
 	name: string
+	/** Текстовое описание */
 	description?: string | null
+	/** Информация о родительской сущности */
 	parent?: BlockParentInfo | null
+	/** Список дочерних сущностей */
 	children: BlockChildInfo[]
+	/** Список статических свойств сущности */
 	properties: BlockPropertyInfo[]
+	/** Список прикреплённых тегов */
 	tags: BlockTagInfo[]
 }
 
+/** Информация о родительской сущности */
 export type BlockParentInfo = BlockRelationInfo & object
 
+/** Связанный с блоком объект */
 export interface BlockRelationInfo {
-	/** @format int32 */
+	/**
+	 * Идентификатор
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Наименование
+	 * @minLength 1
+	 */
 	name: string
 }
 
+/** Информация о дочерней сущности */
 export type BlockChildInfo = BlockRelationInfo & object
 
+/** Информация о статическом свойстве сущности */
 export type BlockPropertyInfo = BlockRelationInfo & {
+	/** Тип значения свойства */
 	type: TagType
-	/** @minLength 1 */
+	/**
+	 * Значение свойства
+	 * @minLength 1
+	 */
 	value: string
 }
 
+/** Тип данных */
 export enum TagType {
 	String = 'String',
 	Number = 'Number',
 	Boolean = 'Boolean',
 }
 
+/** Информация о закреплённом теге */
 export type BlockTagInfo = BlockRelationInfo & {
+	/** Тип значений тега */
 	tagType: BlockTagRelation
 }
 
+/** Тип связи тега и блока */
 export enum BlockTagRelation {
 	Static = 'Static',
 	Input = 'Input',
 	Output = 'Output',
 }
 
+/** Информация о сущности */
 export interface BlockSimpleInfo {
-	/** @format int32 */
+	/**
+	 * Идентификатор
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Наименование
+	 * @minLength 1
+	 */
 	name: string
+	/** Текстовое описание */
 	description?: string | null
 }
 
+/** Информация о сущности в иерархическом представлении */
 export interface BlockTreeInfo {
-	/** @format int32 */
+	/**
+	 * Идентификатор
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Наименование
+	 * @minLength 1
+	 */
 	name: string
+	/** Текстовое описание */
 	description?: string | null
+	/** Вложенные сущности, подчинённые этой */
 	children: BlockTreeInfo[]
 }
 
+/** Запись собщения */
 export interface LogInfo {
-	/** @format int64 */
+	/**
+	 * Идентификатор записи
+	 * @format int64
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Дата формата DateFormats.Long
+	 * @minLength 1
+	 */
 	dateString: string
+	/** Категория сообщения (к какому объекту относится) */
 	category: LogCategory
+	/** Степень важности сообщения */
 	type: LogType
-	/** @minLength 1 */
+	/**
+	 * Текст сообщеня
+	 * @minLength 1
+	 */
 	text: string
-	/** @format int32 */
-	refId?: number | null
+	/** Ссылка на конкретный объект в случае, если это подразумевает категория */
+	refId?: string | null
 }
 
+/** Категория, к которой относится сообщение */
 export enum LogCategory {
 	Core = 'Core',
 	Database = 'Database',
@@ -94,8 +154,10 @@ export enum LogCategory {
 	Tag = 'Tag',
 	Http = 'Http',
 	Users = 'Users',
+	UserGroups = 'UserGroups',
 }
 
+/** Степень важности сообщения */
 export enum LogType {
 	Trace = 'Trace',
 	Information = 'Information',
@@ -104,16 +166,27 @@ export enum LogType {
 	Error = 'Error',
 }
 
+/** Информация о источнике */
 export interface SourceInfo {
-	/** @format int32 */
+	/**
+	 * Идентификатор источника в базе данных
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Название источника
+	 * @minLength 1
+	 */
 	name: string
+	/** Произвольное описание источника */
 	description?: string | null
+	/** Используемый для получения данных адрес */
 	address?: string | null
+	/** Тип протокола, по которому запрашиваются данные */
 	type: SourceType
 }
 
+/** Тип получения данных с источника */
 export enum SourceType {
 	Inopc = 'Inopc',
 	Datalake = 'Datalake',
@@ -121,117 +194,281 @@ export enum SourceType {
 	Custom = 'Custom',
 }
 
+/** Информация о удалённой записи с данными источника */
 export interface SourceItemInfo {
-	/** @minLength 1 */
+	/**
+	 * Путь к данным в источнике
+	 * @minLength 1
+	 */
 	path: string
+	/** Тип данных */
 	type: TagType
 }
 
+/** Информация о сопоставлении данных в источнике и в базе */
 export interface SourceEntryInfo {
+	/** Сопоставленная запись в источнике */
 	itemInfo?: SourceItemInfo | null
+	/** Сопоставленный тег в базе */
 	tagInfo?: SourceTagInfo | null
 }
 
+/** Информация о теге, берущем данные из этого источника */
 export interface SourceTagInfo {
-	/** @format int32 */
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Глобальное наименование тега
+	 * @minLength 1
+	 */
 	name: string
-	/** @minLength 1 */
+	/**
+	 * Путь к данным в источнике
+	 * @minLength 1
+	 */
 	item: string
+	/** Тип данных тега */
 	type: TagType
 }
 
+/** Необходимые данные для создания тега */
 export interface TagCreateRequest {
+	/** Наименование тега. Если не указать, будет составлено автоматически */
 	name?: string | null
+	/** Тип значений тега */
 	tagType: TagType
-	/** @format int32 */
+	/**
+	 * Идентификатор источника данных
+	 * @format int32
+	 */
 	sourceId?: number | null
+	/** Путь к данным при использовании удалённого источника */
 	sourceItem?: string | null
-	/** @format int32 */
+	/**
+	 * Идентификатор сущности, к которой будет привязан новый тег
+	 * @format int32
+	 */
 	blockId?: number | null
 }
 
+/** Информация о теге */
 export interface TagInfo {
-	/** @format int32 */
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Имя тега
+	 * @minLength 1
+	 */
 	name: string
+	/** Произвольное описание тега */
 	description?: string | null
+	/** Тип данных тега */
 	type: TagType
+	/** Интервал опроса источника для получения нового значения */
 	intervalInSeconds: number
-	/** @format int32 */
+	/**
+	 * Идентификатор источника данных
+	 * @format int32
+	 */
 	sourceId: number
+	/** Тип данных источника */
 	sourceType: SourceType
+	/** Путь к данным в источнике */
 	sourceItem?: string | null
+	/** Имя используемого источника данных */
 	sourceName?: string | null
+	/** Формула, на основе которой вычисляется значение */
 	formula?: string | null
+	/** Применяется ли приведение числового значения тега к другой шкале */
 	isScaling: boolean
-	/** @format float */
+	/**
+	 * Меньший предел итоговой шкалы
+	 * @format float
+	 */
 	minEu: number
-	/** @format float */
+	/**
+	 * Больший предел итоговой шкалы
+	 * @format float
+	 */
 	maxEu: number
-	/** @format float */
+	/**
+	 * Меньший предел шкалы исходного значения
+	 * @format float
+	 */
 	minRaw: number
-	/** @format float */
+	/**
+	 * Больший предел шкалы исходного значения
+	 * @format float
+	 */
 	maxRaw: number
+	/** Входные переменные для формулы, по которой рассчитывается значение */
 	formulaInputs: TagInputInfo[]
 }
 
+/** Тег, используемый как входной параметр в формуле */
 export interface TagInputInfo {
-	/** @format int32 */
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Имя тега
+	 * @minLength 1
+	 */
 	name: string
-	/** @minLength 1 */
+	/**
+	 * Имя переменной, используемое в формуле
+	 * @minLength 1
+	 */
 	variableName: string
 }
 
+/** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
 export interface TagAsInputInfo {
-	/** @format int32 */
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Имя тега
+	 * @minLength 1
+	 */
 	name: string
+	/** Тип данных тега */
 	type: TagType
 }
 
+/** Данные запроса для изменение тега */
 export interface TagUpdateRequest {
-	/** @minLength 1 */
+	/**
+	 * Новое имя тега
+	 * @minLength 1
+	 */
 	name: string
+	/** Новое описание */
 	description?: string | null
+	/** Новый тип данных */
 	type: TagType
+	/** Новый интервал получения значения */
 	intervalInSeconds: number
-	/** @format int32 */
+	/**
+	 * Источник данных
+	 * @format int32
+	 */
 	sourceId: number
+	/** Тип источника данных */
 	sourceType: SourceType
+	/** Путь к данными в источнике */
 	sourceItem?: string | null
+	/** Формула, по которой рассчитывается значение */
 	formula?: string | null
+	/** Применяется ли изменение шкалы значения */
 	isScaling: boolean
-	/** @format float */
+	/**
+	 * Меньший предел итоговой шкалы
+	 * @format float
+	 */
 	minEu: number
-	/** @format float */
+	/**
+	 * Больший предел итоговой шкалы
+	 * @format float
+	 */
 	maxEu: number
-	/** @format float */
+	/**
+	 * Меньший предел шкалы исходного значения
+	 * @format float
+	 */
 	minRaw: number
-	/** @format float */
+	/**
+	 * Больший предел шкалы исходного значения
+	 * @format float
+	 */
 	maxRaw: number
+	/** Входные переменные для формулы, по которой рассчитывается значение */
 	formulaInputs: TagInputInfo[]
 }
 
-export interface UserAuthInfo {
+/** Данные запроса для создания группы пользователей */
+export interface UserGroupCreateRequest {
 	/**
+	 * Название. Не может повторяться в рамках родительской группы
+	 * @minLength 1
+	 */
+	name: string
+	/**
+	 * Идентификатор родительской группы
+	 * @format guid
+	 */
+	parentGuid?: string | null
+	/** Описание */
+	description?: string | null
+}
+
+/** Информация о группе пользователей */
+export interface UserGroupInfo {
+	/**
+	 * Идентификатор группы
 	 * @format guid
 	 * @minLength 1
 	 */
-	userGuid: string
-	/** @minLength 1 */
-	userName: string
-	/** @minLength 1 */
-	token: string
-	globalAccessType: AccessType
-	rights: UserAccessRightsInfo[]
+	guid: string
+	/**
+	 * Название группы
+	 * @minLength 1
+	 */
+	name: string
+	/** Произвольное описание группы */
+	description?: string | null
+	/**
+	 * Идентификатор группы, в которой располагается эта группа
+	 * @format guid
+	 */
+	parentGroupGuid?: string | null
 }
 
+/** Информация о группе пользователей в иерархическом представлении */
+export type UserGroupTreeInfo = UserGroupInfo & {
+	/** Список подгрупп */
+	children: UserGroupTreeInfo[]
+	/**
+	 * Идентификатор родительской группы
+	 * @format guid
+	 */
+	parentGuid?: string | null
+	/** Информация о родительской группе */
+	parent?: UserGroupTreeInfo | null
+}
+
+/** Расширенная информация о группе пользователей, включающая вложенные группы и список пользователей */
+export type UserGroupDetailedInfo = UserGroupInfo & {
+	/** Список пользователей этой группы */
+	users: UserGroupUsersInfo[]
+	/** Список подгрупп этой группы */
+	subgroups: UserGroupInfo[]
+}
+
+/** Информация о пользователей данной группы */
+export interface UserGroupUsersInfo {
+	/**
+	 * Идентификатор пользователя
+	 * @format guid
+	 */
+	guid?: string
+	/** Уровень доступа пользователя в группе */
+	accessType?: AccessType
+	/** Полное имя пользователя */
+	fullName?: string | null
+}
+
+/** Уровень доступа */
 export enum AccessType {
 	NoAccess = 'NoAccess',
 	Viewer = 'Viewer',
@@ -240,80 +477,215 @@ export enum AccessType {
 	NotSet = 'NotSet',
 }
 
-export interface UserAccessRightsInfo {
-	isGlobal?: boolean
-	/** @format int32 */
-	tagId?: number | null
-	/** @format int32 */
-	sourceId?: number | null
-	/** @format int32 */
-	blockId?: number | null
-	accessType: AccessType
+/** Данные запроса для изменения группы пользователей */
+export type UserGroupUpdateRequest = UserGroupCreateRequest & {
+	/** Базовый уровень доступа участников и под-групп */
+	accessType?: AccessType
+	/** Список пользователей, которые включены в эту группу */
+	users: UserGroupUsersInfo[]
+	/** Список групп, которые включены в эту группу */
+	groups: UserGroupInfo[]
 }
 
-export interface UserLoginPass {
-	/** @minLength 1 */
-	name: string
-	/** @minLength 1 */
-	password: string
-}
-
-export interface UserCreateRequest {
-	/** @minLength 1 */
-	loginName: string
-	fullName?: string | null
-	password?: string | null
-	staticHost?: string | null
-	accessType: AccessType
-}
-
-export interface UserInfo {
+/** Информация о пользователе, взятая из Keycloak */
+export interface UserEnergoIdInfo {
 	/**
+	 * Идентификатор пользователя в сервере Keycloak
 	 * @format guid
 	 * @minLength 1
 	 */
-	userGuid: string
-	/** @minLength 1 */
-	loginName: string
-	fullName?: string | null
-	accessType: AccessType
-	isStatic: boolean
-	userGroups: UserGroupInfo[]
+	energoIdGuid: string
+	/**
+	 * Имя для входа
+	 * @minLength 1
+	 */
+	login: string
+	/**
+	 * Полное имя пользователя
+	 * @minLength 1
+	 */
+	fullName: string
 }
 
-export interface UserGroupInfo {
-	/** @minLength 1 */
+/** Информация о аутентифицированном пользователе */
+export interface UserAuthInfo {
+	/**
+	 * Идентификатор пользователя
+	 * @format guid
+	 * @minLength 1
+	 */
 	guid: string
-	/** @minLength 1 */
+	/**
+	 * Имя пользователя
+	 * @minLength 1
+	 */
+	fullName: string
+	/**
+	 * Идентификатор сессии
+	 * @minLength 1
+	 */
+	token: string
+	/** Список правил доступа */
+	rights: UserAccessRightsInfo[]
+}
+
+/** Правило доступа пользователя */
+export interface UserAccessRightsInfo {
+	/** Является ли это правило глобальным */
+	isGlobal: boolean
+	/**
+	 * Идентификатор тега, на который распространяется это правило
+	 * @format int32
+	 */
+	tagId?: number | null
+	/**
+	 * Идентификатор источника, на который распространяется это правило
+	 * @format int32
+	 */
+	sourceId?: number | null
+	/**
+	 * Идентификатор блока, на который распространяется это правило
+	 * @format int32
+	 */
+	blockId?: number | null
+	/** Уровень доступа на основе этого правила */
+	accessType: AccessType
+}
+
+/** Информация при аутентификации локальной учетной записи */
+export interface UserLoginPass {
+	/**
+	 * Имя для входа
+	 * @minLength 1
+	 */
+	login: string
+	/**
+	 * Пароль
+	 * @minLength 1
+	 */
+	password: string
+}
+
+/** Данные запроса на создание пользователя */
+export interface UserCreateRequest {
+	/** Имя для входа */
+	login?: string | null
+	/** Полное имя пользователя */
+	fullName?: string | null
+	/** Глобальный уровень доступа */
+	accessType: AccessType
+	/** Тип учетной записи */
+	type: UserType
+	/** Используемый пароль */
+	password?: string | null
+	/** Адрес статической точки, откуда будет осуществляться доступ */
+	staticHost?: string | null
+	/**
+	 * Идентификатор связанной учетной записи в сервере EnergoId
+	 * @format guid
+	 */
+	energoIdGuid?: string | null
+}
+
+/** Тип учётной записи */
+export enum UserType {
+	Local = 'Local',
+	Static = 'Static',
+	EnergoId = 'EnergoId',
+}
+
+/** Информация о пользователе */
+export interface UserInfo {
+	/**
+	 * Идентификатор пользователя
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/** Имя для входа */
+	login?: string | null
+	/** Полное имя */
+	fullName?: string | null
+	/** Глобальный уровень доступа */
+	accessType: AccessType
+	/** Тип учётной записи */
+	type: UserType
+	/**
+	 * Идентификатор пользователя в сервере EnergoId
+	 * @format guid
+	 */
+	energoIdGuid?: string | null
+	/** Список групп, в которые входит пользователь */
+	userGroups: UserGroupsInfo[]
+}
+
+/** Информация о принадлежности пользователя к группе */
+export interface UserGroupsInfo {
+	/**
+	 * Идентификатор группы
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
+	 * Имя группы
+	 * @minLength 1
+	 */
 	name: string
 }
 
+/** Расширенная информация о пользователе, включающая данные для аутентификации */
 export type UserDetailInfo = UserInfo & {
-	/** @minLength 1 */
-	hash: string
+	/** Хэш, по которому проверяется доступ */
+	hash?: string | null
+	/** Адрес статического узла, с которого идёт доступ */
 	staticHost?: string | null
 }
 
+/** Данные запроса для изменения учетной записи */
 export interface UserUpdateRequest {
-	/** @minLength 1 */
-	loginName: string
+	/** Новое имя для входа */
+	login?: string | null
+	/** Новый адрес статической точки, из которой будет разрешен доступ */
 	staticHost?: string | null
+	/** Новый пароль */
 	password?: string | null
+	/** Новое полное имя */
 	fullName?: string | null
+	/** Новый глобальный уровень доступа */
 	accessType: AccessType
+	/** Нужно ли создать новый ключ для статичной учетной записи */
 	createNewStaticHash: boolean
+	/**
+	 * Идентификатор пользователя в сервере EnergoId
+	 * @format guid
+	 */
+	energoIdGuid?: string | null
+	/** Тип учетной записи */
+	type: UserType
 }
 
+/** Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения */
 export interface ValuesResponse {
-	/** @format int32 */
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
 	id: number
-	/** @minLength 1 */
+	/**
+	 * Имя тега
+	 * @minLength 1
+	 */
 	tagName: string
+	/** Тип данных */
 	type: TagType
+	/** Применённый тип агрегирования */
 	func: AggregationFunc
+	/** Список значений */
 	values: ValueRecord[]
 }
 
+/** Тип агрегирования данных */
 export enum AggregationFunc {
 	List = 'List',
 	Sum = 'Sum',
@@ -322,19 +694,28 @@ export enum AggregationFunc {
 	Max = 'Max',
 }
 
+/** Запись о значении */
 export interface ValueRecord {
 	/**
+	 * Дата, на которую значение актуально
 	 * @format date-time
 	 * @minLength 1
 	 */
 	date: string
-	/** @minLength 1 */
+	/**
+	 * Строковое представление даты
+	 * @minLength 1
+	 */
 	dateString: string
+	/** Значение */
 	value: any
+	/** Достоверность значения */
 	quality: TagQuality
+	/** Характеристика хранения значения */
 	using: TagUsing
 }
 
+/** Достоверность значения */
 export enum TagQuality {
 	Bad = 'Bad',
 	BadNoConnect = 'Bad_NoConnect',
@@ -345,6 +726,7 @@ export enum TagQuality {
 	Unknown = 'Unknown',
 }
 
+/** Характеристика значения */
 export enum TagUsing {
 	Initial = 'Initial',
 	Basic = 'Basic',
@@ -354,27 +736,53 @@ export enum TagUsing {
 	NotFound = 'NotFound',
 }
 
+/** Данные запроса для получения значений */
 export interface ValuesRequest {
+	/** Список локальных идентификаторов тегов */
 	tags?: number[] | null
+	/** Список имён тегов */
 	tagNames?: string[] | null
-	/** @format date-time */
+	/**
+	 * Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
+	 * @format date-time
+	 */
 	old?: string | null
-	/** @format date-time */
+	/**
+	 * Дата, по которую (включительно) нужно получить значения. По умолчанию - текущая дата
+	 * @format date-time
+	 */
 	young?: string | null
-	/** @format date-time */
+	/**
+	 * Дата, на которую (по точному соответствию) нужно получить значения. По умолчанию - не используется
+	 * @format date-time
+	 */
 	exact?: string | null
-	/** @format int32 */
+	/**
+	 * Шаг времени, по которому нужно разбить значения. Если не задан, будут оставлены записи о изменениях значений
+	 * @format int32
+	 */
 	resolution?: number | null
+	/** Тип агрегирования значений, который нужно применить к этому запросу. По умолчанию - список */
 	func?: AggregationFunc | null
 }
 
+/** Данные запроса на ввод значения */
 export interface ValueWriteRequest {
-	/** @format int32 */
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
 	tagId?: number | null
+	/** Имя тега */
 	tagName?: string | null
+	/** Новое значение */
 	value?: any
-	/** @format date-time */
+	/**
+	 * Дата, на которую будет записано значение
+	 * @format date-time
+	 */
 	date?: string | null
+	/** Флаг достоверности нового значения */
 	tagQuality?: TagQuality | null
 }
 

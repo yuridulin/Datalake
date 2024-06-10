@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -10,12 +10,19 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>1701;1702;1591</NoWarn>
+    <NoWarn>1701;1702</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <NoWarn>1701;1702;1591</NoWarn>
+    <NoWarn>1701;1702</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="wwwroot\generated\**" />
+    <Content Remove="wwwroot\generated\**" />
+    <EmbeddedResource Remove="wwwroot\generated\**" />
+    <None Remove="wwwroot\generated\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="linq2db.AspNet" Version="5.4.1" />
@@ -34,8 +41,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-    <Folder Include="wwwroot\generated\" />
+    <Folder Include="Logs\" />
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

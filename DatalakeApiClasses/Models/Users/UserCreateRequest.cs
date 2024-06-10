@@ -3,17 +3,45 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DatalakeApiClasses.Models.Users;
 
+/// <summary>
+/// Данные запроса на создание пользователя
+/// </summary>
 public class UserCreateRequest
 {
-	[Required]
-	public required string LoginName { get; set; }
+	/// <summary>
+	/// Имя для входа
+	/// </summary>
+	public string? Login { get; set; }
 
+	/// <summary>
+	/// Полное имя пользователя
+	/// </summary>
 	public string? FullName { get; set; }
 
-	public string? Password { get; set; }
-
-	public string? StaticHost { get; set; }
-
+	/// <summary>
+	/// Глобальный уровень доступа
+	/// </summary>
 	[Required]
 	public AccessType AccessType { get; set; }
+
+	/// <summary>
+	/// Тип учетной записи
+	/// </summary>
+	[Required]
+	public UserType Type { get; set; }
+
+	/// <summary>
+	/// Используемый пароль
+	/// </summary>
+	public string? Password { get; set; }
+
+	/// <summary>
+	/// Адрес статической точки, откуда будет осуществляться доступ
+	/// </summary>
+	public string? StaticHost { get; set; }
+
+	/// <summary>
+	/// Идентификатор связанной учетной записи в сервере EnergoId
+	/// </summary>
+	public Guid? EnergoIdGuid { get; set; }
 }

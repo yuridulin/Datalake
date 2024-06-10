@@ -16,12 +16,11 @@ namespace DatalakeDatabase.Tests.Steps
 
 			var userAuthInfo = await usersRepository.AuthenticateAsync(new UserLoginPass
 			{
-				Name = "admin",
+				Login = "admin",
 				Password = "admin",
 			});
 
 			Assert.NotNull(userAuthInfo);
-			Assert.Equal(AccessType.Admin, userAuthInfo.GlobalAccessType);
 
 			Constants.DefaultAdmin = userAuthInfo;
 		}

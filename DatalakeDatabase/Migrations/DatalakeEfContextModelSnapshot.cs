@@ -322,35 +322,36 @@ namespace DatalakeDatabase.Migrations
 
             modelBuilder.Entity("DatalakeDatabase.Models.User", b =>
                 {
-                    b.Property<Guid>("UserGuid")
+                    b.Property<Guid>("Guid")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("AccessType")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("EnergoIdGuid")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("FullName")
                         .HasColumnType("text");
 
-                    b.Property<string>("Hash")
-                        .IsRequired()
+                    b.Property<string>("Login")
                         .HasColumnType("text");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
                     b.Property<string>("StaticHost")
                         .HasColumnType("text");
 
-                    b.HasKey("UserGuid");
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Guid");
 
                     b.ToTable("Users");
                 });
 
             modelBuilder.Entity("DatalakeDatabase.Models.UserGroup", b =>
                 {
-                    b.Property<Guid>("UserGroupGuid")
+                    b.Property<Guid>("Guid")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
@@ -361,10 +362,10 @@ namespace DatalakeDatabase.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("ParentGroupGuid")
+                    b.Property<Guid?>("ParentGuid")
                         .HasColumnType("uuid");
 
-                    b.HasKey("UserGroupGuid");
+                    b.HasKey("Guid");
 
                     b.ToTable("UserGroups");
                 });

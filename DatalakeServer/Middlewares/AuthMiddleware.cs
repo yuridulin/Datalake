@@ -6,18 +6,26 @@ using System.Text;
 
 namespace DatalakeServer.Middlewares;
 
+/// <summary>
+/// Обработчик, проверяющий аутентификацию
+/// </summary>
+/// <param name="sessionManager">Менеджер сессий доступа</param>
 public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
 {
-	string[] checkingMethods = ["GET", "POST", "PUT", "DELETE"];
-
+	/// <summary>
+	/// Выполнение проверки аутентификации
+	/// </summary>
+	/// <param name="context">Контекст запроса</param>
+	/// <param name="next">Следующий обработчик</param>
 	public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 	{
-		bool isApi = context.Request.Path.StartsWithSegments("/api");
-		bool isNotAuthApi = !context.Request.Path.StartsWithSegments("/api/users/auth");
-		bool isMethodInCheckedList = checkingMethods.Contains(context.Request.Method);
+		bool needToAuth = context.Request.Path.StartsWithSegments("/api") // только api
+			&& (context.Request.Method != "OPTIONS") // только REST
+			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/auth")) // не логин-пасс
+			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/energo-id")); // не energoId
 
 		AuthSession? authSession = null;
-		if (isApi && isNotAuthApi && isMethodInCheckedList)
+		if (needToAuth)
 		{
 			authSession = sessionManager.GetExistSession(context);
 			if (authSession == null)

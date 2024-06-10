@@ -1,8 +1,12 @@
 import { Button, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import api from '../../../api/api'
-import { AccessType, UserInfo } from '../../../api/swagger/data-contracts'
+import api from '../../../api/swagger-api'
+import {
+	AccessType,
+	UserInfo,
+	UserType,
+} from '../../../api/swagger/data-contracts'
 import FormRow from '../../small/FormRow'
 import Header from '../../small/Header'
 
@@ -32,6 +36,21 @@ export default function UsersList() {
 		}
 	}
 
+	function UserTypeDescription(type: UserType) {
+		switch (type) {
+			case UserType.Local:
+				return 'Локальная учётная запись'
+
+			case UserType.Static:
+				return 'Статичная учётная запись'
+
+			case UserType.EnergoId:
+				return 'Учётная запись EnergoID'
+			default:
+				return '?'
+		}
+	}
+
 	useEffect(load, [])
 
 	return (
@@ -52,22 +71,20 @@ export default function UsersList() {
 					</FormRow>
 					<div className='table'>
 						<div className='table-header'>
-							<span style={{ width: '12em' }}>Логин</span>
+							<span style={{ width: '15em' }}>
+								Учетная запись
+							</span>
 							<span style={{ width: '12em' }}>
 								Уровень доступа
 							</span>
-							<span
-								style={{ width: '12em' }}
-								title='Статичный тип доступа используются для обращения без необходимости логиниться'
-							>
+							<span title='Статичный тип доступа используются для обращения без необходимости логиниться'>
 								Тип доступа
 							</span>
-							<span>Имя</span>
 						</div>
 						{users
 							.filter((x) =>
 								(
-									(x.loginName ?? '') +
+									(x.login ?? '') +
 									(x.fullName ?? '') +
 									AccessTypeDescription(x.accessType)
 								)
@@ -76,19 +93,18 @@ export default function UsersList() {
 									.includes(search.toLowerCase()),
 							)
 							.map((x) => (
-								<div className='table-row' key={x.loginName}>
+								<div className='table-row' key={x.login}>
 									<span>
-										<NavLink to={'/users/' + x.userGuid}>
-											<Button>{x.loginName}</Button>
+										<NavLink to={'/users/' + x.guid}>
+											<Button size='small'>
+												{x.fullName}
+											</Button>
 										</NavLink>
 									</span>
 									<span>
 										{AccessTypeDescription(x.accessType)}
 									</span>
-									<span>
-										{!!x.isStatic ? 'статичный' : 'базовый'}
-									</span>
-									<span>{x.fullName}</span>
+									<span>{UserTypeDescription(x.type)}</span>
 								</div>
 							))}
 					</div>

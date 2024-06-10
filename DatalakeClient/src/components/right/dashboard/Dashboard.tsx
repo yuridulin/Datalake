@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import { LogInfo } from '../../../api/swagger/data-contracts'
 import { useFetching } from '../../../hooks/useFetching'
 import LogTypeEl from '../../small/LogTypeEl'

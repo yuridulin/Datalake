@@ -8,6 +8,10 @@ namespace DatalakeApiClasses.Exceptions;
 /// <param name="message">Сообщение после "Запрещено: "</param>
 public class ForbiddenException(string? message) : DatalakeException(message)
 {
+	/// <summary>
+	/// Генерация строкового сообщения о ошибке
+	/// </summary>
+	/// <returns>Сообщение об ошибке</returns>
 	public override string ToString()
 	{
 		return "Запрещено: " + Message;

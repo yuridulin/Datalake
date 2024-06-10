@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../api/api'
+import api from '../../api/swagger-api'
 import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
-import { auth } from '../../etc/auth'
 import { CustomSource } from '../../etc/customSource'
+import routes from '../../router/routes'
 
 export function AppMenu() {
 	const { lastUpdate } = useUpdateContext()
@@ -22,14 +22,12 @@ export function AppMenu() {
 
 	return (
 		<div className='app-menu'>
-			{auth.isAdmin() && <NavLink to={'/users'}>Пользователи</NavLink>}
-
 			<div className='app-menu-block'>
 				<NavLink to={'/'}>Монитор</NavLink>
-				{/* <div className="app-menu-sub">
-				<NavLink to={'/logs'}>События</NavLink>
-				<NavLink to={'/settings'}>Администрирование</NavLink>
-			</div> */}
+				<NavLink to={routes.Users.List}>Пользователи</NavLink>
+				<NavLink to={routes.UserGroups.List}>
+					Группы пользователей
+				</NavLink>
 			</div>
 
 			<div className='app-menu-block'>

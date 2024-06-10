@@ -2,7 +2,7 @@ import { PlusCircleOutlined } from '@ant-design/icons'
 import { Button, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../../api/api'
+import api from '../../../api/swagger-api'
 import {
 	SourceEntryInfo,
 	SourceType,

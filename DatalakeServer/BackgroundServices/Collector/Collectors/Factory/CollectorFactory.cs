@@ -1,10 +1,14 @@
 ﻿using DatalakeApiClasses.Enums;
+using DatalakeDatabase.Models;
 using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
 using DatalakeServer.Services.Receiver;
-using DatalakeDatabase.Models;
 
 namespace DatalakeServer.BackgroundServices.Collector.Collectors.Factory;
 
+/// <summary>
+/// Получение нужного сборщика данных для выбранного источника
+/// </summary>
+/// <param name="receiverService">Служба запроса данных из источника</param>
 public class CollectorFactory(ReceiverService receiverService)
 {
 	private ILoggerFactory _loggerFactory = LoggerFactory.Create(builder =>
@@ -12,6 +16,11 @@ public class CollectorFactory(ReceiverService receiverService)
 		builder.AddDebug();
 	});
 
+	/// <summary>
+	/// Получение сборщика для источника
+	/// </summary>
+	/// <param name="source">Выбранный источник данных</param>
+	/// <returns>Новый экземпляр подходящего сборщика</returns>
 	public ICollector? GetCollector(Source source)
 	{
 		return source.Type switch

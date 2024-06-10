@@ -1,7 +1,10 @@
-import { Button, Form, Input } from 'antd'
+import { Button, Form, Input, Space } from 'antd'
+import { AxiosResponse } from 'axios'
+import { useKeycloak } from 'keycloak-react-web'
 import { useNavigate } from 'react-router-dom'
-import api from '../../api/api'
+import api from '../../api/swagger-api'
 import { UserLoginPass } from '../../api/swagger/data-contracts'
+import routes from '../../router/routes'
 
 const style = {
 	width: '40em',
@@ -10,16 +13,19 @@ const style = {
 
 export default function LoginPanel() {
 	const navigate = useNavigate()
+	const { keycloak } = useKeycloak()
 
 	const onFinish = (values: any) => {
 		api.usersAuthenticate({
-			name: values.username,
+			login: values.username,
 			password: values.password,
-		}).then((res) => {
-			if (res.status === 200) {
-				navigate('/')
-			}
-		})
+		}).then(onSuccessAuth)
+	}
+
+	const onSuccessAuth = (res: AxiosResponse) => {
+		if (res.status === 200) {
+			navigate('/')
+		}
 	}
 
 	const onFinishFailed = (errorInfo: any) => {
@@ -35,7 +41,7 @@ export default function LoginPanel() {
 				style={{ maxWidth: 600 }}
 				onFinish={onFinish}
 				onFinishFailed={onFinishFailed}
-				autoComplete='off'
+				autoComplete='on'
 			>
 				<Form.Item<UserLoginPass>
 					label='Имя учётной записи'
@@ -54,9 +60,22 @@ export default function LoginPanel() {
 				</Form.Item>
 
 				<Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-					<Button type='primary' htmlType='submit'>
-						Вход
-					</Button>
+					<Space>
+						<Button type='primary' htmlType='submit'>
+							Вход
+						</Button>
+						<Button
+							onClick={() =>
+								keycloak.login({
+									redirectUri:
+										window.location.origin +
+										routes.Auth.KeycloakAfterLogin,
+								})
+							}
+						>
+							Вход через EnergoID
+						</Button>
+					</Space>
 				</Form.Item>
 			</Form>
 		</div>

@@ -3,17 +3,32 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DatalakeApiClasses.Models.Sources;
 
+/// <summary>
+/// Информация о теге, берущем данные из этого источника
+/// </summary>
 public class SourceTagInfo
 {
+	/// <summary>
+	/// Идентификатор тега в локальной базе
+	/// </summary>
 	[Required]
 	public int Id { get; set; }
 
+	/// <summary>
+	/// Глобальное наименование тега
+	/// </summary>
 	[Required]
 	public required string Name { get; set; }
 
+	/// <summary>
+	/// Путь к данным в источнике
+	/// </summary>
 	[Required]
 	public required string Item { get; set; }
 
+	/// <summary>
+	/// Тип данных тега
+	/// </summary>
 	[Required]
 	public TagType Type { get; set; }
 }

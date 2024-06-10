@@ -1,5 +1,8 @@
 ﻿namespace DatalakeApiClasses.Constants;
 
+/// <summary>
+/// Маски для перевода дат в строковое представление
+/// </summary>
 public static class DateFormats
 {
 	/// <summary>

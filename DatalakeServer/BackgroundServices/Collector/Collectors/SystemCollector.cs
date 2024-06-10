@@ -1,9 +1,14 @@
-﻿using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
-using DatalakeDatabase.Models;
+﻿using DatalakeDatabase.Models;
+using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
 
 namespace DatalakeServer.BackgroundServices.Collector.Collectors;
 
-public class SystemCollector(
+/// <summary>
+/// Системный сборщик данных, собирающий информацию о работе сервера
+/// </summary>
+/// <param name="source">Источник данных</param>
+/// <param name="logger">Служба сообщений</param>
+internal class SystemCollector(
 	Source source,
 	ILogger<SystemCollector> logger) : CollectorBase(source, logger)
 {

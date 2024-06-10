@@ -5,6 +5,7 @@ using DatalakeApiClasses.Models.Users;
 using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
 using LinqToDB;
+using System.Linq;
 
 namespace DatalakeDatabase.Extensions;
 
@@ -47,7 +48,6 @@ public static class DatalakeContextExtension
 	/// </summary>
 	/// <param name="db">Подключение к базе данных</param>
 	/// <param name="userGuid">Идентификатор пользователя</param>
-	/// <param name="objectWhere">Дополнительные условия проверки</param>
 	/// <returns>Объект разрешений пользователя</returns>
 	public static async Task<AccessRights[]> AuthorizeUserAsync(
 		this DatalakeContext db,
@@ -56,7 +56,7 @@ public static class DatalakeContextExtension
 		var groups = await db.GetUserGroupsAsync(userGuid);
 
 		var rights = await db.AccessRights
-			.Where(x => groups.Select(g => g.Guid).Contains(x.UserGroupGuid.ToString()) || x.UserGuid == userGuid)
+			.Where(x => groups.Where(g => g.Guid == x.UserGroupGuid).Any() || x.UserGuid == userGuid)
 			.Where(x => x.AccessType != AccessType.NotSet)
 			.ToArrayAsync();
 
@@ -92,18 +92,18 @@ public static class DatalakeContextExtension
 		if (userGuid == null)
 			throw new NotFoundException(message: "пользователь без идентификатора");
 
-		var user = await db.Users.FirstOrDefaultAsync(x => x.UserGuid == userGuid)
+		var user = await db.Users.FirstOrDefaultAsync(x => x.Guid == userGuid)
 			?? throw new NotFoundException(message: "пользователь " + userGuid);
 
 		var groupsQuery = from userGroup in db.UserGroups
 											from rel in db.UserGroupRelations
 											 .Where(x => x.UserGuid == userGuid)
-											 .LeftJoin(x => x.UserGroupGuid == userGroup.UserGroupGuid)
+											 .LeftJoin(x => x.UserGroupGuid == userGroup.Guid)
 											group new { userGroup, rel } by userGroup into g
 											select new
 											{
-												Id = g.Key.UserGroupGuid.ToString(),
-												ParentId = g.Key.ParentGroupGuid.ToString(),
+												Id = g.Key.Guid,
+												ParentId = g.Key.ParentGuid,
 												g.Key.Name,
 												Relations = g.Select(x => x.rel != null ? x.rel.AccessType : AccessType.NoAccess).ToArray(),
 											};
@@ -121,7 +121,7 @@ public static class DatalakeContextExtension
 			})
 			.ToArray();
 
-		UserGroupsTreeInfo[] ReadChildren(string? id)
+		UserGroupsTreeInfo[] ReadChildren(Guid? id)
 		{
 			return groups
 				.Where(x => x.ParentId == id)

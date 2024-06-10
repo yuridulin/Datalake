@@ -1,16 +1,16 @@
 ﻿using DatalakeApiClasses.Models.Values;
-using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
-using DatalakeServer.BackgroundServices.Collector.Collectors.Factory;
-using DatalakeServer.BackgroundServices.Collector.Models;
 using DatalakeDatabase;
 using DatalakeDatabase.Extensions;
 using DatalakeDatabase.Models;
 using DatalakeDatabase.Repositories;
+using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
+using DatalakeServer.BackgroundServices.Collector.Collectors.Factory;
+using DatalakeServer.BackgroundServices.Collector.Models;
 using LinqToDB;
 
 namespace DatalakeServer.BackgroundServices.Collector;
 
-public class CollectorService(
+internal class CollectorService(
 	CollectorFactory collectorFactory,
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<CollectorService> logger) : BackgroundService
@@ -81,7 +81,7 @@ public class CollectorService(
 			.ToArray();
 
 		valuesRepository.WriteValuesAsync(writeValues).Wait();
-		logger.LogDebug("Collect from {name} of {type} type: {count} values", 
+		logger.LogDebug("Collect from {name} of {type} type: {count} values",
 			collector.Name, collector.Type, writeValues.Length);
 	}
 

@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import App from '../components/App'
 import Offline from '../components/Offline'
+import KeycloakAfterLogin from '../components/global/KeycloakAfterLogin'
 import LoginPanel from '../components/global/LoginPanel'
 import BlockForm from '../components/right/blocks/BlockForm'
 import BlockView from '../components/right/blocks/BlockView'
@@ -12,15 +13,21 @@ import TagForm from '../components/right/tags/TagForm'
 import TagsCalculatedList from '../components/right/tags/TagsCalculatedList'
 import TagsList from '../components/right/tags/TagsList'
 import TagsManualList from '../components/right/tags/TagsManualList'
+import UserGroupsTreeList from '../components/right/usergroups/UserGroupsTreeList'
 import UserCreate from '../components/right/users/UserCreate'
 import UserForm from '../components/right/users/UserForm'
 import UsersList from '../components/right/users/UsersList'
 import Viewer from '../components/right/viewer/Viewer'
+import routes from './routes'
 
 const router = createBrowserRouter([
 	{
-		path: '/login',
+		path: routes.Auth.LoginPage,
 		element: <LoginPanel />,
+	},
+	{
+		path: routes.Auth.KeycloakAfterLogin,
+		element: <KeycloakAfterLogin />,
 	},
 	{
 		path: '/',
@@ -35,20 +42,37 @@ const router = createBrowserRouter([
 				element: <Viewer />,
 			},
 			{
-				path: '/users',
+				path: routes.Users.root,
 				children: [
 					{
-						path: '/users/',
+						path: routes.Users.List,
 						element: <UsersList />,
 					},
 					{
-						path: '/users/create',
+						path: routes.Users.Create,
 						element: <UserCreate />,
 					},
 					{
-						path: '/users/:id',
+						path: routes.Users.Form,
 						element: <UserForm />,
 					},
+				],
+			},
+			{
+				path: routes.UserGroups.root,
+				children: [
+					{
+						path: routes.UserGroups.List,
+						element: <UserGroupsTreeList />,
+					},
+					/* {
+						path: '/user-groups/create',
+						element: <UserCreate />,
+					},
+					{
+						path: '/user-groups/:id',
+						element: <UserForm />,
+					}, */
 				],
 			},
 			{

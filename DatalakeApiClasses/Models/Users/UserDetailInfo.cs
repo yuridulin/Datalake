@@ -1,11 +1,20 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DatalakeApiClasses.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace DatalakeApiClasses.Models.Users;
 
+/// <summary>
+/// Расширенная информация о пользователе, включающая данные для аутентификации
+/// </summary>
 public class UserDetailInfo : UserInfo
 {
-	[Required]
-	public required string Hash { get; set; }
+	/// <summary>
+	/// Хэш, по которому проверяется доступ
+	/// </summary>
+	public string? Hash { get; set; }
 
+	/// <summary>
+	/// Адрес статического узла, с которого идёт доступ
+	/// </summary>
 	public string? StaticHost { get; set; }
 }
