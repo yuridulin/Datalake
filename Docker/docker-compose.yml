@@ -3,10 +3,13 @@ version: '3.4'
 services:
   datalakeserver:
     image: ${DOCKER_REGISTRY-}datalakeserver
-    container_name: datalake
+    container_name: datalake-server
     build:
       context: ../
-      dockerfile: ./DatalakeServer/Dockerfile
+      dockerfile: ./Server/Dockerfile
+    environment:
+      DATALAKE_HOST_DEV: ${DEV_PG_HOST}
+      DATALAKE_DB_DEV: ${DATALAKE_DB_DEV}
 
   # keycloak:
   #   image: ${DOCKER_REGISTRY-}keycloak

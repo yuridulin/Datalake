@@ -32,7 +32,8 @@
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger/index.html",
       "environmentVariables": {
         "ASPNETCORE_HTTPS_PORTS": "8081",
-        "ASPNETCORE_HTTP_PORTS": "8080"
+        "ASPNETCORE_HTTP_PORTS": "8080",
+        "DATALAKE_HOST_DEV": ""
       },
       "publishAllPorts": true,
       "useSSL": true

@@ -22,6 +22,4 @@ RUN dotnet publish "Server.csproj" -c Release -o /app/publish /p:UseAppHost=fals
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ARG ENVIRONMENT
-ENV ASPNETCORE_ENVIRONMENT $ENVIRONMENT
 ENTRYPOINT ["dotnet", "Server.dll"]
