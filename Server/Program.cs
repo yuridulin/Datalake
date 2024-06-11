@@ -51,9 +51,10 @@ namespace DatalakeServer
 
 			builder.Host.UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
 			builder.Services.AddLogging(options => options.AddSerilog());
+			builder.Services.AddEndpointsApiExplorer();
 
 			ConfigureDatabase(builder);
-			ConfigureAuth(builder);
+			//ConfigureAuth(builder);
 			ConfigureServices(builder);
 
 			var app = builder.Build();
@@ -72,8 +73,8 @@ namespace DatalakeServer
 			app.UseDefaultFiles();
 			app.UseStaticFiles();
 			app.UseRouting();
-			app.UseAuthentication();
-			app.UseAuthorization();
+			//app.UseAuthentication();
+			//app.UseAuthorization();
 			app.UseCors(policy =>
 			{
 				policy
@@ -84,8 +85,8 @@ namespace DatalakeServer
 						AuthConstants.TokenHeader,
 					]);
 			});
-			app.UseOpenApi();
 #if DEBUG
+			app.UseOpenApi();
 			app.UseSwaggerUi();
 #endif
 			app.UseMiddleware<AuthMiddleware>();
@@ -95,6 +96,7 @@ namespace DatalakeServer
 			app.MapControllerRoute(
 				name: "default",
 				pattern: "{controller=Home}/{action=Index}/{id?}");
+			app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
 
 			app.Run();
 		}
