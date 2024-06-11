@@ -1,1 +1,1 @@
-const PORT = 83;
+﻿var LOCAL_API = true;

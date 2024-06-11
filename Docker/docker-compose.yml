@@ -1,0 +1,31 @@
+version: '3.4'
+
+services:
+  datalakeserver:
+    image: ${DOCKER_REGISTRY-}datalakeserver
+    container_name: datalake
+    build:
+      context: ../
+      dockerfile: ./DatalakeServer/Dockerfile
+
+  # keycloak:
+  #   image: ${DOCKER_REGISTRY-}keycloak
+  #   container_name: keycloak
+  #   build:
+  #     context: ../../
+  #     dockerfile: ./KcSvc/keycloak/Dockerfile
+  #   environment:
+  #     KEYCLOAK_ADMIN: admin
+  #     KEYCLOAK_ADMIN_PASSWORD: admin
+  #     KC_DB: postgres
+  #     KC_DB_URL_HOST: ${DEV_PG_HOST}
+  #     KC_DB_URL_PORT: 5432
+  #     KC_DB_URL_DATABASE: ${KEYCLOAK_SINUS_DB}
+  #     KC_DB_SCHEMA: public
+  #     KC_DB_USERNAME: postgres
+  #     KC_DB_PASSWORD: postgres
+  #   entrypoint: /opt/keycloak/bin/kc.sh -v start-dev --import-realm
+  #   volumes:
+  #     - "../../KcSvc/keycloak/storage:/opt/keycloak/data"
+  #   ports:
+  #     - 8080:8080

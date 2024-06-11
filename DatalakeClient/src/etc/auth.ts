@@ -40,9 +40,11 @@ class Auth {
 	}
 
 	logout() {
-		this.token = ''
-		this.fullName = ''
-		this.isAuthenticated = false
+		try {
+			this.token = ''
+			this.fullName = ''
+			this.isAuthenticated = false
+		} catch (e) {}
 		localStorage.removeItem(tokenHeader)
 		localStorage.removeItem(nameHeader)
 	}

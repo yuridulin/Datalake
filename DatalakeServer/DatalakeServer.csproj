@@ -7,6 +7,7 @@
     <UserSecretsId>e8e47f82-b72d-4b5a-8497-ec368aca8169</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -16,13 +17,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <NoWarn>1701;1702</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="wwwroot\generated\**" />
-    <Content Remove="wwwroot\generated\**" />
-    <EmbeddedResource Remove="wwwroot\generated\**" />
-    <None Remove="wwwroot\generated\**" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="linq2db.AspNet" Version="5.4.1" />
@@ -42,7 +36,6 @@
 
   <ItemGroup>
     <Folder Include="Logs\" />
-    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

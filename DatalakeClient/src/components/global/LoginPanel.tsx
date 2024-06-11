@@ -1,5 +1,4 @@
 import { Button, Form, Input, Space } from 'antd'
-import { AxiosResponse } from 'axios'
 import { useKeycloak } from 'keycloak-react-web'
 import { useNavigate } from 'react-router-dom'
 import api from '../../api/swagger-api'
@@ -19,13 +18,10 @@ export default function LoginPanel() {
 		api.usersAuthenticate({
 			login: values.username,
 			password: values.password,
-		}).then(onSuccessAuth)
-	}
-
-	const onSuccessAuth = (res: AxiosResponse) => {
-		if (res.status === 200) {
-			navigate('/')
-		}
+		}).then((res) => {
+			console.log(res)
+			if (res.status < 400) navigate('/')
+		})
 	}
 
 	const onFinishFailed = (errorInfo: any) => {

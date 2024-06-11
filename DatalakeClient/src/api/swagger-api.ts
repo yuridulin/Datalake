@@ -4,8 +4,15 @@ import { auth, tokenHeader } from '../etc/auth'
 import router from '../router/router'
 import { Api } from './swagger/Api'
 
+declare const LOCAL_API: boolean
+
+let isLocal = false
+try {
+	isLocal = LOCAL_API
+} catch (e) {}
+
 const api = new Api({
-	//baseURL: 'https://localhost:32781/',
+	baseURL: !!isLocal ? window.location.href : 'https://localhost:32781/',
 	validateStatus(status) {
 		return status >= 200 && status < 300
 	},
