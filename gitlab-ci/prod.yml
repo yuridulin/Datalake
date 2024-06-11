@@ -10,7 +10,7 @@ build-server:
     - push-build
 
   script:
-    - docker build -t datalake:latest  -f ./DatalakeServer/Dockerfile .
+    - docker build -t datalake:latest  -f ./Server/Dockerfile .
     - docker tag datalake:latest "$CI_REPOS_URL"/datalake:"$CI_COMMIT_TAG"
     - docker tag datalake:latest "$CI_REPOS_URL"/datalake:latest
 
