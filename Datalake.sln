@@ -4,9 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatalakeServer", "DatalakeServer\DatalakeServer.csproj", "{B78B7FDA-DB88-42DD-A640-13419342F483}"
-	ProjectSection(ProjectDependencies) = postProject
-		{4043FA0A-765B-4DE6-A68A-FEDFA29064AA} = {4043FA0A-765B-4DE6-A68A-FEDFA29064AA}
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatalakeDatabase", "DatalakeDatabase\DatalakeDatabase.csproj", "{66C6FACE-4230-4FCA-B309-87965B6C9CA8}"
 EndProject

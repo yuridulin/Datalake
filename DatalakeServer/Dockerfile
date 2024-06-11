@@ -7,10 +7,11 @@ EXPOSE 8080
 EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["/DatalakeServer/DatalakeServer.csproj", "DatalakeServer/"]
 COPY ["/DatalakeDatabase/DatalakeDatabase.csproj", "DatalakeDatabase/"]
-COPY ["/DatalakeClient/datalakeclient.esproj", "DatalakeClient/"]
+#COPY ["/DatalakeClient/datalakeclient.esproj", "DatalakeClient/"]
 COPY ["/DatalakeApiClasses/DatalakeApiClasses.csproj", "DatalakeApiClasses/"]
 RUN dotnet restore "./DatalakeServer/DatalakeServer.csproj"
 COPY . .
@@ -18,6 +19,7 @@ WORKDIR "/src/DatalakeServer"
 RUN dotnet build "DatalakeServer.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "DatalakeServer.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
