@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DatalakeApiClasses\DatalakeApiClasses.csproj" />
+    <ProjectReference Include="..\ApiClasses\ApiClasses.csproj" />
   </ItemGroup>
 
 </Project>
