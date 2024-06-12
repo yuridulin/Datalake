@@ -17,5 +17,6 @@ public static class Defaults
 		Password = "admin",
 		AccessType = AccessType.Admin,
 		FullName = "Администратор",
+		Type = UserType.Local,
 	};
 }

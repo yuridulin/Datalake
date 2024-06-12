@@ -22,13 +22,13 @@ public class UserCreateRequest
 	/// Глобальный уровень доступа
 	/// </summary>
 	[Required]
-	public AccessType AccessType { get; set; }
+	public required AccessType AccessType { get; set; }
 
 	/// <summary>
 	/// Тип учетной записи
 	/// </summary>
 	[Required]
-	public UserType Type { get; set; }
+	public required UserType Type { get; set; }
 
 	/// <summary>
 	/// Используемый пароль
