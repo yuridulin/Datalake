@@ -1,7 +1,7 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.Database.Models;
 
-namespace DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
+namespace Datalake.Server.BackgroundServices.Collector.Collectors.Abstractions;
 
 /// <summary>
 /// Базовый класс сборщика с реализацией основных механизмов

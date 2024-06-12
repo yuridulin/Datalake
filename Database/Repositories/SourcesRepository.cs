@@ -51,7 +51,7 @@ public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 			.InsertWithInt32IdentityAsync();
 
 		if (!id.HasValue)
-			throw new DatabaseException("Не удалось добавить источник");
+			throw new DatabaseException(message: "не удалось добавить источник", DatabaseStandartError.IdIsNull);
 
 		await db.Sources
 			.Where(x => x.Id == id.Value)
@@ -83,7 +83,7 @@ public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 			.InsertWithInt32IdentityAsync();
 
 		if (!id.HasValue)
-			throw new DatabaseException("Не удалось добавить источник");
+			throw new DatabaseException("Не удалось добавить источник", DatabaseStandartError.IdIsNull);
 
 		await db.SetLastUpdateToNowAsync();
 		await transaction.CommitAsync();
@@ -111,7 +111,7 @@ public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 			.UpdateAsync();
 
 		if (count == 0)
-			throw new DatabaseException($"Не удалось обновить источник #{id}");
+			throw new DatabaseException($"Не удалось обновить источник #{id}", DatabaseStandartError.UpdatedZero);
 
 		await db.SetLastUpdateToNowAsync();
 		await transaction.CommitAsync();
@@ -128,7 +128,7 @@ public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 			.DeleteAsync();
 
 		if (count == 0)
-			throw new DatabaseException($"Не удалось удалить источник #{id}");
+			throw new DatabaseException($"Не удалось удалить источник #{id}", DatabaseStandartError.DeletedZero);
 
 		// при удалении источника его теги становятся ручными
 		await db.Tags

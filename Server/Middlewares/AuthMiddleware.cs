@@ -1,10 +1,10 @@
 ﻿using Datalake.ApiClasses.Exceptions;
-using DatalakeServer.Constants;
-using DatalakeServer.Services.SessionManager;
-using DatalakeServer.Services.SessionManager.Models;
+using Datalake.Server.Constants;
+using Datalake.Server.Services.SessionManager;
+using Datalake.Server.Services.SessionManager.Models;
 using System.Text;
 
-namespace DatalakeServer.Middlewares;
+namespace Datalake.Server.Middlewares;
 
 /// <summary>
 /// Обработчик, проверяющий аутентификацию

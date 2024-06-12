@@ -1,4 +1,4 @@
-﻿namespace DatalakeServer.Services.Receiver.Models.Inopc;
+﻿namespace Datalake.Server.Services.Receiver.Models.Inopc;
 
 /// <summary>
 /// Ответ INOPC на запрос за значениями

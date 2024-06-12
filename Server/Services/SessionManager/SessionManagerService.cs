@@ -1,8 +1,8 @@
 ﻿using Datalake.ApiClasses.Models.Users;
-using DatalakeServer.Constants;
-using DatalakeServer.Services.SessionManager.Models;
+using Datalake.Server.Constants;
+using Datalake.Server.Services.SessionManager.Models;
 
-namespace DatalakeServer.Services.SessionManager;
+namespace Datalake.Server.Services.SessionManager;
 
 /// <summary>
 /// Менеджер сессий пользователей

@@ -1,12 +1,12 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.UserGroups;
 using Datalake.ApiClasses.Models.Users;
-using DatalakeServer.Constants;
-using DatalakeServer.TestRunner.Attributes;
-using DatalakeServer.TestRunner.Extensions;
+using Datalake.Server.Constants;
+using Datalake.Server.TestRunner.Attributes;
+using Datalake.Server.TestRunner.Extensions;
 using System.Net.Http.Json;
 
-namespace DatalakeServer.TestRunner.Tests.CrudTests;
+namespace Datalake.Server.TestRunner.Tests.CrudTests;
 
 public class UserGroupCrud : IClassFixture<TestingWebAppFactory<Program>>
 {

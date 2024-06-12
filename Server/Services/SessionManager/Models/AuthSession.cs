@@ -1,6 +1,6 @@
 ﻿using Datalake.ApiClasses.Models.Users;
 
-namespace DatalakeServer.Services.SessionManager.Models;
+namespace Datalake.Server.Services.SessionManager.Models;
 
 /// <summary>
 /// Данные сессии пользователя

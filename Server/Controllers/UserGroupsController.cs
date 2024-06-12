@@ -1,12 +1,12 @@
 ﻿using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.UserGroups;
 using Datalake.Database.Repositories;
-using DatalakeServer.Controllers.Base;
+using Datalake.Server.Controllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace DatalakeServer.Controllers;
+namespace Datalake.Server.Controllers;
 
 /// <summary>
 /// Взаимодействие с группами пользователей

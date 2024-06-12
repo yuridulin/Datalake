@@ -3,12 +3,12 @@ using Datalake.Database;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
 using Datalake.Database.Repositories;
-using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
-using DatalakeServer.BackgroundServices.Collector.Collectors.Factory;
-using DatalakeServer.BackgroundServices.Collector.Models;
+using Datalake.Server.BackgroundServices.Collector.Collectors.Abstractions;
+using Datalake.Server.BackgroundServices.Collector.Collectors.Factory;
+using Datalake.Server.BackgroundServices.Collector.Models;
 using LinqToDB;
 
-namespace DatalakeServer.BackgroundServices.Collector;
+namespace Datalake.Server.BackgroundServices.Collector;
 
 internal class CollectorService(
 	CollectorFactory collectorFactory,

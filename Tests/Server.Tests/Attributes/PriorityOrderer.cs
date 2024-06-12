@@ -1,7 +1,7 @@
 ﻿using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace DatalakeServer.TestRunner.Attributes
+namespace Datalake.Server.TestRunner.Attributes
 {
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 	public class PriorityAttribute(int priority) : Attribute

@@ -1,6 +1,6 @@
-﻿using DatalakeServer.Services.Receiver.Models.Inopc.Enums;
+﻿using Datalake.Server.Services.Receiver.Models.Inopc.Enums;
 
-namespace DatalakeServer.Services.Receiver.Models.Inopc;
+namespace Datalake.Server.Services.Receiver.Models.Inopc;
 
 /// <summary>
 /// Объект данных INOPC

@@ -1,6 +1,6 @@
 ﻿using Datalake.ApiClasses.Enums;
 
-namespace DatalakeServer.BackgroundServices.Collector.Models;
+namespace Datalake.Server.BackgroundServices.Collector.Models;
 
 /// <summary>
 /// Информация о полученном значении

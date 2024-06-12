@@ -1,9 +1,9 @@
 ﻿using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
-using DatalakeServer.Constants;
+using Datalake.Server.Constants;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DatalakeServer.Controllers.Base
+namespace Datalake.Server.Controllers.Base
 {
 	/// <summary>
 	/// Базовый контроллер приложения

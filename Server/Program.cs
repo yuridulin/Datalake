@@ -1,12 +1,12 @@
 using Datalake.ApiClasses.Exceptions.Base;
 using Datalake.Database;
 using Datalake.Database.Repositories;
-using DatalakeServer.BackgroundServices.Collector;
-using DatalakeServer.BackgroundServices.Collector.Collectors.Factory;
-using DatalakeServer.Constants;
-using DatalakeServer.Middlewares;
-using DatalakeServer.Services.Receiver;
-using DatalakeServer.Services.SessionManager;
+using Datalake.Server.BackgroundServices.Collector;
+using Datalake.Server.BackgroundServices.Collector.Collectors.Factory;
+using Datalake.Server.Constants;
+using Datalake.Server.Middlewares;
+using Datalake.Server.Services.Receiver;
+using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using LinqToDB.AspNet;
 using Microsoft.AspNetCore.Diagnostics;
@@ -18,7 +18,7 @@ using System.Reflection;
 using LinqToDB.AspNet.Logging;
 #endif
 
-namespace DatalakeServer
+namespace Datalake.Server
 {
 	/// <summary>
 	/// �������� ����� ����������

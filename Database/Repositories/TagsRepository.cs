@@ -207,7 +207,7 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 			.UpdateAsync();
 
 		if (count == 0)
-			throw new DatabaseException($"Не удалось сохранить тег #{id}");
+			throw new DatabaseException($"Не удалось сохранить тег #{id}", DatabaseStandartError.UpdatedZero);
 
 		await db.TagInputs
 			.Where(x => x.TagId == id)
@@ -234,7 +234,7 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 			.DeleteAsync();
 
 		if (count == 0)
-			throw new DatabaseException($"Не удалось удалить тег #{id}");
+			throw new DatabaseException($"Не удалось удалить тег #{id}", DatabaseStandartError.DeletedZero);
 
 		// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
 		// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей

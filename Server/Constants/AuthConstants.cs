@@ -1,4 +1,4 @@
-﻿namespace DatalakeServer.Constants
+﻿namespace Datalake.Server.Constants
 {
 	/// <summary>
 	/// Константы, используемые для передачи данных о пользователе при выполнении запросов

@@ -1,13 +1,13 @@
 ﻿using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Sources;
 using Datalake.Database.Repositories;
-using DatalakeServer.Controllers.Base;
-using DatalakeServer.Services.Receiver;
+using Datalake.Server.Controllers.Base;
+using Datalake.Server.Services.Receiver;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace DatalakeServer.Controllers;
+namespace Datalake.Server.Controllers;
 
 /// <summary>
 /// Взаимодействие с источниками данных

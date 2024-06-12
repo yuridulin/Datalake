@@ -6,7 +6,7 @@ namespace Datalake.Database.Repositories;
 
 public partial class SystemRepository
 {
-	public IQueryable<LogInfo> GetInfoWithAllRelations()
+	public IQueryable<LogInfo> GetLogs()
 	{
 		var query = db.Logs
 			.Select(x => new LogInfo

@@ -1,9 +1,9 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.Database.Models;
-using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
-using DatalakeServer.Services.Receiver;
+using Datalake.Server.BackgroundServices.Collector.Collectors.Abstractions;
+using Datalake.Server.Services.Receiver;
 
-namespace DatalakeServer.BackgroundServices.Collector.Collectors.Factory;
+namespace Datalake.Server.BackgroundServices.Collector.Collectors.Factory;
 
 /// <summary>
 /// Получение нужного сборщика данных для выбранного источника

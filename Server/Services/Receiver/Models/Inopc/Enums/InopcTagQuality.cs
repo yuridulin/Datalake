@@ -1,4 +1,4 @@
-﻿namespace DatalakeServer.Services.Receiver.Models.Inopc.Enums
+﻿namespace Datalake.Server.Services.Receiver.Models.Inopc.Enums
 {
 	/// <summary>
 	/// Достоверность значения в INOPC

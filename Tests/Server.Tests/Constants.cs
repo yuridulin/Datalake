@@ -1,4 +1,4 @@
-﻿namespace DatalakeServer.TestRunner;
+﻿namespace Datalake.Server.TestRunner;
 
 public static class Constants
 {

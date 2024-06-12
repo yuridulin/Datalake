@@ -235,7 +235,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 
 		if (countOfGenerations >= 100)
 		{
-			throw new DatabaseException(message: "не удалось создать новый уникальный api-ключ за 100 шагов");
+			throw new DatabaseException(message: "не удалось создать новый уникальный api-ключ за 100 шагов", innerException: null);
 		}
 
 		return hash;

@@ -1,6 +1,6 @@
 ﻿using Datalake.ApiClasses.Enums;
 
-namespace DatalakeServer.Services.Receiver.Models;
+namespace Datalake.Server.Services.Receiver.Models;
 
 /// <summary>
 /// Запись о полученном из источника значении

@@ -1,4 +1,4 @@
-﻿namespace DatalakeServer.Models;
+﻿namespace Datalake.Server.Models;
 
 /// <summary>
 /// Запись о пользователе, полученная из сервера EnergoID по публичному API

@@ -57,9 +57,9 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 
 			return id.Value;
 		}
-		catch
+		catch (Exception ex)
 		{
-			throw new DatabaseException("Не удалось добавить сущность");
+			throw new DatabaseException(message: "не удалось добавить сущность", ex);
 		}
 
 	}
@@ -85,12 +85,12 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 				.Value(x => x.Description, block.Description)
 				.InsertWithInt32IdentityAsync();
 		}
-		catch
+		catch (Exception ex)
 		{
-			throw new DatabaseException("Не удалось добавить сущность");
+			throw new DatabaseException(message: "не удалось добавить сущность", ex);
 		}
 
-		return id ?? throw new DatabaseException("Не удалось добавить сущность");
+		return id ?? throw new DatabaseException(message: "не удалось добавить сущность", DatabaseStandartError.IdIsNull);
 	}
 
 	internal async Task<bool> UpdateAsync(int id, BlockInfo block)
@@ -120,7 +120,7 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 		await transaction.CommitAsync();
 
 		if (count == 0)
-			throw new DatabaseException($"Не удалось обновить сущность #{id}");
+			throw new DatabaseException(message: "не удалось обновить сущность #{id}", DatabaseStandartError.UpdatedZero);
 
 		return true;
 	}
@@ -132,7 +132,7 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 			.DeleteAsync();
 
 		if (count == 0)
-			throw new DatabaseException($"Не удалось удалить сущность #{id}");
+			throw new DatabaseException(message: "не удалось удалить сущность #{id}", DatabaseStandartError.DeletedZero);
 
 		return true;
 	}

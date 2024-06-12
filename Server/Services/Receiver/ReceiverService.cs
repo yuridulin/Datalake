@@ -1,11 +1,11 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.Values;
-using DatalakeServer.Controllers;
-using DatalakeServer.Services.Receiver.Models;
-using DatalakeServer.Services.Receiver.Models.Inopc;
-using DatalakeServer.Services.Receiver.Models.Inopc.Enums;
+using Datalake.Server.Controllers;
+using Datalake.Server.Services.Receiver.Models;
+using Datalake.Server.Services.Receiver.Models.Inopc;
+using Datalake.Server.Services.Receiver.Models.Inopc.Enums;
 
-namespace DatalakeServer.Services.Receiver;
+namespace Datalake.Server.Services.Receiver;
 
 /// <summary>
 /// Служба получения данных из источников по сети

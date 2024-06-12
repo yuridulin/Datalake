@@ -3,7 +3,7 @@ using Datalake.Database.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace DatalakeServer.Controllers;
+namespace Datalake.Server.Controllers;
 
 /// <summary>
 /// Взаимодействие с данными тегов

@@ -1,8 +1,8 @@
 ﻿using Datalake.Database.Models;
-using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
-using DatalakeServer.Services.Receiver;
+using Datalake.Server.BackgroundServices.Collector.Collectors.Abstractions;
+using Datalake.Server.Services.Receiver;
 
-namespace DatalakeServer.BackgroundServices.Collector.Collectors;
+namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 
 /// <summary>
 /// Сборщик данных из ноды Datalake

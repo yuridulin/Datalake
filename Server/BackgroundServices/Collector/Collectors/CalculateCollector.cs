@@ -1,7 +1,7 @@
 ﻿using Datalake.Database.Models;
-using DatalakeServer.BackgroundServices.Collector.Collectors.Abstractions;
+using Datalake.Server.BackgroundServices.Collector.Collectors.Abstractions;
 
-namespace DatalakeServer.BackgroundServices.Collector.Collectors;
+namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 
 /// <summary>
 /// Источник данных, выполняющий расчёты по формулам
