@@ -73,6 +73,8 @@ public class ConfigController(SystemRepository systemRepository) : ApiController
 
 		await systemRepository.UpdateSettingsAsync(user, newSettings);
 
+		Program.WriteStartipFile(await systemRepository.GetSettingsAsync());
+
 		return NoContent();
 	}
 }

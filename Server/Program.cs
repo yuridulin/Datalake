@@ -14,6 +14,8 @@ using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using Serilog;
 using System.Reflection;
+using Datalake.ApiClasses.Models.Settings;
+
 #if DEBUG
 using LinqToDB.AspNet.Logging;
 #endif
@@ -25,6 +27,8 @@ namespace Datalake.Server
 	/// </summary>
 	public class Program
 	{
+		static string WebRootPath { get; set; } = string.Empty;
+
 		/// <summary>
 		/// Метод запуска приложения
 		/// </summary>
@@ -55,6 +59,7 @@ namespace Datalake.Server
 
 			app.UseSerilogRequestLogging();
 
+			WebRootPath = app.Environment.WebRootPath;
 			StartWorkWithDatabase(app);
 
 			if (app.Environment.IsDevelopment())
@@ -86,10 +91,10 @@ namespace Datalake.Server
 
 			ConfigureErrorPage(app);
 
+			app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
 			app.MapControllerRoute(
 				name: "default",
 				pattern: "{controller=Home}/{action=Index}/{id?}");
-			app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
 
 			app.Run();
 		}
@@ -138,6 +143,7 @@ namespace Datalake.Server
 			builder.Services.AddTransient<BlocksRepository>();
 			builder.Services.AddTransient<TagsRepository>();
 			builder.Services.AddTransient<SourcesRepository>();
+			builder.Services.AddTransient<SystemRepository>();
 			builder.Services.AddTransient<UsersRepository>();
 			builder.Services.AddTransient<UserGroupsRepository>();
 			builder.Services.AddTransient<ValuesRepository>();
@@ -157,12 +163,10 @@ namespace Datalake.Server
 			DatalakeContext.SetupLinqToDB();
 			var db = serviceScope?.ServiceProvider.GetRequiredService<DatalakeContext>();
 			if (db != null)
+			{
 				await db.EnsureDataCreatedAsync();
-
-			File.WriteAllLines(Path.Combine(app.Environment.WebRootPath, "startup.js"), [
-				"",
-				"",
-			]);
+				WriteStartipFile(await new SystemRepository(db).GetSettingsAsync());
+			}
 		}
 
 		static void ConfigureErrorPage(WebApplication app)
@@ -193,6 +197,18 @@ namespace Datalake.Server
 					await context.Response.WriteAsync(message);
 				});
 			});
+		}
+
+		/// <summary>
+		/// Запись настроек, необходимых при запуске клиента, в клиентский файл
+		/// </summary>
+		/// <param name="settings">Текущие настройки</param>
+		internal static void WriteStartipFile(SettingsInfo settings)
+		{
+			File.WriteAllLines(Path.Combine(WebRootPath, "startup.js"), [
+				"var LOCAL_API = true;",
+				$"var KEYCLOAK_DB = '{settings.EnergoIdHost}';",
+			]);
 		}
 
 		internal class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor
