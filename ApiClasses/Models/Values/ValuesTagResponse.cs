@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace DatalakeApiClasses.Models.Values;
+namespace Datalake.ApiClasses.Models.Values;
 
 /// <summary>
 /// Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения
