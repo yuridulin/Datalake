@@ -176,6 +176,10 @@ namespace DatalakeDatabase.Migrations
 
             modelBuilder.Entity("DatalakeDatabase.Models.Settings", b =>
                 {
+                    b.Property<string>("EnergoIdHost")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("LastUpdate")
                         .HasColumnType("timestamp with time zone");
 

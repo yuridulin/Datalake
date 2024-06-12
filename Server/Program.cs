@@ -9,18 +9,11 @@ using DatalakeServer.Services.Receiver;
 using DatalakeServer.Services.SessionManager;
 using LinqToDB;
 using LinqToDB.AspNet;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using Microsoft.IdentityModel.Tokens;
 using NJsonSchema.Generation;
 using Serilog;
 using System.Reflection;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
-
 #if DEBUG
 using LinqToDB.AspNet.Logging;
 #endif
@@ -35,7 +28,7 @@ namespace DatalakeServer
 		/// <summary>
 		/// Метод запуска приложения
 		/// </summary>
-		/// <param name="args">Агрументы, с которыми оно запускается</param>
+		/// <param name="args">Аргументы, с которыми оно запускается</param>
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
@@ -64,9 +57,13 @@ namespace DatalakeServer
 
 			StartWorkWithDatabase(app);
 
-			if (!app.Environment.IsDevelopment())
+			if (app.Environment.IsDevelopment())
 			{
-				app.UseExceptionHandler("/Home/Error");
+				app.UseOpenApi();
+				app.UseSwaggerUi();
+			}
+			else
+			{
 				app.UseHsts();
 			}
 
@@ -84,10 +81,7 @@ namespace DatalakeServer
 						AuthConstants.TokenHeader,
 					]);
 			});
-#if DEBUG
-			app.UseOpenApi();
-			app.UseSwaggerUi();
-#endif
+
 			app.UseMiddleware<AuthMiddleware>();
 
 			ConfigureErrorPage(app);

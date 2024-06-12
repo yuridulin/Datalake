@@ -71,7 +71,22 @@ namespace DatalakeDatabase.Migrations
                 type: "boolean",
                 nullable: false,
                 defaultValue: false);
-        }
+
+            migrationBuilder.Sql(
+                "UPDATE \"Tags\" " +
+                "SET \"GlobalGuid\" = gen_random_uuid() " +
+                "WHERE \"GlobalGuid\" = '00000000-0000-0000-0000-000000000000';");
+
+            migrationBuilder.Sql(
+                "UPDATE \"Tags\" " +
+                "SET \"Created\" = now() " +
+                "WHERE \"Created\" = '-infinity';");
+
+            migrationBuilder.Sql(
+                "UPDATE \"Blocks\" " +
+                "SET \"GlobalId\" = gen_random_uuid() " +
+                "WHERE \"GlobalId\" = '00000000-0000-0000-0000-000000000000';");
+    }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)

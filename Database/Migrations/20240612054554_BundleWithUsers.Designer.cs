@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DatalakeDatabase.Migrations
 {
     [DbContext(typeof(DatalakeEfContext))]
-    [Migration("20240610130235_MakeLoginNullable")]
-    partial class MakeLoginNullable
+    [Migration("20240612054554_BundleWithUsers")]
+    partial class BundleWithUsers
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -179,6 +179,10 @@ namespace DatalakeDatabase.Migrations
 
             modelBuilder.Entity("DatalakeDatabase.Models.Settings", b =>
                 {
+                    b.Property<string>("EnergoIdHost")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("LastUpdate")
                         .HasColumnType("timestamp with time zone");
 

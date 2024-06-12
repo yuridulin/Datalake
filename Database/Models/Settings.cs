@@ -14,4 +14,7 @@ public class Settings
 
 	[Column, NotNull]
 	public DateTime LastUpdate { get; set; }
+
+	[Column, NotNull]
+	public string EnergoIdHost { get; set; } = string.Empty;
 }
