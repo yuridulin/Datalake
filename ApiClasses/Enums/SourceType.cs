@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace DatalakeApiClasses.Enums;
+namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Тип получения данных с источника

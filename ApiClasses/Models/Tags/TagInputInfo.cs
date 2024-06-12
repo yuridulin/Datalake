@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DatalakeApiClasses.Models.Tags;
+namespace Datalake.ApiClasses.Models.Tags;
 
 /// <summary>
 /// Тег, используемый как входной параметр в формуле

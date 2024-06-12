@@ -1,7 +1,7 @@
-﻿using DatalakeDatabase.Models;
+﻿using Datalake.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace DatalakeDatabase;
+namespace Datalake.Database;
 
 public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : DbContext(options)
 {

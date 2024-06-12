@@ -1,6 +1,6 @@
-using DatalakeApiClasses.Exceptions.Base;
-using DatalakeDatabase;
-using DatalakeDatabase.Repositories;
+using Datalake.ApiClasses.Exceptions.Base;
+using Datalake.Database;
+using Datalake.Database.Repositories;
 using DatalakeServer.BackgroundServices.Collector;
 using DatalakeServer.BackgroundServices.Collector.Collectors.Factory;
 using DatalakeServer.Constants;
@@ -21,14 +21,14 @@ using LinqToDB.AspNet.Logging;
 namespace DatalakeServer
 {
 	/// <summary>
-	/// Основной класс приложения
+	/// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	/// </summary>
 	public class Program
 	{
 		/// <summary>
-		/// Метод запуска приложения
+		/// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 		/// </summary>
-		/// <param name="args">Аргументы, с которыми оно запускается</param>
+		/// <param name="args">пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ</param>
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
@@ -120,7 +120,7 @@ namespace DatalakeServer
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
-					.UsePostgreSQL(connectionString ?? throw new Exception("Не передана строка подключения к базе данных"))
+					.UsePostgreSQL(connectionString ?? throw new Exception("пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ"))
 #if DEBUG
 					.UseDefaultLogging(provider)
 #endif
@@ -129,12 +129,12 @@ namespace DatalakeServer
 
 		static void ConfigureServices(WebApplicationBuilder builder)
 		{
-			// постоянные
+			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 			builder.Services.AddSingleton<CollectorFactory>();
 			builder.Services.AddSingleton<ReceiverService>();
 			builder.Services.AddSingleton<SessionManagerService>();
 
-			// временные
+			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 			builder.Services.AddTransient<BlocksRepository>();
 			builder.Services.AddTransient<TagsRepository>();
 			builder.Services.AddTransient<SourcesRepository>();
@@ -143,7 +143,7 @@ namespace DatalakeServer
 			builder.Services.AddTransient<ValuesRepository>();
 			builder.Services.AddTransient<AuthMiddleware>();
 
-			// службы
+			// пїЅпїЅпїЅпїЅпїЅпїЅ
 			builder.Services.AddHostedService<CollectorService>();
 		}
 
@@ -177,8 +177,8 @@ namespace DatalakeServer
 					}
 					else
 					{
-						message = "Ошибка выполнения на сервере" +
-							"\n\n" + // разделитель, по которому клиент отсекает служебную часть сообщения
+						message = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ" +
+							"\n\n" + // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 							error?.ToString() ?? "error is null";
 					}
 

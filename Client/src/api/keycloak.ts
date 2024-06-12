@@ -1,7 +1,9 @@
 import Keycloak from 'keycloak-js'
 
+// api на получение настроек
+
 const keycloak = new Keycloak({
-	url: 'http://auth-test.energo.net/',
+	url: window.location.protocol + '//' + +'/',
 	realm: 'energo',
 	clientId: 'datalake',
 })

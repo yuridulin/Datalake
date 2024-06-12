@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace DatalakeApiClasses.Models.Tags;
+namespace Datalake.ApiClasses.Models.Tags;
 
 /// <summary>
 /// Данные запроса для изменение тега

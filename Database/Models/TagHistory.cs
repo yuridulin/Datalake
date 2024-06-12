@@ -1,10 +1,10 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
-namespace DatalakeDatabase.Models;
+namespace Datalake.Database.Models;
 
 [Keyless, Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public class TagHistory

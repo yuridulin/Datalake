@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.UserGroups;
-using DatalakeApiClasses.Models.Users;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.UserGroups;
+using Datalake.ApiClasses.Models.Users;
 using DatalakeServer.Constants;
 using DatalakeServer.TestRunner.Attributes;
 using DatalakeServer.TestRunner.Extensions;

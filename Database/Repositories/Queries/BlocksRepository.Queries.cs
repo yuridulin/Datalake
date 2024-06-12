@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Models.Blocks;
+﻿using Datalake.ApiClasses.Models.Blocks;
 using LinqToDB;
 
-namespace DatalakeDatabase.Repositories;
+namespace Datalake.Database.Repositories;
 
 public partial class BlocksRepository
 {
@@ -108,7 +108,7 @@ public partial class BlocksRepository
 	public async Task<List<BlockSimpleInfo>> GetWithParentsAsync(int blockId)
 	{
 		var blocks = await db.Blocks
-			.Select(x => new 
+			.Select(x => new
 			{
 				x.Id,
 				x.Name,

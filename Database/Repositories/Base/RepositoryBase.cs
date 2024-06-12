@@ -1,9 +1,9 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Exceptions;
-using DatalakeApiClasses.Models.Users;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.Users;
 using LinqToDB;
 
-namespace DatalakeDatabase.Repositories.Base;
+namespace Datalake.Database.Repositories.Base;
 
 public abstract class RepositoryBase
 {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DatalakeApiClasses.Models.Blocks;
+namespace Datalake.ApiClasses.Models.Blocks;
 
 /// <summary>
 /// Информация о сущности

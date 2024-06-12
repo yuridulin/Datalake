@@ -1,10 +1,10 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
-namespace DatalakeDatabase.Models;
+namespace Datalake.Database.Models;
 
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public class UserGroupRelation
@@ -28,4 +28,3 @@ public class UserGroupRelation
 
 	public UserGroup? UserGroup { get; set; }
 }
-

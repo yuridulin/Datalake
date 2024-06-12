@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 
-namespace DatalakeApiClasses.Constants;
+namespace Datalake.ApiClasses.Constants;
 
 /// <summary>
 /// Комбинации значений, используемые для проверок

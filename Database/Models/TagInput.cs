@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
-namespace DatalakeDatabase.Models;
+namespace Datalake.Database.Models;
 
 [Keyless, Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public class TagInput

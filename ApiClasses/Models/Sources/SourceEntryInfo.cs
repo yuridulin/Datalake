@@ -1,4 +1,4 @@
-﻿namespace DatalakeApiClasses.Models.Sources;
+﻿namespace Datalake.ApiClasses.Models.Sources;
 
 /// <summary>
 /// Информация о сопоставлении данных в источнике и в базе

@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace DatalakeApiClasses.Models.Sources;
+namespace Datalake.ApiClasses.Models.Sources;
 
 /// <summary>
 /// Информация о удалённой записи с данными источника

@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace DatalakeApiClasses.Models.UserGroups;
+namespace Datalake.ApiClasses.Models.UserGroups;
 
 /// <summary>
 /// Данные запроса для изменения группы пользователей

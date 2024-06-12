@@ -1,4 +1,4 @@
-﻿using DatalakeApiClasses.Models.Users;
+﻿using Datalake.ApiClasses.Models.Users;
 
 namespace DatalakeServer.Services.SessionManager.Models;
 

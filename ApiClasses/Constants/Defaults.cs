@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.Users;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Users;
 
-namespace DatalakeApiClasses.Constants;
+namespace Datalake.ApiClasses.Constants;
 
 /// <summary>
 /// Данные, которые используются при инициализации приложения в новом окружении

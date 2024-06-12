@@ -1,12 +1,12 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Exceptions;
-using DatalakeApiClasses.Models.Sources;
-using DatalakeApiClasses.Models.Users;
-using DatalakeDatabase.Extensions;
-using DatalakeDatabase.Repositories.Base;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.Sources;
+using Datalake.ApiClasses.Models.Users;
+using Datalake.Database.Extensions;
+using Datalake.Database.Repositories.Base;
 using LinqToDB;
 
-namespace DatalakeDatabase.Repositories;
+namespace Datalake.Database.Repositories;
 
 public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 {

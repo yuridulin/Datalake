@@ -1,5 +1,5 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.Values;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Values;
 using DatalakeServer.Controllers;
 using DatalakeServer.Services.Receiver.Models;
 using DatalakeServer.Services.Receiver.Models.Inopc;

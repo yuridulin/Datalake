@@ -1,4 +1,4 @@
-﻿namespace DatalakeDatabase.Extensions
+﻿namespace Datalake.Database.Extensions
 {
 	public class ObjectExtension<T> where T : class
 	{

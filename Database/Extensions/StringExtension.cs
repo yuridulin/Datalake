@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace DatalakeDatabase.Extensions
+namespace Datalake.Database.Extensions
 {
 	public static partial class ValueChecker
 	{

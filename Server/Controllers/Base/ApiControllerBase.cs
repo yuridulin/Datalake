@@ -1,5 +1,5 @@
-﻿using DatalakeApiClasses.Exceptions;
-using DatalakeApiClasses.Models.Users;
+﻿using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.Users;
 using DatalakeServer.Constants;
 using Microsoft.AspNetCore.Mvc;
 

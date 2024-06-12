@@ -3,11 +3,11 @@ using LinqToDB.AspNet.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace DatalakeDatabase.Tests
+namespace Datalake.Database.Tests
 {
 	public static class Setup
 	{
-		public static readonly string ConnectionString = 
+		public static readonly string ConnectionString =
 			"Server=10.208.4.113; " +
 			"Port=5432; " +
 			"Database=datalake_test; " +

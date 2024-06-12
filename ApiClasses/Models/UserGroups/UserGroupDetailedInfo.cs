@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DatalakeApiClasses.Models.UserGroups;
+namespace Datalake.ApiClasses.Models.UserGroups;
 
 /// <summary>
 /// Расширенная информация о группе пользователей, включающая вложенные группы и список пользователей

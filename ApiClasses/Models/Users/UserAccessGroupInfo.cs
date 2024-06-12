@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 
-namespace DatalakeApiClasses.Models.Users;
+namespace Datalake.ApiClasses.Models.Users;
 
 /// <summary>
 /// Информация о отношении пользователя к группе

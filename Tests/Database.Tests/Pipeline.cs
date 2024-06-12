@@ -1,14 +1,14 @@
-﻿using DatalakeDatabase.Tests.Attributes;
-using DatalakeDatabase.Tests.Steps;
+﻿using Datalake.Database.Tests.Attributes;
+using Datalake.Database.Tests.Steps;
 
-namespace DatalakeDatabase.Tests
+namespace Datalake.Database.Tests
 {
-	[TestCaseOrderer("DatalakeDatabase.Tests.Attributes.PriorityOrderer", "DatalakeDatabase.Tests")]
+	[TestCaseOrderer("Datalake.Database.Tests.Attributes.PriorityOrderer", "Datalake.Database.Tests")]
 	public class Pipeline
 	{
 		[Fact, Priority(1)]
 		public async Task T001_CreationTest() => await Step001_DatabaseCreationAndSeed.T1_1_CreationTest();
-		
+
 		[Fact, Priority(2)]
 		public static async Task T002_SeedTest() => await Step001_DatabaseCreationAndSeed.T1_2_SeedTest();
 

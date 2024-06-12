@@ -1,8 +1,8 @@
-using DatalakeApiClasses.Enums;
-using DatalakeDatabase.Repositories;
+using Datalake.ApiClasses.Enums;
+using Datalake.Database.Repositories;
 using LinqToDB;
 
-namespace DatalakeDatabase.Tests.Steps
+namespace Datalake.Database.Tests.Steps
 {
 	public static class Step001_DatabaseCreationAndSeed
 	{

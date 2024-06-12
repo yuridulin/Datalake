@@ -1,8 +1,8 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.Tags;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Tags;
 using LinqToDB;
 
-namespace DatalakeDatabase.Repositories;
+namespace Datalake.Database.Repositories;
 
 public partial class TagsRepository
 {

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace DatalakeDatabase.Migrations
+namespace Datalake.Database.Migrations
 {
     /// <inheritdoc />
     public partial class BundleWithUsers : Migration

@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Models.Values;
-using DatalakeDatabase.Repositories;
+﻿using Datalake.ApiClasses.Models.Values;
+using Datalake.Database.Repositories;
 
-namespace DatalakeDatabase.Tests.Steps
+namespace Datalake.Database.Tests.Steps
 {
 	public static class Step004_HistoryRead
 	{

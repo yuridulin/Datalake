@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Exceptions.Base;
+﻿using Datalake.ApiClasses.Exceptions.Base;
 
-namespace DatalakeApiClasses.Exceptions;
+namespace Datalake.ApiClasses.Exceptions;
 
 /// <summary>
 /// Ошибка при попытке выполнить действие, выполнение которого защищено по соображениям безопасности

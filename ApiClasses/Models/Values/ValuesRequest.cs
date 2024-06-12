@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 
-namespace DatalakeApiClasses.Models.Values;
+namespace Datalake.ApiClasses.Models.Values;
 
 /// <summary>
 /// Данные запроса для получения значений

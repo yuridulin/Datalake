@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Models.UserGroups;
+﻿using Datalake.ApiClasses.Models.UserGroups;
 using LinqToDB;
 
-namespace DatalakeDatabase.Repositories;
+namespace Datalake.Database.Repositories;
 
 public partial class UserGroupsRepository
 {

@@ -1,4 +1,4 @@
-﻿namespace DatalakeApiClasses.Constants;
+﻿namespace Datalake.ApiClasses.Constants;
 
 /// <summary>
 /// Маски для перевода дат в строковое представление

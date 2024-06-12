@@ -1,8 +1,8 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.Sources;
-using DatalakeApiClasses.Models.Tags;
-using DatalakeApiClasses.Models.Users;
-using DatalakeApiClasses.Models.Values;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Sources;
+using Datalake.ApiClasses.Models.Tags;
+using Datalake.ApiClasses.Models.Users;
+using Datalake.ApiClasses.Models.Values;
 using DatalakeServer.Constants;
 using DatalakeServer.Services.Receiver.Models.Inopc;
 using DatalakeServer.TestRunner.Attributes;

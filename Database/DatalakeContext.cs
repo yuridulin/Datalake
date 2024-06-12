@@ -1,13 +1,13 @@
-﻿using DatalakeApiClasses.Constants;
-using DatalakeApiClasses.Enums;
-using DatalakeDatabase.Extensions;
-using DatalakeDatabase.Models;
-using DatalakeDatabase.Repositories;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
+using Datalake.Database.Extensions;
+using Datalake.Database.Models;
+using Datalake.Database.Repositories;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
 
-namespace DatalakeDatabase;
+namespace Datalake.Database;
 
 public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnection(options.Options)
 {

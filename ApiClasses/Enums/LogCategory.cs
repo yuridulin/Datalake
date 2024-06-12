@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace DatalakeApiClasses.Enums;
+namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Категория, к которой относится сообщение

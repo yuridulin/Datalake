@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Exceptions;
-using DatalakeApiClasses.Models.Blocks;
-using DatalakeDatabase.Repositories;
+﻿using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.Blocks;
+using Datalake.Database.Repositories;
 using DatalakeServer.Controllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;

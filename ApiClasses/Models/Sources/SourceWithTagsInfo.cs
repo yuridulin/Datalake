@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DatalakeApiClasses.Models.Sources;
+namespace Datalake.ApiClasses.Models.Sources;
 
 /// <summary>
 /// Расширенная информация о источнике, включающая список связанных тегов

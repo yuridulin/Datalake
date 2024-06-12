@@ -1,13 +1,13 @@
-﻿using DatalakeApiClasses.Constants;
-using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Exceptions;
-using DatalakeApiClasses.Models.Users;
-using DatalakeDatabase.Models;
-using DatalakeDatabase.Repositories;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.Users;
+using Datalake.Database.Models;
+using Datalake.Database.Repositories;
 using LinqToDB;
 using System.Linq;
 
-namespace DatalakeDatabase.Extensions;
+namespace Datalake.Database.Extensions;
 
 public static class DatalakeContextExtension
 {

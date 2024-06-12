@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Exceptions.Base;
+﻿using Datalake.ApiClasses.Exceptions.Base;
 
-namespace DatalakeApiClasses.Exceptions;
+namespace Datalake.ApiClasses.Exceptions;
 
 /// <summary>
 /// Ошибка о том, что предоставленные данные отсутствуют, неверно указаны или неправильно предоставлены

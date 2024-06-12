@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace DatalakeDatabase.Extensions;
+namespace Datalake.Database.Extensions;
 
 public static class EnumExtension
 {

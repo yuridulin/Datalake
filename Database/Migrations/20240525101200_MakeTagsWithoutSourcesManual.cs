@@ -1,9 +1,9 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace DatalakeDatabase.Migrations
+namespace Datalake.Database.Migrations
 {
 	/// <inheritdoc />
 	public partial class MakeTagsWithoutSourcesManual : Migration

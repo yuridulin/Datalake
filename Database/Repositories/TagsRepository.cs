@@ -1,14 +1,14 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Exceptions;
-using DatalakeApiClasses.Models.Tags;
-using DatalakeApiClasses.Models.Users;
-using DatalakeDatabase.Extensions;
-using DatalakeDatabase.Models;
-using DatalakeDatabase.Repositories.Base;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.Tags;
+using Datalake.ApiClasses.Models.Users;
+using Datalake.Database.Extensions;
+using Datalake.Database.Models;
+using Datalake.Database.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
 
-namespace DatalakeDatabase.Repositories;
+namespace Datalake.Database.Repositories;
 
 public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 {
@@ -88,11 +88,11 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 
 			if (string.IsNullOrEmpty(createRequest.Name))
 			{
-				createRequest.Name = (source.Id <= 0 ? ((CustomSource)source.Id).ToString() : source.Name) 
+				createRequest.Name = (source.Id <= 0 ? ((CustomSource)source.Id).ToString() : source.Name)
 					+ "." + (createRequest.SourceItem ?? "Tag");
 			}
 		}
-		
+
 		if (createRequest.BlockId.HasValue)
 		{
 			var block = await db.Blocks

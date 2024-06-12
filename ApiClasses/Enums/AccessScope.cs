@@ -1,4 +1,4 @@
-﻿namespace DatalakeApiClasses.Enums;
+﻿namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Зоны проверки разрешений

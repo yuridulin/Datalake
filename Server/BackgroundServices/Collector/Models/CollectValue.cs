@@ -1,4 +1,4 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 
 namespace DatalakeServer.BackgroundServices.Collector.Models;
 

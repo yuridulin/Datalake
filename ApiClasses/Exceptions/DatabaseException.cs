@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Exceptions.Base;
+﻿using Datalake.ApiClasses.Exceptions.Base;
 
-namespace DatalakeApiClasses.Exceptions;
+namespace Datalake.ApiClasses.Exceptions;
 
 /// <summary>
 /// Ошибка при выполнении какой-либо операции с базой данных, связанная с выполнением запросов

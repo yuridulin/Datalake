@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace DatalakeApiClasses.Enums;
+namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Достоверность значения

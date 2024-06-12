@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace DatalakeDatabase.Migrations
+namespace Datalake.Database.Migrations
 {
 	[DbContext(typeof(DatalakeEfContext))]
 	[Migration("20240525101200_MakeTagsWithoutSourcesManual")]
@@ -21,7 +21,7 @@ namespace DatalakeDatabase.Migrations
 
 			NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-			modelBuilder.Entity("DatalakeDatabase.Models.Block", b =>
+			modelBuilder.Entity("Datalake.Database.Models.Block", b =>
 					{
 						b.Property<int>("Id")
 											.ValueGeneratedOnAdd()
@@ -47,7 +47,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("Blocks");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.BlockProperty", b =>
+			modelBuilder.Entity("Datalake.Database.Models.BlockProperty", b =>
 					{
 						b.Property<int>("Id")
 											.ValueGeneratedOnAdd()
@@ -76,7 +76,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("BlockProperties");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.BlockTag", b =>
+			modelBuilder.Entity("Datalake.Database.Models.BlockTag", b =>
 					{
 						b.Property<int>("BlockId")
 											.HasColumnType("integer");
@@ -97,7 +97,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("BlockTags");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.Log", b =>
+			modelBuilder.Entity("Datalake.Database.Models.Log", b =>
 					{
 						b.Property<long>("Id")
 											.ValueGeneratedOnAdd()
@@ -129,7 +129,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("Logs");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.Settings", b =>
+			modelBuilder.Entity("Datalake.Database.Models.Settings", b =>
 					{
 						b.Property<DateTime>("LastUpdate")
 											.HasColumnType("timestamp with time zone");
@@ -137,7 +137,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("Settings");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.Source", b =>
+			modelBuilder.Entity("Datalake.Database.Models.Source", b =>
 					{
 						b.Property<int>("Id")
 											.ValueGeneratedOnAdd()
@@ -163,7 +163,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("Sources");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.Tag", b =>
+			modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
 					{
 						b.Property<int>("Id")
 											.ValueGeneratedOnAdd()
@@ -221,7 +221,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("Tags");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.TagHistory", b =>
+			modelBuilder.Entity("Datalake.Database.Models.TagHistory", b =>
 					{
 						b.Property<DateTime>("Date")
 											.HasColumnType("timestamp with time zone");
@@ -244,7 +244,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("TagsLive");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.TagHistoryChunk", b =>
+			modelBuilder.Entity("Datalake.Database.Models.TagHistoryChunk", b =>
 					{
 						b.Property<DateOnly>("Date")
 											.HasColumnType("date");
@@ -258,7 +258,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("TagHistoryChunks");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.TagInput", b =>
+			modelBuilder.Entity("Datalake.Database.Models.TagInput", b =>
 					{
 						b.Property<int>("InputTagId")
 											.HasColumnType("integer");
@@ -275,7 +275,7 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("TagInputs");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.User", b =>
+			modelBuilder.Entity("Datalake.Database.Models.User", b =>
 					{
 						b.Property<string>("Name")
 											.HasColumnType("text");
@@ -299,9 +299,9 @@ namespace DatalakeDatabase.Migrations
 						b.ToTable("Users");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.BlockProperty", b =>
+			modelBuilder.Entity("Datalake.Database.Models.BlockProperty", b =>
 					{
-						b.HasOne("DatalakeDatabase.Models.Block", "Block")
+						b.HasOne("Datalake.Database.Models.Block", "Block")
 											.WithMany("Properties")
 											.HasForeignKey("BlockId")
 											.OnDelete(DeleteBehavior.Cascade)
@@ -310,15 +310,15 @@ namespace DatalakeDatabase.Migrations
 						b.Navigation("Block");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.BlockTag", b =>
+			modelBuilder.Entity("Datalake.Database.Models.BlockTag", b =>
 					{
-						b.HasOne("DatalakeDatabase.Models.Block", "Block")
+						b.HasOne("Datalake.Database.Models.Block", "Block")
 											.WithMany("RelationsToTags")
 											.HasForeignKey("BlockId")
 											.OnDelete(DeleteBehavior.NoAction)
 											.IsRequired();
 
-						b.HasOne("DatalakeDatabase.Models.Tag", "Tag")
+						b.HasOne("Datalake.Database.Models.Tag", "Tag")
 											.WithMany("RelationsToBlocks")
 											.HasForeignKey("TagId")
 											.OnDelete(DeleteBehavior.NoAction)
@@ -329,9 +329,9 @@ namespace DatalakeDatabase.Migrations
 						b.Navigation("Tag");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.Tag", b =>
+			modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
 					{
-						b.HasOne("DatalakeDatabase.Models.Source", "Source")
+						b.HasOne("Datalake.Database.Models.Source", "Source")
 											.WithMany("Tags")
 											.HasForeignKey("SourceId")
 											.OnDelete(DeleteBehavior.SetNull)
@@ -340,9 +340,9 @@ namespace DatalakeDatabase.Migrations
 						b.Navigation("Source");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.TagInput", b =>
+			modelBuilder.Entity("Datalake.Database.Models.TagInput", b =>
 					{
-						b.HasOne("DatalakeDatabase.Models.Tag", "Tag")
+						b.HasOne("Datalake.Database.Models.Tag", "Tag")
 											.WithMany()
 											.HasForeignKey("TagId")
 											.OnDelete(DeleteBehavior.Cascade)
@@ -351,19 +351,19 @@ namespace DatalakeDatabase.Migrations
 						b.Navigation("Tag");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.Block", b =>
+			modelBuilder.Entity("Datalake.Database.Models.Block", b =>
 					{
 						b.Navigation("Properties");
 
 						b.Navigation("RelationsToTags");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.Source", b =>
+			modelBuilder.Entity("Datalake.Database.Models.Source", b =>
 					{
 						b.Navigation("Tags");
 					});
 
-			modelBuilder.Entity("DatalakeDatabase.Models.Tag", b =>
+			modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
 					{
 						b.Navigation("RelationsToBlocks");
 					});

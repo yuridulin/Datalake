@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace DatalakeApiClasses.Models.Users;
+namespace Datalake.ApiClasses.Models.Users;
 
 /// <summary>
 /// Расширенная информация о пользователе, включающая данные для аутентификации

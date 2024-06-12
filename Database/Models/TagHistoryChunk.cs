@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using PrimaryKeyAttribute = LinqToDB.Mapping.PrimaryKeyAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
-namespace DatalakeDatabase.Models;
+namespace Datalake.Database.Models;
 
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public class TagHistoryChunk

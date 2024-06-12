@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Models.Users;
+﻿using Datalake.ApiClasses.Models.Users;
 
-namespace DatalakeDatabase.Tests
+namespace Datalake.Database.Tests
 {
 	public static class Constants
 	{

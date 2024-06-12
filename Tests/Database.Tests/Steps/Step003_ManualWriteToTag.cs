@@ -1,8 +1,8 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.Values;
-using DatalakeDatabase.Repositories;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Values;
+using Datalake.Database.Repositories;
 
-namespace DatalakeDatabase.Tests.Steps
+namespace Datalake.Database.Tests.Steps
 {
 	public static class Step003_ManualWriteToTag
 	{

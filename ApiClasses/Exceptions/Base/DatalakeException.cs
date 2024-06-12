@@ -1,4 +1,4 @@
-﻿namespace DatalakeApiClasses.Exceptions.Base;
+﻿namespace Datalake.ApiClasses.Exceptions.Base;
 
 /// <summary>
 /// Базовый класс ошибок приложения

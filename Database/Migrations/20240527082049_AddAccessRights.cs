@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace DatalakeDatabase.Migrations
+namespace Datalake.Database.Migrations
 {
     /// <inheritdoc />
     public partial class AddAccessRights : Migration

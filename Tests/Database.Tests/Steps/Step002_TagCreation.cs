@@ -1,10 +1,10 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.Tags;
-using DatalakeApiClasses.Models.Users;
-using DatalakeDatabase.Repositories;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Tags;
+using Datalake.ApiClasses.Models.Users;
+using Datalake.Database.Repositories;
 using LinqToDB;
 
-namespace DatalakeDatabase.Tests.Steps
+namespace Datalake.Database.Tests.Steps
 {
 	public static class Step002_TagCreation
 	{

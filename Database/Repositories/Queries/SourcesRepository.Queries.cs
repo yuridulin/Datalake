@@ -1,8 +1,8 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Models.Sources;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Sources;
 using LinqToDB;
 
-namespace DatalakeDatabase.Repositories;
+namespace Datalake.Database.Repositories;
 
 public partial class SourcesRepository
 {

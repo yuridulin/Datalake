@@ -10,6 +10,7 @@
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
     <DockerfileTag>datalake-server</DockerfileTag>
     <Product>$(AssemblyName)</Product>
+    <AssemblyName>Datalake.$(MSBuildProjectName)</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

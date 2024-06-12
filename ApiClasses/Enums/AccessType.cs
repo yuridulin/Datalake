@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace DatalakeApiClasses.Enums;
+namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Уровень доступа
@@ -24,7 +24,7 @@ public enum AccessType
 	Viewer = 5,
 
 	/// <summary>
-	/// Доступ к действиям 
+	/// Доступ к действиям
 	/// </summary>
 	User = 10,
 

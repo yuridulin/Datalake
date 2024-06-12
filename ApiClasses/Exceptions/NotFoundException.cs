@@ -1,6 +1,6 @@
-﻿using DatalakeApiClasses.Exceptions.Base;
+﻿using Datalake.ApiClasses.Exceptions.Base;
 
-namespace DatalakeApiClasses.Exceptions;
+namespace Datalake.ApiClasses.Exceptions;
 
 /// <summary>
 /// Ошибка при получении каких-либо данных о том, что эти данные не были найдены

@@ -1,13 +1,13 @@
-﻿using DatalakeApiClasses.Constants;
-using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Exceptions;
-using DatalakeApiClasses.Models.Values;
-using DatalakeDatabase.Extensions;
-using DatalakeDatabase.Models;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.Values;
+using Datalake.Database.Extensions;
+using Datalake.Database.Models;
 using LinqToDB;
 using LinqToDB.Data;
 
-namespace DatalakeDatabase.Repositories;
+namespace Datalake.Database.Repositories;
 
 public class ValuesRepository(DatalakeContext db) : IDisposable
 {
@@ -124,7 +124,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				.Where(x => (writeRequest.TagId.HasValue && x.Id == writeRequest.TagId)
 					|| (!string.IsNullOrEmpty(writeRequest.TagName) && x.Name == writeRequest.TagName))
 				.FirstOrDefaultAsync()
-				?? throw new NotFoundException(writeRequest.TagId.HasValue 
+				?? throw new NotFoundException(writeRequest.TagId.HasValue
 					? $"Тег #{writeRequest.TagId} не найден"
 					: $"Тег \"{writeRequest.TagName}\" не найден");
 
@@ -538,7 +538,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				.OrderByDescending(x => x)
 				.DefaultIfEmpty(DateOnly.MinValue)
 				.FirstOrDefault();
-			
+
 			// если у нас не было подходящих таблиц в выборке, нужно их дозагрузить
 			if (initialDate == DateOnly.MinValue)
 			{

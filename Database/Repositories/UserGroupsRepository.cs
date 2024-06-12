@@ -1,14 +1,14 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeApiClasses.Exceptions;
-using DatalakeApiClasses.Models.UserGroups;
-using DatalakeApiClasses.Models.Users;
-using DatalakeDatabase.Extensions;
-using DatalakeDatabase.Models;
-using DatalakeDatabase.Repositories.Base;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.UserGroups;
+using Datalake.ApiClasses.Models.Users;
+using Datalake.Database.Extensions;
+using Datalake.Database.Models;
+using Datalake.Database.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
 
-namespace DatalakeDatabase.Repositories;
+namespace Datalake.Database.Repositories;
 
 public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 {

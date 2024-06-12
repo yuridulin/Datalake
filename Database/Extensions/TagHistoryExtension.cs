@@ -1,7 +1,7 @@
-﻿using DatalakeApiClasses.Enums;
-using DatalakeDatabase.Models;
+﻿using Datalake.ApiClasses.Enums;
+using Datalake.Database.Models;
 
-namespace DatalakeDatabase.Extensions;
+namespace Datalake.Database.Extensions;
 
 public static class TagHistoryExtension
 {
