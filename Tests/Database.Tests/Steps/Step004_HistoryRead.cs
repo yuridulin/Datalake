@@ -14,15 +14,16 @@ namespace Datalake.Database.Tests.Steps
 			var response = await valuesRepository.GetValuesAsync([
 				new ValuesRequest()
 				{
+					RequestKey = "1",
 					Exact = Constants.InCenterDate,
-					TagNames = [Constants.TagName]
+					Tags = [Constants.TagGuid]
 				}
 			]);
 
 			Assert.NotNull(response);
 			Assert.Single(response);
 
-			var values = response[0].Values;
+			var values = response[0].Tags[0].Values;
 			Assert.NotNull(values);
 			Assert.Single(values);
 

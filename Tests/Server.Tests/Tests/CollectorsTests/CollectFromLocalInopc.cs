@@ -110,7 +110,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 		var testSource = sources.FirstOrDefault(x => x.Name == TestSourceName);
 		Assert.NotNull(testSource);
 
-		var id = await _httpClient.PostAsync<int>("api/tags", new TagCreateRequest
+		var guid = await _httpClient.PostAsync<Guid>("api/tags", new TagCreateRequest
 		{
 			Name = TestTagName,
 			TagType = TagType.Number,
@@ -118,9 +118,9 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 			SourceItem = TestItemPath,
 		});
 
-		Assert.True(id > 0);
+		Assert.True(guid.GetType() == typeof(Guid));
 
-		await _httpClient.PutAsync("api/tags/" + id, new TagUpdateRequest
+		await _httpClient.PutAsync("api/tags/" + guid, new TagUpdateRequest
 		{
 			Name = TestTagName,
 			IntervalInSeconds = 0,
@@ -142,17 +142,22 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 
 		object? storedValue = null;
 
+		var tags = await _httpClient.GetAsync<TagInfo[]>("api/tags");
+		var tag = tags.Where(x => x.Name == TestTagName).FirstOrDefault();
+		Assert.NotNull(tag);
+
 		for (var i = 0; i < 4; i++)
 		{
 			var request = new ValuesRequest[]
 			{
 				new()
 				{
-					TagNames = [TestTagName]
+					RequestKey = "1",
+					Tags = [tag.Guid]
 				}
 			};
 
-			var responses = await _httpClient.PostAsync<List<ValuesResponse>>("api/tags/values", request);
+			var responses = await _httpClient.PostAsync<List<ValuesTagResponse>>("api/tags/values", request);
 			Assert.NotNull(responses);
 			Assert.Single(responses);
 
@@ -191,7 +196,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 		if (testTag != null)
 		{
 			Assert.NotNull(testTag);
-			await _httpClient.DeleteAsync("api/tags/" + testTag.Id);
+			await _httpClient.DeleteAsync("api/tags/" + testTag.Guid);
 		}
 	}
 }

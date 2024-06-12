@@ -113,22 +113,19 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 	/// <param name="requests">Список запросов на запись</param>
 	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
-	public async Task<List<ValuesResponse>> WriteValuesAsync(ValueWriteRequest[] requests)
+	public async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueWriteRequest[] requests)
 	{
-		List<ValuesResponse> responses = [];
+		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToSimpleWrite = [];
 
 		foreach (var writeRequest in requests)
 		{
 			Tag tag = await db.Tags
-				.Where(x => (writeRequest.TagId.HasValue && x.Id == writeRequest.TagId)
-					|| (!string.IsNullOrEmpty(writeRequest.TagName) && x.Name == writeRequest.TagName))
+				.Where(x => x.GlobalGuid == writeRequest.Guid)
 				.FirstOrDefaultAsync()
-				?? throw new NotFoundException(writeRequest.TagId.HasValue
-					? $"Тег #{writeRequest.TagId} не найден"
-					: $"Тег \"{writeRequest.TagName}\" не найден");
+				?? throw new NotFoundException($"Тег #{writeRequest.Guid} не найден");
 
-			var record = tag.ToHistory(writeRequest.Value, writeRequest.TagQuality);
+			var record = tag.ToHistory(writeRequest.Value, writeRequest.Quality);
 			record.Date = writeRequest.Date ?? DateTime.Now;
 			record.Using = TagUsing.Basic;
 
@@ -143,12 +140,10 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				recordsToSimpleWrite.Add(record);
 			}
 
-			responses.Add(new ValuesResponse
+			responses.Add(new ValuesTagResponse
 			{
-				Id = tag.Id,
+				Guid = tag.GlobalGuid,
 				Type = tag.Type,
-				TagName = tag.Name,
-				Func = AggregationFunc.List,
 				Values = [
 					new ValueRecord
 					{
@@ -314,10 +309,14 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		foreach (var request in requests)
 		{
-			if (request.Tags == null && request.TagNames == null) continue;
-			if (request.Tags?.Length + request.TagNames?.Length == 0) continue;
+			if (request.Tags.Length == 0) continue;
 
-			var info = await ReadTagsInfoAsync(request.Tags!, request.TagNames!);
+			var response = new ValuesResponse
+			{
+				RequestKey = request.RequestKey,
+				Tags = []
+			};
+			var info = await ReadTagsInfoAsync(request.Tags);
 
 			DateTime exact = request.Exact ?? DateTime.Now;
 			DateTime old, young;
@@ -352,12 +351,10 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 				if (request.Func == AggregationFunc.List)
 				{
-					responses.Add(new ValuesResponse
+					response.Tags.Add(new ValuesTagResponse
 					{
-						Id = databaseValueGroup.Key,
-						TagName = tagInfo.TagName,
+						Guid = tagInfo.Guid,
 						Type = tagInfo.TagType,
-						Func = (AggregationFunc)request.Func,
 						Values = [.. databaseValueGroup
 							.Select(x => new ValueRecord
 							{
@@ -402,12 +399,10 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 						{
 						}
 
-						responses.Add(new ValuesResponse
+						response.Tags.Add(new ValuesTagResponse
 						{
-							Id = databaseValueGroup.Key,
-							TagName = tagInfo.TagName,
+							Guid = tagInfo.Guid,
 							Type = tagInfo.TagType,
-							Func = request.Func ?? AggregationFunc.List,
 							Values = [
 									new ValueRecord
 									{
@@ -422,12 +417,10 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					}
 					else
 					{
-						responses.Add(new ValuesResponse
+						response.Tags.Add(new ValuesTagResponse
 						{
-							Id = databaseValueGroup.Key,
-							TagName = tagInfo.TagName,
+							Guid = tagInfo.Guid,
 							Type = tagInfo.TagType,
-							Func = request.Func ?? AggregationFunc.List,
 							Values = [
 									new ValueRecord
 									{
@@ -442,28 +435,39 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					}
 				}
 			}
+
+			// дописываем информацию о тех тегах, которые не были найдены
+			var notFoundTags = request.Tags.Except(info.Values.Select(v => v.Guid));
+			foreach (var guid in notFoundTags)
+			{
+				response.Tags.Add(new ValuesTagResponse
+				{
+					Guid = guid,
+					Type = TagType.String,
+					Values = [
+						new ValueRecord
+						{
+							Date = exact,
+							DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
+							Quality = TagQuality.Bad_NoValues,
+							Using = TagUsing.NotFound,
+							Value = 0,
+						}
+					]
+				});
+			}
 		}
 
 		return responses;
 	}
 
-	async Task<Dictionary<int, ValueTagInfo>> ReadTagsInfoAsync(int[] identifiers, string[] names)
+	async Task<Dictionary<int, ValueTagInfo>> ReadTagsInfoAsync(Guid[] identifiers)
 	{
-		var query = db.Tags.AsQueryable();
-
-		if (identifiers.Length > 0)
-		{
-			query = query.Where(x => identifiers.Contains(x.Id));
-		}
-		else if (names.Length > 0)
-		{
-			var _names = names.Select(x => x.ToLower().Trim()).ToHashSet();
-			query = query.Where(x => _names.Contains(x.Name.ToLower().Trim()));
-		}
-
-		var info = await query
+		var info = await db.Tags
+			.Where(x => identifiers.Contains(x.GlobalGuid))
 			.ToDictionaryAsync(x => x.Id, x => new ValueTagInfo
 			{
+				Guid = x.GlobalGuid,
 				TagName = x.Name,
 				TagType = x.Type,
 			});

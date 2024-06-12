@@ -8,14 +8,9 @@ namespace Datalake.ApiClasses.Models.Values;
 public class ValueWriteRequest
 {
 	/// <summary>
-	/// Идентификатор тега в локальной базе
+	/// Идентификатор тега
 	/// </summary>
-	public int? TagId { get; set; }
-
-	/// <summary>
-	/// Имя тега
-	/// </summary>
-	public string? TagName { get; set; }
+	public Guid Guid { get; set; }
 
 	/// <summary>
 	/// Новое значение
@@ -30,5 +25,5 @@ public class ValueWriteRequest
 	/// <summary>
 	/// Флаг достоверности нового значения
 	/// </summary>
-	public TagQuality? TagQuality { get; set; }
+	public TagQuality? Quality { get; set; }
 }

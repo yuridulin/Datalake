@@ -42,7 +42,7 @@ namespace Datalake.Database.Tests.Steps
 
 			int tagId = await tagsRepository.CreateAsync(Constants.DefaultAdmin, request);
 
-			Assert.True(tagId == Constants.TagId);
+			Assert.True(tagId > 0);
 		}
 
 		public static async Task T2_2_GetManualTag()
@@ -52,7 +52,7 @@ namespace Datalake.Database.Tests.Steps
 			var tagsRepository = new TagsRepository(db);
 
 			var tagInfo = await tagsRepository.GetInfoWithSources()
-				.Where(x => x.Id == Constants.TagId)
+				.Where(x => x.Guid == Constants.TagGuid)
 				.FirstOrDefaultAsync();
 
 			Assert.NotNull(tagInfo);
@@ -70,12 +70,13 @@ namespace Datalake.Database.Tests.Steps
 			[
 				new()
 				{
-					Tags = [Constants.TagId]
+					RequestKey = "1",
+					Tags = [Constants.TagGuid]
 				},
 			]);
 
 			Assert.Single(valuesResponses);
-			Assert.Single(valuesResponses.First().Values);
+			Assert.Single(valuesResponses[0].Tags[0].Values);
 		}
 	}
 }

@@ -4,7 +4,7 @@ namespace Datalake.Database.Tests
 {
 	public static class Constants
 	{
-		public const int TagId = 1;
+		public static Guid TagGuid { get; set; }
 		public const string TagName = "test";
 
 		public static readonly DateTime FirstWriteDate = DateTime.Parse("2024-01-07 11:11:11");

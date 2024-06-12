@@ -4,37 +4,19 @@ using System.ComponentModel.DataAnnotations;
 namespace Datalake.ApiClasses.Models.Values;
 
 /// <summary>
-/// Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения
+/// Ответ на запрос для получения значений, включающий обработанные теги и идентификатор запроса
 /// </summary>
 public class ValuesResponse
 {
 	/// <summary>
-	/// Идентификатор тега в локальной базе
+	/// Идентификатор запроса, который будет передан в соответствующий объект ответа
 	/// </summary>
 	[Required]
-	public required int Id { get; set; }
+	public required string RequestKey { get; set; }
 
 	/// <summary>
-	/// Имя тега
+	/// Список глобальных идентификаторов тегов
 	/// </summary>
 	[Required]
-	public required string TagName { get; set; }
-
-	/// <summary>
-	/// Тип данных
-	/// </summary>
-	[Required]
-	public required TagType Type { get; set; }
-
-	/// <summary>
-	/// Применённый тип агрегирования
-	/// </summary>
-	[Required]
-	public required AggregationFunc Func { get; set; }
-
-	/// <summary>
-	/// Список значений
-	/// </summary>
-	[Required]
-	public required ValueRecord[] Values { get; set; } = [];
+	public required List<ValuesTagResponse> Tags { get; set; } = [];
 }

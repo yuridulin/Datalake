@@ -118,7 +118,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 	/// <param name="tags">Список названий запрашиваемых тегов</param>
 	/// <param name="address">Адрес ноды</param>
 	/// <returns>Ответ с данными</returns>
-	public async Task<ReceiveResponse> AskDatalake(string[] tags, string address)
+	public async Task<ReceiveResponse> AskDatalake(Guid[] tags, string address)
 	{
 		logger.LogDebug("Ask datalake with address: {address}", address);
 
@@ -126,39 +126,44 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		{
 			Request = new ValuesRequest
 			{
-				TagNames = tags,
+				RequestKey = "1",
+				Tags = tags,
 			}
 		};
 
 		using var client = new HttpClient();
 		client.Timeout = TimeSpan.FromSeconds(1);
 
-		List<ValuesResponse>? historyResponse = null;
+		List<ValuesResponse>? historyResponses = null;
 
 		try
 		{
 			var answer = await client.PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
-			historyResponse = await answer.Content.ReadFromJsonAsync<List<ValuesResponse>>();
+			historyResponses = await answer.Content.ReadFromJsonAsync<List<ValuesResponse>>();
 		}
 		catch
 		{
 			logger.LogDebug("Ask datalake with address: {address} fail", address);
 		}
 
-		historyResponse ??= [];
+		historyResponses ??= [];
+
+		var historyResponse = historyResponses.FirstOrDefault();
 
 		var response = new ReceiveResponse
 		{
 			Timestamp = DateTime.Now,
-			Tags = historyResponse
-				.SelectMany(x => x.Values, (tag, value) => new ReceiveRecord
-				{
-					Name = tag.TagName,
-					Quality = value.Quality,
-					Value = value.Value,
-					Type = tag.Type,
-				})
-				.ToArray()
+			Tags = historyResponse != null 
+				? historyResponse.Tags
+					.SelectMany(t => t.Values.Select(v => new ReceiveRecord
+					{
+						Name = t.Guid.ToString(),
+						Type = t.Type,
+						Quality = v.Quality,
+						Value = v.Value,
+					}))
+					.ToArray()
+				: [],
 		};
 
 		return response;

@@ -12,7 +12,7 @@ public class TagInfo
 	/// Идентификатор тега в локальной базе
 	/// </summary>
 	[Required]
-	public required int Id { get; set; }
+	public required Guid Guid { get; set; }
 
 	/// <summary>
 	/// Имя тега
