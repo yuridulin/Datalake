@@ -21,14 +21,14 @@ using LinqToDB.AspNet.Logging;
 namespace Datalake.Server
 {
 	/// <summary>
-	/// �������� ����� ����������
+	/// Основной класс приложения
 	/// </summary>
 	public class Program
 	{
 		/// <summary>
-		/// ����� ������� ����������
+		/// Метод запуска приложения
 		/// </summary>
-		/// <param name="args">���������, � �������� ��� �����������</param>
+		/// <param name="args">Аргументы, с которыми оно запускается</param>
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
@@ -129,12 +129,12 @@ namespace Datalake.Server
 
 		static void ConfigureServices(WebApplicationBuilder builder)
 		{
-			// ����������
+			// постоянные
 			builder.Services.AddSingleton<CollectorFactory>();
 			builder.Services.AddSingleton<ReceiverService>();
 			builder.Services.AddSingleton<SessionManagerService>();
 
-			// ���������
+			// временные
 			builder.Services.AddTransient<BlocksRepository>();
 			builder.Services.AddTransient<TagsRepository>();
 			builder.Services.AddTransient<SourcesRepository>();
@@ -143,7 +143,7 @@ namespace Datalake.Server
 			builder.Services.AddTransient<ValuesRepository>();
 			builder.Services.AddTransient<AuthMiddleware>();
 
-			// ������
+			// службы
 			builder.Services.AddHostedService<CollectorService>();
 		}
 
@@ -158,6 +158,11 @@ namespace Datalake.Server
 			var db = serviceScope?.ServiceProvider.GetRequiredService<DatalakeContext>();
 			if (db != null)
 				await db.EnsureDataCreatedAsync();
+
+			File.WriteAllLines(Path.Combine(app.Environment.WebRootPath, "startup.js"), [
+				"",
+				"",
+			]);
 		}
 
 		static void ConfigureErrorPage(WebApplication app)
@@ -177,8 +182,8 @@ namespace Datalake.Server
 					}
 					else
 					{
-						message = "������ ���������� �� �������" +
-							"\n\n" + // �����������, �� �������� ������ �������� ��������� ����� ���������
+						message = "Ошибка выполнения на сервере" +
+							"\n\n" + // разделитель, по которому клиент отсекает служебную часть сообщения
 							error?.ToString() ?? "error is null";
 					}
 

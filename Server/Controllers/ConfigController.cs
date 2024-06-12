@@ -66,7 +66,7 @@ public class ConfigController(SystemRepository systemRepository) : ApiController
 	/// </summary>
 	/// <param name="newSettings">Новые настройки сервера</param>
 	[HttpPut("settings")]
-	public async Task<ActionResult> GetSettingsAsync(
+	public async Task<ActionResult> UpdateSettingsAsync(
 		[BindRequired][FromBody] SettingsInfo newSettings)
 	{
 		var user = Authenticate();
