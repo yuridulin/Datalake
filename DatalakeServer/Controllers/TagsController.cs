@@ -33,16 +33,16 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	/// <summary>
 	/// Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
 	/// </summary>
-	/// <param name="id">Идентификатор тега</param>
+	/// <param name="guid">Идентификатор тега</param>
 	/// <returns>Объект информации о теге</returns>
 	/// <exception cref="NotFoundException">Ошибка, если тег не найден</exception>
-	[HttpGet("{id:int}")]
-	public async Task<ActionResult<TagInfo>> ReadAsync(int id)
+	[HttpGet("{guid}")]
+	public async Task<ActionResult<TagInfo>> ReadAsync(Guid guid)
 	{
 		var tag = await tagsRepository.GetInfoWithSources()
-			.Where(x => x.Id == id)
+			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Тег #{id}");
+			?? throw new NotFoundException($"Тег {guid}");
 
 		return tag;
 	}

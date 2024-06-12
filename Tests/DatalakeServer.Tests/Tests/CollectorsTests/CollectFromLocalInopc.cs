@@ -7,7 +7,6 @@ using DatalakeServer.Constants;
 using DatalakeServer.Services.Receiver.Models.Inopc;
 using DatalakeServer.TestRunner.Attributes;
 using DatalakeServer.TestRunner.Extensions;
-using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 
 namespace DatalakeServer.TestRunner.Tests.CollectorsTests;
@@ -15,13 +14,11 @@ namespace DatalakeServer.TestRunner.Tests.CollectorsTests;
 public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>>
 {
 	private readonly TestingWebAppFactory<Program> _webAppFactory;
-	private readonly ILogger<CollectFromLocalInopc> _logger;
 	private readonly HttpClient _httpClient;
 
 	public CollectFromLocalInopc(TestingWebAppFactory<Program> webAppFactory)
 	{
 		_webAppFactory = webAppFactory;
-		_logger = new LoggerFactory().CreateLogger<CollectFromLocalInopc>();
 		_httpClient = _webAppFactory.CreateDefaultClient();
 	}
 
@@ -32,15 +29,14 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	const string TestItemPath = "Test.TestDevice.Num1";
 	const string TestTagName = "TestTag1";
 
-	public async Task<(string, string)> Authorization()
+	public async Task<string> Authorization()
 	{
 		var request = new UserLoginPass { Login = "admin", Password = "admin" };
 		var response = await _httpClient.PostAsJsonAsync("api/users/auth", request);
 
 		var token = response.Headers.GetValues(AuthConstants.TokenHeader).First();
-		var name = response.Headers.GetValues(AuthConstants.NameHeader).First();
 
-		return (token, name);
+		return token;
 	}
 
 	[Fact, Priority(0)]
@@ -48,10 +44,9 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	{
 		Assert.True(true);
 
-		var (token, name) = await Authorization();
+		var token = await Authorization();
 
 		Assert.NotNull(token);
-		Assert.NotNull(name);
 	}
 
 	[Fact, Priority(1)]
@@ -71,9 +66,8 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	[Fact, Priority(2)]
 	public async Task T002_CreateSourceForLocalInopc()
 	{
-		var (token, name) = await Authorization();
+		var token = await Authorization();
 		_httpClient.DefaultRequestHeaders.Add(AuthConstants.TokenHeader, token);
-		_httpClient.DefaultRequestHeaders.Add(AuthConstants.NameHeader, name);
 
 		var body = new SourceInfo
 		{
@@ -89,9 +83,8 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	[Fact, Priority(3)]
 	public async Task T003_GetItemsListForTestSource()
 	{
-		var (token, name) = await Authorization();
+		var token = await Authorization();
 		_httpClient.DefaultRequestHeaders.Add(AuthConstants.TokenHeader, token);
-		_httpClient.DefaultRequestHeaders.Add(AuthConstants.NameHeader, name);
 
 		var sources = await _httpClient.GetAsync<SourceInfo[]>("api/sources");
 		Assert.NotNull(sources);
@@ -107,9 +100,8 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	[Fact, Priority(4)]
 	public async Task T004_CreateTestTagForTestSource()
 	{
-		var (token, name) = await Authorization();
+		var token = await Authorization();
 		_httpClient.DefaultRequestHeaders.Add(AuthConstants.TokenHeader, token);
-		_httpClient.DefaultRequestHeaders.Add(AuthConstants.NameHeader, name);
 
 		var sources = await _httpClient.GetAsync<SourceInfo[]>("api/sources");
 		Assert.NotNull(sources);
@@ -117,7 +109,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 		var testSource = sources.FirstOrDefault(x => x.Name == TestSourceName);
 		Assert.NotNull(testSource);
 
-		var id = await _httpClient.PostAsync<int>("api/tags", new TagCreateRequest
+		var guid = await _httpClient.PostAsync<Guid>("api/tags", new TagCreateRequest
 		{
 			Name = TestTagName,
 			TagType = TagType.Number,
@@ -125,9 +117,9 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 			SourceItem = TestItemPath,
 		});
 
-		Assert.True(id > 0);
+		Assert.True(guid.GetType() == typeof(Guid));
 
-		await _httpClient.PutAsync("api/tags/" + id, new TagUpdateRequest
+		await _httpClient.PutAsync("api/tags/" + guid, new TagUpdateRequest
 		{
 			Name = TestTagName,
 			IntervalInSeconds = 0,
@@ -144,11 +136,14 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	{
 		await Task.Delay(TimeSpan.FromSeconds(3));
 
-		var (token, name) = await Authorization();
+		var token = await Authorization();
 		_httpClient.DefaultRequestHeaders.Add(AuthConstants.TokenHeader, token);
-		_httpClient.DefaultRequestHeaders.Add(AuthConstants.NameHeader, name);
 
 		object? storedValue = null;
+
+		var tags = await _httpClient.GetAsync<TagInfo[]>("api/tags");
+		var tag = tags.Where(x => x.Name == TestTagName).FirstOrDefault();
+		Assert.NotNull(tag);
 
 		for (var i = 0; i < 4; i++)
 		{
@@ -156,11 +151,12 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 			{
 				new()
 				{
-					TagNames = [TestTagName]
+					RequestKey = "1",
+					Tags = [tag.Guid]
 				}
 			};
 
-			var responses = await _httpClient.PostAsync<List<ValuesResponse>>("api/tags/values", request);
+			var responses = await _httpClient.PostAsync<List<ValuesTagResponse>>("api/tags/values", request);
 			Assert.NotNull(responses);
 			Assert.Single(responses);
 
@@ -180,9 +176,8 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	[Fact, Priority(int.MaxValue)]
 	public async Task T999_RemoveTestObjects()
 	{
-		var (token, name) = await Authorization();
+		var token = await Authorization();
 		_httpClient.DefaultRequestHeaders.Add(AuthConstants.TokenHeader, token);
-		_httpClient.DefaultRequestHeaders.Add(AuthConstants.NameHeader, name);
 
 		var sources = await _httpClient.GetAsync<SourceInfo[]>("api/sources");
 		Assert.NotNull(sources);
@@ -200,7 +195,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 		if (testTag != null)
 		{
 			Assert.NotNull(testTag);
-			await _httpClient.DeleteAsync("api/tags/" + testTag.Id);
+			await _httpClient.DeleteAsync("api/tags/" + testTag.Guid);
 		}
 	}
 }

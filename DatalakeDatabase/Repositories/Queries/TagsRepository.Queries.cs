@@ -12,7 +12,7 @@ public partial class TagsRepository
 								from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
 								select new TagInfo
 								{
-									Id = tag.Id,
+									Guid = tag.GlobalGuid,
 									Name = tag.Name,
 									Description = tag.Description,
 									IntervalInSeconds = tag.Interval,

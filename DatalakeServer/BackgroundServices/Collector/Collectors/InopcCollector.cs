@@ -31,7 +31,7 @@ internal class InopcCollector : CollectorBase
 		_itemsTags = source.Tags
 			.Where(x => x.SourceItem != null)
 			.GroupBy(x => x.SourceItem)
-			.ToDictionary(g => g.Key!, g => g.Select(x => x.Id).ToArray());
+			.ToDictionary(g => g.Key!, g => g.Select(x => x.GlobalGuid).ToArray());
 
 		_timer.Elapsed += async (s, e) => await Timer_ElapsedAsync();
 		_timer.Interval = _itemsToSend
@@ -73,7 +73,7 @@ internal class InopcCollector : CollectorBase
 	private readonly Timer _timer;
 	private readonly string _address;
 	private readonly List<Item> _itemsToSend;
-	private readonly Dictionary<string, int[]> _itemsTags;
+	private readonly Dictionary<string, Guid[]> _itemsTags;
 	private ILogger<InopcCollector> _logger;
 
 	private async Task Timer_ElapsedAsync()
@@ -107,12 +107,12 @@ internal class InopcCollector : CollectorBase
 
 		CollectValues?.Invoke(this, response.Tags
 			.SelectMany(item => _itemsTags[item.Name]
-				.Select(id => new Models.CollectValue
+				.Select(guid => new Models.CollectValue
 				{
 					DateTime = response.Timestamp,
 					Name = item.Name,
 					Quality = item.Quality,
-					TagId = id,
+					Guid = guid,
 					Value = item.Value,
 				})
 			));

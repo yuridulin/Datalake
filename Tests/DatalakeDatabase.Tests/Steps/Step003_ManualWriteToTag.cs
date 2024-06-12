@@ -18,14 +18,14 @@ namespace DatalakeDatabase.Tests.Steps
 				new ValueWriteRequest()
 				{
 					Date = now,
-					TagId = Constants.TagId,
-					TagQuality = TagQuality.Good,
+					Guid = Constants.TagGuid,
+					Quality = TagQuality.Good,
 					Value = Constants.LastValue,
 				}
 			]);
 
 			Assert.Single(response);
-			Assert.True(response[0].Id == Constants.TagId);
+			Assert.True(response[0].Guid == Constants.TagGuid);
 			Assert.Single(response[0].Values);
 			Assert.True(response[0].Values[0].Date == now);
 			Assert.NotNull(response[0].Values[0].Value);
@@ -44,13 +44,13 @@ namespace DatalakeDatabase.Tests.Steps
 			[
 				new()
 				{
-					TagId = Constants.TagId,
+					Guid = Constants.TagGuid,
 					Date = Constants.BeforeLastWriteDate,
 					Value = Constants.BeforeLastWriteValue,
 				},
 				new()
 				{
-					TagId = Constants.TagId,
+					Guid = Constants.TagGuid,
 					Date = Constants.FirstWriteDate,
 					Value = Constants.FirstWriteValue,
 				},
@@ -62,7 +62,7 @@ namespace DatalakeDatabase.Tests.Steps
 			[
 				new()
 				{
-					TagId = Constants.TagId,
+					Guid = Constants.TagGuid,
 					Date = Constants.AfterFirstWriteDate,
 					Value = Constants.AfterFirstWriteValue,
 				},
@@ -70,9 +70,9 @@ namespace DatalakeDatabase.Tests.Steps
 
 			await valuesRepository.WriteValuesAsync(seedResponse);
 
-			var value = await valuesRepository.GetValuesAsync([ new ValuesRequest() { Tags = [Constants.TagId] } ]);
+			var value = await valuesRepository.GetValuesAsync([ new ValuesRequest() { RequestKey = "1", Tags = [Constants.TagGuid] } ]);
 
-			Assert.Equal(Constants.LastValue, value[0].Values[0].Value);
+			Assert.Equal(Constants.LastValue, value[0].Tags[0].Values[0].Value);
 		}
 	}
 }
