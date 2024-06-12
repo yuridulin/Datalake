@@ -1,0 +1,30 @@
+﻿using System.Text.Json.Serialization;
+
+namespace Datalake.ApiClasses.Enums;
+
+/// <summary>
+/// Тип получения данных с источника
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum SourceType
+{
+	/// <summary>
+	/// Не определен или не известен
+	/// </summary>
+	Unknown = -100,
+
+	/// <summary>
+	/// Уникальный
+	/// </summary>
+	Custom = -1,
+
+	/// <summary>
+	/// INOPC-сервер
+	/// </summary>
+	Inopc = 0,
+
+	/// <summary>
+	/// Другая нода базы данных Datalake
+	/// </summary>
+	Datalake = 1,
+}

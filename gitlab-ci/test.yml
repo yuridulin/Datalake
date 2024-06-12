@@ -1,0 +1,50 @@
+stages:
+  - build
+  - push
+  - deploy
+
+build-server:
+  stage: build
+
+  tags:
+    - push-build
+
+  script:
+    - docker build -t datalake:latest-test  -f ./Server/Dockerfile .
+    - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:"$CI_COMMIT_TAG"
+    - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:latest-test
+
+  only:
+    - /^\d+.\d+.\d+.test$/
+
+push-server:
+  stage: push
+
+  tags:
+    - push-build
+
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+
+  script:
+    - docker push "$CI_REPOS_URL"/datalake:"$CI_COMMIT_TAG"
+    - docker push "$CI_REPOS_URL"/datalake:latest-test
+
+  only:
+    - /^\d+.\d+.\d+.test$/
+
+deploy-server:
+  stage: deploy
+
+  tags:
+    - local-ve
+
+  image:
+    name: lachlanevenson/k8s-kubectl:latest
+    entrypoint: ["/bin/sh", "-c"]
+
+  script:
+    - kubectl delete -n sinus-test pods -l app=datalake-test
+
+  only:
+    - /^\d+.\d+.\d+.test$/
