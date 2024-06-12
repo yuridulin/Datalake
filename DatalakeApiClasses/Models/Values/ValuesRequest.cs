@@ -1,4 +1,5 @@
 ﻿using DatalakeApiClasses.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace DatalakeApiClasses.Models.Values;
 
@@ -8,14 +9,16 @@ namespace DatalakeApiClasses.Models.Values;
 public class ValuesRequest
 {
 	/// <summary>
-	/// Список локальных идентификаторов тегов
+	/// Идентификатор запроса, который будет передан в соответствующий объект ответа
 	/// </summary>
-	public int[]? Tags { get; set; } = [];
+	[Required]
+	public required string RequestKey { get; set; }
 
 	/// <summary>
-	/// Список имён тегов
+	/// Список глобальных идентификаторов тегов
 	/// </summary>
-	public string[]? TagNames { get; set; } = [];
+	[Required]
+	public required Guid[] Tags { get; set; } = [];
 
 	/// <summary>
 	/// Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток

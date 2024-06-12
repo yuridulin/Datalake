@@ -38,7 +38,7 @@ public class ValuesController(ValuesRepository valuesRepository) : ControllerBas
 	/// <param name="requests">Список запросов на изменение</param>
 	/// <returns>Список измененных начений</returns>
 	[HttpPut]
-	public async Task<List<ValuesResponse>> WriteAsync(
+	public async Task<List<ValuesTagResponse>> WriteAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests)
 	{
 		var responses = await valuesRepository.WriteValuesAsync(requests);

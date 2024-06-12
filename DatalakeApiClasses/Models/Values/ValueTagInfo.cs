@@ -9,10 +9,16 @@ namespace DatalakeApiClasses.Models.Values;
 public class ValueTagInfo
 {
 	/// <summary>
+	/// Глобальный идентификатор тега
+	/// </summary>
+	[Required]
+	public required Guid Guid { get; set; }
+
+	/// <summary>
 	/// Имя тега
 	/// </summary>
 	[Required]
-	public string TagName { get; set; } = string.Empty;
+	public required string TagName { get; set; }
 
 	/// <summary>
 	/// Тип данных значений тега

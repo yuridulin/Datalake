@@ -72,11 +72,10 @@ internal class CollectorService(
 		var writeValues = values
 			.Select(x => new ValueWriteRequest
 			{
-				TagId = x.TagId,
-				TagName = null,
+				Guid = x.Guid,
 				Date = x.DateTime,
 				Value = x.Value,
-				TagQuality = x.Quality,
+				Quality = x.Quality,
 			})
 			.ToArray();
 

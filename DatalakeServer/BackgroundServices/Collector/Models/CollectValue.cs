@@ -15,7 +15,7 @@ public struct CollectValue
 	/// <summary>
 	/// Идентификатор тега, для которого предназначено это значение
 	/// </summary>
-	public int TagId { get; set; }
+	public Guid Guid { get; set; }
 
 	/// <summary>
 	/// Путь, по которому было получено значение
