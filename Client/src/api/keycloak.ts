@@ -1,11 +1,16 @@
 import Keycloak from 'keycloak-js'
 
-// api на получение настроек
+declare const KEYCLOAK_DB: boolean
 
-const keycloak = new Keycloak({
-	url: window.location.protocol + '//' + +'/',
+let keycloakHost = false
+try {
+	keycloakHost = KEYCLOAK_DB
+} catch (e) {}
+
+const keycloak: Keycloak = new Keycloak({
+	url: window.location.protocol + '//' + keycloakHost + '/',
 	realm: 'energo',
 	clientId: 'datalake',
 })
 
-export default keycloak
+export { keycloak }

@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import api from '../../api/swagger-api'
 import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
-import { CustomSource } from '../../etc/customSource'
+import { CustomSource } from '../../models/customSource'
 import routes from '../../router/routes'
 
 export function AppMenu() {
@@ -40,13 +40,14 @@ export function AppMenu() {
 			<div className='app-menu-block'>
 				<NavLink to={'/sources'}>Источники</NavLink>
 				<div className='app-menu-sub'>
-					{sources
-						.filter((x) => x.id > 0)
-						.map((x) => (
-							<NavLink key={x.id} to={`/sources/${x.id}`}>
-								{x.name}
-							</NavLink>
-						))}
+					{sources.length > 0 &&
+						sources
+							.filter((x) => x.id > 0)
+							.map((x) => (
+								<NavLink key={x.id} to={`/sources/${x.id}`}>
+									{x.name}
+								</NavLink>
+							))}
 				</div>
 			</div>
 
@@ -62,11 +63,12 @@ export function AppMenu() {
 			<div className='app-menu-block'>
 				<NavLink to={'/blocks'}>Объекты</NavLink>
 				<div className='app-menu-sub'>
-					{blocks.map((x) => (
-						<NavLink key={x.id} to={`/blocks/${x.id}`}>
-							{x.name}
-						</NavLink>
-					))}
+					{blocks.length > 0 &&
+						blocks.map((x) => (
+							<NavLink key={x.id} to={`/blocks/${x.id}`}>
+								{x.name}
+							</NavLink>
+						))}
 				</div>
 			</div>
 		</div>

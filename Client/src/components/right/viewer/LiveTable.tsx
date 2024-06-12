@@ -2,7 +2,7 @@ import { Button } from 'antd'
 import dayjs from 'dayjs'
 import api from '../../../api/swagger-api'
 import { TagInfo, ValuesResponse } from '../../../api/swagger/data-contracts'
-import { CustomSource } from '../../../etc/customSource'
+import { CustomSource } from '../../../models/customSource'
 import TagQualityEl from '../../small/TagQualityEl'
 import TagValueEl from '../../small/TagValueEl'
 

@@ -14,6 +14,7 @@ import {
 	BlockSimpleInfo,
 	BlockTreeInfo,
 	LogInfo,
+	SettingsInfo,
 	SourceEntryInfo,
 	SourceInfo,
 	SourceItemInfo,
@@ -199,6 +200,39 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			method: 'GET',
 			query: query,
 			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Config
+	 * @name ConfigGetSettings
+	 * @summary Получение информации о настройках сервера
+	 * @request GET:/api/Config/settings
+	 * @response `200` `SettingsInfo` Информация о настройках
+	 */
+	configGetSettings = (params: RequestParams = {}) =>
+		this.request<SettingsInfo, any>({
+			path: `/api/Config/settings`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Config
+	 * @name ConfigUpdateSettings
+	 * @summary Изменение информации о настройках сервера
+	 * @request PUT:/api/Config/settings
+	 * @response `200` `File`
+	 */
+	configUpdateSettings = (data: SettingsInfo, params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/Config/settings`,
+			method: 'PUT',
+			body: data,
+			type: ContentType.Json,
 			...params,
 		})
 	/**

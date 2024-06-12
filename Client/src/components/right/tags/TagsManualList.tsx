@@ -2,7 +2,7 @@ import { Button } from 'antd'
 import { useEffect, useState } from 'react'
 import api from '../../../api/swagger-api'
 import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
-import { CustomSource } from '../../../etc/customSource'
+import { CustomSource } from '../../../models/customSource'
 import Header from '../../small/Header'
 import TagsTable from './TagsTable'
 

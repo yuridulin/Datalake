@@ -2,7 +2,7 @@ import { ConfigProvider, theme } from 'antd'
 import { KeycloakProvider } from 'keycloak-react-web'
 import { useEffect, useState } from 'react'
 import { RouterProvider } from 'react-router-dom'
-import keycloak from '../api/keycloak'
+import { keycloak } from '../api/keycloak'
 import { UpdateContext } from '../context/updateContext'
 import router from '../router/router'
 

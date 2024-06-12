@@ -1,5 +1,5 @@
 import { Link, Outlet } from 'react-router-dom'
-import { auth } from '../etc/auth'
+import { auth } from '../api/auth'
 import UserPanel from './global/UserPanel'
 import { AppMenu } from './left/AppMenu'
 

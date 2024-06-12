@@ -1,7 +1,7 @@
 import { notification } from 'antd'
 import { AxiosError, AxiosResponse } from 'axios'
-import { auth, tokenHeader } from '../etc/auth'
 import router from '../router/router'
+import { auth, tokenHeader } from './auth'
 import { Api } from './swagger/Api'
 
 declare const LOCAL_API: boolean
@@ -12,7 +12,7 @@ try {
 } catch (e) {}
 
 const api = new Api({
-	baseURL: !!isLocal ? window.location.href : 'https://localhost:32781/',
+	baseURL: !!isLocal ? window.location.href : 'http://localhost:5018/',
 	validateStatus(status) {
 		return status >= 200 && status < 300
 	},

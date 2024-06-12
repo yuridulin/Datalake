@@ -1,7 +1,7 @@
 import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { auth } from '../../etc/auth'
+import { auth } from '../../api/auth'
 import routes from '../../router/routes'
 
 const style = {

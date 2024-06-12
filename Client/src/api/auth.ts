@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx'
-import api from '../api/swagger-api'
+import api from './swagger-api'
 
 const nameHeader = 'd-name'
 const tokenHeader = 'd-access-token'
