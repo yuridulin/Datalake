@@ -8,8 +8,8 @@ services:
       context: ../
       dockerfile: ./Server/Dockerfile
     environment:
-      DATALAKE_HOST_DEV: ${DATALAKE_HOST_DEV}
-      DATALAKE_DB_DEV: ${DATALAKE_DB_DEV}
+      DATALAKE_HOST: ${DATALAKE_HOST}
+      DATALAKE_DB: ${DATALAKE_DB_DEV}
 
   # keycloak:
   #   image: ${DOCKER_REGISTRY-}keycloak
