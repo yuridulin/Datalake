@@ -12,7 +12,168 @@ namespace Datalake.Database.Migrations
 		/// <inheritdoc />
 		protected override void Up(MigrationBuilder migrationBuilder)
 		{
-			migrationBuilder.Sql(@"DO $$
+			#region Регенерация старых таблиц в ситуации, когда у нас пустая база данных
+
+			migrationBuilder.Sql(@"
+					DO $$
+					BEGIN
+						IF NOT EXISTS (
+							SELECT 1
+							FROM pg_tables
+							WHERE tablename = 'Blocks'
+						) THEN
+							CREATE TABLE public.""Blocks"" (
+								""Id"" serial4 NOT NULL,
+								""ParentId"" int4 NOT NULL,
+								""Name"" text NOT NULL,
+								""Description"" text NULL,
+								""PropertiesRaw"" text NULL,
+								CONSTRAINT ""PK_Blocks"" PRIMARY KEY (""Id"")
+							);
+						END IF;
+					COMMIT;
+					END $$;", true);
+
+			migrationBuilder.Sql(@"
+					DO $$
+					BEGIN
+						IF NOT EXISTS (
+							SELECT 1
+							FROM pg_tables
+							WHERE tablename = 'Logs'
+						) THEN
+							CREATE TABLE public.""Logs"" (
+								""Date"" timestamp NOT NULL,
+								""Category"" int4 NOT NULL,
+								""Ref"" int4 NULL,
+								""Type"" int4 NOT NULL,
+								""Text"" text NOT NULL,
+								""Details"" text NULL,
+								""User"" text NULL
+							);
+						END IF;
+					COMMIT;
+					END $$;", true);
+
+			migrationBuilder.Sql(@"
+					DO $$
+					BEGIN
+						IF NOT EXISTS (
+							SELECT 1
+							FROM pg_tables
+							WHERE tablename = 'Rel_Block_Tag'
+						) THEN
+							CREATE TABLE public.""Rel_Block_Tag"" (
+								""BlockId"" int4 NOT NULL,
+								""TagId"" int4 NOT NULL,
+								""Name"" text NULL,
+								""Type"" int4 NOT NULL
+							);
+						END IF;
+					COMMIT;
+					END $$;", true);
+
+			migrationBuilder.Sql(@"
+					DO $$
+					BEGIN
+						IF NOT EXISTS (
+							SELECT 1
+							FROM pg_tables
+							WHERE tablename = 'Rel_Tag_Input'
+						) THEN
+							CREATE TABLE public.""Rel_Tag_Input"" (
+								""TagId"" int4 NOT NULL,
+								""InputTagId"" int4 NOT NULL,
+								""VariableName"" text NULL
+							);
+						END IF;
+					COMMIT;
+					END $$;", true);
+
+			migrationBuilder.Sql(@"
+					DO $$
+					BEGIN
+						IF NOT EXISTS (
+							SELECT 1
+							FROM pg_tables
+							WHERE tablename = 'Settings'
+						) THEN
+							CREATE TABLE public.""Settings"" (
+								""Key"" text NOT NULL,
+								""Value"" text NULL
+							);
+						END IF;
+					COMMIT;
+					END $$;", true);
+
+			migrationBuilder.Sql(@"
+					DO $$
+					BEGIN
+						IF NOT EXISTS (
+							SELECT 1
+							FROM pg_tables
+							WHERE tablename = 'Sources'
+						) THEN
+							CREATE TABLE public.""Sources"" (
+								""Id"" serial4 NOT NULL,
+								""Name"" text NULL,
+								""Type"" int4 NOT NULL,
+								""Address"" text NULL
+							);
+						END IF;
+					COMMIT;
+					END $$;", true);
+
+			migrationBuilder.Sql(@"
+					DO $$
+					BEGIN
+						IF NOT EXISTS (
+							SELECT 1
+							FROM pg_tables
+							WHERE tablename = 'Tags'
+						) THEN
+							CREATE TABLE public.""Tags"" (
+								""Id"" serial4 NOT NULL,
+								""Name"" text NOT NULL,
+								""Description"" text NULL,
+								""Type"" int4 NOT NULL,
+								""Interval"" int2 NOT NULL,
+								""SourceId"" int4 NOT NULL,
+								""SourceItem"" text NULL,
+								""IsScaling"" bool NOT NULL,
+								""MinEU"" float4 NOT NULL,
+								""MaxEU"" float4 NOT NULL,
+								""MinRaw"" float4 NOT NULL,
+								""MaxRaw"" float4 NOT NULL,
+								""IsCalculating"" bool NOT NULL,
+								""Formula"" text NULL,
+								CONSTRAINT ""PK_Tags"" PRIMARY KEY (""Id"")
+							);
+						END IF;
+					COMMIT;
+					END $$;", true);
+
+			migrationBuilder.Sql(@"
+					DO $$
+					BEGIN
+						IF NOT EXISTS (
+							SELECT 1
+							FROM pg_tables
+							WHERE tablename = 'Users'
+						) THEN
+							CREATE TABLE public.""Users"" (
+								""Name"" text NOT NULL,
+								""Hash"" text NOT NULL,
+								""AccessType"" int4 NOT NULL,
+								""FullName"" text NOT NULL,
+								""StaticHost"" text NULL
+							);
+						END IF;
+					COMMIT;
+					END $$;", true);
+
+			migrationBuilder.Sql(@"
+					DO $$
 					DECLARE
 							_tbl text;
 							_column_to_drop text = 'Type';
@@ -25,7 +186,20 @@ namespace Datalake.Database.Migrations
 							LOOP
 									EXECUTE format('ALTER TABLE %I DROP COLUMN IF EXISTS %I', _tbl, _column_to_drop);
 							END LOOP;
-					END $$;");
+					COMMIT;
+					END $$;", true);
+
+			migrationBuilder.Sql(@"
+				DELETE FROM ""Rel_Block_Tag""
+				WHERE ""BlockId"" NOT IN (SELECT ""Id"" FROM ""Blocks"")
+				OR ""TagId"" NOT IN (SELECT ""Id"" FROM ""Tags"")");
+
+			migrationBuilder.Sql(@"
+				DELETE FROM ""Rel_Tag_Input""
+				WHERE ""TagId"" NOT IN (SELECT ""Id"" FROM ""Tags"")
+				OR ""InputTagId"" NOT IN (SELECT ""Id"" FROM ""Tags"")");
+
+			#endregion
 
 			// изменения схемы
 
@@ -74,7 +248,7 @@ namespace Datalake.Database.Migrations
 					table: "Tags",
 					type: "uuid",
 					nullable: false,
-					defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+					defaultValue: Guid.NewGuid());
 
 			migrationBuilder.AlterColumn<int>(
 					name: "SourceId",
@@ -121,7 +295,7 @@ namespace Datalake.Database.Migrations
 					table: "Blocks",
 					type: "uuid",
 					nullable: false,
-					defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+					defaultValue: Guid.NewGuid());
 
 			migrationBuilder.CreateTable(
 					name: "BlockProperties",
@@ -155,6 +329,21 @@ namespace Datalake.Database.Migrations
 					constraints: table =>
 					{
 					});
+
+			migrationBuilder.Sql(
+					"UPDATE \"Tags\" " +
+					"SET \"GlobalGuid\" = gen_random_uuid() " +
+					"WHERE \"GlobalGuid\" = '00000000-0000-0000-0000-000000000000';");
+
+			migrationBuilder.Sql(
+					"UPDATE \"Tags\" " +
+					"SET \"Created\" = now() " +
+					"WHERE \"Created\" = '-infinity';");
+
+			migrationBuilder.Sql(
+					"UPDATE \"Blocks\" " +
+					"SET \"GlobalId\" = gen_random_uuid() " +
+					"WHERE \"GlobalId\" = '00000000-0000-0000-0000-000000000000';");
 
 			// изменение индексов
 
