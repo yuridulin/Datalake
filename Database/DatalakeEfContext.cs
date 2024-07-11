@@ -35,6 +35,8 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
+		modelBuilder.HasDefaultSchema("public");
+
 		// связь объектов и тегов
 		modelBuilder
 			.Entity<Block>()

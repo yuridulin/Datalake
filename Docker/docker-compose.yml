@@ -9,7 +9,7 @@ services:
       dockerfile: ./Server/Dockerfile
     environment:
       DATALAKE_HOST: ${DATALAKE_HOST}
-      DATALAKE_DB: ${DATALAKE_DB_DEV}
+      DATALAKE_DB: datalake
 
   # keycloak:
   #   image: ${DOCKER_REGISTRY-}keycloak

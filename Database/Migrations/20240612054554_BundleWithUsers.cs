@@ -11,13 +11,15 @@ namespace Datalake.Database.Migrations
 		/// <inheritdoc />
 		protected override void Up(MigrationBuilder migrationBuilder)
 		{
-			migrationBuilder.DropColumn(
+			migrationBuilder.RenameColumn(
 					name: "Hash",
-					table: "Users");
+					table: "Users",
+					newName: "PasswordHash");
 
-			migrationBuilder.DropColumn(
+			migrationBuilder.RenameColumn(
 					name: "Name",
-					table: "Users");
+					table: "Users",
+					newName: "Login");
 
 			migrationBuilder.RenameColumn(
 					name: "AccessType",
@@ -46,18 +48,6 @@ namespace Datalake.Database.Migrations
 					nullable: true);
 
 			migrationBuilder.AddColumn<string>(
-					name: "Login",
-					table: "Users",
-					type: "text",
-					nullable: true);
-
-			migrationBuilder.AddColumn<string>(
-					name: "PasswordHash",
-					table: "Users",
-					type: "text",
-					nullable: true);
-
-			migrationBuilder.AddColumn<string>(
 					name: "EnergoIdHost",
 					table: "Settings",
 					type: "text",
@@ -72,6 +62,8 @@ namespace Datalake.Database.Migrations
 					oldClrType: typeof(int),
 					oldType: "integer",
 					oldNullable: true);
+
+			migrationBuilder.Sql("UPDATE \"Users\" SET \"Type\" = CASE WHEN \"StaticHost\" IS NULL THEN 1 ELSE 2 END;");
 		}
 
 		/// <inheritdoc />

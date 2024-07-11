@@ -59,6 +59,21 @@ namespace Datalake.Database.Migrations
 						table.PrimaryKey("PK_UserGroups", x => x.UserGroupGuid);
 					});
 
+			migrationBuilder.Sql(
+					"UPDATE \"Tags\" " +
+					"SET \"GlobalGuid\" = gen_random_uuid() " +
+					"WHERE \"GlobalGuid\" = '00000000-0000-0000-0000-000000000000';");
+
+			migrationBuilder.Sql(
+					"UPDATE \"Tags\" " +
+					"SET \"Created\" = now() " +
+					"WHERE \"Created\" = '-infinity';");
+
+			migrationBuilder.Sql(
+					"UPDATE \"Blocks\" " +
+					"SET \"GlobalId\" = gen_random_uuid() " +
+					"WHERE \"GlobalId\" = '00000000-0000-0000-0000-000000000000';");
+
 			migrationBuilder.CreateTable(
 					name: "AccessRights",
 					columns: table => new
