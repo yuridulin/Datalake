@@ -12,7 +12,7 @@ try {
 } catch (e) {}
 
 const api = new Api({
-	baseURL: !!isLocal ? window.location.href : 'http://localhost:5018/',
+	baseURL: !!isLocal ? window.location.href : 'http://localhost:8000/',
 	validateStatus(status) {
 		return status >= 200 && status < 300
 	},

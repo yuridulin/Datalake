@@ -32,7 +32,7 @@ public partial class SystemRepository(DatalakeContext db) : RepositoryBase
 
 		return new SettingsInfo
 		{
-			EnergoIdHost = setting.EnergoIdHost,
+			EnergoIdHost = setting.KeycloakHost,
 		};
 	}
 
@@ -52,7 +52,7 @@ public partial class SystemRepository(DatalakeContext db) : RepositoryBase
 		try
 		{
 			await db.Settings
-				.Set(x => x.EnergoIdHost, newSettings.EnergoIdHost)
+				.Set(x => x.KeycloakHost, newSettings.EnergoIdHost)
 				.UpdateAsync();
 		}
 		catch (Exception ex)

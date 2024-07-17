@@ -29,8 +29,8 @@ public class UsersController(
 	public async Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdListAsync(
 		[FromQuery] Guid? currentUserGuid = null)
 	{
-		// TODO: изменить адрес на заданный в БД
-		var users = await new HttpClient().GetFromJsonAsync<EnergoIdUserData[]>("https://api.auth-test.energo.net/api/v1/users");
+		string energoId = await usersRepository.GetEnergoIdApi();
+		var users = await new HttpClient().GetFromJsonAsync<EnergoIdUserData[]>("http://" + energoId);
 
 		if (users == null)
 			return Array.Empty<UserEnergoIdInfo>();

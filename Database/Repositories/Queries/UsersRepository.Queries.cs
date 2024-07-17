@@ -90,4 +90,10 @@ public partial class UsersRepository
 
 		return query;
 	}
+
+
+	public async Task<string> GetEnergoIdApi()
+	{
+		return await db.Settings.Select(x => x.EnergoIdApi).FirstAsync();
+	}
 }
