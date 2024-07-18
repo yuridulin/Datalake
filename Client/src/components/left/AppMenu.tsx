@@ -40,14 +40,12 @@ export function AppMenu() {
 			<div className='app-menu-block'>
 				<NavLink to={'/sources'}>Источники</NavLink>
 				<div className='app-menu-sub'>
-					{sources.length > 0 &&
-						sources
-							.filter((x) => x.id > 0)
-							.map((x) => (
-								<NavLink key={x.id} to={`/sources/${x.id}`}>
-									{x.name}
-								</NavLink>
-							))}
+					{!!sources &&
+						sources.map((x) => (
+							<NavLink key={x.id} to={`/sources/${x.id}`}>
+								{x.name}
+							</NavLink>
+						))}
 				</div>
 			</div>
 
@@ -63,7 +61,7 @@ export function AppMenu() {
 			<div className='app-menu-block'>
 				<NavLink to={'/blocks'}>Объекты</NavLink>
 				<div className='app-menu-sub'>
-					{blocks.length > 0 &&
+					{!!blocks &&
 						blocks.map((x) => (
 							<NavLink key={x.id} to={`/blocks/${x.id}`}>
 								{x.name}

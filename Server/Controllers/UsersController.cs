@@ -7,6 +7,7 @@ using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Net;
 
 namespace Datalake.Server.Controllers;
 
@@ -30,7 +31,17 @@ public class UsersController(
 		[FromQuery] Guid? currentUserGuid = null)
 	{
 		string energoId = await usersRepository.GetEnergoIdApi();
-		var users = await new HttpClient().GetFromJsonAsync<EnergoIdUserData[]>("http://" + energoId);
+
+		var clientHandler = new HttpClientHandler
+		{
+			ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+		};
+
+		var client = new HttpClient(clientHandler);
+
+		//ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+
+		var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + energoId);
 
 		if (users == null)
 			return Array.Empty<UserEnergoIdInfo>();

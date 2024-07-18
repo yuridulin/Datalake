@@ -11,4 +11,4 @@ services:
       DATALAKE_HOST: ${DATALAKE_HOST}
       DATALAKE_DB: ${DATALAKE_DB}
     ports:
-      - 8000:8081
+      - 8000:8080

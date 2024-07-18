@@ -69,10 +69,10 @@ namespace Datalake.Server
 			}
 			else
 			{
+				app.UseHttpsRedirection();
 				app.UseHsts();
 			}
 
-			app.UseHttpsRedirection();
 			app.UseDefaultFiles();
 			app.UseStaticFiles();
 			app.UseRouting();

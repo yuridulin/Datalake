@@ -33,7 +33,8 @@
       "environmentVariables": {
         "ASPNETCORE_HTTPS_PORTS": "8081",
         "ASPNETCORE_HTTP_PORTS": "8080",
-        "DATALAKE_HOST_DEV": ""
+        "DATALAKE_HOST": "10.208.4.113",
+        "DATALAKE_DB": "datalake"
       },
       "publishAllPorts": true,
       "useSSL": true

@@ -16,7 +16,7 @@ export default function LoginPanel() {
 
 	const onFinish = (values: any) => {
 		api.usersAuthenticate({
-			login: values.username,
+			login: values.login,
 			password: values.password,
 		}).then((res) => {
 			console.log(res)
@@ -41,7 +41,7 @@ export default function LoginPanel() {
 			>
 				<Form.Item<UserLoginPass>
 					label='Имя учётной записи'
-					name='username'
+					name='login'
 					rules={[{ required: true, message: 'Имя не введено' }]}
 				>
 					<Input name='username' autoComplete='username' />

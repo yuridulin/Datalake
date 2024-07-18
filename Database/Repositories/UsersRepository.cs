@@ -99,6 +99,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 					throw new InvalidValueException(message: "необходимо указать учетную запись EnergoId");
 				if (await db.Users.AnyAsync(x => x.EnergoIdGuid == request.EnergoIdGuid))
 					throw new AlreadyExistException(message: "учётная запись с выбранным EnergoID");
+				hash = string.Empty;
 				break;
 		}
 
