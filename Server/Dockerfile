@@ -22,4 +22,5 @@ RUN dotnet publish "Server.csproj" -c Release -o /app/publish #/p:UseAppHost=fal
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+RUN chmod -R 777 /app
 ENTRYPOINT ["dotnet", "Datalake.Server.dll"]
