@@ -67,11 +67,6 @@ namespace Datalake.Server
 				app.UseOpenApi();
 				app.UseSwaggerUi();
 			}
-			else
-			{
-				app.UseHttpsRedirection();
-				app.UseHsts();
-			}
 
 			app.UseDefaultFiles();
 			app.UseStaticFiles();
