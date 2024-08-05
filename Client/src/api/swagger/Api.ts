@@ -13,6 +13,7 @@ import {
 	BlockInfo,
 	BlockSimpleInfo,
 	BlockTreeInfo,
+	EnergoIdInfo,
 	LogInfo,
 	SettingsInfo,
 	SourceEntryInfo,
@@ -36,6 +37,7 @@ import {
 	UserUpdateRequest,
 	ValuesGetPayload,
 	ValuesResponse,
+	ValuesTagResponse,
 	ValuesWritePayload,
 } from './data-contracts'
 import { ContentType, HttpClient, RequestParams } from './http-client'
@@ -425,12 +427,28 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @tags Tags
 	 * @name TagsRead
 	 * @summary Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
-	 * @request GET:/api/Tags/{id}
+	 * @request GET:/api/Tags/{guid}
 	 * @response `200` `TagInfo` Объект информации о теге
 	 */
-	tagsRead = (id: number, params: RequestParams = {}) =>
+	tagsRead = (guid: string, params: RequestParams = {}) =>
 		this.request<TagInfo, any>({
-			path: `/api/Tags/${id}`,
+			path: `/api/Tags/${guid}`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Tags
+	 * @name TagsReadPossibleInputs
+	 * @summary Получение списка тегов, подходящих для использования в формулах
+	 * @request GET:/api/Tags/inputs
+	 * @response `200` `(TagAsInputInfo)[]` Список тегов
+	 */
+	tagsReadPossibleInputs = (params: RequestParams = {}) =>
+		this.request<TagAsInputInfo[], any>({
+			path: `/api/Tags/inputs`,
 			method: 'GET',
 			format: 'json',
 			...params,
@@ -465,22 +483,6 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 		this.request<File, any>({
 			path: `/api/Tags/${id}`,
 			method: 'DELETE',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Tags
-	 * @name TagsReadPossibleInputs
-	 * @summary Получение списка тегов, подходящих для использования в формулах
-	 * @request GET:/api/Tags/inputs
-	 * @response `200` `(TagAsInputInfo)[]` Список тегов
-	 */
-	tagsReadPossibleInputs = (params: RequestParams = {}) =>
-		this.request<TagAsInputInfo[], any>({
-			path: `/api/Tags/inputs`,
-			method: 'GET',
-			format: 'json',
 			...params,
 		})
 	/**
@@ -604,7 +606,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name UsersGetEnergoIdList
 	 * @summary Получение списка пользователей, определенных на сервере EnergoId
 	 * @request GET:/api/Users/energo-id
-	 * @response `200` `(UserEnergoIdInfo)[]` Список пользователей
+	 * @response `200` `EnergoIdInfo` Список пользователей
 	 */
 	usersGetEnergoIdList = (
 		query?: {
@@ -613,7 +615,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 		},
 		params: RequestParams = {},
 	) =>
-		this.request<UserEnergoIdInfo[], any>({
+		this.request<EnergoIdInfo, any>({
 			path: `/api/Users/energo-id`,
 			method: 'GET',
 			query: query,
@@ -795,10 +797,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name ValuesWrite
 	 * @summary Запись значений на основании списка запросов
 	 * @request PUT:/api/Tags/Values
-	 * @response `200` `(ValuesResponse)[]` Список измененных начений
+	 * @response `200` `(ValuesTagResponse)[]` Список измененных начений
 	 */
 	valuesWrite = (data: ValuesWritePayload, params: RequestParams = {}) =>
-		this.request<ValuesResponse[], any>({
+		this.request<ValuesTagResponse[], any>({
 			path: `/api/Tags/Values`,
 			method: 'PUT',
 			body: data,

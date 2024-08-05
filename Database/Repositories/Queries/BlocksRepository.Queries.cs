@@ -82,10 +82,12 @@ public partial class BlocksRepository
 										})
 										.ToArray(),
 									Tags = g
+										.Where(x => x.tag != null)
 										.Select(x => new BlockInfo.BlockTagInfo
 										{
 											Id = x.tag.Id,
 											Name = x.block_tag.Name ?? "",
+											Guid = x.tag.GlobalGuid,
 											TagType = x.block_tag.Relation,
 										})
 										.ToArray(),

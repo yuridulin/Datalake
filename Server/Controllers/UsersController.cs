@@ -1,5 +1,6 @@
 ﻿using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
+using Datalake.Database.Models;
 using Datalake.Database.Repositories;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Models;
@@ -29,38 +30,54 @@ public class UsersController(
 	/// </summary>
 	/// <returns>Список пользователей</returns>
 	[HttpGet("energo-id")]
-	public async Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdListAsync(
+	public async Task<ActionResult<EnergoIdInfo>> GetEnergoIdListAsync(
 		[FromQuery] Guid? currentUserGuid = null)
 	{
 		string energoId = await usersRepository.GetEnergoIdApi();
 
-		var clientHandler = new HttpClientHandler
+		EnergoIdUserData[]? energoIdReceivedUsers = null;
+
+		try
 		{
-			ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
-		};
+			var clientHandler = new HttpClientHandler
+			{
+				ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+			};
 
-		var client = new HttpClient(clientHandler);
+			var client = new HttpClient(clientHandler);
+			var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + energoId);
 
-		var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + energoId);
+			if (users != null)
+				energoIdReceivedUsers = users;
+		}
+		catch { }
 
-		if (users == null)
-			return Array.Empty<UserEnergoIdInfo>();
+		if (energoIdReceivedUsers == null)
+		{
+			return new EnergoIdInfo();
+		}
 
 		var exists = await usersRepository.GetFlatInfo()
 			.Where(x => x.EnergoIdGuid != null && (currentUserGuid == null || x.Guid != currentUserGuid))
 			.Select(x => x.EnergoIdGuid.ToString())
 			.ToArrayAsync();
 
-		return users
-			.ExceptBy(exists, u => u.Sid)
-			.Select(x => new UserEnergoIdInfo
-			{
-				EnergoIdGuid = Guid.TryParse(x.Sid, out var guid) ? guid : Guid.Empty,
-				Login = x.Email,
-				FullName = x.Name,
-			})
-			.Where(x => x.EnergoIdGuid != Guid.Empty)
-			.ToArray();
+		var response = new EnergoIdInfo
+		{
+			Connected = true,
+			EnergoIdUsers = energoIdReceivedUsers
+				.ExceptBy(exists, u => u.Sid)
+				.Select(x => new UserEnergoIdInfo
+				{
+					EnergoIdGuid = Guid.TryParse(x.Sid, out var guid) ? guid : Guid.Empty,
+					Login = x.Email,
+					FullName = x.Name,
+				})
+				.Where(x => x.EnergoIdGuid != Guid.Empty)
+				.ToArray()
+		};
+
+		return response;
 	}
 
 	/// <summary>

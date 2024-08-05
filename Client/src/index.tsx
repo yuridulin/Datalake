@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import Layout from './components/Layout'
+import Layout from './app/Layout'
 
 const container = document.getElementById('root')
 const root = createRoot(container!)
