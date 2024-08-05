@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import { LogInfo } from '../../../api/swagger/data-contracts'
-import { useFetching } from '../../../hooks/useFetching'
 import LogTypeEl from '../../components/LogTypeEl'
+import routes from '../../router/routes'
 
 export default function Dashboard() {
 	const [logs, setLogs] = useState([] as LogInfo[])
+	const navigate = useNavigate()
 
-	const [update, , error] = useFetching(async () => {
-		api.configGetLogs().then((res) => {
-			let newLogs = [...logs, ...res.data]
-			if (newLogs.length > 50) newLogs = newLogs.slice(-50)
-			setLogs(newLogs)
-		})
-	})
+	function update() {
+		api.configGetLogs()
+			.then((res) => {
+				let newLogs = [...logs, ...res.data]
+				if (newLogs.length > 50) newLogs = newLogs.slice(-50)
+				setLogs(newLogs)
+			})
+			.catch(() => navigate(routes.offline))
+	}
 
 	useEffect(() => {
 		update()
@@ -23,9 +26,7 @@ export default function Dashboard() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
-	return error ? (
-		<Navigate to='/offline' />
-	) : (
+	return (
 		<>
 			{
 				<div className='table'>

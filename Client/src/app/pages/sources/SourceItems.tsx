@@ -8,7 +8,6 @@ import {
 	SourceType,
 	TagType,
 } from '../../../api/swagger/data-contracts'
-import { useFetching } from '../../../hooks/useFetching'
 import Header from '../../components/Header'
 import TagTypeEl from '../../components/TagTypeEl'
 
@@ -20,15 +19,20 @@ export default function SourceItems({
 	id: number
 }) {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
+	const [err, setErr] = useState(true)
 
-	const [read, , error] = useFetching(async () => {
-		api.sourcesGetItemsWithTags(id).then((res) => {
-			setItems(res.data)
-		})
-	})
+	function read() {
+		api.sourcesGetItemsWithTags(id)
+			.then((res) => {
+				setItems(res.data)
+				setErr(false)
+			})
+			.catch(() => setErr(true))
+	}
 
 	useEffect(() => {
-		!!id && read()
+		if (!id) return
+		read()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id])
 
@@ -43,7 +47,7 @@ export default function SourceItems({
 		})
 	}
 
-	const [createEmptyTag] = useFetching(async () => {
+	function createEmptyTag() {
 		api.tagsCreate({
 			name: '',
 			tagType: TagType.String,
@@ -51,11 +55,11 @@ export default function SourceItems({
 		}).then((res) => {
 			if (res.data > 0) read()
 		})
-	})
+	}
 
 	if (type !== SourceType.Datalake && type !== SourceType.Inopc) return <></>
 
-	return error ? (
+	return err ? (
 		<div>
 			<i>
 				Источник данных не предоставил информацию о доступных значениях

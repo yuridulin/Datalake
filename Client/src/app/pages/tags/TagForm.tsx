@@ -10,11 +10,10 @@ import {
 	Select,
 } from 'antd'
 import { useEffect, useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { CustomSource } from '../../../api/models/customSource'
 import api from '../../../api/swagger-api'
 import { TagType, TagUpdateRequest } from '../../../api/swagger/data-contracts'
-import { useFetching } from '../../../hooks/useFetching'
 import FormRow from '../../components/FormRow'
 import Header from '../../components/Header'
 import router from '../../router/router'
@@ -36,30 +35,31 @@ export default function TagForm() {
 	)
 	const [items, setItems] = useState([] as { value: string }[])
 
-	const [getItems] = useFetching(async () => {
+	function getItems() {
 		if (model.tag.sourceId <= 0) return
-		let res = await api.sourcesGetItems(model.tag.sourceId)
-		setItems(
-			res.data.map((x) => ({
-				value: x.path ?? '',
-			})),
-		)
-	})
+		api.sourcesGetItems(model.tag.sourceId).then((res) => {
+			setItems(
+				res.data.map((x) => ({
+					value: x.path ?? '',
+				})),
+			)
+		})
+	}
 
-	const [load, , error] = useFetching(async () => {
-		!!id &&
-			api.tagsRead(String(id)).then((res) => {
-				setModel({
-					...model,
-					tag: res.data,
-					oldName: res.data.name,
-					sourceId: res.data.sourceId,
-					sourceSwitcher:
-						res.data.sourceId < 0
-							? res.data.sourceId
-							: CustomSource.NotSet,
-				})
+	function load() {
+		if (!id) return
+		api.tagsRead(String(id)).then((res) => {
+			setModel({
+				...model,
+				tag: res.data,
+				oldName: res.data.name,
+				sourceId: res.data.sourceId,
+				sourceSwitcher:
+					res.data.sourceId < 0
+						? res.data.sourceId
+						: CustomSource.NotSet,
 			})
+		})
 		api.sourcesReadAll().then((res) => {
 			setSources(
 				res.data.map((source) => ({
@@ -73,7 +73,7 @@ export default function TagForm() {
 		//res.data.map((tag) => ({ value: tag.id, label: tag.name })),
 		//),
 		//)
-	})
+	}
 
 	useEffect(() => {
 		if (!!id) load()
@@ -93,15 +93,13 @@ export default function TagForm() {
 		router.navigate('/tags')
 	}
 
-	const [update] = useFetching(async () => {
-		let res = await api.tagsUpdate(Number(id), model.tag)
-		if (res.status === 200) back()
-	})
+	function tagUpdate() {
+		api.tagsUpdate(Number(id), model.tag).then(back)
+	}
 
-	const [del] = useFetching(async () => {
-		let res = await api.tagsDelete(Number(id))
-		if (res.status === 200) back()
-	})
+	function tagDelete() {
+		api.tagsDelete(Number(id)).then(back)
+	}
 
 	const addParam = () => {
 		/* if (!model.tag.calcInfo) return
@@ -135,9 +133,7 @@ export default function TagForm() {
 
 	//#endregion
 
-	return error ? (
-		<Navigate to='/offline' />
-	) : (
+	return (
 		<>
 			<Header
 				left={
@@ -150,13 +146,13 @@ export default function TagForm() {
 						<Popconfirm
 							title='Вы уверены, что хотите удалить этот тег?'
 							placement='bottom'
-							onConfirm={del}
+							onConfirm={tagDelete}
 							okText='Да'
 							cancelText='Нет'
 						>
 							<Button>Удалить</Button>
 						</Popconfirm>
-						<Button type='primary' onClick={update}>
+						<Button type='primary' onClick={tagUpdate}>
 							Сохранить
 						</Button>
 					</>

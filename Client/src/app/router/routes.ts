@@ -14,6 +14,7 @@ const routes = {
 		KeycloakAfterLogin: '/energo-id',
 	},
 	Root: '/',
+	offline: '/offline',
 }
 
 export default routes

@@ -3,16 +3,14 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
-import { useFetching } from '../../../hooks/useFetching'
 import Header from '../../components/Header'
 
 export default function Dashboard() {
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 
-	const [load] = useFetching(async () => {
-		let res = await api.blocksReadAsTree()
-		if (res.status === 200) setBlocks(res.data)
-	})
+	function load() {
+		api.blocksReadAsTree().then((res) => setBlocks(res.data))
+	}
 
 	function createBlock() {
 		api.blocksCreateEmpty().then(() => load())

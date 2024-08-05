@@ -1,10 +1,9 @@
 import { Button, Input, Popconfirm, Radio } from 'antd'
 import { useEffect, useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import getSourceTypeName from '../../../api/models/getSourceTypeName'
 import api from '../../../api/swagger-api'
 import { SourceInfo, SourceType } from '../../../api/swagger/data-contracts'
-import { useFetching } from '../../../hooks/useFetching'
 import FormRow from '../../components/FormRow'
 import Header from '../../components/Header'
 import router from '../../router/router'
@@ -16,33 +15,32 @@ export default function SourceForm() {
 	const [source, setSource] = useState({} as SourceInfo)
 	const [name, setName] = useState('')
 
-	const [read, , error] = useFetching(async () => {
+	function load() {
 		api.sourcesRead(Number(id)).then((res) => {
 			setSource(res.data)
 			setName(res.data.name)
 		})
-	})
+	}
 
-	const [update] = useFetching(async () => {
+	function sourceUpdate() {
 		api.sourcesUpdate(Number(id), source).then(() =>
 			router.navigate('/sources'),
 		)
-	})
+	}
 
-	const [del] = useFetching(async () => {
+	function sourceDelete() {
 		api.sourcesDelete(Number(id)).then(() => router.navigate('/sources'))
-	})
+	}
 
 	useEffect(() => {
-		read()
+		if (!id) return
+		load()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id])
 
 	console.log()
 
-	return error ? (
-		<Navigate to='/offline' />
-	) : (
+	return (
 		<>
 			<Header
 				left={
@@ -55,13 +53,13 @@ export default function SourceForm() {
 						<Popconfirm
 							title='Удалить источник?'
 							description='Теги, связанные с источником, будут сохранены, но не смогут получать обновления'
-							onConfirm={del}
+							onConfirm={sourceDelete}
 							okText='Удалить'
 							cancelText='Отмена'
 						>
 							<Button>Удалить</Button>
 						</Popconfirm>
-						<Button onClick={update}>Сохранить</Button>
+						<Button onClick={sourceUpdate}>Сохранить</Button>
 					</>
 				}
 			>
