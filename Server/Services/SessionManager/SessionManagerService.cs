@@ -7,21 +7,38 @@ namespace Datalake.Server.Services.SessionManager;
 /// <summary>
 /// Менеджер сессий пользователей
 /// </summary>
-public class SessionManagerService
+/// <param name="loggerFactory"></param>
+public class SessionManagerService(ILoggerFactory loggerFactory)
 {
+	private readonly ILogger<SessionManagerService> _logger = loggerFactory.CreateLogger<SessionManagerService>();
+
 	/// <summary>
 	/// Список текущих сессий
 	/// </summary>
 	List<AuthSession> Sessions { get; set; } = [];
 
 	/// <summary>
+	/// Список статичных учетных записей
+	/// </summary>
+	public static List<AuthSession> StaticAuthRecords { get; set; } = [];
+
+	/// <summary>
 	/// Получить текущую сессию по токену
 	/// </summary>
 	/// <param name="token">Токен сессии</param>
+	/// <param name="address">Адрес, с которого разрешен доступ по статичной учетной записи</param>
 	/// <returns>Информация о сессии</returns>
-	public AuthSession? GetExistSession(string token)
+	public AuthSession? GetExistSession(string token, string address)
 	{
-		var session = Sessions.FirstOrDefault(x => x.User.Token == token);
+		_logger.LogWarning("Search session from {address} with token [{token}]", address, token);
+		foreach (var record in StaticAuthRecords)
+		{
+			_logger.LogWarning("Exists static user: {name} for {address} with token [{token}]",
+				record.User.FullName, record.StaticHost, record.User.Token);
+		}
+
+		var session = Sessions.FirstOrDefault(x => x.User.Token == token)
+			?? StaticAuthRecords.FirstOrDefault(x => x.User.Token == token && x.StaticHost == address);
 		if (session == null)
 			return null;
 		if (session.ExpirationTime < DateTime.UtcNow)
@@ -40,10 +57,11 @@ public class SessionManagerService
 	public AuthSession? GetExistSession(HttpContext context)
 	{
 		var token = context.Request.Headers[AuthConstants.TokenHeader];
+		var address = context.Connection.RemoteIpAddress;
 		if (!string.IsNullOrEmpty(token))
 		{
 			var tokenValue = token.ToString();
-			var session = GetExistSession(tokenValue);
+			var session = GetExistSession(tokenValue, address?.ToString() ?? string.Empty);
 			if (session == null)
 				return null;
 			AddSessionToResponse(session, context.Response);
@@ -66,15 +84,17 @@ public class SessionManagerService
 	/// Создание новой сессии для пользователя
 	/// </summary>
 	/// <param name="userAuthInfo">Информация о пользователе</param>
+	/// <param name="isStatic">Является ли пользователь статичным</param>
 	/// <returns>Информация о сессии</returns>
-	public AuthSession OpenSession(UserAuthInfo userAuthInfo)
+	public AuthSession OpenSession(UserAuthInfo userAuthInfo, bool isStatic = false)
 	{
 		Sessions.RemoveAll(x => x.User.Guid == userAuthInfo.Guid);
 
 		var session = new AuthSession
 		{
 			User = userAuthInfo,
-			ExpirationTime = DateTime.UtcNow.AddDays(7), // срок жизни сессии
+			ExpirationTime = isStatic ? DateTime.MaxValue : DateTime.UtcNow.AddDays(7), // срок жизни сессии
+			StaticHost = string.Empty,
 		};
 		session.User.Token = new Random().Next().ToString();
 		Sessions.Add(session);
@@ -88,7 +108,7 @@ public class SessionManagerService
 	/// <param name="token">Токен сессии</param>
 	public void CloseSession(string token)
 	{
-		var session = GetExistSession(token);
+		var session = GetExistSession(token, string.Empty);
 		if (session != null)
 		{
 			RemoveSession(session);

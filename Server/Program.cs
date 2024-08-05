@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using Serilog;
 using System.Reflection;
-using Datalake.ApiClasses.Models.Settings;
+using Server.BackgroundServices.SettingsHandler;
 
 #if DEBUG
 using LinqToDB.AspNet.Logging;
@@ -27,7 +27,7 @@ namespace Datalake.Server
 	/// </summary>
 	public class Program
 	{
-		static string WebRootPath { get; set; } = string.Empty;
+		internal static string WebRootPath { get; set; } = string.Empty;
 
 		/// <summary>
 		/// Метод запуска приложения
@@ -67,12 +67,7 @@ namespace Datalake.Server
 				app.UseOpenApi();
 				app.UseSwaggerUi();
 			}
-			else
-			{
-				app.UseHsts();
-			}
 
-			app.UseHttpsRedirection();
 			app.UseDefaultFiles();
 			app.UseStaticFiles();
 			app.UseRouting();
@@ -116,7 +111,7 @@ namespace Datalake.Server
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
 				options
-					.UseNpgsql(connectionString)
+					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
 #if DEBUG
 					.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddDebug()))
 #endif
@@ -138,6 +133,9 @@ namespace Datalake.Server
 			builder.Services.AddSingleton<CollectorFactory>();
 			builder.Services.AddSingleton<ReceiverService>();
 			builder.Services.AddSingleton<SessionManagerService>();
+			builder.Services.AddSingleton<SettingsHandlerService>();
+			builder.Services.AddSingleton<ISettingsUpdater>(provider
+				=> provider.GetRequiredService<SettingsHandlerService>());
 
 			// временные
 			builder.Services.AddTransient<BlocksRepository>();
@@ -151,6 +149,9 @@ namespace Datalake.Server
 
 			// службы
 			builder.Services.AddHostedService<CollectorService>();
+			builder.Services.AddHostedService<SettingsHandlerService>();
+			builder.Services.AddHostedService(provider
+				=> provider.GetRequiredService<SettingsHandlerService>());
 		}
 
 		static async void StartWorkWithDatabase(WebApplication app)
@@ -165,7 +166,6 @@ namespace Datalake.Server
 			if (db != null)
 			{
 				await db.EnsureDataCreatedAsync();
-				WriteStartipFile(await new SystemRepository(db).GetSettingsAsync());
 			}
 		}
 
@@ -197,18 +197,6 @@ namespace Datalake.Server
 					await context.Response.WriteAsync(message);
 				});
 			});
-		}
-
-		/// <summary>
-		/// Запись настроек, необходимых при запуске клиента, в клиентский файл
-		/// </summary>
-		/// <param name="settings">Текущие настройки</param>
-		internal static void WriteStartipFile(SettingsInfo settings)
-		{
-			File.WriteAllLines(Path.Combine(WebRootPath, "startup.js"), [
-				"var LOCAL_API = true;",
-				$"var KEYCLOAK_DB = '{settings.EnergoIdHost}';",
-			]);
 		}
 
 		internal class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor

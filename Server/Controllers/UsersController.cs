@@ -1,5 +1,6 @@
 ﻿using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
+using Datalake.Database.Models;
 using Datalake.Database.Repositories;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Models;
@@ -7,6 +8,7 @@ using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Server.BackgroundServices.SettingsHandler;
 
 namespace Datalake.Server.Controllers;
 
@@ -15,41 +17,67 @@ namespace Datalake.Server.Controllers;
 /// </summary>
 /// <param name="usersRepository">Репозиторий</param>
 /// <param name="sessionManager">Менеджер сессий</param>
+/// <param name="settingsService">Обработчик настроек сервера</param>
 [Route("api/[controller]")]
 [ApiController]
 public class UsersController(
 	UsersRepository usersRepository,
-	SessionManagerService sessionManager) : ApiControllerBase
+	SessionManagerService sessionManager,
+	ISettingsUpdater settingsService) : ApiControllerBase
 {
 	/// <summary>
 	/// Получение списка пользователей, определенных на сервере EnergoId
 	/// </summary>
 	/// <returns>Список пользователей</returns>
 	[HttpGet("energo-id")]
-	public async Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdListAsync(
+	public async Task<ActionResult<EnergoIdInfo>> GetEnergoIdListAsync(
 		[FromQuery] Guid? currentUserGuid = null)
 	{
-		// TODO: изменить адрес на заданный в БД
-		var users = await new HttpClient().GetFromJsonAsync<EnergoIdUserData[]>("https://api.auth-test.energo.net/api/v1/users");
+		string energoId = await usersRepository.GetEnergoIdApi();
 
-		if (users == null)
-			return Array.Empty<UserEnergoIdInfo>();
+		EnergoIdUserData[]? energoIdReceivedUsers = null;
+
+		try
+		{
+			var clientHandler = new HttpClientHandler
+			{
+				ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+			};
+
+			var client = new HttpClient(clientHandler);
+			var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + energoId);
+
+			if (users != null)
+				energoIdReceivedUsers = users;
+		}
+		catch { }
+
+		if (energoIdReceivedUsers == null)
+		{
+			return new EnergoIdInfo();
+		}
 
 		var exists = await usersRepository.GetFlatInfo()
 			.Where(x => x.EnergoIdGuid != null && (currentUserGuid == null || x.Guid != currentUserGuid))
 			.Select(x => x.EnergoIdGuid.ToString())
 			.ToArrayAsync();
 
-		return users
-			.ExceptBy(exists, u => u.Sid)
-			.Select(x => new UserEnergoIdInfo
-			{
-				EnergoIdGuid = Guid.TryParse(x.Sid, out var guid) ? guid : Guid.Empty,
-				Login = x.Email,
-				FullName = x.Name,
-			})
-			.Where(x => x.EnergoIdGuid != Guid.Empty)
-			.ToArray();
+		var response = new EnergoIdInfo
+		{
+			Connected = true,
+			EnergoIdUsers = energoIdReceivedUsers
+				.ExceptBy(exists, u => u.Sid)
+				.Select(x => new UserEnergoIdInfo
+				{
+					EnergoIdGuid = Guid.TryParse(x.Sid, out var guid) ? guid : Guid.Empty,
+					Login = x.Email,
+					FullName = x.Name,
+				})
+				.Where(x => x.EnergoIdGuid != Guid.Empty)
+				.ToArray()
+		};
+
+		return response;
 	}
 
 	/// <summary>
@@ -172,6 +200,7 @@ public class UsersController(
 		var user = Authenticate();
 
 		await usersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
+		settingsService.LoadStaticUsers(usersRepository);
 
 		return NoContent();
 	}
@@ -187,6 +216,7 @@ public class UsersController(
 		var user = Authenticate();
 
 		await usersRepository.DeleteAsync(user, userGuid);
+		settingsService.LoadStaticUsers(usersRepository);
 
 		return NoContent();
 	}

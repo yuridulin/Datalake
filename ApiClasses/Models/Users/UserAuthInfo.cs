@@ -1,5 +1,4 @@
-﻿using Datalake.ApiClasses.Enums;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.ApiClasses.Models.Users;
 

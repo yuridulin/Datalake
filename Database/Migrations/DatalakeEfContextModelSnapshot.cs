@@ -17,6 +17,7 @@ namespace Datalake.Database.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("public")
                 .HasAnnotation("ProductVersion", "8.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -63,7 +64,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasIndex("UserGuid");
 
-                    b.ToTable("AccessRights");
+                    b.ToTable("AccessRights", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.Block", b =>
@@ -89,7 +90,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Blocks");
+                    b.ToTable("Blocks", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.BlockProperty", b =>
@@ -118,7 +119,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasIndex("BlockId");
 
-                    b.ToTable("BlockProperties");
+                    b.ToTable("BlockProperties", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.BlockTag", b =>
@@ -139,7 +140,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("BlockTags");
+                    b.ToTable("BlockTags", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.Log", b =>
@@ -171,19 +172,23 @@ namespace Datalake.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Logs");
+                    b.ToTable("Logs", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.Settings", b =>
                 {
-                    b.Property<string>("EnergoIdHost")
+                    b.Property<string>("EnergoIdApi")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("KeycloakHost")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("LastUpdate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.ToTable("Settings");
+                    b.ToTable("Settings", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.Source", b =>
@@ -209,7 +214,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sources");
+                    b.ToTable("Sources", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
@@ -267,7 +272,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasIndex("SourceId");
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.TagHistory", b =>
@@ -290,7 +295,7 @@ namespace Datalake.Database.Migrations
                     b.Property<int>("Using")
                         .HasColumnType("integer");
 
-                    b.ToTable("TagsLive");
+                    b.ToTable("TagsLive", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.TagHistoryChunk", b =>
@@ -304,7 +309,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasKey("Date");
 
-                    b.ToTable("TagHistoryChunks");
+                    b.ToTable("TagHistoryChunks", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.TagInput", b =>
@@ -321,7 +326,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("TagInputs");
+                    b.ToTable("TagInputs", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.User", b =>
@@ -350,7 +355,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasKey("Guid");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.UserGroup", b =>
@@ -371,7 +376,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasKey("Guid");
 
-                    b.ToTable("UserGroups");
+                    b.ToTable("UserGroups", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.UserGroupRelation", b =>
@@ -389,7 +394,7 @@ namespace Datalake.Database.Migrations
 
                     b.HasIndex("UserGuid");
 
-                    b.ToTable("UserGroupRelation");
+                    b.ToTable("UserGroupRelation", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.AccessRights", b =>

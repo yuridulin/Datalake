@@ -75,6 +75,11 @@ export enum TagType {
 export type BlockTagInfo = BlockRelationInfo & {
 	/** Тип значений тега */
 	tagType: BlockTagRelation
+	/**
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
 }
 
 /** Тип связи тега и блока */
@@ -268,9 +273,10 @@ export interface TagCreateRequest {
 export interface TagInfo {
 	/**
 	 * Идентификатор тега в локальной базе
-	 * @format int32
+	 * @format guid
+	 * @minLength 1
 	 */
-	id: number
+	guid: string
 	/**
 	 * Имя тега
 	 * @minLength 1
@@ -497,6 +503,14 @@ export type UserGroupUpdateRequest = UserGroupCreateRequest & {
 	groups: UserGroupInfo[]
 }
 
+/** Данные с сервиса "EnergoID" */
+export interface EnergoIdInfo {
+	/** Список пользователей */
+	energoIdUsers: UserEnergoIdInfo[]
+	/** Есть ли связь с сервисом "EnergoID" */
+	connected: boolean
+}
+
 /** Информация о пользователе, взятая из Keycloak */
 export interface UserEnergoIdInfo {
 	/**
@@ -675,33 +689,29 @@ export interface UserUpdateRequest {
 	type: UserType
 }
 
-/** Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения */
+/** Ответ на запрос для получения значений, включающий обработанные теги и идентификатор запроса */
 export interface ValuesResponse {
 	/**
-	 * Идентификатор тега в локальной базе
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Имя тега
+	 * Идентификатор запроса, который будет передан в соответствующий объект ответа
 	 * @minLength 1
 	 */
-	tagName: string
-	/** Тип данных */
-	type: TagType
-	/** Применённый тип агрегирования */
-	func: AggregationFunc
-	/** Список значений */
-	values: ValueRecord[]
+	requestKey: string
+	/** Список глобальных идентификаторов тегов */
+	tags: ValuesTagResponse[]
 }
 
-/** Тип агрегирования данных */
-export enum AggregationFunc {
-	List = 'List',
-	Sum = 'Sum',
-	Avg = 'Avg',
-	Min = 'Min',
-	Max = 'Max',
+/** Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения */
+export interface ValuesTagResponse {
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/** Тип данных */
+	type: TagType
+	/** Список значений */
+	values: ValueRecord[]
 }
 
 /** Запись о значении */
@@ -748,10 +758,13 @@ export enum TagUsing {
 
 /** Данные запроса для получения значений */
 export interface ValuesRequest {
-	/** Список локальных идентификаторов тегов */
-	tags?: number[] | null
-	/** Список имён тегов */
-	tagNames?: string[] | null
+	/**
+	 * Идентификатор запроса, который будет передан в соответствующий объект ответа
+	 * @minLength 1
+	 */
+	requestKey: string
+	/** Список глобальных идентификаторов тегов */
+	tags: string[]
 	/**
 	 * Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
 	 * @format date-time
@@ -776,15 +789,22 @@ export interface ValuesRequest {
 	func?: AggregationFunc | null
 }
 
+/** Тип агрегирования данных */
+export enum AggregationFunc {
+	List = 'List',
+	Sum = 'Sum',
+	Avg = 'Avg',
+	Min = 'Min',
+	Max = 'Max',
+}
+
 /** Данные запроса на ввод значения */
 export interface ValueWriteRequest {
 	/**
-	 * Идентификатор тега в локальной базе
-	 * @format int32
+	 * Идентификатор тега
+	 * @format guid
 	 */
-	tagId?: number | null
-	/** Имя тега */
-	tagName?: string | null
+	guid?: string
 	/** Новое значение */
 	value?: any
 	/**
@@ -793,7 +813,7 @@ export interface ValueWriteRequest {
 	 */
 	date?: string | null
 	/** Флаг достоверности нового значения */
-	tagQuality?: TagQuality | null
+	quality?: TagQuality | null
 }
 
 export type ValuesGetPayload = ValuesRequest[]

@@ -16,5 +16,8 @@ public class Settings
 	public DateTime LastUpdate { get; set; }
 
 	[Column, NotNull]
-	public string EnergoIdHost { get; set; } = string.Empty;
+	public string KeycloakHost { get; set; } = string.Empty;
+
+	[Column, NotNull]
+	public string EnergoIdApi { get; set; } = string.Empty;
 }

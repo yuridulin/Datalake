@@ -90,4 +90,21 @@ public partial class UsersRepository
 
 		return query;
 	}
+
+	public (UserAuthInfo, string)[] GetStaticUsers()
+	{
+		var staticUsers = db.Users
+			.Where(x => x.Type == UserType.Static)
+			.Where(x => !string.IsNullOrEmpty(x.StaticHost) && !string.IsNullOrEmpty(x.PasswordHash))
+			.ToArray()
+			.Select(x => (GetAuthInfo(db, x).Result, x.StaticHost!))
+			.ToArray();
+
+		return staticUsers;
+	}
+
+	public async Task<string> GetEnergoIdApi()
+	{
+		return await db.Settings.Select(x => x.EnergoIdApi).FirstAsync();
+	}
 }

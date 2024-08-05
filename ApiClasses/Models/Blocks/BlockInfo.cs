@@ -83,6 +83,12 @@ public class BlockInfo
 	public class BlockTagInfo : BlockRelationInfo
 	{
 		/// <summary>
+		/// Идентификатор тега
+		/// </summary>
+		[Required]
+		public required Guid Guid { get; set; }
+
+		/// <summary>
 		/// Тип значений тега
 		/// </summary>
 		[Required]

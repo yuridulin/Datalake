@@ -1,7 +1,7 @@
 import { notification } from 'antd'
 import { AxiosError, AxiosResponse } from 'axios'
-import router from '../router/router'
-import { auth, tokenHeader } from './auth'
+import router from '../app/router/router'
+import { getToken, setToken, tokenHeader } from './auth'
 import { Api } from './swagger/Api'
 
 declare const LOCAL_API: boolean
@@ -12,7 +12,7 @@ try {
 } catch (e) {}
 
 const api = new Api({
-	baseURL: !!isLocal ? window.location.href : 'http://localhost:5018/',
+	baseURL: !!isLocal ? window.location.href : 'http://localhost:8000/',
 	validateStatus(status) {
 		return status >= 200 && status < 300
 	},
@@ -20,7 +20,7 @@ const api = new Api({
 
 api.instance.interceptors.request.use(
 	function (config) {
-		config.headers[tokenHeader] = auth.getSessionToken()
+		config.headers[tokenHeader] = getToken()
 		return config
 	},
 	function (error) {
@@ -45,7 +45,7 @@ api.instance.interceptors.response.use(
 		// нормальное развитие событий
 		else {
 			// данные о доступе сохраняем
-			auth.setSessionToken(res.headers[tokenHeader])
+			setToken(res.headers[tokenHeader])
 
 			// сообщения после выполнения действий
 			if (res.status === 204) {
@@ -95,5 +95,7 @@ api.instance.interceptors.response.use(
 		}
 	},
 )
+
+api.usersIdentify()
 
 export default api
