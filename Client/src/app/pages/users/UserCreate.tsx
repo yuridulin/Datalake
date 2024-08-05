@@ -19,7 +19,10 @@ export default function UserCreate() {
 		staticHost: '',
 		type: UserType.Local,
 	} as UserCreateRequest)
-	const [keycloakInfo, setKeycloakInfo] = useState({} as EnergoIdInfo)
+	const [keycloakInfo, setKeycloakInfo] = useState({
+		connected: false,
+		energoIdUsers: [],
+	} as EnergoIdInfo)
 
 	function load() {
 		api.usersGetEnergoIdList().then(
@@ -120,7 +123,7 @@ export default function UserCreate() {
 								: 'none',
 					}}
 				>
-					<FormRow title='Имя для входа'>
+					<FormRow title='Логин для входа'>
 						<Input
 							value={request.login ?? ''}
 							onChange={(e) =>

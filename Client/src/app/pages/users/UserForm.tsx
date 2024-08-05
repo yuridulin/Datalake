@@ -18,7 +18,10 @@ export default function UserForm() {
 	const [user, setUser] = useState({ oldType: UserType.Local, hash: '' })
 	const [request, setRequest] = useState({} as UserUpdateRequest)
 	const [newType, setNewType] = useState(UserType.Local)
-	const [keycloakUsers, setKeycloakUsers] = useState({} as EnergoIdInfo)
+	const [keycloakUsers, setKeycloakUsers] = useState({
+		connected: false,
+		energoIdUsers: [],
+	} as EnergoIdInfo)
 
 	useEffect(load, [id])
 
@@ -156,7 +159,18 @@ export default function UserForm() {
 								: 'none',
 					}}
 				>
-					<FormRow title='Имя учетной записи'>
+					<FormRow title='Логин для входа'>
+						<Input
+							value={request.login ?? ''}
+							onChange={(e) =>
+								setRequest({
+									...request,
+									login: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
+					<FormRow title='Полное имя'>
 						<Input
 							value={request.fullName ?? ''}
 							onChange={(e) =>
@@ -217,17 +231,6 @@ export default function UserForm() {
 							newType === UserType.Local ? 'inherit' : 'none',
 					}}
 				>
-					<FormRow title='Имя для входа'>
-						<Input
-							value={request.login ?? ''}
-							onChange={(e) =>
-								setRequest({
-									...request,
-									login: e.target.value,
-								})
-							}
-						/>
-					</FormRow>
 					<FormRow title='Пароль'>
 						<Input.Password
 							value={request.password || ''}

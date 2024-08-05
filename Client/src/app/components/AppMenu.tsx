@@ -1,24 +1,30 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { CustomSource } from '../../api/models/customSource'
 import api from '../../api/swagger-api'
 import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
+import { useInterval } from '../../hooks/useInterval'
 import routes from '../router/routes'
 
 export function AppMenu() {
 	const { lastUpdate } = useUpdateContext()
+	const navigate = useNavigate()
 
 	const [sources, setSources] = useState([] as SourceInfo[])
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 
 	function load() {
-		api.blocksReadAsTree().then((res) => setBlocks(res.data))
-		api.sourcesReadAll().then((res) => setSources(res.data))
+		api.blocksReadAsTree()
+			.then((res) => setBlocks(res.data))
+			.catch(() => navigate(routes.offline))
+		api.sourcesReadAll()
+			.then((res) => setSources(res.data))
+			.catch(() => navigate(routes.offline))
 	}
 
-	useEffect(load, [lastUpdate])
-	//useInterval(load, 10000)
+	useEffect(load, [lastUpdate, navigate])
+	useInterval(load, 10000)
 
 	return (
 		<div className='app-menu'>
