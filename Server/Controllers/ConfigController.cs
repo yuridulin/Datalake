@@ -6,6 +6,7 @@ using Datalake.Server.Controllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Server.BackgroundServices.SettingsHandler;
 
 namespace Datalake.Server.Controllers;
 
@@ -13,9 +14,12 @@ namespace Datalake.Server.Controllers;
 /// Представление системной информации о работе сервера
 /// </summary>
 /// <param name="systemRepository">Репозиторий</param>
+/// <param name="settingsService">Обработчик настроек сервера</param>
 [Route("api/[controller]")]
 [ApiController]
-public class ConfigController(SystemRepository systemRepository) : ApiControllerBase
+public class ConfigController(
+	SystemRepository systemRepository,
+	ISettingsUpdater settingsService) : ApiControllerBase
 {
 	/// <summary>
 	/// Получение даты последнего изменения структуры базы данных
@@ -72,8 +76,7 @@ public class ConfigController(SystemRepository systemRepository) : ApiController
 		var user = Authenticate();
 
 		await systemRepository.UpdateSettingsAsync(user, newSettings);
-
-		Program.WriteStartipFile(await systemRepository.GetSettingsAsync());
+		await settingsService.WriteStartipFileAsync(systemRepository);
 
 		return NoContent();
 	}

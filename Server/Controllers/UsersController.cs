@@ -7,6 +7,7 @@ using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Server.BackgroundServices.SettingsHandler;
 
 namespace Datalake.Server.Controllers;
 
@@ -15,11 +16,13 @@ namespace Datalake.Server.Controllers;
 /// </summary>
 /// <param name="usersRepository">Репозиторий</param>
 /// <param name="sessionManager">Менеджер сессий</param>
+/// <param name="settingsService">Обработчик настроек сервера</param>
 [Route("api/[controller]")]
 [ApiController]
 public class UsersController(
 	UsersRepository usersRepository,
-	SessionManagerService sessionManager) : ApiControllerBase
+	SessionManagerService sessionManager,
+	ISettingsUpdater settingsService) : ApiControllerBase
 {
 	/// <summary>
 	/// Получение списка пользователей, определенных на сервере EnergoId
@@ -180,6 +183,7 @@ public class UsersController(
 		var user = Authenticate();
 
 		await usersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
+		settingsService.LoadStaticUsers(usersRepository);
 
 		return NoContent();
 	}
@@ -195,6 +199,7 @@ public class UsersController(
 		var user = Authenticate();
 
 		await usersRepository.DeleteAsync(user, userGuid);
+		settingsService.LoadStaticUsers(usersRepository);
 
 		return NoContent();
 	}
