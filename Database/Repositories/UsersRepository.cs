@@ -270,7 +270,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 		{
 			Guid = user.Guid,
 			FullName = user.FullName ?? "",
-			Token = string.Empty,
+			Token = user.Type == UserType.Static ? (user.PasswordHash ?? string.Empty) : string.Empty,
 			Rights = accessRights
 				.Select(x => new UserAccessRightsInfo
 				{

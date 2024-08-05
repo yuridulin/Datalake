@@ -20,7 +20,7 @@ export default function LoginPanel() {
 			password: values.password,
 		}).then((res) => {
 			console.log(res)
-			if (res.status < 400) navigate('/')
+			if (res && res.status < 400) navigate('/')
 		})
 	}
 

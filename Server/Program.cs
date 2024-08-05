@@ -15,6 +15,7 @@ using NJsonSchema.Generation;
 using Serilog;
 using System.Reflection;
 using Datalake.ApiClasses.Models.Settings;
+using Datalake.Server.Services.SessionManager.Models;
 
 #if DEBUG
 using LinqToDB.AspNet.Logging;
@@ -111,7 +112,7 @@ namespace Datalake.Server
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
 				options
-					.UseNpgsql(connectionString)
+					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
 #if DEBUG
 					.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddDebug()))
 #endif
@@ -161,6 +162,11 @@ namespace Datalake.Server
 			{
 				await db.EnsureDataCreatedAsync();
 				WriteStartipFile(await new SystemRepository(db).GetSettingsAsync());
+
+				SessionManagerService.StaticAuthRecords = new UsersRepository(db)
+					.GetStaticUsers()
+					.Select(x => new AuthSession { ExpirationTime = DateTime.MaxValue, User = x.Item1, StaticHost = x.Item2 })
+					.ToList();
 			}
 		}
 

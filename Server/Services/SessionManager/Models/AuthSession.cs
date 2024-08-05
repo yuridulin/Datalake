@@ -16,4 +16,9 @@ public class AuthSession
 	/// Время истечения сессии
 	/// </summary>
 	public required DateTime ExpirationTime { get; set; }
+
+	/// <summary>
+	/// Адрес, с которого разрешен доступ
+	/// </summary>
+	public required string StaticHost { get; set; }
 }

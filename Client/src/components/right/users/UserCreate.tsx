@@ -22,7 +22,9 @@ export default function UserCreate() {
 	const [keycloakUsers, setKeycloakUsers] = useState([] as UserEnergoIdInfo[])
 
 	function load() {
-		api.usersGetEnergoIdList().then((res) => setKeycloakUsers(res.data))
+		api.usersGetEnergoIdList().then(
+			(res) => !!res && setKeycloakUsers(res.data),
+		)
 	}
 
 	function create() {
@@ -118,7 +120,18 @@ export default function UserCreate() {
 								: 'none',
 					}}
 				>
-					<FormRow title='Имя учетной записи'>
+					<FormRow title='Имя для входа'>
+						<Input
+							value={request.login ?? ''}
+							onChange={(e) =>
+								setRequest({
+									...request,
+									login: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
+					<FormRow title='Полное имя'>
 						<Input
 							value={request.fullName ?? ''}
 							onChange={(e) =>
@@ -160,17 +173,6 @@ export default function UserCreate() {
 								: 'none',
 					}}
 				>
-					<FormRow title='Имя для входа'>
-						<Input
-							value={request.login ?? ''}
-							onChange={(e) =>
-								setRequest({
-									...request,
-									login: e.target.value,
-								})
-							}
-						/>
-					</FormRow>
 					<FormRow title='Пароль'>
 						<Input.Password
 							value={request.password || ''}

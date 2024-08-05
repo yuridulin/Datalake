@@ -38,8 +38,9 @@ export default function UserForm() {
 				type: res.data.type,
 			})
 		})
-		api.usersGetEnergoIdList({ currentUserGuid: id }).then((res) =>
-			setKeycloakUsers(res.data),
+
+		api.usersGetEnergoIdList({ currentUserGuid: id }).then(
+			(res) => !!res && setKeycloakUsers(res.data),
 		)
 	}
 

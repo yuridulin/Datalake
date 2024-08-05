@@ -7,7 +7,6 @@ using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Net;
 
 namespace Datalake.Server.Controllers;
 
@@ -38,8 +37,6 @@ public class UsersController(
 		};
 
 		var client = new HttpClient(clientHandler);
-
-		//ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
 		var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + energoId);
 
