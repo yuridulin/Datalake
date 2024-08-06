@@ -12,11 +12,10 @@ export default function Dashboard() {
 
 	const update = useCallback(() => {
 		setLogs((prevLogs) => {
-			let lastId =
-				prevLogs.length > 0 ? prevLogs[prevLogs.length - 1].id : 0
+			let lastId = prevLogs.length > 0 ? prevLogs[0].id : 0
 			api.configGetLogs({ lastId })
 				.then((res) => {
-					let newLogs = [...prevLogs, ...res.data]
+					let newLogs = [...res.data, ...prevLogs]
 					if (newLogs.length > 50) newLogs = newLogs.slice(-50)
 					setLogs(newLogs)
 				})
