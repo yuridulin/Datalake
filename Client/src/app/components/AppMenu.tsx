@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { CustomSource } from '../../api/models/customSource'
 import api from '../../api/swagger-api'
@@ -14,17 +14,17 @@ export function AppMenu() {
 	const [sources, setSources] = useState([] as SourceInfo[])
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 
-	function load() {
+	const load = useCallback(() => {
 		api.blocksReadAsTree()
 			.then((res) => setBlocks(res.data))
 			.catch(() => navigate(routes.offline))
 		api.sourcesReadAll()
 			.then((res) => setSources(res.data))
 			.catch(() => navigate(routes.offline))
-	}
+	}, [navigate])
 
-	useEffect(load, [lastUpdate, navigate])
-	useInterval(load, 10000)
+	useEffect(load, [load, navigate, lastUpdate])
+	useInterval(load, 60000)
 
 	return (
 		<div className='app-menu'>

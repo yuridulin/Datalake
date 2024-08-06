@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import { LogInfo } from '../../../api/swagger/data-contracts'
+import { useInterval } from '../../../hooks/useInterval'
 import LogTypeEl from '../../components/LogTypeEl'
 import routes from '../../router/routes'
 
@@ -9,22 +10,23 @@ export default function Dashboard() {
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const navigate = useNavigate()
 
-	function update() {
-		api.configGetLogs()
-			.then((res) => {
-				let newLogs = [...logs, ...res.data]
-				if (newLogs.length > 50) newLogs = newLogs.slice(-50)
-				setLogs(newLogs)
-			})
-			.catch(() => navigate(routes.offline))
-	}
+	const update = useCallback(() => {
+		setLogs((prevLogs) => {
+			let lastId =
+				prevLogs.length > 0 ? prevLogs[prevLogs.length - 1].id : 0
+			api.configGetLogs({ lastId })
+				.then((res) => {
+					let newLogs = [...prevLogs, ...res.data]
+					if (newLogs.length > 50) newLogs = newLogs.slice(-50)
+					setLogs(newLogs)
+				})
+				.catch(() => navigate(routes.offline))
+			return prevLogs
+		})
+	}, [navigate])
 
-	useEffect(() => {
-		update()
-		let interval = setInterval(update, 5000)
-		return () => clearInterval(interval)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+	useEffect(update, [update])
+	useInterval(update, 5000)
 
 	return (
 		<>
