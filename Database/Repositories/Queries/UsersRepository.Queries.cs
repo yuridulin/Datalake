@@ -91,13 +91,13 @@ public partial class UsersRepository
 		return query;
 	}
 
-	public (UserAuthInfo, string)[] GetStaticUsers()
+	public (UserAuthInfo, string?)[] GetStaticUsers()
 	{
 		var staticUsers = db.Users
 			.Where(x => x.Type == UserType.Static)
-			.Where(x => !string.IsNullOrEmpty(x.StaticHost) && !string.IsNullOrEmpty(x.PasswordHash))
+			.Where(x => !string.IsNullOrEmpty(x.PasswordHash))
 			.ToArray()
-			.Select(x => (GetAuthInfo(db, x).Result, x.StaticHost!))
+			.Select(x => (GetAuthInfo(db, x).Result, x.StaticHost))
 			.ToArray();
 
 		return staticUsers;

@@ -16,8 +16,6 @@ using System.Reflection;
 using Server.BackgroundServices.SettingsHandler;
 using Datalake.Database.Extensions;
 
-
-
 #if DEBUG
 using LinqToDB.AspNet.Logging;
 #endif
