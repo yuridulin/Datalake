@@ -1,6 +1,6 @@
 import { Button, Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import getDictFromValuesResponseArray from '../../../api/models/getDictFromValuesResponseArray'
 import api from '../../../api/swagger-api'
@@ -27,15 +27,17 @@ export default function TagsTable({
 	const [search, setSearch] = useState('')
 	const [values, setValues] = useState({} as { [key: string]: any })
 
-	function prepareValues() {
-		setValues(
-			tags
-				.map((x) => ({ [x.guid ?? 0]: '' }))
-				.reduce((next, current) => ({ ...next, ...current }), {}),
-		)
-	}
+	const prepareValues = useCallback(() => {
+		setValues((prevTags) => {
+			tags.map((x) => ({ [x.guid ?? 0]: '' })).reduce(
+				(next, current) => ({ ...next, ...current }),
+				{},
+			)
+			return prevTags
+		})
+	}, [tags])
 
-	function loadValues() {
+	const loadValues = useCallback(() => {
 		api.valuesGet([
 			{ requestKey: 'tags-table', tags: tags.map((x) => x.guid) },
 		]).then(
@@ -43,21 +45,22 @@ export default function TagsTable({
 				res.status === 200 &&
 				setValues(getDictFromValuesResponseArray(res.data)),
 		)
-	}
+	}, [tags])
 
 	function doSearch() {
 		setData(
-			tags.filter(
-				(x) =>
-					!!x.name &&
-					x.name.toLowerCase().includes(search.toLowerCase()),
-			),
+			search.length > 0
+				? data.filter(
+						(x) =>
+							!!x.name &&
+							x.name.toLowerCase().includes(search.toLowerCase()),
+				  )
+				: data,
 		)
 	}
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(doSearch, [search])
-	useEffect(prepareValues, [tags])
+	useEffect(doSearch, [search, data])
+	useEffect(prepareValues, [prepareValues])
 	useInterval(loadValues, 5000)
 
 	return tags.length > 0 ? (

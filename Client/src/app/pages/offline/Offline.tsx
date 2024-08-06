@@ -10,9 +10,7 @@ export default function Offline() {
 		api.configGetLastUpdate().then((res) => !!res && setOnline(!!res.data))
 	}
 
-	useInterval(() => {
-		load()
-	}, 5000)
+	useInterval(load, 5000)
 
 	return online ? (
 		<Navigate to={'/'} />
