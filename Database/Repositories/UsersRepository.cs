@@ -89,9 +89,8 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 				break;
 
 			case UserType.Static:
-				if (string.IsNullOrEmpty(request.StaticHost))
-					throw new InvalidValueException(message: "необходимо указать адрес, с которого будет доступ");
 				hash = await GenerateNewHashForStaticAsync();
+				request.Login = string.Empty;
 				break;
 
 			case UserType.EnergoId:

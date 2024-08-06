@@ -117,8 +117,7 @@ export default function UserCreate() {
 				<div
 					style={{
 						display:
-							request.type === UserType.Local ||
-							request.type === UserType.Static
+							request.type === UserType.Local
 								? 'inherit'
 								: 'none',
 					}}
@@ -134,6 +133,17 @@ export default function UserCreate() {
 							}
 						/>
 					</FormRow>
+				</div>
+
+				<div
+					style={{
+						display:
+							request.type === UserType.Local ||
+							request.type === UserType.Static
+								? 'inherit'
+								: 'none',
+					}}
+				>
 					<FormRow title='Полное имя'>
 						<Input
 							value={request.fullName ?? ''}
@@ -158,6 +168,7 @@ export default function UserCreate() {
 					<FormRow title='Адрес, с которого разрешен доступ'>
 						<Input
 							value={request.staticHost || ''}
+							placeholder='Если адрес не указан, доступ разрешен из любого источника'
 							onChange={(e) =>
 								setRequest({
 									...request,
