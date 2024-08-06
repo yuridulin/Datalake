@@ -14,6 +14,12 @@ public class TagInputInfo
 	public required int Id { get; set; }
 
 	/// <summary>
+	/// Идентификатор тега
+	/// </summary>
+	[Required]
+	public required Guid Guid { get; set; }
+
+	/// <summary>
 	/// Имя тега
 	/// </summary>
 	[Required]

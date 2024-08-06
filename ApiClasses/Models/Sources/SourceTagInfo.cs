@@ -9,10 +9,10 @@ namespace Datalake.ApiClasses.Models.Sources;
 public class SourceTagInfo
 {
 	/// <summary>
-	/// Идентификатор тега в локальной базе
+	/// Идентификатор тега
 	/// </summary>
 	[Required]
-	public int Id { get; set; }
+	public Guid Guid { get; set; }
 
 	/// <summary>
 	/// Глобальное наименование тега

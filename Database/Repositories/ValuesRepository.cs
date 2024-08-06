@@ -143,6 +143,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			responses.Add(new ValuesTagResponse
 			{
 				Guid = tag.GlobalGuid,
+				Name = tag.Name,
 				Type = tag.Type,
 				Values = [
 					new ValueRecord
@@ -354,6 +355,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					response.Tags.Add(new ValuesTagResponse
 					{
 						Guid = tagInfo.Guid,
+						Name = tagInfo.TagName,
 						Type = tagInfo.TagType,
 						Values = [.. databaseValueGroup
 							.Select(x => new ValueRecord
@@ -402,6 +404,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 						response.Tags.Add(new ValuesTagResponse
 						{
 							Guid = tagInfo.Guid,
+							Name = tagInfo.TagName,
 							Type = tagInfo.TagType,
 							Values = [
 									new ValueRecord
@@ -420,6 +423,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 						response.Tags.Add(new ValuesTagResponse
 						{
 							Guid = tagInfo.Guid,
+							Name = tagInfo.TagName,
 							Type = tagInfo.TagType,
 							Values = [
 									new ValueRecord
@@ -443,6 +447,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				response.Tags.Add(new ValuesTagResponse
 				{
 					Guid = guid,
+					Name = info.Values.FirstOrDefault(v => v.Guid == guid)?.TagName ?? string.Empty,
 					Type = TagType.String,
 					Values = [
 						new ValueRecord
