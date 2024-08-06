@@ -1,9 +1,10 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.Database.Models;
-using Datalake.Server.BackgroundServices.Collector.Collectors.Abstractions;
+using Datalake.Server.BackgroundServices.Collector.Abstractions;
+using Datalake.Server.BackgroundServices.Collector.Collectors;
 using Datalake.Server.Services.Receiver;
 
-namespace Datalake.Server.BackgroundServices.Collector.Collectors.Factory;
+namespace Datalake.Server.BackgroundServices.Collector;
 
 /// <summary>
 /// Получение нужного сборщика данных для выбранного источника
@@ -25,12 +26,23 @@ public class CollectorFactory(ReceiverService receiverService)
 	{
 		return source.Type switch
 		{
-			SourceType.Inopc => new InopcCollector(receiverService, source, _loggerFactory.CreateLogger<InopcCollector>()),
-			SourceType.Datalake => new DatalakeCollector(receiverService, source, _loggerFactory.CreateLogger<DatalakeCollector>()),
+			SourceType.Inopc
+				=> new InopcCollector(receiverService, source, _loggerFactory.CreateLogger<InopcCollector>()),
+
+			SourceType.Datalake
+				=> new OldDatalakeCollector(receiverService, source, _loggerFactory.CreateLogger<OldDatalakeCollector>()),
+
+			SourceType.DatalakeCore_v1
+				=> new DatalakeCollector(receiverService, source, _loggerFactory.CreateLogger<DatalakeCollector>()),
+
 			SourceType.Custom => (CustomSource)source.Id switch
 			{
-				CustomSource.Calculated => new CalculateCollector(source, _loggerFactory.CreateLogger<CalculateCollector>()),
-				CustomSource.System => new SystemCollector(source, _loggerFactory.CreateLogger<SystemCollector>()),
+				CustomSource.Calculated
+					=> new CalculateCollector(source, _loggerFactory.CreateLogger<CalculateCollector>()),
+
+				CustomSource.System
+					=> new SystemCollector(source, _loggerFactory.CreateLogger<SystemCollector>()),
+
 				CustomSource.Manual => null,
 				_ => null
 			},

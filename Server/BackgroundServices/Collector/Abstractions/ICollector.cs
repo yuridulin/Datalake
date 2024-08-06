@@ -1,7 +1,7 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.Server.BackgroundServices.Collector.Models;
 
-namespace Datalake.Server.BackgroundServices.Collector.Collectors.Abstractions;
+namespace Datalake.Server.BackgroundServices.Collector.Abstractions;
 
 /// <summary>
 /// Обработка собранных значений

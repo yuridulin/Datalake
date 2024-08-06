@@ -27,4 +27,9 @@ public enum SourceType
 	/// Другая нода базы данных Datalake
 	/// </summary>
 	Datalake = 1,
+
+	/// <summary>
+	/// Обновленный на .NET Core Datalake, версия 1
+	/// </summary>
+	DatalakeCore_v1 = 2,
 }

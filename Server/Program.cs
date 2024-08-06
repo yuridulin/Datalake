@@ -2,7 +2,6 @@ using Datalake.ApiClasses.Exceptions.Base;
 using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector;
-using Datalake.Server.BackgroundServices.Collector.Collectors.Factory;
 using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Receiver;
@@ -18,9 +17,12 @@ using Server.BackgroundServices.SettingsHandler;
 using Datalake.Database.Extensions;
 
 
+
 #if DEBUG
 using LinqToDB.AspNet.Logging;
 #endif
+
+[assembly: AssemblyVersion("2.0.*")]
 
 namespace Datalake.Server
 {

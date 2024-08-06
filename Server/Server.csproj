@@ -11,6 +11,12 @@
     <DockerfileTag>datalake-server</DockerfileTag>
     <Product>$(AssemblyName)</Product>
     <AssemblyName>Datalake.$(MSBuildProjectName)</AssemblyName>
+    <RootNamespace>Datalake.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Deterministic>false</Deterministic>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -112,6 +112,73 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		return response;
 	}
 
+
+	/// <summary>
+	/// Запрос данных из ноды Datalake, версия .NET Framework
+	/// </summary>
+	/// <param name="tags">Список названий запрашиваемых тегов</param>
+	/// <param name="address">Адрес ноды</param>
+	/// <returns>Ответ с данными</returns>
+	public async Task<ReceiveResponse> AskOldDatalake(string[] tags, string address)
+	{
+		logger.LogDebug("Ask old datalake with address: {address}", address);
+
+		var request = new
+		{
+			Request = new Models.OldDatalake.LiveRequest
+			{
+				TagNames = [.. tags],
+			}
+		};
+
+		using var client = new HttpClient();
+		client.Timeout = TimeSpan.FromSeconds(1);
+
+		List<Models.OldDatalake.HistoryResponse>? historyResponses = null;
+
+		try
+		{
+			var answer = await client.PostAsJsonAsync("http://" + address + ":83/api/tags/live", request);
+			historyResponses = await answer.Content.ReadFromJsonAsync<List<Models.OldDatalake.HistoryResponse>>();
+		}
+		catch
+		{
+			logger.LogDebug("Ask old datalake with address: {address} fail", address);
+		}
+
+		historyResponses ??= [];
+
+		var response = new ReceiveResponse
+		{
+			Timestamp = DateTime.Now,
+			Tags = historyResponses
+					.SelectMany(t => t.Values.Select(v => new ReceiveRecord
+					{
+						Name = t.TagName,
+						Type = t.Type switch
+						{
+							Models.OldDatalake.TagType.Number => TagType.Number,
+							Models.OldDatalake.TagType.Boolean => TagType.Boolean,
+							_ => TagType.String,
+						},
+						Quality = v.Quality switch
+						{
+							Models.OldDatalake.TagQuality.Bad => TagQuality.Bad,
+							Models.OldDatalake.TagQuality.Bad_NoConnect => TagQuality.Bad_NoConnect,
+							Models.OldDatalake.TagQuality.Bad_NoValues => TagQuality.Bad_NoValues,
+							Models.OldDatalake.TagQuality.Bad_ManualWrite => TagQuality.Bad_ManualWrite,
+							Models.OldDatalake.TagQuality.Good => TagQuality.Good,
+							Models.OldDatalake.TagQuality.Good_ManualWrite => TagQuality.Good_ManualWrite,
+							_ => TagQuality.Unknown,
+						},
+						Value = v.Value,
+					}))
+					.ToArray(),
+		};
+
+		return response;
+	}
+
 	/// <summary>
 	/// Запрос данных из ноды Datalake
 	/// </summary>

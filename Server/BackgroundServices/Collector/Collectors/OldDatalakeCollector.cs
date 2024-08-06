@@ -5,12 +5,12 @@ using Timer = System.Timers.Timer;
 
 namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 
-internal class InopcCollector : CollectorBase
+internal class OldDatalakeCollector : CollectorBase
 {
-	public InopcCollector(
+	public OldDatalakeCollector(
 		ReceiverService receiverService,
 		Source source,
-		ILogger<InopcCollector> logger) : base(source, logger)
+		ILogger<OldDatalakeCollector> logger) : base(source, logger)
 	{
 		_logger = logger;
 		_receiverService = receiverService;
@@ -74,7 +74,7 @@ internal class InopcCollector : CollectorBase
 	private readonly string _address;
 	private readonly List<Item> _itemsToSend;
 	private readonly Dictionary<string, Guid[]> _itemsTags;
-	private ILogger<InopcCollector> _logger;
+	private ILogger<OldDatalakeCollector> _logger;
 
 	private async Task Timer_ElapsedAsync()
 	{
@@ -102,7 +102,7 @@ internal class InopcCollector : CollectorBase
 
 		var items = tags.Select(x => x.TagName).ToArray();
 
-		var response = await _receiverService.AskInopc(items, _address);
+		var response = await _receiverService.AskOldDatalake(items, _address);
 		var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
 
 		CollectValues?.Invoke(this, response.Tags
