@@ -23,19 +23,18 @@ export default function TagsTable({
 	hideValue = false,
 	hideType = false,
 }: TagsTableProps) {
-	const [data, setData] = useState([] as TagInfo[])
+	const [viewingTags, setViewingTags] = useState(tags)
 	const [search, setSearch] = useState('')
-	const [values, setValues] = useState({} as { [key: string]: any })
+	const [viewingTagsValues, setViewingTagsValues] = useState(
+		{} as { [key: string]: any },
+	)
 
 	const prepareValues = useCallback(() => {
-		setValues((prevTags) => {
-			tags.map((x) => ({ [x.guid ?? 0]: '' })).reduce(
-				(next, current) => ({ ...next, ...current }),
-				{},
-			)
-			return prevTags
-		})
-	}, [tags])
+		let values = viewingTags
+			.map((x) => ({ [x.guid ?? 0]: '' }))
+			.reduce((next, current) => ({ ...next, ...current }), {})
+		setViewingTagsValues(values)
+	}, [viewingTags])
 
 	const loadValues = useCallback(() => {
 		api.valuesGet([
@@ -43,28 +42,28 @@ export default function TagsTable({
 		]).then(
 			(res) =>
 				res.status === 200 &&
-				setValues(getDictFromValuesResponseArray(res.data)),
+				setViewingTagsValues(getDictFromValuesResponseArray(res.data)),
 		)
 	}, [tags])
 
-	function doSearch() {
-		setData(
+	const doSearch = useCallback(() => {
+		setViewingTags(
 			search.length > 0
-				? data.filter(
+				? tags.filter(
 						(x) =>
 							!!x.name &&
 							x.name.toLowerCase().includes(search.toLowerCase()),
 				  )
-				: data,
+				: tags,
 		)
-	}
+	}, [search, tags])
 
-	useEffect(doSearch, [search, data])
+	useEffect(doSearch, [doSearch, search, tags])
 	useEffect(prepareValues, [prepareValues])
 	useInterval(loadValues, 5000)
 
-	return tags.length > 0 ? (
-		<Table size='middle' dataSource={data} showSorterTooltip={false}>
+	return (
+		<Table size='middle' dataSource={viewingTags} showSorterTooltip={false}>
 			<Column
 				title={
 					<Input
@@ -140,17 +139,17 @@ export default function TagsTable({
 					key='Value'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
-						String(values[a.guid ?? 0]).localeCompare(
-							String(values[b.guid ?? 0]),
+						String(viewingTagsValues[a.guid ?? 0]).localeCompare(
+							String(viewingTagsValues[b.guid ?? 0]),
 						)
 					}
 					render={(_, record: TagInfo) => (
-						<TagValueEl value={values[record.guid ?? 0]} />
+						<TagValueEl
+							value={viewingTagsValues[record.guid ?? 0]}
+						/>
 					)}
 				/>
 			)}
 		</Table>
-	) : (
-		<></>
 	)
 }
