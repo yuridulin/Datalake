@@ -122,11 +122,11 @@ export default function TagForm() {
 	}
 
 	function tagUpdate() {
-		api.tagsUpdate(Number(id), model.tag).then(back)
+		api.tagsUpdate(String(id), model.tag).then(back)
 	}
 
 	function tagDelete() {
-		api.tagsDelete(Number(id)).then(back)
+		api.tagsDelete(String(id)).then(back)
 	}
 
 	const addParam = () => {

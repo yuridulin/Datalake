@@ -441,30 +441,14 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * No description
 	 *
 	 * @tags Tags
-	 * @name TagsReadPossibleInputs
-	 * @summary Получение списка тегов, подходящих для использования в формулах
-	 * @request GET:/api/Tags/inputs
-	 * @response `200` `(TagAsInputInfo)[]` Список тегов
-	 */
-	tagsReadPossibleInputs = (params: RequestParams = {}) =>
-		this.request<TagAsInputInfo[], any>({
-			path: `/api/Tags/inputs`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Tags
 	 * @name TagsUpdate
 	 * @summary Изменение тега
-	 * @request PUT:/api/Tags/{id}
+	 * @request PUT:/api/Tags/{guid}
 	 * @response `200` `File`
 	 */
-	tagsUpdate = (id: number, data: TagUpdateRequest, params: RequestParams = {}) =>
+	tagsUpdate = (guid: string, data: TagUpdateRequest, params: RequestParams = {}) =>
 		this.request<File, any>({
-			path: `/api/Tags/${id}`,
+			path: `/api/Tags/${guid}`,
 			method: 'PUT',
 			body: data,
 			type: ContentType.Json,
@@ -476,13 +460,29 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @tags Tags
 	 * @name TagsDelete
 	 * @summary Удаление тега
-	 * @request DELETE:/api/Tags/{id}
+	 * @request DELETE:/api/Tags/{guid}
 	 * @response `200` `File`
 	 */
-	tagsDelete = (id: number, params: RequestParams = {}) =>
+	tagsDelete = (guid: string, params: RequestParams = {}) =>
 		this.request<File, any>({
-			path: `/api/Tags/${id}`,
+			path: `/api/Tags/${guid}`,
 			method: 'DELETE',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Tags
+	 * @name TagsReadPossibleInputs
+	 * @summary Получение списка тегов, подходящих для использования в формулах
+	 * @request GET:/api/Tags/inputs
+	 * @response `200` `(TagAsInputInfo)[]` Список тегов
+	 */
+	tagsReadPossibleInputs = (params: RequestParams = {}) =>
+		this.request<TagAsInputInfo[], any>({
+			path: `/api/Tags/inputs`,
+			method: 'GET',
+			format: 'json',
 			...params,
 		})
 	/**

@@ -7,7 +7,7 @@ import TagsTable from './TagsTable'
 export default function Tags() {
 	const [tags, setTags] = useState([] as TagInfo[])
 
-	const loadAllTagsList = useCallback(() => {
+	const getTags = useCallback(() => {
 		setTags((prevTags) => {
 			api.tagsReadAll()
 				.then((res) => setTags(res.data))
@@ -16,7 +16,7 @@ export default function Tags() {
 		})
 	}, [])
 
-	useEffect(loadAllTagsList, [loadAllTagsList])
+	useEffect(getTags, [getTags])
 
 	return (
 		<>

@@ -7,6 +7,7 @@ using Datalake.Database.Models;
 using Datalake.Database.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
+using System;
 
 namespace Datalake.Database.Repositories;
 
@@ -32,16 +33,16 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		return await CreateAsync(tagCreateRequest);
 	}
 
-	public async Task UpdateAsync(UserAuthInfo user, int id, TagUpdateRequest updateRequest)
+	public async Task UpdateAsync(UserAuthInfo user, Guid guid, TagUpdateRequest updateRequest)
 	{
-		await CheckAccessToTagAsync(db, user, AccessType.Admin, id);
-		await UpdateAsync(id, updateRequest);
+		await CheckAccessToTagAsync(db, user, AccessType.Admin, guid);
+		await UpdateAsync(guid, updateRequest);
 	}
 
-	public async Task DeleteAsync(UserAuthInfo user, int id)
+	public async Task DeleteAsync(UserAuthInfo user, Guid guid)
 	{
-		await CheckAccessToTagAsync(db, user, AccessType.Admin, id);
-		await DeleteAsync(id);
+		await CheckAccessToTagAsync(db, user, AccessType.Admin, guid);
+		await DeleteAsync(guid);
 	}
 
 	#endregion
@@ -164,14 +165,14 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		return tag.Id;
 	}
 
-	internal async Task UpdateAsync(int id, TagUpdateRequest updateRequest)
+	internal async Task UpdateAsync(Guid guid, TagUpdateRequest updateRequest)
 	{
 		updateRequest.Name = ValueChecker.RemoveWhitespaces(updateRequest.Name, "_");
 
-		if (!await db.Tags.AnyAsync(x => x.Id == id))
-			throw new NotFoundException($"тег #{id}");
+		var tag = db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
+			?? throw new NotFoundException($"тег {guid}");
 
-		if (await db.Tags.AnyAsync(x => x.Id != id && x.Name == updateRequest.Name))
+		if (await db.Tags.AnyAsync(x => x.GlobalGuid != guid && x.Name == updateRequest.Name))
 			throw new AlreadyExistException($"тег с именем {updateRequest.Name}");
 
 		if (updateRequest.SourceId > 0)
@@ -191,7 +192,7 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		var transaction = await db.BeginTransactionAsync();
 
 		int count = await db.Tags
-			.Where(x => x.Id == id)
+			.Where(x => x.GlobalGuid == guid)
 			.Set(x => x.Name, updateRequest.Name)
 			.Set(x => x.Description, updateRequest.Description)
 			.Set(x => x.Type, updateRequest.Type)
@@ -206,17 +207,17 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 			.Set(x => x.Formula, updateRequest.Formula)
 			.UpdateAsync();
 
-		if (count == 0)
-			throw new DatabaseException($"Не удалось сохранить тег #{id}", DatabaseStandartError.UpdatedZero);
+		if (count != 1)
+			throw new DatabaseException($"Не удалось сохранить тег {guid}", DatabaseStandartError.UpdatedZero);
 
 		await db.TagInputs
-			.Where(x => x.TagId == id)
+			.Where(x => x.TagId == tag.Id)
 			.DeleteAsync();
 
 		await db.TagInputs
 			.BulkCopyAsync(updateRequest.FormulaInputs.Select(x => new TagInput
 			{
-				TagId = id,
+				TagId = tag.Id,
 				InputTagId = x.Id,
 				VariableName = x.VariableName,
 			}));
@@ -225,16 +226,16 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		await transaction.CommitAsync();
 	}
 
-	internal async Task DeleteAsync(int id)
+	internal async Task DeleteAsync(Guid guid)
 	{
 		var transaction = await db.BeginTransactionAsync();
 
 		var count = await db.Tags
-			.Where(x => x.Id == id)
+			.Where(x => x.GlobalGuid == guid)
 			.DeleteAsync();
 
 		if (count == 0)
-			throw new DatabaseException($"Не удалось удалить тег #{id}", DatabaseStandartError.DeletedZero);
+			throw new DatabaseException($"Не удалось удалить тег {guid}", DatabaseStandartError.DeletedZero);
 
 		// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
 		// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей

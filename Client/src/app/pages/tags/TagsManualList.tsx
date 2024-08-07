@@ -1,5 +1,5 @@
 import { Button } from 'antd'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { CustomSource } from '../../../api/models/customSource'
 import api from '../../../api/swagger-api'
 import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
@@ -9,33 +9,36 @@ import TagsTable from './TagsTable'
 export default function TagsManualList() {
 	const [tags, setTags] = useState([] as TagInfo[])
 
-	function load() {
-		api.tagsReadAll({ sourceId: CustomSource.Manual }).then((res) =>
-			setTags(res.data),
-		)
-	}
+	const getTags = useCallback(() => {
+		setTags((prevTags) => {
+			api.tagsReadAll({ sourceId: CustomSource.Manual })
+				.then((res) => setTags(res.data))
+				.catch(() => setTags([]))
+			return prevTags
+		})
+	}, [])
 
-	function createManual() {
+	function createTag() {
 		api.tagsCreate({
-			tagType: TagType.String,
 			sourceId: CustomSource.Manual,
-		}).then(() => load())
+			tagType: TagType.Number,
+		})
+			.then(() => getTags())
+			.catch()
 	}
 
-	useEffect(load, [])
+	useEffect(getTags, [getTags])
 
 	return (
 		<>
 			<Header
-				right={<Button onClick={createManual}>Добавить тег</Button>}
+				right={
+					<Button onClick={createTag}>Создать мануальный тег</Button>
+				}
 			>
-				Список тегов ручного ввода
+				Список мануальных тегов
 			</Header>
-			{tags.length > 0 ? (
-				<TagsTable tags={tags} />
-			) : (
-				<i>Не создано ни одного тега</i>
-			)}
+			<TagsTable tags={tags} hideSource={true} />
 		</>
 	)
 }

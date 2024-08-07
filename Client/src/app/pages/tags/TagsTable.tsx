@@ -29,22 +29,33 @@ export default function TagsTable({
 		{} as { [key: string]: any },
 	)
 
+	const loadValues = useCallback(() => {
+		api.valuesGet([
+			{ requestKey: 'tags-table', tags: viewingTags.map((x) => x.guid) },
+		])
+			.then(
+				(res) =>
+					res.status === 200 &&
+					setViewingTagsValues(
+						getDictFromValuesResponseArray(res.data),
+					),
+			)
+			.catch(() =>
+				setViewingTagsValues(
+					Object.fromEntries(
+						Object.keys(viewingTags).map((prop) => [prop, null]),
+					),
+				),
+			)
+	}, [viewingTags])
+
 	const prepareValues = useCallback(() => {
 		let values = viewingTags
 			.map((x) => ({ [x.guid ?? 0]: '' }))
 			.reduce((next, current) => ({ ...next, ...current }), {})
 		setViewingTagsValues(values)
-	}, [viewingTags])
-
-	const loadValues = useCallback(() => {
-		api.valuesGet([
-			{ requestKey: 'tags-table', tags: tags.map((x) => x.guid) },
-		]).then(
-			(res) =>
-				res.status === 200 &&
-				setViewingTagsValues(getDictFromValuesResponseArray(res.data)),
-		)
-	}, [tags])
+		loadValues()
+	}, [viewingTags, loadValues])
 
 	const doSearch = useCallback(() => {
 		setViewingTags(
@@ -90,20 +101,6 @@ export default function TagsTable({
 					</NavLink>
 				)}
 			/>
-			{!hideType && (
-				<Column
-					title='Тип'
-					dataIndex='Type'
-					key='Type'
-					defaultSortOrder='ascend'
-					sorter={(a: TagInfo, b: TagInfo) =>
-						Number(a.type) - Number(b.type)
-					}
-					render={(_, record) => (
-						<TagTypeEl tagType={record.type ?? TagType.String} />
-					)}
-				/>
-			)}
 			{!hideSource && (
 				<Column
 					title='Источник'
@@ -123,15 +120,20 @@ export default function TagsTable({
 					)}
 				/>
 			)}
-			<Column
-				title='Описание'
-				dataIndex='Description'
-				key='Description'
-				defaultSortOrder='ascend'
-				sorter={(a: TagInfo, b: TagInfo) =>
-					(a.description ?? '').localeCompare(b.description ?? '')
-				}
-			/>
+			{!hideType && (
+				<Column
+					title='Тип'
+					dataIndex='Type'
+					key='Type'
+					defaultSortOrder='ascend'
+					sorter={(a: TagInfo, b: TagInfo) =>
+						Number(a.type) - Number(b.type)
+					}
+					render={(_, record) => (
+						<TagTypeEl tagType={record.type ?? TagType.String} />
+					)}
+				/>
+			)}
 			{!hideValue && (
 				<Column
 					title='Значение'
@@ -150,6 +152,15 @@ export default function TagsTable({
 					)}
 				/>
 			)}
+			<Column
+				title='Описание'
+				dataIndex='Description'
+				key='Description'
+				defaultSortOrder='ascend'
+				sorter={(a: TagInfo, b: TagInfo) =>
+					(a.description ?? '').localeCompare(b.description ?? '')
+				}
+			/>
 		</Table>
 	)
 }
