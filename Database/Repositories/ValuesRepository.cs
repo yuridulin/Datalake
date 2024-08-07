@@ -461,6 +461,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					]
 				});
 			}
+
+			responses.Add(response);
 		}
 
 		return responses;
