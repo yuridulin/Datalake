@@ -15,7 +15,7 @@ build-server:
     - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:latest-test
 
   only:
-    - /^\d+.\d+.\d+.test$/
+    - /^test \d+$/
 
 push-server:
   stage: push
