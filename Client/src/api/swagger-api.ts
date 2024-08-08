@@ -19,83 +19,54 @@ const api = new Api({
 })
 
 api.instance.interceptors.request.use(
-	function (config) {
+	(config) => {
 		config.headers[tokenHeader] = getToken()
 		return config
 	},
-	function (error) {
+	(err) => Promise.reject(err),
+)
+
+api.instance.interceptors.response.use(
+	(response: AxiosResponse) => {
+		if (response.config.method === 'OPTIONS') return response
+
+		setToken(response.headers[tokenHeader])
+
+		if (response.status === 204) {
+			notification.success({
+				placement: 'bottomLeft',
+				message: 'Успешно',
+			})
+		}
+
+		return response
+	},
+	(error: AxiosError) => {
+		if (error.response?.status === 403) {
+			router.navigate('/login')
+			return Promise.resolve(error.response)
+		}
+
+		if (error.code === 'ERR_NETWORK') {
+			router.navigate('/offline')
+			return Promise.resolve(error.response)
+		}
+
+		if (error.response?.status ?? 0 >= 500) {
+			let message = error.request?.responseText as string
+			if (message.indexOf('\n\n') > -1)
+				message = message.substring(0, message.indexOf('\n\n'))
+			notification.error({
+				placement: 'bottomLeft',
+				message: message,
+			})
+			return Promise.resolve(error.response)
+		}
+
 		return Promise.reject(error)
 	},
 )
 
-api.instance.interceptors.response.use(
-	function (res: AxiosResponse) {
-		// запросы, которые не обрабатываем
-		if (res.config.method === 'OPTIONS') {
-			return res
-		}
-		// переход на логин, если нет доступа
-		else if (res.status === 403) {
-			router.navigate('/login')
-		}
-		// обработка ошибки с сервера
-		else if (res.status >= 300) {
-			throw new AxiosError(res.data, String(res.status), res.config)
-		}
-		// нормальное развитие событий
-		else {
-			// данные о доступе сохраняем
-			setToken(res.headers[tokenHeader])
-
-			// сообщения после выполнения действий
-			if (res.status === 204) {
-				notification.success({
-					placement: 'bottomLeft',
-					message: 'Успешно',
-				})
-			} else if (res.data.Done) {
-				notification.info({
-					placement: 'bottomLeft',
-					message: res.data.Done,
-				})
-			} else if (res.data.Error) {
-				notification.error({
-					placement: 'bottomLeft',
-					message: res.data.Error,
-				})
-			}
-		}
-		return res
-	},
-	function (err: AxiosError) {
-		// переход на ожидание соединения, если не получилось провести запрос
-		if (err.request?.status === 0) {
-			return router.navigate('/offline')
-		}
-		// переход на логин, если нет доступа
-		else if (err.response?.status === 403) {
-			return router.navigate('/login')
-		}
-		// сообщения после выполнения действий
-		else {
-			try {
-				let message = err.request?.responseText as string
-				if (message.indexOf('\n\n') > -1)
-					message = message.substring(0, message.indexOf('\n\n'))
-				return notification.error({
-					placement: 'bottomLeft',
-					message: message,
-				})
-			} catch (e) {
-				return notification.error({
-					placement: 'bottomLeft',
-					message: 'Ошибка выполнения',
-				})
-			}
-		}
-	},
-)
-
-api.usersIdentify()
+api.usersIdentify().catch()
 
 export default api

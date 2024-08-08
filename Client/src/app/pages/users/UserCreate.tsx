@@ -19,7 +19,10 @@ export default function UserCreate() {
 		staticHost: '',
 		type: UserType.Local,
 	} as UserCreateRequest)
-	const [keycloakInfo, setKeycloakInfo] = useState({} as EnergoIdInfo)
+	const [keycloakInfo, setKeycloakInfo] = useState({
+		connected: false,
+		energoIdUsers: [],
+	} as EnergoIdInfo)
 
 	function load() {
 		api.usersGetEnergoIdList().then(
@@ -114,13 +117,12 @@ export default function UserCreate() {
 				<div
 					style={{
 						display:
-							request.type === UserType.Local ||
-							request.type === UserType.Static
+							request.type === UserType.Local
 								? 'inherit'
 								: 'none',
 					}}
 				>
-					<FormRow title='Имя для входа'>
+					<FormRow title='Логин для входа'>
 						<Input
 							value={request.login ?? ''}
 							onChange={(e) =>
@@ -131,6 +133,17 @@ export default function UserCreate() {
 							}
 						/>
 					</FormRow>
+				</div>
+
+				<div
+					style={{
+						display:
+							request.type === UserType.Local ||
+							request.type === UserType.Static
+								? 'inherit'
+								: 'none',
+					}}
+				>
 					<FormRow title='Полное имя'>
 						<Input
 							value={request.fullName ?? ''}
@@ -155,6 +168,7 @@ export default function UserCreate() {
 					<FormRow title='Адрес, с которого разрешен доступ'>
 						<Input
 							value={request.staticHost || ''}
+							placeholder='Если адрес не указан, доступ разрешен из любого источника'
 							onChange={(e) =>
 								setRequest({
 									...request,

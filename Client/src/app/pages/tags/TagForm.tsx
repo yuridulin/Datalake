@@ -8,14 +8,17 @@ import {
 	Popconfirm,
 	Radio,
 	Select,
+	Space,
 } from 'antd'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { CustomSource } from '../../../api/models/customSource'
 import api from '../../../api/swagger-api'
 import { TagType, TagUpdateRequest } from '../../../api/swagger/data-contracts'
+import { useInterval } from '../../../hooks/useInterval'
 import FormRow from '../../components/FormRow'
 import Header from '../../components/Header'
+import TagValueEl from '../../components/TagValueEl'
 import router from '../../router/router'
 
 export default function TagForm() {
@@ -75,6 +78,31 @@ export default function TagForm() {
 		//)
 	}
 
+	const [currentValue, setCurrentValue] = useState(
+		null as string | number | boolean | null,
+	)
+	const getCurrentValue = useCallback(() => {
+		if (!id) return
+		setCurrentValue((prevValue) => {
+			api.valuesGet([
+				{
+					requestKey: 'tag-current-value',
+					tags: [id],
+				},
+			])
+				.then((res) =>
+					setCurrentValue(res.data[0].tags[0].values[0].value),
+				)
+				.catch(() => setCurrentValue(null))
+			return prevValue
+		})
+	}, [id])
+
+	useInterval(() => {
+		if (!id) return
+		getCurrentValue()
+	}, 1000)
+
 	useEffect(() => {
 		if (!!id) load()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,11 +122,11 @@ export default function TagForm() {
 	}
 
 	function tagUpdate() {
-		api.tagsUpdate(Number(id), model.tag).then(back)
+		api.tagsUpdate(String(id), model.tag).then(back)
 	}
 
 	function tagDelete() {
-		api.tagsDelete(Number(id)).then(back)
+		api.tagsDelete(String(id)).then(back)
 	}
 
 	const addParam = () => {
@@ -476,6 +504,11 @@ export default function TagForm() {
 						/>
 					</FormRow>
 				</div>
+				<FormRow title='Значение'>
+					<Space>
+						<TagValueEl value={currentValue} />
+					</Space>
+				</FormRow>
 			</div>
 		</>
 	)

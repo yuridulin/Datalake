@@ -1,6 +1,6 @@
 import { Button, Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import getDictFromValuesResponseArray from '../../../api/models/getDictFromValuesResponseArray'
 import api from '../../../api/swagger-api'
@@ -23,45 +23,58 @@ export default function TagsTable({
 	hideValue = false,
 	hideType = false,
 }: TagsTableProps) {
-	const [data, setData] = useState([] as TagInfo[])
+	const [viewingTags, setViewingTags] = useState(tags)
 	const [search, setSearch] = useState('')
-	const [values, setValues] = useState({} as { [key: string]: any })
+	const [viewingTagsValues, setViewingTagsValues] = useState(
+		{} as { [key: string]: any },
+	)
 
-	function prepareValues() {
-		setValues(
-			tags
-				.map((x) => ({ [x.guid ?? 0]: '' }))
-				.reduce((next, current) => ({ ...next, ...current }), {}),
-		)
-	}
-
-	function loadValues() {
+	const loadValues = useCallback(() => {
 		api.valuesGet([
-			{ requestKey: 'tags-table', tags: tags.map((x) => x.guid) },
-		]).then(
-			(res) =>
-				res.status === 200 &&
-				setValues(getDictFromValuesResponseArray(res.data)),
-		)
-	}
+			{ requestKey: 'tags-table', tags: viewingTags.map((x) => x.guid) },
+		])
+			.then(
+				(res) =>
+					res.status === 200 &&
+					setViewingTagsValues(
+						getDictFromValuesResponseArray(res.data),
+					),
+			)
+			.catch(() =>
+				setViewingTagsValues(
+					Object.fromEntries(
+						Object.keys(viewingTags).map((prop) => [prop, null]),
+					),
+				),
+			)
+	}, [viewingTags])
 
-	function doSearch() {
-		setData(
-			tags.filter(
-				(x) =>
-					!!x.name &&
-					x.name.toLowerCase().includes(search.toLowerCase()),
-			),
-		)
-	}
+	const prepareValues = useCallback(() => {
+		let values = viewingTags
+			.map((x) => ({ [x.guid ?? 0]: '' }))
+			.reduce((next, current) => ({ ...next, ...current }), {})
+		setViewingTagsValues(values)
+		loadValues()
+	}, [viewingTags, loadValues])
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(doSearch, [search])
-	useEffect(prepareValues, [tags])
+	const doSearch = useCallback(() => {
+		setViewingTags(
+			search.length > 0
+				? tags.filter(
+						(x) =>
+							!!x.name &&
+							x.name.toLowerCase().includes(search.toLowerCase()),
+				  )
+				: tags,
+		)
+	}, [search, tags])
+
+	useEffect(doSearch, [doSearch, search, tags])
+	useEffect(prepareValues, [prepareValues])
 	useInterval(loadValues, 5000)
 
-	return tags.length > 0 ? (
-		<Table size='middle' dataSource={data} showSorterTooltip={false}>
+	return (
+		<Table size='middle' dataSource={viewingTags} showSorterTooltip={false}>
 			<Column
 				title={
 					<Input
@@ -77,7 +90,7 @@ export default function TagsTable({
 					/>
 				}
 				dataIndex='Name'
-				key='Name'
+				key='Id'
 				defaultSortOrder='ascend'
 				sorter={(a: TagInfo, b: TagInfo) =>
 					(a.name ?? '').localeCompare(b.name ?? '')
@@ -88,25 +101,11 @@ export default function TagsTable({
 					</NavLink>
 				)}
 			/>
-			{!hideType && (
-				<Column
-					title='Тип'
-					dataIndex='Type'
-					key='Type'
-					defaultSortOrder='ascend'
-					sorter={(a: TagInfo, b: TagInfo) =>
-						Number(a.type) - Number(b.type)
-					}
-					render={(_, record) => (
-						<TagTypeEl tagType={record.type ?? TagType.String} />
-					)}
-				/>
-			)}
 			{!hideSource && (
 				<Column
 					title='Источник'
 					dataIndex='SourceId'
-					key='SourceId'
+					key='Id'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
 						(a.sourceName ?? String(a.sourceId)).localeCompare(
@@ -121,33 +120,47 @@ export default function TagsTable({
 					)}
 				/>
 			)}
+			{!hideType && (
+				<Column
+					title='Тип'
+					dataIndex='Type'
+					key='Id'
+					defaultSortOrder='ascend'
+					sorter={(a: TagInfo, b: TagInfo) =>
+						Number(a.type) - Number(b.type)
+					}
+					render={(_, record) => (
+						<TagTypeEl tagType={record.type ?? TagType.String} />
+					)}
+				/>
+			)}
+			{!hideValue && (
+				<Column
+					title='Значение'
+					dataIndex='Value'
+					key='Id'
+					defaultSortOrder='ascend'
+					sorter={(a: TagInfo, b: TagInfo) =>
+						String(viewingTagsValues[a.guid ?? 0]).localeCompare(
+							String(viewingTagsValues[b.guid ?? 0]),
+						)
+					}
+					render={(_, record: TagInfo) => (
+						<TagValueEl
+							value={viewingTagsValues[record.guid ?? 0]}
+						/>
+					)}
+				/>
+			)}
 			<Column
 				title='Описание'
 				dataIndex='Description'
-				key='Description'
+				key='Id'
 				defaultSortOrder='ascend'
 				sorter={(a: TagInfo, b: TagInfo) =>
 					(a.description ?? '').localeCompare(b.description ?? '')
 				}
 			/>
-			{!hideValue && (
-				<Column
-					title='Значение'
-					dataIndex='Value'
-					key='Value'
-					defaultSortOrder='ascend'
-					sorter={(a: TagInfo, b: TagInfo) =>
-						String(values[a.guid ?? 0]).localeCompare(
-							String(values[b.guid ?? 0]),
-						)
-					}
-					render={(_, record: TagInfo) => (
-						<TagValueEl value={values[record.guid ?? 0]} />
-					)}
-				/>
-			)}
 		</Table>
-	) : (
-		<></>
 	)
 }

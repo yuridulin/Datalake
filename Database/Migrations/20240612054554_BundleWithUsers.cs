@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -11,6 +10,11 @@ namespace Datalake.Database.Migrations
 		/// <inheritdoc />
 		protected override void Up(MigrationBuilder migrationBuilder)
 		{
+			migrationBuilder.Sql(@"
+				INSERT INTO ""AccessRights"" (""UserGuid"" , ""AccessType"" , ""IsGlobal"")
+				SELECT u.""UserGuid"" , 100 , TRUE
+				FROM ""Users"" u ");
+
 			migrationBuilder.RenameColumn(
 					name: "Hash",
 					table: "Users",

@@ -15,10 +15,14 @@ import routes from '../../router/routes'
 export default function UserForm() {
 	const navigate = useNavigate()
 	const { id } = useParams()
+	const [oldName, setOldName] = useState('')
 	const [user, setUser] = useState({ oldType: UserType.Local, hash: '' })
 	const [request, setRequest] = useState({} as UserUpdateRequest)
 	const [newType, setNewType] = useState(UserType.Local)
-	const [keycloakUsers, setKeycloakUsers] = useState({} as EnergoIdInfo)
+	const [keycloakUsers, setKeycloakUsers] = useState({
+		connected: false,
+		energoIdUsers: [],
+	} as EnergoIdInfo)
 
 	useEffect(load, [id])
 
@@ -37,6 +41,7 @@ export default function UserForm() {
 				energoIdGuid: res.data.energoIdGuid,
 				type: res.data.type,
 			})
+			setOldName(res.data.fullName ?? id)
 		})
 
 		api.usersGetEnergoIdList({ currentUserGuid: id }).then(
@@ -97,7 +102,7 @@ export default function UserForm() {
 					</>
 				}
 			>
-				Учётная запись: {id}
+				Учётная запись: {oldName}
 			</Header>
 			<form>
 				<FormRow title='Уровень глобального доступа'>
@@ -150,13 +155,32 @@ export default function UserForm() {
 				<div
 					style={{
 						display:
+							newType === UserType.Local ? 'inherit' : 'none',
+					}}
+				>
+					<FormRow title='Логин для входа'>
+						<Input
+							value={request.login ?? ''}
+							onChange={(e) =>
+								setRequest({
+									...request,
+									login: e.target.value,
+								})
+							}
+						/>
+					</FormRow>
+				</div>
+
+				<div
+					style={{
+						display:
 							newType === UserType.Local ||
 							newType === UserType.Static
 								? 'inherit'
 								: 'none',
 					}}
 				>
-					<FormRow title='Имя учетной записи'>
+					<FormRow title='Полное имя'>
 						<Input
 							value={request.fullName ?? ''}
 							onChange={(e) =>
@@ -178,6 +202,7 @@ export default function UserForm() {
 					<FormRow title='Адрес, с которого разрешен доступ'>
 						<Input
 							value={request.staticHost || ''}
+							placeholder='Если адрес не указан, доступ разрешен из любого источника'
 							onChange={(e) =>
 								setRequest({
 									...request,
@@ -217,17 +242,6 @@ export default function UserForm() {
 							newType === UserType.Local ? 'inherit' : 'none',
 					}}
 				>
-					<FormRow title='Имя для входа'>
-						<Input
-							value={request.login ?? ''}
-							onChange={(e) =>
-								setRequest({
-									...request,
-									login: e.target.value,
-								})
-							}
-						/>
-					</FormRow>
 					<FormRow title='Пароль'>
 						<Input.Password
 							value={request.password || ''}

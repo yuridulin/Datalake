@@ -250,7 +250,7 @@ namespace Datalake.Database.Migrations
 					table: "Tags",
 					type: "uuid",
 					nullable: false,
-					defaultValue: Guid.NewGuid());
+					defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
 
 			migrationBuilder.AlterColumn<int>(
 					name: "SourceId",
@@ -297,7 +297,7 @@ namespace Datalake.Database.Migrations
 					table: "Blocks",
 					type: "uuid",
 					nullable: false,
-					defaultValue: Guid.NewGuid());
+					defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
 
 			migrationBuilder.CreateTable(
 					name: "BlockProperties",

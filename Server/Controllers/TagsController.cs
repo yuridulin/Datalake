@@ -84,16 +84,16 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	/// <summary>
 	/// Изменение тега
 	/// </summary>
-	/// <param name="id">Идентификатор тега</param>
+	/// <param name="guid">Идентификатор тега</param>
 	/// <param name="tag">Новые данные тега</param>
-	[HttpPut("{id:int}")]
+	[HttpPut("{guid}")]
 	public async Task<ActionResult> UpdateAsync(
-		[BindRequired, FromRoute] int id,
+		[BindRequired, FromRoute] Guid guid,
 		[BindRequired, FromBody] TagUpdateRequest tag)
 	{
 		var user = Authenticate();
 
-		await tagsRepository.UpdateAsync(user, id, tag);
+		await tagsRepository.UpdateAsync(user, guid, tag);
 
 		return NoContent();
 	}
@@ -101,14 +101,14 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	/// <summary>
 	/// Удаление тега
 	/// </summary>
-	/// <param name="id">Идентификатор тега</param>
-	[HttpDelete("{id:int}")]
+	/// <param name="guid">Идентификатор тега</param>
+	[HttpDelete("{guid}")]
 	public async Task<ActionResult> DeleteAsync(
-		[BindRequired, FromRoute] int id)
+		[BindRequired, FromRoute] Guid guid)
 	{
 		var user = Authenticate();
 
-		await tagsRepository.DeleteAsync(user, id);
+		await tagsRepository.DeleteAsync(user, guid);
 
 		return NoContent();
 	}

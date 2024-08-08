@@ -56,18 +56,23 @@ public abstract class RepositoryBase
 		DatalakeContext db,
 		UserAuthInfo user,
 		AccessType minimalAccess,
-		int tagId)
+		Guid guid)
 	{
-		var sourceQuery = from t in db.Tags.Where(x => x.Id == tagId)
-											from s in db.Sources.InnerJoin(x => x.Id == t.SourceId)
-											select s.Id;
+		var sourceQuery = 
+			from t in db.Tags.Where(x => x.GlobalGuid == guid)
+			from s in db.Sources.InnerJoin(x => x.Id == t.SourceId)
+			select s.Id;
+
 		var source = await sourceQuery
 			.DefaultIfEmpty(-1)
 			.FirstOrDefaultAsync();
 
-		var blocksQuery = from rel in db.BlockTags.Where(x => x.TagId == tagId)
-											from b in db.Blocks.InnerJoin(x => x.Id == rel.BlockId)
-											select b.Id;
+		var blocksQuery =
+			from t in db.Tags.Where(x => x.GlobalGuid == guid)
+			from rel in db.BlockTags.Where(x => x.TagId == t.Id)
+			from b in db.Blocks.InnerJoin(x => x.Id == rel.BlockId)
+			select b.Id;
+
 		var blocksHasThisTag = await blocksQuery.ToArrayAsync();
 		var repository = new BlocksRepository(db);
 		var blocksHasThisTagWithParents = blocksHasThisTag

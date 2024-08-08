@@ -143,6 +143,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			responses.Add(new ValuesTagResponse
 			{
 				Guid = tag.GlobalGuid,
+				Name = tag.Name,
 				Type = tag.Type,
 				Values = [
 					new ValueRecord
@@ -309,14 +310,14 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		foreach (var request in requests)
 		{
-			if (request.Tags.Length == 0) continue;
+			if (request.Tags.Length == 0 && request.TagNames.Length == 0) continue;
 
 			var response = new ValuesResponse
 			{
 				RequestKey = request.RequestKey,
 				Tags = []
 			};
-			var info = await ReadTagsInfoAsync(request.Tags);
+			var info = await ReadTagsInfoAsync(request.Tags, request.TagNames);
 
 			DateTime exact = request.Exact ?? DateTime.Now;
 			DateTime old, young;
@@ -354,6 +355,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					response.Tags.Add(new ValuesTagResponse
 					{
 						Guid = tagInfo.Guid,
+						Name = tagInfo.TagName,
 						Type = tagInfo.TagType,
 						Values = [.. databaseValueGroup
 							.Select(x => new ValueRecord
@@ -402,6 +404,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 						response.Tags.Add(new ValuesTagResponse
 						{
 							Guid = tagInfo.Guid,
+							Name = tagInfo.TagName,
 							Type = tagInfo.TagType,
 							Values = [
 									new ValueRecord
@@ -420,6 +423,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 						response.Tags.Add(new ValuesTagResponse
 						{
 							Guid = tagInfo.Guid,
+							Name = tagInfo.TagName,
 							Type = tagInfo.TagType,
 							Values = [
 									new ValueRecord
@@ -443,6 +447,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				response.Tags.Add(new ValuesTagResponse
 				{
 					Guid = guid,
+					Name = info.Values.FirstOrDefault(v => v.Guid == guid)?.TagName ?? string.Empty,
 					Type = TagType.String,
 					Values = [
 						new ValueRecord
@@ -456,15 +461,17 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					]
 				});
 			}
+
+			responses.Add(response);
 		}
 
 		return responses;
 	}
 
-	async Task<Dictionary<int, ValueTagInfo>> ReadTagsInfoAsync(Guid[] identifiers)
+	async Task<Dictionary<int, ValueTagInfo>> ReadTagsInfoAsync(Guid[] identifiers, string[] names)
 	{
 		var info = await db.Tags
-			.Where(x => identifiers.Contains(x.GlobalGuid))
+			.Where(x => identifiers.Contains(x.GlobalGuid) || names.Contains(x.Name))
 			.ToDictionaryAsync(x => x.Id, x => new ValueTagInfo
 			{
 				Guid = x.GlobalGuid,

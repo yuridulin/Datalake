@@ -15,6 +15,12 @@ public class ValuesTagResponse
 	public required Guid Guid { get; set; }
 
 	/// <summary>
+	/// Полное наименование тега
+	/// </summary>
+	[Required]
+	public required string Name { get; set; }
+
+	/// <summary>
 	/// Тип данных
 	/// </summary>
 	[Required]

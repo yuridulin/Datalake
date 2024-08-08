@@ -1,24 +1,30 @@
-import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { CustomSource } from '../../api/models/customSource'
 import api from '../../api/swagger-api'
 import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../context/updateContext'
+import { useInterval } from '../../hooks/useInterval'
 import routes from '../router/routes'
 
 export function AppMenu() {
 	const { lastUpdate } = useUpdateContext()
+	const navigate = useNavigate()
 
 	const [sources, setSources] = useState([] as SourceInfo[])
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 
-	function load() {
-		api.blocksReadAsTree().then((res) => setBlocks(res.data))
-		api.sourcesReadAll().then((res) => setSources(res.data))
-	}
+	const load = useCallback(() => {
+		api.blocksReadAsTree()
+			.then((res) => setBlocks(res.data))
+			.catch(() => setBlocks([]))
+		api.sourcesReadAll()
+			.then((res) => setSources(res.data))
+			.catch(() => setSources([]))
+	}, [])
 
-	useEffect(load, [lastUpdate])
-	//useInterval(load, 10000)
+	useEffect(load, [load, navigate, lastUpdate])
+	useInterval(load, 60000)
 
 	return (
 		<div className='app-menu'>
@@ -44,12 +50,14 @@ export function AppMenu() {
 
 			<div className='app-menu-block'>
 				<NavLink to={'/tags'}>Теги</NavLink>
-				<NavLink key={CustomSource.Manual} to={'/tags/manual/'}>
-					Мануальные теги
-				</NavLink>
-				<NavLink key={CustomSource.Calculated} to={'/tags/calc/'}>
-					Вычисляемые теги
-				</NavLink>
+				<div className='app-menu-sub'>
+					<NavLink key={CustomSource.Manual} to={'/tags/manual/'}>
+						Мануальные теги
+					</NavLink>
+					<NavLink key={CustomSource.Calculated} to={'/tags/calc/'}>
+						Вычисляемые теги
+					</NavLink>
+				</div>
 			</div>
 
 			<div className='app-menu-block'>

@@ -50,6 +50,7 @@ public class ConfigController(
 			query = query.Take(take.Value);
 
 		return await query
+			.OrderByDescending(x => x.Id)
 			.ToArrayAsync();
 	}
 

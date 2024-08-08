@@ -73,13 +73,14 @@ export enum TagType {
 
 /** Информация о закреплённом теге */
 export type BlockTagInfo = BlockRelationInfo & {
-	/** Тип значений тега */
-	tagType: BlockTagRelation
 	/**
+	 * Идентификатор тега
 	 * @format guid
 	 * @minLength 1
 	 */
 	guid: string
+	/** Тип значений тега */
+	tagType: BlockTagRelation
 }
 
 /** Тип связи тега и блока */
@@ -205,6 +206,7 @@ export interface SourceInfo {
 export enum SourceType {
 	Inopc = 'Inopc',
 	Datalake = 'Datalake',
+	DatalakeCoreV1 = 'DatalakeCore_v1',
 	Unknown = 'Unknown',
 	Custom = 'Custom',
 }
@@ -231,10 +233,11 @@ export interface SourceEntryInfo {
 /** Информация о теге, берущем данные из этого источника */
 export interface SourceTagInfo {
 	/**
-	 * Идентификатор тега в локальной базе
-	 * @format int32
+	 * Идентификатор тега
+	 * @format guid
+	 * @minLength 1
 	 */
-	id: number
+	guid: string
 	/**
 	 * Глобальное наименование тега
 	 * @minLength 1
@@ -335,6 +338,12 @@ export interface TagInputInfo {
 	 */
 	id: number
 	/**
+	 * Идентификатор тега
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
 	 * Имя тега
 	 * @minLength 1
 	 */
@@ -353,6 +362,12 @@ export interface TagAsInputInfo {
 	 * @format int32
 	 */
 	id: number
+	/**
+	 * Идентификатор тега
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
 	/**
 	 * Имя тега
 	 * @minLength 1
@@ -708,6 +723,11 @@ export interface ValuesTagResponse {
 	 * @minLength 1
 	 */
 	guid: string
+	/**
+	 * Полное наименование тега
+	 * @minLength 1
+	 */
+	name: string
 	/** Тип данных */
 	type: TagType
 	/** Список значений */
@@ -764,7 +784,9 @@ export interface ValuesRequest {
 	 */
 	requestKey: string
 	/** Список глобальных идентификаторов тегов */
-	tags: string[]
+	tags?: string[]
+	/** Список имен тегов. По именам будут сопоставлены идентификаторы тегов, если список идентификаторов в запросе пуст */
+	tagNames?: string[]
 	/**
 	 * Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
 	 * @format date-time
@@ -804,7 +826,9 @@ export interface ValueWriteRequest {
 	 * Идентификатор тега
 	 * @format guid
 	 */
-	guid?: string
+	guid?: string | null
+	/** Наименование тега */
+	name?: string | null
 	/** Новое значение */
 	value?: any
 	/**

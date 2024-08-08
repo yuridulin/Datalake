@@ -10,7 +10,12 @@ public class ValueWriteRequest
 	/// <summary>
 	/// Идентификатор тега
 	/// </summary>
-	public Guid Guid { get; set; }
+	public Guid? Guid { get; set; }
+
+	/// <summary>
+	/// Наименование тега
+	/// </summary>
+	public string? Name { get; set; }
 
 	/// <summary>
 	/// Новое значение

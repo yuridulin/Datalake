@@ -90,7 +90,7 @@ export default function SourceItems({
 						</span>
 						{!!x.tagInfo ? (
 							<span>
-								<NavLink to={'/tags/' + x.tagInfo.id}>
+								<NavLink to={'/tags/' + x.tagInfo.guid}>
 									<Button>{x.tagInfo.name}</Button>
 								</NavLink>
 							</span>

@@ -2,7 +2,6 @@ using Datalake.ApiClasses.Exceptions.Base;
 using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector;
-using Datalake.Server.BackgroundServices.Collector.Collectors.Factory;
 using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Receiver;
@@ -15,10 +14,13 @@ using NJsonSchema.Generation;
 using Serilog;
 using System.Reflection;
 using Server.BackgroundServices.SettingsHandler;
+using Datalake.Database.Extensions;
 
 #if DEBUG
 using LinqToDB.AspNet.Logging;
 #endif
+
+[assembly: AssemblyVersion("2.0.*")]
 
 namespace Datalake.Server
 {
@@ -120,7 +122,7 @@ namespace Datalake.Server
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
-					.UsePostgreSQL(connectionString ?? throw new Exception("�� �������� ������ ����������� � ���� ������"))
+					.UsePostgreSQL(connectionString ?? throw new Exception("Connection string not provided"))
 #if DEBUG
 					.UseDefaultLogging(provider)
 #endif
@@ -166,6 +168,12 @@ namespace Datalake.Server
 			if (db != null)
 			{
 				await db.EnsureDataCreatedAsync();
+				await db.LogAsync(new Database.Models.Log
+				{
+					Category = ApiClasses.Enums.LogCategory.Core,
+					Type = ApiClasses.Enums.LogType.Success,
+					Text = "Сервер запущен",
+				});
 			}
 		}
 

@@ -20,5 +20,5 @@ public class AuthSession
 	/// <summary>
 	/// Адрес, с которого разрешен доступ
 	/// </summary>
-	public required string StaticHost { get; set; }
+	public string? StaticHost { get; set; }
 }

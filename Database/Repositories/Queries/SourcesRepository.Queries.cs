@@ -38,7 +38,7 @@ public partial class SourcesRepository
 									Tags = g
 										.Select(x => new SourceTagInfo
 										{
-											Id = x.t.Id,
+											Guid = x.t.GlobalGuid,
 											Item = x.t.SourceItem ?? string.Empty,
 											Name = x.t.Name,
 											Type = x.t.Type,
@@ -55,7 +55,7 @@ public partial class SourcesRepository
 			.Where(x => x.SourceId == id)
 			.Select(x => new SourceTagInfo
 			{
-				Id = x.Id,
+				Guid = x.GlobalGuid,
 				Name = x.Name,
 				Type = x.Type,
 				Item = x.SourceItem ?? string.Empty,

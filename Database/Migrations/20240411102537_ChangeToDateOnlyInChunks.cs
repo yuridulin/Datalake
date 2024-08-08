@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -11,6 +10,19 @@ namespace Datalake.Database.Migrations
 		/// <inheritdoc />
 		protected override void Up(MigrationBuilder migrationBuilder)
 		{
+			migrationBuilder.Sql(
+					"UPDATE \"Tags\" " +
+					"SET \"Created\" = now() " +
+					"WHERE \"Created\" = '-infinity';");
+
+			migrationBuilder.Sql(
+					"UPDATE \"Tags\" " +
+					"SET \"GlobalId\" = gen_random_uuid();");
+
+			migrationBuilder.Sql(
+					"UPDATE \"Blocks\" " +
+					"SET \"GlobalId\" = gen_random_uuid();");
+
 			migrationBuilder.AlterColumn<DateOnly>(
 					name: "Date",
 					table: "TagHistoryChunks",

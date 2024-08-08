@@ -141,7 +141,10 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		return await usersRepository.CreateAsync(user, userAuthRequest);
+		var guid = await usersRepository.CreateAsync(user, userAuthRequest);
+		settingsService.LoadStaticUsers(usersRepository);
+
+		return guid;
 	}
 
 	/// <summary>
