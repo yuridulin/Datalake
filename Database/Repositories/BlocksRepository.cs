@@ -2,7 +2,6 @@
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Blocks;
 using Datalake.ApiClasses.Models.Users;
-using Datalake.Database.Extensions;
 using Datalake.Database.Models;
 using Datalake.Database.Repositories.Base;
 using LinqToDB;

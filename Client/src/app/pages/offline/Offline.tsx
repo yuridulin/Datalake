@@ -7,7 +7,9 @@ export default function Offline() {
 	const [online, setOnline] = useState(false)
 
 	function load() {
-		api.configGetLastUpdate().then((res) => !!res && setOnline(!!res.data))
+		api.configGetLastUpdate()
+			.then((res) => !!res && setOnline(!!res.data))
+			.catch(() => setOnline(false))
 	}
 
 	useInterval(load, 5000)

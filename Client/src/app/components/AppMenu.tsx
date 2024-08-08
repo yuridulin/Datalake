@@ -16,11 +16,21 @@ export function AppMenu() {
 
 	const load = useCallback(() => {
 		api.blocksReadAsTree()
-			.then((res) => setBlocks(res.data))
-			.catch(() => navigate(routes.offline))
-		api.sourcesReadAll()
+			.then((res) => {
+				console.log('blocksRead finish', res)
+				setBlocks(res.data)
+			})
+			.catch(() => setBlocks([]))
+		/* .catch((e) => {
+				console.log('catch error', e)
+				navigate(routes.offline)
+			}) */
+		/* api.sourcesReadAll()
 			.then((res) => setSources(res.data))
-			.catch(() => navigate(routes.offline))
+			.catch((e) => {
+				console.log('catch error', e)
+				navigate(routes.offline)
+			}) */
 	}, [navigate])
 
 	useEffect(load, [load, navigate, lastUpdate])
