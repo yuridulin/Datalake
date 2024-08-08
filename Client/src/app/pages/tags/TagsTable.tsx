@@ -90,7 +90,7 @@ export default function TagsTable({
 					/>
 				}
 				dataIndex='Name'
-				key='Name'
+				key='Id'
 				defaultSortOrder='ascend'
 				sorter={(a: TagInfo, b: TagInfo) =>
 					(a.name ?? '').localeCompare(b.name ?? '')
@@ -105,7 +105,7 @@ export default function TagsTable({
 				<Column
 					title='Источник'
 					dataIndex='SourceId'
-					key='SourceId'
+					key='Id'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
 						(a.sourceName ?? String(a.sourceId)).localeCompare(
@@ -124,7 +124,7 @@ export default function TagsTable({
 				<Column
 					title='Тип'
 					dataIndex='Type'
-					key='Type'
+					key='Id'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
 						Number(a.type) - Number(b.type)
@@ -138,7 +138,7 @@ export default function TagsTable({
 				<Column
 					title='Значение'
 					dataIndex='Value'
-					key='Value'
+					key='Id'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
 						String(viewingTagsValues[a.guid ?? 0]).localeCompare(
@@ -155,7 +155,7 @@ export default function TagsTable({
 			<Column
 				title='Описание'
 				dataIndex='Description'
-				key='Description'
+				key='Id'
 				defaultSortOrder='ascend'
 				sorter={(a: TagInfo, b: TagInfo) =>
 					(a.description ?? '').localeCompare(b.description ?? '')

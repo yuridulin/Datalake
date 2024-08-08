@@ -50,12 +50,14 @@ export function AppMenu() {
 
 			<div className='app-menu-block'>
 				<NavLink to={'/tags'}>Теги</NavLink>
-				<NavLink key={CustomSource.Manual} to={'/tags/manual/'}>
-					Мануальные теги
-				</NavLink>
-				<NavLink key={CustomSource.Calculated} to={'/tags/calc/'}>
-					Вычисляемые теги
-				</NavLink>
+				<div className='app-menu-sub'>
+					<NavLink key={CustomSource.Manual} to={'/tags/manual/'}>
+						Мануальные теги
+					</NavLink>
+					<NavLink key={CustomSource.Calculated} to={'/tags/calc/'}>
+						Вычисляемые теги
+					</NavLink>
+				</div>
 			</div>
 
 			<div className='app-menu-block'>
