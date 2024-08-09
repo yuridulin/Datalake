@@ -1,54 +1,8 @@
+include:
+  - "gitlab-ci/prod.yml"
+  - "gitlab-ci/test.yml"
+
 stages:
-  - copy
-  - kill
-  - build server
-  - build webconsole
+  - build
+  - push
   - deploy
-
-copy-project:
-  stage: copy
-  only: [tags]
-  tags:
-    - buildopc
-  script:
-    - xcopy /s .\Datalake\Datalake "C:\app\Datalake" /K /D /H /Y
-    - xcopy /s .\Datalake\datalakeclient "C:\app\datalakeclient" /K /D /H /Y
-
-kill-previous:
-  stage: kill
-  only: [tags]
-  when: on_success
-  allow_failure: true
-  tags:
-    - buildopc
-  script:
-    - taskkill /f /im Datalake.exe
-
-build-server:
-  stage: build server
-  only: [tags]
-  tags:
-    - buildopc
-  script:
-    - cd C:\app\Datalake
-    - msbuild /t:Restore
-    - msbuild /t:Build /p:Configuration=Release
-
-build-webconsole:
-  stage: build webconsole
-  only: [tags]
-  tags:
-    - buildopc
-  script:
-    - cd C:\app\datalakeclient
-    - npm install
-    - npm run build
-    - xcopy /s .\build "C:\Dist\Datalake\Content" /K /D /H /Y
-
-deploy-server:
-  stage: deploy
-  only: [tags]
-  tags:
-    - buildopc
-  script:
-    - sc start Datalake

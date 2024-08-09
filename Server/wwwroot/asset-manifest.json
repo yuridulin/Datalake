@@ -1,0 +1,11 @@
+{
+  "files": {
+    "main.js": "/static/js/main.6ab06113.js",
+    "static/media/web-vitals.umd.cjs": "/static/media/web-vitals.umd.b15461f05531e4acd976.cjs",
+    "index.html": "/index.html",
+    "main.6ab06113.js.map": "/static/js/main.6ab06113.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.6ab06113.js"
+  ]
+}

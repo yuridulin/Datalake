@@ -365,3 +365,4 @@ FodyWeavers.xsd
 ## Datalake specific
 
 !DatalakeDatabase/ApiModels/Logs
+/Server/wwwroot/startup.js
