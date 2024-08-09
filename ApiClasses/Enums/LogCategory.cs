@@ -1,11 +1,8 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Datalake.ApiClasses.Enums;
+﻿namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Категория, к которой относится сообщение
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LogCategory
 {
 	/// <summary>

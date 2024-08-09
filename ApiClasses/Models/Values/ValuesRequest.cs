@@ -17,12 +17,12 @@ public class ValuesRequest
 	/// <summary>
 	/// Список глобальных идентификаторов тегов
 	/// </summary>
-	public Guid[] Tags { get; set; } = [];
+	public Guid[]? Tags { get; set; } = [];
 
 	/// <summary>
 	/// Список имен тегов. По именам будут сопоставлены идентификаторы тегов, если список идентификаторов в запросе пуст
 	/// </summary>
-	public string[] TagNames { get; set; } = [];
+	public string[]? TagNames { get; set; } = [];
 
 	/// <summary>
 	/// Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток

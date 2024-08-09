@@ -1,5 +1,6 @@
 ﻿using Datalake.ApiClasses.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Datalake.ApiClasses.Models.Values;
 
@@ -23,8 +24,8 @@ public class ValueRecord
 	/// <summary>
 	/// Значение
 	/// </summary>
-	[Required]
-	public required object? Value { get; set; }
+	[AllowNull]
+	public required object? Value { get; set; } = null;
 
 	/// <summary>
 	/// Достоверность значения

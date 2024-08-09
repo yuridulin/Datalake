@@ -1,11 +1,8 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Datalake.ApiClasses.Enums;
+﻿namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Тип учётной записи
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum UserType
 {
 	/// <summary>

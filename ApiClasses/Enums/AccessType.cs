@@ -1,11 +1,8 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Datalake.ApiClasses.Enums;
+﻿namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Уровень доступа
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum AccessType
 {
 	/// <summary>

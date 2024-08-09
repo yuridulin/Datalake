@@ -1,12 +1,10 @@
 ﻿using System.ComponentModel;
-using System.Text.Json.Serialization;
 
 namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Тип источника, имеющего уникальный механизм получения значений
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CustomSource
 {
 	/// <summary>

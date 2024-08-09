@@ -1,11 +1,8 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Datalake.ApiClasses.Enums;
+﻿namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Степень важности сообщения
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LogType
 {
 	/// <summary>

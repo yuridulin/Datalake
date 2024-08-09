@@ -64,11 +64,17 @@ export type BlockPropertyInfo = BlockRelationInfo & {
 	value: string
 }
 
-/** Тип данных */
+/**
+ * Тип данных
+ *
+ * 0 = String
+ * 1 = Number
+ * 2 = Boolean
+ */
 export enum TagType {
-	String = 'String',
-	Number = 'Number',
-	Boolean = 'Boolean',
+	String = 0,
+	Number = 1,
+	Boolean = 2,
 }
 
 /** Информация о закреплённом теге */
@@ -83,11 +89,17 @@ export type BlockTagInfo = BlockRelationInfo & {
 	tagType: BlockTagRelation
 }
 
-/** Тип связи тега и блока */
+/**
+ * Тип связи тега и блока
+ *
+ * 0 = Static
+ * 1 = Input
+ * 2 = Output
+ */
 export enum BlockTagRelation {
-	Static = 'Static',
-	Input = 'Input',
-	Output = 'Output',
+	Static = 0,
+	Input = 1,
+	Output = 2,
 }
 
 /** Информация о сущности */
@@ -149,27 +161,48 @@ export interface LogInfo {
 	refId?: string | null
 }
 
-/** Категория, к которой относится сообщение */
+/**
+ * Категория, к которой относится сообщение
+ *
+ * 0 = Core
+ * 10 = Database
+ * 20 = Collector
+ * 30 = Api
+ * 40 = Calc
+ * 50 = Source
+ * 60 = Tag
+ * 70 = Http
+ * 80 = Users
+ * 90 = UserGroups
+ */
 export enum LogCategory {
-	Core = 'Core',
-	Database = 'Database',
-	Collector = 'Collector',
-	Api = 'Api',
-	Calc = 'Calc',
-	Source = 'Source',
-	Tag = 'Tag',
-	Http = 'Http',
-	Users = 'Users',
-	UserGroups = 'UserGroups',
+	Core = 0,
+	Database = 10,
+	Collector = 20,
+	Api = 30,
+	Calc = 40,
+	Source = 50,
+	Tag = 60,
+	Http = 70,
+	Users = 80,
+	UserGroups = 90,
 }
 
-/** Степень важности сообщения */
+/**
+ * Степень важности сообщения
+ *
+ * 0 = Trace
+ * 1 = Information
+ * 2 = Success
+ * 3 = Warning
+ * 4 = Error
+ */
 export enum LogType {
-	Trace = 'Trace',
-	Information = 'Information',
-	Success = 'Success',
-	Warning = 'Warning',
-	Error = 'Error',
+	Trace = 0,
+	Information = 1,
+	Success = 2,
+	Warning = 3,
+	Error = 4,
 }
 
 /** Информация о настройках приложения, задаваемых через UI */
@@ -202,13 +235,21 @@ export interface SourceInfo {
 	type: SourceType
 }
 
-/** Тип получения данных с источника */
+/**
+ * Тип получения данных с источника
+ *
+ * 0 = Inopc
+ * 1 = Datalake
+ * 2 = DatalakeCore_v1
+ * -100 = Unknown
+ * -1 = Custom
+ */
 export enum SourceType {
-	Inopc = 'Inopc',
-	Datalake = 'Datalake',
-	DatalakeCoreV1 = 'DatalakeCore_v1',
-	Unknown = 'Unknown',
-	Custom = 'Custom',
+	Inopc = 0,
+	Datalake = 1,
+	DatalakeCoreV1 = 2,
+	Unknown = -100,
+	Custom = -1,
 }
 
 /** Информация о удалённой записи с данными источника */
@@ -499,13 +540,21 @@ export interface UserGroupUsersInfo {
 	fullName?: string | null
 }
 
-/** Уровень доступа */
+/**
+ * Уровень доступа
+ *
+ * 0 = NoAccess
+ * 5 = Viewer
+ * 10 = User
+ * 100 = Admin
+ * -100 = NotSet
+ */
 export enum AccessType {
-	NoAccess = 'NoAccess',
-	Viewer = 'Viewer',
-	User = 'User',
-	Admin = 'Admin',
-	NotSet = 'NotSet',
+	NoAccess = 0,
+	Viewer = 5,
+	User = 10,
+	Admin = 100,
+	NotSet = -100,
 }
 
 /** Данные запроса для изменения группы пользователей */
@@ -626,11 +675,17 @@ export interface UserCreateRequest {
 	energoIdGuid?: string | null
 }
 
-/** Тип учётной записи */
+/**
+ * Тип учётной записи
+ *
+ * 1 = Local
+ * 2 = Static
+ * 3 = EnergoId
+ */
 export enum UserType {
-	Local = 'Local',
-	Static = 'Static',
-	EnergoId = 'EnergoId',
+	Local = 1,
+	Static = 2,
+	EnergoId = 3,
 }
 
 /** Информация о пользователе */
@@ -748,32 +803,51 @@ export interface ValueRecord {
 	 */
 	dateString: string
 	/** Значение */
-	value: any
+	value?: any
 	/** Достоверность значения */
 	quality: TagQuality
 	/** Характеристика хранения значения */
 	using: TagUsing
 }
 
-/** Достоверность значения */
+/**
+ * Достоверность значения
+ *
+ * 0 = Bad
+ * 4 = Bad_NoConnect
+ * 8 = Bad_NoValues
+ * 26 = Bad_ManualWrite
+ * 192 = Good
+ * 216 = Good_ManualWrite
+ * -1 = Unknown
+ */
 export enum TagQuality {
-	Bad = 'Bad',
-	BadNoConnect = 'Bad_NoConnect',
-	BadNoValues = 'Bad_NoValues',
-	BadManualWrite = 'Bad_ManualWrite',
-	Good = 'Good',
-	GoodManualWrite = 'Good_ManualWrite',
-	Unknown = 'Unknown',
+	Bad = 0,
+	BadNoConnect = 4,
+	BadNoValues = 8,
+	BadManualWrite = 26,
+	Good = 192,
+	GoodManualWrite = 216,
+	Unknown = -1,
 }
 
-/** Характеристика значения */
+/**
+ * Характеристика значения
+ *
+ * 0 = Initial
+ * 1 = Basic
+ * 2 = Aggregated
+ * 3 = Continuous
+ * 100 = Outdated
+ * 101 = NotFound
+ */
 export enum TagUsing {
-	Initial = 'Initial',
-	Basic = 'Basic',
-	Aggregated = 'Aggregated',
-	Continuous = 'Continuous',
-	Outdated = 'Outdated',
-	NotFound = 'NotFound',
+	Initial = 0,
+	Basic = 1,
+	Aggregated = 2,
+	Continuous = 3,
+	Outdated = 100,
+	NotFound = 101,
 }
 
 /** Данные запроса для получения значений */
@@ -784,9 +858,9 @@ export interface ValuesRequest {
 	 */
 	requestKey: string
 	/** Список глобальных идентификаторов тегов */
-	tags?: string[]
+	tags?: string[] | null
 	/** Список имен тегов. По именам будут сопоставлены идентификаторы тегов, если список идентификаторов в запросе пуст */
-	tagNames?: string[]
+	tagNames?: string[] | null
 	/**
 	 * Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
 	 * @format date-time
@@ -811,13 +885,21 @@ export interface ValuesRequest {
 	func?: AggregationFunc | null
 }
 
-/** Тип агрегирования данных */
+/**
+ * Тип агрегирования данных
+ *
+ * 0 = List
+ * 1 = Sum
+ * 2 = Avg
+ * 3 = Min
+ * 4 = Max
+ */
 export enum AggregationFunc {
-	List = 'List',
-	Sum = 'Sum',
-	Avg = 'Avg',
-	Min = 'Min',
-	Max = 'Max',
+	List = 0,
+	Sum = 1,
+	Avg = 2,
+	Min = 3,
+	Max = 4,
 }
 
 /** Данные запроса на ввод значения */

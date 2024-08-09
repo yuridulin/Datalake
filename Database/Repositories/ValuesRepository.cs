@@ -311,7 +311,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		foreach (var request in requests)
 		{
-			if (request.Tags.Length == 0 && request.TagNames.Length == 0)
+			if (request.Tags?.Length == 0 && request.TagNames?.Length == 0)
 				continue;
 
 			var response = new ValuesResponse
@@ -443,7 +443,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			}
 
 			// дописываем информацию о тех тегах, которые не были найдены
-			var notFoundTags = request.Tags.Except(info.Values.Select(v => v.Guid));
+			var notFoundTags = request.Tags != null ? request.Tags.Except(info.Values.Select(v => v.Guid)) : [];
 			foreach (var guid in notFoundTags)
 			{
 				response.Tags.Add(new ValuesTagResponse
@@ -470,10 +470,11 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		return responses;
 	}
 
-	async Task<Dictionary<int, ValueTagInfo>> ReadTagsInfoAsync(Guid[] identifiers, string[] names)
+	async Task<Dictionary<int, ValueTagInfo>> ReadTagsInfoAsync(Guid[]? identifiers, string[]? names)
 	{
 		var info = await db.Tags
-			.Where(x => identifiers.Contains(x.GlobalGuid) || names.Contains(x.Name))
+			.Where(x => (identifiers != null && identifiers.Contains(x.GlobalGuid))
+				|| (names != null && names.Contains(x.Name)))
 			.ToDictionaryAsync(x => x.Id, x => new ValueTagInfo
 			{
 				Guid = x.GlobalGuid,

@@ -1,11 +1,8 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Datalake.ApiClasses.Enums;
+﻿namespace Datalake.ApiClasses.Enums;
 
 /// <summary>
 /// Характеристика значения
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TagUsing
 {
 	/// <summary>
