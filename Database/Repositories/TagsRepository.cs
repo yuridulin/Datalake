@@ -7,7 +7,6 @@ using Datalake.Database.Models;
 using Datalake.Database.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
-using System;
 
 namespace Datalake.Database.Repositories;
 
@@ -61,10 +60,10 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		{
 			createRequest.Name = ValueChecker.RemoveWhitespaces(createRequest.Name, "_");
 
-			#pragma warning disable CA1862
+#pragma warning disable CA1862
 			if (await db.Tags.AnyAsync(x => x.Name.ToLower() == createRequest.Name.ToLower()))
 				throw new ForbiddenException(message: "уже существует тег с таким именем");
-			#pragma warning restore CA1862
+#pragma warning restore CA1862
 		}
 
 		if (createRequest.SourceId.HasValue)

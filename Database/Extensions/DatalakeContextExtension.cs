@@ -3,9 +3,7 @@ using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Models;
-using Datalake.Database.Repositories;
 using LinqToDB;
-using System.Linq;
 
 namespace Datalake.Database.Extensions;
 

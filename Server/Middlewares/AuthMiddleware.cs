@@ -21,13 +21,13 @@ public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
 	{
 		bool needToAuth =
 			// только api
-			context.Request.Path.StartsWithSegments("/api") 
+			context.Request.Path.StartsWithSegments("/api")
 			// только REST
-			&& (context.Request.Method != "OPTIONS") 
+			&& (context.Request.Method != "OPTIONS")
 			// не логин-пасс
 			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/auth"))
 			// не energoId
-			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/energo-id")); 
+			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/energo-id"));
 
 		AuthSession? authSession = null;
 		if (needToAuth)

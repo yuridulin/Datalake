@@ -220,7 +220,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		var response = new ReceiveResponse
 		{
 			Timestamp = DateTime.Now,
-			Tags = historyResponse != null 
+			Tags = historyResponse != null
 				? historyResponse.Tags
 					.SelectMany(t => t.Values.Select(v => new ReceiveRecord
 					{

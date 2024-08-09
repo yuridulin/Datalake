@@ -128,7 +128,8 @@ public partial class BlocksRepository
 				.Where(x => x.Id == seekId)
 				.FirstOrDefault();
 
-			if (block == null) break;
+			if (block == null)
+				break;
 
 			parents.Add(new BlockSimpleInfo { Name = block.Name, Id = block.Id });
 			seekId = block.ParentId;

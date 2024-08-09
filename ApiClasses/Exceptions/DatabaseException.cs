@@ -31,7 +31,8 @@ public class DatabaseException(string? message, Exception? innerException) : Dat
 			DatabaseStandartError.UpdatedZero => CountUpdatedRowsIsZero,
 			DatabaseStandartError.DeletedZero => CountDeletedRowsIsZero,
 			_ => Unknown,
-		}) { }
+		})
+	{ }
 
 	static readonly Exception IdIsNull = new("Идентификатор новой записи равен NULL");
 

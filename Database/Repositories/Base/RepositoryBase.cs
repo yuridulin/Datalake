@@ -58,7 +58,7 @@ public abstract class RepositoryBase
 		AccessType minimalAccess,
 		Guid guid)
 	{
-		var sourceQuery = 
+		var sourceQuery =
 			from t in db.Tags.Where(x => x.GlobalGuid == guid)
 			from s in db.Sources.InnerJoin(x => x.Id == t.SourceId)
 			select s.Id;

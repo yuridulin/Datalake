@@ -205,7 +205,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
 	{
-		if (!records.Any()) return;
+		if (!records.Any())
+			return;
 
 		foreach (var g in records.GroupBy(x => x.Date.Date))
 		{
@@ -310,7 +311,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		foreach (var request in requests)
 		{
-			if (request.Tags.Length == 0 && request.TagNames.Length == 0) continue;
+			if (request.Tags.Length == 0 && request.TagNames.Length == 0)
+				continue;
 
 			var response = new ValuesResponse
 			{

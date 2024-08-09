@@ -34,7 +34,7 @@ public class SessionManagerService(ILoggerFactory loggerFactory)
 		foreach (var record in StaticAuthRecords)
 		{
 			_logger.LogWarning("Exists static user: {name} for {address} with token [{token}]",
-				record.User.FullName, string.IsNullOrEmpty(record.StaticHost) ? record.StaticHost : "everywhere" , record.User.Token);
+				record.User.FullName, string.IsNullOrEmpty(record.StaticHost) ? record.StaticHost : "everywhere", record.User.Token);
 		}
 
 		var session = Sessions.FirstOrDefault(x => x.User.Token == token)
