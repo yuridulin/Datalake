@@ -18,7 +18,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Database.Tests", "Tests\Dat
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A6CA8A29-0C6E-44D5-B61F-1949C3DCF6AA}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Client", "Client\Client.esproj", "{4043FA0A-765B-4DE6-A68A-FEDFA29064AA}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Client", "Client\datalake\Client.esproj", "{4043FA0A-765B-4DE6-A68A-FEDFA29064AA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiClasses", "ApiClasses\ApiClasses.csproj", "{0E7C89A8-5649-480E-95D9-57ACFD26A64D}"
 EndProject
