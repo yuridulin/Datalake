@@ -1,5 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom'
-import App from '../../App'
+import App from '../App'
 import BlockForm from '../pages/blocks/BlockForm'
 import BlockView from '../pages/blocks/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'

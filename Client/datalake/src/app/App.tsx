@@ -1,7 +1,7 @@
 import { Link, Outlet } from 'react-router-dom'
-import { isAuth } from './api/auth'
-import { AppMenu } from './app/components/AppMenu'
-import UserPanel from './app/components/UserPanel'
+import { isAuth } from '../api/auth'
+import { AppMenu } from './components/AppMenu'
+import UserPanel from './components/UserPanel'
 
 export default function App() {
 	return (
