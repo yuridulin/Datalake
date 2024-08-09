@@ -19,10 +19,15 @@ public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
 	/// <param name="next">Следующий обработчик</param>
 	public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 	{
-		bool needToAuth = context.Request.Path.StartsWithSegments("/api") // только api
-			&& (context.Request.Method != "OPTIONS") // только REST
-			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/auth")) // не логин-пасс
-			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/energo-id")); // не energoId
+		bool needToAuth =
+			// только api
+			context.Request.Path.StartsWithSegments("/api") 
+			// только REST
+			&& (context.Request.Method != "OPTIONS") 
+			// не логин-пасс
+			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/auth"))
+			// не energoId
+			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/energo-id")); 
 
 		AuthSession? authSession = null;
 		if (needToAuth)
