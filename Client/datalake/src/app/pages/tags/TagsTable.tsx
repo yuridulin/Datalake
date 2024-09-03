@@ -153,6 +153,7 @@ export default function TagsTable({
 					render={(_, record: TagInfo) => (
 						<TagValueEl
 							value={viewingTagsValues[record.guid ?? 0]}
+							type={record.type}
 							allowEdit={
 								record.sourceType === SourceType.Custom &&
 								record.sourceId === CustomSource.Manual

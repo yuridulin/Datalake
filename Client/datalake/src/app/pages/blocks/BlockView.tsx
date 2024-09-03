@@ -6,6 +6,7 @@ import api from '../../../api/swagger-api'
 import {
 	AggregationFunc,
 	BlockInfo,
+	TagType,
 	ValuesRequest,
 } from '../../../api/swagger/data-contracts'
 import { useInterval } from '../../../hooks/useInterval'
@@ -87,7 +88,10 @@ export default function BlockView() {
 					<div key={i} className='table-row'>
 						<span>{tag.name}</span>
 						<span>
-							<TagValueEl value={values[tag.id]} />
+							<TagValueEl
+								value={values[tag.id]}
+								type={TagType.String}
+							/>
 						</span>
 						<span>
 							<BlockTagRelationEl relation={tag.tagType} />
