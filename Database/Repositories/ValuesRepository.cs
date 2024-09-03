@@ -123,7 +123,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			Tag tag = await db.Tags
 				.Where(x => x.GlobalGuid == writeRequest.Guid)
 				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"Тег #{writeRequest.Guid} не найден");
+				?? throw new NotFoundException($"тег [{writeRequest.Guid}]");
 
 			var record = tag.ToHistory(writeRequest.Value, writeRequest.Quality);
 			record.Date = writeRequest.Date ?? DateTime.Now;
