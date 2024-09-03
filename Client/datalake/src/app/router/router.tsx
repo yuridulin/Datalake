@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import App from '../App'
 import BlockForm from '../pages/blocks/BlockForm'
 import BlockView from '../pages/blocks/BlockView'
@@ -122,7 +122,7 @@ const router = createBrowserRouter([
 				],
 			},
 		],
-		errorElement: <div>Этот раздел ещё не реализован</div>,
+		errorElement: <Navigate to='/' />,
 	},
 	{
 		path: '/offline',

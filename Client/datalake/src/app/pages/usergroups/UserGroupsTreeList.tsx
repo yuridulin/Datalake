@@ -22,8 +22,10 @@ const columns: ColumnsType<UserGroupRow> = [
 		key: 'name',
 		render(value, record, index) {
 			return (
-				<NavLink to={routeLinks.toUserGroup(record.guid)}>
-					<Button size='small'>{record.name}</Button>
+				<NavLink key={index} to={routeLinks.toUserGroup(record.guid)}>
+					<Button size='small' title={value}>
+						{record.name}
+					</Button>
 				</NavLink>
 			)
 		},
@@ -39,13 +41,13 @@ function userGroupToRow(
 	group: UserGroupInfo,
 	flat: UserGroupInfo[],
 ): UserGroupRow {
-	let row = {
+	const row = {
 		name: group.name,
 		guid: group.guid,
 		description: group.description,
 	} as UserGroupRow
 
-	let childs = flat.filter((x) => x.parentGroupGuid === group.guid)
+	const childs = flat.filter((x) => x.parentGroupGuid === group.guid)
 	if (childs.length > 0) {
 		row.children = childs.map((x) => userGroupToRow(x, flat))
 	}

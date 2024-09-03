@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 
-export const useInterval = (callback: never, delay: number) => {
+export const useInterval = (callback: never | (() => void), delay: number) => {
 	const savedCallback = useRef()
 
 	useEffect(() => {
-		savedCallback.current = callback
+		savedCallback.current = callback as never
 	}, [callback])
 
 	useEffect(() => {

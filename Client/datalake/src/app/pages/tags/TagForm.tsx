@@ -104,7 +104,7 @@ export default function TagForm() {
 	}, 1000)
 
 	useEffect(() => {
-		if (!!id) load()
+		if (id) load()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id])
 
@@ -506,7 +506,10 @@ export default function TagForm() {
 				</div>
 				<FormRow title='Значение'>
 					<Space>
-						<TagValueEl value={currentValue} />
+						<TagValueEl
+							value={currentValue}
+							type={model.tag.type}
+						/>
 					</Space>
 				</FormRow>
 			</div>

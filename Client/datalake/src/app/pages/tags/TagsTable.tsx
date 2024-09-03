@@ -2,9 +2,14 @@ import { Button, Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { CustomSource } from '../../../api/models/customSource'
 import getDictFromValuesResponseArray from '../../../api/models/getDictFromValuesResponseArray'
 import api from '../../../api/swagger-api'
-import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
+import {
+	SourceType,
+	TagInfo,
+	TagType,
+} from '../../../api/swagger/data-contracts'
 import { useInterval } from '../../../hooks/useInterval'
 import SourceEl from '../../components/SourceEl'
 import TagTypeEl from '../../components/TagTypeEl'
@@ -50,7 +55,7 @@ export default function TagsTable({
 	}, [viewingTags])
 
 	const prepareValues = useCallback(() => {
-		let values = viewingTags
+		const values = viewingTags
 			.map((x) => ({ [x.guid ?? 0]: '' }))
 			.reduce((next, current) => ({ ...next, ...current }), {})
 		setViewingTagsValues(values)
@@ -148,6 +153,12 @@ export default function TagsTable({
 					render={(_, record: TagInfo) => (
 						<TagValueEl
 							value={viewingTagsValues[record.guid ?? 0]}
+							type={record.type}
+							allowEdit={
+								record.sourceType === SourceType.Custom &&
+								record.sourceId === CustomSource.Manual
+							}
+							guid={record.guid}
 						/>
 					)}
 				/>

@@ -9,16 +9,25 @@ import Header from '../../components/Header'
 import router from '../../router/router'
 import SourceItems from './SourceItems'
 
+const AvailableSourceTypes = [
+	SourceType.Unknown,
+	SourceType.Inopc,
+	SourceType.Datalake,
+	SourceType.DatalakeCoreV1,
+]
+
 export default function SourceForm() {
 	const { id } = useParams()
 
 	const [source, setSource] = useState({} as SourceInfo)
 	const [name, setName] = useState('')
+	const [type, setType] = useState(SourceType.Unknown)
 
 	function load() {
 		api.sourcesRead(Number(id)).then((res) => {
 			setSource(res.data)
 			setName(res.data.name)
+			setType(res.data.type)
 		})
 	}
 
@@ -81,17 +90,22 @@ export default function SourceForm() {
 						setSource({ ...source, type: e.target.value })
 					}
 				>
-					{Object.values(SourceType)
-						.filter((x) => x !== SourceType.Custom)
-						.map((x) => (
-							<Radio.Button key={x} value={x}>
-								{getSourceTypeName(x)}
-							</Radio.Button>
-						))}
+					{AvailableSourceTypes.map((x) => (
+						<Radio.Button
+							key={x}
+							value={x}
+							style={{
+								fontWeight: x === type ? 'bold' : 'inherit',
+								textDecoration:
+									x === type ? 'underline' : 'inherit',
+							}}
+						>
+							{getSourceTypeName(x)}
+						</Radio.Button>
+					))}
 				</Radio.Group>
 			</FormRow>
-			{(source.type === SourceType.Datalake ||
-				source.type === SourceType.Inopc) && (
+			{source.type !== SourceType.Unknown && (
 				<>
 					<FormRow title='Адрес'>
 						<Input
@@ -106,7 +120,11 @@ export default function SourceForm() {
 					</FormRow>
 					<br />
 					<br />
-					<SourceItems type={source.type} id={Number(id)} />
+					<SourceItems
+						type={type}
+						newType={source.type}
+						id={Number(id)}
+					/>
 				</>
 			)}
 		</>
