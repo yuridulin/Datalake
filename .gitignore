@@ -366,3 +366,9 @@ FodyWeavers.xsd
 
 !DatalakeDatabase/ApiModels/Logs
 /Server/wwwroot/startup.js
+Client/datalake/dist/favicon.ico
+Client/datalake/dist/index.css
+Client/datalake/dist/index.html
+Client/datalake/dist/MaterialIcons-Regular.ttf
+Client/datalake/dist/startup.js
+Client/datalake/dist/assets/index-RlzzbkOe.js
