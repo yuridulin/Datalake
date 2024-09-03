@@ -13,9 +13,11 @@ import TagTypeEl from '../../components/TagTypeEl'
 
 export default function SourceItems({
 	type,
+	newType,
 	id,
 }: {
 	type: SourceType
+	newType: SourceType
 	id: number
 }) {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
@@ -57,7 +59,8 @@ export default function SourceItems({
 		})
 	}
 
-	if (type !== SourceType.Datalake && type !== SourceType.Inopc) return <></>
+	if (type !== newType)
+		return <>Тип источника изменен. Сохраните, чтобы продолжить</>
 
 	return err ? (
 		<div>
@@ -88,7 +91,7 @@ export default function SourceItems({
 								tagType={x.itemInfo?.type || TagType.String}
 							/>
 						</span>
-						{!!x.tagInfo ? (
+						{x.tagInfo ? (
 							<span>
 								<NavLink to={'/tags/' + x.tagInfo.guid}>
 									<Button>{x.tagInfo.name}</Button>
