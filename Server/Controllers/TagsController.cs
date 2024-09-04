@@ -5,7 +5,6 @@ using Datalake.Server.Controllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Linq;
 
 namespace Datalake.Server.Controllers;
 
@@ -69,15 +68,15 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 		{
 			query = query.Where(x => sourceId.Value == x.SourceId);
 		}
-		if (id?.Length == 0)
+		if (id?.Length > 0)
 		{
 			query = query.Where(x => id.Contains(x.Id));
 		}
-		if (names?.Length == 0)
+		if (names?.Length > 0)
 		{
 			query = query.Where(x => names.Contains(x.Name));
 		}
-		if (guids?.Length == 0)
+		if (guids?.Length > 0)
 		{
 			query = query.Where(x => guids.Contains(x.Guid));
 		}
