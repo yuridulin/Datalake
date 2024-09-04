@@ -25,6 +25,11 @@ public class ValuesRequest
 	public string[]? TagNames { get; set; } = [];
 
 	/// <summary>
+	/// Список локальных идентификаторов тегов
+	/// </summary>
+	public int[]? TagId { get; set; }
+
+	/// <summary>
 	/// Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
 	/// </summary>
 	public DateTime? Old { get; set; }

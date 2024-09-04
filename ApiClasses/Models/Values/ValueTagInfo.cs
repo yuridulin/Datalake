@@ -9,6 +9,12 @@ namespace Datalake.ApiClasses.Models.Values;
 public class ValueTagInfo
 {
 	/// <summary>
+	/// Идентификатор тега в локальной базе
+	/// </summary>
+	[Required]
+	public required int Id { get; set; }
+
+	/// <summary>
 	/// Глобальный идентификатор тега
 	/// </summary>
 	[Required]

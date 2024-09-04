@@ -12,6 +12,12 @@ public class ValuesTagResponse
 	/// Идентификатор тега в локальной базе
 	/// </summary>
 	[Required]
+	public required int Id { get; set; }
+
+	/// <summary>
+	/// Глобальный идентификатор тега
+	/// </summary>
+	[Required]
 	public required Guid Guid { get; set; }
 
 	/// <summary>
