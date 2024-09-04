@@ -21,6 +21,32 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	/// </summary>
 	public async Task EnsureDataCreatedAsync()
 	{
+		// заполнение списка партицированных таблиц по реальной базе
+		var schemaProvider = DataProvider.GetSchemaProvider();
+		var schema = schemaProvider.GetSchema(this);
+
+		var storedHistoryTables = await TagHistoryChunks.Select(x => x.Table).ToArrayAsync();
+		var notStoredHistoryTables = schema.Tables
+			.Where(x => x.TableName != null)
+			.Where(x => !storedHistoryTables.Contains(x.TableName))
+			.Where(x => x.TableName!.StartsWith(ValuesRepository.NamePrefix))
+			.Select(x => new TagHistoryChunk
+			{
+				Table = x.TableName!,
+				Date = DateOnly.TryParseExact(
+					x.TableName!.Replace(ValuesRepository.NamePrefix, ""),
+					ValuesRepository.DateMask,
+					out var date) ? date : DateOnly.MinValue,
+			})
+			.Where(x => x.Date != DateOnly.MinValue)
+			.ToArray();
+
+		if (notStoredHistoryTables.Length > 0)
+		{
+			await this.BulkCopyAsync(notStoredHistoryTables);
+		}
+
+		// запись необходимых источников в список
 		var customSources = Enum.GetValues<CustomSource>()
 			.Select(x => new Source
 			{
@@ -47,6 +73,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			}
 		}
 
+		// создание таблицы настроек
 		if (!await Settings.AnyAsync())
 		{
 			var setting = new Settings();
@@ -60,6 +87,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			await this.SetLastUpdateToNowAsync();
 		}
 
+		// создание пользователя по умолчанию
 		if (!Users.Any())
 		{
 			await new UsersRepository(this).CreateAsync(Defaults.InitialAdmin);

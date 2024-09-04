@@ -118,6 +118,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToSimpleWrite = [];
 
+		using var transaction = await db.BeginTransactionAsync();
+
 		foreach (var writeRequest in requests)
 		{
 			Tag tag;
@@ -182,6 +184,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		}
 
 		await WriteHistoryValuesAsync(recordsToSimpleWrite);
+
+		await transaction.CommitAsync();
 
 		return responses;
 	}
