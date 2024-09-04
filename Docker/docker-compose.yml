@@ -9,6 +9,6 @@ services:
       dockerfile: ./Server/Dockerfile
     environment:
       DATALAKE_HOST: ${DATALAKE_HOST}
-      DATALAKE_DB: sinus_test
+      DATALAKE_DB: datalake
     ports:
       - 8000:8080
