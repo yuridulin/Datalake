@@ -366,3 +366,4 @@ FodyWeavers.xsd
 
 !DatalakeDatabase/ApiModels/Logs
 dist/
+/Server/wwwroot/startup.js
