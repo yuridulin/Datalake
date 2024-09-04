@@ -120,10 +120,32 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		foreach (var writeRequest in requests)
 		{
-			Tag tag = await db.Tags
-				.Where(x => x.GlobalGuid == writeRequest.Guid)
-				.FirstOrDefaultAsync()
-				?? throw new NotFoundException($"тег [{writeRequest.Guid}]");
+			Tag tag;
+			if (writeRequest.Guid != null)
+			{
+				tag = await db.Tags
+					.Where(x => x.GlobalGuid == writeRequest.Guid)
+					.FirstOrDefaultAsync()
+					?? throw new NotFoundException($"тег [{writeRequest.Guid}]");
+			}
+			else if (writeRequest.Name != null)
+			{
+				tag = await db.Tags
+					.Where(x => x.Name == writeRequest.Name)
+					.FirstOrDefaultAsync()
+					?? throw new NotFoundException($"тег [{writeRequest.Name}]");
+			}
+			else if (writeRequest.Id != null)
+			{
+				tag = await db.Tags
+					.Where(x => x.Id == writeRequest.Id)
+					.FirstOrDefaultAsync()
+					?? throw new NotFoundException($"тег [{writeRequest.Id}]");
+			}
+			else
+			{
+				continue;
+			}
 
 			var record = tag.ToHistory(writeRequest.Value, writeRequest.Quality);
 			record.Date = writeRequest.Date ?? DateTime.Now;
@@ -142,6 +164,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 			responses.Add(new ValuesTagResponse
 			{
+				Id = tag.Id,
 				Guid = tag.GlobalGuid,
 				Name = tag.Name,
 				Type = tag.Type,
@@ -311,7 +334,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		foreach (var request in requests)
 		{
-			if (request.Tags?.Length == 0 && request.TagNames?.Length == 0)
+			if (request.Tags?.Length == 0 && request.TagNames?.Length == 0 && request.TagId?.Length == 0)
 				continue;
 
 			var response = new ValuesResponse
@@ -319,7 +342,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				RequestKey = request.RequestKey,
 				Tags = []
 			};
-			var info = await ReadTagsInfoAsync(request.Tags, request.TagNames);
+			var info = await ReadTagsInfoAsync(request.Tags, request.TagNames, request.TagId);
 
 			DateTime exact = request.Exact ?? DateTime.Now;
 			DateTime old, young;
@@ -356,6 +379,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				{
 					response.Tags.Add(new ValuesTagResponse
 					{
+						Id = tagInfo.Id,
 						Guid = tagInfo.Guid,
 						Name = tagInfo.TagName,
 						Type = tagInfo.TagType,
@@ -405,6 +429,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 						response.Tags.Add(new ValuesTagResponse
 						{
+							Id = tagInfo.Id,
 							Guid = tagInfo.Guid,
 							Name = tagInfo.TagName,
 							Type = tagInfo.TagType,
@@ -424,6 +449,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					{
 						response.Tags.Add(new ValuesTagResponse
 						{
+							Id = tagInfo.Id,
 							Guid = tagInfo.Guid,
 							Name = tagInfo.TagName,
 							Type = tagInfo.TagType,
@@ -448,6 +474,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			{
 				response.Tags.Add(new ValuesTagResponse
 				{
+					Id = info.Values.FirstOrDefault(v => v.Guid == guid)?.Id ?? -1,
 					Guid = guid,
 					Name = info.Values.FirstOrDefault(v => v.Guid == guid)?.TagName ?? string.Empty,
 					Type = TagType.String,
@@ -470,13 +497,16 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		return responses;
 	}
 
-	async Task<Dictionary<int, ValueTagInfo>> ReadTagsInfoAsync(Guid[]? identifiers, string[]? names)
+	async Task<Dictionary<int, ValueTagInfo>> ReadTagsInfoAsync(Guid[]? identifiers, string[]? names, int[]? id)
 	{
 		var info = await db.Tags
 			.Where(x => (identifiers != null && identifiers.Contains(x.GlobalGuid))
-				|| (names != null && names.Contains(x.Name)))
+				|| (names != null && names.Contains(x.Name))
+				|| (id != null && id.Contains(x.Id))
+			)
 			.ToDictionaryAsync(x => x.Id, x => new ValueTagInfo
 			{
+				Id = x.Id,
 				Guid = x.GlobalGuid,
 				TagName = x.Name,
 				TagType = x.Type,

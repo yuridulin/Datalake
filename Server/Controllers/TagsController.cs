@@ -51,16 +51,34 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	/// Получение списка тегов, включая информацию о источниках и настройках получения данных
 	/// </summary>
 	/// <param name="sourceId">Идентификатор источника. Если указан, будут выбраны теги только этого источника</param>
+	/// <param name="id">Список локальных идентификаторов тегов</param>
+	/// <param name="names">Список текущих наименований тегов</param>
+	/// <param name="guids">Список глобальных идентификаторов тегов</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet]
 	public async Task<ActionResult<TagInfo[]>> ReadAsync(
-		[FromQuery] int? sourceId)
+		[FromQuery] int? sourceId,
+		[FromQuery] int[]? id,
+		[FromQuery] string[]? names,
+		[FromQuery] Guid[]? guids)
 	{
 		var query = tagsRepository.GetInfoWithSources();
 
 		if (sourceId.HasValue)
 		{
 			query = query.Where(x => sourceId.Value == x.SourceId);
+		}
+		if (id?.Length > 0)
+		{
+			query = query.Where(x => id.Contains(x.Id));
+		}
+		if (names?.Length > 0)
+		{
+			query = query.Where(x => names.Contains(x.Name));
+		}
+		if (guids?.Length > 0)
+		{
+			query = query.Where(x => guids.Contains(x.Guid));
 		}
 
 		var tags = await query.ToArrayAsync();
