@@ -26,30 +26,34 @@ public static class TagExtension
 			Using = TagUsing.Basic,
 		};
 
-		string? text = value?.ToString();
-		float? number = string.IsNullOrEmpty(text) ? null : (float.TryParse(value?.ToString(), out float d) ? d : null);
 
 		if (tag.Type == TagType.String)
 		{
-			history.Text = text;
+			history.Text = value?.ToString();
 		}
 
-		else if (tag.Type == TagType.Boolean)
+		else
 		{
-			history.Text = text == "True" ? "true" : "false";
-			history.Number = number.HasValue ? (number.Value == 1 ? 1 : 0) : 0;
-		}
+			float? number = float.TryParse(value?.ToString() ?? "x", out float d) ? d : null;
 
-		else if (tag.Type == TagType.Number)
-		{
-			// вычисление значения на основе шкалирования
-			if (tag.Type == TagType.Number && number.HasValue && tag.IsScaling)
+			if (tag.Type == TagType.Boolean)
 			{
-				history.Number = number.Value * ((tag.MaxEu - tag.MinEu) / (tag.MaxRaw - tag.MinRaw));
+				history.Number = number.HasValue ? (number.Value == 1 ? 1 : 0) : 0;
+
+				history.Text = history.Number != 0 ? "true" : "false";
 			}
-			else
+
+			else if (tag.Type == TagType.Number)
 			{
-				history.Number = number;
+				// вычисление значения на основе шкалирования
+				if (tag.Type == TagType.Number && number.HasValue && tag.IsScaling)
+				{
+					history.Number = number.Value * ((tag.MaxEu - tag.MinEu) / (tag.MaxRaw - tag.MinRaw));
+				}
+				else
+				{
+					history.Number = number;
+				}
 			}
 		}
 
