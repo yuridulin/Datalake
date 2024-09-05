@@ -10,5 +10,7 @@ services:
     environment:
       DATALAKE_HOST: ${DATALAKE_HOST}
       DATALAKE_DB: datalake
+      DATALAKE_DB_USER: postgres
+      DATALAKE_DB_PASS: postgres
     ports:
       - 8000:8080
