@@ -87,8 +87,8 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			await this.SetLastUpdateToNowAsync();
 		}
 
-		// создание пользователя по умолчанию
-		if (!Users.Any())
+		// создание администратора по умолчанию, если его учетки нет
+		if (!Users.Any(x => x.Login == "admin"))
 		{
 			await new UsersRepository(this).CreateAsync(Defaults.InitialAdmin);
 		}
