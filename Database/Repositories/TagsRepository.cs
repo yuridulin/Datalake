@@ -173,7 +173,8 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		var tag = db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
 			?? throw new NotFoundException($"тег {guid}");
 
-		if (await db.Tags.AnyAsync(x => x.GlobalGuid != guid && x.Name == updateRequest.Name))
+		bool hasAnother = await db.Tags.Where(x => x.GlobalGuid != guid && x.Name == updateRequest.Name).CountAsync() > 0;
+		if (hasAnother)
 			throw new AlreadyExistException($"тег с именем {updateRequest.Name}");
 
 		if (updateRequest.SourceId > 0)
