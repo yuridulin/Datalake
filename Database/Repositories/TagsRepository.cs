@@ -170,11 +170,10 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 
 		updateRequest.Name = ValueChecker.RemoveWhitespaces(updateRequest.Name, "_");
 
-		var tag = db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
+		var tag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
 			?? throw new NotFoundException($"тег {guid}");
 
-		bool hasAnother = await db.Tags.Where(x => x.GlobalGuid != guid && x.Name == updateRequest.Name).CountAsync() > 0;
-		if (hasAnother)
+		if (await db.Tags.AnyAsync(x => x.GlobalGuid != guid && x.Name == updateRequest.Name))
 			throw new AlreadyExistException($"тег с именем {updateRequest.Name}");
 
 		if (updateRequest.SourceId > 0)
