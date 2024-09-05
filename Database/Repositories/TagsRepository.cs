@@ -166,6 +166,8 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 
 	internal async Task UpdateAsync(Guid guid, TagUpdateRequest updateRequest)
 	{
+		var transaction = await db.BeginTransactionAsync();
+
 		updateRequest.Name = ValueChecker.RemoveWhitespaces(updateRequest.Name, "_");
 
 		var tag = db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
@@ -187,8 +189,6 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		{
 			updateRequest.SourceItem = null;
 		}
-
-		var transaction = await db.BeginTransactionAsync();
 
 		int count = await db.Tags
 			.Where(x => x.GlobalGuid == guid)

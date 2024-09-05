@@ -334,6 +334,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	public async Task<List<ValuesResponse>> GetValuesAsync(ValuesRequest[] requests)
 	{
+		using var transaction = await db.BeginTransactionAsync();
+
 		List<ValuesResponse> responses = [];
 
 		foreach (var request in requests)
@@ -497,6 +499,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 			responses.Add(response);
 		}
+
+		await transaction.CommitAsync();
 
 		return responses;
 	}
