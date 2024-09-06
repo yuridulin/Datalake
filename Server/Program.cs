@@ -15,10 +15,7 @@ using Serilog;
 using System.Reflection;
 using Server.BackgroundServices.SettingsHandler;
 using Datalake.Database.Extensions;
-
-#if DEBUG
 using LinqToDB.AspNet.Logging;
-#endif
 
 [assembly: AssemblyVersion("2.0.*")]
 
@@ -114,18 +111,13 @@ namespace Datalake.Server
 			{
 				options
 					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
-#if DEBUG
-					.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddDebug()))
-#endif
-					;
+					.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddDebug()));
 			});
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
 					.UsePostgreSQL(connectionString ?? throw new Exception("Connection string not provided"))
-#if DEBUG
 					.UseDefaultLogging(provider)
-#endif
 			);
 
 			AppContext.SetSwitch("Npgsql.EnableDiagnostics", true);
