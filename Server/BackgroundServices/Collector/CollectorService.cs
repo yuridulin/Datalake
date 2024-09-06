@@ -14,6 +14,8 @@ internal class CollectorService(
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<CollectorService> logger) : BackgroundService
 {
+	private static readonly SemaphoreSlim _semaphore = new(1, 1);
+
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		while (!stoppingToken.IsCancellationRequested)
@@ -63,24 +65,33 @@ internal class CollectorService(
 		}
 	}
 
-	private void X_CollectValuesAsync(ICollector collector, IEnumerable<CollectValue> values)
+	private async void X_CollectValuesAsync(ICollector collector, IEnumerable<CollectValue> values)
 	{
-		using var scope = serviceScopeFactory.CreateScope();
-		using var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
+		await _semaphore.WaitAsync();
 
-		var writeValues = values
-			.Select(x => new ValueWriteRequest
-			{
-				Guid = x.Guid,
-				Date = x.DateTime,
-				Value = x.Value,
-				Quality = x.Quality,
-			})
-			.ToArray();
+		try
+		{
+			using var scope = serviceScopeFactory.CreateScope();
+			using var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
 
-		valuesRepository.WriteValuesAsync(writeValues).Wait();
-		logger.LogDebug("Collect from {name} of {type} type: {count} values",
-			collector.Name, collector.Type, writeValues.Length);
+			var writeValues = values
+				.Select(x => new ValueWriteRequest
+				{
+					Guid = x.Guid,
+					Date = x.DateTime,
+					Value = x.Value,
+					Quality = x.Quality,
+				})
+				.ToArray();
+
+			await valuesRepository.WriteValuesAsync(writeValues);
+			logger.LogDebug("Collect from {name} of {type} type: {count} values",
+				collector.Name, collector.Type, writeValues.Length);
+		}
+		finally
+		{
+			_semaphore.Release();
+		}
 	}
 
 	DateTime LastUpdate { get; set; } = DateTime.MinValue;
