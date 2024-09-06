@@ -127,6 +127,8 @@ namespace Datalake.Server
 					.UseDefaultLogging(provider)
 #endif
 			);
+
+			AppContext.SetSwitch("Npgsql.EnableDiagnostics", true);
 		}
 
 		static void ConfigureServices(WebApplicationBuilder builder)

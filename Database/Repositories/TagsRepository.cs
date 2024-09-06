@@ -58,7 +58,7 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		bool needToAddIdInName = string.IsNullOrEmpty(createRequest.Name);
 		if (!string.IsNullOrEmpty(createRequest.Name))
 		{
-			createRequest.Name = ValueChecker.RemoveWhitespaces(createRequest.Name, "_");
+			createRequest.Name = createRequest.Name.RemoveWhitespaces("_");
 
 #pragma warning disable CA1862
 			if (await db.Tags.AnyAsync(x => x.Name.ToLower() == createRequest.Name.ToLower()))
@@ -73,7 +73,7 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 
 			if (!string.IsNullOrEmpty(createRequest.SourceItem))
 			{
-				createRequest.SourceItem = ValueChecker.RemoveWhitespaces(createRequest.SourceItem);
+				createRequest.SourceItem = createRequest.SourceItem.RemoveWhitespaces();
 			}
 
 			var source = await db.Sources

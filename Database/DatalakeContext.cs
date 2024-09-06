@@ -6,6 +6,7 @@ using Datalake.Database.Repositories;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
+using System.Linq;
 
 namespace Datalake.Database;
 
@@ -25,10 +26,8 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		var schemaProvider = DataProvider.GetSchemaProvider();
 		var schema = schemaProvider.GetSchema(this);
 
-		var storedHistoryTables = await TagHistoryChunks.Select(x => x.Table).ToArrayAsync();
-		var notStoredHistoryTables = schema.Tables
+		var realHistoryTables = schema.Tables
 			.Where(x => x.TableName != null)
-			.Where(x => !storedHistoryTables.Contains(x.TableName))
 			.Where(x => x.TableName!.StartsWith(ValuesRepository.NamePrefix))
 			.Select(x => new TagHistoryChunk
 			{
@@ -41,9 +40,10 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			.Where(x => x.Date != DateOnly.MinValue)
 			.ToArray();
 
-		if (notStoredHistoryTables.Length > 0)
+		if (realHistoryTables.Length > 0)
 		{
-			await this.BulkCopyAsync(notStoredHistoryTables);
+			await TagHistoryChunks.DeleteAsync();
+			await TagHistoryChunks.BulkCopyAsync(realHistoryTables);
 		}
 
 		// запись необходимых источников в список
@@ -91,6 +91,47 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		if (!Users.Any(x => x.Login == "admin"))
 		{
 			await new UsersRepository(this).CreateAsync(Defaults.InitialAdmin);
+		}
+
+		// актуализация таблицы текущих значенийD
+		var tagsWithoutLiveValues = await (
+			from tag in Tags
+			from live in TagsLive.LeftJoin(x => x.TagId == tag.Id)
+			where live == null
+			select tag.Id
+		).ToArrayAsync();
+
+		if (tagsWithoutLiveValues.Length > 0)
+		{
+			// пробуем прочитать последние значения из последнего чанка
+			if (realHistoryTables.Length > 0)
+			{
+				var tags = await Tags.Select(x => x.Id).ToArrayAsync();
+				var lastHistoryChunk = realHistoryTables.OrderByDescending(x => x.Date).Select(x => x.Table).First();
+				var lastHistoryTable = this.GetTable<TagHistory>().TableName(lastHistoryChunk);
+
+				var lastHistoryValues = await lastHistoryTable
+					.Where(x => tagsWithoutLiveValues.Contains(x.TagId))
+					.GroupBy(x => x.TagId)
+					.Select(g => g.OrderByDescending(x => x.Date).First())
+					.ToArrayAsync();
+
+				await TagsLive.BulkCopyAsync(lastHistoryValues);
+
+				// после вставки значений урезаем список несуществующих текущих
+				tagsWithoutLiveValues = tagsWithoutLiveValues.Except(lastHistoryValues.Select(x => x.TagId)).ToArray();
+			}
+
+			// создаем заглушки для отсутствующих в текущих тегов
+			await TagsLive.BulkCopyAsync(tagsWithoutLiveValues.Select(x => new TagHistory
+			{
+				TagId = x,
+				Date = DateTime.Today,
+				Number = null,
+				Text = null,
+				Quality = TagQuality.Bad_NoValues,
+				Using = TagUsing.NotFound,
+			}));
 		}
 	}
 
