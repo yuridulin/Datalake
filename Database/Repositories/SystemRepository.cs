@@ -33,6 +33,8 @@ public partial class SystemRepository(DatalakeContext db) : RepositoryBase
 		return new SettingsInfo
 		{
 			EnergoIdHost = setting.KeycloakHost,
+			EnergoIdClient = setting.KeycloakClient,
+			EnergoIdApi = setting.EnergoIdApi,
 		};
 	}
 
@@ -53,6 +55,8 @@ public partial class SystemRepository(DatalakeContext db) : RepositoryBase
 		{
 			await db.Settings
 				.Set(x => x.KeycloakHost, newSettings.EnergoIdHost)
+				.Set(x => x.KeycloakClient, newSettings.EnergoIdClient)
+				.Set(x => x.EnergoIdApi, newSettings.EnergoIdApi)
 				.UpdateAsync();
 		}
 		catch (Exception ex)

@@ -1,6 +1,7 @@
 import Keycloak from 'keycloak-js'
 
 declare const KEYCLOAK_DB: boolean
+declare const KEYCLOAK_CLIENT: string | undefined
 
 let keycloakHost = false
 try {
@@ -13,7 +14,7 @@ try {
 const keycloak: Keycloak = new Keycloak({
 	url: window.location.protocol + '//' + keycloakHost + '/',
 	realm: 'energo',
-	clientId: 'datalake',
+	clientId: KEYCLOAK_CLIENT || 'datalake',
 })
 
 export { keycloak }

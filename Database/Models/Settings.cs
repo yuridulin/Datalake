@@ -19,5 +19,8 @@ public class Settings
 	public string KeycloakHost { get; set; } = string.Empty;
 
 	[Column, NotNull]
+	public string KeycloakClient { get; set; } = "datalake";
+
+	[Column, NotNull]
 	public string EnergoIdApi { get; set; } = string.Empty;
 }
