@@ -9,10 +9,13 @@ declare const LOCAL_API: boolean
 let isLocal = false
 try {
 	isLocal = LOCAL_API
-} catch (e) {}
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+} catch (e) {
+	/* empty */
+}
 
 const api = new Api({
-	baseURL: !!isLocal ? window.location.href : 'http://localhost:8000/',
+	baseURL: isLocal ? window.location.origin + '/' : 'http://localhost:8000/',
 	validateStatus(status) {
 		return status >= 200 && status < 300
 	},
