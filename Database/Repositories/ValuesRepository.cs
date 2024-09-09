@@ -116,32 +116,39 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 	public async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueWriteRequest[] requests)
 	{
 		List<ValuesTagResponse> responses = [];
+		List<TagHistory> recordsToWrite = [];
 		List<TagHistory> recordsToSimpleWrite = [];
 
 		using var transaction = await db.BeginTransactionAsync();
+
+		var tagsInfo = await db.Tags
+			.Where(x => requests.Select(r => r.Id).Contains(x.Id)
+				|| requests.Select(r => r.Guid).Contains(x.GlobalGuid)
+				|| requests.Select(r => r.Guid).Contains(x.GlobalGuid))
+			.ToArrayAsync();
 
 		foreach (var writeRequest in requests)
 		{
 			Tag tag;
 			if (writeRequest.Guid != null)
 			{
-				tag = await db.Tags
+				tag = tagsInfo
 					.Where(x => x.GlobalGuid == writeRequest.Guid)
-					.FirstOrDefaultAsync()
+					.FirstOrDefault()
 					?? throw new NotFoundException($"тег [{writeRequest.Guid}]");
 			}
 			else if (writeRequest.Name != null)
 			{
-				tag = await db.Tags
+				tag = tagsInfo
 					.Where(x => x.Name == writeRequest.Name)
-					.FirstOrDefaultAsync()
+					.FirstOrDefault()
 					?? throw new NotFoundException($"тег [{writeRequest.Name}]");
 			}
 			else if (writeRequest.Id != null)
 			{
-				tag = await db.Tags
+				tag = tagsInfo
 					.Where(x => x.Id == writeRequest.Id)
-					.FirstOrDefaultAsync()
+					.FirstOrDefault()
 					?? throw new NotFoundException($"тег [{writeRequest.Id}]");
 			}
 			else
@@ -153,7 +160,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			record.Date = writeRequest.Date ?? DateTime.Now;
 			record.Using = TagUsing.Basic;
 
-			await UpdateOrCreateLiveValueAsync(record);
+			recordsToWrite.Add(record);
 
 			if (tag.SourceId == (int)CustomSource.Manual)
 			{
@@ -183,6 +190,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			});
 		}
 
+		await WriteLiveValuesAsync(recordsToWrite);
 		await WriteHistoryValuesAsync(recordsToSimpleWrite);
 
 		await transaction.CommitAsync();
@@ -230,6 +238,35 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		}
 	}
 
+	async Task WriteLiveValuesAsync(IEnumerable<TagHistory> records)
+	{
+		// изврат из-за того, что в версиях Postgres <15 нет поддержки Merge API
+		var query =
+			from main in db.TagsLive
+			join temp in records on main.TagId equals temp.TagId
+			select new { main, temp };
+
+		var updated = await query
+			.Set(join => join.main.Text, join => join.temp.Text)
+			.Set(join => join.main.Number, join => join.temp.Number)
+			.Set(join => join.main.Date, join => join.temp.Date)
+			.Set(join => join.main.Quality, join => join.temp.Quality)
+			.Set(join => join.main.Using, join => join.temp.Using)
+			.UpdateAsync();
+
+		if (updated < records.Count())
+		{
+			var notFoundTags = records
+				.Where(x => !db.TagsLive.Any(tag => tag.TagId == x.TagId))
+				.ToList();
+
+			if (notFoundTags.Any())
+			{
+				await db.BulkCopyAsync(notFoundTags);
+			}
+		}
+	}
+
 	async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
 	{
 		if (!records.Any())
@@ -248,6 +285,15 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		await table.BulkCopyAsync([record]);
 	}
 
+	/// <summary>
+	/// Вставка значения с рекурсивным обновлением предшествующих using
+	/// </summary>
+	/// <param name="record"></param>
+	/// <remarks>
+	/// Не будет вызываться при записи из источников, так что не особо бьет по производительности.
+	/// <br />Тем не менее составлен неоптимально, так как на каждую запись будет выполняться проход по таблицам.
+	/// <br />Вариантом лучше видится отдельная таблица Initial значений
+	/// </remarks>
 	async Task WriteManualHistoryValueAsync(TagHistory record)
 	{
 		/*
