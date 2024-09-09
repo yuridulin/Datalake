@@ -3,6 +3,7 @@ using Datalake.Database;
 using Datalake.Database.Extensions;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector;
+using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Receiver;
@@ -14,7 +15,6 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using Serilog;
-using Server.BackgroundServices.SettingsHandler;
 using System.Reflection;
 
 [assembly: AssemblyVersion("2.0.*")]

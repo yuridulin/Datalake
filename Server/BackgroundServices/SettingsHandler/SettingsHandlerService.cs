@@ -1,10 +1,9 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Repositories;
-using Datalake.Server;
 using Datalake.Server.Services.SessionManager;
 using Datalake.Server.Services.SessionManager.Models;
 
-namespace Server.BackgroundServices.SettingsHandler;
+namespace Datalake.Server.BackgroundServices.SettingsHandler;
 
 /// <summary>
 /// Загрузчик настроек из БД

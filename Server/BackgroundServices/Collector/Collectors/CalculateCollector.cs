@@ -19,4 +19,9 @@ internal class CalculateCollector(
 		CollectValues?.Invoke(this, []);
 		return base.Start(stoppingToken);
 	}
+
+	public override Task Stop()
+	{
+		return base.Stop();
+	}
 }

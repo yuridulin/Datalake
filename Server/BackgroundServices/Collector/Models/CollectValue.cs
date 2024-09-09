@@ -1,5 +1,4 @@
 ﻿using Datalake.ApiClasses.Enums;
-using System.Collections;
 
 namespace Datalake.Server.BackgroundServices.Collector.Models;
 

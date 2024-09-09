@@ -39,7 +39,8 @@ internal class OldDatalakeCollector : CollectorBase
 
 	public override Task Start(CancellationToken stoppingToken)
 	{
-		if (_itemsToSend.Count == 0) return Task.CompletedTask;
+		if (_itemsToSend.Count == 0)
+			return Task.CompletedTask;
 
 		Task.Run(Work, stoppingToken);
 

@@ -1,6 +1,6 @@
 ﻿using Datalake.Database.Repositories;
 
-namespace Server.BackgroundServices.SettingsHandler
+namespace Datalake.Server.BackgroundServices.SettingsHandler
 {
 	/// <summary>
 	/// Интерфейс, при помощи которого можно выполнять обновление настроек из БД
