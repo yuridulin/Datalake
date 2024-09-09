@@ -14,14 +14,9 @@ internal class SystemCollector(
 {
 	public override event CollectEvent? CollectValues;
 
-	public override Task Start()
+	public override Task Start(CancellationToken stoppingToken)
 	{
 		CollectValues?.Invoke(this, []);
-		return base.Start();
-	}
-
-	public override Task Stop()
-	{
-		return base.Stop();
+		return base.Start(stoppingToken);
 	}
 }

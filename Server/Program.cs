@@ -1,5 +1,6 @@
 using Datalake.ApiClasses.Exceptions.Base;
 using Datalake.Database;
+using Datalake.Database.Extensions;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector;
 using Datalake.Server.Constants;
@@ -8,14 +9,13 @@ using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using LinqToDB.AspNet;
+using LinqToDB.AspNet.Logging;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using Serilog;
-using System.Reflection;
 using Server.BackgroundServices.SettingsHandler;
-using Datalake.Database.Extensions;
-using LinqToDB.AspNet.Logging;
+using System.Reflection;
 
 [assembly: AssemblyVersion("2.0.*")]
 
@@ -107,17 +107,31 @@ namespace Datalake.Server
 				}
 			}
 
+			var loggerFactory = LoggerFactory.Create(builder =>
+			{
+				builder
+#if DEBUG
+					.AddDebug()
+#else
+					.AddFilter("Microsoft", LogLevel.Warning)
+					.AddFilter("System", LogLevel.Warning)
+					.AddFilter("Npgsql", LogLevel.Warning)
+					.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)
+#endif
+					.AddConsole();
+			});
+
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
 				options
 					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
-					.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddDebug()));
+					.UseLoggerFactory(loggerFactory);
 			});
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
 					.UsePostgreSQL(connectionString ?? throw new Exception("Connection string not provided"))
-					.UseDefaultLogging(provider)
+					.UseLoggerFactory(loggerFactory)
 			);
 
 			AppContext.SetSwitch("Npgsql.EnableDiagnostics", true);

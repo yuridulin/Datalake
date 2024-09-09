@@ -17,7 +17,7 @@ public abstract class CollectorBase(Source source, ILogger logger) : ICollector
 	public SourceType Type { get; set; } = source.Type;
 
 	/// <inheritdoc />
-	public virtual Task Start()
+	public virtual Task Start(CancellationToken stoppingToken)
 	{
 		logger.LogDebug("Start collect");
 		return Task.CompletedTask;

@@ -14,15 +14,13 @@ internal class CollectorService(
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<CollectorService> logger) : BackgroundService
 {
-	private static readonly SemaphoreSlim _semaphore = new(1, 1);
-
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		using var scope = serviceScopeFactory.CreateScope();
+		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			using var scope = serviceScopeFactory.CreateScope();
-			using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-
 			var dbLastUpdate = await db.GetLastUpdateAsync();
 
 			if (dbLastUpdate > LastUpdate)
@@ -40,6 +38,7 @@ internal class CollectorService(
 											Type = g.Key.Type,
 											Tags = g.Select(x => x.tag).Where(x => x != null).ToArray(),
 										};
+
 				var sourcesWithTags = await query.ToListAsync(token: stoppingToken);
 
 				Collectors.ForEach(x =>
@@ -54,8 +53,9 @@ internal class CollectorService(
 				Collectors.ForEach(x =>
 				{
 					x.CollectValues += X_CollectValuesAsync;
-					x.Start();
+					x.Start(stoppingToken);
 				});
+
 				LastUpdate = dbLastUpdate;
 
 				logger.LogWarning("Rebuild sources completed");
@@ -67,12 +67,12 @@ internal class CollectorService(
 
 	private async void X_CollectValuesAsync(ICollector collector, IEnumerable<CollectValue> values)
 	{
-		await _semaphore.WaitAsync();
-
-		try
+		int count = values.Count();
+		if (count > 0)
 		{
 			using var scope = serviceScopeFactory.CreateScope();
-			using var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
+			using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+			using var repository = new ValuesRepository(db);
 
 			var writeValues = values
 				.Select(x => new ValueWriteRequest
@@ -84,13 +84,9 @@ internal class CollectorService(
 				})
 				.ToArray();
 
-			await valuesRepository.WriteValuesAsync(writeValues);
-			logger.LogDebug("Collect from {name} of {type} type: {count} values",
-				collector.Name, collector.Type, writeValues.Length);
-		}
-		finally
-		{
-			_semaphore.Release();
+			await repository.WriteValuesAsync(writeValues);
+
+			logger.LogDebug("Write tags to db: {count}", values.Count());
 		}
 	}
 

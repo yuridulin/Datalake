@@ -1,7 +1,6 @@
 ﻿using Datalake.Database.Models;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.Services.Receiver;
-using Timer = System.Timers.Timer;
 
 namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 
@@ -14,8 +13,8 @@ internal class OldDatalakeCollector : CollectorBase
 	{
 		_logger = logger;
 		_receiverService = receiverService;
-		_timer = new Timer();
 		_address = source.Address ?? throw new InvalidOperationException();
+		_tokenSource = new CancellationTokenSource();
 
 		_itemsToSend = source.Tags
 			.Where(x => !string.IsNullOrEmpty(x.SourceItem))
@@ -33,35 +32,23 @@ internal class OldDatalakeCollector : CollectorBase
 			.GroupBy(x => x.SourceItem)
 			.ToDictionary(g => g.Key!, g => g.Select(x => x.GlobalGuid).ToArray());
 
-		_timer.Elapsed += async (s, e) => await Timer_ElapsedAsync();
-		_timer.Interval = _itemsToSend
-			.Where(x => x.PeriodInSeconds > 0)
-			.Select(x => x.PeriodInSeconds)
-			.DefaultIfEmpty(1)
-			.Min() * 1000;
-
-		_logger.LogInformation("Collector for source {name} has {count} tags", source.Name, _itemsToSend.Count);
+		_logger.LogDebug("Create old Datalake collector {address}. Tags: {count}", _address, _itemsToSend.Count);
 	}
 
 	public override event CollectEvent? CollectValues;
 
-	public override Task Start()
+	public override Task Start(CancellationToken stoppingToken)
 	{
-		if (_itemsToSend.Count > 0)
-		{
-			_timer.Start();
-			Task.Run(Timer_ElapsedAsync);
-		}
+		if (_itemsToSend.Count == 0) return Task.CompletedTask;
 
-		return base.Start();
+		Task.Run(Work, stoppingToken);
+
+		return base.Start(stoppingToken);
 	}
 
 	public override Task Stop()
 	{
-		if (_itemsToSend.Count > 0)
-		{
-			_timer.Stop();
-		}
+		_tokenSource.Cancel();
 
 		return base.Stop();
 	}
@@ -69,60 +56,67 @@ internal class OldDatalakeCollector : CollectorBase
 
 	#region Реализация
 
-	private readonly ReceiverService _receiverService;
-	private readonly Timer _timer;
 	private readonly string _address;
 	private readonly List<Item> _itemsToSend;
+	private readonly ReceiverService _receiverService;
+	private readonly CancellationTokenSource _tokenSource;
 	private readonly Dictionary<string, Guid[]> _itemsTags;
 	private ILogger<OldDatalakeCollector> _logger;
 
-	private async Task Timer_ElapsedAsync()
+	private async Task Work()
 	{
-		_logger.LogInformation("Collect from {address}", _address);
-
-		var now = DateTime.Now;
-		List<Item> tags = [];
-		foreach (var item in _itemsToSend)
+		while (!_tokenSource.Token.IsCancellationRequested)
 		{
-			if (item.PeriodInSeconds == 0)
+			var now = DateTime.Now;
+			List<Item> tags = [];
+
+			foreach (var item in _itemsToSend)
 			{
-				tags.Add(item);
-			}
-			else
-			{
-				var diff = (now - item.LastAsk).TotalSeconds;
-				if (diff > item.PeriodInSeconds)
+				if (item.PeriodInSeconds == 0)
 				{
 					tags.Add(item);
 				}
-			}
-		}
-		if (tags.Count == 0)
-			return;
-
-		var items = tags.Select(x => x.TagName).ToArray();
-
-		var response = await _receiverService.AskOldDatalake(items, _address);
-		var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
-
-		CollectValues?.Invoke(this, response.Tags
-			.SelectMany(item => _itemsTags[item.Name]
-				.Select(guid => new Models.CollectValue
+				else
 				{
-					DateTime = response.Timestamp,
-					Name = item.Name,
-					Quality = item.Quality,
-					Guid = guid,
-					Value = item.Value,
-				})
-			));
+					var diff = (now - item.LastAsk).TotalSeconds;
+					if (diff > item.PeriodInSeconds)
+					{
+						tags.Add(item);
+					}
+				}
+			}
 
-		foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
-		{
-			tag.LastAsk = response.Timestamp;
+			if (tags.Count == 0)
+				return;
+
+			_logger.LogDebug("Collect from {address}", _address);
+
+			var items = tags.Select(x => x.TagName).ToArray();
+
+			var response = await _receiverService.AskOldDatalake(items, _address);
+			var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
+
+			CollectValues?.Invoke(this, response.Tags
+				.SelectMany(item => _itemsTags[item.Name]
+					.Select(guid => new Models.CollectValue
+					{
+						DateTime = response.Timestamp,
+						Name = item.Name,
+						Quality = item.Quality,
+						Guid = guid,
+						Value = item.Value,
+					})
+				));
+
+			foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
+			{
+				tag.LastAsk = response.Timestamp;
+			}
+
+			_logger.LogDebug("Collect from {address} completed, update {count} values", _address, response.Tags.Length);
+
+			await Task.Delay(1000);
 		}
-
-		_logger.LogInformation("Collect from {address} completed, update {count} values", _address, response.Tags.Length);
 	}
 
 	class Item

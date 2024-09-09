@@ -6,7 +6,6 @@ using Datalake.Database.Repositories;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
-using System.Linq;
 
 namespace Datalake.Database;
 
@@ -81,10 +80,6 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 
 			if (count == 0)
 				throw new Exception("Не удалось создать строку настроек");
-		}
-		else
-		{
-			await this.SetLastUpdateToNowAsync();
 		}
 
 		// создание администратора по умолчанию, если его учетки нет

@@ -17,17 +17,17 @@ internal class DatalakeCollector(
 {
 	public override event CollectEvent? CollectValues;
 
-	public override Task Start()
+	public override Task Start(CancellationToken stoppingToken)
 	{
 		CollectValues?.Invoke(this, []);
 		try
 		{
 			if (!string.IsNullOrEmpty(_address))
-				receiverService.AskDatalake([], _address).Wait();
+				receiverService.AskDatalake([], _address).Wait(stoppingToken);
 		}
 		catch { }
 
-		return base.Start();
+		return base.Start(stoppingToken);
 	}
 
 	public override Task Stop()
