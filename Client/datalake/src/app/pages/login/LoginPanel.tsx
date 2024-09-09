@@ -1,6 +1,6 @@
 import { Button, Form, Input, Space } from 'antd'
-import { useKeycloak } from 'keycloak-react-web'
 import { useNavigate } from 'react-router-dom'
+import { keycloak } from '../../../api/keycloak'
 import api from '../../../api/swagger-api'
 import { UserLoginPass } from '../../../api/swagger/data-contracts'
 import routes from '../../router/routes'
@@ -12,7 +12,6 @@ const style = {
 
 export default function LoginPanel() {
 	const navigate = useNavigate()
-	const { keycloak } = useKeycloak()
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const onFinish = (values: any) => {
@@ -64,10 +63,11 @@ export default function LoginPanel() {
 						</Button>
 						<Button
 							onClick={() =>
-								keycloak.login({
+								keycloak.init({
+									onLoad: 'login-required',
 									redirectUri:
 										window.location.origin +
-										routes.Auth.KeycloakAfterLogin,
+										routes.Auth.EnergoId,
 								})
 							}
 						>

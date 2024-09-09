@@ -9,12 +9,6 @@ export default function KeycloakAfterLogin() {
 
 	// после редиректа от keycloak
 	if (keycloak.authenticated) {
-		console.log('keycloak', keycloak.idTokenParsed)
-		console.log('request', {
-			energoIdGuid: keycloak.idTokenParsed?.sub,
-			login: keycloak.idTokenParsed?.email,
-			fullName: keycloak.idTokenParsed?.name,
-		})
 		api.usersAuthenticateEnergoIdUser({
 			energoIdGuid: keycloak.idTokenParsed?.sub ?? '',
 			login: keycloak.idTokenParsed?.email,
@@ -29,6 +23,10 @@ export default function KeycloakAfterLogin() {
 				console.log(e)
 				navigate(routes.Auth.LoginPage)
 			})
+	} else {
+		keycloak.login({
+			redirectUri: window.location.origin + routes.Auth.EnergoId,
+		})
 	}
 
 	return <i>завершаем...</i>

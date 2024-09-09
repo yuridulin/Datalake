@@ -1,14 +1,11 @@
 import { ConfigProvider, theme } from 'antd'
-import { KeycloakProvider } from 'keycloak-react-web'
 import { useEffect, useState } from 'react'
 import { RouterProvider } from 'react-router-dom'
-import { keycloak } from '../api/keycloak'
 import { UpdateContext } from '../context/updateContext'
 import router from './router/router'
 
 export default function Layout() {
 	const [lastUpdate, setUpdate] = useState<Date>(new Date())
-	const [checkedTags, setCheckedTags] = useState<string[]>([])
 	const { defaultAlgorithm, darkAlgorithm } = theme
 	const [isDarkMode, setIsDarkMode] = useState(false)
 
@@ -30,12 +27,8 @@ export default function Layout() {
 				algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,
 			}}
 		>
-			<UpdateContext.Provider
-				value={{ lastUpdate, setUpdate, checkedTags, setCheckedTags }}
-			>
-				<KeycloakProvider client={keycloak as never}>
-					<RouterProvider router={router} />
-				</KeycloakProvider>
+			<UpdateContext.Provider value={{ lastUpdate, setUpdate }}>
+				<RouterProvider router={router} />
 			</UpdateContext.Provider>
 		</ConfigProvider>
 	)

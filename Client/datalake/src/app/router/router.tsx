@@ -25,7 +25,7 @@ const router = createBrowserRouter([
 		element: <LoginPanel />,
 	},
 	{
-		path: routes.Auth.KeycloakAfterLogin,
+		path: routes.Auth.EnergoId,
 		element: <KeycloakAfterLogin />,
 	},
 	{
