@@ -224,10 +224,10 @@ export default function UserCreate() {
 							}))}
 							style={{ width: '100%' }}
 							onChange={(value) => {
-								let user = keycloakInfo.energoIdUsers.filter(
+								const user = keycloakInfo.energoIdUsers.filter(
 									(x) => x.energoIdGuid === value,
 								)[0]
-								if (!!user) {
+								if (user) {
 									setRequest({
 										...request,
 										energoIdGuid: value,

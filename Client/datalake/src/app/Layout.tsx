@@ -33,7 +33,7 @@ export default function Layout() {
 			<UpdateContext.Provider
 				value={{ lastUpdate, setUpdate, checkedTags, setCheckedTags }}
 			>
-				<KeycloakProvider client={keycloak as any}>
+				<KeycloakProvider client={keycloak as never}>
 					<RouterProvider router={router} />
 				</KeycloakProvider>
 			</UpdateContext.Provider>

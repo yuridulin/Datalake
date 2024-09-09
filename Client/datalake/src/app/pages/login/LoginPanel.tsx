@@ -14,6 +14,7 @@ export default function LoginPanel() {
 	const navigate = useNavigate()
 	const { keycloak } = useKeycloak()
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const onFinish = (values: any) => {
 		api.usersAuthenticate({
 			login: values.login,
@@ -24,6 +25,7 @@ export default function LoginPanel() {
 		})
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const onFinishFailed = (errorInfo: any) => {
 		console.log('Failed:', errorInfo)
 	}

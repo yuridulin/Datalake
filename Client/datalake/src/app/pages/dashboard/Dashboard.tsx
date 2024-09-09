@@ -12,7 +12,7 @@ export default function Dashboard() {
 
 	const update = useCallback(() => {
 		setLogs((prevLogs) => {
-			let lastId = prevLogs.length > 0 ? prevLogs[0].id : 0
+			const lastId = prevLogs.length > 0 ? prevLogs[0].id : 0
 			api.configGetLogs({ lastId })
 				.then((res) => {
 					let newLogs = [...res.data, ...prevLogs]

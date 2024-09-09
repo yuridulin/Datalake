@@ -19,7 +19,9 @@ import router from '../../router/router'
 export default function BlockView() {
 	const { id } = useParams()
 	const [block, setBlock] = useState({} as BlockInfo)
-	const [values, setValues] = useState({} as { [key: string]: any })
+	const [values, setValues] = useState(
+		{} as { [key: string]: string | number | boolean | null | undefined },
+	)
 
 	function load() {
 		api.blocksRead(Number(id)).then((res) => {
@@ -45,11 +47,13 @@ export default function BlockView() {
 	}, [id])
 
 	useEffect(() => {
-		!!id && (block?.tags?.length ?? 0) > 0 && getValues()
+		if (!id || (block?.tags?.length ?? 0) === 0) return
+		getValues()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [block])
 	useInterval(function () {
-		!!id && getValues()
+		if (!id) return
+		getValues()
 	}, 1000)
 
 	return (
