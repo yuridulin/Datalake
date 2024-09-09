@@ -30,10 +30,10 @@ public class SessionManagerService(ILoggerFactory loggerFactory)
 	/// <returns>Информация о сессии</returns>
 	public AuthSession? GetExistSession(string token, string address)
 	{
-		_logger.LogWarning("Search session from {address} with token [{token}]", address, token);
+		_logger.LogDebug("Search session from {address} with token [{token}]", address, token);
 		foreach (var record in StaticAuthRecords)
 		{
-			_logger.LogWarning("Exists static user: {name} for {address} with token [{token}]",
+			_logger.LogDebug("Exists static user: {name} for {address} with token [{token}]",
 				record.User.FullName, string.IsNullOrEmpty(record.StaticHost) ? record.StaticHost : "everywhere", record.User.Token);
 		}
 

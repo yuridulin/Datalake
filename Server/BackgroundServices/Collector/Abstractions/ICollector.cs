@@ -28,7 +28,7 @@ public interface ICollector
 	/// <summary>
 	/// Запуск сбора данных
 	/// </summary>
-	public Task Start();
+	public Task Start(CancellationToken stoppingToken);
 
 	/// <summary>
 	/// Прекращение сбора данных
