@@ -113,10 +113,10 @@ namespace Datalake.Server
 //#if DEBUG
 					.AddDebug()
 //#else
-					.AddFilter("Microsoft", LogLevel.Warning)
+					/*.AddFilter("Microsoft", LogLevel.Warning)
 					.AddFilter("System", LogLevel.Warning)
 					.AddFilter("Npgsql", LogLevel.Warning)
-					.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)
+					.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)*/
 //#endif
 					.AddConsole();
 			});
