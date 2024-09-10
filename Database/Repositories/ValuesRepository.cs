@@ -4,8 +4,10 @@ using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Values;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
+using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Data;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Database.Repositories;
 
@@ -13,6 +15,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 {
 	public static readonly string NamePrefix = "TagsHistory_";
 	public static readonly string DateMask = "yyyy_MM_dd";
+
+	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
 
 
 	#region Манипулирование таблицами
@@ -26,14 +30,24 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	async Task<ITable<TagHistory>> GetHistoryTableAsync(DateOnly seekDate)
 	{
+		ITable<TagHistory> table;
+
 		var chunk = await db.TagHistoryChunks
 			.Where(x => x.Date == seekDate)
 			.FirstOrDefaultAsync();
 
 		if (chunk == null)
 		{
+			using var transaction = await db.BeginTransactionAsync();
+
 			// создание новой таблицы в случае, если её не было
 			var newTable = await db.CreateTableAsync<TagHistory>(GetTableName(seekDate));
+
+			await db.InsertAsync(new TagHistoryChunk
+			{
+				Date = seekDate,
+				Table = GetTableName(seekDate)
+			});
 
 			// инициализация значений по последним из предыдущей таблицы
 			var previousChunk = await db.TagHistoryChunks
@@ -88,18 +102,16 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				await newTable.BulkCopyAsync(initialValues);
 			}
 
-			await db.InsertAsync(new TagHistoryChunk
-			{
-				Date = seekDate,
-				Table = GetTableName(seekDate)
-			});
+			await transaction.CommitAsync();
 
-			return newTable;
+			table = newTable;
 		}
 		else
 		{
-			return db.GetTable<TagHistory>().TableName(GetTableName(chunk.Date));
+			table = db.GetTable<TagHistory>().TableName(GetTableName(chunk.Date));
 		}
+
+		return table;
 	}
 
 	#endregion
@@ -118,8 +130,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToWrite = [];
 		List<TagHistory> recordsToSimpleWrite = [];
-
-		using var transaction = await db.BeginTransactionAsync();
 
 		var tagsInfo = await db.Tags
 			.Where(x => requests.Select(r => r.Id).Contains(x.Id)
@@ -193,8 +203,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		await WriteLiveValuesAsync(recordsToWrite);
 		await WriteHistoryValuesAsync(recordsToSimpleWrite);
 
-		await transaction.CommitAsync();
-
 		return responses;
 	}
 
@@ -241,29 +249,36 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 	async Task WriteLiveValuesAsync(IEnumerable<TagHistory> records)
 	{
 		// изврат из-за того, что в версиях Postgres <15 нет поддержки Merge API
-		var query =
-			from main in db.TagsLive
-			join temp in records on main.TagId equals temp.TagId
-			select new { main, temp };
-
-		var updated = await query
-			.Set(join => join.main.Text, join => join.temp.Text)
-			.Set(join => join.main.Number, join => join.temp.Number)
-			.Set(join => join.main.Date, join => join.temp.Date)
-			.Set(join => join.main.Quality, join => join.temp.Quality)
-			.Set(join => join.main.Using, join => join.temp.Using)
-			.UpdateAsync();
-
-		if (updated < records.Count())
+		try
 		{
-			var notFoundTags = records
-				.Where(x => !db.TagsLive.Any(tag => tag.TagId == x.TagId))
-				.ToList();
+			var query =
+				from main in db.TagsLive
+				join temp in records on main.TagId equals temp.TagId
+				select new { main, temp };
 
-			if (notFoundTags.Any())
+			var updated = await query
+				.Set(join => join.main.Text, join => join.temp.Text)
+				.Set(join => join.main.Number, join => join.temp.Number)
+				.Set(join => join.main.Date, join => join.temp.Date)
+				.Set(join => join.main.Quality, join => join.temp.Quality)
+				.Set(join => join.main.Using, join => join.temp.Using)
+				.UpdateAsync();
+
+			if (updated < records.Count())
 			{
-				await db.BulkCopyAsync(notFoundTags);
+				var notFoundTags = records
+					.Where(x => !db.TagsLive.Any(tag => tag.TagId == x.TagId))
+					.ToList();
+
+				if (notFoundTags.Count != 0)
+				{
+					await db.BulkCopyAsync(notFoundTags);
+				}
 			}
+		}
+		catch (Exception ex)
+		{
+			logger.LogError("Ошибка при записи значений:\n{message}\n{trace}", ex.Message, ex.StackTrace);
 		}
 	}
 
