@@ -1,7 +1,8 @@
 import { notification } from 'antd'
 import { AxiosError, AxiosResponse } from 'axios'
 import router from '../app/router/router'
-import { getToken, setToken, tokenHeader } from './auth'
+import routes from '../app/router/routes'
+import { getToken, setToken, tokenHeader } from './local-auth'
 import { Api } from './swagger/Api'
 
 declare const LOCAL_API: boolean
@@ -46,6 +47,7 @@ api.instance.interceptors.response.use(
 	},
 	(error: AxiosError) => {
 		if (error.response?.status === 403) {
+			console.log(error)
 			router.navigate('/login')
 			return Promise.resolve(error.response)
 		}
@@ -70,6 +72,8 @@ api.instance.interceptors.response.use(
 	},
 )
 
-api.usersIdentify().catch()
+if (window.location.pathname !== routes.Auth.EnergoId) {
+	api.usersIdentify().catch()
+}
 
 export default api

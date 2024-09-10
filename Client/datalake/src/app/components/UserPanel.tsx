@@ -2,7 +2,7 @@
 import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { freeToken, getName, isAuth } from '../../api/auth'
+import { freeToken, getName, isAuth } from '../../api/local-auth'
 import routes from '../router/routes'
 
 const style = {

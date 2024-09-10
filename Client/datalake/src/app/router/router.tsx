@@ -4,7 +4,7 @@ import BlockForm from '../pages/blocks/BlockForm'
 import BlockView from '../pages/blocks/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'
 import Dashboard from '../pages/dashboard/Dashboard'
-import KeycloakAfterLogin from '../pages/login/KeycloakAfterLogin'
+import EnergoId from '../pages/login/EnergoId'
 import LoginPanel from '../pages/login/LoginPanel'
 import Offline from '../pages/offline/Offline'
 import SourceForm from '../pages/sources/SourceForm'
@@ -26,7 +26,7 @@ const router = createBrowserRouter([
 	},
 	{
 		path: routes.Auth.EnergoId,
-		element: <KeycloakAfterLogin />,
+		element: <EnergoId />,
 	},
 	{
 		path: '/',

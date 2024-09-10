@@ -1,5 +1,4 @@
-﻿using Datalake.ApiClasses.Exceptions;
-using Datalake.Server.Constants;
+﻿using Datalake.Server.Constants;
 using Datalake.Server.Services.SessionManager;
 using Datalake.Server.Services.SessionManager.Models;
 using System.Text;

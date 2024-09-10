@@ -1,6 +1,7 @@
-import { Button, Form, Input, Space } from 'antd'
+import { Button, Form, Input, notification, Space } from 'antd'
+import { useAuth } from 'react-oidc-context'
 import { useNavigate } from 'react-router-dom'
-import { keycloak } from '../../../api/keycloak'
+import { setName } from '../../../api/local-auth'
 import api from '../../../api/swagger-api'
 import { UserLoginPass } from '../../../api/swagger/data-contracts'
 import routes from '../../router/routes'
@@ -12,16 +13,27 @@ const style = {
 
 export default function LoginPanel() {
 	const navigate = useNavigate()
+	const auth = useAuth()
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const onFinish = (values: any) => {
 		api.usersAuthenticate({
 			login: values.login,
 			password: values.password,
-		}).then((res) => {
-			console.log(res, res && res.status < 400)
-			if (res && res.status < 400) navigate('/')
 		})
+			.then((res) => {
+				if (res.status === 200) {
+					setName(res.data.fullName)
+					navigate(routes.Root)
+				}
+			})
+			.catch(() => {
+				notification.error({
+					placement: 'bottomLeft',
+					message: 'Аутентификация не пройдена',
+				})
+				navigate(routes.Auth.LoginPage)
+			})
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,16 +73,7 @@ export default function LoginPanel() {
 						<Button type='primary' htmlType='submit'>
 							Вход
 						</Button>
-						<Button
-							onClick={() =>
-								keycloak.init({
-									onLoad: 'login-required',
-									redirectUri:
-										window.location.origin +
-										routes.Auth.EnergoId,
-								})
-							}
-						>
+						<Button onClick={() => void auth.signinRedirect()}>
 							Вход через EnergoID
 						</Button>
 					</Space>
