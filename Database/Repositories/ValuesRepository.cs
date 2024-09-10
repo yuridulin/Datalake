@@ -18,93 +18,26 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
 
-
 	#region Манипулирование таблицами
 
 	static string GetTableName(DateOnly date) => NamePrefix + date.ToString(DateMask);
 
-	async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime date)
+	ITable<TagHistory> GetHistoryTable(DateTime date)
 	{
-		return await GetHistoryTableAsync(DateOnly.FromDateTime(date));
+		return GetHistoryTable(DateOnly.FromDateTime(date));
 	}
 
-	async Task<ITable<TagHistory>> GetHistoryTableAsync(DateOnly seekDate)
+	ITable<TagHistory> GetHistoryTable(DateOnly seekDate)
 	{
 		ITable<TagHistory> table;
 
-		var chunk = await db.TagHistoryChunks
+		var chunk = db.TagHistoryChunks
 			.Where(x => x.Date == seekDate)
-			.FirstOrDefaultAsync();
+			.FirstOrDefault();
 
 		if (chunk == null)
 		{
-			using var transaction = await db.BeginTransactionAsync();
-
-			// создание новой таблицы в случае, если её не было
-			var newTable = await db.CreateTableAsync<TagHistory>(GetTableName(seekDate));
-
-			await db.InsertAsync(new TagHistoryChunk
-			{
-				Date = seekDate,
-				Table = GetTableName(seekDate)
-			});
-
-			// инициализация значений по последним из предыдущей таблицы
-			var previousChunk = await db.TagHistoryChunks
-				.Where(x => x.Date < seekDate)
-				.OrderByDescending(x => x.Date)
-				.FirstOrDefaultAsync();
-
-			if (previousChunk != null)
-			{
-				var initialValues = new List<TagHistory>();
-
-				var previousTable = db.GetTable<TagHistory>().TableName(previousChunk.Table);
-
-				var previousWritedRows = await previousTable
-					.GroupBy(x => x.TagId)
-					.Select(g => g
-						.OrderByDescending(x => x.Date)
-						.FirstOrDefault() ?? new TagHistory { Number = null, Text = null }
-					)
-					.ToListAsync();
-
-				var previousWritedTags = previousWritedRows
-					.Select(x => new TagHistory
-					{
-						Date = seekDate.ToDateTime(TimeOnly.MinValue),
-						TagId = x.TagId,
-						Number = x.Number,
-						Text = x.Text,
-						Quality = x.Quality,
-						Using = TagUsing.Initial,
-					})
-					.ToList();
-
-				initialValues.AddRange(previousWritedTags);
-
-				var notFoundTags = await db.Tags
-					.Select(x => x.Id)
-					.Where(x => !initialValues.Any(v => v.TagId == x))
-					.Select(x => new TagHistory
-					{
-						TagId = x,
-						Date = seekDate.ToDateTime(TimeOnly.MinValue),
-						Text = null,
-						Number = null,
-						Quality = TagQuality.Bad,
-						Using = TagUsing.Initial,
-					})
-					.ToListAsync();
-
-				initialValues.AddRange(notFoundTags);
-
-				await newTable.BulkCopyAsync(initialValues);
-			}
-
-			await transaction.CommitAsync();
-
-			table = newTable;
+			table = CreateHistoryTable(seekDate);
 		}
 		else
 		{
@@ -112,6 +45,69 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		}
 
 		return table;
+	}
+
+	ITable<TagHistory> CreateHistoryTable(DateOnly date)
+	{
+		using var transaction = db.BeginTransaction();
+
+		// создание новой таблицы в случае, если её не было
+		var tableName = GetTableName(date);
+		var dateTime = date.ToDateTime(TimeOnly.MinValue);
+
+		var newTable = db.CreateTable<TagHistory>(tableName);
+
+		db.Insert(new TagHistoryChunk
+		{
+			Date = date,
+			Table = tableName,
+		});
+
+		// инициализация значений по последним из предыдущей таблицы
+		var previousChunk = db.TagHistoryChunks
+			.Where(x => x.Date < date)
+			.OrderByDescending(x => x.Date)
+			.FirstOrDefault();
+
+		if (previousChunk != null)
+		{
+			var initialValues = new List<TagHistory>();
+
+			var previousTable = db.GetTable<TagHistory>().TableName(previousChunk.Table);
+
+			var latestHistoryValues =
+				from previous in previousTable
+				group previous by previous.TagId into g
+				select g.OrderByDescending(x => x.Date).Select(x => new TagHistory
+				{
+					TagId = x.TagId,
+					Date = dateTime,
+					Number = x.Number,
+					Text = x.Text,
+					Quality = x.Quality,
+					Using = TagUsing.Initial,
+				}).First();
+
+			var uninitializedValues =
+				from t in db.Tags
+				where !previousTable.Select(x => x.TagId).Contains(t.Id)
+				select new TagHistory
+				{
+					TagId = t.Id,
+					Date = dateTime,
+					Number = null,
+					Text = null,
+					Quality = TagQuality.Bad_NoValues,
+					Using = TagUsing.Initial,
+				};
+
+			newTable.BulkCopy(latestHistoryValues);
+			newTable.BulkCopy(uninitializedValues);
+		}
+
+		transaction.Commit();
+
+		return newTable;
 	}
 
 	#endregion
@@ -130,6 +126,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToWrite = [];
 		List<TagHistory> recordsToSimpleWrite = [];
+		List<TagHistory> recordsToManualWrite = [];
 
 		var tagsInfo = await db.Tags
 			.Where(x => requests.Select(r => r.Id).Contains(x.Id)
@@ -174,7 +171,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 			if (tag.SourceId == (int)CustomSource.Manual)
 			{
-				await WriteManualHistoryValueAsync(record);
+				recordsToManualWrite.Add(record);
 			}
 			else
 			{
@@ -202,6 +199,10 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		await WriteLiveValuesAsync(recordsToWrite);
 		await WriteHistoryValuesAsync(recordsToSimpleWrite);
+		foreach (var record in recordsToManualWrite)
+		{
+			await WriteManualHistoryValueAsync(record);
+		}
 
 		return responses;
 	}
@@ -289,14 +290,14 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		foreach (var g in records.GroupBy(x => x.Date.Date))
 		{
-			var table = await GetHistoryTableAsync(g.Key);
+			var table = GetHistoryTable(g.Key);
 			await table.BulkCopyAsync(records);
 		}
 	}
 
 	async Task WriteHistoryValueAsync(TagHistory record)
 	{
-		var table = await GetHistoryTableAsync(record.Date);
+		var table = GetHistoryTable(record.Date);
 		await table.BulkCopyAsync([record]);
 	}
 
@@ -318,7 +319,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		 * 3. Произвести запись
 		 * 4. Проверить, есть ли в этой таблице записи позже записанной. Если их нет - мы должны обновить Initial значение в следующей (из существующих) таблице
 		 */
-		var table = await GetHistoryTableAsync(record.Date);
+		var table = GetHistoryTable(record.Date);
 
 		// указываем, что предыдущие значения в этой точке времени устарели
 		await table
@@ -350,7 +351,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			{
 				// выгружаем значения
 				// нам достаточно двух, Initial от прошлой таблицы и Basic за этот день
-				var nextTable = await GetHistoryTableAsync(next.Date);
+				var nextTable = GetHistoryTable(next.Date);
 				var nextTableValues = await nextTable
 					.Where(x => x.TagId == record.TagId)
 					.OrderBy(x => x.Date)

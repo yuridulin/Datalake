@@ -110,14 +110,14 @@ namespace Datalake.Server
 			var loggerFactory = LoggerFactory.Create(builder =>
 			{
 				builder
-//#if DEBUG
+#if DEBUG
 					.AddDebug()
-//#else
-					/*.AddFilter("Microsoft", LogLevel.Warning)
-					.AddFilter("System", LogLevel.Warning)
-					.AddFilter("Npgsql", LogLevel.Warning)
-					.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)*/
-//#endif
+#endif
+					//.AddFilter("Microsoft", LogLevel.Warning)
+					//.AddFilter("System", LogLevel.Warning)
+					//.AddFilter("Npgsql", LogLevel.Warning)
+					.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)
+
 					.AddConsole();
 			});
 

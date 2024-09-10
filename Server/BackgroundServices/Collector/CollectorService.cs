@@ -6,6 +6,7 @@ using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using LinqToDB;
+using System.Diagnostics;
 
 namespace Datalake.Server.BackgroundServices.Collector;
 
@@ -14,6 +15,8 @@ internal class CollectorService(
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<CollectorService> logger) : BackgroundService
 {
+	static SemaphoreSlim semaphore = new(1,1);
+
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		using var scope = serviceScopeFactory.CreateScope();
@@ -70,23 +73,36 @@ internal class CollectorService(
 		int count = values.Count();
 		if (count > 0)
 		{
-			using var scope = serviceScopeFactory.CreateScope();
-			using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-			using var repository = new ValuesRepository(db);
+			var watch = Stopwatch.StartNew();
+			await semaphore.WaitAsync();
 
-			var writeValues = values
-				.Select(x => new ValueWriteRequest
-				{
-					Guid = x.Guid,
-					Date = x.DateTime,
-					Value = x.Value,
-					Quality = x.Quality,
-				})
-				.ToArray();
+			try
+			{
+				using var scope = serviceScopeFactory.CreateScope();
+				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+				using var repository = new ValuesRepository(db);
 
-			await repository.WriteValuesAsync(writeValues);
+				var writeValues = values
+					.Select(x => new ValueWriteRequest
+					{
+						Guid = x.Guid,
+						Date = x.DateTime,
+						Value = x.Value,
+						Quality = x.Quality,
+					})
+					.ToArray();
 
-			logger.LogDebug("Write tags to db: {count}", values.Count());
+				await repository.WriteValuesAsync(writeValues);
+
+				logger.LogDebug("Write tags to db: {count}", values.Count());
+
+			}
+			finally
+			{
+				watch.Stop();
+				Debug.WriteLine($"Запись значений за {watch.Elapsed.TotalMilliseconds}");
+				semaphore.Release();
+			}
 		}
 	}
 
