@@ -100,7 +100,7 @@ internal class CollectorService(
 			finally
 			{
 				watch.Stop();
-				Debug.WriteLine($"Запись значений за {watch.Elapsed.TotalMilliseconds}");
+				logger.LogInformation($"Запись значений за {watch.Elapsed.TotalMilliseconds}");
 				semaphore.Release();
 			}
 		}
