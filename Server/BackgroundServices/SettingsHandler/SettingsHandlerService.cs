@@ -57,6 +57,7 @@ public class SettingsHandlerService(
 		File.WriteAllLines(Path.Combine(Program.WebRootPath, "startup.js"), [
 			"var LOCAL_API = true;",
 			$"var KEYCLOAK_DB = '{newSettings.EnergoIdHost}';",
+			$"var KEYCLOAK_CLIENT = '{newSettings.EnergoIdClient}';",
 		]);
 
 		_lastUpdate = DateTime.Now;

@@ -1,5 +1,4 @@
-﻿using Datalake.ApiClasses.Exceptions;
-using Datalake.Server.Constants;
+﻿using Datalake.Server.Constants;
 using Datalake.Server.Services.SessionManager;
 using Datalake.Server.Services.SessionManager.Models;
 using System.Text;
@@ -12,6 +11,8 @@ namespace Datalake.Server.Middlewares;
 /// <param name="sessionManager">Менеджер сессий доступа</param>
 public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
 {
+	static readonly byte[] ErrorMessage = Encoding.UTF8.GetBytes("Access Denied - No Auth");
+
 	/// <summary>
 	/// Выполнение проверки аутентификации
 	/// </summary>
@@ -36,9 +37,7 @@ public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
 			if (authSession == null)
 			{
 				context.Response.StatusCode = 403;
-				await context.Response.Body.WriteAsync(
-					Encoding.UTF8.GetBytes(
-						new ForbiddenException(message: "пользователь не аутентифицирован").ToString()));
+				await context.Response.Body.WriteAsync(ErrorMessage);
 				return;
 			}
 		}

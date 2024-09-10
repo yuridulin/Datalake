@@ -31,7 +31,7 @@ export default function TagsTable({
 	const [viewingTags, setViewingTags] = useState(tags)
 	const [search, setSearch] = useState('')
 	const [viewingTagsValues, setViewingTagsValues] = useState(
-		{} as { [key: string]: any },
+		{} as { [key: string]: string | number | boolean | null | undefined },
 	)
 
 	const loadValues = useCallback(() => {

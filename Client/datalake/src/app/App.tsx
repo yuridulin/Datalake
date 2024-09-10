@@ -1,5 +1,5 @@
 import { Link, Outlet } from 'react-router-dom'
-import { isAuth } from '../api/auth'
+import { isAuth } from '../api/local-auth'
 import { AppMenu } from './components/AppMenu'
 import UserPanel from './components/UserPanel'
 

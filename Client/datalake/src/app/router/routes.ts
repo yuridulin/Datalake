@@ -11,7 +11,7 @@ const routes = {
 	},
 	Auth: {
 		LoginPage: '/login',
-		KeycloakAfterLogin: '/energo-id',
+		EnergoId: '/energo-id',
 	},
 	Root: '/',
 	offline: '/offline',

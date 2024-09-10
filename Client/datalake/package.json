@@ -12,13 +12,13 @@
 	},
 	"dependencies": {
 		"@ant-design/icons": "^5.4.0",
-		"@react-keycloak/web": "^3.4.0",
 		"antd": "^5.20.0",
 		"axios": "^1.7.3",
-		"keycloak-react-web": "^0.1.19",
 		"mobx-react-lite": "^4.0.7",
+		"oidc-client-ts": "^3.0.1",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
+		"react-oidc-context": "^3.1.0",
 		"react-router-dom": "^6.26.0",
 		"tslib": "^2.6.3"
 	},
