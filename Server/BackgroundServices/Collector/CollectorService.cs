@@ -22,13 +22,16 @@ internal class CollectorService(
 		using var scope = serviceScopeFactory.CreateScope();
 		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
+		logger.LogInformation("Начало сбора данных");
+
 		while (!stoppingToken.IsCancellationRequested)
 		{
 			var dbLastUpdate = await db.GetLastUpdateAsync();
 
 			if (dbLastUpdate > LastUpdate)
 			{
-				logger.LogWarning("Rebuild sources");
+				var sw = Stopwatch.StartNew();
+				logger.LogInformation("Событие обновления сборщиков");
 
 				var query = from source in db.Sources
 										from tag in db.Tags.Where(x => !string.IsNullOrEmpty(x.SourceItem)).LeftJoin(x => x.SourceId == source.Id)
@@ -61,7 +64,8 @@ internal class CollectorService(
 
 				LastUpdate = dbLastUpdate;
 
-				logger.LogWarning("Rebuild sources completed");
+				sw.Stop();
+				logger.LogInformation("Обновление сборщиков завершено: [{n}] за {ms} мс", Collectors.Count, sw.Elapsed.TotalMilliseconds);
 			}
 
 			await Task.Delay(5000, stoppingToken);
@@ -73,7 +77,8 @@ internal class CollectorService(
 		int count = values.Count();
 		if (count > 0)
 		{
-			var watch = Stopwatch.StartNew();
+			logger.LogInformation("Событие {n} записи значений: {count}", semaphore.CurrentCount, count);
+			var sw = Stopwatch.StartNew();
 			await semaphore.WaitAsync();
 
 			try
@@ -93,14 +98,11 @@ internal class CollectorService(
 					.ToArray();
 
 				await repository.WriteValuesAsync(writeValues);
-
-				logger.LogDebug("Write tags to db: {count}", values.Count());
-
 			}
 			finally
 			{
-				watch.Stop();
-				logger.LogInformation($"Запись значений за {watch.Elapsed.TotalMilliseconds}");
+				sw.Stop();
+				logger.LogInformation("Запись значений завершена: {ms} мс", sw.Elapsed.TotalMilliseconds);
 				semaphore.Release();
 			}
 		}

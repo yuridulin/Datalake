@@ -47,7 +47,7 @@ namespace Datalake.Server
 				options.SchemaSettings.SchemaProcessors.Add(new XEnumVarnamesNswagSchemaProcessor());
 			});
 
-			builder.Host.UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
+			//builder.Host.UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
 			builder.Services.AddLogging(options => options.AddSerilog());
 			builder.Services.AddEndpointsApiExplorer();
 
@@ -56,7 +56,7 @@ namespace Datalake.Server
 
 			var app = builder.Build();
 
-			app.UseSerilogRequestLogging();
+			//app.UseSerilogRequestLogging();
 
 			WebRootPath = app.Environment.WebRootPath;
 			StartWorkWithDatabase(app);

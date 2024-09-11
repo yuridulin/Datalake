@@ -7,7 +7,9 @@ using Datalake.Database.Models;
 using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Data;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
 
@@ -29,6 +31,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	ITable<TagHistory> GetHistoryTable(DateOnly seekDate)
 	{
+		var tableName = GetTableName(seekDate);
+		logger.LogInformation("Обращение к таблице: {name}", tableName);
 		ITable<TagHistory> table;
 
 		var chunk = db.TagHistoryChunks
@@ -49,11 +53,15 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	ITable<TagHistory> CreateHistoryTable(DateOnly date)
 	{
-		using var transaction = db.BeginTransaction();
+		var sw = Stopwatch.StartNew();
 
 		// создание новой таблицы в случае, если её не было
 		var tableName = GetTableName(date);
 		var dateTime = date.ToDateTime(TimeOnly.MinValue);
+
+		logger.LogInformation("Событие создания новой таблицы: {name}", tableName);
+
+		using var transaction = db.BeginTransaction();
 
 		var newTable = db.CreateTable<TagHistory>(tableName);
 
@@ -106,6 +114,9 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		}
 
 		transaction.Commit();
+
+		sw.Stop();
+		logger.LogInformation("Новая таблица создана: [{name}] за {ms} мс", tableName, sw.Elapsed.TotalMilliseconds);
 
 		return newTable;
 	}
@@ -249,6 +260,9 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	async Task WriteLiveValuesAsync(IEnumerable<TagHistory> records)
 	{
+		var sw = Stopwatch.StartNew();
+		logger.LogInformation("Событие записи текущих значений");
+
 		// изврат из-за того, что в версиях Postgres <15 нет поддержки Merge API
 		try
 		{
@@ -281,10 +295,18 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		{
 			logger.LogError("Ошибка при записи значений:\n{message}\n{trace}", ex.Message, ex.StackTrace);
 		}
+		finally
+		{
+			sw.Stop();
+			logger.LogInformation("Запись текущих значений: [{n}] за {ms} мс", records.Count(), sw.Elapsed.TotalMilliseconds);
+		}
 	}
 
 	async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
 	{
+		var sw = Stopwatch.StartNew();
+		logger.LogInformation("Событие записи архивных значений");
+
 		if (!records.Any())
 			return;
 
@@ -293,6 +315,9 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			var table = GetHistoryTable(g.Key);
 			await table.BulkCopyAsync(records);
 		}
+
+		sw.Stop();
+		logger.LogInformation("Запись архивных значений: [{n}] за {ms} мс", records.Count(), sw.Elapsed.TotalMilliseconds);
 	}
 
 	async Task WriteHistoryValueAsync(TagHistory record)
