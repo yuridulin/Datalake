@@ -411,6 +411,12 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			 * @format int32
 			 */
 			sourceId?: number | null
+			/** Список локальных идентификаторов тегов */
+			id?: number[] | null
+			/** Список текущих наименований тегов */
+			names?: string[] | null
+			/** Список глобальных идентификаторов тегов */
+			guids?: string[] | null
 		},
 		params: RequestParams = {},
 	) =>

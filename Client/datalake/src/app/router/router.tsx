@@ -17,6 +17,7 @@ import UserGroupsTreeList from '../pages/usergroups/UserGroupsTreeList'
 import UserCreate from '../pages/users/UserCreate'
 import UserForm from '../pages/users/UserForm'
 import UsersList from '../pages/users/UsersList'
+import TagsViewer from '../pages/viewer/TagsViewer'
 import routes from './routes'
 
 const router = createBrowserRouter([
@@ -101,6 +102,15 @@ const router = createBrowserRouter([
 					{
 						path: '/tags/:id',
 						element: <TagForm />,
+					},
+				],
+			},
+			{
+				path: routes.Viewer.root,
+				children: [
+					{
+						path: routes.Viewer.root + routes.Viewer.TagsViewer,
+						element: <TagsViewer />,
 					},
 				],
 			},

@@ -13,6 +13,16 @@ const routes = {
 		LoginPage: '/login',
 		EnergoId: '/energo-id',
 	},
+	Viewer: {
+		root: '/viewer',
+		TagsViewer: '/tags',
+	},
+	Tags: {
+		root: '/tags',
+		routeToTag(guid: string) {
+			return this.root + '/' + guid
+		},
+	},
 	Root: '/',
 	offline: '/offline',
 }

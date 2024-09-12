@@ -6,8 +6,7 @@ import { freeToken, getName, isAuth } from '../../api/local-auth'
 import routes from '../router/routes'
 
 const style = {
-	marginTop: '1em',
-	padding: '0 1em',
+	padding: '1em',
 	display: 'flex',
 	justifyContent: 'space-between',
 	alignItems: 'center',
@@ -23,10 +22,14 @@ const UserPanel = () => {
 
 	return isAuth() ? (
 		<div style={style}>
-			<div>
-				<b style={{ fontWeight: '500', color: '#33a2ff' }}>
-					{getName()}
-				</b>
+			<div
+				style={{
+					paddingLeft: '10px',
+					fontWeight: '500',
+					color: '#33a2ff',
+				}}
+			>
+				{getName()}
 			</div>
 			<Button onClick={logout}>Выход</Button>
 		</div>
