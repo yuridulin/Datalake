@@ -1,6 +1,7 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.Tags;
+using Datalake.ApiClasses.Models.Values;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
 using Datalake.Database.Repositories;
@@ -90,35 +91,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		).ToDictionaryAsync(x => x.Id, x => x);
 
 		// актуализация таблицы текущих значений
-		var lastTable = Cache.LastTable(DateTime.Now);
+		var lastValues = await new ValuesRepository(this).ReadHistoryValuesAsync([.. Cache.Tags.Keys], DateTime.Now, DateTime.Now);
 
-		if (lastTable != null)
-		{
-			var lastValues = await this.GetTable<TagHistory>().TableName(lastTable)
-				.GroupBy(x => x.TagId)
-				.Select(g => g.OrderByDescending(x => x.Date).First())
-				.ToArrayAsync();
-
-			Live.Write(lastValues);
-		}
-
-		var notExistedValues = Cache.Tags.Keys
-			.Where(x => !Live.Values.ContainsKey(x))
-			.Select(x => new TagHistory
-			{
-				TagId = x,
-				Date = DateTime.Today,
-				Number = null,
-				Text = null,
-				Quality = TagQuality.Bad_NoValues,
-				Using = TagUsing.NotFound,
-			})
-			.ToArray();
-
-		if (notExistedValues.Length != 0)
-		{
-			Live.Write(notExistedValues);
-		}
+		Live.Write(lastValues);
 	}
 
 	#region Таблицы
