@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Datalake.Database.Migrations
 {
     [DbContext(typeof(DatalakeEfContext))]
-    [Migration("20240912074439_RemoveHistoryChunks")]
-    partial class RemoveHistoryChunks
+    [Migration("20240912121132_DropSomeTables")]
+    partial class DropSomeTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -280,29 +280,6 @@ namespace Datalake.Database.Migrations
                     b.HasIndex("SourceId");
 
                     b.ToTable("Tags", "public");
-                });
-
-            modelBuilder.Entity("Datalake.Database.Models.TagHistory", b =>
-                {
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<float?>("Number")
-                        .HasColumnType("real");
-
-                    b.Property<int>("Quality")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TagId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Text")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Using")
-                        .HasColumnType("integer");
-
-                    b.ToTable("TagsLive", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.TagInput", b =>

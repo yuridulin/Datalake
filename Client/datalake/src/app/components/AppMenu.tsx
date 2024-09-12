@@ -29,6 +29,17 @@ const items: ItemType<MenuItemType>[] = [
 		],
 	},
 	{
+		key: 'sources',
+		label: 'Источники данных',
+		type: 'group',
+		children: [
+			{
+				key: 'sources-list',
+				label: <NavLink to={'/sources'}>Список источников</NavLink>,
+			},
+		],
+	},
+	{
 		key: 'blocks',
 		label: 'Объекты',
 		type: 'group',

@@ -3,6 +3,7 @@ using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Models;
+using Datalake.Database.Utilities;
 using LinqToDB;
 
 namespace Datalake.Database.Extensions;
@@ -21,6 +22,12 @@ public static class DatalakeContextExtension
 		}
 	}
 
+	/// <summary>
+	/// Сообщение аудита в БД
+	/// </summary>
+	/// <param name="db"></param>
+	/// <param name="log"></param>
+	/// <returns></returns>
 	public static async Task LogAsync(
 		this DatalakeContext db,
 		Log log)

@@ -1,8 +1,8 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Models.Logs;
 using Datalake.ApiClasses.Models.Settings;
-using Datalake.Database;
 using Datalake.Database.Repositories;
+using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
 using LinqToDB;

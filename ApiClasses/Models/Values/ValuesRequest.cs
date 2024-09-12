@@ -20,14 +20,9 @@ public class ValuesRequest
 	public Guid[]? Tags { get; set; } = [];
 
 	/// <summary>
-	/// Список имен тегов. По именам будут сопоставлены идентификаторы тегов, если список идентификаторов в запросе пуст
-	/// </summary>
-	public string[]? TagNames { get; set; } = [];
-
-	/// <summary>
 	/// Список локальных идентификаторов тегов
 	/// </summary>
-	public int[]? TagId { get; set; }
+	public int[]? TagsId { get; set; }
 
 	/// <summary>
 	/// Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток

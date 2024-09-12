@@ -279,29 +279,6 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Tags", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.TagHistory", b =>
-                {
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<float?>("Number")
-                        .HasColumnType("real");
-
-                    b.Property<int>("Quality")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TagId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Text")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Using")
-                        .HasColumnType("integer");
-
-                    b.ToTable("TagsLive", "public");
-                });
-
             modelBuilder.Entity("Datalake.Database.Models.TagInput", b =>
                 {
                     b.Property<int>("InputTagId")

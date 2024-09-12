@@ -67,14 +67,10 @@ internal class InopcCollector : CollectorBase
 
 	private async Task Work()
 	{
-
-
 		while (!_tokenSource.Token.IsCancellationRequested)
 		{
 			var now = DateTime.Now;
 			List<Item> tags = [];
-			CollectValue[] lastValues = [];
-			var comparer = new CollectValueComparer();
 
 			foreach (var item in _itemsToSend)
 			{
@@ -114,10 +110,7 @@ internal class InopcCollector : CollectorBase
 					}))
 				.ToArray();
 
-			CollectValues?.Invoke(this, collectedValues
-				.Except(lastValues, comparer));
-
-			lastValues = collectedValues;
+			CollectValues?.Invoke(this, collectedValues);
 
 			foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
 			{

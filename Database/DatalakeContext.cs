@@ -4,6 +4,7 @@ using Datalake.ApiClasses.Models.Tags;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
 using Datalake.Database.Repositories;
+using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
@@ -33,21 +34,12 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			})
 			.ToArray();
 
-		foreach (var source in customSources)
-		{
-			if (!await Sources.AnyAsync(x => x.Id == source.Id))
-			{
-				int count = await Sources
-					.Value(x => x.Id, source.Id)
-					.Value(x => x.Name, source.Name)
-					.Value(x => x.Description, source.Description)
-					.Value(x => x.Type, source.Type)
-					.InsertAsync();
-
-				if (count == 0)
-					throw new Exception("Не удалось добавить источник по умолчанию: " + (CustomSource)source.Id);
-			}
-		}
+		var existsCustomSources = await Sources
+			.Where(x => customSources.Select(c => c.Id).Contains(x.Id))
+			.Select(x => x.Id)
+			.ToArrayAsync();
+		
+		await Sources.BulkCopyAsync(customSources.ExceptBy(existsCustomSources, x => x.Id));
 
 		// создание таблицы настроек
 		if (!await Settings.AnyAsync())
@@ -69,10 +61,16 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		var schemaProvider = DataProvider.GetSchemaProvider();
 		var schema = schemaProvider.GetSchema(this);
 
-		Cache.Tables.AddRange([.. schema.Tables
+		Cache.Tables = schema.Tables
 			.Where(x => x.TableName!.StartsWith(ValuesRepository.NamePrefix))
-			.Select(x => x.TableName!)
-			.OrderByDescending(x => x)]);
+			.Select(x => new
+			{
+				Date = ValuesRepository.GetTableDate(x.TableName!),
+				Name = x.TableName!,
+			})
+			.Where(x => x.Date != DateTime.MinValue)
+			.DistinctBy(x => x.Date)
+			.ToDictionary(x => x.Date, x => x.Name);
 
 		Cache.Tags = await (
 			from t in Tags
@@ -81,13 +79,19 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			{
 				Id = t.Id,
 				Guid = t.GlobalGuid,
+				Name = t.Name,
 				TagType = t.Type,
 				SourceType = s.Type,
+				IsManual = t.SourceId == (int)CustomSource.Manual,
+				ScalingCoefficient = t.IsScaling 
+					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
+					: 1,
 			}
 		).ToDictionaryAsync(x => x.Id, x => x);
 
 		// актуализация таблицы текущих значений
-		var lastTable = Cache.Tables.LastOrDefault();
+		var lastTable = Cache.LastTable(DateTime.Now);
+
 		if (lastTable != null)
 		{
 			var lastValues = await this.GetTable<TagHistory>().TableName(lastTable)
@@ -95,10 +99,11 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 				.Select(g => g.OrderByDescending(x => x.Date).First())
 				.ToArrayAsync();
 
-			Cache.LiveValuesSet(lastValues);
+			Live.Write(lastValues);
 		}
+
 		var notExistedValues = Cache.Tags.Keys
-			.Where(x => !Cache.LiveValues.ContainsKey(x))
+			.Where(x => !Live.Values.ContainsKey(x))
 			.Select(x => new TagHistory
 			{
 				TagId = x,
@@ -109,9 +114,10 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 				Using = TagUsing.NotFound,
 			})
 			.ToArray();
+
 		if (notExistedValues.Length != 0)
 		{
-			Cache.LiveValuesSet(notExistedValues);
+			Live.Write(notExistedValues);
 		}
 	}
 
@@ -143,9 +149,6 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 
 	public ITable<TagInput> TagInputs
 		=> this.GetTable<TagInput>();
-
-	public ITable<TagHistory> TagsLive
-		=> this.GetTable<TagHistory>();
 
 	public ITable<User> Users
 		=> this.GetTable<User>();

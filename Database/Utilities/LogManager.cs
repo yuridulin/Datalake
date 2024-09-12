@@ -4,18 +4,21 @@ namespace Datalake.Database.Utilities;
 
 public static class LogManager
 {
-	private static ILoggerFactory _loggerFactory;
-
-	static LogManager()
+	public static readonly ILoggerFactory MainLoggerFactory = LoggerFactory.Create(builder =>
 	{
-		_loggerFactory = LoggerFactory.Create(builder =>
-		{
-			builder.AddConsole();
-		});
-	}
+		builder
+			.AddConsole()
+#if DEBUG
+			.AddDebug()
+#elif RELEASE
+			.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)
+			.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)
+#endif
+			;
+	});
 
-	public static ILogger CreateLogger<T>()
+	public static ILogger<T> CreateLogger<T>()
 	{
-		return _loggerFactory.CreateLogger<T>();
+		return MainLoggerFactory.CreateLogger<T>();
 	}
 }

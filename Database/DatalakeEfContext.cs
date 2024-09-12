@@ -23,8 +23,6 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 
 	public virtual DbSet<TagInput> TagInputs { get; set; }
 
-	public virtual DbSet<TagHistory> TagsLive { get; set; }
-
 	public virtual DbSet<User> Users { get; set; }
 
 	public virtual DbSet<UserGroup> UserGroups { get; set; }

@@ -1,5 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Models;
+using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using LinqToDB;
