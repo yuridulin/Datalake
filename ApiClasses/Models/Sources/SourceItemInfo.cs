@@ -19,4 +19,9 @@ public class SourceItemInfo
 	/// </summary>
 	[Required]
 	public TagType Type { get; set; }
+
+	/// <summary>
+	/// Значение, прочитанное с источника при опросе
+	/// </summary>
+	public object? Value { get; set; }
 }

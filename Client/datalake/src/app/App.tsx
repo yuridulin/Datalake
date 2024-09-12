@@ -1,54 +1,59 @@
-import { Layout } from 'antd'
-import Sider from 'antd/es/layout/Sider'
-import { Content } from 'antd/es/layout/layout'
-import { Link, Outlet } from 'react-router-dom'
-import { isAuth } from '../api/local-auth'
-import { useUpdateContext } from '../context/updateContext'
-import { AppMenu } from './components/AppMenu'
-import UserPanel from './components/UserPanel'
+import { ConfigProvider, theme } from 'antd'
+import dayjs from 'dayjs'
+import { useEffect, useState } from 'react'
+import { AuthProvider } from 'react-oidc-context'
+import { RouterProvider } from 'react-router-dom'
+import { UpdateContext } from '../context/updateContext'
+import router from './router/router'
+import routes from './router/routes'
+
+import locale from 'antd/locale/ru_RU'
+import 'dayjs/locale/ru'
+dayjs.locale('ru')
+
+declare const KEYCLOAK_DB: string
+declare const KEYCLOAK_CLIENT: string
 
 export default function App() {
-	const { isDarkMode } = useUpdateContext()
-	const layoutStyle = {
-		minHeight: '100vh',
-		//borderRadius: 8,
-		//overflow: 'hidden',
-		//width: 'calc(50% - 8px)',
-		//maxWidth: 'calc(50% - 8px)',
+	const [lastUpdate, setUpdate] = useState<Date>(new Date())
+	const { defaultAlgorithm, darkAlgorithm } = theme
+	const [isDarkMode, setIsDarkMode] = useState(false)
+
+	const oidcConfig = {
+		authority:
+			window.location.protocol + '//' + KEYCLOAK_DB + '/realms/energo',
+		redirect_uri: window.location.origin + routes.Auth.EnergoId,
+		client_id: KEYCLOAK_CLIENT,
 	}
-	const siderStyle: React.CSSProperties = {
-		//textAlign: 'center',
-		//lineHeight: '120px',
-		backgroundColor: isDarkMode ? '#141414' : '#eee',
-		paddingTop: '1em',
-	}
-	const contentStyle: React.CSSProperties = {
-		padding: '20px',
-	}
+
+	useEffect(() => {
+		setIsDarkMode(
+			window.matchMedia &&
+				window.matchMedia('(prefers-color-scheme: dark)').matches,
+		)
+		window
+			.matchMedia('(prefers-color-scheme: dark)')
+			.addEventListener('change', (event) => {
+				setIsDarkMode(event.matches)
+			})
+	}, [])
+
+	dayjs.locale('')
+
 	return (
-		<>
-			{isAuth() && (
-				<Layout style={layoutStyle}>
-					<Sider width='20%' style={siderStyle}>
-						<Link
-							to='/'
-							className='title'
-							style={{
-								padding: '1.5em 1em',
-							}}
-						>
-							Datalake
-						</Link>
-						<UserPanel />
-						<AppMenu />
-					</Sider>
-					<Layout>
-						<Content style={contentStyle}>
-							<Outlet />
-						</Content>
-					</Layout>
-				</Layout>
-			)}
-		</>
+		<ConfigProvider
+			theme={{
+				algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,
+			}}
+			locale={locale}
+		>
+			<UpdateContext.Provider
+				value={{ lastUpdate, setUpdate, isDarkMode }}
+			>
+				<AuthProvider {...oidcConfig}>
+					<RouterProvider router={router} />
+				</AuthProvider>
+			</UpdateContext.Provider>
+		</ConfigProvider>
 	)
 }

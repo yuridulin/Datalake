@@ -125,7 +125,13 @@ public class SourcesController(
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 
 		var items = sourceItemsResponse.Tags
-			.Select(x => new SourceItemInfo { Type = x.Type, Path = x.Name })
+			.Select(x => new SourceItemInfo
+			{
+				Type = x.Type,
+				Path = x.Name,
+				Value = x.Value,
+			})
+			.OrderBy(x => x.Path)
 			.ToArray();
 
 		return items;
@@ -150,7 +156,7 @@ public class SourcesController(
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 		var sourceItems = sourceItemsResponse.Tags
 			.DistinctBy(x => x.Name)
-			.ToDictionary(x => x.Name, x => new SourceItemInfo { Path = x.Name, Type = x.Type });
+			.ToDictionary(x => x.Name, x => new SourceItemInfo { Path = x.Name, Type = x.Type, Value = x.Value });
 
 		var sourceTags = await sourcesRepository.GetExistTags(id)
 			.ToListAsync();
@@ -166,9 +172,11 @@ public class SourcesController(
 				{
 					TagInfo = null,
 					ItemInfo = itemKeyValue.Value,
-				}))
-			.ToArray();
+				}));
 
-		return all;
+		return all
+			.OrderBy(x => x.ItemInfo?.Path)
+			.ThenBy(x => x.TagInfo?.Item)
+			.ToArray();
 	}
 }

@@ -68,17 +68,19 @@ export default function TagsViewer() {
 		])
 			.then((res) => {
 				setValues(
-					res.data[0].tags.map((x) => {
-						const valueObject = x.values[0]
-						return {
-							guid: x.guid,
-							name: x.name,
-							value: valueObject.value,
-							type: x.type,
-							date: valueObject.dateString,
-							quality: valueObject.quality,
-						}
-					}),
+					res.data[0].tags
+						.map((x) => {
+							const valueObject = x.values[0]
+							return {
+								guid: x.guid,
+								name: x.name,
+								value: valueObject.value,
+								type: x.type,
+								date: valueObject.dateString,
+								quality: valueObject.quality,
+							}
+						})
+						.sort((a, b) => -1 * a.name.localeCompare(b.name)),
 				)
 			})
 			.catch(() => setValues([]))
@@ -95,17 +97,12 @@ export default function TagsViewer() {
 		<>
 			<Row>
 				<Col flex='auto'>
-					<Space>
-						Теги:
-						<Select
-							mode='multiple'
-							options={tags}
-							style={{ display: 'block', width: 200 }}
-							onChange={(e) =>
-								setRequest({ ...request, tags: e })
-							}
-						/>
-					</Space>
+					<Select
+						options={tags}
+						mode='tags'
+						style={{ width: '100%' }}
+						onChange={(e) => setRequest({ ...request, tags: e })}
+					/>
 				</Col>
 				<Col flex='20em'>
 					<Space>

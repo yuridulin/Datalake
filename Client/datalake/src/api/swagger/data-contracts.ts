@@ -265,6 +265,8 @@ export interface SourceItemInfo {
 	path: string
 	/** Тип данных */
 	type: TagType
+	/** Значение, прочитанное с источника при опросе */
+	value?: any
 }
 
 /** Информация о сопоставлении данных в источнике и в базе */

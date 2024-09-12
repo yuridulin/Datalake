@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import App from '../App'
+import AppLayout from '../AppLayout'
 import BlockForm from '../pages/blocks/BlockForm'
 import BlockView from '../pages/blocks/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'
@@ -31,7 +31,7 @@ const router = createBrowserRouter([
 	},
 	{
 		path: '/',
-		element: <App />,
+		element: <AppLayout />,
 		children: [
 			{
 				path: '/',
