@@ -376,28 +376,24 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
 			if (!request.Exact.HasValue && !request.Old.HasValue && !request.Young.HasValue)
 			{
-				responses.Add(new ValuesResponse
-				{
-					RequestKey = request.RequestKey,
-					Tags = Live.Read(trustedIdentifiers)
-						.Select(x => new { Info = Cache.Tags[x.TagId], Value = x })
-						.Select(x => new ValuesTagResponse
+				response.Tags = Live.Read(trustedIdentifiers)
+					.Select(x => new { Info = Cache.Tags[x.TagId], Value = x })
+					.Select(x => new ValuesTagResponse
+					{
+						Id = x.Info.Id,
+						Guid = x.Info.Guid,
+						Name = x.Info.Name,
+						Type = x.Info.TagType,
+						Values = [ new()
 						{
-							Id = x.Info.Id,
-							Guid = x.Info.Guid,
-							Name = x.Info.Name,
-							Type = x.Info.TagType,
-							Values = [ new()
-							{
-								Date = x.Value.Date,
-								DateString = x.Value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
-								Quality = x.Value.Quality,
-								Using = x.Value.Using,
-								Value = x.Value.GetTypedValue(x.Info.TagType),
-							}]
-						})
-						.ToList()
-				});
+							Date = x.Value.Date,
+							DateString = x.Value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
+							Quality = x.Value.Quality,
+							Using = x.Value.Using,
+							Value = x.Value.GetTypedValue(x.Info.TagType),
+						}]
+					})
+					.ToList();
 			}
 			else
 			{
@@ -520,12 +516,14 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					}
 				}
 			}
+
+			responses.Add(response);
 		}
 
 		return responses;
 	}
 
-	async Task<List<TagHistory>> ReadHistoryValuesAsync(
+	public async Task<List<TagHistory>> ReadHistoryValuesAsync(
 		int[] identifiers,
 		DateTime old,
 		DateTime young,
