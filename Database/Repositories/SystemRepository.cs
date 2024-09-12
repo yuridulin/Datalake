@@ -12,11 +12,6 @@ public partial class SystemRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
 
-	public async Task<DateTime> GetLastUpdateDate()
-	{
-		return await db.GetLastUpdateAsync();
-	}
-
 	public async Task<SettingsInfo> GetSettingsAsync()
 	{
 		var setting = await db.Settings

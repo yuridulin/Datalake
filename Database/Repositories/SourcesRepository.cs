@@ -58,7 +58,7 @@ public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 			.Set(x => x.Name, ValueChecker.RemoveWhitespaces("Новый источник #" + id.Value, "_"))
 			.UpdateAsync();
 
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 
 		return id.Value;
@@ -85,7 +85,7 @@ public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 		if (!id.HasValue)
 			throw new DatabaseException("Не удалось добавить источник", DatabaseStandartError.IdIsNull);
 
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 
 		return id.Value;
@@ -113,7 +113,7 @@ public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 		if (count == 0)
 			throw new DatabaseException($"Не удалось обновить источник #{id}", DatabaseStandartError.UpdatedZero);
 
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 
 		return true;
@@ -136,7 +136,7 @@ public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 			.Set(x => x.SourceId, (int)CustomSource.Manual)
 			.UpdateAsync();
 
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 
 		return true;

@@ -158,7 +158,7 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 			Type = LogType.Success,
 		});
 
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 
 		return tag.Id;
@@ -221,7 +221,7 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 				VariableName = x.VariableName,
 			}));
 
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 	}
 
@@ -239,7 +239,7 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
 		// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
 
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 	}
 

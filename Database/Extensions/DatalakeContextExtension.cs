@@ -13,21 +13,12 @@ public static class DatalakeContextExtension
 	/// Обновление времени последнего изменения структуры тегов, источников и сущностей в базе данных
 	/// </summary>
 	/// <param name="db">Подключение к базе данных</param>
-	public static async Task SetLastUpdateToNowAsync(this DatalakeContext db)
+	public static void SetLastUpdateToNow(this DatalakeContext db)
 	{
-		await db.Settings
-			.Set(x => x.LastUpdate, DateTime.UtcNow)
-			.UpdateAsync();
-	}
-
-	public static async Task<DateTime> GetLastUpdateAsync(this DatalakeContext db)
-	{
-		var lastUpdate = await db.Settings
-			.Select(x => x.LastUpdate)
-			.DefaultIfEmpty(DateTime.MinValue)
-			.FirstOrDefaultAsync();
-
-		return lastUpdate;
+		lock (db)
+		{
+			Cache.LastUpdate = DateTime.Now;
+		}
 	}
 
 	public static async Task LogAsync(

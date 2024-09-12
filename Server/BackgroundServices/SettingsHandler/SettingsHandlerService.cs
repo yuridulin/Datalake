@@ -25,16 +25,17 @@ public class SettingsHandlerService(
 	{
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			using var scope = serviceScopeFactory.CreateScope();
-			using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+			var lastUpdate = Cache.LastUpdate;
 
-			var systemRepository = new SystemRepository(db);
-			var usersRepository = new UsersRepository(db);
-
-			var newUpdateDate = await systemRepository.GetLastUpdateDate();
-			if (newUpdateDate > _lastUpdate)
+			if (lastUpdate > StoredUpdate)
 			{
 				logger.LogDebug("Обновление настроек");
+
+				using var scope = serviceScopeFactory.CreateScope();
+				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+
+				var systemRepository = new SystemRepository(db);
+				var usersRepository = new UsersRepository(db);
 
 				await WriteStartipFileAsync(systemRepository);
 				LoadStaticUsers(usersRepository);
@@ -45,7 +46,7 @@ public class SettingsHandlerService(
 	}
 
 
-	private DateTime _lastUpdate;
+	private DateTime StoredUpdate;
 
 	/// <inheritdoc />
 	public async Task WriteStartipFileAsync(SystemRepository systemRepository)
@@ -60,7 +61,7 @@ public class SettingsHandlerService(
 			$"var KEYCLOAK_CLIENT = '{newSettings.EnergoIdClient}';",
 		]);
 
-		_lastUpdate = DateTime.Now;
+		StoredUpdate = DateTime.Now;
 	}
 
 	/// <inheritdoc />
@@ -73,6 +74,6 @@ public class SettingsHandlerService(
 			.Select(x => new AuthSession { ExpirationTime = DateTime.MaxValue, User = x.Item1, StaticHost = x.Item2 })
 			.ToList();
 
-		_lastUpdate = DateTime.Now;
+		StoredUpdate = DateTime.Now;
 	}
 }

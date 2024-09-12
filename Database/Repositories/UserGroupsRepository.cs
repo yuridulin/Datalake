@@ -68,7 +68,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 			.InsertAsync();
 
 		await db.LogAsync(Success(group.Guid, $"Создана группа пользователей \"{group.Name}\""));
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 
 		return group.Guid;
@@ -108,7 +108,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 			}));
 
 		await db.LogAsync(Success(groupGuid, $"Изменена группа пользователей \"{groupGuid}\""));
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 
 		return true;
@@ -135,7 +135,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 			.DeleteAsync();
 
 		await db.LogAsync(Success(groupGuid, $"Удалена группа пользователей \"{groupGuid}\""));
-		await db.SetLastUpdateToNowAsync();
+		db.SetLastUpdateToNow();
 		await transaction.CommitAsync();
 
 		return true;

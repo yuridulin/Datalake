@@ -12,11 +12,6 @@ namespace Datalake.Server.BackgroundServices.Collector;
 /// <param name="receiverService">Служба запроса данных из источника</param>
 public class CollectorFactory(ReceiverService receiverService)
 {
-	private ILoggerFactory _loggerFactory = LoggerFactory.Create(builder =>
-	{
-		builder.AddDebug();
-	});
-
 	/// <summary>
 	/// Получение сборщика для источника
 	/// </summary>
@@ -27,21 +22,21 @@ public class CollectorFactory(ReceiverService receiverService)
 		return source.Type switch
 		{
 			SourceType.Inopc
-				=> new InopcCollector(receiverService, source, _loggerFactory.CreateLogger<InopcCollector>()),
+				=> new InopcCollector(receiverService, source, Program.MainLoggerFactory.CreateLogger<InopcCollector>()),
 
 			SourceType.Datalake
-				=> new OldDatalakeCollector(receiverService, source, _loggerFactory.CreateLogger<OldDatalakeCollector>()),
+				=> new OldDatalakeCollector(receiverService, source, Program.MainLoggerFactory.CreateLogger<OldDatalakeCollector>()),
 
 			SourceType.DatalakeCore_v1
-				=> new DatalakeCollector(receiverService, source, _loggerFactory.CreateLogger<DatalakeCollector>()),
+				=> new DatalakeCollector(receiverService, source, Program.MainLoggerFactory.CreateLogger<DatalakeCollector>()),
 
 			SourceType.Custom => (CustomSource)source.Id switch
 			{
 				CustomSource.Calculated
-					=> new CalculateCollector(source, _loggerFactory.CreateLogger<CalculateCollector>()),
+					=> new CalculateCollector(source, Program.MainLoggerFactory.CreateLogger<CalculateCollector>()),
 
 				CustomSource.System
-					=> new SystemCollector(source, _loggerFactory.CreateLogger<SystemCollector>()),
+					=> new SystemCollector(source, Program.MainLoggerFactory.CreateLogger<SystemCollector>()),
 
 				CustomSource.Manual => null,
 				_ => null
