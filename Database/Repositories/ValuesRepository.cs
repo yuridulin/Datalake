@@ -35,13 +35,13 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 	{
 		ITable<TagHistory> table;
 
-		if (Cache.Tables.TryGetValue(seekDate, out string? value))
+		if (Cache.Tables.TryGetValue(seekDate.Date, out string? value))
 		{
 			table = db.GetTable<TagHistory>().TableName(value);
 		}
 		else
 		{
-			table = await CreateHistoryTableAsync(seekDate);
+			table = await CreateHistoryTableAsync(seekDate.Date);
 		}
 
 		return table;

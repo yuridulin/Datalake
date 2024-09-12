@@ -12,6 +12,7 @@ export default function AppLayout() {
 
 	const siderStyle: React.CSSProperties = {
 		backgroundColor: isDarkMode ? '#141414' : '#eee',
+		borderRight: '1px solid ' + (isDarkMode ? '#222' : '#ddd'),
 		paddingTop: '1em',
 		overflow: 'auto',
 		height: '100vh',
@@ -39,7 +40,12 @@ export default function AppLayout() {
 						<UserPanel />
 						<AppMenu />
 					</Sider>
-					<Layout style={{ marginInlineStart: '20%' }}>
+					<Layout
+						style={{
+							marginInlineStart: '20%',
+							backgroundColor: isDarkMode ? '#121212' : '#fff',
+						}}
+					>
 						<Content
 							style={{
 								overflow: 'initial',
