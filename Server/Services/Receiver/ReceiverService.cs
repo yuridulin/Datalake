@@ -4,6 +4,7 @@ using Datalake.Server.Controllers;
 using Datalake.Server.Services.Receiver.Models;
 using Datalake.Server.Services.Receiver.Models.Inopc;
 using Datalake.Server.Services.Receiver.Models.Inopc.Enums;
+using System.Text.Json;
 
 namespace Datalake.Server.Services.Receiver;
 
@@ -14,6 +15,11 @@ namespace Datalake.Server.Services.Receiver;
 public class ReceiverService(ILogger<ReceiverService> logger)
 {
 	CancellationTokenSource cancellationTokenSource = new();
+
+	static JsonSerializerOptions JsonOptions = new()
+	{
+		Converters = { new JsonObjectConverter(), }
+	};
 
 	/// <summary>
 	/// Универсальное получение данных из удаленного источника
@@ -70,7 +76,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 			var answer = await client.PostAsJsonAsync("http://" + address + ":81/api/storage/read", request, cancellationTokenSource.Token);
 			if (answer.IsSuccessStatusCode)
 			{
-				inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>();
+				inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>(JsonOptions);
 			}
 		}
 		catch
@@ -139,7 +145,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		try
 		{
 			var answer = await client.PostAsJsonAsync("http://" + address + ":83/api/tags/live", request);
-			historyResponses = await answer.Content.ReadFromJsonAsync<List<Models.OldDatalake.HistoryResponse>>();
+			historyResponses = await answer.Content.ReadFromJsonAsync<List<Models.OldDatalake.HistoryResponse>>(JsonOptions);
 		}
 		catch
 		{
@@ -206,7 +212,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		try
 		{
 			var answer = await client.PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
-			historyResponses = await answer.Content.ReadFromJsonAsync<List<ValuesResponse>>();
+			historyResponses = await answer.Content.ReadFromJsonAsync<List<ValuesResponse>>(JsonOptions);
 		}
 		catch
 		{

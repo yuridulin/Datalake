@@ -45,6 +45,6 @@ public class TagHistory
 
 	public override bool Equals(object? obj)
 	{
-		return obj is TagHistory history && _cachedHashCode == history._cachedHashCode;
+		return obj is TagHistory history && GetHashCode() == history.GetHashCode();
 	}
 }

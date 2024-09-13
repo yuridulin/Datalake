@@ -27,30 +27,35 @@ public static class TagExtension
 			Using = TagUsing.Basic,
 		};
 
-		if (value == null) return history;
+		if (value == null)
+			return history;
 
-		if (tag.TagType == TagType.String)
+		string text = value.ToString()!;
+
+		switch (tag.TagType)
 		{
-			history.Text = value?.ToString();
-		}
-		else if (float.TryParse(value?.ToString() ?? "x", out float number))
-		{
-			if (tag.TagType == TagType.Boolean)
-			{
-				history.Number = number == 1 ? 1 : 0;
-			}
-			else if (tag.TagType == TagType.Number)
-			{
-				// вычисление значения на основе шкалирования
-				if (tag.ScalingCoefficient != 1)
+			case TagType.String:
+				history.Text = text;
+				break;
+
+			case TagType.Number:
+				if (float.TryParse(text ?? "x", out float number))
 				{
-					history.Number = number * tag.ScalingCoefficient;
+					// вычисление значения на основе шкалирования
+					if (tag.ScalingCoefficient != 1)
+					{
+						history.Number = number * tag.ScalingCoefficient;
+					}
+					else
+					{
+						history.Number = number;
+					}
 				}
-				else
-				{
-					history.Number = number;
-				}
-			}
+				break;
+
+			case TagType.Boolean:
+				history.Number = text == "1" || text == "true" ? 1 : 0;
+				break;
 		}
 
 		return history;
