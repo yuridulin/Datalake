@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { TagValue } from '../../api/models/tagValue'
 import api from '../../api/swagger-api'
 import { TagQuality, TagType } from '../../api/swagger/data-contracts'
 
@@ -15,7 +16,7 @@ export default function TagValueEl({
 	allowEdit = false,
 	guid,
 }: {
-	value?: string | number | boolean | null
+	value?: TagValue
 	type: TagType
 	allowEdit?: boolean
 	guid?: string
