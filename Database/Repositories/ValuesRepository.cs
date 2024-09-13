@@ -529,149 +529,107 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		DateTime young,
 		int resolution = 0)
 	{
-		var sw = Stopwatch.StartNew();
 		logger.LogInformation("Событие чтения архивных значений");
 
 		var firstDate = old.Date;
 		var lastDate = young.Date;
-		var seekDate = firstDate;
+		var seekDate = lastDate;
 		var values = new List<TagHistory>();
-
 		Stopwatch d;
+
+		var tables = Cache.Tables
+			.Where(x => x.Key >= firstDate && x.Key <= lastDate)
+			.Union(Cache.Tables.Where(x => x.Key <= firstDate).OrderByDescending(x => x.Key).Take(1))
+			.ToDictionary();
+
 		d = Stopwatch.StartNew();
+		List<IQueryable<TagHistory>> queries = [];
 
-		var cachedTables = Cache.Tables
-			.Select(x => new
-			{
-				Date = x.Key,
-				Table = x.Value,
-			})
-			.ToArray();
+		ITable<TagHistory> table = null!;
 
-		var tables = cachedTables
-			.Where(x => x.Date >= firstDate && x.Date <= lastDate)
-			.Union(cachedTables.Where(x => x.Date <= firstDate).OrderByDescending(x => x.Date).Take(1))
-			.Union(cachedTables.Where(x => x.Date >= firstDate).OrderBy(x => x.Date).Take(1))
-			.ToDictionary(x => x.Date, x => x.Table);
-
-		d.Stop();
-		logger.LogInformation("Список таблиц: {ms} мс", d.Elapsed.TotalMilliseconds);
-
-		// выгружаем текущие значения
-		d = Stopwatch.StartNew();
+		// проход по циклу, чтобы выгрузить все данные между old и young
 		do
 		{
 			if (tables.ContainsKey(seekDate))
 			{
-				var table = db.GetTable<TagHistory>().TableName(GetTableName(seekDate));
+				table = db.GetTable<TagHistory>().TableName(GetTableName(seekDate));
 
-				try
-				{
-					values.AddRange([.. table
-						.Where(x => identifiers.Contains(x.TagId))
-						.Where(x => x.Date >= old)
-						.Where(x => x.Date <= young)
-						.Where(x => x.Using == TagUsing.Basic)
-						.OrderBy(x => x.Date)]);
-				}
-				catch { }
+				var query = table
+					.Where(x => identifiers.Contains(x.TagId))
+					.Where(x => x.Using == TagUsing.Basic);
+
+				if (seekDate == lastDate) query = query.Where(x => x.Date <= young);
+				if (seekDate == firstDate) query = query.Where(x => x.Date >= old);
+
+				queries.Add(query);
 			}
 
-			seekDate = seekDate.AddDays(1);
+			seekDate = seekDate.AddDays(-1);
 		}
-		while (seekDate <= lastDate);
-		d.Stop();
-		logger.LogInformation("Чтение значений: {ms} мс", d.Elapsed.TotalMilliseconds);
+		while (seekDate >= firstDate);
 
-		// проверяем наличие значений на old
-
-		d = Stopwatch.StartNew();
-		var lost = identifiers
-			.Except(values
-				.Where(x => x.Date == old)
-				.Select(x => x.TagId))
-			.ToList();
-
-		if (lost.Count > 0)
-		{
-			// если у нас есть непроинициализированные теги
-			// нужно получить initial значения для них
-			// берем ближайшую в прошлом таблицу
-			var initialDate = tables.Keys
-				.Where(x => x <= firstDate)
-				.OrderByDescending(x => x)
-				.DefaultIfEmpty(DateTime.MinValue)
-				.FirstOrDefault();
-
-			// если у нас не было подходящих таблиц в выборке, нужно их дозагрузить
-			if (initialDate == DateTime.MinValue)
+		// CTE для поиска последних по дате (перед old) значений для каждого из тегов
+		var tagsBeforeOld =
+			from th in table
+			where identifiers.Contains(th.TagId)
+				&& th.Date < old
+				&& (th.Using == TagUsing.Initial || th.Using == TagUsing.Basic)
+			select new
 			{
-				// ближайшая, где будут все нужные теги, это следующая существующая после old
-				// если такой не будет, значит нам нужна последняя существующая перед old
-				// разница в том, что в первом случае мы просто возьмём initial, а во втором рассчитаем их через группировку, что дороже
-			}
+				th.TagId,
+				th.Date,
+				th.Text,
+				th.Number,
+				th.Quality,
+				th.Using,
+				rn = Sql.Ext
+					.RowNumber().Over()
+					.PartitionBy(th.TagId)
+					.OrderByDesc(th.Date)
+					.ToValue()
+			};
 
-			string initialTableName = GetTableName(initialDate);
-
-			if (tables.ContainsKey(initialDate))
+		queries.Add(
+			from rt in tagsBeforeOld
+			where rt.rn == 1
+			select new TagHistory
 			{
-				var initialTable = db.GetTable<TagHistory>().TableName(initialTableName);
+				TagId = rt.TagId,
+				Date = old,
+				Text = rt.Text,
+				Number = rt.Number,
+				Quality = rt.Quality,
+				Using = TagUsing.Continuous,
+			});
 
-				// определяем список тех значений, которым не хватает initial
-				// и грузим их
-				List<TagHistory> initial = await initialTable
-					.Where(x => x != null && lost.Contains(x.TagId))
-					.Where(x => x.Date <= old)
-					.Where(x => x.Using == TagUsing.Initial || x.Using == TagUsing.Basic)
-					.GroupBy(x => x.TagId)
-					.Where(g => g.Count() > 0)
-					.Select(g => g.OrderByDescending(x => x.Date).First())
-					.ToListAsync();
+		// мегазапрос для получения всех необходимых данных
+		var megaQuery = queries.Aggregate((current, next) => current.Union(next));
 
-				foreach (var value in initial)
-				{
-					if (value == null)
-						continue;
-					if (value.Date < old)
-					{
-						// обрезаем значение по временному окну, т.е. по old
-						value.Date = old;
-						value.Using = TagUsing.Continuous;
-					}
-					else if (value.Date > old)
-					{
-						// если мы обнаружили, что initial был уже после old, это значит, что тег был создан после old
-						// для него мы делаем заглушку
-						values.Add(LostTag(value.TagId));
-					}
-				}
+		// выполнение мегазапроса
+		values = await megaQuery.ToListAsync();
 
-				values.AddRange(initial);
-			}
-		}
 		d.Stop();
-		logger.LogInformation("Чтение предшествующих значений: {ms} мс", d.Elapsed.TotalMilliseconds);
+		logger.LogInformation("Чтение значений из БД: {ms} мс", d.Elapsed.TotalMilliseconds);
+
 
 		// заглушки, если значения так и не были проинициализированы
 		d = Stopwatch.StartNew();
-		lost = identifiers
-			.Except(values
-				.Where(x => x.Date == old)
-				.Select(x => x.TagId))
-			.ToList();
+		var lost = identifiers
+			.Except(values.Where(x => x.Date == old).Select(x => x.TagId))
+			.Select(LostTag)
+			.ToArray();
 
-		var lostTags = await db.Tags
-			.Where(x => lost.Contains(x.Id))
-			.Select(x => x.Id)
-			.ToListAsync();
-
-		values.AddRange(lostTags.Select(LostTag));
-		d.Stop();
-		logger.LogInformation("Чтение отсутствующий значений: {ms} мс", d.Elapsed.TotalMilliseconds);
+		if (lost.Length > 0)
+		{
+			values.AddRange(lost);
+		}
 
 		// выполняем протяжку, если необходимо
 		if (resolution > 0)
 		{
+			d = Stopwatch.StartNew();
+			logger.LogInformation("Протяжка данных...");
+
 			var timeRange = (young - old).TotalMilliseconds;
 			var continuous = new List<TagHistory>();
 			DateTime stepDate;
@@ -711,10 +669,10 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			}
 
 			values = continuous;
-		}
 
-		sw.Stop();
-		logger.LogInformation("Архивные данные прочитаны: [{tags}] тегов, [{values}] значений за {ms} мс", identifiers.Length, values.Count, sw.Elapsed.TotalMilliseconds);
+			d.Stop();
+			logger.LogInformation("Протяжка завершена: {ms} мс", d.Elapsed.TotalMilliseconds);
+		}
 
 		return values;
 

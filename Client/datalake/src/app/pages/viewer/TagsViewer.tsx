@@ -120,6 +120,7 @@ export default function TagsViewer() {
 							}}
 						>
 							<DatePicker
+								showTime
 								onChange={(e) =>
 									setRequest({ ...request, date: e })
 								}

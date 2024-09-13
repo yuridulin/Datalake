@@ -9,7 +9,7 @@ public static class LogManager
 		builder
 			.AddConsole()
 #if DEBUG
-			.AddDebug()
+			.AddDebug().AddFilter(null, LogLevel.Trace)
 #elif RELEASE
 			.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)
 			.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)
