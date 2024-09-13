@@ -36,7 +36,7 @@ export default function TagsViewer() {
 	const [values, setValues] = useState([] as ValueType[])
 
 	const [request, setRequest] = useState({
-		tags: [] as string[],
+		tags: [] as number[],
 		date: dayjs(new Date()),
 		isLive: true,
 	})
@@ -48,7 +48,7 @@ export default function TagsViewer() {
 					res.data.map((x) => ({
 						label: x.name,
 						title: x.name,
-						value: x.guid,
+						value: x.id,
 					})),
 				)
 			})
@@ -60,7 +60,7 @@ export default function TagsViewer() {
 		api.valuesGet([
 			{
 				requestKey: 'viewer-tags',
-				tags: request.tags,
+				tagsId: request.tags,
 				...(request.isLive
 					? {}
 					: { exact: request.date.format('YYYY-MM-DDThh:mm:ss') }),
@@ -99,7 +99,7 @@ export default function TagsViewer() {
 				<Col flex='auto'>
 					<Select
 						options={tags}
-						mode='tags'
+						mode='multiple'
 						style={{ width: '100%' }}
 						onChange={(e) => setRequest({ ...request, tags: e })}
 					/>
@@ -132,7 +132,6 @@ export default function TagsViewer() {
 			<Table dataSource={values} size='small'>
 				<Column
 					title='Тег'
-					key='tag'
 					dataIndex='guid'
 					render={(guid, row: ValueType) => (
 						<NavLink to={routes.Tags.routeToTag(guid)}>
@@ -142,7 +141,6 @@ export default function TagsViewer() {
 				/>
 				<Column
 					title='Значение'
-					key='value'
 					dataIndex='value'
 					render={(value, row: ValueType) => (
 						<TagValueEl
@@ -155,7 +153,6 @@ export default function TagsViewer() {
 				/>
 				<Column
 					title='Качество'
-					key='quality'
 					dataIndex='quality'
 					render={(quality) => <TagQualityEl quality={quality} />}
 				/>

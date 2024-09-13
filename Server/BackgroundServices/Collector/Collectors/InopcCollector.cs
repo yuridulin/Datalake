@@ -16,6 +16,7 @@ internal class InopcCollector : CollectorBase
 		_receiverService = receiverService;
 		_address = source.Address ?? throw new InvalidOperationException();
 		_tokenSource = new CancellationTokenSource();
+		_id = source.Id;
 
 		_itemsToSend = source.Tags
 			.Where(x => !string.IsNullOrEmpty(x.SourceItem))
@@ -58,6 +59,7 @@ internal class InopcCollector : CollectorBase
 
 	#region Реализация
 
+	private readonly int _id;
 	private readonly string _address;
 	private readonly List<Item> _itemsToSend;
 	private readonly ReceiverService _receiverService;
@@ -69,57 +71,64 @@ internal class InopcCollector : CollectorBase
 	{
 		while (!_tokenSource.Token.IsCancellationRequested)
 		{
-			var now = DateTime.Now;
-			List<Item> tags = [];
-
-			foreach (var item in _itemsToSend)
+			try
 			{
-				if (item.PeriodInSeconds == 0)
+				var now = DateTime.Now;
+				List<Item> tags = [];
+
+				foreach (var item in _itemsToSend)
 				{
-					tags.Add(item);
-				}
-				else
-				{
-					var diff = (now - item.LastAsk).TotalSeconds;
-					if (diff > item.PeriodInSeconds)
+					if (item.PeriodInSeconds == 0)
 					{
 						tags.Add(item);
 					}
+					else
+					{
+						var diff = (now - item.LastAsk).TotalSeconds;
+						if (diff > item.PeriodInSeconds)
+						{
+							tags.Add(item);
+						}
+					}
+				}
+
+				if (tags.Count > 0)
+				{
+					var items = tags.Select(x => x.TagName).ToArray();
+
+					var response = await _receiverService.AskInopc(items, _address);
+					var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
+
+					var collectedValues = response.Tags
+						.SelectMany(item => _itemsTags[item.Name]
+							.Select(guid => new CollectValue
+							{
+								DateTime = response.Timestamp,
+								Name = item.Name,
+								Quality = item.Quality,
+								Guid = guid,
+								Value = item.Value,
+							}))
+						.ToArray();
+
+					CollectValues?.Invoke(this, collectedValues);
+
+					foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
+					{
+						tag.LastAsk = response.Timestamp;
+					}
+
+					_logger.LogDebug("Опрос INOPC [{id}][{address}], получено значений: {count}", _id, _address, response.Tags.Length);
 				}
 			}
-
-			if (tags.Count == 0)
-				return;
-
-			_logger.LogDebug("Collect from {address}", _address);
-
-			var items = tags.Select(x => x.TagName).ToArray();
-
-			var response = await _receiverService.AskInopc(items, _address);
-			var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
-
-			var collectedValues = response.Tags
-				.SelectMany(item => _itemsTags[item.Name]
-					.Select(guid => new CollectValue
-					{
-						DateTime = response.Timestamp,
-						Name = item.Name,
-						Quality = item.Quality,
-						Guid = guid,
-						Value = item.Value,
-					}))
-				.ToArray();
-
-			CollectValues?.Invoke(this, collectedValues);
-
-			foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
+			catch (Exception ex)
 			{
-				tag.LastAsk = response.Timestamp;
+				_logger.LogWarning("Ошибка в сборщике INOPC [{id}]: {message}", _id, ex.Message);
 			}
-
-			_logger.LogDebug("Collect from {address} completed, update {count} values", _address, response.Tags.Length);
-
-			await Task.Delay(1000);
+			finally
+			{
+				await Task.Delay(1000);
+			}
 		}
 	}
 
