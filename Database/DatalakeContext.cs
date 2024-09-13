@@ -40,7 +40,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			.Select(x => x.Id)
 			.ToArrayAsync();
 		
-		await Sources.BulkCopyAsync(customSources.ExceptBy(existsCustomSources, x => x.Id));
+		await Sources.BulkCopyAsync(
+			new BulkCopyOptions { KeepIdentity = true },
+			customSources.ExceptBy(existsCustomSources, x => x.Id));
 
 		// создание таблицы настроек
 		if (!await Settings.AnyAsync())
