@@ -3,8 +3,12 @@ using System.Text.Json.Serialization;
 
 namespace Datalake.Server.Services.Receiver;
 
+/// <summary>
+/// Конвертер, преобразовывающий строковое представление о object в соответствующие объекты
+/// </summary>
 public class JsonObjectConverter : JsonConverter<object>
 {
+	/// <inheritdoc />
 	public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		switch (reader.TokenType)
@@ -16,7 +20,7 @@ public class JsonObjectConverter : JsonConverter<object>
 				}
 				break;
 			case JsonTokenType.String:
-				return reader.GetString();
+				return reader.GetString()!;
 			case JsonTokenType.True:
 			case JsonTokenType.False:
 				return reader.GetBoolean();
@@ -29,6 +33,7 @@ public class JsonObjectConverter : JsonConverter<object>
 		throw new JsonException();
 	}
 
+	/// <inheritdoc />
 	public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options)
 	{
 		throw new NotImplementedException();

@@ -51,7 +51,7 @@ public class HistoryIndexerService(
 
 						sw.Stop();
 
-						logger.LogInformation("Создание индекса для {name} завершено: {ms} мс", table.Name, sw.Elapsed.TotalMilliseconds);
+						logger.LogDebug("Создание индекса для {name} завершено: {ms} мс", table.Name, sw.Elapsed.TotalMilliseconds);
 
 						await Task.Delay(1000, stoppingToken);
 					}

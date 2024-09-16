@@ -21,9 +21,6 @@ internal class CollectorProcessor(
 
 			if (lastUpdate > StoredUpdate)
 			{
-				using var scope = serviceScopeFactory.CreateScope();
-				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-
 				var sw = Stopwatch.StartNew();
 				logger.LogInformation("Обновление сборщиков");
 
@@ -31,6 +28,9 @@ internal class CollectorProcessor(
 
 				try
 				{
+					using var scope = serviceScopeFactory.CreateScope();
+					using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+
 					var query =
 						from source in db.Sources
 						from tag in db.Tags.Where(x => !string.IsNullOrEmpty(x.SourceItem)).LeftJoin(x => x.SourceId == source.Id)
