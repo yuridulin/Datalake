@@ -38,7 +38,7 @@ public class HistoryIndexerService(
 					.OrderBy(x => x.Date)
 					.ToArray();
 
-				foreach (var table in tables)
+				foreach (var table in notIndexedTables)
 				{
 					logger.LogInformation("Создание индекса для {name}", table.Name);
 
