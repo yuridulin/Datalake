@@ -7,7 +7,7 @@ build-server:
   stage: build
 
   tags:
-    - push-repos
+    - push-build
 
   script:
     - docker build --no-cache -t datalake:latest-test  -f ./Server/Dockerfile .
