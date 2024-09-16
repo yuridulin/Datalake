@@ -4,6 +4,7 @@ using Datalake.Database.Extensions;
 using Datalake.Database.Repositories;
 using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.Collector;
+using Datalake.Server.BackgroundServices.HistoryIndexer;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
@@ -143,6 +144,7 @@ namespace Datalake.Server
 			// службы
 			builder.Services.AddHostedService<CollectorProcessor>();
 			builder.Services.AddHostedService<CollectorWriter>();
+			builder.Services.AddHostedService<HistoryIndexerService>();
 			builder.Services.AddHostedService<SettingsHandlerService>();
 			builder.Services.AddHostedService(provider
 				=> provider.GetRequiredService<SettingsHandlerService>());

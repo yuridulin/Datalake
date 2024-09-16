@@ -1,10 +1,12 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.Tables;
 using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Values;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
+using Datalake.Database.Models.Classes;
 using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Data;
@@ -17,6 +19,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 {
 	public static readonly string NamePrefix = "TagsHistory_";
 	public static readonly string DateMask = "yyyy_MM_dd";
+	public static readonly string IndexPostfix = "_idx";
 
 	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
 
@@ -31,7 +34,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
 
-	async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime seekDate)
+	internal async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime seekDate)
 	{
 		ITable<TagHistory> table;
 
@@ -128,6 +131,32 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		logger.LogInformation("Новая таблица создана: [{name}] за {ms} мс", tableName, sw.Elapsed.TotalMilliseconds);
 
 		return newTable;
+	}
+
+
+	public async Task<HistoryTableInfo[]> PostgreSQL_GetHistoryTablesFromSchema()
+	{
+		var tables = await db.QueryToArrayAsync<HistoryTableWithIndex>($@"
+			SELECT t.table_name AS ""Name"", i.indexname AS ""Index""
+				FROM information_schema.TABLES t
+				LEFT JOIN pg_indexes i ON i.tablename = t.table_name
+				WHERE t.table_schema = 'public'
+				AND table_name LIKE '{NamePrefix}_%';");
+
+		return tables
+			.Select(x => new HistoryTableInfo
+			{
+				Name = x.Name,
+				Date = GetTableDate(x.Name),
+				HasIndex = !string.IsNullOrEmpty(x.Index),
+			})
+			.ToArray();
+	}
+
+	public async Task PostgreSQL_CreateHistoryIndex(string tableName)
+	{
+		await db.ExecuteAsync($"CREATE INDEX {tableName.ToLower()}{IndexPostfix} " +
+			$"ON public.\"{tableName}\" (\"{nameof(TagHistory.TagId)}\", \"{nameof(TagHistory.Date)}\" DESC);");
 	}
 
 	#endregion
@@ -569,44 +598,64 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		while (seekDate >= firstDate);
 
 		// CTE для поиска последних по дате (перед old) значений для каждого из тегов
-		var tagsBeforeOld =
-			from th in table
-			where identifiers.Contains(th.TagId)
-				&& th.Date < old
-				&& (th.Using == TagUsing.Initial || th.Using == TagUsing.Basic)
-			select new
-			{
-				th.TagId,
-				th.Date,
-				th.Text,
-				th.Number,
-				th.Quality,
-				th.Using,
-				rn = Sql.Ext
-					.RowNumber().Over()
-					.PartitionBy(th.TagId)
-					.OrderByDesc(th.Date)
-					.ToValue()
-			};
+		if (table == null)
+		{
+			var lastStoredDate = tables.Keys
+				.Where(x => x <= lastDate)
+				.OrderByDescending(x => x)
+				.DefaultIfEmpty(DateTime.MinValue)
+				.FirstOrDefault();
 
-		queries.Add(
-			from rt in tagsBeforeOld
-			where rt.rn == 1
-			select new TagHistory
+			if (lastStoredDate != DateTime.MinValue)
 			{
-				TagId = rt.TagId,
-				Date = old,
-				Text = rt.Text,
-				Number = rt.Number,
-				Quality = rt.Quality,
-				Using = TagUsing.Continuous,
-			});
+				table = db.GetTable<TagHistory>().TableName(GetTableName(lastStoredDate));
+			}
+		}
+
+		if (table != null)
+		{
+			var tagsBeforeOld =
+				from th in table
+				where identifiers.Contains(th.TagId)
+					&& th.Date < old
+					&& (th.Using == TagUsing.Initial || th.Using == TagUsing.Basic)
+				select new
+				{
+					th.TagId,
+					th.Date,
+					th.Text,
+					th.Number,
+					th.Quality,
+					th.Using,
+					rn = Sql.Ext
+						.RowNumber().Over()
+						.PartitionBy(th.TagId)
+						.OrderByDesc(th.Date)
+						.ToValue()
+				};
+
+			queries.Add(
+				from rt in tagsBeforeOld
+				where rt.rn == 1
+				select new TagHistory
+				{
+					TagId = rt.TagId,
+					Date = old,
+					Text = rt.Text,
+					Number = rt.Number,
+					Quality = rt.Quality,
+					Using = TagUsing.Continuous,
+				});
+		}
 
 		// мегазапрос для получения всех необходимых данных
-		var megaQuery = queries.Aggregate((current, next) => current.Union(next));
+		if (queries.Count > 0)
+		{
+			var megaQuery = queries.Aggregate((current, next) => current.Union(next));
 
-		// выполнение мегазапроса
-		values = await megaQuery.ToListAsync();
+			// выполнение мегазапроса
+			values = await megaQuery.ToListAsync();
+		}
 
 		d.Stop();
 		logger.LogInformation("Чтение значений из БД: {ms} мс", d.Elapsed.TotalMilliseconds);

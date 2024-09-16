@@ -1,7 +1,6 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.Tags;
-using Datalake.ApiClasses.Models.Values;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
 using Datalake.Database.Repositories;
@@ -61,15 +60,16 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		}
 
 		// заполнение кэша
-		var schemaProvider = DataProvider.GetSchemaProvider();
-		var schema = schemaProvider.GetSchema(this);
+		var valuesRepository = new ValuesRepository(this);
 
-		Cache.Tables = schema.Tables
-			.Where(x => x.TableName!.StartsWith(ValuesRepository.NamePrefix))
+		var tables = await valuesRepository.PostgreSQL_GetHistoryTablesFromSchema();
+
+		Cache.Tables = tables
+			.Where(x => x.Name.StartsWith(ValuesRepository.NamePrefix))
 			.Select(x => new
 			{
-				Date = ValuesRepository.GetTableDate(x.TableName!),
-				Name = x.TableName!,
+				Date = ValuesRepository.GetTableDate(x.Name),
+				x.Name,
 			})
 			.Where(x => x.Date != DateTime.MinValue)
 			.DistinctBy(x => x.Date)
@@ -92,8 +92,14 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			}
 		).ToDictionaryAsync(x => x.Id, x => x);
 
+		// создание таблицы для значений на текущую дату
+		if (!Cache.Tables.ContainsKey(DateTime.Today))
+		{
+			await valuesRepository.GetHistoryTableAsync(DateTime.Today);
+		}
+
 		// актуализация таблицы текущих значений
-		var lastValues = await new ValuesRepository(this).ReadHistoryValuesAsync([.. Cache.Tags.Keys], DateTime.Now, DateTime.Now);
+		var lastValues = await valuesRepository.ReadHistoryValuesAsync([.. Cache.Tags.Keys], DateTime.Now, DateTime.Now);
 
 		Live.Write(lastValues);
 	}
