@@ -7,7 +7,7 @@ build-server:
   stage: build
 
   tags:
-    - push-repos
+    - push-build
 
   script:
     - docker build --no-cache -t datalake:latest-test  -f ./Server/Dockerfile .
@@ -20,7 +20,7 @@ push-server:
   stage: push
 
   tags:
-    - push-repos
+    - push-build
 
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
