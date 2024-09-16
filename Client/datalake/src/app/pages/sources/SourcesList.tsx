@@ -9,7 +9,10 @@ import Header from '../../components/Header'
 export default function SourcesList() {
 	const [list, setList] = useState([] as SourceInfo[])
 
-	const load = () => api.sourcesReadAll().then((res) => setList(res.data))
+	const load = () =>
+		api
+			.sourcesReadAll({ withCustom: false })
+			.then((res) => setList(res.data))
 
 	const createSource = () => {
 		api.sourcesCreate().then(load)

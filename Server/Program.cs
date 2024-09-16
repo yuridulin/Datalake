@@ -2,7 +2,9 @@ using Datalake.ApiClasses.Exceptions.Base;
 using Datalake.Database;
 using Datalake.Database.Extensions;
 using Datalake.Database.Repositories;
+using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.Collector;
+using Datalake.Server.BackgroundServices.HistoryIndexer;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
@@ -14,7 +16,6 @@ using LinqToDB.AspNet.Logging;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
-using Serilog;
 using System.Reflection;
 
 [assembly: AssemblyVersion("2.0.*")]
@@ -47,16 +48,13 @@ namespace Datalake.Server
 				options.SchemaSettings.SchemaProcessors.Add(new XEnumVarnamesNswagSchemaProcessor());
 			});
 
-			builder.Host.UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
-			builder.Services.AddLogging(options => options.AddSerilog());
+			builder.Services.AddLogging(/*options => options.AddSerilog()*/);
 			builder.Services.AddEndpointsApiExplorer();
 
 			ConfigureDatabase(builder);
 			ConfigureServices(builder);
 
 			var app = builder.Build();
-
-			app.UseSerilogRequestLogging();
 
 			WebRootPath = app.Environment.WebRootPath;
 			StartWorkWithDatabase(app);
@@ -107,31 +105,17 @@ namespace Datalake.Server
 				}
 			}
 
-			var loggerFactory = LoggerFactory.Create(builder =>
-			{
-				builder
-#if DEBUG
-					.AddDebug()
-#else
-					.AddFilter("Microsoft", LogLevel.Warning)
-					.AddFilter("System", LogLevel.Warning)
-					.AddFilter("Npgsql", LogLevel.Warning)
-					.AddFilter("LinqToDB.Data.DataConnection", LogLevel.Warning)
-#endif
-					.AddConsole();
-			});
-
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
 				options
 					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
-					.UseLoggerFactory(loggerFactory);
+					.UseLoggerFactory(LogManager.MainLoggerFactory);
 			});
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
 					.UsePostgreSQL(connectionString ?? throw new Exception("Connection string not provided"))
-					.UseLoggerFactory(loggerFactory)
+					.UseLoggerFactory(LogManager.MainLoggerFactory)
 			);
 
 			AppContext.SetSwitch("Npgsql.EnableDiagnostics", true);
@@ -158,7 +142,9 @@ namespace Datalake.Server
 			builder.Services.AddTransient<AuthMiddleware>();
 
 			// службы
-			builder.Services.AddHostedService<CollectorService>();
+			builder.Services.AddHostedService<CollectorProcessor>();
+			builder.Services.AddHostedService<CollectorWriter>();
+			builder.Services.AddHostedService<HistoryIndexerService>();
 			builder.Services.AddHostedService<SettingsHandlerService>();
 			builder.Services.AddHostedService(provider
 				=> provider.GetRequiredService<SettingsHandlerService>());
@@ -182,6 +168,8 @@ namespace Datalake.Server
 					Type = ApiClasses.Enums.LogType.Success,
 					Text = "Сервер запущен",
 				});
+
+				db.SetLastUpdateToNow();
 			}
 		}
 

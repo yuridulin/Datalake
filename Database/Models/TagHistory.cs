@@ -1,16 +1,11 @@
 ﻿using Datalake.ApiClasses.Enums;
 using LinqToDB.Mapping;
-using Microsoft.EntityFrameworkCore;
-using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
-using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
 namespace Datalake.Database.Models;
 
-[Keyless, Table(TableName), LinqToDB.Mapping.Table(TableName)]
+[Table]
 public class TagHistory
 {
-	const string TableName = "TagsLive";
-
 	[Column, NotNull]
 	public int TagId { get; set; }
 
@@ -28,4 +23,28 @@ public class TagHistory
 
 	[Column, NotNull]
 	public TagUsing Using { get; set; } = TagUsing.Basic;
+
+
+
+	[System.ComponentModel.DataAnnotations.Schema.NotMapped]
+	private int? _cachedHashCode;
+
+	public override int GetHashCode()
+	{
+		if (!_cachedHashCode.HasValue)
+		{
+			int hashQuality = Quality.GetHashCode();
+			int hashText = Text?.GetHashCode() ?? 0;
+			int hashNumber = Number.GetHashCode();
+
+			_cachedHashCode = hashQuality ^ hashText ^ hashNumber;
+		}
+
+		return _cachedHashCode.Value;
+	}
+
+	public override bool Equals(object? obj)
+	{
+		return obj is TagHistory history && GetHashCode() == history.GetHashCode();
+	}
 }

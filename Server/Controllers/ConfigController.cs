@@ -2,6 +2,7 @@
 using Datalake.ApiClasses.Models.Logs;
 using Datalake.ApiClasses.Models.Settings;
 using Datalake.Database.Repositories;
+using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
 using LinqToDB;
@@ -26,9 +27,9 @@ public class ConfigController(
 	/// </summary>
 	/// <returns>Дата в строковом виде</returns>
 	[HttpGet("last")]
-	public async Task<ActionResult<string>> GetLastUpdateAsync()
+	public ActionResult<string> GetLastUpdate()
 	{
-		var lastUpdate = await systemRepository.GetLastUpdateDate();
+		var lastUpdate = Cache.LastUpdate;
 		return lastUpdate.ToString(DateFormats.HierarchicalWithMilliseconds);
 	}
 

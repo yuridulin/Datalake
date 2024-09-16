@@ -1,25 +1,59 @@
-import { Link, Outlet } from 'react-router-dom'
-import { isAuth } from '../api/local-auth'
-import { AppMenu } from './components/AppMenu'
-import UserPanel from './components/UserPanel'
+import { ConfigProvider, theme } from 'antd'
+import dayjs from 'dayjs'
+import { useEffect, useState } from 'react'
+import { AuthProvider } from 'react-oidc-context'
+import { RouterProvider } from 'react-router-dom'
+import { UpdateContext } from '../context/updateContext'
+import router from './router/router'
+import routes from './router/routes'
+
+import locale from 'antd/locale/ru_RU'
+import 'dayjs/locale/ru'
+dayjs.locale('ru')
+
+declare const KEYCLOAK_DB: string
+declare const KEYCLOAK_CLIENT: string
 
 export default function App() {
+	const [lastUpdate, setUpdate] = useState<Date>(new Date())
+	const { defaultAlgorithm, darkAlgorithm } = theme
+	const [isDarkMode, setIsDarkMode] = useState(false)
+
+	const oidcConfig = {
+		authority:
+			window.location.protocol + '//' + KEYCLOAK_DB + '/realms/energo',
+		redirect_uri: window.location.origin + routes.Auth.EnergoId,
+		client_id: KEYCLOAK_CLIENT,
+	}
+
+	useEffect(() => {
+		setIsDarkMode(
+			window.matchMedia &&
+				window.matchMedia('(prefers-color-scheme: dark)').matches,
+		)
+		window
+			.matchMedia('(prefers-color-scheme: dark)')
+			.addEventListener('change', (event) => {
+				setIsDarkMode(event.matches)
+			})
+	}, [])
+
+	dayjs.locale('')
+
 	return (
-		<>
-			{isAuth() && (
-				<>
-					<div className='left'>
-						<Link to='/' className='title'>
-							Datalake
-						</Link>
-						<UserPanel />
-						<AppMenu />
-					</div>
-					<div className='right'>
-						<Outlet />
-					</div>
-				</>
-			)}
-		</>
+		<ConfigProvider
+			theme={{
+				algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,
+			}}
+			locale={locale}
+		>
+			<UpdateContext.Provider
+				value={{ lastUpdate, setUpdate, isDarkMode }}
+			>
+				<AuthProvider {...oidcConfig}>
+					<RouterProvider router={router} />
+				</AuthProvider>
+			</UpdateContext.Provider>
+		</ConfigProvider>
 	)
 }

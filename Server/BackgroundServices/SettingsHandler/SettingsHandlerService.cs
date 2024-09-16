@@ -1,5 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Repositories;
+using Datalake.Database.Utilities;
 using Datalake.Server.Services.SessionManager;
 using Datalake.Server.Services.SessionManager.Models;
 
@@ -25,19 +26,29 @@ public class SettingsHandlerService(
 	{
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			using var scope = serviceScopeFactory.CreateScope();
-			using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+			var lastUpdate = Cache.LastUpdate;
 
-			var systemRepository = new SystemRepository(db);
-			var usersRepository = new UsersRepository(db);
-
-			var newUpdateDate = await systemRepository.GetLastUpdateDate();
-			if (newUpdateDate > _lastUpdate)
+			if (lastUpdate > StoredUpdate)
 			{
-				logger.LogDebug("Обновление настроек");
+				logger.LogInformation("Обновление настроек");
 
-				await WriteStartipFileAsync(systemRepository);
-				LoadStaticUsers(usersRepository);
+				try
+				{
+					using var scope = serviceScopeFactory.CreateScope();
+					using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+
+					var systemRepository = new SystemRepository(db);
+					var usersRepository = new UsersRepository(db);
+
+					await WriteStartipFileAsync(systemRepository);
+					LoadStaticUsers(usersRepository);
+
+					StoredUpdate = lastUpdate;
+				}
+				catch (Exception ex)
+				{
+					logger.LogError("Ошибка при обновлении настроек: {message}", ex.Message);
+				}
 			}
 
 			await Task.Delay(5000, stoppingToken);
@@ -45,22 +56,29 @@ public class SettingsHandlerService(
 	}
 
 
-	private DateTime _lastUpdate;
+	private DateTime StoredUpdate;
 
 	/// <inheritdoc />
 	public async Task WriteStartipFileAsync(SystemRepository systemRepository)
 	{
 		logger.LogDebug("Обновление настроек, передаваемых веб-клиенту");
 
-		var newSettings = await systemRepository.GetSettingsAsync();
+		try
+		{
+			var newSettings = await systemRepository.GetSettingsAsync();
 
-		File.WriteAllLines(Path.Combine(Program.WebRootPath, "startup.js"), [
-			"var LOCAL_API = true;",
-			$"var KEYCLOAK_DB = '{newSettings.EnergoIdHost}';",
-			$"var KEYCLOAK_CLIENT = '{newSettings.EnergoIdClient}';",
-		]);
+			File.WriteAllLines(Path.Combine(Program.WebRootPath, "startup.js"), [
+				"var LOCAL_API = true;",
+				$"var KEYCLOAK_DB = '{newSettings.EnergoIdHost}';",
+				$"var KEYCLOAK_CLIENT = '{newSettings.EnergoIdClient}';",
+			]);
 
-		_lastUpdate = DateTime.Now;
+			StoredUpdate = DateTime.Now;
+		}
+		catch (Exception ex)
+		{
+			logger.LogError("Ошибка при обновлении настроек, передаваемых веб-клиенту: {message}", ex.Message);
+		}
 	}
 
 	/// <inheritdoc />
@@ -68,11 +86,18 @@ public class SettingsHandlerService(
 	{
 		logger.LogDebug("Обновление списка статичных учетных записей");
 
-		SessionManagerService.StaticAuthRecords = usersRepository
-			.GetStaticUsers()
-			.Select(x => new AuthSession { ExpirationTime = DateTime.MaxValue, User = x.Item1, StaticHost = x.Item2 })
-			.ToList();
+		try
+		{
+			SessionManagerService.StaticAuthRecords = usersRepository
+				.GetStaticUsers()
+				.Select(x => new AuthSession { ExpirationTime = DateTime.MaxValue, User = x.Item1, StaticHost = x.Item2 })
+				.ToList();
 
-		_lastUpdate = DateTime.Now;
+			StoredUpdate = DateTime.Now;
+		}
+		catch (Exception ex)
+		{
+			logger.LogError("Ошибка при обновлении списка статичных учетных записей: {message}", ex.Message);
+		}
 	}
 }

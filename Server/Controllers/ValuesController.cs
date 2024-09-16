@@ -41,7 +41,8 @@ public class ValuesController(ValuesRepository valuesRepository) : ControllerBas
 	public async Task<List<ValuesTagResponse>> WriteAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests)
 	{
-		var responses = await valuesRepository.WriteValuesAsync(requests);
+		// Флаг отключает проверку на новизну значения по сравнению с текущим
+		var responses = await valuesRepository.WriteValuesAsync(requests, overrided: true);
 
 		return responses;
 	}

@@ -3,6 +3,7 @@ using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Models;
+using Datalake.Database.Utilities;
 using LinqToDB;
 
 namespace Datalake.Database.Extensions;
@@ -13,23 +14,20 @@ public static class DatalakeContextExtension
 	/// Обновление времени последнего изменения структуры тегов, источников и сущностей в базе данных
 	/// </summary>
 	/// <param name="db">Подключение к базе данных</param>
-	public static async Task SetLastUpdateToNowAsync(this DatalakeContext db)
+	public static void SetLastUpdateToNow(this DatalakeContext db)
 	{
-		await db.Settings
-			.Set(x => x.LastUpdate, DateTime.UtcNow)
-			.UpdateAsync();
+		lock (db)
+		{
+			Cache.LastUpdate = DateTime.Now;
+		}
 	}
 
-	public static async Task<DateTime> GetLastUpdateAsync(this DatalakeContext db)
-	{
-		var lastUpdate = await db.Settings
-			.Select(x => x.LastUpdate)
-			.DefaultIfEmpty(DateTime.MinValue)
-			.FirstOrDefaultAsync();
-
-		return lastUpdate;
-	}
-
+	/// <summary>
+	/// Сообщение аудита в БД
+	/// </summary>
+	/// <param name="db"></param>
+	/// <param name="log"></param>
+	/// <returns></returns>
 	public static async Task LogAsync(
 		this DatalakeContext db,
 		Log log)

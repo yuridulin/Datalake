@@ -63,4 +63,25 @@ public partial class TagsRepository
 
 		return query;
 	}
+
+	public IQueryable<TagCacheInfo> GetTagsForCache()
+	{
+		var query =
+			from t in db.Tags
+			from s in db.Sources.LeftJoin(x => x.Id == t.SourceId)
+			select new TagCacheInfo
+			{
+				Id = t.Id,
+				Guid = t.GlobalGuid,
+				Name = t.Name,
+				TagType = t.Type,
+				SourceType = s.Type,
+				IsManual = t.SourceId == (int)CustomSource.Manual,
+				ScalingCoefficient = t.IsScaling
+					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
+					: 1,
+			};
+
+		return query;
+	}
 }

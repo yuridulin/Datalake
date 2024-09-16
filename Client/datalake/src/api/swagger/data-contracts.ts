@@ -213,6 +213,10 @@ export interface SettingsInfo {
 	 * Протокол будет выбран на основе того, какой используется в клиенте в данный момент
 	 */
 	energoIdHost?: string
+	/** Название клиента EnergoId, через который идет аутентификация */
+	energoIdClient?: string
+	/** Конечная точка сервиса, который отдает информацию о пользователях EnergoId */
+	energoIdApi?: string
 }
 
 /** Информация о источнике */
@@ -261,6 +265,8 @@ export interface SourceItemInfo {
 	path: string
 	/** Тип данных */
 	type: TagType
+	/** Значение, прочитанное с источника при опросе */
+	value?: any
 }
 
 /** Информация о сопоставлении данных в источнике и в базе */
@@ -317,6 +323,11 @@ export interface TagCreateRequest {
 export interface TagInfo {
 	/**
 	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Глобальный идентификатор тега
 	 * @format guid
 	 * @minLength 1
 	 */
@@ -774,6 +785,11 @@ export interface ValuesResponse {
 export interface ValuesTagResponse {
 	/**
 	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Глобальный идентификатор тега
 	 * @format guid
 	 * @minLength 1
 	 */
@@ -859,8 +875,8 @@ export interface ValuesRequest {
 	requestKey: string
 	/** Список глобальных идентификаторов тегов */
 	tags?: string[] | null
-	/** Список имен тегов. По именам будут сопоставлены идентификаторы тегов, если список идентификаторов в запросе пуст */
-	tagNames?: string[] | null
+	/** Список локальных идентификаторов тегов */
+	tagsId?: number[] | null
 	/**
 	 * Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
 	 * @format date-time
@@ -905,10 +921,15 @@ export enum AggregationFunc {
 /** Данные запроса на ввод значения */
 export interface ValueWriteRequest {
 	/**
-	 * Идентификатор тега
+	 * Глобальные идентификатор тега
 	 * @format guid
 	 */
 	guid?: string | null
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
+	id?: number | null
 	/** Наименование тега */
 	name?: string | null
 	/** Новое значение */

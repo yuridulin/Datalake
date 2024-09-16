@@ -1,76 +1,98 @@
-import { useCallback, useEffect, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Menu } from 'antd'
+import { ItemType, MenuItemType } from 'antd/es/menu/interface'
+import { NavLink } from 'react-router-dom'
 import { CustomSource } from '../../api/models/customSource'
-import api from '../../api/swagger-api'
-import { BlockTreeInfo, SourceInfo } from '../../api/swagger/data-contracts'
-import { useUpdateContext } from '../../context/updateContext'
-import { useInterval } from '../../hooks/useInterval'
 import routes from '../router/routes'
 
+const items: ItemType<MenuItemType>[] = [
+	{
+		key: 'admin',
+		label: 'Администрирование',
+		type: 'group',
+		children: [
+			{
+				key: 'logs',
+				label: <NavLink to={'/'}>Журнал</NavLink>,
+			},
+			{
+				key: 'users',
+				label: <NavLink to={routes.Users.List}>Пользователи</NavLink>,
+			},
+			{
+				key: 'user-groups',
+				label: (
+					<NavLink to={routes.UserGroups.List}>
+						Группы пользователей
+					</NavLink>
+				),
+			},
+		],
+	},
+	{
+		key: 'sources',
+		label: 'Источники данных',
+		type: 'group',
+		children: [
+			{
+				key: 'sources-list',
+				label: <NavLink to={'/sources'}>Список источников</NavLink>,
+			},
+		],
+	},
+	{
+		key: 'blocks',
+		label: 'Объекты',
+		type: 'group',
+		children: [
+			{
+				key: 'blocks-tree',
+				label: <NavLink to={'/blocks'}>Дерево объектов</NavLink>,
+			},
+		],
+	},
+	{
+		key: 'tags-group',
+		type: 'group',
+		label: 'Теги',
+		children: [
+			{
+				key: 'tags',
+				label: <NavLink to={'/tags'}>Все теги</NavLink>,
+			},
+			{
+				key: CustomSource.Manual,
+				label: <NavLink to={'/tags/manual/'}>Мануальные теги</NavLink>,
+			},
+			{
+				key: CustomSource.Calculated,
+				label: <NavLink to={'/tags/calc/'}>Вычисляемые теги</NavLink>,
+			},
+		],
+	},
+	{
+		key: 'viewer',
+		label: 'Просмотр данных',
+		type: 'group',
+		children: [
+			{
+				key: 'viewer-tags',
+				label: (
+					<NavLink to={routes.Viewer.root + routes.Viewer.TagsViewer}>
+						Запросы
+					</NavLink>
+				),
+			},
+		],
+	},
+]
+
 export function AppMenu() {
-	const { lastUpdate } = useUpdateContext()
-	const navigate = useNavigate()
-
-	const [sources, setSources] = useState([] as SourceInfo[])
-	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
-
-	const load = useCallback(() => {
-		api.blocksReadAsTree()
-			.then((res) => setBlocks(res.data))
-			.catch(() => setBlocks([]))
-		api.sourcesReadAll()
-			.then((res) => setSources(res.data))
-			.catch(() => setSources([]))
-	}, [])
-
-	useEffect(load, [load, navigate, lastUpdate])
-	useInterval(load, 60000)
-
 	return (
-		<div className='app-menu'>
-			<div className='app-menu-block'>
-				<NavLink to={'/'}>Монитор</NavLink>
-				<NavLink to={routes.Users.List}>Пользователи</NavLink>
-				<NavLink to={routes.UserGroups.List}>
-					Группы пользователей
-				</NavLink>
-			</div>
-
-			<div className='app-menu-block'>
-				<NavLink to={'/sources'}>Источники</NavLink>
-				<div className='app-menu-sub'>
-					{!!sources &&
-						sources.map((x) => (
-							<NavLink key={x.id} to={`/sources/${x.id}`}>
-								{x.name}
-							</NavLink>
-						))}
-				</div>
-			</div>
-
-			<div className='app-menu-block'>
-				<NavLink to={'/tags'}>Теги</NavLink>
-				<div className='app-menu-sub'>
-					<NavLink key={CustomSource.Manual} to={'/tags/manual/'}>
-						Мануальные теги
-					</NavLink>
-					<NavLink key={CustomSource.Calculated} to={'/tags/calc/'}>
-						Вычисляемые теги
-					</NavLink>
-				</div>
-			</div>
-
-			<div className='app-menu-block'>
-				<NavLink to={'/blocks'}>Объекты</NavLink>
-				<div className='app-menu-sub'>
-					{!!blocks &&
-						blocks.map((x) => (
-							<NavLink key={x.id} to={`/blocks/${x.id}`}>
-								{x.name}
-							</NavLink>
-						))}
-				</div>
-			</div>
-		</div>
+		<Menu
+			style={{ border: 0 }}
+			items={items}
+			mode='inline'
+			defaultOpenKeys={['tags']}
+		/>
 	)
 }

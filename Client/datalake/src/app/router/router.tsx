@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import App from '../App'
+import AppLayout from '../AppLayout'
 import BlockForm from '../pages/blocks/BlockForm'
 import BlockView from '../pages/blocks/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'
@@ -17,6 +17,7 @@ import UserGroupsTreeList from '../pages/usergroups/UserGroupsTreeList'
 import UserCreate from '../pages/users/UserCreate'
 import UserForm from '../pages/users/UserForm'
 import UsersList from '../pages/users/UsersList'
+import TagsViewer from '../pages/viewer/TagsViewer'
 import routes from './routes'
 
 const router = createBrowserRouter([
@@ -30,7 +31,7 @@ const router = createBrowserRouter([
 	},
 	{
 		path: '/',
-		element: <App />,
+		element: <AppLayout />,
 		children: [
 			{
 				path: '/',
@@ -101,6 +102,15 @@ const router = createBrowserRouter([
 					{
 						path: '/tags/:id',
 						element: <TagForm />,
+					},
+				],
+			},
+			{
+				path: routes.Viewer.root,
+				children: [
+					{
+						path: routes.Viewer.root + routes.Viewer.TagsViewer,
+						element: <TagsViewer />,
 					},
 				],
 			},

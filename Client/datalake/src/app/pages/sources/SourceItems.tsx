@@ -10,6 +10,7 @@ import {
 } from '../../../api/swagger/data-contracts'
 import Header from '../../components/Header'
 import TagTypeEl from '../../components/TagTypeEl'
+import TagValueEl from '../../components/TagValueEl'
 
 export default function SourceItems({
 	type,
@@ -81,6 +82,14 @@ export default function SourceItems({
 				Доступные значения с этого источника данных
 			</Header>
 			<div className='table'>
+				<div className='table-header'>
+					<span>Путь в источнике</span>
+					<span>Тип значения</span>
+					<span title='Значение, полученное при опросе источника'>
+						Значение
+					</span>
+					<span>Тег</span>
+				</div>
 				{items.map((x, i) => (
 					<div className='table-row' key={i}>
 						<span>
@@ -89,6 +98,13 @@ export default function SourceItems({
 						<span>
 							<TagTypeEl
 								tagType={x.itemInfo?.type || TagType.String}
+							/>
+						</span>
+						<span>
+							<TagValueEl
+								type={x.itemInfo?.type || TagType.String}
+								allowEdit={false}
+								value={x.itemInfo?.value}
 							/>
 						</span>
 						{x.tagInfo ? (

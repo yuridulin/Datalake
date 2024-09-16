@@ -1,11 +1,12 @@
 ﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Tags;
 using Datalake.Database.Models;
 
 namespace Datalake.Database.Extensions;
 
 public static class TagExtension
 {
-	public static TagHistory ToHistory(this Tag tag, object? value, ushort qualityRaw)
+	public static TagHistory ToHistory(this TagCacheInfo tag, object? value, ushort qualityRaw)
 	{
 		var quality = !Enum.IsDefined(typeof(TagQuality), (int)qualityRaw)
 			? TagQuality.Unknown
@@ -14,7 +15,7 @@ public static class TagExtension
 		return tag.ToHistory(value, quality);
 	}
 
-	public static TagHistory ToHistory(this Tag tag, object? value, TagQuality? quality)
+	public static TagHistory ToHistory(this TagCacheInfo tag, object? value, TagQuality? quality)
 	{
 		var history = new TagHistory
 		{
@@ -26,35 +27,35 @@ public static class TagExtension
 			Using = TagUsing.Basic,
 		};
 
+		if (value == null)
+			return history;
 
-		if (tag.Type == TagType.String)
+		string text = value.ToString()!;
+
+		switch (tag.TagType)
 		{
-			history.Text = value?.ToString();
-		}
+			case TagType.String:
+				history.Text = text;
+				break;
 
-		else
-		{
-			float? number = float.TryParse(value?.ToString() ?? "x", out float d) ? d : null;
-
-			if (tag.Type == TagType.Boolean)
-			{
-				history.Number = number.HasValue ? (number.Value == 1 ? 1 : 0) : 0;
-
-				history.Text = history.Number != 0 ? "true" : "false";
-			}
-
-			else if (tag.Type == TagType.Number)
-			{
-				// вычисление значения на основе шкалирования
-				if (tag.Type == TagType.Number && number.HasValue && tag.IsScaling)
+			case TagType.Number:
+				if (float.TryParse(text ?? "x", out float number))
 				{
-					history.Number = number.Value * ((tag.MaxEu - tag.MinEu) / (tag.MaxRaw - tag.MinRaw));
+					// вычисление значения на основе шкалирования
+					if (tag.ScalingCoefficient != 1)
+					{
+						history.Number = number * tag.ScalingCoefficient;
+					}
+					else
+					{
+						history.Number = number;
+					}
 				}
-				else
-				{
-					history.Number = number;
-				}
-			}
+				break;
+
+			case TagType.Boolean:
+				history.Number = text == "1" || text == "true" ? 1 : 0;
+				break;
 		}
 
 		return history;

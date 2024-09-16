@@ -1,8 +1,10 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Tags;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
 using Datalake.Database.Repositories;
+using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
@@ -21,30 +23,6 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	/// </summary>
 	public async Task EnsureDataCreatedAsync()
 	{
-		// заполнение списка партицированных таблиц по реальной базе
-		var schemaProvider = DataProvider.GetSchemaProvider();
-		var schema = schemaProvider.GetSchema(this);
-
-		var realHistoryTables = schema.Tables
-			.Where(x => x.TableName != null)
-			.Where(x => x.TableName!.StartsWith(ValuesRepository.NamePrefix))
-			.Select(x => new TagHistoryChunk
-			{
-				Table = x.TableName!,
-				Date = DateOnly.TryParseExact(
-					x.TableName!.Replace(ValuesRepository.NamePrefix, ""),
-					ValuesRepository.DateMask,
-					out var date) ? date : DateOnly.MinValue,
-			})
-			.Where(x => x.Date != DateOnly.MinValue)
-			.ToArray();
-
-		if (realHistoryTables.Length > 0)
-		{
-			await TagHistoryChunks.DeleteAsync();
-			await TagHistoryChunks.BulkCopyAsync(realHistoryTables);
-		}
-
 		// запись необходимых источников в список
 		var customSources = Enum.GetValues<CustomSource>()
 			.Select(x => new Source
@@ -56,21 +34,14 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			})
 			.ToArray();
 
-		foreach (var source in customSources)
-		{
-			if (!await Sources.AnyAsync(x => x.Id == source.Id))
-			{
-				int count = await Sources
-					.Value(x => x.Id, source.Id)
-					.Value(x => x.Name, source.Name)
-					.Value(x => x.Description, source.Description)
-					.Value(x => x.Type, source.Type)
-					.InsertAsync();
-
-				if (count == 0)
-					throw new Exception("Не удалось добавить источник по умолчанию: " + (CustomSource)source.Id);
-			}
-		}
+		var existsCustomSources = await Sources
+			.Where(x => customSources.Select(c => c.Id).Contains(x.Id))
+			.Select(x => x.Id)
+			.ToArrayAsync();
+		
+		await Sources.BulkCopyAsync(
+			new BulkCopyOptions { KeepIdentity = true },
+			customSources.ExceptBy(existsCustomSources, x => x.Id));
 
 		// создание таблицы настроек
 		if (!await Settings.AnyAsync())
@@ -88,46 +59,49 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			await new UsersRepository(this).CreateAsync(Defaults.InitialAdmin);
 		}
 
-		// актуализация таблицы текущих значенийD
-		var tagsWithoutLiveValues = await (
-			from tag in Tags
-			from live in TagsLive.LeftJoin(x => x.TagId == tag.Id)
-			where live == null
-			select tag.Id
-		).ToArrayAsync();
+		// заполнение кэша
+		var valuesRepository = new ValuesRepository(this);
 
-		if (tagsWithoutLiveValues.Length > 0)
-		{
-			// пробуем прочитать последние значения из последнего чанка
-			if (realHistoryTables.Length > 0)
+		var tables = await valuesRepository.PostgreSQL_GetHistoryTablesFromSchema();
+
+		Cache.Tables = tables
+			.Where(x => x.Name.StartsWith(ValuesRepository.NamePrefix))
+			.Select(x => new
 			{
-				var tags = await Tags.Select(x => x.Id).ToArrayAsync();
-				var lastHistoryChunk = realHistoryTables.OrderByDescending(x => x.Date).Select(x => x.Table).First();
-				var lastHistoryTable = this.GetTable<TagHistory>().TableName(lastHistoryChunk);
+				Date = ValuesRepository.GetTableDate(x.Name),
+				x.Name,
+			})
+			.Where(x => x.Date != DateTime.MinValue)
+			.DistinctBy(x => x.Date)
+			.ToDictionary(x => x.Date, x => x.Name);
 
-				var lastHistoryValues = await lastHistoryTable
-					.Where(x => tagsWithoutLiveValues.Contains(x.TagId))
-					.GroupBy(x => x.TagId)
-					.Select(g => g.OrderByDescending(x => x.Date).First())
-					.ToArrayAsync();
-
-				await TagsLive.BulkCopyAsync(lastHistoryValues);
-
-				// после вставки значений урезаем список несуществующих текущих
-				tagsWithoutLiveValues = tagsWithoutLiveValues.Except(lastHistoryValues.Select(x => x.TagId)).ToArray();
+		Cache.Tags = await (
+			from t in Tags
+			from s in Sources.LeftJoin(x => x.Id == t.SourceId)
+			select new TagCacheInfo
+			{
+				Id = t.Id,
+				Guid = t.GlobalGuid,
+				Name = t.Name,
+				TagType = t.Type,
+				SourceType = s.Type,
+				IsManual = t.SourceId == (int)CustomSource.Manual,
+				ScalingCoefficient = t.IsScaling 
+					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
+					: 1,
 			}
+		).ToDictionaryAsync(x => x.Id, x => x);
 
-			// создаем заглушки для отсутствующих в текущих тегов
-			await TagsLive.BulkCopyAsync(tagsWithoutLiveValues.Select(x => new TagHistory
-			{
-				TagId = x,
-				Date = DateTime.Today,
-				Number = null,
-				Text = null,
-				Quality = TagQuality.Bad_NoValues,
-				Using = TagUsing.NotFound,
-			}));
+		// создание таблицы для значений на текущую дату
+		if (!Cache.Tables.ContainsKey(DateTime.Today))
+		{
+			await valuesRepository.GetHistoryTableAsync(DateTime.Today);
 		}
+
+		// актуализация таблицы текущих значений
+		var lastValues = await valuesRepository.ReadHistoryValuesAsync([.. Cache.Tags.Keys], DateTime.Now, DateTime.Now);
+
+		Live.Write(lastValues);
 	}
 
 	#region Таблицы
@@ -156,14 +130,8 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	public ITable<Tag> Tags
 		=> this.GetTable<Tag>();
 
-	public ITable<TagHistoryChunk> TagHistoryChunks
-		=> this.GetTable<TagHistoryChunk>();
-
 	public ITable<TagInput> TagInputs
 		=> this.GetTable<TagInput>();
-
-	public ITable<TagHistory> TagsLive
-		=> this.GetTable<TagHistory>();
 
 	public ITable<User> Users
 		=> this.GetTable<User>();
