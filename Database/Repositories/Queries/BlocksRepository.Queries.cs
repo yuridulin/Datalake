@@ -42,7 +42,7 @@ public partial class BlocksRepository
 								from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id)
 								from parent in db.Blocks.LeftJoin(x => x.Id == block.ParentId)
 								from block_tag in db.BlockTags.LeftJoin(x => x.BlockId == block.Id)
-								from tag in db.Tags.InnerJoin(x => x.Id == block_tag.TagId)
+								from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId)
 								group new
 								{
 									block,
@@ -59,6 +59,7 @@ public partial class BlocksRepository
 									Name = g.Key.Name,
 									Description = g.Key.Description,
 									Parent = g.Select(x => x.parent)
+										.Where(x => x!= null)
 										.Select(x => new BlockInfo.BlockParentInfo
 										{
 											Id = x.Id,
@@ -66,6 +67,7 @@ public partial class BlocksRepository
 										})
 										.FirstOrDefault(),
 									Children = g.Select(x => x.child)
+										.Where(x => x != null)
 										.Select(x => new BlockInfo.BlockChildInfo
 										{
 											Id = x.Id,
@@ -73,6 +75,7 @@ public partial class BlocksRepository
 										})
 										.ToArray(),
 									Properties = g.Select(x => x.property)
+										.Where(x => x != null)
 										.Select(x => new BlockInfo.BlockPropertyInfo
 										{
 											Id = x.Id,
@@ -82,7 +85,8 @@ public partial class BlocksRepository
 										})
 										.ToArray(),
 									Tags = g
-										.Where(x => x.tag != null)
+										.Select(x => new { x.tag, x.block_tag })
+										.Where(x => x.tag != null && x.block_tag != null)
 										.Select(x => new BlockInfo.BlockTagInfo
 										{
 											Id = x.tag.Id,

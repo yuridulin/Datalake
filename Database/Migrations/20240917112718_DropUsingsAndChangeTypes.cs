@@ -39,12 +39,14 @@ namespace Datalake.Database.Migrations
 
 						EXECUTE superscript;
 				END $$;");
+
+			migrationBuilder.Sql(@"UPDATE ""Blocks"" SET ""ParentId"" = NULL WHERE ""ParentId"" = 0;");
 		}
 
 		/// <inheritdoc />
 		protected override void Down(MigrationBuilder migrationBuilder)
 		{
-
+			// Так далеко мы еще не заходили...
 		}
 	}
 }
