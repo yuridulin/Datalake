@@ -92,7 +92,9 @@ public partial class BlocksRepository
 											Id = x.tag.Id,
 											Name = x.block_tag.Name ?? "",
 											Guid = x.tag.GlobalGuid,
-											TagType = x.block_tag.Relation,
+											Relation = x.block_tag.Relation,
+											TagName = x.tag.Name,
+											TagType = x.tag.Type,
 										})
 										.ToArray(),
 								};

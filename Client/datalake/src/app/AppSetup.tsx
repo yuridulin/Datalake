@@ -14,7 +14,7 @@ dayjs.locale('ru')
 declare const KEYCLOAK_DB: string
 declare const KEYCLOAK_CLIENT: string
 
-export default function App() {
+export default function AppSetup() {
 	const [lastUpdate, setUpdate] = useState<Date>(new Date())
 	const { defaultAlgorithm, darkAlgorithm } = theme
 	const [isDarkMode, setIsDarkMode] = useState(false)

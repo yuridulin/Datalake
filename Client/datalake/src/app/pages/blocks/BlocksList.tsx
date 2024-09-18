@@ -1,15 +1,75 @@
-import { Button } from 'antd'
+import { Button, Table, TableColumnsType } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
 import Header from '../../components/Header'
 
+interface DataType {
+	key: React.ReactNode
+	id: number
+	name: string
+	description: string
+	children?: DataType[]
+}
+
+function transformBlockTreeInfo(blocks: BlockTreeInfo[]): DataType[] {
+	const data = blocks.map((block) => {
+		const transformedBlock: DataType = {
+			key: block.id,
+			id: block.id,
+			name: block.name,
+			description: block.description || '',
+		}
+
+		const children = transformBlockTreeInfo(block.children)
+		if (children.length > 0) {
+			transformedBlock.children = children
+		}
+
+		return transformedBlock
+	})
+
+	return data.sort((a, b) => a.name.localeCompare(b.name))
+}
+
+const columns: TableColumnsType<DataType> = [
+	{
+		key: 'id',
+		width: '3em',
+		align: 'center',
+	},
+	{
+		title: 'Название',
+		dataIndex: 'name',
+		key: 'name',
+		width: '40%',
+		render: (_, record: DataType) => (
+			<NavLink
+				className='table-row'
+				to={'/blocks/view/' + record.id}
+				key={record.id}
+			>
+				<Button>{record.name}</Button>
+			</NavLink>
+		),
+		sorter: (a, b) => a.name.localeCompare(b.name),
+		defaultSortOrder: 'ascend',
+	},
+	{
+		title: 'Описание',
+		dataIndex: 'description',
+		key: 'desc',
+	},
+]
+
 export default function Dashboard() {
-	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
+	const [data, setData] = useState([] as DataType[])
 
 	function load() {
-		api.blocksReadAsTree().then((res) => setBlocks(res.data))
+		api.blocksReadAsTree().then((res) =>
+			setData(transformBlockTreeInfo(res.data)),
+		)
 	}
 
 	function createBlock() {
@@ -27,28 +87,12 @@ export default function Dashboard() {
 			>
 				Блоки верхнего уровня
 			</Header>
-			{blocks.length > 0 ? (
-				<div className='table'>
-					<div className='table-header'>
-						<span>Имя</span>
-						<span>Описание</span>
-						<span>Кол-во тегов</span>
-					</div>
-					{blocks.map((x) => (
-						<NavLink
-							className='table-row'
-							to={'/blocks/view/' + x.id}
-							key={x.id}
-						>
-							<span>{x.name}</span>
-							<span>{x.description}</span>
-							<span>{x.children.length}</span>
-						</NavLink>
-					))}
-				</div>
-			) : (
-				<div>не определено ни одного блока</div>
-			)}
+			<Table
+				size='small'
+				columns={columns}
+				dataSource={data}
+				pagination={false}
+			/>
 		</>
 	)
 }

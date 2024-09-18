@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Datalake.ApiClasses.Models.Blocks;
 
 /// <summary>
-/// Информация о сущности
+/// Информация о блоке
 /// </summary>
 public class BlockInfo
 {
@@ -26,18 +26,18 @@ public class BlockInfo
 	public string? Description { get; set; }
 
 	/// <summary>
-	/// Информация о родительской сущности
+	/// Информация о родительском блоке
 	/// </summary>
 	public BlockParentInfo? Parent { get; set; }
 
 	/// <summary>
-	/// Список дочерних сущностей
+	/// Список дочерних блоков
 	/// </summary>
 	[Required]
 	public BlockChildInfo[] Children { get; set; } = [];
 
 	/// <summary>
-	/// Список статических свойств сущности
+	/// Список статических свойств блока
 	/// </summary>
 	[Required]
 	public BlockPropertyInfo[] Properties { get; set; } = [];
@@ -68,12 +68,12 @@ public class BlockInfo
 	}
 
 	/// <summary>
-	/// Информация о родительской сущности
+	/// Информация о родительском блоке
 	/// </summary>
 	public class BlockParentInfo : BlockRelationInfo { }
 
 	/// <summary>
-	/// Информация о дочерней сущности
+	/// Информация о дочернем блоке
 	/// </summary>
 	public class BlockChildInfo : BlockRelationInfo { }
 
@@ -89,14 +89,23 @@ public class BlockInfo
 		public required Guid Guid { get; set; }
 
 		/// <summary>
+		/// Тип поля блока для этого тега
+		/// </summary>
+		public BlockTagRelation Relation { get; set; } = BlockTagRelation.Static;
+
+		/// <summary>
 		/// Тип значений тега
 		/// </summary>
-		[Required]
-		public required BlockTagRelation TagType { get; set; }
+		public TagType TagType { get; set; } = TagType.String;
+
+		/// <summary>
+		/// Свое имя тега в общем списке
+		/// </summary>
+		public string TagName { get; set; } = string.Empty;
 	}
 
 	/// <summary>
-	/// Информация о статическом свойстве сущности
+	/// Информация о статическом свойстве блока
 	/// </summary>
 	public class BlockPropertyInfo : BlockRelationInfo
 	{

@@ -23,6 +23,17 @@ const routes = {
 			return this.root + '/' + guid
 		},
 	},
+	Blocks: {
+		root: '/blocks',
+		View: '/view',
+		Edit: '/edit',
+		routeToViewBlock(id: number) {
+			return `${this.root}${this.View}/${id}`
+		},
+		routeToEditBlock(id: number) {
+			return `${this.root}${this.Edit}/${id}`
+		},
+	},
 	Root: '/',
 	offline: '/offline',
 }

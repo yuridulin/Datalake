@@ -1,108 +1,122 @@
-import { Button } from 'antd'
+import { Button, Descriptions, DescriptionsProps, Divider, Table } from 'antd'
+import Column from 'antd/es/table/Column'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import getDictFromValuesResponseArray from '../../../api/models/getDictFromValuesResponseArray'
+import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import {
-	AggregationFunc,
 	BlockInfo,
-	TagType,
-	ValuesRequest,
+	BlockTagInfo,
+	ValueRecord,
 } from '../../../api/swagger/data-contracts'
 import { useInterval } from '../../../hooks/useInterval'
-import BlockTagRelationEl from '../../components/BlockTagRelationEl'
-import FormRow from '../../components/FormRow'
 import Header from '../../components/Header'
-import TagValueEl from '../../components/TagValueEl'
-import router from '../../router/router'
+import TagCompactValue from '../../components/TagCompactValue'
+import routes from '../../router/routes'
+
+type TableModel = BlockInfo & {
+	tags: BlockTagInfo & {
+		value?: ValueRecord
+	}
+}
 
 export default function BlockView() {
 	const { id } = useParams()
-	const [block, setBlock] = useState({} as BlockInfo)
-	const [values, setValues] = useState(
-		{} as { [key: string]: string | number | boolean | null | undefined },
-	)
+	const navigate = useNavigate()
 
-	function load() {
-		api.blocksRead(Number(id)).then((res) => {
-			setBlock(res.data)
-		})
+	const [block, setBlock] = useState({} as TableModel)
+
+	const items: DescriptionsProps['items'] = [
+		{ key: 'name', label: 'Имя', children: block.name },
+		{
+			key: 'desc',
+			label: 'Описание',
+			children: block.description,
+		},
+	]
+
+	const getBlock = () => {
+		api.blocksRead(Number(id))
+			.then((res) => {
+				setBlock(res.data as TableModel)
+				getTagsValues(res.data.tags.map((x) => x.id))
+			})
+			.catch(() => setBlock({} as TableModel))
 	}
 
-	function getValues() {
+	const getValues = () => {
+		if (block.tags?.length === 0) return
+		getTagsValues(block.tags.map((x) => x.id))
+	}
+
+	const getTagsValues = (tags: number[]) => {
 		api.valuesGet([
 			{
-				tags: block.tags.map((x) => x.guid),
-				func: AggregationFunc.List,
-			} as ValuesRequest,
+				requestKey: 'block-values',
+				tagsId: tags,
+			},
 		]).then((res) => {
-			setValues(getDictFromValuesResponseArray(res.data))
+			const values = Object.fromEntries(
+				res.data[0].tags.map((x) => [x.id, x.values[0]]),
+			)
+			setBlock({
+				...block,
+				tags: block.tags.map((x) => ({ ...x, value: values[x.id] })),
+			} as unknown as TableModel)
 		})
 	}
 
-	useEffect(() => {
-		if (!id) return
-		load()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [id])
-
-	useEffect(() => {
-		if (!id || (block?.tags?.length ?? 0) === 0) return
-		getValues()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [block])
-	useInterval(function () {
-		if (!id) return
-		getValues()
-	}, 1000)
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect(getBlock, [id])
+	useInterval(getValues, 1000)
 
 	return (
 		<>
 			<Header
 				left={
-					<Button onClick={() => router.navigate('/blocks')}>
+					<Button onClick={() => navigate('/blocks')}>
 						Вернуться
 					</Button>
 				}
 				right={
-					<Button
-						onClick={() => router.navigate('/blocks/edit/' + id)}
-					>
-						Изменить
+					<Button onClick={() => navigate('/blocks/edit/' + id)}>
+						Редактирование
 					</Button>
 				}
 			>
-				<i className='material-icons'>data_object</i> {block.name}
+				{block.name}
 			</Header>
-			<FormRow title='Описание'>{block.description}</FormRow>
-			<div className='table'>
-				<div className='table-header'>
-					<span style={{ width: '40%' }}>Свойство</span>
-					<span>Значение</span>
-					<span style={{ width: '10em' }}>Тип</span>
-				</div>
-				{block.properties.map((propertyInfo, i) => (
-					<div key={i} className='table-row'>
-						<span>Свойство</span>
-						<span>{propertyInfo.name}</span>
-						<span>постоянное</span>
-					</div>
-				))}
-				{block.tags.map((tag, i) => (
-					<div key={i} className='table-row'>
-						<span>{tag.name}</span>
-						<span>
-							<TagValueEl
-								value={values[tag.id]}
-								type={TagType.String}
+			<Descriptions colon={true} layout='vertical' items={items} />
+			<Divider />
+			<Table dataSource={block.tags} size='small' pagination={false}>
+				<Column
+					key='guid'
+					dataIndex='guid'
+					title='Поле'
+					render={(_, record: BlockTagInfo) => (
+						<NavLink to={routes.Tags.routeToTag(record.guid)}>
+							<Button title={record.tagName} size='small'>
+								{record.name || <i>имя не задано</i>}
+							</Button>
+						</NavLink>
+					)}
+				/>
+				<Column
+					key='value'
+					dataIndex='value'
+					title='Значение'
+					render={(value: ValueRecord, record: BlockTagInfo) =>
+						!value ? (
+							<></>
+						) : (
+							<TagCompactValue
+								type={record.tagType!}
+								quality={value.quality}
+								value={value.value}
 							/>
-						</span>
-						<span>
-							<BlockTagRelationEl relation={tag.tagType} />
-						</span>
-					</div>
-				))}
-			</div>
+						)
+					}
+				/>
+			</Table>
 		</>
 	)
 }

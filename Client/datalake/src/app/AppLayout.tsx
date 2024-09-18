@@ -1,4 +1,4 @@
-import { Layout } from 'antd'
+import { Layout, notification } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
 import { Link, Outlet } from 'react-router-dom'
@@ -6,6 +6,12 @@ import { isAuth } from '../api/local-auth'
 import { useUpdateContext } from '../context/updateContext'
 import { AppMenu } from './components/AppMenu'
 import UserPanel from './components/UserPanel'
+
+notification.config({
+	placement: 'bottomLeft',
+	bottom: 50,
+	duration: 5,
+})
 
 export default function AppLayout() {
 	const { isDarkMode } = useUpdateContext()
@@ -22,12 +28,18 @@ export default function AppLayout() {
 		bottom: 0,
 		scrollbarWidth: 'thin',
 		scrollbarColor: 'unset',
+		zIndex: 1,
 	}
 	return (
 		<>
 			{isAuth() && (
-				<Layout hasSider>
-					<Sider width='20%' style={siderStyle}>
+				<Layout
+					hasSider
+					style={{
+						minWidth: '80em',
+					}}
+				>
+					<Sider width='20em' style={siderStyle}>
 						<Link
 							to='/'
 							className='title'
@@ -42,7 +54,7 @@ export default function AppLayout() {
 					</Sider>
 					<Layout
 						style={{
-							marginInlineStart: '20%',
+							marginInlineStart: '20em',
 							backgroundColor: isDarkMode ? '#121212' : '#fff',
 						}}
 					>

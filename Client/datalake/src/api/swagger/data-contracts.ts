@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------
  */
 
-/** Информация о сущности */
+/** Информация о блоке */
 export interface BlockInfo {
 	/**
 	 * Идентификатор
@@ -23,17 +23,17 @@ export interface BlockInfo {
 	name: string
 	/** Текстовое описание */
 	description?: string | null
-	/** Информация о родительской сущности */
+	/** Информация о родительском блоке */
 	parent?: BlockParentInfo | null
-	/** Список дочерних сущностей */
+	/** Список дочерних блоков */
 	children: BlockChildInfo[]
-	/** Список статических свойств сущности */
+	/** Список статических свойств блока */
 	properties: BlockPropertyInfo[]
 	/** Список прикреплённых тегов */
 	tags: BlockTagInfo[]
 }
 
-/** Информация о родительской сущности */
+/** Информация о родительском блоке */
 export type BlockParentInfo = BlockRelationInfo & object
 
 /** Связанный с блоком объект */
@@ -50,10 +50,10 @@ export interface BlockRelationInfo {
 	name: string
 }
 
-/** Информация о дочерней сущности */
+/** Информация о дочернем блоке */
 export type BlockChildInfo = BlockRelationInfo & object
 
-/** Информация о статическом свойстве сущности */
+/** Информация о статическом свойстве блока */
 export type BlockPropertyInfo = BlockRelationInfo & {
 	/** Тип значения свойства */
 	type: TagType
@@ -85,8 +85,12 @@ export type BlockTagInfo = BlockRelationInfo & {
 	 * @minLength 1
 	 */
 	guid: string
+	/** Тип поля блока для этого тега */
+	relation?: BlockTagRelation
 	/** Тип значений тега */
-	tagType: BlockTagRelation
+	tagType?: TagType
+	/** Свое имя тега в общем списке */
+	tagName?: string
 }
 
 /**
@@ -822,8 +826,6 @@ export interface ValueRecord {
 	value?: any
 	/** Достоверность значения */
 	quality: TagQuality
-	/** Характеристика хранения значения */
-	using: TagUsing
 }
 
 /**
@@ -845,25 +847,6 @@ export enum TagQuality {
 	Good = 192,
 	GoodManualWrite = 216,
 	Unknown = -1,
-}
-
-/**
- * Характеристика значения
- *
- * 0 = Initial
- * 1 = Basic
- * 2 = Aggregated
- * 3 = Continuous
- * 100 = Outdated
- * 101 = NotFound
- */
-export enum TagUsing {
-	Initial = 0,
-	Basic = 1,
-	Aggregated = 2,
-	Continuous = 3,
-	Outdated = 100,
-	NotFound = 101,
 }
 
 /** Данные запроса для получения значений */

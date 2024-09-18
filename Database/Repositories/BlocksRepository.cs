@@ -96,7 +96,7 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 	{
 		if (!await db.Blocks.AnyAsync(x => x.Id == id))
 			throw new NotFoundException($"Сущность #{id} не найдена");
-		if (await db.Blocks.AnyAsync(x => x.Name == block.Name))
+		if (await db.Blocks.AnyAsync(x => x.Id != id && x.Name == block.Name))
 			throw new AlreadyExistException("Сущность с таким именем уже существует");
 		if (block.Parent != null)
 		{
@@ -144,7 +144,7 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 
 		if (tags != null && tags.Length > 0)
 		{
-			await db.BulkCopyAsync(tags.Select(x => new BlockTag
+			await db.BlockTags.BulkCopyAsync(tags.Select(x => new BlockTag
 			{
 				BlockId = id,
 				TagId = x.Id,

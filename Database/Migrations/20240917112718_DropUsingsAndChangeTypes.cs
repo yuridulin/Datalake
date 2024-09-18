@@ -40,7 +40,11 @@ namespace Datalake.Database.Migrations
 						EXECUTE superscript;
 				END $$;");
 
+			// проблема старого подхода к ParentId
 			migrationBuilder.Sql(@"UPDATE ""Blocks"" SET ""ParentId"" = NULL WHERE ""ParentId"" = 0;");
+
+			// откуда это, я хз
+			migrationBuilder.Sql(@"ALTER TABLE ""BlockTags"" DROP COLUMN ""Type"";");
 		}
 
 		/// <inheritdoc />

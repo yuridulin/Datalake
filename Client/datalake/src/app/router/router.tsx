@@ -1,5 +1,6 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '../AppLayout'
+import ErrorBoundary from '../components/ErrorBoundary'
 import BlockForm from '../pages/blocks/BlockForm'
 import BlockView from '../pages/blocks/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'
@@ -132,7 +133,7 @@ const router = createBrowserRouter([
 				],
 			},
 		],
-		errorElement: <Navigate to='/' />,
+		errorElement: <ErrorBoundary />,
 	},
 	{
 		path: '/offline',
