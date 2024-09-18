@@ -34,7 +34,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
 
-	internal async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime seekDate)
+	internal async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTimeOffset seekDate)
 	{
 		ITable<TagHistory> table;
 
@@ -100,7 +100,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					Number = x.Number,
 					Text = x.Text,
 					Quality = x.Quality,
-					Using = TagUsing.Initial,
 				});
 
 			await newTable.BulkCopyAsync(latestHistoryValues);
@@ -116,7 +115,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					Number = null,
 					Text = null,
 					Quality = TagQuality.Bad_NoValues,
-					Using = TagUsing.Initial,
 				};
 
 			await newTable.BulkCopyAsync(uninitializedValues);
@@ -173,7 +171,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			Text = null,
 			Quality = TagQuality.Unknown,
 			TagId = tagId,
-			Using = TagUsing.Initial,
 		};
 
 		Live.Write([record]);
@@ -221,7 +218,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			if (!Live.IsNew(record) && !overrided)
 				continue;
 			record.Date = writeRequest.Date ?? DateTime.Now;
-			record.Using = TagUsing.Basic;
 
 			recordsToWrite.Add(record);
 
@@ -247,7 +243,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 						DateString = record.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 						Quality = record.Quality,
 						Value = record.GetTypedValue(info.TagType),
-						Using = record.Using,
 					}
 				]
 			});
@@ -304,8 +299,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		// указываем, что предыдущие значения в этой точке времени устарели
 		await table
 			.Where(x => x.TagId == record.TagId && x.Date == record.Date)
-			.Set(x => x.Using, TagUsing.Outdated)
-			.UpdateAsync();
+			.DeleteAsync();
 
 		// запись нового значения
 		await table
@@ -314,12 +308,11 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			.Value(x => x.Text, record.Text)
 			.Value(x => x.Number, record.Number)
 			.Value(x => x.Quality, record.Quality)
-			.Value(x => x.Using, TagUsing.Basic)
 			.InsertAsync();
 
 		// проверка, является ли новое значение последним в таблице
 		// если да, мы должны обновить следующие Using = Initial по каскаду до последнего
-		var valueAfterWrited = await table.Where(x => x.TagId == record.TagId && x.Date > record.Date).ToArrayAsync();
+		/*var valueAfterWrited = await table.Where(x => x.TagId == record.TagId && x.Date > record.Date).ToArrayAsync();
 		if (valueAfterWrited.Length == 0)
 		{
 			var nextTablesDates = Cache.Tables
@@ -371,7 +364,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					break;
 				}
 			}
-		}
+		}*/
 	}
 
 	#endregion
@@ -418,7 +411,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 							Date = x.Value.Date,
 							DateString = x.Value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 							Quality = x.Value.Quality,
-							Using = x.Value.Using,
 							Value = x.Value.GetTypedValue(x.Info.TagType),
 						}]
 					})
@@ -466,7 +458,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 								Date = x.Date,
 								DateString = x.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 								Quality = x.Quality,
-								Using = x.Using,
 								Value = x.GetTypedValue(tagInfo.TagType),
 							})
 							.OrderBy(x => x.Date)],
@@ -516,7 +507,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 										Date = exact,
 										DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
 										Quality = TagQuality.Good,
-										Using = TagUsing.Aggregated,
 										Value = value,
 									}
 									]
@@ -536,7 +526,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 										Date = exact,
 										DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
 										Quality = TagQuality.Bad_NoValues,
-										Using = TagUsing.Aggregated,
 										Value = 0,
 									}
 									]
@@ -584,8 +573,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				table = db.GetTable<TagHistory>().TableName(GetTableName(seekDate));
 
 				var query = table
-					.Where(x => identifiers.Contains(x.TagId))
-					.Where(x => x.Using == TagUsing.Basic);
+					.Where(x => identifiers.Contains(x.TagId));
 
 				if (seekDate == lastDate) query = query.Where(x => x.Date <= young);
 				if (seekDate == firstDate) query = query.Where(x => x.Date >= old);
@@ -618,7 +606,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				from th in table
 				where identifiers.Contains(th.TagId)
 					&& th.Date < old
-					&& (th.Using == TagUsing.Initial || th.Using == TagUsing.Basic)
 				select new
 				{
 					th.TagId,
@@ -626,7 +613,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					th.Text,
 					th.Number,
 					th.Quality,
-					th.Using,
 					rn = Sql.Ext
 						.RowNumber().Over()
 						.PartitionBy(th.TagId)
@@ -644,7 +630,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 					Text = rt.Text,
 					Number = rt.Number,
 					Quality = rt.Quality,
-					Using = TagUsing.Continuous,
 				});
 		}
 
@@ -706,7 +691,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 								Text = value.Text,
 								Number = value.Number,
 								Quality = value.Quality,
-								Using = TagUsing.Continuous,
 							});
 						}
 						else
@@ -732,7 +716,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			Text = null,
 			Number = null,
 			Quality = TagQuality.Bad,
-			Using = TagUsing.NotFound,
 		};
 	}
 

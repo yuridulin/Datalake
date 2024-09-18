@@ -24,7 +24,6 @@ public static class TagExtension
 			Number = null,
 			Quality = quality ?? TagQuality.Unknown,
 			TagId = tag.Id,
-			Using = TagUsing.Basic,
 		};
 
 		if (value == null)

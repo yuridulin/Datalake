@@ -1,16 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Datalake.ApiClasses.Models.Tables;
 
-namespace Datalake.ApiClasses.Models.Tables;
-
+/// <summary>
+/// Информация о таблице истории
+/// </summary>
 public class HistoryTableInfo
 {
-	public string Name { get; set; }
+	/// <summary>
+	/// Название таблицы
+	/// </summary>
+	public required string Name { get; set; }
 
-	public DateTime Date { get; set; }
+	/// <summary>
+	/// Дата суток, на которые значения
+	/// </summary>
+	public required DateTime Date { get; set; }
 
-	public bool HasIndex { get; set; }
+	/// <summary>
+	/// Найден ли индекс в базе данных
+	/// </summary>
+	public required bool HasIndex { get; set; }
 }

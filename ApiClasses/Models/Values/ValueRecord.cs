@@ -13,7 +13,7 @@ public class ValueRecord
 	/// Дата, на которую значение актуально
 	/// </summary>
 	[Required]
-	public required DateTime Date { get; set; }
+	public required DateTimeOffset Date { get; set; }
 
 	/// <summary>
 	/// Строковое представление даты
@@ -32,10 +32,4 @@ public class ValueRecord
 	/// </summary>
 	[Required]
 	public required TagQuality Quality { get; set; }
-
-	/// <summary>
-	/// Характеристика хранения значения
-	/// </summary>
-	[Required]
-	public required TagUsing Using { get; set; }
 }

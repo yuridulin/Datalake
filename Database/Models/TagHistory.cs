@@ -10,9 +10,9 @@ public class TagHistory
 	public int TagId { get; set; }
 
 	[Column, NotNull]
-	public DateTime Date { get; set; } = DateTime.Now;
+	public DateTimeOffset Date { get; set; } = DateTimeOffset.Now;
 
-	[Column, Nullable]
+	[Column, Nullable, DataType(LinqToDB.DataType.Text)]
 	public string? Text { get; set; } = null;
 
 	[Column, Nullable]
@@ -20,9 +20,6 @@ public class TagHistory
 
 	[Column, NotNull]
 	public TagQuality Quality { get; set; } = TagQuality.Good;
-
-	[Column, NotNull]
-	public TagUsing Using { get; set; } = TagUsing.Basic;
 
 
 
