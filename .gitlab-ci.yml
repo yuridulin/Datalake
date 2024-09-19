@@ -2,6 +2,9 @@ include:
   - "gitlab-ci/prod.yml"
   - "gitlab-ci/test.yml"
 
+variables:
+  GIT_SSL_NO_VERIFY: "true"
+
 stages:
   - build
   - push
