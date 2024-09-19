@@ -58,10 +58,15 @@ export default function BlockView() {
 			const values = Object.fromEntries(
 				res.data[0].tags.map((x) => [x.id, x.values[0]]),
 			)
-			setBlock({
-				...block,
-				tags: block.tags.map((x) => ({ ...x, value: values[x.id] })),
-			} as unknown as TableModel)
+			if (block.tags) {
+				setBlock({
+					...block,
+					tags: block.tags.map((x) => ({
+						...x,
+						value: values[x.id],
+					})),
+				} as unknown as TableModel)
+			}
 		})
 	}
 
