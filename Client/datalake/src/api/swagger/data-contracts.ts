@@ -140,6 +140,35 @@ export interface BlockTreeInfo {
 	children: BlockTreeInfo[]
 }
 
+/** Новая информация о блоке */
+export interface BlockUpdateRequest {
+	/**
+	 * Новое название
+	 * @minLength 1
+	 */
+	name: string
+	/** Новое описание */
+	description?: string | null
+	/** Новый список закрепленных тегов */
+	tags: AttachedTag[]
+}
+
+/** Информация о закрепленном теге */
+export interface AttachedTag {
+	/**
+	 * Локальный идентификатор тега
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Название поля в блоке, которому соответствует тег
+	 * @minLength 1
+	 */
+	name: string
+	/** Тип поля блока */
+	relation?: BlockTagRelation
+}
+
 /** Запись собщения */
 export interface LogInfo {
 	/**

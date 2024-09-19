@@ -15,7 +15,7 @@ import {
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '../../../api/swagger-api'
-import { BlockInfo } from '../../../api/swagger/data-contracts'
+import { BlockUpdateRequest } from '../../../api/swagger/data-contracts'
 import Header from '../../components/Header'
 import routes from '../../router/routes'
 import styles from './BlockForm.module.css'
@@ -23,10 +23,10 @@ import styles from './BlockForm.module.css'
 export default function BlockForm() {
 	const { id } = useParams()
 	const navigate = useNavigate()
-	const [form] = Form.useForm<BlockInfo>()
+	const [form] = Form.useForm<BlockUpdateRequest>()
 
-	const [block, setBlock] = useState({} as BlockInfo)
-	const [tags, setTags] = useState([] as { label: string; value: string }[])
+	const [block, setBlock] = useState({} as BlockUpdateRequest)
+	const [tags, setTags] = useState([] as { label: string; value: number }[])
 
 	const getBlock = () => {
 		api.blocksRead(Number(id)).then((res) => {
@@ -35,10 +35,10 @@ export default function BlockForm() {
 		})
 	}
 
-	const updateBlock = (newInfo: BlockInfo) => {
+	const updateBlock = (newInfo: BlockUpdateRequest) => {
 		api.blocksUpdate(Number(id), newInfo)
 			.then(() => {
-				setBlock(newInfo)
+				//setBlock(newInfo)
 			})
 			.catch(() => {
 				notification.error({
@@ -57,7 +57,7 @@ export default function BlockForm() {
 				res.data
 					.map((x) => ({
 						label: x.name,
-						value: x.guid,
+						value: x.id,
 					}))
 					.sort((a, b) => a.label.localeCompare(b.label)),
 			)
@@ -145,10 +145,11 @@ export default function BlockForm() {
 										<td>
 											<Form.Item
 												{...rest}
-												name={[name, 'guid']}
+												name={[name, 'id']}
 											>
 												<Select
 													showSearch
+													optionFilterProp='label'
 													options={tags}
 													placeholder='Выберите тег для прикрепления'
 												></Select>

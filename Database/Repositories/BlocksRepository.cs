@@ -19,7 +19,7 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync();
 	}
 
-	public async Task<bool> UpdateAsync(UserAuthInfo user, int id, BlockInfo block)
+	public async Task<bool> UpdateAsync(UserAuthInfo user, int id, BlockUpdateRequest block)
 	{
 		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
 		return await UpdateAsync(id, block);
@@ -92,17 +92,12 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 		return id ?? throw new DatabaseException(message: "не удалось добавить сущность", DatabaseStandartError.IdIsNull);
 	}
 
-	internal async Task<bool> UpdateAsync(int id, BlockInfo block)
+	internal async Task<bool> UpdateAsync(int id, BlockUpdateRequest block)
 	{
 		if (!await db.Blocks.AnyAsync(x => x.Id == id))
 			throw new NotFoundException($"Сущность #{id} не найдена");
 		if (await db.Blocks.AnyAsync(x => x.Id != id && x.Name == block.Name))
 			throw new AlreadyExistException("Сущность с таким именем уже существует");
-		if (block.Parent != null)
-		{
-			if (!await db.Blocks.AnyAsync(x => x.Id == block.Parent.Id))
-				throw new NotFoundException($"Родительская сущность #{block.Parent.Id} не найдена");
-		}
 
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -112,10 +107,23 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 			.Where(x => x.Id == id)
 			.Set(x => x.Name, block.Name)
 			.Set(x => x.Description, block.Description)
-			.Set(x => x.ParentId, block.Parent?.Id ?? null)
 			.UpdateAsync();
 
-		await UpdateRelationsWithTags(id, block.Tags);
+		await db.BlockTags
+			.Where(x => x.BlockId == id)
+			.DeleteAsync();
+
+		if (block.Tags.Length > 0)
+		{
+			await db.BlockTags.BulkCopyAsync(block.Tags.Select(x => new BlockTag
+			{
+				BlockId = id,
+				TagId = x.Id,
+				Name = x.Name,
+				Relation = x.Relation,
+			}));
+		}
+
 		await transaction.CommitAsync();
 
 		if (count == 0)
@@ -132,25 +140,6 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 
 		if (count == 0)
 			throw new DatabaseException(message: "не удалось удалить сущность #{id}", DatabaseStandartError.DeletedZero);
-
-		return true;
-	}
-
-	private async Task<bool> UpdateRelationsWithTags(int id, BlockInfo.BlockTagInfo[]? tags)
-	{
-		await db.BlockTags
-			.Where(x => x.BlockId == id)
-			.DeleteAsync();
-
-		if (tags != null && tags.Length > 0)
-		{
-			await db.BlockTags.BulkCopyAsync(tags.Select(x => new BlockTag
-			{
-				BlockId = id,
-				TagId = x.Id,
-				Name = x.Name,
-			}));
-		}
 
 		return true;
 	}

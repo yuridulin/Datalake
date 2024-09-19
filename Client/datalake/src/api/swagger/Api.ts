@@ -13,6 +13,7 @@ import {
 	BlockInfo,
 	BlockSimpleInfo,
 	BlockTreeInfo,
+	BlockUpdateRequest,
 	EnergoIdInfo,
 	LogInfo,
 	SettingsInfo,
@@ -118,7 +119,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request PUT:/api/Blocks/{id}
 	 * @response `200` `File`
 	 */
-	blocksUpdate = (id: number, data: BlockInfo, params: RequestParams = {}) =>
+	blocksUpdate = (id: number, data: BlockUpdateRequest, params: RequestParams = {}) =>
 		this.request<File, any>({
 			path: `/api/Blocks/${id}`,
 			method: 'PUT',

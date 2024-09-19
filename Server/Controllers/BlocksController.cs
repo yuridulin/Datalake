@@ -87,7 +87,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	[HttpPut("{id:int}")]
 	public async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int id,
-		[BindRequired, FromBody] BlockInfo block)
+		[BindRequired, FromBody] BlockUpdateRequest block)
 	{
 		var user = Authenticate();
 
