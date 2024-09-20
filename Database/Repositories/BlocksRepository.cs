@@ -6,18 +6,12 @@ using Datalake.Database.Models;
 using Datalake.Database.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
-using LinqToDB.EntityFrameworkCore;
 
 namespace Datalake.Database.Repositories;
 
-public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
+public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
-
-	public async Task CheckAccessToBlockAsync(UserAuthInfo user, int id)
-	{
-		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
-	}
 
 	public async Task<int> CreateAsync(UserAuthInfo user, BlockInfo? blockInfo = null, int? parentId = null)
 	{
@@ -47,20 +41,13 @@ public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
 
 	#region Реализация
 
-	internal async Task<int> CreateAsync(int? parentId)
+	internal async Task<int> CreateAsync(int? parentId = null)
 	{
 		int? id;
-
-		if (parentId != null)
-		{
-			if (!await db.Blocks.AnyAsync(x => x.Id == parentId))
-				throw new NotFoundException($"Родительский блок #{parentId} не найден");
-		}
 
 		try
 		{
 			id = await db.Blocks
-				.ToLinqToDBTable()
 				.Value(x => x.GlobalId, Guid.NewGuid())
 				.Value(x => x.ParentId, parentId)
 				.Value(x => x.Name, "INSERTING BLOCK")
@@ -70,14 +57,14 @@ public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
 			if (id.HasValue)
 				await db.Blocks
 					.Where(x => x.Id == id.Value)
-					.Set(x => x.Name, "Блок #" + id.Value)
+					.Set(x => x.Name, "Сущность #" + id.Value)
 					.UpdateAsync();
 
 			return id.Value;
 		}
 		catch (Exception ex)
 		{
-			throw new DatabaseException(message: "не удалось добавить блок", ex);
+			throw new DatabaseException(message: "не удалось добавить сущность", ex);
 		}
 
 	}
@@ -85,11 +72,11 @@ public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
 	internal async Task<int> CreateAsync(BlockInfo block)
 	{
 		if (await db.Blocks.AnyAsync(x => x.Name == block.Name))
-			throw new AlreadyExistException("Блок с таким именем уже существует");
+			throw new AlreadyExistException("Сущность с таким именем уже существует");
 		if (block.Parent != null)
 		{
 			if (!await db.Blocks.AnyAsync(x => x.Id == block.Parent.Id))
-				throw new NotFoundException($"Родительский блок #{block.Parent.Id} не найден");
+				throw new NotFoundException($"Родительская сущность #{block.Parent.Id} не найдена");
 		}
 
 		int? id;
@@ -97,7 +84,6 @@ public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
 		try
 		{
 			id = await db.Blocks
-				.ToLinqToDBTable()
 				.Value(x => x.GlobalId, Guid.NewGuid())
 				.Value(x => x.ParentId, block.Parent?.Id)
 				.Value(x => x.Name, block.Name)
@@ -119,7 +105,7 @@ public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
 		if (await db.Blocks.AnyAsync(x => x.Id != id && x.Name == block.Name))
 			throw new AlreadyExistException("Сущность с таким именем уже существует");
 
-		using var transaction = await db.Database.BeginTransactionAsync();
+		using var transaction = await db.BeginTransactionAsync();
 
 		int count = 0;
 
@@ -135,15 +121,13 @@ public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
 
 		if (block.Tags.Length > 0)
 		{
-			await db.BlockTags
-				.ToLinqToDBTable()
-				.BulkCopyAsync(block.Tags.Select(x => new BlockTag
-				{
-					BlockId = id,
-					TagId = x.Id,
-					Name = x.Name,
-					Relation = x.Relation,
-				}));
+			await db.BlockTags.BulkCopyAsync(block.Tags.Select(x => new BlockTag
+			{
+				BlockId = id,
+				TagId = x.Id,
+				Name = x.Name,
+				Relation = x.Relation,
+			}));
 		}
 
 		await transaction.CommitAsync();
@@ -156,7 +140,7 @@ public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
 
 	internal async Task<bool> MoveAsync(int id, int? parentId)
 	{
-		using var transaction = await db.Database.BeginTransactionAsync();
+		using var transaction = await db.BeginTransactionAsync();
 
 		try
 		{
@@ -175,6 +159,7 @@ public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
 			throw new DatabaseException("не удалось переместить блок", ex);
 		}
 	}
+
 
 	internal async Task<bool> DeleteAsync(int id)
 	{

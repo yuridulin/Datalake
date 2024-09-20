@@ -26,7 +26,7 @@ namespace Datalake.Database.Migrations
 																	WHERE table_name = 'TagsHistory_{year}_{month:D2}_{day:D2}' 
 																	AND column_name = 'Date' 
 																	AND data_type = 'timestamp without time zone') THEN
-													ALTER TABLE TagsHistory_{year}_{month:D2}_{day:D2} 
+													ALTER TABLE ""TagsHistory_{year}_{month:D2}_{day:D2}""
 													ALTER COLUMN ""Date"" TYPE timestamptz USING ""Date""::timestamptz;
 											END IF;
 
@@ -34,14 +34,14 @@ namespace Datalake.Database.Migrations
 											IF EXISTS (SELECT 1 FROM information_schema.columns 
 																	WHERE table_name = 'TagsHistory_{year}_{month:D2}_{day:D2}' 
 																	AND column_name = 'Using') THEN
-													DELETE FROM TagsHistory_{year}_{month:D2}_{day:D2} WHERE ""Using"" <> 1;
+													DELETE FROM ""TagsHistory_{year}_{month:D2}_{day:D2}"" WHERE ""Using"" <> 1;
 											END IF;
 
 											-- Удаление столбца Using
 											IF EXISTS (SELECT 1 FROM information_schema.columns 
 																	WHERE table_name = 'TagsHistory_{year}_{month:D2}_{day:D2}' 
 																	AND column_name = 'Using') THEN
-													ALTER TABLE TagsHistory_{year}_{month:D2}_{day:D2} DROP COLUMN ""Using"";
+													ALTER TABLE ""TagsHistory_{year}_{month:D2}_{day:D2}"" DROP COLUMN ""Using"";
 											END IF;
 									END IF;
 							END $$;", true);

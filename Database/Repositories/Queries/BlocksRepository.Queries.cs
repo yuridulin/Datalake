@@ -1,7 +1,5 @@
 ﻿using Datalake.ApiClasses.Models.Blocks;
 using LinqToDB;
-using LinqToDB.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Database.Repositories;
 
@@ -10,7 +8,6 @@ public partial class BlocksRepository
 	public async Task<BlockTreeInfo[]> GetTreeAsync()
 	{
 		var blocks = await db.Blocks
-			.AsNoTracking()
 			.Select(x => new
 			{
 				x.Id,
@@ -18,7 +15,7 @@ public partial class BlocksRepository
 				x.Description,
 				x.ParentId,
 			})
-			.ToArrayAsyncEF();
+			.ToArrayAsync();
 
 		return ReadChildren(null);
 
@@ -34,59 +31,53 @@ public partial class BlocksRepository
 					Children = ReadChildren(x.Id),
 				})
 				.ToArray();
-			;
 		}
 	}
 
 	public IQueryable<BlockInfo> GetInfoWithAllRelations()
 	{
-		var query = db.Blocks
-			.Include(x => x.Properties)
-			.Include(x => x.Children)
-			.Include(x => x.Parent)
-			.Include(x => x.RelationsToTags)
-			.ThenInclude(x => x.Tag)
-			.AsNoTracking()
-			.Select(x => new BlockInfo
-			{
-				Id = x.Id,
-				Name = x.Name,
-				Description = x.Description,
-				Properties = x.Properties
-					.Select(p => new BlockInfo.BlockPropertyInfo
-					{
-						Id = p.Id,
-						Name = p.Name,
-						Type = p.Type,
-						Value = p.Value,
-					})
-					.ToArray(),
-				Parent = x.Parent == null
-					? null
-					: new BlockInfo.BlockParentInfo
-					{
-						Id = x.Parent.Id,
-						Name = x.Parent.Name,
-					},
-				Children = x.Children
-					.Select(c => new BlockInfo.BlockChildInfo
-					{
-						Id = c.Id,
-						Name = c.Name,
-					})
-					.ToArray(),
-				Tags = x.RelationsToTags
-					.Where(r => r.Tag != null)
-					.Select(r => new BlockInfo.BlockTagInfo
-					{
-						Guid = r.Tag!.GlobalGuid,
-						Name = r.Name ?? "",
-						Id = r.Tag!.Id,
-						TagName = r.Tag!.Name,
-						TagType = r.Tag!.Type,
-					})
-					.ToArray(),
-			});
+		var query = from block in db.Blocks
+								select new BlockInfo
+								{
+									Id = block.Id,
+									Name = block.Name,
+									Description = block.Description,
+									Parent = (from parent in db.Blocks
+														where parent.Id == block.ParentId
+														select new BlockInfo.BlockParentInfo
+														{
+															Id = parent.Id,
+															Name = parent.Name
+														}).FirstOrDefault(),
+									Children = (from child in db.Blocks
+															where child.ParentId == block.Id
+															select new BlockInfo.BlockChildInfo
+															{
+																Id = child.Id,
+																Name = child.Name
+															}).ToArray(),
+									Properties = (from property in db.BlockProperties
+																where property.BlockId == block.Id
+																select new BlockInfo.BlockPropertyInfo
+																{
+																	Id = property.Id,
+																	Name = property.Name,
+																	Type = property.Type,
+																	Value = property.Value,
+																}).ToArray(),
+									Tags = (from block_tag in db.BlockTags
+													join tag in db.Tags on block_tag.TagId equals tag.Id
+													where block_tag.BlockId == block.Id
+													select new BlockInfo.BlockTagInfo
+													{
+														Id = tag.Id,
+														Name = block_tag.Name ?? "",
+														Guid = tag.GlobalGuid,
+														Relation = block_tag.Relation,
+														TagName = tag.Name,
+														TagType = tag.Type,
+													}).ToArray(),
+								};
 
 		return query;
 	}
@@ -94,7 +85,6 @@ public partial class BlocksRepository
 	public IQueryable<BlockSimpleInfo> GetSimpleInfo()
 	{
 		return db.Blocks
-			.AsNoTracking()
 			.Select(x => new BlockSimpleInfo
 			{
 				Id = x.Id,
@@ -106,7 +96,6 @@ public partial class BlocksRepository
 	public async Task<List<BlockSimpleInfo>> GetWithParentsAsync(int blockId)
 	{
 		var blocks = await db.Blocks
-			.AsNoTracking()
 			.Select(x => new
 			{
 				x.Id,
@@ -114,7 +103,7 @@ public partial class BlocksRepository
 				x.Description,
 				x.ParentId,
 			})
-			.ToArrayAsyncEF();
+			.ToArrayAsync();
 
 		var parents = new List<BlockSimpleInfo>();
 		int? seekId = blockId;
@@ -134,71 +123,5 @@ public partial class BlocksRepository
 		while (seekId != null);
 
 		return parents;
-	}
-
-	protected async Task<BlockSimpleInfo[]> GetParentsFlat(int? id)
-	{
-		if (id == null)
-			return [];
-
-		var linqToDb = db.CreateLinqToDBConnection();
-
-		var recCTE = linqToDb.GetCte<BlockSimpleInfo>(cte => (
-			from b in db.Blocks
-			where b.Id == id
-			select new BlockSimpleInfo
-			{
-				Id = b.Id,
-				Name = b.Name,
-				ParentId = b.ParentId
-			})
-			.Concat(
-					from r in cte
-					join b in db.Blocks on r.ParentId equals b.Id
-					select new BlockSimpleInfo
-					{
-						Id = b.Id,
-						Name = b.Name,
-						ParentId = b.ParentId
-					}
-			)
-		);
-
-		var result = await recCTE.ToArrayAsyncLinqToDB();
-
-		return result;
-	}
-
-	protected async Task<BlockSimpleInfo[]> GetChildsFlat(int? id)
-	{
-		if (id == null)
-			return await GetSimpleInfo().ToArrayAsyncEF();
-
-		var linqToDb = db.CreateLinqToDBConnection();
-
-		var recCTE = linqToDb.GetCte<BlockSimpleInfo>(cte => (
-			from b in db.Blocks
-			where b.ParentId == id
-			select new BlockSimpleInfo
-			{
-				Id = b.Id,
-				Name = b.Name,
-				ParentId = b.ParentId
-			})
-			.Concat(
-					from r in cte
-					join b in db.Blocks on r.Id equals b.ParentId
-					select new BlockSimpleInfo
-					{
-						Id = b.Id,
-						Name = b.Name,
-						ParentId = b.ParentId
-					}
-			)
-		);
-
-		var result = await recCTE.ToArrayAsyncLinqToDB();
-
-		return result;
 	}
 }

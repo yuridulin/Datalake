@@ -8,11 +8,10 @@ using Datalake.Database.Repositories.Base;
 using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Data;
-using LinqToDB.EntityFrameworkCore;
 
 namespace Datalake.Database.Repositories;
 
-public partial class TagsRepository(DatalakeEfContext db) : RepositoryBase
+public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 {
 	#region Действия
 
@@ -115,7 +114,7 @@ public partial class TagsRepository(DatalakeEfContext db) : RepositoryBase
 			}
 		}
 
-		using var transaction = await db.Database.BeginTransactionAsync();
+		using var transaction = await db.BeginTransactionAsync();
 
 		var tag = new Tag
 		{
@@ -128,7 +127,7 @@ public partial class TagsRepository(DatalakeEfContext db) : RepositoryBase
 			Type = createRequest.TagType,
 			SourceItem = createRequest.SourceItem,
 		};
-		await db.Tags.AddAsync(tag);
+		tag.Id = await db.InsertWithInt32IdentityAsync(tag);
 
 		if (needToAddIdInName)
 		{
@@ -140,12 +139,11 @@ public partial class TagsRepository(DatalakeEfContext db) : RepositoryBase
 				.UpdateAsync();
 		}
 
-		await new ValuesRepository((DatalakeContext)db.CreateLinqToDBContext()).InitializeValueAsync(tag.Id);
+		await new ValuesRepository(db).InitializeValueAsync(tag.Id);
 
 		if (createRequest.BlockId.HasValue)
 		{
 			await db.BlockTags
-				.ToLinqToDBTable()
 				.Value(x => x.TagId, tag.Id)
 				.Value(x => x.BlockId, createRequest.BlockId)
 				.Value(x => x.Name, createRequest.Name)
@@ -170,7 +168,7 @@ public partial class TagsRepository(DatalakeEfContext db) : RepositoryBase
 
 	internal async Task UpdateAsync(Guid guid, TagUpdateRequest updateRequest)
 	{
-		var transaction = await db.Database.BeginTransactionAsync();
+		var transaction = await db.BeginTransactionAsync();
 
 		updateRequest.Name = ValueChecker.RemoveWhitespaces(updateRequest.Name, "_");
 
@@ -218,7 +216,6 @@ public partial class TagsRepository(DatalakeEfContext db) : RepositoryBase
 			.DeleteAsync();
 
 		await db.TagInputs
-			.ToLinqToDBTable()
 			.BulkCopyAsync(updateRequest.FormulaInputs.Select(x => new TagInput
 			{
 				TagId = tag.Id,
@@ -233,7 +230,7 @@ public partial class TagsRepository(DatalakeEfContext db) : RepositoryBase
 
 	internal async Task DeleteAsync(Guid guid)
 	{
-		var transaction = await db.Database.BeginTransactionAsync();
+		var transaction = await db.BeginTransactionAsync();
 
 		var cached = Cache.Tags.Values.FirstOrDefault(x => x.Guid == guid)
 			?? throw new NotFoundException(message: $"тег {guid}");
@@ -256,8 +253,18 @@ public partial class TagsRepository(DatalakeEfContext db) : RepositoryBase
 	internal async Task UpdateTagCache(int id)
 	{
 		var cache = await GetTagsForCache().FirstOrDefaultAsync(x => x.Id == id);
-
-		Cache.UpdateTagCache(id, cache);
+		lock (Cache.Tags)
+		{
+			if (cache == null)
+			{
+				Cache.Tags.Remove(id);
+			}
+			else
+			{
+				Cache.Tags[id] = cache;
+			}
+		}
+		db.SetLastUpdateToNow();
 	}
 
 	#endregion

@@ -35,7 +35,7 @@ public abstract class RepositoryBase
 	}
 
 	protected static async Task CheckAccessToBlockAsync(
-		DatalakeEfContext db,
+		DatalakeContext db,
 		UserAuthInfo user,
 		AccessType minimalAccess,
 		int blockId)
@@ -53,7 +53,7 @@ public abstract class RepositoryBase
 	}
 
 	protected static async Task CheckAccessToTagAsync(
-		DatalakeEfContext db,
+		DatalakeContext db,
 		UserAuthInfo user,
 		AccessType minimalAccess,
 		Guid guid)
