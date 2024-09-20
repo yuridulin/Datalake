@@ -3,7 +3,7 @@ stages:
   - push
   - deploy
 
-build-server:
+build-server-prod:
   stage: build
 
   tags:
@@ -15,9 +15,9 @@ build-server:
     - docker tag datalake:latest "$CI_REPOS_URL"/datalake:latest
 
   only:
-    - /^\d+.\d+.\d+.release$/
+    - /^release.\d+$/
 
-push-server:
+push-server-prod:
   stage: push
 
   tags:
@@ -31,9 +31,9 @@ push-server:
     - docker push "$CI_REPOS_URL"/datalake:latest
 
   only:
-    - /^\d+.\d+.\d+.release$/
+    - /^release.\d+$/
 
-deploy-server:
+deploy-server-prod:
   stage: deploy
 
   tags:
@@ -47,4 +47,4 @@ deploy-server:
     - kubectl delete -n sinus pods -l app=datalake
 
   only:
-    - /^\d+.\d+.\d+.release$/
+    - /^release.\d+$/
