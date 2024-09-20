@@ -1,0 +1,72 @@
+﻿using Datalake.Database;
+using Datalake.Database.Repositories;
+using System.Diagnostics;
+
+namespace Datalake.Server.BackgroundServices.HistoryIndexer;
+
+/// <summary>
+/// Индексирование таблиц истории после завершения активного периода
+/// </summary>
+public class HistoryIndexerService(
+	IServiceScopeFactory serviceScopeFactory,
+	ILogger<HistoryIndexerService> logger) : BackgroundService
+{
+	DateTime LastIndexedTableDate = DateTime.MinValue;
+
+	/// <summary>
+	/// Периодическая проверка необходимости создания индексов для таблиц истории позже сегодня
+	/// </summary>
+	/// <param name="stoppingToken">Токен остановки</param>
+	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+	{
+		while (!stoppingToken.IsCancellationRequested)
+		{
+			bool hasError = false;
+			try
+			{
+				using var scope = serviceScopeFactory.CreateScope();
+				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+
+				using var valuesRepository = new ValuesRepository(db);
+
+				var tables = await valuesRepository.PostgreSQL_GetHistoryTablesFromSchema();
+
+				var notIndexedTables = tables
+					.Where(x => x.Date < DateTime.Today)
+					.Where(x => x.Date > LastIndexedTableDate)
+					.Where(x => !x.HasIndex)
+					.OrderBy(x => x.Date)
+					.ToArray();
+
+				foreach (var table in notIndexedTables)
+				{
+					logger.LogInformation("Создание индекса для {name}", table.Name);
+
+					try
+					{
+						var sw = Stopwatch.StartNew();
+						await valuesRepository.PostgreSQL_CreateHistoryIndex(table.Name);
+
+						LastIndexedTableDate = table.Date;
+
+						sw.Stop();
+
+						logger.LogDebug("Создание индекса для {name} завершено: {ms} мс", table.Name, sw.Elapsed.TotalMilliseconds);
+
+						await Task.Delay(1000, stoppingToken);
+					}
+					catch (Exception ex)
+					{
+						logger.LogWarning("Не удалось создать индекс для {name}: {message}", table.Name, ex);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.LogWarning("Ошибка при индексации истории: {message}", ex);
+			}
+
+			await Task.Delay(hasError ? TimeSpan.FromMinutes(1) : TimeSpan.FromHours(1), stoppingToken);
+		}
+	}
+}
