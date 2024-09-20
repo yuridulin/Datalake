@@ -106,13 +106,18 @@ export enum BlockTagRelation {
 	Output = 2,
 }
 
-/** Информация о сущности */
+/** Информация о блоке */
 export interface BlockSimpleInfo {
 	/**
 	 * Идентификатор
 	 * @format int32
 	 */
 	id: number
+	/**
+	 * Идентификатор родительского блока
+	 * @format int32
+	 */
+	parentId?: number | null
 	/**
 	 * Наименование
 	 * @minLength 1

@@ -33,13 +33,15 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	/// <summary>
 	/// Создание нового отдельного блока с информацией по умолчанию
 	/// </summary>
+	/// <param name="parentId">Идентификатор родительского блока</param>
 	/// <returns>Идентификатор блока</returns>
 	[HttpPost("empty")]
-	public async Task<ActionResult<int>> CreateEmptyAsync()
+	public async Task<ActionResult<int>> CreateEmptyAsync(
+		[FromQuery] int? parentId)
 	{
 		var user = Authenticate();
 
-		return await blocksRepository.CreateAsync(user);
+		return await blocksRepository.CreateAsync(user, parentId: parentId);
 	}
 
 	/// <summary>
@@ -92,6 +94,22 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 		var user = Authenticate();
 
 		await blocksRepository.UpdateAsync(user, id, block);
+
+		return NoContent();
+	}
+
+	/// <summary>
+	/// Перемещение блока
+	/// </summary>
+	/// <param name="id">Идентификатор блока</param>
+	/// <param name="parentId">Идентификатор нового родительского блока</param>
+	[HttpPost("{id:int}/move")]
+	public async Task<ActionResult> MoveAsync(
+		[BindRequired, FromRoute] int id,
+		[FromQuery] int? parentId)
+	{
+		var user = Authenticate();
+		await blocksRepository.MoveAsync(user, id, parentId);
 
 		return NoContent();
 	}

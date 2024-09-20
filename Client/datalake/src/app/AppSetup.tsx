@@ -14,10 +14,14 @@ dayjs.locale('ru')
 declare const KEYCLOAK_DB: string
 declare const KEYCLOAK_CLIENT: string
 
+const datalakeThemeKey = 'datalake-theme'
+const datalakeThemeDark = 'dark'
+const datalakeThemeLight = 'light'
+
 export default function AppSetup() {
 	const [lastUpdate, setUpdate] = useState<Date>(new Date())
 	const { defaultAlgorithm, darkAlgorithm } = theme
-	const [isDarkMode, setIsDarkMode] = useState(false)
+	const [isDarkMode, setDarkMode] = useState(false)
 
 	const oidcConfig = {
 		authority:
@@ -27,16 +31,29 @@ export default function AppSetup() {
 	}
 
 	useEffect(() => {
-		setIsDarkMode(
-			window.matchMedia &&
-				window.matchMedia('(prefers-color-scheme: dark)').matches,
-		)
-		window
+		const ls = localStorage.getItem(datalakeThemeKey)
+		const storedMode =
+			ls == null
+				? window.matchMedia &&
+				  window.matchMedia('(prefers-color-scheme: dark)').matches
+				: ls == datalakeThemeDark
+		setDarkMode(storedMode)
+
+		/* window
 			.matchMedia('(prefers-color-scheme: dark)')
 			.addEventListener('change', (event) => {
-				setIsDarkMode(event.matches)
-			})
+				if (localStorage.getItem('datalake-dark-mode') == null)
+					setDarkMode(event.matches)
+			}) */
 	}, [])
+	useEffect(
+		() =>
+			localStorage.setItem(
+				datalakeThemeKey,
+				isDarkMode ? datalakeThemeDark : datalakeThemeLight,
+			),
+		[isDarkMode],
+	)
 
 	dayjs.locale('')
 
@@ -48,7 +65,7 @@ export default function AppSetup() {
 			locale={locale}
 		>
 			<UpdateContext.Provider
-				value={{ lastUpdate, setUpdate, isDarkMode }}
+				value={{ lastUpdate, setUpdate, isDarkMode, setDarkMode }}
 			>
 				<AuthProvider {...oidcConfig}>
 					<RouterProvider router={router} />

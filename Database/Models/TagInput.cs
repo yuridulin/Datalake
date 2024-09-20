@@ -1,16 +1,19 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using LinqToDB.Mapping;
+using System.ComponentModel.DataAnnotations;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
 namespace Datalake.Database.Models;
 
-[Keyless, Table(TableName), LinqToDB.Mapping.Table(TableName)]
+[Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public class TagInput
 {
 	public const string TableName = "TagInputs";
 
 	// поля в БД
+
+	[Column, Key, Identity]
+	public int Id { get; set; }
 
 	[Column]
 	public int TagId { get; set; }
@@ -23,9 +26,7 @@ public class TagInput
 
 	// связи
 
-	[ForeignKey(nameof(TagId))]
-	public Tag? Tag { get; set; }
+	public Tag Tag { get; set; } = null!;
 
-	[NotMapped]
-	public Tag? InputTag { get; set; }
+	public Tag InputTag { get; set; } = null!;
 }

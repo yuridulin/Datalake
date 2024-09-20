@@ -4,7 +4,17 @@ namespace Datalake.Database.Utilities;
 
 public static class Cache
 {
+	static object locker = new();
+
 	public static DateTime LastUpdate { get; set; } = DateTime.MinValue;
+
+	public static void Update()
+	{
+		lock (locker)
+		{
+			LastUpdate = DateTime.Now;
+		}
+	}
 
 	public static Dictionary<DateTime, string> Tables { get; set; } = [];
 
@@ -15,4 +25,21 @@ public static class Cache
 		.Where(x => x.Key < seek)
 		.Select(x => x.Value)
 		.LastOrDefault();
+
+	public static void UpdateTagCache(int id, TagCacheInfo? newTagInfo)
+	{
+		lock (locker)
+		{
+			if (newTagInfo == null && Tags.ContainsKey(id))
+			{
+				Tags.Remove(id);
+				Update();
+			}
+			else if (newTagInfo != null)
+			{
+				Tags[id] = newTagInfo;
+				Update();
+			}
+		}
+	}
 }

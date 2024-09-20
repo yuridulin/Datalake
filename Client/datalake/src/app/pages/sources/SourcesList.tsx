@@ -1,10 +1,35 @@
-import { Button } from 'antd'
+import { Button, Table, TableColumnsType } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import getSourceTypeName from '../../../api/models/getSourceTypeName'
 import api from '../../../api/swagger-api'
 import { SourceInfo } from '../../../api/swagger/data-contracts'
 import Header from '../../components/Header'
+
+const columns: TableColumnsType<SourceInfo> = [
+	{
+		dataIndex: 'name',
+		title: 'Название',
+		render: (_, record) => (
+			<NavLink
+				className='table-row'
+				to={'/sources/' + record.id}
+				key={record.id}
+			>
+				<Button size='small'>{record.name}</Button>
+			</NavLink>
+		),
+	},
+	{
+		dataIndex: 'type',
+		title: 'Тип источника',
+		render: (type) => <>{getSourceTypeName(type)}</>,
+	},
+	{
+		dataIndex: 'description',
+		title: 'Описание',
+	},
+]
 
 export default function SourcesList() {
 	const [list, setList] = useState([] as SourceInfo[])
@@ -31,30 +56,13 @@ export default function SourcesList() {
 			>
 				Зарегистрированные источники данных
 			</Header>
-			{list.length === 0 ? (
-				<div>
-					<i>Не определено ни одного источника</i>
-				</div>
-			) : (
-				<div className='table'>
-					<div className='table-header'>
-						<span>Имя</span>
-						<span>Тип</span>
-						<span>Адрес</span>
-					</div>
-					{list.map((x) => (
-						<NavLink
-							className='table-row'
-							to={'/sources/' + x.id}
-							key={x.id}
-						>
-							<span>{x.name}</span>
-							<span>{getSourceTypeName(x.type)}</span>
-							<span>{x.address}</span>
-						</NavLink>
-					))}
-				</div>
-			)}
+			<Table
+				dataSource={list}
+				columns={columns}
+				size='small'
+				pagination={false}
+				rowKey='id'
+			/>
 		</>
 	)
 }

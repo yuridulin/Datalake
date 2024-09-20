@@ -1,6 +1,7 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.Tags;
 using LinqToDB;
+using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Database.Repositories;
 
@@ -8,43 +9,40 @@ public partial class TagsRepository
 {
 	public IQueryable<TagInfo> GetInfoWithSources()
 	{
-		var inputs =
-			from input_rel in db.TagInputs
-			from input in db.Tags.InnerJoin(x => x.Id == input_rel.InputTagId)
-			select new { input, input_rel };
-
-		var query =
-			from tag in db.Tags
-			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
-			select new TagInfo
+		var query = db.Tags
+			.Include(x => x.TagInputs)
+			.ThenInclude(x => x.Tag)
+			.Include(x => x.Source)
+			.AsNoTracking()
+			.Select(x => new TagInfo
 			{
-				Id = tag.Id,
-				Guid = tag.GlobalGuid,
-				Name = tag.Name,
-				Description = tag.Description,
-				IntervalInSeconds = tag.Interval,
-				Type = tag.Type,
-				Formula = tag.Formula ?? string.Empty,
-				FormulaInputs = inputs
-					.Where(x => x.input_rel.TagId == tag.Id)
+				Id = x.Id,
+				Guid = x.GlobalGuid,
+				Name = x.Name,
+				Description = x.Description,
+				IntervalInSeconds = x.Interval,
+				Type = x.Type,
+				Formula = x.Formula ?? string.Empty,
+				FormulaInputs = x.TagInputs
+					.Where(x => x.InputTag != null)
 					.Select(x => new TagInputInfo
 					{
-						Id = x.input.Id,
-						Guid = x.input.GlobalGuid,
-						Name = x.input.Name,
-						VariableName = x.input_rel.VariableName,
+						Id = x.InputTag!.Id,
+						Guid = x.InputTag!.GlobalGuid,
+						Name = x.InputTag!.Name,
+						VariableName = x.VariableName,
 					})
 					.ToArray(),
-				IsScaling = tag.IsScaling,
-				MaxEu = tag.MaxEu,
-				MaxRaw = tag.MaxRaw,
-				MinEu = tag.MinEu,
-				MinRaw = tag.MinRaw,
-				SourceId = tag.SourceId,
-				SourceItem = tag.SourceItem,
-				SourceType = source != null ? source.Type : SourceType.Custom,
-				SourceName = source != null ? source.Name : "Unknown",
-			};
+				IsScaling = x.IsScaling,
+				MaxEu = x.MaxEu,
+				MaxRaw = x.MaxRaw,
+				MinEu = x.MinEu,
+				MinRaw = x.MinRaw,
+				SourceId = x.SourceId,
+				SourceItem = x.SourceItem,
+				SourceType = x.Source != null ? x.Source.Type : SourceType.Custom,
+				SourceName = x.Source != null ? x.Source.Name : "Unknown",
+			});
 
 		return query;
 	}
@@ -52,6 +50,7 @@ public partial class TagsRepository
 	public IQueryable<TagAsInputInfo> GetPossibleInputs()
 	{
 		var query = db.Tags
+			.AsNoTracking()
 			.Select(x => new TagAsInputInfo
 			{
 				Id = x.Id,
@@ -66,21 +65,21 @@ public partial class TagsRepository
 
 	public IQueryable<TagCacheInfo> GetTagsForCache()
 	{
-		var query =
-			from t in db.Tags
-			from s in db.Sources.LeftJoin(x => x.Id == t.SourceId)
-			select new TagCacheInfo
+		var query = db.Tags
+			.Include(x => x.Source)
+			.AsNoTracking()
+			.Select(x => new TagCacheInfo
 			{
-				Id = t.Id,
-				Guid = t.GlobalGuid,
-				Name = t.Name,
-				TagType = t.Type,
-				SourceType = s.Type,
-				IsManual = t.SourceId == (int)CustomSource.Manual,
-				ScalingCoefficient = t.IsScaling
-					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
+				Id = x.Id,
+				Guid = x.GlobalGuid,
+				Name = x.Name,
+				TagType = x.Type,
+				SourceType = x.Source != null ? x.Source.Type : SourceType.Custom,
+				IsManual = x.SourceId == (int)CustomSource.Manual,
+				ScalingCoefficient = x.IsScaling
+					? ((x.MaxEu - x.MinEu) / (x.MaxRaw - x.MinRaw))
 					: 1,
-			};
+			});
 
 		return query;
 	}

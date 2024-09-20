@@ -1,4 +1,4 @@
-import { Button, Input } from 'antd'
+import { Button, Input, Table, TableColumnsType } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import api from '../../../api/swagger-api'
@@ -9,6 +9,56 @@ import {
 } from '../../../api/swagger/data-contracts'
 import FormRow from '../../components/FormRow'
 import Header from '../../components/Header'
+
+function AccessTypeDescription(type?: AccessType) {
+	switch (type) {
+		case AccessType.Admin:
+			return 'администратор'
+		case AccessType.User:
+			return 'пользователь'
+		case AccessType.Viewer:
+			return 'наблюдатель'
+		default:
+			return 'нет доступа'
+	}
+}
+
+function UserTypeDescription(type: UserType) {
+	switch (type) {
+		case UserType.Local:
+			return 'Локальная учётная запись'
+
+		case UserType.Static:
+			return 'Статичная учётная запись'
+
+		case UserType.EnergoId:
+			return 'Учётная запись EnergoID'
+		default:
+			return '?'
+	}
+}
+
+const columns: TableColumnsType<UserInfo> = [
+	{
+		dataIndex: 'guid',
+		title: 'Учетная запись',
+		render: (_, record) => (
+			<NavLink to={'/users/' + record.guid}>
+				<Button size='small'>{record.fullName}</Button>
+			</NavLink>
+		),
+	},
+	{
+		dataIndex: 'accessType',
+		title: 'Уровень доступа',
+		render: (_, record) => <>{AccessTypeDescription(record.accessType)}</>,
+	},
+	{
+		dataIndex: 'guid',
+		title: 'Тип учетной записи',
+		render: (_, record) => <>{UserTypeDescription(record.type)}</>,
+	},
+]
 
 export default function UsersList() {
 	const navigate = useNavigate()
@@ -21,34 +71,6 @@ export default function UsersList() {
 
 	function create() {
 		navigate('/users/create')
-	}
-
-	function AccessTypeDescription(type?: AccessType) {
-		switch (type) {
-			case AccessType.Admin:
-				return 'администратор'
-			case AccessType.User:
-				return 'пользователь'
-			case AccessType.Viewer:
-				return 'наблюдатель'
-			default:
-				return 'нет доступа'
-		}
-	}
-
-	function UserTypeDescription(type: UserType) {
-		switch (type) {
-			case UserType.Local:
-				return 'Локальная учётная запись'
-
-			case UserType.Static:
-				return 'Статичная учётная запись'
-
-			case UserType.EnergoId:
-				return 'Учётная запись EnergoID'
-			default:
-				return '?'
-		}
 	}
 
 	useEffect(load, [])
@@ -69,45 +91,20 @@ export default function UsersList() {
 							placeholder='введите поисковый запрос...'
 						/>
 					</FormRow>
-					<div className='table'>
-						<div className='table-header'>
-							<span style={{ width: '15em' }}>
-								Учетная запись
-							</span>
-							<span style={{ width: '12em' }}>
-								Уровень доступа
-							</span>
-							<span title='Статичный тип доступа используются для обращения без необходимости логиниться'>
-								Тип доступа
-							</span>
-						</div>
-						{users
-							.filter((x) =>
-								(
-									(x.login ?? '') +
-									(x.fullName ?? '') +
-									AccessTypeDescription(x.accessType)
-								)
-									.toLowerCase()
-									.trim()
-									.includes(search.toLowerCase()),
+					<Table
+						size='small'
+						dataSource={users.filter((x) =>
+							(
+								(x.login ?? '') +
+								(x.fullName ?? '') +
+								AccessTypeDescription(x.accessType)
 							)
-							.map((x) => (
-								<div className='table-row' key={x.login}>
-									<span>
-										<NavLink to={'/users/' + x.guid}>
-											<Button size='small'>
-												{x.fullName}
-											</Button>
-										</NavLink>
-									</span>
-									<span>
-										{AccessTypeDescription(x.accessType)}
-									</span>
-									<span>{UserTypeDescription(x.type)}</span>
-								</div>
-							))}
-					</div>
+								.toLowerCase()
+								.trim()
+								.includes(search.toLowerCase()),
+						)}
+						columns={columns}
+					/>
 				</>
 			)}
 		</>

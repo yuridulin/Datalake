@@ -75,8 +75,7 @@ public class Tag
 	[DeleteBehavior(DeleteBehavior.SetNull)]
 	public Source? Source { get; set; } = null!;
 
-	[NotMapped]
-	public ICollection<TagInput> RelationsToInputTags { get; set; } = [];
+	public ICollection<TagInput> TagInputs { get; set; } = [];
 
 	public ICollection<BlockTag> RelationsToBlocks { get; set; } = [];
 

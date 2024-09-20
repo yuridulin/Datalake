@@ -3,6 +3,7 @@ using System;
 using Datalake.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Datalake.Database.Migrations
 {
     [DbContext(typeof(DatalakeEfContext))]
-    partial class DatalakeEfContextModelSnapshot : ModelSnapshot
+    [Migration("20240919132712_AddParentChildrenRelationsToBlocks")]
+    partial class AddParentChildrenRelationsToBlocks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -283,12 +286,6 @@ namespace Datalake.Database.Migrations
 
             modelBuilder.Entity("Datalake.Database.Models.TagInput", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
                     b.Property<int>("InputTagId")
                         .HasColumnType("integer");
 
@@ -298,10 +295,6 @@ namespace Datalake.Database.Migrations
                     b.Property<string>("VariableName")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InputTagId");
 
                     b.HasIndex("TagId");
 
@@ -461,19 +454,11 @@ namespace Datalake.Database.Migrations
 
             modelBuilder.Entity("Datalake.Database.Models.TagInput", b =>
                 {
-                    b.HasOne("Datalake.Database.Models.Tag", "InputTag")
-                        .WithMany()
-                        .HasForeignKey("InputTagId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Datalake.Database.Models.Tag", "Tag")
-                        .WithMany("TagInputs")
+                        .WithMany()
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("InputTag");
 
                     b.Navigation("Tag");
                 });
@@ -520,8 +505,6 @@ namespace Datalake.Database.Migrations
                     b.Navigation("AccessRightsList");
 
                     b.Navigation("RelationsToBlocks");
-
-                    b.Navigation("TagInputs");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.User", b =>

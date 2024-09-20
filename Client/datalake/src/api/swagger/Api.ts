@@ -87,10 +87,20 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request POST:/api/Blocks/empty
 	 * @response `200` `number` Идентификатор блока
 	 */
-	blocksCreateEmpty = (params: RequestParams = {}) =>
+	blocksCreateEmpty = (
+		query?: {
+			/**
+			 * Идентификатор родительского блока
+			 * @format int32
+			 */
+			parentId?: number | null
+		},
+		params: RequestParams = {},
+	) =>
 		this.request<number, any>({
 			path: `/api/Blocks/empty`,
 			method: 'POST',
+			query: query,
 			format: 'json',
 			...params,
 		})
@@ -156,6 +166,32 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			path: `/api/Blocks/tree`,
 			method: 'GET',
 			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Blocks
+	 * @name BlocksMove
+	 * @summary Перемещение блока
+	 * @request POST:/api/Blocks/{id}/move
+	 * @response `200` `File`
+	 */
+	blocksMove = (
+		id: number,
+		query?: {
+			/**
+			 * Идентификатор нового родительского блока
+			 * @format int32
+			 */
+			parentId?: number | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<File, any>({
+			path: `/api/Blocks/${id}/move`,
+			method: 'POST',
+			query: query,
 			...params,
 		})
 	/**

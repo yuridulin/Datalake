@@ -30,7 +30,10 @@ public class Block
 
 	// связанные данные
 
-	[NotMapped]
+	[ForeignKey(nameof(ParentId))]
+	public Block? Parent { get; set; }
+
+	[InverseProperty(nameof(Parent))]
 	public ICollection<Block> Children { get; set; } = [];
 
 	[InverseProperty(nameof(BlockProperty.Block))]

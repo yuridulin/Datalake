@@ -1,4 +1,5 @@
-import { Layout, notification } from 'antd'
+import { MoonOutlined, SunOutlined } from '@ant-design/icons'
+import { Layout, notification, theme } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
 import { Link, Outlet } from 'react-router-dom'
@@ -14,10 +15,11 @@ notification.config({
 })
 
 export default function AppLayout() {
-	const { isDarkMode } = useUpdateContext()
+	const { isDarkMode, setDarkMode } = useUpdateContext()
+	const { token } = theme.useToken()
 
 	const siderStyle: React.CSSProperties = {
-		backgroundColor: isDarkMode ? '#141414' : '#eee',
+		backgroundColor: token.colorBgLayout,
 		borderRight: '1px solid ' + (isDarkMode ? '#222' : '#ddd'),
 		paddingTop: '1em',
 		overflow: 'auto',
@@ -37,6 +39,7 @@ export default function AppLayout() {
 					hasSider
 					style={{
 						minWidth: '80em',
+						height: '100vh',
 					}}
 				>
 					<Sider width='20em' style={siderStyle}>
@@ -49,29 +52,37 @@ export default function AppLayout() {
 						>
 							Datalake
 						</Link>
+						{isDarkMode ? (
+							<MoonOutlined
+								style={{ color: '#ccc' }}
+								onClick={() => setDarkMode(false)}
+							/>
+						) : (
+							<SunOutlined
+								style={{ color: '#666' }}
+								onClick={() => setDarkMode(true)}
+							/>
+						)}
 						<UserPanel />
 						<AppMenu />
 					</Sider>
 					<Layout
 						style={{
 							marginInlineStart: '20em',
-							backgroundColor: isDarkMode ? '#121212' : '#fff',
 						}}
 					>
 						<Content
 							style={{
-								overflow: 'initial',
+								overflow: 'auto',
 								scrollbarWidth: 'thin',
 								scrollbarColor: 'unset',
+								padding: 24,
+								backgroundColor: isDarkMode
+									? '#121212'
+									: '#fff',
 							}}
 						>
-							<div
-								style={{
-									padding: 24,
-								}}
-							>
-								<Outlet />
-							</div>
+							<Outlet />
 						</Content>
 					</Layout>
 				</Layout>

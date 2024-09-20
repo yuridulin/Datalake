@@ -92,6 +92,7 @@ export default function Dashboard() {
 				columns={columns}
 				dataSource={data}
 				pagination={false}
+				rowKey='id'
 			/>
 		</>
 	)

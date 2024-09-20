@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import {
+	BlockChildInfo,
 	BlockInfo,
 	BlockTagInfo,
 	ValueRecord,
@@ -70,6 +71,10 @@ export default function BlockView() {
 		})
 	}
 
+	const createChild = () => {
+		api.blocksCreateEmpty({ parentId: Number(id) }).then(getBlock)
+	}
+
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(getBlock, [id])
 	useInterval(getValues, 1000)
@@ -91,12 +96,22 @@ export default function BlockView() {
 				{block.name}
 			</Header>
 			<Descriptions colon={true} layout='vertical' items={items} />
-			<Divider />
-			<Table dataSource={block.tags} size='small' pagination={false}>
+			<Divider
+				variant='dashed'
+				orientation='left'
+				style={{ fontSize: '1em' }}
+			>
+				Поля
+			</Divider>
+			<Table
+				dataSource={block.tags}
+				size='small'
+				pagination={false}
+				rowKey='guid'
+			>
 				<Column
-					key='guid'
 					dataIndex='guid'
-					title='Поле'
+					title='Название'
 					render={(_, record: BlockTagInfo) => (
 						<NavLink to={routes.Tags.routeToTag(record.guid)}>
 							<Button title={record.tagName} size='small'>
@@ -106,7 +121,6 @@ export default function BlockView() {
 					)}
 				/>
 				<Column
-					key='value'
 					dataIndex='value'
 					title='Значение'
 					render={(value: ValueRecord, record: BlockTagInfo) =>
@@ -122,6 +136,39 @@ export default function BlockView() {
 					}
 				/>
 			</Table>
+			<Divider
+				variant='dashed'
+				orientation='left'
+				style={{ fontSize: '1em' }}
+			>
+				Вложенные блоки&emsp;
+				<Button size='small' onClick={createChild}>
+					Создать
+				</Button>
+			</Divider>
+			{block.children?.length > 0 ? (
+				<Table
+					dataSource={block.children}
+					size='small'
+					pagination={false}
+					rowKey='id'
+				>
+					<Column
+						dataIndex='id'
+						title='Название'
+						render={(_, record: BlockChildInfo) => (
+							<NavLink
+								key={record.id}
+								to={routes.Blocks.routeToViewBlock(record.id)}
+							>
+								<Button size='small'>{record.name}</Button>
+							</NavLink>
+						)}
+					/>
+				</Table>
+			) : (
+				<i>Нет вложенных блоков</i>
+			)}
 		</>
 	)
 }

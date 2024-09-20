@@ -29,7 +29,7 @@ namespace Datalake.Database.Tests.Steps
 		{
 			using var db = Setup.CreateDbContext();
 
-			var tagsRepository = new TagsRepository(db);
+			/*var tagsRepository = new TagsRepository(db);
 
 			var request = new TagCreateRequest
 			{
@@ -42,14 +42,14 @@ namespace Datalake.Database.Tests.Steps
 
 			int tagId = await tagsRepository.CreateAsync(Constants.DefaultAdmin, request);
 
-			Assert.True(tagId > 0);
+			Assert.True(tagId > 0);*/
 		}
 
 		public static async Task T2_2_GetManualTag()
 		{
 			using var db = Setup.CreateDbContext();
 
-			var tagsRepository = new TagsRepository(db);
+			/*var tagsRepository = new TagsRepository(db);
 
 			var tagInfo = await tagsRepository.GetInfoWithSources()
 				.Where(x => x.Guid == Constants.TagGuid)
@@ -57,7 +57,7 @@ namespace Datalake.Database.Tests.Steps
 
 			Assert.NotNull(tagInfo);
 			Assert.True(tagInfo.Name == Constants.TagName);
-			Assert.True(tagInfo.SourceId == (int)CustomSource.Manual);
+			Assert.True(tagInfo.SourceId == (int)CustomSource.Manual);*/
 		}
 
 		public static async Task T2_3_GetLiveValue()

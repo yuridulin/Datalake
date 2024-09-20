@@ -38,9 +38,7 @@ export default function UserGroupsCreateModal({
 
 	return (
 		<>
-			<Button type='primary' onClick={showModal}>
-				Создать группу
-			</Button>
+			<Button onClick={showModal}>Создать группу</Button>
 			<Modal
 				title='Создание группы пользователей'
 				open={open}

@@ -68,7 +68,10 @@ export default function SourceForm() {
 						>
 							<Button>Удалить</Button>
 						</Popconfirm>
-						<Button onClick={sourceUpdate}>Сохранить</Button>
+						&ensp;
+						<Button onClick={sourceUpdate} type='primary'>
+							Сохранить
+						</Button>
 					</>
 				}
 			>

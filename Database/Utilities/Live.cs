@@ -4,6 +4,8 @@ namespace Datalake.Database.Utilities;
 
 public static class Live
 {
+	static object locker = new();
+
 	public static Dictionary<int, TagHistory> Values { get; set; } = [];
 
 	public static List<TagHistory> Read(int[] identifiers)
@@ -15,7 +17,7 @@ public static class Live
 
 	public static void Write(IEnumerable<TagHistory> values)
 	{
-		lock (Values)
+		lock (locker)
 		{
 			foreach (var value in values)
 			{

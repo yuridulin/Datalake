@@ -1,4 +1,4 @@
-import { Menu } from 'antd'
+import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { NavLink } from 'react-router-dom'
 import { CustomSource } from '../../api/models/customSource'
@@ -18,14 +18,14 @@ const items: ItemType<MenuItemType>[] = [
 				key: 'users',
 				label: <NavLink to={routes.Users.List}>Пользователи</NavLink>,
 			},
-			{
+			/* {
 				key: 'user-groups',
 				label: (
 					<NavLink to={routes.UserGroups.List}>
 						Группы пользователей
 					</NavLink>
 				),
-			},
+			}, */
 		],
 	},
 	{
@@ -87,9 +87,11 @@ const items: ItemType<MenuItemType>[] = [
 ]
 
 export function AppMenu() {
+	const { token } = theme.useToken()
+
 	return (
 		<Menu
-			style={{ border: 0 }}
+			style={{ border: 0, backgroundColor: token.colorBgLayout }}
 			items={items}
 			mode='inline'
 			defaultOpenKeys={['tags']}

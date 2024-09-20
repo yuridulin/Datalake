@@ -6,23 +6,35 @@ using Datalake.Database.Models;
 using Datalake.Database.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
+using LinqToDB.EntityFrameworkCore;
 
 namespace Datalake.Database.Repositories;
 
-public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
+public partial class BlocksRepository(DatalakeEfContext db) : RepositoryBase
 {
 	#region Действия
 
-	public async Task<int> CreateAsync(UserAuthInfo user, BlockInfo? blockInfo = null)
+	public async Task CheckAccessToBlockAsync(UserAuthInfo user, int id)
+	{
+		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
+	}
+
+	public async Task<int> CreateAsync(UserAuthInfo user, BlockInfo? blockInfo = null, int? parentId = null)
 	{
 		CheckGlobalAccess(user, AccessType.Admin);
-		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync();
+		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync(parentId);
 	}
 
 	public async Task<bool> UpdateAsync(UserAuthInfo user, int id, BlockUpdateRequest block)
 	{
 		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
 		return await UpdateAsync(id, block);
+	}
+
+	public async Task<bool> MoveAsync(UserAuthInfo user, int id, int? parentId)
+	{
+		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
+		return await MoveAsync(id, parentId);
 	}
 
 	public async Task<bool> DeleteAsync(UserAuthInfo user, int id)
@@ -35,15 +47,22 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 
 	#region Реализация
 
-	internal async Task<int> CreateAsync()
+	internal async Task<int> CreateAsync(int? parentId)
 	{
 		int? id;
+
+		if (parentId != null)
+		{
+			if (!await db.Blocks.AnyAsync(x => x.Id == parentId))
+				throw new NotFoundException($"Родительский блок #{parentId} не найден");
+		}
 
 		try
 		{
 			id = await db.Blocks
+				.ToLinqToDBTable()
 				.Value(x => x.GlobalId, Guid.NewGuid())
-				.Value(x => x.ParentId, 0)
+				.Value(x => x.ParentId, parentId)
 				.Value(x => x.Name, "INSERTING BLOCK")
 				.Value(x => x.Description, string.Empty)
 				.InsertWithInt32IdentityAsync();
@@ -51,14 +70,14 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 			if (id.HasValue)
 				await db.Blocks
 					.Where(x => x.Id == id.Value)
-					.Set(x => x.Name, "Сущность #" + id.Value)
+					.Set(x => x.Name, "Блок #" + id.Value)
 					.UpdateAsync();
 
 			return id.Value;
 		}
 		catch (Exception ex)
 		{
-			throw new DatabaseException(message: "не удалось добавить сущность", ex);
+			throw new DatabaseException(message: "не удалось добавить блок", ex);
 		}
 
 	}
@@ -66,11 +85,11 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 	internal async Task<int> CreateAsync(BlockInfo block)
 	{
 		if (await db.Blocks.AnyAsync(x => x.Name == block.Name))
-			throw new AlreadyExistException("Сущность с таким именем уже существует");
+			throw new AlreadyExistException("Блок с таким именем уже существует");
 		if (block.Parent != null)
 		{
 			if (!await db.Blocks.AnyAsync(x => x.Id == block.Parent.Id))
-				throw new NotFoundException($"Родительская сущность #{block.Parent.Id} не найдена");
+				throw new NotFoundException($"Родительский блок #{block.Parent.Id} не найден");
 		}
 
 		int? id;
@@ -78,6 +97,7 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 		try
 		{
 			id = await db.Blocks
+				.ToLinqToDBTable()
 				.Value(x => x.GlobalId, Guid.NewGuid())
 				.Value(x => x.ParentId, block.Parent?.Id)
 				.Value(x => x.Name, block.Name)
@@ -99,7 +119,7 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 		if (await db.Blocks.AnyAsync(x => x.Id != id && x.Name == block.Name))
 			throw new AlreadyExistException("Сущность с таким именем уже существует");
 
-		using var transaction = await db.BeginTransactionAsync();
+		using var transaction = await db.Database.BeginTransactionAsync();
 
 		int count = 0;
 
@@ -115,13 +135,15 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 
 		if (block.Tags.Length > 0)
 		{
-			await db.BlockTags.BulkCopyAsync(block.Tags.Select(x => new BlockTag
-			{
-				BlockId = id,
-				TagId = x.Id,
-				Name = x.Name,
-				Relation = x.Relation,
-			}));
+			await db.BlockTags
+				.ToLinqToDBTable()
+				.BulkCopyAsync(block.Tags.Select(x => new BlockTag
+				{
+					BlockId = id,
+					TagId = x.Id,
+					Name = x.Name,
+					Relation = x.Relation,
+				}));
 		}
 
 		await transaction.CommitAsync();
@@ -130,6 +152,28 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 			throw new DatabaseException(message: "не удалось обновить сущность #{id}", DatabaseStandartError.UpdatedZero);
 
 		return true;
+	}
+
+	internal async Task<bool> MoveAsync(int id, int? parentId)
+	{
+		using var transaction = await db.Database.BeginTransactionAsync();
+
+		try
+		{
+			await db.Blocks
+				.Where(x => x.Id == id)
+				.Set(x => x.ParentId, parentId)
+				.UpdateAsync();
+
+			await transaction.CommitAsync();
+
+			return true;
+		}
+		catch (Exception ex)
+		{
+			transaction.Rollback();
+			throw new DatabaseException("не удалось переместить блок", ex);
+		}
 	}
 
 	internal async Task<bool> DeleteAsync(int id)

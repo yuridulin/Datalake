@@ -72,5 +72,34 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 				r => r
 				.HasKey(x => new { x.UserGroupGuid, x.UserGuid })
 			);
+
+		// связь тегов с входными тегами (переменными)
+		modelBuilder.Entity<Tag>()
+			.HasMany(t => t.TagInputs)
+			.WithOne(ti => ti.Tag)
+			.HasForeignKey(ti => ti.TagId)
+			.OnDelete(DeleteBehavior.Cascade);
+
+		modelBuilder.Entity<TagInput>()
+			.HasOne(ti => ti.InputTag)
+			.WithMany()
+			.HasForeignKey(ti => ti.InputTagId)
+			.OnDelete(DeleteBehavior.Restrict);
+
+	}
+
+	/// <summary>
+	/// Сообщение аудита в БД
+	/// </summary>
+	/// <param name="db"></param>
+	/// <param name="log"></param>
+	/// <returns></returns>
+	public async Task LogAsync(Log log)
+	{
+		try
+		{
+			await Logs.AddAsync(log);
+		}
+		catch { }
 	}
 }

@@ -3,7 +3,7 @@
 namespace Datalake.ApiClasses.Models.Blocks;
 
 /// <summary>
-/// Информация о сущности
+/// Информация о блоке
 /// </summary>
 public class BlockSimpleInfo
 {
@@ -12,6 +12,11 @@ public class BlockSimpleInfo
 	/// </summary>
 	[Required]
 	public int Id { get; set; } = 0;
+
+	/// <summary>
+	/// Идентификатор родительского блока
+	/// </summary>
+	public int? ParentId { get; set; }
 
 	/// <summary>
 	/// Наименование

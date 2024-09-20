@@ -31,12 +31,12 @@ export default function TagsTable({
 	const [viewingTags, setViewingTags] = useState(tags)
 	const [search, setSearch] = useState('')
 	const [viewingTagsValues, setViewingTagsValues] = useState(
-		{} as { [key: string]: string | number | boolean | null | undefined },
+		{} as { [key: number]: string | number | boolean | null | undefined },
 	)
 
 	const loadValues = useCallback(() => {
 		api.valuesGet([
-			{ requestKey: 'tags-table', tags: viewingTags.map((x) => x.guid) },
+			{ requestKey: 'tags-table', tagsId: viewingTags.map((x) => x.id) },
 		])
 			.then(
 				(res) =>
@@ -79,7 +79,12 @@ export default function TagsTable({
 	useInterval(loadValues, 5000)
 
 	return (
-		<Table size='middle' dataSource={viewingTags} showSorterTooltip={false}>
+		<Table
+			size='middle'
+			dataSource={viewingTags}
+			showSorterTooltip={false}
+			rowKey='id'
+		>
 			<Column
 				title={
 					<Input
@@ -95,7 +100,6 @@ export default function TagsTable({
 					/>
 				}
 				dataIndex='Name'
-				key='Id'
 				defaultSortOrder='ascend'
 				sorter={(a: TagInfo, b: TagInfo) =>
 					(a.name ?? '').localeCompare(b.name ?? '')
@@ -110,7 +114,6 @@ export default function TagsTable({
 				<Column
 					title='Источник'
 					dataIndex='SourceId'
-					key='Id'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
 						(a.sourceName ?? String(a.sourceId)).localeCompare(
@@ -129,7 +132,6 @@ export default function TagsTable({
 				<Column
 					title='Тип'
 					dataIndex='Type'
-					key='Id'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
 						Number(a.type) - Number(b.type)
@@ -143,16 +145,15 @@ export default function TagsTable({
 				<Column
 					title='Значение'
 					dataIndex='Value'
-					key='Id'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
-						String(viewingTagsValues[a.guid ?? 0]).localeCompare(
-							String(viewingTagsValues[b.guid ?? 0]),
+						String(viewingTagsValues[a.id ?? 0]).localeCompare(
+							String(viewingTagsValues[b.id ?? 0]),
 						)
 					}
 					render={(_, record: TagInfo) => (
 						<TagValueEl
-							value={viewingTagsValues[record.guid ?? 0]}
+							value={viewingTagsValues[record.id ?? 0]}
 							type={record.type}
 							allowEdit={
 								record.sourceType === SourceType.Custom &&
@@ -166,7 +167,6 @@ export default function TagsTable({
 			<Column
 				title='Описание'
 				dataIndex='Description'
-				key='Id'
 				defaultSortOrder='ascend'
 				sorter={(a: TagInfo, b: TagInfo) =>
 					(a.description ?? '').localeCompare(b.description ?? '')
