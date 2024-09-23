@@ -14,7 +14,7 @@ build-server:
     - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:latest-test
 
   only:
-    - /^test.\d+$/
+    - /^test\.\d+(\.\d+){0,2}$/
 
 push-server:
   stage: push
@@ -29,7 +29,7 @@ push-server:
     - docker push "$CI_REPOS_URL"/datalake:latest-test
  
   only:
-    - /^test.\d+$/
+    - /^test\.\d+(\.\d+){0,2}$/
 
 deploy-server:
   stage: deploy
@@ -45,4 +45,4 @@ deploy-server:
     - kubectl delete -n sinus-test pods -l app=datalake-test
 
   only:
-    - /^test.\d+$/
+    - /^test\.\d+(\.\d+){0,2}$/
