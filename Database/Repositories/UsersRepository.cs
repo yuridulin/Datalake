@@ -173,7 +173,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 
 		using var transaction = await db.BeginTransactionAsync();
 
-		var updateQuery = db.Users
+		int updatedRows = await db.Users
 			.Where(x => x.Guid == userGuid)
 			.Set(x => x.Type, request.Type)
 			.Set(x => x.Login, request.Login)
@@ -183,7 +183,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 			.Set(x => x.StaticHost, request.StaticHost ?? oldUser.StaticHost)
 			.UpdateAsync();
 
-		await db.AccessRights
+		updatedRows += await db.AccessRights
 			.Where(x => x.UserGuid == userGuid)
 			.Set(x => x.AccessType, request.AccessType)
 			.UpdateAsync();
