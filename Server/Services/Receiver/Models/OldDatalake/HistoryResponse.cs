@@ -1,14 +1,14 @@
 ﻿namespace Datalake.Server.Services.Receiver.Models.OldDatalake;
 
-internal class HistoryResponse
+public class HistoryResponse
 {
-	internal int Id { get; set; }
+	public int Id { get; set; }
 
-	internal required string TagName { get; set; }
+	public required string TagName { get; set; }
 
-	internal TagType Type { get; set; }
+	public TagType Type { get; set; }
 
-	internal AggFunc Func { get; set; }
+	public AggFunc Func { get; set; }
 
-	internal List<HistoryValue> Values { get; set; } = new List<HistoryValue>();
+	public List<HistoryValue> Values { get; set; } = new List<HistoryValue>();
 }

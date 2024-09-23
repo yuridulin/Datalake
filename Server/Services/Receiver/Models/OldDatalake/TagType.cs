@@ -1,6 +1,6 @@
 ﻿namespace Datalake.Server.Services.Receiver.Models.OldDatalake;
 
-internal enum TagType
+public enum TagType
 {
 	String = 0,
 	Number = 1,

@@ -1,6 +1,6 @@
 ﻿namespace Datalake.Server.Services.Receiver.Models.OldDatalake;
 
-internal enum TagQuality
+public enum TagQuality
 {
 	Bad = 0,
 	Bad_NoConnect = 4,

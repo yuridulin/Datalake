@@ -4,6 +4,7 @@ using Datalake.Server.Controllers;
 using Datalake.Server.Services.Receiver.Models;
 using Datalake.Server.Services.Receiver.Models.Inopc;
 using Datalake.Server.Services.Receiver.Models.Inopc.Enums;
+using Newtonsoft.Json;
 using System.Text.Json;
 
 namespace Datalake.Server.Services.Receiver;
@@ -41,6 +42,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		return type switch
 		{
 			SourceType.Inopc => await AskInopc([], address),
+			SourceType.Datalake => await AskOldDatalake([], address),
 			_ => await AskDatalake([], address),
 		};
 	}
@@ -145,11 +147,12 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		try
 		{
 			var answer = await client.PostAsJsonAsync("http://" + address + ":83/api/tags/live", request);
-			historyResponses = await answer.Content.ReadFromJsonAsync<List<Models.OldDatalake.HistoryResponse>>(JsonOptions);
+			var content = await answer.Content.ReadAsStringAsync();
+			historyResponses = JsonConvert.DeserializeObject<List<Models.OldDatalake.HistoryResponse>>(content);
 		}
-		catch
+		catch (Exception ex)
 		{
-			logger.LogDebug("Ask old datalake with address: {address} fail", address);
+			logger.LogError(ex, "Получение значений из OldDatalake");
 		}
 
 		historyResponses ??= [];

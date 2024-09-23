@@ -4,7 +4,7 @@ using Newtonsoft.Json.Converters;
 namespace Datalake.Server.Services.Receiver.Models.OldDatalake;
 
 [JsonConverter(typeof(StringEnumConverter))]
-internal enum AggFunc
+public enum AggFunc
 {
 	List = 0,
 	Sum = 1,

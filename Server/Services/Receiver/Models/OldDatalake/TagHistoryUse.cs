@@ -1,6 +1,6 @@
 ﻿namespace Datalake.Server.Services.Receiver.Models.OldDatalake;
 
-internal enum TagHistoryUse
+public enum TagHistoryUse
 {
 	Initial = 0,
 	Basic = 1,
