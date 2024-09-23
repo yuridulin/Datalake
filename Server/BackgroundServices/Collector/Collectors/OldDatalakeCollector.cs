@@ -64,10 +64,16 @@ internal class OldDatalakeCollector : CollectorBase
 
 	private async Task Work()
 	{
+		List<CollectValue> collectedValues;
+		List<Item> updatedItems;
+
 		while (!_tokenSource.Token.IsCancellationRequested)
 		{
 			try
 			{
+				collectedValues = [];
+				updatedItems = [];
+
 				var now = DateTime.Now;
 				var items = _itemsToSend
 					.Where(x => x.PeriodInSeconds == 0 || (now - x.LastAsk).TotalSeconds > x.PeriodInSeconds)
@@ -76,9 +82,6 @@ internal class OldDatalakeCollector : CollectorBase
 				if (items.Length > 0)
 				{
 					var response = await _receiverService.AskOldDatalake([.. items.Select(x => x.TagName) ], _address);
-
-					List<CollectValue> collectedValues = [];
-					List<Item> updatedItems = [];
 
 					foreach (var value in response.Tags)
 					{
