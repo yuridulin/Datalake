@@ -1,5 +1,6 @@
 ﻿using Datalake.Database.Models;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
+using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
 
 namespace Datalake.Server.BackgroundServices.Collector.Collectors;
@@ -19,19 +20,15 @@ internal class OldDatalakeCollector : CollectorBase
 
 		_itemsToSend = source.Tags
 			.Where(x => !string.IsNullOrEmpty(x.SourceItem))
-			.DistinctBy(x => x.SourceItem)
-			.Select(x => new Item
+			.GroupBy(x => x.SourceItem)
+			.Select(g => new Item
 			{
-				TagName = x.SourceItem!,
-				PeriodInSeconds = x.Interval,
-				LastAsk = DateTime.MinValue
+				TagName = g.Key!,
+				PeriodInSeconds = g.Select(x => x.Interval).Min(),
+				LastAsk = DateTime.MinValue,
+				Tags = g.Select(x => x.GlobalGuid).ToArray(),
 			})
 			.ToList();
-
-		_itemsTags = source.Tags
-			.Where(x => x.SourceItem != null)
-			.GroupBy(x => x.SourceItem)
-			.ToDictionary(g => g.Key!, g => g.Select(x => x.GlobalGuid).ToArray());
 
 		_logger.LogDebug("Create old Datalake collector {address}. Tags: {count}", _address, _itemsToSend.Count);
 	}
@@ -63,7 +60,6 @@ internal class OldDatalakeCollector : CollectorBase
 	private readonly List<Item> _itemsToSend;
 	private readonly ReceiverService _receiverService;
 	private readonly CancellationTokenSource _tokenSource;
-	private readonly Dictionary<string, Guid[]> _itemsTags;
 	private ILogger<OldDatalakeCollector> _logger;
 
 	private async Task Work()
@@ -73,44 +69,38 @@ internal class OldDatalakeCollector : CollectorBase
 			try
 			{
 				var now = DateTime.Now;
-				List<Item> tags = [];
+				var items = _itemsToSend
+					.Where(x => x.PeriodInSeconds == 0 || (now - x.LastAsk).TotalSeconds > x.PeriodInSeconds)
+					.ToArray();
 
-				foreach (var item in _itemsToSend)
+				if (items.Length > 0)
 				{
-					if (item.PeriodInSeconds == 0)
+					var response = await _receiverService.AskOldDatalake([.. items.Select(x => x.TagName) ], _address);
+
+					List<CollectValue> collectedValues = [];
+					List<Item> updatedItems = [];
+
+					foreach (var value in response.Tags)
 					{
-						tags.Add(item);
-					}
-					else
-					{
-						var diff = (now - item.LastAsk).TotalSeconds;
-						if (diff > item.PeriodInSeconds)
+						var item = items.FirstOrDefault(x => x.TagName == value.Name);
+						if (item != null)
 						{
-							tags.Add(item);
-						}
-					}
-				}
-
-				if (tags.Count > 0)
-				{
-					var items = tags.Select(x => x.TagName).ToArray();
-
-					var response = await _receiverService.AskOldDatalake(items, _address);
-					var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
-
-					CollectValues?.Invoke(this, response.Tags
-						.SelectMany(item => _itemsTags[item.Name]
-							.Select(guid => new Models.CollectValue
+							collectedValues.AddRange(item.Tags.Select(guid => new CollectValue
 							{
 								DateTime = response.Timestamp,
-								Name = item.Name,
-								Quality = item.Quality,
+								Name = value.Name,
+								Quality = value.Quality,
 								Guid = guid,
-								Value = item.Value,
-							})
-						));
+								Value = value.Value,
+							}));
 
-					foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
+							updatedItems.Add(item);
+						}
+					}
+
+					CollectValues?.Invoke(this, collectedValues);
+
+					foreach (var tag in updatedItems)
 					{
 						tag.LastAsk = response.Timestamp;
 					}
@@ -137,6 +127,8 @@ internal class OldDatalakeCollector : CollectorBase
 		public DateTime LastAsk { get; set; }
 
 		public int PeriodInSeconds { get; set; }
+
+		public required Guid[] Tags { get; set; }
 	}
 
 	#endregion
