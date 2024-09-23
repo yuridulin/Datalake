@@ -10,7 +10,7 @@ build-server:
     - push-build
 
   script:
-    - docker build --no-cache -t datalake:latest-test  -f ./Server/Dockerfile .
+    - docker build -t datalake:latest-test  -f ./Server/Dockerfile .
     - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:latest-test
 
   only:
