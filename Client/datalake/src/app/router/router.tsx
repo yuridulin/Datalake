@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
+import SettingsPage from '../pages/admin/SettingsPage'
 import BlockForm from '../pages/blocks/BlockForm'
 import BlockView from '../pages/blocks/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'
@@ -34,10 +35,12 @@ const router = createBrowserRouter([
 		path: '/',
 		element: <AppLayout />,
 		children: [
+			// root
 			{
 				path: '/',
 				element: <Dashboard />,
 			},
+			// users
 			{
 				path: routes.Users.root,
 				children: [
@@ -55,6 +58,7 @@ const router = createBrowserRouter([
 					},
 				],
 			},
+			// usergroups
 			{
 				path: routes.UserGroups.root,
 				children: [
@@ -72,6 +76,12 @@ const router = createBrowserRouter([
 					}, */
 				],
 			},
+			// settings
+			{
+				path: routes.Settings,
+				element: <SettingsPage />,
+			},
+			// sources
 			{
 				path: '/sources',
 				children: [
@@ -85,6 +95,7 @@ const router = createBrowserRouter([
 					},
 				],
 			},
+			// tags
 			{
 				path: '/tags',
 				children: [
@@ -106,6 +117,7 @@ const router = createBrowserRouter([
 					},
 				],
 			},
+			// values
 			{
 				path: routes.Viewer.root,
 				children: [
@@ -115,6 +127,7 @@ const router = createBrowserRouter([
 					},
 				],
 			},
+			// blocks
 			{
 				path: '/blocks',
 				children: [

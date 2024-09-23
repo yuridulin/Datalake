@@ -6,29 +6,6 @@ import routes from '../router/routes'
 
 const items: ItemType<MenuItemType>[] = [
 	{
-		key: 'admin',
-		label: 'Администрирование',
-		type: 'group',
-		children: [
-			{
-				key: 'logs',
-				label: <NavLink to={'/'}>Журнал</NavLink>,
-			},
-			{
-				key: 'users',
-				label: <NavLink to={routes.Users.List}>Пользователи</NavLink>,
-			},
-			/* {
-				key: 'user-groups',
-				label: (
-					<NavLink to={routes.UserGroups.List}>
-						Группы пользователей
-					</NavLink>
-				),
-			}, */
-		],
-	},
-	{
 		key: 'sources',
 		label: 'Источники данных',
 		type: 'group',
@@ -81,6 +58,33 @@ const items: ItemType<MenuItemType>[] = [
 						Запросы
 					</NavLink>
 				),
+			},
+		],
+	},
+	{
+		key: 'admin',
+		label: 'Администрирование',
+		type: 'group',
+		children: [
+			{
+				key: 'logs',
+				label: <NavLink to={'/'}>Журнал</NavLink>,
+			},
+			{
+				key: 'users',
+				label: <NavLink to={routes.Users.List}>Пользователи</NavLink>,
+			},
+			/* {
+				key: 'user-groups',
+				label: (
+					<NavLink to={routes.UserGroups.List}>
+						Группы пользователей
+					</NavLink>
+				),
+			}, */
+			{
+				key: 'settings',
+				label: <NavLink to={routes.Settings}>Настройки</NavLink>,
 			},
 		],
 	},

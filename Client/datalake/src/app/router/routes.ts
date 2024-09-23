@@ -1,4 +1,5 @@
 const routes = {
+	Settings: '/settings',
 	Users: {
 		root: '/users',
 		List: '/users/',
