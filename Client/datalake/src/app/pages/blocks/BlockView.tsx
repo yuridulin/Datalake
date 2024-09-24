@@ -14,17 +14,16 @@ import Header from '../../components/Header'
 import TagCompactValue from '../../components/TagCompactValue'
 import routes from '../../router/routes'
 
-type TableModel = BlockFullInfo & {
-	tags: BlockNestedTagInfo & {
-		value?: ValueRecord
-	}
+type BlockValues = {
+	[key: number]: ValueRecord
 }
 
 export default function BlockView() {
 	const { id } = useParams()
 	const navigate = useNavigate()
 
-	const [block, setBlock] = useState({} as TableModel)
+	const [block, setBlock] = useState({} as BlockFullInfo)
+	const [values, setValues] = useState({} as BlockValues)
 
 	const items: DescriptionsProps['items'] = [
 		{ key: 'name', label: 'Имя', children: block.name },
@@ -38,10 +37,10 @@ export default function BlockView() {
 	const getBlock = () => {
 		api.blocksRead(Number(id))
 			.then((res) => {
-				setBlock(res.data as TableModel)
+				setBlock(res.data)
 				getTagsValues(res.data.tags.map((x) => x.id))
 			})
-			.catch(() => setBlock({} as TableModel))
+			.catch(() => setBlock({} as BlockFullInfo))
 	}
 
 	const getValues = () => {
@@ -59,15 +58,7 @@ export default function BlockView() {
 			const values = Object.fromEntries(
 				res.data[0].tags.map((x) => [x.id, x.values[0]]),
 			)
-			if (block.tags) {
-				setBlock({
-					...block,
-					tags: block.tags.map((x) => ({
-						...x,
-						value: values[x.id],
-					})),
-				} as unknown as TableModel)
-			}
+			setValues(values)
 		})
 	}
 
@@ -75,7 +66,6 @@ export default function BlockView() {
 		api.blocksCreateEmpty({ parentId: Number(id) }).then(getBlock)
 	}
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(getBlock, [id])
 	useInterval(getValues, 5000)
 
@@ -123,8 +113,9 @@ export default function BlockView() {
 				<Column
 					dataIndex='value'
 					title='Значение'
-					render={(value: ValueRecord, record: BlockNestedTagInfo) =>
-						!value ? (
+					render={(_, record: BlockNestedTagInfo) => {
+						const value = values[record.id]
+						return !value ? (
 							<></>
 						) : (
 							<TagCompactValue
@@ -133,7 +124,7 @@ export default function BlockView() {
 								value={value.value}
 							/>
 						)
-					}
+					}}
 				/>
 			</Table>
 			<Divider

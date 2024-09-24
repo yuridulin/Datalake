@@ -40,10 +40,6 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[]): DataType[] {
 
 const columns: TableColumnsType<DataType> = [
 	{
-		width: '3em',
-		align: 'center',
-	},
-	{
 		title: 'Название',
 		dataIndex: 'name',
 		width: '40%',
