@@ -8,13 +8,15 @@ using LinqToDB;
 
 namespace Datalake.Database.Repositories;
 
-public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
+public partial class SourcesRepository(DatalakeContext context) : RepositoryBase(context)
 {
 	#region Действия
 
-	public async Task<int> CreateAsync(UserAuthInfo user, SourceInfo? sourceInfo = null)
+	public async Task<int> CreateAsync(
+		UserAuthInfo user,
+		SourceInfo? sourceInfo = null)
 	{
-		CheckGlobalAccess(user, AccessType.Admin);
+		await CheckGlobalAccess(user, AccessType.Admin);
 
 		if (sourceInfo != null)
 			return await CreateAsync(sourceInfo);
@@ -22,16 +24,21 @@ public partial class SourcesRepository(DatalakeContext db) : RepositoryBase
 		return await CreateAsync();
 	}
 
-	public async Task<bool> UpdateAsync(UserAuthInfo user, int id, SourceInfo sourceInfo)
+	public async Task<bool> UpdateAsync(
+		UserAuthInfo user,
+		int id,
+		SourceInfo sourceInfo)
 	{
-		CheckAccessToSource(user, AccessType.Admin, id);
+		await CheckAccessToSource(user, AccessType.Admin, id);
 
 		return await UpdateAsync(id, sourceInfo);
 	}
 
-	public async Task<bool> DeleteAsync(UserAuthInfo user, int id)
+	public async Task<bool> DeleteAsync(
+		UserAuthInfo user,
+		int id)
 	{
-		CheckAccessToSource(user, AccessType.Admin, id);
+		await CheckAccessToSource(user, AccessType.Admin, id);
 
 		return await DeleteAsync(id);
 	}

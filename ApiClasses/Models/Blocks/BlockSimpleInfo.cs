@@ -28,4 +28,10 @@ public class BlockSimpleInfo
 	/// Текстовое описание
 	/// </summary>
 	public string? Description { get; set; }
+
+	/// <summary>
+	/// Список прикреплённых тегов
+	/// </summary>
+	[Required]
+	public BlockNestedTagInfo[] Tags { get; set; } = [];
 }

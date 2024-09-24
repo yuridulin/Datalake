@@ -17,15 +17,64 @@ namespace Datalake.Database.Repositories;
 
 public class ValuesRepository(DatalakeContext db) : IDisposable
 {
-	public static readonly string NamePrefix = "TagsHistory_";
-	public static readonly string DateMask = "yyyy_MM_dd";
-	public static readonly string IndexPostfix = "_idx";
+	#region Действия
+
+	public async Task<List<ValuesResponse>> GetValuesAsync(
+		ValuesRequest[] requests,
+		Guid? energoId)
+	{
+		// TODO: energoId
+		if (energoId.HasValue)
+		{ }
+
+		return await GetValuesAsync(requests, energoId);
+	}
+
+	public async Task<List<ValuesTagResponse>> WriteValuesAsync(
+		ValueWriteRequest[] requests,
+		bool overrided,
+		Guid? energoId)
+	{
+		// TODO: energoId
+		if (energoId.HasValue)
+		{ }
+
+		return await WriteValuesAsync(requests, overrided);
+	}
+
+	#endregion
+
+	#region Системные действия
+
+	public async Task WriteValuesAsSystemAsync(
+		ValueWriteRequest[] requests)
+	{
+		await WriteValuesAsync(requests, false);
+	}
+
+	public async Task<HistoryTableInfo[]> GetHistoryTablesFromSchema()
+	{
+		return await PostgreSQL_GetHistoryTablesFromSchema();
+	}
+
+	public async Task CreateHistoryIndex(string tableName)
+	{
+		await PostgreSQL_CreateHistoryIndex(tableName);
+	}
+
+	#endregion
+
+	#region Реализация
+
+	internal static readonly string NamePrefix = "TagsHistory_";
+	internal static readonly string DateMask = "yyyy_MM_dd";
+	internal static readonly string IndexPostfix = "_idx";
 
 	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
 
 	#region Манипулирование таблицами
 
-	public static DateTime GetTableDate(string tableName) => DateTime.TryParseExact(
+	internal static DateTime GetTableDate(string tableName) => DateTime.TryParseExact(
 		tableName.AsSpan(NamePrefix.Length),
 		DateMask,
 		null,
@@ -131,8 +180,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		return newTable;
 	}
 
-
-	public async Task<HistoryTableInfo[]> PostgreSQL_GetHistoryTablesFromSchema()
+	async Task<HistoryTableInfo[]> PostgreSQL_GetHistoryTablesFromSchema()
 	{
 		var tables = await db.QueryToArrayAsync<HistoryTableWithIndex>($@"
 			SELECT t.table_name AS ""Name"", i.indexname AS ""Index""
@@ -151,7 +199,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			.ToArray();
 	}
 
-	public async Task PostgreSQL_CreateHistoryIndex(string tableName)
+	async Task PostgreSQL_CreateHistoryIndex(string tableName)
 	{
 		await db.ExecuteAsync($"CREATE INDEX {tableName.ToLower()}{IndexPostfix} " +
 			$"ON public.\"{tableName}\" (\"{nameof(TagHistory.TagId)}\", \"{nameof(TagHistory.Date)}\" DESC);");
@@ -162,7 +210,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	#region Запись значений
 
-	public async Task InitializeValueAsync(int tagId)
+	internal async Task InitializeValueAsync(int tagId)
 	{
 		var record = new TagHistory
 		{
@@ -185,7 +233,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 	/// <param name="requests">Список запросов на запись</param>
 	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
-	public async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueWriteRequest[] requests, bool overrided = false)
+	internal async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueWriteRequest[] requests, bool overrided = false)
 	{
 		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToWrite = [];
@@ -372,7 +420,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	#region Чтение значений
 
-	public async Task<List<ValuesResponse>> GetValuesAsync(ValuesRequest[] requests)
+	internal async Task<List<ValuesResponse>> GetValuesAsync(ValuesRequest[] requests)
 	{
 		List<ValuesResponse> responses = [];
 
@@ -541,7 +589,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		return responses;
 	}
 
-	public async Task<List<TagHistory>> ReadHistoryValuesAsync(
+	internal async Task<List<TagHistory>> ReadHistoryValuesAsync(
 		int[] identifiers,
 		DateTime old,
 		DateTime young,
@@ -727,4 +775,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		db.Close();
 		GC.SuppressFinalize(this);
 	}
+
+	#endregion
 }
