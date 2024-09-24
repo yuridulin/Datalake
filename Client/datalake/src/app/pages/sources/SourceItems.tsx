@@ -1,5 +1,6 @@
 import { PlusCircleOutlined } from '@ant-design/icons'
 import { Button, Table, TableColumnsType, Tag } from 'antd'
+import { createStyles } from 'antd-style'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
@@ -12,6 +13,22 @@ import {
 import Header from '../../components/Header'
 import TagCompactValue from '../../components/TagCompactValue'
 
+const useStyle = createStyles(({ css, prefixCls }) => {
+	return {
+		customTable: css`
+			${prefixCls}-table {
+				${prefixCls}-table-container {
+					${prefixCls}-table-body,
+					${prefixCls}-table-content {
+						scrollbar-width: thin;
+						scrollbar-color: unset;
+					}
+				}
+			}
+		`,
+	}
+})
+
 export default function SourceItems({
 	type,
 	newType,
@@ -23,6 +40,7 @@ export default function SourceItems({
 }) {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
+	const { styles } = useStyle()
 
 	const columns: TableColumnsType<SourceEntryInfo> = [
 		{
@@ -121,9 +139,11 @@ export default function SourceItems({
 			<Table
 				dataSource={items}
 				columns={columns}
+				className={styles.customTable}
 				size='small'
 				pagination={false}
 				rowKey='itemInfo'
+				scroll={{ y: 55 * 8 }}
 			/>
 		</>
 	)
