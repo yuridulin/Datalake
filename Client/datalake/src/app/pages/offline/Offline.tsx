@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import api from '../../../api/swagger-api'
+import { useUpdateContext } from '../../../context/updateContext'
 import { useInterval } from '../../../hooks/useInterval'
 
 export default function Offline() {
 	const [online, setOnline] = useState(false)
+
+	const { isDarkMode } = useUpdateContext()
 
 	function load() {
 		api.configGetLastUpdate()
@@ -17,6 +20,17 @@ export default function Offline() {
 	return online ? (
 		<Navigate to={'/'} />
 	) : (
-		<div className='offline'>Сервер не отвечает</div>
+		<div
+			style={{
+				position: 'fixed',
+				top: 0,
+				left: 0,
+				right: 0,
+				bottom: 0,
+				backgroundColor: isDarkMode ? '#121212' : '#fff',
+			}}
+		>
+			<div className='offline'>Сервер не отвечает</div>
+		</div>
 	)
 }

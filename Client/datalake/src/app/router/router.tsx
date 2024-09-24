@@ -2,9 +2,10 @@ import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
 import SettingsPage from '../pages/admin/SettingsPage'
-import BlockForm from '../pages/blocks/BlockForm'
-import BlockView from '../pages/blocks/BlockView'
+import BlockForm from '../pages/blocks/block/BlockForm'
+import BlockView from '../pages/blocks/block/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'
+import BlocksMover from '../pages/blocks/BlocksMover'
 import Dashboard from '../pages/dashboard/Dashboard'
 import EnergoId from '../pages/login/EnergoId'
 import LoginPanel from '../pages/login/LoginPanel'
@@ -134,6 +135,10 @@ const router = createBrowserRouter([
 					{
 						path: '/blocks/',
 						element: <BlocksList />,
+					},
+					{
+						path: '/blocks/mover/',
+						element: <BlocksMover />,
 					},
 					{
 						path: '/blocks/view/:id',

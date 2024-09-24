@@ -7,6 +7,7 @@ import {
 	BlockTreeInfo,
 } from '../../../api/swagger/data-contracts'
 import Header from '../../components/Header'
+import routes from '../../router/routes'
 
 interface DataType {
 	key: React.ReactNode
@@ -67,7 +68,7 @@ const columns: TableColumnsType<DataType> = [
 	},
 ]
 
-export default function Dashboard() {
+export default function BlocksList() {
 	const [data, setData] = useState([] as DataType[])
 
 	function load() {
@@ -80,14 +81,20 @@ export default function Dashboard() {
 		api.blocksCreateEmpty().then(() => load())
 	}
 
-	useEffect(() => {
-		load()
-	}, [])
+	useEffect(load, [])
 
 	return (
 		<>
 			<Header
-				right={<Button onClick={createBlock}>Добавить блок</Button>}
+				right={
+					<>
+						<NavLink to={routes.Blocks.root + routes.Blocks.Mover}>
+							<Button>Изменить иерархию</Button>
+						</NavLink>
+						&ensp;
+						<Button onClick={createBlock}>Добавить блок</Button>
+					</>
+				}
 			>
 				Блоки верхнего уровня
 			</Header>

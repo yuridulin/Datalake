@@ -2,17 +2,17 @@ import { Button, Descriptions, DescriptionsProps, Divider, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
-import api from '../../../api/swagger-api'
+import api from '../../../../api/swagger-api'
 import {
 	BlockChildInfo,
 	BlockFullInfo,
 	BlockNestedTagInfo,
 	ValueRecord,
-} from '../../../api/swagger/data-contracts'
-import { useInterval } from '../../../hooks/useInterval'
-import Header from '../../components/Header'
-import TagCompactValue from '../../components/TagCompactValue'
-import routes from '../../router/routes'
+} from '../../../../api/swagger/data-contracts'
+import { useInterval } from '../../../../hooks/useInterval'
+import Header from '../../../components/Header'
+import TagCompactValue from '../../../components/TagCompactValue'
+import routes from '../../../router/routes'
 
 type BlockValues = {
 	[key: number]: ValueRecord

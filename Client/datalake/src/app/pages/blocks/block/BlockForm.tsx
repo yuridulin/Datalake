@@ -14,10 +14,10 @@ import {
 } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import api from '../../../api/swagger-api'
-import { BlockUpdateRequest } from '../../../api/swagger/data-contracts'
-import Header from '../../components/Header'
-import routes from '../../router/routes'
+import api from '../../../../api/swagger-api'
+import { BlockUpdateRequest } from '../../../../api/swagger/data-contracts'
+import Header from '../../../components/Header'
+import routes from '../../../router/routes'
 import styles from './BlockForm.module.css'
 
 export default function BlockForm() {

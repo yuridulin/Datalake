@@ -158,7 +158,7 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 		{
 			await db.Blocks
 				.Where(x => x.Id == id)
-				.Set(x => x.ParentId, parentId)
+				.Set(x => x.ParentId, parentId == 0 ? null : parentId)
 				.UpdateAsync();
 
 			await transaction.CommitAsync();

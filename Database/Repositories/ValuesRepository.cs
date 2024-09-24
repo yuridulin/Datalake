@@ -21,7 +21,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	public async Task<List<ValuesResponse>> GetValuesAsync(
 		ValuesRequest[] requests,
-		Guid? energoId)
+		Guid? energoId = null)
 	{
 		// TODO: energoId
 		if (energoId.HasValue)
@@ -32,8 +32,8 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	public async Task<List<ValuesTagResponse>> WriteValuesAsync(
 		ValueWriteRequest[] requests,
-		bool overrided,
-		Guid? energoId)
+		bool overrided = false,
+		Guid? energoId = null)
 	{
 		// TODO: energoId
 		if (energoId.HasValue)
@@ -83,7 +83,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
 
-	internal async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTimeOffset seekDate)
+	internal async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime seekDate)
 	{
 		ITable<TagHistory> table;
 

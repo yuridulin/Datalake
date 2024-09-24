@@ -10,6 +10,8 @@ import {
 	TagQuality,
 	TagType,
 } from '../../../api/swagger/data-contracts'
+import compareValues from '../../../hooks/compareValues'
+import { useInterval } from '../../../hooks/useInterval'
 import Header from '../../components/Header'
 import TagCompactValue from '../../components/TagCompactValue'
 
@@ -49,6 +51,8 @@ export default function SourceItems({
 			render: (_, record) => (
 				<>{record.itemInfo?.path ?? <Tag>Путь не существует</Tag>}</>
 			),
+			sorter: (a, b) => compareValues(a.itemInfo?.path, b.itemInfo?.path),
+			defaultSortOrder: 'ascend',
 		},
 		{
 			dataIndex: ['itemInfo', 'value'],
@@ -63,6 +67,8 @@ export default function SourceItems({
 				) : (
 					<></>
 				),
+			sorter: (a, b) =>
+				compareValues(a.itemInfo?.value, b.itemInfo?.value),
 		},
 		{
 			dataIndex: ['tagInfo', 'guid'],
@@ -87,10 +93,12 @@ export default function SourceItems({
 						></Button>
 					</span>
 				),
+			sorter: (a, b) => compareValues(a.tagInfo?.name, b.tagInfo?.name),
 		},
 	]
 
 	function read() {
+		if (!id) return
 		api.sourcesGetItemsWithTags(id)
 			.then((res) => {
 				setItems(res.data)
@@ -98,12 +106,6 @@ export default function SourceItems({
 			})
 			.catch(() => setErr(true))
 	}
-
-	useEffect(() => {
-		if (!id) return
-		read()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [id])
 
 	const createTag = async (item: string, tagType: TagType) => {
 		api.tagsCreate({
@@ -115,6 +117,9 @@ export default function SourceItems({
 			if (res.data > 0) read()
 		})
 	}
+
+	useEffect(read, [id])
+	useInterval(read, 5000)
 
 	if (type !== newType)
 		return <>Тип источника изменен. Сохраните, чтобы продолжить</>

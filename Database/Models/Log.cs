@@ -18,7 +18,7 @@ public class Log
 	public long Id { get; set; }
 
 	[Column, NotNull]
-	public DateTime Date { get; set; } = DateTime.Now;
+	public DateTimeOffset Date { get; set; } = DateTimeOffset.Now; // NOTE: в бд это обычная дата, без этого типа почему-то не пишется нормально
 
 	[Column, NotNull]
 	public LogCategory Category { get; set; } = LogCategory.Api;
