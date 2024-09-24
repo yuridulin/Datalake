@@ -23,11 +23,11 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	/// <returns>Идентификатор блока</returns>
 	[HttpPost]
 	public async Task<ActionResult<int>> CreateAsync(
-		[BindRequired, FromBody] BlockInfo blockInfo)
+		[BindRequired, FromBody] BlockFullInfo blockInfo)
 	{
 		var user = Authenticate();
 
-		return await blocksRepository.CreateAsync(user, blockInfo);
+		return await blocksRepository.CreateAsync(user, blockInfo: blockInfo);
 	}
 
 	/// <summary>
@@ -47,11 +47,13 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	/// <summary>
 	/// Получение списка блоков с базовой информацией о них
 	/// </summary>
+	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public async Task<ActionResult<BlockSimpleInfo[]>> ReadAsync()
+	public async Task<ActionResult<BlockSimpleInfo[]>> ReadAsync(
+		Guid? energoId = null)
 	{
-		return await blocksRepository.GetSimpleInfo()
+		return await blocksRepository.GetSimpleInfo(energoId)
 			.ToArrayAsync();
 	}
 
@@ -62,7 +64,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	/// <returns>Информация о блоке</returns>
 	/// <exception cref="NotFoundException">Блок не найден по идентификатору</exception>
 	[HttpGet("{id:int}")]
-	public async Task<ActionResult<BlockInfo>> ReadAsync(
+	public async Task<ActionResult<BlockFullInfo>> ReadAsync(
 		[BindRequired, FromRoute] int id)
 	{
 		return await blocksRepository.GetInfoWithAllRelations()
@@ -74,11 +76,13 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	/// <summary>
 	/// Получение иерархической структуры всех блоков
 	/// </summary>
+	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список обособленных блоков с вложенными блоками</returns>
 	[HttpGet("tree")]
-	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync()
+	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync(
+		Guid? energoId = null)
 	{
-		return await blocksRepository.GetTreeAsync();
+		return await blocksRepository.GetTreeAsync(energoId);
 	}
 
 	/// <summary>

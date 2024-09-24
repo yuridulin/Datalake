@@ -29,7 +29,7 @@ public class HistoryIndexerService(
 
 				using var valuesRepository = new ValuesRepository(db);
 
-				var tables = await valuesRepository.PostgreSQL_GetHistoryTablesFromSchema();
+				var tables = await valuesRepository.GetHistoryTablesFromSchema();
 
 				var notIndexedTables = tables
 					.Where(x => x.Date < DateTime.Today)
@@ -45,7 +45,7 @@ public class HistoryIndexerService(
 					try
 					{
 						var sw = Stopwatch.StartNew();
-						await valuesRepository.PostgreSQL_CreateHistoryIndex(table.Name);
+						await valuesRepository.CreateHistoryIndex(table.Name);
 
 						LastIndexedTableDate = table.Date;
 

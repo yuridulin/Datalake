@@ -1,7 +1,6 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
-using Datalake.Database.Extensions;
 using Datalake.Database.Models;
 using Datalake.Database.Repositories.Base;
 using LinqToDB;
@@ -10,7 +9,7 @@ using System.Text;
 
 namespace Datalake.Database.Repositories;
 
-public partial class UsersRepository(DatalakeContext db) : RepositoryBase
+public partial class UsersRepository(DatalakeContext context) : RepositoryBase(context)
 {
 	#region Действия
 
@@ -22,7 +21,7 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "указанная учётная запись по guid");
 
-		return await GetAuthInfo(db, user);
+		return await GetAuthInfo(user);
 	}
 
 	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
@@ -43,26 +42,26 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 			throw new ForbiddenException(message: "пароль не подходит");
 		}
 
-		return await GetAuthInfo(db, user);
+		return await GetAuthInfo(user);
 	}
 
 	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
 	{
-		CheckGlobalAccess(user, AccessType.Admin);
+		await CheckGlobalAccess(user, AccessType.Admin);
 
 		return await CreateAsync(userInfo);
 	}
 
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
-		CheckGlobalAccess(user, AccessType.Admin);
+		await CheckGlobalAccess(user, AccessType.Admin);
 
 		return await UpdateAsync(userGuid, request);
 	}
 
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid userGuid)
 	{
-		CheckGlobalAccess(user, AccessType.Admin);
+		await CheckGlobalAccess(user, AccessType.Admin);
 
 		return await DeleteAsync(userGuid);
 	}
@@ -258,28 +257,6 @@ public partial class UsersRepository(DatalakeContext db) : RepositoryBase
 
 		string refreshToken = Convert.ToBase64String(randomNumber);
 		return refreshToken;
-	}
-
-	private static async Task<UserAuthInfo> GetAuthInfo(DatalakeContext db, User user)
-	{
-		var accessRights = await db.AuthorizeUserAsync(user.Guid);
-
-		return new UserAuthInfo
-		{
-			Guid = user.Guid,
-			FullName = user.FullName ?? "",
-			Token = user.Type == UserType.Static ? (user.PasswordHash ?? string.Empty) : string.Empty,
-			Rights = accessRights
-				.Select(x => new UserAccessRightsInfo
-				{
-					AccessType = x.AccessType,
-					IsGlobal = x.IsGlobal,
-					BlockId = x.BlockId,
-					SourceId = x.SourceId,
-					TagId = x.TagId,
-				})
-				.ToArray(),
-		};
 	}
 
 	#endregion

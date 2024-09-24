@@ -76,7 +76,7 @@ public class CollectorWriter(
 			})
 			.ToArray();
 
-		await repository.WriteValuesAsync(writeValues);
+		await repository.WriteValuesAsSystemAsync(writeValues);
 
 		sw.Stop();
 		logger.LogInformation("Событие записи значений: {ms} мс", sw.Elapsed.TotalMilliseconds);

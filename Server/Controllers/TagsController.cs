@@ -54,15 +54,17 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	/// <param name="id">Список локальных идентификаторов тегов</param>
 	/// <param name="names">Список текущих наименований тегов</param>
 	/// <param name="guids">Список глобальных идентификаторов тегов</param>
+	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet]
 	public async Task<ActionResult<TagInfo[]>> ReadAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? id,
 		[FromQuery] string[]? names,
-		[FromQuery] Guid[]? guids)
+		[FromQuery] Guid[]? guids,
+		Guid? energoId = null)
 	{
-		var query = tagsRepository.GetInfoWithSources();
+		var query = tagsRepository.GetInfoWithSources(energoId);
 
 		if (sourceId.HasValue)
 		{

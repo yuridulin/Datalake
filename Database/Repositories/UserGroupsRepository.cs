@@ -10,7 +10,7 @@ using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
-public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
+public partial class UserGroupsRepository(DatalakeContext context) : RepositoryBase(context)
 {
 	#region Действия
 
@@ -22,7 +22,7 @@ public partial class UserGroupsRepository(DatalakeContext db) : RepositoryBase
 		}
 		else
 		{
-			CheckGlobalAccess(user, AccessType.Admin);
+			await CheckGlobalAccess(user, AccessType.Admin);
 		}
 
 		return await CreateAsync(request);
