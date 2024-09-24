@@ -5,8 +5,8 @@ import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import {
 	BlockChildInfo,
-	BlockInfo,
-	BlockTagInfo,
+	BlockFullInfo,
+	BlockNestedTagInfo,
 	ValueRecord,
 } from '../../../api/swagger/data-contracts'
 import { useInterval } from '../../../hooks/useInterval'
@@ -14,8 +14,8 @@ import Header from '../../components/Header'
 import TagCompactValue from '../../components/TagCompactValue'
 import routes from '../../router/routes'
 
-type TableModel = BlockInfo & {
-	tags: BlockTagInfo & {
+type TableModel = BlockFullInfo & {
+	tags: BlockNestedTagInfo & {
 		value?: ValueRecord
 	}
 }
@@ -112,7 +112,7 @@ export default function BlockView() {
 				<Column
 					dataIndex='guid'
 					title='Название'
-					render={(_, record: BlockTagInfo) => (
+					render={(_, record: BlockNestedTagInfo) => (
 						<NavLink to={routes.Tags.routeToTag(record.guid)}>
 							<Button title={record.tagName} size='small'>
 								{record.name || <i>имя не задано</i>}
@@ -123,7 +123,7 @@ export default function BlockView() {
 				<Column
 					dataIndex='value'
 					title='Значение'
-					render={(value: ValueRecord, record: BlockTagInfo) =>
+					render={(value: ValueRecord, record: BlockNestedTagInfo) =>
 						!value ? (
 							<></>
 						) : (
