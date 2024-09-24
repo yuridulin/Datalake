@@ -77,7 +77,7 @@ export default function BlockView() {
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(getBlock, [id])
-	useInterval(getValues, 1000)
+	useInterval(getValues, 5000)
 
 	return (
 		<>

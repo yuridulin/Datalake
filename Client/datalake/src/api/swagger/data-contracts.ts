@@ -10,34 +10,20 @@
  */
 
 /** Информация о блоке */
-export interface BlockInfo {
-	/**
-	 * Идентификатор
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Наименование
-	 * @minLength 1
-	 */
-	name: string
-	/** Текстовое описание */
-	description?: string | null
+export type BlockFullInfo = BlockSimpleInfo & {
 	/** Информация о родительском блоке */
 	parent?: BlockParentInfo | null
 	/** Список дочерних блоков */
 	children: BlockChildInfo[]
 	/** Список статических свойств блока */
 	properties: BlockPropertyInfo[]
-	/** Список прикреплённых тегов */
-	tags: BlockTagInfo[]
 }
 
 /** Информация о родительском блоке */
-export type BlockParentInfo = BlockRelationInfo & object
+export type BlockParentInfo = BlockNestedItem & object
 
 /** Связанный с блоком объект */
-export interface BlockRelationInfo {
+export interface BlockNestedItem {
 	/**
 	 * Идентификатор
 	 * @format int32
@@ -51,10 +37,10 @@ export interface BlockRelationInfo {
 }
 
 /** Информация о дочернем блоке */
-export type BlockChildInfo = BlockRelationInfo & object
+export type BlockChildInfo = BlockNestedItem & object
 
 /** Информация о статическом свойстве блока */
-export type BlockPropertyInfo = BlockRelationInfo & {
+export type BlockPropertyInfo = BlockNestedItem & {
 	/** Тип значения свойства */
 	type: TagType
 	/**
@@ -77,8 +63,31 @@ export enum TagType {
 	Boolean = 2,
 }
 
+/** Информация о блоке */
+export interface BlockSimpleInfo {
+	/**
+	 * Идентификатор
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Идентификатор родительского блока
+	 * @format int32
+	 */
+	parentId?: number | null
+	/**
+	 * Наименование
+	 * @minLength 1
+	 */
+	name: string
+	/** Текстовое описание */
+	description?: string | null
+	/** Список прикреплённых тегов */
+	tags: BlockNestedTagInfo[]
+}
+
 /** Информация о закреплённом теге */
-export type BlockTagInfo = BlockRelationInfo & {
+export type BlockNestedTagInfo = BlockNestedItem & {
 	/**
 	 * Идентификатор тега
 	 * @format guid
@@ -106,41 +115,8 @@ export enum BlockTagRelation {
 	Output = 2,
 }
 
-/** Информация о блоке */
-export interface BlockSimpleInfo {
-	/**
-	 * Идентификатор
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Идентификатор родительского блока
-	 * @format int32
-	 */
-	parentId?: number | null
-	/**
-	 * Наименование
-	 * @minLength 1
-	 */
-	name: string
-	/** Текстовое описание */
-	description?: string | null
-}
-
 /** Информация о сущности в иерархическом представлении */
-export interface BlockTreeInfo {
-	/**
-	 * Идентификатор
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Наименование
-	 * @minLength 1
-	 */
-	name: string
-	/** Текстовое описание */
-	description?: string | null
+export type BlockTreeInfo = BlockSimpleInfo & {
 	/** Вложенные сущности, подчинённые этой */
 	children: BlockTreeInfo[]
 }

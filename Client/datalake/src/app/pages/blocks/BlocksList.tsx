@@ -2,7 +2,10 @@ import { Button, Table, TableColumnsType } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
-import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
+import {
+	BlockNestedTagInfo,
+	BlockTreeInfo,
+} from '../../../api/swagger/data-contracts'
 import Header from '../../components/Header'
 
 interface DataType {
@@ -10,6 +13,7 @@ interface DataType {
 	id: number
 	name: string
 	description: string
+	tags: BlockNestedTagInfo[]
 	children?: DataType[]
 }
 
@@ -20,6 +24,7 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[]): DataType[] {
 			id: block.id,
 			name: block.name,
 			description: block.description || '',
+			tags: block.tags,
 		}
 
 		const children = transformBlockTreeInfo(block.children)
@@ -35,14 +40,12 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[]): DataType[] {
 
 const columns: TableColumnsType<DataType> = [
 	{
-		key: 'id',
 		width: '3em',
 		align: 'center',
 	},
 	{
 		title: 'Название',
 		dataIndex: 'name',
-		key: 'name',
 		width: '40%',
 		render: (_, record: DataType) => (
 			<NavLink
@@ -59,7 +62,12 @@ const columns: TableColumnsType<DataType> = [
 	{
 		title: 'Описание',
 		dataIndex: 'description',
-		key: 'desc',
+	},
+	{
+		title: 'Количество тегов',
+		dataIndex: 'tags',
+		render: (_, record: DataType) => record.tags.length,
+		sorter: (a, b) => (a.tags.length > b.tags.length ? 1 : -1),
 	},
 ]
 

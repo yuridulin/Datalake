@@ -10,7 +10,7 @@
  */
 
 import {
-	BlockInfo,
+	BlockFullInfo,
 	BlockSimpleInfo,
 	BlockTreeInfo,
 	BlockUpdateRequest,
@@ -53,7 +53,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request POST:/api/Blocks
 	 * @response `200` `number` Идентификатор блока
 	 */
-	blocksCreate = (data: BlockInfo, params: RequestParams = {}) =>
+	blocksCreate = (data: BlockFullInfo, params: RequestParams = {}) =>
 		this.request<number, any>({
 			path: `/api/Blocks`,
 			method: 'POST',
@@ -71,10 +71,20 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request GET:/api/Blocks
 	 * @response `200` `(BlockSimpleInfo)[]` Список блоков
 	 */
-	blocksReadAll = (params: RequestParams = {}) =>
+	blocksReadAll = (
+		query?: {
+			/**
+			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
+			 * @format guid
+			 */
+			energoId?: string | null
+		},
+		params: RequestParams = {},
+	) =>
 		this.request<BlockSimpleInfo[], any>({
 			path: `/api/Blocks`,
 			method: 'GET',
+			query: query,
 			format: 'json',
 			...params,
 		})
@@ -111,10 +121,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name BlocksRead
 	 * @summary Получение информации о выбранном блоке
 	 * @request GET:/api/Blocks/{id}
-	 * @response `200` `BlockInfo` Информация о блоке
+	 * @response `200` `BlockFullInfo` Информация о блоке
 	 */
 	blocksRead = (id: number, params: RequestParams = {}) =>
-		this.request<BlockInfo, any>({
+		this.request<BlockFullInfo, any>({
 			path: `/api/Blocks/${id}`,
 			method: 'GET',
 			format: 'json',
@@ -161,10 +171,20 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request GET:/api/Blocks/tree
 	 * @response `200` `(BlockTreeInfo)[]` Список обособленных блоков с вложенными блоками
 	 */
-	blocksReadAsTree = (params: RequestParams = {}) =>
+	blocksReadAsTree = (
+		query?: {
+			/**
+			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
+			 * @format guid
+			 */
+			energoId?: string | null
+		},
+		params: RequestParams = {},
+	) =>
 		this.request<BlockTreeInfo[], any>({
 			path: `/api/Blocks/tree`,
 			method: 'GET',
+			query: query,
 			format: 'json',
 			...params,
 		})
@@ -454,6 +474,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			names?: string[] | null
 			/** Список глобальных идентификаторов тегов */
 			guids?: string[] | null
+			/**
+			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
+			 * @format guid
+			 */
+			energoId?: string | null
 		},
 		params: RequestParams = {},
 	) =>
@@ -824,10 +849,21 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request POST:/api/Tags/Values
 	 * @response `200` `(ValuesResponse)[]` Список ответов на запросы
 	 */
-	valuesGet = (data: ValuesGetPayload, params: RequestParams = {}) =>
+	valuesGet = (
+		data: ValuesGetPayload,
+		query?: {
+			/**
+			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
+			 * @format guid
+			 */
+			energoId?: string | null
+		},
+		params: RequestParams = {},
+	) =>
 		this.request<ValuesResponse[], any>({
 			path: `/api/Tags/Values`,
 			method: 'POST',
+			query: query,
 			body: data,
 			type: ContentType.Json,
 			format: 'json',
@@ -842,10 +878,21 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request PUT:/api/Tags/Values
 	 * @response `200` `(ValuesTagResponse)[]` Список измененных начений
 	 */
-	valuesWrite = (data: ValuesWritePayload, params: RequestParams = {}) =>
+	valuesWrite = (
+		data: ValuesWritePayload,
+		query?: {
+			/**
+			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
+			 * @format guid
+			 */
+			energoId?: string | null
+		},
+		params: RequestParams = {},
+	) =>
 		this.request<ValuesTagResponse[], any>({
 			path: `/api/Tags/Values`,
 			method: 'PUT',
+			query: query,
 			body: data,
 			type: ContentType.Json,
 			format: 'json',
