@@ -27,7 +27,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		if (energoId.HasValue)
 		{ }
 
-		return await GetValuesAsync(requests, energoId);
+		return await GetValuesAsync(requests);
 	}
 
 	public async Task<List<ValuesTagResponse>> WriteValuesAsync(
