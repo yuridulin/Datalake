@@ -32,6 +32,5 @@ public class BlockProperty
 
 	// связи
 
-	[ForeignKey(nameof(BlockId))]
 	public Block? Block { get; set; }
 }

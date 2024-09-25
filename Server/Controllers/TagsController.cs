@@ -22,7 +22,7 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	/// <param name="tagCreateRequest">Необходимые данные для создания тега</param>
 	/// <returns>Идентификатор нового тега в локальной базе данных</returns>
 	[HttpPost]
-	public async Task<ActionResult<int>> CreateAsync(
+	public async Task<ActionResult<TagInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest tagCreateRequest)
 	{
 		var user = Authenticate();

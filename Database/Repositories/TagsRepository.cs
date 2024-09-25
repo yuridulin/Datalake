@@ -15,7 +15,7 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 {
 	#region Действия
 
-	public async Task<int> CreateAsync(
+	public async Task<TagInfo> CreateAsync(
 		UserAuthInfo user,
 		TagCreateRequest tagCreateRequest,
 		Guid? energoId = null)
@@ -59,7 +59,7 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 
 	#region Реализация
 
-	internal async Task<int> CreateAsync(TagCreateRequest createRequest)
+	internal async Task<TagInfo> CreateAsync(TagCreateRequest createRequest)
 	{
 		// TODO: проверка разрешения на создание тега
 
@@ -172,8 +172,10 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 		await transaction.CommitAsync();
 
 		await UpdateTagCache(tag.Id);
+		var info = await GetInfoWithSources().FirstOrDefaultAsync(x => x.Id == tag.Id)
+			?? throw new NotFoundException(message: "тег после создания");
 
-		return tag.Id;
+		return info;
 	}
 
 	internal async Task UpdateAsync(Guid guid, TagUpdateRequest updateRequest)

@@ -41,18 +41,13 @@ public class AccessRights
 
 	// связи
 
-	[ForeignKey(nameof(UserGuid))]
 	public User? User { get; set; }
 
-	[ForeignKey(nameof(UserGroupGuid))]
 	public UserGroup? UserGroup { get; set; }
 
-	[ForeignKey(nameof(TagId))]
 	public Tag? Tag { get; set; }
 
-	[ForeignKey(nameof(SourceId))]
 	public Source? Source { get; set; }
 
-	[ForeignKey(nameof(BlockId))]
 	public Block? Block { get; set; }
 }
