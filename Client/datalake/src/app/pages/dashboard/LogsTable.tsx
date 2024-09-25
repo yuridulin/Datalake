@@ -13,7 +13,7 @@ import LogCategoryEl from '../../components/LogCategoryEl'
 import LogTypeEl from '../../components/LogTypeEl'
 import routes from '../../router/routes'
 
-export default function Dashboard() {
+export default function LogsTable() {
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const navigate = useNavigate()
 

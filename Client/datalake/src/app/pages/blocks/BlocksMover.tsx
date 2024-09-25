@@ -1,10 +1,10 @@
-import { Button, Tree, TreeDataNode, TreeProps } from 'antd'
+import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
 import compareValues from '../../../hooks/compareValues'
-import Header from '../../components/Header'
+import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 
 function transformBlockTreeInfo(blocks: BlockTreeInfo[]): TreeDataNode[] {
@@ -28,6 +28,7 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[]): TreeDataNode[] {
 export default function BlocksMover() {
 	const [blocks, setBlocks] = useState([] as TreeDataNode[])
 	const [loading, setLoading] = useState(false)
+	const { token } = theme.useToken()
 
 	function load() {
 		api.blocksReadAsTree().then((res) =>
@@ -121,9 +122,11 @@ export default function BlocksMover() {
 
 	useEffect(load, [])
 
+	console.log(token)
+
 	return (
 		<>
-			<Header
+			<PageHeader
 				left={
 					<NavLink to={routes.Blocks.root}>
 						<Button>Вернуться</Button>
@@ -131,11 +134,15 @@ export default function BlocksMover() {
 				}
 			>
 				Иерархия блоков
-			</Header>
+			</PageHeader>
 			<Tree
 				draggable
 				disabled={loading}
 				blockNode
+				style={{
+					fontSize: '1.1em',
+					backgroundColor: token.colorBgContainer,
+				}}
 				onDrop={onDrop}
 				treeData={blocks}
 			/>

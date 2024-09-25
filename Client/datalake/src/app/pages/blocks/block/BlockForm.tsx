@@ -5,6 +5,7 @@ import {
 } from '@ant-design/icons'
 import {
 	Button,
+	Dropdown,
 	Form,
 	Input,
 	notification,
@@ -15,8 +16,13 @@ import {
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '../../../../api/swagger-api'
-import { BlockUpdateRequest } from '../../../../api/swagger/data-contracts'
-import Header from '../../../components/Header'
+import {
+	AttachedTag,
+	BlockTagRelation,
+	BlockUpdateRequest,
+	TagType,
+} from '../../../../api/swagger/data-contracts'
+import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
 import styles from './BlockForm.module.css'
 
@@ -69,7 +75,7 @@ export default function BlockForm() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				left={
 					<Button
 						onClick={() =>
@@ -100,7 +106,7 @@ export default function BlockForm() {
 					<CreditCardOutlined style={{ fontSize: '20px' }} />{' '}
 					{block.name}
 				</Space>
-			</Header>
+			</PageHeader>
 
 			<Form form={form} onFinish={updateBlock}>
 				<Form.Item label='Название' name='name'>
@@ -119,14 +125,138 @@ export default function BlockForm() {
 								<tr>
 									<td>Значение блока</td>
 									<td>Закрепленный тег</td>
-									<td style={{ width: '1em' }}>
+									<td style={{ width: '3em' }}>
 										<Form.Item>
-											<Button
-												onClick={() => add()}
+											<Dropdown.Button
 												title='Добавить новое значение'
+												menu={{
+													items: [
+														{
+															key: '1',
+															label: 'Создать строковый мануальный тег и добавить как значение',
+															onClick: () => {
+																api.tagsCreate({
+																	blockId:
+																		Number(
+																			id,
+																		),
+																	tagType:
+																		TagType.String,
+																}).then(
+																	(res) => {
+																		setTags(
+																			[
+																				...tags,
+																				{
+																					label: res
+																						.data
+																						.name,
+																					value: res
+																						.data
+																						.id,
+																				},
+																			],
+																		)
+																		add({
+																			id: res
+																				.data
+																				.id,
+																			name: res
+																				.data
+																				.name,
+																			relation:
+																				BlockTagRelation.Static,
+																		} as AttachedTag)
+																	},
+																)
+															},
+														},
+														{
+															key: '2',
+															label: 'Создать числовой мануальный тег и добавить как значение',
+															onClick: () => {
+																api.tagsCreate({
+																	blockId:
+																		Number(
+																			id,
+																		),
+																	tagType:
+																		TagType.Number,
+																}).then(
+																	(res) => {
+																		setTags(
+																			[
+																				...tags,
+																				{
+																					label: res
+																						.data
+																						.name,
+																					value: res
+																						.data
+																						.id,
+																				},
+																			],
+																		)
+																		add({
+																			id: res
+																				.data
+																				.id,
+																			name: res
+																				.data
+																				.name,
+																			relation:
+																				BlockTagRelation.Static,
+																		} as AttachedTag)
+																	},
+																)
+															},
+														},
+														{
+															key: '3',
+															label: 'Создать логический мануальный тег и добавить как значение',
+															onClick: () => {
+																api.tagsCreate({
+																	blockId:
+																		Number(
+																			id,
+																		),
+																	tagType:
+																		TagType.Boolean,
+																}).then(
+																	(res) => {
+																		setTags(
+																			[
+																				...tags,
+																				{
+																					label: res
+																						.data
+																						.name,
+																					value: res
+																						.data
+																						.id,
+																				},
+																			],
+																		)
+																		add({
+																			id: res
+																				.data
+																				.id,
+																			name: res
+																				.data
+																				.name,
+																			relation:
+																				BlockTagRelation.Static,
+																		} as AttachedTag)
+																	},
+																)
+															},
+														},
+													],
+												}}
+												onClick={() => add()}
 											>
 												<PlusOutlined />
-											</Button>
+											</Dropdown.Button>
 										</Form.Item>
 									</td>
 								</tr>

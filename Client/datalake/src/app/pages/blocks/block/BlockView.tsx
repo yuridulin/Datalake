@@ -10,7 +10,7 @@ import {
 	ValueRecord,
 } from '../../../../api/swagger/data-contracts'
 import { useInterval } from '../../../../hooks/useInterval'
-import Header from '../../../components/Header'
+import PageHeader from '../../../components/PageHeader'
 import TagCompactValue from '../../../components/TagCompactValue'
 import routes from '../../../router/routes'
 
@@ -71,7 +71,7 @@ export default function BlockView() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				left={
 					<Button onClick={() => navigate('/blocks')}>
 						Вернуться
@@ -84,7 +84,7 @@ export default function BlockView() {
 				}
 			>
 				{block.name}
-			</Header>
+			</PageHeader>
 			<Descriptions colon={true} layout='vertical' items={items} />
 			<Divider
 				variant='dashed'

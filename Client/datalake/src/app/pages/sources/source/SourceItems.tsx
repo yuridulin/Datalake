@@ -3,17 +3,19 @@ import { Button, Table, TableColumnsType, Tag } from 'antd'
 import { createStyles } from 'antd-style'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../../api/swagger-api'
+import api from '../../../../api/swagger-api'
 import {
 	SourceEntryInfo,
 	SourceType,
+	TagInfo,
 	TagQuality,
 	TagType,
-} from '../../../api/swagger/data-contracts'
-import compareValues from '../../../hooks/compareValues'
-import { useInterval } from '../../../hooks/useInterval'
-import Header from '../../components/Header'
-import TagCompactValue from '../../components/TagCompactValue'
+} from '../../../../api/swagger/data-contracts'
+import compareValues from '../../../../hooks/compareValues'
+import { useInterval } from '../../../../hooks/useInterval'
+import CreatedTagLinker from '../../../components/CreatedTagsLinker'
+import PageHeader from '../../../components/PageHeader'
+import TagCompactValue from '../../../components/TagCompactValue'
 
 const useStyle = createStyles(({ css, prefixCls }) => {
 	return {
@@ -42,6 +44,7 @@ export default function SourceItems({
 }) {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
+	const [created, setCreated] = useState(null as TagInfo | null)
 	const { styles } = useStyle()
 
 	const columns: TableColumnsType<SourceEntryInfo> = [
@@ -114,7 +117,9 @@ export default function SourceItems({
 			sourceId: id,
 			sourceItem: item,
 		}).then((res) => {
-			if (res.data > 0) read()
+			if (!res.data?.id) return
+			read()
+			setCreated(res.data)
 		})
 	}
 
@@ -132,7 +137,7 @@ export default function SourceItems({
 		</div>
 	) : (
 		<>
-			<Header
+			<PageHeader
 				right={
 					<>
 						<Button onClick={read}>Обновить</Button>
@@ -140,7 +145,13 @@ export default function SourceItems({
 				}
 			>
 				Доступные значения с этого источника данных
-			</Header>
+			</PageHeader>
+			{!!created && (
+				<CreatedTagLinker
+					tag={created}
+					onClose={() => setCreated(null)}
+				/>
+			)}
 			<Table
 				dataSource={items}
 				columns={columns}

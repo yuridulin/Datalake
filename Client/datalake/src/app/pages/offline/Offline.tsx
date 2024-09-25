@@ -1,13 +1,13 @@
+import { CompressOutlined } from '@ant-design/icons'
+import { Spin, theme } from 'antd'
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import api from '../../../api/swagger-api'
-import { useUpdateContext } from '../../../context/updateContext'
 import { useInterval } from '../../../hooks/useInterval'
 
 export default function Offline() {
 	const [online, setOnline] = useState(false)
-
-	const { isDarkMode } = useUpdateContext()
+	const { token } = theme.useToken()
 
 	function load() {
 		api.configGetLastUpdate()
@@ -27,10 +27,13 @@ export default function Offline() {
 				left: 0,
 				right: 0,
 				bottom: 0,
-				backgroundColor: isDarkMode ? '#121212' : '#fff',
+				padding: '2em',
+				backgroundColor: token.colorBgContainer,
+				color: token.colorText,
 			}}
 		>
-			<div className='offline'>Сервер не отвечает</div>
+			<Spin indicator={<CompressOutlined spin />} />
+			&emsp; Сервер не отвечает... &emsp;
 		</div>
 	)
 }

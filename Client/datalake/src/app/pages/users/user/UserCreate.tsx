@@ -1,15 +1,15 @@
 import { Button, Input, Radio, Select } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../../../api/swagger-api'
+import api from '../../../../api/swagger-api'
 import {
 	AccessType,
 	EnergoIdInfo,
 	UserCreateRequest,
 	UserType,
-} from '../../../api/swagger/data-contracts'
-import FormRow from '../../components/FormRow'
-import Header from '../../components/Header'
+} from '../../../../api/swagger/data-contracts'
+import FormRow from '../../../components/FormRow'
+import PageHeader from '../../../components/PageHeader'
 
 export default function UserCreate() {
 	const navigate = useNavigate()
@@ -50,7 +50,7 @@ export default function UserCreate() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				left={
 					<Button onClick={() => navigate('/users/')}>
 						Вернуться
@@ -63,7 +63,7 @@ export default function UserCreate() {
 				}
 			>
 				Новая учётная запись
-			</Header>
+			</PageHeader>
 			<form>
 				<FormRow title='Уровень глобального доступа'>
 					<Radio.Group

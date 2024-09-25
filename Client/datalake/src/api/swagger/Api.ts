@@ -441,10 +441,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name TagsCreate
 	 * @summary Создание нового тега
 	 * @request POST:/api/Tags
-	 * @response `200` `number` Идентификатор нового тега в локальной базе данных
+	 * @response `200` `TagInfo` Идентификатор нового тега в локальной базе данных
 	 */
 	tagsCreate = (data: TagCreateRequest, params: RequestParams = {}) =>
-		this.request<number, any>({
+		this.request<TagInfo, any>({
 			path: `/api/Tags`,
 			method: 'POST',
 			body: data,

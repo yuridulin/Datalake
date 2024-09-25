@@ -6,7 +6,7 @@ import {
 	BlockNestedTagInfo,
 	BlockTreeInfo,
 } from '../../../api/swagger/data-contracts'
-import Header from '../../components/Header'
+import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 
 interface DataType {
@@ -85,7 +85,7 @@ export default function BlocksList() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				right={
 					<>
 						<NavLink to={routes.Blocks.root + routes.Blocks.Mover}>
@@ -97,7 +97,7 @@ export default function BlocksList() {
 				}
 			>
 				Блоки верхнего уровня
-			</Header>
+			</PageHeader>
 			<Table
 				size='small'
 				columns={columns}

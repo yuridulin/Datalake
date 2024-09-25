@@ -20,7 +20,7 @@ export default function AppLayout() {
 
 	const siderStyle: React.CSSProperties = {
 		backgroundColor: token.colorBgLayout,
-		borderRight: '1px solid ' + (isDarkMode ? '#222' : '#ddd'),
+		borderRight: '1px solid ' + token.colorSplit,
 		paddingTop: '1em',
 		overflow: 'auto',
 		height: '100vh',
@@ -77,9 +77,7 @@ export default function AppLayout() {
 								scrollbarWidth: 'thin',
 								scrollbarColor: 'unset',
 								padding: 24,
-								backgroundColor: isDarkMode
-									? '#121212'
-									: '#fff',
+								backgroundColor: token.colorBgContainer,
 							}}
 						>
 							<Outlet />

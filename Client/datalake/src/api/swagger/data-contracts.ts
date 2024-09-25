@@ -313,26 +313,6 @@ export interface SourceTagInfo {
 	type: TagType
 }
 
-/** Необходимые данные для создания тега */
-export interface TagCreateRequest {
-	/** Наименование тега. Если не указать, будет составлено автоматически */
-	name?: string | null
-	/** Тип значений тега */
-	tagType: TagType
-	/**
-	 * Идентификатор источника данных
-	 * @format int32
-	 */
-	sourceId?: number | null
-	/** Путь к данным при использовании удалённого источника */
-	sourceItem?: string | null
-	/**
-	 * Идентификатор сущности, к которой будет привязан новый тег
-	 * @format int32
-	 */
-	blockId?: number | null
-}
-
 /** Информация о теге */
 export interface TagInfo {
 	/**
@@ -419,6 +399,26 @@ export interface TagInputInfo {
 	 * @minLength 1
 	 */
 	variableName: string
+}
+
+/** Необходимые данные для создания тега */
+export interface TagCreateRequest {
+	/** Наименование тега. Если не указать, будет составлено автоматически */
+	name?: string | null
+	/** Тип значений тега */
+	tagType: TagType
+	/**
+	 * Идентификатор источника данных
+	 * @format int32
+	 */
+	sourceId?: number | null
+	/** Путь к данным при использовании удалённого источника */
+	sourceItem?: string | null
+	/**
+	 * Идентификатор сущности, к которой будет привязан новый тег
+	 * @format int32
+	 */
+	blockId?: number | null
 }
 
 /** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
