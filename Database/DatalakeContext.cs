@@ -95,7 +95,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		// создание таблицы для значений на текущую дату
 		if (!Cache.Tables.ContainsKey(DateTime.Today))
 		{
-			await valuesRepository.GetHistoryTableAsync(DateTime.Today);
+			valuesRepository.GetHistoryTable(DateTime.Today);
 		}
 
 		// актуализация таблицы текущих значений
