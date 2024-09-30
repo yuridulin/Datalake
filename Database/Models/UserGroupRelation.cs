@@ -24,7 +24,7 @@ public class UserGroupRelation
 
 	// связи
 
-	public User? User { get; set; }
+	public User User { get; set; } = null!;
 
-	public UserGroup? UserGroup { get; set; }
+	public UserGroup UserGroup { get; set; } = null!;
 }

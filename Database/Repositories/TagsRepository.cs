@@ -11,37 +11,47 @@ using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
-public partial class TagsRepository(DatalakeContext db) : RepositoryBase
+public partial class TagsRepository(DatalakeContext context) : RepositoryBase(context)
 {
 	#region Действия
 
-	public async Task<int> CreateAsync(UserAuthInfo user, TagCreateRequest tagCreateRequest)
+	public async Task<TagInfo> CreateAsync(
+		UserAuthInfo user,
+		TagCreateRequest tagCreateRequest,
+		Guid? energoId = null)
 	{
 		if (tagCreateRequest.SourceId.HasValue)
 		{
-			CheckAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value);
+			await CheckAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value, energoId);
 		}
 		else if (tagCreateRequest.BlockId.HasValue)
 		{
-			await CheckAccessToBlockAsync(db, user, AccessType.Admin, tagCreateRequest.BlockId.Value);
+			await CheckAccessToBlockAsync(user, AccessType.Admin, tagCreateRequest.BlockId.Value, energoId);
 		}
 		else
 		{
-			CheckGlobalAccess(user, AccessType.Admin);
+			await CheckGlobalAccess(user, AccessType.Admin, energoId);
 		}
 
 		return await CreateAsync(tagCreateRequest);
 	}
 
-	public async Task UpdateAsync(UserAuthInfo user, Guid guid, TagUpdateRequest updateRequest)
+	public async Task UpdateAsync(
+		UserAuthInfo user,
+		Guid guid,
+		TagUpdateRequest updateRequest,
+		Guid? energoId = null)
 	{
-		await CheckAccessToTagAsync(db, user, AccessType.Admin, guid);
+		await CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
 		await UpdateAsync(guid, updateRequest);
 	}
 
-	public async Task DeleteAsync(UserAuthInfo user, Guid guid)
+	public async Task DeleteAsync(
+		UserAuthInfo user,
+		Guid guid,
+		Guid? energoId = null)
 	{
-		await CheckAccessToTagAsync(db, user, AccessType.Admin, guid);
+		await CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
 		await DeleteAsync(guid);
 	}
 
@@ -49,7 +59,7 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 
 	#region Реализация
 
-	internal async Task<int> CreateAsync(TagCreateRequest createRequest)
+	internal async Task<TagInfo> CreateAsync(TagCreateRequest createRequest)
 	{
 		// TODO: проверка разрешения на создание тега
 
@@ -162,8 +172,10 @@ public partial class TagsRepository(DatalakeContext db) : RepositoryBase
 		await transaction.CommitAsync();
 
 		await UpdateTagCache(tag.Id);
+		var info = await GetInfoWithSources().FirstOrDefaultAsync(x => x.Id == tag.Id)
+			?? throw new NotFoundException(message: "тег после создания");
 
-		return tag.Id;
+		return info;
 	}
 
 	internal async Task UpdateAsync(Guid guid, TagUpdateRequest updateRequest)

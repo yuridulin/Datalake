@@ -9,31 +9,43 @@ using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
-public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
+public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(context)
 {
 	#region Действия
 
-	public async Task<int> CreateAsync(UserAuthInfo user, BlockInfo? blockInfo = null, int? parentId = null)
+	public async Task<int> CreateAsync(
+		UserAuthInfo user,
+		BlockFullInfo? blockInfo = null,
+		int? parentId = null)
 	{
-		CheckGlobalAccess(user, AccessType.Admin);
+		await CheckGlobalAccess(user, AccessType.Admin);
+
 		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync(parentId);
 	}
 
-	public async Task<bool> UpdateAsync(UserAuthInfo user, int id, BlockUpdateRequest block)
+	public async Task<bool> UpdateAsync(
+		UserAuthInfo user,
+		int id,
+		BlockUpdateRequest block)
 	{
-		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
+		await CheckAccessToBlockAsync(user, AccessType.Admin, id);
 		return await UpdateAsync(id, block);
 	}
 
-	public async Task<bool> MoveAsync(UserAuthInfo user, int id, int? parentId)
+	public async Task<bool> MoveAsync(
+		UserAuthInfo user,
+		int id,
+		int? parentId)
 	{
-		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
+		await CheckAccessToBlockAsync(user, AccessType.Admin, id);
 		return await MoveAsync(id, parentId);
 	}
 
-	public async Task<bool> DeleteAsync(UserAuthInfo user, int id)
+	public async Task<bool> DeleteAsync(
+		UserAuthInfo user,
+		int id)
 	{
-		await CheckAccessToBlockAsync(db, user, AccessType.Admin, id);
+		await CheckAccessToBlockAsync(user, AccessType.Admin, id);
 		return await DeleteAsync(id);
 	}
 
@@ -69,7 +81,7 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 
 	}
 
-	internal async Task<int> CreateAsync(BlockInfo block)
+	internal async Task<int> CreateAsync(BlockFullInfo block)
 	{
 		if (await db.Blocks.AnyAsync(x => x.Name == block.Name))
 			throw new AlreadyExistException("Сущность с таким именем уже существует");
@@ -146,7 +158,7 @@ public partial class BlocksRepository(DatalakeContext db) : RepositoryBase
 		{
 			await db.Blocks
 				.Where(x => x.Id == id)
-				.Set(x => x.ParentId, parentId)
+				.Set(x => x.ParentId, parentId == 0 ? null : parentId)
 				.UpdateAsync();
 
 			await transaction.CommitAsync();

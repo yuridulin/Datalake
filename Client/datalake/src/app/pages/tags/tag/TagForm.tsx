@@ -11,20 +11,23 @@ import {
 	Space,
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { CustomSource } from '../../../api/models/customSource'
-import api from '../../../api/swagger-api'
-import { TagType, TagUpdateRequest } from '../../../api/swagger/data-contracts'
-import { useInterval } from '../../../hooks/useInterval'
-import FormRow from '../../components/FormRow'
-import Header from '../../components/Header'
-import TagValueEl from '../../components/TagValueEl'
-import router from '../../router/router'
+import { useNavigate, useParams } from 'react-router-dom'
+import { CustomSource } from '../../../../api/models/customSource'
+import api from '../../../../api/swagger-api'
+import {
+	TagType,
+	TagUpdateRequest,
+} from '../../../../api/swagger/data-contracts'
+import { useInterval } from '../../../../hooks/useInterval'
+import FormRow from '../../../components/FormRow'
+import PageHeader from '../../../components/PageHeader'
+import TagValueEl from '../../../components/TagValueEl'
 
 export default function TagForm() {
 	//#region Данные
 
 	const { id } = useParams()
+	const navigate = useNavigate()
 
 	const [model, setModel] = useState({
 		tag: {} as TagUpdateRequest,
@@ -118,7 +121,7 @@ export default function TagForm() {
 	//#region Действия
 
 	const back = () => {
-		router.navigate('/tags')
+		navigate('/tags')
 	}
 
 	function tagUpdate() {
@@ -163,11 +166,9 @@ export default function TagForm() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				left={
-					<Button onClick={() => router.navigate('/tags')}>
-						Вернуться
-					</Button>
+					<Button onClick={() => navigate('/tags')}>Вернуться</Button>
 				}
 				right={
 					<>
@@ -187,7 +188,7 @@ export default function TagForm() {
 				}
 			>
 				Тег {model.oldName}
-			</Header>
+			</PageHeader>
 			<FormRow title='Имя'>
 				<Input
 					value={model.tag.name}

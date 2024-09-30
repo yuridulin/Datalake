@@ -6,13 +6,18 @@ namespace Datalake.Database.Repositories;
 
 public partial class TagsRepository
 {
-	public IQueryable<TagInfo> GetInfoWithSources()
+	public IQueryable<TagInfo> GetInfoWithSources(Guid? energoId = null)
 	{
+		// TODO: energoId
+		if (energoId.HasValue)
+		{ }
+
 		var inputs =
 			from input_rel in db.TagInputs
 			from input in db.Tags.InnerJoin(x => x.Id == input_rel.InputTagId)
 			select new { input, input_rel };
 
+#pragma warning disable IDE0305 // Упростите инициализацию коллекции
 		var query =
 			from tag in db.Tags
 			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
@@ -45,6 +50,7 @@ public partial class TagsRepository
 				SourceType = source != null ? source.Type : SourceType.Custom,
 				SourceName = source != null ? source.Name : "Unknown",
 			};
+#pragma warning restore IDE0305 // Упростите инициализацию коллекции
 
 		return query;
 	}

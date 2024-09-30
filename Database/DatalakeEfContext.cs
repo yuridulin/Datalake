@@ -33,59 +33,110 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 	{
 		modelBuilder.HasDefaultSchema("public");
 
-		// связь объектов и тегов
-		modelBuilder
-			.Entity<Block>()
-			.HasMany(e => e.Tags)
-			.WithMany(t => t.Blocks)
+		// связь блоков по иерархии
+		modelBuilder.Entity<Block>()
+			.HasOne(block => block.Parent)
+			.WithMany(block => block.Children)
+			.HasForeignKey(block => block.ParentId)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		// связь блоков и тегов
+		modelBuilder.Entity<Block>()
+			.HasMany(block => block.Tags)
+			.WithMany(tag => tag.Blocks)
 			.UsingEntity<BlockTag>(
-				r => r
-				.HasOne(x => x.Tag)
-				.WithMany(t => t.RelationsToBlocks)
-				.HasForeignKey(x => x.TagId)
-				.OnDelete(DeleteBehavior.NoAction),
-				r => r
-				.HasOne(x => x.Block)
-				.WithMany(e => e.RelationsToTags)
-				.HasForeignKey(x => x.BlockId)
-				.OnDelete(DeleteBehavior.NoAction),
-				r => r
-				.HasKey(x => new { x.BlockId, x.TagId })
+				relation => relation
+					.HasOne(rel => rel.Tag)
+					.WithMany(tag => tag.RelationsToBlocks)
+					.HasForeignKey(rel => rel.TagId)
+					.OnDelete(DeleteBehavior.SetNull),
+				relation => relation
+					.HasOne(rel => rel.Block)
+					.WithMany(e => e.RelationsToTags)
+					.HasForeignKey(rel => rel.BlockId)
+					.OnDelete(DeleteBehavior.Cascade),
+				relation => relation
+					.HasKey(rel => new { rel.BlockId, rel.TagId })
 			);
+
+		// связь групп пользователей по иерархии
+		modelBuilder.Entity<UserGroup>()
+			.HasOne(group => group.Parent)
+			.WithMany(group => group.Children)
+			.HasForeignKey(group => group.ParentGuid)
+			.OnDelete(DeleteBehavior.SetNull);
 
 		// связь пользователей и групп пользователей
 		modelBuilder
 			.Entity<UserGroup>()
-			.HasMany(e => e.Users)
-			.WithMany(t => t.Groups)
+			.HasMany(group => group.Users)
+			.WithMany(user => user.Groups)
 			.UsingEntity<UserGroupRelation>(
-				r => r
-				.HasOne(x => x.User)
-				.WithMany(t => t.GroupsRelations)
-				.HasForeignKey(x => x.UserGroupGuid)
-				.OnDelete(DeleteBehavior.NoAction),
-				r => r
-				.HasOne(x => x.UserGroup)
-				.WithMany(e => e.UsersRelations)
-				.HasForeignKey(x => x.UserGuid)
-				.OnDelete(DeleteBehavior.NoAction),
-				r => r
-				.HasKey(x => new { x.UserGroupGuid, x.UserGuid })
+				relation => relation
+					.HasOne(rel => rel.User)
+					.WithMany(user => user.GroupsRelations)
+					.HasForeignKey(rel => rel.UserGroupGuid)
+					.OnDelete(DeleteBehavior.Cascade),
+				relation => relation
+					.HasOne(rel => rel.UserGroup)
+					.WithMany(group => group.UsersRelations)
+					.HasForeignKey(rel => rel.UserGuid)
+					.OnDelete(DeleteBehavior.Cascade),
+				relation => relation
+					.HasKey(rel => new { rel.UserGroupGuid, rel.UserGuid })
 			);
+
+		// связь источников и тегов
+		modelBuilder
+			.Entity<Tag>()
+			.HasOne(tag => tag.Source)
+			.WithMany(source => source.Tags)
+			.HasForeignKey(tag => tag.SourceId)
+			.OnDelete(DeleteBehavior.SetNull);
 
 		// связь тегов с входными тегами (переменными)
 		modelBuilder.Entity<Tag>()
-			.HasMany(t => t.TagInputs)
-			.WithOne(ti => ti.Tag)
-			.HasForeignKey(ti => ti.TagId)
+			.HasMany(tag => tag.Inputs)
+			.WithOne(input => input.Tag)
+			.HasForeignKey(input => input.TagId)
 			.OnDelete(DeleteBehavior.Cascade);
 
 		modelBuilder.Entity<TagInput>()
-			.HasOne(ti => ti.InputTag)
+			.HasOne(input => input.InputTag)
 			.WithMany()
-			.HasForeignKey(ti => ti.InputTagId)
-			.OnDelete(DeleteBehavior.Restrict);
+			.HasForeignKey(input => input.InputTagId)
+			.OnDelete(DeleteBehavior.SetNull);
 
+		// связи модели прав с объектами
+		modelBuilder.Entity<AccessRights>()
+			.HasOne(x => x.Block)
+			.WithMany(x => x.AccessRightsList)
+			.HasForeignKey(x => x.BlockId)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<AccessRights>()
+			.HasOne(x => x.Source)
+			.WithMany(x => x.AccessRightsList)
+			.HasForeignKey(x => x.SourceId)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<AccessRights>()
+			.HasOne(x => x.Tag)
+			.WithMany(x => x.AccessRightsList)
+			.HasForeignKey(x => x.TagId)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<AccessRights>()
+			.HasOne(x => x.User)
+			.WithMany(x => x.AccessRightsList)
+			.HasForeignKey(x => x.UserGuid)
+			.OnDelete(DeleteBehavior.Cascade);
+
+		modelBuilder.Entity<AccessRights>()
+			.HasOne(x => x.UserGroup)
+			.WithMany(x => x.AccessRightsList)
+			.HasForeignKey(x => x.UserGroupGuid)
+			.OnDelete(DeleteBehavior.Cascade);
 	}
 
 	/// <summary>

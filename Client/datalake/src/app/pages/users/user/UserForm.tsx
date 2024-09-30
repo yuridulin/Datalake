@@ -1,17 +1,16 @@
 import { Button, Input, Popconfirm, Radio, Select } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import api from '../../../api/swagger-api'
+import api from '../../../../api/swagger-api'
 import {
 	AccessType,
 	EnergoIdInfo,
 	UserType,
 	UserUpdateRequest,
-} from '../../../api/swagger/data-contracts'
-import FormRow from '../../components/FormRow'
-import Header from '../../components/Header'
-import routes from '../../router/routes'
-
+} from '../../../../api/swagger/data-contracts'
+import FormRow from '../../../components/FormRow'
+import PageHeader from '../../../components/PageHeader'
+import routes from '../../../router/routes'
 export default function UserForm() {
 	const navigate = useNavigate()
 	const { id } = useParams()
@@ -79,7 +78,7 @@ export default function UserForm() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				left={
 					<Button onClick={() => navigate(routes.Users.List)}>
 						Вернуться
@@ -103,7 +102,7 @@ export default function UserForm() {
 				}
 			>
 				Учётная запись: {oldName}
-			</Header>
+			</PageHeader>
 			<form>
 				<FormRow title='Уровень глобального доступа'>
 					<Radio.Group

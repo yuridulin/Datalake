@@ -7,7 +7,7 @@ using LinqToDB;
 
 namespace Datalake.Database.Repositories;
 
-public partial class SystemRepository(DatalakeContext db) : RepositoryBase
+public partial class SystemRepository(DatalakeContext context) : RepositoryBase(context)
 {
 	#region Действия
 
@@ -34,7 +34,7 @@ public partial class SystemRepository(DatalakeContext db) : RepositoryBase
 
 	public async Task UpdateSettingsAsync(UserAuthInfo user, SettingsInfo newSettings)
 	{
-		CheckGlobalAccess(user, AccessType.Admin);
+		await CheckGlobalAccess(user, AccessType.Admin);
 
 		await UpdateSettingsAsync(newSettings);
 	}

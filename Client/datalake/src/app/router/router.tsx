@@ -2,25 +2,26 @@ import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
 import SettingsPage from '../pages/admin/SettingsPage'
-import BlockForm from '../pages/blocks/BlockForm'
-import BlockView from '../pages/blocks/BlockView'
+import BlockForm from '../pages/blocks/block/BlockForm'
+import BlockView from '../pages/blocks/block/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'
-import Dashboard from '../pages/dashboard/Dashboard'
+import BlocksMover from '../pages/blocks/BlocksMover'
+import LogsTable from '../pages/dashboard/LogsTable'
 import EnergoId from '../pages/login/EnergoId'
 import LoginPanel from '../pages/login/LoginPanel'
 import Offline from '../pages/offline/Offline'
-import SourceForm from '../pages/sources/SourceForm'
+import SourceForm from '../pages/sources/source/SourceForm'
 import SourcesList from '../pages/sources/SourcesList'
-import TagForm from '../pages/tags/TagForm'
+import TagForm from '../pages/tags/tag/TagForm'
 import TagsCalculatedList from '../pages/tags/TagsCalculatedList'
 import TagsList from '../pages/tags/TagsList'
 import TagsManualList from '../pages/tags/TagsManualList'
 import UserGroupsTreeList from '../pages/usergroups/UserGroupsTreeList'
-import UserCreate from '../pages/users/UserCreate'
-import UserForm from '../pages/users/UserForm'
 import UsersList from '../pages/users/UsersList'
 import TagsViewer from '../pages/viewer/TagsViewer'
 import routes from './routes'
+import UserForm from '../pages/users/user/UserForm'
+import UserCreate from '../pages/users/user/UserCreate'
 
 const router = createBrowserRouter([
 	{
@@ -38,7 +39,7 @@ const router = createBrowserRouter([
 			// root
 			{
 				path: '/',
-				element: <Dashboard />,
+				element: <LogsTable />,
 			},
 			// users
 			{
@@ -134,6 +135,10 @@ const router = createBrowserRouter([
 					{
 						path: '/blocks/',
 						element: <BlocksList />,
+					},
+					{
+						path: '/blocks/mover/',
+						element: <BlocksMover />,
 					},
 					{
 						path: '/blocks/view/:id',

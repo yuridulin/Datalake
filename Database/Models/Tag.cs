@@ -1,6 +1,5 @@
 ﻿using Datalake.ApiClasses.Enums;
 using LinqToDB.Mapping;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
@@ -71,16 +70,13 @@ public class Tag
 
 	// связи
 
-	[ForeignKey(nameof(SourceId))]
-	[DeleteBehavior(DeleteBehavior.SetNull)]
 	public Source? Source { get; set; } = null!;
 
-	public ICollection<TagInput> TagInputs { get; set; } = [];
+	public ICollection<TagInput> Inputs { get; set; } = [];
 
 	public ICollection<BlockTag> RelationsToBlocks { get; set; } = [];
 
 	public ICollection<Block> Blocks { get; set; } = [];
 
-	[InverseProperty(nameof(AccessRights.Tag))]
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
 }

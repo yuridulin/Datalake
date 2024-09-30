@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import { UserGroupInfo } from '../../../api/swagger/data-contracts'
-import Header from '../../components/Header'
+import PageHeader from '../../components/PageHeader'
 import routeLinks from '../../router/routeLinks'
 import UserGroupsCreateModal from './UserGroupsCreateModal'
 
@@ -73,9 +73,9 @@ export default function UserGroupsTreeList() {
 
 	return (
 		<>
-			<Header right={<UserGroupsCreateModal onCreate={load} />}>
+			<PageHeader right={<UserGroupsCreateModal onCreate={load} />}>
 				Группы пользователей
-			</Header>
+			</PageHeader>
 			<Table
 				columns={columns}
 				dataSource={groups}

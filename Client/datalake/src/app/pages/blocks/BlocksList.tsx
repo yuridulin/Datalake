@@ -2,14 +2,19 @@ import { Button, Table, TableColumnsType } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
-import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
-import Header from '../../components/Header'
+import {
+	BlockNestedTagInfo,
+	BlockTreeInfo,
+} from '../../../api/swagger/data-contracts'
+import PageHeader from '../../components/PageHeader'
+import routes from '../../router/routes'
 
 interface DataType {
 	key: React.ReactNode
 	id: number
 	name: string
 	description: string
+	tags: BlockNestedTagInfo[]
 	children?: DataType[]
 }
 
@@ -20,6 +25,7 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[]): DataType[] {
 			id: block.id,
 			name: block.name,
 			description: block.description || '',
+			tags: block.tags,
 		}
 
 		const children = transformBlockTreeInfo(block.children)
@@ -35,14 +41,8 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[]): DataType[] {
 
 const columns: TableColumnsType<DataType> = [
 	{
-		key: 'id',
-		width: '3em',
-		align: 'center',
-	},
-	{
 		title: 'Название',
 		dataIndex: 'name',
-		key: 'name',
 		width: '40%',
 		render: (_, record: DataType) => (
 			<NavLink
@@ -59,11 +59,16 @@ const columns: TableColumnsType<DataType> = [
 	{
 		title: 'Описание',
 		dataIndex: 'description',
-		key: 'desc',
+	},
+	{
+		title: 'Количество тегов',
+		dataIndex: 'tags',
+		render: (_, record: DataType) => record.tags.length,
+		sorter: (a, b) => (a.tags.length > b.tags.length ? 1 : -1),
 	},
 ]
 
-export default function Dashboard() {
+export default function BlocksList() {
 	const [data, setData] = useState([] as DataType[])
 
 	function load() {
@@ -76,17 +81,23 @@ export default function Dashboard() {
 		api.blocksCreateEmpty().then(() => load())
 	}
 
-	useEffect(() => {
-		load()
-	}, [])
+	useEffect(load, [])
 
 	return (
 		<>
-			<Header
-				right={<Button onClick={createBlock}>Добавить блок</Button>}
+			<PageHeader
+				right={
+					<>
+						<NavLink to={routes.Blocks.root + routes.Blocks.Mover}>
+							<Button>Изменить иерархию</Button>
+						</NavLink>
+						&ensp;
+						<Button onClick={createBlock}>Добавить блок</Button>
+					</>
+				}
 			>
 				Блоки верхнего уровня
-			</Header>
+			</PageHeader>
 			<Table
 				size='small'
 				columns={columns}

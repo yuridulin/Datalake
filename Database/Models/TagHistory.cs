@@ -10,7 +10,7 @@ public class TagHistory
 	public int TagId { get; set; }
 
 	[Column, NotNull]
-	public DateTimeOffset Date { get; set; } = DateTimeOffset.Now;
+	public DateTime Date { get; set; } = DateTime.Now;
 
 	[Column, Nullable, DataType(LinqToDB.DataType.Text)]
 	public string? Text { get; set; } = null;

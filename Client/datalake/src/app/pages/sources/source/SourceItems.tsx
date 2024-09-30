@@ -1,16 +1,37 @@
 import { PlusCircleOutlined } from '@ant-design/icons'
 import { Button, Table, TableColumnsType, Tag } from 'antd'
+import { createStyles } from 'antd-style'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../../api/swagger-api'
+import api from '../../../../api/swagger-api'
 import {
 	SourceEntryInfo,
 	SourceType,
+	TagInfo,
 	TagQuality,
 	TagType,
-} from '../../../api/swagger/data-contracts'
-import Header from '../../components/Header'
-import TagCompactValue from '../../components/TagCompactValue'
+} from '../../../../api/swagger/data-contracts'
+import compareValues from '../../../../hooks/compareValues'
+import { useInterval } from '../../../../hooks/useInterval'
+import CreatedTagLinker from '../../../components/CreatedTagsLinker'
+import PageHeader from '../../../components/PageHeader'
+import TagCompactValue from '../../../components/TagCompactValue'
+
+const useStyle = createStyles(({ css, prefixCls }) => {
+	return {
+		customTable: css`
+			${prefixCls}-table {
+				${prefixCls}-table-container {
+					${prefixCls}-table-body,
+					${prefixCls}-table-content {
+						scrollbar-width: thin;
+						scrollbar-color: unset;
+					}
+				}
+			}
+		`,
+	}
+})
 
 export default function SourceItems({
 	type,
@@ -23,6 +44,8 @@ export default function SourceItems({
 }) {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
+	const [created, setCreated] = useState(null as TagInfo | null)
+	const { styles } = useStyle()
 
 	const columns: TableColumnsType<SourceEntryInfo> = [
 		{
@@ -31,6 +54,8 @@ export default function SourceItems({
 			render: (_, record) => (
 				<>{record.itemInfo?.path ?? <Tag>Путь не существует</Tag>}</>
 			),
+			sorter: (a, b) => compareValues(a.itemInfo?.path, b.itemInfo?.path),
+			defaultSortOrder: 'ascend',
 		},
 		{
 			dataIndex: ['itemInfo', 'value'],
@@ -45,6 +70,8 @@ export default function SourceItems({
 				) : (
 					<></>
 				),
+			sorter: (a, b) =>
+				compareValues(a.itemInfo?.value, b.itemInfo?.value),
 		},
 		{
 			dataIndex: ['tagInfo', 'guid'],
@@ -69,10 +96,12 @@ export default function SourceItems({
 						></Button>
 					</span>
 				),
+			sorter: (a, b) => compareValues(a.tagInfo?.name, b.tagInfo?.name),
 		},
 	]
 
 	function read() {
+		if (!id) return
 		api.sourcesGetItemsWithTags(id)
 			.then((res) => {
 				setItems(res.data)
@@ -81,12 +110,6 @@ export default function SourceItems({
 			.catch(() => setErr(true))
 	}
 
-	useEffect(() => {
-		if (!id) return
-		read()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [id])
-
 	const createTag = async (item: string, tagType: TagType) => {
 		api.tagsCreate({
 			name: '',
@@ -94,9 +117,14 @@ export default function SourceItems({
 			sourceId: id,
 			sourceItem: item,
 		}).then((res) => {
-			if (res.data > 0) read()
+			if (!res.data?.id) return
+			read()
+			setCreated(res.data)
 		})
 	}
+
+	useEffect(read, [id])
+	useInterval(read, 5000)
 
 	if (type !== newType)
 		return <>Тип источника изменен. Сохраните, чтобы продолжить</>
@@ -109,7 +137,7 @@ export default function SourceItems({
 		</div>
 	) : (
 		<>
-			<Header
+			<PageHeader
 				right={
 					<>
 						<Button onClick={read}>Обновить</Button>
@@ -117,13 +145,21 @@ export default function SourceItems({
 				}
 			>
 				Доступные значения с этого источника данных
-			</Header>
+			</PageHeader>
+			{!!created && (
+				<CreatedTagLinker
+					tag={created}
+					onClose={() => setCreated(null)}
+				/>
+			)}
 			<Table
 				dataSource={items}
 				columns={columns}
+				className={styles.customTable}
 				size='small'
 				pagination={false}
 				rowKey='itemInfo'
+				scroll={{ y: 55 * 8 }}
 			/>
 		</>
 	)

@@ -16,17 +16,17 @@ public class BlockTag
 	public int BlockId { get; set; }
 
 	[Column]
-	public int TagId { get; set; }
+	public int? TagId { get; set; }
 
 	[Column]
 	public string? Name { get; set; } = string.Empty;
 
 	[Column]
-	public BlockTagRelation Relation { get; set; }
+	public BlockTagRelation Relation { get; set; } = BlockTagRelation.Static;
 
 	// связи
 
-	public Block? Block { get; set; }
+	public Block Block { get; set; } = null!;
 
 	public Tag? Tag { get; set; }
 }

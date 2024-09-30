@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import api from '../../../api/swagger-api'
 import { TagInfo } from '../../../api/swagger/data-contracts'
-import Header from '../../components/Header'
+import PageHeader from '../../components/PageHeader'
 import TagsTable from './TagsTable'
 
 export default function Tags() {
@@ -20,7 +20,7 @@ export default function Tags() {
 
 	return (
 		<>
-			<Header>Список тегов</Header>
+			<PageHeader>Список тегов</PageHeader>
 			<TagsTable tags={tags} />
 		</>
 	)

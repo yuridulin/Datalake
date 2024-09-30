@@ -3,12 +3,17 @@ import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../../api/swagger-api'
-import { LogInfo, LogType } from '../../../api/swagger/data-contracts'
+import {
+	LogCategory,
+	LogInfo,
+	LogType,
+} from '../../../api/swagger/data-contracts'
 import { useInterval } from '../../../hooks/useInterval'
+import LogCategoryEl from '../../components/LogCategoryEl'
 import LogTypeEl from '../../components/LogTypeEl'
 import routes from '../../router/routes'
 
-export default function Dashboard() {
+export default function LogsTable() {
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const navigate = useNavigate()
 
@@ -44,7 +49,11 @@ export default function Dashboard() {
 					sorter={(a: LogInfo, b: LogInfo) => (a.id > b.id ? 1 : -1)}
 					defaultSortOrder='descend'
 				/>
-				<Column dataIndex='category' title='Категория' />
+				<Column
+					dataIndex='category'
+					title='Категория'
+					render={(x: LogCategory) => <LogCategoryEl category={x} />}
+				/>
 				<Column dataIndex='text' title='Сообщение' />
 				<Column
 					dataIndex='type'

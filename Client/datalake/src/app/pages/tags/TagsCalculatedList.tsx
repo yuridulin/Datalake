@@ -3,11 +3,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { CustomSource } from '../../../api/models/customSource'
 import api from '../../../api/swagger-api'
 import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
-import Header from '../../components/Header'
+import CreatedTagLinker from '../../components/CreatedTagsLinker'
+import PageHeader from '../../components/PageHeader'
 import TagsTable from './TagsTable'
 
 export default function TagsCalculatedList() {
 	const [tags, setTags] = useState([] as TagInfo[])
+	const [created, setCreated] = useState(null as TagInfo | null)
 
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
@@ -23,7 +25,10 @@ export default function TagsCalculatedList() {
 			sourceId: CustomSource.Calculated,
 			tagType: TagType.Number,
 		})
-			.then(() => getTags())
+			.then((res) => {
+				getTags()
+				setCreated(res.data)
+			})
 			.catch()
 	}
 
@@ -31,13 +36,19 @@ export default function TagsCalculatedList() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				right={
 					<Button onClick={createTag}>Создать вычисляемый тег</Button>
 				}
 			>
 				Список вычисляемых тегов
-			</Header>
+			</PageHeader>
+			{!!created && (
+				<CreatedTagLinker
+					tag={created}
+					onClose={() => setCreated(null)}
+				/>
+			)}
 			<TagsTable tags={tags} hideSource={true} />
 		</>
 	)

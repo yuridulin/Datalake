@@ -30,19 +30,15 @@ public class Block
 
 	// связанные данные
 
-	[ForeignKey(nameof(ParentId))]
 	public Block? Parent { get; set; }
 
-	[InverseProperty(nameof(Parent))]
 	public ICollection<Block> Children { get; set; } = [];
 
-	[InverseProperty(nameof(BlockProperty.Block))]
 	public ICollection<BlockProperty> Properties { get; set; } = [];
 
 	public ICollection<BlockTag> RelationsToTags { get; set; } = [];
 
 	public ICollection<Tag> Tags { get; set; } = [];
 
-	[InverseProperty(nameof(AccessRights.Block))]
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
 }

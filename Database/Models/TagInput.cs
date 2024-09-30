@@ -19,7 +19,7 @@ public class TagInput
 	public int TagId { get; set; }
 
 	[Column]
-	public int InputTagId { get; set; }
+	public int? InputTagId { get; set; }
 
 	[Column]
 	public string VariableName { get; set; } = string.Empty;
@@ -28,5 +28,5 @@ public class TagInput
 
 	public Tag Tag { get; set; } = null!;
 
-	public Tag InputTag { get; set; } = null!;
+	public Tag? InputTag { get; set; }
 }

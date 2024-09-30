@@ -2,7 +2,7 @@ import { Button, Form, Input } from 'antd'
 import { useEffect } from 'react'
 import api from '../../../api/swagger-api'
 import { SettingsInfo } from '../../../api/swagger/data-contracts'
-import Header from '../../components/Header'
+import PageHeader from '../../components/PageHeader'
 
 const SettingsPage = () => {
 	const [form] = Form.useForm<SettingsInfo>()
@@ -15,7 +15,7 @@ const SettingsPage = () => {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				right={
 					<Button type='primary' onClick={form.submit}>
 						Сохранить
@@ -23,7 +23,7 @@ const SettingsPage = () => {
 				}
 			>
 				Настройки
-			</Header>
+			</PageHeader>
 			<Form
 				form={form}
 				layout='vertical'

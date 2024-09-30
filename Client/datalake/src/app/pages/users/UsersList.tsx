@@ -8,7 +8,7 @@ import {
 	UserType,
 } from '../../../api/swagger/data-contracts'
 import FormRow from '../../components/FormRow'
-import Header from '../../components/Header'
+import PageHeader from '../../components/PageHeader'
 
 function AccessTypeDescription(type?: AccessType) {
 	switch (type) {
@@ -77,11 +77,11 @@ export default function UsersList() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				right={<Button onClick={create}>Добавить пользователя</Button>}
 			>
 				Список пользователей
-			</Header>
+			</PageHeader>
 			{users.length > 0 && (
 				<>
 					<FormRow title='Поиск'>

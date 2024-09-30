@@ -11,19 +11,19 @@ export default function SourceEl({ id, name }: HeaderProps) {
 	if (id === CustomSource.Manual) {
 		return (
 			<NavLink to={`/tags/manual/`}>
-				<Button>Мануальный</Button>
+				<Button size='small'>Мануальный</Button>
 			</NavLink>
 		)
 	} else if (id === CustomSource.Calculated) {
 		return (
 			<NavLink to={`/tags/calc/`}>
-				<Button>Вычисляемый</Button>
+				<Button size='small'>Вычисляемый</Button>
 			</NavLink>
 		)
 	} else {
 		return (
 			<NavLink to={`/sources/${id}`}>
-				<Button>{name}</Button>
+				<Button size='small'>{name}</Button>
 			</NavLink>
 		)
 	}

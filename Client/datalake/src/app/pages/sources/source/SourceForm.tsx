@@ -1,12 +1,11 @@
 import { Button, Input, Popconfirm, Radio } from 'antd'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import getSourceTypeName from '../../../api/models/getSourceTypeName'
-import api from '../../../api/swagger-api'
-import { SourceInfo, SourceType } from '../../../api/swagger/data-contracts'
-import FormRow from '../../components/FormRow'
-import Header from '../../components/Header'
-import router from '../../router/router'
+import { useNavigate, useParams } from 'react-router-dom'
+import getSourceTypeName from '../../../../api/models/getSourceTypeName'
+import api from '../../../../api/swagger-api'
+import { SourceInfo, SourceType } from '../../../../api/swagger/data-contracts'
+import FormRow from '../../../components/FormRow'
+import PageHeader from '../../../components/PageHeader'
 import SourceItems from './SourceItems'
 
 const AvailableSourceTypes = [
@@ -18,6 +17,7 @@ const AvailableSourceTypes = [
 
 export default function SourceForm() {
 	const { id } = useParams()
+	const navigate = useNavigate()
 
 	const [source, setSource] = useState({} as SourceInfo)
 	const [name, setName] = useState('')
@@ -32,13 +32,11 @@ export default function SourceForm() {
 	}
 
 	function sourceUpdate() {
-		api.sourcesUpdate(Number(id), source).then(() =>
-			router.navigate('/sources'),
-		)
+		api.sourcesUpdate(Number(id), source).then(() => navigate('/sources'))
 	}
 
 	function sourceDelete() {
-		api.sourcesDelete(Number(id)).then(() => router.navigate('/sources'))
+		api.sourcesDelete(Number(id)).then(() => navigate('/sources'))
 	}
 
 	useEffect(() => {
@@ -51,9 +49,9 @@ export default function SourceForm() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				left={
-					<Button onClick={() => router.navigate('/sources')}>
+					<Button onClick={() => navigate('/sources')}>
 						Вернуться
 					</Button>
 				}
@@ -76,7 +74,7 @@ export default function SourceForm() {
 				}
 			>
 				Источник: {name}
-			</Header>
+			</PageHeader>
 			<FormRow title='Имя'>
 				<Input
 					value={source.name}

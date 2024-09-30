@@ -31,9 +31,7 @@ public class Source
 
 	// связи
 
-	[InverseProperty(nameof(Tag.Source))]
 	public ICollection<Tag> Tags { get; set; } = [];
 
-	[InverseProperty(nameof(AccessRights.Source))]
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
 }

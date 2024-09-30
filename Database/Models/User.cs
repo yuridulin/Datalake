@@ -48,6 +48,5 @@ public class User
 
 	public ICollection<UserGroup> Groups { get; set; } = [];
 
-	[InverseProperty(nameof(AccessRights.User))]
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
 }

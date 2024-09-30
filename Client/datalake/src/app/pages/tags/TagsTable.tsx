@@ -2,65 +2,48 @@ import { Button, Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { CustomSource } from '../../../api/models/customSource'
-import getDictFromValuesResponseArray from '../../../api/models/getDictFromValuesResponseArray'
 import api from '../../../api/swagger-api'
-import {
-	SourceType,
-	TagInfo,
-	TagType,
-} from '../../../api/swagger/data-contracts'
+import { TagInfo, ValueRecord } from '../../../api/swagger/data-contracts'
 import { useInterval } from '../../../hooks/useInterval'
 import SourceEl from '../../components/SourceEl'
-import TagTypeEl from '../../components/TagTypeEl'
-import TagValueEl from '../../components/TagValueEl'
+import TagCompactValue from '../../components/TagCompactValue'
 
 interface TagsTableProps {
 	tags: TagInfo[]
 	hideSource?: boolean
 	hideValue?: boolean
-	hideType?: boolean
 }
 
 export default function TagsTable({
 	tags,
 	hideSource = false,
 	hideValue = false,
-	hideType = false,
 }: TagsTableProps) {
 	const [viewingTags, setViewingTags] = useState(tags)
 	const [search, setSearch] = useState('')
-	const [viewingTagsValues, setViewingTagsValues] = useState(
-		{} as { [key: number]: string | number | boolean | null | undefined },
+	const [values, setValues] = useState(
+		{} as { [key: number]: ValueRecord | null },
 	)
 
-	const loadValues = useCallback(() => {
+	const loadValues = () => {
 		api.valuesGet([
 			{ requestKey: 'tags-table', tagsId: viewingTags.map((x) => x.id) },
 		])
-			.then(
-				(res) =>
-					res.status === 200 &&
-					setViewingTagsValues(
-						getDictFromValuesResponseArray(res.data),
+			.then((res) => {
+				setValues(
+					Object.fromEntries(
+						res.data[0].tags.map((x) => [x.id, x.values[0]]),
 					),
-			)
+				)
+			})
 			.catch(() =>
-				setViewingTagsValues(
+				setValues(
 					Object.fromEntries(
 						Object.keys(viewingTags).map((prop) => [prop, null]),
 					),
 				),
 			)
-	}, [viewingTags])
-
-	const prepareValues = useCallback(() => {
-		const values = viewingTags
-			.map((x) => ({ [x.guid ?? 0]: '' }))
-			.reduce((next, current) => ({ ...next, ...current }), {})
-		setViewingTagsValues(values)
-		loadValues()
-	}, [viewingTags, loadValues])
+	}
 
 	const doSearch = useCallback(() => {
 		setViewingTags(
@@ -75,12 +58,11 @@ export default function TagsTable({
 	}, [search, tags])
 
 	useEffect(doSearch, [doSearch, search, tags])
-	useEffect(prepareValues, [prepareValues])
 	useInterval(loadValues, 5000)
 
 	return (
 		<Table
-			size='middle'
+			size='small'
 			dataSource={viewingTags}
 			showSorterTooltip={false}
 			rowKey='id'
@@ -106,7 +88,7 @@ export default function TagsTable({
 				}
 				render={(_, tag) => (
 					<NavLink to={`/tags/${tag.guid}`}>
-						<Button>{tag.name}</Button>
+						<Button size='small'>{tag.name}</Button>
 					</NavLink>
 				)}
 			/>
@@ -128,40 +110,27 @@ export default function TagsTable({
 					)}
 				/>
 			)}
-			{!hideType && (
-				<Column
-					title='Тип'
-					dataIndex='Type'
-					defaultSortOrder='ascend'
-					sorter={(a: TagInfo, b: TagInfo) =>
-						Number(a.type) - Number(b.type)
-					}
-					render={(_, record) => (
-						<TagTypeEl tagType={record.type ?? TagType.String} />
-					)}
-				/>
-			)}
 			{!hideValue && (
 				<Column
 					title='Значение'
 					dataIndex='Value'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
-						String(viewingTagsValues[a.id ?? 0]).localeCompare(
-							String(viewingTagsValues[b.id ?? 0]),
+						String(values[a.id ?? 0]).localeCompare(
+							String(values[b.id ?? 0]),
 						)
 					}
-					render={(_, record: TagInfo) => (
-						<TagValueEl
-							value={viewingTagsValues[record.id ?? 0]}
-							type={record.type}
-							allowEdit={
-								record.sourceType === SourceType.Custom &&
-								record.sourceId === CustomSource.Manual
-							}
-							guid={record.guid}
-						/>
-					)}
+					render={(_, record: TagInfo) => {
+						const value = values[record.id]
+						console.log(record, value)
+						return (
+							<TagCompactValue
+								value={value?.value}
+								type={record.type}
+								quality={value?.quality}
+							/>
+						)
+					}}
 				/>
 			)}
 			<Column

@@ -17,15 +17,64 @@ namespace Datalake.Database.Repositories;
 
 public class ValuesRepository(DatalakeContext db) : IDisposable
 {
-	public static readonly string NamePrefix = "TagsHistory_";
-	public static readonly string DateMask = "yyyy_MM_dd";
-	public static readonly string IndexPostfix = "_idx";
+	#region Действия
+
+	public async Task<List<ValuesResponse>> GetValuesAsync(
+		ValuesRequest[] requests,
+		Guid? energoId = null)
+	{
+		// TODO: energoId
+		if (energoId.HasValue)
+		{ }
+
+		return await GetValuesAsync(requests);
+	}
+
+	public async Task<List<ValuesTagResponse>> WriteValuesAsync(
+		ValueWriteRequest[] requests,
+		bool overrided = false,
+		Guid? energoId = null)
+	{
+		// TODO: energoId
+		if (energoId.HasValue)
+		{ }
+
+		return await WriteValuesAsync(requests, overrided);
+	}
+
+	#endregion
+
+	#region Системные действия
+
+	public async Task WriteValuesAsSystemAsync(
+		ValueWriteRequest[] requests)
+	{
+		await WriteValuesAsync(requests, false);
+	}
+
+	public async Task<HistoryTableInfo[]> GetHistoryTablesFromSchema()
+	{
+		return await PostgreSQL_GetHistoryTablesFromSchema();
+	}
+
+	public async Task CreateHistoryIndex(string tableName)
+	{
+		await PostgreSQL_CreateHistoryIndex(tableName);
+	}
+
+	#endregion
+
+	#region Реализация
+
+	internal static readonly string NamePrefix = "TagsHistory_";
+	internal static readonly string DateMask = "yyyy_MM_dd";
+	internal static readonly string IndexPostfix = "_idx";
 
 	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
 
 	#region Манипулирование таблицами
 
-	public static DateTime GetTableDate(string tableName) => DateTime.TryParseExact(
+	internal static DateTime GetTableDate(string tableName) => DateTime.TryParseExact(
 		tableName.AsSpan(NamePrefix.Length),
 		DateMask,
 		null,
@@ -34,105 +83,30 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
 
-	internal async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTimeOffset seekDate)
+	internal ITable<TagHistory> GetHistoryTable(DateTime seekDate)
 	{
+		DateTime date = seekDate.Date;
 		ITable<TagHistory> table;
 
-		if (Cache.Tables.TryGetValue(seekDate.Date, out string? value))
+		if (Cache.Tables.TryGetValue(date, out string? value))
 		{
 			table = db.GetTable<TagHistory>().TableName(value);
 		}
 		else
 		{
-			table = await CreateHistoryTableAsync(seekDate.Date);
+			var tableName = GetTableName(date);
+			table = db.CreateTable<TagHistory>(tableName);
+
+			lock (Cache.Tables)
+			{
+				Cache.Tables.Add(date, tableName);
+			}
 		}
 
 		return table;
 	}
 
-	async Task<ITable<TagHistory>> CreateHistoryTableAsync(DateTime date)
-	{
-		var sw = Stopwatch.StartNew();
-
-		// создание новой таблицы в случае, если её не было
-		var tableName = GetTableName(date);
-		var dateTime = date.Date;
-
-		logger.LogInformation("Событие создания новой таблицы: {name}", tableName);
-
-		ITable<TagHistory>? newTable = null;
-		try
-		{
-			newTable = db.CreateTable<TagHistory>(tableName);
-		}
-		catch (Exception ex)
-		{
-			logger.LogError("Новая таблица не создана: {message}", ex.Message);
-			throw new DatabaseException("Новая таблица не создана", ex);
-		}
-
-		ITable<TagHistory>? previousTable = null;
-		try
-		{
-			string? previousTableName = Cache.LastTable(dateTime);
-			if (previousTableName != null)
-				previousTable = db.GetTable<TagHistory>().TableName(previousTableName);
-		}
-		catch (Exception ex)
-		{
-			logger.LogError("Предыдущая таблица не получена: {message}", ex.Message);
-		}
-
-		// инициализация значений по последним из предыдущей таблицы)
-		if (previousTable != null)
-		{
-			var initialValues = new List<TagHistory>();
-
-			var latestHistoryValues = previousTable
-				.Where(x => previousTable
-					.GroupBy(x => x.TagId)
-					.Select(g => new { Id = g.Key, Date = g.Select(v => v.Date).Max() })
-					.Contains(new { Id = x.TagId, x.Date }))
-				.Select(x => new TagHistory
-				{
-					TagId = x.TagId,
-					Date = x.Date,
-					Number = x.Number,
-					Text = x.Text,
-					Quality = x.Quality,
-				});
-
-			await newTable.BulkCopyAsync(latestHistoryValues);
-
-			var uninitializedValues =
-				from t in db.Tags
-				from v in previousTable.LeftJoin(x => x.TagId == t.Id)
-				where v == null
-				select new TagHistory
-				{
-					TagId = t.Id,
-					Date = dateTime,
-					Number = null,
-					Text = null,
-					Quality = TagQuality.Bad_NoValues,
-				};
-
-			await newTable.BulkCopyAsync(uninitializedValues);
-		}
-
-		lock (Cache.Tables)
-		{
-			Cache.Tables.Add(dateTime, tableName);
-		}
-
-		sw.Stop();
-		logger.LogInformation("Новая таблица создана: [{name}] за {ms} мс", tableName, sw.Elapsed.TotalMilliseconds);
-
-		return newTable;
-	}
-
-
-	public async Task<HistoryTableInfo[]> PostgreSQL_GetHistoryTablesFromSchema()
+	async Task<HistoryTableInfo[]> PostgreSQL_GetHistoryTablesFromSchema()
 	{
 		var tables = await db.QueryToArrayAsync<HistoryTableWithIndex>($@"
 			SELECT t.table_name AS ""Name"", i.indexname AS ""Index""
@@ -151,7 +125,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			.ToArray();
 	}
 
-	public async Task PostgreSQL_CreateHistoryIndex(string tableName)
+	async Task PostgreSQL_CreateHistoryIndex(string tableName)
 	{
 		await db.ExecuteAsync($"CREATE INDEX {tableName.ToLower()}{IndexPostfix} " +
 			$"ON public.\"{tableName}\" (\"{nameof(TagHistory.TagId)}\", \"{nameof(TagHistory.Date)}\" DESC);");
@@ -162,7 +136,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	#region Запись значений
 
-	public async Task InitializeValueAsync(int tagId)
+	internal async Task InitializeValueAsync(int tagId)
 	{
 		var record = new TagHistory
 		{
@@ -175,7 +149,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		Live.Write([record]);
 
-		var table = await GetHistoryTableAsync(record.Date);
+		var table = GetHistoryTable(record.Date);
 		await table.BulkCopyAsync([record]);
 	}
 
@@ -185,12 +159,10 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 	/// <param name="requests">Список запросов на запись</param>
 	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
-	public async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueWriteRequest[] requests, bool overrided = false)
+	internal async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueWriteRequest[] requests, bool overrided = false)
 	{
 		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToWrite = [];
-		List<TagHistory> recordsToSimpleWrite = [];
-		List<TagHistory> recordsToManualWrite = [];
 
 		foreach (var writeRequest in requests)
 		{
@@ -221,15 +193,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 			recordsToWrite.Add(record);
 
-			if (info.SourceType == SourceType.Custom)
-			{
-				recordsToManualWrite.Add(record);
-			}
-			else
-			{
-				recordsToSimpleWrite.Add(record);
-			}
-
 			responses.Add(new ValuesTagResponse
 			{
 				Id = info.Id,
@@ -249,11 +212,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		}
 
 		Live.Write(recordsToWrite);
-		await WriteHistoryValuesAsync(recordsToSimpleWrite);
-		foreach (var record in recordsToManualWrite)
-		{
-			await WriteManualHistoryValueAsync(record);
-		}
+		await WriteHistoryValuesAsync(recordsToWrite);
 
 		return responses;
 	}
@@ -268,7 +227,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 		foreach (var g in records.GroupBy(x => x.Date.Date))
 		{
-			var table = await GetHistoryTableAsync(g.Key);
+			var table = GetHistoryTable(g.Key);
 			await table.BulkCopyAsync(records);
 		}
 
@@ -276,103 +235,12 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		logger.LogInformation("Запись архивных значений: [{n}] за {ms} мс", records.Count(), sw.Elapsed.TotalMilliseconds);
 	}
 
-	/// <summary>
-	/// Вставка значения с рекурсивным обновлением предшествующих using
-	/// </summary>
-	/// <param name="record"></param>
-	/// <remarks>
-	/// Не будет вызываться при записи из источников, так что не особо бьет по производительности.
-	/// <br />Тем не менее составлен неоптимально, так как на каждую запись будет выполняться проход по таблицам.
-	/// <br />Вариантом лучше видится отдельная таблица Initial значений
-	/// </remarks>
-	async Task WriteManualHistoryValueAsync(TagHistory record)
-	{
-		/*
-		 * Реализация:
-		 * 1. Определить, существует ли таблица на дату записи. Если нет - пересоздать. Для пересоздания таблицы по хорошему нужен отдельный метод.
-		 * 2. Проверить предыдущие значения в этой точке времени. Если они есть - изменить Using
-		 * 3. Произвести запись
-		 * 4. Проверить, есть ли в этой таблице записи позже записанной. Если их нет - мы должны обновить Initial значение в следующей (из существующих) таблице
-		 */
-		var table = await GetHistoryTableAsync(record.Date);
-
-		// указываем, что предыдущие значения в этой точке времени устарели
-		await table
-			.Where(x => x.TagId == record.TagId && x.Date == record.Date)
-			.DeleteAsync();
-
-		// запись нового значения
-		await table
-			.Value(x => x.TagId, record.TagId)
-			.Value(x => x.Date, record.Date)
-			.Value(x => x.Text, record.Text)
-			.Value(x => x.Number, record.Number)
-			.Value(x => x.Quality, record.Quality)
-			.InsertAsync();
-
-		// проверка, является ли новое значение последним в таблице
-		// если да, мы должны обновить следующие Using = Initial по каскаду до последнего
-		/*var valueAfterWrited = await table.Where(x => x.TagId == record.TagId && x.Date > record.Date).ToArrayAsync();
-		if (valueAfterWrited.Length == 0)
-		{
-			var nextTablesDates = Cache.Tables
-				.Where(x => x.Key > record.Date)
-				.OrderBy(x => x.Key)
-				.Select(x => new
-				{
-					Date = x.Key,
-					Table = x.Value,
-				})
-				.ToList();
-
-			foreach (var next in nextTablesDates)
-			{
-				// выгружаем значения
-				// нам достаточно двух, Initial от прошлой таблицы и Basic за этот день
-				var nextTable = await GetHistoryTableAsync(next.Date);
-				var nextTableValues = await nextTable
-					.Where(x => x.TagId == record.TagId)
-					.OrderBy(x => x.Date)
-					.Take(2)
-					.ToListAsync();
-
-				// проверяем, есть ли Initial значение, если да - обновляем, если нет - создаём
-				if (nextTableValues.Any(x => x.Using == TagUsing.Initial))
-				{
-					await nextTable
-						.Where(x => x.TagId == record.TagId && x.Using == TagUsing.Initial)
-						.Set(x => x.Number, record.Number)
-						.Set(x => x.Text, record.Text)
-						.Set(x => x.Quality, record.Quality)
-						.UpdateAsync();
-				}
-				else
-				{
-					await nextTable
-						.Value(x => x.TagId, record.TagId)
-						.Value(x => x.Date, next.Date)
-						.Value(x => x.Number, record.Number)
-						.Value(x => x.Text, record.Text)
-						.Value(x => x.Quality, record.Quality)
-						.Value(x => x.Using, TagUsing.Initial)
-						.InsertAsync();
-				}
-
-				// проверяем, есть ли Basic записи в этой таблице, если есть - выходим из цикла
-				if (nextTableValues.Any(x => x.Using == TagUsing.Basic))
-				{
-					break;
-				}
-			}
-		}*/
-	}
-
 	#endregion
 
 
 	#region Чтение значений
 
-	public async Task<List<ValuesResponse>> GetValuesAsync(ValuesRequest[] requests)
+	internal async Task<List<ValuesResponse>> GetValuesAsync(ValuesRequest[] requests)
 	{
 		List<ValuesResponse> responses = [];
 
@@ -541,7 +409,7 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		return responses;
 	}
 
-	public async Task<List<TagHistory>> ReadHistoryValuesAsync(
+	internal async Task<List<TagHistory>> ReadHistoryValuesAsync(
 		int[] identifiers,
 		DateTime old,
 		DateTime young,
@@ -727,4 +595,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		db.Close();
 		GC.SuppressFinalize(this);
 	}
+
+	#endregion
 }

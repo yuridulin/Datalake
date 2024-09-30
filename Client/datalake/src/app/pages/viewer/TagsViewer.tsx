@@ -23,6 +23,7 @@ import { NavLink } from 'react-router-dom'
 import { TagValue } from '../../../api/models/tagValue'
 import api from '../../../api/swagger-api'
 import { TagQuality, TagType } from '../../../api/swagger/data-contracts'
+import compareValues from '../../../hooks/compareValues'
 import { useInterval } from '../../../hooks/useInterval'
 import TagCompactValue from '../../components/TagCompactValue'
 import TagQualityEl from '../../components/TagQualityEl'
@@ -145,7 +146,13 @@ export default function TagsViewer() {
 
 				// Определение столбцов
 				setRangeColumns([
-					{ title: 'Время', dataIndex: 'time', key: 'time' },
+					{
+						title: 'Время',
+						dataIndex: 'time',
+						key: 'time',
+						sorter: (a, b) => compareValues(a.time, b.time),
+						showSorterTooltip: false,
+					},
 					...res.data[0].tags.map((x) => ({
 						title: () => (
 							<NavLink to={'/tags/' + x.guid}>
@@ -310,9 +317,10 @@ export default function TagsViewer() {
 					columns={rangeColumns}
 					dataSource={rangeValues}
 					size='small'
+					rowKey='date'
 				/>
 			) : (
-				<Table dataSource={values} size='small'>
+				<Table dataSource={values} size='small' rowKey='guid'>
 					<Column
 						title='Тег'
 						dataIndex='guid'

@@ -28,6 +28,7 @@ const routes = {
 		root: '/blocks',
 		View: '/view',
 		Edit: '/edit',
+		Mover: '/mover',
 		routeToViewBlock(id: number) {
 			return `${this.root}${this.View}/${id}`
 		},

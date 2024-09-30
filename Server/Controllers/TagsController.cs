@@ -22,7 +22,7 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	/// <param name="tagCreateRequest">Необходимые данные для создания тега</param>
 	/// <returns>Идентификатор нового тега в локальной базе данных</returns>
 	[HttpPost]
-	public async Task<ActionResult<int>> CreateAsync(
+	public async Task<ActionResult<TagInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest tagCreateRequest)
 	{
 		var user = Authenticate();
@@ -54,15 +54,17 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	/// <param name="id">Список локальных идентификаторов тегов</param>
 	/// <param name="names">Список текущих наименований тегов</param>
 	/// <param name="guids">Список глобальных идентификаторов тегов</param>
+	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet]
 	public async Task<ActionResult<TagInfo[]>> ReadAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? id,
 		[FromQuery] string[]? names,
-		[FromQuery] Guid[]? guids)
+		[FromQuery] Guid[]? guids,
+		Guid? energoId = null)
 	{
-		var query = tagsRepository.GetInfoWithSources();
+		var query = tagsRepository.GetInfoWithSources(energoId);
 
 		if (sourceId.HasValue)
 		{

@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom'
 import getSourceTypeName from '../../../api/models/getSourceTypeName'
 import api from '../../../api/swagger-api'
 import { SourceInfo } from '../../../api/swagger/data-contracts'
-import Header from '../../components/Header'
+import PageHeader from '../../components/PageHeader'
 
 const columns: TableColumnsType<SourceInfo> = [
 	{
@@ -49,13 +49,13 @@ export default function SourcesList() {
 
 	return (
 		<>
-			<Header
+			<PageHeader
 				right={
 					<Button onClick={createSource}>Добавить источник</Button>
 				}
 			>
 				Зарегистрированные источники данных
-			</Header>
+			</PageHeader>
 			<Table
 				dataSource={list}
 				columns={columns}

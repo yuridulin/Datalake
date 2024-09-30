@@ -29,13 +29,13 @@ public class UserGroup
 
 	// связи
 
-	[NotMapped]
-	public ICollection<UserGroup> Childred { get; set; } = [];
+	public UserGroup? Parent { get; set; }
+
+	public ICollection<UserGroup> Children { get; set; } = [];
 
 	public ICollection<UserGroupRelation> UsersRelations { get; set; } = [];
 
 	public ICollection<User> Users { get; set; } = [];
 
-	[InverseProperty(nameof(AccessRights.UserGroup))]
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
 }
