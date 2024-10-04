@@ -1,5 +1,4 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
+﻿using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Models;
@@ -14,6 +13,18 @@ namespace Datalake.Database.Repositories.Base;
 public abstract class RepositoryBase(DatalakeContext context)
 {
 	protected readonly DatalakeContext db = context;
+
+	/* 
+	 * Нужны списки по тегам и блокам:
+	 * 1. для каждого тега: список юзеров, которые имеют доступ, с указанием уровня. Высчитать на основе блоков и групп пользователей
+	 * 2. для каждого блока: список юзеров, которые имеют доступ, с указанием уровня. Высчитать на основе блоков и групп пользователей
+	 * 3. для каждого пользователя: список блоков и тегов, к которым есть доступ, с указанием уровня
+	 * 
+	 * Этот список создается в начале и пересчитывается, когда происходит любое изменение с уровнями доступа:
+	 * 1. появляется новое правило (при создании тега, блока, выдаче разрешений)
+	 * 2. изменяется правило (при изменении разрешений)
+	 * 3. удаляется правило (при удалении разрешений либо объекта)
+	 */
 
 	#region Информация о учетной записи
 
@@ -71,81 +82,54 @@ public abstract class RepositoryBase(DatalakeContext context)
 		var groups = await GetUserGroupsAsync(userGuid);
 
 		var rights = await db.AccessRights
-			.Where(x => groups.Where(g => g.Guid == x.UserGroupGuid).Any() || x.UserGuid == userGuid)
+			.Where(x => groups.Where(g => g.GroupGuid == x.UserGroupGuid).Any() || x.UserGuid == userGuid)
 			.Where(x => x.AccessType != AccessType.NotSet)
 			.ToArrayAsync();
 
 		return rights;
 	}
 
-	public async Task<List<UserGroupsInfo>> GetUserGroupsAsync(
+	/// <summary>
+	/// Получаем список всех групп, к которым у пользователя есть доступ, по его идентификатору
+	/// Будут получены все группы с предоставленным доступом, а так же все дочерние
+	/// Если для дочерней группы не указано отдельное разрешение, действует родительское
+	/// </summary>
+	/// <param name="userGuid">Идентификатор пользователя</param>
+	/// <returns>Плоский список всех групп с указанием действующего уровня доступа для каждой</returns>
+	public async Task<IEnumerable<UserAccessGroupInfo>> GetUserGroupsAsync(
 		Guid? userGuid)
 	{
-		var groupsTree = await GetUserGroupsTreeAsync(userGuid);
-		var groups = new List<UserGroupsInfo>();
-
-		foreach (var group in groupsTree)
-		{
-			ExtractGroups(group);
-		}
-
-		void ExtractGroups(UserGroupsTreeInfo userGroupInfo)
-		{
-			groups.Add(userGroupInfo);
-			foreach (var child in userGroupInfo.Children)
-				ExtractGroups(child);
-		}
-
-		return groups;
-	}
-
-	public async Task<UserGroupsTreeInfo[]> GetUserGroupsTreeAsync(
-		Guid? userGuid)
-	{
-		if (userGuid == null)
-			throw new NotFoundException(message: "пользователь без идентификатора");
-
-		var user = await db.Users.FirstOrDefaultAsync(x => x.Guid == userGuid)
-			?? throw new NotFoundException(message: "пользователь " + userGuid);
-
-		var groupsQuery = from userGroup in db.UserGroups
-											from rel in db.UserGroupRelations
-											 .Where(x => x.UserGuid == userGuid)
-											 .LeftJoin(x => x.UserGroupGuid == userGroup.Guid)
-											group new { userGroup, rel } by userGroup into g
-											select new
-											{
-												Id = g.Key.Guid,
-												ParentId = g.Key.ParentGuid,
-												g.Key.Name,
-												Relations = g.Select(x => x.rel != null ? x.rel.AccessType : AccessType.NoAccess).ToArray(),
-											};
-
-		var groups = groupsQuery.ToArray();
-
-		var userGroups = groups.Where(x => x.Relations.Intersect(EnumSet.UserWithAccess).Any()).ToArray();
-
-		return userGroups
-			.Select(x => new UserGroupsTreeInfo
-			{
-				Guid = x.Id,
-				Name = x.Name,
-				Children = ReadChildren(x.Id),
-			})
-			.ToArray();
-
-		UserGroupsTreeInfo[] ReadChildren(Guid? id)
-		{
-			return groups
-				.Where(x => x.ParentId == id)
-				.Select(x => new UserGroupsTreeInfo
+		var userGroupsCTE = db.GetCte<UserAccessGroupCTE>(cte => (
+				from ug in db.UserGroups
+				from ugr in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == ug.Guid)
+				select new UserAccessGroupCTE
 				{
-					Name = x.Name,
-					Guid = x.Id,
-					Children = ReadChildren(id)
+					GroupGuid = ug.Guid,
+					ParentGuid = ug.ParentGuid,
+					AccessType = ugr.AccessType,
+					UserGuid = ugr.UserGuid,
 				})
-				.ToArray();
-		}
+				.Concat(
+						from sub_ug in db.UserGroups
+						from cteItem in cte.InnerJoin(x => x.GroupGuid == sub_ug.ParentGuid)
+						from sub_ugr in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == sub_ug.Guid).DefaultIfEmpty()
+						select new UserAccessGroupCTE
+						{
+							GroupGuid = sub_ug.Guid,
+							ParentGuid = sub_ug.ParentGuid,
+							AccessType = sub_ugr != null ? sub_ugr.AccessType : cteItem.AccessType,
+							UserGuid = sub_ugr != null ? sub_ugr.UserGuid : cteItem.UserGuid,
+						}
+				)
+		);
+
+		var userGroupsWithAccess = await userGroupsCTE
+			.Where(x => x.UserGuid == userGuid)
+			.Select(x => new UserAccessGroupInfo { GroupGuid = x.GroupGuid, AccessType = x.AccessType, })
+			.Distinct()
+			.ToArrayAsync();
+
+		return userGroupsWithAccess;
 	}
 
 	#endregion
