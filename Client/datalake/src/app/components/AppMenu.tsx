@@ -18,12 +18,12 @@ const items: ItemType<MenuItemType>[] = [
 	},
 	{
 		key: 'blocks',
-		label: 'Объекты',
+		label: 'Блоки',
 		type: 'group',
 		children: [
 			{
 				key: 'blocks-tree',
-				label: <NavLink to={'/blocks'}>Дерево объектов</NavLink>,
+				label: <NavLink to={'/blocks'}>Дерево блоков</NavLink>,
 			},
 		],
 	},
@@ -54,7 +54,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'viewer-tags',
 				label: (
-					<NavLink to={routes.Viewer.root + routes.Viewer.TagsViewer}>
+					<NavLink to={routes.viewer.root + routes.viewer.tagsViewer}>
 						Запросы
 					</NavLink>
 				),
@@ -72,19 +72,19 @@ const items: ItemType<MenuItemType>[] = [
 			},
 			{
 				key: 'users',
-				label: <NavLink to={routes.Users.List}>Пользователи</NavLink>,
+				label: <NavLink to={routes.users.list}>Пользователи</NavLink>,
 			},
-			/* {
+			{
 				key: 'user-groups',
 				label: (
-					<NavLink to={routes.UserGroups.List}>
+					<NavLink to={routes.userGroups.list}>
 						Группы пользователей
 					</NavLink>
 				),
-			}, */
+			},
 			{
 				key: 'settings',
-				label: <NavLink to={routes.Settings}>Настройки</NavLink>,
+				label: <NavLink to={routes.settings}>Настройки</NavLink>,
 			},
 		],
 	},

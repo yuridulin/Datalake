@@ -64,7 +64,7 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 		// TODO: проверка разрешения на создание тега
 
 		if (!createRequest.SourceId.HasValue && !createRequest.BlockId.HasValue)
-			throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или родительскую сущность");
+			throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или блок");
 
 		bool needToAddIdInName = string.IsNullOrEmpty(createRequest.Name);
 		if (!string.IsNullOrEmpty(createRequest.Name))
@@ -114,9 +114,9 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 					x.Name,
 				})
 				.FirstOrDefaultAsync()
-				?? throw new NotFoundException(message: $"сущность #{createRequest.BlockId}");
+				?? throw new NotFoundException(message: $"блок #{createRequest.BlockId}");
 
-			// TODO: проверка разрешения на изменение сущности
+			// TODO: проверка разрешения на изменение блока
 
 			if (string.IsNullOrEmpty(createRequest.Name))
 			{

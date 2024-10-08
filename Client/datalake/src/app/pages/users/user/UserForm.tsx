@@ -56,7 +56,7 @@ export default function UserForm() {
 	}
 
 	function del() {
-		api.usersDelete(String(id)).then(() => navigate(routes.Users.List))
+		api.usersDelete(String(id)).then(() => navigate(routes.users.list))
 	}
 
 	function generateNewHash() {
@@ -80,7 +80,7 @@ export default function UserForm() {
 		<>
 			<PageHeader
 				left={
-					<Button onClick={() => navigate(routes.Users.List)}>
+					<Button onClick={() => navigate(routes.users.list)}>
 						Вернуться
 					</Button>
 				}

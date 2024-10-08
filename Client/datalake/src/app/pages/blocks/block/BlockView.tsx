@@ -103,7 +103,7 @@ export default function BlockView() {
 					dataIndex='guid'
 					title='Название'
 					render={(_, record: BlockNestedTagInfo) => (
-						<NavLink to={routes.Tags.routeToTag(record.guid)}>
+						<NavLink to={routes.tags.toTag(record.guid)}>
 							<Button title={record.tagName} size='small'>
 								{record.name || <i>имя не задано</i>}
 							</Button>
@@ -150,7 +150,7 @@ export default function BlockView() {
 						render={(_, record: BlockChildInfo) => (
 							<NavLink
 								key={record.id}
-								to={routes.Blocks.routeToViewBlock(record.id)}
+								to={routes.blocks.toViewBlock(record.id)}
 							>
 								<Button size='small'>{record.name}</Button>
 							</NavLink>

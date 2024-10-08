@@ -76,7 +76,7 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 		}
 		catch (Exception ex)
 		{
-			throw new DatabaseException(message: "не удалось добавить сущность", ex);
+			throw new DatabaseException(message: "не удалось добавить блок", ex);
 		}
 
 	}
@@ -84,11 +84,11 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 	internal async Task<int> CreateAsync(BlockFullInfo block)
 	{
 		if (await db.Blocks.AnyAsync(x => x.Name == block.Name))
-			throw new AlreadyExistException("Сущность с таким именем уже существует");
+			throw new AlreadyExistException("Блок с таким именем уже существует");
 		if (block.Parent != null)
 		{
 			if (!await db.Blocks.AnyAsync(x => x.Id == block.Parent.Id))
-				throw new NotFoundException($"Родительская сущность #{block.Parent.Id} не найдена");
+				throw new NotFoundException($"Родительский блок #{block.Parent.Id} не найдена");
 		}
 
 		int? id;
@@ -104,10 +104,10 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 		}
 		catch (Exception ex)
 		{
-			throw new DatabaseException(message: "не удалось добавить сущность", ex);
+			throw new DatabaseException(message: "не удалось добавить блок", ex);
 		}
 
-		return id ?? throw new DatabaseException(message: "не удалось добавить сущность", DatabaseStandartError.IdIsNull);
+		return id ?? throw new DatabaseException(message: "не удалось добавить блок", DatabaseStandartError.IdIsNull);
 	}
 
 	internal async Task<bool> UpdateAsync(int id, BlockUpdateRequest block)
@@ -145,7 +145,7 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 		await transaction.CommitAsync();
 
 		if (count == 0)
-			throw new DatabaseException(message: "не удалось обновить сущность #{id}", DatabaseStandartError.UpdatedZero);
+			throw new DatabaseException(message: "не удалось обновить блок #{id}", DatabaseStandartError.UpdatedZero);
 
 		return true;
 	}
@@ -172,7 +172,6 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 		}
 	}
 
-
 	internal async Task<bool> DeleteAsync(int id)
 	{
 		var count = await db.Blocks
@@ -180,7 +179,7 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 			.DeleteAsync();
 
 		if (count == 0)
-			throw new DatabaseException(message: "не удалось удалить сущность #{id}", DatabaseStandartError.DeletedZero);
+			throw new DatabaseException(message: "не удалось удалить блок #{id}", DatabaseStandartError.DeletedZero);
 
 		return true;
 	}

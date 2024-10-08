@@ -50,7 +50,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public async Task<ActionResult<BlockSimpleInfo[]>> ReadAsync(
+	public async Task<ActionResult<BlockWithTagsInfo[]>> ReadAsync(
 		Guid? energoId = null)
 	{
 		return await blocksRepository.GetSimpleInfo(energoId)

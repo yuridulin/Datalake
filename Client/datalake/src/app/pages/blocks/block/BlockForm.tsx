@@ -24,7 +24,6 @@ import {
 } from '../../../../api/swagger/data-contracts'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
-import styles from './BlockForm.module.css'
 
 export default function BlockForm() {
 	const { id } = useParams()
@@ -54,7 +53,7 @@ export default function BlockForm() {
 	}
 
 	const deleteBlock = () => {
-		api.blocksDelete(Number(id)).then(() => navigate(routes.Blocks.root))
+		api.blocksDelete(Number(id)).then(() => navigate(routes.blocks.root))
 	}
 
 	const getTags = () => {
@@ -79,7 +78,7 @@ export default function BlockForm() {
 				left={
 					<Button
 						onClick={() =>
-							navigate(routes.Blocks.routeToViewBlock(Number(id)))
+							navigate(routes.blocks.toViewBlock(Number(id)))
 						}
 					>
 						Вернуться
@@ -96,6 +95,7 @@ export default function BlockForm() {
 						>
 							<Button>Удалить</Button>
 						</Popconfirm>
+						&ensp;
 						<Button type='primary' onClick={() => form.submit()}>
 							Сохранить
 						</Button>
@@ -120,7 +120,7 @@ export default function BlockForm() {
 				</Form.Item>
 				<Form.List name='tags'>
 					{(fields, { add, remove }) => (
-						<table className={styles.tags}>
+						<table className='form-subtable'>
 							<thead>
 								<tr>
 									<td>Значение блока</td>

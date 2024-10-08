@@ -35,6 +35,22 @@ public partial class UserGroupsRepository(DatalakeContext context) : RepositoryB
 		return await UpdateAsync(groupGuid, request);
 	}
 
+	public async Task<bool> MoveAsync(UserAuthInfo user, Guid guid, Guid? parentGuid)
+	{
+		await CheckAccessToUserGroupAsync(db, user, AccessType.Admin, guid);
+
+		if (parentGuid.HasValue)
+		{
+			await CheckAccessToUserGroupAsync(db, user, AccessType.User, parentGuid.Value);
+		}
+		else
+		{
+			await CheckGlobalAccess(user, AccessType.User);
+		}
+
+		return await MoveAsync(guid, parentGuid);
+	}
+
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid groupGuid)
 	{
 		await CheckAccessToUserGroupAsync(db, user, AccessType.Admin, groupGuid);
@@ -112,6 +128,28 @@ public partial class UserGroupsRepository(DatalakeContext context) : RepositoryB
 		await transaction.CommitAsync();
 
 		return true;
+	}
+
+	internal async Task<bool> MoveAsync(Guid guid, Guid? parentGuid)
+	{
+		using var transaction = await db.BeginTransactionAsync();
+
+		try
+		{
+			await db.UserGroups
+				.Where(x => x.Guid == guid)
+				.Set(x => x.ParentGuid, parentGuid)
+				.UpdateAsync();
+
+			await transaction.CommitAsync();
+
+			return true;
+		}
+		catch (Exception ex)
+		{
+			transaction.Rollback();
+			throw new DatabaseException("не удалось переместить группу", ex);
+		}
 	}
 
 	internal async Task<bool> DeleteAsync(Guid groupGuid)

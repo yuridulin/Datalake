@@ -9,5 +9,5 @@ export default function ErrorBoundary() {
 		message: error.message,
 	})
 
-	return <Navigate to={routes.Root} />
+	return <Navigate to={routes.globalRoot} />
 }

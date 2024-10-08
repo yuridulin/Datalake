@@ -74,3 +74,15 @@ code {
 		color: #33a2ff;
 	}
 }
+
+.form-subtable {
+	width: 100%;
+}
+
+.form-subtable td {
+	padding: .25em .5em;
+}
+
+.form-subtable td div {
+	margin-bottom: 0;
+}

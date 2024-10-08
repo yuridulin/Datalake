@@ -26,7 +26,7 @@ export default function AppSetup() {
 	const oidcConfig = {
 		authority:
 			window.location.protocol + '//' + KEYCLOAK_DB + '/realms/energo',
-		redirect_uri: window.location.origin + routes.Auth.EnergoId,
+		redirect_uri: window.location.origin + routes.auth.energoId,
 		client_id: KEYCLOAK_CLIENT,
 	}
 

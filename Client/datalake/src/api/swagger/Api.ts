@@ -11,9 +11,9 @@
 
 import {
 	BlockFullInfo,
-	BlockSimpleInfo,
 	BlockTreeInfo,
 	BlockUpdateRequest,
+	BlockWithTagsInfo,
 	EnergoIdInfo,
 	LogInfo,
 	SettingsInfo,
@@ -69,7 +69,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name BlocksReadAll
 	 * @summary Получение списка блоков с базовой информацией о них
 	 * @request GET:/api/Blocks
-	 * @response `200` `(BlockSimpleInfo)[]` Список блоков
+	 * @response `200` `(BlockWithTagsInfo)[]` Список блоков
 	 */
 	blocksReadAll = (
 		query?: {
@@ -81,7 +81,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 		},
 		params: RequestParams = {},
 	) =>
-		this.request<BlockSimpleInfo[], any>({
+		this.request<BlockWithTagsInfo[], any>({
 			path: `/api/Blocks`,
 			method: 'GET',
 			query: query,
@@ -665,6 +665,32 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			path: `/api/UserGroups/${groupGuid}/detailed`,
 			method: 'GET',
 			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsMove
+	 * @summary Перемещение группы пользователей
+	 * @request POST:/api/UserGroups/{groupGuid}/move
+	 * @response `200` `File`
+	 */
+	userGroupsMove = (
+		groupGuid: string,
+		query?: {
+			/**
+			 * Идентификатор новой родительской группы
+			 * @format guid
+			 */
+			parentGuid?: string | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<File, any>({
+			path: `/api/UserGroups/${groupGuid}/move`,
+			method: 'POST',
+			query: query,
 			...params,
 		})
 	/**

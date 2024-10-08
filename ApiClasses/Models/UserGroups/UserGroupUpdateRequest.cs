@@ -11,6 +11,7 @@ public class UserGroupUpdateRequest : UserGroupCreateRequest
 	/// <summary>
 	/// Базовый уровень доступа участников и под-групп
 	/// </summary>
+	[Required]
 	public required AccessType AccessType { get; set; }
 
 	/// <summary>
@@ -18,10 +19,4 @@ public class UserGroupUpdateRequest : UserGroupCreateRequest
 	/// </summary>
 	[Required]
 	public required UserGroupUsersInfo[] Users { get; set; } = [];
-
-	/// <summary>
-	/// Список групп, которые включены в эту группу
-	/// </summary>
-	[Required]
-	public required UserGroupInfo[] Groups { get; set; } = [];
 }

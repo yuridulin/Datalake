@@ -17,7 +17,7 @@ const UserPanel = () => {
 
 	function logout() {
 		freeToken()
-		navigate(routes.Auth.LoginPage)
+		navigate(routes.auth.loginPage)
 	}
 
 	return isAuth() ? (
@@ -34,7 +34,7 @@ const UserPanel = () => {
 			<Button onClick={logout}>Выход</Button>
 		</div>
 	) : (
-		<Navigate to={routes.Auth.LoginPage} />
+		<Navigate to={routes.auth.loginPage} />
 	)
 }
 

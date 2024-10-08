@@ -22,6 +22,7 @@ public partial class BlocksRepository
 				.Select(x => new BlockTreeInfo
 				{
 					Id = x.Id,
+					Guid = x.Guid,
 					ParentId = x.ParentId,
 					Name = x.Name,
 					Description = x.Description,
@@ -38,6 +39,7 @@ public partial class BlocksRepository
 								select new BlockFullInfo
 								{
 									Id = block.Id,
+									Guid = block.GlobalId,
 									Name = block.Name,
 									Description = block.Description,
 									Parent = (from parent in db.Blocks
@@ -80,7 +82,7 @@ public partial class BlocksRepository
 		return query;
 	}
 
-	public IQueryable<BlockSimpleInfo> GetSimpleInfo(Guid? energoId = null)
+	public IQueryable<BlockWithTagsInfo> GetSimpleInfo(Guid? energoId = null)
 	{
 		// TODO: energoId
 		if (energoId.HasValue)
@@ -88,9 +90,10 @@ public partial class BlocksRepository
 
 		var query =
 			from block in db.Blocks
-			select new BlockSimpleInfo
+			select new BlockWithTagsInfo
 			{
 				Id = block.Id,
+				Guid = block.GlobalId,
 				Name = block.Name,
 				Description = block.Description,
 				ParentId = block.ParentId,
@@ -111,19 +114,20 @@ public partial class BlocksRepository
 		return query;
 	}
 
-	public async Task<List<BlockSimpleInfo>> GetWithParentsAsync(int blockId)
+	public async Task<List<BlockWithTagsInfo>> GetWithParentsAsync(int blockId)
 	{
 		var blocks = await db.Blocks
 			.Select(x => new
 			{
 				x.Id,
+				x.GlobalId,
 				x.Name,
 				x.Description,
 				x.ParentId,
 			})
 			.ToArrayAsync();
 
-		var parents = new List<BlockSimpleInfo>();
+		var parents = new List<BlockWithTagsInfo>();
 		int? seekId = blockId;
 
 		do
@@ -135,7 +139,7 @@ public partial class BlocksRepository
 			if (block == null)
 				break;
 
-			parents.Add(new BlockSimpleInfo { Name = block.Name, Id = block.Id });
+			parents.Add(new BlockWithTagsInfo { Name = block.Name, Id = block.Id, Guid = block.GlobalId });
 			seekId = block.ParentId;
 		}
 		while (seekId != null);

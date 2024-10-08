@@ -2,7 +2,8 @@ import { MoonOutlined, SunOutlined } from '@ant-design/icons'
 import { Layout, notification, theme } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
-import { Link, Outlet } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { isAuth } from '../api/local-auth'
 import { useUpdateContext } from '../context/updateContext'
 import { AppMenu } from './components/AppMenu'
@@ -17,6 +18,7 @@ notification.config({
 export default function AppLayout() {
 	const { isDarkMode, setDarkMode } = useUpdateContext()
 	const { token } = theme.useToken()
+	const { pathname } = useLocation()
 
 	const siderStyle: React.CSSProperties = {
 		backgroundColor: token.colorBgLayout,
@@ -80,7 +82,14 @@ export default function AppLayout() {
 								backgroundColor: token.colorBgContainer,
 							}}
 						>
-							<Outlet />
+							<motion.div
+								layout
+								key={pathname}
+								initial='initial'
+								animate='in'
+							>
+								<Outlet />
+							</motion.div>
 						</Content>
 					</Layout>
 				</Layout>

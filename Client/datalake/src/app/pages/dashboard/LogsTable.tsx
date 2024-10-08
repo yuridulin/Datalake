@@ -16,14 +16,15 @@ import routes from '../../router/routes'
 export default function LogsTable() {
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const navigate = useNavigate()
+	const count = 15
 
 	const update = useCallback(() => {
 		setLogs((prevLogs) => {
 			const lastId = prevLogs.length > 0 ? prevLogs[0].id : 0
-			api.configGetLogs({ lastId })
+			api.configGetLogs({ lastId, take: count })
 				.then((res) => {
 					let newLogs = [...res.data, ...prevLogs]
-					if (newLogs.length > 50) newLogs = newLogs.slice(-50)
+					if (newLogs.length > count) newLogs = newLogs.slice(-count)
 					setLogs(newLogs)
 				})
 				.catch(() => navigate(routes.offline))

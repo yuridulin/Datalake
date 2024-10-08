@@ -79,10 +79,7 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 	public async Task<ActionResult<UserGroupDetailedInfo>> ReadWithDetailsAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
-		return await userGroupsRepository.GetWithChildsAndUsers()
-			.Where(x => x.Guid == groupGuid)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"группа {groupGuid}");
+		return await userGroupsRepository.GetWithDetails(groupGuid);
 	}
 
 	/// <summary>
@@ -98,6 +95,22 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 		var user = Authenticate();
 
 		await userGroupsRepository.UpdateAsync(user, groupGuid, request);
+
+		return NoContent();
+	}
+
+	/// <summary>
+	/// Перемещение группы пользователей
+	/// </summary>
+	/// <param name="groupGuid">Идентификатор группы</param>
+	/// <param name="parentGuid">Идентификатор новой родительской группы</param>
+	[HttpPost("{groupGuid}/move")]
+	public async Task<ActionResult> MoveAsync(
+		[BindRequired, FromRoute] Guid groupGuid,
+		[FromQuery] Guid? parentGuid)
+	{
+		var user = Authenticate();
+		await userGroupsRepository.MoveAsync(user, groupGuid, parentGuid);
 
 		return NoContent();
 	}

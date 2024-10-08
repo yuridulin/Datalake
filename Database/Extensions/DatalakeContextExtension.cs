@@ -1,8 +1,4 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Users;
-using Datalake.Database.Models;
+﻿using Datalake.Database.Models;
 using Datalake.Database.Utilities;
 using LinqToDB;
 
@@ -11,7 +7,7 @@ namespace Datalake.Database.Extensions;
 public static class DatalakeContextExtension
 {
 	/// <summary>
-	/// Обновление времени последнего изменения структуры тегов, источников и сущностей в базе данных
+	/// Обновление времени последнего изменения структуры тегов, источников и блоков в базе данных
 	/// </summary>
 	/// <param name="db">Подключение к базе данных</param>
 	public static void SetLastUpdateToNow(this DatalakeContext db)

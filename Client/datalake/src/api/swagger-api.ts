@@ -72,7 +72,7 @@ api.instance.interceptors.response.use(
 	},
 )
 
-if (window.location.pathname !== routes.Auth.EnergoId) {
+if (window.location.pathname !== routes.auth.energoId) {
 	api.usersIdentify().catch()
 }
 

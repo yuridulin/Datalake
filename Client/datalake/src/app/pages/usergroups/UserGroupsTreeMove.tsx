@@ -2,19 +2,20 @@ import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
-import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
+import { UserGroupTreeInfo } from '../../../api/swagger/data-contracts'
 import compareValues from '../../../hooks/compareValues'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
+import UserGroupsCreateModal from './usergroup/modals/UserGroupsCreateModal'
 
-function transformBlockTreeInfo(blocks: BlockTreeInfo[]): TreeDataNode[] {
-	const data = blocks.map((block) => {
+function transformToTreeNode(groups: UserGroupTreeInfo[]): TreeDataNode[] {
+	const data = groups.map((group) => {
 		const transformedBlock: TreeDataNode = {
-			key: block.id,
-			title: block.name,
+			key: group.guid,
+			title: group.name,
 		}
 
-		transformedBlock.children = transformBlockTreeInfo(block.children)
+		transformedBlock.children = transformToTreeNode(group.children)
 		if (transformedBlock.children.length === 0) {
 			transformedBlock.isLeaf = true
 		}
@@ -25,14 +26,14 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[]): TreeDataNode[] {
 	return data.sort((a, b) => compareValues(a.title, b.title))
 }
 
-export default function BlocksMover() {
-	const [blocks, setBlocks] = useState([] as TreeDataNode[])
+export default function UserGroupsTreeMove() {
+	const [tree, setTree] = useState([] as TreeDataNode[])
 	const [loading, setLoading] = useState(false)
 	const { token } = theme.useToken()
 
 	function load() {
-		api.blocksReadAsTree().then((res) =>
-			setBlocks(transformBlockTreeInfo(res.data)),
+		api.userGroupsReadAsTree().then((res) =>
+			setTree(transformToTreeNode(res.data)),
 		)
 	}
 
@@ -78,7 +79,7 @@ export default function BlocksMover() {
 				}
 			}
 		}
-		const data = [...blocks]
+		const data = [...tree]
 
 		let dragObj: TreeDataNode
 
@@ -106,34 +107,34 @@ export default function BlocksMover() {
 		const parentKey = findParentKey(data, dragKey)
 
 		setLoading(true)
-		api.blocksMove(Number(info.dragNode.key), {
-			parentId: Number(parentKey),
+		api.userGroupsMove(String(info.dragNode.key), {
+			parentGuid: parentKey == null ? null : String(parentKey),
 		})
 			.then(() => {
-				setBlocks(data)
+				setTree(data)
 				setLoading(false)
 			})
 			.catch(() => {
 				setLoading(false)
 			})
-
-		setBlocks(data)
 	}
 
 	useEffect(load, [])
 
-	console.log(token)
-
 	return (
 		<>
 			<PageHeader
-				left={
-					<NavLink to={routes.blocks.root}>
-						<Button>Вернуться</Button>
-					</NavLink>
+				right={
+					<>
+						<NavLink to={routes.userGroups.list}>
+							<Button>Вернуться к списку</Button>
+						</NavLink>
+						&ensp;
+						<UserGroupsCreateModal onCreate={load} />
+					</>
 				}
 			>
-				Иерархия блоков
+				Группы пользователей
 			</PageHeader>
 			<Tree
 				draggable
@@ -144,7 +145,7 @@ export default function BlocksMover() {
 					backgroundColor: token.colorBgContainer,
 				}}
 				onDrop={onDrop}
-				treeData={blocks}
+				treeData={tree}
 			/>
 		</>
 	)

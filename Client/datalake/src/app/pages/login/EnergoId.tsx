@@ -30,7 +30,7 @@ export default function EnergoId() {
 			.then((res) => {
 				if (res.status === 200) {
 					setName(res.data.fullName)
-					navigate(routes.Root)
+					navigate(routes.globalRoot)
 				}
 			})
 			.catch(() => {
@@ -38,7 +38,7 @@ export default function EnergoId() {
 					placement: 'bottomLeft',
 					message: 'Аутентификация не пройдена',
 				})
-				navigate(routes.Auth.LoginPage)
+				navigate(routes.auth.loginPage)
 			})
 
 		return (

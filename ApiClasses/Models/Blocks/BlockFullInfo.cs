@@ -6,7 +6,7 @@ namespace Datalake.ApiClasses.Models.Blocks;
 /// <summary>
 /// Информация о блоке
 /// </summary>
-public class BlockFullInfo : BlockSimpleInfo
+public class BlockFullInfo : BlockWithTagsInfo
 {
 	/// <summary>
 	/// Информация о родительском блоке
