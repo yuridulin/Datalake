@@ -1,12 +1,14 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.AccessRights;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Models;
 using LinqToDB;
+using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
-public class AccessRepository(DatalakeContext db)
+public partial class AccessRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -40,6 +42,44 @@ public class AccessRepository(DatalakeContext db)
 		}
 
 		return await GetAuthInfo(user);
+	}
+
+	public async Task ApplyChangesAsync(AccessRightsApplyRequest[] applyRequests)
+	{
+		// Создание новых записей
+		await db.AccessRights.BulkCopyAsync(applyRequests
+			.Where(x => !x.Id.HasValue)
+			.Where(x => x.AccessType != AccessType.NotSet)
+			.Select(x => new AccessRights
+			{
+				AccessType = x.AccessType,
+				UserGuid = x.UserGuid,
+				UserGroupGuid = x.UserGroupGuid,
+				SourceId = x.SourceId,
+				BlockId = x.BlockId,
+				TagId = x.TagId,
+				IsGlobal = false,
+			}));
+
+		// Удаление существующих записей
+		await db.AccessRights
+			.Where(x => applyRequests
+				.Where(r => r.Id.HasValue && r.AccessType == AccessType.NotSet)
+				.Select(x => x.Id!.Value)
+				.Contains(x.Id))
+			.DeleteAsync();
+
+		// Обновление измененных записей
+		await db.AccessRights
+			.Join(applyRequests.Where(x => x.Id.HasValue && x.AccessType != AccessType.NotSet),
+				data => data.Id, updated => updated.Id!.Value, (data, updated) => new { data, updated })
+			.Set(joined => joined.data.AccessType, joined => joined.updated.AccessType)
+			.Set(joined => joined.data.UserGuid, joined => joined.updated.UserGuid)
+			.Set(joined => joined.data.UserGroupGuid, joined => joined.updated.UserGroupGuid)
+			.Set(joined => joined.data.SourceId, joined => joined.updated.SourceId)
+			.Set(joined => joined.data.BlockId, joined => joined.updated.BlockId)
+			.Set(joined => joined.data.TagId, joined => joined.updated.TagId)
+			.UpdateAsync();
 	}
 
 	#endregion

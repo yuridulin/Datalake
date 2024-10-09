@@ -95,7 +95,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 
 		await db.UserGroupsRepository.UpdateAsync(user, groupGuid, request);
 
-		return NoContent();
+		return Ok();
 	}
 
 	/// <summary>
@@ -111,7 +111,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 		var user = Authenticate();
 		await db.UserGroupsRepository.MoveAsync(user, groupGuid, parentGuid);
 
-		return NoContent();
+		return Ok();
 	}
 
 	/// <summary>
@@ -126,6 +126,6 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 
 		await db.UserGroupsRepository.DeleteAsync(user, groupGuid);
 
-		return NoContent();
+		return Ok();
 	}
 }

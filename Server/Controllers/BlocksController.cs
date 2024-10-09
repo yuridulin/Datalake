@@ -98,7 +98,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 
 		await db.BlocksRepository.UpdateAsync(user, id, block);
 
-		return NoContent();
+		return Ok();
 	}
 
 	/// <summary>
@@ -114,7 +114,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 		var user = Authenticate();
 		await db.BlocksRepository.MoveAsync(user, id, parentId);
 
-		return NoContent();
+		return Ok();
 	}
 
 	/// <summary>
@@ -129,6 +129,6 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 
 		await db.BlocksRepository.DeleteAsync(user, id);
 
-		return NoContent();
+		return Ok();
 	}
 }

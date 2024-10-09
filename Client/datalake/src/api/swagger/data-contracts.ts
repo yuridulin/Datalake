@@ -9,6 +9,170 @@
  * ---------------------------------------------------------------
  */
 
+/** Информация о разрешении пользователя или группы на доступ к какому-либо объекту */
+export type AccessRightsInfo = AccessRightsForOneInfo & {
+	/** Информация о группе пользователей */
+	userGroup?: UserGroupSimpleInfo | null
+	/** Информация о пользователе */
+	user?: UserSimpleInfo | null
+}
+
+/** Базовая информация о группе пользователей */
+export interface UserGroupSimpleInfo {
+	/**
+	 * Идентификатор группы
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
+	 * Название группы
+	 * @minLength 1
+	 */
+	name: string
+}
+
+/** Базовая информация о пользователе */
+export interface UserSimpleInfo {
+	/**
+	 * Идентификатор пользователя
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
+	 * Имя пользователя
+	 * @minLength 1
+	 */
+	fullName: string
+}
+
+/** Информация о разрешении */
+export interface AccessRightsForOneInfo {
+	/**
+	 * Идентификатор разрешения
+	 * @format int32
+	 */
+	id?: number
+	/** Тип доступа */
+	accessType?: AccessType
+	/** Является ли разрешение глобальным */
+	isGlobal?: boolean
+	/** Тег, на который выдано разрешение */
+	tag?: TagSimpleInfo | null
+	/** Блок, на который выдано разрешение */
+	block?: BlockSimpleInfo | null
+	/** Источник, на который выдано разрешение */
+	source?: SourceSimpleInfo | null
+}
+
+/**
+ * Уровень доступа
+ *
+ * 0 = NoAccess
+ * 5 = Viewer
+ * 10 = User
+ * 100 = Admin
+ * -100 = NotSet
+ */
+export enum AccessType {
+	NoAccess = 0,
+	Viewer = 5,
+	User = 10,
+	Admin = 100,
+	NotSet = -100,
+}
+
+/** Базовая информация о теге, достаточная, чтобы на него сослаться */
+export interface TagSimpleInfo {
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Глобальный идентификатор тега
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
+	 * Имя тега
+	 * @minLength 1
+	 */
+	name: string
+}
+
+/** Базовая информация о блоке, достаточная, чтобы на него сослаться */
+export interface BlockSimpleInfo {
+	/**
+	 * Идентификатор
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Глобальный идентификатор
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
+	 * Наименование
+	 * @minLength 1
+	 */
+	name: string
+}
+
+/** Базовая информация о источнике, достаточная, чтобы на него сослаться */
+export interface SourceSimpleInfo {
+	/**
+	 * Идентификатор источника в базе данных
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Название источника
+	 * @minLength 1
+	 */
+	name: string
+}
+
+/** Измененное разрешение, которое нужно обновить в БД */
+export interface AccessRightsApplyRequest {
+	/**
+	 * Идентификатор существующего разрешения
+	 * @format int32
+	 */
+	id?: number | null
+	/** Уровень доступа */
+	accessType?: AccessType
+	/**
+	 * Идентификатор пользователя, которому выдается разрешение
+	 * @format guid
+	 */
+	userGuid?: string | null
+	/**
+	 * Идентификатор группы пользователей, которой выдается разрешение
+	 * @format guid
+	 */
+	userGroupGuid?: string | null
+	/**
+	 * Идентификатор источника, на который выдается разрешение
+	 * @format int32
+	 */
+	sourceId?: number | null
+	/**
+	 * Идентификатор блока, на который выдается разрешение
+	 * @format int32
+	 */
+	blockId?: number | null
+	/**
+	 * Идентификатор тега, на который выдается разрешение
+	 * @format int32
+	 */
+	tagId?: number | null
+}
+
 /** Информация о блоке */
 export type BlockFullInfo = BlockWithTagsInfo & {
 	/** Информация о родительском блоке */
@@ -106,26 +270,6 @@ export enum BlockTagRelation {
 	Static = 0,
 	Input = 1,
 	Output = 2,
-}
-
-/** Базовая информация о блоке, достаточная, чтобы на него сослаться */
-export interface BlockSimpleInfo {
-	/**
-	 * Идентификатор
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Глобальный идентификатор
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Наименование
-	 * @minLength 1
-	 */
-	name: string
 }
 
 /** Информация о блоке в иерархическом представлении */
@@ -280,20 +424,6 @@ export enum SourceType {
 	Custom = -1,
 }
 
-/** Базовая информация о источнике, достаточная, чтобы на него сослаться */
-export interface SourceSimpleInfo {
-	/**
-	 * Идентификатор источника в базе данных
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Название источника
-	 * @minLength 1
-	 */
-	name: string
-}
-
 /** Информация о удалённой записи с данными источника */
 export interface SourceItemInfo {
 	/**
@@ -398,26 +528,6 @@ export type TagInputInfo = TagSimpleInfo & {
 	variableName: string
 }
 
-/** Базовая информация о теге, достаточная, чтобы на него сослаться */
-export interface TagSimpleInfo {
-	/**
-	 * Идентификатор тега в локальной базе
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Глобальный идентификатор тега
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Имя тега
-	 * @minLength 1
-	 */
-	name: string
-}
-
 /** Необходимые данные для создания тега */
 export interface TagCreateRequest {
 	/** Наименование тега. Если не указать, будет составлено автоматически */
@@ -511,18 +621,7 @@ export interface UserGroupCreateRequest {
 }
 
 /** Информация о группе пользователей */
-export interface UserGroupInfo {
-	/**
-	 * Идентификатор группы
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Название группы
-	 * @minLength 1
-	 */
-	name: string
+export type UserGroupInfo = UserGroupSimpleInfo & {
 	/** Произвольное описание группы */
 	description?: string | null
 	/**
@@ -557,23 +656,6 @@ export type UserGroupDetailedInfo = UserGroupInfo & {
 	accessRights: AccessRightsForOneInfo[]
 }
 
-/**
- * Уровень доступа
- *
- * 0 = NoAccess
- * 5 = Viewer
- * 10 = User
- * 100 = Admin
- * -100 = NotSet
- */
-export enum AccessType {
-	NoAccess = 0,
-	Viewer = 5,
-	User = 10,
-	Admin = 100,
-	NotSet = -100,
-}
-
 /** Информация о пользователей данной группы */
 export interface UserGroupUsersInfo {
 	/**
@@ -586,25 +668,6 @@ export interface UserGroupUsersInfo {
 	accessType: AccessType
 	/** Полное имя пользователя */
 	fullName?: string | null
-}
-
-/** Информация о разрешении */
-export interface AccessRightsForOneInfo {
-	/**
-	 * Идентификатор разрешения
-	 * @format int32
-	 */
-	id?: number
-	/** Тип доступа */
-	accessType?: AccessType
-	/** Является ли разрешение глобальным */
-	isGlobal?: boolean
-	/** Тег, на который выдано разрешение */
-	tag?: TagSimpleInfo | null
-	/** Блок, на который выдано разрешение */
-	block?: BlockSimpleInfo | null
-	/** Источник, на который выдано разрешение */
-	source?: SourceSimpleInfo | null
 }
 
 /** Данные запроса для изменения группы пользователей */
@@ -644,18 +707,7 @@ export interface UserEnergoIdInfo {
 }
 
 /** Информация о аутентифицированном пользователе */
-export interface UserAuthInfo {
-	/**
-	 * Идентификатор пользователя
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Имя пользователя
-	 * @minLength 1
-	 */
-	fullName: string
+export type UserAuthInfo = UserSimpleInfo & {
 	/**
 	 * Идентификатор сессии
 	 * @minLength 1
@@ -737,17 +789,9 @@ export enum UserType {
 }
 
 /** Информация о пользователе */
-export interface UserInfo {
-	/**
-	 * Идентификатор пользователя
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
+export type UserInfo = UserSimpleInfo & {
 	/** Имя для входа */
 	login?: string | null
-	/** Полное имя */
-	fullName?: string | null
 	/** Глобальный уровень доступа */
 	accessType: AccessType
 	/** Тип учётной записи */
@@ -758,22 +802,7 @@ export interface UserInfo {
 	 */
 	energoIdGuid?: string | null
 	/** Список групп, в которые входит пользователь */
-	userGroups: UserGroupsInfo[]
-}
-
-/** Информация о принадлежности пользователя к группе */
-export interface UserGroupsInfo {
-	/**
-	 * Идентификатор группы
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Имя группы
-	 * @minLength 1
-	 */
-	name: string
+	userGroups: UserGroupSimpleInfo[]
 }
 
 /** Расширенная информация о пользователе, включающая данные для аутентификации */
@@ -958,6 +987,8 @@ export interface ValueWriteRequest {
 	/** Флаг достоверности нового значения */
 	quality?: TagQuality | null
 }
+
+export type AccessApplyChangesPayload = AccessRightsApplyRequest[]
 
 export type ValuesGetPayload = ValuesRequest[]
 

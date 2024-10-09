@@ -10,6 +10,9 @@
  */
 
 import {
+	AccessApplyChangesPayload,
+	AccessRightsForOneInfo,
+	AccessRightsInfo,
 	BlockFullInfo,
 	BlockTreeInfo,
 	BlockUpdateRequest,
@@ -44,6 +47,97 @@ import {
 import { ContentType, HttpClient, RequestParams } from './http-client'
 
 export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+	/**
+	 * No description
+	 *
+	 * @tags Access
+	 * @name AccessGet
+	 * @summary Получение списка прямых (не глобальных) разрешений субъекта на объект
+	 * @request GET:/api/Access
+	 * @response `200` `(AccessRightsInfo)[]` Список разрешений
+	 */
+	accessGet = (
+		query?: {
+			/**
+			 * Идентификтатор пользователя
+			 * @format guid
+			 */
+			user?: string | null
+			/**
+			 * Идентификатор группы пользователей
+			 * @format guid
+			 */
+			userGroup?: string | null
+			/**
+			 * Идентификатор источника
+			 * @format int32
+			 */
+			source?: number | null
+			/**
+			 * Идентификатор блока
+			 * @format int32
+			 */
+			block?: number | null
+			/**
+			 * Идентификатор тега
+			 * @format int32
+			 */
+			tag?: number | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<AccessRightsInfo[], any>({
+			path: `/api/Access`,
+			method: 'GET',
+			query: query,
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Access
+	 * @name AccessApplyChanges
+	 * @summary Пакетное изменение разрешений
+	 * @request POST:/api/Access
+	 * @response `200` `File`
+	 */
+	accessApplyChanges = (data: AccessApplyChangesPayload, params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/Access`,
+			method: 'POST',
+			body: data,
+			type: ContentType.Json,
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Access
+	 * @name AccessCheckUserAccess
+	 * @summary Получение разрешений пользователя на конкретные объекты, включая непрямые (предоставленные на объекты выше в иерархии либо на группы пользователя)
+	 * @request GET:/api/Access/{user}
+	 * @response `200` `(AccessRightsForOneInfo)[]` Список разрешений на доступ к запрошенным объектам
+	 */
+	accessCheckUserAccess = (
+		user: string,
+		query?: {
+			/** Идентификаторы источников, разрешения на которые нужно проверить */
+			sources?: number[] | null
+			/** Идентификаторы блоков, разрешения на которые нужно проверить */
+			blocks?: number[] | null
+			/** Идентификаторы тегов, разрешения на которые нужно проверить */
+			tags?: number[] | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<AccessRightsForOneInfo[], any>({
+			path: `/api/Access/${user}`,
+			method: 'GET',
+			query: query,
+			format: 'json',
+			...params,
+		})
 	/**
 	 * No description
 	 *

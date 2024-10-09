@@ -78,7 +78,7 @@ public class ConfigController(
 		await db.SystemRepository.UpdateSettingsAsync(user, newSettings);
 		await settingsService.WriteStartipFileAsync(db.SystemRepository);
 
-		return NoContent();
+		return Ok();
 	}
 
 	/// <summary>
@@ -93,6 +93,6 @@ public class ConfigController(
 		await db.ValuesRepository.RebuildCacheAsync(user);
 		Cache.Update();
 
-		return NoContent();
+		return Ok();
 	}
 }

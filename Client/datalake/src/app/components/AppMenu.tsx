@@ -78,7 +78,7 @@ const items: ItemType<MenuItemType>[] = [
 				label: (
 					<NavLink to={'/tags/calc/'}>
 						<CalculatorOutlined style={{ color: blue[4] }} />
-						&emsp; Вычисляемые теги
+						&emsp;Вычисляемые теги
 					</NavLink>
 				),
 			},
@@ -94,7 +94,7 @@ const items: ItemType<MenuItemType>[] = [
 				label: (
 					<NavLink to={routes.viewer.root + routes.viewer.tagsViewer}>
 						<PlaySquareOutlined style={{ color: blue[4] }} />
-						&emsp; Запросы
+						&emsp;Запросы
 					</NavLink>
 				),
 			},
@@ -110,7 +110,7 @@ const items: ItemType<MenuItemType>[] = [
 				label: (
 					<NavLink to={'/'}>
 						<UnorderedListOutlined style={{ color: blue[4] }} />
-						&emsp; Журнал
+						&emsp;Журнал
 					</NavLink>
 				),
 			},

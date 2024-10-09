@@ -114,7 +114,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 
 		await db.TagsRepository.UpdateAsync(user, guid, tag);
 
-		return NoContent();
+		return Ok();
 	}
 
 	/// <summary>
@@ -129,6 +129,6 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 
 		await db.TagsRepository.DeleteAsync(user, guid);
 
-		return NoContent();
+		return Ok();
 	}
 }

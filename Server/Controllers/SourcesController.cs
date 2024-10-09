@@ -87,7 +87,7 @@ public class SourcesController(
 		var user = Authenticate();
 		await db.SourcesRepository.UpdateAsync(user, id, source);
 
-		return NoContent();
+		return Ok();
 	}
 
 	/// <summary>
@@ -101,7 +101,7 @@ public class SourcesController(
 		var user = Authenticate();
 		await db.SourcesRepository.DeleteAsync(user, id);
 
-		return NoContent();
+		return Ok();
 	}
 
 	/// <summary>

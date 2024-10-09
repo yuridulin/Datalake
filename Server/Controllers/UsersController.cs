@@ -201,7 +201,7 @@ public class UsersController(
 		await db.UsersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
 		settingsService.LoadStaticUsers(db.UsersRepository);
 
-		return NoContent();
+		return Ok();
 	}
 
 	/// <summary>
@@ -217,6 +217,6 @@ public class UsersController(
 		await db.UsersRepository.DeleteAsync(user, userGuid);
 		settingsService.LoadStaticUsers(db.UsersRepository);
 
-		return NoContent();
+		return Ok();
 	}
 }
