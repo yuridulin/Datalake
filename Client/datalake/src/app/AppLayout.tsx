@@ -1,12 +1,11 @@
-import { MoonOutlined, SunOutlined } from '@ant-design/icons'
-import { Layout, notification, theme } from 'antd'
+import { Divider, Layout, notification, theme } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
 import { motion } from 'framer-motion'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { isAuth } from '../api/local-auth'
-import { useUpdateContext } from '../context/updateContext'
 import { AppMenu } from './components/AppMenu'
+import LogoPanel from './components/LogoPanel'
 import UserPanel from './components/UserPanel'
 
 notification.config({
@@ -16,14 +15,13 @@ notification.config({
 })
 
 export default function AppLayout() {
-	const { isDarkMode, setDarkMode } = useUpdateContext()
 	const { token } = theme.useToken()
 	const { pathname } = useLocation()
 
 	const siderStyle: React.CSSProperties = {
 		backgroundColor: token.colorBgLayout,
 		borderRight: '1px solid ' + token.colorSplit,
-		paddingTop: '1em',
+		paddingTop: '.5em',
 		overflow: 'auto',
 		height: '100vh',
 		position: 'fixed',
@@ -45,27 +43,12 @@ export default function AppLayout() {
 					}}
 				>
 					<Sider width='20em' style={siderStyle}>
-						<Link
-							to='/'
-							className='title'
-							style={{
-								padding: '1.5em 1em',
-							}}
-						>
-							Datalake
-						</Link>
-						{isDarkMode ? (
-							<MoonOutlined
-								style={{ color: '#ccc' }}
-								onClick={() => setDarkMode(false)}
-							/>
-						) : (
-							<SunOutlined
-								style={{ color: '#666' }}
-								onClick={() => setDarkMode(true)}
-							/>
-						)}
+						<LogoPanel />
 						<UserPanel />
+						<Divider
+							variant='dotted'
+							style={{ margin: '.5em 0' }}
+						/>
 						<AppMenu />
 					</Sider>
 					<Layout

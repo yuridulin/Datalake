@@ -86,3 +86,11 @@ code {
 .form-subtable td div {
 	margin-bottom: 0;
 }
+
+.app-two-items {
+	width: 100%;
+}
+
+.app-two-items > * {
+	padding: .25em 1em;
+}
