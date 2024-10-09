@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Models;
+﻿using Datalake.ApiClasses.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.Services.Receiver;
 
@@ -12,7 +12,7 @@ namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 /// <param name="logger">Служба сообщений</param>
 internal class DatalakeCollector(
 	ReceiverService receiverService,
-	Source source,
+	SourceWithTagsInfo source,
 	ILogger<DatalakeCollector> logger) : CollectorBase(source, logger)
 {
 	public override event CollectEvent? CollectValues;

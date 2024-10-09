@@ -4,15 +4,45 @@ using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Models;
 using LinqToDB;
 
-namespace Datalake.Database.Repositories.Base;
+namespace Datalake.Database.Repositories;
 
-/// <summary>
-/// База репозитория содержит методы проверки прав и получения информации о пользователях
-/// для разграничения доступа к работе с БД
-/// </summary>
-public abstract class RepositoryBase(DatalakeContext context)
+public class AccessRepository(DatalakeContext db)
 {
-	protected readonly DatalakeContext db = context;
+	#region Действия
+
+	public async Task<UserAuthInfo> AuthenticateAsync(UserEnergoIdInfo info)
+	{
+		var user = await db.Users
+			.Where(x => x.Type == UserType.EnergoId)
+			.Where(x => x.EnergoIdGuid != null && x.EnergoIdGuid == info.EnergoIdGuid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "указанная учётная запись по guid");
+
+		return await GetAuthInfo(user);
+	}
+
+	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
+	{
+		var user = await db.Users
+			.Where(x => x.Type == UserType.Local)
+			.Where(x => x.Login != null && (x.Login.ToLower().Trim() == loginPass.Login.ToLower().Trim()))
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "указанная учётная запись по логину");
+
+		if (string.IsNullOrEmpty(user.PasswordHash))
+		{
+			throw new InvalidValueException(message: "пароль не задан");
+		}
+
+		if (!user.PasswordHash.Equals(UsersRepository.GetHashFromPassword(loginPass.Password)))
+		{
+			throw new ForbiddenException(message: "пароль не подходит");
+		}
+
+		return await GetAuthInfo(user);
+	}
+
+	#endregion
 
 	/* 
 	 * Нужны списки по тегам и блокам:
@@ -48,7 +78,7 @@ public abstract class RepositoryBase(DatalakeContext context)
 		return await GetAuthInfo(user);
 	}
 
-	protected async Task<UserAuthInfo> GetAuthInfo(
+	internal async Task<UserAuthInfo> GetAuthInfo(
 		User user)
 	{
 		var accessRights = await AuthorizeUserAsync(user.Guid);
@@ -136,7 +166,7 @@ public abstract class RepositoryBase(DatalakeContext context)
 
 	#region Проверки прав доступа
 
-	protected async Task CheckGlobalAccess(
+	internal async Task CheckGlobalAccess(
 		UserAuthInfo user,
 		AccessType minimalAccess,
 		Guid? energoId = null)
@@ -156,7 +186,7 @@ public abstract class RepositoryBase(DatalakeContext context)
 		}
 	}
 
-	protected async Task CheckAccessToSource(
+	internal async Task CheckAccessToSource(
 		UserAuthInfo user,
 		AccessType minimalAccess,
 		int sourceId,
@@ -177,14 +207,13 @@ public abstract class RepositoryBase(DatalakeContext context)
 		}
 	}
 
-	protected async Task CheckAccessToBlockAsync(
+	internal async Task CheckAccessToBlockAsync(
 		UserAuthInfo user,
 		AccessType minimalAccess,
 		int blockId,
 		Guid? energoId = null)
 	{
-		// TODO: Сам себя получается вызывает. Что за нахуй?
-		var blockWithParents = await new BlocksRepository(db).GetWithParentsAsync(blockId);
+		var blockWithParents = await db.BlocksRepository.GetWithParentsAsync(blockId);
 		var blocksId = blockWithParents.Select(x => x.Id).ToArray();
 
 		var hasAccess = user.Rights
@@ -202,7 +231,7 @@ public abstract class RepositoryBase(DatalakeContext context)
 		}
 	}
 
-	protected async Task CheckAccessToTagAsync(
+	internal async Task CheckAccessToTagAsync(
 		UserAuthInfo user,
 		AccessType minimalAccess,
 		Guid guid,
@@ -224,11 +253,10 @@ public abstract class RepositoryBase(DatalakeContext context)
 			select b.Id;
 
 		var blocksHasThisTag = await blocksQuery.ToArrayAsync();
-		var repository = new BlocksRepository(db); // TODO: Сам себя получается вызывает. Что за нахуй? bonus х2
 		var blocksHasThisTagWithParents = blocksHasThisTag
 			.SelectMany(x =>
 			{
-				var blockWithParents = repository.GetWithParentsAsync(x).Result;
+				var blockWithParents = db.BlocksRepository.GetWithParentsAsync(x).Result;
 				return blockWithParents.Select(b => b.Id).ToArray();
 			})
 			.ToList();
@@ -248,7 +276,28 @@ public abstract class RepositoryBase(DatalakeContext context)
 		}
 	}
 
-	protected static readonly ForbiddenException NoAccess = new(message: "нет доступа");
+	internal async Task CheckAccessToUserGroupAsync(
+		UserAuthInfo user,
+		AccessType minimalAccess,
+		Guid groupGuid)
+	{
+		var hasAccess = user.Rights
+			.Where(x => x.IsGlobal && (int)minimalAccess <= (int)x.AccessType)
+			.Any();
+
+		if (!hasAccess)
+		{
+			var groups = await new UserGroupsRepository(db).GetWithParentsAsync(groupGuid);
+			hasAccess = user.Rights
+				.Where(x => groups.Select(g => g.Guid).Contains(groupGuid) && (int)minimalAccess <= (int)x.AccessType)
+				.Any();
+		}
+
+		if (!hasAccess)
+			throw NoAccess;
+	}
+
+	static readonly ForbiddenException NoAccess = new(message: "нет доступа");
 
 	#endregion
 }

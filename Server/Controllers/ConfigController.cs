@@ -1,7 +1,7 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Models.Logs;
 using Datalake.ApiClasses.Models.Settings;
-using Datalake.Database.Repositories;
+using Datalake.Database;
 using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
@@ -14,12 +14,10 @@ namespace Datalake.Server.Controllers;
 /// <summary>
 /// Представление системной информации о работе сервера
 /// </summary>
-/// <param name="systemRepository">Репозиторий</param>
-/// <param name="settingsService">Обработчик настроек сервера</param>
 [Route("api/[controller]")]
 [ApiController]
 public class ConfigController(
-	SystemRepository systemRepository,
+	DatalakeContext db,
 	ISettingsUpdater settingsService) : ApiControllerBase
 {
 	/// <summary>
@@ -44,7 +42,7 @@ public class ConfigController(
 		[FromQuery] int? take,
 		[FromQuery] int? lastId)
 	{
-		var query = systemRepository.GetLogs()
+		var query = db.SystemRepository.GetLogs()
 			.Where(x => !lastId.HasValue || x.Id > lastId.Value);
 
 		if (take.HasValue)
@@ -62,7 +60,7 @@ public class ConfigController(
 	[HttpGet("settings")]
 	public async Task<ActionResult<SettingsInfo>> GetSettingsAsync()
 	{
-		var info = await systemRepository.GetSettingsAsync();
+		var info = await db.SystemRepository.GetSettingsAsync();
 
 		return info;
 	}
@@ -77,8 +75,23 @@ public class ConfigController(
 	{
 		var user = Authenticate();
 
-		await systemRepository.UpdateSettingsAsync(user, newSettings);
-		await settingsService.WriteStartipFileAsync(systemRepository);
+		await db.SystemRepository.UpdateSettingsAsync(user, newSettings);
+		await settingsService.WriteStartipFileAsync(db.SystemRepository);
+
+		return NoContent();
+	}
+
+	/// <summary>
+	/// Перестроение кэша и перезапуск всех сборщиков
+	/// </summary>
+	/// <returns></returns>
+	[HttpPut("restart")]
+	public async Task<ActionResult> RestartAsync()
+	{
+		var user = Authenticate();
+
+		await db.ValuesRepository.RebuildCacheAsync(user);
+		Cache.Update();
 
 		return NoContent();
 	}

@@ -335,6 +335,11 @@ export interface SourceTagInfo {
 	item: string
 	/** Тип данных тега */
 	type: TagType
+	/**
+	 * Интервал обновления тега
+	 * @format int32
+	 */
+	interval: number
 }
 
 /** Информация о теге */

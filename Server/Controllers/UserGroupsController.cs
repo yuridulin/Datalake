@@ -1,6 +1,6 @@
 ﻿using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.UserGroups;
-using Datalake.Database.Repositories;
+using Datalake.Database;
 using Datalake.Server.Controllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +11,9 @@ namespace Datalake.Server.Controllers;
 /// <summary>
 /// Взаимодействие с группами пользователей
 /// </summary>
-/// <param name="userGroupsRepository">Репозиторий</param>
 [Route("api/[controller]")]
 [ApiController]
-public class UserGroupsController(UserGroupsRepository userGroupsRepository) : ApiControllerBase
+public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 {
 	/// <summary>
 	/// Создание новой группы пользователей
@@ -27,7 +26,7 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 	{
 		var user = Authenticate();
 
-		return await userGroupsRepository.CreateAsync(user, request);
+		return await db.UserGroupsRepository.CreateAsync(user, request);
 	}
 
 	/// <summary>
@@ -37,7 +36,7 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 	[HttpGet]
 	public async Task<ActionResult<UserGroupInfo[]>> ReadAsync()
 	{
-		return await userGroupsRepository.GetInfo()
+		return await db.UserGroupsRepository.GetInfo()
 			.ToArrayAsync();
 	}
 
@@ -51,7 +50,7 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 	public async Task<ActionResult<UserGroupInfo>> ReadAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
-		return await userGroupsRepository.GetInfo()
+		return await db.UserGroupsRepository.GetInfo()
 			.Where(x => x.Guid == groupGuid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"группа {groupGuid}");
@@ -64,7 +63,7 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 	[HttpGet("tree")]
 	public async Task<ActionResult<UserGroupTreeInfo[]>> ReadAsTreeAsync()
 	{
-		var tree = await userGroupsRepository.GetTreeAsync();
+		var tree = await db.UserGroupsRepository.GetTreeAsync();
 
 		return tree;
 	}
@@ -79,7 +78,7 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 	public async Task<ActionResult<UserGroupDetailedInfo>> ReadWithDetailsAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
-		return await userGroupsRepository.GetWithDetails(groupGuid);
+		return await db.UserGroupsRepository.GetWithDetails(groupGuid);
 	}
 
 	/// <summary>
@@ -94,7 +93,7 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 	{
 		var user = Authenticate();
 
-		await userGroupsRepository.UpdateAsync(user, groupGuid, request);
+		await db.UserGroupsRepository.UpdateAsync(user, groupGuid, request);
 
 		return NoContent();
 	}
@@ -110,7 +109,7 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 		[FromQuery] Guid? parentGuid)
 	{
 		var user = Authenticate();
-		await userGroupsRepository.MoveAsync(user, groupGuid, parentGuid);
+		await db.UserGroupsRepository.MoveAsync(user, groupGuid, parentGuid);
 
 		return NoContent();
 	}
@@ -125,7 +124,7 @@ public class UserGroupsController(UserGroupsRepository userGroupsRepository) : A
 	{
 		var user = Authenticate();
 
-		await userGroupsRepository.DeleteAsync(user, groupGuid);
+		await db.UserGroupsRepository.DeleteAsync(user, groupGuid);
 
 		return NoContent();
 	}

@@ -297,6 +297,21 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	/**
 	 * No description
 	 *
+	 * @tags Config
+	 * @name ConfigRestart
+	 * @summary Перестроение кэша и перезапуск всех сборщиков
+	 * @request PUT:/api/Config/restart
+	 * @response `200` `File`
+	 */
+	configRestart = (params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/Config/restart`,
+			method: 'PUT',
+			...params,
+		})
+	/**
+	 * No description
+	 *
 	 * @tags Sources
 	 * @name SourcesCreate
 	 * @summary Создание источника с информацией по умолчанию

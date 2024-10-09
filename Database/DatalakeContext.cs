@@ -1,6 +1,5 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Models.Tags;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
 using Datalake.Database.Repositories;
@@ -11,8 +10,20 @@ using LinqToDB.Data;
 
 namespace Datalake.Database;
 
-public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnection(options.Options)
+public class DatalakeContext : DataConnection
 {
+	public DatalakeContext(DataOptions<DatalakeContext> options) : base(options.Options)
+	{
+		_accessRepository = new Lazy<AccessRepository>(() => new AccessRepository(this));
+		_blocksRepository = new Lazy<BlocksRepository>(() => new BlocksRepository(this));
+		_sourcesRepository = new Lazy<SourcesRepository>(() => new SourcesRepository(this));
+		_systemRepository = new Lazy<SystemRepository>(() => new SystemRepository(this));
+		_tagsRepository = new Lazy<TagsRepository>(() => new TagsRepository(this));
+		_usersRepository = new Lazy<UsersRepository>(() => new UsersRepository(this));
+		_userGroupsRepository = new Lazy<UserGroupsRepository>(() => new UserGroupsRepository(this));
+		_valuesRepository = new Lazy<ValuesRepository>(() => new ValuesRepository(this));
+	}
+
 	public static void SetupLinqToDB()
 	{
 		Configuration.Linq.GuardGrouping = false;
@@ -38,7 +49,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			.Where(x => customSources.Select(c => c.Id).Contains(x.Id))
 			.Select(x => x.Id)
 			.ToArrayAsync();
-		
+
 		await Sources.BulkCopyAsync(
 			new BulkCopyOptions { KeepIdentity = true },
 			customSources.ExceptBy(existsCustomSources, x => x.Id));
@@ -56,90 +67,79 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		// создание администратора по умолчанию, если его учетки нет
 		if (!Users.Any(x => x.Login == "admin"))
 		{
-			await new UsersRepository(this).CreateAsync(Defaults.InitialAdmin);
+			await UsersRepository.CreateAsync(Defaults.InitialAdmin);
 		}
 
 		// заполнение кэша
-		var valuesRepository = new ValuesRepository(this);
+		await ValuesRepository.RebuildCacheAsync();
 
-		var tables = await valuesRepository.GetHistoryTablesFromSchema();
-
-		Cache.Tables = tables
-			.Where(x => x.Name.StartsWith(ValuesRepository.NamePrefix))
-			.Select(x => new
-			{
-				Date = ValuesRepository.GetTableDate(x.Name),
-				x.Name,
-			})
-			.Where(x => x.Date != DateTime.MinValue)
-			.DistinctBy(x => x.Date)
-			.ToDictionary(x => x.Date, x => x.Name);
-
-		Cache.Tags = await (
-			from t in Tags
-			from s in Sources.LeftJoin(x => x.Id == t.SourceId)
-			select new TagCacheInfo
-			{
-				Id = t.Id,
-				Guid = t.GlobalGuid,
-				Name = t.Name,
-				TagType = t.Type,
-				SourceType = s.Type,
-				IsManual = t.SourceId == (int)CustomSource.Manual,
-				ScalingCoefficient = t.IsScaling 
-					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
-					: 1,
-			}
-		).ToDictionaryAsync(x => x.Id, x => x);
-
-		// создание таблицы для значений на текущую дату
-		if (!Cache.Tables.ContainsKey(DateTime.Today))
-		{
-			valuesRepository.GetHistoryTable(DateTime.Today);
-		}
-
-		// актуализация таблицы текущих значений
-		var lastValues = await valuesRepository.ReadHistoryValuesAsync([.. Cache.Tags.Keys], DateTime.Now, DateTime.Now);
-
-		Live.Write(lastValues);
+		Cache.Update();
 	}
+
+	#region Репозитории
+
+	public AccessRepository AccessRepository => _accessRepository.Value;
+	private readonly Lazy<AccessRepository> _accessRepository;
+
+	public BlocksRepository BlocksRepository => _blocksRepository.Value;
+	private readonly Lazy<BlocksRepository> _blocksRepository;
+
+	public SourcesRepository SourcesRepository => _sourcesRepository.Value;
+	private readonly Lazy<SourcesRepository> _sourcesRepository;
+
+	public SystemRepository SystemRepository => _systemRepository.Value;
+	private readonly Lazy<SystemRepository> _systemRepository;
+
+	public TagsRepository TagsRepository => _tagsRepository.Value;
+	private readonly Lazy<TagsRepository> _tagsRepository;
+
+	public UsersRepository UsersRepository => _usersRepository.Value;
+	private readonly Lazy<UsersRepository> _usersRepository;
+
+	public UserGroupsRepository UserGroupsRepository => _userGroupsRepository.Value;
+	private readonly Lazy<UserGroupsRepository> _userGroupsRepository;
+
+	public ValuesRepository ValuesRepository => _valuesRepository.Value;
+	private readonly Lazy<ValuesRepository> _valuesRepository;
+
+	#endregion
 
 	#region Таблицы
 
-	public ITable<AccessRights> AccessRights
+	internal ITable<AccessRights> AccessRights
 		=> this.GetTable<AccessRights>();
 
-	public ITable<Block> Blocks
+	internal ITable<Block> Blocks
 		=> this.GetTable<Block>();
 
-	public ITable<BlockProperty> BlockProperties
+	internal ITable<BlockProperty> BlockProperties
 		=> this.GetTable<BlockProperty>();
 
-	public ITable<BlockTag> BlockTags
+	internal ITable<BlockTag> BlockTags
 		=> this.GetTable<BlockTag>();
 
-	public ITable<Log> Logs
+	internal ITable<Log> Logs
 		=> this.GetTable<Log>();
 
-	public ITable<Settings> Settings
+	internal ITable<Settings> Settings
 		=> this.GetTable<Settings>();
 
-	public ITable<Source> Sources
+	internal ITable<Source> Sources
 		=> this.GetTable<Source>();
 
-	public ITable<Tag> Tags
+	internal ITable<Tag> Tags
 		=> this.GetTable<Tag>();
 
-	public ITable<TagInput> TagInputs
+	internal ITable<TagInput> TagInputs
 		=> this.GetTable<TagInput>();
 
-	public ITable<User> Users
+	internal ITable<User> Users
 		=> this.GetTable<User>();
 
-	public ITable<UserGroup> UserGroups
+	internal ITable<UserGroup> UserGroups
 		=> this.GetTable<UserGroup>();
 
-	public ITable<UserGroupRelation> UserGroupRelations
+	internal ITable<UserGroupRelation> UserGroupRelations
 		=> this.GetTable<UserGroupRelation>();
 
 	#endregion

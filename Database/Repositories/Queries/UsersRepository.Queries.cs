@@ -97,7 +97,7 @@ public partial class UsersRepository
 			.Where(x => x.Type == UserType.Static)
 			.Where(x => !string.IsNullOrEmpty(x.PasswordHash))
 			.ToArray()
-			.Select(x => (GetAuthInfo(x).Result, x.StaticHost))
+			.Select(x => (db.AccessRepository.GetAuthInfo(x).Result, x.StaticHost))
 			.ToArray();
 
 		return staticUsers;

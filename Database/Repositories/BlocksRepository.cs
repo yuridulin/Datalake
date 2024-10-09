@@ -3,13 +3,12 @@ using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Blocks;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Models;
-using Datalake.Database.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
-public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(context)
+public partial class BlocksRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -18,7 +17,7 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 		BlockFullInfo? blockInfo = null,
 		int? parentId = null)
 	{
-		await CheckGlobalAccess(user, AccessType.Admin);
+		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 
 		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync(parentId);
 	}
@@ -28,7 +27,7 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 		int id,
 		BlockUpdateRequest block)
 	{
-		await CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
 		return await UpdateAsync(id, block);
 	}
 
@@ -37,7 +36,7 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 		int id,
 		int? parentId)
 	{
-		await CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
 		return await MoveAsync(id, parentId);
 	}
 
@@ -45,7 +44,7 @@ public partial class BlocksRepository(DatalakeContext context) : RepositoryBase(
 		UserAuthInfo user,
 		int id)
 	{
-		await CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
 		return await DeleteAsync(id);
 	}
 

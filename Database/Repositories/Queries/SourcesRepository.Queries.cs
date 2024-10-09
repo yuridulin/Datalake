@@ -26,25 +26,25 @@ public partial class SourcesRepository
 
 	public IQueryable<SourceWithTagsInfo> GetInfoWithTags()
 	{
-		var query = from s in db.Sources
-								from t in db.Tags.LeftJoin(x => x.SourceId == s.Id)
-								group new { s, t } by s into g
-								select new SourceWithTagsInfo
-								{
-									Id = g.Key.Id,
-									Address = g.Key.Address,
-									Name = g.Key.Name,
-									Type = g.Key.Type,
-									Tags = g
-										.Select(x => new SourceTagInfo
-										{
-											Guid = x.t.GlobalGuid,
-											Item = x.t.SourceItem ?? string.Empty,
-											Name = x.t.Name,
-											Type = x.t.Type,
-										})
-										.ToArray(),
-								};
+		var query =
+			from source in db.Sources
+			select new SourceWithTagsInfo
+			{
+				Id = source.Id,
+				Address = source.Address,
+				Name = source.Name,
+				Type = source.Type,
+				Tags =
+					from tag in db.Tags
+					where tag.SourceId == source.Id
+					select new SourceTagInfo
+					{
+						Guid = tag.GlobalGuid,
+						Item = tag.SourceItem ?? string.Empty,
+						Name = tag.Name,
+						Type = tag.Type,
+					}
+			};
 
 		return query;
 	}
@@ -59,6 +59,7 @@ public partial class SourcesRepository
 				Name = x.Name,
 				Type = x.Type,
 				Item = x.SourceItem ?? string.Empty,
+				Interval = x.Interval,
 			});
 
 		return query;

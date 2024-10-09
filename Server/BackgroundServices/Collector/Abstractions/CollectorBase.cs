@@ -1,5 +1,5 @@
 ﻿using Datalake.ApiClasses.Enums;
-using Datalake.Database.Models;
+using Datalake.ApiClasses.Models.Sources;
 
 namespace Datalake.Server.BackgroundServices.Collector.Abstractions;
 
@@ -8,7 +8,7 @@ namespace Datalake.Server.BackgroundServices.Collector.Abstractions;
 /// </summary>
 /// <param name="source">Источник данных</param>
 /// <param name="logger">Служба сообщений</param>
-public abstract class CollectorBase(Source source, ILogger logger) : ICollector
+public abstract class CollectorBase(SourceWithTagsInfo source, ILogger logger) : ICollector
 {
 	/// <inheritdoc />
 	public string Name { get; set; } = source.Name;
