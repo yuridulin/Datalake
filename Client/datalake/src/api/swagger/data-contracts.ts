@@ -47,40 +47,14 @@ export interface UserSimpleInfo {
 	fullName: string
 }
 
-/** Информация о разрешении */
-export interface AccessRightsForOneInfo {
-	/**
-	 * Идентификатор разрешения
-	 * @format int32
-	 */
-	id?: number
-	/** Тип доступа */
-	accessType?: AccessType
-	/** Является ли разрешение глобальным */
-	isGlobal?: boolean
+/** Информация о разрешении субьекта на доступ к объекту */
+export type AccessRightsForOneInfo = AccessRightsSimpleInfo & {
 	/** Тег, на который выдано разрешение */
 	tag?: TagSimpleInfo | null
 	/** Блок, на который выдано разрешение */
 	block?: BlockSimpleInfo | null
 	/** Источник, на который выдано разрешение */
 	source?: SourceSimpleInfo | null
-}
-
-/**
- * Уровень доступа
- *
- * 0 = NoAccess
- * 5 = Viewer
- * 10 = User
- * 100 = Admin
- * -100 = NotSet
- */
-export enum AccessType {
-	NoAccess = 0,
-	Viewer = 5,
-	User = 10,
-	Admin = 100,
-	NotSet = -100,
 }
 
 /** Базовая информация о теге, достаточная, чтобы на него сослаться */
@@ -137,6 +111,36 @@ export interface SourceSimpleInfo {
 	name: string
 }
 
+/** Общая информация о разрешении */
+export interface AccessRightsSimpleInfo {
+	/**
+	 * Идентификатор разрешения
+	 * @format int32
+	 */
+	id?: number
+	/** Тип доступа */
+	accessType?: AccessType
+	/** Является ли разрешение глобальным */
+	isGlobal?: boolean
+}
+
+/**
+ * Уровень доступа
+ *
+ * 0 = NoAccess
+ * 5 = Viewer
+ * 10 = User
+ * 100 = Admin
+ * -100 = NotSet
+ */
+export enum AccessType {
+	NoAccess = 0,
+	Viewer = 5,
+	User = 10,
+	Admin = 100,
+	NotSet = -100,
+}
+
 /** Измененное разрешение, которое нужно обновить в БД */
 export interface AccessRightsApplyRequest {
 	/**
@@ -181,6 +185,8 @@ export type BlockFullInfo = BlockWithTagsInfo & {
 	children: BlockChildInfo[]
 	/** Список статических свойств блока */
 	properties: BlockPropertyInfo[]
+	/** Список прав доступа, которые действуют на этот блок */
+	accessRights: AccessRightsForObjectInfo[]
 }
 
 /** Информация о родительском блоке */
@@ -225,6 +231,14 @@ export enum TagType {
 	String = 0,
 	Number = 1,
 	Boolean = 2,
+}
+
+/** Информация о разрешении на объект для субьекта */
+export type AccessRightsForObjectInfo = AccessRightsSimpleInfo & {
+	/** Информация о группе пользователей */
+	userGroup?: UserGroupSimpleInfo | null
+	/** Информация о пользователе */
+	user?: UserSimpleInfo | null
 }
 
 /** Информация о блоке */
@@ -651,7 +665,7 @@ export type UserGroupDetailedInfo = UserGroupInfo & {
 	/** Список пользователей этой группы */
 	users: UserGroupUsersInfo[]
 	/** Список подгрупп этой группы */
-	subgroups: UserGroupInfo[]
+	subgroups: UserGroupSimpleInfo[]
 	/** Разрешения, выданные на эту группу */
 	accessRights: AccessRightsForOneInfo[]
 }

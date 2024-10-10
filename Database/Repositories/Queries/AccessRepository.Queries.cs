@@ -11,11 +11,11 @@ namespace Datalake.Database.Repositories;
 public partial class AccessRepository
 {
 	public IQueryable<AccessRightsInfo> GetAccessRightsInfo(
-		Guid? userGuid,
-		Guid? userGroupGuid,
-		int? sourceId,
-		int? blockId,
-		int? tagId)
+		Guid? userGuid = null,
+		Guid? userGroupGuid = null,
+		int? sourceId = null,
+		int? blockId = null,
+		int? tagId = null)
 	{
 		var rightsQuery = db.AccessRights
 			.Where(x => userGuid == null || x.UserGuid == userGuid)

@@ -7,7 +7,6 @@ import {
 	Button,
 	Form,
 	Input,
-	notification,
 	Popconfirm,
 	Select,
 	SelectProps,
@@ -16,6 +15,7 @@ import {
 } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
+import notify from '../../../../api/notifications'
 import api from '../../../../api/swagger-api'
 import {
 	AccessType,
@@ -74,9 +74,7 @@ export default function UserGroupForm() {
 
 	const updateGroup = (newInfo: UserGroupUpdateRequest) => {
 		api.userGroupsUpdate(String(id), newInfo).catch(() => {
-			notification.error({
-				message: 'Ошибка при сохранении',
-			})
+			notify.err('Ошибка при сохранении')
 		})
 	}
 

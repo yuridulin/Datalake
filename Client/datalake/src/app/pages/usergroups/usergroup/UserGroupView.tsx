@@ -2,7 +2,10 @@ import { Button, Descriptions, DescriptionsProps, Spin, Tabs } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import api from '../../../../api/swagger-api'
-import { UserGroupDetailedInfo } from '../../../../api/swagger/data-contracts'
+import {
+	AccessType,
+	UserGroupDetailedInfo,
+} from '../../../../api/swagger/data-contracts'
 import AccessTypeEl from '../../../components/AccessTypeEl'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
@@ -17,6 +20,14 @@ export default function UserGroupView() {
 	const navigate = useNavigate()
 	const { id } = useParams()
 
+	const getGlobalAccessRights = () => {
+		if (!group.accessRights) return AccessType.NotSet
+		const parent = group.accessRights.filter((x) => x.isGlobal)
+		const accessType =
+			parent.length > 0 ? parent[0].accessType : AccessType.NotSet
+		return accessType ?? AccessType.NotSet
+	}
+
 	const items: DescriptionsProps['items'] = [
 		{
 			key: 'desc',
@@ -26,7 +37,7 @@ export default function UserGroupView() {
 		{
 			key: 'access',
 			label: 'Общий уровень доступа',
-			children: <AccessTypeEl type={group.globalAccessType} />,
+			children: <AccessTypeEl type={getGlobalAccessRights()} />,
 		},
 	]
 
@@ -98,7 +109,9 @@ export default function UserGroupView() {
 						label: 'Разрешения',
 						children: (
 							<ObjectsWithAccess
-								accessRights={group.accessRights}
+								accessRights={group.accessRights.filter(
+									(x) => !x.isGlobal,
+								)}
 							/>
 						),
 					},

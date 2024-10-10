@@ -1,4 +1,4 @@
-import { Divider, Layout, notification, theme } from 'antd'
+import { Divider, Layout, theme } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
 import { motion } from 'framer-motion'
@@ -7,12 +7,6 @@ import { isAuth } from '../api/local-auth'
 import { AppMenu } from './components/AppMenu'
 import LogoPanel from './components/LogoPanel'
 import UserPanel from './components/UserPanel'
-
-notification.config({
-	placement: 'bottomLeft',
-	bottom: 50,
-	duration: 5,
-})
 
 export default function AppLayout() {
 	const { token } = theme.useToken()

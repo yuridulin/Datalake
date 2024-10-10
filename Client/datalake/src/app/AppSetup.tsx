@@ -9,14 +9,11 @@ import routes from './router/routes'
 
 import locale from 'antd/locale/ru_RU'
 import 'dayjs/locale/ru'
+import appTheme from '../api/theme-settings'
 dayjs.locale('ru')
 
 declare const KEYCLOAK_DB: string
 declare const KEYCLOAK_CLIENT: string
-
-const datalakeThemeKey = 'datalake-theme'
-const datalakeThemeDark = 'dark'
-const datalakeThemeLight = 'light'
 
 export default function AppSetup() {
 	const [lastUpdate, setUpdate] = useState<Date>(new Date())
@@ -31,30 +28,11 @@ export default function AppSetup() {
 	}
 
 	useEffect(() => {
-		const ls = localStorage.getItem(datalakeThemeKey)
-		const storedMode =
-			ls == null
-				? window.matchMedia &&
-				  window.matchMedia('(prefers-color-scheme: dark)').matches
-				: ls == datalakeThemeDark
-		setDarkMode(storedMode)
-
-		/* window
-			.matchMedia('(prefers-color-scheme: dark)')
-			.addEventListener('change', (event) => {
-				if (localStorage.getItem('datalake-dark-mode') == null)
-					setDarkMode(event.matches)
-			}) */
+		setDarkMode(appTheme.isDark())
 	}, [])
-	useEffect(
-		() =>
-			localStorage.setItem(
-				datalakeThemeKey,
-				isDarkMode ? datalakeThemeDark : datalakeThemeLight,
-			),
-		[isDarkMode],
-	)
-
+	useEffect(() => {
+		appTheme.setTheme(isDarkMode)
+	}, [isDarkMode])
 	dayjs.locale('')
 
 	return (

@@ -78,7 +78,10 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	public async Task<ActionResult<UserGroupDetailedInfo>> ReadWithDetailsAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
-		return await db.UserGroupsRepository.GetWithDetails(groupGuid);
+		return await db.UserGroupsRepository.GetWithDetails()
+			.Where(x => x.Guid == groupGuid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: $"группа пользователей \"{groupGuid}\"");
 	}
 
 	/// <summary>
@@ -95,7 +98,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 
 		await db.UserGroupsRepository.UpdateAsync(user, groupGuid, request);
 
-		return Ok();
+		return NoContent();
 	}
 
 	/// <summary>
@@ -111,7 +114,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 		var user = Authenticate();
 		await db.UserGroupsRepository.MoveAsync(user, groupGuid, parentGuid);
 
-		return Ok();
+		return NoContent();
 	}
 
 	/// <summary>
@@ -126,6 +129,6 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 
 		await db.UserGroupsRepository.DeleteAsync(user, groupGuid);
 
-		return Ok();
+		return NoContent();
 	}
 }

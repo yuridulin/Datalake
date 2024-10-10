@@ -1,30 +1,14 @@
-﻿using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Models.Blocks;
+﻿using Datalake.ApiClasses.Models.Blocks;
 using Datalake.ApiClasses.Models.Sources;
 using Datalake.ApiClasses.Models.Tags;
 
 namespace Datalake.ApiClasses.Models.AccessRights;
 
 /// <summary>
-/// Информация о разрешении
+/// Информация о разрешении субьекта на доступ к объекту
 /// </summary>
-public class AccessRightsForOneInfo
+public class AccessRightsForOneInfo : AccessRightsSimpleInfo
 {
-	/// <summary>
-	/// Идентификатор разрешения
-	/// </summary>
-	public int Id { get; set; }
-
-	/// <summary>
-	/// Тип доступа
-	/// </summary>
-	public AccessType AccessType { get; set; }
-
-	/// <summary>
-	/// Является ли разрешение глобальным
-	/// </summary>
-	public required bool IsGlobal { get; set; }
-
 	/// <summary>
 	/// Тег, на который выдано разрешение
 	/// </summary>

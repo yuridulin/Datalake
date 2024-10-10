@@ -68,6 +68,6 @@ public class AccessController(DatalakeContext db) : ApiControllerBase
 	{
 		await db.AccessRepository.ApplyChangesAsync(applyRequests);
 
-		return Ok();
+		return NoContent();
 	}
 }

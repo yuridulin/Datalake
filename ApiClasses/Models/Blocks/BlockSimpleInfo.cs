@@ -11,7 +11,7 @@ public class BlockSimpleInfo
 	/// Идентификатор
 	/// </summary>
 	[Required]
-	public int Id { get; set; } = 0;
+	public required int Id { get; set; } = 0;
 
 	/// <summary>
 	/// Глобальный идентификатор

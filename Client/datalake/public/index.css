@@ -94,3 +94,13 @@ code {
 .app-two-items > * {
 	padding: .25em 1em;
 }
+
+.notify-dark {
+	background: #222;
+}
+
+.notify-dark .ant-notification-notice-message,
+.notify-dark .ant-notification-notice-description,
+.notify-dark .ant-notification-notice-close {
+	color: #fff !important;
+}

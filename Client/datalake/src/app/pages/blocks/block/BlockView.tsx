@@ -49,6 +49,7 @@ export default function BlockView() {
 	}
 
 	const getTagsValues = (tags: number[]) => {
+		if (tags.length === 0) return
 		api.valuesGet([
 			{
 				requestKey: 'block-values',

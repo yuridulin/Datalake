@@ -1,7 +1,8 @@
-import { Button, Form, Input, notification, Space } from 'antd'
+import { Button, Form, Input, Space } from 'antd'
 import { useAuth } from 'react-oidc-context'
 import { useNavigate } from 'react-router-dom'
 import { setName } from '../../../api/local-auth'
+import notify from '../../../api/notifications'
 import api from '../../../api/swagger-api'
 import { UserLoginPass } from '../../../api/swagger/data-contracts'
 import { useUpdateContext } from '../../../context/updateContext'
@@ -30,10 +31,7 @@ export default function LoginPanel() {
 				}
 			})
 			.catch(() => {
-				notification.error({
-					placement: 'bottomLeft',
-					message: 'Аутентификация не пройдена',
-				})
+				notify.err('Аутентификация не пройдена')
 				navigate(routes.auth.loginPage)
 			})
 	}

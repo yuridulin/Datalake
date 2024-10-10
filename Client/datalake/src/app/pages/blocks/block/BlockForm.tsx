@@ -3,18 +3,10 @@ import {
 	MinusCircleOutlined,
 	PlusOutlined,
 } from '@ant-design/icons'
-import {
-	Button,
-	Dropdown,
-	Form,
-	Input,
-	notification,
-	Popconfirm,
-	Select,
-	Space,
-} from 'antd'
+import { Button, Dropdown, Form, Input, Popconfirm, Select, Space } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import notify from '../../../../api/notifications'
 import api from '../../../../api/swagger-api'
 import {
 	AttachedTag,
@@ -46,9 +38,7 @@ export default function BlockForm() {
 				//setBlock(newInfo)
 			})
 			.catch(() => {
-				notification.error({
-					message: 'Ошибка при сохранении',
-				})
+				notify.err('Ошибка при сохранении')
 			})
 	}
 

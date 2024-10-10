@@ -1,7 +1,8 @@
-import { Button, notification, Space } from 'antd'
+import { Button, Space } from 'antd'
 import { useAuth } from 'react-oidc-context'
 import { useNavigate } from 'react-router-dom'
 import { setName } from '../../../api/local-auth'
+import notify from '../../../api/notifications'
 import api from '../../../api/swagger-api'
 import routes from '../../router/routes'
 
@@ -34,10 +35,7 @@ export default function EnergoId() {
 				}
 			})
 			.catch(() => {
-				notification.error({
-					placement: 'bottomLeft',
-					message: 'Аутентификация не пройдена',
-				})
+				notify.err('Аутентификация не пройдена')
 				navigate(routes.auth.loginPage)
 			})
 
