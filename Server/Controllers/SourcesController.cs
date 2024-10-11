@@ -154,7 +154,7 @@ public class SourcesController(
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 		var sourceItems = sourceItemsResponse.Tags
 			.DistinctBy(x => x.Name)
-			.ToDictionary(x => x.Name, x => new SourceItemInfo { Path = x.Name, Type = x.Type, Value = x.Value });
+			.ToDictionary(x => x.Name, x => new SourceItemInfo { Path = x.Name, Type = x.Type, Value = x.Value, Quality = x.Quality });
 
 		var sourceTags = await db.SourcesRepository.GetExistTags(id)
 			.ToListAsync();

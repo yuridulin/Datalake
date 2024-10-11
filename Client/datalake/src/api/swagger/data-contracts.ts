@@ -449,6 +449,29 @@ export interface SourceItemInfo {
 	type: TagType
 	/** Значение, прочитанное с источника при опросе */
 	value?: any
+	/** Достоверность значения */
+	quality: TagQuality
+}
+
+/**
+ * Достоверность значения
+ *
+ * 0 = Bad
+ * 4 = Bad_NoConnect
+ * 8 = Bad_NoValues
+ * 26 = Bad_ManualWrite
+ * 192 = Good
+ * 216 = Good_ManualWrite
+ * -1 = Unknown
+ */
+export enum TagQuality {
+	Bad = 0,
+	BadNoConnect = 4,
+	BadNoValues = 8,
+	BadManualWrite = 26,
+	Good = 192,
+	GoodManualWrite = 216,
+	Unknown = -1,
 }
 
 /** Информация о сопоставлении данных в источнике и в базе */
@@ -902,27 +925,6 @@ export interface ValueRecord {
 	value?: any
 	/** Достоверность значения */
 	quality: TagQuality
-}
-
-/**
- * Достоверность значения
- *
- * 0 = Bad
- * 4 = Bad_NoConnect
- * 8 = Bad_NoValues
- * 26 = Bad_ManualWrite
- * 192 = Good
- * 216 = Good_ManualWrite
- * -1 = Unknown
- */
-export enum TagQuality {
-	Bad = 0,
-	BadNoConnect = 4,
-	BadNoValues = 8,
-	BadManualWrite = 26,
-	Good = 192,
-	GoodManualWrite = 216,
-	Unknown = -1,
 }
 
 /** Данные запроса для получения значений */

@@ -1,6 +1,6 @@
 import { PlusCircleOutlined } from '@ant-design/icons'
-import { Button, Table, TableColumnsType, Tag } from 'antd'
-import { createStyles } from 'antd-style'
+import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
+import debounce from 'debounce'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../../api/swagger-api'
@@ -8,30 +8,12 @@ import {
 	SourceEntryInfo,
 	SourceType,
 	TagInfo,
-	TagQuality,
 	TagType,
 } from '../../../../api/swagger/data-contracts'
 import compareValues from '../../../../hooks/compareValues'
-import { useInterval } from '../../../../hooks/useInterval'
 import CreatedTagLinker from '../../../components/CreatedTagsLinker'
 import PageHeader from '../../../components/PageHeader'
 import TagCompactValue from '../../../components/TagCompactValue'
-
-const useStyle = createStyles(({ css, prefixCls }) => {
-	return {
-		customTable: css`
-			${prefixCls}-table {
-				${prefixCls}-table-container {
-					${prefixCls}-table-body,
-					${prefixCls}-table-content {
-						scrollbar-width: thin;
-						scrollbar-color: unset;
-					}
-				}
-			}
-		`,
-	}
-})
 
 export default function SourceItems({
 	type,
@@ -43,9 +25,10 @@ export default function SourceItems({
 	id: number
 }) {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
+	const [searchedItems, setSearchedItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
 	const [created, setCreated] = useState(null as TagInfo | null)
-	const { styles } = useStyle()
+	const [search, setSearch] = useState('')
 
 	const columns: TableColumnsType<SourceEntryInfo> = [
 		{
@@ -55,7 +38,6 @@ export default function SourceItems({
 				<>{record.itemInfo?.path ?? <Tag>Путь не существует</Tag>}</>
 			),
 			sorter: (a, b) => compareValues(a.itemInfo?.path, b.itemInfo?.path),
-			defaultSortOrder: 'ascend',
 		},
 		{
 			dataIndex: ['itemInfo', 'value'],
@@ -64,7 +46,7 @@ export default function SourceItems({
 				record.itemInfo ? (
 					<TagCompactValue
 						type={record.itemInfo.type}
-						quality={TagQuality.Good}
+						quality={record.itemInfo.quality}
 						value={record.itemInfo.value}
 					/>
 				) : (
@@ -86,6 +68,7 @@ export default function SourceItems({
 				) : (
 					<span>
 						<Button
+							size='small'
 							icon={<PlusCircleOutlined />}
 							onClick={() =>
 								createTag(
@@ -123,8 +106,49 @@ export default function SourceItems({
 		})
 	}
 
+	const doSearch = debounce((value: string) => {
+		const tokens = value
+			.toLowerCase()
+			.split(' ')
+			.filter((x) => x.length > 0)
+		console.log('ищем по строкам:', tokens)
+		if (value.length > 0) {
+			setSearchedItems(
+				items.filter(
+					(x) =>
+						tokens.filter(
+							(token) =>
+								token.length > 0 &&
+								(
+									(x.itemInfo?.path ?? '') +
+									(x.tagInfo?.name ?? '')
+								)
+									.toLowerCase()
+									.indexOf(token) > -1,
+						).length == tokens.length,
+				),
+			)
+		} else {
+			setSearchedItems(items)
+		}
+	}, 300)
+
+	useEffect(
+		function () {
+			doSearch(search)
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[items],
+	)
+	useEffect(() => {
+		console.log(
+			'Нашлось элементов: ' +
+				searchedItems.length +
+				' из ' +
+				items.length,
+		)
+	}, [searchedItems, items])
 	useEffect(read, [id])
-	useInterval(read, 5000)
 
 	if (type !== newType)
 		return <>Тип источника изменен. Сохраните, чтобы продолжить</>
@@ -152,14 +176,24 @@ export default function SourceItems({
 					onClose={() => setCreated(null)}
 				/>
 			)}
+			<Input.Search
+				style={{ marginBottom: '1em' }}
+				placeholder='Введите запрос для поиска по значениям и тегам. Можно написать несколько запросов, разделив пробелами'
+				value={search}
+				onChange={(e) => {
+					setSearch(e.target.value)
+					doSearch(e.target.value.toLowerCase())
+				}}
+			/>
 			<Table
-				dataSource={items}
+				dataSource={searchedItems}
 				columns={columns}
-				className={styles.customTable}
+				showSorterTooltip={false}
 				size='small'
-				pagination={false}
-				rowKey='itemInfo'
-				scroll={{ y: 55 * 8 }}
+				pagination={{ position: ['bottomCenter'] }}
+				rowKey={(row) =>
+					(row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')
+				}
 			/>
 		</>
 	)
