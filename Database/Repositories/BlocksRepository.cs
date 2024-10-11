@@ -68,7 +68,7 @@ public partial class BlocksRepository(DatalakeContext db)
 			if (id.HasValue)
 				await db.Blocks
 					.Where(x => x.Id == id.Value)
-					.Set(x => x.Name, "Сущность #" + id.Value)
+					.Set(x => x.Name, "Блок #" + id.Value)
 					.UpdateAsync();
 
 			return id.Value;
