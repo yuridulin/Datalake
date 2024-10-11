@@ -1,3 +1,16 @@
+import { blue } from '@ant-design/colors'
+import {
+	ApiOutlined,
+	CalculatorOutlined,
+	ContainerOutlined,
+	EditOutlined,
+	PlaySquareOutlined,
+	SettingOutlined,
+	TagOutlined,
+	TeamOutlined,
+	UnorderedListOutlined,
+	UserOutlined,
+} from '@ant-design/icons'
 import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { NavLink } from 'react-router-dom'
@@ -12,18 +25,28 @@ const items: ItemType<MenuItemType>[] = [
 		children: [
 			{
 				key: 'sources-list',
-				label: <NavLink to={'/sources'}>Список источников</NavLink>,
+				label: (
+					<NavLink to={'/sources'}>
+						<ApiOutlined style={{ color: blue[4] }} />
+						&emsp;Список источников
+					</NavLink>
+				),
 			},
 		],
 	},
 	{
 		key: 'blocks',
-		label: 'Объекты',
+		label: 'Блоки',
 		type: 'group',
 		children: [
 			{
 				key: 'blocks-tree',
-				label: <NavLink to={'/blocks'}>Дерево объектов</NavLink>,
+				label: (
+					<NavLink to={'/blocks'}>
+						<ContainerOutlined style={{ color: blue[4] }} />
+						&emsp;Дерево блоков
+					</NavLink>
+				),
 			},
 		],
 	},
@@ -34,15 +57,30 @@ const items: ItemType<MenuItemType>[] = [
 		children: [
 			{
 				key: 'tags',
-				label: <NavLink to={'/tags'}>Все теги</NavLink>,
+				label: (
+					<NavLink to={'/tags'}>
+						<TagOutlined style={{ color: blue[4] }} />
+						&emsp;Все теги
+					</NavLink>
+				),
 			},
 			{
 				key: CustomSource.Manual,
-				label: <NavLink to={'/tags/manual/'}>Мануальные теги</NavLink>,
+				label: (
+					<NavLink to={'/tags/manual/'}>
+						<EditOutlined style={{ color: blue[4] }} />
+						&emsp;Мануальные теги
+					</NavLink>
+				),
 			},
 			{
 				key: CustomSource.Calculated,
-				label: <NavLink to={'/tags/calc/'}>Вычисляемые теги</NavLink>,
+				label: (
+					<NavLink to={'/tags/calc/'}>
+						<CalculatorOutlined style={{ color: blue[4] }} />
+						&emsp;Вычисляемые теги
+					</NavLink>
+				),
 			},
 		],
 	},
@@ -54,8 +92,9 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'viewer-tags',
 				label: (
-					<NavLink to={routes.Viewer.root + routes.Viewer.TagsViewer}>
-						Запросы
+					<NavLink to={routes.viewer.root + routes.viewer.tagsViewer}>
+						<PlaySquareOutlined style={{ color: blue[4] }} />
+						&emsp;Запросы
 					</NavLink>
 				),
 			},
@@ -68,23 +107,39 @@ const items: ItemType<MenuItemType>[] = [
 		children: [
 			{
 				key: 'logs',
-				label: <NavLink to={'/'}>Журнал</NavLink>,
+				label: (
+					<NavLink to={'/'}>
+						<UnorderedListOutlined style={{ color: blue[4] }} />
+						&emsp;Журнал
+					</NavLink>
+				),
 			},
 			{
 				key: 'users',
-				label: <NavLink to={routes.Users.List}>Пользователи</NavLink>,
-			},
-			/* {
-				key: 'user-groups',
 				label: (
-					<NavLink to={routes.UserGroups.List}>
-						Группы пользователей
+					<NavLink to={routes.users.list}>
+						<UserOutlined style={{ color: blue[5] }} />
+						&emsp;Пользователи
 					</NavLink>
 				),
-			}, */
+			},
+			{
+				key: 'user-groups',
+				label: (
+					<NavLink to={routes.userGroups.list}>
+						<TeamOutlined style={{ color: blue[5] }} />
+						&emsp;Группы пользователей
+					</NavLink>
+				),
+			},
 			{
 				key: 'settings',
-				label: <NavLink to={routes.Settings}>Настройки</NavLink>,
+				label: (
+					<NavLink to={routes.settings}>
+						<SettingOutlined style={{ color: blue[5] }} />
+						&emsp;Настройки
+					</NavLink>
+				),
 			},
 		],
 	},

@@ -6,23 +6,12 @@ namespace Datalake.ApiClasses.Models.Users;
 /// <summary>
 /// Сокращенная информация о пользователе без каких-либо связей
 /// </summary>
-public class UserFlatInfo
+public class UserFlatInfo : UserSimpleInfo
 {
-	/// <summary>
-	/// Идентификатор пользователя
-	/// </summary>
-	[Required]
-	public required Guid Guid { get; set; }
-
 	/// <summary>
 	/// Имя для входа
 	/// </summary>
 	public string? Login { get; set; }
-
-	/// <summary>
-	/// Полное имя
-	/// </summary>
-	public string? FullName { get; set; }
 
 	/// <summary>
 	/// Тип учётной записи

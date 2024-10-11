@@ -128,7 +128,7 @@ export default function BlocksMover() {
 		<>
 			<PageHeader
 				left={
-					<NavLink to={routes.Blocks.root}>
+					<NavLink to={routes.blocks.root}>
 						<Button>Вернуться</Button>
 					</NavLink>
 				}

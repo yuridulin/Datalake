@@ -1,4 +1,8 @@
-﻿using Datalake.ApiClasses.Models.UserGroups;
+﻿using Datalake.ApiClasses.Models.AccessRights;
+using Datalake.ApiClasses.Models.Blocks;
+using Datalake.ApiClasses.Models.Sources;
+using Datalake.ApiClasses.Models.Tags;
+using Datalake.ApiClasses.Models.UserGroups;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
@@ -78,36 +82,61 @@ public partial class UserGroupsRepository
 			});
 	}
 
-	public IQueryable<UserGroupDetailedInfo> GetWithChildsAndUsers()
+	public IQueryable<UserGroupDetailedInfo> GetWithDetails()
 	{
-		var query = from g in db.UserGroups
-								from rel in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == g.Guid)
-								from u in db.Users.LeftJoin(x => x.Guid == rel.UserGuid)
-								from c in db.UserGroups.LeftJoin(x => x.ParentGuid == g.Guid)
-								group new { g, rel, u, c } by g into groupping
-								select new UserGroupDetailedInfo
-								{
-									Guid = groupping.Key.Guid,
-									Name = groupping.Key.Name,
-									Description = groupping.Key.Description,
-									ParentGroupGuid = groupping.Key.ParentGuid,
-									Subgroups = groupping
-										.Select(x => new UserGroupInfo
-										{
-											Guid = x.c.Guid,
-											Name = x.c.Name,
-											Description = x.c.Description,
-										})
-										.ToArray(),
-									Users = groupping
-										.Select(x => new UserGroupUsersInfo
-										{
-											Guid = x.u.Guid,
-											FullName = x.u.FullName,
-											AccessType = x.rel.AccessType,
-										})
-										.ToArray(),
-								};
+		var query =
+			from usergroup in db.UserGroups
+			select new UserGroupDetailedInfo
+			{
+				Guid = usergroup.Guid,
+				Name = usergroup.Name,
+				Description = usergroup.Description,
+				ParentGroupGuid = usergroup.ParentGuid,
+				Users =
+					from rel in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == usergroup.Guid)
+					from u in db.Users.InnerJoin(x => x.Guid == rel.UserGuid)
+					select new UserGroupUsersInfo
+					{
+						Guid = u.Guid,
+						FullName = u.FullName,
+						AccessType = rel.AccessType,
+					},
+				AccessRights = 
+					from rights in db.AccessRights.InnerJoin(x => x.UserGroupGuid == usergroup.Guid)
+					from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId)
+					from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)
+					from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId)
+					select new AccessRightsForOneInfo
+					{
+						Id = rights.Id,
+						IsGlobal = rights.IsGlobal,
+						AccessType = rights.AccessType,
+						Source = source == null ? null : new SourceSimpleInfo
+						{
+							Id = source.Id,
+							Name = source.Name,
+						},
+						Block = block == null ? null : new BlockSimpleInfo
+						{
+							Id = block.Id,
+							Guid = block.GlobalId,
+							Name = block.Name,
+						},
+						Tag = tag == null ? null : new TagSimpleInfo
+						{
+							Id = tag.Id,
+							Guid = tag.GlobalGuid,
+							Name = tag.Name,
+						},
+					},
+				Subgroups =
+					from subgroup in db.UserGroups.LeftJoin(x => x.ParentGuid == usergroup.Guid)
+					select new UserGroupSimpleInfo
+					{
+						Guid = subgroup.Guid,
+						Name = subgroup.Name,
+					},
+			};
 
 		return query;
 	}

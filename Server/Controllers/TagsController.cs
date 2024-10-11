@@ -1,6 +1,6 @@
 ﻿using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Tags;
-using Datalake.Database.Repositories;
+using Datalake.Database;
 using Datalake.Server.Controllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +11,9 @@ namespace Datalake.Server.Controllers;
 /// <summary>
 /// Взаимодействие с тегами
 /// </summary>
-/// <param name="tagsRepository">Репозиторий</param>
 [ApiController]
 [Route("api/[controller]")]
-public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
+public class TagsController(DatalakeContext db) : ApiControllerBase
 {
 	/// <summary>
 	/// Создание нового тега
@@ -27,7 +26,7 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await tagsRepository.CreateAsync(user, tagCreateRequest);
+		return await db.TagsRepository.CreateAsync(user, tagCreateRequest);
 	}
 
 	/// <summary>
@@ -39,7 +38,7 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	[HttpGet("{guid}")]
 	public async Task<ActionResult<TagInfo>> ReadAsync(Guid guid)
 	{
-		var tag = await tagsRepository.GetInfoWithSources()
+		var tag = await db.TagsRepository.GetInfoWithSources()
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Тег {guid}");
@@ -64,7 +63,7 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 		[FromQuery] Guid[]? guids,
 		Guid? energoId = null)
 	{
-		var query = tagsRepository.GetInfoWithSources(energoId);
+		var query = db.TagsRepository.GetInfoWithSources(energoId);
 
 		if (sourceId.HasValue)
 		{
@@ -95,7 +94,7 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	[HttpGet("inputs")]
 	public async Task<ActionResult<TagAsInputInfo[]>> ReadPossibleInputsAsync()
 	{
-		var tags = await tagsRepository.GetPossibleInputs()
+		var tags = await db.TagsRepository.GetPossibleInputs()
 			.ToArrayAsync();
 
 		return tags;
@@ -113,7 +112,7 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await tagsRepository.UpdateAsync(user, guid, tag);
+		await db.TagsRepository.UpdateAsync(user, guid, tag);
 
 		return NoContent();
 	}
@@ -128,7 +127,7 @@ public class TagsController(TagsRepository tagsRepository) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await tagsRepository.DeleteAsync(user, guid);
+		await db.TagsRepository.DeleteAsync(user, guid);
 
 		return NoContent();
 	}

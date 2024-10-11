@@ -6,20 +6,8 @@ namespace Datalake.ApiClasses.Models.Sources;
 /// <summary>
 /// Информация о источнике
 /// </summary>
-public class SourceInfo
+public class SourceInfo : SourceSimpleInfo
 {
-	/// <summary>
-	/// Идентификатор источника в базе данных
-	/// </summary>
-	[Required]
-	public int Id { get; set; }
-
-	/// <summary>
-	/// Название источника
-	/// </summary>
-	[Required]
-	public required string Name { get; set; }
-
 	/// <summary>
 	/// Произвольное описание источника
 	/// </summary>

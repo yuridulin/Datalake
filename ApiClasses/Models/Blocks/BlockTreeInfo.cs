@@ -3,12 +3,12 @@
 namespace Datalake.ApiClasses.Models.Blocks;
 
 /// <summary>
-/// Информация о сущности в иерархическом представлении
+/// Информация о блоке в иерархическом представлении
 /// </summary>
-public class BlockTreeInfo : BlockSimpleInfo
+public class BlockTreeInfo : BlockWithTagsInfo
 {
 	/// <summary>
-	/// Вложенные сущности, подчинённые этой
+	/// Вложенные блоки
 	/// </summary>
 	[Required]
 	public BlockTreeInfo[] Children { get; set; } = [];

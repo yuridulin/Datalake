@@ -45,6 +45,7 @@ public class BlockUpdateRequest
 		/// <summary>
 		/// Тип поля блока
 		/// </summary>
+		[Required]
 		public BlockTagRelation Relation { get; set; } = BlockTagRelation.Static;
 	}
 }

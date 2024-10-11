@@ -1,8 +1,8 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Tables;
 using Datalake.ApiClasses.Models.Tags;
+using Datalake.ApiClasses.Models.Users;
 using Datalake.ApiClasses.Models.Values;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
@@ -15,7 +15,7 @@ using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
 
-public class ValuesRepository(DatalakeContext db) : IDisposable
+public class ValuesRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -42,6 +42,12 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		return await WriteValuesAsync(requests, overrided);
 	}
 
+	public async Task RebuildCacheAsync(UserAuthInfo user)
+	{
+		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		await RebuildCacheAsync();
+	}
+
 	#endregion
 
 	#region Системные действия
@@ -64,13 +70,60 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	#endregion
 
-	#region Реализация
-
 	internal static readonly string NamePrefix = "TagsHistory_";
 	internal static readonly string DateMask = "yyyy_MM_dd";
 	internal static readonly string IndexPostfix = "_idx";
 
 	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
+
+	#region Кэш
+
+	internal async Task RebuildCacheAsync()
+	{
+		var tables = await GetHistoryTablesFromSchema();
+
+		Cache.Tables = tables
+			.Where(x => x.Name.StartsWith(NamePrefix))
+			.Select(x => new
+			{
+				Date = GetTableDate(x.Name),
+				x.Name,
+			})
+			.Where(x => x.Date != DateTime.MinValue)
+			.DistinctBy(x => x.Date)
+			.ToDictionary(x => x.Date, x => x.Name);
+
+		Cache.Tags = await (
+			from t in db.Tags
+			from s in db.Sources.LeftJoin(x => x.Id == t.SourceId)
+			select new TagCacheInfo
+			{
+				Id = t.Id,
+				Guid = t.GlobalGuid,
+				Name = t.Name,
+				TagType = t.Type,
+				SourceType = s.Type,
+				IsManual = t.SourceId == (int)CustomSource.Manual,
+				ScalingCoefficient = t.IsScaling
+					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
+					: 1,
+			}
+		).ToDictionaryAsync(x => x.Id, x => x);
+
+		// создание таблицы для значений на текущую дату
+		if (!Cache.Tables.ContainsKey(DateTime.Today))
+		{
+			GetHistoryTable(DateTime.Today);
+		}
+
+		// актуализация таблицы текущих значений
+		var lastValues = await ReadHistoryValuesAsync([.. Cache.Tags.Keys], DateTime.Now, DateTime.Now);
+
+		Live.Write(lastValues);
+	}
+
+	#endregion
+
 
 	#region Манипулирование таблицами
 
@@ -443,8 +496,10 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				var query = table
 					.Where(x => identifiers.Contains(x.TagId));
 
-				if (seekDate == lastDate) query = query.Where(x => x.Date <= young);
-				if (seekDate == firstDate) query = query.Where(x => x.Date >= old);
+				if (seekDate == lastDate)
+					query = query.Where(x => x.Date <= young);
+				if (seekDate == firstDate)
+					query = query.Where(x => x.Date >= old);
 
 				queries.Add(query);
 			}
@@ -585,15 +640,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			Number = null,
 			Quality = TagQuality.Bad,
 		};
-	}
-
-	#endregion
-
-
-	public void Dispose()
-	{
-		db.Close();
-		GC.SuppressFinalize(this);
 	}
 
 	#endregion

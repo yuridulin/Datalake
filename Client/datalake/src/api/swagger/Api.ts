@@ -10,10 +10,13 @@
  */
 
 import {
+	AccessApplyChangesPayload,
+	AccessRightsForOneInfo,
+	AccessRightsInfo,
 	BlockFullInfo,
-	BlockSimpleInfo,
 	BlockTreeInfo,
 	BlockUpdateRequest,
+	BlockWithTagsInfo,
 	EnergoIdInfo,
 	LogInfo,
 	SettingsInfo,
@@ -47,6 +50,97 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	/**
 	 * No description
 	 *
+	 * @tags Access
+	 * @name AccessGet
+	 * @summary Получение списка прямых (не глобальных) разрешений субъекта на объект
+	 * @request GET:/api/Access
+	 * @response `200` `(AccessRightsInfo)[]` Список разрешений
+	 */
+	accessGet = (
+		query?: {
+			/**
+			 * Идентификтатор пользователя
+			 * @format guid
+			 */
+			user?: string | null
+			/**
+			 * Идентификатор группы пользователей
+			 * @format guid
+			 */
+			userGroup?: string | null
+			/**
+			 * Идентификатор источника
+			 * @format int32
+			 */
+			source?: number | null
+			/**
+			 * Идентификатор блока
+			 * @format int32
+			 */
+			block?: number | null
+			/**
+			 * Идентификатор тега
+			 * @format int32
+			 */
+			tag?: number | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<AccessRightsInfo[], any>({
+			path: `/api/Access`,
+			method: 'GET',
+			query: query,
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Access
+	 * @name AccessApplyChanges
+	 * @summary Пакетное изменение разрешений
+	 * @request POST:/api/Access
+	 * @response `200` `File`
+	 */
+	accessApplyChanges = (data: AccessApplyChangesPayload, params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/Access`,
+			method: 'POST',
+			body: data,
+			type: ContentType.Json,
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Access
+	 * @name AccessCheckUserAccess
+	 * @summary Получение разрешений пользователя на конкретные объекты, включая непрямые (предоставленные на объекты выше в иерархии либо на группы пользователя)
+	 * @request GET:/api/Access/{user}
+	 * @response `200` `(AccessRightsForOneInfo)[]` Список разрешений на доступ к запрошенным объектам
+	 */
+	accessCheckUserAccess = (
+		user: string,
+		query?: {
+			/** Идентификаторы источников, разрешения на которые нужно проверить */
+			sources?: number[] | null
+			/** Идентификаторы блоков, разрешения на которые нужно проверить */
+			blocks?: number[] | null
+			/** Идентификаторы тегов, разрешения на которые нужно проверить */
+			tags?: number[] | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<AccessRightsForOneInfo[], any>({
+			path: `/api/Access/${user}`,
+			method: 'GET',
+			query: query,
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
 	 * @tags Blocks
 	 * @name BlocksCreate
 	 * @summary Создание нового блока на основании переданной информации
@@ -69,7 +163,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name BlocksReadAll
 	 * @summary Получение списка блоков с базовой информацией о них
 	 * @request GET:/api/Blocks
-	 * @response `200` `(BlockSimpleInfo)[]` Список блоков
+	 * @response `200` `(BlockWithTagsInfo)[]` Список блоков
 	 */
 	blocksReadAll = (
 		query?: {
@@ -81,7 +175,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 		},
 		params: RequestParams = {},
 	) =>
-		this.request<BlockSimpleInfo[], any>({
+		this.request<BlockWithTagsInfo[], any>({
 			path: `/api/Blocks`,
 			method: 'GET',
 			query: query,
@@ -292,6 +386,21 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			method: 'PUT',
 			body: data,
 			type: ContentType.Json,
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags Config
+	 * @name ConfigRestart
+	 * @summary Перестроение кэша и перезапуск всех сборщиков
+	 * @request PUT:/api/Config/restart
+	 * @response `200` `File`
+	 */
+	configRestart = (params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/Config/restart`,
+			method: 'PUT',
 			...params,
 		})
 	/**
@@ -665,6 +774,32 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			path: `/api/UserGroups/${groupGuid}/detailed`,
 			method: 'GET',
 			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags UserGroups
+	 * @name UserGroupsMove
+	 * @summary Перемещение группы пользователей
+	 * @request POST:/api/UserGroups/{groupGuid}/move
+	 * @response `200` `File`
+	 */
+	userGroupsMove = (
+		groupGuid: string,
+		query?: {
+			/**
+			 * Идентификатор новой родительской группы
+			 * @format guid
+			 */
+			parentGuid?: string | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<File, any>({
+			path: `/api/UserGroups/${groupGuid}/move`,
+			method: 'POST',
+			query: query,
 			...params,
 		})
 	/**

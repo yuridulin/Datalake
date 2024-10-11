@@ -37,11 +37,9 @@ public class SettingsHandlerService(
 					using var scope = serviceScopeFactory.CreateScope();
 					using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-					var systemRepository = new SystemRepository(db);
-					var usersRepository = new UsersRepository(db);
 
-					await WriteStartipFileAsync(systemRepository);
-					LoadStaticUsers(usersRepository);
+					await WriteStartipFileAsync(db.SystemRepository);
+					LoadStaticUsers(db.UsersRepository);
 
 					StoredUpdate = lastUpdate;
 				}

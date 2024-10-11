@@ -3,18 +3,10 @@ import {
 	MinusCircleOutlined,
 	PlusOutlined,
 } from '@ant-design/icons'
-import {
-	Button,
-	Dropdown,
-	Form,
-	Input,
-	notification,
-	Popconfirm,
-	Select,
-	Space,
-} from 'antd'
+import { Button, Dropdown, Form, Input, Popconfirm, Select, Space } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import notify from '../../../../api/notifications'
 import api from '../../../../api/swagger-api'
 import {
 	AttachedTag,
@@ -24,7 +16,6 @@ import {
 } from '../../../../api/swagger/data-contracts'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
-import styles from './BlockForm.module.css'
 
 export default function BlockForm() {
 	const { id } = useParams()
@@ -47,14 +38,12 @@ export default function BlockForm() {
 				//setBlock(newInfo)
 			})
 			.catch(() => {
-				notification.error({
-					message: 'Ошибка при сохранении',
-				})
+				notify.err('Ошибка при сохранении')
 			})
 	}
 
 	const deleteBlock = () => {
-		api.blocksDelete(Number(id)).then(() => navigate(routes.Blocks.root))
+		api.blocksDelete(Number(id)).then(() => navigate(routes.blocks.root))
 	}
 
 	const getTags = () => {
@@ -79,7 +68,7 @@ export default function BlockForm() {
 				left={
 					<Button
 						onClick={() =>
-							navigate(routes.Blocks.routeToViewBlock(Number(id)))
+							navigate(routes.blocks.toViewBlock(Number(id)))
 						}
 					>
 						Вернуться
@@ -96,6 +85,7 @@ export default function BlockForm() {
 						>
 							<Button>Удалить</Button>
 						</Popconfirm>
+						&ensp;
 						<Button type='primary' onClick={() => form.submit()}>
 							Сохранить
 						</Button>
@@ -120,7 +110,7 @@ export default function BlockForm() {
 				</Form.Item>
 				<Form.List name='tags'>
 					{(fields, { add, remove }) => (
-						<table className={styles.tags}>
+						<table className='form-subtable'>
 							<thead>
 								<tr>
 									<td>Значение блока</td>

@@ -9,14 +9,184 @@
  * ---------------------------------------------------------------
  */
 
+/** Информация о разрешении пользователя или группы на доступ к какому-либо объекту */
+export type AccessRightsInfo = AccessRightsForOneInfo & {
+	/** Информация о группе пользователей */
+	userGroup?: UserGroupSimpleInfo | null
+	/** Информация о пользователе */
+	user?: UserSimpleInfo | null
+}
+
+/** Базовая информация о группе пользователей */
+export interface UserGroupSimpleInfo {
+	/**
+	 * Идентификатор группы
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
+	 * Название группы
+	 * @minLength 1
+	 */
+	name: string
+}
+
+/** Базовая информация о пользователе */
+export interface UserSimpleInfo {
+	/**
+	 * Идентификатор пользователя
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
+	 * Имя пользователя
+	 * @minLength 1
+	 */
+	fullName: string
+}
+
+/** Информация о разрешении субьекта на доступ к объекту */
+export type AccessRightsForOneInfo = AccessRightsSimpleInfo & {
+	/** Тег, на который выдано разрешение */
+	tag?: TagSimpleInfo | null
+	/** Блок, на который выдано разрешение */
+	block?: BlockSimpleInfo | null
+	/** Источник, на который выдано разрешение */
+	source?: SourceSimpleInfo | null
+}
+
+/** Базовая информация о теге, достаточная, чтобы на него сослаться */
+export interface TagSimpleInfo {
+	/**
+	 * Идентификатор тега в локальной базе
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Глобальный идентификатор тега
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
+	 * Имя тега
+	 * @minLength 1
+	 */
+	name: string
+}
+
+/** Базовая информация о блоке, достаточная, чтобы на него сослаться */
+export interface BlockSimpleInfo {
+	/**
+	 * Идентификатор
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Глобальный идентификатор
+	 * @format guid
+	 * @minLength 1
+	 */
+	guid: string
+	/**
+	 * Наименование
+	 * @minLength 1
+	 */
+	name: string
+}
+
+/** Базовая информация о источнике, достаточная, чтобы на него сослаться */
+export interface SourceSimpleInfo {
+	/**
+	 * Идентификатор источника в базе данных
+	 * @format int32
+	 */
+	id: number
+	/**
+	 * Название источника
+	 * @minLength 1
+	 */
+	name: string
+}
+
+/** Общая информация о разрешении */
+export interface AccessRightsSimpleInfo {
+	/**
+	 * Идентификатор разрешения
+	 * @format int32
+	 */
+	id?: number
+	/** Тип доступа */
+	accessType?: AccessType
+	/** Является ли разрешение глобальным */
+	isGlobal?: boolean
+}
+
+/**
+ * Уровень доступа
+ *
+ * 0 = NoAccess
+ * 5 = Viewer
+ * 10 = User
+ * 100 = Admin
+ * -100 = NotSet
+ */
+export enum AccessType {
+	NoAccess = 0,
+	Viewer = 5,
+	User = 10,
+	Admin = 100,
+	NotSet = -100,
+}
+
+/** Измененное разрешение, которое нужно обновить в БД */
+export interface AccessRightsApplyRequest {
+	/**
+	 * Идентификатор существующего разрешения
+	 * @format int32
+	 */
+	id?: number | null
+	/** Уровень доступа */
+	accessType?: AccessType
+	/**
+	 * Идентификатор пользователя, которому выдается разрешение
+	 * @format guid
+	 */
+	userGuid?: string | null
+	/**
+	 * Идентификатор группы пользователей, которой выдается разрешение
+	 * @format guid
+	 */
+	userGroupGuid?: string | null
+	/**
+	 * Идентификатор источника, на который выдается разрешение
+	 * @format int32
+	 */
+	sourceId?: number | null
+	/**
+	 * Идентификатор блока, на который выдается разрешение
+	 * @format int32
+	 */
+	blockId?: number | null
+	/**
+	 * Идентификатор тега, на который выдается разрешение
+	 * @format int32
+	 */
+	tagId?: number | null
+}
+
 /** Информация о блоке */
-export type BlockFullInfo = BlockSimpleInfo & {
+export type BlockFullInfo = BlockWithTagsInfo & {
 	/** Информация о родительском блоке */
 	parent?: BlockParentInfo | null
 	/** Список дочерних блоков */
 	children: BlockChildInfo[]
 	/** Список статических свойств блока */
 	properties: BlockPropertyInfo[]
+	/** Список прав доступа, которые действуют на этот блок */
+	accessRights: AccessRightsForObjectInfo[]
 }
 
 /** Информация о родительском блоке */
@@ -63,23 +233,21 @@ export enum TagType {
 	Boolean = 2,
 }
 
+/** Информация о разрешении на объект для субьекта */
+export type AccessRightsForObjectInfo = AccessRightsSimpleInfo & {
+	/** Информация о группе пользователей */
+	userGroup?: UserGroupSimpleInfo | null
+	/** Информация о пользователе */
+	user?: UserSimpleInfo | null
+}
+
 /** Информация о блоке */
-export interface BlockSimpleInfo {
-	/**
-	 * Идентификатор
-	 * @format int32
-	 */
-	id: number
+export type BlockWithTagsInfo = BlockSimpleInfo & {
 	/**
 	 * Идентификатор родительского блока
 	 * @format int32
 	 */
 	parentId?: number | null
-	/**
-	 * Наименование
-	 * @minLength 1
-	 */
-	name: string
 	/** Текстовое описание */
 	description?: string | null
 	/** Список прикреплённых тегов */
@@ -95,11 +263,14 @@ export type BlockNestedTagInfo = BlockNestedItem & {
 	 */
 	guid: string
 	/** Тип поля блока для этого тега */
-	relation?: BlockTagRelation
+	relation: BlockTagRelation
 	/** Тип значений тега */
-	tagType?: TagType
-	/** Свое имя тега в общем списке */
-	tagName?: string
+	tagType: TagType
+	/**
+	 * Свое имя тега в общем списке
+	 * @minLength 1
+	 */
+	tagName: string
 }
 
 /**
@@ -115,9 +286,9 @@ export enum BlockTagRelation {
 	Output = 2,
 }
 
-/** Информация о сущности в иерархическом представлении */
-export type BlockTreeInfo = BlockSimpleInfo & {
-	/** Вложенные сущности, подчинённые этой */
+/** Информация о блоке в иерархическом представлении */
+export type BlockTreeInfo = BlockWithTagsInfo & {
+	/** Вложенные блоки */
 	children: BlockTreeInfo[]
 }
 
@@ -147,7 +318,7 @@ export interface AttachedTag {
 	 */
 	name: string
 	/** Тип поля блока */
-	relation?: BlockTagRelation
+	relation: BlockTagRelation
 }
 
 /** Запись собщения */
@@ -225,26 +396,23 @@ export interface SettingsInfo {
 	 * Адрес сервера EnergoId, к которому выполняются подключения, включая порт при необходимости
 	 *
 	 * Протокол будет выбран на основе того, какой используется в клиенте в данный момент
+	 * @minLength 1
 	 */
-	energoIdHost?: string
-	/** Название клиента EnergoId, через который идет аутентификация */
-	energoIdClient?: string
-	/** Конечная точка сервиса, который отдает информацию о пользователях EnergoId */
-	energoIdApi?: string
+	energoIdHost: string
+	/**
+	 * Название клиента EnergoId, через который идет аутентификация
+	 * @minLength 1
+	 */
+	energoIdClient: string
+	/**
+	 * Конечная точка сервиса, который отдает информацию о пользователях EnergoId
+	 * @minLength 1
+	 */
+	energoIdApi: string
 }
 
 /** Информация о источнике */
-export interface SourceInfo {
-	/**
-	 * Идентификатор источника в базе данных
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Название источника
-	 * @minLength 1
-	 */
-	name: string
+export type SourceInfo = SourceSimpleInfo & {
 	/** Произвольное описание источника */
 	description?: string | null
 	/** Используемый для получения данных адрес */
@@ -311,26 +479,15 @@ export interface SourceTagInfo {
 	item: string
 	/** Тип данных тега */
 	type: TagType
+	/**
+	 * Интервал обновления тега
+	 * @format int32
+	 */
+	interval: number
 }
 
 /** Информация о теге */
-export interface TagInfo {
-	/**
-	 * Идентификатор тега в локальной базе
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Глобальный идентификатор тега
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Имя тега
-	 * @minLength 1
-	 */
-	name: string
+export type TagInfo = TagSimpleInfo & {
 	/** Произвольное описание тега */
 	description?: string | null
 	/** Тип данных тега */
@@ -377,23 +534,7 @@ export interface TagInfo {
 }
 
 /** Тег, используемый как входной параметр в формуле */
-export interface TagInputInfo {
-	/**
-	 * Идентификатор тега в локальной базе
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Идентификатор тега
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Имя тега
-	 * @minLength 1
-	 */
-	name: string
+export type TagInputInfo = TagSimpleInfo & {
 	/**
 	 * Имя переменной, используемое в формуле
 	 * @minLength 1
@@ -415,30 +556,14 @@ export interface TagCreateRequest {
 	/** Путь к данным при использовании удалённого источника */
 	sourceItem?: string | null
 	/**
-	 * Идентификатор сущности, к которой будет привязан новый тег
+	 * Идентификатор блока, к которому будет привязан новый тег
 	 * @format int32
 	 */
 	blockId?: number | null
 }
 
 /** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
-export interface TagAsInputInfo {
-	/**
-	 * Идентификатор тега в локальной базе
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Идентификатор тега
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Имя тега
-	 * @minLength 1
-	 */
-	name: string
+export type TagAsInputInfo = TagSimpleInfo & {
 	/** Тип данных тега */
 	type: TagType
 }
@@ -510,18 +635,7 @@ export interface UserGroupCreateRequest {
 }
 
 /** Информация о группе пользователей */
-export interface UserGroupInfo {
-	/**
-	 * Идентификатор группы
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Название группы
-	 * @minLength 1
-	 */
-	name: string
+export type UserGroupInfo = UserGroupSimpleInfo & {
 	/** Произвольное описание группы */
 	description?: string | null
 	/**
@@ -546,10 +660,14 @@ export type UserGroupTreeInfo = UserGroupInfo & {
 
 /** Расширенная информация о группе пользователей, включающая вложенные группы и список пользователей */
 export type UserGroupDetailedInfo = UserGroupInfo & {
+	/** Общий уровень доступа для всех участников группы */
+	globalAccessType: AccessType
 	/** Список пользователей этой группы */
 	users: UserGroupUsersInfo[]
 	/** Список подгрупп этой группы */
-	subgroups: UserGroupInfo[]
+	subgroups: UserGroupSimpleInfo[]
+	/** Разрешения, выданные на эту группу */
+	accessRights: AccessRightsForOneInfo[]
 }
 
 /** Информация о пользователей данной группы */
@@ -557,39 +675,21 @@ export interface UserGroupUsersInfo {
 	/**
 	 * Идентификатор пользователя
 	 * @format guid
+	 * @minLength 1
 	 */
-	guid?: string
+	guid: string
 	/** Уровень доступа пользователя в группе */
-	accessType?: AccessType
+	accessType: AccessType
 	/** Полное имя пользователя */
 	fullName?: string | null
-}
-
-/**
- * Уровень доступа
- *
- * 0 = NoAccess
- * 5 = Viewer
- * 10 = User
- * 100 = Admin
- * -100 = NotSet
- */
-export enum AccessType {
-	NoAccess = 0,
-	Viewer = 5,
-	User = 10,
-	Admin = 100,
-	NotSet = -100,
 }
 
 /** Данные запроса для изменения группы пользователей */
 export type UserGroupUpdateRequest = UserGroupCreateRequest & {
 	/** Базовый уровень доступа участников и под-групп */
-	accessType?: AccessType
+	accessType: AccessType
 	/** Список пользователей, которые включены в эту группу */
 	users: UserGroupUsersInfo[]
-	/** Список групп, которые включены в эту группу */
-	groups: UserGroupInfo[]
 }
 
 /** Данные с сервиса "EnergoID" */
@@ -621,18 +721,7 @@ export interface UserEnergoIdInfo {
 }
 
 /** Информация о аутентифицированном пользователе */
-export interface UserAuthInfo {
-	/**
-	 * Идентификатор пользователя
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Имя пользователя
-	 * @minLength 1
-	 */
-	fullName: string
+export type UserAuthInfo = UserSimpleInfo & {
 	/**
 	 * Идентификатор сессии
 	 * @minLength 1
@@ -714,17 +803,9 @@ export enum UserType {
 }
 
 /** Информация о пользователе */
-export interface UserInfo {
-	/**
-	 * Идентификатор пользователя
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
+export type UserInfo = UserSimpleInfo & {
 	/** Имя для входа */
 	login?: string | null
-	/** Полное имя */
-	fullName?: string | null
 	/** Глобальный уровень доступа */
 	accessType: AccessType
 	/** Тип учётной записи */
@@ -735,22 +816,7 @@ export interface UserInfo {
 	 */
 	energoIdGuid?: string | null
 	/** Список групп, в которые входит пользователь */
-	userGroups: UserGroupsInfo[]
-}
-
-/** Информация о принадлежности пользователя к группе */
-export interface UserGroupsInfo {
-	/**
-	 * Идентификатор группы
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Имя группы
-	 * @minLength 1
-	 */
-	name: string
+	userGroups: UserGroupSimpleInfo[]
 }
 
 /** Расширенная информация о пользователе, включающая данные для аутентификации */
@@ -935,6 +1001,8 @@ export interface ValueWriteRequest {
 	/** Флаг достоверности нового значения */
 	quality?: TagQuality | null
 }
+
+export type AccessApplyChangesPayload = AccessRightsApplyRequest[]
 
 export type ValuesGetPayload = ValuesRequest[]
 

@@ -1,6 +1,5 @@
 ﻿using Datalake.ApiClasses.Models.Values;
 using Datalake.Database;
-using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using System.Diagnostics;
 
@@ -42,7 +41,7 @@ public class CollectorWriter(
 					logger.LogError("Ошибка при записи значений: {message}", ex.Message);
 				}
 			}
-			 
+
 			await Task.Delay(1000, stoppingToken);
 		}
 	}
@@ -50,7 +49,7 @@ public class CollectorWriter(
 	/// <summary>
 	/// Очередь новых значений на запись в БД
 	/// </summary>
-	public static List<CollectValue> Queue = [];
+	public static List<CollectValue> Queue { get; set; } = [];
 
 	/// <summary>
 	/// Объект блокировки операций с очередью
@@ -64,7 +63,6 @@ public class CollectorWriter(
 
 		using var scope = serviceScopeFactory.CreateScope();
 		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-		using var repository = new ValuesRepository(db);
 
 		var writeValues = values
 			.Select(x => new ValueWriteRequest
@@ -76,7 +74,7 @@ public class CollectorWriter(
 			})
 			.ToArray();
 
-		await repository.WriteValuesAsSystemAsync(writeValues);
+		await db.ValuesRepository.WriteValuesAsSystemAsync(writeValues);
 
 		sw.Stop();
 		logger.LogInformation("Событие записи значений: {ms} мс", sw.Elapsed.TotalMilliseconds);

@@ -3,12 +3,11 @@ using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Sources;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Extensions;
-using Datalake.Database.Repositories.Base;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
 
-public partial class SourcesRepository(DatalakeContext context) : RepositoryBase(context)
+public partial class SourcesRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -16,7 +15,7 @@ public partial class SourcesRepository(DatalakeContext context) : RepositoryBase
 		UserAuthInfo user,
 		SourceInfo? sourceInfo = null)
 	{
-		await CheckGlobalAccess(user, AccessType.Admin);
+		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 
 		if (sourceInfo != null)
 			return await CreateAsync(sourceInfo);
@@ -29,7 +28,7 @@ public partial class SourcesRepository(DatalakeContext context) : RepositoryBase
 		int id,
 		SourceInfo sourceInfo)
 	{
-		await CheckAccessToSource(user, AccessType.Admin, id);
+		await db.AccessRepository.CheckAccessToSource(user, AccessType.Admin, id);
 
 		return await UpdateAsync(id, sourceInfo);
 	}
@@ -38,7 +37,7 @@ public partial class SourcesRepository(DatalakeContext context) : RepositoryBase
 		UserAuthInfo user,
 		int id)
 	{
-		await CheckAccessToSource(user, AccessType.Admin, id);
+		await db.AccessRepository.CheckAccessToSource(user, AccessType.Admin, id);
 
 		return await DeleteAsync(id);
 	}

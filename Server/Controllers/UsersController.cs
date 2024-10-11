@@ -1,6 +1,6 @@
 ﻿using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
-using Datalake.Database.Repositories;
+using Datalake.Database;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Models;
@@ -14,13 +14,10 @@ namespace Datalake.Server.Controllers;
 /// <summary>
 /// Взаимодействие с пользователями
 /// </summary>
-/// <param name="usersRepository">Репозиторий</param>
-/// <param name="sessionManager">Менеджер сессий</param>
-/// <param name="settingsService">Обработчик настроек сервера</param>
 [Route("api/[controller]")]
 [ApiController]
 public class UsersController(
-	UsersRepository usersRepository,
+	DatalakeContext db,
 	SessionManagerService sessionManager,
 	ISettingsUpdater settingsService) : ApiControllerBase
 {
@@ -32,7 +29,7 @@ public class UsersController(
 	public async Task<ActionResult<EnergoIdInfo>> GetEnergoIdListAsync(
 		[FromQuery] Guid? currentUserGuid = null)
 	{
-		string energoId = await usersRepository.GetEnergoIdApi();
+		string energoId = await db.UsersRepository.GetEnergoIdApi();
 
 		EnergoIdUserData[]? energoIdReceivedUsers = null;
 
@@ -56,7 +53,7 @@ public class UsersController(
 			return new EnergoIdInfo();
 		}
 
-		var exists = await usersRepository.GetFlatInfo()
+		var exists = await db.UsersRepository.GetFlatInfo()
 			.Where(x => x.EnergoIdGuid != null && (currentUserGuid == null || x.Guid != currentUserGuid))
 			.Select(x => x.EnergoIdGuid.ToString())
 			.ToArrayAsync();
@@ -88,7 +85,7 @@ public class UsersController(
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
 		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
 	{
-		var userAuthInfo = await usersRepository.AuthenticateAsync(energoIdInfo);
+		var userAuthInfo = await db.AccessRepository.AuthenticateAsync(energoIdInfo);
 
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
@@ -107,7 +104,7 @@ public class UsersController(
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
 		[BindRequired, FromBody] UserLoginPass loginPass)
 	{
-		var userAuthInfo = await usersRepository.AuthenticateAsync(loginPass);
+		var userAuthInfo = await db.AccessRepository.AuthenticateAsync(loginPass);
 
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
@@ -140,8 +137,8 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		var guid = await usersRepository.CreateAsync(user, userAuthRequest);
-		settingsService.LoadStaticUsers(usersRepository);
+		var guid = await db.UsersRepository.CreateAsync(user, userAuthRequest);
+		settingsService.LoadStaticUsers(db.UsersRepository);
 
 		return guid;
 	}
@@ -153,7 +150,7 @@ public class UsersController(
 	[HttpGet]
 	public async Task<ActionResult<UserInfo[]>> ReadAsync()
 	{
-		return await usersRepository.GetInfo()
+		return await db.UsersRepository.GetInfo()
 			.ToArrayAsync();
 	}
 
@@ -167,7 +164,7 @@ public class UsersController(
 	public async Task<ActionResult<UserInfo>> ReadAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
-		return await usersRepository.GetInfo()
+		return await db.UsersRepository.GetInfo()
 			.Where(x => x.Guid == userGuid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Учётная запись {userGuid}");
@@ -183,7 +180,7 @@ public class UsersController(
 	public async Task<ActionResult<UserDetailInfo>> ReadWithDetailsAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
-		return await usersRepository.GetDetailInfo()
+		return await db.UsersRepository.GetDetailInfo()
 			.Where(x => x.Guid == userGuid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Учётная запись {userGuid}");
@@ -201,8 +198,8 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		await usersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
-		settingsService.LoadStaticUsers(usersRepository);
+		await db.UsersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
+		settingsService.LoadStaticUsers(db.UsersRepository);
 
 		return NoContent();
 	}
@@ -217,8 +214,8 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		await usersRepository.DeleteAsync(user, userGuid);
-		settingsService.LoadStaticUsers(usersRepository);
+		await db.UsersRepository.DeleteAsync(user, userGuid);
+		settingsService.LoadStaticUsers(db.UsersRepository);
 
 		return NoContent();
 	}

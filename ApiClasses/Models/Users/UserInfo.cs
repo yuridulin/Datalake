@@ -1,4 +1,5 @@
 ﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.UserGroups;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.ApiClasses.Models.Users;
@@ -6,23 +7,12 @@ namespace Datalake.ApiClasses.Models.Users;
 /// <summary>
 /// Информация о пользователе
 /// </summary>
-public class UserInfo
+public class UserInfo : UserSimpleInfo
 {
-	/// <summary>
-	/// Идентификатор пользователя
-	/// </summary>
-	[Required]
-	public required Guid Guid { get; set; }
-
 	/// <summary>
 	/// Имя для входа
 	/// </summary>
 	public string? Login { get; set; }
-
-	/// <summary>
-	/// Полное имя
-	/// </summary>
-	public string? FullName { get; set; }
 
 	/// <summary>
 	/// Глобальный уровень доступа
@@ -45,5 +35,5 @@ public class UserInfo
 	/// Список групп, в которые входит пользователь
 	/// </summary>
 	[Required]
-	public UserGroupsInfo[] UserGroups { get; set; } = [];
+	public IEnumerable<UserGroupSimpleInfo> UserGroups { get; set; } = [];
 }

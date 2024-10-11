@@ -1,4 +1,6 @@
-﻿namespace Datalake.ApiClasses.Models.Settings;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Datalake.ApiClasses.Models.Settings;
 
 /// <summary>
 /// Информация о настройках приложения, задаваемых через UI
@@ -10,15 +12,18 @@ public class SettingsInfo
 	/// <br/>
 	/// Протокол будет выбран на основе того, какой используется в клиенте в данный момент
 	/// </summary>
+	[Required]
 	public required string EnergoIdHost { get; set; }
 
 	/// <summary>
 	/// Название клиента EnergoId, через который идет аутентификация
 	/// </summary>
+	[Required]
 	public required string EnergoIdClient { get; set; }
 
 	/// <summary>
 	/// Конечная точка сервиса, который отдает информацию о пользователях EnergoId
 	/// </summary>
+	[Required]
 	public required string EnergoIdApi { get; set; }
 }
