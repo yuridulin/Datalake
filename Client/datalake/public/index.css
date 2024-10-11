@@ -104,3 +104,6 @@ code {
 .notify-dark .ant-notification-notice-close {
 	color: #fff !important;
 }
+
+.dark * {scrollbar-color: #444 #111;
+}
