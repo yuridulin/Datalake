@@ -1,27 +1,30 @@
-export default function compareValues<T>(
-	a: T | undefined,
-	b: T | undefined,
-): number {
-	if (a === b) {
-		return 0
-	}
-	if (a === undefined) {
-		return -1
-	}
-	if (b === undefined) {
-		return 1
+import { TagValue } from '../api/models/tagValue'
+
+export default function compareValues(a: TagValue, b: TagValue): number {
+	const typeOrder = (value: TagValue): number => {
+		if (typeof value === 'boolean') return 0
+		if (typeof value === 'number') return 1
+		if (typeof value === 'string') return 2
+		return 3
 	}
 
-	if (typeof a === 'string' && typeof b === 'string') {
-		return a.localeCompare(b)
+	const typeA = typeOrder(a)
+	const typeB = typeOrder(b)
+
+	if (typeA !== typeB) {
+		return typeA - typeB
+	}
+
+	if (typeof a === 'boolean' && typeof b === 'boolean') {
+		return Number(a) - Number(b)
 	}
 
 	if (typeof a === 'number' && typeof b === 'number') {
 		return a - b
 	}
 
-	if (typeof a === 'boolean' && typeof b === 'boolean') {
-		return a === b ? 0 : a ? 1 : -1
+	if (typeof a === 'string' && typeof b === 'string') {
+		return a.localeCompare(b)
 	}
 
 	return 0
