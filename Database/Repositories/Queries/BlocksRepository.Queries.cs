@@ -121,7 +121,7 @@ public partial class BlocksRepository
 				Description = block.Description,
 				ParentId = block.ParentId,
 				Tags = 
-					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == x.TagId)
+					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
 					from tag in db.Tags.InnerJoin(x => x.Id == block_tag.TagId)
 					select new BlockNestedTagInfo
 					{

@@ -77,7 +77,6 @@ public partial class BlocksRepository(DatalakeContext db)
 		{
 			throw new DatabaseException(message: "не удалось добавить блок", ex);
 		}
-
 	}
 
 	internal async Task<int> CreateAsync(BlockFullInfo block)
