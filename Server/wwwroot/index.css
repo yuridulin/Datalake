@@ -74,3 +74,33 @@ code {
 		color: #33a2ff;
 	}
 }
+
+.form-subtable {
+	width: 100%;
+}
+
+.form-subtable td {
+	padding: .25em .5em;
+}
+
+.form-subtable td div {
+	margin-bottom: 0;
+}
+
+.app-two-items {
+	width: 100%;
+}
+
+.app-two-items > * {
+	padding: .25em 1em;
+}
+
+.notify-dark {
+	background: #222;
+}
+
+.notify-dark .ant-notification-notice-message,
+.notify-dark .ant-notification-notice-description,
+.notify-dark .ant-notification-notice-close {
+	color: #fff !important;
+}
