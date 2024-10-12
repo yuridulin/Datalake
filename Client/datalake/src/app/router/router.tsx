@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
+import AccessRulesForm from '../pages/access/AccessRulesForm'
 import SettingsPage from '../pages/admin/SettingsPage'
 import BlockForm from '../pages/blocks/block/BlockForm'
 import BlockView from '../pages/blocks/block/BlockView'
@@ -154,6 +155,16 @@ const router = createBrowserRouter([
 					{
 						path: '/blocks/edit/:id',
 						element: <BlockForm />,
+					},
+				],
+			},
+			// access
+			{
+				path: routes.access.root,
+				children: [
+					{
+						path: routes.access.root + routes.access.form,
+						element: <AccessRulesForm />,
 					},
 				],
 			},

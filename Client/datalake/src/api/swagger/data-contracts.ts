@@ -271,6 +271,11 @@ export type BlockNestedTagInfo = BlockNestedItem & {
 	 * @minLength 1
 	 */
 	tagName: string
+	/**
+	 * Идентификатор источника данных
+	 * @format int32
+	 */
+	sourceId: number
 }
 
 /**
@@ -460,7 +465,9 @@ export interface SourceItemInfo {
  * 4 = Bad_NoConnect
  * 8 = Bad_NoValues
  * 26 = Bad_ManualWrite
+ * 100 = Bad_LOCF
  * 192 = Good
+ * 200 = Good_LOCF
  * 216 = Good_ManualWrite
  * -1 = Unknown
  */
@@ -469,7 +476,9 @@ export enum TagQuality {
 	BadNoConnect = 4,
 	BadNoValues = 8,
 	BadManualWrite = 26,
+	BadLOCF = 100,
 	Good = 192,
+	GoodLOCF = 200,
 	GoodManualWrite = 216,
 	Unknown = -1,
 }

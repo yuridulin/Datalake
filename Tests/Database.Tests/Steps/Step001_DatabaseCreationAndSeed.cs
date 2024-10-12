@@ -21,7 +21,7 @@ namespace Datalake.Database.Tests.Steps
 
 			await db.EnsureDataCreatedAsync();
 
-			var customSources = await db.Sources
+			var customSources = await db.SourcesRepository.GetInfo()
 				.ToArrayAsync();
 
 			Assert.Equal(customSources.Length, Enum.GetValues<CustomSource>().Length);

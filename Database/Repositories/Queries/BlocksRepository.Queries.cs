@@ -131,6 +131,7 @@ public partial class BlocksRepository
 						Relation = block_tag.Relation,
 						TagName = tag.Name,
 						TagType = tag.Type,
+						SourceId = tag.SourceId,
 					},
 			};
 

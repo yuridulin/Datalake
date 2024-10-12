@@ -73,7 +73,6 @@ public class ValuesRepository(DatalakeContext db)
 	internal const string NamePrefix = "TagsHistory_";
 	internal const string DateMask = "yyyy_MM_dd";
 	internal const string IndexPostfix = "_idx";
-	internal const string InitialTable = "TagsHistory_Initial";
 
 	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
 
@@ -84,7 +83,7 @@ public class ValuesRepository(DatalakeContext db)
 		var tables = await GetHistoryTablesFromSchema();
 
 		Cache.Tables = tables
-			.Where(x => x.Name.StartsWith(NamePrefix) && x.Name != InitialTable)
+			.Where(x => x.Name.StartsWith(NamePrefix))
 			.Select(x => new
 			{
 				Date = GetTableDate(x.Name),
