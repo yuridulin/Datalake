@@ -52,7 +52,6 @@ public class UserGroupCrud : IClassFixture<TestingWebAppFactory<Program>>
 		{
 			Name = userGroupName,
 			Users = [],
-			Groups = [],
 			AccessType = AccessType.Admin,
 			Description = "test",
 		});

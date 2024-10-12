@@ -11,7 +11,7 @@ public class SourceSimpleInfo
 	/// Идентификатор источника в базе данных
 	/// </summary>
 	[Required]
-	public required int Id { get; set; }
+	public int Id { get; set; }
 
 	/// <summary>
 	/// Название источника

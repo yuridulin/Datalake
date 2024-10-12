@@ -23,7 +23,7 @@ function transformToTreeNode(groups: UserGroupTreeInfo[]): TreeDataNode[] {
 		return transformedBlock
 	})
 
-	return data.sort((a, b) => compareValues(a.title, b.title))
+	return data.sort((a, b) => compareValues(String(a.title), String(b.title)))
 }
 
 export default function UserGroupsTreeMove() {

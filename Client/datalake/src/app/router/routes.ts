@@ -1,3 +1,8 @@
+import {
+	AccessObject,
+	AccessObjectToString,
+} from '../../api/models/accessObject'
+
 const withId = (route: string, id: string | number) =>
 	route.replace(':id', String(id))
 
@@ -56,9 +61,14 @@ const routes = {
 	},
 	access: {
 		root: '/access',
-		form: '/form',
-		toForm() {
-			return this.root + this.form
+		form: '/form/:object?/:id?',
+		toForm(object: AccessObject, id: string | number) {
+			return (
+				this.root +
+				this.form
+					.replace(':object?', AccessObjectToString(object))
+					.replace(':id?', String(id))
+			)
 		},
 	},
 	sources: {

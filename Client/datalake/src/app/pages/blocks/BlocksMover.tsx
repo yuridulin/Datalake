@@ -22,7 +22,7 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[]): TreeDataNode[] {
 		return transformedBlock
 	})
 
-	return data.sort((a, b) => compareValues(a.title, b.title))
+	return data.sort((a, b) => compareValues(String(a.title), String(b.title)))
 }
 
 export default function BlocksMover() {

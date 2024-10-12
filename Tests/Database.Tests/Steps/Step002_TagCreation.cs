@@ -12,9 +12,7 @@ namespace Datalake.Database.Tests.Steps
 		{
 			using var db = Setup.CreateDbContext();
 
-			var usersRepository = new UsersRepository(db);
-
-			var userAuthInfo = await usersRepository.AuthenticateAsync(new UserLoginPass
+			var userAuthInfo = await db.AccessRepository.AuthenticateAsync(new UserLoginPass
 			{
 				Login = "admin",
 				Password = "admin",

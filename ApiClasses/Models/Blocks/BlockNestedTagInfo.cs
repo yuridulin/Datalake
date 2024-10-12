@@ -31,4 +31,10 @@ public class BlockNestedTagInfo : BlockNestedItem
 	/// </summary>
 	[Required]
 	public string TagName { get; set; } = string.Empty;
+
+	/// <summary>
+	/// Идентификатор источника данных
+	/// </summary>
+	[Required]
+	public int SourceId { get; set; }
 }

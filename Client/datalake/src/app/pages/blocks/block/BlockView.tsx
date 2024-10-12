@@ -2,6 +2,7 @@ import { Button, Descriptions, DescriptionsProps, Divider, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
+import { AccessObject } from '../../../../api/models/accessObject'
 import api from '../../../../api/swagger-api'
 import {
 	BlockChildInfo,
@@ -79,9 +80,20 @@ export default function BlockView() {
 					</Button>
 				}
 				right={
-					<Button onClick={() => navigate('/blocks/edit/' + id)}>
-						Редактирование
-					</Button>
+					<>
+						<Button onClick={() => navigate('/blocks/edit/' + id)}>
+							Редактирование блока
+						</Button>
+						&ensp;
+						<NavLink
+							to={routes.access.toForm(
+								AccessObject.Block,
+								Number(id),
+							)}
+						>
+							<Button>Редактирование разрешений</Button>
+						</NavLink>
+					</>
 				}
 			>
 				{block.name}
