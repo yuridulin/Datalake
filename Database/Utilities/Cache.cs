@@ -19,4 +19,14 @@ public static class Cache
 			LastUpdate = DateTime.Now;
 		}
 	}
+
+	public static DateTime? GetNextTable(DateTime date)
+	{
+		return Tables.Keys.Where(x => x > date).OrderBy(x => x).FirstOrDefault();
+	}
+
+	public static DateTime? GetPreviousTable(DateTime date)
+	{
+		return Tables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
+	}
 }

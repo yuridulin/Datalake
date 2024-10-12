@@ -70,9 +70,10 @@ public class ValuesRepository(DatalakeContext db)
 
 	#endregion
 
-	internal static readonly string NamePrefix = "TagsHistory_";
-	internal static readonly string DateMask = "yyyy_MM_dd";
-	internal static readonly string IndexPostfix = "_idx";
+	internal const string NamePrefix = "TagsHistory_";
+	internal const string DateMask = "yyyy_MM_dd";
+	internal const string IndexPostfix = "_idx";
+	internal const string InitialTable = "TagsHistory_Initial";
 
 	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
 
@@ -83,7 +84,7 @@ public class ValuesRepository(DatalakeContext db)
 		var tables = await GetHistoryTablesFromSchema();
 
 		Cache.Tables = tables
-			.Where(x => x.Name.StartsWith(NamePrefix))
+			.Where(x => x.Name.StartsWith(NamePrefix) && x.Name != InitialTable)
 			.Select(x => new
 			{
 				Date = GetTableDate(x.Name),
@@ -149,6 +150,37 @@ public class ValuesRepository(DatalakeContext db)
 		{
 			var tableName = GetTableName(date);
 			table = db.CreateTable<TagHistory>(tableName);
+
+			DateTime? previous = Cache.Tables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
+			if (previous != null)
+			{
+				var previousTable = db.GetTable<TagHistory>().TableName(GetTableName(previous.Value));
+				Task.Run(() => table.BulkCopy(
+					from rt in 
+					from th in previousTable
+					select new
+					{
+						th.TagId,
+						th.Date,
+						th.Text,
+						th.Number,
+						th.Quality,
+						rn = Sql.Ext
+							.RowNumber().Over()
+							.PartitionBy(th.TagId)
+							.OrderByDesc(th.Date)
+							.ToValue()
+					}
+				where rt.rn == 1
+				select new TagHistory
+				{
+					TagId = rt.TagId,
+					Date = rt.Date > date ? rt.Date : date,
+					Text = rt.Text,
+					Number = rt.Number,
+					Quality = (short)rt.Quality >= 192 ? TagQuality.Good_LOCF : TagQuality.Bad_LOCF,
+				}));
+			}
 
 			lock (Cache.Tables)
 			{
@@ -281,7 +313,61 @@ public class ValuesRepository(DatalakeContext db)
 		foreach (var g in records.GroupBy(x => x.Date.Date))
 		{
 			var table = GetHistoryTable(g.Key);
-			await table.BulkCopyAsync(records);
+			var values = g.Select(x => x);
+			await table.BulkCopyAsync(values);
+
+			// Если пишем в прошлое, нужно обновить стартовые записи в будущем
+			if (g.Key < DateTime.Today)
+			{
+				DateTime date = g.Key;
+				do
+				{
+					var nextDate = Cache.GetNextTable(date);
+					if (!nextDate.HasValue)
+						break;
+
+					var tagsWithoutNextValues = await GetHistoryTable(date)
+						.Where(x => !records.Any(r => r.TagId == x.TagId && r.Date < x.Date))
+						.Select(x => x.TagId)
+						.ToArrayAsync();
+
+					if (tagsWithoutNextValues.Length == 0)
+						break;
+
+					var nextTable = GetHistoryTable(nextDate.Value);
+
+					var tagsWithNextInitialValues = await nextTable
+						.Where(x => tagsWithoutNextValues.Contains(x.TagId))
+						.Where(x => x.Quality == TagQuality.Bad_LOCF || x.Quality == TagQuality.Good_LOCF)
+						.Select(x => x.TagId)
+						.ToArrayAsync();
+
+					await nextTable
+						.Join(records.Where(x => tagsWithNextInitialValues.Contains(x.TagId)),
+							data => data.TagId, updated => updated.TagId, (data, updated) => new { data, updated })
+						.Set(joined => joined.data.Text, joined => joined.updated.Text)
+						.Set(joined => joined.data.Number, joined => joined.updated.Number)
+						.Set(joined => joined.data.Quality, joined => joined.updated.Quality == TagQuality.Bad_ManualWrite
+							? TagQuality.Bad_LOCF
+							: TagQuality.Good_LOCF)
+						.UpdateAsync();
+
+					await nextTable
+						.BulkCopyAsync(records
+							.Where(x => tagsWithoutNextValues.Contains(x.TagId) && !tagsWithNextInitialValues.Contains(x.TagId))
+							.Select(x => new TagHistory
+							{
+								TagId = x.TagId,
+								Date = nextDate.Value,
+								Number = x.Number,
+								Text = x.Text,
+								Quality = x.Quality == TagQuality.Bad_ManualWrite ? TagQuality.Bad_LOCF : TagQuality.Good_LOCF
+							}));
+
+					date = nextDate.Value;
+				}
+				while (true);
+			}
 		}
 
 		sw.Stop();
