@@ -31,4 +31,10 @@ public class SourceTagInfo
 	/// </summary>
 	[Required]
 	public TagType Type { get; set; }
+
+	/// <summary>
+	/// Интервал обновления тега
+	/// </summary>
+	[Required]
+	public int Interval { get; set; }
 }

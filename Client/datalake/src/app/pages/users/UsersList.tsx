@@ -104,6 +104,7 @@ export default function UsersList() {
 								.includes(search.toLowerCase()),
 						)}
 						columns={columns}
+						rowKey='guid'
 					/>
 				</>
 			)}

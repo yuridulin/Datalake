@@ -5,8 +5,8 @@ import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import { UserGroupInfo } from '../../../api/swagger/data-contracts'
 import PageHeader from '../../components/PageHeader'
-import routeLinks from '../../router/routeLinks'
-import UserGroupsCreateModal from './UserGroupsCreateModal'
+import routes from '../../router/routes'
+import UserGroupsCreateModal from './usergroup/modals/UserGroupsCreateModal'
 
 type UserGroupRow = {
 	guid: string
@@ -22,7 +22,10 @@ const columns: ColumnsType<UserGroupRow> = [
 		key: 'name',
 		render(value, record, index) {
 			return (
-				<NavLink key={index} to={routeLinks.toUserGroup(record.guid)}>
+				<NavLink
+					key={index}
+					to={routes.userGroups.toUserGroup(record.guid)}
+				>
 					<Button size='small' title={value}>
 						{record.name}
 					</Button>
@@ -71,14 +74,47 @@ export default function UserGroupsTreeList() {
 
 	useEffect(load, [])
 
+	const expandKey = 'expandedUserGroups'
+	const [expandedRowKeys, setExpandedRowKeys] = useState(() => {
+		const savedKeys = localStorage.getItem(expandKey)
+		return savedKeys
+			? (JSON.parse(savedKeys) as string[])
+			: ([] as string[])
+	})
+
+	const onExpand = (expanded: boolean, record: UserGroupRow) => {
+		const keys = expanded
+			? [...expandedRowKeys, record.guid]
+			: expandedRowKeys.filter((key) => key !== record.guid)
+		setExpandedRowKeys(keys)
+	}
+
+	useEffect(() => {
+		localStorage.setItem(expandKey, JSON.stringify(expandedRowKeys))
+	}, [expandedRowKeys])
+
 	return (
 		<>
-			<PageHeader right={<UserGroupsCreateModal onCreate={load} />}>
+			<PageHeader
+				right={
+					<>
+						<NavLink to={routes.userGroups.move}>
+							<Button>Изменить иерархию</Button>
+						</NavLink>
+						&ensp;
+						<UserGroupsCreateModal onCreate={load} />
+					</>
+				}
+			>
 				Группы пользователей
 			</PageHeader>
 			<Table
 				columns={columns}
 				dataSource={groups}
+				expandable={{
+					expandedRowKeys,
+					onExpand,
+				}}
 				size='small'
 				rowKey='guid'
 			/>

@@ -1,42 +1,79 @@
+const withId = (route: string, id: string | number) =>
+	route.replace(':id', String(id))
+
 const routes = {
-	Settings: '/settings',
-	Users: {
+	settings: '/settings',
+	users: {
 		root: '/users',
-		List: '/users/',
-		Create: '/users/create',
-		Form: '/users/:id',
+		list: '/users/',
+		create: '/users/create',
+		view: '/users/:id',
+		toUser(guid: string) {
+			return withId(this.view, guid)
+		},
 	},
-	UserGroups: {
+	userGroups: {
 		root: '/user-groups',
-		List: '/user-groups/',
+		list: '/user-groups/',
+		move: '/user-groups/move',
+		view: '/user-groups/:id',
+		edit: '/user-groups/edit/:id',
+		toList() {
+			return this.list
+		},
+		toUserGroup(guid: string) {
+			return withId(this.view, guid)
+		},
+		toUserGroupEdit(guid: string) {
+			return withId(this.edit, guid)
+		},
 	},
-	Auth: {
-		LoginPage: '/login',
-		EnergoId: '/energo-id',
+	auth: {
+		loginPage: '/login',
+		energoId: '/energo-id',
 	},
-	Viewer: {
+	viewer: {
 		root: '/viewer',
-		TagsViewer: '/tags',
+		tagsViewer: '/tags',
 	},
-	Tags: {
+	tags: {
 		root: '/tags',
-		routeToTag(guid: string) {
+		toTag(guid: string) {
 			return this.root + '/' + guid
 		},
 	},
-	Blocks: {
+	blocks: {
 		root: '/blocks',
-		View: '/view',
-		Edit: '/edit',
-		Mover: '/mover',
-		routeToViewBlock(id: number) {
-			return `${this.root}${this.View}/${id}`
+		view: '/view',
+		edit: '/edit',
+		mover: '/mover',
+		toViewBlock(id: number) {
+			return `${this.root}${this.view}/${id}`
 		},
-		routeToEditBlock(id: number) {
-			return `${this.root}${this.Edit}/${id}`
+		toEditBlock(id: number) {
+			return `${this.root}${this.edit}/${id}`
 		},
 	},
-	Root: '/',
+	access: {
+		root: '/access',
+		form: '/form',
+		toForm() {
+			return this.root + this.form
+		},
+	},
+	sources: {
+		root: '/sources',
+		list: '/sources/',
+		view: '/sources/:id',
+		edit: '/sources/edit/:id',
+		toViewSource(id: string | number) {
+			return withId(this.view, id)
+		},
+		toEditSource(id: string | number) {
+			return withId(this.edit, id)
+		},
+	},
+	globalRoot: '/',
 	offline: '/offline',
 }
 

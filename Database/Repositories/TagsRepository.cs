@@ -4,14 +4,13 @@ using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
-using Datalake.Database.Repositories.Base;
 using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
-public partial class TagsRepository(DatalakeContext context) : RepositoryBase(context)
+public partial class TagsRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -22,15 +21,15 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 	{
 		if (tagCreateRequest.SourceId.HasValue)
 		{
-			await CheckAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value, energoId);
+			await db.AccessRepository.CheckAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value, energoId);
 		}
 		else if (tagCreateRequest.BlockId.HasValue)
 		{
-			await CheckAccessToBlockAsync(user, AccessType.Admin, tagCreateRequest.BlockId.Value, energoId);
+			await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, tagCreateRequest.BlockId.Value, energoId);
 		}
 		else
 		{
-			await CheckGlobalAccess(user, AccessType.Admin, energoId);
+			await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin, energoId);
 		}
 
 		return await CreateAsync(tagCreateRequest);
@@ -42,7 +41,7 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 		TagUpdateRequest updateRequest,
 		Guid? energoId = null)
 	{
-		await CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
+		await db.AccessRepository.CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
 		await UpdateAsync(guid, updateRequest);
 	}
 
@@ -51,7 +50,7 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 		Guid guid,
 		Guid? energoId = null)
 	{
-		await CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
+		await db.AccessRepository.CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
 		await DeleteAsync(guid);
 	}
 
@@ -64,7 +63,7 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 		// TODO: проверка разрешения на создание тега
 
 		if (!createRequest.SourceId.HasValue && !createRequest.BlockId.HasValue)
-			throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или родительскую сущность");
+			throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или блок");
 
 		bool needToAddIdInName = string.IsNullOrEmpty(createRequest.Name);
 		if (!string.IsNullOrEmpty(createRequest.Name))
@@ -101,6 +100,7 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 			{
 				createRequest.Name = (source.Id <= 0 ? ((CustomSource)source.Id).ToString() : source.Name)
 					+ "." + (createRequest.SourceItem ?? "Tag");
+				needToAddIdInName = false;
 			}
 		}
 
@@ -114,9 +114,9 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 					x.Name,
 				})
 				.FirstOrDefaultAsync()
-				?? throw new NotFoundException(message: $"сущность #{createRequest.BlockId}");
+				?? throw new NotFoundException(message: $"блок #{createRequest.BlockId}");
 
-			// TODO: проверка разрешения на изменение сущности
+			// TODO: проверка разрешения на изменение блока
 
 			if (string.IsNullOrEmpty(createRequest.Name))
 			{
@@ -149,7 +149,7 @@ public partial class TagsRepository(DatalakeContext context) : RepositoryBase(co
 				.UpdateAsync();
 		}
 
-		await new ValuesRepository(db).InitializeValueAsync(tag.Id);
+		await db.ValuesRepository.InitializeValueAsync(tag.Id);
 
 		if (createRequest.BlockId.HasValue)
 		{

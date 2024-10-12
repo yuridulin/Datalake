@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.ApiClasses.Models.Users;
+namespace Datalake.ApiClasses.Models.UserGroups;
 
 /// <summary>
-/// Информация о принадлежности пользователя к группе
+/// Базовая информация о группе пользователей
 /// </summary>
-public class UserGroupsInfo
+public class UserGroupSimpleInfo
 {
 	/// <summary>
 	/// Идентификатор группы
@@ -14,7 +14,7 @@ public class UserGroupsInfo
 	public required Guid Guid { get; set; }
 
 	/// <summary>
-	/// Имя группы
+	/// Название группы
 	/// </summary>
 	[Required]
 	public required string Name { get; set; }

@@ -1,6 +1,6 @@
 ﻿using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Blocks;
-using Datalake.Database.Repositories;
+using Datalake.Database;
 using Datalake.Server.Controllers.Base;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +11,9 @@ namespace Datalake.Server.Controllers;
 /// <summary>
 /// Взаимодействие с блоками
 /// </summary>
-/// <param name="blocksRepository">Репозиторий</param>
 [Route("api/[controller]")]
 [ApiController]
-public class BlocksController(BlocksRepository blocksRepository) : ApiControllerBase
+public class BlocksController(DatalakeContext db) : ApiControllerBase
 {
 	/// <summary>
 	/// Создание нового блока на основании переданной информации
@@ -27,7 +26,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	{
 		var user = Authenticate();
 
-		return await blocksRepository.CreateAsync(user, blockInfo: blockInfo);
+		return await db.BlocksRepository.CreateAsync(user, blockInfo: blockInfo);
 	}
 
 	/// <summary>
@@ -41,7 +40,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	{
 		var user = Authenticate();
 
-		return await blocksRepository.CreateAsync(user, parentId: parentId);
+		return await db.BlocksRepository.CreateAsync(user, parentId: parentId);
 	}
 
 	/// <summary>
@@ -50,10 +49,10 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public async Task<ActionResult<BlockSimpleInfo[]>> ReadAsync(
+	public async Task<ActionResult<BlockWithTagsInfo[]>> ReadAsync(
 		Guid? energoId = null)
 	{
-		return await blocksRepository.GetSimpleInfo(energoId)
+		return await db.BlocksRepository.GetSimpleInfo(energoId)
 			.ToArrayAsync();
 	}
 
@@ -67,7 +66,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	public async Task<ActionResult<BlockFullInfo>> ReadAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		return await blocksRepository.GetInfoWithAllRelations()
+		return await db.BlocksRepository.GetInfoWithAllRelations()
 			.Where(x => x.Id == id)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Сущность #{id}");
@@ -82,7 +81,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync(
 		Guid? energoId = null)
 	{
-		return await blocksRepository.GetTreeAsync(energoId);
+		return await db.BlocksRepository.GetTreeAsync(energoId);
 	}
 
 	/// <summary>
@@ -97,7 +96,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	{
 		var user = Authenticate();
 
-		await blocksRepository.UpdateAsync(user, id, block);
+		await db.BlocksRepository.UpdateAsync(user, id, block);
 
 		return NoContent();
 	}
@@ -113,7 +112,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 		[FromQuery] int? parentId)
 	{
 		var user = Authenticate();
-		await blocksRepository.MoveAsync(user, id, parentId);
+		await db.BlocksRepository.MoveAsync(user, id, parentId);
 
 		return NoContent();
 	}
@@ -128,7 +127,7 @@ public class BlocksController(BlocksRepository blocksRepository) : ApiController
 	{
 		var user = Authenticate();
 
-		await blocksRepository.DeleteAsync(user, id);
+		await db.BlocksRepository.DeleteAsync(user, id);
 
 		return NoContent();
 	}

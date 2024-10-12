@@ -1,27 +1,23 @@
-import { MoonOutlined, SunOutlined } from '@ant-design/icons'
-import { Layout, notification, theme } from 'antd'
+import { Divider, Layout, theme } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
-import { Link, Outlet } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { Outlet, useLocation } from 'react-router-dom'
 import { isAuth } from '../api/local-auth'
 import { useUpdateContext } from '../context/updateContext'
 import { AppMenu } from './components/AppMenu'
+import LogoPanel from './components/LogoPanel'
 import UserPanel from './components/UserPanel'
 
-notification.config({
-	placement: 'bottomLeft',
-	bottom: 50,
-	duration: 5,
-})
-
 export default function AppLayout() {
-	const { isDarkMode, setDarkMode } = useUpdateContext()
 	const { token } = theme.useToken()
+	const { pathname } = useLocation()
+	const { isDarkMode } = useUpdateContext()
 
 	const siderStyle: React.CSSProperties = {
 		backgroundColor: token.colorBgLayout,
 		borderRight: '1px solid ' + token.colorSplit,
-		paddingTop: '1em',
+		paddingTop: '.5em',
 		overflow: 'auto',
 		height: '100vh',
 		position: 'fixed',
@@ -34,6 +30,7 @@ export default function AppLayout() {
 	}
 	return (
 		<>
+			{isDarkMode && <style>{':root { color-scheme: dark; }'}</style>}
 			{isAuth() && (
 				<Layout
 					hasSider
@@ -43,27 +40,12 @@ export default function AppLayout() {
 					}}
 				>
 					<Sider width='20em' style={siderStyle}>
-						<Link
-							to='/'
-							className='title'
-							style={{
-								padding: '1.5em 1em',
-							}}
-						>
-							Datalake
-						</Link>
-						{isDarkMode ? (
-							<MoonOutlined
-								style={{ color: '#ccc' }}
-								onClick={() => setDarkMode(false)}
-							/>
-						) : (
-							<SunOutlined
-								style={{ color: '#666' }}
-								onClick={() => setDarkMode(true)}
-							/>
-						)}
+						<LogoPanel />
 						<UserPanel />
+						<Divider
+							variant='dotted'
+							style={{ margin: '.5em 0' }}
+						/>
 						<AppMenu />
 					</Sider>
 					<Layout
@@ -80,7 +62,14 @@ export default function AppLayout() {
 								backgroundColor: token.colorBgContainer,
 							}}
 						>
-							<Outlet />
+							<motion.div
+								layout
+								key={pathname}
+								initial='initial'
+								animate='in'
+							>
+								<Outlet />
+							</motion.div>
 						</Content>
 					</Layout>
 				</Layout>

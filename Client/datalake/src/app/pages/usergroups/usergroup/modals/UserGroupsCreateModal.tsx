@@ -1,14 +1,18 @@
 import { Button, Form, Input, Modal } from 'antd'
 import { useState } from 'react'
-import api from '../../../api/swagger-api'
-import { UserGroupCreateRequest } from '../../../api/swagger/data-contracts'
+import api from '../../../../../api/swagger-api'
+import { UserGroupCreateRequest } from '../../../../../api/swagger/data-contracts'
 
 interface UserGroupsCreateModalProps {
 	onCreate: () => void
+	isSmall?: boolean
+	parentGuid?: string
 }
 
 export default function UserGroupsCreateModal({
 	onCreate,
+	parentGuid = undefined,
+	isSmall = false,
 }: UserGroupsCreateModalProps) {
 	const [open, setOpen] = useState(false)
 	const [confirmLoading, setConfirmLoading] = useState(false)
@@ -22,6 +26,7 @@ export default function UserGroupsCreateModal({
 	}
 
 	const finishForm = (formData: UserGroupCreateRequest) => {
+		if (parentGuid) formData.parentGuid = parentGuid
 		api.userGroupsCreate(formData)
 			.then(() => {
 				closeModal()
@@ -38,7 +43,9 @@ export default function UserGroupsCreateModal({
 
 	return (
 		<>
-			<Button onClick={showModal}>Создать группу</Button>
+			<Button size={isSmall ? 'small' : 'middle'} onClick={showModal}>
+				Создать группу
+			</Button>
 			<Modal
 				title='Создание группы пользователей'
 				open={open}

@@ -64,6 +64,7 @@ const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 export default function TagsViewer() {
 	const [tags, setTags] = useState([] as DefaultOptionType[])
 	const [values, setValues] = useState([] as ValueType[])
+	const [searchValue, setSearchValue] = useState('')
 	const [rangeValues, setRangeValues] = useState([] as TransformedData[])
 	const [rangeColumns, setRangeColumns] = useState(
 		[] as ColumnsType<TransformedData>,
@@ -198,18 +199,28 @@ export default function TagsViewer() {
 		if (request.mode === 'live' && request.update) getValues()
 	}, 1000)
 
+	function handleSearch(value: string): void {
+		setSearchValue(value)
+	}
+
+	const handleChange = (value: number[]) => {
+		setRequest({ ...request, tags: value })
+	}
+
 	return (
 		<>
 			<div style={{ position: 'sticky' }}>
 				<Row>
 					<Select
 						showSearch
-						optionFilterProp='label'
-						options={tags}
-						placeholder='Выберите теги'
 						mode='multiple'
+						options={tags}
+						optionFilterProp='label'
+						placeholder='Выберите теги'
 						style={{ width: '100%' }}
-						onChange={(e) => setRequest({ ...request, tags: e })}
+						onSearch={handleSearch}
+						searchValue={searchValue}
+						onChange={handleChange}
 					/>
 				</Row>
 				<Row style={{ marginTop: '1em' }}>
@@ -325,7 +336,7 @@ export default function TagsViewer() {
 						title='Тег'
 						dataIndex='guid'
 						render={(guid, row: ValueType) => (
-							<NavLink to={routes.Tags.routeToTag(guid)}>
+							<NavLink to={routes.tags.toTag(guid)}>
 								<Button size='small'>{row.name}</Button>
 							</NavLink>
 						)}

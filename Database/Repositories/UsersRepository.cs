@@ -2,66 +2,33 @@
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Models;
-using Datalake.Database.Repositories.Base;
 using LinqToDB;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Datalake.Database.Repositories;
 
-public partial class UsersRepository(DatalakeContext context) : RepositoryBase(context)
+public partial class UsersRepository(DatalakeContext db)
 {
 	#region Действия
 
-	public async Task<UserAuthInfo> AuthenticateAsync(UserEnergoIdInfo info)
-	{
-		var user = await db.Users
-			.Where(x => x.Type == UserType.EnergoId)
-			.Where(x => x.EnergoIdGuid != null && x.EnergoIdGuid == info.EnergoIdGuid)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException(message: "указанная учётная запись по guid");
-
-		return await GetAuthInfo(user);
-	}
-
-	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
-	{
-		var user = await db.Users
-			.Where(x => x.Type == UserType.Local)
-			.Where(x => x.Login != null && (x.Login.ToLower().Trim() == loginPass.Login.ToLower().Trim()))
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException(message: "указанная учётная запись по логину");
-
-		if (string.IsNullOrEmpty(user.PasswordHash))
-		{
-			throw new InvalidValueException(message: "пароль не задан");
-		}
-
-		if (!user.PasswordHash.Equals(GetHashFromPassword(loginPass.Password)))
-		{
-			throw new ForbiddenException(message: "пароль не подходит");
-		}
-
-		return await GetAuthInfo(user);
-	}
-
 	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
 	{
-		await CheckGlobalAccess(user, AccessType.Admin);
+		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 
 		return await CreateAsync(userInfo);
 	}
 
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
-		await CheckGlobalAccess(user, AccessType.Admin);
+		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 
 		return await UpdateAsync(userGuid, request);
 	}
 
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid userGuid)
 	{
-		await CheckGlobalAccess(user, AccessType.Admin);
+		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 
 		return await DeleteAsync(userGuid);
 	}
@@ -214,6 +181,15 @@ public partial class UsersRepository(DatalakeContext context) : RepositoryBase(c
 	}
 
 
+	internal static string GetHashFromPassword(string password)
+	{
+		if (string.IsNullOrEmpty(password))
+			throw new InvalidValueException(message: "пароль не может быть пустым");
+
+		var hash = SHA1.HashData(Encoding.UTF8.GetBytes(password));
+		return Convert.ToBase64String(hash);
+	}
+
 	private async Task<string> GenerateNewHashForStaticAsync()
 	{
 		string hash;
@@ -237,15 +213,6 @@ public partial class UsersRepository(DatalakeContext context) : RepositoryBase(c
 		}
 
 		return hash;
-	}
-
-	private static string GetHashFromPassword(string password)
-	{
-		if (string.IsNullOrEmpty(password))
-			throw new InvalidValueException(message: "пароль не может быть пустым");
-
-		var hash = SHA1.HashData(Encoding.UTF8.GetBytes(password));
-		return Convert.ToBase64String(hash);
 	}
 
 	private static string RandomHash()

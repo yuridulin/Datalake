@@ -26,9 +26,19 @@ public enum TagQuality
 	Bad_ManualWrite = 26,
 
 	/// <summary>
+	/// Протянуто с последнего наблюдения
+	/// </summary>
+	Bad_LOCF = 100,
+
+	/// <summary>
 	/// Достоверно
 	/// </summary>
 	Good = 192,
+
+	/// <summary>
+	/// Протянуто с последнего наблюдения
+	/// </summary>
+	Good_LOCF = 200,
 
 	/// <summary>
 	/// Достоверно после ручного ввода

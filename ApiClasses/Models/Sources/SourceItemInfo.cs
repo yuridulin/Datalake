@@ -24,4 +24,10 @@ public class SourceItemInfo
 	/// Значение, прочитанное с источника при опросе
 	/// </summary>
 	public object? Value { get; set; }
+
+	/// <summary>
+	/// Достоверность значения
+	/// </summary>
+	[Required]
+	public TagQuality Quality { get; set; } = TagQuality.Unknown;
 }

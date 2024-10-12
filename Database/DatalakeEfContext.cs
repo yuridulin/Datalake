@@ -75,12 +75,12 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 				relation => relation
 					.HasOne(rel => rel.User)
 					.WithMany(user => user.GroupsRelations)
-					.HasForeignKey(rel => rel.UserGroupGuid)
+					.HasForeignKey(rel => rel.UserGuid)
 					.OnDelete(DeleteBehavior.Cascade),
 				relation => relation
 					.HasOne(rel => rel.UserGroup)
 					.WithMany(group => group.UsersRelations)
-					.HasForeignKey(rel => rel.UserGuid)
+					.HasForeignKey(rel => rel.UserGroupGuid)
 					.OnDelete(DeleteBehavior.Cascade),
 				relation => relation
 					.HasKey(rel => new { rel.UserGroupGuid, rel.UserGuid })

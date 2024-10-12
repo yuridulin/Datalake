@@ -1,8 +1,8 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Tables;
 using Datalake.ApiClasses.Models.Tags;
+using Datalake.ApiClasses.Models.Users;
 using Datalake.ApiClasses.Models.Values;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
@@ -15,7 +15,7 @@ using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
 
-public class ValuesRepository(DatalakeContext db) : IDisposable
+public class ValuesRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -42,6 +42,12 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		return await WriteValuesAsync(requests, overrided);
 	}
 
+	public async Task RebuildCacheAsync(UserAuthInfo user)
+	{
+		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		await RebuildCacheAsync();
+	}
+
 	#endregion
 
 	#region Системные действия
@@ -64,13 +70,61 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 
 	#endregion
 
-	#region Реализация
-
-	internal static readonly string NamePrefix = "TagsHistory_";
-	internal static readonly string DateMask = "yyyy_MM_dd";
-	internal static readonly string IndexPostfix = "_idx";
+	internal const string NamePrefix = "TagsHistory_";
+	internal const string DateMask = "yyyy_MM_dd";
+	internal const string IndexPostfix = "_idx";
+	internal const string InitialTable = "TagsHistory_Initial";
 
 	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
+
+	#region Кэш
+
+	internal async Task RebuildCacheAsync()
+	{
+		var tables = await GetHistoryTablesFromSchema();
+
+		Cache.Tables = tables
+			.Where(x => x.Name.StartsWith(NamePrefix) && x.Name != InitialTable)
+			.Select(x => new
+			{
+				Date = GetTableDate(x.Name),
+				x.Name,
+			})
+			.Where(x => x.Date != DateTime.MinValue)
+			.DistinctBy(x => x.Date)
+			.ToDictionary(x => x.Date, x => x.Name);
+
+		Cache.Tags = await (
+			from t in db.Tags
+			from s in db.Sources.LeftJoin(x => x.Id == t.SourceId)
+			select new TagCacheInfo
+			{
+				Id = t.Id,
+				Guid = t.GlobalGuid,
+				Name = t.Name,
+				TagType = t.Type,
+				SourceType = s.Type,
+				IsManual = t.SourceId == (int)CustomSource.Manual,
+				ScalingCoefficient = t.IsScaling
+					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
+					: 1,
+			}
+		).ToDictionaryAsync(x => x.Id, x => x);
+
+		// создание таблицы для значений на текущую дату
+		if (!Cache.Tables.ContainsKey(DateTime.Today))
+		{
+			GetHistoryTable(DateTime.Today);
+		}
+
+		// актуализация таблицы текущих значений
+		var lastValues = await ReadHistoryValuesAsync([.. Cache.Tags.Keys], DateTime.Now, DateTime.Now);
+
+		Live.Write(lastValues);
+	}
+
+	#endregion
+
 
 	#region Манипулирование таблицами
 
@@ -96,6 +150,37 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		{
 			var tableName = GetTableName(date);
 			table = db.CreateTable<TagHistory>(tableName);
+
+			DateTime? previous = Cache.Tables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
+			if (previous != null)
+			{
+				var previousTable = db.GetTable<TagHistory>().TableName(GetTableName(previous.Value));
+				Task.Run(() => table.BulkCopy(
+					from rt in 
+					from th in previousTable
+					select new
+					{
+						th.TagId,
+						th.Date,
+						th.Text,
+						th.Number,
+						th.Quality,
+						rn = Sql.Ext
+							.RowNumber().Over()
+							.PartitionBy(th.TagId)
+							.OrderByDesc(th.Date)
+							.ToValue()
+					}
+				where rt.rn == 1
+				select new TagHistory
+				{
+					TagId = rt.TagId,
+					Date = rt.Date > date ? rt.Date : date,
+					Text = rt.Text,
+					Number = rt.Number,
+					Quality = (short)rt.Quality >= 192 ? TagQuality.Good_LOCF : TagQuality.Bad_LOCF,
+				}));
+			}
 
 			lock (Cache.Tables)
 			{
@@ -228,7 +313,61 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 		foreach (var g in records.GroupBy(x => x.Date.Date))
 		{
 			var table = GetHistoryTable(g.Key);
-			await table.BulkCopyAsync(records);
+			var values = g.Select(x => x);
+			await table.BulkCopyAsync(values);
+
+			// Если пишем в прошлое, нужно обновить стартовые записи в будущем
+			if (g.Key < DateTime.Today)
+			{
+				DateTime date = g.Key;
+				do
+				{
+					var nextDate = Cache.GetNextTable(date);
+					if (!nextDate.HasValue)
+						break;
+
+					var tagsWithoutNextValues = await GetHistoryTable(date)
+						.Where(x => !records.Any(r => r.TagId == x.TagId && r.Date < x.Date))
+						.Select(x => x.TagId)
+						.ToArrayAsync();
+
+					if (tagsWithoutNextValues.Length == 0)
+						break;
+
+					var nextTable = GetHistoryTable(nextDate.Value);
+
+					var tagsWithNextInitialValues = await nextTable
+						.Where(x => tagsWithoutNextValues.Contains(x.TagId))
+						.Where(x => x.Quality == TagQuality.Bad_LOCF || x.Quality == TagQuality.Good_LOCF)
+						.Select(x => x.TagId)
+						.ToArrayAsync();
+
+					await nextTable
+						.Join(records.Where(x => tagsWithNextInitialValues.Contains(x.TagId)),
+							data => data.TagId, updated => updated.TagId, (data, updated) => new { data, updated })
+						.Set(joined => joined.data.Text, joined => joined.updated.Text)
+						.Set(joined => joined.data.Number, joined => joined.updated.Number)
+						.Set(joined => joined.data.Quality, joined => joined.updated.Quality == TagQuality.Bad_ManualWrite
+							? TagQuality.Bad_LOCF
+							: TagQuality.Good_LOCF)
+						.UpdateAsync();
+
+					await nextTable
+						.BulkCopyAsync(records
+							.Where(x => tagsWithoutNextValues.Contains(x.TagId) && !tagsWithNextInitialValues.Contains(x.TagId))
+							.Select(x => new TagHistory
+							{
+								TagId = x.TagId,
+								Date = nextDate.Value,
+								Number = x.Number,
+								Text = x.Text,
+								Quality = x.Quality == TagQuality.Bad_ManualWrite ? TagQuality.Bad_LOCF : TagQuality.Good_LOCF
+							}));
+
+					date = nextDate.Value;
+				}
+				while (true);
+			}
 		}
 
 		sw.Stop();
@@ -443,8 +582,10 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 				var query = table
 					.Where(x => identifiers.Contains(x.TagId));
 
-				if (seekDate == lastDate) query = query.Where(x => x.Date <= young);
-				if (seekDate == firstDate) query = query.Where(x => x.Date >= old);
+				if (seekDate == lastDate)
+					query = query.Where(x => x.Date <= young);
+				if (seekDate == firstDate)
+					query = query.Where(x => x.Date >= old);
 
 				queries.Add(query);
 			}
@@ -585,15 +726,6 @@ public class ValuesRepository(DatalakeContext db) : IDisposable
 			Number = null,
 			Quality = TagQuality.Bad,
 		};
-	}
-
-	#endregion
-
-
-	public void Dispose()
-	{
-		db.Close();
-		GC.SuppressFinalize(this);
 	}
 
 	#endregion

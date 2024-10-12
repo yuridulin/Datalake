@@ -1,4 +1,4 @@
-﻿namespace Datalake.ApiClasses.Models.Tables;
+﻿namespace Datalake.Database.Models.Classes;
 
 /// <summary>
 /// Информация о таблице истории

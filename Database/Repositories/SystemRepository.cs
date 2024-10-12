@@ -2,12 +2,11 @@
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Settings;
 using Datalake.ApiClasses.Models.Users;
-using Datalake.Database.Repositories.Base;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
 
-public partial class SystemRepository(DatalakeContext context) : RepositoryBase(context)
+public partial class SystemRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -34,7 +33,7 @@ public partial class SystemRepository(DatalakeContext context) : RepositoryBase(
 
 	public async Task UpdateSettingsAsync(UserAuthInfo user, SettingsInfo newSettings)
 	{
-		await CheckGlobalAccess(user, AccessType.Admin);
+		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 
 		await UpdateSettingsAsync(newSettings);
 	}

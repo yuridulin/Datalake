@@ -1,5 +1,5 @@
 ﻿using Datalake.ApiClasses.Models.Values;
-using Datalake.Database.Repositories;
+using Datalake.Database;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -8,10 +8,9 @@ namespace Datalake.Server.Controllers;
 /// <summary>
 /// Взаимодействие с данными тегов
 /// </summary>
-/// <param name="valuesRepository">Репозиторий</param>
 [ApiController]
 [Route("api/Tags/[controller]")]
-public class ValuesController(ValuesRepository valuesRepository) : ControllerBase
+public class ValuesController(DatalakeContext db) : ControllerBase
 {
 	/// <summary>
 	/// Путь для получения текущих данные
@@ -29,7 +28,7 @@ public class ValuesController(ValuesRepository valuesRepository) : ControllerBas
 		[BindRequired, FromBody] ValuesRequest[] requests,
 		Guid? energoId = null)
 	{
-		var responses = await valuesRepository.GetValuesAsync(requests, energoId: energoId);
+		var responses = await db.ValuesRepository.GetValuesAsync(requests, energoId: energoId);
 
 		return responses;
 	}
@@ -46,7 +45,7 @@ public class ValuesController(ValuesRepository valuesRepository) : ControllerBas
 		Guid? energoId = null)
 	{
 		// Флаг отключает проверку на новизну значения по сравнению с текущим
-		var responses = await valuesRepository.WriteValuesAsync(requests, overrided: true, energoId: energoId);
+		var responses = await db.ValuesRepository.WriteValuesAsync(requests, overrided: true, energoId: energoId);
 
 		return responses;
 	}

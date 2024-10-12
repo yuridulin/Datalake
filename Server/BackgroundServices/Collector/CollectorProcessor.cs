@@ -1,5 +1,5 @@
-﻿using Datalake.Database;
-using Datalake.Database.Models;
+﻿using Datalake.ApiClasses.Models.Sources;
+using Datalake.Database;
 using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
@@ -24,34 +24,21 @@ internal class CollectorProcessor(
 				var sw = Stopwatch.StartNew();
 				logger.LogInformation("Обновление сборщиков");
 
-				List<Source> newSources = [];
+				SourceWithTagsInfo[] newSources = [];
 
 				try
 				{
 					using var scope = serviceScopeFactory.CreateScope();
 					using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-					var query =
-						from source in db.Sources
-						from tag in db.Tags.Where(x => !string.IsNullOrEmpty(x.SourceItem)).LeftJoin(x => x.SourceId == source.Id)
-						group new { source, tag } by source into g
-						select new Source
-						{
-							Id = g.Key.Id,
-							Address = g.Key.Address,
-							Name = g.Key.Name,
-							Type = g.Key.Type,
-							Tags = g.Select(x => x.tag).Where(x => x != null).ToArray(),
-						};
-
-					newSources = await query.ToListAsync(token: stoppingToken);
+					newSources = await db.SourcesRepository.GetInfoWithTags().ToArrayAsync(token: stoppingToken);
 				}
 				catch (Exception ex)
 				{
 					logger.LogError("Ошибка при получении информации о источниках: {message}", ex.Message);
 				}
 
-				if (newSources.Count != 0)
+				if (newSources.Length > 0)
 				{
 					Collectors.ForEach(x =>
 					{

@@ -497,14 +497,14 @@ namespace Datalake.Database.Migrations
 
             modelBuilder.Entity("Datalake.Database.Models.UserGroupRelation", b =>
                 {
-                    b.HasOne("Datalake.Database.Models.User", "User")
-                        .WithMany("GroupsRelations")
+                    b.HasOne("Datalake.Database.Models.UserGroup", "UserGroup")
+                        .WithMany("UsersRelations")
                         .HasForeignKey("UserGroupGuid")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Datalake.Database.Models.UserGroup", "UserGroup")
-                        .WithMany("UsersRelations")
+                    b.HasOne("Datalake.Database.Models.User", "User")
+                        .WithMany("GroupsRelations")
                         .HasForeignKey("UserGuid")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

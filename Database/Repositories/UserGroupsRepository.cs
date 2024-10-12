@@ -4,13 +4,12 @@ using Datalake.ApiClasses.Models.UserGroups;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
-using Datalake.Database.Repositories.Base;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
-public partial class UserGroupsRepository(DatalakeContext context) : RepositoryBase(context)
+public partial class UserGroupsRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -18,11 +17,11 @@ public partial class UserGroupsRepository(DatalakeContext context) : RepositoryB
 	{
 		if (request.ParentGuid.HasValue)
 		{
-			await CheckAccessToUserGroupAsync(db, user, AccessType.Admin, request.ParentGuid.Value);
+			await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, request.ParentGuid.Value);
 		}
 		else
 		{
-			await CheckGlobalAccess(user, AccessType.Admin);
+			await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 		}
 
 		return await CreateAsync(request);
@@ -30,14 +29,30 @@ public partial class UserGroupsRepository(DatalakeContext context) : RepositoryB
 
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
 	{
-		await CheckAccessToUserGroupAsync(db, user, AccessType.Admin, groupGuid);
+		await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, groupGuid);
 
 		return await UpdateAsync(groupGuid, request);
 	}
 
+	public async Task<bool> MoveAsync(UserAuthInfo user, Guid guid, Guid? parentGuid)
+	{
+		await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, guid);
+
+		if (parentGuid.HasValue)
+		{
+			await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.User, parentGuid.Value);
+		}
+		else
+		{
+			await db.AccessRepository.CheckGlobalAccess(user, AccessType.User);
+		}
+
+		return await MoveAsync(guid, parentGuid);
+	}
+
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid groupGuid)
 	{
-		await CheckAccessToUserGroupAsync(db, user, AccessType.Admin, groupGuid);
+		await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, groupGuid);
 
 		return await DeleteAsync(groupGuid);
 	}
@@ -114,6 +129,28 @@ public partial class UserGroupsRepository(DatalakeContext context) : RepositoryB
 		return true;
 	}
 
+	internal async Task<bool> MoveAsync(Guid guid, Guid? parentGuid)
+	{
+		using var transaction = await db.BeginTransactionAsync();
+
+		try
+		{
+			await db.UserGroups
+				.Where(x => x.Guid == guid)
+				.Set(x => x.ParentGuid, parentGuid)
+				.UpdateAsync();
+
+			await transaction.CommitAsync();
+
+			return true;
+		}
+		catch (Exception ex)
+		{
+			transaction.Rollback();
+			throw new DatabaseException("не удалось переместить группу", ex);
+		}
+	}
+
 	internal async Task<bool> DeleteAsync(Guid groupGuid)
 	{
 		using var transaction = await db.BeginTransactionAsync();
@@ -139,28 +176,6 @@ public partial class UserGroupsRepository(DatalakeContext context) : RepositoryB
 		await transaction.CommitAsync();
 
 		return true;
-	}
-
-	internal static async Task CheckAccessToUserGroupAsync(
-		DatalakeContext db,
-		UserAuthInfo user,
-		AccessType minimalAccess,
-		Guid groupGuid)
-	{
-		var hasAccess = user.Rights
-			.Where(x => x.IsGlobal && (int)minimalAccess <= (int)x.AccessType)
-			.Any();
-
-		if (!hasAccess)
-		{
-			var groups = await new UserGroupsRepository(db).GetWithParentsAsync(groupGuid);
-			hasAccess = user.Rights
-				.Where(x => groups.Select(g => g.Guid).Contains(groupGuid) && (int)minimalAccess <= (int)x.AccessType)
-				.Any();
-		}
-
-		if (!hasAccess)
-			throw NoAccess;
 	}
 
 	private static Log Success(Guid guid, string message, string? details = null) => new()

@@ -30,7 +30,7 @@ public class TagCreateRequest
 	public string? SourceItem { get; set; }
 
 	/// <summary>
-	/// Идентификатор сущности, к которой будет привязан новый тег
+	/// Идентификатор блока, к которому будет привязан новый тег
 	/// </summary>
 	public int? BlockId { get; set; }
 }

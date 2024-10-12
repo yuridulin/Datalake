@@ -1,4 +1,5 @@
 ﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.AccessRights;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.ApiClasses.Models.Blocks;
@@ -6,7 +7,7 @@ namespace Datalake.ApiClasses.Models.Blocks;
 /// <summary>
 /// Информация о блоке
 /// </summary>
-public class BlockFullInfo : BlockSimpleInfo
+public class BlockFullInfo : BlockWithTagsInfo
 {
 	/// <summary>
 	/// Информация о родительском блоке
@@ -17,13 +18,19 @@ public class BlockFullInfo : BlockSimpleInfo
 	/// Список дочерних блоков
 	/// </summary>
 	[Required]
-	public BlockChildInfo[] Children { get; set; } = [];
+	public IEnumerable<BlockChildInfo> Children { get; set; } = [];
 
 	/// <summary>
 	/// Список статических свойств блока
 	/// </summary>
 	[Required]
-	public BlockPropertyInfo[] Properties { get; set; } = [];
+	public IEnumerable<BlockPropertyInfo> Properties { get; set; } = [];
+
+	/// <summary>
+	/// Список прав доступа, которые действуют на этот блок
+	/// </summary>
+	[Required]
+	public IEnumerable<AccessRightsForObjectInfo> AccessRights { get; set; } = [];
 
 
 	/// <summary>

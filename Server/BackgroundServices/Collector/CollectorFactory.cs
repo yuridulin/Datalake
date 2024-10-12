@@ -1,5 +1,5 @@
 ﻿using Datalake.ApiClasses.Enums;
-using Datalake.Database.Models;
+using Datalake.ApiClasses.Models.Sources;
 using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Collectors;
@@ -18,7 +18,7 @@ public class CollectorFactory(ReceiverService receiverService)
 	/// </summary>
 	/// <param name="source">Выбранный источник данных</param>
 	/// <returns>Новый экземпляр подходящего сборщика</returns>
-	public ICollector? GetCollector(Source source)
+	public ICollector? GetCollector(SourceWithTagsInfo source)
 	{
 		return source.Type switch
 		{

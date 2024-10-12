@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Models;
+﻿using Datalake.ApiClasses.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
@@ -9,7 +9,7 @@ internal class OldDatalakeCollector : CollectorBase
 {
 	public OldDatalakeCollector(
 		ReceiverService receiverService,
-		Source source,
+		SourceWithTagsInfo source,
 		ILogger<OldDatalakeCollector> logger) : base(source, logger)
 	{
 		_id = source.Id;
@@ -19,14 +19,14 @@ internal class OldDatalakeCollector : CollectorBase
 		_tokenSource = new CancellationTokenSource();
 
 		_itemsToSend = source.Tags
-			.Where(x => !string.IsNullOrEmpty(x.SourceItem))
-			.GroupBy(x => x.SourceItem)
+			.Where(x => !string.IsNullOrEmpty(x.Item))
+			.GroupBy(x => x.Item)
 			.Select(g => new Item
 			{
 				TagName = g.Key!,
 				PeriodInSeconds = g.Select(x => x.Interval).Min(),
 				LastAsk = DateTime.MinValue,
-				Tags = g.Select(x => x.GlobalGuid).ToArray(),
+				Tags = g.Select(x => x.Guid).ToArray(),
 			})
 			.ToList();
 
@@ -81,7 +81,7 @@ internal class OldDatalakeCollector : CollectorBase
 
 				if (items.Length > 0)
 				{
-					var response = await _receiverService.AskOldDatalake([.. items.Select(x => x.TagName) ], _address);
+					var response = await _receiverService.AskOldDatalake([.. items.Select(x => x.TagName)], _address);
 
 					foreach (var value in response.Tags)
 					{

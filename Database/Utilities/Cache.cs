@@ -8,6 +8,10 @@ public static class Cache
 
 	public static DateTime LastUpdate { get; set; } = DateTime.MinValue;
 
+	public static Dictionary<DateTime, string> Tables { get; set; } = [];
+
+	public static Dictionary<int, TagCacheInfo> Tags { get; set; } = [];
+
 	public static void Update()
 	{
 		lock (locker)
@@ -16,30 +20,13 @@ public static class Cache
 		}
 	}
 
-	public static Dictionary<DateTime, string> Tables { get; set; } = [];
-
-	public static Dictionary<int, TagCacheInfo> Tags { get; set; } = [];
-
-	public static string? LastTable(DateTime seek) => Tables
-		.OrderByDescending(x => x.Key)
-		.Where(x => x.Key < seek)
-		.Select(x => x.Value)
-		.LastOrDefault();
-
-	public static void UpdateTagCache(int id, TagCacheInfo? newTagInfo)
+	public static DateTime? GetNextTable(DateTime date)
 	{
-		lock (locker)
-		{
-			if (newTagInfo == null && Tags.ContainsKey(id))
-			{
-				Tags.Remove(id);
-				Update();
-			}
-			else if (newTagInfo != null)
-			{
-				Tags[id] = newTagInfo;
-				Update();
-			}
-		}
+		return Tables.Keys.Where(x => x > date).OrderBy(x => x).FirstOrDefault();
+	}
+
+	public static DateTime? GetPreviousTable(DateTime date)
+	{
+		return Tables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
 	}
 }

@@ -16,20 +16,23 @@ import TagForm from '../pages/tags/tag/TagForm'
 import TagsCalculatedList from '../pages/tags/TagsCalculatedList'
 import TagsList from '../pages/tags/TagsList'
 import TagsManualList from '../pages/tags/TagsManualList'
+import UserGroupForm from '../pages/usergroups/usergroup/UserGroupForm'
+import UserGroupView from '../pages/usergroups/usergroup/UserGroupView'
 import UserGroupsTreeList from '../pages/usergroups/UserGroupsTreeList'
+import UserGroupsTreeMove from '../pages/usergroups/UserGroupsTreeMove'
+import UserCreate from '../pages/users/user/UserCreate'
+import UserForm from '../pages/users/user/UserForm'
 import UsersList from '../pages/users/UsersList'
 import TagsViewer from '../pages/viewer/TagsViewer'
 import routes from './routes'
-import UserForm from '../pages/users/user/UserForm'
-import UserCreate from '../pages/users/user/UserCreate'
 
 const router = createBrowserRouter([
 	{
-		path: routes.Auth.LoginPage,
+		path: routes.auth.loginPage,
 		element: <LoginPanel />,
 	},
 	{
-		path: routes.Auth.EnergoId,
+		path: routes.auth.energoId,
 		element: <EnergoId />,
 	},
 	{
@@ -43,43 +46,47 @@ const router = createBrowserRouter([
 			},
 			// users
 			{
-				path: routes.Users.root,
+				path: routes.users.root,
 				children: [
 					{
-						path: routes.Users.List,
+						path: routes.users.list,
 						element: <UsersList />,
 					},
 					{
-						path: routes.Users.Create,
+						path: routes.users.create,
 						element: <UserCreate />,
 					},
 					{
-						path: routes.Users.Form,
+						path: routes.users.view,
 						element: <UserForm />,
 					},
 				],
 			},
 			// usergroups
 			{
-				path: routes.UserGroups.root,
+				path: routes.userGroups.root,
 				children: [
 					{
-						path: routes.UserGroups.List,
+						path: routes.userGroups.list,
 						element: <UserGroupsTreeList />,
 					},
-					/* {
-						path: '/user-groups/create',
-						element: <UserCreate />,
+					{
+						path: routes.userGroups.move,
+						element: <UserGroupsTreeMove />,
 					},
 					{
-						path: '/user-groups/:id',
-						element: <UserForm />,
-					}, */
+						path: routes.userGroups.view,
+						element: <UserGroupView />,
+					},
+					{
+						path: routes.userGroups.edit,
+						element: <UserGroupForm />,
+					},
 				],
 			},
 			// settings
 			{
-				path: routes.Settings,
+				path: routes.settings,
 				element: <SettingsPage />,
 			},
 			// sources
@@ -120,10 +127,10 @@ const router = createBrowserRouter([
 			},
 			// values
 			{
-				path: routes.Viewer.root,
+				path: routes.viewer.root,
 				children: [
 					{
-						path: routes.Viewer.root + routes.Viewer.TagsViewer,
+						path: routes.viewer.root + routes.viewer.tagsViewer,
 						element: <TagsViewer />,
 					},
 				],

@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Models;
+﻿using Datalake.ApiClasses.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
@@ -9,7 +9,7 @@ internal class InopcCollector : CollectorBase
 {
 	public InopcCollector(
 		ReceiverService receiverService,
-		Source source,
+		SourceWithTagsInfo source,
 		ILogger<InopcCollector> logger) : base(source, logger)
 	{
 		_logger = logger;
@@ -19,20 +19,20 @@ internal class InopcCollector : CollectorBase
 		_id = source.Id;
 
 		_itemsToSend = source.Tags
-			.Where(x => !string.IsNullOrEmpty(x.SourceItem))
-			.DistinctBy(x => x.SourceItem)
+			.Where(x => !string.IsNullOrEmpty(x.Item))
+			.DistinctBy(x => x.Item)
 			.Select(x => new Item
 			{
-				TagName = x.SourceItem!,
+				TagName = x.Item!,
 				PeriodInSeconds = x.Interval,
 				LastAsk = DateTime.MinValue
 			})
 			.ToList();
 
 		_itemsTags = source.Tags
-			.Where(x => x.SourceItem != null)
-			.GroupBy(x => x.SourceItem)
-			.ToDictionary(g => g.Key!, g => g.Select(x => x.GlobalGuid).ToArray());
+			.Where(x => x.Item != null)
+			.GroupBy(x => x.Item)
+			.ToDictionary(g => g.Key!, g => g.Select(x => x.Guid).ToArray());
 
 		_logger.LogDebug("Create iNOPC collector {address}. Tags: {count}", _address, _itemsToSend.Count);
 	}

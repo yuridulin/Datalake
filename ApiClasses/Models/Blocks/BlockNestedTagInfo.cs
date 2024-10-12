@@ -17,15 +17,18 @@ public class BlockNestedTagInfo : BlockNestedItem
 	/// <summary>
 	/// Тип поля блока для этого тега
 	/// </summary>
+	[Required]
 	public BlockTagRelation Relation { get; set; } = BlockTagRelation.Static;
 
 	/// <summary>
 	/// Тип значений тега
 	/// </summary>
+	[Required]
 	public TagType TagType { get; set; } = TagType.String;
 
 	/// <summary>
 	/// Свое имя тега в общем списке
 	/// </summary>
+	[Required]
 	public string TagName { get; set; } = string.Empty;
 }

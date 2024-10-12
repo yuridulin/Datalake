@@ -50,7 +50,7 @@ const columns: TableColumnsType<DataType> = [
 				to={'/blocks/view/' + record.id}
 				key={record.id}
 			>
-				<Button>{record.name}</Button>
+				<Button size='small'>{record.name}</Button>
 			</NavLink>
 		),
 		sorter: (a, b) => a.name.localeCompare(b.name),
@@ -83,12 +83,31 @@ export default function BlocksList() {
 
 	useEffect(load, [])
 
+	const expandKey = 'expandedBlocks'
+	const [expandedRowKeys, setExpandedRowKeys] = useState(() => {
+		const savedKeys = localStorage.getItem(expandKey)
+		return savedKeys
+			? (JSON.parse(savedKeys) as number[])
+			: ([] as number[])
+	})
+
+	const onExpand = (expanded: boolean, record: DataType) => {
+		const keys = expanded
+			? [...expandedRowKeys, record.id]
+			: expandedRowKeys.filter((key) => key !== record.id)
+		setExpandedRowKeys(keys)
+	}
+
+	useEffect(() => {
+		localStorage.setItem(expandKey, JSON.stringify(expandedRowKeys))
+	}, [expandedRowKeys])
+
 	return (
 		<>
 			<PageHeader
 				right={
 					<>
-						<NavLink to={routes.Blocks.root + routes.Blocks.Mover}>
+						<NavLink to={routes.blocks.root + routes.blocks.mover}>
 							<Button>Изменить иерархию</Button>
 						</NavLink>
 						&ensp;
@@ -103,6 +122,10 @@ export default function BlocksList() {
 				columns={columns}
 				dataSource={data}
 				pagination={false}
+				expandable={{
+					expandedRowKeys,
+					onExpand,
+				}}
 				rowKey='id'
 			/>
 		</>
