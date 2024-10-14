@@ -26,7 +26,7 @@ public class ValuesRepository(DatalakeContext db)
 			.ToList();
 	}
 
-	public static void WriteLiveValues(IEnumerable<TagHistory> values)
+	public static void WriteLiveValues(IEnumerable<TagHistory> values, bool overrideWrite = false)
 	{
 		lock (locker)
 		{
@@ -36,7 +36,7 @@ public class ValuesRepository(DatalakeContext db)
 				{
 					LiveValues.Add(value.TagId, value);
 				}
-				else if (exist.Date <= value.Date)
+				else if (exist.Date <= value.Date || overrideWrite)
 				{
 					LiveValues[exist.TagId] = value;
 				}
