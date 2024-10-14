@@ -238,6 +238,17 @@ public partial class TagsRepository(DatalakeContext db)
 				VariableName = x.VariableName,
 			}));
 
+		var updatedTag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
+			?? throw new NotFoundException($"тег {guid}");
+
+		await db.LogsRepository.LogAsync(new Log
+		{
+			Category = LogCategory.Tag,
+			RefId = tag.Id.ToString(),
+			Text = $"Изменен тег \"{tag.Name}\". " + ObjectExtension<Tag>.Difference(tag, updatedTag),
+			Type = LogType.Success,
+		});
+
 		await transaction.CommitAsync();
 
 		await UpdateTagCache(tag.Id);
@@ -246,6 +257,9 @@ public partial class TagsRepository(DatalakeContext db)
 	internal async Task DeleteAsync(Guid guid)
 	{
 		var transaction = await db.BeginTransactionAsync();
+
+		var tag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
+			?? throw new NotFoundException($"тег {guid}");
 
 		var cached = CachedTags.Values.FirstOrDefault(x => x.Guid == guid)
 			?? throw new NotFoundException(message: $"тег {guid}");
@@ -259,6 +273,14 @@ public partial class TagsRepository(DatalakeContext db)
 
 		// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
 		// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
+
+		await db.LogsRepository.LogAsync(new Log
+		{
+			Category = LogCategory.Tag,
+			RefId = tag.Id.ToString(),
+			Text = $"Удален тег \"{tag.Name}\".",
+			Type = LogType.Success,
+		});
 
 		await transaction.CommitAsync();
 

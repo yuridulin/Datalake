@@ -1,8 +1,8 @@
 ﻿namespace Datalake.Database.Extensions
 {
-	public class ObjectExtension<T> where T : class
+	public static class ObjectExtension<T> where T : class
 	{
-		public string Difference(T old, T @new)
+		public static string Difference(T old, T @new)
 		{
 			var type = typeof(T);
 			List<string> parts = [];
