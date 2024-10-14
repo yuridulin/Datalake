@@ -26,7 +26,27 @@ public class ValuesRepository(DatalakeContext db)
 			.ToList();
 	}
 
-	public static void WriteLiveValues(IEnumerable<TagHistory> values, bool overrideWrite = false)
+	public async Task CreateLiveValues()
+	{
+		var lastValues = await ReadHistoryValuesAsync([], DateFormats.GetCurrentDateTime(), DateFormats.GetCurrentDateTime());
+
+		await db.Logs.BulkCopyAsync(lastValues.Select(v => new Log
+		{
+			Category = LogCategory.Database,
+			Date = v.Date,
+			RefId = v.TagId.ToString(),
+			Type = LogType.Trace,
+			Text = $"Значение тега для кэша: {v.Number} | {v.Text} | {v.Quality}",
+		}));
+
+		lock (locker)
+		{
+			LiveValues = lastValues
+				.ToDictionary(x => x.TagId, x => x);
+		}
+	}
+
+	public static void WriteLiveValues(IEnumerable<TagHistory> values)
 	{
 		lock (locker)
 		{
@@ -36,7 +56,7 @@ public class ValuesRepository(DatalakeContext db)
 				{
 					LiveValues.Add(value.TagId, value);
 				}
-				else if (exist.Date <= value.Date || overrideWrite)
+				else if (exist.Date <= value.Date)
 				{
 					LiveValues[exist.TagId] = value;
 				}

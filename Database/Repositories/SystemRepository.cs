@@ -4,9 +4,7 @@ using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Settings;
 using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Users;
-using Datalake.Database.Utilities;
 using LinqToDB;
-using Microsoft.Extensions.Logging;
 
 namespace Datalake.Database.Repositories;
 
@@ -65,8 +63,6 @@ public partial class SystemRepository(DatalakeContext db)
 
 	static object locker = new();
 
-	static readonly ILogger logger = LogManager.CreateLogger<SystemRepository>();
-
 	internal async Task RebuildCacheAsync()
 	{
 		var tables = await db.TablesRepository.GetHistoryTablesFromSchema();
@@ -106,11 +102,7 @@ public partial class SystemRepository(DatalakeContext db)
 		}
 
 		// актуализация таблицы текущих значений
-		var currentDate = DateFormats.GetCurrentDateTime();
-		logger.LogWarning("Ребилд кэшей на дату: {date}", currentDate);
-		var lastValues = await db.ValuesRepository.ReadHistoryValuesAsync([.. TagsRepository.CachedTags.Keys], currentDate, currentDate);
-
-		ValuesRepository.WriteLiveValues(lastValues, overrideWrite: true);
+		await db.ValuesRepository.CreateLiveValues();
 	}
 
 	internal async Task UpdateSettingsAsync(SettingsInfo newSettings)
