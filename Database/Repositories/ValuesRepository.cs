@@ -29,9 +29,64 @@ public class ValuesRepository(DatalakeContext db)
 	public async Task CreateLiveValues()
 	{
 		var tags = db.Tags.Select(x => x.Id).ToArray();
-		var lastValues = await ReadHistoryValuesAsync(tags, DateFormats.GetCurrentDateTime(), DateFormats.GetCurrentDateTime());
+		var date = DateFormats.GetCurrentDateTime();
 
-		await db.Logs.BulkCopyAsync(lastValues.Select(v => new Log
+		var table = db.TablesRepository.GetHistoryTable(DateFormats.GetCurrentDateTime().Date);
+		var count = await table.CountAsync();
+
+		if (count == 0)
+		{
+			var lastDate = TablesRepository.GetPreviousTable(DateFormats.GetCurrentDateTime().Date);
+			if (lastDate != null)
+				table = db.TablesRepository.GetHistoryTable(lastDate.Value);
+			else
+			{
+				lock (locker)
+				{
+					LiveValues = tags.ToDictionary(x => x, x => new TagHistory
+					{
+						TagId = x,
+						Date = DateTime.MinValue,
+						Number = null,
+						Text = null,
+						Quality = TagQuality.Bad,
+					});
+				}
+
+				return;
+			}
+		}
+
+		var query = 
+			from rt in 
+				from th in table
+				where tags.Contains(th.TagId)
+				select new
+				{
+					th.TagId,
+					th.Date,
+					th.Text,
+					th.Number,
+					th.Quality,
+					rn = Sql.Ext
+						.RowNumber().Over()
+						.PartitionBy(th.TagId)
+						.OrderByDesc(th.Date)
+						.ToValue()
+				}
+			where rt.rn == 1
+			select new TagHistory
+			{
+				TagId = rt.TagId,
+				Date = rt.Date,
+				Text = rt.Text,
+				Number = rt.Number,
+				Quality = rt.Quality,
+			};
+
+		var values = await query.ToListAsync();
+
+		await db.Logs.BulkCopyAsync(values.Select(v => new Log
 		{
 			Category = LogCategory.Database,
 			Date = v.Date,
@@ -42,7 +97,8 @@ public class ValuesRepository(DatalakeContext db)
 
 		lock (locker)
 		{
-			LiveValues = lastValues
+			LiveValues = values
+				.DistinctBy(x => x.TagId)
 				.ToDictionary(x => x.TagId, x => x);
 		}
 	}
