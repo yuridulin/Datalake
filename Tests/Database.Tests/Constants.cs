@@ -1,6 +1,4 @@
-﻿using Datalake.ApiClasses.Models.Users;
-
-namespace Datalake.Database.Tests
+﻿namespace Datalake.Database.Tests
 {
 	public static class Constants
 	{
@@ -20,7 +18,5 @@ namespace Datalake.Database.Tests
 		public const float BeforeLastWriteValue = 222;
 
 		public const float LastValue = 666;
-
-		public static UserAuthInfo? DefaultAdmin { get; set; }
 	}
 }

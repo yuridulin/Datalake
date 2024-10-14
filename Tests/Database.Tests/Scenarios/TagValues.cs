@@ -1,19 +1,28 @@
 ﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Values;
-using Datalake.Database.Repositories;
 
-namespace Datalake.Database.Tests.Steps
+namespace Datalake.Database.Tests.Scenarios
 {
-	public static class Step003_ManualWriteToTag
+	public static class TagValues
 	{
+		static string DbName = "values";
+
 		public static async Task T021_WriteToTag()
 		{
-			using var db = Setup.CreateDbContext();
-
-			var valuesRepository = new ValuesRepository(db);
+			// setup
+			using var db = await Setup.CreateDbContextAsync(DbName);
+			var admin = await db.GetDefaultAdminAsync();
 			var now = DateTime.Now;
 
-			var response = await valuesRepository.WriteValuesAsync(
+			var tag = await db.TagsRepository.CreateAsync(admin, new TagCreateRequest
+			{
+				Name = "TestTag",
+				TagType = TagType.String,
+			});
+
+			// write value
+			var response = await db.ValuesRepository.WriteValuesAsync(
 			[
 				new ValueWriteRequest()
 				{
@@ -34,10 +43,8 @@ namespace Datalake.Database.Tests.Steps
 
 		public static async Task T3_1_SeedValues()
 		{
-			DatalakeContext.SetupLinqToDB();
-			using var db = Setup.CreateDbContext();
+			using var db = await Setup.CreateDbContextAsync(DbName);
 
-			var valuesRepository = new ValuesRepository(db);
 			var now = DateTime.Now;
 
 			ValueWriteRequest[] seedResponse =
@@ -56,7 +63,7 @@ namespace Datalake.Database.Tests.Steps
 				},
 			];
 
-			await valuesRepository.WriteValuesAsync(seedResponse);
+			await db.ValuesRepository.WriteValuesAsync(seedResponse);
 
 			seedResponse =
 			[
@@ -68,9 +75,15 @@ namespace Datalake.Database.Tests.Steps
 				},
 			];
 
-			await valuesRepository.WriteValuesAsync(seedResponse);
+			await db.ValuesRepository.WriteValuesAsync(seedResponse);
 
-			var value = await valuesRepository.GetValuesAsync([ new ValuesRequest() { RequestKey = "1", Tags = [Constants.TagGuid] } ]);
+			var value = await db.ValuesRepository.GetValuesAsync([
+				new ValuesRequest()
+				{
+					RequestKey = "1",
+					Tags = [Constants.TagGuid]
+				}
+			]);
 
 			Assert.Equal(Constants.LastValue, value[0].Tags[0].Values[0].Value);
 		}
