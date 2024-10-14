@@ -28,7 +28,8 @@ public class ValuesRepository(DatalakeContext db)
 
 	public async Task CreateLiveValues()
 	{
-		var lastValues = await ReadHistoryValuesAsync([], DateFormats.GetCurrentDateTime(), DateFormats.GetCurrentDateTime());
+		var tags = db.Tags.Select(x => x.Id).ToArray();
+		var lastValues = await ReadHistoryValuesAsync(tags, DateFormats.GetCurrentDateTime(), DateFormats.GetCurrentDateTime());
 
 		await db.Logs.BulkCopyAsync(lastValues.Select(v => new Log
 		{
