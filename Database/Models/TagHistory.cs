@@ -1,4 +1,5 @@
-﻿using Datalake.ApiClasses.Enums;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
 using LinqToDB.Mapping;
 
 namespace Datalake.Database.Models;
@@ -10,7 +11,7 @@ public class TagHistory
 	public int TagId { get; set; }
 
 	[Column, NotNull]
-	public DateTime Date { get; set; } = DateTime.Now;
+	public DateTime Date { get; set; } = DateFormats.GetCurrentDateTime();
 
 	[Column, Nullable, DataType(LinqToDB.DataType.Text)]
 	public string? Text { get; set; } = null;

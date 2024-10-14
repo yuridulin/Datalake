@@ -1,4 +1,5 @@
-﻿using Datalake.ApiClasses.Enums;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
 
 namespace Datalake.ApiClasses.Models.Values;
 
@@ -30,7 +31,7 @@ public class ValueWriteRequest
 	/// <summary>
 	/// Дата, на которую будет записано значение
 	/// </summary>
-	public DateTime? Date { get; set; } = DateTime.Now;
+	public DateTime? Date { get; set; } = DateFormats.GetCurrentDateTime();
 
 	/// <summary>
 	/// Флаг достоверности нового значения

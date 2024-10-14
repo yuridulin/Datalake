@@ -1,4 +1,6 @@
-﻿using Datalake.ApiClasses.Models.Sources;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Models.Sources;
+using Datalake.Database;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
@@ -73,7 +75,7 @@ internal class InopcCollector : CollectorBase
 		{
 			try
 			{
-				var now = DateTime.Now;
+				var now = DateFormats.GetCurrentDateTime();
 				List<Item> tags = [];
 
 				foreach (var item in _itemsToSend)

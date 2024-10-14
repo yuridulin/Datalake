@@ -1,4 +1,6 @@
-﻿using Datalake.ApiClasses.Models.Sources;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Models.Sources;
+using Datalake.Database;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
@@ -74,7 +76,7 @@ internal class OldDatalakeCollector : CollectorBase
 				collectedValues = [];
 				updatedItems = [];
 
-				var now = DateTime.Now;
+				var now = DateFormats.GetCurrentDateTime();
 				var items = _itemsToSend
 					.Where(x => x.PeriodInSeconds == 0 || (now - x.LastAsk).TotalSeconds > x.PeriodInSeconds)
 					.ToArray();

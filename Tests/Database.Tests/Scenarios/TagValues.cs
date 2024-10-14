@@ -1,4 +1,5 @@
-﻿using Datalake.ApiClasses.Enums;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Values;
 
@@ -13,7 +14,7 @@ namespace Datalake.Database.Tests.Scenarios
 			// setup
 			using var db = await Setup.CreateDbContextAsync(DbName);
 			var admin = await db.GetDefaultAdminAsync();
-			var now = DateTime.Now;
+			var now = DateFormats.GetCurrentDateTime();
 
 			var tag = await db.TagsRepository.CreateAsync(admin, new TagCreateRequest
 			{
@@ -45,7 +46,7 @@ namespace Datalake.Database.Tests.Scenarios
 		{
 			using var db = await Setup.CreateDbContextAsync(DbName);
 
-			var now = DateTime.Now;
+			var now = DateFormats.GetCurrentDateTime();
 
 			ValueWriteRequest[] seedResponse =
 			[

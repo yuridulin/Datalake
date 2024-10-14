@@ -1,4 +1,5 @@
-﻿using Datalake.ApiClasses.Enums;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Users;
@@ -131,7 +132,7 @@ public partial class TagsRepository(DatalakeContext db)
 
 		var tag = new Tag
 		{
-			Created = DateTime.Now,
+			Created = DateFormats.GetCurrentDateTime(),
 			GlobalGuid = Guid.NewGuid(),
 			Interval = 60,
 			IsScaling = false,

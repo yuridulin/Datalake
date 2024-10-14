@@ -1,4 +1,5 @@
-﻿using Datalake.ApiClasses.Enums;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.Tags;
 using Datalake.Database.Models;
 
@@ -19,7 +20,7 @@ public static class TagExtension
 	{
 		var history = new TagHistory
 		{
-			Date = DateTime.Now,
+			Date = DateFormats.GetCurrentDateTime(),
 			Text = null,
 			Number = null,
 			Quality = quality ?? TagQuality.Unknown,

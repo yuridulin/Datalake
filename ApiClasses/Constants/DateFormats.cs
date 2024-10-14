@@ -14,4 +14,15 @@ public static class DateFormats
 	/// yyyy-MM-dd HH:mm:ss.fff
 	/// </summary>
 	public const string HierarchicalWithMilliseconds = "yyyy-MM-dd HH:mm:ss.fff";
+
+	/// <summary>
+	/// Получение текущей даты в выбранном часовом поясе
+	/// </summary>
+	public static DateTime GetCurrentDateTime()
+	{
+		// Только попробуйте еще где-то запустить
+		TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
+		DateTime localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+		return localTime;
+	}
 }

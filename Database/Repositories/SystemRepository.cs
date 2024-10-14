@@ -1,4 +1,5 @@
-﻿using Datalake.ApiClasses.Enums;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Settings;
 using Datalake.ApiClasses.Models.Tags;
@@ -51,7 +52,7 @@ public partial class SystemRepository(DatalakeContext db)
 	{
 		lock (locker)
 		{
-			LastUpdate = DateTime.Now;
+			LastUpdate = DateFormats.GetCurrentDateTime();
 		}
 	}
 
@@ -100,7 +101,8 @@ public partial class SystemRepository(DatalakeContext db)
 		}
 
 		// актуализация таблицы текущих значений
-		var lastValues = await db.ValuesRepository.ReadHistoryValuesAsync([.. TagsRepository.CachedTags.Keys], DateTime.Now, DateTime.Now);
+		var currentDate = DateFormats.GetCurrentDateTime();
+		var lastValues = await db.ValuesRepository.ReadHistoryValuesAsync([.. TagsRepository.CachedTags.Keys], currentDate, currentDate);
 
 		ValuesRepository.WriteLiveValues(lastValues);
 	}

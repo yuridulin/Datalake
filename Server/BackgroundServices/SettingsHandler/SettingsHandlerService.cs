@@ -1,4 +1,5 @@
-﻿using Datalake.Database;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Database.Utilities;
 using Datalake.Server.Services.SessionManager;
@@ -71,7 +72,7 @@ public class SettingsHandlerService(
 				$"var KEYCLOAK_CLIENT = '{newSettings.EnergoIdClient}';",
 			]);
 
-			StoredUpdate = DateTime.Now;
+			StoredUpdate = DateFormats.GetCurrentDateTime();
 		}
 		catch (Exception ex)
 		{
@@ -91,7 +92,7 @@ public class SettingsHandlerService(
 				.Select(x => new AuthSession { ExpirationTime = DateTime.MaxValue, User = x.Item1, StaticHost = x.Item2 })
 				.ToList();
 
-			StoredUpdate = DateTime.Now;
+			StoredUpdate = DateFormats.GetCurrentDateTime();
 		}
 		catch (Exception ex)
 		{

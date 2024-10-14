@@ -1,5 +1,7 @@
-﻿using Datalake.ApiClasses.Enums;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.Values;
+using Datalake.Database;
 using Datalake.Server.Controllers;
 using Datalake.Server.Services.Receiver.Models;
 using Datalake.Server.Services.Receiver.Models.Inopc;
@@ -35,7 +37,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 			return new ReceiveResponse
 			{
 				Tags = [],
-				Timestamp = DateTime.Now,
+				Timestamp = DateFormats.GetCurrentDateTime(),
 			};
 		}
 
@@ -64,7 +66,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 
 		ReceiveResponse response = new()
 		{
-			Timestamp = DateTime.Now,
+			Timestamp = DateFormats.GetCurrentDateTime(),
 			Tags = [],
 		};
 
@@ -159,7 +161,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 
 		var response = new ReceiveResponse
 		{
-			Timestamp = DateTime.Now,
+			Timestamp = DateFormats.GetCurrentDateTime(),
 			Tags = historyResponses
 					.SelectMany(t => t.Values.Select(v => new ReceiveRecord
 					{
@@ -228,7 +230,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 
 		var response = new ReceiveResponse
 		{
-			Timestamp = DateTime.Now,
+			Timestamp = DateFormats.GetCurrentDateTime(),
 			Tags = historyResponse != null
 				? historyResponse.Tags
 					.SelectMany(t => t.Values.Select(v => new ReceiveRecord

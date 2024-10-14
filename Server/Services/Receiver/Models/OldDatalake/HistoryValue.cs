@@ -1,4 +1,6 @@
-﻿namespace Datalake.Server.Services.Receiver.Models.OldDatalake;
+﻿using Datalake.ApiClasses.Constants;
+
+namespace Datalake.Server.Services.Receiver.Models.OldDatalake;
 
 /// <summary>
 /// Пришедшее значение
@@ -8,7 +10,7 @@ public class HistoryValue
 	/// <summary>
 	/// Дата записи
 	/// </summary>
-	public DateTime Date { get; set; } = DateTime.Now;
+	public DateTime Date { get; set; } = DateFormats.GetCurrentDateTime();
 
 	/// <summary>
 	/// Значение

@@ -22,7 +22,7 @@ public class ValuesRepository(DatalakeContext db)
 	public static List<TagHistory> GetLiveValues(int[] identifiers)
 	{
 		return identifiers
-			.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateTime.Now))
+			.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateFormats.GetCurrentDateTime()))
 			.ToList();
 	}
 
@@ -131,7 +131,7 @@ public class ValuesRepository(DatalakeContext db)
 			var record = info.ToHistory(writeRequest.Value, writeRequest.Quality);
 			if (!IsValueNew(record) && !overrided)
 				continue;
-			record.Date = writeRequest.Date ?? DateTime.Now;
+			record.Date = writeRequest.Date ?? DateFormats.GetCurrentDateTime();
 
 			recordsToWrite.Add(record);
 
@@ -312,7 +312,7 @@ public class ValuesRepository(DatalakeContext db)
 			}
 			else
 			{
-				DateTime exact = timeSettings.Exact ?? DateTime.Now;
+				DateTime exact = timeSettings.Exact ?? DateFormats.GetCurrentDateTime();
 				DateTime old, young;
 
 				// Получение истории
