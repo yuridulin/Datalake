@@ -1,6 +1,7 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
+using Datalake.ApiClasses.Models.Logs;
 using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Values;
 using Datalake.Database.Extensions;
@@ -9,6 +10,7 @@ using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Data;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
@@ -255,166 +257,185 @@ public class ValuesRepository(DatalakeContext db)
 	{
 		List<ValuesResponse> responses = [];
 
-		// TODO: группировка тегов по диапазонам, чтобы прочитать с минимумом обращений к БД
-		// Такой подход выиграет, если много запросов с примерно одинаковым диапазоном времени
-
-		foreach (var request in requests)
+		var trustedRequests = requests.Select(x => new
 		{
-			int[] trustedIdentifiers = TagsRepository.CachedTags.Keys.Where(x => request.TagsId?.Contains(x) ?? false)
-				.Union(TagsRepository.CachedTags.Values.Where(x => request.Tags?.Contains(x.Guid) ?? false).Select(x => x.Id))
-				.Distinct()
-				.ToArray();
-
-			if (trustedIdentifiers.Length == 0)
-				continue;
-
-			ValuesResponse response = new()
+			x.RequestKey,
+			Time = new
 			{
-				RequestKey = request.RequestKey,
-				Tags = []
-			};
+				x.Old,
+				x.Young,
+				x.Exact,
+			},
+			x.Resolution,
+			x.Func,
+			Tags = TagsRepository.CachedTags.Values.Where(t => x.TagsId != null && x.TagsId.Contains(t.Id))
+				.Union(TagsRepository.CachedTags.Values.Where(t => x.Tags != null && x.Tags.Contains(t.Guid)))
+				.ToArray(),
+		});
+
+		foreach (var timeGroup in trustedRequests.GroupBy(x => x.Time))
+		{
+			var timeSettings = timeGroup.Key;
+			var processedRequests = timeGroup.ToArray();
+			var trustedIdentifiers = processedRequests.SelectMany(x => x.Tags.Select(t => t.Id)).ToArray();
 
 			// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
-			if (!request.Exact.HasValue && !request.Old.HasValue && !request.Young.HasValue)
+			if (!timeSettings.Exact.HasValue && !timeSettings.Old.HasValue && !timeSettings.Young.HasValue)
 			{
-				response.Tags = GetLiveValues(trustedIdentifiers)
-					.Select(x => new { Info = TagsRepository.CachedTags[x.TagId], Value = x })
-					.Select(x => new ValuesTagResponse
+				var values = GetLiveValues(trustedIdentifiers);
+
+				foreach (var request in processedRequests)
+				{
+					var response = new ValuesResponse
 					{
-						Id = x.Info.Id,
-						Guid = x.Info.Guid,
-						Name = x.Info.Name,
-						Type = x.Info.TagType,
-						Values = [ new()
-						{
-							Date = x.Value.Date,
-							DateString = x.Value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
-							Quality = x.Value.Quality,
-							Value = x.Value.GetTypedValue(x.Info.TagType),
-						}]
-					})
-					.ToList();
+						RequestKey = request.RequestKey,
+						Tags = (
+							from value in values
+							join tag in request.Tags on value.TagId equals tag.Id
+							select new ValuesTagResponse
+							{
+								Id = tag.Id,
+								Guid = tag.Guid,
+								Name = tag.Name,
+								Type = tag.TagType,
+								Values = [ new()
+								{
+									Date = value.Date,
+									DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
+									Quality = value.Quality,
+									Value = value.GetTypedValue(tag.TagType),
+								}]
+							}
+						).ToList(),
+					};
+
+					responses.Add(response);
+				}
 			}
 			else
 			{
-				DateTime exact = request.Exact ?? DateTime.Now;
+				DateTime exact = timeSettings.Exact ?? DateTime.Now;
 				DateTime old, young;
 
 				// Получение истории
-				if (request.Exact.HasValue)
+				if (timeSettings.Exact.HasValue)
 				{
-					young = request.Exact.Value;
-					old = request.Exact.Value;
+					young = timeSettings.Exact.Value;
+					old = timeSettings.Exact.Value;
 				}
 				else
 				{
-					young = request.Young ?? exact;
-					old = request.Old ?? young.Date;
+					young = timeSettings.Young ?? exact;
+					old = timeSettings.Old ?? young.Date;
 				}
 
-				var databaseValues = await ReadHistoryValuesAsync(
-					trustedIdentifiers, old, young, resolution: Math.Max(0, request.Resolution ?? 0));
+				var databaseValues = await ReadHistoryValuesAsync(trustedIdentifiers, old, young);
 
-				// сборка ответа, агрегация по необходимости
-				foreach (var id in trustedIdentifiers)
+				foreach (var request in processedRequests)
 				{
-					var tagInfo = TagsRepository.CachedTags[id];
-					var existValues = databaseValues
-						.Where(x => x.TagId == id)
-						.ToArray();
-
-					if (request.Func == AggregationFunc.List)
+					var response = new ValuesResponse
 					{
-						response.Tags.Add(new ValuesTagResponse
-						{
-							Id = tagInfo.Id,
-							Guid = tagInfo.Guid,
-							Name = tagInfo.Name,
-							Type = tagInfo.TagType,
-							Values = [.. existValues
-							.Select(x => new ValueRecord
-							{
-								Date = x.Date,
-								DateString = x.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
-								Quality = x.Quality,
-								Value = x.GetTypedValue(tagInfo.TagType),
-							})
-							.OrderBy(x => x.Date)],
-						});
-					}
-					else if (tagInfo.TagType == TagType.Number)
-					{
-						var values = existValues
-							.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
-							.Select(x => x.GetTypedValue(tagInfo.TagType) as float?)
-							.ToList();
+						RequestKey = request.RequestKey,
+						Tags = [],
+					};
 
-						if (values.Count > 0)
+					var tagsResponses = new List<ValuesTagResponse>();
+					var requestIdentifiers = request.Tags.Select(t => t.Id).ToArray();
+					var requestValues = databaseValues.Where(x => requestIdentifiers.Contains(x.TagId));
+
+					foreach (var tag in request.Tags)
+					{
+						var tagResponse = new ValuesTagResponse
 						{
-							float? value = 0;
-							try
-							{
-								switch (request.Func)
+							Guid = tag.Guid,
+							Id = tag.Id,
+							Name = tag.Name,
+							Type = tag.TagType,
+							Values = [],
+						};
+						var tagValues = requestValues.Where(x => x.TagId == tag.Id).ToList();
+
+						if (tagValues.Count == 0)
+						{
+							tagResponse.Values = [
+								new()
 								{
-									case AggregationFunc.Sum:
-										value = values.Sum();
-										break;
-									case AggregationFunc.Avg:
-										value = values.Average();
-										break;
-									case AggregationFunc.Min:
-										value = values.Min();
-										break;
-									case AggregationFunc.Max:
-										value = values.Max();
-										break;
+									Date = exact,
+									DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
+									Quality = TagQuality.Bad_NoValues,
+									Value = 0,
 								}
-							}
-							catch
-							{
-							}
-
-							response.Tags.Add(new ValuesTagResponse
-							{
-								Id = tagInfo.Id,
-								Guid = tagInfo.Guid,
-								Name = tagInfo.Name,
-								Type = tagInfo.TagType,
-								Values = [
-										new ValueRecord
-									{
-										Date = exact,
-										DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
-										Quality = TagQuality.Good,
-										Value = value,
-									}
-									]
-							});
+							];
 						}
 						else
 						{
-							response.Tags.Add(new ValuesTagResponse
+							if (request.Resolution != null && request.Resolution > 0)
 							{
-								Id = tagInfo.Id,
-								Guid = tagInfo.Guid,
-								Name = tagInfo.Name,
-								Type = tagInfo.TagType,
-								Values = [
-										new ValueRecord
+								tagValues = StretchByResolution(tagValues, old, young, request.Resolution.Value);
+							}
+
+							if (tag.TagType == TagType.Number && request.Func != AggregationFunc.List)
+							{
+								var numericValues = tagValues
+									.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
+									.Select(x => x.GetTypedValue(TagType.Number) as float?);
+
+								float? value = 0;
+								try
+								{
+									switch (request.Func)
 									{
-										Date = exact,
-										DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
-										Quality = TagQuality.Bad_NoValues,
-										Value = 0,
+										case AggregationFunc.Sum:
+											value = numericValues.Sum();
+											break;
+										case AggregationFunc.Avg:
+											value = numericValues.Average();
+											break;
+										case AggregationFunc.Min:
+											value = numericValues.Min();
+											break;
+										case AggregationFunc.Max:
+											value = numericValues.Max();
+											break;
 									}
-									]
-							});
+
+									tagResponse.Values = [
+										new() {
+											Date = exact,
+											DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
+											Quality = TagQuality.Good,
+											Value = value,
+										}
+									];
+								}
+								catch (Exception e)
+								{
+									logger.LogError("Ошибка при агрегировании: {message}", e.Message);
+								}
+							}
+							else
+							{
+								tagResponse.Values = [
+									..tagValues
+									.Select(x => new ValueRecord
+									{
+										Date = x.Date,
+										DateString = x.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
+										Quality = x.Quality,
+										Value = x.GetTypedValue(tag.TagType),
+									})
+									.OrderBy(x => x.Date)
+								];
+							}
 						}
+
+						tagsResponses.Add(tagResponse);
 					}
+
+					response.Tags = tagsResponses;
+					responses.Add(response);
 				}
 			}
-
-			responses.Add(response);
 		}
 
 		return responses;
@@ -423,8 +444,7 @@ public class ValuesRepository(DatalakeContext db)
 	internal async Task<List<TagHistory>> ReadHistoryValuesAsync(
 		int[] identifiers,
 		DateTime old,
-		DateTime young,
-		int resolution = 0)
+		DateTime young)
 	{
 		logger.LogInformation("Событие чтения архивных значений");
 
@@ -539,12 +559,6 @@ public class ValuesRepository(DatalakeContext db)
 			values.AddRange(lost);
 		}
 
-		// выполняем протяжку, если необходимо
-		if (resolution > 0)
-		{
-			values = StretchByResolution(identifiers, values, old, young, resolution);
-		}
-
 		return values;
 
 		TagHistory LostTag(int id) => new()
@@ -558,27 +572,23 @@ public class ValuesRepository(DatalakeContext db)
 	}
 
 	static List<TagHistory> StretchByResolution(
-		int[] identifiers,
 		IEnumerable<TagHistory> valuesByChange,
 		DateTime old,
 		DateTime young,
 		int resolution)
-	{
-		var d = Stopwatch.StartNew();
-		logger.LogInformation("Протяжка данных...");
-
-		var timeRange = (young - old).TotalMilliseconds;
-		var continuous = new List<TagHistory>();
-		DateTime stepDate;
-
-		for (double i = 0; i < timeRange; i += resolution)
 		{
-			stepDate = old.AddMilliseconds(i);
+			var d = Stopwatch.StartNew();
+			logger.LogInformation("Протяжка данных...");
 
-			foreach (var id in identifiers)
+			var timeRange = (young - old).TotalMilliseconds;
+			var continuous = new List<TagHistory>();
+			DateTime stepDate;
+
+			for (double i = 0; i < timeRange; i += resolution)
 			{
+				stepDate = old.AddMilliseconds(i);
+
 				var value = valuesByChange
-					.Where(x => x.TagId == id)
 					.Where(x => x.Date <= stepDate)
 					.OrderByDescending(x => x.Date)
 					.FirstOrDefault();
@@ -589,7 +599,7 @@ public class ValuesRepository(DatalakeContext db)
 					{
 						continuous.Add(new TagHistory
 						{
-							TagId = id,
+							TagId = value.TagId,
 							Date = stepDate,
 							Text = value.Text,
 							Number = value.Number,
@@ -601,14 +611,14 @@ public class ValuesRepository(DatalakeContext db)
 						continuous.Add(value);
 					}
 				}
+
 			}
+
+			d.Stop();
+			logger.LogInformation("Протяжка завершена: {ms} мс", d.Elapsed.TotalMilliseconds);
+
+			return continuous;
 		}
-
-		d.Stop();
-		logger.LogInformation("Протяжка завершена: {ms} мс", d.Elapsed.TotalMilliseconds);
-
-		return continuous;
-	}
 
 	#endregion
 }
