@@ -565,49 +565,49 @@ public class ValuesRepository(DatalakeContext db)
 		DateTime old,
 		DateTime young,
 		int resolution)
+	{
+		var d = Stopwatch.StartNew();
+		logger.LogInformation("Протяжка данных...");
+
+		var timeRange = (young - old).TotalMilliseconds;
+		var continuous = new List<TagHistory>();
+		DateTime stepDate = old;
+
+		do
 		{
-			var d = Stopwatch.StartNew();
-			logger.LogInformation("Протяжка данных...");
+			var value = valuesByChange
+				.Where(x => x.Date <= stepDate)
+				.OrderByDescending(x => x.Date)
+				.FirstOrDefault();
 
-			var timeRange = (young - old).TotalMilliseconds;
-			var continuous = new List<TagHistory>();
-			DateTime stepDate;
-
-			for (double i = 0; i < timeRange; i += resolution)
+			if (value != null)
 			{
-				stepDate = old.AddMilliseconds(i);
-
-				var value = valuesByChange
-					.Where(x => x.Date <= stepDate)
-					.OrderByDescending(x => x.Date)
-					.FirstOrDefault();
-
-				if (value != null)
+				if (value.Date != stepDate)
 				{
-					if (value.Date != stepDate)
+					continuous.Add(new TagHistory
 					{
-						continuous.Add(new TagHistory
-						{
-							TagId = value.TagId,
-							Date = stepDate,
-							Text = value.Text,
-							Number = value.Number,
-							Quality = value.Quality,
-						});
-					}
-					else
-					{
-						continuous.Add(value);
-					}
+						TagId = value.TagId,
+						Date = stepDate,
+						Text = value.Text,
+						Number = value.Number,
+						Quality = value.Quality,
+					});
 				}
-
+				else
+				{
+					continuous.Add(value);
+				}
 			}
 
-			d.Stop();
-			logger.LogInformation("Протяжка завершена: {ms} мс", d.Elapsed.TotalMilliseconds);
-
-			return continuous;
+			stepDate = stepDate.AddMilliseconds(resolution);
 		}
+		while (stepDate <= young);
+
+		d.Stop();
+		logger.LogInformation("Протяжка завершена: {ms} мс", d.Elapsed.TotalMilliseconds);
+
+		return continuous;
+	}
 
 	static TagHistory LostTag(int id, DateTime date) => new()
 	{
