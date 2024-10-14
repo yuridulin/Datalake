@@ -4,7 +4,6 @@ using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
-using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Data;
 
@@ -12,6 +11,8 @@ namespace Datalake.Database.Repositories;
 
 public partial class TagsRepository(DatalakeContext db)
 {
+	public static Dictionary<int, TagCacheInfo> CachedTags { get; set; } = [];
+
 	#region Действия
 
 	public async Task<TagInfo> CreateAsync(
@@ -57,6 +58,8 @@ public partial class TagsRepository(DatalakeContext db)
 	#endregion
 
 	#region Реализация
+
+	static object locker = new();
 
 	internal async Task<TagInfo> CreateAsync(TagCreateRequest createRequest)
 	{
@@ -149,7 +152,7 @@ public partial class TagsRepository(DatalakeContext db)
 				.UpdateAsync();
 		}
 
-		await db.ValuesRepository.InitializeValueAsync(tag.Id);
+		await InitializeValueAsync(tag.Id);
 
 		if (createRequest.BlockId.HasValue)
 		{
@@ -161,7 +164,7 @@ public partial class TagsRepository(DatalakeContext db)
 				.InsertAsync();
 		}
 
-		await db.LogAsync(new Log
+		await db.LogsRepository.LogAsync(new Log
 		{
 			Category = LogCategory.Tag,
 			RefId = tag.Id.ToString(),
@@ -244,7 +247,7 @@ public partial class TagsRepository(DatalakeContext db)
 	{
 		var transaction = await db.BeginTransactionAsync();
 
-		var cached = Cache.Tags.Values.FirstOrDefault(x => x.Guid == guid)
+		var cached = CachedTags.Values.FirstOrDefault(x => x.Guid == guid)
 			?? throw new NotFoundException(message: $"тег {guid}");
 
 		var count = await db.Tags
@@ -265,18 +268,36 @@ public partial class TagsRepository(DatalakeContext db)
 	internal async Task UpdateTagCache(int id)
 	{
 		var cache = await GetTagsForCache().FirstOrDefaultAsync(x => x.Id == id);
-		lock (Cache.Tags)
+		lock (locker)
 		{
 			if (cache == null)
 			{
-				Cache.Tags.Remove(id);
+				CachedTags.Remove(id);
 			}
 			else
 			{
-				Cache.Tags[id] = cache;
+				CachedTags[id] = cache;
 			}
 		}
-		db.SetLastUpdateToNow();
+
+		SystemRepository.Update();
+	}
+
+	internal async Task InitializeValueAsync(int tagId)
+	{
+		var record = new TagHistory
+		{
+			Date = DateTime.Now,
+			Number = null,
+			Text = null,
+			Quality = TagQuality.Unknown,
+			TagId = tagId,
+		};
+
+		ValuesRepository.WriteLiveValues([record]);
+
+		var table = db.TablesRepository.GetHistoryTable(record.Date);
+		await table.BulkCopyAsync([record]);
 	}
 
 	#endregion

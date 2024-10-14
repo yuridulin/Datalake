@@ -82,8 +82,8 @@ public partial class UserGroupsRepository(DatalakeContext db)
 			.Value(x => x.AccessType, AccessType.Viewer)
 			.InsertAsync();
 
-		await db.LogAsync(Success(group.Guid, $"Создана группа пользователей \"{group.Name}\""));
-		db.SetLastUpdateToNow();
+		await db.LogsRepository.LogAsync(Success(group.Guid, $"Создана группа пользователей \"{group.Name}\""));
+		SystemRepository.Update();
 		await transaction.CommitAsync();
 
 		return group.Guid;
@@ -122,8 +122,8 @@ public partial class UserGroupsRepository(DatalakeContext db)
 				AccessType = u.AccessType,
 			}));
 
-		await db.LogAsync(Success(groupGuid, $"Изменена группа пользователей \"{groupGuid}\""));
-		db.SetLastUpdateToNow();
+		await db.LogsRepository.LogAsync(Success(groupGuid, $"Изменена группа пользователей \"{groupGuid}\""));
+		SystemRepository.Update();
 		await transaction.CommitAsync();
 
 		return true;
@@ -171,8 +171,8 @@ public partial class UserGroupsRepository(DatalakeContext db)
 			.Where(x => x.Guid == groupGuid)
 			.DeleteAsync();
 
-		await db.LogAsync(Success(groupGuid, $"Удалена группа пользователей \"{groupGuid}\""));
-		db.SetLastUpdateToNow();
+		await db.LogsRepository.LogAsync(Success(groupGuid, $"Удалена группа пользователей \"{groupGuid}\""));
+		SystemRepository.Update();
 		await transaction.CommitAsync();
 
 		return true;
