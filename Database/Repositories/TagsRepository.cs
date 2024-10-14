@@ -152,8 +152,6 @@ public partial class TagsRepository(DatalakeContext db)
 				.UpdateAsync();
 		}
 
-		await InitializeValueAsync(tag.Id);
-
 		if (createRequest.BlockId.HasValue)
 		{
 			await db.BlockTags
@@ -303,23 +301,6 @@ public partial class TagsRepository(DatalakeContext db)
 		}
 
 		SystemRepository.Update();
-	}
-
-	internal async Task InitializeValueAsync(int tagId)
-	{
-		var record = new TagHistory
-		{
-			Date = DateTime.Now,
-			Number = null,
-			Text = null,
-			Quality = TagQuality.Unknown,
-			TagId = tagId,
-		};
-
-		ValuesRepository.WriteLiveValues([record]);
-
-		var table = db.TablesRepository.GetHistoryTable(record.Date);
-		await table.BulkCopyAsync([record]);
 	}
 
 	#endregion

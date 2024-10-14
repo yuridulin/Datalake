@@ -1,7 +1,6 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Logs;
 using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Values;
 using Datalake.Database.Extensions;
@@ -10,7 +9,6 @@ using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Data;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
@@ -23,9 +21,9 @@ public class ValuesRepository(DatalakeContext db)
 
 	public static List<TagHistory> GetLiveValues(int[] identifiers)
 	{
-		return LiveValues
-			.Where(x => identifiers.Length == 0 || identifiers.Contains(x.Key))
-			.Select(x => x.Value).ToList();
+		return identifiers
+			.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateTime.Now))
+			.ToList();
 	}
 
 	public static void WriteLiveValues(IEnumerable<TagHistory> values)
@@ -551,7 +549,7 @@ public class ValuesRepository(DatalakeContext db)
 		d = Stopwatch.StartNew();
 		var lost = identifiers
 			.Except(values.Where(x => x.Date == old).Select(x => x.TagId))
-			.Select(LostTag)
+			.Select(id => LostTag(id, old))
 			.ToArray();
 
 		if (lost.Length > 0)
@@ -560,15 +558,6 @@ public class ValuesRepository(DatalakeContext db)
 		}
 
 		return values;
-
-		TagHistory LostTag(int id) => new()
-		{
-			TagId = id,
-			Date = old,
-			Text = null,
-			Number = null,
-			Quality = TagQuality.Bad,
-		};
 	}
 
 	static List<TagHistory> StretchByResolution(
@@ -619,6 +608,15 @@ public class ValuesRepository(DatalakeContext db)
 
 			return continuous;
 		}
+
+	static TagHistory LostTag(int id, DateTime date) => new()
+	{
+		TagId = id,
+		Date = date,
+		Text = null,
+		Number = null,
+		Quality = TagQuality.Bad,
+	};
 
 	#endregion
 }
