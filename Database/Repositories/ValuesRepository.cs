@@ -260,10 +260,10 @@ public class ValuesRepository(DatalakeContext db)
 
 		foreach (var request in requests)
 		{
-			int[] trustedIdentifiers = [
-				.. TagsRepository.CachedTags.Keys.Where(x => request.TagsId?.Contains(x) ?? false),
-				.. TagsRepository.CachedTags.Values.Where(x => request.Tags?.Contains(x.Guid) ?? false).Select(x => x.Id)
-			];
+			int[] trustedIdentifiers = TagsRepository.CachedTags.Keys.Where(x => request.TagsId?.Contains(x) ?? false)
+				.Union(TagsRepository.CachedTags.Values.Where(x => request.Tags?.Contains(x.Guid) ?? false).Select(x => x.Id))
+				.Distinct()
+				.ToArray();
 
 			if (trustedIdentifiers.Length == 0)
 				continue;
