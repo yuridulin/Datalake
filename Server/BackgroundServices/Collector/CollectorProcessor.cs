@@ -1,6 +1,6 @@
 ﻿using Datalake.ApiClasses.Models.Sources;
 using Datalake.Database;
-using Datalake.Database.Utilities;
+using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using LinqToDB;
@@ -17,7 +17,7 @@ internal class CollectorProcessor(
 	{
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			var lastUpdate = Cache.LastUpdate;
+			var lastUpdate = SystemRepository.LastUpdate;
 
 			if (lastUpdate > StoredUpdate)
 			{

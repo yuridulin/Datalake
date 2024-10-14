@@ -4,7 +4,7 @@ using Datalake.Database.Extensions;
 using Datalake.Database.Repositories;
 using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.Collector;
-using Datalake.Server.BackgroundServices.HistoryIndexer;
+using Datalake.Server.BackgroundServices.History;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
@@ -145,6 +145,7 @@ namespace Datalake.Server
 			builder.Services.AddHostedService<CollectorProcessor>();
 			builder.Services.AddHostedService<CollectorWriter>();
 			builder.Services.AddHostedService<HistoryIndexerService>();
+			builder.Services.AddHostedService<HistoryInitialService>();
 			builder.Services.AddHostedService<SettingsHandlerService>();
 			builder.Services.AddHostedService(provider
 				=> provider.GetRequiredService<SettingsHandlerService>());
@@ -162,14 +163,14 @@ namespace Datalake.Server
 			if (db != null)
 			{
 				await db.EnsureDataCreatedAsync();
-				await db.LogAsync(new Database.Models.Log
+				await db.LogsRepository.LogAsync(new Database.Models.Log
 				{
 					Category = ApiClasses.Enums.LogCategory.Core,
 					Type = ApiClasses.Enums.LogType.Success,
 					Text = "Сервер запущен",
 				});
 
-				db.SetLastUpdateToNow();
+				SystemRepository.Update();
 			}
 		}
 

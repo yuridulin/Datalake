@@ -26,7 +26,7 @@ public class SettingsHandlerService(
 	{
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			var lastUpdate = Cache.LastUpdate;
+			var lastUpdate = SystemRepository.LastUpdate;
 
 			if (lastUpdate > StoredUpdate)
 			{

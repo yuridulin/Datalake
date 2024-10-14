@@ -2,7 +2,7 @@
 using Datalake.ApiClasses.Models.Logs;
 using Datalake.ApiClasses.Models.Settings;
 using Datalake.Database;
-using Datalake.Database.Utilities;
+using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
 using LinqToDB;
@@ -27,7 +27,7 @@ public class ConfigController(
 	[HttpGet("last")]
 	public ActionResult<string> GetLastUpdate()
 	{
-		var lastUpdate = Cache.LastUpdate;
+		var lastUpdate = SystemRepository.LastUpdate;
 		return lastUpdate.ToString(DateFormats.HierarchicalWithMilliseconds);
 	}
 
@@ -90,8 +90,8 @@ public class ConfigController(
 	{
 		var user = Authenticate();
 
-		await db.ValuesRepository.RebuildCacheAsync(user);
-		Cache.Update();
+		await db.SystemRepository.RebuildCacheAsync(user);
+		SystemRepository.Update();
 
 		return NoContent();
 	}

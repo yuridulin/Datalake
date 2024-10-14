@@ -1,7 +1,7 @@
 ﻿using Datalake.Database;
 using System.Diagnostics;
 
-namespace Datalake.Server.BackgroundServices.HistoryIndexer;
+namespace Datalake.Server.BackgroundServices.History;
 
 /// <summary>
 /// Индексирование таблиц истории после завершения активного периода
@@ -26,7 +26,7 @@ public class HistoryIndexerService(
 				using var scope = serviceScopeFactory.CreateScope();
 				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-				var tables = await db.ValuesRepository.GetHistoryTablesFromSchema();
+				var tables = await db.TablesRepository.GetHistoryTablesFromSchema();
 
 				var notIndexedTables = tables
 					.Where(x => x.Date < DateTime.Today)
@@ -42,7 +42,7 @@ public class HistoryIndexerService(
 					try
 					{
 						var sw = Stopwatch.StartNew();
-						await db.ValuesRepository.CreateHistoryIndex(table.Name);
+						await db.TablesRepository.CreateHistoryIndex(table.Name);
 
 						LastIndexedTableDate = table.Date;
 
