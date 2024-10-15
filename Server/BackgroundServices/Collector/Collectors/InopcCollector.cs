@@ -43,8 +43,6 @@ internal class InopcCollector : CollectorBase
 				DateTime = DateTime.MinValue,
 				Guid = x.Guid,
 			});
-
-		_logger.LogDebug("Create iNOPC collector {address}. Tags: {count}", _address, _itemsToSend.Count);
 	}
 
 	public override event CollectEvent? CollectValues;
