@@ -612,7 +612,7 @@ public class ValuesRepository(DatalakeContext db)
 		// мегазапрос для получения всех необходимых данных
 		if (queries.Count > 0)
 		{
-			var megaQuery = queries.Aggregate((current, next) => current.Union(next));
+			var megaQuery = queries.Aggregate((current, next) => current.UnionAll(next));
 
 			// выполнение мегазапроса
 			values = await megaQuery.ToListAsync();

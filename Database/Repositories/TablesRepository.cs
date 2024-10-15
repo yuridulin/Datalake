@@ -145,7 +145,7 @@ public class TablesRepository(DatalakeContext db)
 	async Task PostgreSQL_CreateHistoryIndex(string tableName)
 	{
 		await db.ExecuteAsync($"CREATE INDEX {tableName.ToLower()}{IndexPostfix} " +
-			$"ON public.\"{tableName}\" (\"{nameof(TagHistory.TagId)}\", \"{nameof(TagHistory.Date)}\" DESC);");
+			$"ON public.\"{tableName}\" (\"{nameof(TagHistory.TagId)}\", \"{nameof(TagHistory.Date)}\");");
 	}
 
 	#endregion

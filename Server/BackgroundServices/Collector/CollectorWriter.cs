@@ -33,7 +33,7 @@ public class CollectorWriter(
 
 					lock (Lock)
 					{
-						Queue = Queue.Except(buffer).ToList();
+						Queue = Queue.Skip(1000).ToList();
 					}
 				}
 				catch (Exception ex)
@@ -42,7 +42,7 @@ public class CollectorWriter(
 				}
 			}
 
-			await Task.Delay(1000, stoppingToken);
+			await Task.Delay(250, stoppingToken);
 		}
 	}
 
