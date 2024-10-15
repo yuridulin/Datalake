@@ -102,7 +102,7 @@ internal class OldDatalakeCollector : CollectorBase
 						{
 							collectedValues.AddRange(item.Tags.Select(guid => new CollectValue
 							{
-								DateTime = response.Timestamp,
+								DateTime = DateFormats.GetCurrentDateTime(),
 								Name = value.Name,
 								Quality = value.Quality,
 								Guid = guid,

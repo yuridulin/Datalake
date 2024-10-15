@@ -114,7 +114,7 @@ internal class InopcCollector : CollectorBase
 						.SelectMany(item => _itemsTags[item.Name]
 							.Select(guid => new CollectValue
 							{
-								DateTime = response.Timestamp,
+								DateTime = DateFormats.GetCurrentDateTime(),
 								Name = item.Name,
 								Quality = item.Quality,
 								Guid = guid,
