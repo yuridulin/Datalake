@@ -22,7 +22,7 @@ public partial class UsersRepository
 
 	public IQueryable<UserInfo> GetInfo()
 	{
-		var query = 
+		var query =
 			from u in db.Users
 			from rel in db.UserGroupRelations.LeftJoin(x => x.UserGuid == u.Guid)
 			from g in db.UserGroups.LeftJoin(x => x.Guid == rel.UserGroupGuid)

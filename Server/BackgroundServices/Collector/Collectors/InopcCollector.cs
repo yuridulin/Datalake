@@ -1,6 +1,5 @@
 ﻿using Datalake.ApiClasses.Constants;
 using Datalake.ApiClasses.Models.Sources;
-using Datalake.Database;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
@@ -36,6 +35,15 @@ internal class InopcCollector : CollectorBase
 			.GroupBy(x => x.Item)
 			.ToDictionary(g => g.Key!, g => g.Select(x => x.Guid).ToArray());
 
+		_previousValues = source.Tags
+			.ToDictionary(x => x.Guid, x => new CollectValue
+			{
+				Value = null,
+				Quality = ApiClasses.Enums.TagQuality.Unknown,
+				DateTime = DateTime.MinValue,
+				Guid = x.Guid,
+			});
+
 		_logger.LogDebug("Create iNOPC collector {address}. Tags: {count}", _address, _itemsToSend.Count);
 	}
 
@@ -68,9 +76,12 @@ internal class InopcCollector : CollectorBase
 	private readonly Dictionary<string, Guid[]> _itemsTags;
 	private readonly CancellationTokenSource _tokenSource;
 	private ILogger<InopcCollector> _logger;
+	private readonly Dictionary<Guid, CollectValue> _previousValues;
 
 	private async Task Work()
 	{
+		_logger.LogDebug("Старт опроса INOPC [{id}][{address}]", _id, _address);
+
 		while (!_tokenSource.Token.IsCancellationRequested)
 		{
 			try
@@ -113,14 +124,16 @@ internal class InopcCollector : CollectorBase
 							}))
 						.ToArray();
 
+					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid]).ToArray();
+					foreach (var v in collectedValues)
+						_previousValues[v.Guid] = v;
+
 					CollectValues?.Invoke(this, collectedValues);
 
 					foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
 					{
 						tag.LastAsk = response.Timestamp;
 					}
-
-					_logger.LogDebug("Опрос INOPC [{id}][{address}], получено значений: {count}", _id, _address, response.Tags.Length);
 				}
 			}
 			catch (Exception ex)

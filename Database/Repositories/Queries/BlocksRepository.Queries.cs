@@ -52,7 +52,7 @@ public partial class BlocksRepository
 					Id = parent.Id,
 					Name = parent.Name
 				},
-				Children = 
+				Children =
 					from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id)
 					select new BlockFullInfo.BlockChildInfo
 					{
@@ -68,7 +68,7 @@ public partial class BlocksRepository
 						Type = property.Type,
 						Value = property.Value,
 					},
-				Tags = 
+				Tags =
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
 					from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId)
 					select new BlockNestedTagInfo
@@ -80,7 +80,7 @@ public partial class BlocksRepository
 						TagName = tag.Name,
 						TagType = tag.Type,
 					},
-				AccessRights = 
+				AccessRights =
 					from rights in db.AccessRights.InnerJoin(x => x.BlockId == block.Id)
 					from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid)
 					from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid)
@@ -120,7 +120,7 @@ public partial class BlocksRepository
 				Name = block.Name,
 				Description = block.Description,
 				ParentId = block.ParentId,
-				Tags = 
+				Tags =
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
 					from tag in db.Tags.InnerJoin(x => x.Id == block_tag.TagId)
 					select new BlockNestedTagInfo

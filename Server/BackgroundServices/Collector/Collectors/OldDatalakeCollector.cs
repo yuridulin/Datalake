@@ -32,7 +32,14 @@ internal class OldDatalakeCollector : CollectorBase
 			})
 			.ToList();
 
-		_logger.LogDebug("Create old Datalake collector {address}. Tags: {count}", _address, _itemsToSend.Count);
+		_previousValues = source.Tags
+			.ToDictionary(x => x.Guid, x => new CollectValue
+			{
+				Value = null,
+				Quality = ApiClasses.Enums.TagQuality.Unknown,
+				DateTime = DateTime.MinValue,
+				Guid = x.Guid,
+			});
 	}
 
 	public override event CollectEvent? CollectValues;
@@ -63,11 +70,14 @@ internal class OldDatalakeCollector : CollectorBase
 	private readonly ReceiverService _receiverService;
 	private readonly CancellationTokenSource _tokenSource;
 	private ILogger<OldDatalakeCollector> _logger;
+	private readonly Dictionary<Guid, CollectValue> _previousValues;
 
 	private async Task Work()
 	{
 		List<CollectValue> collectedValues;
 		List<Item> updatedItems;
+
+		_logger.LogDebug("Старт опроса Datalake (old) [{id}][{address}]", _id, _address);
 
 		while (!_tokenSource.Token.IsCancellationRequested)
 		{
@@ -103,15 +113,16 @@ internal class OldDatalakeCollector : CollectorBase
 						}
 					}
 
+					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid]).ToList();
+					foreach (var v in collectedValues)
+						_previousValues[v.Guid] = v;
+
 					CollectValues?.Invoke(this, collectedValues);
 
 					foreach (var tag in updatedItems)
 					{
 						tag.LastAsk = response.Timestamp;
 					}
-
-					_logger.LogDebug("Опрос Datalake (old) [{id}][{address}], получено значений: {count}",
-						_id, _address, response.Tags.Length);
 				}
 			}
 			catch (Exception ex)

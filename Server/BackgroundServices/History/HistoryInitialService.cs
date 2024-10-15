@@ -1,6 +1,5 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Repositories;
-using Datalake.Database.Utilities;
 
 namespace Datalake.Server.BackgroundServices.History;
 

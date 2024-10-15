@@ -1,6 +1,5 @@
 ﻿using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.Sources;
-using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Collectors;
 using Datalake.Server.Services.Receiver;
@@ -10,8 +9,7 @@ namespace Datalake.Server.BackgroundServices.Collector;
 /// <summary>
 /// Получение нужного сборщика данных для выбранного источника
 /// </summary>
-/// <param name="receiverService">Служба запроса данных из источника</param>
-public class CollectorFactory(ReceiverService receiverService)
+public class CollectorFactory(ReceiverService receiverService, ILoggerFactory loggerFactory)
 {
 	/// <summary>
 	/// Получение сборщика для источника
@@ -23,21 +21,21 @@ public class CollectorFactory(ReceiverService receiverService)
 		return source.Type switch
 		{
 			SourceType.Inopc
-				=> new InopcCollector(receiverService, source, LogManager.CreateLogger<InopcCollector>()),
+				=> new InopcCollector(receiverService, source, loggerFactory.CreateLogger<InopcCollector>()),
 
 			SourceType.Datalake
-				=> new OldDatalakeCollector(receiverService, source, LogManager.CreateLogger<OldDatalakeCollector>()),
+				=> new OldDatalakeCollector(receiverService, source, loggerFactory.CreateLogger<OldDatalakeCollector>()),
 
 			SourceType.DatalakeCore_v1
-				=> new DatalakeCollector(receiverService, source, LogManager.CreateLogger<DatalakeCollector>()),
+				=> new DatalakeCollector(receiverService, source, loggerFactory.CreateLogger<DatalakeCollector>()),
 
 			SourceType.Custom => (CustomSource)source.Id switch
 			{
 				CustomSource.Calculated
-					=> new CalculateCollector(source, LogManager.CreateLogger<CalculateCollector>()),
+					=> new CalculateCollector(source, loggerFactory.CreateLogger<CalculateCollector>()),
 
 				CustomSource.System
-					=> new SystemCollector(source, LogManager.CreateLogger<SystemCollector>()),
+					=> new SystemCollector(source, loggerFactory.CreateLogger<SystemCollector>()),
 
 				CustomSource.Manual => null,
 				_ => null

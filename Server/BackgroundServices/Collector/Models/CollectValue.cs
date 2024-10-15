@@ -31,4 +31,31 @@ public struct CollectValue
 	/// Достоверность значения
 	/// </summary>
 	public TagQuality Quality { get; set; }
+
+	/// <inheritdoc/>
+	public override readonly int GetHashCode()
+	{
+		int hashQuality = Quality.GetHashCode();
+		int hashValue = Value?.GetHashCode() ?? 0;
+
+		return hashQuality ^ hashValue;
+	}
+
+	/// <inheritdoc/>
+	public override readonly bool Equals(object? obj)
+	{
+		return obj is CollectValue history && GetHashCode() == history.GetHashCode();
+	}
+
+	/// <inheritdoc/>
+	public static bool operator ==(CollectValue left, CollectValue right)
+	{
+		return left.Equals(right);
+	}
+
+	/// <inheritdoc/>
+	public static bool operator !=(CollectValue left, CollectValue right)
+	{
+		return !(left == right);
+	}
 }

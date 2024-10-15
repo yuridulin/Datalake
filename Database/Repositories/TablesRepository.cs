@@ -28,7 +28,8 @@ public class TablesRepository(DatalakeContext db)
 
 		bool hasInitial = await table.AnyAsync(x => x.Quality == TagQuality.Bad_LOCF || x.Quality == TagQuality.Good_LOCF);
 
-		if (!hasInitial) await WriteInitialValuesAsync(date);
+		if (!hasInitial)
+			await WriteInitialValuesAsync(date);
 	}
 
 	public static DateTime? GetNextTable(DateTime date)
@@ -85,7 +86,7 @@ public class TablesRepository(DatalakeContext db)
 
 		return table;
 	}
-	
+
 	async Task WriteInitialValuesAsync(DateTime date)
 	{
 		var table = db.TablesRepository.GetHistoryTable(date);

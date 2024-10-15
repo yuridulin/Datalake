@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Datalake.ApiClasses.Models.UserGroups;
+﻿namespace Datalake.ApiClasses.Models.UserGroups;
 
 /// <summary>
 /// Информация о группе пользователей

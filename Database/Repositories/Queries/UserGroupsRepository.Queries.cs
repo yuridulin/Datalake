@@ -101,7 +101,7 @@ public partial class UserGroupsRepository
 						FullName = u.FullName,
 						AccessType = rel.AccessType,
 					},
-				AccessRights = 
+				AccessRights =
 					from rights in db.AccessRights.InnerJoin(x => x.UserGroupGuid == usergroup.Guid)
 					from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId)
 					from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)

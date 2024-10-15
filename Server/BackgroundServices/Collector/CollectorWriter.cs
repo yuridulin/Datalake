@@ -1,7 +1,6 @@
 ﻿using Datalake.ApiClasses.Models.Values;
 using Datalake.Database;
 using Datalake.Server.BackgroundServices.Collector.Models;
-using System.Diagnostics;
 
 namespace Datalake.Server.BackgroundServices.Collector;
 
@@ -22,23 +21,46 @@ public class CollectorWriter(
 	{
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			var buffer = Queue.Take(1000).ToArray();
+			CollectValue[] buffer;
+			int allCount = Queue.Count;
+
+			if (Queue.Count == 0)
+			{
+				await Task.Delay(250, stoppingToken);
+				continue;
+			}
+			else if (Queue.Count > 1000)
+			{
+				buffer = Queue.Take(1000).ToArray();
+				lock (Lock)
+				{
+					Queue = Queue.Skip(1000).ToList();
+				}
+			}
+			else
+			{
+				buffer = [.. Queue];
+				lock (Lock)
+				{
+					Queue = [];
+				}
+			}
 
 			if (buffer.Length > 0)
 			{
 				try
 				{
-					logger.LogInformation("Запись значений из очереди: {} шт.", buffer.Length);
+					logger.LogInformation("Запись значений из очереди: {length} из {all}", buffer.Length, allCount);
 					await WriteValuesAsync(buffer);
-
-					lock (Lock)
-					{
-						Queue = Queue.Skip(1000).ToList();
-					}
 				}
 				catch (Exception ex)
 				{
 					logger.LogError("Ошибка при записи значений: {message}", ex.Message);
+
+					lock (Lock)
+					{
+						Queue.AddRange(buffer);
+					}
 				}
 			}
 
@@ -58,9 +80,6 @@ public class CollectorWriter(
 
 	private async Task WriteValuesAsync(IEnumerable<CollectValue> values)
 	{
-		logger.LogInformation("Событие записи значений");
-		var sw = Stopwatch.StartNew();
-
 		using var scope = serviceScopeFactory.CreateScope();
 		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
@@ -75,8 +94,5 @@ public class CollectorWriter(
 			.ToArray();
 
 		await db.ValuesRepository.WriteValuesAsSystemAsync(writeValues);
-
-		sw.Stop();
-		logger.LogInformation("Событие записи значений: {ms} мс", sw.Elapsed.TotalMilliseconds);
 	}
 }

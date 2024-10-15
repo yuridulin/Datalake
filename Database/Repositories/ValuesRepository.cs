@@ -5,10 +5,8 @@ using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Values;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models;
-using Datalake.Database.Utilities;
 using LinqToDB;
 using LinqToDB.Data;
-using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
@@ -57,8 +55,8 @@ public class ValuesRepository(DatalakeContext db)
 			}
 		}
 
-		var query = 
-			from rt in 
+		var query =
+			from rt in
 				from th in table
 				where tags.Contains(th.TagId)
 				select new
@@ -165,9 +163,6 @@ public class ValuesRepository(DatalakeContext db)
 	#endregion
 
 
-
-	static readonly ILogger logger = LogManager.CreateLogger<ValuesRepository>();
-
 	static object locker = new();
 
 	#region Запись значений
@@ -238,9 +233,6 @@ public class ValuesRepository(DatalakeContext db)
 
 	async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
 	{
-		var sw = Stopwatch.StartNew();
-		logger.LogInformation("Событие записи архивных значений");
-
 		if (!records.Any())
 			return;
 
@@ -256,9 +248,6 @@ public class ValuesRepository(DatalakeContext db)
 				await UpdateInitialValuesInFuture(db, records, g);
 			}
 		}
-
-		sw.Stop();
-		logger.LogInformation("Запись архивных значений: [{n}] за {ms} мс", records.Count(), sw.Elapsed.TotalMilliseconds);
 	}
 
 	private static async Task UpdateInitialValuesInFuture(
@@ -266,9 +255,6 @@ public class ValuesRepository(DatalakeContext db)
 		IEnumerable<TagHistory> records,
 		IGrouping<DateTime, TagHistory> g)
 	{
-		var sw = Stopwatch.StartNew();
-		logger.LogInformation("Обновление initial значений в будущих таблицах");
-
 		DateTime date = g.Key;
 
 		do
@@ -318,9 +304,6 @@ public class ValuesRepository(DatalakeContext db)
 			date = nextDate.Value;
 		}
 		while (true);
-
-		sw.Stop();
-		logger.LogInformation("Обновление initial значений в будущих таблицах: [{n}] за {ms} мс", records.Count(), sw.Elapsed.TotalMilliseconds);
 	}
 
 	#endregion
@@ -483,9 +466,8 @@ public class ValuesRepository(DatalakeContext db)
 										}
 									];
 								}
-								catch (Exception e)
+								catch
 								{
-									logger.LogError("Ошибка при агрегировании: {message}", e.Message);
 								}
 							}
 							else
@@ -521,8 +503,6 @@ public class ValuesRepository(DatalakeContext db)
 		DateTime old,
 		DateTime young)
 	{
-		logger.LogInformation("Событие чтения архивных значений");
-
 		var firstDate = old.Date;
 		var lastDate = young.Date;
 		var seekDate = lastDate;
@@ -618,10 +598,6 @@ public class ValuesRepository(DatalakeContext db)
 			values = await megaQuery.ToListAsync();
 		}
 
-		d.Stop();
-		logger.LogInformation("Чтение значений из БД: {ms} мс", d.Elapsed.TotalMilliseconds);
-
-
 		// заглушки, если значения так и не были проинициализированы
 		d = Stopwatch.StartNew();
 		var lost = identifiers
@@ -643,9 +619,6 @@ public class ValuesRepository(DatalakeContext db)
 		DateTime young,
 		int resolution)
 	{
-		var d = Stopwatch.StartNew();
-		logger.LogInformation("Протяжка данных...");
-
 		var timeRange = (young - old).TotalMilliseconds;
 		var continuous = new List<TagHistory>();
 		DateTime stepDate = old;
@@ -679,9 +652,6 @@ public class ValuesRepository(DatalakeContext db)
 			stepDate = stepDate.AddMilliseconds(resolution);
 		}
 		while (stepDate <= young);
-
-		d.Stop();
-		logger.LogInformation("Протяжка завершена: {ms} мс", d.Elapsed.TotalMilliseconds);
 
 		return continuous;
 	}

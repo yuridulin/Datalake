@@ -1,8 +1,6 @@
 using Datalake.ApiClasses.Exceptions.Base;
 using Datalake.Database;
-using Datalake.Database.Extensions;
 using Datalake.Database.Repositories;
-using Datalake.Database.Utilities;
 using Datalake.Server.BackgroundServices.Collector;
 using Datalake.Server.BackgroundServices.History;
 using Datalake.Server.BackgroundServices.SettingsHandler;
@@ -12,7 +10,6 @@ using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using LinqToDB.AspNet;
-using LinqToDB.AspNet.Logging;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
@@ -47,8 +44,6 @@ namespace Datalake.Server
 				options.SchemaSettings.UseXmlDocumentation = true;
 				options.SchemaSettings.SchemaProcessors.Add(new XEnumVarnamesNswagSchemaProcessor());
 			});
-
-			builder.Services.AddLogging(/*options => options.AddSerilog()*/);
 			builder.Services.AddEndpointsApiExplorer();
 
 			ConfigureDatabase(builder);
@@ -78,7 +73,6 @@ namespace Datalake.Server
 						AuthConstants.TokenHeader,
 					]);
 			});
-
 			app.UseMiddleware<AuthMiddleware>();
 
 			ConfigureErrorPage(app);
@@ -108,17 +102,13 @@ namespace Datalake.Server
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 			{
 				options
-					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
-					.UseLoggerFactory(LogManager.MainLoggerFactory);
+					.UseNpgsql(connectionString, config => config.CommandTimeout(300));
 			});
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
 					.UsePostgreSQL(connectionString ?? throw new Exception("Connection string not provided"))
-					.UseLoggerFactory(LogManager.MainLoggerFactory)
 			);
-
-			AppContext.SetSwitch("Npgsql.EnableDiagnostics", true);
 		}
 
 		static void ConfigureServices(WebApplicationBuilder builder)
