@@ -2,7 +2,6 @@
 using Datalake.Database;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Diagnostics;
 
 namespace Datalake.Server.Controllers;
 
@@ -29,22 +28,8 @@ public class ValuesController(DatalakeContext db, ILogger<ValuesController> logg
 		[BindRequired, FromBody] ValuesRequest[] requests,
 		Guid? energoId = null)
 	{
-#if DEBUG
-		var sw = Stopwatch.StartNew();
-#endif
 		var responses = await db.ValuesRepository.GetValuesAsync(requests, energoId: energoId);
 
-#if DEBUG
-		sw.Stop();
-		var ms = Math.Round(sw.Elapsed.TotalMilliseconds);
-		logger.LogInformation("Чтение значений: {ms} мс", ms);
-		if (ms > 1000)
-		{
-			logger.LogWarning("Долгий запрос: {requests} => {values}",
-				System.Text.Json.JsonSerializer.Serialize(requests),
-				responses.SelectMany(x => x.Tags.SelectMany(t => t.Values)).Count());
-		}
-#endif
 		return responses;
 	}
 

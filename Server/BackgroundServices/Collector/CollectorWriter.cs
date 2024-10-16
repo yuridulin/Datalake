@@ -19,6 +19,9 @@ public class CollectorWriter(
 	/// <param name="stoppingToken">Токен остановки</param>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		using var scope = serviceScopeFactory.CreateScope();
+		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+
 		while (!stoppingToken.IsCancellationRequested)
 		{
 			CollectValue[] buffer;
@@ -50,8 +53,19 @@ public class CollectorWriter(
 			{
 				try
 				{
-					logger.LogInformation("Запись значений из очереди: {length} из {all}", buffer.Length, allCount);
-					await WriteValuesAsync(buffer);
+					var writeValues = buffer
+						.Select(x => new ValueWriteRequest
+						{
+							Guid = x.Guid,
+							Date = x.DateTime,
+							Value = x.Value,
+							Quality = x.Quality,
+						})
+						.ToArray();
+
+					var ms = await db.ValuesRepository.WriteValuesAsSystemAsync(writeValues);
+
+					logger.LogInformation("Запись значений из очереди: {length} из {all} за {ms}мс", buffer.Length, allCount, ms);
 				}
 				catch (Exception ex)
 				{
@@ -77,22 +91,4 @@ public class CollectorWriter(
 	/// Объект блокировки операций с очередью
 	/// </summary>
 	public static readonly object Lock = new();
-
-	private async Task WriteValuesAsync(IEnumerable<CollectValue> values)
-	{
-		using var scope = serviceScopeFactory.CreateScope();
-		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-
-		var writeValues = values
-			.Select(x => new ValueWriteRequest
-			{
-				Guid = x.Guid,
-				Date = x.DateTime,
-				Value = x.Value,
-				Quality = x.Quality,
-			})
-			.ToArray();
-
-		await db.ValuesRepository.WriteValuesAsSystemAsync(writeValues);
-	}
 }

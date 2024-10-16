@@ -154,10 +154,15 @@ public class ValuesRepository(DatalakeContext db)
 		return await WriteValuesAsync(requests, overrided);
 	}
 
-	public async Task WriteValuesAsSystemAsync(
+	public async Task<int> WriteValuesAsSystemAsync(
 		ValueWriteRequest[] requests)
 	{
+		var stopwatch = Stopwatch.StartNew();
+
 		await WriteValuesAsync(requests, false);
+
+		stopwatch.Stop();
+		return Convert.ToInt32(stopwatch.Elapsed.TotalMilliseconds);
 	}
 
 	#endregion
