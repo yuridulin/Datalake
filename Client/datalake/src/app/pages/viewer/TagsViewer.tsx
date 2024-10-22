@@ -336,7 +336,7 @@ export default function TagsViewer() {
 						title='Тег'
 						dataIndex='guid'
 						render={(guid, row: ValueType) => (
-							<NavLink to={routes.tags.toTag(guid)}>
+							<NavLink to={routes.tags.toTagForm(guid)}>
 								<Button size='small'>{row.name}</Button>
 							</NavLink>
 						)}

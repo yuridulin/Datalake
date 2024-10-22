@@ -3,6 +3,7 @@ import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
 import AccessRulesForm from '../pages/access/AccessRulesForm'
 import SettingsPage from '../pages/admin/SettingsPage'
+import BlockAccessForm from '../pages/blocks/block/access/BlockAccessForm'
 import BlockForm from '../pages/blocks/block/BlockForm'
 import BlockView from '../pages/blocks/block/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'
@@ -59,7 +60,7 @@ const router = createBrowserRouter([
 						element: <UserCreate />,
 					},
 					{
-						path: routes.users.view,
+						path: routes.users.edit,
 						element: <UserForm />,
 					},
 				],
@@ -97,36 +98,36 @@ const router = createBrowserRouter([
 			},
 			// sources
 			{
-				path: '/sources',
+				path: routes.sources.root,
 				children: [
 					{
-						path: '/sources/',
+						path: routes.sources.list,
 						element: <SourcesList />,
 					},
 					{
-						path: '/sources/:id',
+						path: routes.sources.edit,
 						element: <SourceForm />,
 					},
 				],
 			},
 			// tags
 			{
-				path: '/tags',
+				path: routes.tags.root,
 				children: [
 					{
-						path: '/tags/',
+						path: routes.tags.list,
 						element: <TagsList />,
 					},
 					{
-						path: '/tags/manual/',
+						path: routes.tags.manual,
 						element: <TagsManualList />,
 					},
 					{
-						path: '/tags/calc/',
+						path: routes.tags.calc,
 						element: <TagsCalculatedList />,
 					},
 					{
-						path: '/tags/:id',
+						path: routes.tags.edit,
 						element: <TagForm />,
 					},
 				],
@@ -143,23 +144,27 @@ const router = createBrowserRouter([
 			},
 			// blocks
 			{
-				path: '/blocks',
+				path: routes.blocks.root,
 				children: [
 					{
-						path: '/blocks/',
+						path: routes.blocks.list,
 						element: <BlocksList />,
 					},
 					{
-						path: '/blocks/mover/',
+						path: routes.blocks.mover,
 						element: <BlocksMover />,
 					},
 					{
-						path: '/blocks/view/:id',
+						path: routes.blocks.view,
 						element: <BlockView />,
 					},
 					{
-						path: '/blocks/edit/:id',
+						path: routes.blocks.edit,
 						element: <BlockForm />,
+					},
+					{
+						path: routes.blocks.access.edit,
+						element: <BlockAccessForm />,
 					},
 				],
 			},

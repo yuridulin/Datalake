@@ -26,7 +26,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'sources-list',
 				label: (
-					<NavLink to={'/sources'}>
+					<NavLink to={routes.sources.list}>
 						<SourceIcon />
 						&emsp;Список источников
 					</NavLink>
@@ -42,7 +42,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'blocks-tree',
 				label: (
-					<NavLink to={'/blocks'}>
+					<NavLink to={routes.blocks.list}>
 						<BlockIcon />
 						&emsp;Дерево блоков
 					</NavLink>
@@ -58,7 +58,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'tags',
 				label: (
-					<NavLink to={'/tags'}>
+					<NavLink to={routes.tags.list}>
 						<TagIcon />
 						&emsp;Все теги
 					</NavLink>
@@ -67,7 +67,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: CustomSource.Manual,
 				label: (
-					<NavLink to={'/tags/manual/'}>
+					<NavLink to={routes.tags.manual}>
 						<EditOutlined style={{ color: blue[4] }} />
 						&emsp;Мануальные теги
 					</NavLink>
@@ -76,7 +76,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: CustomSource.Calculated,
 				label: (
-					<NavLink to={'/tags/calc/'}>
+					<NavLink to={routes.tags.calc}>
 						<CalculatorOutlined style={{ color: blue[4] }} />
 						&emsp;Вычисляемые теги
 					</NavLink>
@@ -92,7 +92,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'viewer-tags',
 				label: (
-					<NavLink to={routes.viewer.root + routes.viewer.tagsViewer}>
+					<NavLink to={routes.viewer.tagsViewer}>
 						<PlaySquareOutlined style={{ color: blue[4] }} />
 						&emsp;Запросы
 					</NavLink>

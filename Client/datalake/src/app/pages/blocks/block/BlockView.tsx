@@ -1,8 +1,7 @@
 import { Button, Descriptions, DescriptionsProps, Divider, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useEffect, useState } from 'react'
-import { NavLink, useNavigate, useParams } from 'react-router-dom'
-import { AccessObject } from '../../../../api/models/accessObject'
+import { NavLink, useParams } from 'react-router-dom'
 import api from '../../../../api/swagger-api'
 import {
 	BlockChildInfo,
@@ -21,7 +20,6 @@ type BlockValues = {
 
 export default function BlockView() {
 	const { id } = useParams()
-	const navigate = useNavigate()
 
 	const [block, setBlock] = useState({} as BlockFullInfo)
 	const [values, setValues] = useState({} as BlockValues)
@@ -75,21 +73,18 @@ export default function BlockView() {
 		<>
 			<PageHeader
 				left={
-					<Button onClick={() => navigate('/blocks')}>
-						Вернуться
-					</Button>
+					<NavLink to={routes.blocks.list}>
+						<Button>К дереву блоков</Button>
+					</NavLink>
 				}
 				right={
 					<>
-						<Button onClick={() => navigate('/blocks/edit/' + id)}>
-							Редактирование блока
-						</Button>
+						<NavLink to={routes.blocks.toEditBlock(Number(id))}>
+							<Button>Редактирование блока</Button>
+						</NavLink>
 						&ensp;
 						<NavLink
-							to={routes.access.toForm(
-								AccessObject.Block,
-								Number(id),
-							)}
+							to={routes.blocks.toBlockAccessForm(Number(id))}
 						>
 							<Button>Редактирование разрешений</Button>
 						</NavLink>
@@ -116,7 +111,7 @@ export default function BlockView() {
 					dataIndex='guid'
 					title='Название'
 					render={(_, record: BlockNestedTagInfo) => (
-						<NavLink to={routes.tags.toTag(record.guid)}>
+						<NavLink to={routes.tags.toTagForm(record.guid)}>
 							<Button title={record.tagName} size='small'>
 								{record.name || <i>имя не задано</i>}
 							</Button>

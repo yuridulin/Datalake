@@ -25,7 +25,7 @@ const columns: ColumnsType<UserGroupUsersInfo> = [
 			!record.guid ? (
 				<>?</>
 			) : (
-				<NavLink to={routes.users.toUser(record.guid)}>
+				<NavLink to={routes.users.toUserForm(record.guid)}>
 					<Button size='small'>{record.fullName}</Button>
 				</NavLink>
 			),

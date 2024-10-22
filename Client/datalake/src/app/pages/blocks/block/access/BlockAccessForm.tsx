@@ -8,7 +8,7 @@ import api from '../../../../../api/swagger-api'
 import {
 	AccessRightsIdInfo,
 	AccessType,
-	UserGroupInfo,
+	BlockSimpleInfo,
 } from '../../../../../api/swagger/data-contracts'
 import AccessTypeEl from '../../../../components/AccessTypeEl'
 import PageHeader from '../../../../components/PageHeader'
@@ -16,21 +16,17 @@ import routes from '../../../../router/routes'
 
 type FormType = AccessRightsIdInfo & {
 	key: string
-	choosedObject: 'source' | 'block' | 'tag'
+	choosedObject: 'group' | 'user'
 }
 
 const objectOptions: DefaultOptionType[] = [
 	{
-		value: 'source',
-		label: 'Источник',
+		value: 'group',
+		label: 'Группа пользователей',
 	},
 	{
-		value: 'block',
-		label: 'Блок',
-	},
-	{
-		value: 'tag',
-		label: 'Тег',
+		value: 'user',
+		label: 'Пользователь',
 	},
 ]
 
@@ -57,63 +53,51 @@ const accessOptions: DefaultOptionType[] = [
 	},
 ]
 
-const UserGroupAccessForm = () => {
+const BlockAccessForm = () => {
 	const { id } = useParams()
 
-	const [group, setGroup] = useState({} as UserGroupInfo)
+	const [block, setBlock] = useState({} as BlockSimpleInfo)
 	const [form, setForm] = useState([] as FormType[])
 	const [err, setErr] = useState(null as string | null)
 	const [loading, setLoading] = useState(false)
-	const [sources, setSources] = useState([] as DefaultOptionType[])
-	const [blocks, setBlocks] = useState([] as DefaultOptionType[])
-	const [tags, setTags] = useState([] as DefaultOptionType[])
+	const [userGroups, setUserGroups] = useState([] as DefaultOptionType[])
+	const [users, setUsers] = useState([] as DefaultOptionType[])
 
 	const getRights = () => {
 		if (!id) return
 		setLoading(true)
 		const loaders = [
-			api.userGroupsRead(String(id)).then((res) => {
-				setGroup(res.data)
+			api.blocksRead(Number(id)).then((res) => {
+				setBlock(res.data)
 			}),
 			api
-				.sourcesReadAll()
+				.userGroupsReadAll()
 				.then((res) =>
-					setSources(
-						res.data.map((x) => ({ label: x.name, value: x.id })),
+					setUserGroups(
+						res.data.map((x) => ({ label: x.name, value: x.guid })),
 					),
 				),
-			api
-				.blocksReadAll()
-				.then((res) =>
-					setBlocks(
-						res.data.map((x) => ({ label: x.name, value: x.id })),
-					),
+			api.usersReadAll().then((res) =>
+				setUsers(
+					res.data.map((x) => ({
+						label: x.fullName,
+						value: x.guid,
+					})),
 				),
+			),
 			api
-				.tagsReadAll()
-				.then((res) =>
-					setTags(
-						res.data.map((x) => ({ label: x.name, value: x.id })),
-					),
-				),
-			api
-				.accessGet({ userGroup: String(id) })
+				.accessGet({ block: Number(id) })
 				.then((res) => {
 					setForm(
 						res.data
 							.filter((x) => !x.isGlobal)
 							.map((x) => ({
-								sourceId: x.source?.id ?? null,
-								blockId: x.block?.id ?? null,
-								tagId: x.tag?.id ?? null,
+								userGroupGuid: x.userGroup?.guid ?? null,
+								userGuid: x.user?.guid ?? null,
 								accessType: x.accessType,
 								key: String(x.id),
 								choosedObject:
-									x.source != null
-										? 'source'
-										: x.block != null
-										? 'block'
-										: 'tag',
+									x.userGroup != null ? 'group' : 'user',
 							})),
 					)
 				})
@@ -124,17 +108,14 @@ const UserGroupAccessForm = () => {
 
 	const updateRights = () => {
 		api.accessApplyChanges({
-			userGroupGuid: String(id),
+			blockId: Number(id),
 			rights: form.map((x) => {
 				switch (x.choosedObject) {
-					case 'source':
-						return { ...x, blockId: null, tagId: null }
+					case 'group':
+						return { ...x, userGuid: null }
 
-					case 'block':
-						return { ...x, sourceId: null, tagId: null }
-
-					case 'tag':
-						return { ...x, blockId: null, sourceId: null }
+					case 'user':
+						return { ...x, userGroupGuid: null }
 				}
 			}),
 		})
@@ -152,7 +133,7 @@ const UserGroupAccessForm = () => {
 								...form,
 								{
 									key: String(Date.now()),
-									choosedObject: 'block',
+									choosedObject: 'group',
 									accessType: AccessType.NotSet,
 								},
 							])
@@ -231,19 +212,19 @@ const UserGroupAccessForm = () => {
 			title: 'Объект',
 			render: (_, record) => {
 				switch (record.choosedObject) {
-					case 'source':
+					case 'group':
 						return (
 							<Select
-								options={sources}
+								options={userGroups}
 								style={{ width: '100%' }}
-								value={record.sourceId}
+								value={record.userGroupGuid}
 								onChange={(value) => {
 									setForm(
 										form.map((x) =>
 											x.key === record.key
 												? {
 														...x,
-														sourceId: value,
+														userGroupGuid: value,
 												  }
 												: x,
 										),
@@ -251,11 +232,11 @@ const UserGroupAccessForm = () => {
 								}}
 							></Select>
 						)
-					case 'block':
+					case 'user':
 						return (
 							<Select
-								options={blocks}
-								value={record.blockId}
+								options={users}
+								value={record.userGuid}
 								style={{ width: '100%' }}
 								onChange={(value) => {
 									setForm(
@@ -263,27 +244,7 @@ const UserGroupAccessForm = () => {
 											x.key === record.key
 												? {
 														...x,
-														blockId: value,
-												  }
-												: x,
-										),
-									)
-								}}
-							></Select>
-						)
-					case 'tag':
-						return (
-							<Select
-								options={tags}
-								value={record.tagId}
-								style={{ width: '100%' }}
-								onChange={(value) => {
-									setForm(
-										form.map((x) =>
-											x.key === record.key
-												? {
-														...x,
-														tagId: value,
+														userGuid: value,
 												  }
 												: x,
 										),
@@ -306,8 +267,8 @@ const UserGroupAccessForm = () => {
 		<>
 			<PageHeader
 				left={
-					<NavLink to={routes.userGroups.toUserGroup(String(id))}>
-						<Button>К просмотру группы</Button>
+					<NavLink to={routes.blocks.toViewBlock(Number(id))}>
+						<Button>К просмотру блока</Button>
 					</NavLink>
 				}
 				right={
@@ -316,7 +277,7 @@ const UserGroupAccessForm = () => {
 					</Button>
 				}
 			>
-				Разрешения, выдаваемые группе "{group.name}"
+				Разрешения на доступ к блоку "{block.name}"
 			</PageHeader>
 			<Table
 				size='small'
@@ -329,4 +290,4 @@ const UserGroupAccessForm = () => {
 	)
 }
 
-export default UserGroupAccessForm
+export default BlockAccessForm

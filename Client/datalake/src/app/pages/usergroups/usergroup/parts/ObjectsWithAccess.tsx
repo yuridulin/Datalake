@@ -42,7 +42,7 @@ const columns: ColumnsType<AccessRightsForOneInfo> = [
 		render: (_, record) => {
 			if (record.source)
 				return (
-					<NavLink to={routes.sources.toViewSource(record.source.id)}>
+					<NavLink to={routes.sources.toEditSource(record.source.id)}>
 						<Button size='small'>
 							<SourceIcon /> {record.source.name}
 						</Button>
@@ -58,7 +58,7 @@ const columns: ColumnsType<AccessRightsForOneInfo> = [
 				)
 			if (record.tag)
 				return (
-					<NavLink to={routes.tags.toTag(record.tag.guid)}>
+					<NavLink to={routes.tags.toTagForm(record.tag.guid)}>
 						<Button size='small'>
 							<TagIcon /> {record.tag.name}
 						</Button>

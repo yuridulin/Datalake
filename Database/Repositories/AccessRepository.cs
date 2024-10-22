@@ -148,6 +148,7 @@ public partial class AccessRepository(DatalakeContext db)
 				.BulkCopyAsync(rights.Select(x => new AccessRights
 				{
 					IsGlobal = false,
+					AccessType = x.AccessType,
 					SourceId = sourceId,
 					UserGroupGuid = x.UserGroupGuid,
 					UserGuid = x.UserGuid,
@@ -176,6 +177,7 @@ public partial class AccessRepository(DatalakeContext db)
 				.BulkCopyAsync(rights.Select(x => new AccessRights
 				{
 					IsGlobal = false,
+					AccessType = x.AccessType,
 					BlockId = blockId,
 					UserGroupGuid = x.UserGroupGuid,
 					UserGuid = x.UserGuid,
@@ -204,6 +206,7 @@ public partial class AccessRepository(DatalakeContext db)
 				.BulkCopyAsync(rights.Select(x => new AccessRights
 				{
 					IsGlobal = false,
+					AccessType = x.AccessType,
 					TagId = tagId,
 					UserGroupGuid = x.UserGroupGuid,
 					UserGuid = x.UserGuid,

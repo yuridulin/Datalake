@@ -19,7 +19,7 @@ export default function CreatedTagLinker({
 					<>
 						Создан тег:
 						<NavLink
-							to={routes.tags.toTag(tag.guid)}
+							to={routes.tags.toTagForm(tag.guid)}
 							target='_blank'
 						>
 							<Button>{tag.name}</Button>
