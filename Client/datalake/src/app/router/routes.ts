@@ -21,8 +21,11 @@ const routes = {
 		root: '/user-groups',
 		list: '/user-groups/',
 		move: '/user-groups/move',
-		view: '/user-groups/:id',
-		edit: '/user-groups/edit/:id',
+		view: '/user-groups/:id/view',
+		edit: '/user-groups/:id/edit',
+		access: {
+			edit: '/user-groups/:id/edit/access',
+		},
 		toList() {
 			return this.list
 		},
@@ -31,6 +34,9 @@ const routes = {
 		},
 		toUserGroupEdit(guid: string) {
 			return withId(this.edit, guid)
+		},
+		toUserGroupAccessForm(guid: string) {
+			return withId(this.access.edit, guid)
 		},
 	},
 	auth: {

@@ -1,12 +1,9 @@
 import { blue } from '@ant-design/colors'
 import {
-	ApiOutlined,
 	CalculatorOutlined,
-	ContainerOutlined,
 	EditOutlined,
 	PlaySquareOutlined,
 	SettingOutlined,
-	TagOutlined,
 	TeamOutlined,
 	UnorderedListOutlined,
 	UserOutlined,
@@ -15,6 +12,9 @@ import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { NavLink } from 'react-router-dom'
 import { CustomSource } from '../../api/models/customSource'
+import BlockIcon from '../icons/BlockIcon'
+import SourceIcon from '../icons/SourceIcon'
+import TagIcon from '../icons/TagIcon'
 import routes from '../router/routes'
 
 const items: ItemType<MenuItemType>[] = [
@@ -27,7 +27,7 @@ const items: ItemType<MenuItemType>[] = [
 				key: 'sources-list',
 				label: (
 					<NavLink to={'/sources'}>
-						<ApiOutlined style={{ color: blue[4] }} />
+						<SourceIcon />
 						&emsp;Список источников
 					</NavLink>
 				),
@@ -43,7 +43,7 @@ const items: ItemType<MenuItemType>[] = [
 				key: 'blocks-tree',
 				label: (
 					<NavLink to={'/blocks'}>
-						<ContainerOutlined style={{ color: blue[4] }} />
+						<BlockIcon />
 						&emsp;Дерево блоков
 					</NavLink>
 				),
@@ -59,7 +59,7 @@ const items: ItemType<MenuItemType>[] = [
 				key: 'tags',
 				label: (
 					<NavLink to={'/tags'}>
-						<TagOutlined style={{ color: blue[4] }} />
+						<TagIcon />
 						&emsp;Все теги
 					</NavLink>
 				),

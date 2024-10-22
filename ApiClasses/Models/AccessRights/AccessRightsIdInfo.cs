@@ -1,10 +1,22 @@
-﻿namespace Datalake.ApiClasses.Models.AccessRights;
+﻿using Datalake.ApiClasses.Enums;
+
+namespace Datalake.ApiClasses.Models.AccessRights;
 
 /// <summary>
 /// Измененное разрешение, которое нужно обновить в БД
 /// </summary>
-public class AccessRightsApplyRequest
+public class AccessRightsIdInfo
 {
+	/// <summary>
+	/// Идентификатор существующего разрешения
+	/// </summary>
+	public int? Id { get; set; }
+
+	/// <summary>
+	/// Уровень доступа
+	/// </summary>
+	public AccessType AccessType { get; set; }
+
 	/// <summary>
 	/// Идентификатор пользователя, которому выдается разрешение
 	/// </summary>
@@ -29,9 +41,4 @@ public class AccessRightsApplyRequest
 	/// Идентификатор тега, на который выдается разрешение
 	/// </summary>
 	public int? TagId { get; set; }
-
-	/// <summary>
-	/// Список прав доступа
-	/// </summary>
-	public required AccessRightsIdInfo[] Rights { get; set; }
 }

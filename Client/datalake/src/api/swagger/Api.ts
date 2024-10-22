@@ -10,7 +10,7 @@
  */
 
 import {
-	AccessApplyChangesPayload,
+	AccessRightsApplyRequest,
 	AccessRightsForOneInfo,
 	AccessRightsInfo,
 	BlockFullInfo,
@@ -98,11 +98,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 *
 	 * @tags Access
 	 * @name AccessApplyChanges
-	 * @summary Пакетное изменение разрешений
+	 * @summary Изменение разрешений для группы пользователей
 	 * @request POST:/api/Access
 	 * @response `200` `File`
 	 */
-	accessApplyChanges = (data: AccessApplyChangesPayload, params: RequestParams = {}) =>
+	accessApplyChanges = (data: AccessRightsApplyRequest, params: RequestParams = {}) =>
 		this.request<File, any>({
 			path: `/api/Access`,
 			method: 'POST',

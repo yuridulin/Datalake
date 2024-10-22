@@ -17,6 +17,7 @@ import TagForm from '../pages/tags/tag/TagForm'
 import TagsCalculatedList from '../pages/tags/TagsCalculatedList'
 import TagsList from '../pages/tags/TagsList'
 import TagsManualList from '../pages/tags/TagsManualList'
+import UserGroupAccessForm from '../pages/usergroups/usergroup/access/UserGroupAccessForm'
 import UserGroupForm from '../pages/usergroups/usergroup/UserGroupForm'
 import UserGroupView from '../pages/usergroups/usergroup/UserGroupView'
 import UserGroupsTreeList from '../pages/usergroups/UserGroupsTreeList'
@@ -82,6 +83,10 @@ const router = createBrowserRouter([
 					{
 						path: routes.userGroups.edit,
 						element: <UserGroupForm />,
+					},
+					{
+						path: routes.userGroups.access.edit,
+						element: <UserGroupAccessForm />,
 					},
 				],
 			},

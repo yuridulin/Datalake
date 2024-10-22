@@ -1,7 +1,6 @@
 import { Button, Descriptions, DescriptionsProps, Spin, Tabs } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
-import { AccessObject } from '../../../../api/models/accessObject'
 import api from '../../../../api/swagger-api'
 import {
 	AccessType,
@@ -81,8 +80,7 @@ export default function UserGroupView() {
 						</NavLink>
 						&ensp;
 						<NavLink
-							to={routes.access.toForm(
-								AccessObject.UserGroup,
+							to={routes.userGroups.toUserGroupAccessForm(
 								String(id),
 							)}
 						>

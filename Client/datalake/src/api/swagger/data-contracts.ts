@@ -144,6 +144,37 @@ export enum AccessType {
 /** Измененное разрешение, которое нужно обновить в БД */
 export interface AccessRightsApplyRequest {
 	/**
+	 * Идентификатор пользователя, которому выдается разрешение
+	 * @format guid
+	 */
+	userGuid?: string | null
+	/**
+	 * Идентификатор группы пользователей, которой выдается разрешение
+	 * @format guid
+	 */
+	userGroupGuid?: string | null
+	/**
+	 * Идентификатор источника, на который выдается разрешение
+	 * @format int32
+	 */
+	sourceId?: number | null
+	/**
+	 * Идентификатор блока, на который выдается разрешение
+	 * @format int32
+	 */
+	blockId?: number | null
+	/**
+	 * Идентификатор тега, на который выдается разрешение
+	 * @format int32
+	 */
+	tagId?: number | null
+	/** Список прав доступа */
+	rights?: AccessRightsIdInfo[]
+}
+
+/** Измененное разрешение, которое нужно обновить в БД */
+export interface AccessRightsIdInfo {
+	/**
 	 * Идентификатор существующего разрешения
 	 * @format int32
 	 */
@@ -1012,8 +1043,6 @@ export interface ValueWriteRequest {
 	/** Флаг достоверности нового значения */
 	quality?: TagQuality | null
 }
-
-export type AccessApplyChangesPayload = AccessRightsApplyRequest[]
 
 export type ValuesGetPayload = ValuesRequest[]
 

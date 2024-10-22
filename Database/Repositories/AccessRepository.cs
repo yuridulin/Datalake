@@ -44,42 +44,178 @@ public partial class AccessRepository(DatalakeContext db)
 		return await GetAuthInfo(user);
 	}
 
-	public async Task ApplyChangesAsync(AccessRightsApplyRequest[] applyRequests)
+	public async Task ApplyChangesAsync(UserAuthInfo user, AccessRightsApplyRequest request)
 	{
-		// Создание новых записей
-		await db.AccessRights.BulkCopyAsync(applyRequests
-			.Where(x => !x.Id.HasValue)
-			.Where(x => x.AccessType != AccessType.NotSet)
-			.Select(x => new AccessRights
-			{
-				AccessType = x.AccessType,
-				UserGuid = x.UserGuid,
-				UserGroupGuid = x.UserGroupGuid,
-				SourceId = x.SourceId,
-				BlockId = x.BlockId,
-				TagId = x.TagId,
-				IsGlobal = false,
-			}));
+		await CheckGlobalAccess(user, AccessType.Admin);
 
-		// Удаление существующих записей
-		await db.AccessRights
-			.Where(x => applyRequests
-				.Where(r => r.Id.HasValue && r.AccessType == AccessType.NotSet)
-				.Select(x => x.Id!.Value)
-				.Contains(x.Id))
-			.DeleteAsync();
+		if (request.UserGroupGuid.HasValue)
+		{
+			await SetUserGroupRightsAsync(request.UserGroupGuid.Value, request.Rights);
+		}
+		else if (request.UserGuid.HasValue)
+		{
+			await SetUserRightsAsync(request.UserGuid.Value, request.Rights);
+		}
+		else if (request.SourceId.HasValue)
+		{
+			await SetSourceRightsAsync(request.SourceId.Value, request.Rights);
+		}
+		else if (request.BlockId.HasValue)
+		{
+			await SetBlockRightsAsync(request.BlockId.Value, request.Rights);
+		}
+		else if (request.TagId.HasValue)
+		{
+			await SetTagRightsAsync(request.TagId.Value, request.Rights);
+		}
+	}
 
-		// Обновление измененных записей
-		await db.AccessRights
-			.Join(applyRequests.Where(x => x.Id.HasValue && x.AccessType != AccessType.NotSet),
-				data => data.Id, updated => updated.Id!.Value, (data, updated) => new { data, updated })
-			.Set(joined => joined.data.AccessType, joined => joined.updated.AccessType)
-			.Set(joined => joined.data.UserGuid, joined => joined.updated.UserGuid)
-			.Set(joined => joined.data.UserGroupGuid, joined => joined.updated.UserGroupGuid)
-			.Set(joined => joined.data.SourceId, joined => joined.updated.SourceId)
-			.Set(joined => joined.data.BlockId, joined => joined.updated.BlockId)
-			.Set(joined => joined.data.TagId, joined => joined.updated.TagId)
-			.UpdateAsync();
+	#endregion
+
+	#region Реализация
+
+	internal async Task SetUserGroupRightsAsync(Guid userGroupGuid, AccessRightsIdInfo[] rights)
+	{
+		using var transaction = await db.BeginTransactionAsync();
+
+		try
+		{
+			await db.AccessRights
+				.Where(x => x.UserGroupGuid == userGroupGuid && !x.IsGlobal)
+				.DeleteAsync();
+
+			await db.AccessRights
+				.BulkCopyAsync(rights.Select(x => new AccessRights
+				{
+					IsGlobal = false,
+					UserGroupGuid = userGroupGuid,
+					AccessType = x.AccessType,
+					SourceId = x.SourceId,
+					BlockId = x.BlockId,
+					TagId = x.TagId,
+				}));
+
+			await transaction.CommitAsync();
+		}
+		catch (Exception ex)
+		{
+			await transaction.RollbackAsync();
+			throw new DatabaseException(message: "не удалось обновить права доступа", ex);
+		}
+	}
+
+	internal async Task SetUserRightsAsync(Guid userGuid, AccessRightsIdInfo[] rights)
+	{
+		using var transaction = await db.BeginTransactionAsync();
+
+		try
+		{
+			await db.AccessRights
+				.Where(x => x.UserGuid == userGuid && !x.IsGlobal)
+				.DeleteAsync();
+
+			await db.AccessRights
+				.BulkCopyAsync(rights.Select(x => new AccessRights
+				{
+					IsGlobal = false,
+					UserGuid = userGuid,
+					AccessType = x.AccessType,
+					SourceId = x.SourceId,
+					BlockId = x.BlockId,
+					TagId = x.TagId,
+				}));
+
+			await transaction.CommitAsync();
+		}
+		catch (Exception ex)
+		{
+			await transaction.RollbackAsync();
+			throw new DatabaseException(message: "не удалось обновить права доступа", ex);
+		}
+	}
+
+	internal async Task SetSourceRightsAsync(int sourceId, AccessRightsIdInfo[] rights)
+	{
+		using var transaction = await db.BeginTransactionAsync();
+
+		try
+		{
+			await db.AccessRights
+				.Where(x => x.SourceId == sourceId && !x.IsGlobal)
+				.DeleteAsync();
+
+			await db.AccessRights
+				.BulkCopyAsync(rights.Select(x => new AccessRights
+				{
+					IsGlobal = false,
+					SourceId = sourceId,
+					UserGroupGuid = x.UserGroupGuid,
+					UserGuid = x.UserGuid,
+				}));
+
+			await transaction.CommitAsync();
+		}
+		catch (Exception ex)
+		{
+			await transaction.RollbackAsync();
+			throw new DatabaseException(message: "не удалось обновить права доступа", ex);
+		}
+	}
+	
+	internal async Task SetBlockRightsAsync(int blockId, AccessRightsIdInfo[] rights)
+	{
+		using var transaction = await db.BeginTransactionAsync();
+
+		try
+		{
+			await db.AccessRights
+				.Where(x => x.BlockId == blockId && !x.IsGlobal)
+				.DeleteAsync();
+
+			await db.AccessRights
+				.BulkCopyAsync(rights.Select(x => new AccessRights
+				{
+					IsGlobal = false,
+					BlockId = blockId,
+					UserGroupGuid = x.UserGroupGuid,
+					UserGuid = x.UserGuid,
+				}));
+
+			await transaction.CommitAsync();
+		}
+		catch (Exception ex)
+		{
+			await transaction.RollbackAsync();
+			throw new DatabaseException(message: "не удалось обновить права доступа", ex);
+		}
+	}
+	
+	internal async Task SetTagRightsAsync(int tagId, AccessRightsIdInfo[] rights)
+	{
+		using var transaction = await db.BeginTransactionAsync();
+
+		try
+		{
+			await db.AccessRights
+				.Where(x => x.TagId == tagId && !x.IsGlobal)
+				.DeleteAsync();
+
+			await db.AccessRights
+				.BulkCopyAsync(rights.Select(x => new AccessRights
+				{
+					IsGlobal = false,
+					TagId = tagId,
+					UserGroupGuid = x.UserGroupGuid,
+					UserGuid = x.UserGuid,
+				}));
+
+			await transaction.CommitAsync();
+		}
+		catch (Exception ex)
+		{
+			await transaction.RollbackAsync();
+			throw new DatabaseException(message: "не удалось обновить права доступа", ex);
+		}
 	}
 
 	#endregion
