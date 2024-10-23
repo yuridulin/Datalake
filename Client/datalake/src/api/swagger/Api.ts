@@ -18,7 +18,9 @@ import {
 	BlockUpdateRequest,
 	BlockWithTagsInfo,
 	EnergoIdInfo,
+	LogCategory,
 	LogInfo,
+	LogType,
 	SettingsInfo,
 	SourceEntryInfo,
 	SourceInfo,
@@ -472,7 +474,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name SystemGetLogs
 	 * @summary Получение списка сообщений
 	 * @request GET:/api/System/logs
-	 * @response `200` `(LogInfo)[]`
+	 * @response `200` `(LogInfo)[]` Список сообщений
 	 */
 	systemGetLogs = (
 		query?: {
@@ -486,6 +488,40 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			 * @format int32
 			 */
 			lastId?: number | null
+			/**
+			 * Идентификатор затронутого источника
+			 * @format int32
+			 */
+			source?: number | null
+			/**
+			 * Идентификатор затронутого блока
+			 * @format int32
+			 */
+			block?: number | null
+			/**
+			 * Идентификатор затронутого тега
+			 * @format guid
+			 */
+			tag?: string | null
+			/**
+			 * Идентификатор затронутого пользователя
+			 * @format guid
+			 */
+			user?: string | null
+			/**
+			 * Идентификатор затронутой группы пользователей
+			 * @format guid
+			 */
+			group?: string | null
+			/** Выбранные категории сообщений */
+			categories?: LogCategory[] | null
+			/** Выбранные типы сообщений */
+			types?: LogType[] | null
+			/**
+			 * Идентификатор пользователя, создавшего сообщение
+			 * @format guid
+			 */
+			author?: string | null
 		},
 		params: RequestParams = {},
 	) =>

@@ -16,11 +16,36 @@ namespace Datalake.Database.Migrations
 					table: "Logs",
 					type: "uuid",
 					nullable: true);
+
+			migrationBuilder.CreateIndex(
+					name: "IX_Logs_UserGuid",
+					schema: "public",
+					table: "Logs",
+					column: "UserGuid");
+
+			migrationBuilder.AddForeignKey(
+					name: "FK_Logs_Users_UserGuid",
+					schema: "public",
+					table: "Logs",
+					column: "UserGuid",
+					principalSchema: "public",
+					principalTable: "Users",
+					principalColumn: "Guid");
 		}
 
 		/// <inheritdoc />
 		protected override void Down(MigrationBuilder migrationBuilder)
 		{
+			migrationBuilder.DropForeignKey(
+					name: "FK_Logs_Users_UserGuid",
+					schema: "public",
+					table: "Logs");
+
+			migrationBuilder.DropIndex(
+					name: "IX_Logs_UserGuid",
+					schema: "public",
+					table: "Logs");
+
 			migrationBuilder.DropColumn(
 					name: "UserGuid",
 					schema: "public",

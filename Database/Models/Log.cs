@@ -38,4 +38,8 @@ public class Log
 
 	[Column]
 	public string? Details { get; set; }
+
+	// связи
+
+	public User? Author { get; set; }
 }

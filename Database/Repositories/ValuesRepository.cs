@@ -84,15 +84,6 @@ public class ValuesRepository(DatalakeContext db)
 
 		var values = await query.ToListAsync();
 
-		await db.Logs.BulkCopyAsync(values.Select(v => new Log
-		{
-			Category = LogCategory.Database,
-			Date = v.Date,
-			RefId = v.TagId.ToString(),
-			Type = LogType.Trace,
-			Text = $"Значение тега для кэша: {v.Number} | {v.Text} | {v.Quality}",
-		}));
-
 		lock (locker)
 		{
 			LiveValues = values

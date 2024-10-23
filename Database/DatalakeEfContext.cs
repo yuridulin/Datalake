@@ -5,35 +5,12 @@ namespace Datalake.Database;
 
 public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : DbContext(options)
 {
-	public virtual DbSet<AccessRights> AccessRights { get; set; }
-
-	public virtual DbSet<Block> Blocks { get; set; }
-
-	public virtual DbSet<BlockProperty> BlockProperties { get; set; }
-
-	public virtual DbSet<BlockTag> BlockTags { get; set; }
-
-	public virtual DbSet<Log> Logs { get; set; }
-
-	public virtual DbSet<Settings> Settings { get; set; }
-
-	public virtual DbSet<Source> Sources { get; set; }
-
-	public virtual DbSet<Tag> Tags { get; set; }
-
-	public virtual DbSet<TagInput> TagInputs { get; set; }
-
-	public virtual DbSet<User> Users { get; set; }
-
-	public virtual DbSet<UserGroup> UserGroups { get; set; }
-
-	public virtual DbSet<UserGroupRelation> UserGroupRelations { get; set; }
-
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		modelBuilder.HasDefaultSchema("public");
 
 		// связь блоков по иерархии
+
 		modelBuilder.Entity<Block>()
 			.HasOne(block => block.Parent)
 			.WithMany(block => block.Children)
@@ -41,6 +18,7 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.OnDelete(DeleteBehavior.SetNull);
 
 		// связь блоков и тегов
+
 		modelBuilder.Entity<Block>()
 			.HasMany(block => block.Tags)
 			.WithMany(tag => tag.Blocks)
@@ -60,6 +38,7 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			);
 
 		// связь групп пользователей по иерархии
+
 		modelBuilder.Entity<UserGroup>()
 			.HasOne(group => group.Parent)
 			.WithMany(group => group.Children)
@@ -67,6 +46,7 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.OnDelete(DeleteBehavior.SetNull);
 
 		// связь пользователей и групп пользователей
+
 		modelBuilder
 			.Entity<UserGroup>()
 			.HasMany(group => group.Users)
@@ -87,6 +67,7 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			);
 
 		// связь источников и тегов
+
 		modelBuilder
 			.Entity<Tag>()
 			.HasOne(tag => tag.Source)
@@ -95,6 +76,7 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.OnDelete(DeleteBehavior.SetNull);
 
 		// связь тегов с входными тегами (переменными)
+
 		modelBuilder.Entity<Tag>()
 			.HasMany(tag => tag.Inputs)
 			.WithOne(input => input.Tag)
@@ -108,6 +90,7 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.OnDelete(DeleteBehavior.SetNull);
 
 		// связи модели прав с объектами
+
 		modelBuilder.Entity<AccessRights>()
 			.HasOne(x => x.Block)
 			.WithMany(x => x.AccessRightsList)
@@ -137,20 +120,41 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.WithMany(x => x.AccessRightsList)
 			.HasForeignKey(x => x.UserGroupGuid)
 			.OnDelete(DeleteBehavior.Cascade);
+
+		// связь логов с пользователем, чьи действия записаны
+
+		modelBuilder.Entity<User>()
+			.HasMany(x => x.Logs)
+			.WithOne(x => x.Author)
+			.HasForeignKey(x => x.UserGuid)
+			.OnDelete(DeleteBehavior.NoAction);
 	}
 
-	/// <summary>
-	/// Сообщение аудита в БД
-	/// </summary>
-	/// <param name="db"></param>
-	/// <param name="log"></param>
-	/// <returns></returns>
-	public async Task LogAsync(Log log)
-	{
-		try
-		{
-			await Logs.AddAsync(log);
-		}
-		catch { }
-	}
+	#region Таблицы
+
+	public virtual DbSet<AccessRights> AccessRights { get; set; }
+
+	public virtual DbSet<Block> Blocks { get; set; }
+
+	public virtual DbSet<BlockProperty> BlockProperties { get; set; }
+
+	public virtual DbSet<BlockTag> BlockTags { get; set; }
+
+	public virtual DbSet<Log> Logs { get; set; }
+
+	public virtual DbSet<Settings> Settings { get; set; }
+
+	public virtual DbSet<Source> Sources { get; set; }
+
+	public virtual DbSet<Tag> Tags { get; set; }
+
+	public virtual DbSet<TagInput> TagInputs { get; set; }
+
+	public virtual DbSet<User> Users { get; set; }
+
+	public virtual DbSet<UserGroup> UserGroups { get; set; }
+
+	public virtual DbSet<UserGroupRelation> UserGroupRelations { get; set; }
+
+	#endregion
 }

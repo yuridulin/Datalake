@@ -48,4 +48,6 @@ public class User
 	public ICollection<UserGroup> Groups { get; set; } = [];
 
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
+
+	public ICollection<Log> Logs { get; set; } = [];
 }

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Datalake.Database.Migrations
 {
     [DbContext(typeof(DatalakeEfContext))]
-    [Migration("20241023091659_AddUserReferenceToLogs")]
+    [Migration("20241023101355_AddUserReferenceToLogs")]
     partial class AddUserReferenceToLogs
     {
         /// <inheritdoc />
@@ -179,6 +179,8 @@ namespace Datalake.Database.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserGuid");
 
                     b.ToTable("Logs", "public");
                 });
@@ -462,6 +464,16 @@ namespace Datalake.Database.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("Datalake.Database.Models.Log", b =>
+                {
+                    b.HasOne("Datalake.Database.Models.User", "Author")
+                        .WithMany("Logs")
+                        .HasForeignKey("UserGuid")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Author");
+                });
+
             modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
                 {
                     b.HasOne("Datalake.Database.Models.Source", "Source")
@@ -552,6 +564,8 @@ namespace Datalake.Database.Migrations
                     b.Navigation("AccessRightsList");
 
                     b.Navigation("GroupsRelations");
+
+                    b.Navigation("Logs");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.UserGroup", b =>

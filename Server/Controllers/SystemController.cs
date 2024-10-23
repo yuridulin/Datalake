@@ -1,4 +1,5 @@
 ﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
 using Datalake.ApiClasses.Models.Logs;
 using Datalake.ApiClasses.Models.Settings;
 using Datalake.Database;
@@ -40,14 +41,55 @@ public class SystemController(
 	/// </summary>
 	/// <param name="take">Сколько сообщений получить за этот запрос</param>
 	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества</param>
-	/// <returns></returns>
+	/// <param name="source">Идентификатор затронутого источника</param>
+	/// <param name="block">Идентификатор затронутого блока</param>
+	/// <param name="tag">Идентификатор затронутого тега</param>
+	/// <param name="user">Идентификатор затронутого пользователя</param>
+	/// <param name="group">Идентификатор затронутой группы пользователей</param>
+	/// <param name="categories">Выбранные категории сообщений</param>
+	/// <param name="types">Выбранные типы сообщений</param>
+	/// <param name="author">Идентификатор пользователя, создавшего сообщение</param>
+	/// <returns>Список сообщений</returns>
 	[HttpGet("logs")]
 	public async Task<ActionResult<LogInfo[]>> GetLogsAsync(
-		[FromQuery] int? take,
-		[FromQuery] int? lastId)
+		[FromQuery] int? take = null,
+		[FromQuery] int? lastId = null,
+		[FromQuery] int? source = null,
+		[FromQuery] int? block = null,
+		[FromQuery] Guid? tag = null,
+		[FromQuery] Guid? user = null,
+		[FromQuery] Guid? group = null,
+		[FromQuery(Name = nameof(categories) + "[]")] LogCategory[]? categories = null,
+		[FromQuery(Name = nameof(types) + "[]")] LogType[]? types = null,
+		[FromQuery] Guid? author = null)
 	{
-		var query = db.SystemRepository.GetLogs()
-			.Where(x => !lastId.HasValue || x.Id > lastId.Value);
+		var query = db.SystemRepository.GetLogs();
+		if (lastId.HasValue)
+			query = query.Where(x => x.Id > lastId.Value);
+
+		if (source.HasValue)
+			query = query.Where(x => x.RefId == source.Value.ToString());
+
+		if (block.HasValue)
+			query = query.Where(x => x.RefId == block.Value.ToString());
+
+		if (tag.HasValue)
+			query = query.Where(x => x.RefId == tag.Value.ToString());
+
+		if (user.HasValue)
+			query = query.Where(x => x.RefId == user.Value.ToString());
+
+		if (group.HasValue)
+			query = query.Where(x => x.RefId == group.Value.ToString());
+
+		if (categories != null && categories.Length > 0)
+			query = query.Where(x => categories.Contains(x.Category));
+
+		if (types != null && types.Length > 0)
+			query = query.Where(x =>  types.Contains(x.Type));
+		
+		if (author != null)
+			query = query.Where(x => x.Author != null && x.Author.Guid == author.Value);
 
 		if (take.HasValue)
 			query = query.Take(take.Value);

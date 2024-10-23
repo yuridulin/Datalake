@@ -480,8 +480,15 @@ export interface LogInfo {
 	 * @minLength 1
 	 */
 	text: string
-	/** Ссылка на конкретный объект в случае, если это подразумевает категория */
+	/**
+	 * Ссылка на конкретный объект в случае, если это подразумевает категория
+	 *
+	 * Теги, пользователи, группы пользователей: Guid
+	 * Источники, блоки: int
+	 */
 	refId?: string | null
+	/** Информация об авторе сообщения */
+	author?: UserSimpleInfo | null
 }
 
 /**
@@ -497,6 +504,7 @@ export interface LogInfo {
  * 70 = Http
  * 80 = Users
  * 90 = UserGroups
+ * 100 = Blocks
  */
 export enum LogCategory {
 	Core = 0,
@@ -509,6 +517,7 @@ export enum LogCategory {
 	Http = 70,
 	Users = 80,
 	UserGroups = 90,
+	Blocks = 100,
 }
 
 /**
