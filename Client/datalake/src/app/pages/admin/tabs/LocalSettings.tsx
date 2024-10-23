@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import api from '../../../../api/swagger-api'
 import { SettingsInfo } from '../../../../api/swagger/data-contracts'
 
-export default function AuthSettings() {
+export default function LocalSettings() {
 	const [settings, setSettings] = useState({} as SettingsInfo)
 	const [form] = Form.useForm<SettingsInfo>()
 
@@ -13,6 +13,7 @@ export default function AuthSettings() {
 			form.setFieldsValue(res.data)
 		})
 	}
+
 	const update = (newSettings: SettingsInfo) => {
 		api.systemUpdateSettings({ ...settings, ...newSettings })
 	}
@@ -22,25 +23,10 @@ export default function AuthSettings() {
 	return (
 		<Form form={form} layout='vertical' onFinish={update}>
 			<Form.Item<SettingsInfo>
-				label='Адрес Keycloak сервера EnergoId'
-				name='energoIdHost'
+				label='Название базы данных'
+				name='instanceName'
 			>
-				<Input placeholder='auth.energo.net' prefix='https://' />
-			</Form.Item>
-			<Form.Item<SettingsInfo>
-				label='Адрес EnergoId'
-				name='energoIdClient'
-			>
-				<Input placeholder='datalake' />
-			</Form.Item>
-			<Form.Item<SettingsInfo>
-				label='Путь к API EnergoId'
-				name='energoIdApi'
-			>
-				<Input
-					placeholder='api.auth.energo.net/api/v1/users'
-					prefix='https://'
-				/>
+				<Input placeholder='Введите название базы данных' />
 			</Form.Item>
 			<Button type='primary' onClick={form.submit}>
 				Сохранить

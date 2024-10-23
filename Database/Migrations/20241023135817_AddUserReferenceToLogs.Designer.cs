@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Datalake.Database.Migrations
 {
     [DbContext(typeof(DatalakeEfContext))]
-    [Migration("20241023101355_AddUserReferenceToLogs")]
+    [Migration("20241023135817_AddUserReferenceToLogs")]
     partial class AddUserReferenceToLogs
     {
         /// <inheritdoc />
@@ -188,6 +188,10 @@ namespace Datalake.Database.Migrations
             modelBuilder.Entity("Datalake.Database.Models.Settings", b =>
                 {
                     b.Property<string>("EnergoIdApi")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("InstanceName")
                         .IsRequired()
                         .HasColumnType("text");
 

@@ -34,8 +34,8 @@ export default function LogsTable() {
 		setLogs((prevLogs) => {
 			api.systemGetLogs({
 				take: count,
-				categories: filter.categories,
-				types: filter.types,
+				'categories[]': filter.categories,
+				'types[]': filter.types,
 			})
 				.then((res) => {
 					setLogs(res.data)

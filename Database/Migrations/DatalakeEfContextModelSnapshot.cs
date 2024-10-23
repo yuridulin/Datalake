@@ -188,6 +188,10 @@ namespace Datalake.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("InstanceName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("KeycloakClient")
                         .IsRequired()
                         .HasColumnType("text");

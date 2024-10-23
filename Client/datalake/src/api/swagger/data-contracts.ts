@@ -578,6 +578,11 @@ export interface SettingsInfo {
 	 * @minLength 1
 	 */
 	energoIdApi: string
+	/**
+	 * Пользовательское название базы данных
+	 * @minLength 1
+	 */
+	instanceName: string
 }
 
 /** Информация о теге */

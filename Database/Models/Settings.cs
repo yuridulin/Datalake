@@ -23,4 +23,7 @@ public class Settings
 
 	[Column, NotNull]
 	public string EnergoIdApi { get; set; } = string.Empty;
+
+	[Column, NotNull]
+	public string InstanceName { get; set; } = string.Empty;
 }

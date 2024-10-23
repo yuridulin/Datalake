@@ -33,6 +33,7 @@ public partial class SystemRepository(DatalakeContext db)
 			EnergoIdHost = setting.KeycloakHost,
 			EnergoIdClient = setting.KeycloakClient,
 			EnergoIdApi = setting.EnergoIdApi,
+			InstanceName = setting.InstanceName,
 		};
 	}
 
@@ -129,6 +130,7 @@ public partial class SystemRepository(DatalakeContext db)
 				.Set(x => x.KeycloakHost, newSettings.EnergoIdHost)
 				.Set(x => x.KeycloakClient, newSettings.EnergoIdClient)
 				.Set(x => x.EnergoIdApi, newSettings.EnergoIdApi)
+				.Set(x => x.InstanceName, newSettings.InstanceName)
 				.UpdateAsync();
 
 			await db.InsertAsync(new Models.Log

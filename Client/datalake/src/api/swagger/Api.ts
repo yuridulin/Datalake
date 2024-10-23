@@ -514,9 +514,9 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			 */
 			group?: string | null
 			/** Выбранные категории сообщений */
-			categories?: LogCategory[] | null
+			'categories[]'?: LogCategory[] | null
 			/** Выбранные типы сообщений */
-			types?: LogType[] | null
+			'types[]'?: LogType[] | null
 			/**
 			 * Идентификатор пользователя, создавшего сообщение
 			 * @format guid

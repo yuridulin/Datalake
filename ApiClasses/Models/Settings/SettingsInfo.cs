@@ -26,4 +26,10 @@ public class SettingsInfo
 	/// </summary>
 	[Required]
 	public required string EnergoIdApi { get; set; }
+
+	/// <summary>
+	/// Пользовательское название базы данных
+	/// </summary>
+	[Required]
+	public required string InstanceName { get; set; }
 }
