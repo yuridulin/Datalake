@@ -60,9 +60,7 @@ export default function SourcesList() {
 								color='success'
 								title={
 									'Последнее подключение: ' +
-									timeAgoInstance.format(
-										new Date(state.lastTry),
-									)
+									timeAgo.format(new Date(state.lastTry))
 								}
 							>
 								есть

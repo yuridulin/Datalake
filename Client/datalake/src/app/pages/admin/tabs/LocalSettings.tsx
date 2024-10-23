@@ -15,7 +15,9 @@ export default function LocalSettings() {
 	}
 
 	const update = (newSettings: SettingsInfo) => {
-		api.systemUpdateSettings({ ...settings, ...newSettings })
+		api.systemUpdateSettings({ ...settings, ...newSettings }).then(() => {
+			document.title = 'Datalake | ' + newSettings.instanceName
+		})
 	}
 
 	useEffect(load, [form])

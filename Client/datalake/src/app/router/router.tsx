@@ -1,7 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
-import AccessRulesForm from '../pages/access/AccessRulesForm'
 import SettingsPage from '../pages/admin/SettingsPage'
 import BlockAccessForm from '../pages/blocks/block/access/BlockAccessForm'
 import BlockForm from '../pages/blocks/block/BlockForm'
@@ -137,7 +136,7 @@ const router = createBrowserRouter([
 				path: routes.viewer.root,
 				children: [
 					{
-						path: routes.viewer.root + routes.viewer.tagsViewer,
+						path: routes.viewer.tagsViewer,
 						element: <TagsViewer />,
 					},
 				],
@@ -165,16 +164,6 @@ const router = createBrowserRouter([
 					{
 						path: routes.blocks.access.edit,
 						element: <BlockAccessForm />,
-					},
-				],
-			},
-			// access
-			{
-				path: routes.access.root,
-				children: [
-					{
-						path: routes.access.root + routes.access.form,
-						element: <AccessRulesForm />,
 					},
 				],
 			},
