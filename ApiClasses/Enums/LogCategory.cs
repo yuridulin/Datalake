@@ -54,4 +54,9 @@ public enum LogCategory
 	/// Группы пользователей
 	/// </summary>
 	UserGroups = 90,
+
+	/// <summary>
+	/// Блоки
+	/// </summary>
+	Blocks = 100,
 }

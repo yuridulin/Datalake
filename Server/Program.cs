@@ -156,7 +156,7 @@ namespace Datalake.Server
 			if (db != null)
 			{
 				await db.EnsureDataCreatedAsync();
-				await db.LogsRepository.LogAsync(new Database.Models.Log
+				await db.InsertAsync(new Database.Models.Log
 				{
 					Category = ApiClasses.Enums.LogCategory.Core,
 					Type = ApiClasses.Enums.LogType.Success,

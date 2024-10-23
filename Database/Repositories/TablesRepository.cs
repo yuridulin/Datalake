@@ -20,6 +20,13 @@ public class TablesRepository(DatalakeContext db)
 	public async Task CreateHistoryIndex(string tableName)
 	{
 		await PostgreSQL_CreateHistoryIndex(tableName);
+
+		db.Insert(new Log
+		{
+			Category = LogCategory.Database,
+			Type = LogType.Trace,
+			Text = "Создан индекс для партиции: " + tableName,
+		});
 	}
 
 	public async Task EnsureInitialValues(DateTime date)
@@ -82,6 +89,13 @@ public class TablesRepository(DatalakeContext db)
 			}
 
 			WriteInitialValuesAsync(date).Wait();
+
+			db.Insert(new Log
+			{
+				Category = LogCategory.Database,
+				Type = LogType.Trace,
+				Text = "Создана партиция: " + tableName,
+			});
 		}
 
 		return table;

@@ -22,7 +22,6 @@ public class DatalakeContext : DataConnection
 		_userGroupsRepository = new Lazy<UserGroupsRepository>(() => new UserGroupsRepository(this));
 		_valuesRepository = new Lazy<ValuesRepository>(() => new ValuesRepository(this));
 		_tablesRepository = new Lazy<TablesRepository>(() => new TablesRepository(this));
-		_logsRepository = new Lazy<LogsRepository>(() => new LogsRepository(this));
 	}
 
 	public static void SetupLinqToDB()
@@ -105,9 +104,6 @@ public class DatalakeContext : DataConnection
 
 	public TablesRepository TablesRepository => _tablesRepository.Value;
 	private readonly Lazy<TablesRepository> _tablesRepository;
-
-	public LogsRepository LogsRepository => _logsRepository.Value;
-	private readonly Lazy<LogsRepository> _logsRepository;
 
 	#endregion
 

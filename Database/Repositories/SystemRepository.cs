@@ -4,6 +4,7 @@ using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Settings;
 using Datalake.ApiClasses.Models.Tags;
 using Datalake.ApiClasses.Models.Users;
+using Datalake.Database.Extensions;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
@@ -38,6 +39,7 @@ public partial class SystemRepository(DatalakeContext db)
 	public async Task UpdateSettingsAsync(UserAuthInfo user, SettingsInfo newSettings)
 	{
 		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
 
 		await UpdateSettingsAsync(newSettings);
 	}
@@ -45,7 +47,17 @@ public partial class SystemRepository(DatalakeContext db)
 	public async Task RebuildCacheAsync(UserAuthInfo user)
 	{
 		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
+
 		await RebuildCacheAsync();
+
+		await db.InsertAsync(new Models.Log
+		{
+			Category = LogCategory.Core,
+			Type = LogType.Success,
+			Text = "Перезапуск служб получения данных",
+			UserGuid = User,
+		});
 	}
 
 	public static void Update()
@@ -60,6 +72,8 @@ public partial class SystemRepository(DatalakeContext db)
 
 
 	#region Реализация
+
+	Guid? User { get; set; }
 
 	static object locker = new();
 
@@ -109,11 +123,22 @@ public partial class SystemRepository(DatalakeContext db)
 	{
 		try
 		{
+			var settings = await GetSettingsAsync();
+
 			await db.Settings
 				.Set(x => x.KeycloakHost, newSettings.EnergoIdHost)
 				.Set(x => x.KeycloakClient, newSettings.EnergoIdClient)
 				.Set(x => x.EnergoIdApi, newSettings.EnergoIdApi)
 				.UpdateAsync();
+
+			await db.InsertAsync(new Models.Log
+			{
+				Category = LogCategory.Core,
+				Type = LogType.Success,
+				Text = "Изменены настройки",
+				UserGuid = User,
+				Details = ObjectExtension.Difference(settings, newSettings),
+			});
 		}
 		catch (Exception ex)
 		{

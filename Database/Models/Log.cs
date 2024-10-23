@@ -1,4 +1,5 @@
-﻿using Datalake.ApiClasses.Enums;
+﻿using Datalake.ApiClasses.Constants;
+using Datalake.ApiClasses.Enums;
 using LinqToDB.Mapping;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,14 +19,16 @@ public class Log
 	public long Id { get; set; }
 
 	[Column, NotNull]
-	public DateTimeOffset Date { get; set; } = DateTimeOffset.Now;
-	// NOTE: в бд это обычная дата, без этого типа почему-то не пишется нормально
+	public DateTime Date { get; set; } = DateFormats.GetCurrentDateTime();
 
 	[Column, NotNull]
 	public LogCategory Category { get; set; } = LogCategory.Api;
 
 	[Column]
 	public string? RefId { get; set; }
+
+	[Column]
+	public Guid? UserGuid { get; set; }
 
 	[Column, NotNull]
 	public LogType Type { get; set; } = LogType.Information;

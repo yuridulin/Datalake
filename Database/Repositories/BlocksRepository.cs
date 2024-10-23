@@ -2,6 +2,7 @@
 using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Blocks;
 using Datalake.ApiClasses.Models.Users;
+using Datalake.Database.Extensions;
 using Datalake.Database.Models;
 using LinqToDB;
 using LinqToDB.Data;
@@ -10,6 +11,7 @@ namespace Datalake.Database.Repositories;
 
 public partial class BlocksRepository(DatalakeContext db)
 {
+
 	#region Действия
 
 	public async Task<int> CreateAsync(
@@ -18,6 +20,7 @@ public partial class BlocksRepository(DatalakeContext db)
 		int? parentId = null)
 	{
 		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
 
 		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync(parentId);
 	}
@@ -28,6 +31,8 @@ public partial class BlocksRepository(DatalakeContext db)
 		BlockUpdateRequest block)
 	{
 		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		User = user.Guid;
+
 		return await UpdateAsync(id, block);
 	}
 
@@ -37,6 +42,8 @@ public partial class BlocksRepository(DatalakeContext db)
 		int? parentId)
 	{
 		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		User = user.Guid;
+
 		return await MoveAsync(id, parentId);
 	}
 
@@ -45,6 +52,8 @@ public partial class BlocksRepository(DatalakeContext db)
 		int id)
 	{
 		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		User = user.Guid;
+
 		return await DeleteAsync(id);
 	}
 
@@ -52,68 +61,67 @@ public partial class BlocksRepository(DatalakeContext db)
 
 	#region Реализация
 
+	Guid User { get; set; }
+
 	internal async Task<int> CreateAsync(int? parentId = null)
 	{
-		int? id;
+		int? id = await db.Blocks
+			.Value(x => x.GlobalId, Guid.NewGuid())
+			.Value(x => x.ParentId, parentId)
+			.Value(x => x.Name, "INSERTING BLOCK")
+			.Value(x => x.Description, string.Empty)
+			.InsertWithInt32IdentityAsync();
 
-		try
-		{
-			id = await db.Blocks
-				.Value(x => x.GlobalId, Guid.NewGuid())
-				.Value(x => x.ParentId, parentId)
-				.Value(x => x.Name, "INSERTING BLOCK")
-				.Value(x => x.Description, string.Empty)
-				.InsertWithInt32IdentityAsync();
+		if (!id.HasValue)
+			throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
 
-			if (id.HasValue)
-				await db.Blocks
-					.Where(x => x.Id == id.Value)
-					.Set(x => x.Name, "Блок #" + id.Value)
-					.UpdateAsync();
+		string name = "Блок #" + id.Value;
 
-			return id.Value;
-		}
-		catch (Exception ex)
-		{
-			throw new DatabaseException(message: "не удалось добавить блок", ex);
-		}
+		await db.Blocks
+			.Where(x => x.Id == id.Value)
+			.Set(x => x.Name, name)
+			.UpdateAsync();
+
+		await LogAsync(id.Value, "Создан блок: " + name);
+
+		return id.Value;
 	}
 
 	internal async Task<int> CreateAsync(BlockFullInfo block)
 	{
 		if (await db.Blocks.AnyAsync(x => x.Name == block.Name))
 			throw new AlreadyExistException("Блок с таким именем уже существует");
+
 		if (block.Parent != null)
 		{
 			if (!await db.Blocks.AnyAsync(x => x.Id == block.Parent.Id))
-				throw new NotFoundException($"Родительский блок #{block.Parent.Id} не найдена");
+				throw new NotFoundException($"Родительский блок #{block.Parent.Id} не найден");
 		}
 
-		int? id;
+		int? id = await db.Blocks
+			.Value(x => x.GlobalId, Guid.NewGuid())
+			.Value(x => x.ParentId, block.Parent?.Id)
+			.Value(x => x.Name, block.Name)
+			.Value(x => x.Description, block.Description)
+			.InsertWithInt32IdentityAsync();
 
-		try
-		{
-			id = await db.Blocks
-				.Value(x => x.GlobalId, Guid.NewGuid())
-				.Value(x => x.ParentId, block.Parent?.Id)
-				.Value(x => x.Name, block.Name)
-				.Value(x => x.Description, block.Description)
-				.InsertWithInt32IdentityAsync();
-		}
-		catch (Exception ex)
-		{
-			throw new DatabaseException(message: "не удалось добавить блок", ex);
-		}
+		if (!id.HasValue)
+			throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
 
-		return id ?? throw new DatabaseException(message: "не удалось добавить блок", DatabaseStandartError.IdIsNull);
+		await LogAsync(id.Value, "Создан блок: " + block.Name);
+
+		return id ?? throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
 	}
 
 	internal async Task<bool> UpdateAsync(int id, BlockUpdateRequest block)
 	{
-		if (!await db.Blocks.AnyAsync(x => x.Id == id))
-			throw new NotFoundException($"Сущность #{id} не найдена");
+		var oldBlock = await GetInfoWithAllRelations()
+			.Where(x => x.Id == id)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"Блок #{id} не найден");
+
 		if (await db.Blocks.AnyAsync(x => x.Id != id && x.Name == block.Name))
-			throw new AlreadyExistException("Сущность с таким именем уже существует");
+			throw new AlreadyExistException("Блок с таким именем уже существует");
 
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -140,10 +148,11 @@ public partial class BlocksRepository(DatalakeContext db)
 			}));
 		}
 
-		await transaction.CommitAsync();
+		await LogAsync(id, "Изменен блок: " + block.Name, ObjectExtension.Difference(
+			new { oldBlock.Name, oldBlock.Description, Tags = oldBlock.Tags.Select(t => t.Id) },
+			new { block.Name, block.Description, Tags = block.Tags.Select(t => t.Id) }));
 
-		if (count == 0)
-			throw new DatabaseException(message: "не удалось обновить блок #{id}", DatabaseStandartError.UpdatedZero);
+		await transaction.CommitAsync();
 
 		return true;
 	}
@@ -152,34 +161,56 @@ public partial class BlocksRepository(DatalakeContext db)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
-		try
-		{
-			await db.Blocks
-				.Where(x => x.Id == id)
-				.Set(x => x.ParentId, parentId == 0 ? null : parentId)
-				.UpdateAsync();
+		var block = await db.Blocks
+			.Where(x => x.Id == id)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "блок " + id);
 
-			await transaction.CommitAsync();
+		await db.Blocks
+			.Where(x => x.Id == id)
+			.Set(x => x.ParentId, parentId == 0 ? null : parentId)
+			.UpdateAsync();
 
-			return true;
-		}
-		catch (Exception ex)
-		{
-			transaction.Rollback();
-			throw new DatabaseException("не удалось переместить блок", ex);
-		}
+		await LogAsync(id, "Изменено расположение блока: " + block.Name, ObjectExtension.Difference(
+			new { block.ParentId },
+			new { ParentId = parentId == 0 ? null : parentId }));
+
+		await transaction.CommitAsync();
+
+		return true;
 	}
 
 	internal async Task<bool> DeleteAsync(int id)
 	{
-		var count = await db.Blocks
+		using var transaction = await db.BeginTransactionAsync();
+
+		var blockName = await db.Blocks
+			.Where(x => x.Id == id)
+			.Select(x => x.Name)
+			.FirstOrDefaultAsync();
+
+		await db.Blocks
 			.Where(x => x.Id == id)
 			.DeleteAsync();
 
-		if (count == 0)
-			throw new DatabaseException(message: "не удалось удалить блок #{id}", DatabaseStandartError.DeletedZero);
+		await LogAsync(id, "Удален блок: " + blockName);
+
+		await transaction.CommitAsync();
 
 		return true;
+	}
+
+	internal async Task LogAsync(int id, string message, string? details = null)
+	{
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.Blocks,
+			RefId = id.ToString(),
+			UserGuid = User,
+			Text = message,
+			Type = LogType.Success,
+			Details = details,
+		});
 	}
 
 	#endregion

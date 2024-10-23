@@ -162,7 +162,7 @@ public partial class AccessRepository(DatalakeContext db)
 			throw new DatabaseException(message: "не удалось обновить права доступа", ex);
 		}
 	}
-	
+
 	internal async Task SetBlockRightsAsync(int blockId, AccessRightsIdInfo[] rights)
 	{
 		using var transaction = await db.BeginTransactionAsync();
@@ -191,7 +191,7 @@ public partial class AccessRepository(DatalakeContext db)
 			throw new DatabaseException(message: "не удалось обновить права доступа", ex);
 		}
 	}
-	
+
 	internal async Task SetTagRightsAsync(int tagId, AccessRightsIdInfo[] rights)
 	{
 		using var transaction = await db.BeginTransactionAsync();

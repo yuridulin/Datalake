@@ -3,6 +3,7 @@ using Datalake.ApiClasses.Exceptions;
 using Datalake.ApiClasses.Models.Sources;
 using Datalake.ApiClasses.Models.Users;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
@@ -16,6 +17,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		SourceInfo? sourceInfo = null)
 	{
 		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
 
 		if (sourceInfo != null)
 			return await CreateAsync(sourceInfo);
@@ -29,6 +31,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		SourceInfo sourceInfo)
 	{
 		await db.AccessRepository.CheckAccessToSource(user, AccessType.Admin, id);
+		User = user.Guid;
 
 		return await UpdateAsync(id, sourceInfo);
 	}
@@ -37,7 +40,8 @@ public partial class SourcesRepository(DatalakeContext db)
 		UserAuthInfo user,
 		int id)
 	{
-		await db.AccessRepository.CheckAccessToSource(user, AccessType.Admin, id);
+		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
 
 		return await DeleteAsync(id);
 	}
@@ -45,6 +49,8 @@ public partial class SourcesRepository(DatalakeContext db)
 	#endregion
 
 	#region Реализация
+
+	Guid User { get; set; }
 
 	internal async Task<int> CreateAsync()
 	{
@@ -56,16 +62,18 @@ public partial class SourcesRepository(DatalakeContext db)
 			.Value(x => x.Type, SourceType.Unknown)
 			.InsertWithInt32IdentityAsync();
 
-		if (!id.HasValue)
-			throw new DatabaseException(message: "не удалось добавить источник", DatabaseStandartError.IdIsNull);
+		string name = ValueChecker.RemoveWhitespaces("Новый источник #" + id.Value, "_");
 
 		await db.Sources
 			.Where(x => x.Id == id.Value)
-			.Set(x => x.Name, ValueChecker.RemoveWhitespaces("Новый источник #" + id.Value, "_"))
+			.Set(x => x.Name, name)
 			.UpdateAsync();
 
-		SystemRepository.Update();
+		await LogAsync(id.Value, "Создан источник: " + name);
+
 		await transaction.CommitAsync();
+
+		SystemRepository.Update();
 
 		return id.Value;
 	}
@@ -88,11 +96,11 @@ public partial class SourcesRepository(DatalakeContext db)
 			.Value(x => x.Type, sourceInfo.Type)
 			.InsertWithInt32IdentityAsync();
 
-		if (!id.HasValue)
-			throw new DatabaseException("Не удалось добавить источник", DatabaseStandartError.IdIsNull);
+		await LogAsync(id.Value, "Создан источник: " + sourceInfo.Name);
+
+		await transaction.CommitAsync();
 
 		SystemRepository.Update();
-		await transaction.CommitAsync();
 
 		return id.Value;
 	}
@@ -101,8 +109,10 @@ public partial class SourcesRepository(DatalakeContext db)
 	{
 		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
 
-		if (!await db.Sources.AnyAsync(x => x.Id == id))
-			throw new NotFoundException($"Источник #{id} не найден");
+		var source = await db.Sources
+			.Where(x => x.Id == id)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"Источник #{id} не найден");
 
 		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name && x.Id != id))
 			throw new AlreadyExistException("Уже существует источник с таким именем");
@@ -119,8 +129,13 @@ public partial class SourcesRepository(DatalakeContext db)
 		if (count == 0)
 			throw new DatabaseException($"Не удалось обновить источник #{id}", DatabaseStandartError.UpdatedZero);
 
-		SystemRepository.Update();
+		await LogAsync(id, "Изменен источник: " + sourceInfo.Name, ObjectExtension.Difference(
+			new { source.Name, source.Address, source.Type },
+			new { sourceInfo.Name, sourceInfo.Address, sourceInfo.Type }));
+
 		await transaction.CommitAsync();
+
+		SystemRepository.Update();
 
 		return true;
 	}
@@ -128,6 +143,11 @@ public partial class SourcesRepository(DatalakeContext db)
 	internal async Task<bool> DeleteAsync(int id)
 	{
 		using var transaction = await db.BeginTransactionAsync();
+
+		var name = await db.Sources
+			.Where(x => x.Id == id)
+			.Select(x => x.Name)
+			.FirstOrDefaultAsync();
 
 		var count = await db.Sources
 			.Where(x => x.Id == id)
@@ -137,15 +157,31 @@ public partial class SourcesRepository(DatalakeContext db)
 			throw new DatabaseException($"Не удалось удалить источник #{id}", DatabaseStandartError.DeletedZero);
 
 		// при удалении источника его теги становятся ручными
-		await db.Tags
+		int tagsCount = await db.Tags
 			.Where(x => x.SourceId == id)
 			.Set(x => x.SourceId, (int)CustomSource.Manual)
 			.UpdateAsync();
 
-		SystemRepository.Update();
+		await LogAsync(id, "Удален источник: " + name + ". Затронуто тегов: " + tagsCount);
+
 		await transaction.CommitAsync();
 
+		SystemRepository.Update();
+
 		return true;
+	}
+
+	internal async Task LogAsync(int id, string message, string? details = null)
+	{
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.Source,
+			RefId = id.ToString(),
+			UserGuid = User,
+			Text = message,
+			Type = LogType.Success,
+			Details = details,
+		});
 	}
 
 	#endregion
