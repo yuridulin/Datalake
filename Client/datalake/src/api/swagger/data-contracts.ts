@@ -357,96 +357,6 @@ export interface AttachedTag {
 	relation: BlockTagRelation
 }
 
-/** Запись собщения */
-export interface LogInfo {
-	/**
-	 * Идентификатор записи
-	 * @format int64
-	 */
-	id: number
-	/**
-	 * Дата формата DateFormats.Long
-	 * @minLength 1
-	 */
-	dateString: string
-	/** Категория сообщения (к какому объекту относится) */
-	category: LogCategory
-	/** Степень важности сообщения */
-	type: LogType
-	/**
-	 * Текст сообщеня
-	 * @minLength 1
-	 */
-	text: string
-	/** Ссылка на конкретный объект в случае, если это подразумевает категория */
-	refId?: string | null
-}
-
-/**
- * Категория, к которой относится сообщение
- *
- * 0 = Core
- * 10 = Database
- * 20 = Collector
- * 30 = Api
- * 40 = Calc
- * 50 = Source
- * 60 = Tag
- * 70 = Http
- * 80 = Users
- * 90 = UserGroups
- */
-export enum LogCategory {
-	Core = 0,
-	Database = 10,
-	Collector = 20,
-	Api = 30,
-	Calc = 40,
-	Source = 50,
-	Tag = 60,
-	Http = 70,
-	Users = 80,
-	UserGroups = 90,
-}
-
-/**
- * Степень важности сообщения
- *
- * 0 = Trace
- * 1 = Information
- * 2 = Success
- * 3 = Warning
- * 4 = Error
- */
-export enum LogType {
-	Trace = 0,
-	Information = 1,
-	Success = 2,
-	Warning = 3,
-	Error = 4,
-}
-
-/** Информация о настройках приложения, задаваемых через UI */
-export interface SettingsInfo {
-	/**
-	 * Адрес сервера EnergoId, к которому выполняются подключения, включая порт при необходимости
-	 *
-	 * Протокол будет выбран на основе того, какой используется в клиенте в данный момент
-	 * @minLength 1
-	 */
-	energoIdHost: string
-	/**
-	 * Название клиента EnergoId, через который идет аутентификация
-	 * @minLength 1
-	 */
-	energoIdClient: string
-	/**
-	 * Конечная точка сервиса, который отдает информацию о пользователях EnergoId
-	 * @minLength 1
-	 */
-	energoIdApi: string
-}
-
 /** Информация о источнике */
 export type SourceInfo = SourceSimpleInfo & {
 	/** Произвольное описание источника */
@@ -547,6 +457,118 @@ export interface SourceTagInfo {
 	 * @format int32
 	 */
 	interval: number
+}
+
+/** Запись собщения */
+export interface LogInfo {
+	/**
+	 * Идентификатор записи
+	 * @format int64
+	 */
+	id: number
+	/**
+	 * Дата формата DateFormats.Long
+	 * @minLength 1
+	 */
+	dateString: string
+	/** Категория сообщения (к какому объекту относится) */
+	category: LogCategory
+	/** Степень важности сообщения */
+	type: LogType
+	/**
+	 * Текст сообщеня
+	 * @minLength 1
+	 */
+	text: string
+	/** Ссылка на конкретный объект в случае, если это подразумевает категория */
+	refId?: string | null
+}
+
+/**
+ * Категория, к которой относится сообщение
+ *
+ * 0 = Core
+ * 10 = Database
+ * 20 = Collector
+ * 30 = Api
+ * 40 = Calc
+ * 50 = Source
+ * 60 = Tag
+ * 70 = Http
+ * 80 = Users
+ * 90 = UserGroups
+ */
+export enum LogCategory {
+	Core = 0,
+	Database = 10,
+	Collector = 20,
+	Api = 30,
+	Calc = 40,
+	Source = 50,
+	Tag = 60,
+	Http = 70,
+	Users = 80,
+	UserGroups = 90,
+}
+
+/**
+ * Степень важности сообщения
+ *
+ * 0 = Trace
+ * 1 = Information
+ * 2 = Success
+ * 3 = Warning
+ * 4 = Error
+ */
+export enum LogType {
+	Trace = 0,
+	Information = 1,
+	Success = 2,
+	Warning = 3,
+	Error = 4,
+}
+
+/** Объект состояния источника */
+export interface SourceState {
+	/**
+	 * Идентификатор источника
+	 * @format int32
+	 */
+	sourceId: number
+	/**
+	 * Дата последней попытки подключиться
+	 * @format date-time
+	 * @minLength 1
+	 */
+	lastTry: string
+	/**
+	 * Дата последнего удачного подключения
+	 * @format date-time
+	 */
+	lastConnection?: string | null
+	/** Было ли соединение при последнем подключении */
+	isConnected: boolean
+}
+
+/** Информация о настройках приложения, задаваемых через UI */
+export interface SettingsInfo {
+	/**
+	 * Адрес сервера EnergoId, к которому выполняются подключения, включая порт при необходимости
+	 *
+	 * Протокол будет выбран на основе того, какой используется в клиенте в данный момент
+	 * @minLength 1
+	 */
+	energoIdHost: string
+	/**
+	 * Название клиента EnergoId, через который идет аутентификация
+	 * @minLength 1
+	 */
+	energoIdClient: string
+	/**
+	 * Конечная точка сервиса, который отдает информацию о пользователях EnergoId
+	 * @minLength 1
+	 */
+	energoIdApi: string
 }
 
 /** Информация о теге */

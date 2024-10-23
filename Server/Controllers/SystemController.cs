@@ -5,6 +5,8 @@ using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
+using Datalake.Server.Models.System;
+using Datalake.Server.Services.StateManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -16,8 +18,10 @@ namespace Datalake.Server.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
-public class ConfigController(
+public class SystemController(
 	DatalakeContext db,
+	SourcesStateService sourcesStateService,
+	UsersStateService usersStateService,
 	ISettingsUpdater settingsService) : ApiControllerBase
 {
 	/// <summary>
@@ -51,6 +55,26 @@ public class ConfigController(
 		return await query
 			.OrderByDescending(x => x.Id)
 			.ToArrayAsync();
+	}
+
+	/// <summary>
+	/// Информация о визитах пользователей
+	/// </summary>
+	/// <returns>Даты визитов, сопоставленные с идентификаторами пользователей</returns>
+	[HttpGet("visits")]
+	public ActionResult<Dictionary<Guid, DateTime>> GetVisits()
+	{
+		return usersStateService.State;
+	}
+
+	/// <summary>
+	/// Информация о подключении к источникам данных
+	/// </summary>
+	/// <returns></returns>
+	[HttpGet("sources")]
+	public ActionResult<Dictionary<int, SourceState>> GetSources()
+	{
+		return sourcesStateService.State;
 	}
 
 	/// <summary>

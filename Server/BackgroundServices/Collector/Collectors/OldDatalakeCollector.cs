@@ -4,6 +4,7 @@ using Datalake.Database;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
+using Datalake.Server.Services.StateManager;
 
 namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 
@@ -11,12 +12,14 @@ internal class OldDatalakeCollector : CollectorBase
 {
 	public OldDatalakeCollector(
 		ReceiverService receiverService,
+		SourcesStateService sourcesStateService,
 		SourceWithTagsInfo source,
 		ILogger<OldDatalakeCollector> logger) : base(source, logger)
 	{
 		_id = source.Id;
 		_logger = logger;
 		_receiverService = receiverService;
+		_stateService = sourcesStateService;
 		_address = source.Address ?? throw new InvalidOperationException();
 		_tokenSource = new CancellationTokenSource();
 
@@ -68,6 +71,7 @@ internal class OldDatalakeCollector : CollectorBase
 	private readonly string _address;
 	private readonly List<Item> _itemsToSend;
 	private readonly ReceiverService _receiverService;
+	private readonly SourcesStateService _stateService;
 	private readonly CancellationTokenSource _tokenSource;
 	private ILogger<OldDatalakeCollector> _logger;
 	private readonly Dictionary<Guid, CollectValue> _previousValues;
@@ -124,10 +128,13 @@ internal class OldDatalakeCollector : CollectorBase
 						tag.LastAsk = response.Timestamp;
 					}
 				}
+
+				_stateService.UpdateSource(_id, connected: true);
 			}
 			catch (Exception ex)
 			{
 				_logger.LogWarning("Ошибка в сборщике Datalake (old) [{id}]: {message}", _id, ex.Message);
+				_stateService.UpdateSource(_id, connected: false);
 			}
 			finally
 			{

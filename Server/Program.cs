@@ -8,6 +8,7 @@ using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SessionManager;
+using Datalake.Server.Services.StateManager;
 using LinqToDB;
 using LinqToDB.AspNet;
 using Microsoft.AspNetCore.Diagnostics;
@@ -120,6 +121,8 @@ namespace Datalake.Server
 			builder.Services.AddSingleton<SettingsHandlerService>();
 			builder.Services.AddSingleton<ISettingsUpdater>(provider
 				=> provider.GetRequiredService<SettingsHandlerService>());
+			builder.Services.AddSingleton<SourcesStateService>();
+			builder.Services.AddSingleton<UsersStateService>();
 
 			// временные
 			builder.Services.AddTransient<BlocksRepository>();

@@ -7,13 +7,13 @@ export default function AuthSettings() {
 	const [form] = Form.useForm<SettingsInfo>()
 
 	const load = () => {
-		api.configGetSettings().then((res) => form.setFieldsValue(res.data))
+		api.systemGetSettings().then((res) => form.setFieldsValue(res.data))
 	}
 
 	useEffect(load, [form])
 
 	return (
-		<Form form={form} layout='vertical' onFinish={api.configUpdateSettings}>
+		<Form form={form} layout='vertical' onFinish={api.systemUpdateSettings}>
 			<Form.Item<SettingsInfo>
 				label='Адрес Keycloak сервера EnergoId'
 				name='energoIdHost'

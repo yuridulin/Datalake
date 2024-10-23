@@ -1,27 +1,14 @@
-import { Button, Input, Table, TableColumnsType } from 'antd'
+import { ClockCircleOutlined } from '@ant-design/icons'
+import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { timeAgo } from '../../../api/extensions/timeAgoInstance'
 import api from '../../../api/swagger-api'
-import {
-	AccessType,
-	UserInfo,
-	UserType,
-} from '../../../api/swagger/data-contracts'
+import { UserInfo, UserType } from '../../../api/swagger/data-contracts'
+import { useInterval } from '../../../hooks/useInterval'
+import AccessTypeEl from '../../components/AccessTypeEl'
 import FormRow from '../../components/FormRow'
 import PageHeader from '../../components/PageHeader'
-
-function AccessTypeDescription(type?: AccessType) {
-	switch (type) {
-		case AccessType.Admin:
-			return 'администратор'
-		case AccessType.User:
-			return 'пользователь'
-		case AccessType.Viewer:
-			return 'наблюдатель'
-		default:
-			return 'нет доступа'
-	}
-}
 
 function UserTypeDescription(type: UserType) {
 	switch (type) {
@@ -38,42 +25,76 @@ function UserTypeDescription(type: UserType) {
 	}
 }
 
-const columns: TableColumnsType<UserInfo> = [
-	{
-		dataIndex: 'guid',
-		title: 'Учетная запись',
-		render: (_, record) => (
-			<NavLink to={'/users/' + record.guid}>
-				<Button size='small'>{record.fullName}</Button>
-			</NavLink>
-		),
-	},
-	{
-		dataIndex: 'accessType',
-		title: 'Уровень доступа',
-		render: (_, record) => <>{AccessTypeDescription(record.accessType)}</>,
-	},
-	{
-		dataIndex: 'guid',
-		title: 'Тип учетной записи',
-		render: (_, record) => <>{UserTypeDescription(record.type)}</>,
-	},
-]
-
 export default function UsersList() {
 	const navigate = useNavigate()
 	const [users, setUsers] = useState([] as UserInfo[])
+	const [states, setStates] = useState({} as { [key: string]: string })
 	const [search, setSearch] = useState('')
 
-	function load() {
+	const load = () => {
 		api.usersReadAll().then((res) => setUsers(res.data))
+		getStates()
 	}
 
-	function create() {
+	const create = () => {
 		navigate('/users/create')
 	}
 
+	const getStates = () => {
+		api.systemGetVisits().then((res) => setStates(res.data))
+	}
+
+	const columns: TableColumnsType<UserInfo> = [
+		{
+			dataIndex: 'guid',
+			title: 'Учетная запись',
+			render: (_, record) => (
+				<NavLink to={'/users/' + record.guid}>
+					<Button size='small'>{record.fullName}</Button>
+				</NavLink>
+			),
+		},
+		{
+			dataIndex: 'accessType',
+			title: 'Глобальный уровень доступа',
+			width: '16em',
+			render: (_, record) => <AccessTypeEl type={record.accessType} />,
+		},
+		{
+			dataIndex: 'accessType',
+			title: 'Активность',
+			width: '14em',
+			render: (_, record) => {
+				const state = states[record.guid]
+				if (!state) return <Tag>не было</Tag>
+				const lastVisit = new Date(state)
+				const late = Date.now() - Number(lastVisit)
+				return (
+					<Tag
+						icon={<ClockCircleOutlined />}
+						color={
+							late < 120000
+								? 'success'
+								: late < 3600000
+								? 'warning'
+								: 'default'
+						}
+					>
+						{timeAgo.format(lastVisit)}
+					</Tag>
+				)
+			},
+		},
+		{
+			dataIndex: 'guid',
+			title: 'Тип учетной записи',
+			width: '20em',
+			render: (_, record) => <>{UserTypeDescription(record.type)}</>,
+		},
+	]
+
 	useEffect(load, [])
+	useInterval(getStates, 5000)
 
 	return (
 		<>
@@ -94,11 +115,7 @@ export default function UsersList() {
 					<Table
 						size='small'
 						dataSource={users.filter((x) =>
-							(
-								(x.login ?? '') +
-								(x.fullName ?? '') +
-								AccessTypeDescription(x.accessType)
-							)
+							((x.login ?? '') + (x.fullName ?? ''))
 								.toLowerCase()
 								.trim()
 								.includes(search.toLowerCase()),

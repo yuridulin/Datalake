@@ -10,7 +10,7 @@ export default function Offline() {
 	const { token } = theme.useToken()
 
 	function load() {
-		api.configGetLastUpdate()
+		api.systemGetLastUpdate()
 			.then((res) => !!res && setOnline(!!res.data))
 			.catch(() => setOnline(false))
 	}

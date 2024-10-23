@@ -23,6 +23,7 @@ import {
 	SourceEntryInfo,
 	SourceInfo,
 	SourceItemInfo,
+	SourceState,
 	TagAsInputInfo,
 	TagCreateRequest,
 	TagInfo,
@@ -311,101 +312,6 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	/**
 	 * No description
 	 *
-	 * @tags Config
-	 * @name ConfigGetLastUpdate
-	 * @summary Получение даты последнего изменения структуры базы данных
-	 * @request GET:/api/Config/last
-	 * @response `200` `string` Дата в строковом виде
-	 */
-	configGetLastUpdate = (params: RequestParams = {}) =>
-		this.request<string, any>({
-			path: `/api/Config/last`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Config
-	 * @name ConfigGetLogs
-	 * @summary Получение списка сообщений
-	 * @request GET:/api/Config/logs
-	 * @response `200` `(LogInfo)[]`
-	 */
-	configGetLogs = (
-		query?: {
-			/**
-			 * Сколько сообщений получить за этот запрос
-			 * @format int32
-			 */
-			take?: number | null
-			/**
-			 * Идентификатор сообщения, с которого начать отсчёт количества
-			 * @format int32
-			 */
-			lastId?: number | null
-		},
-		params: RequestParams = {},
-	) =>
-		this.request<LogInfo[], any>({
-			path: `/api/Config/logs`,
-			method: 'GET',
-			query: query,
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Config
-	 * @name ConfigGetSettings
-	 * @summary Получение информации о настройках сервера
-	 * @request GET:/api/Config/settings
-	 * @response `200` `SettingsInfo` Информация о настройках
-	 */
-	configGetSettings = (params: RequestParams = {}) =>
-		this.request<SettingsInfo, any>({
-			path: `/api/Config/settings`,
-			method: 'GET',
-			format: 'json',
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Config
-	 * @name ConfigUpdateSettings
-	 * @summary Изменение информации о настройках сервера
-	 * @request PUT:/api/Config/settings
-	 * @response `200` `File`
-	 */
-	configUpdateSettings = (data: SettingsInfo, params: RequestParams = {}) =>
-		this.request<File, any>({
-			path: `/api/Config/settings`,
-			method: 'PUT',
-			body: data,
-			type: ContentType.Json,
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Config
-	 * @name ConfigRestart
-	 * @summary Перестроение кэша и перезапуск всех сборщиков
-	 * @request PUT:/api/Config/restart
-	 * @response `200` `File`
-	 */
-	configRestart = (params: RequestParams = {}) =>
-		this.request<File, any>({
-			path: `/api/Config/restart`,
-			method: 'PUT',
-			...params,
-		})
-	/**
-	 * No description
-	 *
 	 * @tags Sources
 	 * @name SourcesCreate
 	 * @summary Создание источника с информацией по умолчанию
@@ -541,6 +447,133 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			path: `/api/Sources/${id}/items-and-tags`,
 			method: 'GET',
 			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemGetLastUpdate
+	 * @summary Получение даты последнего изменения структуры базы данных
+	 * @request GET:/api/System/last
+	 * @response `200` `string` Дата в строковом виде
+	 */
+	systemGetLastUpdate = (params: RequestParams = {}) =>
+		this.request<string, any>({
+			path: `/api/System/last`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemGetLogs
+	 * @summary Получение списка сообщений
+	 * @request GET:/api/System/logs
+	 * @response `200` `(LogInfo)[]`
+	 */
+	systemGetLogs = (
+		query?: {
+			/**
+			 * Сколько сообщений получить за этот запрос
+			 * @format int32
+			 */
+			take?: number | null
+			/**
+			 * Идентификатор сообщения, с которого начать отсчёт количества
+			 * @format int32
+			 */
+			lastId?: number | null
+		},
+		params: RequestParams = {},
+	) =>
+		this.request<LogInfo[], any>({
+			path: `/api/System/logs`,
+			method: 'GET',
+			query: query,
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemGetVisits
+	 * @summary Информация о визитах пользователей
+	 * @request GET:/api/System/visits
+	 * @response `200` `Record<string,string>` Даты визитов, сопоставленные с идентификаторами пользователей
+	 */
+	systemGetVisits = (params: RequestParams = {}) =>
+		this.request<Record<string, string>, any>({
+			path: `/api/System/visits`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemGetSources
+	 * @summary Информация о подключении к источникам данных
+	 * @request GET:/api/System/sources
+	 * @response `200` `Record<string,SourceState>`
+	 */
+	systemGetSources = (params: RequestParams = {}) =>
+		this.request<Record<string, SourceState>, any>({
+			path: `/api/System/sources`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemGetSettings
+	 * @summary Получение информации о настройках сервера
+	 * @request GET:/api/System/settings
+	 * @response `200` `SettingsInfo` Информация о настройках
+	 */
+	systemGetSettings = (params: RequestParams = {}) =>
+		this.request<SettingsInfo, any>({
+			path: `/api/System/settings`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemUpdateSettings
+	 * @summary Изменение информации о настройках сервера
+	 * @request PUT:/api/System/settings
+	 * @response `200` `File`
+	 */
+	systemUpdateSettings = (data: SettingsInfo, params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/System/settings`,
+			method: 'PUT',
+			body: data,
+			type: ContentType.Json,
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemRestart
+	 * @summary Перестроение кэша и перезапуск всех сборщиков
+	 * @request PUT:/api/System/restart
+	 * @response `200` `File`
+	 */
+	systemRestart = (params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/System/restart`,
+			method: 'PUT',
 			...params,
 		})
 	/**

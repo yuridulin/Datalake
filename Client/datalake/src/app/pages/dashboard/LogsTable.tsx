@@ -21,7 +21,7 @@ export default function LogsTable() {
 	const update = useCallback(() => {
 		setLogs((prevLogs) => {
 			const lastId = prevLogs.length > 0 ? prevLogs[0].id : 0
-			api.configGetLogs({ lastId, take: count })
+			api.systemGetLogs({ lastId, take: count })
 				.then((res) => {
 					let newLogs = [...res.data, ...prevLogs]
 					if (newLogs.length > count) newLogs = newLogs.slice(-count)

@@ -1,51 +1,108 @@
-import { Button, Table, TableColumnsType } from 'antd'
+import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
+import { Button, Table, TableColumnsType, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { timeAgo } from '../../../api/extensions/timeAgoInstance'
 import getSourceTypeName from '../../../api/models/getSourceTypeName'
 import api from '../../../api/swagger-api'
-import { SourceInfo } from '../../../api/swagger/data-contracts'
+import { SourceInfo, SourceState } from '../../../api/swagger/data-contracts'
+import { useInterval } from '../../../hooks/useInterval'
 import PageHeader from '../../components/PageHeader'
-
-const columns: TableColumnsType<SourceInfo> = [
-	{
-		dataIndex: 'name',
-		title: 'Название',
-		render: (_, record) => (
-			<NavLink
-				className='table-row'
-				to={'/sources/' + record.id}
-				key={record.id}
-			>
-				<Button size='small'>{record.name}</Button>
-			</NavLink>
-		),
-	},
-	{
-		dataIndex: 'type',
-		title: 'Тип источника',
-		render: (type) => <>{getSourceTypeName(type)}</>,
-	},
-	{
-		dataIndex: 'description',
-		title: 'Описание',
-	},
-]
+import routes from '../../router/routes'
 
 export default function SourcesList() {
 	const [list, setList] = useState([] as SourceInfo[])
+	const [states, setStates] = useState({} as { [key: number]: SourceState })
 
-	const load = () =>
-		api
-			.sourcesReadAll({ withCustom: false })
-			.then((res) => setList(res.data))
+	const load = () => {
+		api.sourcesReadAll({ withCustom: false }).then((res) => {
+			setList(res.data)
+		})
+		getStates()
+	}
+
+	const getStates = () => {
+		api.systemGetSources().then((res) => {
+			setStates(res.data)
+		})
+	}
 
 	const createSource = () => {
 		api.sourcesCreate().then(load)
 	}
 
-	useEffect(() => {
-		load()
-	}, [])
+	const columns: TableColumnsType<SourceInfo> = [
+		{
+			dataIndex: 'name',
+			title: 'Название',
+			width: '30em',
+			render: (_, record) => (
+				<NavLink
+					className='table-row'
+					to={routes.sources.toEditSource(record.id)}
+					key={record.id}
+				>
+					<Button size='small'>{record.name}</Button>
+				</NavLink>
+			),
+		},
+		{
+			title: 'Подключение',
+			width: '10em',
+			render: (_, record) => {
+				const state = states[record.id]
+				if (!state) return <></>
+				return (
+					<span>
+						{state.isConnected ? (
+							<Tag
+								icon={<CheckOutlined />}
+								color='success'
+								title={
+									'Последнее подключение: ' +
+									timeAgoInstance.format(
+										new Date(state.lastTry),
+									)
+								}
+							>
+								есть
+							</Tag>
+						) : (
+							<Tag
+								icon={<DisconnectOutlined />}
+								color='error'
+								title={
+									(state.lastConnection
+										? 'Последний раз связь была ' +
+										  timeAgo.format(
+												new Date(state.lastConnection),
+										  )
+										: 'Успешных подключений не было с момента запуска') +
+									'. Последняя попытка: ' +
+									timeAgo.format(new Date(state.lastTry))
+								}
+							>
+								нет
+							</Tag>
+						)}
+					</span>
+				)
+			},
+		},
+		{
+			dataIndex: 'type',
+			title: 'Тип источника',
+			width: '10em',
+			render: (type) => <>{getSourceTypeName(type)}</>,
+		},
+		{
+			dataIndex: 'description',
+			title: 'Описание',
+		},
+	]
+
+	useEffect(load, [])
+	useInterval(getStates, 5000)
 
 	return (
 		<>
