@@ -1,11 +1,11 @@
-﻿using Datalake.ApiClasses.Enums;
-using Datalake.Database.Models;
+﻿using Datalake.Database.Enums;
+using Datalake.Database.Tables;
 
 namespace Datalake.Database.Extensions;
 
-public static class TagHistoryExtension
+internal static class TagHistoryExtension
 {
-	public static object? GetTypedValue(this TagHistory tagHistory, TagType type) => type switch
+	internal static object? GetTypedValue(this TagHistory tagHistory, TagType type) => type switch
 	{
 		TagType.String => tagHistory.Text,
 		TagType.Number => tagHistory.Number,

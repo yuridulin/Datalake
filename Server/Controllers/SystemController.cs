@@ -1,7 +1,7 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Models.Logs;
-using Datalake.ApiClasses.Models.Settings;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
+using Datalake.Database.Models.Logs;
+using Datalake.Database.Models.Settings;
 using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.SettingsHandler;

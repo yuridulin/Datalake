@@ -1,5 +1,5 @@
-﻿using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Models.Tags;
+﻿using Datalake.Database.Enums;
+using Datalake.Database.Models.Tags;
 using LinqToDB;
 
 namespace Datalake.Database.Tests.Scenarios

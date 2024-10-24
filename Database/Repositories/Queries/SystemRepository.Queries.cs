@@ -1,6 +1,6 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Models.Logs;
-using Datalake.ApiClasses.Models.Users;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Models.Logs;
+using Datalake.Database.Models.Users;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;

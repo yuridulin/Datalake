@@ -1,9 +1,9 @@
-﻿using Datalake.ApiClasses.Models.AccessRights;
-using Datalake.ApiClasses.Models.Blocks;
-using Datalake.ApiClasses.Models.Sources;
-using Datalake.ApiClasses.Models.Tags;
-using Datalake.ApiClasses.Models.UserGroups;
-using Datalake.ApiClasses.Models.Users;
+﻿using Datalake.Database.Models.AccessRights;
+using Datalake.Database.Models.Blocks;
+using Datalake.Database.Models.Sources;
+using Datalake.Database.Models.Tags;
+using Datalake.Database.Models.UserGroups;
+using Datalake.Database.Models.Users;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;

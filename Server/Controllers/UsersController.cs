@@ -1,5 +1,5 @@
-﻿using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Users;
+﻿using Datalake.Database.Exceptions;
+using Datalake.Database.Models.Users;
 using Datalake.Database;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;

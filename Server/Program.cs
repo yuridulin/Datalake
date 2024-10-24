@@ -1,4 +1,4 @@
-using Datalake.ApiClasses.Exceptions.Base;
+using Datalake.Database.Exceptions.Base;
 using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector;
@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using System.Reflection;
+using Datalake.Database.Tables;
+using Datalake.Database.Enums;
 
 [assembly: AssemblyVersion("2.0.*")]
 
@@ -156,10 +158,10 @@ namespace Datalake.Server
 			if (db != null)
 			{
 				await db.EnsureDataCreatedAsync();
-				await db.InsertAsync(new Database.Models.Log
+				await db.InsertAsync(new Log
 				{
-					Category = ApiClasses.Enums.LogCategory.Core,
-					Type = ApiClasses.Enums.LogType.Success,
+					Category = LogCategory.Core,
+					Type = LogType.Success,
 					Text = "Сервер запущен",
 				});
 

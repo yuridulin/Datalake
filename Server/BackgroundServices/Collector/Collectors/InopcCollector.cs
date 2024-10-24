@@ -1,5 +1,6 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Models.Sources;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
+using Datalake.Database.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
@@ -42,7 +43,7 @@ internal class InopcCollector : CollectorBase
 			.ToDictionary(x => x.Guid, x => new CollectValue
 			{
 				Value = null,
-				Quality = ApiClasses.Enums.TagQuality.Unknown,
+				Quality = TagQuality.Unknown,
 				DateTime = DateTime.MinValue,
 				Guid = x.Guid,
 			});

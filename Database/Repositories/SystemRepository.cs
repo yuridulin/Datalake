@@ -1,10 +1,11 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Settings;
-using Datalake.ApiClasses.Models.Tags;
-using Datalake.ApiClasses.Models.Users;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
+using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Settings;
+using Datalake.Database.Models.Tags;
+using Datalake.Database.Models.Users;
+using Datalake.Database.Tables;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
@@ -52,7 +53,7 @@ public partial class SystemRepository(DatalakeContext db)
 
 		await RebuildCacheAsync();
 
-		await db.InsertAsync(new Models.Log
+		await db.InsertAsync(new Log
 		{
 			Category = LogCategory.Core,
 			Type = LogType.Success,
@@ -133,7 +134,7 @@ public partial class SystemRepository(DatalakeContext db)
 				.Set(x => x.InstanceName, newSettings.InstanceName)
 				.UpdateAsync();
 
-			await db.InsertAsync(new Models.Log
+			await db.InsertAsync(new Log
 			{
 				Category = LogCategory.Core,
 				Type = LogType.Success,

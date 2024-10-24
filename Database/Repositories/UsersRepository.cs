@@ -1,8 +1,8 @@
-﻿using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Users;
+﻿using Datalake.Database.Enums;
+using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
-using Datalake.Database.Models;
+using Datalake.Database.Models.Users;
+using Datalake.Database.Tables;
 using LinqToDB;
 using System.Security.Cryptography;
 using System.Text;

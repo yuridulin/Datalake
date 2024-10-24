@@ -1,4 +1,4 @@
-﻿using Datalake.ApiClasses.Models.AccessRights;
+﻿using Datalake.Database.Models.AccessRights;
 using Datalake.Database;
 using Datalake.Server.Controllers.Base;
 using LinqToDB;

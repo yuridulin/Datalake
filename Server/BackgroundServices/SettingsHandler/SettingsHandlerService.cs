@@ -1,4 +1,4 @@
-﻿using Datalake.ApiClasses.Constants;
+﻿using Datalake.Database.Constants;
 using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.Services.SessionManager;

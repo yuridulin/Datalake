@@ -1,6 +1,6 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Models.Values;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
+using Datalake.Database.Models.Values;
 using Datalake.Server.Controllers;
 using Datalake.Server.Services.Receiver.Models;
 using Datalake.Server.Services.Receiver.Models.Inopc;
