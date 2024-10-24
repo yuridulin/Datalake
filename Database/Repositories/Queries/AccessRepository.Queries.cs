@@ -10,6 +10,9 @@ namespace Datalake.Database.Repositories;
 
 public partial class AccessRepository
 {
+	/// <summary>
+	/// Получение списка прав доступа
+	/// </summary>
 	public IQueryable<AccessRightsInfo> GetAccessRightsInfo(
 		Guid? userGuid = null,
 		Guid? userGroupGuid = null,
