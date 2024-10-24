@@ -2,11 +2,13 @@ import { Button, Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import compareValues from '../../../api/extensions/compareValues'
 import api from '../../../api/swagger-api'
 import { TagInfo, ValueRecord } from '../../../api/swagger/data-contracts'
 import { useInterval } from '../../../hooks/useInterval'
 import SourceEl from '../../components/SourceEl'
 import TagCompactValue from '../../components/TagCompactValue'
+import routes from '../../router/routes'
 
 interface TagsTableProps {
 	tags: TagInfo[]
@@ -67,7 +69,7 @@ export default function TagsTable({
 			showSorterTooltip={false}
 			rowKey='id'
 		>
-			<Column
+			<Column<TagInfo>
 				title={
 					<Input
 						placeholder='Поиск по имени тега'
@@ -81,21 +83,31 @@ export default function TagsTable({
 						}}
 					/>
 				}
-				dataIndex='Name'
+				dataIndex='name'
 				defaultSortOrder='ascend'
+				width='40%'
 				sorter={(a: TagInfo, b: TagInfo) =>
 					(a.name ?? '').localeCompare(b.name ?? '')
 				}
 				render={(_, tag) => (
-					<NavLink to={`/tags/${tag.guid}`}>
+					<NavLink to={routes.tags.toTagForm(tag.guid)}>
 						<Button size='small'>{tag.name}</Button>
 					</NavLink>
 				)}
 			/>
+			<Column<TagInfo>
+				title='Описание'
+				dataIndex='description'
+				defaultSortOrder='ascend'
+				sorter={(a: TagInfo, b: TagInfo) =>
+					(a.description ?? '').localeCompare(b.description ?? '')
+				}
+			/>
 			{!hideSource && (
-				<Column
+				<Column<TagInfo>
 					title='Источник'
-					dataIndex='SourceId'
+					dataIndex='sourceId'
+					width='18em'
 					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
 						(a.sourceName ?? String(a.sourceId)).localeCompare(
@@ -111,18 +123,15 @@ export default function TagsTable({
 				/>
 			)}
 			{!hideValue && (
-				<Column
+				<Column<TagInfo>
 					title='Значение'
-					dataIndex='Value'
 					defaultSortOrder='ascend'
+					width='12em'
 					sorter={(a: TagInfo, b: TagInfo) =>
-						String(values[a.id ?? 0]).localeCompare(
-							String(values[b.id ?? 0]),
-						)
+						compareValues(values[a.id]?.value, values[b.id]?.value)
 					}
 					render={(_, record: TagInfo) => {
 						const value = values[record.id]
-						console.log(record, value)
 						return (
 							<TagCompactValue
 								value={value?.value}
@@ -133,14 +142,6 @@ export default function TagsTable({
 					}}
 				/>
 			)}
-			<Column
-				title='Описание'
-				dataIndex='Description'
-				defaultSortOrder='ascend'
-				sorter={(a: TagInfo, b: TagInfo) =>
-					(a.description ?? '').localeCompare(b.description ?? '')
-				}
-			/>
 		</Table>
 	)
 }

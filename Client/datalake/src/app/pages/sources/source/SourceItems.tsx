@@ -14,6 +14,7 @@ import {
 import CreatedTagLinker from '../../../components/CreatedTagsLinker'
 import PageHeader from '../../../components/PageHeader'
 import TagCompactValue from '../../../components/TagCompactValue'
+import routes from '../../../router/routes'
 
 export default function SourceItems({
 	type,
@@ -61,7 +62,9 @@ export default function SourceItems({
 			render: (_, record) =>
 				record.tagInfo ? (
 					<span>
-						<NavLink to={'/tags/' + record.tagInfo.guid}>
+						<NavLink
+							to={routes.tags.toTagForm(record.tagInfo.guid)}
+						>
 							<Button>{record.tagInfo.name}</Button>
 						</NavLink>
 					</span>

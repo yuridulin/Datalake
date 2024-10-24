@@ -9,6 +9,7 @@ import { useInterval } from '../../../hooks/useInterval'
 import AccessTypeEl from '../../components/AccessTypeEl'
 import FormRow from '../../components/FormRow'
 import PageHeader from '../../components/PageHeader'
+import routes from '../../router/routes'
 
 function UserTypeDescription(type: UserType) {
 	switch (type) {
@@ -37,7 +38,7 @@ export default function UsersList() {
 	}
 
 	const create = () => {
-		navigate('/users/create')
+		navigate(routes.users.create)
 	}
 
 	const getStates = () => {
@@ -49,7 +50,7 @@ export default function UsersList() {
 			dataIndex: 'guid',
 			title: 'Учетная запись',
 			render: (_, record) => (
-				<NavLink to={'/users/' + record.guid}>
+				<NavLink to={routes.users.toUserForm(record.guid)}>
 					<Button size='small'>{record.fullName}</Button>
 				</NavLink>
 			),

@@ -156,7 +156,7 @@ export default function TagsViewer() {
 					},
 					...res.data[0].tags.map((x) => ({
 						title: () => (
-							<NavLink to={'/tags/' + x.guid}>
+							<NavLink to={routes.tags.toTagForm(x.guid)}>
 								<Button>{x.name}</Button>
 							</NavLink>
 						),

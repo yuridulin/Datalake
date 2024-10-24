@@ -10,6 +10,7 @@ import {
 } from '../../../../api/swagger/data-contracts'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
+import routes from '../../../router/routes'
 
 export default function UserCreate() {
 	const navigate = useNavigate()
@@ -32,7 +33,7 @@ export default function UserCreate() {
 
 	function create() {
 		api.usersCreate(request).then((res) => {
-			navigate('/users/' + res.data)
+			navigate(routes.users.toUserForm(res.data))
 		})
 	}
 
@@ -52,7 +53,7 @@ export default function UserCreate() {
 		<>
 			<PageHeader
 				left={
-					<Button onClick={() => navigate('/users/')}>
+					<Button onClick={() => navigate(routes.users.list)}>
 						Вернуться
 					</Button>
 				}

@@ -6,6 +6,7 @@ import api from '../../../../api/swagger-api'
 import { SourceInfo, SourceType } from '../../../../api/swagger/data-contracts'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
+import routes from '../../../router/routes'
 import SourceItems from './SourceItems'
 
 const AvailableSourceTypes = [
@@ -32,11 +33,13 @@ export default function SourceForm() {
 	}
 
 	function sourceUpdate() {
-		api.sourcesUpdate(Number(id), source).then(() => navigate('/sources'))
+		api.sourcesUpdate(Number(id), source).then(() =>
+			navigate(routes.sources.list),
+		)
 	}
 
 	function sourceDelete() {
-		api.sourcesDelete(Number(id)).then(() => navigate('/sources'))
+		api.sourcesDelete(Number(id)).then(() => navigate(routes.sources.list))
 	}
 
 	useEffect(() => {
@@ -51,7 +54,7 @@ export default function SourceForm() {
 		<>
 			<PageHeader
 				left={
-					<Button onClick={() => navigate('/sources')}>
+					<Button onClick={() => navigate(routes.sources.list)}>
 						Вернуться
 					</Button>
 				}

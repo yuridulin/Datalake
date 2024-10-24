@@ -44,12 +44,12 @@ api.instance.interceptors.response.use(
 	},
 	(error: AxiosError) => {
 		if (error.response?.status === 403) {
-			router.navigate('/login')
+			router.navigate(routes.auth.loginPage)
 			return Promise.resolve(error.response)
 		}
 
 		if (error.code === 'ERR_NETWORK') {
-			router.navigate('/offline')
+			router.navigate(routes.offline)
 			return Promise.resolve(error.response)
 		}
 
