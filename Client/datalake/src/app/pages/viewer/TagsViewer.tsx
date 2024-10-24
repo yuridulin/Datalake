@@ -20,10 +20,10 @@ import Column from 'antd/es/table/Column'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import compareValues from '../../../api/extensions/compareValues'
 import { TagValue } from '../../../api/models/tagValue'
 import api from '../../../api/swagger-api'
 import { TagQuality, TagType } from '../../../api/swagger/data-contracts'
-import compareValues from '../../../hooks/compareValues'
 import { useInterval } from '../../../hooks/useInterval'
 import TagCompactValue from '../../components/TagCompactValue'
 import TagQualityEl from '../../components/TagQualityEl'
@@ -156,7 +156,7 @@ export default function TagsViewer() {
 					},
 					...res.data[0].tags.map((x) => ({
 						title: () => (
-							<NavLink to={'/tags/' + x.guid}>
+							<NavLink to={routes.tags.toTagForm(x.guid)}>
 								<Button>{x.name}</Button>
 							</NavLink>
 						),
@@ -336,7 +336,7 @@ export default function TagsViewer() {
 						title='Тег'
 						dataIndex='guid'
 						render={(guid, row: ValueType) => (
-							<NavLink to={routes.tags.toTag(guid)}>
+							<NavLink to={routes.tags.toTagForm(guid)}>
 								<Button size='small'>{row.name}</Button>
 							</NavLink>
 						)}

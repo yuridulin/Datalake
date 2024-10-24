@@ -1,10 +1,10 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Tags;
-using Datalake.ApiClasses.Models.Values;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
+using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
-using Datalake.Database.Models;
+using Datalake.Database.Models.Tags;
+using Datalake.Database.Models.Values;
+using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Data;
 using System.Diagnostics;
@@ -83,15 +83,6 @@ public class ValuesRepository(DatalakeContext db)
 			};
 
 		var values = await query.ToListAsync();
-
-		await db.Logs.BulkCopyAsync(values.Select(v => new Log
-		{
-			Category = LogCategory.Database,
-			Date = v.Date,
-			RefId = v.TagId.ToString(),
-			Type = LogType.Trace,
-			Text = $"Значение тега для кэша: {v.Number} | {v.Text} | {v.Quality}",
-		}));
 
 		lock (locker)
 		{

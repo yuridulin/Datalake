@@ -1,4 +1,5 @@
 ﻿using Datalake.ApiClasses.Enums;
+using Datalake.ApiClasses.Models.Users;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.ApiClasses.Models.Logs;
@@ -40,6 +41,14 @@ public class LogInfo
 
 	/// <summary>
 	/// Ссылка на конкретный объект в случае, если это подразумевает категория
+	/// <br />
+	/// Теги, пользователи, группы пользователей: Guid
+	/// Источники, блоки: int
 	/// </summary>
 	public string? RefId { get; set; }
+
+	/// <summary>
+	/// Информация об авторе сообщения
+	/// </summary>
+	public UserSimpleInfo? Author { get; set; }
 }

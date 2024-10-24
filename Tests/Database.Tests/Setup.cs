@@ -1,4 +1,4 @@
-﻿using Datalake.ApiClasses.Models.Users;
+﻿using Datalake.Database.Models.Users;
 using LinqToDB;
 using LinqToDB.AspNet.Logging;
 using Microsoft.EntityFrameworkCore;

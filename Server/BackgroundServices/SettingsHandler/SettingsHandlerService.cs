@@ -1,4 +1,4 @@
-﻿using Datalake.ApiClasses.Constants;
+﻿using Datalake.Database.Constants;
 using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.Services.SessionManager;
@@ -69,6 +69,7 @@ public class SettingsHandlerService(
 				"var LOCAL_API = true;",
 				$"var KEYCLOAK_DB = '{newSettings.EnergoIdHost}';",
 				$"var KEYCLOAK_CLIENT = '{newSettings.EnergoIdClient}';",
+				$"var INSTANCE_NAME = '{newSettings.InstanceName}'",
 			]);
 
 			StoredUpdate = DateFormats.GetCurrentDateTime();

@@ -1,4 +1,4 @@
-﻿using Datalake.ApiClasses.Models.Values;
+﻿using Datalake.Database.Models.Values;
 using Datalake.Database;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -10,7 +10,7 @@ namespace Datalake.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/Tags/[controller]")]
-public class ValuesController(DatalakeContext db, ILogger<ValuesController> logger) : ControllerBase
+public class ValuesController(DatalakeContext db) : ControllerBase
 {
 	/// <summary>
 	/// Путь для получения текущих данные

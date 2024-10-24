@@ -22,6 +22,7 @@ import { useInterval } from '../../../../hooks/useInterval'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import TagValueEl from '../../../components/TagValueEl'
+import routes from '../../../router/routes'
 
 export default function TagForm() {
 	//#region Данные
@@ -121,7 +122,7 @@ export default function TagForm() {
 	//#region Действия
 
 	const back = () => {
-		navigate('/tags')
+		navigate(routes.tags.list)
 	}
 
 	function tagUpdate() {
@@ -168,7 +169,9 @@ export default function TagForm() {
 		<>
 			<PageHeader
 				left={
-					<Button onClick={() => navigate('/tags')}>Вернуться</Button>
+					<Button onClick={() => navigate(routes.tags.list)}>
+						Вернуться
+					</Button>
 				}
 				right={
 					<>

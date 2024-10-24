@@ -156,7 +156,7 @@ namespace Datalake.Database.Migrations
                     b.Property<int>("Category")
                         .HasColumnType("integer");
 
-                    b.Property<DateTimeOffset>("Date")
+                    b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Details")
@@ -172,7 +172,12 @@ namespace Datalake.Database.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("UserGuid")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserGuid");
 
                     b.ToTable("Logs", "public");
                 });
@@ -180,6 +185,10 @@ namespace Datalake.Database.Migrations
             modelBuilder.Entity("Datalake.Database.Models.Settings", b =>
                 {
                     b.Property<string>("EnergoIdApi")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("InstanceName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -456,6 +465,16 @@ namespace Datalake.Database.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("Datalake.Database.Models.Log", b =>
+                {
+                    b.HasOne("Datalake.Database.Models.User", "Author")
+                        .WithMany("Logs")
+                        .HasForeignKey("UserGuid")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Author");
+                });
+
             modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
                 {
                     b.HasOne("Datalake.Database.Models.Source", "Source")
@@ -546,6 +565,8 @@ namespace Datalake.Database.Migrations
                     b.Navigation("AccessRightsList");
 
                     b.Navigation("GroupsRelations");
+
+                    b.Navigation("Logs");
                 });
 
             modelBuilder.Entity("Datalake.Database.Models.UserGroup", b =>

@@ -1,28 +1,37 @@
-﻿namespace Datalake.Database.Extensions
+﻿namespace Datalake.Database.Extensions;
+
+/// <summary>
+/// Расширение для работы с объектами
+/// </summary>
+public static class ObjectExtension
 {
-	public static class ObjectExtension<T> where T : class
+	/// <summary>
+	/// Запись различий двух однотипных объектов
+	/// </summary>
+	/// <typeparam name="T">Тип объектов</typeparam>
+	/// <param name="old">Исходный объект</param>
+	/// <param name="new">Измененный объект</param>
+	/// <returns>Строковая запись различий</returns>
+	public static string Difference<T>(T old, T @new) where T : class
 	{
-		public static string Difference(T old, T @new)
+		var type = typeof(T);
+		List<string> parts = [];
+
+		foreach (var property in type.GetProperties())
 		{
-			var type = typeof(T);
-			List<string> parts = [];
+			var oldValue = property.GetValue(old);
+			var newValue = property.GetValue(@new);
 
-			foreach (var property in type.GetProperties())
+			if (!Equals(oldValue, newValue))
 			{
-				var oldValue = property.GetValue(old);
-				var newValue = property.GetValue(@new);
-
-				if (!Equals(oldValue, newValue))
-				{
-					parts.Add($"{property.Name}: [{oldValue}] -> [{newValue}]");
-				}
+				parts.Add($"{property.Name}: [{oldValue}] -> [{newValue}]");
 			}
-			if (parts.Count > 0)
-			{
-				return "Изменения: " + string.Join(", ", parts);
-			}
-
-			return "Изменений нет";
 		}
+		if (parts.Count > 0)
+		{
+			return "Изменения: " + string.Join(", ", parts);
+		}
+
+		return "Изменений нет";
 	}
 }

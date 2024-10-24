@@ -1,8 +1,10 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Models.Sources;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
+using Datalake.Database.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
+using Datalake.Server.Services.StateManager;
 
 namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 
@@ -10,11 +12,13 @@ internal class InopcCollector : CollectorBase
 {
 	public InopcCollector(
 		ReceiverService receiverService,
+		SourcesStateService sourcesStateService,
 		SourceWithTagsInfo source,
 		ILogger<InopcCollector> logger) : base(source, logger)
 	{
 		_logger = logger;
 		_receiverService = receiverService;
+		_stateService = sourcesStateService;
 		_address = source.Address ?? throw new InvalidOperationException();
 		_tokenSource = new CancellationTokenSource();
 		_id = source.Id;
@@ -39,7 +43,7 @@ internal class InopcCollector : CollectorBase
 			.ToDictionary(x => x.Guid, x => new CollectValue
 			{
 				Value = null,
-				Quality = ApiClasses.Enums.TagQuality.Unknown,
+				Quality = TagQuality.Unknown,
 				DateTime = DateTime.MinValue,
 				Guid = x.Guid,
 			});
@@ -71,6 +75,7 @@ internal class InopcCollector : CollectorBase
 	private readonly string _address;
 	private readonly List<Item> _itemsToSend;
 	private readonly ReceiverService _receiverService;
+	private readonly SourcesStateService _stateService;
 	private readonly Dictionary<string, Guid[]> _itemsTags;
 	private readonly CancellationTokenSource _tokenSource;
 	private ILogger<InopcCollector> _logger;
@@ -107,7 +112,7 @@ internal class InopcCollector : CollectorBase
 				{
 					var items = tags.Select(x => x.TagName).ToArray();
 
-					var response = await _receiverService.AskInopc(items, _address);
+					var response = await _receiverService.AskInopc(items, _address, true);
 					var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
 
 					var collectedValues = response.Tags
@@ -133,10 +138,13 @@ internal class InopcCollector : CollectorBase
 						tag.LastAsk = response.Timestamp;
 					}
 				}
+
+				_stateService.UpdateSource(_id, connected: true);
 			}
 			catch (Exception ex)
 			{
 				_logger.LogWarning("Ошибка в сборщике INOPC [{id}]: {message}", _id, ex.Message);
+				_stateService.UpdateSource(_id, connected: false);
 			}
 			finally
 			{

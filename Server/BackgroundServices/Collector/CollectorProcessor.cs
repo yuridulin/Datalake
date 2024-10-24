@@ -1,4 +1,4 @@
-﻿using Datalake.ApiClasses.Models.Sources;
+﻿using Datalake.Database.Models.Sources;
 using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;

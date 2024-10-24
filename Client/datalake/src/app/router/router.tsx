@@ -1,8 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
-import AccessRulesForm from '../pages/access/AccessRulesForm'
 import SettingsPage from '../pages/admin/SettingsPage'
+import BlockAccessForm from '../pages/blocks/block/access/BlockAccessForm'
 import BlockForm from '../pages/blocks/block/BlockForm'
 import BlockView from '../pages/blocks/block/BlockView'
 import BlocksList from '../pages/blocks/BlocksList'
@@ -17,6 +17,7 @@ import TagForm from '../pages/tags/tag/TagForm'
 import TagsCalculatedList from '../pages/tags/TagsCalculatedList'
 import TagsList from '../pages/tags/TagsList'
 import TagsManualList from '../pages/tags/TagsManualList'
+import UserGroupAccessForm from '../pages/usergroups/usergroup/access/UserGroupAccessForm'
 import UserGroupForm from '../pages/usergroups/usergroup/UserGroupForm'
 import UserGroupView from '../pages/usergroups/usergroup/UserGroupView'
 import UserGroupsTreeList from '../pages/usergroups/UserGroupsTreeList'
@@ -58,7 +59,7 @@ const router = createBrowserRouter([
 						element: <UserCreate />,
 					},
 					{
-						path: routes.users.view,
+						path: routes.users.edit,
 						element: <UserForm />,
 					},
 				],
@@ -83,6 +84,10 @@ const router = createBrowserRouter([
 						path: routes.userGroups.edit,
 						element: <UserGroupForm />,
 					},
+					{
+						path: routes.userGroups.access.edit,
+						element: <UserGroupAccessForm />,
+					},
 				],
 			},
 			// settings
@@ -92,36 +97,36 @@ const router = createBrowserRouter([
 			},
 			// sources
 			{
-				path: '/sources',
+				path: routes.sources.root,
 				children: [
 					{
-						path: '/sources/',
+						path: routes.sources.list,
 						element: <SourcesList />,
 					},
 					{
-						path: '/sources/:id',
+						path: routes.sources.edit,
 						element: <SourceForm />,
 					},
 				],
 			},
 			// tags
 			{
-				path: '/tags',
+				path: routes.tags.root,
 				children: [
 					{
-						path: '/tags/',
+						path: routes.tags.list,
 						element: <TagsList />,
 					},
 					{
-						path: '/tags/manual/',
+						path: routes.tags.manual,
 						element: <TagsManualList />,
 					},
 					{
-						path: '/tags/calc/',
+						path: routes.tags.calc,
 						element: <TagsCalculatedList />,
 					},
 					{
-						path: '/tags/:id',
+						path: routes.tags.edit,
 						element: <TagForm />,
 					},
 				],
@@ -131,40 +136,34 @@ const router = createBrowserRouter([
 				path: routes.viewer.root,
 				children: [
 					{
-						path: routes.viewer.root + routes.viewer.tagsViewer,
+						path: routes.viewer.tagsViewer,
 						element: <TagsViewer />,
 					},
 				],
 			},
 			// blocks
 			{
-				path: '/blocks',
+				path: routes.blocks.root,
 				children: [
 					{
-						path: '/blocks/',
+						path: routes.blocks.list,
 						element: <BlocksList />,
 					},
 					{
-						path: '/blocks/mover/',
+						path: routes.blocks.mover,
 						element: <BlocksMover />,
 					},
 					{
-						path: '/blocks/view/:id',
+						path: routes.blocks.view,
 						element: <BlockView />,
 					},
 					{
-						path: '/blocks/edit/:id',
+						path: routes.blocks.edit,
 						element: <BlockForm />,
 					},
-				],
-			},
-			// access
-			{
-				path: routes.access.root,
-				children: [
 					{
-						path: routes.access.root + routes.access.form,
-						element: <AccessRulesForm />,
+						path: routes.blocks.access.edit,
+						element: <BlockAccessForm />,
 					},
 				],
 			},

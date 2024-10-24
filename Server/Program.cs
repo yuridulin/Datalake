@@ -1,4 +1,4 @@
-using Datalake.ApiClasses.Exceptions.Base;
+using Datalake.Database.Exceptions.Base;
 using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector;
@@ -8,12 +8,15 @@ using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SessionManager;
+using Datalake.Server.Services.StateManager;
 using LinqToDB;
 using LinqToDB.AspNet;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using System.Reflection;
+using Datalake.Database.Tables;
+using Datalake.Database.Enums;
 
 [assembly: AssemblyVersion("2.0.*")]
 
@@ -120,6 +123,8 @@ namespace Datalake.Server
 			builder.Services.AddSingleton<SettingsHandlerService>();
 			builder.Services.AddSingleton<ISettingsUpdater>(provider
 				=> provider.GetRequiredService<SettingsHandlerService>());
+			builder.Services.AddSingleton<SourcesStateService>();
+			builder.Services.AddSingleton<UsersStateService>();
 
 			// временные
 			builder.Services.AddTransient<BlocksRepository>();
@@ -153,10 +158,10 @@ namespace Datalake.Server
 			if (db != null)
 			{
 				await db.EnsureDataCreatedAsync();
-				await db.LogsRepository.LogAsync(new Database.Models.Log
+				await db.InsertAsync(new Log
 				{
-					Category = ApiClasses.Enums.LogCategory.Core,
-					Type = ApiClasses.Enums.LogType.Success,
+					Category = LogCategory.Core,
+					Type = LogType.Success,
 					Text = "Сервер запущен",
 				});
 

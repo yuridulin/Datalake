@@ -1,13 +1,13 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Models.Tags;
-using Datalake.Database.Models;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
+using Datalake.Database.Models.Tags;
+using Datalake.Database.Tables;
 
 namespace Datalake.Database.Extensions;
 
-public static class TagExtension
+internal static class TagExtension
 {
-	public static TagHistory ToHistory(this TagCacheInfo tag, object? value, ushort qualityRaw)
+	internal static TagHistory ToHistory(this TagCacheInfo tag, object? value, ushort qualityRaw)
 	{
 		var quality = !Enum.IsDefined(typeof(TagQuality), (int)qualityRaw)
 			? TagQuality.Unknown
@@ -16,7 +16,7 @@ public static class TagExtension
 		return tag.ToHistory(value, quality);
 	}
 
-	public static TagHistory ToHistory(this TagCacheInfo tag, object? value, TagQuality? quality)
+	internal static TagHistory ToHistory(this TagCacheInfo tag, object? value, TagQuality? quality)
 	{
 		var history = new TagHistory
 		{

@@ -12,17 +12,23 @@ const routes = {
 		root: '/users',
 		list: '/users/',
 		create: '/users/create',
-		view: '/users/:id',
-		toUser(guid: string) {
-			return withId(this.view, guid)
+		edit: '/users/:id/edit',
+		toList() {
+			return this.list
+		},
+		toUserForm(guid: string) {
+			return withId(this.edit, guid)
 		},
 	},
 	userGroups: {
 		root: '/user-groups',
 		list: '/user-groups/',
 		move: '/user-groups/move',
-		view: '/user-groups/:id',
-		edit: '/user-groups/edit/:id',
+		view: '/user-groups/:id/view',
+		edit: '/user-groups/:id/edit',
+		access: {
+			edit: '/user-groups/:id/edit/access',
+		},
 		toList() {
 			return this.list
 		},
@@ -32,6 +38,9 @@ const routes = {
 		toUserGroupEdit(guid: string) {
 			return withId(this.edit, guid)
 		},
+		toUserGroupAccessForm(guid: string) {
+			return withId(this.access.edit, guid)
+		},
 	},
 	auth: {
 		loginPage: '/login',
@@ -39,24 +48,41 @@ const routes = {
 	},
 	viewer: {
 		root: '/viewer',
-		tagsViewer: '/tags',
+		tagsViewer: '/viewer/tags',
 	},
 	tags: {
 		root: '/tags',
-		toTag(guid: string) {
-			return this.root + '/' + guid
+		list: '/tags/all',
+		manual: '/tags/manual',
+		calc: '/tags/calculated',
+		edit: '/tags/:id/edit',
+		toTagForm(guid: string) {
+			return withId(this.edit, guid)
 		},
 	},
 	blocks: {
 		root: '/blocks',
-		view: '/view',
-		edit: '/edit',
-		mover: '/mover',
+		list: '/blocks/',
+		mover: '/blocks/mover',
+		view: '/blocks/:id/view',
+		edit: '/blocks/:id/edit',
+		access: {
+			edit: '/blocks/:id/edit/access',
+		},
+		toList() {
+			return this.list
+		},
+		toMoveForm() {
+			return this.mover
+		},
 		toViewBlock(id: number) {
-			return `${this.root}${this.view}/${id}`
+			return withId(this.view, id)
 		},
 		toEditBlock(id: number) {
-			return `${this.root}${this.edit}/${id}`
+			return withId(this.edit, id)
+		},
+		toBlockAccessForm(id: number) {
+			return withId(this.access.edit, id)
 		},
 	},
 	access: {
@@ -74,11 +100,7 @@ const routes = {
 	sources: {
 		root: '/sources',
 		list: '/sources/',
-		view: '/sources/:id',
-		edit: '/sources/edit/:id',
-		toViewSource(id: string | number) {
-			return withId(this.view, id)
-		},
+		edit: '/sources/:id/edit',
 		toEditSource(id: string | number) {
 			return withId(this.edit, id)
 		},

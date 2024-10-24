@@ -1,8 +1,9 @@
-﻿using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.UserGroups;
-using Datalake.ApiClasses.Models.Users;
-using Datalake.Database.Models;
+﻿using Datalake.Database.Enums;
+using Datalake.Database.Exceptions;
+using Datalake.Database.Extensions;
+using Datalake.Database.Models.UserGroups;
+using Datalake.Database.Models.Users;
+using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Data;
 
@@ -22,6 +23,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 		{
 			await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 		}
+		User = user.Guid;
 
 		return await CreateAsync(request);
 	}
@@ -29,6 +31,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
 	{
 		await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, groupGuid);
+		User = user.Guid;
 
 		return await UpdateAsync(groupGuid, request);
 	}
@@ -45,6 +48,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 		{
 			await db.AccessRepository.CheckGlobalAccess(user, AccessType.User);
 		}
+		User = user.Guid;
 
 		return await MoveAsync(guid, parentGuid);
 	}
@@ -52,6 +56,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid groupGuid)
 	{
 		await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, groupGuid);
+		User = user.Guid;
 
 		return await DeleteAsync(groupGuid);
 	}
@@ -60,6 +65,8 @@ public partial class UserGroupsRepository(DatalakeContext db)
 
 
 	#region Реализация
+
+	Guid User { get; set; }
 
 	internal async Task<Guid> CreateAsync(UserGroupCreateRequest request)
 	{
@@ -81,15 +88,22 @@ public partial class UserGroupsRepository(DatalakeContext db)
 			.Value(x => x.AccessType, AccessType.Viewer)
 			.InsertAsync();
 
-		await db.LogsRepository.LogAsync(Success(group.Guid, $"Создана группа пользователей \"{group.Name}\""));
-		SystemRepository.Update();
+		await LogAsync(group.Guid, $"Создана группа пользователей \"{group.Name}\"");
+
 		await transaction.CommitAsync();
+
+		SystemRepository.Update();
 
 		return group.Guid;
 	}
 
 	internal async Task<bool> UpdateAsync(Guid groupGuid, UserGroupUpdateRequest request)
 	{
+		var group = await GetWithDetails()
+			.Where(x => x.Guid == groupGuid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "группа " + groupGuid);
+
 		if (await db.UserGroups.AnyAsync(x => x.Name == request.Name
 			&& x.ParentGuid == request.ParentGuid
 			&& x.Guid != groupGuid))
@@ -121,9 +135,13 @@ public partial class UserGroupsRepository(DatalakeContext db)
 				AccessType = u.AccessType,
 			}));
 
-		await db.LogsRepository.LogAsync(Success(groupGuid, $"Изменена группа пользователей \"{groupGuid}\""));
-		SystemRepository.Update();
+		await LogAsync(groupGuid, $"Изменена группа пользователей: {group.Name}", ObjectExtension.Difference(
+			new { group.Name, group.Description, ParentGuid = group.ParentGroupGuid, Users = group.Users.Select(u => new { u.Guid, u.AccessType }) },
+			new { request.Name, request.Description, request.ParentGuid, Users = request.Users.Select(u => new { u.Guid, u.AccessType }) }));
+
 		await transaction.CommitAsync();
+
+		SystemRepository.Update();
 
 		return true;
 	}
@@ -132,22 +150,23 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
-		try
-		{
-			await db.UserGroups
-				.Where(x => x.Guid == guid)
-				.Set(x => x.ParentGuid, parentGuid)
-				.UpdateAsync();
+		var group = await db.UserGroups
+			.Where(x => x.Guid == guid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "группа " + guid);
 
-			await transaction.CommitAsync();
+		await db.UserGroups
+			.Where(x => x.Guid == guid)
+			.Set(x => x.ParentGuid, parentGuid)
+			.UpdateAsync();
 
-			return true;
-		}
-		catch (Exception ex)
-		{
-			transaction.Rollback();
-			throw new DatabaseException("не удалось переместить группу", ex);
-		}
+		await LogAsync(guid, $"Изменено расположение группы пользователей: {group.Name}", ObjectExtension.Difference(
+			new { group.ParentGuid },
+			new { ParentGuid = parentGuid }));
+
+		await transaction.CommitAsync();
+
+		return true;
 	}
 
 	internal async Task<bool> DeleteAsync(Guid groupGuid)
@@ -170,21 +189,27 @@ public partial class UserGroupsRepository(DatalakeContext db)
 			.Where(x => x.Guid == groupGuid)
 			.DeleteAsync();
 
-		await db.LogsRepository.LogAsync(Success(groupGuid, $"Удалена группа пользователей \"{groupGuid}\""));
-		SystemRepository.Update();
+		await LogAsync(groupGuid, $"Удалена группа пользователей: {group.Name}");
+
 		await transaction.CommitAsync();
+
+		SystemRepository.Update();
 
 		return true;
 	}
 
-	private static Log Success(Guid guid, string message, string? details = null) => new()
+	private async Task LogAsync(Guid guid, string message, string? details = null)
 	{
-		Category = LogCategory.UserGroups,
-		RefId = guid.ToString(),
-		Text = message,
-		Type = LogType.Success,
-		Details = details,
-	};
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.UserGroups,
+			RefId = guid.ToString(),
+			Text = message,
+			Type = LogType.Success,
+			UserGuid = User,
+			Details = details,
+		});
+	}
 
 	#endregion
 }

@@ -1,4 +1,4 @@
-﻿using Datalake.ApiClasses.Models.AccessRights;
+﻿using Datalake.Database.Models.AccessRights;
 using Datalake.Database;
 using Datalake.Server.Controllers.Base;
 using LinqToDB;
@@ -59,14 +59,16 @@ public class AccessController(DatalakeContext db) : ApiControllerBase
 	}
 
 	/// <summary>
-	/// Пакетное изменение разрешений
+	/// Изменение разрешений для группы пользователей
 	/// </summary>
-	/// <param name="applyRequests">Список изменений</param>
+	/// <param name="request">Список изменений</param>
 	[HttpPost]
 	public async Task<ActionResult> ApplyChangesAsync(
-		[FromBody] AccessRightsApplyRequest[] applyRequests)
+		[FromBody] AccessRightsApplyRequest request)
 	{
-		await db.AccessRepository.ApplyChangesAsync(applyRequests);
+		var user = Authenticate();
+
+		await db.AccessRepository.ApplyChangesAsync(user, request);
 
 		return NoContent();
 	}

@@ -1,4 +1,4 @@
-﻿using Datalake.ApiClasses.Enums;
+﻿using Datalake.Database.Enums;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable

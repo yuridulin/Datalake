@@ -1,9 +1,9 @@
 import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import compareValues from '../../../api/extensions/compareValues'
 import api from '../../../api/swagger-api'
 import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
-import compareValues from '../../../hooks/compareValues'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 

@@ -47,7 +47,7 @@ const columns: TableColumnsType<DataType> = [
 		render: (_, record: DataType) => (
 			<NavLink
 				className='table-row'
-				to={'/blocks/view/' + record.id}
+				to={routes.blocks.toViewBlock(record.id)}
 				key={record.id}
 			>
 				<Button size='small'>{record.name}</Button>
@@ -107,7 +107,7 @@ export default function BlocksList() {
 			<PageHeader
 				right={
 					<>
-						<NavLink to={routes.blocks.root + routes.blocks.mover}>
+						<NavLink to={routes.blocks.toMoveForm()}>
 							<Button>Изменить иерархию</Button>
 						</NavLink>
 						&ensp;

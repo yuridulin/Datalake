@@ -1,4 +1,4 @@
-using Datalake.ApiClasses.Enums;
+using Datalake.Database.Enums;
 using LinqToDB;
 
 namespace Datalake.Database.Tests.Scenarios

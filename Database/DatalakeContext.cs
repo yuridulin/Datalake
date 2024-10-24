@@ -1,16 +1,22 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
 using Datalake.Database.Extensions;
-using Datalake.Database.Models;
 using Datalake.Database.Repositories;
+using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
 
 namespace Datalake.Database;
 
+/// <summary>
+/// Контекст для работы с базой данных
+/// </summary>
 public class DatalakeContext : DataConnection
 {
+	/// <summary>
+	/// Конструктор
+	/// </summary>
 	public DatalakeContext(DataOptions<DatalakeContext> options) : base(options.Options)
 	{
 		_accessRepository = new Lazy<AccessRepository>(() => new AccessRepository(this));
@@ -22,9 +28,11 @@ public class DatalakeContext : DataConnection
 		_userGroupsRepository = new Lazy<UserGroupsRepository>(() => new UserGroupsRepository(this));
 		_valuesRepository = new Lazy<ValuesRepository>(() => new ValuesRepository(this));
 		_tablesRepository = new Lazy<TablesRepository>(() => new TablesRepository(this));
-		_logsRepository = new Lazy<LogsRepository>(() => new LogsRepository(this));
 	}
 
+	/// <summary>
+	/// Специфичные настройки LinqToDB, которые необходимо применять при запуске
+	/// </summary>
 	public static void SetupLinqToDB()
 	{
 		Configuration.Linq.GuardGrouping = false;
@@ -79,35 +87,59 @@ public class DatalakeContext : DataConnection
 
 	#region Репозитории
 
+	/// <summary>
+	/// Репозиторий для работы с правами доступа
+	/// </summary>
 	public AccessRepository AccessRepository => _accessRepository.Value;
 	private readonly Lazy<AccessRepository> _accessRepository;
 
+	/// <summary>
+	/// Репозиторий для работы с блоками тегов
+	/// </summary>
 	public BlocksRepository BlocksRepository => _blocksRepository.Value;
 	private readonly Lazy<BlocksRepository> _blocksRepository;
 
+	/// <summary>
+	/// Репозиторий для работы с источниками данных
+	/// </summary>
 	public SourcesRepository SourcesRepository => _sourcesRepository.Value;
 	private readonly Lazy<SourcesRepository> _sourcesRepository;
 
+	/// <summary>
+	/// Репозиторий для работы с настройками и системной информацией
+	/// </summary>
 	public SystemRepository SystemRepository => _systemRepository.Value;
 	private readonly Lazy<SystemRepository> _systemRepository;
 
+	/// <summary>
+	/// Репозиторий для работы с тегами
+	/// </summary>
 	public TagsRepository TagsRepository => _tagsRepository.Value;
 	private readonly Lazy<TagsRepository> _tagsRepository;
 
+	/// <summary>
+	/// Репозиторий для работы с пользователями
+	/// </summary>
 	public UsersRepository UsersRepository => _usersRepository.Value;
 	private readonly Lazy<UsersRepository> _usersRepository;
 
+	/// <summary>
+	/// Репозиторий для работы с группами пользователей
+	/// </summary>
 	public UserGroupsRepository UserGroupsRepository => _userGroupsRepository.Value;
 	private readonly Lazy<UserGroupsRepository> _userGroupsRepository;
 
+	/// <summary>
+	/// Репозиторий для работы со значениями
+	/// </summary>
 	public ValuesRepository ValuesRepository => _valuesRepository.Value;
 	private readonly Lazy<ValuesRepository> _valuesRepository;
 
+	/// <summary>
+	/// Репозиторий для работы с таблицами с историей значений
+	/// </summary>
 	public TablesRepository TablesRepository => _tablesRepository.Value;
 	private readonly Lazy<TablesRepository> _tablesRepository;
-
-	public LogsRepository LogsRepository => _logsRepository.Value;
-	private readonly Lazy<LogsRepository> _logsRepository;
 
 	#endregion
 

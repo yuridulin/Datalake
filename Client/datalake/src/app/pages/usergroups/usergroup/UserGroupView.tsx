@@ -1,7 +1,6 @@
 import { Button, Descriptions, DescriptionsProps, Spin, Tabs } from 'antd'
 import { useEffect, useState } from 'react'
-import { NavLink, useNavigate, useParams } from 'react-router-dom'
-import { AccessObject } from '../../../../api/models/accessObject'
+import { NavLink, useParams } from 'react-router-dom'
 import api from '../../../../api/swagger-api'
 import {
 	AccessType,
@@ -18,7 +17,6 @@ const defaultGroup = {} as UserGroupDetailedInfo
 export default function UserGroupView() {
 	const [group, setGroup] = useState(defaultGroup)
 	const [ready, setReady] = useState(false)
-	const navigate = useNavigate()
 	const { id } = useParams()
 
 	const getGlobalAccessRights = () => {
@@ -68,9 +66,9 @@ export default function UserGroupView() {
 		<>
 			<PageHeader
 				left={
-					<Button onClick={() => navigate(routes.userGroups.root)}>
-						К списку групп
-					</Button>
+					<NavLink to={routes.userGroups.root}>
+						<Button>К списку групп</Button>
+					</NavLink>
 				}
 				right={
 					<>
@@ -81,8 +79,7 @@ export default function UserGroupView() {
 						</NavLink>
 						&ensp;
 						<NavLink
-							to={routes.access.toForm(
-								AccessObject.UserGroup,
+							to={routes.userGroups.toUserGroupAccessForm(
 								String(id),
 							)}
 						>

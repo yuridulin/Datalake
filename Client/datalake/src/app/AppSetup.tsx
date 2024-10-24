@@ -14,6 +14,11 @@ dayjs.locale('ru')
 
 declare const KEYCLOAK_DB: string
 declare const KEYCLOAK_CLIENT: string
+declare const INSTANCE_NAME: string
+
+if (INSTANCE_NAME) {
+	document.title = 'Datalake | ' + INSTANCE_NAME
+}
 
 export default function AppSetup() {
 	const [lastUpdate, setUpdate] = useState<Date>(new Date())

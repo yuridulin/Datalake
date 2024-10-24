@@ -1,7 +1,8 @@
-﻿using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Users;
-using Datalake.Database.Models;
+﻿using Datalake.Database.Enums;
+using Datalake.Database.Exceptions;
+using Datalake.Database.Extensions;
+using Datalake.Database.Models.Users;
+using Datalake.Database.Tables;
 using LinqToDB;
 using System.Security.Cryptography;
 using System.Text;
@@ -15,6 +16,7 @@ public partial class UsersRepository(DatalakeContext db)
 	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
 	{
 		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
 
 		return await CreateAsync(userInfo);
 	}
@@ -22,6 +24,7 @@ public partial class UsersRepository(DatalakeContext db)
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
 		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
 
 		return await UpdateAsync(userGuid, request);
 	}
@@ -29,6 +32,7 @@ public partial class UsersRepository(DatalakeContext db)
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid userGuid)
 	{
 		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
 
 		return await DeleteAsync(userGuid);
 	}
@@ -37,6 +41,8 @@ public partial class UsersRepository(DatalakeContext db)
 
 
 	#region Реализация
+
+	Guid User { get; set; }
 
 	internal async Task<Guid> CreateAsync(UserCreateRequest request)
 	{
@@ -97,6 +103,8 @@ public partial class UsersRepository(DatalakeContext db)
 			.Value(x => x.AccessType, request.AccessType)
 			.InsertAsync();
 
+		await LogAsync(user.Guid, "Создан пользователь " + user.FullName);
+
 		await transaction.CommitAsync();
 
 		return user.Guid;
@@ -154,6 +162,10 @@ public partial class UsersRepository(DatalakeContext db)
 			.Set(x => x.AccessType, request.AccessType)
 			.UpdateAsync();
 
+		await LogAsync(userGuid, "Изменен пользователь " + (request.FullName ?? request.Login), ObjectExtension.Difference(
+			new { oldUser.Type, oldUser.Login, oldUser.FullName, oldUser.EnergoIdGuid, oldUser.StaticHost, Hash = "old" },
+			new { request.Type, request.Login, request.FullName, request.EnergoIdGuid, request.StaticHost, Hash = string.IsNullOrEmpty(request.StaticHost) ? "new" : "old" }));
+
 		await transaction.CommitAsync();
 
 		return true;
@@ -162,6 +174,11 @@ public partial class UsersRepository(DatalakeContext db)
 	internal async Task<bool> DeleteAsync(Guid userGuid)
 	{
 		using var transaction = await db.BeginTransactionAsync();
+
+		var user = await db.Users
+			.Where(x => x.Guid == userGuid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "пользователь " + userGuid);
 
 		await db.AccessRights
 			.Where(x => x.UserGuid == userGuid)
@@ -174,6 +191,8 @@ public partial class UsersRepository(DatalakeContext db)
 		await db.Users
 			.Where(x => x.Guid == userGuid)
 			.DeleteAsync();
+
+		await LogAsync(userGuid, "Удален пользователь " + (user.FullName ?? user.Login));
 
 		await transaction.CommitAsync();
 
@@ -224,6 +243,19 @@ public partial class UsersRepository(DatalakeContext db)
 
 		string refreshToken = Convert.ToBase64String(randomNumber);
 		return refreshToken;
+	}
+
+	private async Task LogAsync(Guid guid, string message, string? details = null)
+	{
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.Users,
+			RefId = guid.ToString(),
+			Text = message,
+			Type = LogType.Success,
+			UserGuid = User,
+			Details = details,
+		});
 	}
 
 	#endregion

@@ -1,19 +1,26 @@
 import { Button, Form, Input } from 'antd'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import api from '../../../../api/swagger-api'
 import { SettingsInfo } from '../../../../api/swagger/data-contracts'
 
 export default function AuthSettings() {
+	const [settings, setSettings] = useState({} as SettingsInfo)
 	const [form] = Form.useForm<SettingsInfo>()
 
 	const load = () => {
-		api.configGetSettings().then((res) => form.setFieldsValue(res.data))
+		api.systemGetSettings().then((res) => {
+			setSettings(res.data)
+			form.setFieldsValue(res.data)
+		})
+	}
+	const update = (newSettings: SettingsInfo) => {
+		api.systemUpdateSettings({ ...settings, ...newSettings })
 	}
 
 	useEffect(load, [form])
 
 	return (
-		<Form form={form} layout='vertical' onFinish={api.configUpdateSettings}>
+		<Form form={form} layout='vertical' onFinish={update}>
 			<Form.Item<SettingsInfo>
 				label='Адрес Keycloak сервера EnergoId'
 				name='energoIdHost'

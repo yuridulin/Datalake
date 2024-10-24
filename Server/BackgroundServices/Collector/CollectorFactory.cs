@@ -1,15 +1,19 @@
-﻿using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Models.Sources;
+﻿using Datalake.Database.Enums;
+using Datalake.Database.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Collectors;
 using Datalake.Server.Services.Receiver;
+using Datalake.Server.Services.StateManager;
 
 namespace Datalake.Server.BackgroundServices.Collector;
 
 /// <summary>
 /// Получение нужного сборщика данных для выбранного источника
 /// </summary>
-public class CollectorFactory(ReceiverService receiverService, ILoggerFactory loggerFactory)
+public class CollectorFactory(
+	ReceiverService receiverService,
+	SourcesStateService stateService,
+	ILoggerFactory loggerFactory)
 {
 	/// <summary>
 	/// Получение сборщика для источника
@@ -21,10 +25,10 @@ public class CollectorFactory(ReceiverService receiverService, ILoggerFactory lo
 		return source.Type switch
 		{
 			SourceType.Inopc
-				=> new InopcCollector(receiverService, source, loggerFactory.CreateLogger<InopcCollector>()),
+				=> new InopcCollector(receiverService, stateService, source, loggerFactory.CreateLogger<InopcCollector>()),
 
 			SourceType.Datalake
-				=> new OldDatalakeCollector(receiverService, source, loggerFactory.CreateLogger<OldDatalakeCollector>()),
+				=> new OldDatalakeCollector(receiverService, stateService, source, loggerFactory.CreateLogger<OldDatalakeCollector>()),
 
 			SourceType.DatalakeCore_v1
 				=> new DatalakeCollector(receiverService, source, loggerFactory.CreateLogger<DatalakeCollector>()),

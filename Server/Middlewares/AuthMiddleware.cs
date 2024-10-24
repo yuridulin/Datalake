@@ -1,6 +1,7 @@
 ﻿using Datalake.Server.Constants;
 using Datalake.Server.Services.SessionManager;
 using Datalake.Server.Services.SessionManager.Models;
+using Datalake.Server.Services.StateManager;
 using System.Text;
 
 namespace Datalake.Server.Middlewares;
@@ -8,8 +9,9 @@ namespace Datalake.Server.Middlewares;
 /// <summary>
 /// Обработчик, проверяющий аутентификацию
 /// </summary>
-/// <param name="sessionManager">Менеджер сессий доступа</param>
-public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
+public class AuthMiddleware(
+	SessionManagerService sessionManager,
+	UsersStateService stateService) : IMiddleware
 {
 	static readonly byte[] ErrorMessage = Encoding.UTF8.GetBytes("Access Denied - No Auth");
 
@@ -40,6 +42,7 @@ public class AuthMiddleware(SessionManagerService sessionManager) : IMiddleware
 				await context.Response.Body.WriteAsync(ErrorMessage);
 				return;
 			}
+			stateService.WriteVisit(authSession.User.Guid);
 		}
 
 		context.Items.Add(AuthConstants.ContextSessionKey, authSession?.User);

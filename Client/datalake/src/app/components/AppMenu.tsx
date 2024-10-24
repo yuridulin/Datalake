@@ -1,12 +1,9 @@
 import { blue } from '@ant-design/colors'
 import {
-	ApiOutlined,
 	CalculatorOutlined,
-	ContainerOutlined,
 	EditOutlined,
 	PlaySquareOutlined,
 	SettingOutlined,
-	TagOutlined,
 	TeamOutlined,
 	UnorderedListOutlined,
 	UserOutlined,
@@ -15,6 +12,9 @@ import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { NavLink } from 'react-router-dom'
 import { CustomSource } from '../../api/models/customSource'
+import BlockIcon from '../icons/BlockIcon'
+import SourceIcon from '../icons/SourceIcon'
+import TagIcon from '../icons/TagIcon'
 import routes from '../router/routes'
 
 const items: ItemType<MenuItemType>[] = [
@@ -26,8 +26,8 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'sources-list',
 				label: (
-					<NavLink to={'/sources'}>
-						<ApiOutlined style={{ color: blue[4] }} />
+					<NavLink to={routes.sources.list}>
+						<SourceIcon />
 						&emsp;Список источников
 					</NavLink>
 				),
@@ -42,8 +42,8 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'blocks-tree',
 				label: (
-					<NavLink to={'/blocks'}>
-						<ContainerOutlined style={{ color: blue[4] }} />
+					<NavLink to={routes.blocks.list}>
+						<BlockIcon />
 						&emsp;Дерево блоков
 					</NavLink>
 				),
@@ -58,8 +58,8 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'tags',
 				label: (
-					<NavLink to={'/tags'}>
-						<TagOutlined style={{ color: blue[4] }} />
+					<NavLink to={routes.tags.list}>
+						<TagIcon />
 						&emsp;Все теги
 					</NavLink>
 				),
@@ -67,7 +67,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: CustomSource.Manual,
 				label: (
-					<NavLink to={'/tags/manual/'}>
+					<NavLink to={routes.tags.manual}>
 						<EditOutlined style={{ color: blue[4] }} />
 						&emsp;Мануальные теги
 					</NavLink>
@@ -76,7 +76,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: CustomSource.Calculated,
 				label: (
-					<NavLink to={'/tags/calc/'}>
+					<NavLink to={routes.tags.calc}>
 						<CalculatorOutlined style={{ color: blue[4] }} />
 						&emsp;Вычисляемые теги
 					</NavLink>
@@ -92,7 +92,7 @@ const items: ItemType<MenuItemType>[] = [
 			{
 				key: 'viewer-tags',
 				label: (
-					<NavLink to={routes.viewer.root + routes.viewer.tagsViewer}>
+					<NavLink to={routes.viewer.tagsViewer}>
 						<PlaySquareOutlined style={{ color: blue[4] }} />
 						&emsp;Запросы
 					</NavLink>

@@ -1,10 +1,10 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Tags;
-using Datalake.ApiClasses.Models.Users;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
+using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
-using Datalake.Database.Models;
+using Datalake.Database.Models.Tags;
+using Datalake.Database.Models.Users;
+using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Data;
 
@@ -33,6 +33,7 @@ public partial class TagsRepository(DatalakeContext db)
 		{
 			await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin, energoId);
 		}
+		User = user.Guid;
 
 		return await CreateAsync(tagCreateRequest);
 	}
@@ -44,6 +45,8 @@ public partial class TagsRepository(DatalakeContext db)
 		Guid? energoId = null)
 	{
 		await db.AccessRepository.CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
+		User = user.Guid;
+
 		await UpdateAsync(guid, updateRequest);
 	}
 
@@ -53,6 +56,8 @@ public partial class TagsRepository(DatalakeContext db)
 		Guid? energoId = null)
 	{
 		await db.AccessRepository.CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
+		User = user.Guid;
+
 		await DeleteAsync(guid);
 	}
 
@@ -60,12 +65,12 @@ public partial class TagsRepository(DatalakeContext db)
 
 	#region Реализация
 
+	Guid User { get; set; }
+
 	static object locker = new();
 
 	internal async Task<TagInfo> CreateAsync(TagCreateRequest createRequest)
 	{
-		// TODO: проверка разрешения на создание тега
-
 		if (!createRequest.SourceId.HasValue && !createRequest.BlockId.HasValue)
 			throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или блок");
 
@@ -120,8 +125,6 @@ public partial class TagsRepository(DatalakeContext db)
 				.FirstOrDefaultAsync()
 				?? throw new NotFoundException(message: $"блок #{createRequest.BlockId}");
 
-			// TODO: проверка разрешения на изменение блока
-
 			if (string.IsNullOrEmpty(createRequest.Name))
 			{
 				createRequest.Name = block.Name + ".Tag";
@@ -141,6 +144,7 @@ public partial class TagsRepository(DatalakeContext db)
 			Type = createRequest.TagType,
 			SourceItem = createRequest.SourceItem,
 		};
+
 		tag.Id = await db.InsertWithInt32IdentityAsync(tag);
 
 		if (needToAddIdInName)
@@ -163,13 +167,9 @@ public partial class TagsRepository(DatalakeContext db)
 				.InsertAsync();
 		}
 
-		await db.LogsRepository.LogAsync(new Log
-		{
-			Category = LogCategory.Tag,
-			RefId = tag.Id.ToString(),
-			Text = $"Создан тег \"{createRequest.Name}\"",
-			Type = LogType.Success,
-		});
+		Guid? guid = await db.Tags.Where(x => x.Id == tag.Id).Select(x => x.GlobalGuid).FirstOrDefaultAsync();
+
+		await LogAsync(guid, $"Создан тег \"{createRequest.Name}\"");
 
 		await transaction.CommitAsync();
 
@@ -240,13 +240,7 @@ public partial class TagsRepository(DatalakeContext db)
 		var updatedTag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
 			?? throw new NotFoundException($"тег {guid}");
 
-		await db.LogsRepository.LogAsync(new Log
-		{
-			Category = LogCategory.Tag,
-			RefId = tag.Id.ToString(),
-			Text = $"Изменен тег \"{tag.Name}\". " + ObjectExtension<Tag>.Difference(tag, updatedTag),
-			Type = LogType.Success,
-		});
+		await LogAsync(guid, $"Изменен тег \"{tag.Name}\"", ObjectExtension.Difference(tag, updatedTag));
 
 		await transaction.CommitAsync();
 
@@ -273,13 +267,7 @@ public partial class TagsRepository(DatalakeContext db)
 		// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
 		// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
 
-		await db.LogsRepository.LogAsync(new Log
-		{
-			Category = LogCategory.Tag,
-			RefId = tag.Id.ToString(),
-			Text = $"Удален тег \"{tag.Name}\".",
-			Type = LogType.Success,
-		});
+		await LogAsync(guid, $"Удален тег \"{tag.Name}\"");
 
 		await transaction.CommitAsync();
 
@@ -302,6 +290,19 @@ public partial class TagsRepository(DatalakeContext db)
 		}
 
 		SystemRepository.Update();
+	}
+
+	internal async Task LogAsync(Guid? guid, string message, string? details = null)
+	{
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.Tag,
+			RefId = guid?.ToString() ?? null,
+			Text = message,
+			Type = LogType.Success,
+			UserGuid = User,
+			Details = details,
+		});
 	}
 
 	#endregion

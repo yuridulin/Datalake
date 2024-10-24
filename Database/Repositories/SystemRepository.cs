@@ -1,9 +1,11 @@
-﻿using Datalake.ApiClasses.Constants;
-using Datalake.ApiClasses.Enums;
-using Datalake.ApiClasses.Exceptions;
-using Datalake.ApiClasses.Models.Settings;
-using Datalake.ApiClasses.Models.Tags;
-using Datalake.ApiClasses.Models.Users;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
+using Datalake.Database.Exceptions;
+using Datalake.Database.Extensions;
+using Datalake.Database.Models.Settings;
+using Datalake.Database.Models.Tags;
+using Datalake.Database.Models.Users;
+using Datalake.Database.Tables;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
@@ -32,12 +34,14 @@ public partial class SystemRepository(DatalakeContext db)
 			EnergoIdHost = setting.KeycloakHost,
 			EnergoIdClient = setting.KeycloakClient,
 			EnergoIdApi = setting.EnergoIdApi,
+			InstanceName = setting.InstanceName,
 		};
 	}
 
 	public async Task UpdateSettingsAsync(UserAuthInfo user, SettingsInfo newSettings)
 	{
 		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
 
 		await UpdateSettingsAsync(newSettings);
 	}
@@ -45,7 +49,17 @@ public partial class SystemRepository(DatalakeContext db)
 	public async Task RebuildCacheAsync(UserAuthInfo user)
 	{
 		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		User = user.Guid;
+
 		await RebuildCacheAsync();
+
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.Core,
+			Type = LogType.Success,
+			Text = "Перезапуск служб получения данных",
+			UserGuid = User,
+		});
 	}
 
 	public static void Update()
@@ -60,6 +74,8 @@ public partial class SystemRepository(DatalakeContext db)
 
 
 	#region Реализация
+
+	Guid? User { get; set; }
 
 	static object locker = new();
 
@@ -109,11 +125,23 @@ public partial class SystemRepository(DatalakeContext db)
 	{
 		try
 		{
+			var settings = await GetSettingsAsync();
+
 			await db.Settings
 				.Set(x => x.KeycloakHost, newSettings.EnergoIdHost)
 				.Set(x => x.KeycloakClient, newSettings.EnergoIdClient)
 				.Set(x => x.EnergoIdApi, newSettings.EnergoIdApi)
+				.Set(x => x.InstanceName, newSettings.InstanceName)
 				.UpdateAsync();
+
+			await db.InsertAsync(new Log
+			{
+				Category = LogCategory.Core,
+				Type = LogType.Success,
+				Text = "Изменены настройки",
+				UserGuid = User,
+				Details = ObjectExtension.Difference(settings, newSettings),
+			});
 		}
 		catch (Exception ex)
 		{
