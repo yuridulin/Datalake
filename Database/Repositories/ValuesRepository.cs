@@ -11,20 +11,83 @@ using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
 
+/// <summary>
+/// Репозиторий для работы со значениями тегов
+/// </summary>
 public class ValuesRepository(DatalakeContext db)
 {
-	public static Dictionary<int, TagHistory> LiveValues { get; set; } = [];
-
 	#region Действия
 
-	public static List<TagHistory> GetLiveValues(int[] identifiers)
+	/// <summary>
+	/// Получение значений по списку запрошенных тегов
+	/// </summary>
+	/// <param name="requests">Список запрошенных тегов с настройками получения</param>
+	/// <param name="energoId">Идентификатор пользователя EnergoId из внешнего источника</param>
+	/// <returns>Список ответов со значениями тегов</returns>
+	public async Task<List<ValuesResponse>> GetValuesAsync(
+		ValuesRequest[] requests,
+		Guid? energoId = null)
+	{
+		// TODO: energoId
+		if (energoId.HasValue)
+		{ }
+
+		return await GetValuesAsync(requests);
+	}
+
+	/// <summary>
+	/// Запись новых значений для указанных тегов
+	/// </summary>
+	/// <param name="requests">Список тегов с новыми значениями</param>
+	/// <param name="overrided">Нужно ли выполнять запись, если нет изменений с текущим значением</param>
+	/// <param name="energoId"></param>
+	/// <returns>Список записанных значений</returns>
+	public async Task<List<ValuesTagResponse>> WriteValuesAsync(
+		ValueWriteRequest[] requests,
+		bool overrided = false,
+		Guid? energoId = null)
+	{
+		// TODO: energoId
+		if (energoId.HasValue)
+		{ }
+
+		return await WriteValuesAsync(requests, overrided);
+	}
+
+	/// <summary>
+	/// Запись значений на уровне приложения, без проверок на уровень доступа.
+	/// Используется для сборщиков
+	/// </summary>
+	/// <param name="requests">Список записанных значений</param>
+	/// <returns>Затраченное на запись время в миллисекундах</returns>
+	public async Task<int> WriteValuesAsSystemAsync(
+		ValueWriteRequest[] requests)
+	{
+		var stopwatch = Stopwatch.StartNew();
+
+		await WriteValuesAsync(requests, false);
+
+		stopwatch.Stop();
+		return Convert.ToInt32(stopwatch.Elapsed.TotalMilliseconds);
+	}
+
+	#endregion
+
+	#region Кэш
+
+	/// <summary>
+	/// Кэшированные текущие значения тегов, сопоставленные с идентификаторами
+	/// </summary>
+	public static Dictionary<int, TagHistory> LiveValues { get; set; } = [];
+
+	internal static List<TagHistory> GetLiveValues(int[] identifiers)
 	{
 		return identifiers
 			.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateFormats.GetCurrentDateTime()))
 			.ToList();
 	}
 
-	public async Task CreateLiveValues()
+	internal async Task CreateLiveValues()
 	{
 		var tags = db.Tags.Select(x => x.Id).ToArray();
 		var date = DateFormats.GetCurrentDateTime();
@@ -34,7 +97,7 @@ public class ValuesRepository(DatalakeContext db)
 
 		if (count == 0)
 		{
-			var lastDate = TablesRepository.GetPreviousTable(DateFormats.GetCurrentDateTime().Date);
+			var lastDate = TablesRepository.GetPreviousTableDate(DateFormats.GetCurrentDateTime().Date);
 			if (lastDate != null)
 				table = db.TablesRepository.GetHistoryTable(lastDate.Value);
 			else
@@ -92,7 +155,7 @@ public class ValuesRepository(DatalakeContext db)
 		}
 	}
 
-	public static void WriteLiveValues(IEnumerable<TagHistory> values)
+	internal static void WriteLiveValues(IEnumerable<TagHistory> values)
 	{
 		lock (locker)
 		{
@@ -110,7 +173,7 @@ public class ValuesRepository(DatalakeContext db)
 		}
 	}
 
-	public static bool IsValueNew(TagHistory value)
+	internal static bool IsValueNew(TagHistory value)
 	{
 		if (LiveValues.TryGetValue(value.TagId, out var old))
 		{
@@ -122,44 +185,9 @@ public class ValuesRepository(DatalakeContext db)
 		}
 	}
 
-	public async Task<List<ValuesResponse>> GetValuesAsync(
-		ValuesRequest[] requests,
-		Guid? energoId = null)
-	{
-		// TODO: energoId
-		if (energoId.HasValue)
-		{ }
-
-		return await GetValuesAsync(requests);
-	}
-
-	public async Task<List<ValuesTagResponse>> WriteValuesAsync(
-		ValueWriteRequest[] requests,
-		bool overrided = false,
-		Guid? energoId = null)
-	{
-		// TODO: energoId
-		if (energoId.HasValue)
-		{ }
-
-		return await WriteValuesAsync(requests, overrided);
-	}
-
-	public async Task<int> WriteValuesAsSystemAsync(
-		ValueWriteRequest[] requests)
-	{
-		var stopwatch = Stopwatch.StartNew();
-
-		await WriteValuesAsync(requests, false);
-
-		stopwatch.Stop();
-		return Convert.ToInt32(stopwatch.Elapsed.TotalMilliseconds);
-	}
+	static object locker = new();
 
 	#endregion
-
-
-	static object locker = new();
 
 	#region Запись значений
 
@@ -167,6 +195,7 @@ public class ValuesRepository(DatalakeContext db)
 	/// Запись новых значений, с обновлением текущих при необходимости
 	/// </summary>
 	/// <param name="requests">Список запросов на запись</param>
+	/// <param name="overrided">Обязательная запись, даже если изменений не было</param>
 	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
 	internal async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueWriteRequest[] requests, bool overrided = false)
@@ -227,7 +256,7 @@ public class ValuesRepository(DatalakeContext db)
 		return responses;
 	}
 
-	async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
+	private async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
 	{
 		if (!records.Any())
 			return;
@@ -255,7 +284,7 @@ public class ValuesRepository(DatalakeContext db)
 
 		do
 		{
-			var nextDate = TablesRepository.GetNextTable(date);
+			var nextDate = TablesRepository.GetNextTableDate(date);
 			if (!nextDate.HasValue)
 				break;
 
@@ -303,7 +332,6 @@ public class ValuesRepository(DatalakeContext db)
 	}
 
 	#endregion
-
 
 	#region Чтение значений
 

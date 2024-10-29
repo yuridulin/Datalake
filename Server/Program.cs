@@ -1,6 +1,8 @@
-using Datalake.Database.Exceptions.Base;
 using Datalake.Database;
+using Datalake.Database.Enums;
+using Datalake.Database.Exceptions.Base;
 using Datalake.Database.Repositories;
+using Datalake.Database.Tables;
 using Datalake.Server.BackgroundServices.Collector;
 using Datalake.Server.BackgroundServices.History;
 using Datalake.Server.BackgroundServices.SettingsHandler;
@@ -15,8 +17,6 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using System.Reflection;
-using Datalake.Database.Tables;
-using Datalake.Database.Enums;
 
 [assembly: AssemblyVersion("2.0.*")]
 
@@ -140,7 +140,6 @@ namespace Datalake.Server
 			builder.Services.AddHostedService<CollectorProcessor>();
 			builder.Services.AddHostedService<CollectorWriter>();
 			builder.Services.AddHostedService<HistoryIndexerService>();
-			builder.Services.AddHostedService<HistoryInitialService>();
 			builder.Services.AddHostedService<SettingsHandlerService>();
 			builder.Services.AddHostedService(provider
 				=> provider.GetRequiredService<SettingsHandlerService>());
@@ -164,8 +163,6 @@ namespace Datalake.Server
 					Type = LogType.Success,
 					Text = "Сервер запущен",
 				});
-
-				SystemRepository.Update();
 			}
 		}
 

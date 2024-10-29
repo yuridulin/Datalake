@@ -1,4 +1,5 @@
 ﻿using Datalake.Database.Enums;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.UserGroups;
 using Datalake.Database.Models.Users;
 using LinqToDB;
@@ -7,6 +8,9 @@ namespace Datalake.Database.Repositories;
 
 public partial class UsersRepository
 {
+	/// <summary>
+	/// Запрос информации о учетных записях
+	/// </summary>
 	public IQueryable<UserFlatInfo> GetFlatInfo()
 	{
 		return db.Users
@@ -20,6 +24,9 @@ public partial class UsersRepository
 			});
 	}
 
+	/// <summary>
+	/// Запрос полной информации о учетных записях, включая группы и права доступа
+	/// </summary>
 	public IQueryable<UserInfo> GetInfo()
 	{
 		var query =
@@ -55,6 +62,9 @@ public partial class UsersRepository
 		return query;
 	}
 
+	/// <summary>
+	/// Получение полной информации о учетных записях, включая группы, права доступа и данные для входа
+	/// </summary>
 	public IQueryable<UserDetailInfo> GetDetailInfo()
 	{
 		var query =
@@ -91,22 +101,5 @@ public partial class UsersRepository
 			};
 
 		return query;
-	}
-
-	public (UserAuthInfo, string?)[] GetStaticUsers()
-	{
-		var staticUsers = db.Users
-			.Where(x => x.Type == UserType.Static)
-			.Where(x => !string.IsNullOrEmpty(x.PasswordHash))
-			.ToArray()
-			.Select(x => (db.AccessRepository.GetAuthInfo(x).Result, x.StaticHost))
-			.ToArray();
-
-		return staticUsers;
-	}
-
-	public async Task<string> GetEnergoIdApi()
-	{
-		return await db.Settings.Select(x => x.EnergoIdApi).FirstAsync();
 	}
 }

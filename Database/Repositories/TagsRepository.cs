@@ -2,60 +2,78 @@
 using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Tags;
-using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
+/// <summary>
+/// Репозиторий для работы с тегами
+/// </summary>
 public partial class TagsRepository(DatalakeContext db)
 {
-	public static Dictionary<int, TagCacheInfo> CachedTags { get; set; } = [];
-
 	#region Действия
 
+	/// <summary>
+	/// Создание нового тега
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="tagCreateRequest">Параметры нового тега</param>
+	/// <param name="energoId">Идентификатор пользователя EnergoId из внешнего источника</param>
+	/// <returns>Информация о созданном теге</returns>
 	public async Task<TagInfo> CreateAsync(
 		UserAuthInfo user,
 		TagCreateRequest tagCreateRequest,
 		Guid? energoId = null)
 	{
 		if (tagCreateRequest.SourceId.HasValue)
-		{
-			await db.AccessRepository.CheckAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value, energoId);
-		}
-		else if (tagCreateRequest.BlockId.HasValue)
-		{
-			await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, tagCreateRequest.BlockId.Value, energoId);
-		}
-		else
-		{
-			await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin, energoId);
-		}
+			AccessRepository.CheckAccessToSource(user.Rights, AccessType.Admin, tagCreateRequest.SourceId.Value, energoId);
+
+		if (tagCreateRequest.BlockId.HasValue)
+			AccessRepository.CheckAccessToBlock(user.Rights, AccessType.Admin, tagCreateRequest.BlockId.Value, energoId);
+
+		if (!tagCreateRequest.SourceId.HasValue && !tagCreateRequest.BlockId.HasValue)
+			AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin, energoId);
+		
 		User = user.Guid;
 
 		return await CreateAsync(tagCreateRequest);
 	}
 
+	/// <summary>
+	/// Изменение параметров тега
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="updateRequest">Новые параметры тега</param>
+	/// <param name="energoId">Идентификатор пользователя EnergoId из внешнего источника</param>
 	public async Task UpdateAsync(
 		UserAuthInfo user,
 		Guid guid,
 		TagUpdateRequest updateRequest,
 		Guid? energoId = null)
 	{
-		await db.AccessRepository.CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
+		AccessRepository.CheckAccessToTag(user.Rights, AccessType.Admin, guid, energoId);
 		User = user.Guid;
 
 		await UpdateAsync(guid, updateRequest);
 	}
 
+	/// <summary>
+	/// Удаление тега
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="energoId">Идентификатор пользователя EnergoId из внешнего источника</param>
 	public async Task DeleteAsync(
 		UserAuthInfo user,
 		Guid guid,
 		Guid? energoId = null)
 	{
-		await db.AccessRepository.CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
+		AccessRepository.CheckAccessToTag(user.Rights, AccessType.Admin, guid, energoId);
 		User = user.Guid;
 
 		await DeleteAsync(guid);
@@ -63,11 +81,20 @@ public partial class TagsRepository(DatalakeContext db)
 
 	#endregion
 
+	#region Кэш
+
+	/// <summary>
+	/// Кэшированный список тегов
+	/// </summary>
+	public static Dictionary<int, TagCacheInfo> CachedTags { get; set; } = [];
+
+	static object locker = new();
+
+	#endregion
+
 	#region Реализация
 
 	Guid User { get; set; }
-
-	static object locker = new();
 
 	internal async Task<TagInfo> CreateAsync(TagCreateRequest createRequest)
 	{
@@ -177,6 +204,8 @@ public partial class TagsRepository(DatalakeContext db)
 		var info = await GetInfoWithSources().FirstOrDefaultAsync(x => x.Id == tag.Id)
 			?? throw new NotFoundException(message: "тег после создания");
 
+		AccessRepository.Update();
+
 		return info;
 	}
 
@@ -272,6 +301,8 @@ public partial class TagsRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 
 		await UpdateTagCache(cached.Id);
+
+		AccessRepository.Update();
 	}
 
 	internal async Task UpdateTagCache(int id)

@@ -8,6 +8,7 @@ using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Datalake.Database.Models.Auth;
 
 namespace Datalake.Server.Controllers;
 
@@ -29,7 +30,7 @@ public class UsersController(
 	public async Task<ActionResult<EnergoIdInfo>> GetEnergoIdListAsync(
 		[FromQuery] Guid? currentUserGuid = null)
 	{
-		string energoId = await db.UsersRepository.GetEnergoIdApi();
+		var settings = await db.SystemRepository.GetSettingsAsSystemAsync();
 
 		EnergoIdUserData[]? energoIdReceivedUsers = null;
 
@@ -41,7 +42,7 @@ public class UsersController(
 			};
 
 			var client = new HttpClient(clientHandler);
-			var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + energoId);
+			var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + settings.EnergoIdHost);
 
 			if (users != null)
 				energoIdReceivedUsers = users;
@@ -138,7 +139,7 @@ public class UsersController(
 		var user = Authenticate();
 
 		var guid = await db.UsersRepository.CreateAsync(user, userAuthRequest);
-		settingsService.LoadStaticUsers(db.UsersRepository);
+		settingsService.LoadStaticUsers(db.AccessRepository);
 
 		return guid;
 	}
@@ -199,7 +200,7 @@ public class UsersController(
 		var user = Authenticate();
 
 		await db.UsersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
-		settingsService.LoadStaticUsers(db.UsersRepository);
+		settingsService.LoadStaticUsers(db.AccessRepository);
 
 		return NoContent();
 	}
@@ -215,7 +216,7 @@ public class UsersController(
 		var user = Authenticate();
 
 		await db.UsersRepository.DeleteAsync(user, userGuid);
-		settingsService.LoadStaticUsers(db.UsersRepository);
+		settingsService.LoadStaticUsers(db.AccessRepository);
 
 		return NoContent();
 	}

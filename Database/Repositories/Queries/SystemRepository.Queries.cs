@@ -7,6 +7,9 @@ namespace Datalake.Database.Repositories;
 
 public partial class SystemRepository
 {
+	/// <summary>
+	/// Запрос сообщений аудита
+	/// </summary>
 	public IQueryable<LogInfo> GetLogs()
 	{
 		var query =

@@ -36,23 +36,23 @@ const objectOptions: DefaultOptionType[] = [
 
 const accessOptions: DefaultOptionType[] = [
 	{
-		label: <AccessTypeEl type={AccessType.NotSet} />,
+		label: <AccessTypeEl type={AccessType.NotSet} bordered={false} />,
 		value: AccessType.NotSet,
 	},
 	{
-		label: <AccessTypeEl type={AccessType.NoAccess} />,
+		label: <AccessTypeEl type={AccessType.NoAccess} bordered={false} />,
 		value: AccessType.NoAccess,
 	},
 	{
-		label: <AccessTypeEl type={AccessType.Viewer} />,
+		label: <AccessTypeEl type={AccessType.Viewer} bordered={false} />,
 		value: AccessType.Viewer,
 	},
 	{
-		label: <AccessTypeEl type={AccessType.User} />,
+		label: <AccessTypeEl type={AccessType.User} bordered={false} />,
 		value: AccessType.User,
 	},
 	{
-		label: <AccessTypeEl type={AccessType.Admin} />,
+		label: <AccessTypeEl type={AccessType.Admin} bordered={false} />,
 		value: AccessType.Admin,
 	},
 ]

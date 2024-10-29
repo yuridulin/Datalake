@@ -1,57 +1,102 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Blocks;
-using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
+/// <summary>
+/// Репозиторий для работы с блоками
+/// </summary>
 public partial class BlocksRepository(DatalakeContext db)
 {
-
 	#region Действия
 
+	/// <summary>
+	/// Создание нового блока
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="blockInfo">Параметры нового блока</param>
+	/// <param name="parentId">Идентификатор родительского блока</param>
+	/// <returns>Идентификатор нового блока</returns>
 	public async Task<int> CreateAsync(
 		UserAuthInfo user,
 		BlockFullInfo? blockInfo = null,
 		int? parentId = null)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		if (parentId.HasValue)
+		{
+			AccessRepository.CheckAccessToBlock(user.Rights, AccessType.Admin, parentId.Value);
+		}
+		else
+		{
+			AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		}
+		
 		User = user.Guid;
 
 		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync(parentId);
 	}
 
+	/// <summary>
+	/// Изменение параметров блока, включая закрепленные теги
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <param name="block">Новые параметры блока</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(
 		UserAuthInfo user,
 		int id,
 		BlockUpdateRequest block)
 	{
-		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		AccessRepository.CheckAccessToBlock(user.Rights, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await UpdateAsync(id, block);
 	}
 
+	/// <summary>
+	/// Изменение расположения блока в иерархии
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <param name="parentId"></param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> MoveAsync(
 		UserAuthInfo user,
 		int id,
 		int? parentId)
 	{
-		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		AccessRepository.CheckAccessToBlock(user.Rights, AccessType.Admin, id);
+		if (parentId.HasValue)
+		{
+			AccessRepository.CheckAccessToBlock(user.Rights, AccessType.Admin, parentId.Value);
+		}
+		else
+		{
+			AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		}
 		User = user.Guid;
 
 		return await MoveAsync(id, parentId);
 	}
 
+	/// <summary>
+	/// Удаление блока
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(
 		UserAuthInfo user,
 		int id)
 	{
-		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		AccessRepository.CheckAccessToBlock(user.Rights, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await DeleteAsync(id);
@@ -84,6 +129,8 @@ public partial class BlocksRepository(DatalakeContext db)
 
 		await LogAsync(id.Value, "Создан блок: " + name);
 
+		AccessRepository.Update();
+
 		return id.Value;
 	}
 
@@ -109,6 +156,8 @@ public partial class BlocksRepository(DatalakeContext db)
 			throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
 
 		await LogAsync(id.Value, "Создан блок: " + block.Name);
+
+		AccessRepository.Update();
 
 		return id ?? throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
 	}
@@ -177,6 +226,8 @@ public partial class BlocksRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
+		AccessRepository.Update();
+
 		return true;
 	}
 
@@ -196,6 +247,8 @@ public partial class BlocksRepository(DatalakeContext db)
 		await LogAsync(id, "Удален блок: " + blockName);
 
 		await transaction.CommitAsync();
+
+		AccessRepository.Update();
 
 		return true;
 	}

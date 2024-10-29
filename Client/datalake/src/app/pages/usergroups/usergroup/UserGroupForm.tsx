@@ -22,29 +22,30 @@ import {
 	UserGroupDetailedInfo,
 	UserGroupUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
+import AccessTypeEl from '../../../components/AccessTypeEl'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
 
 const accessOptions: SelectProps['options'] = [
 	{
 		value: AccessType.NotSet,
-		label: 'не определено',
+		label: <AccessTypeEl type={AccessType.NotSet} bordered={false} />,
 	},
 	{
 		value: AccessType.NoAccess,
-		label: 'нет доступа',
+		label: <AccessTypeEl type={AccessType.NoAccess} bordered={false} />,
 	},
 	{
 		value: AccessType.Viewer,
-		label: 'просмотр',
+		label: <AccessTypeEl type={AccessType.Viewer} bordered={false} />,
 	},
 	{
 		value: AccessType.User,
-		label: 'редактирование',
+		label: <AccessTypeEl type={AccessType.User} bordered={false} />,
 	},
 	{
 		value: AccessType.Admin,
-		label: 'полный доступ',
+		label: <AccessTypeEl type={AccessType.Admin} bordered={false} />,
 	},
 ]
 

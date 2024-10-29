@@ -86,12 +86,14 @@ public partial class UserGroupsRepository
 	{
 		var query =
 			from usergroup in db.UserGroups
+			from globalAccess in db.AccessRights.InnerJoin(x => x.UserGroupGuid == usergroup.Guid && x.IsGlobal)
 			select new UserGroupDetailedInfo
 			{
 				Guid = usergroup.Guid,
 				Name = usergroup.Name,
 				Description = usergroup.Description,
 				ParentGroupGuid = usergroup.ParentGuid,
+				GlobalAccessType = globalAccess.AccessType,
 				Users =
 					from rel in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == usergroup.Guid)
 					from u in db.Users.InnerJoin(x => x.Guid == rel.UserGuid)

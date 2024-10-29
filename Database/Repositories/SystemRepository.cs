@@ -2,21 +2,84 @@
 using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Settings;
 using Datalake.Database.Models.Tags;
-using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
 
+/// <summary>
+/// Репозиторий для работы с настройками и кэшами
+/// </summary>
+/// <param name="db"></param>
 public partial class SystemRepository(DatalakeContext db)
 {
-	public static DateTime LastUpdate { get; set; } = DateTime.MinValue;
-
 	#region Действия
 
-	public async Task<SettingsInfo> GetSettingsAsync()
+	/// <summary>
+	/// Получение настроек приложения
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Настройки</returns>
+	public async Task<SettingsInfo> GetSettingsAsync(UserAuthInfo user)
+	{
+		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+
+		return await GetSettingsAsync();
+	}
+
+	/// <summary>
+	/// Изменение настроек приложения
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="newSettings">Новые настройки</param>
+	public async Task UpdateSettingsAsync(UserAuthInfo user, SettingsInfo newSettings)
+	{
+		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		User = user.Guid;
+
+		await UpdateSettingsAsync(newSettings);
+	}
+
+	/// <summary>
+	/// Перестроение кэша системы получения данных
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	public async Task RebuildStorageCacheAsync(UserAuthInfo user)
+	{
+		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		User = user.Guid;
+
+		await RebuildStorageCacheAsync();
+
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.Core,
+			Type = LogType.Success,
+			Text = "Перезапуск служб получения данных",
+			UserGuid = User,
+		});
+	}
+
+
+	/// <summary>
+	/// Получение настроек приложения от имени приложения
+	/// </summary>
+	/// <returns>Настройки</returns>
+	public async Task<SettingsInfo> GetSettingsAsSystemAsync()
+	{
+		return await GetSettingsAsync();
+	}
+
+	#endregion
+
+	#region Реализация
+
+	Guid? User { get; set; }
+
+	internal async Task<SettingsInfo> GetSettingsAsync()
 	{
 		var setting = await db.Settings
 			.FirstOrDefaultAsync();
@@ -38,31 +101,48 @@ public partial class SystemRepository(DatalakeContext db)
 		};
 	}
 
-	public async Task UpdateSettingsAsync(UserAuthInfo user, SettingsInfo newSettings)
+	internal async Task UpdateSettingsAsync(SettingsInfo newSettings)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
-		User = user.Guid;
-
-		await UpdateSettingsAsync(newSettings);
-	}
-
-	public async Task RebuildCacheAsync(UserAuthInfo user)
-	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
-		User = user.Guid;
-
-		await RebuildCacheAsync();
-
-		await db.InsertAsync(new Log
+		try
 		{
-			Category = LogCategory.Core,
-			Type = LogType.Success,
-			Text = "Перезапуск служб получения данных",
-			UserGuid = User,
-		});
+			var settings = await GetSettingsAsync();
+
+			await db.Settings
+				.Set(x => x.KeycloakHost, newSettings.EnergoIdHost)
+				.Set(x => x.KeycloakClient, newSettings.EnergoIdClient)
+				.Set(x => x.EnergoIdApi, newSettings.EnergoIdApi)
+				.Set(x => x.InstanceName, newSettings.InstanceName)
+				.UpdateAsync();
+
+			await db.InsertAsync(new Log
+			{
+				Category = LogCategory.Core,
+				Type = LogType.Success,
+				Text = "Изменены настройки",
+				UserGuid = User,
+				Details = ObjectExtension.Difference(settings, newSettings),
+			});
+		}
+		catch (Exception ex)
+		{
+			throw new DatabaseException(message: "не удалось изменить настройки", ex);
+		}
 	}
 
-	public static void Update()
+	#endregion
+
+	#region Кэш
+
+	/// <summary>
+	/// Время последнего обновления кэша получения данных
+	/// </summary>
+	public static DateTime LastUpdate { get; set; } = DateTime.MinValue;
+
+	/// <summary>
+	/// Обновление времени последнего изменения кэша.
+	/// По обновлению этого времени служба, изменяющая кэш, понимает, что нужно его изменить
+	/// </summary>
+	internal static void Update()
 	{
 		lock (locker)
 		{
@@ -70,16 +150,7 @@ public partial class SystemRepository(DatalakeContext db)
 		}
 	}
 
-	#endregion
-
-
-	#region Реализация
-
-	Guid? User { get; set; }
-
-	static object locker = new();
-
-	internal async Task RebuildCacheAsync()
+	internal async Task RebuildStorageCacheAsync()
 	{
 		var tables = await db.TablesRepository.GetHistoryTablesFromSchema();
 
@@ -121,33 +192,7 @@ public partial class SystemRepository(DatalakeContext db)
 		await db.ValuesRepository.CreateLiveValues();
 	}
 
-	internal async Task UpdateSettingsAsync(SettingsInfo newSettings)
-	{
-		try
-		{
-			var settings = await GetSettingsAsync();
-
-			await db.Settings
-				.Set(x => x.KeycloakHost, newSettings.EnergoIdHost)
-				.Set(x => x.KeycloakClient, newSettings.EnergoIdClient)
-				.Set(x => x.EnergoIdApi, newSettings.EnergoIdApi)
-				.Set(x => x.InstanceName, newSettings.InstanceName)
-				.UpdateAsync();
-
-			await db.InsertAsync(new Log
-			{
-				Category = LogCategory.Core,
-				Type = LogType.Success,
-				Text = "Изменены настройки",
-				UserGuid = User,
-				Details = ObjectExtension.Difference(settings, newSettings),
-			});
-		}
-		catch (Exception ex)
-		{
-			throw new DatabaseException(message: "не удалось изменить настройки", ex);
-		}
-	}
+	static object locker = new();
 
 	#endregion
 }

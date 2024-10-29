@@ -1,22 +1,31 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Sources;
-using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
 
+/// <summary>
+/// Репозиторий для работы с источниками данных
+/// </summary>
 public partial class SourcesRepository(DatalakeContext db)
 {
 	#region Действия
 
+	/// <summary>
+	/// Создание нового источника
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="sourceInfo">Параметры нового источника</param>
+	/// <returns>Идентификатор нового источника</returns>
 	public async Task<int> CreateAsync(
 		UserAuthInfo user,
 		SourceInfo? sourceInfo = null)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
 		User = user.Guid;
 
 		if (sourceInfo != null)
@@ -25,22 +34,35 @@ public partial class SourcesRepository(DatalakeContext db)
 		return await CreateAsync();
 	}
 
+	/// <summary>
+	/// Изменение параметров источника
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <param name="sourceInfo">Новые параметры источника</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(
 		UserAuthInfo user,
 		int id,
 		SourceInfo sourceInfo)
 	{
-		await db.AccessRepository.CheckAccessToSource(user, AccessType.Admin, id);
+		AccessRepository.CheckAccessToSource(user.Rights, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await UpdateAsync(id, sourceInfo);
 	}
 
+	/// <summary>
+	/// Удаление источника
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(
 		UserAuthInfo user,
 		int id)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.CheckAccessToSource(user.Rights, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await DeleteAsync(id);
@@ -74,6 +96,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 
 		SystemRepository.Update();
+		AccessRepository.Update();
 
 		return id.Value;
 	}
@@ -101,6 +124,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 
 		SystemRepository.Update();
+		AccessRepository.Update();
 
 		return id.Value;
 	}
@@ -167,6 +191,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 
 		SystemRepository.Update();
+		AccessRepository.Update();
 
 		return true;
 	}

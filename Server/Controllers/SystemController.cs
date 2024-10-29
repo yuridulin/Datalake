@@ -91,11 +91,13 @@ public class SystemController(
 		if (author != null)
 			query = query.Where(x => x.Author != null && x.Author.Guid == author.Value);
 
+		query = query
+			.OrderByDescending(x => x.Id);
+
 		if (take.HasValue)
 			query = query.Take(take.Value);
 
 		return await query
-			.OrderByDescending(x => x.Id)
 			.ToArrayAsync();
 	}
 
@@ -126,7 +128,9 @@ public class SystemController(
 	[HttpGet("settings")]
 	public async Task<ActionResult<SettingsInfo>> GetSettingsAsync()
 	{
-		var info = await db.SystemRepository.GetSettingsAsync();
+		var user = Authenticate();
+
+		var info = await db.SystemRepository.GetSettingsAsync(user);
 
 		return info;
 	}
@@ -156,8 +160,7 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		await db.SystemRepository.RebuildCacheAsync(user);
-		SystemRepository.Update();
+		await db.SystemRepository.RebuildStorageCacheAsync(user);
 
 		return NoContent();
 	}

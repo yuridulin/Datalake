@@ -1,6 +1,7 @@
 import { Button, Input, Popconfirm, Radio, Select } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import getAccessTypeName from '../../../../api/models/getAccessTypeName'
 import api from '../../../../api/swagger-api'
 import {
 	AccessType,
@@ -116,19 +117,19 @@ export default function UserForm() {
 						}
 					>
 						<Radio.Button value={AccessType.NotSet}>
-							Отключена
+							{getAccessTypeName(AccessType.NotSet)}
 						</Radio.Button>
 						<Radio.Button value={AccessType.NoAccess}>
-							Заблокирована
+							{getAccessTypeName(AccessType.NoAccess)}
 						</Radio.Button>
 						<Radio.Button value={AccessType.Viewer}>
-							Наблюдатель
+							{getAccessTypeName(AccessType.Viewer)}
 						</Radio.Button>
 						<Radio.Button value={AccessType.User}>
-							Пользователь
+							{getAccessTypeName(AccessType.User)}
 						</Radio.Button>
 						<Radio.Button value={AccessType.Admin}>
-							Администратор
+							{getAccessTypeName(AccessType.Admin)}
 						</Radio.Button>
 					</Radio.Group>
 				</FormRow>

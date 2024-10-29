@@ -1,19 +1,41 @@
 import { Tag } from 'antd'
+import getAccessTypeName from '../../api/models/getAccessTypeName'
 import { AccessType } from '../../api/swagger/data-contracts'
 
-export default function AccessTypeEl({ type }: { type: AccessType }) {
+export default function AccessTypeEl({
+	type,
+	bordered = true,
+}: {
+	type: AccessType
+	bordered?: boolean
+}) {
+	const name = getAccessTypeName(type)
 	switch (type) {
 		case AccessType.NoAccess:
-			return <Tag color='volcano'>Нет доступа</Tag>
+			return (
+				<Tag color='volcano' bordered={bordered}>
+					{name}
+				</Tag>
+			)
 		case AccessType.Viewer:
-			return <Tag color='gold'>Просмотр</Tag>
+			return (
+				<Tag color='gold' bordered={bordered}>
+					{name}
+				</Tag>
+			)
 		case AccessType.User:
-			return <Tag color='green'>Изменение</Tag>
+			return (
+				<Tag color='green' bordered={bordered}>
+					{name}
+				</Tag>
+			)
 		case AccessType.Admin:
-			return <Tag color='blue'>Полный доступ</Tag>
-		case AccessType.NotSet:
-			return <Tag>Не установлен</Tag>
+			return (
+				<Tag color='blue' bordered={bordered}>
+					{name}
+				</Tag>
+			)
 		default:
-			return <Tag>...</Tag>
+			return <Tag bordered={bordered}>{name}</Tag>
 	}
 }

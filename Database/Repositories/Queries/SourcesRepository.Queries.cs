@@ -8,22 +8,30 @@ public partial class SourcesRepository
 {
 	static int[] CustomSourcesId = Enum.GetValues<CustomSource>().Cast<int>().ToArray();
 
+	/// <summary>
+	/// Запрос информации о источниках без связей
+	/// </summary>
+	/// <param name="withCustom">Включать ли системные источники в запрос</param>
 	public IQueryable<SourceInfo> GetInfo(bool withCustom = false)
 	{
-		var query = from source in db.Sources
-								where withCustom || !CustomSourcesId.Contains(source.Id)
-								select new SourceInfo
-								{
-									Id = source.Id,
-									Name = source.Name,
-									Address = source.Address,
-									Description = source.Description,
-									Type = source.Type,
-								};
+		var query = 
+			from source in db.Sources
+			where withCustom || !CustomSourcesId.Contains(source.Id)
+			select new SourceInfo
+			{
+				Id = source.Id,
+				Name = source.Name,
+				Address = source.Address,
+				Description = source.Description,
+				Type = source.Type,
+			};
 
 		return query;
 	}
 
+	/// <summary>
+	/// Запрос информации о источниках вместе со списками зависящих тегов
+	/// </summary>
 	public IQueryable<SourceWithTagsInfo> GetInfoWithTags()
 	{
 		var query =
@@ -43,12 +51,17 @@ public partial class SourcesRepository
 						Item = tag.SourceItem ?? string.Empty,
 						Name = tag.Name,
 						Type = tag.Type,
+						Interval = tag.Interval,
 					}
 			};
 
 		return query;
 	}
 
+	/// <summary>
+	/// Запрос информации о зависящих от источника тегов по его идентификатору
+	/// </summary>
+	/// <param name="id">Идентификатор источника</param>
 	public IQueryable<SourceTagInfo> GetExistTags(int id)
 	{
 		var query = db.Tags

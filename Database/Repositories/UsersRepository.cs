@@ -1,6 +1,7 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
@@ -9,36 +10,57 @@ using System.Text;
 
 namespace Datalake.Database.Repositories;
 
+/// <summary>
+/// Репозиторий для работы с учетными записями пользователей
+/// </summary>
 public partial class UsersRepository(DatalakeContext db)
 {
 	#region Действия
 
+	/// <summary>
+	/// Создание нового пользователя
+	/// </summary>
+	/// <param name="user">Идентификатор создающего пользователя</param>
+	/// <param name="userInfo">Параметры новой учетной записи</param>
+	/// <returns>Идентификатор созданного пользователя</returns>
 	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
 		User = user.Guid;
 
 		return await CreateAsync(userInfo);
 	}
 
+	/// <summary>
+	/// Изменение параметров пользователя
+	/// </summary>
+	/// <param name="user">Идентификатор изменяющего пользователя</param>
+	/// <param name="userGuid">Идентификатор затронутого пользователя</param>
+	/// <param name="request">Новые параметры учетной записи</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
 		User = user.Guid;
 
 		return await UpdateAsync(userGuid, request);
 	}
 
+	/// <summary>
+	/// Удаление пользователя
+	/// </summary>
+	/// <param name="user">Идентификатор удаляющего пользователя</param>
+	/// <param name="userGuid">Идентификатор затронутого пользователя</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid userGuid)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
 		User = user.Guid;
 
 		return await DeleteAsync(userGuid);
 	}
 
 	#endregion
-
 
 	#region Реализация
 
@@ -107,6 +129,8 @@ public partial class UsersRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
+		AccessRepository.Update();
+
 		return user.Guid;
 	}
 
@@ -168,6 +192,8 @@ public partial class UsersRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
+		AccessRepository.Update();
+
 		return true;
 	}
 
@@ -195,6 +221,8 @@ public partial class UsersRepository(DatalakeContext db)
 		await LogAsync(userGuid, "Удален пользователь " + (user.FullName ?? user.Login));
 
 		await transaction.CommitAsync();
+
+		AccessRepository.Update();
 
 		return true;
 	}

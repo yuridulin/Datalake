@@ -1,68 +1,96 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.UserGroups;
-using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
+/// <summary>
+/// Репозиторий для работы с группами пользователей
+/// </summary>
 public partial class UserGroupsRepository(DatalakeContext db)
 {
 	#region Действия
 
+	/// <summary>
+	/// Создание новой группы пользователей
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="request">Параметры новой группы</param>
+	/// <returns>Идентификатор созданной группы</returns>
 	public async Task<Guid> CreateAsync(UserAuthInfo user, UserGroupCreateRequest request)
 	{
 		if (request.ParentGuid.HasValue)
 		{
-			await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, request.ParentGuid.Value);
+			AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.Admin, request.ParentGuid.Value);
 		}
 		else
 		{
-			await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+			AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
 		}
 		User = user.Guid;
 
 		return await CreateAsync(request);
 	}
 
+	/// <summary>
+	/// Изменение параметров группы пользователей
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="groupGuid">Идентификатор группы</param>
+	/// <param name="request">Новые параметры группы</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
 	{
-		await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, groupGuid);
+		AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.Admin, groupGuid);
 		User = user.Guid;
 
 		return await UpdateAsync(groupGuid, request);
 	}
 
-	public async Task<bool> MoveAsync(UserAuthInfo user, Guid guid, Guid? parentGuid)
+	/// <summary>
+	/// Изменение положения группы пользователей в иерархии
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="groupGuid">Идентификатор группы</param>
+	/// <param name="parentGuid">Идентификатор вышестоящей группы</param>
+	/// <returns>Флаг успешного завершения</returns>
+	public async Task<bool> MoveAsync(UserAuthInfo user, Guid groupGuid, Guid? parentGuid)
 	{
-		await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, guid);
+		AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.Admin, groupGuid);
 
 		if (parentGuid.HasValue)
 		{
-			await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.User, parentGuid.Value);
+			AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.User, parentGuid.Value);
 		}
 		else
 		{
-			await db.AccessRepository.CheckGlobalAccess(user, AccessType.User);
+			AccessRepository.CheckGlobalAccess(user.Rights, AccessType.User);
 		}
 		User = user.Guid;
 
-		return await MoveAsync(guid, parentGuid);
+		return await MoveAsync(groupGuid, parentGuid);
 	}
 
+	/// <summary>
+	/// Удаление группы пользователей
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="groupGuid">Идентификатор группы</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid groupGuid)
 	{
-		await db.AccessRepository.CheckAccessToUserGroupAsync(user, AccessType.Admin, groupGuid);
+		AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.Admin, groupGuid);
 		User = user.Guid;
 
 		return await DeleteAsync(groupGuid);
 	}
 
 	#endregion
-
 
 	#region Реализация
 
@@ -92,7 +120,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
-		SystemRepository.Update();
+		AccessRepository.Update();
 
 		return group.Guid;
 	}
@@ -115,7 +143,6 @@ public partial class UserGroupsRepository(DatalakeContext db)
 			.Where(x => x.Guid == groupGuid)
 			.Set(x => x.Name, request.Name)
 			.Set(x => x.Description, request.Description)
-			.Set(x => x.ParentGuid, request.ParentGuid)
 			.UpdateAsync();
 
 		await db.AccessRights
@@ -141,7 +168,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
-		SystemRepository.Update();
+		AccessRepository.Update();
 
 		return true;
 	}
@@ -165,6 +192,8 @@ public partial class UserGroupsRepository(DatalakeContext db)
 			new { ParentGuid = parentGuid }));
 
 		await transaction.CommitAsync();
+
+		AccessRepository.Update();
 
 		return true;
 	}
@@ -193,7 +222,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
-		SystemRepository.Update();
+		AccessRepository.Update();
 
 		return true;
 	}

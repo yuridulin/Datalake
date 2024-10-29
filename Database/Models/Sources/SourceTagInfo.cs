@@ -12,7 +12,7 @@ public class SourceTagInfo
 	/// Идентификатор тега
 	/// </summary>
 	[Required]
-	public Guid Guid { get; set; }
+	public required Guid Guid { get; set; }
 
 	/// <summary>
 	/// Глобальное наименование тега
@@ -30,11 +30,11 @@ public class SourceTagInfo
 	/// Тип данных тега
 	/// </summary>
 	[Required]
-	public TagType Type { get; set; }
+	public required TagType Type { get; set; }
 
 	/// <summary>
 	/// Интервал обновления тега
 	/// </summary>
 	[Required]
-	public int Interval { get; set; }
+	public required int Interval { get; set; }
 }

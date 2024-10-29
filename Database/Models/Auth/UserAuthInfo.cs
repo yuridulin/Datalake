@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Datalake.Database.Models.Users;
+using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Database.Models.Users;
+namespace Datalake.Database.Models.Auth;
 
 /// <summary>
 /// Информация о аутентифицированном пользователе
@@ -17,5 +18,5 @@ public class UserAuthInfo : UserSimpleInfo
 	/// Список правил доступа
 	/// </summary>
 	[Required]
-	public required UserAccessRightsInfo[] Rights { get; set; }
+	public required UserRights Rights { get; set; }
 }

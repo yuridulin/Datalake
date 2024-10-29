@@ -1,5 +1,5 @@
 ﻿using Datalake.Database.Exceptions;
-using Datalake.Database.Models.Users;
+using Datalake.Database.Models.Auth;
 using Datalake.Server.Constants;
 using Microsoft.AspNetCore.Mvc;
 
