@@ -91,7 +91,7 @@ public class UsersController(
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
 
-		userAuthInfo.Token = session.User.Token;
+		userAuthInfo.Token = session.Token;
 
 		return userAuthInfo;
 	}
@@ -110,7 +110,7 @@ public class UsersController(
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
 
-		userAuthInfo.Token = session.User.Token;
+		userAuthInfo.Token = session.Token;
 
 		return userAuthInfo;
 	}

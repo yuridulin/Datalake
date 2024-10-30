@@ -30,13 +30,13 @@ public partial class TagsRepository(DatalakeContext db)
 		Guid? energoId = null)
 	{
 		if (tagCreateRequest.SourceId.HasValue)
-			AccessRepository.CheckAccessToSource(user.Rights, AccessType.Admin, tagCreateRequest.SourceId.Value, energoId);
+			AccessRepository.CheckAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value, energoId);
 
 		if (tagCreateRequest.BlockId.HasValue)
-			AccessRepository.CheckAccessToBlock(user.Rights, AccessType.Admin, tagCreateRequest.BlockId.Value, energoId);
+			AccessRepository.CheckAccessToBlock(user, AccessType.Admin, tagCreateRequest.BlockId.Value, energoId);
 
 		if (!tagCreateRequest.SourceId.HasValue && !tagCreateRequest.BlockId.HasValue)
-			AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin, energoId);
+			AccessRepository.CheckGlobalAccess(user, AccessType.Admin, energoId);
 		
 		User = user.Guid;
 
@@ -56,7 +56,7 @@ public partial class TagsRepository(DatalakeContext db)
 		TagUpdateRequest updateRequest,
 		Guid? energoId = null)
 	{
-		AccessRepository.CheckAccessToTag(user.Rights, AccessType.Admin, guid, energoId);
+		AccessRepository.CheckAccessToTag(user, AccessType.Admin, guid, energoId);
 		User = user.Guid;
 
 		await UpdateAsync(guid, updateRequest);
@@ -73,7 +73,7 @@ public partial class TagsRepository(DatalakeContext db)
 		Guid guid,
 		Guid? energoId = null)
 	{
-		AccessRepository.CheckAccessToTag(user.Rights, AccessType.Admin, guid, energoId);
+		AccessRepository.CheckAccessToTag(user, AccessType.Admin, guid, energoId);
 		User = user.Guid;
 
 		await DeleteAsync(guid);

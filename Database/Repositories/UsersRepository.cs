@@ -25,7 +25,7 @@ public partial class UsersRepository(DatalakeContext db)
 	/// <returns>Идентификатор созданного пользователя</returns>
 	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
 	{
-		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		return await CreateAsync(userInfo);
@@ -40,7 +40,7 @@ public partial class UsersRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
-		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		return await UpdateAsync(userGuid, request);
@@ -54,7 +54,7 @@ public partial class UsersRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid userGuid)
 	{
-		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		return await DeleteAsync(userGuid);

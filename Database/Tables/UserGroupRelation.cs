@@ -1,6 +1,7 @@
 ﻿using Datalake.Database.Enums;
 using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.ComponentModel.DataAnnotations;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
@@ -12,6 +13,9 @@ public class UserGroupRelation
 	const string TableName = "UserGroupRelation";
 
 	// поля в БД
+
+	[Column, Key, Identity]
+	public int Id { get; set; }
 
 	[Column, NotNull]
 	public required Guid UserGuid { get; set; }

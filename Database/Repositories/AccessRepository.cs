@@ -71,7 +71,7 @@ public partial class AccessRepository(DatalakeContext db)
 			.ToArrayAsync();
 
 		return staticUsers
-			.Select(x => new UserStaticAuthInfo { Host = x.StaticHost, AuthInfo = GetAuthInfo(x), })
+			.Select(x => new UserStaticAuthInfo { Guid = x.Guid, Host = x.StaticHost, AuthInfo = GetAuthInfo(x), })
 			.ToArray();
 	}
 
@@ -82,7 +82,7 @@ public partial class AccessRepository(DatalakeContext db)
 	/// <param name="request">Новые права доступа</param>
 	public async Task ApplyChangesAsync(UserAuthInfo user, AccessRightsApplyRequest request)
 	{
-		CheckGlobalAccess(user.Rights, AccessType.Admin);
+		CheckGlobalAccess(user, AccessType.Admin);
 
 		if (request.UserGroupGuid.HasValue)
 		{
@@ -291,7 +291,7 @@ public partial class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Глобальный кэш учетных записей с вычисленным доступом ко всем объектам
 	/// </summary>
-	public static ConcurrentDictionary<Guid, UserRights> UserRights { get; set; } = [];
+	public static ConcurrentDictionary<Guid, UserAuthInfo> UserRights { get; set; } = [];
 
 	/// <summary>
 	/// Вычисление доступа ко всем объектам для каждой учетной записи и обновление кэша
@@ -652,53 +652,27 @@ public partial class AccessRepository(DatalakeContext db)
 					})
 					.ToArray();
 
-				return new
+				return new UserAuthInfo
 				{
-					user.Guid,
-					globalRule,
-					userGroups,
-					userSources,
-					userBlocks,
-					userTags,
+					Guid = user.Guid,
+					FullName = user.Name,
+					Token = string.Empty,
+					GlobalAccessType = globalRule.AccessType,
+					Groups = userGroups
+						.ToDictionary(x => x.Guid, x => new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+					Sources = userSources
+						.ToDictionary(x => x.Id, x => new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+					Blocks = userBlocks
+						.ToDictionary(x => x.Id, x => new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+					Tags = userTags
+						.ToDictionary(x => x.Guid, x => new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
 				};
 			})
-			.ToDictionary(x => x.Guid, x => new UserRights
-			{
-				GlobalAccessType = x.globalRule.AccessType,
-				Groups = x.userGroups
-					.Select(x => new UserAccessToGroup
-					{
-						Guid = x.Guid,
-						Rule = new AccessRule { RuleId = defaultRule.Id, AccessType = x.Rule.AccessType },
-					})
-					.ToArray(),
-				Sources = x.userSources
-					.Select(x => new UserAccessToObject
-					{
-						Id = x.Id,
-						Rule = new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, },
-					})
-					.ToArray(),
-				Blocks = x.userBlocks
-					.Select(x => new UserAccessToObject
-					{
-						Id = x.Id,
-						Rule = new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, },
-					})
-					.ToArray(),
-				Tags = x.userTags
-					.Select(x => new UserAccessToTag
-					{
-						Id = x.Id,
-						Guid = x.Guid,
-						Rule = new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, },
-					})
-					.ToArray(),
-			});
+			.ToDictionary(x => x.Guid);
 
 		lock (locker)
 		{
-			UserRights = new ConcurrentDictionary<Guid, UserRights>(userRights);
+			UserRights = new ConcurrentDictionary<Guid, UserAuthInfo>(userRights);
 		}
 	}
 
@@ -723,7 +697,11 @@ public partial class AccessRepository(DatalakeContext db)
 				Guid = user.Guid,
 				FullName = user.FullName ?? "",
 				Token = user.Type == UserType.Static ? (user.PasswordHash ?? string.Empty) : string.Empty,
-				Rights = accessRights,
+				GlobalAccessType = accessRights.GlobalAccessType,
+				Sources = accessRights.Sources,
+				Blocks = accessRights.Blocks,
+				Tags = accessRights.Tags,
+				Groups = accessRights.Groups,
 			};
 		}
 		else
@@ -737,7 +715,7 @@ public partial class AccessRepository(DatalakeContext db)
 	/// </summary>
 	/// <param name="energoId">Идентификатор пользователя EnergoId</param>
 	/// <returns>Информация о доступе учетной записи</returns>
-	protected static UserRights GetEnergoIdUserRights(
+	internal static UserAuthInfo GetEnergoIdUserRights(
 		Guid energoId)
 	{
 		if (UserRights.TryGetValue(energoId, out var accessRights))
@@ -753,13 +731,12 @@ public partial class AccessRepository(DatalakeContext db)
 	#region Проверки прав доступа
 
 	internal static void CheckGlobalAccess(
-		UserRights userRights,
+		UserAuthInfo userRights,
 		AccessType minimalAccess,
 		Guid? energoId = null)
 	{
-		var hasAccess = (int)minimalAccess <= (int)userRights.GlobalAccessType;
 
-		if (!hasAccess)
+		if (!HasAccess(userRights.GlobalAccessType, minimalAccess))
 			throw NoAccess;
 
 		if (energoId.HasValue)
@@ -770,15 +747,15 @@ public partial class AccessRepository(DatalakeContext db)
 	}
 
 	internal static void CheckAccessToSource(
-		UserRights userRights,
+		UserAuthInfo userRights,
 		AccessType minimalAccess,
 		int sourceId,
 		Guid? energoId = null)
 	{
-		var access = userRights.Sources.FirstOrDefault(x => x.Id == sourceId);
-		var hasAccess = (int)minimalAccess <= (int)(access?.Rule.AccessType ?? AccessType.NotSet);
+		if (!userRights.Sources.TryGetValue(sourceId, out var accessRights))
+			throw NoAccess;
 
-		if (!hasAccess)
+		if (!HasAccess(accessRights.AccessType, minimalAccess))
 			throw NoAccess;
 
 		if (energoId.HasValue)
@@ -789,15 +766,15 @@ public partial class AccessRepository(DatalakeContext db)
 	}
 
 	internal static void CheckAccessToBlock(
-		UserRights userRights,
+		UserAuthInfo userRights,
 		AccessType minimalAccess,
 		int blockId,
 		Guid? energoId = null)
 	{
-		var access = userRights.Blocks.FirstOrDefault(x => x.Id == blockId);
-		var hasAccess = (int)minimalAccess <= (int)(access?.Rule.AccessType ?? AccessType.NotSet);
+		if (!userRights.Blocks.TryGetValue(blockId, out var accessRights))
+			throw NoAccess;
 
-		if (!hasAccess)
+		if (!HasAccess(accessRights.AccessType, minimalAccess))
 			throw NoAccess;
 
 		if (energoId.HasValue)
@@ -808,15 +785,15 @@ public partial class AccessRepository(DatalakeContext db)
 	}
 
 	internal static void CheckAccessToTag(
-		UserRights userRights,
+		UserAuthInfo userRights,
 		AccessType minimalAccess,
 		Guid guid,
 		Guid? energoId = null)
 	{
-		var access = userRights.Tags.FirstOrDefault(x => x.Guid == guid);
-		var hasAccess = (int)minimalAccess <= (int)(access?.Rule.AccessType ?? AccessType.NotSet);
+		if (!userRights.Tags.TryGetValue(guid, out var accessRights))
+			throw NoAccess;
 
-		if (!hasAccess)
+		if (!HasAccess(accessRights.AccessType, minimalAccess))
 			throw NoAccess;
 
 		if (energoId.HasValue)
@@ -827,15 +804,28 @@ public partial class AccessRepository(DatalakeContext db)
 	}
 
 	internal static void CheckAccessToUserGroup(
-		UserRights userRights,
+		UserAuthInfo userRights,
 		AccessType minimalAccess,
 		Guid groupGuid)
 	{
-		var access = userRights.Groups.FirstOrDefault(x => x.Guid == groupGuid);
-		var hasAccess = (int)minimalAccess <= (int)(access?.Rule.AccessType ?? AccessType.NotSet);
-
-		if (!hasAccess)
+		if (!userRights.Groups.TryGetValue(groupGuid, out var accessRights))
 			throw NoAccess;
+
+		if (!HasAccess(accessRights.AccessType, minimalAccess))
+			throw NoAccess;
+	}
+
+	internal static bool HasAccess(AccessType current, AccessType minimal)
+	{
+		return minimal switch
+		{
+			AccessType.NotSet => false,
+			AccessType.NoAccess => false,
+			AccessType.Viewer => current == AccessType.Viewer || current == AccessType.User || current == AccessType.Admin,
+			AccessType.User => current == AccessType.User || current == AccessType.Admin,
+			AccessType.Admin => current == AccessType.Admin,
+			_ => false,
+		};
 	}
 
 	static readonly ForbiddenException NoAccess = new(message: "нет доступа");

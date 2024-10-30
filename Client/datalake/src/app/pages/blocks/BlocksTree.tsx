@@ -68,7 +68,7 @@ const columns: TableColumnsType<DataType> = [
 	},
 ]
 
-export default function BlocksList() {
+export default function BlocksTree() {
 	const [data, setData] = useState([] as DataType[])
 
 	function load() {

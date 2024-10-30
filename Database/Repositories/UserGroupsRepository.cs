@@ -26,11 +26,11 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	{
 		if (request.ParentGuid.HasValue)
 		{
-			AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.Admin, request.ParentGuid.Value);
+			AccessRepository.CheckAccessToUserGroup(user, AccessType.Admin, request.ParentGuid.Value);
 		}
 		else
 		{
-			AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+			AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 		}
 		User = user.Guid;
 
@@ -46,7 +46,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
 	{
-		AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.Admin, groupGuid);
+		AccessRepository.CheckAccessToUserGroup(user, AccessType.Admin, groupGuid);
 		User = user.Guid;
 
 		return await UpdateAsync(groupGuid, request);
@@ -61,15 +61,15 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> MoveAsync(UserAuthInfo user, Guid groupGuid, Guid? parentGuid)
 	{
-		AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.Admin, groupGuid);
+		AccessRepository.CheckAccessToUserGroup(user, AccessType.Admin, groupGuid);
 
 		if (parentGuid.HasValue)
 		{
-			AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.User, parentGuid.Value);
+			AccessRepository.CheckAccessToUserGroup(user, AccessType.User, parentGuid.Value);
 		}
 		else
 		{
-			AccessRepository.CheckGlobalAccess(user.Rights, AccessType.User);
+			AccessRepository.CheckGlobalAccess(user, AccessType.User);
 		}
 		User = user.Guid;
 
@@ -84,7 +84,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid groupGuid)
 	{
-		AccessRepository.CheckAccessToUserGroup(user.Rights, AccessType.Admin, groupGuid);
+		AccessRepository.CheckAccessToUserGroup(user, AccessType.Admin, groupGuid);
 		User = user.Guid;
 
 		return await DeleteAsync(groupGuid);

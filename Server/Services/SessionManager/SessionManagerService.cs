@@ -1,6 +1,8 @@
 ﻿using Datalake.Database.Models.Auth;
+using Datalake.Database.Repositories;
 using Datalake.Server.Constants;
 using Datalake.Server.Services.SessionManager.Models;
+using System.Net;
 
 namespace Datalake.Server.Services.SessionManager;
 
@@ -30,25 +32,24 @@ public class SessionManagerService(ILoggerFactory loggerFactory)
 	/// <returns>Информация о сессии</returns>
 	public AuthSession? GetExistSession(string token, string address)
 	{
-		_logger.LogDebug("Search session from {address} with token [{token}]", address, token);
-		foreach (var record in StaticAuthRecords)
-		{
-			_logger.LogDebug("Exists static user: {name} for {address} with token [{token}]",
-				record.User.FullName, string.IsNullOrEmpty(record.StaticHost) ? record.StaticHost : "everywhere", record.User.Token);
-		}
-
-		var session = Sessions.FirstOrDefault(x => x.User.Token == token)
+		var session = Sessions.FirstOrDefault(x => x.Token == token)
 			?? StaticAuthRecords
-				.Where(x => x.User.Token == token)
+				.Where(x => x.Token == token)
 				.Where(x => string.IsNullOrEmpty(x.StaticHost) || x.StaticHost == address)
 				.FirstOrDefault();
+
 		if (session == null)
 			return null;
+
+		if (AccessRepository.UserRights.TryGetValue(session.UserGuid, out var userRights))
+			session.AuthInfo = userRights;
+
 		if (session.ExpirationTime < DateTime.UtcNow)
 		{
 			RemoveSession(session);
 			return null;
 		}
+
 		return session;
 	}
 
@@ -61,15 +62,18 @@ public class SessionManagerService(ILoggerFactory loggerFactory)
 	{
 		var token = context.Request.Headers[AuthConstants.TokenHeader];
 		var address = context.Connection.RemoteIpAddress;
+
 		if (!string.IsNullOrEmpty(token))
 		{
 			var tokenValue = token.ToString();
 			var session = GetExistSession(tokenValue, address?.ToString() ?? string.Empty);
 			if (session == null)
 				return null;
+
 			AddSessionToResponse(session, context.Response);
 			return session;
 		}
+
 		return null;
 	}
 
@@ -80,7 +84,9 @@ public class SessionManagerService(ILoggerFactory loggerFactory)
 	/// <param name="response">Запрос</param>
 	public void AddSessionToResponse(AuthSession session, HttpResponse response)
 	{
-		response.Headers[AuthConstants.TokenHeader] = session.User.Token;
+		response.Headers[AuthConstants.TokenHeader] = session.Token;
+		response.Headers[AuthConstants.NameHeader] = Uri.EscapeDataString(session.AuthInfo.FullName);
+		response.Headers[AuthConstants.GlobalAccessHeader] = session.AuthInfo.GlobalAccessType.ToString();
 	}
 
 	/// <summary>
@@ -91,15 +97,17 @@ public class SessionManagerService(ILoggerFactory loggerFactory)
 	/// <returns>Информация о сессии</returns>
 	public AuthSession OpenSession(UserAuthInfo userAuthInfo, bool isStatic = false)
 	{
-		Sessions.RemoveAll(x => x.User.Guid == userAuthInfo.Guid);
+		Sessions.RemoveAll(x => x.UserGuid == userAuthInfo.Guid);
 
 		var session = new AuthSession
 		{
-			User = userAuthInfo,
+			UserGuid = userAuthInfo.Guid,
+			AuthInfo = userAuthInfo,
+			Token = new Random().Next().ToString(),
 			ExpirationTime = isStatic ? DateTime.MaxValue : DateTime.UtcNow.AddDays(7), // срок жизни сессии
 			StaticHost = string.Empty,
 		};
-		session.User.Token = new Random().Next().ToString();
+
 		Sessions.Add(session);
 
 		return session;

@@ -281,6 +281,8 @@ export type BlockWithTagsInfo = BlockSimpleInfo & {
 	parentId?: number | null
 	/** Текстовое описание */
 	description?: string | null
+	/** Уровень доступа к блоку */
+	accessType: AccessType
 	/** Список прикреплённых тегов */
 	tags: BlockNestedTagInfo[]
 }
@@ -827,30 +829,63 @@ export type UserAuthInfo = UserSimpleInfo & {
 	 */
 	token: string
 	/** Список правил доступа */
-	rights: UserAccessRightsInfo[]
+	rights: UserRights
 }
 
-/** Правило доступа пользователя */
-export interface UserAccessRightsInfo {
-	/** Является ли это правило глобальным */
-	isGlobal: boolean
+/** Вычисленные уровни доступа ко всем защищаемым объектам */
+export interface UserRights {
+	/** Глобальный уровень доступа */
+	globalAccessType?: AccessType
+	/** Список всех блоков с указанием доступа к ним */
+	groups?: UserAccessToGroup[]
+	/** Список всех блоков с указанием доступа к ним */
+	sources?: UserAccessToObject[]
+	/** Список всех блоков с указанием доступа к ним */
+	blocks?: UserAccessToObject[]
+	/** Список всех тегов с указанием доступа к ним */
+	tags?: UserAccessToTag[]
+}
+
+/** Информация о доступе к группе пользователей */
+export interface UserAccessToGroup {
 	/**
-	 * Идентификатор тега, на который распространяется это правило
+	 * Идентификатор группы
+	 * @format guid
+	 */
+	guid?: string
+	/** Правило доступа */
+	rule?: AccessRule
+}
+
+/** Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ */
+export interface AccessRule {
+	/**
+	 * Идентификатор правила доступа
 	 * @format int32
 	 */
-	tagId?: number | null
+	ruleId?: number
+	/** Уровень доступа */
+	accessType?: AccessType
+}
+
+/** Информация о доступе к объекту */
+export interface UserAccessToObject {
 	/**
-	 * Идентификатор источника, на который распространяется это правило
+	 * Идентификатор объекта
 	 * @format int32
 	 */
-	sourceId?: number | null
+	id?: number
+	/** Правило доступа */
+	rule?: AccessRule
+}
+
+/** Информация о доступе к тегу */
+export type UserAccessToTag = UserAccessToObject & {
 	/**
-	 * Идентификатор блока, на который распространяется это правило
-	 * @format int32
+	 * Глобальный идентификатор тега
+	 * @format guid
 	 */
-	blockId?: number | null
-	/** Уровень доступа на основе этого правила */
-	accessType: AccessType
+	guid?: string
 }
 
 /** Информация при аутентификации локальной учетной записи */

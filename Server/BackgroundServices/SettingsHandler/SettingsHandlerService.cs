@@ -111,7 +111,14 @@ public class SettingsHandlerService(
 				.GetStaticAuthenticatedUsersAsync().Result;
 
 			SessionManagerService.StaticAuthRecords = staticUsers
-				.Select(x => new AuthSession { ExpirationTime = DateTime.MaxValue, User = x.AuthInfo, StaticHost = x.Host })
+				.Select(x => new AuthSession
+				{
+					ExpirationTime = DateTime.MaxValue,
+					UserGuid = x.Guid,
+					Token = string.Empty,
+					AuthInfo = x.AuthInfo,
+					StaticHost = x.Host
+				})
 				.ToList();
 
 			StoredSystemUpdate = DateFormats.GetCurrentDateTime();

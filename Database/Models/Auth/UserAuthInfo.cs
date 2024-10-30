@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Models.Users;
+﻿using Datalake.Database.Enums;
+using Datalake.Database.Models.Users;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Auth;
@@ -13,10 +14,29 @@ public class UserAuthInfo : UserSimpleInfo
 	/// </summary>
 	[Required]
 	public required string Token { get; set; }
-
 	/// <summary>
-	/// Список правил доступа
+	/// Глобальный уровень доступа
 	/// </summary>
 	[Required]
-	public required UserRights Rights { get; set; }
+	public required AccessType GlobalAccessType { get; set; }
+
+	/// <summary>
+	/// Список всех блоков с указанием доступа к ним
+	/// </summary>
+	public Dictionary<Guid, AccessRule> Groups { get; set; } = [];
+
+	/// <summary>
+	/// Список всех блоков с указанием доступа к ним
+	/// </summary>
+	public Dictionary<int, AccessRule> Sources { get; set; } = [];
+
+	/// <summary>
+	/// Список всех блоков с указанием доступа к ним
+	/// </summary>
+	public Dictionary<int, AccessRule> Blocks { get; set; } = [];
+
+	/// <summary>
+	/// Список всех тегов с указанием доступа к ним
+	/// </summary>
+	public Dictionary<Guid, AccessRule> Tags { get; set; } = [];
 }

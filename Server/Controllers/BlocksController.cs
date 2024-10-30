@@ -1,8 +1,7 @@
-﻿using Datalake.Database.Exceptions;
+﻿using Datalake.Database;
+using Datalake.Database.Exceptions;
 using Datalake.Database.Models.Blocks;
-using Datalake.Database;
 using Datalake.Server.Controllers.Base;
-using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -52,8 +51,9 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	public async Task<ActionResult<BlockWithTagsInfo[]>> ReadAsync(
 		Guid? energoId = null)
 	{
-		return await db.BlocksRepository.GetSimpleInfo(energoId)
-			.ToArrayAsync();
+		var user = Authenticate();
+
+		return await db.BlocksRepository.ReadAllAsync(user, energoId);
 	}
 
 	/// <summary>
@@ -66,10 +66,9 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	public async Task<ActionResult<BlockFullInfo>> ReadAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		return await db.BlocksRepository.GetInfoWithAllRelations()
-			.Where(x => x.Id == id)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Сущность #{id}");
+		var user = Authenticate();
+
+		return await db.BlocksRepository.ReadAsync(user, id);
 	}
 
 	/// <summary>
@@ -81,7 +80,9 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync(
 		Guid? energoId = null)
 	{
-		return await db.BlocksRepository.GetTreeAsync(energoId);
+		var user = Authenticate();
+
+		return await db.BlocksRepository.ReadAllAsTreeAsync(user, energoId);
 	}
 
 	/// <summary>
@@ -112,6 +113,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 		[FromQuery] int? parentId)
 	{
 		var user = Authenticate();
+
 		await db.BlocksRepository.MoveAsync(user, id, parentId);
 
 		return NoContent();

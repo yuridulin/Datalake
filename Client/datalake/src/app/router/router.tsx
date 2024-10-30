@@ -5,8 +5,8 @@ import SettingsPage from '../pages/admin/SettingsPage'
 import BlockAccessForm from '../pages/blocks/block/access/BlockAccessForm'
 import BlockForm from '../pages/blocks/block/BlockForm'
 import BlockView from '../pages/blocks/block/BlockView'
-import BlocksList from '../pages/blocks/BlocksList'
 import BlocksMover from '../pages/blocks/BlocksMover'
+import BlocksTree from '../pages/blocks/BlocksTree'
 import LogsTable from '../pages/dashboard/LogsTable'
 import EnergoId from '../pages/login/EnergoId'
 import LoginPanel from '../pages/login/LoginPanel'
@@ -147,7 +147,7 @@ const router = createBrowserRouter([
 				children: [
 					{
 						path: routes.blocks.list,
-						element: <BlocksList />,
+						element: <BlocksTree />,
 					},
 					{
 						path: routes.blocks.mover,

@@ -74,6 +74,8 @@ namespace Datalake.Server
 					.AllowAnyHeader()
 					.WithExposedHeaders([
 						AuthConstants.TokenHeader,
+						AuthConstants.GlobalAccessHeader,
+						AuthConstants.NameHeader,
 					]);
 			});
 			app.UseMiddleware<AuthMiddleware>();

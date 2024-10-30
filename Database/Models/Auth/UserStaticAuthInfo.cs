@@ -8,6 +8,12 @@ namespace Datalake.Database.Models.Auth;
 public class UserStaticAuthInfo
 {
 	/// <summary>
+	/// Идентификатор учетной записи
+	/// </summary>
+	[Required]
+	public required Guid Guid { get; set; }
+
+	/// <summary>
 	/// Адрес, с которого разрешен доступ.
 	/// Если пустой, адрес не проверяется
 	/// </summary>

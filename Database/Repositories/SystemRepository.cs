@@ -25,7 +25,7 @@ public partial class SystemRepository(DatalakeContext db)
 	/// <returns>Настройки</returns>
 	public async Task<SettingsInfo> GetSettingsAsync(UserAuthInfo user)
 	{
-		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 
 		return await GetSettingsAsync();
 	}
@@ -37,7 +37,7 @@ public partial class SystemRepository(DatalakeContext db)
 	/// <param name="newSettings">Новые настройки</param>
 	public async Task UpdateSettingsAsync(UserAuthInfo user, SettingsInfo newSettings)
 	{
-		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		await UpdateSettingsAsync(newSettings);
@@ -49,7 +49,7 @@ public partial class SystemRepository(DatalakeContext db)
 	/// <param name="user">Информация о пользователе</param>
 	public async Task RebuildStorageCacheAsync(UserAuthInfo user)
 	{
-		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		await RebuildStorageCacheAsync();

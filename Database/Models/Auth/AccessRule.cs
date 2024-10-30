@@ -16,4 +16,9 @@ public class AccessRule
 	/// Уровень доступа
 	/// </summary>
 	public AccessType AccessType { get; set; }
+
+	/// <summary>
+	/// Заглушка для неопределенного уровня доступа
+	/// </summary>
+	public static readonly AccessRule Default = new() { RuleId = 0, AccessType = AccessType.NotSet };
 }

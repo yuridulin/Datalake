@@ -82,6 +82,8 @@ public class DatalakeContext : DataConnection
 		// заполнение кэша
 		await SystemRepository.RebuildStorageCacheAsync();
 		await AccessRepository.RebuildUserRightsCacheAsync();
+		SystemRepository.Update();
+		AccessRepository.Update();
 	}
 
 	#region Репозитории

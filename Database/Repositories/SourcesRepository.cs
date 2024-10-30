@@ -25,7 +25,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		UserAuthInfo user,
 		SourceInfo? sourceInfo = null)
 	{
-		AccessRepository.CheckGlobalAccess(user.Rights, AccessType.Admin);
+		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		if (sourceInfo != null)
@@ -46,7 +46,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		int id,
 		SourceInfo sourceInfo)
 	{
-		AccessRepository.CheckAccessToSource(user.Rights, AccessType.Admin, id);
+		AccessRepository.CheckAccessToSource(user, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await UpdateAsync(id, sourceInfo);
@@ -62,7 +62,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		UserAuthInfo user,
 		int id)
 	{
-		AccessRepository.CheckAccessToSource(user.Rights, AccessType.Admin, id);
+		AccessRepository.CheckAccessToSource(user, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await DeleteAsync(id);

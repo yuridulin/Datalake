@@ -1,7 +1,7 @@
 import { Button, Space } from 'antd'
 import { useAuth } from 'react-oidc-context'
 import { useNavigate } from 'react-router-dom'
-import { setName } from '../../../api/local-auth'
+import { user } from '../../../api/local-auth'
 import notify from '../../../api/notifications'
 import api from '../../../api/swagger-api'
 import routes from '../../router/routes'
@@ -30,7 +30,7 @@ export default function EnergoId() {
 		})
 			.then((res) => {
 				if (res.status === 200) {
-					setName(res.data.fullName)
+					user.setName(res.data.fullName)
 					navigate(routes.globalRoot)
 				}
 			})

@@ -10,7 +10,17 @@ public class AuthSession
 	/// <summary>
 	/// Информация о пользователе
 	/// </summary>
-	public required UserAuthInfo User { get; set; }
+	public required Guid UserGuid { get; set; }
+
+	/// <summary>
+	/// Информация о правах пользователя
+	/// </summary>
+	public required UserAuthInfo AuthInfo { get; set; }
+
+	/// <summary>
+	/// Токен сессии
+	/// </summary>
+	public required string Token { get; set; }
 
 	/// <summary>
 	/// Время истечения сессии
