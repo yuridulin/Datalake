@@ -5,7 +5,7 @@ namespace Datalake.Database.Models.Auth;
 /// <summary>
 /// Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ
 /// </summary>
-public class AccessRule
+public class AccessRuleInfo
 {
 	/// <summary>
 	/// Идентификатор правила доступа
@@ -20,5 +20,5 @@ public class AccessRule
 	/// <summary>
 	/// Заглушка для неопределенного уровня доступа
 	/// </summary>
-	public static readonly AccessRule Default = new() { RuleId = 0, AccessType = AccessType.NotSet };
+	public static readonly AccessRuleInfo Default = new() { RuleId = 0, AccessType = AccessType.NotSet };
 }

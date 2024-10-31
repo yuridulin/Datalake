@@ -1,7 +1,11 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.AccessRights;
 using Datalake.Database.Models.Auth;
+using Datalake.Database.Models.Blocks;
+using Datalake.Database.Models.Sources;
+using Datalake.Database.Models.Tags;
 using Datalake.Database.Models.UserGroups;
 using Datalake.Database.Tables;
 using LinqToDB;
@@ -12,7 +16,7 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы с группами пользователей
 /// </summary>
-public partial class UserGroupsRepository(DatalakeContext db)
+public class UserGroupsRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -26,15 +30,48 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	{
 		if (request.ParentGuid.HasValue)
 		{
-			AccessRepository.CheckAccessToUserGroup(user, AccessType.Admin, request.ParentGuid.Value);
+			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Admin, request.ParentGuid.Value);
 		}
 		else
 		{
-			AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 		}
 		User = user.Guid;
 
 		return await CreateAsync(request);
+	}
+
+	public async Task<UserGroupInfo> ReadAsync(UserAuthInfo user, Guid guid)
+	{
+		return await db.UserGroupsRepository.GetInfo()
+			.Where(x => x.Guid == guid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"группа {guid}");
+	}
+
+	public async Task<UserGroupInfo[]> ReadAllAsync(UserAuthInfo user)
+	{
+
+		return await db.UserGroupsRepository.GetInfo()
+			.ToArrayAsync();
+	}
+
+	public async Task<UserGroupTreeInfo[]> ReadAllAsTreeAsync(UserAuthInfo user)
+	{
+
+		var tree = await db.UserGroupsRepository.GetTreeAsync();
+
+		return tree;
+	}
+
+	public async Task<UserGroupDetailedInfo> ReadWithDetailsAsync(UserAuthInfo user, Guid guid)
+	{
+
+
+		return await db.UserGroupsRepository.GetWithDetails()
+			.Where(x => x.Guid == guid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: $"группа пользователей \"{guid}\"");
 	}
 
 	/// <summary>
@@ -46,7 +83,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
 	{
-		AccessRepository.CheckAccessToUserGroup(user, AccessType.Admin, groupGuid);
+		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Admin, groupGuid);
 		User = user.Guid;
 
 		return await UpdateAsync(groupGuid, request);
@@ -61,15 +98,15 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> MoveAsync(UserAuthInfo user, Guid groupGuid, Guid? parentGuid)
 	{
-		AccessRepository.CheckAccessToUserGroup(user, AccessType.Admin, groupGuid);
+		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Admin, groupGuid);
 
 		if (parentGuid.HasValue)
 		{
-			AccessRepository.CheckAccessToUserGroup(user, AccessType.User, parentGuid.Value);
+			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.User, parentGuid.Value);
 		}
 		else
 		{
-			AccessRepository.CheckGlobalAccess(user, AccessType.User);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.User);
 		}
 		User = user.Guid;
 
@@ -84,7 +121,7 @@ public partial class UserGroupsRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid groupGuid)
 	{
-		AccessRepository.CheckAccessToUserGroup(user, AccessType.Admin, groupGuid);
+		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Admin, groupGuid);
 		User = user.Guid;
 
 		return await DeleteAsync(groupGuid);
@@ -238,6 +275,144 @@ public partial class UserGroupsRepository(DatalakeContext db)
 			UserGuid = User,
 			Details = details,
 		});
+	}
+
+	#endregion
+
+	#region Запросы
+
+	public async Task<UserGroupTreeInfo[]> GetTreeAsync()
+	{
+		var groups = await db.UserGroups
+			.Select(x => new UserGroupTreeInfo
+			{
+				Guid = x.Guid,
+				Name = x.Name,
+				ParentGuid = x.ParentGuid,
+				Description = x.Description,
+			})
+			.ToArrayAsync();
+
+		return ReadChildren(null);
+
+		UserGroupTreeInfo[] ReadChildren(Guid? guid)
+		{
+			var selected = groups
+				.Where(x => x.ParentGuid == guid)
+				.ToArray();
+
+			foreach (var item in selected)
+			{
+				item.Children = ReadChildren(item.Guid);
+			};
+
+			return selected;
+		}
+	}
+
+	public async Task<UserGroupInfo[]> GetWithParentsAsync(Guid groupGuid)
+	{
+		var groups = await db.UserGroups
+			.Select(x => new UserGroupTreeInfo
+			{
+				Guid = x.Guid,
+				Name = x.Name,
+				Description = x.Description,
+				ParentGuid = x.ParentGuid,
+			})
+			.ToArrayAsync();
+
+		var parents = new List<UserGroupInfo>();
+		Guid? seekGuid = groupGuid;
+
+		do
+		{
+			var group = groups
+				.Where(x => x.Guid == groupGuid)
+				.FirstOrDefault();
+
+			if (group == null)
+				break;
+
+			parents.Add(new UserGroupInfo { Name = group.Name, Guid = group.Guid });
+			seekGuid = group.ParentGuid;
+		}
+		while (seekGuid != null);
+
+		return groups;
+	}
+
+	public IQueryable<UserGroupInfo> GetInfo()
+	{
+		return db.UserGroups
+			.Select(x => new UserGroupInfo
+			{
+				Guid = x.Guid,
+				Name = x.Name,
+				Description = x.Description,
+				ParentGroupGuid = x.ParentGuid,
+			});
+	}
+
+	public IQueryable<UserGroupDetailedInfo> GetWithDetails()
+	{
+		var query =
+			from usergroup in db.UserGroups
+			from globalAccess in db.AccessRights.InnerJoin(x => x.UserGroupGuid == usergroup.Guid && x.IsGlobal)
+			select new UserGroupDetailedInfo
+			{
+				Guid = usergroup.Guid,
+				Name = usergroup.Name,
+				Description = usergroup.Description,
+				ParentGroupGuid = usergroup.ParentGuid,
+				GlobalAccessType = globalAccess.AccessType,
+				Users =
+					from rel in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == usergroup.Guid)
+					from u in db.Users.InnerJoin(x => x.Guid == rel.UserGuid)
+					select new UserGroupUsersInfo
+					{
+						Guid = u.Guid,
+						FullName = u.FullName,
+						AccessType = rel.AccessType,
+					},
+				AccessRights =
+					from rights in db.AccessRights.InnerJoin(x => x.UserGroupGuid == usergroup.Guid)
+					from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId)
+					from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)
+					from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId)
+					select new AccessRightsForOneInfo
+					{
+						Id = rights.Id,
+						IsGlobal = rights.IsGlobal,
+						AccessType = rights.AccessType,
+						Source = source == null ? null : new SourceSimpleInfo
+						{
+							Id = source.Id,
+							Name = source.Name,
+						},
+						Block = block == null ? null : new BlockSimpleInfo
+						{
+							Id = block.Id,
+							Guid = block.GlobalId,
+							Name = block.Name,
+						},
+						Tag = tag == null ? null : new TagSimpleInfo
+						{
+							Id = tag.Id,
+							Guid = tag.GlobalGuid,
+							Name = tag.Name,
+						},
+					},
+				Subgroups =
+					from subgroup in db.UserGroups.LeftJoin(x => x.ParentGuid == usergroup.Guid)
+					select new UserGroupSimpleInfo
+					{
+						Guid = subgroup.Guid,
+						Name = subgroup.Name,
+					},
+			};
+
+		return query;
 	}
 
 	#endregion

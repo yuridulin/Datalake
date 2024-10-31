@@ -1,6 +1,7 @@
-﻿using Datalake.Database.Exceptions;
+﻿using Datalake.Database;
+using Datalake.Database.Exceptions;
 using Datalake.Database.Models.Sources;
-using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Services.Receiver;
 using LinqToDB;
@@ -42,6 +43,7 @@ public class SourcesController(
 		[BindRequired, FromBody] SourceInfo source)
 	{
 		var user = Authenticate();
+
 		var id = await db.SourcesRepository.CreateAsync(user, source);
 
 		return id;
@@ -57,9 +59,9 @@ public class SourcesController(
 	public async Task<ActionResult<SourceInfo>> ReadAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		return await db.SourcesRepository.GetInfo()
-			.FirstOrDefaultAsync(x => x.Id == id)
-			?? throw new NotFoundException($"Источник #{id}");
+		var user = Authenticate();
+
+		return await db.SourcesRepository.ReadAsync(user, id);
 	}
 
 	/// <summary>
@@ -70,8 +72,9 @@ public class SourcesController(
 	[HttpGet]
 	public async Task<ActionResult<SourceInfo[]>> ReadAsync(bool withCustom = false)
 	{
-		return await db.SourcesRepository.GetInfo(withCustom)
-			.ToArrayAsync();
+		var user = Authenticate();
+
+		return await db.SourcesRepository.ReadAllAsync(user, withCustom);
 	}
 
 	/// <summary>
@@ -85,6 +88,7 @@ public class SourcesController(
 		[BindRequired, FromBody] SourceInfo source)
 	{
 		var user = Authenticate();
+
 		await db.SourcesRepository.UpdateAsync(user, id, source);
 
 		return NoContent();
@@ -99,6 +103,7 @@ public class SourcesController(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = Authenticate();
+
 		await db.SourcesRepository.DeleteAsync(user, id);
 
 		return NoContent();
@@ -114,12 +119,11 @@ public class SourcesController(
 	public async Task<ActionResult<SourceItemInfo[]>> GetItemsAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		var source = await db.SourcesRepository.GetInfo()
-			.Where(x => x.Id == id)
-			.Select(x => new { x.Type, x.Address })
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Источник #{id}");
+		var user = Authenticate();
 
+		AccessRepository.ThrowIfNoAccessToSource(user, Database.Enums.AccessType.Viewer, id);
+
+		var source = await db.SourcesRepository.ReadAsync(user, id);
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 
 		var items = sourceItemsResponse.Tags
@@ -145,19 +149,18 @@ public class SourcesController(
 	public async Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		var source = await db.SourcesRepository.GetInfo()
-			.Where(x => x.Id == id)
-			.Select(x => new { x.Type, x.Address })
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Источник #{id}");
+		var user = Authenticate();
+
+		AccessRepository.ThrowIfNoAccessToSource(user, Database.Enums.AccessType.User, id);
+
+		var source = await db.SourcesRepository.ReadWithTagsAsync(user, id);
 
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 		var sourceItems = sourceItemsResponse.Tags
 			.DistinctBy(x => x.Name)
 			.ToDictionary(x => x.Name, x => new SourceItemInfo { Path = x.Name, Type = x.Type, Value = x.Value, Quality = x.Quality });
 
-		var sourceTags = await db.SourcesRepository.GetExistTags(id)
-			.ToListAsync();
+		var sourceTags = source.Tags.ToList();
 
 		var all = sourceTags.Select(tag => new SourceEntryInfo
 		{

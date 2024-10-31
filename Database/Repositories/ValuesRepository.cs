@@ -2,6 +2,7 @@
 using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Tags;
 using Datalake.Database.Models.Values;
 using Datalake.Database.Tables;
@@ -21,37 +22,64 @@ public class ValuesRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение значений по списку запрошенных тегов
 	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
 	/// <param name="requests">Список запрошенных тегов с настройками получения</param>
-	/// <param name="energoId">Идентификатор пользователя EnergoId из внешнего источника</param>
 	/// <returns>Список ответов со значениями тегов</returns>
 	public async Task<List<ValuesResponse>> GetValuesAsync(
-		ValuesRequest[] requests,
-		Guid? energoId = null)
+		UserAuthInfo user,
+		ValuesRequest[] requests)
 	{
-		// TODO: energoId
-		if (energoId.HasValue)
-		{ }
+		var trustedRequests = requests.Select(x => new ValuesTrustedRequest
+		{
+			RequestKey = x.RequestKey,
+			Time = new ValuesTrustedRequest.TimeSettings
+			{
+				Old = x.Old,
+				Young = x.Young,
+				Exact = x.Exact,
+			},
+			Resolution = x.Resolution,
+			Func = x.Func,
+			Tags = TagsRepository.CachedTags.Values.Where(t => x.TagsId != null && x.TagsId.Contains(t.Id))
+				.Union(TagsRepository.CachedTags.Values.Where(t => x.Tags != null && x.Tags.Contains(t.Guid)))
+				.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Viewer, x.Guid))
+				.ToArray(),
+		});
 
-		return await GetValuesAsync(requests);
+		return await GetValuesAsync(trustedRequests);
 	}
 
 	/// <summary>
 	/// Запись новых значений для указанных тегов
 	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
 	/// <param name="requests">Список тегов с новыми значениями</param>
 	/// <param name="overrided">Нужно ли выполнять запись, если нет изменений с текущим значением</param>
-	/// <param name="energoId"></param>
 	/// <returns>Список записанных значений</returns>
 	public async Task<List<ValuesTagResponse>> WriteValuesAsync(
+		UserAuthInfo user,
 		ValueWriteRequest[] requests,
-		bool overrided = false,
-		Guid? energoId = null)
+		bool overrided = false)
 	{
-		// TODO: energoId
-		if (energoId.HasValue)
-		{ }
-
-		return await WriteValuesAsync(requests, overrided);
+		var trustedRequests = requests
+			.Select(x => new ValueTrustedWriteRequest
+			{
+				Tag = x.Id.HasValue ? TagsRepository.CachedTags.TryGetValue(x.Id.Value, out var i)
+					? i
+					: null!
+					: x.Guid.HasValue ? TagsRepository.CachedTags.Values
+						.Where(x => x.Guid == x.Guid)
+						.FirstOrDefault() ?? null!
+					: null!,
+				Date = x.Date,
+				Quality = x.Quality,
+				Value = x.Value,
+			})
+		.Where(x => x != null)
+		.Where(x => AccessRepository.HasAccessToTag(user, AccessType.User, x.Tag.Guid))
+		.ToArray();
+		
+		return await WriteValuesAsync(trustedRequests, overrided);
 	}
 
 	/// <summary>
@@ -65,7 +93,24 @@ public class ValuesRepository(DatalakeContext db)
 	{
 		var stopwatch = Stopwatch.StartNew();
 
-		await WriteValuesAsync(requests, false);
+		var trustedRequests = requests
+			.Select(x => new ValueTrustedWriteRequest
+			{
+				Tag = x.Id.HasValue ? TagsRepository.CachedTags.TryGetValue(x.Id.Value, out var i)
+					? i
+					: null!
+					: x.Guid.HasValue ? TagsRepository.CachedTags.Values
+						.Where(x => x.Guid == x.Guid)
+						.FirstOrDefault() ?? null!
+					: null!,
+				Date = x.Date,
+				Quality = x.Quality,
+				Value = x.Value,
+			})
+		.Where(x => x != null)
+		.ToArray();
+
+		await WriteValuesAsync(trustedRequests, false);
 
 		stopwatch.Stop();
 		return Convert.ToInt32(stopwatch.Elapsed.TotalMilliseconds);
@@ -198,53 +243,33 @@ public class ValuesRepository(DatalakeContext db)
 	/// <param name="overrided">Обязательная запись, даже если изменений не было</param>
 	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
-	internal async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueWriteRequest[] requests, bool overrided = false)
+	internal async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueTrustedWriteRequest[] requests, bool overrided = false)
 	{
 		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToWrite = [];
 
-		foreach (var writeRequest in requests)
+		foreach (var request in requests)
 		{
-			TagCacheInfo? info = null;
-
-			if (writeRequest.Id != null)
-			{
-				info = TagsRepository.CachedTags.TryGetValue(writeRequest.Id.Value, out var i)
-					? i
-					: throw new NotFoundException($"тег [#{writeRequest.Id}]");
-			}
-			else if (writeRequest.Guid != null)
-			{
-				info = TagsRepository.CachedTags.Values
-					.Where(x => x.Guid == writeRequest.Guid)
-					.FirstOrDefault()
-					?? throw new NotFoundException($"тег [{writeRequest.Guid}]");
-			}
-			else
-			{
-				continue;
-			}
-
-			var record = info.ToHistory(writeRequest.Value, writeRequest.Quality);
+			var record = request.Tag.ToHistory(request.Value, request.Quality);
 			if (!IsValueNew(record) && !overrided)
 				continue;
-			record.Date = writeRequest.Date ?? DateFormats.GetCurrentDateTime();
+			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
 
 			recordsToWrite.Add(record);
 
 			responses.Add(new ValuesTagResponse
 			{
-				Id = info.Id,
-				Guid = info.Guid,
-				Name = info.Name,
-				Type = info.TagType,
+				Id = request.Tag.Id,
+				Guid = request.Tag.Guid,
+				Name = request.Tag.Name,
+				Type = request.Tag.TagType,
 				Values = [
 					new ValueRecord
 					{
 						Date = record.Date,
 						DateString = record.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 						Quality = record.Quality,
-						Value = record.GetTypedValue(info.TagType),
+						Value = record.GetTypedValue(request.Tag.TagType),
 					}
 				]
 			});
@@ -335,25 +360,9 @@ public class ValuesRepository(DatalakeContext db)
 
 	#region Чтение значений
 
-	internal async Task<List<ValuesResponse>> GetValuesAsync(ValuesRequest[] requests)
+	internal async Task<List<ValuesResponse>> GetValuesAsync(IEnumerable<ValuesTrustedRequest> trustedRequests)
 	{
 		List<ValuesResponse> responses = [];
-
-		var trustedRequests = requests.Select(x => new
-		{
-			x.RequestKey,
-			Time = new
-			{
-				x.Old,
-				x.Young,
-				x.Exact,
-			},
-			x.Resolution,
-			x.Func,
-			Tags = TagsRepository.CachedTags.Values.Where(t => x.TagsId != null && x.TagsId.Contains(t.Id))
-				.Union(TagsRepository.CachedTags.Values.Where(t => x.Tags != null && x.Tags.Contains(t.Guid)))
-				.ToArray(),
-		});
 
 		foreach (var timeGroup in trustedRequests.GroupBy(x => x.Time))
 		{

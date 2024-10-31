@@ -1,14 +1,13 @@
-﻿using Datalake.Database.Constants;
+﻿using Datalake.Database;
+using Datalake.Database.Constants;
 using Datalake.Database.Enums;
 using Datalake.Database.Models.Logs;
 using Datalake.Database.Models.Settings;
-using Datalake.Database;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Models.System;
 using Datalake.Server.Services.StateManager;
-using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -63,42 +62,9 @@ public class SystemController(
 		[FromQuery(Name = nameof(types) + "[]")] LogType[]? types = null,
 		[FromQuery] Guid? author = null)
 	{
-		var query = db.SystemRepository.GetLogs();
-		if (lastId.HasValue)
-			query = query.Where(x => x.Id > lastId.Value);
+		var userAuth = Authenticate();
 
-		if (source.HasValue)
-			query = query.Where(x => x.RefId == source.Value.ToString());
-
-		if (block.HasValue)
-			query = query.Where(x => x.RefId == block.Value.ToString());
-
-		if (tag.HasValue)
-			query = query.Where(x => x.RefId == tag.Value.ToString());
-
-		if (user.HasValue)
-			query = query.Where(x => x.RefId == user.Value.ToString());
-
-		if (group.HasValue)
-			query = query.Where(x => x.RefId == group.Value.ToString());
-
-		if (categories != null && categories.Length > 0)
-			query = query.Where(x => categories.Contains(x.Category));
-
-		if (types != null && types.Length > 0)
-			query = query.Where(x =>  types.Contains(x.Type));
-		
-		if (author != null)
-			query = query.Where(x => x.Author != null && x.Author.Guid == author.Value);
-
-		query = query
-			.OrderByDescending(x => x.Id);
-
-		if (take.HasValue)
-			query = query.Take(take.Value);
-
-		return await query
-			.ToArrayAsync();
+		return await db.SystemRepository.GetLogsAsync(userAuth, take, lastId, source, block, tag, user, group, categories, types, author);
 	}
 
 	/// <summary>
@@ -108,6 +74,10 @@ public class SystemController(
 	[HttpGet("visits")]
 	public ActionResult<Dictionary<Guid, DateTime>> GetVisits()
 	{
+		var userAuth = Authenticate();
+
+		AccessRepository.ThrowIfNoGlobalAccess(userAuth, AccessType.User);
+
 		return usersStateService.State;
 	}
 
@@ -118,6 +88,10 @@ public class SystemController(
 	[HttpGet("sources")]
 	public ActionResult<Dictionary<int, SourceState>> GetSources()
 	{
+		var userAuth = Authenticate();
+
+		AccessRepository.ThrowIfNoGlobalAccess(userAuth, AccessType.User);
+
 		return sourcesStateService.State;
 	}
 

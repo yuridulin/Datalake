@@ -1,5 +1,6 @@
-﻿using Datalake.Database.Models.Values;
-using Datalake.Database;
+﻿using Datalake.Database;
+using Datalake.Database.Models.Values;
+using Datalake.Server.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -10,7 +11,7 @@ namespace Datalake.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/Tags/[controller]")]
-public class ValuesController(DatalakeContext db) : ControllerBase
+public class ValuesController(DatalakeContext db) : ApiControllerBase
 {
 	/// <summary>
 	/// Путь для получения текущих данные
@@ -21,14 +22,14 @@ public class ValuesController(DatalakeContext db) : ControllerBase
 	/// Получение значений на основании списка запросов
 	/// </summary>
 	/// <param name="requests">Список запросов с настройками</param>
-	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список ответов на запросы</returns>
 	[HttpPost]
 	public async Task<List<ValuesResponse>> GetAsync(
-		[BindRequired, FromBody] ValuesRequest[] requests,
-		Guid? energoId = null)
+		[BindRequired, FromBody] ValuesRequest[] requests)
 	{
-		var responses = await db.ValuesRepository.GetValuesAsync(requests, energoId: energoId);
+		var user = Authenticate();
+
+		var responses = await db.ValuesRepository.GetValuesAsync(user, requests);
 
 		return responses;
 	}
@@ -37,15 +38,15 @@ public class ValuesController(DatalakeContext db) : ControllerBase
 	/// Запись значений на основании списка запросов
 	/// </summary>
 	/// <param name="requests">Список запросов на изменение</param>
-	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список измененных начений</returns>
 	[HttpPut]
 	public async Task<List<ValuesTagResponse>> WriteAsync(
-		[BindRequired, FromBody] ValueWriteRequest[] requests,
-		Guid? energoId = null)
+		[BindRequired, FromBody] ValueWriteRequest[] requests)
 	{
+		var user = Authenticate();
+
 		// Флаг отключает проверку на новизну значения по сравнению с текущим
-		var responses = await db.ValuesRepository.WriteValuesAsync(requests, overrided: true, energoId: energoId);
+		var responses = await db.ValuesRepository.WriteValuesAsync(user, requests, overrided: true);
 
 		return responses;
 	}

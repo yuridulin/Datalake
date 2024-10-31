@@ -23,7 +23,7 @@ public class BlockWithTagsInfo : BlockSimpleInfo
 	/// Уровень доступа к блоку
 	/// </summary>
 	[Required]
-	public AccessRule AccessRule { get; set; } = AccessRule.Default;
+	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 
 	/// <summary>
 	/// Список прикреплённых тегов

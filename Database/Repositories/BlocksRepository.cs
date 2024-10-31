@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models.AccessRights;
@@ -33,11 +34,11 @@ public class BlocksRepository(DatalakeContext db)
 	{
 		if (parentId.HasValue)
 		{
-			AccessRepository.CheckAccessToBlock(user, AccessType.Admin, parentId.Value);
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, parentId.Value);
 		}
 		else
 		{
-			AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 		}
 		
 		User = user.Guid;
@@ -57,7 +58,7 @@ public class BlocksRepository(DatalakeContext db)
 	{
 		BlockWithTagsInfo[] blocks = await GetBlocks(user, energoId);
 
-		return blocks.Where(x => AccessRepository.HasAccess(x.AccessRule.AccessType, AccessType.Viewer)).ToArray();
+		return blocks.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer)).ToArray();
 	}
 
 	/// <summary>
@@ -71,12 +72,13 @@ public class BlocksRepository(DatalakeContext db)
 		UserAuthInfo user,
 		int id)
 	{
-		AccessRepository.CheckAccessToBlock(user, AccessType.Viewer, id);
+		var rule = AccessRepository.GetAccessToBlock(user, id);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer)) throw Errors.NoAccess;
 
 		var block = await QueryFullInfo().FirstOrDefaultAsync(x => x.Id == id)
 			?? throw new NotFoundException(message: "блок #" + id);
 
-		block.AccessRule = user.Blocks[id];
+		block.AccessRule = rule;
 
 		return block;
 	}
@@ -113,7 +115,7 @@ public class BlocksRepository(DatalakeContext db)
 						Children = ReadChildren(x.Id),
 					};
 
-					if (!AccessRepository.HasAccess(x.AccessRule.AccessType, AccessType.Viewer))
+					if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
 					{
 						block.Name = string.Empty;
 						block.Description = string.Empty;
@@ -122,7 +124,7 @@ public class BlocksRepository(DatalakeContext db)
 
 					return block;
 				})
-				.Where(x => x.Children.Length > 0 || AccessRepository.HasAccess(x.AccessRule.AccessType, AccessType.Viewer))
+				.Where(x => x.Children.Length > 0 || x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
 				.ToArray();
 		}
 	}
@@ -139,7 +141,7 @@ public class BlocksRepository(DatalakeContext db)
 		int id,
 		BlockUpdateRequest block)
 	{
-		AccessRepository.CheckAccessToBlock(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await UpdateAsync(id, block);
@@ -157,14 +159,15 @@ public class BlocksRepository(DatalakeContext db)
 		int id,
 		int? parentId)
 	{
-		AccessRepository.CheckAccessToBlock(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
+
 		if (parentId.HasValue)
 		{
-			AccessRepository.CheckAccessToBlock(user, AccessType.Admin, parentId.Value);
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, parentId.Value);
 		}
 		else
 		{
-			AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 		}
 		User = user.Guid;
 
@@ -181,7 +184,7 @@ public class BlocksRepository(DatalakeContext db)
 		UserAuthInfo user,
 		int id)
 	{
-		AccessRepository.CheckAccessToBlock(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await DeleteAsync(id);
@@ -343,14 +346,14 @@ public class BlocksRepository(DatalakeContext db)
 		var rights = user;
 		if (energoId.HasValue)
 		{
-			AccessRepository.CheckGlobalAccess(rights, AccessType.Viewer);
-			rights = AccessRepository.GetEnergoIdUserRights(energoId.Value);
+			AccessRepository.ThrowIfNoGlobalAccess(rights, AccessType.Viewer);
+			rights = AccessRepository.GetAuthInfo(energoId.Value);
 		}
 
 		var blocks = await QuerySimpleInfo().ToArrayAsync();
 		foreach (var block in blocks)
 		{
-			block.AccessRule = rights.Blocks.TryGetValue(block.Id, out var rule) ? rule : AccessRule.Default;
+			block.AccessRule = rights.Blocks.TryGetValue(block.Id, out var rule) ? rule : AccessRuleInfo.Default;
 		}
 
 		return blocks;

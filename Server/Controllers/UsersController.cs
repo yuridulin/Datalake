@@ -1,6 +1,8 @@
-﻿using Datalake.Database.Exceptions;
+﻿using Datalake.Database;
+using Datalake.Database.Exceptions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Users;
-using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Models;
@@ -8,7 +10,6 @@ using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Datalake.Database.Models.Auth;
 
 namespace Datalake.Server.Controllers;
 
@@ -30,6 +31,10 @@ public class UsersController(
 	public async Task<ActionResult<EnergoIdInfo>> GetEnergoIdListAsync(
 		[FromQuery] Guid? currentUserGuid = null)
 	{
+		var user = Authenticate();
+
+		AccessRepository.HasGlobalAccess(user, Database.Enums.AccessType.Admin);
+
 		var settings = await db.SystemRepository.GetSettingsAsSystemAsync();
 
 		EnergoIdUserData[]? energoIdReceivedUsers = null;
@@ -151,8 +156,9 @@ public class UsersController(
 	[HttpGet]
 	public async Task<ActionResult<UserInfo[]>> ReadAsync()
 	{
-		return await db.UsersRepository.GetInfo()
-			.ToArrayAsync();
+		var user = Authenticate();
+
+		return await db.UsersRepository.ReadAllAsync(user);
 	}
 
 	/// <summary>
@@ -165,10 +171,9 @@ public class UsersController(
 	public async Task<ActionResult<UserInfo>> ReadAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
-		return await db.UsersRepository.GetInfo()
-			.Where(x => x.Guid == userGuid)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Учётная запись {userGuid}");
+		var user = Authenticate();
+
+		return await db.UsersRepository.ReadAsync(user, userGuid);
 	}
 
 	/// <summary>
@@ -181,10 +186,9 @@ public class UsersController(
 	public async Task<ActionResult<UserDetailInfo>> ReadWithDetailsAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
-		return await db.UsersRepository.GetDetailInfo()
-			.Where(x => x.Guid == userGuid)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Учётная запись {userGuid}");
+		var user = Authenticate();
+
+		return await db.UsersRepository.ReadWithDetailsAsync(user, userGuid);
 	}
 
 	/// <summary>

@@ -24,4 +24,9 @@ public static class AuthConstants
 	/// Название заголовка, в котором записывается глобальный уровень доступа пользователя
 	/// </summary>
 	public const string GlobalAccessHeader = "D-Access-Type";
+
+	/// <summary>
+	/// Название заголовка, через который передается идентификатор пользователя внешнего приложения
+	/// </summary>
+	public const string UnderlyingUserGuidHeader = "D-As-User";
 }

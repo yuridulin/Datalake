@@ -2,6 +2,7 @@
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models.Auth;
+using Datalake.Database.Models.UserGroups;
 using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
@@ -13,7 +14,7 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы с учетными записями пользователей
 /// </summary>
-public partial class UsersRepository(DatalakeContext db)
+public class UsersRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -25,10 +26,38 @@ public partial class UsersRepository(DatalakeContext db)
 	/// <returns>Идентификатор созданного пользователя</returns>
 	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
 	{
-		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		return await CreateAsync(userInfo);
+	}
+
+	public async Task<UserInfo[]> ReadAllAsync(UserAuthInfo user)
+	{
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+
+		return await db.UsersRepository.GetInfo()
+			.ToArrayAsync();
+	}
+
+	public async Task<UserInfo> ReadAsync(UserAuthInfo user, Guid guid)
+	{
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.User);
+
+		return await db.UsersRepository.GetInfo()
+			.Where(x => x.Guid == guid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"Учётная запись {guid}");
+	}
+
+	public async Task<UserDetailInfo> ReadWithDetailsAsync(UserAuthInfo user, Guid guid)
+	{
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		return await db.UsersRepository.GetDetailInfo()
+			.Where(x => x.Guid == guid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"Учётная запись {guid}");
 	}
 
 	/// <summary>
@@ -40,7 +69,7 @@ public partial class UsersRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
-		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		return await UpdateAsync(userGuid, request);
@@ -54,7 +83,7 @@ public partial class UsersRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid userGuid)
 	{
-		AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		return await DeleteAsync(userGuid);
@@ -284,6 +313,105 @@ public partial class UsersRepository(DatalakeContext db)
 			UserGuid = User,
 			Details = details,
 		});
+	}
+
+	#endregion
+
+	#region Запросы
+
+	/// <summary>
+	/// Запрос информации о учетных записях
+	/// </summary>
+	public IQueryable<UserFlatInfo> GetFlatInfo()
+	{
+		return db.Users
+			.Select(x => new UserFlatInfo
+			{
+				Guid = x.Guid,
+				Login = x.Login,
+				FullName = x.FullName ?? string.Empty,
+				EnergoIdGuid = x.EnergoIdGuid,
+				Type = x.Type,
+			});
+	}
+
+	/// <summary>
+	/// Запрос полной информации о учетных записях, включая группы и права доступа
+	/// </summary>
+	public IQueryable<UserInfo> GetInfo()
+	{
+		var query =
+			from u in db.Users
+			from rel in db.UserGroupRelations.LeftJoin(x => x.UserGuid == u.Guid)
+			from g in db.UserGroups.LeftJoin(x => x.Guid == rel.UserGroupGuid)
+			from urights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGuid == u.Guid)
+			from grights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGroupGuid == g.Guid)
+			group new { u, g, urights, grights } by u into g
+			select new UserInfo
+			{
+				Login = g.Key.Login,
+				Guid = g.Key.Guid,
+				Type = g.Key.Type,
+				FullName = g.Key.FullName ?? string.Empty,
+				EnergoIdGuid = g.Key.EnergoIdGuid,
+				UserGroups = g
+					.Where(x => x.g != null)
+					.Select(x => new UserGroupSimpleInfo
+					{
+						Guid = x.g.Guid,
+						Name = x.g.Name,
+					}),
+				AccessType = (AccessType)g
+					.Select(x => Math.Max(
+						(int)(x.urights != null ? x.urights.AccessType : AccessType.NotSet),
+						(int)(x.urights != null ? x.urights.AccessType : AccessType.NotSet)
+					))
+					.DefaultIfEmpty((int)AccessType.NoAccess)
+					.Max(),
+			};
+
+		return query;
+	}
+
+	/// <summary>
+	/// Получение полной информации о учетных записях, включая группы, права доступа и данные для входа
+	/// </summary>
+	public IQueryable<UserDetailInfo> GetDetailInfo()
+	{
+		var query =
+			from u in db.Users
+			from rel in db.UserGroupRelations.LeftJoin(x => x.UserGuid == u.Guid)
+			from g in db.UserGroups.LeftJoin(x => x.Guid == rel.UserGroupGuid)
+			from urights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGuid == u.Guid)
+			from grights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGroupGuid == g.Guid)
+			group new { u, g, urights, grights } by u into g
+			select new UserDetailInfo
+			{
+				Login = g.Key.Login,
+				Guid = g.Key.Guid,
+				Type = g.Key.Type,
+				FullName = g.Key.FullName ?? string.Empty,
+				EnergoIdGuid = g.Key.EnergoIdGuid,
+				UserGroups = g
+					.Where(x => x.g != null)
+					.Select(x => new UserGroupSimpleInfo
+					{
+						Guid = x.g.Guid,
+						Name = x.g.Name,
+					})
+					.ToArray(),
+				AccessType = (AccessType)g
+					.Select(x => Math.Max(
+						(int)(x.urights != null ? x.urights.AccessType : AccessType.NotSet),
+						(int)(x.urights != null ? x.urights.AccessType : AccessType.NotSet)
+					))
+					.DefaultIfEmpty((int)AccessType.NoAccess)
+					.Max(),
+				Hash = g.Key.PasswordHash,
+				StaticHost = g.Key.StaticHost,
+			};
+
+		return query;
 	}
 
 	#endregion

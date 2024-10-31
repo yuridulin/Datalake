@@ -108,7 +108,7 @@ public class SettingsHandlerService(
 		try
 		{
 			var staticUsers = accessRepository
-				.GetStaticAuthenticatedUsersAsync().Result;
+				.GetStaticUsersAsSystemAsync().Result;
 
 			SessionManagerService.StaticAuthRecords = staticUsers
 				.Select(x => new AuthSession

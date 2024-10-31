@@ -282,9 +282,20 @@ export type BlockWithTagsInfo = BlockSimpleInfo & {
 	/** Текстовое описание */
 	description?: string | null
 	/** Уровень доступа к блоку */
-	accessType: AccessType
+	accessRule: AccessRule
 	/** Список прикреплённых тегов */
 	tags: BlockNestedTagInfo[]
+}
+
+/** Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ */
+export interface AccessRule {
+	/**
+	 * Идентификатор правила доступа
+	 * @format int32
+	 */
+	ruleId?: number
+	/** Уровень доступа */
+	accessType?: AccessType
 }
 
 /** Информация о закреплённом теге */
@@ -828,64 +839,16 @@ export type UserAuthInfo = UserSimpleInfo & {
 	 * @minLength 1
 	 */
 	token: string
-	/** Список правил доступа */
-	rights: UserRights
-}
-
-/** Вычисленные уровни доступа ко всем защищаемым объектам */
-export interface UserRights {
 	/** Глобальный уровень доступа */
-	globalAccessType?: AccessType
+	globalAccessType: AccessType
 	/** Список всех блоков с указанием доступа к ним */
-	groups?: UserAccessToGroup[]
+	groups?: Record<string, AccessRule>
 	/** Список всех блоков с указанием доступа к ним */
-	sources?: UserAccessToObject[]
+	sources?: Record<string, AccessRule>
 	/** Список всех блоков с указанием доступа к ним */
-	blocks?: UserAccessToObject[]
+	blocks?: Record<string, AccessRule>
 	/** Список всех тегов с указанием доступа к ним */
-	tags?: UserAccessToTag[]
-}
-
-/** Информация о доступе к группе пользователей */
-export interface UserAccessToGroup {
-	/**
-	 * Идентификатор группы
-	 * @format guid
-	 */
-	guid?: string
-	/** Правило доступа */
-	rule?: AccessRule
-}
-
-/** Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ */
-export interface AccessRule {
-	/**
-	 * Идентификатор правила доступа
-	 * @format int32
-	 */
-	ruleId?: number
-	/** Уровень доступа */
-	accessType?: AccessType
-}
-
-/** Информация о доступе к объекту */
-export interface UserAccessToObject {
-	/**
-	 * Идентификатор объекта
-	 * @format int32
-	 */
-	id?: number
-	/** Правило доступа */
-	rule?: AccessRule
-}
-
-/** Информация о доступе к тегу */
-export type UserAccessToTag = UserAccessToObject & {
-	/**
-	 * Глобальный идентификатор тега
-	 * @format guid
-	 */
-	guid?: string
+	tags?: Record<string, AccessRule>
 }
 
 /** Информация при аутентификации локальной учетной записи */

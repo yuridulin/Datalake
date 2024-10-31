@@ -1,4 +1,6 @@
-﻿namespace Datalake.Database.Models.Users;
+﻿using Datalake.Database.Models.Users;
+
+namespace Datalake.Database.Models.Tables;
 
 /// <summary>
 /// Информация о отношении пользователя к группе

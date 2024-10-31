@@ -23,20 +23,25 @@ public class UserAuthInfo : UserSimpleInfo
 	/// <summary>
 	/// Список всех блоков с указанием доступа к ним
 	/// </summary>
-	public Dictionary<Guid, AccessRule> Groups { get; set; } = [];
+	public Dictionary<Guid, AccessRuleInfo> Groups { get; set; } = [];
 
 	/// <summary>
 	/// Список всех блоков с указанием доступа к ним
 	/// </summary>
-	public Dictionary<int, AccessRule> Sources { get; set; } = [];
+	public Dictionary<int, AccessRuleInfo> Sources { get; set; } = [];
 
 	/// <summary>
 	/// Список всех блоков с указанием доступа к ним
 	/// </summary>
-	public Dictionary<int, AccessRule> Blocks { get; set; } = [];
+	public Dictionary<int, AccessRuleInfo> Blocks { get; set; } = [];
 
 	/// <summary>
 	/// Список всех тегов с указанием доступа к ним
 	/// </summary>
-	public Dictionary<Guid, AccessRule> Tags { get; set; } = [];
+	public Dictionary<Guid, AccessRuleInfo> Tags { get; set; } = [];
+
+	/// <summary>
+	/// Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
+	/// </summary>
+	public Guid? UnderlyingUserGuid { get; set; } = null;
 }

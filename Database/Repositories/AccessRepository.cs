@@ -1,8 +1,13 @@
 ﻿using Datalake.Database.Constants;
 using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
+using Datalake.Database.Extensions;
 using Datalake.Database.Models.AccessRights;
 using Datalake.Database.Models.Auth;
+using Datalake.Database.Models.Blocks;
+using Datalake.Database.Models.Sources;
+using Datalake.Database.Models.Tags;
+using Datalake.Database.Models.UserGroups;
 using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
@@ -14,7 +19,7 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы с правами доступа
 /// </summary>
-public partial class AccessRepository(DatalakeContext db)
+public class AccessRepository(DatalakeContext db)
 {
 	#region Действия
 
@@ -61,10 +66,35 @@ public partial class AccessRepository(DatalakeContext db)
 	}
 
 	/// <summary>
+	/// Получение списка правил доступа для запрошенных объектов
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="userGuid">Идентификатор пользователя</param>
+	/// <param name="userGroupGuid">Идентификатор группы пользователей</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <param name="blockId">Идентификатор блока</param>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <returns>Список правил доступа</returns>
+	public async Task<AccessRightsInfo[]> GetRightsAsync(
+		UserAuthInfo user,
+		Guid? userGuid,
+		Guid? userGroupGuid,
+		int? sourceId,
+		int? blockId,
+		int? tagId)
+	{
+		ThrowIfNoGlobalAccess(user, AccessType.User);
+
+		var rights = await QueryRights(userGuid, userGroupGuid, sourceId, blockId, tagId).ToArrayAsync();
+
+		return rights;
+	}
+
+	/// <summary>
 	/// Получение списка статичный учетных записей вместе с информацией о доступе
 	/// </summary>
 	/// <returns>Список статичных учетных записей</returns>
-	public async Task<UserStaticAuthInfo[]> GetStaticAuthenticatedUsersAsync()
+	public async Task<UserStaticAuthInfo[]> GetStaticUsersAsSystemAsync()
 	{
 		var staticUsers = await db.Users
 			.Where(x => x.Type == UserType.Static)
@@ -82,7 +112,7 @@ public partial class AccessRepository(DatalakeContext db)
 	/// <param name="request">Новые права доступа</param>
 	public async Task ApplyChangesAsync(UserAuthInfo user, AccessRightsApplyRequest request)
 	{
-		CheckGlobalAccess(user, AccessType.Admin);
+		ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		if (request.UserGroupGuid.HasValue)
 		{
@@ -659,13 +689,13 @@ public partial class AccessRepository(DatalakeContext db)
 					Token = string.Empty,
 					GlobalAccessType = globalRule.AccessType,
 					Groups = userGroups
-						.ToDictionary(x => x.Guid, x => new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+						.ToDictionary(x => x.Guid, x => new AccessRuleInfo { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
 					Sources = userSources
-						.ToDictionary(x => x.Id, x => new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+						.ToDictionary(x => x.Id, x => new AccessRuleInfo { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
 					Blocks = userBlocks
-						.ToDictionary(x => x.Id, x => new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+						.ToDictionary(x => x.Id, x => new AccessRuleInfo { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
 					Tags = userTags
-						.ToDictionary(x => x.Guid, x => new AccessRule { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+						.ToDictionary(x => x.Guid, x => new AccessRuleInfo { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
 				};
 			})
 			.ToDictionary(x => x.Guid);
@@ -705,7 +735,7 @@ public partial class AccessRepository(DatalakeContext db)
 			};
 		}
 		else
-			throw NoAccess;
+			throw Errors.NoAccess;
 	}
 
 	/// <summary>
@@ -715,7 +745,7 @@ public partial class AccessRepository(DatalakeContext db)
 	/// </summary>
 	/// <param name="energoId">Идентификатор пользователя EnergoId</param>
 	/// <returns>Информация о доступе учетной записи</returns>
-	internal static UserAuthInfo GetEnergoIdUserRights(
+	internal static UserAuthInfo GetAuthInfo(
 		Guid energoId)
 	{
 		if (UserRights.TryGetValue(energoId, out var accessRights))
@@ -723,112 +753,377 @@ public partial class AccessRepository(DatalakeContext db)
 			return accessRights;
 		}
 		else
-			throw NoAccess;
+			throw Errors.NoAccess;
 	}
 
 	#endregion
 
 	#region Проверки прав доступа
 
-	internal static void CheckGlobalAccess(
-		UserAuthInfo userRights,
-		AccessType minimalAccess,
-		Guid? energoId = null)
+	/// <summary>
+	/// Проверка достаточности глобального уровня доступа
+	/// </summary>
+	/// <param name="user"></param>
+	/// <param name="minimalAccess"></param>
+	/// <returns></returns>
+	public static bool HasGlobalAccess(
+		UserAuthInfo user,
+		AccessType minimalAccess)
 	{
-
-		if (!HasAccess(userRights.GlobalAccessType, minimalAccess))
-			throw NoAccess;
-
-		if (energoId.HasValue)
+		bool access = user.GlobalAccessType.HasAccess(minimalAccess);
+		if (user.UnderlyingUserGuid.HasValue)
 		{
-			var energoIdUserRights = GetEnergoIdUserRights(energoId.Value);
-			CheckGlobalAccess(energoIdUserRights, minimalAccess);
+			var underlyingUser = GetAuthInfo(user.UnderlyingUserGuid.Value);
+			access = access && HasGlobalAccess(underlyingUser, minimalAccess);
 		}
+
+		return access;
 	}
 
-	internal static void CheckAccessToSource(
-		UserAuthInfo userRights,
+	/// <summary>
+	/// Проверка достаточности уровня доступа к источнику данных
+	/// </summary>
+	/// <param name="user"></param>
+	/// <param name="minimalAccess"></param>
+	/// <param name="sourceId"></param>
+	/// <returns></returns>
+	public static bool HasAccessToSource(
+		UserAuthInfo user,
 		AccessType minimalAccess,
-		int sourceId,
-		Guid? energoId = null)
+		int sourceId)
 	{
-		if (!userRights.Sources.TryGetValue(sourceId, out var accessRights))
-			throw NoAccess;
+		if (!user.Sources.TryGetValue(sourceId, out var rule))
+			return false;
 
-		if (!HasAccess(accessRights.AccessType, minimalAccess))
-			throw NoAccess;
-
-		if (energoId.HasValue)
+		bool access = rule.AccessType.HasAccess(minimalAccess);
+		if (user.UnderlyingUserGuid.HasValue)
 		{
-			var energoIdUserRights = GetEnergoIdUserRights(energoId.Value);
-			CheckAccessToSource(energoIdUserRights, minimalAccess, sourceId);
+			var underlyingUser = GetAuthInfo(user.UnderlyingUserGuid.Value);
+			access = access && HasAccessToSource(underlyingUser, minimalAccess, sourceId);
 		}
+
+		return access;
 	}
 
-	internal static void CheckAccessToBlock(
-		UserAuthInfo userRights,
+	/// <summary>
+	/// Проверка достаточности уровня доступа к блоку
+	/// </summary>
+	/// <param name="user"></param>
+	/// <param name="minimalAccess"></param>
+	/// <param name="blockId"></param>
+	/// <returns></returns>
+	public static bool HasAccessToBlock(
+		UserAuthInfo user,
 		AccessType minimalAccess,
-		int blockId,
-		Guid? energoId = null)
+		int blockId)
 	{
-		if (!userRights.Blocks.TryGetValue(blockId, out var accessRights))
-			throw NoAccess;
+		if (!user.Sources.TryGetValue(blockId, out var rule))
+			return false;
 
-		if (!HasAccess(accessRights.AccessType, minimalAccess))
-			throw NoAccess;
-
-		if (energoId.HasValue)
+		bool access = rule.AccessType.HasAccess(minimalAccess);
+		if (user.UnderlyingUserGuid.HasValue)
 		{
-			var energoIdUserRights = GetEnergoIdUserRights(energoId.Value);
-			CheckAccessToBlock(energoIdUserRights, minimalAccess, blockId);
+			var underlyingUser = GetAuthInfo(user.UnderlyingUserGuid.Value);
+			access = access && HasAccessToBlock(underlyingUser, minimalAccess, blockId);
 		}
+
+		return access;
 	}
 
-	internal static void CheckAccessToTag(
-		UserAuthInfo userRights,
+	/// <summary>
+	/// Проверка достаточности уровня доступа к тегу
+	/// </summary>
+	/// <param name="user"></param>
+	/// <param name="minimalAccess"></param>
+	/// <param name="guid"></param>
+	/// <returns></returns>
+	public static bool HasAccessToTag(
+		UserAuthInfo user,
 		AccessType minimalAccess,
-		Guid guid,
-		Guid? energoId = null)
+		Guid guid)
 	{
-		if (!userRights.Tags.TryGetValue(guid, out var accessRights))
-			throw NoAccess;
+		if (!user.Tags.TryGetValue(guid, out var rule))
+			return false;
 
-		if (!HasAccess(accessRights.AccessType, minimalAccess))
-			throw NoAccess;
-
-		if (energoId.HasValue)
+		bool access = rule.AccessType.HasAccess(minimalAccess);
+		if (user.UnderlyingUserGuid.HasValue)
 		{
-			var energoIdUserRights = GetEnergoIdUserRights(energoId.Value);
-			CheckAccessToTag(energoIdUserRights, minimalAccess, guid);
+			var underlyingUser = GetAuthInfo(user.UnderlyingUserGuid.Value);
+			access = access && HasAccessToTag(underlyingUser, minimalAccess, guid);
 		}
+
+		return access;
 	}
 
-	internal static void CheckAccessToUserGroup(
+	/// <summary>
+	/// Проверка достаточности уровня доступа к группе пользователей
+	/// </summary>
+	/// <param name="userRights"></param>
+	/// <param name="minimalAccess"></param>
+	/// <param name="groupGuid"></param>
+	/// <returns></returns>
+	public static bool HasAccessToUserGroup(
 		UserAuthInfo userRights,
 		AccessType minimalAccess,
 		Guid groupGuid)
 	{
-		if (!userRights.Groups.TryGetValue(groupGuid, out var accessRights))
-			throw NoAccess;
+		if (!userRights.Groups.TryGetValue(groupGuid, out var rule))
+			return false;
 
-		if (!HasAccess(accessRights.AccessType, minimalAccess))
-			throw NoAccess;
+		return rule.AccessType.HasAccess(minimalAccess);
 	}
 
-	internal static bool HasAccess(AccessType current, AccessType minimal)
+	/// <summary>
+	/// Проверка достаточности глобального уровня доступа
+	/// </summary>
+	/// <param name="user"></param>
+	/// <param name="minimalAccess"></param>
+	/// <exception cref="ForbiddenException">Нет доступа</exception>
+	public static void ThrowIfNoGlobalAccess(
+		UserAuthInfo user,
+		AccessType minimalAccess)
 	{
-		return minimal switch
-		{
-			AccessType.NotSet => false,
-			AccessType.NoAccess => false,
-			AccessType.Viewer => current == AccessType.Viewer || current == AccessType.User || current == AccessType.Admin,
-			AccessType.User => current == AccessType.User || current == AccessType.Admin,
-			AccessType.Admin => current == AccessType.Admin,
-			_ => false,
-		};
+		if (!HasGlobalAccess(user, minimalAccess))
+			throw Errors.NoAccess;
 	}
 
-	static readonly ForbiddenException NoAccess = new(message: "нет доступа");
+	/// <summary>
+	/// Проверка достаточности уровня доступа к источнику данных
+	/// </summary>
+	/// <param name="user"></param>
+	/// <param name="minimalAccess"></param>
+	/// <param name="sourceId"></param>
+	/// <exception cref="ForbiddenException">Нет доступа</exception>
+	public static void ThrowIfNoAccessToSource(
+		UserAuthInfo user,
+		AccessType minimalAccess,
+		int sourceId)
+	{
+		if (!HasAccessToSource(user, minimalAccess, sourceId))
+			throw Errors.NoAccess;
+	}
+
+	/// <summary>
+	/// Проверка достаточности уровня доступа к блоку
+	/// </summary>
+	/// <param name="user"></param>
+	/// <param name="minimalAccess"></param>
+	/// <param name="blockId"></param>
+	/// <exception cref="ForbiddenException">Нет доступа</exception>
+	public static void ThrowIfNoAccessToBlock(
+		UserAuthInfo user,
+		AccessType minimalAccess,
+		int blockId)
+	{
+		if (!HasAccessToBlock(user, minimalAccess, blockId))
+			throw Errors.NoAccess;
+	}
+
+	/// <summary>
+	/// Проверка достаточности уровня доступа к тегу
+	/// </summary>
+	/// <param name="user"></param>
+	/// <param name="minimalAccess"></param>
+	/// <param name="guid"></param>
+	/// <exception cref="ForbiddenException">Нет доступа</exception>
+	public static void ThrowIfNoAccessToTag(
+		UserAuthInfo user,
+		AccessType minimalAccess,
+		Guid guid)
+	{
+		if (!HasAccessToTag(user, minimalAccess, guid))
+			throw Errors.NoAccess;
+	}
+
+	/// <summary>
+	/// Проверка достаточности уровня доступа к группе пользователей
+	/// </summary>
+	/// <param name="user"></param>
+	/// <param name="minimalAccess"></param>
+	/// <param name="groupGuid"></param>
+	/// <exception cref="ForbiddenException">Нет доступа</exception>
+	public static void ThrowIfNoAccessToUserGroup(
+		UserAuthInfo user,
+		AccessType minimalAccess,
+		Guid groupGuid)
+	{
+		if (!HasAccessToUserGroup(user, minimalAccess, groupGuid))
+			throw Errors.NoAccess;
+	}
+	
+	/// <summary>
+	 /// Получение глобального уровня доступа
+	 /// </summary>
+	 /// <param name="user">Информация о пользователе</param>
+	 /// <returns>Глобальный уровень доступа</returns>
+	public static AccessType GetGlobalAccess(UserAuthInfo user)
+	{
+		var access = user.GlobalAccessType;
+		if (user.UnderlyingUserGuid.HasValue)
+		{
+			var underlyingUser = GetAuthInfo(user.UnderlyingUserGuid.Value);
+			access = underlyingUser.GlobalAccessType;
+		}
+
+		return access;
+	}
+
+	/// <summary>
+	/// Получение правила доступа к источнику данных
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <returns>Правило доступа</returns>
+	public static AccessRuleInfo GetAccessToSource(
+		UserAuthInfo user,
+		int sourceId)
+	{
+		if (!user.Sources.TryGetValue(sourceId, out var rule))
+			return AccessRuleInfo.Default;
+
+		if (user.UnderlyingUserGuid.HasValue)
+		{
+			var underlyingUser = GetAuthInfo(user.UnderlyingUserGuid.Value);
+			if (!underlyingUser.Sources.TryGetValue(sourceId, out rule))
+				return AccessRuleInfo.Default;
+		}
+
+		return rule;
+	}
+
+	/// <summary>
+	/// Получение правила доступа к блоку
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="blockId">Идентификатор блока</param>
+	/// <returns>Правило доступа</returns>
+	public static AccessRuleInfo GetAccessToBlock(
+		UserAuthInfo user,
+		int blockId)
+	{
+		if (!user.Blocks.TryGetValue(blockId, out var rule))
+			return AccessRuleInfo.Default;
+
+		if (user.UnderlyingUserGuid.HasValue)
+		{
+			var underlyingUser = GetAuthInfo(user.UnderlyingUserGuid.Value);
+			if (!underlyingUser.Blocks.TryGetValue(blockId, out rule))
+				return AccessRuleInfo.Default;
+		}
+
+		return rule;
+	}
+
+	/// <summary>
+	/// Получение правила доступа к тегу
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="tagGuid">Идентификатор тега</param>
+	/// <returns>Правило доступа</returns>
+	public static AccessRuleInfo GetAccessToTag(
+		UserAuthInfo user,
+		Guid tagGuid)
+	{
+		if (!user.Tags.TryGetValue(tagGuid, out var rule))
+			return AccessRuleInfo.Default;
+
+		if (user.UnderlyingUserGuid.HasValue)
+		{
+			var underlyingUser = GetAuthInfo(user.UnderlyingUserGuid.Value);
+			if (!underlyingUser.Tags.TryGetValue(tagGuid, out rule))
+				return AccessRuleInfo.Default;
+		}
+
+		return rule;
+	}
+
+	/// <summary>
+	/// Получение правила доступа к группе пользователей
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="groupGuid">Идентификатор группы</param>
+	/// <returns>Правило доступа</returns>
+	public static AccessRuleInfo GetAccessToUserGroup(
+		UserAuthInfo user,
+		Guid groupGuid)
+	{
+		if (!user.Groups.TryGetValue(groupGuid, out var rule))
+			return AccessRuleInfo.Default;
+
+		if (user.UnderlyingUserGuid.HasValue)
+		{
+			var underlyingUser = GetAuthInfo(user.UnderlyingUserGuid.Value);
+			if (!underlyingUser.Groups.TryGetValue(groupGuid, out rule))
+				return AccessRuleInfo.Default;
+		}
+
+		return rule;
+	}
+
+	#endregion
+
+	#region Запросы
+
+	/// <summary>
+	/// Получение списка прав доступа
+	/// </summary>
+	internal IQueryable<AccessRightsInfo> QueryRights(
+		Guid? userGuid = null,
+		Guid? userGroupGuid = null,
+		int? sourceId = null,
+		int? blockId = null,
+		int? tagId = null)
+	{
+		var rightsQuery = db.AccessRights
+			.Where(x => userGuid == null || x.UserGuid == userGuid)
+			.Where(x => userGroupGuid == null || x.UserGroupGuid == userGroupGuid)
+			.Where(x => sourceId == null || x.SourceId == sourceId)
+			.Where(x => blockId == null || x.BlockId == blockId)
+			.Where(x => tagId == null || x.TagId == tagId);
+
+		var query =
+			from rights in rightsQuery
+			from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid)
+			from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid)
+			from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId)
+			from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)
+			from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId)
+			select new AccessRightsInfo
+			{
+				Id = rights.Id,
+				AccessType = rights.AccessType,
+				IsGlobal = rights.IsGlobal,
+				Source = source == null ? null : new SourceSimpleInfo
+				{
+					Id = source.Id,
+					Name = source.Name,
+				},
+				User = user == null ? null : new UserSimpleInfo
+				{
+					Guid = user.Guid,
+					FullName = user.FullName ?? string.Empty,
+				},
+				UserGroup = usergroup == null ? null : new UserGroupSimpleInfo
+				{
+					Guid = usergroup.Guid,
+					Name = usergroup.Name,
+				},
+				Block = block == null ? null : new BlockSimpleInfo
+				{
+					Id = block.Id,
+					Guid = block.GlobalId,
+					Name = block.Name,
+				},
+				Tag = tag == null ? null : new TagSimpleInfo
+				{
+					Id = tag.Id,
+					Guid = tag.GlobalGuid,
+					Name = tag.Name,
+				},
+			};
+
+		return query;
+	}
 
 	#endregion
 }

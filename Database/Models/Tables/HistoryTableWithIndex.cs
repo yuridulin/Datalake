@@ -1,4 +1,4 @@
-﻿namespace Datalake.Database.Models.Classes;
+﻿namespace Datalake.Database.Models.Tables;
 
 public class HistoryTableWithIndex
 {

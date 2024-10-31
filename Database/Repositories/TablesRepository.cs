@@ -1,5 +1,5 @@
 ﻿using Datalake.Database.Enums;
-using Datalake.Database.Models.Classes;
+using Datalake.Database.Models.Tables;
 using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Data;

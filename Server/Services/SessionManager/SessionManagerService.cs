@@ -2,18 +2,14 @@
 using Datalake.Database.Repositories;
 using Datalake.Server.Constants;
 using Datalake.Server.Services.SessionManager.Models;
-using System.Net;
 
 namespace Datalake.Server.Services.SessionManager;
 
 /// <summary>
 /// Менеджер сессий пользователей
 /// </summary>
-/// <param name="loggerFactory"></param>
-public class SessionManagerService(ILoggerFactory loggerFactory)
+public class SessionManagerService
 {
-	private readonly ILogger<SessionManagerService> _logger = loggerFactory.CreateLogger<SessionManagerService>();
-
 	/// <summary>
 	/// Список текущих сессий
 	/// </summary>

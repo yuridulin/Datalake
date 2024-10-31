@@ -1,4 +1,6 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Database.Abstractions;
+using Datalake.Database.Enums;
+using Datalake.Database.Models.Auth;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Sources;
@@ -6,7 +8,7 @@ namespace Datalake.Database.Models.Sources;
 /// <summary>
 /// Информация о теге, берущем данные из этого источника
 /// </summary>
-public class SourceTagInfo
+public class SourceTagInfo : IProtectedEntity
 {
 	/// <summary>
 	/// Идентификатор тега
@@ -37,4 +39,7 @@ public class SourceTagInfo
 	/// </summary>
 	[Required]
 	public required int Interval { get; set; }
+
+	/// <inheritdoc />
+	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }
