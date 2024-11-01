@@ -49,12 +49,12 @@ api.instance.interceptors.response.use(
 	},
 	(error: AxiosError) => {
 		if (error.response?.status === 401) {
-			router.navigate(routes.auth.loginPage)
+			router.navigate(routes.auth.loginPage, { replace: true })
 			return Promise.reject(error.response)
 		}
 
 		if (error.code === 'ERR_NETWORK') {
-			router.navigate(routes.offline)
+			router.navigate(routes.offline, { replace: true })
 			return Promise.resolve(error.response)
 		}
 
