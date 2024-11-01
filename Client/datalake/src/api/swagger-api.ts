@@ -71,7 +71,12 @@ api.instance.interceptors.response.use(
 )
 
 if (window.location.pathname !== routes.auth.energoId) {
-	api.usersIdentify().catch()
+	api.usersIdentify()
+		.then((res) => {
+			if (res.status != 200) return
+			user.identify(res.data)
+		})
+		.catch()
 }
 
 export default api

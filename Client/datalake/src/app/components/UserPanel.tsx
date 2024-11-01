@@ -25,7 +25,7 @@ const UserPanel = observer(() => {
 							wordBreak: 'break-word',
 						}}
 					>
-						{user.name}
+						{user.fullName}
 					</td>
 				</tr>
 				<tr>
@@ -33,7 +33,7 @@ const UserPanel = observer(() => {
 						<UserOutlined />
 					</td>
 					<td style={{ padding: '.25em 1em' }}>
-						<AccessTypeEl type={user.globalAccess} />
+						<AccessTypeEl type={user.globalAccessType} />
 					</td>
 					<td style={{ padding: '.25em 1em .25em 0', width: '1em' }}>
 						<Button

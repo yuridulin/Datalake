@@ -1,30 +1,36 @@
 import { makeAutoObservable } from 'mobx'
-import { AccessType } from './swagger/data-contracts'
+import { AccessRule, AccessType, UserAuthInfo } from './swagger/data-contracts'
 
 const nameHeader = 'd-name'
 const tokenHeader = 'd-access-token'
 const accessHeader = 'd-access-type'
 
-class User {
+class User implements UserAuthInfo {
 	constructor() {
-		this.name = localStorage.getItem(nameHeader) || ''
+		this.fullName = localStorage.getItem(nameHeader) || ''
 		this.token = localStorage.getItem(tokenHeader) || ''
-		this.globalAccess = AccessType[
+		this.globalAccessType = AccessType[
 			(localStorage.getItem(accessHeader) || '') as unknown as AccessType
 		] as unknown as AccessType
+
 		makeAutoObservable(this)
 	}
 
-	name: string = ''
+	guid: string = ''
+	fullName: string
+	globalAccessType: AccessType
+	groups?: Record<string, AccessRule> | undefined = {}
+	sources?: Record<string, AccessRule> | undefined = {}
+	blocks?: Record<string, AccessRule> | undefined = {}
+	tags?: Record<string, AccessRule> | undefined = {}
 	token: string = ''
-	globalAccess: AccessType = AccessType.NoAccess
 
 	isAuth() {
 		return this.token !== ''
 	}
 
 	setName(name: string) {
-		this.name = name
+		this.fullName = name
 		localStorage.setItem(nameHeader, name)
 	}
 
@@ -34,8 +40,17 @@ class User {
 	}
 
 	setAccess(access: AccessType) {
-		this.globalAccess = AccessType[access] as unknown as AccessType
+		this.globalAccessType = AccessType[access] as unknown as AccessType
 		localStorage.setItem(accessHeader, access.toString())
+	}
+
+	identify(authInfo: UserAuthInfo) {
+		this.sources = authInfo.sources
+		this.blocks = authInfo.blocks
+		this.tags = authInfo.tags
+		this.groups = authInfo.groups
+
+		console.log('user:', JSON.parse(JSON.stringify(this)))
 	}
 
 	logout() {
