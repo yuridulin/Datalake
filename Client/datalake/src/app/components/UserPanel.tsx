@@ -2,7 +2,7 @@ import { LogoutOutlined, UserOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { freeToken, isAuth, user } from '../../api/local-auth'
+import { user } from '../../api/user'
 import routes from '../router/routes'
 import AccessTypeEl from './AccessTypeEl'
 
@@ -10,11 +10,11 @@ const UserPanel = observer(() => {
 	const navigate = useNavigate()
 
 	function logout() {
-		freeToken()
+		user.logout()
 		navigate(routes.auth.loginPage)
 	}
 
-	return isAuth() ? (
+	return user.isAuth() ? (
 		<table style={{ width: '100%', maxWidth: '100%' }}>
 			<tbody>
 				<tr>

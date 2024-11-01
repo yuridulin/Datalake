@@ -1,9 +1,9 @@
 import { Button, Space } from 'antd'
 import { useAuth } from 'react-oidc-context'
 import { useNavigate } from 'react-router-dom'
-import { user } from '../../../api/local-auth'
 import notify from '../../../api/notifications'
 import api from '../../../api/swagger-api'
+import { user } from '../../../api/user'
 import routes from '../../router/routes'
 
 export default function EnergoId() {

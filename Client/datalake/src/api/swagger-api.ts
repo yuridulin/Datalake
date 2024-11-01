@@ -1,17 +1,10 @@
 import { AxiosError, AxiosResponse } from 'axios'
 import router from '../app/router/router'
 import routes from '../app/router/routes'
-import {
-	getToken,
-	globalAccessHeader,
-	nameHeader,
-	setToken,
-	tokenHeader,
-	user,
-} from './local-auth'
 import notify from './notifications'
 import { Api } from './swagger/Api'
 import { AccessType } from './swagger/data-contracts'
+import { globalAccessHeader, nameHeader, tokenHeader, user } from './user'
 
 declare const LOCAL_API: boolean
 
@@ -32,7 +25,7 @@ const api = new Api({
 
 api.instance.interceptors.request.use(
 	(config) => {
-		config.headers[tokenHeader] = getToken()
+		config.headers[tokenHeader] = user.token
 		return config
 	},
 	(err) => Promise.reject(err),
@@ -42,12 +35,11 @@ api.instance.interceptors.response.use(
 	(response: AxiosResponse) => {
 		if (response.config.method === 'OPTIONS') return response
 
-		setToken(response.headers[tokenHeader])
+		user.setName(decodeURIComponent(response.headers[nameHeader]))
+		user.setToken(response.headers[tokenHeader])
 		user.setAccess(
 			response.headers[globalAccessHeader] || AccessType.NoAccess,
 		)
-		console.log(response.headers)
-		user.setName(decodeURIComponent(response.headers[nameHeader]))
 
 		if (response.status === 204) {
 			notify.done()

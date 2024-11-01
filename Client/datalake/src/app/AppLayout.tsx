@@ -2,14 +2,15 @@ import { Divider, Layout, theme } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
 import { motion } from 'framer-motion'
+import { observer } from 'mobx-react-lite'
 import { Outlet, useLocation } from 'react-router-dom'
-import { isAuth } from '../api/local-auth'
+import { user } from '../api/user'
 import { useUpdateContext } from '../context/updateContext'
 import { AppMenu } from './components/AppMenu'
 import LogoPanel from './components/LogoPanel'
 import UserPanel from './components/UserPanel'
 
-export default function AppLayout() {
+const AppLayout = observer(() => {
 	const { token } = theme.useToken()
 	const { pathname } = useLocation()
 	const { isDarkMode } = useUpdateContext()
@@ -31,7 +32,7 @@ export default function AppLayout() {
 	return (
 		<>
 			{isDarkMode && <style>{':root { color-scheme: dark; }'}</style>}
-			{isAuth() && (
+			{user.isAuth() && (
 				<Layout
 					hasSider
 					style={{
@@ -76,4 +77,6 @@ export default function AppLayout() {
 			)}
 		</>
 	)
-}
+})
+
+export default AppLayout
