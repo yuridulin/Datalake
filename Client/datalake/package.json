@@ -5,10 +5,11 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"build": "tsc -b && vite build",
+		"build": "tsc -b && vite build && npm run update-datalake-client",
 		"lint": "eslint .",
 		"preview": "vite preview",
-		"swagger": "npx swagger-typescript-api --path \"http://localhost:8000/swagger/Datalake%20App/swagger.json\" --output \"./src/api/swagger\" --axios --modular --clean-output --extract-request-body --responses"
+		"swagger": "npx swagger-typescript-api --path \"http://localhost:8000/swagger/Datalake%20App/swagger.json\" --output \"./src/api/swagger\" --axios --modular --clean-output --extract-request-body --responses",
+		"update-datalake-client": "node env/update-datalake-client.js"
 	},
 	"dependencies": {
 		"@ant-design/icons": "^5.4.0",
