@@ -11,7 +11,7 @@ import {
 import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { NavLink } from 'react-router-dom'
-import { CustomSource } from '../../api/models/customSource'
+import { CustomSource } from '../../api/types/customSource'
 import BlockIcon from '../icons/BlockIcon'
 import SourceIcon from '../icons/SourceIcon'
 import TagIcon from '../icons/TagIcon'

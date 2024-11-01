@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
-import { TagValue } from '../../api/models/tagValue'
 import api from '../../api/swagger-api'
 import { TagQuality, TagType } from '../../api/swagger/data-contracts'
+import { TagValue } from '../../api/types/tagValue'
 
 const style: React.CSSProperties = {
 	border: '1px solid #8080804d',

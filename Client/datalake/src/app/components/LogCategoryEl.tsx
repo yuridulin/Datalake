@@ -1,5 +1,5 @@
 import { Tag } from 'antd'
-import getLogCategodyName from '../../api/models/getLogCategoryName'
+import getLogCategodyName from '../../api/functions/getLogCategoryName'
 import { LogCategory } from '../../api/swagger/data-contracts'
 
 type LogCategoryProps = {

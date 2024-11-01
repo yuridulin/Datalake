@@ -56,9 +56,9 @@ api.instance.interceptors.response.use(
 		return response
 	},
 	(error: AxiosError) => {
-		if (error.response?.status === 403) {
+		if (error.response?.status === 401) {
 			router.navigate(routes.auth.loginPage)
-			return Promise.resolve(error.response)
+			return Promise.reject(error.response)
 		}
 
 		if (error.code === 'ERR_NETWORK') {
@@ -71,7 +71,7 @@ api.instance.interceptors.response.use(
 			if (message.indexOf('\n\n') > -1)
 				message = message.substring(0, message.indexOf('\n\n'))
 			notify.err(message)
-			return Promise.resolve(error.response)
+			return Promise.reject(error.response)
 		}
 
 		return Promise.reject(error)

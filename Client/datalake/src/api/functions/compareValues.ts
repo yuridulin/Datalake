@@ -1,4 +1,4 @@
-import { TagValue } from '../models/tagValue'
+import { TagValue } from '../types/tagValue'
 
 export default function compareValues(a: TagValue, b: TagValue): number {
 	const typeOrder = (value: TagValue): number => {

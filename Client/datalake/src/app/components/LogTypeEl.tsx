@@ -1,5 +1,5 @@
 import { Tag } from 'antd'
-import getLogTypeName from '../../api/models/getLogTypeName'
+import getLogTypeName from '../../api/functions/getLogTypeName'
 import { LogType } from '../../api/swagger/data-contracts'
 
 type LogTypeProps = {

@@ -1,7 +1,7 @@
 import { Button, Input, Popconfirm, Radio, Select } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import getAccessTypeName from '../../../../api/models/getAccessTypeName'
+import getAccessTypeName from '../../../../api/functions/getAccessTypeName'
 import api from '../../../../api/swagger-api'
 import {
 	AccessType,

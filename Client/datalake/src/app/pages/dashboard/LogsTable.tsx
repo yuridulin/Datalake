@@ -1,9 +1,10 @@
 import { Button, Table } from 'antd'
 import Column from 'antd/es/table/Column'
+import { AxiosResponse } from 'axios'
 import { useCallback, useEffect, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
-import getLogCategoryName from '../../../api/models/getLogCategoryName'
-import getLogTypeName from '../../../api/models/getLogTypeName'
+import { NavLink } from 'react-router-dom'
+import getLogCategoryName from '../../../api/functions/getLogCategoryName'
+import getLogTypeName from '../../../api/functions/getLogTypeName'
 import api from '../../../api/swagger-api'
 import {
 	LogCategory,
@@ -22,15 +23,16 @@ type FilterType = {
 }
 
 export default function LogsTable() {
+	const [error, setError] = useState(null as string | null)
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const [filter, setFilter] = useState({
 		categories: [],
 		types: [],
 	} as FilterType)
-	const navigate = useNavigate()
 	const count = 15
 
 	const update = useCallback(() => {
+		if (error) return
 		setLogs((prevLogs) => {
 			api.systemGetLogs({
 				take: count,
@@ -38,17 +40,23 @@ export default function LogsTable() {
 				'types[]': filter.types,
 			})
 				.then((res) => {
+					setError(null)
 					setLogs(res.data)
 				})
-				.catch(() => navigate(routes.offline))
+				.catch((res: AxiosResponse) => {
+					if (res.status === 403) setError(res.data)
+					setLogs([])
+				})
 			return prevLogs
 		})
-	}, [navigate, filter])
+	}, [filter, error])
 
 	useEffect(update, [update, filter])
 	useInterval(update, 5000)
 
-	return (
+	return error ? (
+		<>{error}</>
+	) : (
 		<>
 			<Table
 				dataSource={logs}

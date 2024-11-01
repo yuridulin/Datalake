@@ -1,7 +1,7 @@
 import {
 	AccessObject,
 	AccessObjectToString,
-} from '../../api/models/accessObject'
+} from '../../api/types/accessObject'
 
 const withId = (route: string, id: string | number) =>
 	route.replace(':id', String(id))

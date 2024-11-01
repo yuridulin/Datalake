@@ -3,7 +3,7 @@ import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import compareValues from '../../../../api/extensions/compareValues'
+import compareValues from '../../../../api/functions/compareValues'
 import api from '../../../../api/swagger-api'
 import {
 	SourceEntryInfo,

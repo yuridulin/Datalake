@@ -1,5 +1,5 @@
 import { Tag } from 'antd'
-import getAccessTypeName from '../../api/models/getAccessTypeName'
+import getAccessTypeName from '../../api/functions/getAccessTypeName'
 import { AccessType } from '../../api/swagger/data-contracts'
 
 export default function AccessTypeEl({

@@ -12,12 +12,12 @@ import {
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CustomSource } from '../../../../api/models/customSource'
 import api from '../../../../api/swagger-api'
 import {
 	TagType,
 	TagUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
+import { CustomSource } from '../../../../api/types/customSource'
 import { useInterval } from '../../../../hooks/useInterval'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
