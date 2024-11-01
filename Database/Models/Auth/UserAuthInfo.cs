@@ -23,21 +23,25 @@ public class UserAuthInfo : UserSimpleInfo
 	/// <summary>
 	/// Список всех блоков с указанием доступа к ним
 	/// </summary>
+	[Required]
 	public Dictionary<Guid, AccessRuleInfo> Groups { get; set; } = [];
 
 	/// <summary>
 	/// Список всех блоков с указанием доступа к ним
 	/// </summary>
+	[Required]
 	public Dictionary<int, AccessRuleInfo> Sources { get; set; } = [];
 
 	/// <summary>
 	/// Список всех блоков с указанием доступа к ним
 	/// </summary>
+	[Required]
 	public Dictionary<int, AccessRuleInfo> Blocks { get; set; } = [];
 
 	/// <summary>
 	/// Список всех тегов с указанием доступа к ним
 	/// </summary>
+	[Required]
 	public Dictionary<Guid, AccessRuleInfo> Tags { get; set; } = [];
 
 	/// <summary>

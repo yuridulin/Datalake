@@ -1,4 +1,5 @@
 ﻿using Datalake.Database.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Auth;
 
@@ -10,11 +11,13 @@ public class AccessRuleInfo
 	/// <summary>
 	/// Идентификатор правила доступа
 	/// </summary>
+	[Required]
 	public int RuleId { get; set; }
 
 	/// <summary>
 	/// Уровень доступа
 	/// </summary>
+	[Required]
 	public AccessType AccessType { get; set; }
 
 	/// <summary>

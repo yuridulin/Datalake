@@ -11,7 +11,6 @@
 
 import {
 	AccessRightsApplyRequest,
-	AccessRightsForOneInfo,
 	AccessRightsInfo,
 	BlockFullInfo,
 	BlockTreeInfo,
@@ -111,34 +110,6 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			method: 'POST',
 			body: data,
 			type: ContentType.Json,
-			...params,
-		})
-	/**
-	 * No description
-	 *
-	 * @tags Access
-	 * @name AccessCheckUserAccess
-	 * @summary Получение разрешений пользователя на конкретные объекты, включая непрямые (предоставленные на объекты выше в иерархии либо на группы пользователя)
-	 * @request GET:/api/Access/{user}
-	 * @response `200` `(AccessRightsForOneInfo)[]` Список разрешений на доступ к запрошенным объектам
-	 */
-	accessCheckUserAccess = (
-		user: string,
-		query?: {
-			/** Идентификаторы источников, разрешения на которые нужно проверить */
-			sources?: number[] | null
-			/** Идентификаторы блоков, разрешения на которые нужно проверить */
-			blocks?: number[] | null
-			/** Идентификаторы тегов, разрешения на которые нужно проверить */
-			tags?: number[] | null
-		},
-		params: RequestParams = {},
-	) =>
-		this.request<AccessRightsForOneInfo[], any>({
-			path: `/api/Access/${user}`,
-			method: 'GET',
-			query: query,
-			format: 'json',
 			...params,
 		})
 	/**
@@ -652,11 +623,6 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 			names?: string[] | null
 			/** Список глобальных идентификаторов тегов */
 			guids?: string[] | null
-			/**
-			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
-			 * @format guid
-			 */
-			energoId?: string | null
 		},
 		params: RequestParams = {},
 	) =>
@@ -721,12 +687,12 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @tags Tags
 	 * @name TagsReadPossibleInputs
 	 * @summary Получение списка тегов, подходящих для использования в формулах
-	 * @request GET:/api/Tags/inputs
+	 * @request GET:/api/Tags/{guid}/inputs
 	 * @response `200` `(TagAsInputInfo)[]` Список тегов
 	 */
-	tagsReadPossibleInputs = (params: RequestParams = {}) =>
+	tagsReadPossibleInputs = (guid: string, params: RequestParams = {}) =>
 		this.request<TagAsInputInfo[], any>({
-			path: `/api/Tags/inputs`,
+			path: `/api/Tags/${guid}/inputs`,
 			method: 'GET',
 			format: 'json',
 			...params,
@@ -1053,21 +1019,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request POST:/api/Tags/Values
 	 * @response `200` `(ValuesResponse)[]` Список ответов на запросы
 	 */
-	valuesGet = (
-		data: ValuesGetPayload,
-		query?: {
-			/**
-			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
-			 * @format guid
-			 */
-			energoId?: string | null
-		},
-		params: RequestParams = {},
-	) =>
+	valuesGet = (data: ValuesGetPayload, params: RequestParams = {}) =>
 		this.request<ValuesResponse[], any>({
 			path: `/api/Tags/Values`,
 			method: 'POST',
-			query: query,
 			body: data,
 			type: ContentType.Json,
 			format: 'json',
@@ -1082,21 +1037,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request PUT:/api/Tags/Values
 	 * @response `200` `(ValuesTagResponse)[]` Список измененных начений
 	 */
-	valuesWrite = (
-		data: ValuesWritePayload,
-		query?: {
-			/**
-			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
-			 * @format guid
-			 */
-			energoId?: string | null
-		},
-		params: RequestParams = {},
-	) =>
+	valuesWrite = (data: ValuesWritePayload, params: RequestParams = {}) =>
 		this.request<ValuesTagResponse[], any>({
 			path: `/api/Tags/Values`,
 			method: 'PUT',
-			query: query,
 			body: data,
 			type: ContentType.Json,
 			format: 'json',

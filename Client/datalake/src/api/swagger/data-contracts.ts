@@ -117,11 +117,11 @@ export interface AccessRightsSimpleInfo {
 	 * Идентификатор разрешения
 	 * @format int32
 	 */
-	id?: number
+	id: number
 	/** Тип доступа */
-	accessType?: AccessType
+	accessType: AccessType
 	/** Является ли разрешение глобальным */
-	isGlobal?: boolean
+	isGlobal: boolean
 }
 
 /**
@@ -169,7 +169,7 @@ export interface AccessRightsApplyRequest {
 	 */
 	tagId?: number | null
 	/** Список прав доступа */
-	rights?: AccessRightsIdInfo[]
+	rights: AccessRightsIdInfo[]
 }
 
 /** Измененное разрешение, которое нужно обновить в БД */
@@ -180,7 +180,7 @@ export interface AccessRightsIdInfo {
 	 */
 	id?: number | null
 	/** Уровень доступа */
-	accessType?: AccessType
+	accessType: AccessType
 	/**
 	 * Идентификатор пользователя, которому выдается разрешение
 	 * @format guid
@@ -282,20 +282,20 @@ export type BlockWithTagsInfo = BlockSimpleInfo & {
 	/** Текстовое описание */
 	description?: string | null
 	/** Уровень доступа к блоку */
-	accessRule: AccessRule
+	accessRule: AccessRuleInfo
 	/** Список прикреплённых тегов */
 	tags: BlockNestedTagInfo[]
 }
 
 /** Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ */
-export interface AccessRule {
+export interface AccessRuleInfo {
 	/**
 	 * Идентификатор правила доступа
 	 * @format int32
 	 */
-	ruleId?: number
+	ruleId: number
 	/** Уровень доступа */
-	accessType?: AccessType
+	accessType: AccessType
 }
 
 /** Информация о закреплённом теге */
@@ -378,6 +378,8 @@ export type SourceInfo = SourceSimpleInfo & {
 	address?: string | null
 	/** Тип протокола, по которому запрашиваются данные */
 	type: SourceType
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /**
@@ -470,6 +472,8 @@ export interface SourceTagInfo {
 	 * @format int32
 	 */
 	interval: number
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /** Запись собщения */
@@ -643,6 +647,8 @@ export type TagInfo = TagSimpleInfo & {
 	maxRaw: number
 	/** Входные переменные для формулы, по которой рассчитывается значение */
 	formulaInputs: TagInputInfo[]
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /** Тег, используемый как входной параметр в формуле */
@@ -652,6 +658,8 @@ export type TagInputInfo = TagSimpleInfo & {
 	 * @minLength 1
 	 */
 	variableName: string
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /** Необходимые данные для создания тега */
@@ -678,6 +686,8 @@ export interface TagCreateRequest {
 export type TagAsInputInfo = TagSimpleInfo & {
 	/** Тип данных тега */
 	type: TagType
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /** Данные запроса для изменение тега */
@@ -842,13 +852,18 @@ export type UserAuthInfo = UserSimpleInfo & {
 	/** Глобальный уровень доступа */
 	globalAccessType: AccessType
 	/** Список всех блоков с указанием доступа к ним */
-	groups?: Record<string, AccessRule>
+	groups: Record<string, AccessRuleInfo>
 	/** Список всех блоков с указанием доступа к ним */
-	sources?: Record<string, AccessRule>
+	sources: Record<string, AccessRuleInfo>
 	/** Список всех блоков с указанием доступа к ним */
-	blocks?: Record<string, AccessRule>
+	blocks: Record<string, AccessRuleInfo>
 	/** Список всех тегов с указанием доступа к ним */
-	tags?: Record<string, AccessRule>
+	tags: Record<string, AccessRuleInfo>
+	/**
+	 * Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
+	 * @format guid
+	 */
+	underlyingUserGuid?: string | null
 }
 
 /** Информация при аутентификации локальной учетной записи */

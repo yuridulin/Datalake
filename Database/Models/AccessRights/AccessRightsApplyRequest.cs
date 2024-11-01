@@ -1,4 +1,6 @@
-﻿namespace Datalake.Database.Models.AccessRights;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Datalake.Database.Models.AccessRights;
 
 /// <summary>
 /// Измененное разрешение, которое нужно обновить в БД
@@ -33,5 +35,6 @@ public class AccessRightsApplyRequest
 	/// <summary>
 	/// Список прав доступа
 	/// </summary>
+	[Required]
 	public required AccessRightsIdInfo[] Rights { get; set; }
 }
