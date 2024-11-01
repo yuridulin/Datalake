@@ -1,8 +1,10 @@
+import { user } from '@/api/user'
 import { Button, Table, TableColumnsType } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import api from '../../../api/swagger-api'
 import {
+	AccessType,
 	BlockNestedTagInfo,
 	BlockTreeInfo,
 } from '../../../api/swagger/data-contracts'
@@ -72,9 +74,9 @@ export default function BlocksTree() {
 	const [data, setData] = useState([] as DataType[])
 
 	function load() {
-		api.blocksReadAsTree().then((res) =>
-			setData(transformBlockTreeInfo(res.data)),
-		)
+		api.blocksReadAsTree()
+			.then((res) => setData(transformBlockTreeInfo(res.data)))
+			.catch(() => setData([]))
 	}
 
 	function createBlock() {
@@ -106,13 +108,15 @@ export default function BlocksTree() {
 		<>
 			<PageHeader
 				right={
-					<>
-						<NavLink to={routes.blocks.toMoveForm()}>
-							<Button>Изменить иерархию</Button>
-						</NavLink>
-						&ensp;
-						<Button onClick={createBlock}>Добавить блок</Button>
-					</>
+					user.hasGlobalAccess(AccessType.Admin) && (
+						<>
+							<NavLink to={routes.blocks.toMoveForm()}>
+								<Button>Изменить иерархию</Button>
+							</NavLink>
+							&ensp;
+							<Button onClick={createBlock}>Добавить блок</Button>
+						</>
+					)
 				}
 			>
 				Блоки верхнего уровня

@@ -1,14 +1,19 @@
+import getSourceTypeName from '@/api/functions/getSourceTypeName'
+import { timeAgo } from '@/api/functions/timeAgoInstance'
+import api from '@/api/swagger-api'
+import {
+	AccessType,
+	SourceInfo,
+	SourceState,
+} from '@/api/swagger/data-contracts'
+import { user } from '@/api/user'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
+import { useInterval } from '@/hooks/useInterval'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, Table, TableColumnsType, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import getSourceTypeName from '../../../api/functions/getSourceTypeName'
-import { timeAgo } from '../../../api/functions/timeAgoInstance'
-import api from '../../../api/swagger-api'
-import { SourceInfo, SourceState } from '../../../api/swagger/data-contracts'
-import { useInterval } from '../../../hooks/useInterval'
-import PageHeader from '../../components/PageHeader'
-import routes from '../../router/routes'
 
 export default function SourcesList() {
 	const [list, setList] = useState([] as SourceInfo[])
@@ -74,9 +79,9 @@ export default function SourcesList() {
 								title={
 									(state.lastConnection
 										? 'Последний раз связь была ' +
-										  timeAgo.format(
+											timeAgo.format(
 												new Date(state.lastConnection),
-										  )
+											)
 										: 'Успешных подключений не было с момента запуска') +
 									'. Последняя попытка: ' +
 									timeAgo.format(new Date(state.lastTry))
@@ -108,7 +113,11 @@ export default function SourcesList() {
 		<>
 			<PageHeader
 				right={
-					<Button onClick={createSource}>Добавить источник</Button>
+					user.hasGlobalAccess(AccessType.User) && (
+						<Button onClick={createSource}>
+							Добавить источник
+						</Button>
+					)
 				}
 			>
 				Зарегистрированные источники данных

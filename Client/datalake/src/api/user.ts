@@ -1,5 +1,10 @@
 import { makeAutoObservable } from 'mobx'
-import { AccessRule, AccessType, UserAuthInfo } from './swagger/data-contracts'
+import hasAccess from './functions/hasAccess'
+import {
+	AccessRuleInfo,
+	AccessType,
+	UserAuthInfo,
+} from './swagger/data-contracts'
 
 const nameHeader = 'd-name'
 const tokenHeader = 'd-access-token'
@@ -33,10 +38,10 @@ class User implements UserAuthInfo {
 	guid: string = ''
 	fullName: string
 	globalAccessType: AccessType
-	groups?: Record<string, AccessRule> | undefined = {}
-	sources?: Record<string, AccessRule> | undefined = {}
-	blocks?: Record<string, AccessRule> | undefined = {}
-	tags?: Record<string, AccessRule> | undefined = {}
+	groups: Record<string, AccessRuleInfo> = {}
+	sources: Record<number, AccessRuleInfo> = {}
+	blocks: Record<number, AccessRuleInfo> = {}
+	tags: Record<string, AccessRuleInfo> = {}
 	token: string = ''
 	theme: 'dark' | 'light'
 
@@ -82,6 +87,30 @@ class User implements UserAuthInfo {
 		this.setName('')
 		this.setToken('')
 		this.setAccess(AccessType.NotSet)
+	}
+
+	hasGlobalAccess(minimal: AccessType) {
+		return hasAccess(this.globalAccessType, minimal)
+	}
+
+	hasAccessToSource(minimal: AccessType, id: number) {
+		const rule = this.sources[id]
+		return hasAccess(rule?.accessType ?? AccessType.NotSet, minimal)
+	}
+
+	hasAccessToBlock(minimal: AccessType, id: number) {
+		const rule = this.blocks[id]
+		return hasAccess(rule?.accessType ?? AccessType.NotSet, minimal)
+	}
+
+	hasAccessToTag(minimal: AccessType, guid: string) {
+		const rule = this.tags[guid]
+		return hasAccess(rule?.accessType ?? AccessType.NotSet, minimal)
+	}
+
+	hasAccessToGroup(minimal: AccessType, guid: string) {
+		const rule = this.groups[guid]
+		return hasAccess(rule?.accessType ?? AccessType.NotSet, minimal)
 	}
 }
 

@@ -1,3 +1,4 @@
+import { user } from '@/api/user'
 import {
 	CreditCardOutlined,
 	MinusCircleOutlined,
@@ -9,6 +10,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import notify from '../../../../api/notifications'
 import api from '../../../../api/swagger-api'
 import {
+	AccessType,
 	AttachedTag,
 	BlockTagRelation,
 	BlockUpdateRequest,
@@ -76,15 +78,20 @@ export default function BlockForm() {
 				}
 				right={
 					<>
-						<Popconfirm
-							title='Вы уверены, что хотите удалить этот блок?'
-							placement='bottom'
-							onConfirm={deleteBlock}
-							okText='Да'
-							cancelText='Нет'
-						>
-							<Button>Удалить</Button>
-						</Popconfirm>
+						{user.hasAccessToBlock(
+							AccessType.Admin,
+							Number(id),
+						) && (
+							<Popconfirm
+								title='Вы уверены, что хотите удалить этот блок?'
+								placement='bottom'
+								onConfirm={deleteBlock}
+								okText='Да'
+								cancelText='Нет'
+							>
+								<Button>Удалить</Button>
+							</Popconfirm>
+						)}
 						&ensp;
 						<Button type='primary' onClick={() => form.submit()}>
 							Сохранить
