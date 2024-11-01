@@ -1,24 +1,16 @@
 using Datalake.Database;
 using Datalake.Database.Enums;
-using Datalake.Database.Exceptions.Base;
-using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
-using Datalake.Server.BackgroundServices.Collector;
-using Datalake.Server.BackgroundServices.History;
-using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
-using Datalake.Server.Services.Receiver;
-using Datalake.Server.Services.SessionManager;
-using Datalake.Server.Services.StateManager;
+using Datalake.Server.Services;
 using LinqToDB;
 using LinqToDB.AspNet;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using System.Reflection;
 
-[assembly: AssemblyVersion("2.0.*")]
+[assembly: AssemblyVersion("2.2.*")]
 
 namespace Datalake.Server
 {
@@ -49,8 +41,9 @@ namespace Datalake.Server
 			});
 			builder.Services.AddEndpointsApiExplorer();
 
+			builder.AddMiddlewares();
 			ConfigureDatabase(builder);
-			ConfigureServices(builder);
+			builder.AddServices();
 
 			var app = builder.Build();
 
@@ -78,9 +71,7 @@ namespace Datalake.Server
 						AuthConstants.NameHeader,
 					]);
 			});
-			app.UseMiddleware<AuthMiddleware>();
-
-			ConfigureErrorPage(app);
+			app.UseMiddlewares();
 
 			app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
 			app.MapControllerRoute(
@@ -116,37 +107,6 @@ namespace Datalake.Server
 			);
 		}
 
-		static void ConfigureServices(WebApplicationBuilder builder)
-		{
-			// постоянные
-			builder.Services.AddSingleton<CollectorFactory>();
-			builder.Services.AddSingleton<ReceiverService>();
-			builder.Services.AddSingleton<SessionManagerService>();
-			builder.Services.AddSingleton<SettingsHandlerService>();
-			builder.Services.AddSingleton<ISettingsUpdater>(provider
-				=> provider.GetRequiredService<SettingsHandlerService>());
-			builder.Services.AddSingleton<SourcesStateService>();
-			builder.Services.AddSingleton<UsersStateService>();
-
-			// временные
-			builder.Services.AddTransient<BlocksRepository>();
-			builder.Services.AddTransient<TagsRepository>();
-			builder.Services.AddTransient<SourcesRepository>();
-			builder.Services.AddTransient<SystemRepository>();
-			builder.Services.AddTransient<UsersRepository>();
-			builder.Services.AddTransient<UserGroupsRepository>();
-			builder.Services.AddTransient<ValuesRepository>();
-			builder.Services.AddTransient<AuthMiddleware>();
-
-			// службы
-			builder.Services.AddHostedService<CollectorProcessor>();
-			builder.Services.AddHostedService<CollectorWriter>();
-			builder.Services.AddHostedService<HistoryIndexerService>();
-			builder.Services.AddHostedService<SettingsHandlerService>();
-			builder.Services.AddHostedService(provider
-				=> provider.GetRequiredService<SettingsHandlerService>());
-		}
-
 		static async void StartWorkWithDatabase(WebApplication app)
 		{
 			using var serviceScope = app.Services?.GetService<IServiceScopeFactory>()?.CreateScope();
@@ -166,36 +126,6 @@ namespace Datalake.Server
 					Text = "Сервер запущен",
 				});
 			}
-		}
-
-		static void ConfigureErrorPage(WebApplication app)
-		{
-			app.UseExceptionHandler(exceptionHandlerApp =>
-			{
-				exceptionHandlerApp.Run(async context =>
-				{
-					var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-
-					var error = exceptionHandlerPathFeature?.Error;
-					string message;
-
-					if (error is DatalakeException)
-					{
-						message = error.ToString();
-					}
-					else
-					{
-						message = "Ошибка выполнения на сервере" +
-							"\n\n" + // разделитель, по которому клиент отсекает служебную часть сообщения
-							error?.ToString() ?? "error is null";
-					}
-
-					context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-					context.Response.ContentType = "text/plain; charset=UTF-8";
-
-					await context.Response.WriteAsync(message);
-				});
-			});
 		}
 
 		internal class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor

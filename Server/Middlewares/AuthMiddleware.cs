@@ -38,7 +38,7 @@ public class AuthMiddleware(
 			authSession = sessionManager.GetExistSession(context);
 			if (authSession == null)
 			{
-				context.Response.StatusCode = 403;
+				context.Response.StatusCode = 401;
 				await context.Response.Body.WriteAsync(ErrorMessage);
 				return;
 			}
