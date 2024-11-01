@@ -5,15 +5,13 @@ import { motion } from 'framer-motion'
 import { observer } from 'mobx-react-lite'
 import { Outlet, useLocation } from 'react-router-dom'
 import { user } from '../api/user'
-import { useUpdateContext } from '../context/updateContext'
-import { AppMenu } from './components/AppMenu'
+import { AppMenu } from './AppMenu'
 import LogoPanel from './components/LogoPanel'
 import UserPanel from './components/UserPanel'
 
 const AppLayout = observer(() => {
 	const { token } = theme.useToken()
 	const { pathname } = useLocation()
-	const { isDarkMode } = useUpdateContext()
 
 	const siderStyle: React.CSSProperties = {
 		backgroundColor: token.colorBgLayout,
@@ -31,7 +29,7 @@ const AppLayout = observer(() => {
 	}
 	return (
 		<>
-			{isDarkMode && <style>{':root { color-scheme: dark; }'}</style>}
+			{user.isDark() && <style>{':root { color-scheme: dark; }'}</style>}
 			{user.isAuth() && (
 				<Layout
 					hasSider

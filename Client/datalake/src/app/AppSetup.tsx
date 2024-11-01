@@ -1,6 +1,6 @@
 import { ConfigProvider, theme } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AuthProvider } from 'react-oidc-context'
 import { RouterProvider } from 'react-router-dom'
 import { UpdateContext } from '../context/updateContext'
@@ -9,7 +9,8 @@ import routes from './router/routes'
 
 import locale from 'antd/locale/ru_RU'
 import 'dayjs/locale/ru'
-import appTheme from '../api/theme-settings'
+import { observer } from 'mobx-react-lite'
+import { user } from '../api/user'
 dayjs.locale('ru')
 
 declare const KEYCLOAK_DB: string
@@ -20,10 +21,9 @@ if (INSTANCE_NAME) {
 	document.title = 'Datalake | ' + INSTANCE_NAME
 }
 
-export default function AppSetup() {
+const AppSetup = observer(() => {
 	const [lastUpdate, setUpdate] = useState<Date>(new Date())
 	const { defaultAlgorithm, darkAlgorithm } = theme
-	const [isDarkMode, setDarkMode] = useState(false)
 
 	const oidcConfig = {
 		authority:
@@ -31,29 +31,22 @@ export default function AppSetup() {
 		redirect_uri: window.location.origin + routes.auth.energoId,
 		client_id: KEYCLOAK_CLIENT,
 	}
-
-	useEffect(() => {
-		setDarkMode(appTheme.isDark())
-	}, [])
-	useEffect(() => {
-		appTheme.setTheme(isDarkMode)
-	}, [isDarkMode])
 	dayjs.locale('')
 
 	return (
 		<ConfigProvider
 			theme={{
-				algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,
+				algorithm: user.isDark() ? darkAlgorithm : defaultAlgorithm,
 			}}
 			locale={locale}
 		>
-			<UpdateContext.Provider
-				value={{ lastUpdate, setUpdate, isDarkMode, setDarkMode }}
-			>
+			<UpdateContext.Provider value={{ lastUpdate, setUpdate }}>
 				<AuthProvider {...oidcConfig}>
 					<RouterProvider router={router} />
 				</AuthProvider>
 			</UpdateContext.Provider>
 		</ConfigProvider>
 	)
-}
+})
+
+export default AppSetup

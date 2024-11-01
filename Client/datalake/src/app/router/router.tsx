@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
 import SettingsPage from '../pages/admin/SettingsPage'
@@ -41,9 +41,13 @@ const router = createBrowserRouter([
 		path: '/',
 		element: <AppLayout />,
 		children: [
-			// root
 			{
 				path: '/',
+				element: <Navigate to={routes.blocks.list} replace={true} />,
+			},
+			// logs
+			{
+				path: '/logs',
 				element: <LogsTable />,
 			},
 			// users

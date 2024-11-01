@@ -58,6 +58,10 @@ api.instance.interceptors.response.use(
 			return Promise.resolve(error.response)
 		}
 
+		if (error.response?.status === 403) {
+			return Promise.reject(error.response)
+		}
+
 		if (error.response?.status ?? 0 >= 500) {
 			let message = error.request?.responseText as string
 			if (message.indexOf('\n\n') > -1)

@@ -15,9 +15,11 @@ export default function SourcesList() {
 	const [states, setStates] = useState({} as { [key: number]: SourceState })
 
 	const load = () => {
-		api.sourcesReadAll({ withCustom: false }).then((res) => {
-			setList(res.data)
-		})
+		api.sourcesReadAll({ withCustom: false })
+			.then((res) => {
+				setList(res.data)
+			})
+			.catch(() => setList([]))
 		getStates()
 	}
 

@@ -4,6 +4,7 @@ import { AccessRule, AccessType, UserAuthInfo } from './swagger/data-contracts'
 const nameHeader = 'd-name'
 const tokenHeader = 'd-access-token'
 const accessHeader = 'd-access-type'
+const themeKey = 'd-theme'
 
 class User implements UserAuthInfo {
 	constructor() {
@@ -12,6 +13,19 @@ class User implements UserAuthInfo {
 		this.globalAccessType = AccessType[
 			(localStorage.getItem(accessHeader) || '') as unknown as AccessType
 		] as unknown as AccessType
+
+		//debugger
+		const storedTheme = localStorage.getItem(themeKey)
+		if (storedTheme == null) {
+			this.theme =
+				window.matchMedia &&
+				window.matchMedia('(prefers-color-scheme: dark)').matches
+					? 'dark'
+					: 'light'
+			localStorage.setItem(themeKey, this.theme)
+		} else {
+			this.theme = storedTheme == 'dark' ? 'dark' : 'light'
+		}
 
 		makeAutoObservable(this)
 	}
@@ -24,6 +38,7 @@ class User implements UserAuthInfo {
 	blocks?: Record<string, AccessRule> | undefined = {}
 	tags?: Record<string, AccessRule> | undefined = {}
 	token: string = ''
+	theme: 'dark' | 'light'
 
 	isAuth() {
 		return this.token !== ''
@@ -42,6 +57,16 @@ class User implements UserAuthInfo {
 	setAccess(access: AccessType) {
 		this.globalAccessType = AccessType[access] as unknown as AccessType
 		localStorage.setItem(accessHeader, access.toString())
+	}
+
+	isDark() {
+		return this.theme === 'dark'
+	}
+
+	setTheme(theme: 'dark' | 'light') {
+		//debugger
+		this.theme = theme
+		localStorage.setItem(themeKey, theme)
 	}
 
 	identify(authInfo: UserAuthInfo) {

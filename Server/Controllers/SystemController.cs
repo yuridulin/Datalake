@@ -74,9 +74,9 @@ public class SystemController(
 	[HttpGet("visits")]
 	public ActionResult<Dictionary<Guid, DateTime>> GetVisits()
 	{
-		var userAuth = Authenticate();
+		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(userAuth, AccessType.User);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.User);
 
 		return usersStateService.State;
 	}
@@ -88,11 +88,13 @@ public class SystemController(
 	[HttpGet("sources")]
 	public ActionResult<Dictionary<int, SourceState>> GetSources()
 	{
-		var userAuth = Authenticate();
+		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(userAuth, AccessType.User);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		return sourcesStateService.State;
+		return sourcesStateService.State
+			.Where(x => AccessRepository.HasAccessToSource(user, AccessType.Viewer, x.Key))
+			.ToDictionary();
 	}
 
 	/// <summary>
@@ -103,6 +105,8 @@ public class SystemController(
 	public async Task<ActionResult<SettingsInfo>> GetSettingsAsync()
 	{
 		var user = Authenticate();
+
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.User);
 
 		var info = await db.SystemRepository.GetSettingsAsync(user);
 

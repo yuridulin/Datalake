@@ -1,5 +1,5 @@
 import { notification } from 'antd'
-import appTheme from './theme-settings'
+import { user } from './user'
 
 notification.config({
 	placement: 'bottomLeft',
@@ -12,13 +12,13 @@ const notify = {
 	done(message: string = 'Успешно') {
 		notification.success({
 			message: message,
-			className: appTheme.isDark() ? 'notify-dark' : '',
+			className: user.isDark() ? 'notify-dark' : '',
 		})
 	},
 	err(message: string) {
 		notification.error({
 			message: message,
-			className: appTheme.isDark() ? 'notify-dark' : '',
+			className: user.isDark() ? 'notify-dark' : '',
 		})
 	},
 }

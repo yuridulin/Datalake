@@ -1,4 +1,4 @@
-import { Button, Table } from 'antd'
+import { Button, Spin, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { AxiosResponse } from 'axios'
 import { useCallback, useEffect, useState } from 'react'
@@ -15,6 +15,7 @@ import {
 import { useInterval } from '../../../hooks/useInterval'
 import LogCategoryEl from '../../components/LogCategoryEl'
 import LogTypeEl from '../../components/LogTypeEl'
+import NoAccess from '../../components/NoAccessPage'
 import routes from '../../router/routes'
 
 type FilterType = {
@@ -23,7 +24,8 @@ type FilterType = {
 }
 
 export default function LogsTable() {
-	const [error, setError] = useState(null as string | null)
+	const [loading, setLoading] = useState(true)
+	const [noAccess, setAccess] = useState(false)
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const [filter, setFilter] = useState({
 		categories: [],
@@ -32,7 +34,7 @@ export default function LogsTable() {
 	const count = 15
 
 	const update = useCallback(() => {
-		if (error) return
+		if (noAccess) return
 		setLogs((prevLogs) => {
 			api.systemGetLogs({
 				take: count,
@@ -40,22 +42,25 @@ export default function LogsTable() {
 				'types[]': filter.types,
 			})
 				.then((res) => {
-					setError(null)
+					setAccess(false)
 					setLogs(res.data)
 				})
 				.catch((res: AxiosResponse) => {
-					if (res.status === 403) setError(res.data)
+					if (res.status === 403) setAccess(true)
 					setLogs([])
 				})
+				.finally(() => setLoading(false))
 			return prevLogs
 		})
-	}, [filter, error])
+	}, [filter, noAccess])
 
 	useEffect(update, [update, filter])
 	useInterval(update, 5000)
 
-	return error ? (
-		<>{error}</>
+	return loading ? (
+		<Spin />
+	) : noAccess ? (
+		<NoAccess />
 	) : (
 		<>
 			<Table

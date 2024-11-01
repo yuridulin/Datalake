@@ -11,33 +11,23 @@ import {
 import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { NavLink } from 'react-router-dom'
-import { CustomSource } from '../../api/types/customSource'
-import BlockIcon from '../icons/BlockIcon'
-import SourceIcon from '../icons/SourceIcon'
-import TagIcon from '../icons/TagIcon'
-import routes from '../router/routes'
+import hasAccess from '../api/functions/hasAccess'
+import { AccessType } from '../api/swagger/data-contracts'
+import { CustomSource } from '../api/types/customSource'
+import { user } from '../api/user'
+import BlockIcon from './icons/BlockIcon'
+import SourceIcon from './icons/SourceIcon'
+import TagIcon from './icons/TagIcon'
+import routes from './router/routes'
 
-const items: ItemType<MenuItemType>[] = [
-	{
-		key: 'sources',
-		label: 'Источники данных',
-		type: 'group',
-		children: [
-			{
-				key: 'sources-list',
-				label: (
-					<NavLink to={routes.sources.list}>
-						<SourceIcon />
-						&emsp;Список источников
-					</NavLink>
-				),
-			},
-		],
-	},
+type MenuType = 'item' | 'group' | 'divider'
+
+const items = [
 	{
 		key: 'blocks',
 		label: 'Блоки',
-		type: 'group',
+		type: 'group' as MenuType,
+		minimalAccess: AccessType.Viewer,
 		children: [
 			{
 				key: 'blocks-tree',
@@ -47,13 +37,15 @@ const items: ItemType<MenuItemType>[] = [
 						&emsp;Дерево блоков
 					</NavLink>
 				),
+				minimalAccess: AccessType.Viewer,
 			},
 		],
 	},
 	{
 		key: 'tags-group',
-		type: 'group',
+		type: 'group' as MenuType,
 		label: 'Теги',
+		minimalAccess: AccessType.Viewer,
 		children: [
 			{
 				key: 'tags',
@@ -63,31 +55,35 @@ const items: ItemType<MenuItemType>[] = [
 						&emsp;Все теги
 					</NavLink>
 				),
+				minimalAccess: AccessType.Viewer,
 			},
 			{
-				key: CustomSource.Manual,
+				key: String(CustomSource.Manual),
 				label: (
 					<NavLink to={routes.tags.manual}>
 						<EditOutlined style={{ color: blue[4] }} />
 						&emsp;Мануальные теги
 					</NavLink>
 				),
+				minimalAccess: AccessType.Viewer,
 			},
 			{
-				key: CustomSource.Calculated,
+				key: String(CustomSource.Calculated),
 				label: (
 					<NavLink to={routes.tags.calc}>
 						<CalculatorOutlined style={{ color: blue[4] }} />
 						&emsp;Вычисляемые теги
 					</NavLink>
 				),
+				minimalAccess: AccessType.Viewer,
 			},
 		],
 	},
 	{
 		key: 'viewer',
 		label: 'Просмотр данных',
-		type: 'group',
+		type: 'group' as MenuType,
+		minimalAccess: AccessType.Viewer,
 		children: [
 			{
 				key: 'viewer-tags',
@@ -97,13 +93,33 @@ const items: ItemType<MenuItemType>[] = [
 						&emsp;Запросы
 					</NavLink>
 				),
+				minimalAccess: AccessType.Viewer,
+			},
+		],
+	},
+	{
+		key: 'sources',
+		label: 'Источники данных',
+		type: 'group' as MenuType,
+		minimalAccess: AccessType.Viewer,
+		children: [
+			{
+				key: 'sources-list',
+				label: (
+					<NavLink to={routes.sources.list}>
+						<SourceIcon />
+						&emsp;Список источников
+					</NavLink>
+				),
+				minimalAccess: AccessType.Viewer,
 			},
 		],
 	},
 	{
 		key: 'admin',
 		label: 'Администрирование',
-		type: 'group',
+		type: 'group' as MenuType,
+		minimalAccess: AccessType.User,
 		children: [
 			{
 				key: 'logs',
@@ -113,6 +129,7 @@ const items: ItemType<MenuItemType>[] = [
 						&emsp;Журнал
 					</NavLink>
 				),
+				minimalAccess: AccessType.User,
 			},
 			{
 				key: 'users',
@@ -122,6 +139,7 @@ const items: ItemType<MenuItemType>[] = [
 						&emsp;Пользователи
 					</NavLink>
 				),
+				minimalAccess: AccessType.User,
 			},
 			{
 				key: 'user-groups',
@@ -131,6 +149,7 @@ const items: ItemType<MenuItemType>[] = [
 						&emsp;Группы пользователей
 					</NavLink>
 				),
+				minimalAccess: AccessType.User,
 			},
 			{
 				key: 'settings',
@@ -140,6 +159,7 @@ const items: ItemType<MenuItemType>[] = [
 						&emsp;Настройки
 					</NavLink>
 				),
+				minimalAccess: AccessType.User,
 			},
 		],
 	},
@@ -147,11 +167,23 @@ const items: ItemType<MenuItemType>[] = [
 
 export function AppMenu() {
 	const { token } = theme.useToken()
+	const globalAccess = user.globalAccessType
+
+	const filteredItems: ItemType<MenuItemType>[] = items
+		.filter((item) => hasAccess(globalAccess, item.minimalAccess))
+		.map((item) => ({
+			key: item.key,
+			label: item.label,
+			type: item.type,
+			children: item.children
+				.filter((child) => hasAccess(globalAccess, child.minimalAccess))
+				.map((child) => ({ key: child.key, label: child.label })),
+		}))
 
 	return (
 		<Menu
 			style={{ border: 0, backgroundColor: token.colorBgLayout }}
-			items={items}
+			items={filteredItems}
 			mode='inline'
 			defaultOpenKeys={['tags']}
 		/>

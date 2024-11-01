@@ -1,17 +1,16 @@
 import { Button, Form, Input, Space } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useAuth } from 'react-oidc-context'
 import { useNavigate } from 'react-router-dom'
 import notify from '../../../api/notifications'
 import api from '../../../api/swagger-api'
 import { UserLoginPass } from '../../../api/swagger/data-contracts'
 import { user } from '../../../api/user'
-import { useUpdateContext } from '../../../context/updateContext'
 import routes from '../../router/routes'
 
-export default function LoginPanel() {
+const LoginPanel = observer(() => {
 	const navigate = useNavigate()
 	const auth = useAuth()
-	const { isDarkMode } = useUpdateContext()
 
 	const style = {
 		width: '40em',
@@ -49,7 +48,7 @@ export default function LoginPanel() {
 				left: 0,
 				right: 0,
 				bottom: 0,
-				backgroundColor: isDarkMode ? '#121212' : '#fff',
+				backgroundColor: user.isDark() ? '#121212' : '#fff',
 			}}
 		>
 			<div style={style}>
@@ -97,4 +96,6 @@ export default function LoginPanel() {
 			</div>
 		</div>
 	)
-}
+})
+
+export default LoginPanel
