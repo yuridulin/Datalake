@@ -45,5 +45,5 @@ const sourceDir = path.resolve(__dirname, '../dist');
 
 deleteFilesAndFolders(targetDir)
     .then(() => copyFiles(sourceDir, targetDir))
-    .then(() => console.log('Все файлы и подпапки удалены, новые файлы скопированы'))
-    .catch((err) => console.error('Ошибка при выполнении операции:', err));
+    .then(() => console.log('Client updated, all OK'))
+    .catch((err) => console.error('ERR:', err));
