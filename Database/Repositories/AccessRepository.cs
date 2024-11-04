@@ -83,7 +83,7 @@ public class AccessRepository(DatalakeContext db)
 		int? blockId,
 		int? tagId)
 	{
-		ThrowIfNoGlobalAccess(user, AccessType.User);
+		ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
 		var rights = await QueryRights(userGuid, userGroupGuid, sourceId, blockId, tagId).ToArrayAsync();
 

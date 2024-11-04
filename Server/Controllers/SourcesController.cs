@@ -151,7 +151,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoAccessToSource(user, Database.Enums.AccessType.User, id);
+		AccessRepository.ThrowIfNoAccessToSource(user, Database.Enums.AccessType.Editor, id);
 
 		var source = await db.SourcesRepository.ReadWithTagsAsync(user, id);
 

@@ -4,21 +4,39 @@ using LinqToDB.Mapping;
 
 namespace Datalake.Database.Tables;
 
+/// <summary>
+/// Запись в таблице истории значений тегов
+/// </summary>
 [Table]
 public class TagHistory
 {
+	/// <summary>
+	/// Идентификатор тега
+	/// </summary>
 	[Column, NotNull]
 	public int TagId { get; set; }
 
+	/// <summary>
+	/// Дата
+	/// </summary>
 	[Column, NotNull]
 	public DateTime Date { get; set; } = DateFormats.GetCurrentDateTime();
 
+	/// <summary>
+	/// Текстовое значение
+	/// </summary>
 	[Column, Nullable, DataType(LinqToDB.DataType.Text)]
 	public string? Text { get; set; } = null;
 
+	/// <summary>
+	/// Числовое значение
+	/// </summary>
 	[Column, Nullable]
 	public float? Number { get; set; } = null;
 
+	/// <summary>
+	/// Флаг качества
+	/// </summary>
 	[Column, NotNull]
 	public TagQuality Quality { get; set; } = TagQuality.Good;
 
@@ -27,6 +45,7 @@ public class TagHistory
 	[System.ComponentModel.DataAnnotations.Schema.NotMapped]
 	private int? _cachedHashCode;
 
+	/// <inheritdoc/>
 	public override int GetHashCode()
 	{
 		if (!_cachedHashCode.HasValue)
@@ -41,6 +60,7 @@ public class TagHistory
 		return _cachedHashCode.Value;
 	}
 
+	/// <inheritdoc/>
 	public override bool Equals(object? obj)
 	{
 		return obj is TagHistory history && GetHashCode() == history.GetHashCode();

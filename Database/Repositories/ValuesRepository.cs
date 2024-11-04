@@ -76,7 +76,7 @@ public class ValuesRepository(DatalakeContext db)
 				Value = x.Value,
 			})
 		.Where(x => x != null)
-		.Where(x => AccessRepository.HasAccessToTag(user, AccessType.User, x.Tag.Guid))
+		.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Editor, x.Tag.Guid))
 		.ToArray();
 		
 		return await WriteValuesAsync(trustedRequests, overrided);
@@ -123,7 +123,7 @@ public class ValuesRepository(DatalakeContext db)
 	/// <summary>
 	/// Кэшированные текущие значения тегов, сопоставленные с идентификаторами
 	/// </summary>
-	public static Dictionary<int, TagHistory> LiveValues { get; set; } = [];
+	internal static Dictionary<int, TagHistory> LiveValues { get; set; } = [];
 
 	internal static List<TagHistory> GetLiveValues(int[] identifiers)
 	{

@@ -19,8 +19,8 @@ public static class AccessTypeExtension
 		{
 			AccessType.NotSet => false,
 			AccessType.NoAccess => current != AccessType.NoAccess,
-			AccessType.Viewer => current == AccessType.Viewer || current == AccessType.User || current == AccessType.Admin,
-			AccessType.User => current == AccessType.User || current == AccessType.Admin,
+			AccessType.Viewer => current == AccessType.Viewer || current == AccessType.Editor || current == AccessType.Admin,
+			AccessType.Editor => current == AccessType.Editor || current == AccessType.Admin,
 			AccessType.Admin => current == AccessType.Admin,
 			_ => false,
 		};

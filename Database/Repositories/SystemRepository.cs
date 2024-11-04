@@ -48,7 +48,7 @@ public class SystemRepository(DatalakeContext db)
 		LogType[]? types = null,
 		Guid? authorGuid = null)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.User);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
 		var query = QueryLogs();
 
@@ -87,6 +87,35 @@ public class SystemRepository(DatalakeContext db)
 
 		return await query
 			.ToArrayAsync();
+	}
+
+	/// <summary>
+	/// Создание новой записи в журнале аудита
+	/// </summary>
+	/// <param name="text">Сообщение</param>
+	/// <param name="details">Детали</param>
+	/// <param name="referenceId">Идентификатор связанного объекта</param>
+	/// <param name="category">Категория</param>
+	/// <param name="type">Тип</param>
+	/// <param name="user">идентификатор пользователя, чьё действие вызвало запись сообщения</param>
+	public async Task WriteLog(
+		string text,
+		string? details = null,
+		string? referenceId = null,
+		LogCategory category = LogCategory.Core,
+		LogType type = LogType.Trace,
+		Guid? user = null)
+	{
+		await db.InsertAsync(new Log
+		{
+			Category = category,
+			Date = DateFormats.GetCurrentDateTime(),
+			Type = type,
+			UserGuid = user,
+			Text = text,
+			Details = details,
+			RefId = referenceId,
+		});
 	}
 
 	/// <summary>

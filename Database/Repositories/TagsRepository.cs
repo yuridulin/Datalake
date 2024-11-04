@@ -42,9 +42,9 @@ public class TagsRepository(DatalakeContext db)
 	}
 
 	/// <summary>
-	/// 
+	/// Получение информации о теге
 	/// </summary>
-	/// <param name="user"></param>
+	/// <param name="user">Информация о пользователе</param>
 	/// <param name="guid"></param>
 	/// <returns></returns>
 	public async Task<TagInfo> ReadAsync(UserAuthInfo user, Guid guid)
@@ -62,6 +62,15 @@ public class TagsRepository(DatalakeContext db)
 		return tag;
 	}
 
+	/// <summary>
+	/// Получение информации о тегах с поддержкой фильтров
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <param name="id">Идентификаторы тегов</param>
+	/// <param name="names">Имена тегов</param>
+	/// <param name="guids">Глобальные идентификаторы тегов</param>
+	/// <returns>Список информации о тегах</returns>
 	public async Task<TagInfo[]> ReadAllAsync(UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
 	{
 		var query = db.TagsRepository.GetInfoWithSources();
@@ -94,11 +103,11 @@ public class TagsRepository(DatalakeContext db)
 	}
 
 	/// <summary>
-	/// 
+	/// Получение тегов, которые можно использовать как входные параметры для расчета значения
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="guid"></param>
-	/// <returns></returns>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
+	/// <returns>Список информации о тегах</returns>
 	public async Task<TagAsInputInfo[]> ReadPossibleInputsAsync(UserAuthInfo user, Guid guid)
 	{
 		var tags = await GetPossibleInputs()
@@ -409,7 +418,7 @@ public class TagsRepository(DatalakeContext db)
 
 	#region Запросы
 
-	public IQueryable<TagInfo> GetInfoWithSources()
+	internal IQueryable<TagInfo> GetInfoWithSources()
 	{
 		var query =
 			from tag in db.Tags
@@ -447,7 +456,7 @@ public class TagsRepository(DatalakeContext db)
 		return query;
 	}
 
-	public IQueryable<TagAsInputInfo> GetPossibleInputs()
+	internal IQueryable<TagAsInputInfo> GetPossibleInputs()
 	{
 		var query = db.Tags
 			.Select(x => new TagAsInputInfo
@@ -462,7 +471,7 @@ public class TagsRepository(DatalakeContext db)
 		return query;
 	}
 
-	public IQueryable<TagCacheInfo> GetTagsForCache()
+	internal IQueryable<TagCacheInfo> GetTagsForCache()
 	{
 		var query =
 			from t in db.Tags

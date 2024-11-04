@@ -119,12 +119,11 @@ namespace Datalake.Server
 			if (db != null)
 			{
 				await db.EnsureDataCreatedAsync();
-				await db.InsertAsync(new Log
-				{
-					Category = LogCategory.Core,
-					Type = LogType.Success,
-					Text = "Сервер запущен",
-				});
+				await db.SystemRepository.WriteLog(
+					"Сервер запущен",
+					category: LogCategory.Core,
+					type: LogType.Success
+				);
 			}
 		}
 

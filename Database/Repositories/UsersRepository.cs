@@ -32,6 +32,11 @@ public class UsersRepository(DatalakeContext db)
 		return await CreateAsync(userInfo);
 	}
 
+	/// <summary>
+	/// Получение информации о пользователях
+	/// </summary>
+	/// <param name="user">Идентификатор читающего пользователя</param>
+	/// <returns>Список пользователей</returns>
 	public async Task<UserInfo[]> ReadAllAsync(UserAuthInfo user)
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
@@ -40,9 +45,15 @@ public class UsersRepository(DatalakeContext db)
 			.ToArrayAsync();
 	}
 
+	/// <summary>
+	/// Получение информации о пользователе
+	/// </summary>
+	/// <param name="user">Идентификатор читающего пользователя</param>
+	/// <param name="guid">Идентификатор затронутого пользователя</param>
+	/// <returns>Детальная о пользователе</returns>
 	public async Task<UserInfo> ReadAsync(UserAuthInfo user, Guid guid)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.User);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
 		return await db.UsersRepository.GetInfo()
 			.Where(x => x.Guid == guid)
@@ -50,6 +61,12 @@ public class UsersRepository(DatalakeContext db)
 			?? throw new NotFoundException($"Учётная запись {guid}");
 	}
 
+	/// <summary>
+	/// Получение детальной информации о пользователе, включая группы и правила
+	/// </summary>
+	/// <param name="user">Идентификатор читающего пользователя</param>
+	/// <param name="guid">Идентификатор затронутого пользователя</param>
+	/// <returns>Детальная информация о пользователе</returns>
 	public async Task<UserDetailInfo> ReadWithDetailsAsync(UserAuthInfo user, Guid guid)
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
@@ -338,7 +355,7 @@ public class UsersRepository(DatalakeContext db)
 	/// <summary>
 	/// Запрос полной информации о учетных записях, включая группы и права доступа
 	/// </summary>
-	public IQueryable<UserInfo> GetInfo()
+	internal IQueryable<UserInfo> GetInfo()
 	{
 		var query =
 			from u in db.Users
@@ -376,7 +393,7 @@ public class UsersRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение полной информации о учетных записях, включая группы, права доступа и данные для входа
 	/// </summary>
-	public IQueryable<UserDetailInfo> GetDetailInfo()
+	internal IQueryable<UserDetailInfo> GetDetailInfo()
 	{
 		var query =
 			from u in db.Users

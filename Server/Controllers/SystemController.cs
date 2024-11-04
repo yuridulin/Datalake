@@ -76,7 +76,7 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.User);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
 		return usersStateService.State;
 	}
@@ -106,7 +106,7 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.User);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
 		var info = await db.SystemRepository.GetSettingsAsync(user);
 

@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models.AccessRights;
@@ -41,37 +42,122 @@ public class UserGroupsRepository(DatalakeContext db)
 		return await CreateAsync(request);
 	}
 
+	/// <summary>
+	/// Получение информации о группе пользователей
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор группы</param>
+	/// <returns>Информация о группе</returns>
 	public async Task<UserGroupInfo> ReadAsync(UserAuthInfo user, Guid guid)
 	{
-		return await db.UserGroupsRepository.GetInfo()
+		var rule = AccessRepository.GetAccessToUserGroup(user, guid);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
+
+		var group = await db.UserGroupsRepository.GetInfo()
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"группа {guid}");
+
+		group.AccessRule = rule;
+
+		return group;
 	}
 
+	/// <summary>
+	/// Получение информации о группах пользователей
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Список групп</returns>
 	public async Task<UserGroupInfo[]> ReadAllAsync(UserAuthInfo user)
 	{
-
-		return await db.UserGroupsRepository.GetInfo()
+		var groups = await db.UserGroupsRepository.GetInfo()
 			.ToArrayAsync();
+
+		foreach (var group in groups)
+		{
+			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+		}
+
+		return groups
+			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			.ToArray();
 	}
 
+	/// <summary>
+	/// Получение информации о группе пользователей в иерархической структуре
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Дерево групп</returns>
 	public async Task<UserGroupTreeInfo[]> ReadAllAsTreeAsync(UserAuthInfo user)
 	{
+		var groups = await db.UserGroups
+			.Select(x => new UserGroupTreeInfo
+			{
+				Guid = x.Guid,
+				Name = x.Name,
+				ParentGuid = x.ParentGuid,
+				Description = x.Description,
+			})
+			.ToArrayAsync();
 
-		var tree = await db.UserGroupsRepository.GetTreeAsync();
+		foreach (var group in groups)
+		{
+			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+		}
 
-		return tree;
+		return ReadChildren(null);
+
+		UserGroupTreeInfo[] ReadChildren(Guid? guid)
+		{
+			return groups
+				.Where(x => x.ParentGuid == guid)
+				.Select(x =>
+				{
+					var group = new UserGroupTreeInfo
+					{
+						Guid = x.Guid,
+						Name = x.Name,
+						ParentGuid = x.ParentGuid,
+						Description = x.Description,
+						AccessRule = x.AccessRule,
+						ParentGroupGuid = x.ParentGroupGuid,
+						Children = ReadChildren(x.Guid),
+					};
+
+					if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+					{
+						group.Name = string.Empty;
+						group.Description = string.Empty;
+					}
+
+					return group;
+				})
+				.Where(x => x.Children.Length > 0 || x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				.ToArray();
+		}
 	}
 
+	/// <summary>
+	/// Получение информации о группе пользователей, включая пользователей, подгруппы и правила
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор группы</param>
+	/// <returns>Детальная информация о группе</returns>
 	public async Task<UserGroupDetailedInfo> ReadWithDetailsAsync(UserAuthInfo user, Guid guid)
 	{
+		var rule = AccessRepository.GetAccessToUserGroup(user, guid);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
 
-
-		return await db.UserGroupsRepository.GetWithDetails()
+		var group = await db.UserGroupsRepository.GetWithDetails()
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: $"группа пользователей \"{guid}\"");
+
+		group.AccessRule = rule;
+
+		return group;
 	}
 
 	/// <summary>
@@ -102,11 +188,11 @@ public class UserGroupsRepository(DatalakeContext db)
 
 		if (parentGuid.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.User, parentGuid.Value);
+			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Editor, parentGuid.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.User);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 		}
 		User = user.Guid;
 
@@ -281,68 +367,7 @@ public class UserGroupsRepository(DatalakeContext db)
 
 	#region Запросы
 
-	public async Task<UserGroupTreeInfo[]> GetTreeAsync()
-	{
-		var groups = await db.UserGroups
-			.Select(x => new UserGroupTreeInfo
-			{
-				Guid = x.Guid,
-				Name = x.Name,
-				ParentGuid = x.ParentGuid,
-				Description = x.Description,
-			})
-			.ToArrayAsync();
-
-		return ReadChildren(null);
-
-		UserGroupTreeInfo[] ReadChildren(Guid? guid)
-		{
-			var selected = groups
-				.Where(x => x.ParentGuid == guid)
-				.ToArray();
-
-			foreach (var item in selected)
-			{
-				item.Children = ReadChildren(item.Guid);
-			};
-
-			return selected;
-		}
-	}
-
-	public async Task<UserGroupInfo[]> GetWithParentsAsync(Guid groupGuid)
-	{
-		var groups = await db.UserGroups
-			.Select(x => new UserGroupTreeInfo
-			{
-				Guid = x.Guid,
-				Name = x.Name,
-				Description = x.Description,
-				ParentGuid = x.ParentGuid,
-			})
-			.ToArrayAsync();
-
-		var parents = new List<UserGroupInfo>();
-		Guid? seekGuid = groupGuid;
-
-		do
-		{
-			var group = groups
-				.Where(x => x.Guid == groupGuid)
-				.FirstOrDefault();
-
-			if (group == null)
-				break;
-
-			parents.Add(new UserGroupInfo { Name = group.Name, Guid = group.Guid });
-			seekGuid = group.ParentGuid;
-		}
-		while (seekGuid != null);
-
-		return groups;
-	}
-
-	public IQueryable<UserGroupInfo> GetInfo()
+	internal IQueryable<UserGroupInfo> GetInfo()
 	{
 		return db.UserGroups
 			.Select(x => new UserGroupInfo
@@ -354,7 +379,7 @@ public class UserGroupsRepository(DatalakeContext db)
 			});
 	}
 
-	public IQueryable<UserGroupDetailedInfo> GetWithDetails()
+	internal IQueryable<UserGroupDetailedInfo> GetWithDetails()
 	{
 		var query =
 			from usergroup in db.UserGroups
