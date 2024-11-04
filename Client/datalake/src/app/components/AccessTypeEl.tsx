@@ -23,7 +23,13 @@ export default function AccessTypeEl({
 					{name}
 				</Tag>
 			)
-		case AccessType.User:
+		case AccessType.Editor:
+			return (
+				<Tag color='lime' bordered={bordered}>
+					{name}
+				</Tag>
+			)
+		case AccessType.Manager:
 			return (
 				<Tag color='green' bordered={bordered}>
 					{name}

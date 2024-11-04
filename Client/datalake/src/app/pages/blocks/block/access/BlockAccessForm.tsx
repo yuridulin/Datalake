@@ -1,3 +1,4 @@
+import { accessOptions } from '@/api/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Select, Spin, Table } from 'antd'
 import { DefaultOptionType } from 'antd/es/select'
@@ -27,29 +28,6 @@ const objectOptions: DefaultOptionType[] = [
 	{
 		value: 'user',
 		label: 'Пользователь',
-	},
-]
-
-const accessOptions: DefaultOptionType[] = [
-	{
-		label: <AccessTypeEl type={AccessType.NotSet} bordered={false} />,
-		value: AccessType.NotSet,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.NoAccess} bordered={false} />,
-		value: AccessType.NoAccess,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.Viewer} bordered={false} />,
-		value: AccessType.Viewer,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.User} bordered={false} />,
-		value: AccessType.User,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.Admin} bordered={false} />,
-		value: AccessType.Admin,
 	},
 ]
 
@@ -199,7 +177,7 @@ const BlockAccessForm = () => {
 										? {
 												...x,
 												choosedObject: value,
-										  }
+											}
 										: x,
 								),
 							)
@@ -225,7 +203,7 @@ const BlockAccessForm = () => {
 												? {
 														...x,
 														userGroupGuid: value,
-												  }
+													}
 												: x,
 										),
 									)
@@ -245,7 +223,7 @@ const BlockAccessForm = () => {
 												? {
 														...x,
 														userGuid: value,
-												  }
+													}
 												: x,
 										),
 									)

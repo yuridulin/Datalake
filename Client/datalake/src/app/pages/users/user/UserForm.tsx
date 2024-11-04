@@ -1,10 +1,9 @@
+import { accessOptions } from '@/api/types/accessOptions'
 import { Button, Input, Popconfirm, Radio, Select } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import getAccessTypeName from '../../../../api/functions/getAccessTypeName'
 import api from '../../../../api/swagger-api'
 import {
-	AccessType,
 	EnergoIdInfo,
 	UserType,
 	UserUpdateRequest,
@@ -109,29 +108,14 @@ export default function UserForm() {
 					<Radio.Group
 						buttonStyle='solid'
 						value={request.accessType}
+						options={accessOptions as never}
 						onChange={(e) =>
 							setRequest({
 								...request,
 								accessType: e.target.value,
 							})
 						}
-					>
-						<Radio.Button value={AccessType.NotSet}>
-							{getAccessTypeName(AccessType.NotSet)}
-						</Radio.Button>
-						<Radio.Button value={AccessType.NoAccess}>
-							{getAccessTypeName(AccessType.NoAccess)}
-						</Radio.Button>
-						<Radio.Button value={AccessType.Viewer}>
-							{getAccessTypeName(AccessType.Viewer)}
-						</Radio.Button>
-						<Radio.Button value={AccessType.User}>
-							{getAccessTypeName(AccessType.User)}
-						</Radio.Button>
-						<Radio.Button value={AccessType.Admin}>
-							{getAccessTypeName(AccessType.Admin)}
-						</Radio.Button>
-					</Radio.Group>
+					/>
 				</FormRow>
 
 				<FormRow title='Тип учетной записи'>

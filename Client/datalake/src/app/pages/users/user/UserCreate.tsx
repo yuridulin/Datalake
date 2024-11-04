@@ -1,3 +1,4 @@
+import { accessOptions } from '@/api/types/accessOptions'
 import { Button, Input, Radio, Select } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -70,29 +71,14 @@ export default function UserCreate() {
 					<Radio.Group
 						buttonStyle='solid'
 						value={request.accessType}
+						options={accessOptions as never}
 						onChange={(e) =>
 							setRequest({
 								...request,
 								accessType: e.target.value,
 							})
 						}
-					>
-						<Radio.Button value={AccessType.NotSet}>
-							Отключена
-						</Radio.Button>
-						<Radio.Button value={AccessType.NoAccess}>
-							Заблокирована
-						</Radio.Button>
-						<Radio.Button value={AccessType.Viewer}>
-							Наблюдатель
-						</Radio.Button>
-						<Radio.Button value={AccessType.User}>
-							Пользователь
-						</Radio.Button>
-						<Radio.Button value={AccessType.Admin}>
-							Администратор
-						</Radio.Button>
-					</Radio.Group>
+					/>
 				</FormRow>
 
 				<FormRow title='Тип учетной записи'>

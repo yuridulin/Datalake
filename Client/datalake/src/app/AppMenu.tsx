@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons'
 import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
+import { observer } from 'mobx-react-lite'
 import { NavLink } from 'react-router-dom'
 import hasAccess from '../api/functions/hasAccess'
 import { AccessType } from '../api/swagger/data-contracts'
@@ -27,7 +28,7 @@ const items = [
 		key: 'blocks',
 		label: 'Блоки',
 		type: 'group' as MenuType,
-		minimalAccess: AccessType.Viewer,
+		minimalAccess: AccessType.NotSet,
 		children: [
 			{
 				key: 'blocks-tree',
@@ -37,7 +38,7 @@ const items = [
 						&emsp;Дерево блоков
 					</NavLink>
 				),
-				minimalAccess: AccessType.Viewer,
+				minimalAccess: AccessType.NotSet,
 			},
 		],
 	},
@@ -45,7 +46,7 @@ const items = [
 		key: 'tags-group',
 		type: 'group' as MenuType,
 		label: 'Теги',
-		minimalAccess: AccessType.Viewer,
+		minimalAccess: AccessType.NotSet,
 		children: [
 			{
 				key: 'tags',
@@ -55,7 +56,7 @@ const items = [
 						&emsp;Все теги
 					</NavLink>
 				),
-				minimalAccess: AccessType.Viewer,
+				minimalAccess: AccessType.NotSet,
 			},
 			{
 				key: String(CustomSource.Manual),
@@ -83,7 +84,7 @@ const items = [
 		key: 'viewer',
 		label: 'Просмотр данных',
 		type: 'group' as MenuType,
-		minimalAccess: AccessType.Viewer,
+		minimalAccess: AccessType.NotSet,
 		children: [
 			{
 				key: 'viewer-tags',
@@ -93,7 +94,7 @@ const items = [
 						&emsp;Запросы
 					</NavLink>
 				),
-				minimalAccess: AccessType.Viewer,
+				minimalAccess: AccessType.NotSet,
 			},
 		],
 	},
@@ -119,7 +120,7 @@ const items = [
 		key: 'admin',
 		label: 'Администрирование',
 		type: 'group' as MenuType,
-		minimalAccess: AccessType.User,
+		minimalAccess: AccessType.NotSet,
 		children: [
 			{
 				key: 'logs',
@@ -129,7 +130,7 @@ const items = [
 						&emsp;Журнал
 					</NavLink>
 				),
-				minimalAccess: AccessType.User,
+				minimalAccess: AccessType.NotSet,
 			},
 			{
 				key: 'users',
@@ -139,7 +140,7 @@ const items = [
 						&emsp;Пользователи
 					</NavLink>
 				),
-				minimalAccess: AccessType.User,
+				minimalAccess: AccessType.Editor,
 			},
 			{
 				key: 'user-groups',
@@ -149,7 +150,7 @@ const items = [
 						&emsp;Группы пользователей
 					</NavLink>
 				),
-				minimalAccess: AccessType.User,
+				minimalAccess: AccessType.NotSet,
 			},
 			{
 				key: 'settings',
@@ -159,13 +160,13 @@ const items = [
 						&emsp;Настройки
 					</NavLink>
 				),
-				minimalAccess: AccessType.User,
+				minimalAccess: AccessType.Admin,
 			},
 		],
 	},
 ]
 
-export function AppMenu() {
+const AppMenu = observer(() => {
 	const { token } = theme.useToken()
 	const globalAccess = user.globalAccessType
 
@@ -188,4 +189,6 @@ export function AppMenu() {
 			defaultOpenKeys={['tags']}
 		/>
 	)
-}
+})
+
+export default AppMenu

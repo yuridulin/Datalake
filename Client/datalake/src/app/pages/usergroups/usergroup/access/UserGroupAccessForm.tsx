@@ -13,6 +13,7 @@ import {
 import AccessTypeEl from '../../../../components/AccessTypeEl'
 import PageHeader from '../../../../components/PageHeader'
 import routes from '../../../../router/routes'
+import { accessOptions } from '@/api/types/accessOptions'
 
 type FormType = AccessRightsIdInfo & {
 	key: string
@@ -31,29 +32,6 @@ const objectOptions: DefaultOptionType[] = [
 	{
 		value: 'tag',
 		label: 'Тег',
-	},
-]
-
-const accessOptions: DefaultOptionType[] = [
-	{
-		label: <AccessTypeEl type={AccessType.NotSet} bordered={false} />,
-		value: AccessType.NotSet,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.NoAccess} bordered={false} />,
-		value: AccessType.NoAccess,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.Viewer} bordered={false} />,
-		value: AccessType.Viewer,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.User} bordered={false} />,
-		value: AccessType.User,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.Admin} bordered={false} />,
-		value: AccessType.Admin,
 	},
 ]
 
@@ -112,8 +90,8 @@ const UserGroupAccessForm = () => {
 									x.source != null
 										? 'source'
 										: x.block != null
-										? 'block'
-										: 'tag',
+											? 'block'
+											: 'tag',
 							})),
 					)
 				})
@@ -218,7 +196,7 @@ const UserGroupAccessForm = () => {
 										? {
 												...x,
 												choosedObject: value,
-										  }
+											}
 										: x,
 								),
 							)
@@ -244,7 +222,7 @@ const UserGroupAccessForm = () => {
 												? {
 														...x,
 														sourceId: value,
-												  }
+													}
 												: x,
 										),
 									)
@@ -264,7 +242,7 @@ const UserGroupAccessForm = () => {
 												? {
 														...x,
 														blockId: value,
-												  }
+													}
 												: x,
 										),
 									)
@@ -284,7 +262,7 @@ const UserGroupAccessForm = () => {
 												? {
 														...x,
 														tagId: value,
-												  }
+													}
 												: x,
 										),
 									)

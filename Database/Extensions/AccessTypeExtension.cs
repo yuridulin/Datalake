@@ -17,11 +17,28 @@ public static class AccessTypeExtension
 	{
 		return minimal switch
 		{
-			AccessType.NotSet => false,
-			AccessType.NoAccess => current != AccessType.NoAccess,
-			AccessType.Viewer => current == AccessType.Viewer || current == AccessType.Editor || current == AccessType.Admin,
-			AccessType.Editor => current == AccessType.Editor || current == AccessType.Admin,
-			AccessType.Admin => current == AccessType.Admin,
+			AccessType.NotSet => true,
+
+			AccessType.NoAccess =>
+				current != AccessType.NoAccess,
+
+			AccessType.Viewer => 
+				current == AccessType.Viewer 
+				|| current == AccessType.Editor
+				|| current == AccessType.Manager
+				|| current == AccessType.Admin,
+
+			AccessType.Editor => 
+				current == AccessType.Editor
+				|| current == AccessType.Manager
+				|| current == AccessType.Admin,
+
+			AccessType.Manager => current == AccessType.Editor
+				|| current == AccessType.Admin,
+
+			AccessType.Admin =>
+				current == AccessType.Admin,
+
 			_ => false,
 		};
 	}

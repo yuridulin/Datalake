@@ -129,14 +129,16 @@ export interface AccessRightsSimpleInfo {
  *
  * 0 = NoAccess
  * 5 = Viewer
- * 10 = User
+ * 10 = Editor
+ * 50 = Manager
  * 100 = Admin
  * -100 = NotSet
  */
 export enum AccessType {
 	NoAccess = 0,
 	Viewer = 5,
-	User = 10,
+	Editor = 10,
+	Manager = 50,
 	Admin = 100,
 	NotSet = -100,
 }
@@ -765,6 +767,8 @@ export type UserGroupInfo = UserGroupSimpleInfo & {
 	 * @format guid
 	 */
 	parentGroupGuid?: string | null
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /** Информация о группе пользователей в иерархическом представлении */

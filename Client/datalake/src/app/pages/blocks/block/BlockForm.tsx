@@ -1,4 +1,15 @@
+import notify from '@/api/notifications'
+import api from '@/api/swagger-api'
+import {
+	AccessType,
+	AttachedTag,
+	BlockTagRelation,
+	BlockUpdateRequest,
+	TagType,
+} from '@/api/swagger/data-contracts'
 import { user } from '@/api/user'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
 import {
 	CreditCardOutlined,
 	MinusCircleOutlined,
@@ -7,17 +18,6 @@ import {
 import { Button, Dropdown, Form, Input, Popconfirm, Select, Space } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import notify from '../../../../api/notifications'
-import api from '../../../../api/swagger-api'
-import {
-	AccessType,
-	AttachedTag,
-	BlockTagRelation,
-	BlockUpdateRequest,
-	TagType,
-} from '../../../../api/swagger/data-contracts'
-import PageHeader from '../../../components/PageHeader'
-import routes from '../../../router/routes'
 
 export default function BlockForm() {
 	const { id } = useParams()
@@ -35,13 +35,9 @@ export default function BlockForm() {
 	}
 
 	const updateBlock = (newInfo: BlockUpdateRequest) => {
-		api.blocksUpdate(Number(id), newInfo)
-			.then(() => {
-				//setBlock(newInfo)
-			})
-			.catch(() => {
-				notify.err('Ошибка при сохранении')
-			})
+		api.blocksUpdate(Number(id), newInfo).catch(() => {
+			notify.err('Ошибка при сохранении')
+		})
 	}
 
 	const deleteBlock = () => {

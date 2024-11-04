@@ -81,7 +81,10 @@ export default function BlockView() {
 				}
 				right={
 					<>
-						{user.hasAccessToBlock(AccessType.User, Number(id)) && (
+						{user.hasAccessToBlock(
+							AccessType.Editor,
+							Number(id),
+						) && (
 							<NavLink to={routes.blocks.toEditBlock(Number(id))}>
 								<Button>Редактирование блока</Button>
 							</NavLink>
@@ -150,7 +153,7 @@ export default function BlockView() {
 				style={{ fontSize: '1em' }}
 			>
 				Вложенные блоки
-				{user.hasAccessToBlock(AccessType.User, Number(id)) && (
+				{user.hasAccessToBlock(AccessType.Manager, Number(id)) && (
 					<>
 						&emsp;
 						<Button size='small' onClick={createChild}>

@@ -1,18 +1,10 @@
+import { accessOptions } from '@/api/types/accessOptions'
 import {
 	MinusCircleOutlined,
 	PlusOutlined,
 	TeamOutlined,
 } from '@ant-design/icons'
-import {
-	Button,
-	Form,
-	Input,
-	Popconfirm,
-	Select,
-	SelectProps,
-	Space,
-	Spin,
-} from 'antd'
+import { Button, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import notify from '../../../../api/notifications'
@@ -22,32 +14,8 @@ import {
 	UserGroupDetailedInfo,
 	UserGroupUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
-import AccessTypeEl from '../../../components/AccessTypeEl'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
-
-const accessOptions: SelectProps['options'] = [
-	{
-		value: AccessType.NotSet,
-		label: <AccessTypeEl type={AccessType.NotSet} bordered={false} />,
-	},
-	{
-		value: AccessType.NoAccess,
-		label: <AccessTypeEl type={AccessType.NoAccess} bordered={false} />,
-	},
-	{
-		value: AccessType.Viewer,
-		label: <AccessTypeEl type={AccessType.Viewer} bordered={false} />,
-	},
-	{
-		value: AccessType.User,
-		label: <AccessTypeEl type={AccessType.User} bordered={false} />,
-	},
-	{
-		value: AccessType.Admin,
-		label: <AccessTypeEl type={AccessType.Admin} bordered={false} />,
-	},
-]
 
 export default function UserGroupForm() {
 	const navigate = useNavigate()

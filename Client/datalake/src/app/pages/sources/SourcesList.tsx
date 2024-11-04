@@ -113,7 +113,7 @@ export default function SourcesList() {
 		<>
 			<PageHeader
 				right={
-					user.hasGlobalAccess(AccessType.User) && (
+					user.hasGlobalAccess(AccessType.Admin) && (
 						<Button onClick={createSource}>
 							Добавить источник
 						</Button>
