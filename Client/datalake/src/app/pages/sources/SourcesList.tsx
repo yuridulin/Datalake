@@ -1,21 +1,22 @@
-import getSourceTypeName from '@/api/functions/getSourceTypeName'
-import { timeAgo } from '@/api/functions/timeAgoInstance'
 import api from '@/api/swagger-api'
 import {
 	AccessType,
 	SourceInfo,
 	SourceState,
 } from '@/api/swagger/data-contracts'
-import { user } from '@/api/user'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
+import getSourceTypeName from '@/functions/getSourceTypeName'
 import { useInterval } from '@/hooks/useInterval'
+import { timeAgo } from '@/state/timeAgoInstance'
+import { user } from '@/state/user'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, Table, TableColumnsType, Tag } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
-export default function SourcesList() {
+const SourcesList = observer(() => {
 	const [list, setList] = useState([] as SourceInfo[])
 	const [states, setStates] = useState({} as { [key: number]: SourceState })
 
@@ -131,4 +132,6 @@ export default function SourcesList() {
 			/>
 		</>
 	)
-}
+})
+
+export default SourcesList

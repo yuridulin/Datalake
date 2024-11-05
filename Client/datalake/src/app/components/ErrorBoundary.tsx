@@ -1,5 +1,5 @@
 import { Navigate, useRouteError } from 'react-router-dom'
-import notify from '../../api/notifications'
+import notify from '../../state/notifications'
 import routes from '../router/routes'
 
 export default function ErrorBoundary() {

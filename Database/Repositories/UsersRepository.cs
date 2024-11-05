@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models.Auth;
@@ -39,10 +40,27 @@ public class UsersRepository(DatalakeContext db)
 	/// <returns>Список пользователей</returns>
 	public async Task<UserInfo[]> ReadAllAsync(UserAuthInfo user)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
-
-		return await db.UsersRepository.GetInfo()
+		var users = await db.UsersRepository.GetInfo()
 			.ToArrayAsync();
+
+		foreach (var u in users)
+		{
+			u.AccessRule = (user.Guid == u.Guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
+				? new AccessRuleInfo { AccessType = AccessType.Manager }
+				: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
+
+			if (!u.AccessRule.AccessType.HasAccess(AccessType.Manager))
+			{
+				u.FullName = string.Empty;
+				u.AccessType = AccessType.NotSet;
+				u.Login = string.Empty;
+				u.Type = UserType.Local;
+				u.UserGroups = [];
+				u.Guid = Guid.Empty;
+			}
+		}
+
+		return users.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer)).ToArray();
 	}
 
 	/// <summary>
@@ -53,12 +71,24 @@ public class UsersRepository(DatalakeContext db)
 	/// <returns>Детальная о пользователе</returns>
 	public async Task<UserInfo> ReadAsync(UserAuthInfo user, Guid guid)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
+		if (user.Guid != guid)
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		return await db.UsersRepository.GetInfo()
+		var userInfo = await db.UsersRepository.GetInfo()
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Учётная запись {guid}");
+
+		foreach (var group in userInfo.UserGroups)
+		{
+			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+		}
+
+		userInfo.AccessRule = (user.Guid == guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
+			? new AccessRuleInfo { AccessType = AccessType.Manager, RuleId = 0 }
+			: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
+
+		return userInfo;
 	}
 
 	/// <summary>
@@ -69,12 +99,24 @@ public class UsersRepository(DatalakeContext db)
 	/// <returns>Детальная информация о пользователе</returns>
 	public async Task<UserDetailInfo> ReadWithDetailsAsync(UserAuthInfo user, Guid guid)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		if (user.Guid != guid)
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		return await db.UsersRepository.GetDetailInfo()
+		var userInfo = await db.UsersRepository.GetDetailInfo()
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Учётная запись {guid}");
+
+		userInfo.AccessRule = (user.Guid == guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
+			? new AccessRuleInfo { AccessType = AccessType.Manager, RuleId = 0 }
+			: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
+
+		foreach (var group in userInfo.UserGroups)
+		{
+			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+		}
+
+		return userInfo;
 	}
 
 	/// <summary>
@@ -86,7 +128,11 @@ public class UsersRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		var accessType = user.Guid == userGuid ? AccessType.Manager : user.GlobalAccessType;
+
+		if (!accessType.HasAccess(AccessType.Manager))
+			throw Errors.NoAccess;
+
 		User = user.Guid;
 
 		return await UpdateAsync(userGuid, request);

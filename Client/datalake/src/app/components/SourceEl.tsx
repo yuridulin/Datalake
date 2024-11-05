@@ -1,6 +1,6 @@
 import { Button } from 'antd'
 import { NavLink } from 'react-router-dom'
-import { CustomSource } from '../../api/types/customSource'
+import { CustomSource } from '../../types/customSource'
 import routes from '../router/routes'
 
 type HeaderProps = {

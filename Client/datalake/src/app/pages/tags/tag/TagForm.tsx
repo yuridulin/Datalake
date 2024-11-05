@@ -1,3 +1,4 @@
+import api from '@/api/swagger-api'
 import { AppstoreAddOutlined } from '@ant-design/icons'
 import {
 	AutoComplete,
@@ -12,19 +13,18 @@ import {
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import api from '../../../../api/swagger-api'
 import {
 	TagType,
 	TagUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
-import { CustomSource } from '../../../../api/types/customSource'
 import { useInterval } from '../../../../hooks/useInterval'
+import { CustomSource } from '../../../../types/customSource'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import TagValueEl from '../../../components/TagValueEl'
 import routes from '../../../router/routes'
 
-export default function TagForm() {
+const TagForm = () => {
 	//#region Данные
 
 	const { id } = useParams()
@@ -520,3 +520,5 @@ export default function TagForm() {
 		</>
 	)
 }
+
+export default TagForm

@@ -1,9 +1,9 @@
+import api from '@/api/swagger-api'
 import { Button, Input, Popconfirm, Radio } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import getSourceTypeName from '../../../../api/functions/getSourceTypeName'
-import api from '../../../../api/swagger-api'
 import { SourceInfo, SourceType } from '../../../../api/swagger/data-contracts'
+import getSourceTypeName from '../../../../functions/getSourceTypeName'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
@@ -16,7 +16,7 @@ const AvailableSourceTypes = [
 	SourceType.DatalakeCoreV1,
 ]
 
-export default function SourceForm() {
+const SourceForm = () => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 
@@ -134,3 +134,5 @@ export default function SourceForm() {
 		</>
 	)
 }
+
+export default SourceForm

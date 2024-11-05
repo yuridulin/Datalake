@@ -1,10 +1,10 @@
 import { makeAutoObservable } from 'mobx'
-import hasAccess from './functions/hasAccess'
 import {
 	AccessRuleInfo,
 	AccessType,
 	UserAuthInfo,
-} from './swagger/data-contracts'
+} from '../api/swagger/data-contracts'
+import hasAccess from '../functions/hasAccess'
 
 const nameHeader = 'd-name'
 const tokenHeader = 'd-access-token'

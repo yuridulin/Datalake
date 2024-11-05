@@ -1,10 +1,11 @@
+import api from '@/api/swagger-api'
+import { accessOptions } from '@/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Select, Spin, Table } from 'antd'
 import { DefaultOptionType } from 'antd/es/select'
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import api from '../../../../../api/swagger-api'
 import {
 	AccessRightsIdInfo,
 	AccessType,
@@ -13,7 +14,6 @@ import {
 import AccessTypeEl from '../../../../components/AccessTypeEl'
 import PageHeader from '../../../../components/PageHeader'
 import routes from '../../../../router/routes'
-import { accessOptions } from '@/api/types/accessOptions'
 
 type FormType = AccessRightsIdInfo & {
 	key: string

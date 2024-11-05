@@ -1,10 +1,10 @@
+import { Api } from '@/api/swagger/Api'
+import { AccessType } from '@/api/swagger/data-contracts'
+import router from '@/app/router/router'
+import routes from '@/app/router/routes'
+import notify from '@/state/notifications'
+import { globalAccessHeader, nameHeader, tokenHeader, user } from '@/state/user'
 import { AxiosError, AxiosResponse } from 'axios'
-import router from '../app/router/router'
-import routes from '../app/router/routes'
-import notify from './notifications'
-import { Api } from './swagger/Api'
-import { AccessType } from './swagger/data-contracts'
-import { globalAccessHeader, nameHeader, tokenHeader, user } from './user'
 
 declare const LOCAL_API: boolean
 

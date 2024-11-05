@@ -76,7 +76,7 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
 		return usersStateService.State;
 	}

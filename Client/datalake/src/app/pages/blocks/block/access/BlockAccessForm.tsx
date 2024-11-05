@@ -1,19 +1,19 @@
-import { accessOptions } from '@/api/types/accessOptions'
+import api from '@/api/swagger-api'
+import {
+	AccessRightsIdInfo,
+	AccessType,
+	BlockSimpleInfo,
+} from '@/api/swagger/data-contracts'
+import AccessTypeEl from '@/app/components/AccessTypeEl'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
+import { accessOptions } from '@/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Select, Spin, Table } from 'antd'
 import { DefaultOptionType } from 'antd/es/select'
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import api from '../../../../../api/swagger-api'
-import {
-	AccessRightsIdInfo,
-	AccessType,
-	BlockSimpleInfo,
-} from '../../../../../api/swagger/data-contracts'
-import AccessTypeEl from '../../../../components/AccessTypeEl'
-import PageHeader from '../../../../components/PageHeader'
-import routes from '../../../../router/routes'
 
 type FormType = AccessRightsIdInfo & {
 	key: string

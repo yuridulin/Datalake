@@ -1,24 +1,24 @@
+import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
+import UserIcon from '@/app/components/icons/UserIcon'
 import { blue } from '@ant-design/colors'
 import {
 	CalculatorOutlined,
 	EditOutlined,
 	PlaySquareOutlined,
 	SettingOutlined,
-	TeamOutlined,
 	UnorderedListOutlined,
-	UserOutlined,
 } from '@ant-design/icons'
 import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { observer } from 'mobx-react-lite'
 import { NavLink } from 'react-router-dom'
-import hasAccess from '../api/functions/hasAccess'
 import { AccessType } from '../api/swagger/data-contracts'
-import { CustomSource } from '../api/types/customSource'
-import { user } from '../api/user'
-import BlockIcon from './icons/BlockIcon'
-import SourceIcon from './icons/SourceIcon'
-import TagIcon from './icons/TagIcon'
+import hasAccess from '../functions/hasAccess'
+import { user } from '../state/user'
+import { CustomSource } from '../types/customSource'
+import BlockIcon from './components/icons/BlockIcon'
+import SourceIcon from './components/icons/SourceIcon'
+import TagIcon from './components/icons/TagIcon'
 import routes from './router/routes'
 
 type MenuType = 'item' | 'group' | 'divider'
@@ -125,7 +125,7 @@ const items = [
 			{
 				key: 'logs',
 				label: (
-					<NavLink to={'/'}>
+					<NavLink to={routes.stats.logs}>
 						<UnorderedListOutlined style={{ color: blue[4] }} />
 						&emsp;Журнал
 					</NavLink>
@@ -136,17 +136,17 @@ const items = [
 				key: 'users',
 				label: (
 					<NavLink to={routes.users.list}>
-						<UserOutlined style={{ color: blue[5] }} />
+						<UserIcon />
 						&emsp;Пользователи
 					</NavLink>
 				),
-				minimalAccess: AccessType.Editor,
+				minimalAccess: AccessType.NotSet,
 			},
 			{
 				key: 'user-groups',
 				label: (
 					<NavLink to={routes.userGroups.list}>
-						<TeamOutlined style={{ color: blue[5] }} />
+						<UserGroupIcon />
 						&emsp;Группы пользователей
 					</NavLink>
 				),

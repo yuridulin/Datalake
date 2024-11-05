@@ -1,9 +1,9 @@
+import api from '@/api/swagger-api'
 import { Button, Form, Input } from 'antd'
 import { useEffect, useState } from 'react'
-import api from '../../../../api/swagger-api'
 import { SettingsInfo } from '../../../../api/swagger/data-contracts'
 
-export default function AuthSettings() {
+const AuthSettings = () => {
 	const [settings, setSettings] = useState({} as SettingsInfo)
 	const [form] = Form.useForm<SettingsInfo>()
 
@@ -48,3 +48,5 @@ export default function AuthSettings() {
 		</Form>
 	)
 }
+
+export default AuthSettings

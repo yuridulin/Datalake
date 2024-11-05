@@ -1,32 +1,21 @@
+import api from '@/api/swagger-api'
+import { AccessType, UserInfo } from '@/api/swagger/data-contracts'
+import AccessTypeEl from '@/app/components/AccessTypeEl'
+import UserButton from '@/app/components/buttons/UserButton'
+import FormRow from '@/app/components/FormRow'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
+import getUserTypeName from '@/functions/getUserTypeName'
+import { useInterval } from '@/hooks/useInterval'
+import { timeAgo } from '@/state/timeAgoInstance'
+import { user } from '@/state/user'
 import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
-import { timeAgo } from '../../../api/functions/timeAgoInstance'
-import api from '../../../api/swagger-api'
-import { UserInfo, UserType } from '../../../api/swagger/data-contracts'
-import { useInterval } from '../../../hooks/useInterval'
-import AccessTypeEl from '../../components/AccessTypeEl'
-import FormRow from '../../components/FormRow'
-import PageHeader from '../../components/PageHeader'
-import routes from '../../router/routes'
+import { useNavigate } from 'react-router-dom'
 
-function UserTypeDescription(type: UserType) {
-	switch (type) {
-		case UserType.Local:
-			return 'Локальная учётная запись'
-
-		case UserType.Static:
-			return 'Статичная учётная запись'
-
-		case UserType.EnergoId:
-			return 'Учётная запись EnergoID'
-		default:
-			return '?'
-	}
-}
-
-export default function UsersList() {
+const UsersList = observer(() => {
 	const navigate = useNavigate()
 	const [users, setUsers] = useState([] as UserInfo[])
 	const [states, setStates] = useState({} as { [key: string]: string })
@@ -42,6 +31,7 @@ export default function UsersList() {
 	}
 
 	const getStates = () => {
+		if (!user.hasGlobalAccess(AccessType.Manager)) return
 		api.systemGetVisits().then((res) => setStates(res.data))
 	}
 
@@ -49,11 +39,7 @@ export default function UsersList() {
 		{
 			dataIndex: 'guid',
 			title: 'Учетная запись',
-			render: (_, record) => (
-				<NavLink to={routes.users.toUserForm(record.guid)}>
-					<Button size='small'>{record.fullName}</Button>
-				</NavLink>
-			),
+			render: (_, record) => <UserButton userInfo={record} />,
 		},
 		{
 			dataIndex: 'accessType',
@@ -67,7 +53,7 @@ export default function UsersList() {
 			width: '14em',
 			render: (_, record) => {
 				const state = states[record.guid]
-				if (!state) return <Tag>не было</Tag>
+				if (!state) return <></>
 				const lastVisit = new Date(state)
 				const late = Date.now() - Number(lastVisit)
 				return (
@@ -77,8 +63,8 @@ export default function UsersList() {
 							late < 120000
 								? 'success'
 								: late < 3600000
-								? 'warning'
-								: 'default'
+									? 'warning'
+									: 'default'
 						}
 					>
 						{timeAgo.format(lastVisit)}
@@ -90,7 +76,7 @@ export default function UsersList() {
 			dataIndex: 'guid',
 			title: 'Тип учетной записи',
 			width: '20em',
-			render: (_, record) => <>{UserTypeDescription(record.type)}</>,
+			render: (_, record) => <>{getUserTypeName(record.type)}</>,
 		},
 	]
 
@@ -100,7 +86,11 @@ export default function UsersList() {
 	return (
 		<>
 			<PageHeader
-				right={<Button onClick={create}>Добавить пользователя</Button>}
+				right={
+					user.hasGlobalAccess(AccessType.Manager) && (
+						<Button onClick={create}>Добавить пользователя</Button>
+					)
+				}
 			>
 				Список пользователей
 			</PageHeader>
@@ -128,4 +118,6 @@ export default function UsersList() {
 			)}
 		</>
 	)
-}
+})
+
+export default UsersList

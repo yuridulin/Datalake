@@ -1,21 +1,21 @@
+import api from '@/api/swagger-api'
 import { Button, Spin, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { AxiosResponse } from 'axios'
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import getLogCategoryName from '../../../api/functions/getLogCategoryName'
-import getLogTypeName from '../../../api/functions/getLogTypeName'
-import api from '../../../api/swagger-api'
 import {
 	LogCategory,
 	LogInfo,
 	LogType,
 	UserSimpleInfo,
 } from '../../../api/swagger/data-contracts'
+import getLogCategoryName from '../../../functions/getLogCategoryName'
+import getLogTypeName from '../../../functions/getLogTypeName'
 import { useInterval } from '../../../hooks/useInterval'
 import LogCategoryEl from '../../components/LogCategoryEl'
 import LogTypeEl from '../../components/LogTypeEl'
-import NoAccess from '../../components/NoAccessPage'
+import NoAccessPage from '../../components/NoAccessPage'
 import routes from '../../router/routes'
 
 type FilterType = {
@@ -23,7 +23,7 @@ type FilterType = {
 	types: LogType[] | null
 }
 
-export default function LogsTable() {
+const LogsTable = () => {
 	const [loading, setLoading] = useState(true)
 	const [noAccess, setAccess] = useState(false)
 	const [logs, setLogs] = useState([] as LogInfo[])
@@ -60,7 +60,7 @@ export default function LogsTable() {
 	return loading ? (
 		<Spin />
 	) : noAccess ? (
-		<NoAccess />
+		<NoAccessPage />
 	) : (
 		<>
 			<Table
@@ -114,7 +114,7 @@ export default function LogsTable() {
 					render={(author: UserSimpleInfo | undefined) => {
 						if (!author) return <></>
 						return (
-							<NavLink to={routes.users.toUserForm(author.guid)}>
+							<NavLink to={routes.users.toUserView(author.guid)}>
 								<Button size='small'>{author.fullName}</Button>
 							</NavLink>
 						)
@@ -124,3 +124,5 @@ export default function LogsTable() {
 		</>
 	)
 }
+
+export default LogsTable

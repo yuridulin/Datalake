@@ -1,13 +1,13 @@
+import api from '@/api/swagger-api'
 import { Button } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import api from '../../../api/swagger-api'
 import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
-import { CustomSource } from '../../../api/types/customSource'
+import { CustomSource } from '../../../types/customSource'
 import CreatedTagLinker from '../../components/CreatedTagsLinker'
 import PageHeader from '../../components/PageHeader'
 import TagsTable from './TagsTable'
 
-export default function TagsCalculatedList() {
+const TagsCalculatedList = () => {
 	const [tags, setTags] = useState([] as TagInfo[])
 	const [created, setCreated] = useState(null as TagInfo | null)
 
@@ -53,3 +53,5 @@ export default function TagsCalculatedList() {
 		</>
 	)
 }
+
+export default TagsCalculatedList

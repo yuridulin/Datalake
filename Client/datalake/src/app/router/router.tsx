@@ -1,3 +1,4 @@
+import UserView from '@/app/pages/users/user/UserView'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -47,7 +48,7 @@ const router = createBrowserRouter([
 			},
 			// logs
 			{
-				path: '/logs',
+				path: routes.stats.logs,
 				element: <LogsTable />,
 			},
 			// users
@@ -61,6 +62,10 @@ const router = createBrowserRouter([
 					{
 						path: routes.users.create,
 						element: <UserCreate />,
+					},
+					{
+						path: routes.users.view,
+						element: <UserView />,
 					},
 					{
 						path: routes.users.edit,

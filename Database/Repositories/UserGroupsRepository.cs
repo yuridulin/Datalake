@@ -169,7 +169,7 @@ public class UserGroupsRepository(DatalakeContext db)
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
 	{
-		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Admin, groupGuid);
+		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Editor, groupGuid);
 		User = user.Guid;
 
 		return await UpdateAsync(groupGuid, request);

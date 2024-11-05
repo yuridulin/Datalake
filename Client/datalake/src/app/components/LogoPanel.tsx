@@ -2,7 +2,7 @@ import { MoonOutlined, SunOutlined } from '@ant-design/icons'
 import { Button, Col, Row } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { Link } from 'react-router-dom'
-import { user } from '../../api/user'
+import { user } from '../../state/user'
 
 const LogoPanel = observer(() => {
 	return (

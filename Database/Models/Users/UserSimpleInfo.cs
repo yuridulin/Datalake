@@ -1,11 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Datalake.Database.Abstractions;
+using Datalake.Database.Models.Auth;
+using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Users;
 
 /// <summary>
 /// Базовая информация о пользователе
 /// </summary>
-public class UserSimpleInfo
+public class UserSimpleInfo : IProtectedEntity
 {
 	/// <summary>
 	/// Идентификатор пользователя
@@ -18,4 +20,10 @@ public class UserSimpleInfo
 	/// </summary>
 	[Required]
 	public required string FullName { get; set; }
+
+	/// <summary>
+	/// Правило доступа
+	/// </summary>
+	[Required]
+	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

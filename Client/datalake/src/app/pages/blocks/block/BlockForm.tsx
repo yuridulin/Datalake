@@ -1,4 +1,3 @@
-import notify from '@/api/notifications'
 import api from '@/api/swagger-api'
 import {
 	AccessType,
@@ -7,19 +6,21 @@ import {
 	BlockUpdateRequest,
 	TagType,
 } from '@/api/swagger/data-contracts'
-import { user } from '@/api/user'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
+import notify from '@/state/notifications'
+import { user } from '@/state/user'
 import {
 	CreditCardOutlined,
 	MinusCircleOutlined,
 	PlusOutlined,
 } from '@ant-design/icons'
 import { Button, Dropdown, Form, Input, Popconfirm, Select, Space } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-export default function BlockForm() {
+const BlockForm = observer(() => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 	const [form] = Form.useForm<BlockUpdateRequest>()
@@ -297,4 +298,6 @@ export default function BlockForm() {
 			</Form>
 		</>
 	)
-}
+})
+
+export default BlockForm

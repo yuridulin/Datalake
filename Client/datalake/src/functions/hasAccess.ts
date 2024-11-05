@@ -1,4 +1,4 @@
-import { AccessType } from '../swagger/data-contracts'
+import { AccessType } from '../api/swagger/data-contracts'
 
 function hasAccess(current: AccessType, minimal: AccessType): boolean {
 	switch (minimal) {

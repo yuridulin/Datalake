@@ -1,12 +1,13 @@
+import api from '@/api/swagger-api'
 import { Button, Space } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useAuth } from 'react-oidc-context'
 import { useNavigate } from 'react-router-dom'
-import notify from '../../../api/notifications'
-import api from '../../../api/swagger-api'
-import { user } from '../../../api/user'
+import notify from '../../../state/notifications'
+import { user } from '../../../state/user'
 import routes from '../../router/routes'
 
-export default function EnergoId() {
+const EnergoId = observer(() => {
 	const auth = useAuth()
 	const navigate = useNavigate()
 
@@ -48,4 +49,6 @@ export default function EnergoId() {
 	}
 
 	return <i>Что-то пошло не так</i>
-}
+})
+
+export default EnergoId

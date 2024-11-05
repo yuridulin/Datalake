@@ -1,8 +1,9 @@
-import { user } from '@/api/user'
+import api from '@/api/swagger-api'
+import { user } from '@/state/user'
 import { Button, Table, TableColumnsType } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../../api/swagger-api'
 import {
 	AccessType,
 	BlockNestedTagInfo,
@@ -70,7 +71,7 @@ const columns: TableColumnsType<DataType> = [
 	},
 ]
 
-export default function BlocksTree() {
+const BlocksTree = observer(() => {
 	const [data, setData] = useState([] as DataType[])
 
 	function load() {
@@ -134,4 +135,6 @@ export default function BlocksTree() {
 			/>
 		</>
 	)
-}
+})
+
+export default BlocksTree

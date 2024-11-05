@@ -817,7 +817,7 @@ public class AccessRepository(DatalakeContext db)
 		AccessType minimalAccess,
 		int blockId)
 	{
-		if (!user.Sources.TryGetValue(blockId, out var rule))
+		if (!user.Blocks.TryGetValue(blockId, out var rule))
 			return false;
 
 		bool access = rule.AccessType.HasAccess(minimalAccess);

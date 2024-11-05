@@ -1,9 +1,10 @@
+import api from '@/api/swagger-api'
 import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import compareValues from '../../../api/functions/compareValues'
-import api from '../../../api/swagger-api'
 import { BlockTreeInfo } from '../../../api/swagger/data-contracts'
+import compareValues from '../../../functions/compareValues'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 
@@ -25,7 +26,7 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[]): TreeDataNode[] {
 	return data.sort((a, b) => compareValues(String(a.title), String(b.title)))
 }
 
-export default function BlocksMover() {
+const BlocksMover = observer(() => {
 	const [blocks, setBlocks] = useState([] as TreeDataNode[])
 	const [loading, setLoading] = useState(false)
 	const { token } = theme.useToken()
@@ -148,4 +149,6 @@ export default function BlocksMover() {
 			/>
 		</>
 	)
-}
+})
+
+export default BlocksMover

@@ -1,4 +1,4 @@
-import { AccessType } from '../swagger/data-contracts'
+import { AccessType } from '../api/swagger/data-contracts'
 
 export default function getAccessTypeName(type: AccessType) {
 	switch (type) {

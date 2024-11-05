@@ -33,7 +33,8 @@ public static class AccessTypeExtension
 				|| current == AccessType.Manager
 				|| current == AccessType.Admin,
 
-			AccessType.Manager => current == AccessType.Editor
+			AccessType.Manager =>
+				current == AccessType.Manager
 				|| current == AccessType.Admin,
 
 			AccessType.Admin =>

@@ -1,7 +1,7 @@
 import { WarningOutlined } from '@ant-design/icons'
 import { theme } from 'antd'
 import { TagQuality, TagType } from '../../api/swagger/data-contracts'
-import { TagValue } from '../../api/types/tagValue'
+import { TagValue } from '../../types/tagValue'
 
 type TagCompactOptions = {
 	value: TagValue

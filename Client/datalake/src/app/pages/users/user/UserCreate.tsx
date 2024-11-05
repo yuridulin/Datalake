@@ -1,8 +1,11 @@
-import { accessOptions } from '@/api/types/accessOptions'
+import api from '@/api/swagger-api'
+import NoAccessPage from '@/app/components/NoAccessPage'
+import { user } from '@/state/user'
+import { accessOptions } from '@/types/accessOptions'
 import { Button, Input, Radio, Select } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../../../../api/swagger-api'
 import {
 	AccessType,
 	EnergoIdInfo,
@@ -13,7 +16,7 @@ import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
 
-export default function UserCreate() {
+const UserCreate = observer(() => {
 	const navigate = useNavigate()
 	const [request, setRequest] = useState({
 		accessType: AccessType.NotSet,
@@ -50,6 +53,8 @@ export default function UserCreate() {
 
 	useEffect(load, [])
 
+	if (!user.hasGlobalAccess(AccessType.Admin)) return <NoAccessPage />
+
 	return (
 		<>
 			<PageHeader
@@ -68,17 +73,17 @@ export default function UserCreate() {
 			</PageHeader>
 			<form>
 				<FormRow title='Уровень глобального доступа'>
-					<Radio.Group
-						buttonStyle='solid'
+					<Select
 						value={request.accessType}
-						options={accessOptions as never}
+						defaultValue={request.accessType}
+						options={accessOptions}
 						onChange={(e) =>
 							setRequest({
 								...request,
-								accessType: e.target.value,
+								accessType: e,
 							})
 						}
-					/>
+					></Select>
 				</FormRow>
 
 				<FormRow title='Тип учетной записи'>
@@ -229,4 +234,6 @@ export default function UserCreate() {
 			</form>
 		</>
 	)
-}
+})
+
+export default UserCreate

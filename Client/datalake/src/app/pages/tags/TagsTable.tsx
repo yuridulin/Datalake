@@ -1,10 +1,10 @@
+import api from '@/api/swagger-api'
 import { Button, Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import compareValues from '../../../api/functions/compareValues'
-import api from '../../../api/swagger-api'
 import { TagInfo, ValueRecord } from '../../../api/swagger/data-contracts'
+import compareValues from '../../../functions/compareValues'
 import { useInterval } from '../../../hooks/useInterval'
 import SourceEl from '../../components/SourceEl'
 import TagCompactValue from '../../components/TagCompactValue'
@@ -16,11 +16,11 @@ interface TagsTableProps {
 	hideValue?: boolean
 }
 
-export default function TagsTable({
+const TagsTable = ({
 	tags,
 	hideSource = false,
 	hideValue = false,
-}: TagsTableProps) {
+}: TagsTableProps) => {
 	const [viewingTags, setViewingTags] = useState(tags)
 	const [search, setSearch] = useState('')
 	const [values, setValues] = useState(
@@ -54,12 +54,13 @@ export default function TagsTable({
 						(x) =>
 							!!x.name &&
 							x.name.toLowerCase().includes(search.toLowerCase()),
-				  )
+					)
 				: tags,
 		)
 	}, [search, tags])
 
 	useEffect(doSearch, [doSearch, search, tags])
+	useEffect(loadValues, [viewingTags])
 	useInterval(loadValues, 5000)
 
 	return (
@@ -145,3 +146,5 @@ export default function TagsTable({
 		</Table>
 	)
 }
+
+export default TagsTable

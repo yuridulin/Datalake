@@ -1,9 +1,15 @@
+import api from '@/api/swagger-api'
+import NoAccessPage from '@/app/components/NoAccessPage'
+import { user } from '@/state/user'
 import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import compareValues from '../../../api/functions/compareValues'
-import api from '../../../api/swagger-api'
-import { UserGroupTreeInfo } from '../../../api/swagger/data-contracts'
+import {
+	AccessType,
+	UserGroupTreeInfo,
+} from '../../../api/swagger/data-contracts'
+import compareValues from '../../../functions/compareValues'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 import UserGroupsCreateModal from './usergroup/modals/UserGroupsCreateModal'
@@ -26,7 +32,7 @@ function transformToTreeNode(groups: UserGroupTreeInfo[]): TreeDataNode[] {
 	return data.sort((a, b) => compareValues(String(a.title), String(b.title)))
 }
 
-export default function UserGroupsTreeMove() {
+const UserGroupsTreeMove = observer(() => {
 	const [tree, setTree] = useState([] as TreeDataNode[])
 	const [loading, setLoading] = useState(false)
 	const { token } = theme.useToken()
@@ -121,6 +127,8 @@ export default function UserGroupsTreeMove() {
 
 	useEffect(load, [])
 
+	if (!user.hasGlobalAccess(AccessType.Admin)) return <NoAccessPage />
+
 	return (
 		<>
 			<PageHeader
@@ -149,4 +157,6 @@ export default function UserGroupsTreeMove() {
 			/>
 		</>
 	)
-}
+})
+
+export default UserGroupsTreeMove

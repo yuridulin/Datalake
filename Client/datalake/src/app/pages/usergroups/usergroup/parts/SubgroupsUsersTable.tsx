@@ -1,9 +1,12 @@
+import { user } from '@/state/user'
 import { Button, Divider, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import Column from 'antd/es/table/Column'
 import { NavLink } from 'react-router-dom'
 import {
+	AccessType,
 	UserGroupInfo,
+	UserGroupSimpleInfo,
 	UserGroupUsersInfo,
 } from '../../../../../api/swagger/data-contracts'
 import AccessTypeEl from '../../../../components/AccessTypeEl'
@@ -12,7 +15,7 @@ import UserGroupsCreateModal from '../modals/UserGroupsCreateModal'
 
 type SubgroupsUsersTableProps = {
 	guid: string
-	subgroups: UserGroupInfo[]
+	subgroups: UserGroupSimpleInfo[]
 	users: UserGroupUsersInfo[]
 	onCreateGroup: () => void
 }
@@ -25,7 +28,7 @@ const columns: ColumnsType<UserGroupUsersInfo> = [
 			!record.guid ? (
 				<>?</>
 			) : (
-				<NavLink to={routes.users.toUserForm(record.guid)}>
+				<NavLink to={routes.users.toUserView(record.guid)}>
 					<Button size='small'>{record.fullName}</Button>
 				</NavLink>
 			),
@@ -39,12 +42,12 @@ const columns: ColumnsType<UserGroupUsersInfo> = [
 	},
 ]
 
-export default function SubgroupsUsersTable({
+const SubgroupsUsersTable = ({
 	guid,
 	subgroups,
 	users,
 	onCreateGroup,
-}: SubgroupsUsersTableProps) {
+}: SubgroupsUsersTableProps) => {
 	return (
 		<>
 			<Divider>
@@ -62,12 +65,17 @@ export default function SubgroupsUsersTable({
 				orientation='left'
 				style={{ fontSize: '1em' }}
 			>
-				Подгруппы&emsp;
-				<UserGroupsCreateModal
-					isSmall={true}
-					onCreate={onCreateGroup}
-					parentGuid={guid}
-				/>
+				Подгруппы
+				{user.hasAccessToGroup(AccessType.Manager, guid) && (
+					<>
+						&emsp;
+						<UserGroupsCreateModal
+							isSmall={true}
+							onCreate={onCreateGroup}
+							parentGuid={guid}
+						/>
+					</>
+				)}
 			</Divider>
 			{subgroups.length > 0 ? (
 				<Table
@@ -94,3 +102,5 @@ export default function SubgroupsUsersTable({
 		</>
 	)
 }
+
+export default SubgroupsUsersTable

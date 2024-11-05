@@ -5,7 +5,7 @@ import { Content } from 'antd/es/layout/layout'
 import { motion } from 'framer-motion'
 import { observer } from 'mobx-react-lite'
 import { Outlet, useLocation } from 'react-router-dom'
-import { user } from '../api/user'
+import { user } from '../state/user'
 import LogoPanel from './components/LogoPanel'
 import UserPanel from './components/UserPanel'
 

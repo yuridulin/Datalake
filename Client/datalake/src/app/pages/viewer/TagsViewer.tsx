@@ -9,6 +9,7 @@ import {
 	Table,
 } from 'antd'
 
+import api from '@/api/swagger-api'
 import {
 	CheckSquareOutlined,
 	CloseSquareOutlined,
@@ -18,13 +19,13 @@ import { DefaultOptionType } from 'antd/es/select'
 import { ColumnsType } from 'antd/es/table'
 import Column from 'antd/es/table/Column'
 import dayjs from 'dayjs'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import compareValues from '../../../api/functions/compareValues'
-import api from '../../../api/swagger-api'
 import { TagQuality, TagType } from '../../../api/swagger/data-contracts'
-import { TagValue } from '../../../api/types/tagValue'
+import compareValues from '../../../functions/compareValues'
 import { useInterval } from '../../../hooks/useInterval'
+import { TagValue } from '../../../types/tagValue'
 import TagCompactValue from '../../components/TagCompactValue'
 import TagQualityEl from '../../components/TagQualityEl'
 import TagValueEl from '../../components/TagValueEl'
@@ -61,7 +62,7 @@ const resolutions = [
 
 const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 
-export default function TagsViewer() {
+const TagsViewer = observer(() => {
 	const [tags, setTags] = useState([] as DefaultOptionType[])
 	const [values, setValues] = useState([] as ValueType[])
 	const [searchValue, setSearchValue] = useState('')
@@ -103,12 +104,12 @@ export default function TagsViewer() {
 			request.mode === 'live'
 				? {}
 				: request.mode === 'exact'
-				? { exact: request.exact.format(timeMask) }
-				: {
-						old: request.old.format(timeMask),
-						young: request.young.format(timeMask),
-						resolution: request.resolution,
-				  }
+					? { exact: request.exact.format(timeMask) }
+					: {
+							old: request.old.format(timeMask),
+							young: request.young.format(timeMask),
+							resolution: request.resolution,
+						}
 		api.valuesGet([
 			{
 				requestKey: 'viewer-tags',
@@ -364,4 +365,6 @@ export default function TagsViewer() {
 			)}
 		</>
 	)
-}
+})
+
+export default TagsViewer

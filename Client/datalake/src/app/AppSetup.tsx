@@ -10,7 +10,7 @@ import routes from './router/routes'
 import locale from 'antd/locale/ru_RU'
 import 'dayjs/locale/ru'
 import { observer } from 'mobx-react-lite'
-import { user } from '../api/user'
+import { user } from '../state/user'
 dayjs.locale('ru')
 
 declare const KEYCLOAK_DB: string

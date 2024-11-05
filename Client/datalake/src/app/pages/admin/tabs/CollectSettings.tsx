@@ -1,8 +1,8 @@
+import api from '@/api/swagger-api'
 import { Button, Space, Spin } from 'antd'
 import { useState } from 'react'
-import api from '../../../../api/swagger-api'
 
-export default function CollectSettings() {
+const CollectSettings = () => {
 	const [wait, setWait] = useState(false)
 	const restart = () => {
 		setWait(true)
@@ -17,3 +17,5 @@ export default function CollectSettings() {
 		</Space>
 	)
 }
+
+export default CollectSettings

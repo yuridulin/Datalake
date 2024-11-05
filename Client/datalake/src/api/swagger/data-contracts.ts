@@ -30,6 +30,38 @@ export interface UserGroupSimpleInfo {
 	 * @minLength 1
 	 */
 	name: string
+	/** Правило доступа */
+	accessRule: AccessRuleInfo
+}
+
+/** Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ */
+export interface AccessRuleInfo {
+	/**
+	 * Идентификатор правила доступа
+	 * @format int32
+	 */
+	ruleId: number
+	/** Уровень доступа */
+	accessType: AccessType
+}
+
+/**
+ * Уровень доступа
+ *
+ * 0 = NoAccess
+ * 5 = Viewer
+ * 10 = Editor
+ * 50 = Manager
+ * 100 = Admin
+ * -100 = NotSet
+ */
+export enum AccessType {
+	NoAccess = 0,
+	Viewer = 5,
+	Editor = 10,
+	Manager = 50,
+	Admin = 100,
+	NotSet = -100,
 }
 
 /** Базовая информация о пользователе */
@@ -45,6 +77,8 @@ export interface UserSimpleInfo {
 	 * @minLength 1
 	 */
 	fullName: string
+	/** Правило доступа */
+	accessRule: AccessRuleInfo
 }
 
 /** Информация о разрешении субьекта на доступ к объекту */
@@ -122,25 +156,6 @@ export interface AccessRightsSimpleInfo {
 	accessType: AccessType
 	/** Является ли разрешение глобальным */
 	isGlobal: boolean
-}
-
-/**
- * Уровень доступа
- *
- * 0 = NoAccess
- * 5 = Viewer
- * 10 = Editor
- * 50 = Manager
- * 100 = Admin
- * -100 = NotSet
- */
-export enum AccessType {
-	NoAccess = 0,
-	Viewer = 5,
-	Editor = 10,
-	Manager = 50,
-	Admin = 100,
-	NotSet = -100,
 }
 
 /** Измененное разрешение, которое нужно обновить в БД */
@@ -287,17 +302,6 @@ export type BlockWithTagsInfo = BlockSimpleInfo & {
 	accessRule: AccessRuleInfo
 	/** Список прикреплённых тегов */
 	tags: BlockNestedTagInfo[]
-}
-
-/** Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ */
-export interface AccessRuleInfo {
-	/**
-	 * Идентификатор правила доступа
-	 * @format int32
-	 */
-	ruleId: number
-	/** Уровень доступа */
-	accessType: AccessType
 }
 
 /** Информация о закреплённом теге */
@@ -767,8 +771,6 @@ export type UserGroupInfo = UserGroupSimpleInfo & {
 	 * @format guid
 	 */
 	parentGroupGuid?: string | null
-	/** Правило доступа */
-	accessRule?: AccessRuleInfo
 }
 
 /** Информация о группе пользователей в иерархическом представлении */

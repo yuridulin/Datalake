@@ -1,7 +1,9 @@
+import api from '@/api/swagger-api'
+import { user } from '@/state/user'
 import { Button, Descriptions, DescriptionsProps, Spin, Tabs } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import api from '../../../../api/swagger-api'
 import {
 	AccessType,
 	UserGroupDetailedInfo,
@@ -14,7 +16,7 @@ import SubgroupsUsersTable from './parts/SubgroupsUsersTable'
 
 const defaultGroup = {} as UserGroupDetailedInfo
 
-export default function UserGroupView() {
+const UserGroupView = observer(() => {
 	const [group, setGroup] = useState(defaultGroup)
 	const [ready, setReady] = useState(false)
 	const { id } = useParams()
@@ -72,19 +74,30 @@ export default function UserGroupView() {
 				}
 				right={
 					<>
-						<NavLink
-							to={routes.userGroups.toUserGroupEdit(String(id))}
-						>
-							<Button>Редактирование группы и участников</Button>
-						</NavLink>
+						{user.hasAccessToGroup(
+							AccessType.Editor,
+							String(id),
+						) && (
+							<NavLink
+								to={routes.userGroups.toUserGroupEdit(
+									String(id),
+								)}
+							>
+								<Button>
+									Редактирование группы и участников
+								</Button>
+							</NavLink>
+						)}
 						&ensp;
-						<NavLink
-							to={routes.userGroups.toUserGroupAccessForm(
-								String(id),
-							)}
-						>
-							<Button>Редактирование разрешений</Button>
-						</NavLink>
+						{user.hasGlobalAccess(AccessType.Admin) && (
+							<NavLink
+								to={routes.userGroups.toUserGroupAccessForm(
+									String(id),
+								)}
+							>
+								<Button>Редактирование разрешений</Button>
+							</NavLink>
+						)}
 					</>
 				}
 			>
@@ -120,4 +133,6 @@ export default function UserGroupView() {
 			/>
 		</>
 	)
-}
+})
+
+export default UserGroupView

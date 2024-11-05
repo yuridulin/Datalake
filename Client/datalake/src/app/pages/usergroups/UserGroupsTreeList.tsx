@@ -1,74 +1,33 @@
+import api from '@/api/swagger-api'
+import UserGroupButton from '@/app/components/buttons/UserGroupButton'
+import { user } from '@/state/user'
 import { Button, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import api from '../../../api/swagger-api'
-import { UserGroupInfo } from '../../../api/swagger/data-contracts'
+import {
+	AccessType,
+	UserGroupTreeInfo,
+} from '../../../api/swagger/data-contracts'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 import UserGroupsCreateModal from './usergroup/modals/UserGroupsCreateModal'
 
-type UserGroupRow = {
-	guid: string
-	name: string
-	description?: string | null | undefined
-	children?: UserGroupRow[]
-}
+const setEmptyAsLeafs = (group: UserGroupTreeInfo): UserGroupTreeInfo => ({
+	...group,
+	children:
+		group.children.length > 0
+			? group.children.map((x) => setEmptyAsLeafs(x))
+			: (undefined as never),
+})
 
-const columns: ColumnsType<UserGroupRow> = [
-	{
-		title: 'Имя',
-		dataIndex: 'name',
-		key: 'name',
-		render(value, record, index) {
-			return (
-				<NavLink
-					key={index}
-					to={routes.userGroups.toUserGroup(record.guid)}
-				>
-					<Button size='small' title={value}>
-						{record.name}
-					</Button>
-				</NavLink>
-			)
-		},
-	},
-	{
-		title: 'Описание',
-		dataIndex: 'description',
-		key: 'description',
-	},
-]
+const UserGroupsTreeList = observer(() => {
+	const [groups, setGroups] = useState([] as UserGroupTreeInfo[])
 
-function userGroupToRow(
-	group: UserGroupInfo,
-	flat: UserGroupInfo[],
-): UserGroupRow {
-	const row = {
-		name: group.name,
-		guid: group.guid,
-		description: group.description,
-	} as UserGroupRow
-
-	const childs = flat.filter((x) => x.parentGroupGuid === group.guid)
-	if (childs.length > 0) {
-		row.children = childs.map((x) => userGroupToRow(x, flat))
-	}
-
-	return row
-}
-
-export default function UserGroupsTreeList() {
-	const [groups, setGroups] = useState([] as UserGroupRow[])
-
-	function load() {
-		api.userGroupsReadAll().then((res) => {
-			const flat = res.data
-			setGroups(
-				flat
-					.filter((x) => !x.parentGroupGuid)
-					.map((x) => userGroupToRow(x, flat)),
-			)
+	const load = () => {
+		api.userGroupsReadAsTree().then((res) => {
+			setGroups(res.data.map((x) => setEmptyAsLeafs(x)))
 		})
 	}
 
@@ -82,7 +41,7 @@ export default function UserGroupsTreeList() {
 			: ([] as string[])
 	})
 
-	const onExpand = (expanded: boolean, record: UserGroupRow) => {
+	const onExpand = (expanded: boolean, record: UserGroupTreeInfo) => {
 		const keys = expanded
 			? [...expandedRowKeys, record.guid]
 			: expandedRowKeys.filter((key) => key !== record.guid)
@@ -93,17 +52,35 @@ export default function UserGroupsTreeList() {
 		localStorage.setItem(expandKey, JSON.stringify(expandedRowKeys))
 	}, [expandedRowKeys])
 
+	const columns: ColumnsType<UserGroupTreeInfo> = [
+		{
+			title: 'Имя',
+			dataIndex: 'name',
+			key: 'name',
+			render(_, record) {
+				return <UserGroupButton group={record} />
+			},
+		},
+		{
+			title: 'Описание',
+			dataIndex: 'description',
+			key: 'description',
+		},
+	]
+
 	return (
 		<>
 			<PageHeader
 				right={
-					<>
-						<NavLink to={routes.userGroups.move}>
-							<Button>Изменить иерархию</Button>
-						</NavLink>
-						&ensp;
-						<UserGroupsCreateModal onCreate={load} />
-					</>
+					user.hasGlobalAccess(AccessType.Manager) && (
+						<>
+							<NavLink to={routes.userGroups.move}>
+								<Button>Изменить иерархию</Button>
+							</NavLink>
+							&ensp;
+							<UserGroupsCreateModal onCreate={load} />
+						</>
+					)
 				}
 			>
 				Группы пользователей
@@ -120,4 +97,6 @@ export default function UserGroupsTreeList() {
 			/>
 		</>
 	)
-}
+})
+
+export default UserGroupsTreeList

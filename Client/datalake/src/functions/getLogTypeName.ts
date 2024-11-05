@@ -1,4 +1,4 @@
-import { LogType } from '../swagger/data-contracts'
+import { LogType } from '../api/swagger/data-contracts'
 
 export default function getLogTypeName(type: LogType) {
 	switch (type) {

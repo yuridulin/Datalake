@@ -2,7 +2,7 @@ import { LogoutOutlined, UserOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { user } from '../../api/user'
+import { user } from '../../state/user'
 import routes from '../router/routes'
 import AccessTypeEl from './AccessTypeEl'
 

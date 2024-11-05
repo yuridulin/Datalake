@@ -1,6 +1,6 @@
+import api from '@/api/swagger-api'
 import { Button, Form, Input, Modal } from 'antd'
 import { useState } from 'react'
-import api from '../../../../../api/swagger-api'
 import { UserGroupCreateRequest } from '../../../../../api/swagger/data-contracts'
 
 interface UserGroupsCreateModalProps {
@@ -9,11 +9,11 @@ interface UserGroupsCreateModalProps {
 	parentGuid?: string
 }
 
-export default function UserGroupsCreateModal({
+const UserGroupsCreateModal = ({
 	onCreate,
 	parentGuid = undefined,
 	isSmall = false,
-}: UserGroupsCreateModalProps) {
+}: UserGroupsCreateModalProps) => {
 	const [open, setOpen] = useState(false)
 	const [confirmLoading, setConfirmLoading] = useState(false)
 	const [form] = Form.useForm()
@@ -87,3 +87,5 @@ export default function UserGroupsCreateModal({
 		</>
 	)
 }
+
+export default UserGroupsCreateModal
