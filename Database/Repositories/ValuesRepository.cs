@@ -290,7 +290,23 @@ public class ValuesRepository(DatalakeContext db)
 		{
 			var table = db.TablesRepository.GetHistoryTable(g.Key);
 			var values = g.Select(x => x);
-			await table.BulkCopyAsync(values);
+
+			string tempTableName = "TagsHistoryInserting_" + DateTime.UtcNow.ToFileTimeUtc().ToString();
+			var tempTable = await db.CreateTempTableAsync<TagHistory>(tempTableName);
+
+			await tempTable.BulkCopyAsync(values);
+
+			var existValues =
+				from exist in table
+				from insert in tempTable.LeftJoin(x => x.Date == exist.Date && x.TagId == exist.TagId)
+				where insert != null
+				select exist;
+
+			await existValues.DeleteAsync();
+
+			await table.BulkCopyAsync(tempTable);
+
+			await db.DropTableAsync<TagHistory>(tempTableName);
 
 			// Если пишем в прошлое, нужно обновить стартовые записи в будущем
 			if (g.Key < DateTime.Today)
