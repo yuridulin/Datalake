@@ -28,7 +28,7 @@ export default function TagCompactValue({
 			break
 		case TagType.Boolean:
 			color = '#5273e0'
-			v = value == 'true' ? 'True' : 'False'
+			v = value ? 'True' : 'False'
 			break
 		case TagType.Number:
 			color = '#e87040'

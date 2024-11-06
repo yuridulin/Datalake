@@ -184,6 +184,7 @@ const TagForm = () => {
 						>
 							<Button>Удалить</Button>
 						</Popconfirm>
+						&ensp;
 						<Button type='primary' onClick={tagUpdate}>
 							Сохранить
 						</Button>

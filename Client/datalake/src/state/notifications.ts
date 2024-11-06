@@ -21,6 +21,12 @@ const notify = {
 			className: user.isDark() ? 'notify-dark' : '',
 		})
 	},
+	warn(message: string) {
+		notification.warning({
+			message: message,
+			className: user.isDark() ? 'notify-dark' : '',
+		})
+	},
 }
 
 export default notify

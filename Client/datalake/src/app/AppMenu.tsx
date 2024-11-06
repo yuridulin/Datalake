@@ -4,6 +4,7 @@ import { blue } from '@ant-design/colors'
 import {
 	CalculatorOutlined,
 	EditOutlined,
+	FormOutlined,
 	PlaySquareOutlined,
 	SettingOutlined,
 	UnorderedListOutlined,
@@ -62,7 +63,7 @@ const items = [
 				key: routes.tags.manual,
 				label: (
 					<NavLink to={routes.tags.manual}>
-						<EditOutlined style={{ color: blue[4] }} />
+						<FormOutlined style={{ color: blue[4] }} />
 						&emsp;Мануальные теги
 					</NavLink>
 				),
@@ -101,7 +102,7 @@ const items = [
 				key: routes.values.tagsWriter,
 				label: (
 					<NavLink to={routes.values.tagsWriter}>
-						<PlaySquareOutlined style={{ color: blue[4] }} />
+						<EditOutlined style={{ color: blue[4] }} />
 						&emsp;Запись
 					</NavLink>
 				),

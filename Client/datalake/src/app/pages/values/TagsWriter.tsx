@@ -1,18 +1,35 @@
-import { Button, Col, DatePicker, Divider, Row, Select, Spin } from 'antd'
+import {
+	Button,
+	Checkbox,
+	DatePicker,
+	Divider,
+	Input,
+	InputNumber,
+	Select,
+	Space,
+	Spin,
+	Table,
+} from 'antd'
 
 import api from '@/api/swagger-api'
-import { TagQuality, TagType } from '@/api/swagger/data-contracts'
+import {
+	TagQuality,
+	TagSimpleInfo,
+	TagType,
+} from '@/api/swagger/data-contracts'
+import TagButton from '@/app/components/buttons/TagButton'
+import TagCompactValue from '@/app/components/TagCompactValue'
+import notify from '@/state/notifications'
 import { CustomSource } from '@/types/customSource'
 import { TagValue } from '@/types/tagValue'
 import { PlaySquareOutlined } from '@ant-design/icons'
 import { DefaultOptionType } from 'antd/es/select'
+import Column from 'antd/es/table/Column'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 
-type ExactValue = {
-	guid: string
-	name: string
+type ExactValue = TagSimpleInfo & {
 	value: TagValue
 	type: TagType
 	quality: TagQuality
@@ -49,10 +66,12 @@ const TagsWriter = observer(() => {
 
 	const getValues = () => {
 		if (request.tags.length === 0) return setValues([])
+		console.log(request)
+		if (!request.exact) return notify.warn('Дата среза не выбрана')
 		setLoading(true)
 		api.valuesGet([
 			{
-				requestKey: 'viewer-tags',
+				requestKey: 'tags-writer',
 				tagsId: request.tags,
 				exact: request.exact.format(timeMask),
 			},
@@ -63,6 +82,7 @@ const TagsWriter = observer(() => {
 					req.tags.map((tag) => {
 						const value = tag.values[0]
 						return {
+							id: tag.id,
 							guid: tag.guid,
 							name: tag.name,
 							type: tag.type,
@@ -81,16 +101,17 @@ const TagsWriter = observer(() => {
 	useEffect(loadTags, [])
 
 	const writeValues = () => {
-		api.valuesWrite(
-			values
-				.filter((x) => x.hasNewValue)
-				.map((x) => ({
-					date: request.exact.format(timeMask),
-					quality: TagQuality.GoodManualWrite,
-					guid: x.guid,
-					value: x.newValue,
-				})),
-		).then(getValues)
+		const valuesToWrite = values
+			.filter((x) => x.hasNewValue)
+			.map((x) => ({
+				date: request.exact.format(timeMask),
+				quality: TagQuality.GoodManualWrite,
+				guid: x.guid,
+				value: x.newValue,
+			}))
+		if (valuesToWrite.length === 0)
+			return notify.warn('Нет ни одного изменения')
+		api.valuesWrite(valuesToWrite).then(getValues)
 	}
 
 	const handleSearch = (value: string) => {
@@ -101,10 +122,20 @@ const TagsWriter = observer(() => {
 		setRequest({ ...request, tags: value })
 	}
 
+	const setNewValue = (guid: string, newValue: TagValue) => {
+		setValues(
+			values.map((x) =>
+				x.guid != guid
+					? x
+					: { ...x, newValue: newValue, hasNewValue: true },
+			),
+		)
+	}
+
 	return (
 		<>
 			<div style={{ position: 'sticky' }}>
-				<Row>
+				<div>
 					<Select
 						showSearch
 						mode='multiple'
@@ -116,9 +147,9 @@ const TagsWriter = observer(() => {
 						searchValue={searchValue}
 						onChange={handleChange}
 					/>
-				</Row>
-				<Row style={{ marginTop: '1em' }}>
-					<Col flex='10em'>
+				</div>
+				<div style={{ marginTop: '1em' }}>
+					<Space>
 						<DatePicker
 							showTime
 							placeholder='Дата среза'
@@ -127,26 +158,110 @@ const TagsWriter = observer(() => {
 								setRequest({ ...request, exact: e })
 							}
 						/>
-					</Col>
-					<Col flex='12em'>
 						<Button
 							onClick={getValues}
 							disabled={loading}
+							style={{ width: '9em', textAlign: 'left' }}
 							icon={loading ? <Spin /> : <PlaySquareOutlined />}
 						>
 							Запрос
 						</Button>
-					</Col>
-					<Col flex='auto'>
 						<Button
 							onClick={writeValues}
 							icon={<PlaySquareOutlined />}
 						>
 							Запись
 						</Button>
-					</Col>
-				</Row>
-				<Divider orientation='left'>Значения</Divider>
+					</Space>
+				</div>
+				<Divider orientation='left'>
+					<small>Значения</small>
+				</Divider>
+				{values.length > 0 && (
+					<Table size='small' rowKey='guid' dataSource={values}>
+						<Column<ExactValue>
+							title='Тег'
+							render={(_, record) => {
+								return (
+									<TagButton
+										tag={{
+											id: record.id,
+											guid: record.guid,
+											name: record.name,
+										}}
+									/>
+								)
+							}}
+						/>
+						<Column<ExactValue>
+							title='Текущее значение'
+							render={(_, record) => (
+								<TagCompactValue
+									type={record.type}
+									value={record.value}
+									quality={record.quality}
+								/>
+							)}
+						/>
+						<Column<ExactValue>
+							title='Новое значение'
+							render={(_, record) => {
+								switch (record.type) {
+									case TagType.Boolean:
+										return (
+											<Checkbox
+												checked={Boolean(
+													record.newValue,
+												)}
+												onChange={(e) =>
+													setNewValue(
+														record.guid,
+														e.target.checked
+															? 1
+															: 0,
+													)
+												}
+											/>
+										)
+									case TagType.Number:
+										return (
+											<InputNumber
+												value={Number(record.newValue)}
+												onChange={(e) =>
+													setNewValue(record.guid, e)
+												}
+												placeholder='Введите новое значение'
+											/>
+										)
+									case TagType.String:
+										return (
+											<Input
+												value={String(record.newValue)}
+												onChange={(e) =>
+													setNewValue(
+														record.guid,
+														e.target.value,
+													)
+												}
+												placeholder='Введите новое значение'
+											/>
+										)
+									default:
+										return <></>
+								}
+							}}
+						/>
+						<Column<ExactValue>
+							title='Ожидает записи'
+							render={(_, record) => (
+								<Checkbox
+									checked={record.hasNewValue}
+									disabled
+								/>
+							)}
+						/>
+					</Table>
+				)}
 			</div>
 		</>
 	)
