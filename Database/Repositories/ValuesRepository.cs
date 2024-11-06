@@ -3,6 +3,7 @@ using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models.Auth;
+using Datalake.Database.Models.Tags;
 using Datalake.Database.Models.Values;
 using Datalake.Database.Tables;
 using LinqToDB;
@@ -60,23 +61,33 @@ public class ValuesRepository(DatalakeContext db)
 		ValueWriteRequest[] requests,
 		bool overrided = false)
 	{
-		var trustedRequests = requests
-			.Select(x => new ValueTrustedWriteRequest
+		var trustedRequests = new List<ValueTrustedWriteRequest>();
+
+		foreach (var request in requests)
+		{
+			TagCacheInfo? tag = null;
+			if (request.Id.HasValue && TagsRepository.CachedTags.TryGetValue(request.Id.Value, out var t))
 			{
-				Tag = x.Id.HasValue ? TagsRepository.CachedTags.TryGetValue(x.Id.Value, out var i)
-					? i
-					: null!
-					: x.Guid.HasValue ? TagsRepository.CachedTags.Values
-						.Where(x => x.Guid == x.Guid)
-						.FirstOrDefault() ?? null!
-					: null!,
-				Date = x.Date,
-				Quality = x.Quality,
-				Value = x.Value,
-			})
-		.Where(x => x != null)
-		.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Editor, x.Tag.Guid))
-		.ToArray();
+				tag = t;
+			}
+			else if (request.Guid.HasValue)
+			{
+				tag = TagsRepository.CachedTags.Values
+					.Where(x => x.Guid == request.Guid)
+					.FirstOrDefault();
+			}
+
+			if (tag != null && AccessRepository.HasAccessToTag(user, AccessType.Editor, tag.Guid))
+			{
+				trustedRequests.Add(new()
+				{
+					Tag = tag,
+					Date = request.Date,
+					Quality = request.Quality,
+					Value = request.Value
+				});
+			}
+		}
 		
 		return await WriteValuesAsync(trustedRequests, overrided);
 	}
@@ -92,22 +103,33 @@ public class ValuesRepository(DatalakeContext db)
 	{
 		var stopwatch = Stopwatch.StartNew();
 
-		var trustedRequests = requests
-			.Select(x => new ValueTrustedWriteRequest
+		var trustedRequests = new List<ValueTrustedWriteRequest>();
+
+		foreach (var request in requests)
+		{
+			TagCacheInfo? tag = null;
+			if (request.Id.HasValue && TagsRepository.CachedTags.TryGetValue(request.Id.Value, out var t))
 			{
-				Tag = x.Id.HasValue ? TagsRepository.CachedTags.TryGetValue(x.Id.Value, out var i)
-					? i
-					: null!
-					: x.Guid.HasValue ? TagsRepository.CachedTags.Values
-						.Where(x => x.Guid == x.Guid)
-						.FirstOrDefault() ?? null!
-					: null!,
-				Date = x.Date,
-				Quality = x.Quality,
-				Value = x.Value,
-			})
-		.Where(x => x != null)
-		.ToArray();
+				tag = t;
+			}
+			else if (request.Guid.HasValue)
+			{
+				tag = TagsRepository.CachedTags.Values
+					.Where(x => x.Guid == request.Guid)
+					.FirstOrDefault();
+			}
+
+			if (tag != null)
+			{
+				trustedRequests.Add(new()
+				{
+					Tag = tag,
+					Date = request.Date,
+					Quality = request.Quality,
+					Value = request.Value
+				});
+			}
+		}
 
 		await WriteValuesAsync(trustedRequests, false);
 
@@ -242,7 +264,9 @@ public class ValuesRepository(DatalakeContext db)
 	/// <param name="overrided">Обязательная запись, даже если изменений не было</param>
 	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
-	internal async Task<List<ValuesTagResponse>> WriteValuesAsync(ValueTrustedWriteRequest[] requests, bool overrided = false)
+	internal async Task<List<ValuesTagResponse>> WriteValuesAsync(
+		IEnumerable<ValueTrustedWriteRequest> requests,
+		bool overrided = false)
 	{
 		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToWrite = [];
