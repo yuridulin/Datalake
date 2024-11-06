@@ -1,4 +1,5 @@
 import UserView from '@/app/pages/users/user/UserView'
+import TagsWriter from '@/app/pages/values/TagsWriter'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -26,7 +27,7 @@ import UserGroupsTreeMove from '../pages/usergroups/UserGroupsTreeMove'
 import UserCreate from '../pages/users/user/UserCreate'
 import UserForm from '../pages/users/user/UserForm'
 import UsersList from '../pages/users/UsersList'
-import TagsViewer from '../pages/viewer/TagsViewer'
+import TagsViewer from '../pages/values/TagsViewer'
 import routes from './routes'
 
 const router = createBrowserRouter([
@@ -124,7 +125,16 @@ const router = createBrowserRouter([
 				children: [
 					{
 						path: routes.tags.list,
-						element: <TagsList />,
+						children: [
+							{
+								path: routes.tags.list,
+								element: <TagsList />,
+							},
+							{
+								path: routes.tags.edit,
+								element: <TagForm />,
+							},
+						],
 					},
 					{
 						path: routes.tags.manual,
@@ -134,19 +144,19 @@ const router = createBrowserRouter([
 						path: routes.tags.calc,
 						element: <TagsCalculatedList />,
 					},
-					{
-						path: routes.tags.edit,
-						element: <TagForm />,
-					},
 				],
 			},
 			// values
 			{
-				path: routes.viewer.root,
+				path: routes.values.root,
 				children: [
 					{
-						path: routes.viewer.tagsViewer,
+						path: routes.values.tagsViewer,
 						element: <TagsViewer />,
+					},
+					{
+						path: routes.values.tagsWriter,
+						element: <TagsWriter />,
 					},
 				],
 			},

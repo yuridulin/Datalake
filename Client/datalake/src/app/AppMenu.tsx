@@ -11,11 +11,11 @@ import {
 import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { observer } from 'mobx-react-lite'
-import { NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { AccessType } from '../api/swagger/data-contracts'
 import hasAccess from '../functions/hasAccess'
 import { user } from '../state/user'
-import { CustomSource } from '../types/customSource'
 import BlockIcon from './components/icons/BlockIcon'
 import SourceIcon from './components/icons/SourceIcon'
 import TagIcon from './components/icons/TagIcon'
@@ -31,7 +31,7 @@ const items = [
 		minimalAccess: AccessType.NotSet,
 		children: [
 			{
-				key: 'blocks-tree',
+				key: routes.blocks.list,
 				label: (
 					<NavLink to={routes.blocks.list}>
 						<BlockIcon />
@@ -49,7 +49,7 @@ const items = [
 		minimalAccess: AccessType.NotSet,
 		children: [
 			{
-				key: 'tags',
+				key: routes.tags.list,
 				label: (
 					<NavLink to={routes.tags.list}>
 						<TagIcon />
@@ -59,7 +59,7 @@ const items = [
 				minimalAccess: AccessType.NotSet,
 			},
 			{
-				key: String(CustomSource.Manual),
+				key: routes.tags.manual,
 				label: (
 					<NavLink to={routes.tags.manual}>
 						<EditOutlined style={{ color: blue[4] }} />
@@ -69,7 +69,7 @@ const items = [
 				minimalAccess: AccessType.Viewer,
 			},
 			{
-				key: String(CustomSource.Calculated),
+				key: routes.tags.calc,
 				label: (
 					<NavLink to={routes.tags.calc}>
 						<CalculatorOutlined style={{ color: blue[4] }} />
@@ -81,17 +81,28 @@ const items = [
 		],
 	},
 	{
-		key: 'viewer',
-		label: 'Просмотр данных',
+		key: 'values',
+		label: 'Значения',
 		type: 'group' as MenuType,
+		path: '',
 		minimalAccess: AccessType.NotSet,
 		children: [
 			{
-				key: 'viewer-tags',
+				key: routes.values.tagsViewer,
 				label: (
-					<NavLink to={routes.viewer.tagsViewer}>
+					<NavLink to={routes.values.tagsViewer}>
 						<PlaySquareOutlined style={{ color: blue[4] }} />
-						&emsp;Запросы
+						&emsp;Просмотр
+					</NavLink>
+				),
+				minimalAccess: AccessType.NotSet,
+			},
+			{
+				key: routes.values.tagsWriter,
+				label: (
+					<NavLink to={routes.values.tagsWriter}>
+						<PlaySquareOutlined style={{ color: blue[4] }} />
+						&emsp;Запись
 					</NavLink>
 				),
 				minimalAccess: AccessType.NotSet,
@@ -105,7 +116,7 @@ const items = [
 		minimalAccess: AccessType.Viewer,
 		children: [
 			{
-				key: 'sources-list',
+				key: routes.sources.list,
 				label: (
 					<NavLink to={routes.sources.list}>
 						<SourceIcon />
@@ -123,7 +134,7 @@ const items = [
 		minimalAccess: AccessType.NotSet,
 		children: [
 			{
-				key: 'logs',
+				key: routes.stats.logs,
 				label: (
 					<NavLink to={routes.stats.logs}>
 						<UnorderedListOutlined style={{ color: blue[4] }} />
@@ -133,7 +144,7 @@ const items = [
 				minimalAccess: AccessType.NotSet,
 			},
 			{
-				key: 'users',
+				key: routes.users.list,
 				label: (
 					<NavLink to={routes.users.list}>
 						<UserIcon />
@@ -143,7 +154,7 @@ const items = [
 				minimalAccess: AccessType.NotSet,
 			},
 			{
-				key: 'user-groups',
+				key: routes.userGroups.list,
 				label: (
 					<NavLink to={routes.userGroups.list}>
 						<UserGroupIcon />
@@ -153,7 +164,7 @@ const items = [
 				minimalAccess: AccessType.NotSet,
 			},
 			{
-				key: 'settings',
+				key: routes.settings,
 				label: (
 					<NavLink to={routes.settings}>
 						<SettingOutlined style={{ color: blue[5] }} />
@@ -169,6 +180,31 @@ const items = [
 const AppMenu = observer(() => {
 	const { token } = theme.useToken()
 	const globalAccess = user.globalAccessType
+	const [selected, setSelected] = useState([] as string[])
+
+	const location = useLocation()
+	const currentPath = location.pathname
+
+	useEffect(() => {
+		// Найти все ссылки с классом active
+		const links = document.querySelectorAll('#app-menu a')
+		const selectedKeys = [] as string[]
+		links.forEach((link) => {
+			const menuItem = link.closest('li')
+			if (menuItem) {
+				if (link.classList.contains('active')) {
+					menuItem.classList.add('ant-menu-item-selected')
+					selectedKeys.push(
+						(menuItem.getAttribute('data-menu-id') || '').replace(
+							'app-menu-',
+							'',
+						),
+					)
+				} else menuItem.classList.remove('ant-menu-item-selected')
+			}
+		})
+		setSelected(selectedKeys)
+	}, [currentPath])
 
 	const filteredItems: ItemType<MenuItemType>[] = items
 		.filter((item) => hasAccess(globalAccess, item.minimalAccess))
@@ -186,7 +222,8 @@ const AppMenu = observer(() => {
 			style={{ border: 0, backgroundColor: token.colorBgLayout }}
 			items={filteredItems}
 			mode='inline'
-			defaultOpenKeys={['tags']}
+			id='app-menu'
+			selectedKeys={selected}
 		/>
 	)
 })

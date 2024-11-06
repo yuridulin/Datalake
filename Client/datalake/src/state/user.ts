@@ -18,6 +18,7 @@ class User implements UserAuthInfo {
 		this.globalAccessType = AccessType[
 			(localStorage.getItem(accessHeader) || '') as unknown as AccessType
 		] as unknown as AccessType
+		this.accessRule = { ruleId: 0, accessType: this.globalAccessType }
 
 		//debugger
 		const storedTheme = localStorage.getItem(themeKey)
@@ -38,6 +39,7 @@ class User implements UserAuthInfo {
 	guid: string = ''
 	fullName: string
 	globalAccessType: AccessType
+	accessRule: AccessRuleInfo
 	groups: Record<string, AccessRuleInfo> = {}
 	sources: Record<number, AccessRuleInfo> = {}
 	blocks: Record<number, AccessRuleInfo> = {}

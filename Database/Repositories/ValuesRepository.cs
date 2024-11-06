@@ -3,7 +3,6 @@ using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models.Auth;
-using Datalake.Database.Models.Tags;
 using Datalake.Database.Models.Values;
 using Datalake.Database.Tables;
 using LinqToDB;

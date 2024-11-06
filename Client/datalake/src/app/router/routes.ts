@@ -45,23 +45,28 @@ const routes = {
 		loginPage: '/login',
 		energoId: '/energo-id',
 	},
-	viewer: {
-		root: '/viewer',
-		tagsViewer: '/viewer/tags',
+	values: {
+		root: '/values',
+		tagsViewer: '/values/view',
+		tagsWriter: '/values/write',
 	},
 	tags: {
 		root: '/tags',
 		list: '/tags/all',
 		manual: '/tags/manual',
 		calc: '/tags/calculated',
-		edit: '/tags/:id/edit',
+		view: '/tags/all/:id/view',
+		edit: '/tags/all/:id/edit',
+		toTag(guid: string) {
+			return withId(this.view, guid)
+		},
 		toTagForm(guid: string) {
 			return withId(this.edit, guid)
 		},
 	},
 	blocks: {
 		root: '/blocks',
-		list: '/blocks/',
+		list: '/blocks',
 		mover: '/blocks/mover',
 		view: '/blocks/:id/view',
 		edit: '/blocks/:id/edit',
