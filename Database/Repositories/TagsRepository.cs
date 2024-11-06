@@ -27,13 +27,13 @@ public class TagsRepository(DatalakeContext db)
 		UserAuthInfo user,
 		TagCreateRequest tagCreateRequest)
 	{
-		if (tagCreateRequest.SourceId.HasValue)
+		if (tagCreateRequest.SourceId.HasValue && tagCreateRequest.SourceId.Value > 0)
 			AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value);
 
 		if (tagCreateRequest.BlockId.HasValue)
 			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, tagCreateRequest.BlockId.Value);
 
-		if (!tagCreateRequest.SourceId.HasValue && !tagCreateRequest.BlockId.HasValue)
+		if ((!tagCreateRequest.SourceId.HasValue || tagCreateRequest.SourceId.Value <= 0) && !tagCreateRequest.BlockId.HasValue)
 			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 		
 		User = user.Guid;
