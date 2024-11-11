@@ -74,7 +74,7 @@ api.instance.interceptors.response.use(
 	},
 )
 
-if (window.location.pathname !== routes.auth.energoId) {
+const identifyUser = () => {
 	api.usersIdentify()
 		.then((res) => {
 			if (res.status != 200) return
@@ -83,4 +83,10 @@ if (window.location.pathname !== routes.auth.energoId) {
 		.catch()
 }
 
+if (window.location.pathname !== routes.auth.energoId) {
+	identifyUser()
+}
+
 export default api
+
+export { identifyUser }

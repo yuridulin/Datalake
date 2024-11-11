@@ -1,4 +1,4 @@
-import api from '@/api/swagger-api'
+import api, { identifyUser } from '@/api/swagger-api'
 import { Button, Space } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useAuth } from 'react-oidc-context'
@@ -33,6 +33,7 @@ const EnergoId = observer(() => {
 				if (res.status === 200) {
 					user.setName(res.data.fullName)
 					navigate(routes.globalRoot)
+					identifyUser()
 				}
 			})
 			.catch(() => {
