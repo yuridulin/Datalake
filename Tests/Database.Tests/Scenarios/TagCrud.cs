@@ -1,6 +1,5 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Database.Models.Tags;
-using LinqToDB;
 
 namespace Datalake.Database.Tests.Scenarios
 {
@@ -63,9 +62,7 @@ namespace Datalake.Database.Tests.Scenarios
 
 			async Task<TagInfo?> GetTag(Guid guid)
 			{
-				return await db.TagsRepository.GetInfoWithSources()
-					.Where(x => x.Guid == guid)
-					.FirstOrDefaultAsync();
+				return await db.TagsRepository.ReadAsync(admin, guid);
 			}
 		}
 	}

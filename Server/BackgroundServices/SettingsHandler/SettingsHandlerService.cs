@@ -73,8 +73,8 @@ public class SettingsHandlerService(
 	}
 
 
-	private DateTime StoredSystemUpdate;
-	private DateTime StoredAccessUpdate;
+	private DateTime StoredSystemUpdate = DateTime.MinValue.AddMinutes(1);
+	private DateTime StoredAccessUpdate = DateTime.MinValue.AddMinutes(1);
 
 	/// <inheritdoc />
 	public async Task WriteStartipFileAsync(SystemRepository systemRepository)

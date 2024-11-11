@@ -11,7 +11,7 @@ public class HistoryIndexerService(
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<HistoryIndexerService> logger) : BackgroundService
 {
-	DateTime LastIndexedTableDate = DateTime.MinValue;
+	DateTime LastIndexedTableDate = DateTime.MinValue.AddMinutes(1);
 
 	/// <summary>
 	/// Периодическая проверка необходимости создания индексов для таблиц истории позже сегодня
