@@ -45,15 +45,13 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	/// <summary>
 	/// Получение списка блоков с базовой информацией о них
 	/// </summary>
-	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public async Task<ActionResult<BlockWithTagsInfo[]>> ReadAsync(
-		Guid? energoId = null)
+	public async Task<ActionResult<BlockWithTagsInfo[]>> ReadAsync()
 	{
 		var user = Authenticate();
 
-		return await db.BlocksRepository.ReadAllAsync(user, energoId);
+		return await db.BlocksRepository.ReadAllAsync(user);
 	}
 
 	/// <summary>
@@ -74,15 +72,13 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	/// <summary>
 	/// Получение иерархической структуры всех блоков
 	/// </summary>
-	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список обособленных блоков с вложенными блоками</returns>
 	[HttpGet("tree")]
-	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync(
-		Guid? energoId = null)
+	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync()
 	{
 		var user = Authenticate();
 
-		return await db.BlocksRepository.ReadAllAsTreeAsync(user, energoId);
+		return await db.BlocksRepository.ReadAllAsTreeAsync(user);
 	}
 
 	/// <summary>

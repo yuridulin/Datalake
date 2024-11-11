@@ -50,13 +50,11 @@ public class BlocksRepository(DatalakeContext db)
 	/// Получение списка блоков с учетом уровня доступа
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
-	/// <param name="energoId">Пользователь EnergoId из внешнего источника</param>
 	/// <returns>Список блоков с уровнями доступа к ним</returns>
 	public async Task<BlockWithTagsInfo[]> ReadAllAsync(
-		UserAuthInfo user,
-		Guid? energoId = null)
+		UserAuthInfo user)
 	{
-		BlockWithTagsInfo[] blocks = await GetBlocks(user, energoId);
+		BlockWithTagsInfo[] blocks = await GetBlocks(user);
 
 		return blocks.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer)).ToArray();
 	}
@@ -87,13 +85,11 @@ public class BlocksRepository(DatalakeContext db)
 	/// Получение дерева блоков с учетом уровня доступа
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
-	/// <param name="energoId">Пользователь EnergoId из внешнего источника</param>
 	/// <returns>Дерево блоков с уровнями доступа к ним</returns>
 	public async Task<BlockTreeInfo[]> ReadAllAsTreeAsync(
-		UserAuthInfo user,
-		Guid? energoId = null)
+		UserAuthInfo user)
 	{
-		BlockWithTagsInfo[] blocks = await GetBlocks(user, energoId);
+		BlockWithTagsInfo[] blocks = await GetBlocks(user);
 
 		return ReadChildren(null);
 
@@ -341,19 +337,14 @@ public class BlocksRepository(DatalakeContext db)
 		return true;
 	}
 
-	private async Task<BlockWithTagsInfo[]> GetBlocks(UserAuthInfo user, Guid? energoId)
+	private async Task<BlockWithTagsInfo[]> GetBlocks(UserAuthInfo user)
 	{
-		var rights = user;
-		if (energoId.HasValue)
-		{
-			AccessRepository.ThrowIfNoGlobalAccess(rights, AccessType.Viewer);
-			rights = AccessRepository.GetAuthInfo(energoId.Value);
-		}
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
 		var blocks = await QuerySimpleInfo().ToArrayAsync();
 		foreach (var block in blocks)
 		{
-			block.AccessRule = rights.Blocks.TryGetValue(block.Id, out var rule) ? rule : AccessRuleInfo.Default;
+			block.AccessRule = AccessRepository.GetAccessToBlock(user, block.Id);
 		}
 
 		return blocks;
