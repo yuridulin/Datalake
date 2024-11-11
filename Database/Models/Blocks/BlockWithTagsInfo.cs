@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Enums;
-using Datalake.Database.Models.Auth;
+﻿using Datalake.Database.Models.Auth;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Blocks;

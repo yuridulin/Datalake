@@ -1,5 +1,5 @@
-﻿using Datalake.Database.Models.Sources;
-using Datalake.Database;
+﻿using Datalake.Database;
+using Datalake.Database.Models.Sources;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;

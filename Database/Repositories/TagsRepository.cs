@@ -35,7 +35,7 @@ public class TagsRepository(DatalakeContext db)
 
 		if ((!tagCreateRequest.SourceId.HasValue || tagCreateRequest.SourceId.Value <= 0) && !tagCreateRequest.BlockId.HasValue)
 			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-		
+
 		User = user.Guid;
 
 		return await CreateAsync(tagCreateRequest);
@@ -50,7 +50,8 @@ public class TagsRepository(DatalakeContext db)
 	public async Task<TagInfo> ReadAsync(UserAuthInfo user, Guid guid)
 	{
 		var rule = AccessRepository.GetAccessToTag(user, guid);
-		if (!rule.AccessType.HasAccess(AccessType.Viewer)) throw Errors.NoAccess;
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
 
 		var tag = await db.TagsRepository.GetInfoWithSources()
 			.Where(x => x.Guid == guid)

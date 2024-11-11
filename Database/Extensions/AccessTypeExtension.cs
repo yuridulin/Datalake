@@ -22,13 +22,13 @@ public static class AccessTypeExtension
 			AccessType.NoAccess =>
 				current != AccessType.NoAccess,
 
-			AccessType.Viewer => 
-				current == AccessType.Viewer 
+			AccessType.Viewer =>
+				current == AccessType.Viewer
 				|| current == AccessType.Editor
 				|| current == AccessType.Manager
 				|| current == AccessType.Admin,
 
-			AccessType.Editor => 
+			AccessType.Editor =>
 				current == AccessType.Editor
 				|| current == AccessType.Manager
 				|| current == AccessType.Admin,

@@ -88,7 +88,7 @@ public class ValuesRepository(DatalakeContext db)
 				});
 			}
 		}
-		
+
 		return await WriteValuesAsync(trustedRequests, overrided);
 	}
 

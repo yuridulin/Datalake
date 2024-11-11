@@ -1,6 +1,5 @@
 using Datalake.Database;
 using Datalake.Database.Enums;
-using Datalake.Database.Tables;
 using Datalake.Server.Constants;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services;

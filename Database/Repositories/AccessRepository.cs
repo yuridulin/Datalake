@@ -950,12 +950,12 @@ public class AccessRepository(DatalakeContext db)
 		if (!HasAccessToUserGroup(user, minimalAccess, groupGuid))
 			throw Errors.NoAccess;
 	}
-	
+
 	/// <summary>
-	 /// Получение глобального уровня доступа
-	 /// </summary>
-	 /// <param name="user">Информация о пользователе</param>
-	 /// <returns>Глобальный уровень доступа</returns>
+	/// Получение глобального уровня доступа
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Глобальный уровень доступа</returns>
 	public static AccessType GetGlobalAccess(UserAuthInfo user)
 	{
 		var access = user.GlobalAccessType;

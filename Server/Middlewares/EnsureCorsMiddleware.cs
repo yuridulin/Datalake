@@ -14,7 +14,8 @@ internal static class EnsureCorsMiddleware
 				corsHeaders[pair.Key] = pair.Value;
 			}
 
-			httpContext.Response.OnStarting(o => {
+			httpContext.Response.OnStarting(o =>
+			{
 				var ctx = (HttpContext)o;
 				var headers = ctx.Response.Headers;
 				foreach (var pair in corsHeaders)

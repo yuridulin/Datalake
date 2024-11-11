@@ -40,7 +40,7 @@ public class BlocksRepository(DatalakeContext db)
 		{
 			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 		}
-		
+
 		User = user.Guid;
 
 		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync(parentId);
@@ -71,7 +71,8 @@ public class BlocksRepository(DatalakeContext db)
 		int id)
 	{
 		var rule = AccessRepository.GetAccessToBlock(user, id);
-		if (!rule.AccessType.HasAccess(AccessType.Viewer)) throw Errors.NoAccess;
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
 
 		var block = await QueryFullInfo().FirstOrDefaultAsync(x => x.Id == id)
 			?? throw new NotFoundException(message: "блок #" + id);
