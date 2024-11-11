@@ -15,7 +15,7 @@ namespace Datalake.Database.Tests.Scenarios
 
 			await context.Database.EnsureDeletedAsync();
 			await context.Database.EnsureCreatedAsync();
-		
+
 			using var db = await Setup.CreateDbContextAsync(DbName);
 
 			await db.EnsureDataCreatedAsync();

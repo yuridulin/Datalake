@@ -185,6 +185,7 @@ public class UsersRepository(DatalakeContext db)
 				if (await db.Users.AnyAsync(x => x.EnergoIdGuid == request.EnergoIdGuid))
 					throw new AlreadyExistException(message: "учётная запись с выбранным EnergoID");
 				hash = string.Empty;
+				request.Login = string.Empty;
 				break;
 		}
 

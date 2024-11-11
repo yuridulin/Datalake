@@ -7,7 +7,6 @@ using Datalake.Server.Constants;
 using Datalake.Server.Services.Receiver.Models.Inopc;
 using Datalake.Server.TestRunner.Attributes;
 using Datalake.Server.TestRunner.Extensions;
-using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 
 namespace Datalake.Server.TestRunner.Tests.CollectorsTests;
