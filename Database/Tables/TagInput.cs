@@ -5,28 +5,49 @@ using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribu
 
 namespace Datalake.Database.Tables;
 
+/// <summary>
+/// Запись в таблице связей тега с другими тегами для вычисления значений
+/// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public class TagInput
 {
-	public const string TableName = "TagInputs";
+	const string TableName = "TagInputs";
 
 	// поля в БД
 
+	/// <summary>
+	/// Идентификатор
+	/// </summary>
 	[Column, Key, Identity]
 	public int Id { get; set; }
 
+	/// <summary>
+	/// Идентификатор результиющего тега
+	/// </summary>
 	[Column]
 	public int TagId { get; set; }
 
+	/// <summary>
+	/// Идентификатор входного тега
+	/// </summary>
 	[Column]
 	public int? InputTagId { get; set; }
 
+	/// <summary>
+	/// Имя переменной в формуле
+	/// </summary>
 	[Column]
 	public string VariableName { get; set; } = string.Empty;
 
 	// связи
 
+	/// <summary>
+	/// Результирующий тег
+	/// </summary>
 	public Tag Tag { get; set; } = null!;
 
+	/// <summary>
+	/// Входной тег
+	/// </summary>
 	public Tag? InputTag { get; set; }
 }

@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Constants;
 using System.Diagnostics;
 
 namespace Datalake.Server.BackgroundServices.History;
@@ -29,7 +30,7 @@ public class HistoryIndexerService(
 				var tables = await db.TablesRepository.GetHistoryTablesFromSchema();
 
 				var notIndexedTables = tables
-					.Where(x => x.Date < DateTime.Today)
+					.Where(x => x.Date < DateFormats.GetCurrentDateTime().Date)
 					.Where(x => x.Date > LastIndexedTableDate)
 					.Where(x => !x.HasIndex)
 					.OrderBy(x => x.Date)
@@ -55,12 +56,14 @@ public class HistoryIndexerService(
 					catch (Exception ex)
 					{
 						logger.LogWarning("Не удалось создать индекс для {name}: {message}", table.Name, ex);
+						hasError = true;
 					}
 				}
 			}
 			catch (Exception ex)
 			{
 				logger.LogWarning("Ошибка при индексации истории: {message}", ex);
+				hasError = true;
 			}
 
 			await Task.Delay(hasError ? TimeSpan.FromMinutes(1) : TimeSpan.FromHours(1), stoppingToken);

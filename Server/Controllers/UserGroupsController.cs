@@ -1,8 +1,7 @@
-﻿using Datalake.Database.Exceptions;
+﻿using Datalake.Database;
+using Datalake.Database.Exceptions;
 using Datalake.Database.Models.UserGroups;
-using Datalake.Database;
 using Datalake.Server.Controllers.Base;
-using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -34,10 +33,11 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	/// </summary>
 	/// <returns>Список групп</returns>
 	[HttpGet]
-	public async Task<ActionResult<UserGroupInfo[]>> ReadAsync()
+	public async Task<ActionResult<UserGroupInfo[]>> ReadAllAsync()
 	{
-		return await db.UserGroupsRepository.GetInfo()
-			.ToArrayAsync();
+		var user = Authenticate();
+
+		return await db.UserGroupsRepository.ReadAllAsync(user);
 	}
 
 	/// <summary>
@@ -50,10 +50,9 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	public async Task<ActionResult<UserGroupInfo>> ReadAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
-		return await db.UserGroupsRepository.GetInfo()
-			.Where(x => x.Guid == groupGuid)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"группа {groupGuid}");
+		var user = Authenticate();
+
+		return await db.UserGroupsRepository.ReadAsync(user, groupGuid);
 	}
 
 	/// <summary>
@@ -63,9 +62,9 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	[HttpGet("tree")]
 	public async Task<ActionResult<UserGroupTreeInfo[]>> ReadAsTreeAsync()
 	{
-		var tree = await db.UserGroupsRepository.GetTreeAsync();
+		var user = Authenticate();
 
-		return tree;
+		return await db.UserGroupsRepository.ReadAllAsTreeAsync(user);
 	}
 
 	/// <summary>
@@ -78,10 +77,9 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	public async Task<ActionResult<UserGroupDetailedInfo>> ReadWithDetailsAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
-		return await db.UserGroupsRepository.GetWithDetails()
-			.Where(x => x.Guid == groupGuid)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException(message: $"группа пользователей \"{groupGuid}\"");
+		var user = Authenticate();
+
+		return await db.UserGroupsRepository.ReadWithDetailsAsync(user, groupGuid);
 	}
 
 	/// <summary>
@@ -112,6 +110,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 		[FromQuery] Guid? parentGuid)
 	{
 		var user = Authenticate();
+
 		await db.UserGroupsRepository.MoveAsync(user, groupGuid, parentGuid);
 
 		return NoContent();

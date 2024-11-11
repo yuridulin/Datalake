@@ -1,7 +1,6 @@
-﻿using Datalake.Database.Models.AccessRights;
-using Datalake.Database;
+﻿using Datalake.Database;
+using Datalake.Database.Models.AccessRights;
 using Datalake.Server.Controllers.Base;
-using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Server.Controllers;
@@ -30,32 +29,15 @@ public class AccessController(DatalakeContext db) : ApiControllerBase
 		[FromQuery] int? block = null,
 		[FromQuery] int? tag = null)
 	{
-		var query = db.AccessRepository.GetAccessRightsInfo(
+		var userAuth = Authenticate();
+
+		return await db.AccessRepository.GetRightsAsync(
+			user: userAuth,
 			userGuid: user,
 			userGroupGuid: userGroup,
 			sourceId: source,
 			blockId: block,
 			tagId: tag);
-
-		return await query.ToArrayAsync();
-	}
-
-	/// <summary>
-	/// Получение разрешений пользователя на конкретные объекты, включая непрямые (предоставленные на объекты выше в иерархии либо на группы пользователя)
-	/// </summary>
-	/// <param name="user">Идентификатор пользователя</param>
-	/// <param name="sources">Идентификаторы источников, разрешения на которые нужно проверить</param>
-	/// <param name="blocks">Идентификаторы блоков, разрешения на которые нужно проверить</param>
-	/// <param name="tags">Идентификаторы тегов, разрешения на которые нужно проверить</param>
-	/// <returns>Список разрешений на доступ к запрошенным объектам</returns>
-	[HttpGet("{user}")]
-	public Task<ActionResult<AccessRightsForOneInfo[]>> CheckUserAccessAsync(
-		[FromRoute] Guid user,
-		[FromQuery] int[]? sources = null,
-		[FromQuery] int[]? blocks = null,
-		[FromQuery] int[]? tags = null)
-	{
-		throw new NotImplementedException();
 	}
 
 	/// <summary>

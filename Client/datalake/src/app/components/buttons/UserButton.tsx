@@ -1,0 +1,26 @@
+import { AccessType, UserSimpleInfo } from '@/api/swagger/data-contracts'
+import UserIcon from '@/app/components/icons/UserIcon'
+import routes from '@/app/router/routes'
+import hasAccess from '@/functions/hasAccess'
+import { Button } from 'antd'
+import { NavLink } from 'react-router-dom'
+
+type UserGroupButtonProps = {
+	userInfo: UserSimpleInfo
+}
+
+const UserButton = ({ userInfo }: UserGroupButtonProps) => {
+	return hasAccess(userInfo.accessRule.accessType, AccessType.Viewer) ? (
+		<NavLink to={routes.users.toUserView(userInfo.guid)}>
+			<Button size='small' icon={<UserIcon />}>
+				{userInfo.fullName}
+			</Button>
+		</NavLink>
+	) : (
+		<Button size='small' disabled icon={<UserIcon />}>
+			Нет доступа
+		</Button>
+	)
+}
+
+export default UserButton

@@ -1,4 +1,6 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Database.Abstractions;
+using Datalake.Database.Enums;
+using Datalake.Database.Models.Auth;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Tags;
@@ -6,7 +8,7 @@ namespace Datalake.Database.Models.Tags;
 /// <summary>
 /// Информация о теге
 /// </summary>
-public class TagInfo : TagSimpleInfo
+public class TagInfo : TagSimpleInfo, IProtectedEntity
 {
 	/// <summary>
 	/// Произвольное описание тега
@@ -86,5 +88,8 @@ public class TagInfo : TagSimpleInfo
 	/// Входные переменные для формулы, по которой рассчитывается значение
 	/// </summary>
 	[Required]
-	public required TagInputInfo[] FormulaInputs { get; set; } = [];
+	public required IEnumerable<TagInputInfo> FormulaInputs { get; set; } = [];
+
+	/// <inheritdoc />
+	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

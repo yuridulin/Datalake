@@ -1,22 +1,31 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Sources;
-using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
 
-public partial class SourcesRepository(DatalakeContext db)
+/// <summary>
+/// Репозиторий для работы с источниками данных
+/// </summary>
+public class SourcesRepository(DatalakeContext db)
 {
 	#region Действия
 
+	/// <summary>
+	/// Создание нового источника
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="sourceInfo">Параметры нового источника</param>
+	/// <returns>Идентификатор нового источника</returns>
 	public async Task<int> CreateAsync(
 		UserAuthInfo user,
 		SourceInfo? sourceInfo = null)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 		User = user.Guid;
 
 		if (sourceInfo != null)
@@ -25,22 +34,103 @@ public partial class SourcesRepository(DatalakeContext db)
 		return await CreateAsync();
 	}
 
+	/// <summary>
+	/// Получение информации об источнике
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Информация об источнике</returns>
+	public async Task<SourceInfo> ReadAsync(UserAuthInfo user, int id)
+	{
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
+
+		var source = await QueryInfo().Where(x => x.Id == id).FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "источник #" + id);
+
+		source.AccessRule = user.Sources[id];
+
+		return source;
+	}
+
+	/// <summary>
+	/// Получение информации об источнике, включая теги, зависящие от него
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Информация об источнике</returns>
+	public async Task<SourceWithTagsInfo> ReadWithTagsAsync(UserAuthInfo user, int id)
+	{
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
+
+		var source = await QueryInfoWithTags().Where(x => x.Id == id).FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "источник #" + id);
+
+		source.AccessRule = user.Sources[id];
+
+		foreach (var tag in source.Tags)
+		{
+			var rule = user.Tags.TryGetValue(tag.Guid, out var r) ? r : AccessRuleInfo.Default;
+			tag.AccessRule = rule;
+
+			if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			{
+				tag.Guid = Guid.Empty;
+				tag.Name = string.Empty;
+				tag.Interval = 0;
+			}
+		}
+
+		return source;
+	}
+
+	/// <summary>
+	/// Получение списка источников
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="withCustom">Включать в список системные источники</param>
+	/// <returns>Список источников</returns>
+	public async Task<SourceInfo[]> ReadAllAsync(UserAuthInfo user, bool withCustom)
+	{
+		var sources = await QueryInfo(withCustom).ToArrayAsync();
+
+		foreach (var source in sources)
+		{
+			var rule = user.Sources.TryGetValue(source.Id, out var r) ? r : AccessRuleInfo.Default;
+			source.AccessRule = rule;
+		}
+
+		return sources.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer)).ToArray();
+	}
+
+	/// <summary>
+	/// Изменение параметров источника
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <param name="sourceInfo">Новые параметры источника</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(
 		UserAuthInfo user,
 		int id,
 		SourceInfo sourceInfo)
 	{
-		await db.AccessRepository.CheckAccessToSource(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await UpdateAsync(id, sourceInfo);
 	}
 
+	/// <summary>
+	/// Удаление источника
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(
 		UserAuthInfo user,
 		int id)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await DeleteAsync(id);
@@ -74,6 +164,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 
 		SystemRepository.Update();
+		AccessRepository.Update();
 
 		return id.Value;
 	}
@@ -101,6 +192,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 
 		SystemRepository.Update();
+		AccessRepository.Update();
 
 		return id.Value;
 	}
@@ -167,6 +259,7 @@ public partial class SourcesRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 
 		SystemRepository.Update();
+		AccessRepository.Update();
 
 		return true;
 	}
@@ -182,6 +275,82 @@ public partial class SourcesRepository(DatalakeContext db)
 			Type = LogType.Success,
 			Details = details,
 		});
+	}
+
+	#endregion
+
+	#region Запросы
+
+	static int[] CustomSourcesId = Enum.GetValues<CustomSource>().Cast<int>().ToArray();
+
+	/// <summary>
+	/// Запрос информации о источниках без связей
+	/// </summary>
+	/// <param name="withCustom">Включать ли системные источники в запрос</param>
+	public IQueryable<SourceInfo> QueryInfo(bool withCustom = false)
+	{
+		var query =
+			from source in db.Sources
+			where withCustom || !CustomSourcesId.Contains(source.Id)
+			select new SourceInfo
+			{
+				Id = source.Id,
+				Name = source.Name,
+				Address = source.Address,
+				Description = source.Description,
+				Type = source.Type,
+			};
+
+		return query;
+	}
+
+	/// <summary>
+	/// Запрос информации о источниках вместе со списками зависящих тегов
+	/// </summary>
+	public IQueryable<SourceWithTagsInfo> QueryInfoWithTags()
+	{
+		var query =
+			from source in db.Sources
+			select new SourceWithTagsInfo
+			{
+				Id = source.Id,
+				Address = source.Address,
+				Name = source.Name,
+				Type = source.Type,
+				Tags =
+					from tag in db.Tags
+					where tag.SourceId == source.Id
+					select new SourceTagInfo
+					{
+						Guid = tag.GlobalGuid,
+						Item = tag.SourceItem ?? string.Empty,
+						Name = tag.Name,
+						Type = tag.Type,
+						Interval = tag.Interval,
+					}
+			};
+
+		return query;
+	}
+
+	/// <summary>
+	/// Запрос информации о зависящих от источника тегов по его идентификатору
+	/// </summary>
+	/// <param name="id">Идентификатор источника</param>
+	internal IQueryable<SourceTagInfo> QueryExistTags(int id)
+	{
+		var query = db.Tags
+			.Where(x => x.SourceId == id)
+			.Select(x => new SourceTagInfo
+			{
+				Guid = x.GlobalGuid,
+				Name = x.Name,
+				Type = x.Type,
+				Item = x.SourceItem ?? string.Empty,
+				Interval = x.Interval,
+			});
+
+		return query;
 	}
 
 	#endregion

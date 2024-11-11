@@ -1,5 +1,5 @@
 ﻿using Datalake.Database.Exceptions;
-using Datalake.Database.Models.Users;
+using Datalake.Database.Models.Auth;
 using Datalake.Server.Constants;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,12 +18,19 @@ namespace Datalake.Server.Controllers.Base
 		/// <exception cref="NotFoundException">Сессия не найдена</exception>
 		protected UserAuthInfo Authenticate()
 		{
-			if (HttpContext.Items.TryGetValue(AuthConstants.ContextSessionKey, out var session))
+			if (HttpContext.Items.TryGetValue(AuthConstants.ContextSessionKey, out var sessionUserAuthInfo))
 			{
-				if (session == null)
+				if (sessionUserAuthInfo == null)
 					throw new ForbiddenException(message: "требуется пройти аутентификацию");
 
-				return (UserAuthInfo)session;
+				var user = (UserAuthInfo)sessionUserAuthInfo;
+
+				if (HttpContext.Request.Headers.TryGetValue(AuthConstants.UnderlyingUserGuidHeader, out var raw))
+				{
+					user.UnderlyingUserGuid = Guid.TryParse(raw, out var guid) ? guid : null;
+				}
+
+				return user;
 			}
 
 			throw new NotFoundException(message: "данные о сессии");

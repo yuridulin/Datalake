@@ -114,12 +114,13 @@ internal class InopcCollector : CollectorBase
 
 					var response = await _receiverService.AskInopc(items, _address, true);
 					var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
+					now = DateFormats.GetCurrentDateTime();
 
 					var collectedValues = response.Tags
 						.SelectMany(item => _itemsTags[item.Name]
 							.Select(guid => new CollectValue
 							{
-								DateTime = DateFormats.GetCurrentDateTime(),
+								DateTime = now,
 								Name = item.Name,
 								Quality = item.Quality,
 								Guid = guid,
@@ -135,7 +136,7 @@ internal class InopcCollector : CollectorBase
 
 					foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
 					{
-						tag.LastAsk = response.Timestamp;
+						tag.LastAsk = now;
 					}
 				}
 

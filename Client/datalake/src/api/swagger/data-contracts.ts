@@ -30,6 +30,38 @@ export interface UserGroupSimpleInfo {
 	 * @minLength 1
 	 */
 	name: string
+	/** Правило доступа */
+	accessRule: AccessRuleInfo
+}
+
+/** Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ */
+export interface AccessRuleInfo {
+	/**
+	 * Идентификатор правила доступа
+	 * @format int32
+	 */
+	ruleId: number
+	/** Уровень доступа */
+	accessType: AccessType
+}
+
+/**
+ * Уровень доступа
+ *
+ * 0 = NoAccess
+ * 5 = Viewer
+ * 10 = Editor
+ * 50 = Manager
+ * 100 = Admin
+ * -100 = NotSet
+ */
+export enum AccessType {
+	NoAccess = 0,
+	Viewer = 5,
+	Editor = 10,
+	Manager = 50,
+	Admin = 100,
+	NotSet = -100,
 }
 
 /** Базовая информация о пользователе */
@@ -45,6 +77,8 @@ export interface UserSimpleInfo {
 	 * @minLength 1
 	 */
 	fullName: string
+	/** Правило доступа */
+	accessRule: AccessRuleInfo
 }
 
 /** Информация о разрешении субьекта на доступ к объекту */
@@ -117,28 +151,11 @@ export interface AccessRightsSimpleInfo {
 	 * Идентификатор разрешения
 	 * @format int32
 	 */
-	id?: number
+	id: number
 	/** Тип доступа */
-	accessType?: AccessType
+	accessType: AccessType
 	/** Является ли разрешение глобальным */
-	isGlobal?: boolean
-}
-
-/**
- * Уровень доступа
- *
- * 0 = NoAccess
- * 5 = Viewer
- * 10 = User
- * 100 = Admin
- * -100 = NotSet
- */
-export enum AccessType {
-	NoAccess = 0,
-	Viewer = 5,
-	User = 10,
-	Admin = 100,
-	NotSet = -100,
+	isGlobal: boolean
 }
 
 /** Измененное разрешение, которое нужно обновить в БД */
@@ -169,7 +186,7 @@ export interface AccessRightsApplyRequest {
 	 */
 	tagId?: number | null
 	/** Список прав доступа */
-	rights?: AccessRightsIdInfo[]
+	rights: AccessRightsIdInfo[]
 }
 
 /** Измененное разрешение, которое нужно обновить в БД */
@@ -180,7 +197,7 @@ export interface AccessRightsIdInfo {
 	 */
 	id?: number | null
 	/** Уровень доступа */
-	accessType?: AccessType
+	accessType: AccessType
 	/**
 	 * Идентификатор пользователя, которому выдается разрешение
 	 * @format guid
@@ -281,6 +298,8 @@ export type BlockWithTagsInfo = BlockSimpleInfo & {
 	parentId?: number | null
 	/** Текстовое описание */
 	description?: string | null
+	/** Уровень доступа к блоку */
+	accessRule: AccessRuleInfo
 	/** Список прикреплённых тегов */
 	tags: BlockNestedTagInfo[]
 }
@@ -365,6 +384,8 @@ export type SourceInfo = SourceSimpleInfo & {
 	address?: string | null
 	/** Тип протокола, по которому запрашиваются данные */
 	type: SourceType
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /**
@@ -457,6 +478,8 @@ export interface SourceTagInfo {
 	 * @format int32
 	 */
 	interval: number
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /** Запись собщения */
@@ -630,6 +653,8 @@ export type TagInfo = TagSimpleInfo & {
 	maxRaw: number
 	/** Входные переменные для формулы, по которой рассчитывается значение */
 	formulaInputs: TagInputInfo[]
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /** Тег, используемый как входной параметр в формуле */
@@ -639,6 +664,8 @@ export type TagInputInfo = TagSimpleInfo & {
 	 * @minLength 1
 	 */
 	variableName: string
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /** Необходимые данные для создания тега */
@@ -665,6 +692,8 @@ export interface TagCreateRequest {
 export type TagAsInputInfo = TagSimpleInfo & {
 	/** Тип данных тега */
 	type: TagType
+	/** Правило доступа */
+	accessRule?: AccessRuleInfo
 }
 
 /** Данные запроса для изменение тега */
@@ -826,31 +855,21 @@ export type UserAuthInfo = UserSimpleInfo & {
 	 * @minLength 1
 	 */
 	token: string
-	/** Список правил доступа */
-	rights: UserAccessRightsInfo[]
-}
-
-/** Правило доступа пользователя */
-export interface UserAccessRightsInfo {
-	/** Является ли это правило глобальным */
-	isGlobal: boolean
+	/** Глобальный уровень доступа */
+	globalAccessType: AccessType
+	/** Список всех блоков с указанием доступа к ним */
+	groups: Record<string, AccessRuleInfo>
+	/** Список всех блоков с указанием доступа к ним */
+	sources: Record<string, AccessRuleInfo>
+	/** Список всех блоков с указанием доступа к ним */
+	blocks: Record<string, AccessRuleInfo>
+	/** Список всех тегов с указанием доступа к ним */
+	tags: Record<string, AccessRuleInfo>
 	/**
-	 * Идентификатор тега, на который распространяется это правило
-	 * @format int32
+	 * Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
+	 * @format guid
 	 */
-	tagId?: number | null
-	/**
-	 * Идентификатор источника, на который распространяется это правило
-	 * @format int32
-	 */
-	sourceId?: number | null
-	/**
-	 * Идентификатор блока, на который распространяется это правило
-	 * @format int32
-	 */
-	blockId?: number | null
-	/** Уровень доступа на основе этого правила */
-	accessType: AccessType
+	underlyingUserGuid?: string | null
 }
 
 /** Информация при аутентификации локальной учетной записи */

@@ -1,22 +1,31 @@
 ﻿using Datalake.Database.Enums;
-using Datalake.Database.Models.Classes;
+using Datalake.Database.Models.Tables;
 using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
+/// <summary>
+/// Репозиторий для работы с партицированными таблицами значений
+/// </summary>
 public class TablesRepository(DatalakeContext db)
 {
-	public static Dictionary<DateTime, string> CachedTables { get; set; } = [];
-
 	#region Действия
 
+	/// <summary>
+	/// Получение списка существующих таблиц значений из БД, включая данные о наличии индекса
+	/// </summary>
+	/// <returns>Список существующих таблиц</returns>
 	public async Task<HistoryTableInfo[]> GetHistoryTablesFromSchema()
 	{
 		return await PostgreSQL_GetHistoryTablesFromSchema();
 	}
 
+	/// <summary>
+	/// Создание индекса для таблицы значений по идентификаторам тегов и дате
+	/// </summary>
+	/// <param name="tableName">Название таблицы</param>
 	public async Task CreateHistoryIndex(string tableName)
 	{
 		await PostgreSQL_CreateHistoryIndex(tableName);
@@ -29,6 +38,11 @@ public class TablesRepository(DatalakeContext db)
 		});
 	}
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="date"></param>
+	/// <returns></returns>
 	public async Task EnsureInitialValues(DateTime date)
 	{
 		var table = db.GetTable<TagHistory>().TableName(GetTableName(date));
@@ -39,18 +53,16 @@ public class TablesRepository(DatalakeContext db)
 			await WriteInitialValuesAsync(date);
 	}
 
-	public static DateTime? GetNextTable(DateTime date)
-	{
-		return CachedTables.Keys.Where(x => x > date).OrderBy(x => x).FirstOrDefault();
-	}
-
-	public static DateTime? GetPreviousTable(DateTime date)
-	{
-		return CachedTables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
-	}
-
 	#endregion
 
+	#region Кэш
+
+	/// <summary>
+	/// Кэшированный список существующих таблиц
+	/// </summary>
+	public static Dictionary<DateTime, string> CachedTables { get; set; } = [];
+
+	#endregion
 
 	#region Манипулирование таблицами
 
@@ -60,6 +72,8 @@ public class TablesRepository(DatalakeContext db)
 	internal const string DateMask = "yyyy_MM_dd";
 	internal const string IndexPostfix = "_idx";
 
+	internal static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
+
 	internal static DateTime GetTableDate(string tableName) => DateTime.TryParseExact(
 		tableName.AsSpan(NamePrefix.Length),
 		DateMask,
@@ -67,7 +81,15 @@ public class TablesRepository(DatalakeContext db)
 		System.Globalization.DateTimeStyles.None,
 		out var d) ? d : DateTime.MinValue;
 
-	internal static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
+	internal static DateTime? GetNextTableDate(DateTime date)
+	{
+		return CachedTables.Keys.Where(x => x > date).OrderBy(x => x).FirstOrDefault();
+	}
+
+	internal static DateTime? GetPreviousTableDate(DateTime date)
+	{
+		return CachedTables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
+	}
 
 	internal ITable<TagHistory> GetHistoryTable(DateTime seekDate)
 	{

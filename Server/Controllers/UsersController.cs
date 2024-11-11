@@ -1,7 +1,8 @@
-﻿using Datalake.Database.Exceptions;
+﻿using Datalake.Database;
+using Datalake.Database.Exceptions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Users;
-using Datalake.Database;
-using Datalake.Server.BackgroundServices.SettingsHandler;
+using Datalake.Database.Repositories;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Models;
 using Datalake.Server.Services.SessionManager;
@@ -18,8 +19,7 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class UsersController(
 	DatalakeContext db,
-	SessionManagerService sessionManager,
-	ISettingsUpdater settingsService) : ApiControllerBase
+	SessionManagerService sessionManager) : ApiControllerBase
 {
 	/// <summary>
 	/// Получение списка пользователей, определенных на сервере EnergoId
@@ -29,7 +29,11 @@ public class UsersController(
 	public async Task<ActionResult<EnergoIdInfo>> GetEnergoIdListAsync(
 		[FromQuery] Guid? currentUserGuid = null)
 	{
-		string energoId = await db.UsersRepository.GetEnergoIdApi();
+		var user = Authenticate();
+
+		AccessRepository.HasGlobalAccess(user, Database.Enums.AccessType.Admin);
+
+		var settings = await db.SystemRepository.GetSettingsAsSystemAsync();
 
 		EnergoIdUserData[]? energoIdReceivedUsers = null;
 
@@ -41,7 +45,7 @@ public class UsersController(
 			};
 
 			var client = new HttpClient(clientHandler);
-			var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + energoId);
+			var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + settings.EnergoIdHost);
 
 			if (users != null)
 				energoIdReceivedUsers = users;
@@ -90,7 +94,7 @@ public class UsersController(
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
 
-		userAuthInfo.Token = session.User.Token;
+		userAuthInfo.Token = session.Token;
 
 		return userAuthInfo;
 	}
@@ -109,7 +113,7 @@ public class UsersController(
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
 
-		userAuthInfo.Token = session.User.Token;
+		userAuthInfo.Token = session.Token;
 
 		return userAuthInfo;
 	}
@@ -138,7 +142,6 @@ public class UsersController(
 		var user = Authenticate();
 
 		var guid = await db.UsersRepository.CreateAsync(user, userAuthRequest);
-		settingsService.LoadStaticUsers(db.UsersRepository);
 
 		return guid;
 	}
@@ -150,8 +153,9 @@ public class UsersController(
 	[HttpGet]
 	public async Task<ActionResult<UserInfo[]>> ReadAsync()
 	{
-		return await db.UsersRepository.GetInfo()
-			.ToArrayAsync();
+		var user = Authenticate();
+
+		return await db.UsersRepository.ReadAllAsync(user);
 	}
 
 	/// <summary>
@@ -164,10 +168,9 @@ public class UsersController(
 	public async Task<ActionResult<UserInfo>> ReadAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
-		return await db.UsersRepository.GetInfo()
-			.Where(x => x.Guid == userGuid)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Учётная запись {userGuid}");
+		var user = Authenticate();
+
+		return await db.UsersRepository.ReadAsync(user, userGuid);
 	}
 
 	/// <summary>
@@ -180,10 +183,9 @@ public class UsersController(
 	public async Task<ActionResult<UserDetailInfo>> ReadWithDetailsAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
-		return await db.UsersRepository.GetDetailInfo()
-			.Where(x => x.Guid == userGuid)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Учётная запись {userGuid}");
+		var user = Authenticate();
+
+		return await db.UsersRepository.ReadWithDetailsAsync(user, userGuid);
 	}
 
 	/// <summary>
@@ -199,7 +201,6 @@ public class UsersController(
 		var user = Authenticate();
 
 		await db.UsersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
-		settingsService.LoadStaticUsers(db.UsersRepository);
 
 		return NoContent();
 	}
@@ -215,7 +216,6 @@ public class UsersController(
 		var user = Authenticate();
 
 		await db.UsersRepository.DeleteAsync(user, userGuid);
-		settingsService.LoadStaticUsers(db.UsersRepository);
 
 		return NoContent();
 	}

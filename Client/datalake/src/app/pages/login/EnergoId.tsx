@@ -1,12 +1,13 @@
+import api, { identifyUser } from '@/api/swagger-api'
 import { Button, Space } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useAuth } from 'react-oidc-context'
 import { useNavigate } from 'react-router-dom'
-import { setName } from '../../../api/local-auth'
-import notify from '../../../api/notifications'
-import api from '../../../api/swagger-api'
+import notify from '../../../state/notifications'
+import { user } from '../../../state/user'
 import routes from '../../router/routes'
 
-export default function EnergoId() {
+const EnergoId = observer(() => {
 	const auth = useAuth()
 	const navigate = useNavigate()
 
@@ -30,8 +31,9 @@ export default function EnergoId() {
 		})
 			.then((res) => {
 				if (res.status === 200) {
-					setName(res.data.fullName)
+					user.setName(res.data.fullName)
 					navigate(routes.globalRoot)
+					identifyUser()
 				}
 			})
 			.catch(() => {
@@ -48,4 +50,6 @@ export default function EnergoId() {
 	}
 
 	return <i>Что-то пошло не так</i>
-}
+})
+
+export default EnergoId

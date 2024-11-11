@@ -12,7 +12,7 @@ public static class EnumExtension
 	/// </summary>
 	/// <param name="enumValue">Значение</param>
 	/// <returns>Описание, записанное в атрибуте Description</returns>
-	static public string GetDescription(this Enum enumValue)
+	public static string GetDescription(this Enum enumValue)
 	{
 		var field = enumValue.GetType().GetField(enumValue.ToString());
 		if (field == null)

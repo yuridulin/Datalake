@@ -1,10 +1,10 @@
+import api from '@/api/swagger-api'
 import { useCallback, useEffect, useState } from 'react'
-import api from '../../../api/swagger-api'
 import { TagInfo } from '../../../api/swagger/data-contracts'
 import PageHeader from '../../components/PageHeader'
 import TagsTable from './TagsTable'
 
-export default function Tags() {
+const Tags = () => {
 	const [tags, setTags] = useState([] as TagInfo[])
 
 	const getTags = useCallback(() => {
@@ -25,3 +25,5 @@ export default function Tags() {
 		</>
 	)
 }
+
+export default Tags

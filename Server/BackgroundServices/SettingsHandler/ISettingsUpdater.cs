@@ -17,6 +17,6 @@ namespace Datalake.Server.BackgroundServices.SettingsHandler
 		/// Обновление списка статичных учетных записей
 		/// </summary>
 		/// <param name="usersRepository">Репозиторий для работы с учетными данными</param>
-		void LoadStaticUsers(UsersRepository usersRepository);
+		void LoadStaticUsers(AccessRepository usersRepository);
 	}
 }

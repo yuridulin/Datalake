@@ -1,8 +1,7 @@
-﻿using Datalake.Database.Exceptions;
+﻿using Datalake.Database;
+using Datalake.Database.Exceptions;
 using Datalake.Database.Models.Blocks;
-using Datalake.Database;
 using Datalake.Server.Controllers.Base;
-using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -46,14 +45,13 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	/// <summary>
 	/// Получение списка блоков с базовой информацией о них
 	/// </summary>
-	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public async Task<ActionResult<BlockWithTagsInfo[]>> ReadAsync(
-		Guid? energoId = null)
+	public async Task<ActionResult<BlockWithTagsInfo[]>> ReadAsync()
 	{
-		return await db.BlocksRepository.GetSimpleInfo(energoId)
-			.ToArrayAsync();
+		var user = Authenticate();
+
+		return await db.BlocksRepository.ReadAllAsync(user);
 	}
 
 	/// <summary>
@@ -66,22 +64,21 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	public async Task<ActionResult<BlockFullInfo>> ReadAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		return await db.BlocksRepository.GetInfoWithAllRelations()
-			.Where(x => x.Id == id)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Сущность #{id}");
+		var user = Authenticate();
+
+		return await db.BlocksRepository.ReadAsync(user, id);
 	}
 
 	/// <summary>
 	/// Получение иерархической структуры всех блоков
 	/// </summary>
-	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Список обособленных блоков с вложенными блоками</returns>
 	[HttpGet("tree")]
-	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync(
-		Guid? energoId = null)
+	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync()
 	{
-		return await db.BlocksRepository.GetTreeAsync(energoId);
+		var user = Authenticate();
+
+		return await db.BlocksRepository.ReadAllAsTreeAsync(user);
 	}
 
 	/// <summary>
@@ -112,6 +109,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 		[FromQuery] int? parentId)
 	{
 		var user = Authenticate();
+
 		await db.BlocksRepository.MoveAsync(user, id, parentId);
 
 		return NoContent();

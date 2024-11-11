@@ -1,54 +1,27 @@
+import api from '@/api/swagger-api'
+import getAccessTypeName from '@/functions/getAccessTypeName'
+import hasAccess from '@/functions/hasAccess'
+import { user } from '@/state/user'
+import { accessOptions } from '@/types/accessOptions'
 import {
 	MinusCircleOutlined,
 	PlusOutlined,
 	TeamOutlined,
 } from '@ant-design/icons'
-import {
-	Button,
-	Form,
-	Input,
-	Popconfirm,
-	Select,
-	SelectProps,
-	Space,
-	Spin,
-} from 'antd'
+import { Button, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
-import notify from '../../../../api/notifications'
-import api from '../../../../api/swagger-api'
 import {
 	AccessType,
 	UserGroupDetailedInfo,
 	UserGroupUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
+import notify from '../../../../state/notifications'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
 
-const accessOptions: SelectProps['options'] = [
-	{
-		value: AccessType.NotSet,
-		label: 'не определено',
-	},
-	{
-		value: AccessType.NoAccess,
-		label: 'нет доступа',
-	},
-	{
-		value: AccessType.Viewer,
-		label: 'просмотр',
-	},
-	{
-		value: AccessType.User,
-		label: 'редактирование',
-	},
-	{
-		value: AccessType.Admin,
-		label: 'полный доступ',
-	},
-]
-
-export default function UserGroupForm() {
+const UserGroupForm = observer(() => {
 	const navigate = useNavigate()
 	const { id } = useParams()
 	const [form] = Form.useForm<UserGroupUpdateRequest>()
@@ -68,12 +41,18 @@ export default function UserGroupForm() {
 					accessType: res.data.globalAccessType,
 					users: res.data.users,
 				} as UserGroupUpdateRequest)
+				console.log(
+					`Доступ к групе: ${getAccessTypeName(res.data.accessRule.accessType)} по правилу ${res.data.accessRule.ruleId}`,
+				)
 			}
 		})
 	}
 
 	const updateGroup = (newInfo: UserGroupUpdateRequest) => {
-		api.userGroupsUpdate(String(id), newInfo).catch(() => {
+		api.userGroupsUpdate(String(id), {
+			...newInfo,
+			users: newInfo.users || group.users || [],
+		}).catch(() => {
 			notify.err('Ошибка при сохранении')
 		})
 	}
@@ -124,15 +103,20 @@ export default function UserGroupForm() {
 				}
 				right={
 					<>
-						<Popconfirm
-							title='Вы уверены, что хотите удалить эту группу?'
-							placement='bottom'
-							onConfirm={deleteGroup}
-							okText='Да'
-							cancelText='Нет'
-						>
-							<Button>Удалить</Button>
-						</Popconfirm>
+						{hasAccess(
+							group.accessRule.accessType,
+							AccessType.Editor,
+						) && (
+							<Popconfirm
+								title='Вы уверены, что хотите удалить эту группу?'
+								placement='bottom'
+								onConfirm={deleteGroup}
+								okText='Да'
+								cancelText='Нет'
+							>
+								<Button>Удалить</Button>
+							</Popconfirm>
+						)}
 						&ensp;
 						<Button type='primary' onClick={() => form.submit()}>
 							Сохранить
@@ -164,82 +148,93 @@ export default function UserGroupForm() {
 				>
 					<Select
 						placeholder='Выберите уровень доступа'
-						options={accessOptions}
+						options={accessOptions.filter((x) =>
+							hasAccess(
+								user.globalAccessType,
+								x.value as AccessType,
+							),
+						)}
 					/>
 				</Form.Item>
-				<Form.List name='users'>
-					{(fields, { add, remove }) => (
-						<table className='form-subtable'>
-							<thead>
-								<tr>
-									<td>Пользователь</td>
-									<td style={{ width: '20em' }}>
-										Уровень доступа
-									</td>
-									<td style={{ width: '3em' }}>
-										<Form.Item>
-											<Button
-												title='Добавить новое значение'
-												onClick={() =>
-													add({
-														accessType:
-															AccessType.NotSet,
-													})
-												}
-											>
-												<PlusOutlined />
-											</Button>
-										</Form.Item>
-									</td>
-								</tr>
-							</thead>
-							<tbody>
-								{fields.map(({ key, name, ...rest }) => (
-									<tr key={key}>
-										<td>
-											<Form.Item
-												{...rest}
-												name={[name, 'guid']}
-											>
-												<Select
-													showSearch
-													optionFilterProp='children'
-													filterOption={
-														filterUserOption
-													}
-													options={users}
-													placeholder='Выберите учетную запись'
-												/>
-											</Form.Item>
+				{user.hasAccessToGroup(AccessType.Manager, String(id)) && (
+					<Form.List name='users'>
+						{(fields, { add, remove }) => (
+							<table className='form-subtable'>
+								<thead>
+									<tr>
+										<td>Пользователь</td>
+										<td style={{ width: '20em' }}>
+											Уровень доступа
 										</td>
-										<td>
-											<Form.Item
-												{...rest}
-												name={[name, 'accessType']}
-											>
-												<Select
-													options={accessOptions}
-													placeholder='Выберите уровень доступа'
-												></Select>
-											</Form.Item>
-										</td>
-										<td>
+										<td style={{ width: '3em' }}>
 											<Form.Item>
 												<Button
-													onClick={() => remove(name)}
-													title='Удалить значение'
+													title='Добавить новое значение'
+													onClick={() =>
+														add({
+															accessType:
+																AccessType.NotSet,
+														})
+													}
 												>
-													<MinusCircleOutlined />
+													<PlusOutlined />
 												</Button>
 											</Form.Item>
 										</td>
 									</tr>
-								))}
-							</tbody>
-						</table>
-					)}
-				</Form.List>
+								</thead>
+								<tbody>
+									{fields.map(({ key, name, ...rest }) => (
+										<tr key={key}>
+											<td>
+												<Form.Item
+													{...rest}
+													name={[name, 'guid']}
+												>
+													<Select
+														showSearch
+														optionFilterProp='children'
+														filterOption={
+															filterUserOption
+														}
+														options={users}
+														placeholder='Выберите учетную запись'
+													/>
+												</Form.Item>
+											</td>
+											<td>
+												<Form.Item
+													{...rest}
+													name={[name, 'accessType']}
+												>
+													<Select
+														options={accessOptions}
+														placeholder='Выберите уровень доступа'
+													></Select>
+												</Form.Item>
+											</td>
+											<td>
+												<Form.Item>
+													<Button
+														onClick={() =>
+															remove(name)
+														}
+														title='Удалить значение'
+													>
+														<MinusCircleOutlined />
+													</Button>
+												</Form.Item>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						)}
+					</Form.List>
+				)}
 			</Form>
 		</>
 	)
-}
+})
+
+export default UserGroupForm

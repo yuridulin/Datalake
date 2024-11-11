@@ -1,30 +1,28 @@
+import api from '@/api/swagger-api'
 import { PlusCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import compareValues from '../../../../api/extensions/compareValues'
-import api from '../../../../api/swagger-api'
 import {
 	SourceEntryInfo,
 	SourceType,
 	TagInfo,
 	TagType,
 } from '../../../../api/swagger/data-contracts'
+import compareValues from '../../../../functions/compareValues'
 import CreatedTagLinker from '../../../components/CreatedTagsLinker'
 import PageHeader from '../../../components/PageHeader'
 import TagCompactValue from '../../../components/TagCompactValue'
 import routes from '../../../router/routes'
 
-export default function SourceItems({
-	type,
-	newType,
-	id,
-}: {
+type SourceItemsProps = {
 	type: SourceType
 	newType: SourceType
 	id: number
-}) {
+}
+
+const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
 	const [searchedItems, setSearchedItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
@@ -201,3 +199,5 @@ export default function SourceItems({
 		</>
 	)
 }
+
+export default SourceItems

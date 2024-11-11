@@ -38,14 +38,15 @@ public class AuthMiddleware(
 			authSession = sessionManager.GetExistSession(context);
 			if (authSession == null)
 			{
-				context.Response.StatusCode = 403;
+				context.Response.StatusCode = 401;
 				await context.Response.Body.WriteAsync(ErrorMessage);
 				return;
 			}
-			stateService.WriteVisit(authSession.User.Guid);
+			sessionManager.AddSessionToResponse(authSession, context.Response);
+			stateService.WriteVisit(authSession.UserGuid);
 		}
 
-		context.Items.Add(AuthConstants.ContextSessionKey, authSession?.User);
+		context.Items.Add(AuthConstants.ContextSessionKey, authSession?.AuthInfo);
 
 		await next.Invoke(context);
 	}

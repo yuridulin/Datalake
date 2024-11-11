@@ -1,10 +1,11 @@
+import api from '@/api/swagger-api'
+import { accessOptions } from '@/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Select, Spin, Table } from 'antd'
 import { DefaultOptionType } from 'antd/es/select'
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import api from '../../../../../api/swagger-api'
 import {
 	AccessRightsIdInfo,
 	AccessType,
@@ -31,29 +32,6 @@ const objectOptions: DefaultOptionType[] = [
 	{
 		value: 'tag',
 		label: 'Тег',
-	},
-]
-
-const accessOptions: DefaultOptionType[] = [
-	{
-		label: <AccessTypeEl type={AccessType.NotSet} />,
-		value: AccessType.NotSet,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.NoAccess} />,
-		value: AccessType.NoAccess,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.Viewer} />,
-		value: AccessType.Viewer,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.User} />,
-		value: AccessType.User,
-	},
-	{
-		label: <AccessTypeEl type={AccessType.Admin} />,
-		value: AccessType.Admin,
 	},
 ]
 
@@ -112,8 +90,8 @@ const UserGroupAccessForm = () => {
 									x.source != null
 										? 'source'
 										: x.block != null
-										? 'block'
-										: 'tag',
+											? 'block'
+											: 'tag',
 							})),
 					)
 				})
@@ -218,7 +196,7 @@ const UserGroupAccessForm = () => {
 										? {
 												...x,
 												choosedObject: value,
-										  }
+											}
 										: x,
 								),
 							)
@@ -244,7 +222,7 @@ const UserGroupAccessForm = () => {
 												? {
 														...x,
 														sourceId: value,
-												  }
+													}
 												: x,
 										),
 									)
@@ -264,7 +242,7 @@ const UserGroupAccessForm = () => {
 												? {
 														...x,
 														blockId: value,
-												  }
+													}
 												: x,
 										),
 									)
@@ -284,7 +262,7 @@ const UserGroupAccessForm = () => {
 												? {
 														...x,
 														tagId: value,
-												  }
+													}
 												: x,
 										),
 									)

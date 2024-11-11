@@ -1,5 +1,5 @@
-﻿using Datalake.Database.Models.Values;
-using Datalake.Database;
+﻿using Datalake.Database;
+using Datalake.Database.Models.Values;
 using Datalake.Server.BackgroundServices.Collector.Models;
 
 namespace Datalake.Server.BackgroundServices.Collector;

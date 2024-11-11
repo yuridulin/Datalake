@@ -1,7 +1,11 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.AccessRights;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Blocks;
+using Datalake.Database.Models.UserGroups;
 using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
@@ -9,49 +13,175 @@ using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
-public partial class BlocksRepository(DatalakeContext db)
+/// <summary>
+/// Репозиторий для работы с блоками
+/// </summary>
+public class BlocksRepository(DatalakeContext db)
 {
-
 	#region Действия
 
+	/// <summary>
+	/// Создание нового блока
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="blockInfo">Параметры нового блока</param>
+	/// <param name="parentId">Идентификатор родительского блока</param>
+	/// <returns>Идентификатор нового блока</returns>
 	public async Task<int> CreateAsync(
 		UserAuthInfo user,
 		BlockFullInfo? blockInfo = null,
 		int? parentId = null)
 	{
-		await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin);
+		if (parentId.HasValue)
+		{
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, parentId.Value);
+		}
+		else
+		{
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		}
+
 		User = user.Guid;
 
 		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync(parentId);
 	}
 
+	/// <summary>
+	/// Получение списка блоков с учетом уровня доступа
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Список блоков с уровнями доступа к ним</returns>
+	public async Task<BlockWithTagsInfo[]> ReadAllAsync(
+		UserAuthInfo user)
+	{
+		BlockWithTagsInfo[] blocks = await GetBlocks(user);
+
+		return blocks.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer)).ToArray();
+	}
+
+	/// <summary>
+	/// Получение полной информации о блоке, включая права доступа, поля и дочерние блоки
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <returns>Полная информация о блоке</returns>
+	/// <exception cref="NotFoundException">Блок не найден</exception>
+	public async Task<BlockFullInfo> ReadAsync(
+		UserAuthInfo user,
+		int id)
+	{
+		var rule = AccessRepository.GetAccessToBlock(user, id);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
+
+		var block = await QueryFullInfo().FirstOrDefaultAsync(x => x.Id == id)
+			?? throw new NotFoundException(message: "блок #" + id);
+
+		block.AccessRule = rule;
+
+		return block;
+	}
+
+	/// <summary>
+	/// Получение дерева блоков с учетом уровня доступа
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Дерево блоков с уровнями доступа к ним</returns>
+	public async Task<BlockTreeInfo[]> ReadAllAsTreeAsync(
+		UserAuthInfo user)
+	{
+		BlockWithTagsInfo[] blocks = await GetBlocks(user);
+
+		return ReadChildren(null);
+
+		BlockTreeInfo[] ReadChildren(int? id)
+		{
+			return blocks
+				.Where(x => x.ParentId == id)
+				.Select(x =>
+				{
+					var block = new BlockTreeInfo
+					{
+						Id = x.Id,
+						Guid = x.Guid,
+						ParentId = x.ParentId,
+						Name = x.Name,
+						Description = x.Description,
+						Tags = x.Tags,
+						AccessRule = x.AccessRule,
+						Children = ReadChildren(x.Id),
+					};
+
+					if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+					{
+						block.Name = string.Empty;
+						block.Description = string.Empty;
+						block.Tags = [];
+					}
+
+					return block;
+				})
+				.Where(x => x.Children.Length > 0 || x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				.ToArray();
+		}
+	}
+
+	/// <summary>
+	/// Изменение параметров блока, включая закрепленные теги
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <param name="block">Новые параметры блока</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(
 		UserAuthInfo user,
 		int id,
 		BlockUpdateRequest block)
 	{
-		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await UpdateAsync(id, block);
 	}
 
+	/// <summary>
+	/// Изменение расположения блока в иерархии
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <param name="parentId"></param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> MoveAsync(
 		UserAuthInfo user,
 		int id,
 		int? parentId)
 	{
-		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
+
+		if (parentId.HasValue)
+		{
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, parentId.Value);
+		}
+		else
+		{
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		}
 		User = user.Guid;
 
 		return await MoveAsync(id, parentId);
 	}
 
+	/// <summary>
+	/// Удаление блока
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> DeleteAsync(
 		UserAuthInfo user,
 		int id)
 	{
-		await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
 		User = user.Guid;
 
 		return await DeleteAsync(id);
@@ -84,6 +214,8 @@ public partial class BlocksRepository(DatalakeContext db)
 
 		await LogAsync(id.Value, "Создан блок: " + name);
 
+		AccessRepository.Update();
+
 		return id.Value;
 	}
 
@@ -110,12 +242,14 @@ public partial class BlocksRepository(DatalakeContext db)
 
 		await LogAsync(id.Value, "Создан блок: " + block.Name);
 
+		AccessRepository.Update();
+
 		return id ?? throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
 	}
 
 	internal async Task<bool> UpdateAsync(int id, BlockUpdateRequest block)
 	{
-		var oldBlock = await GetInfoWithAllRelations()
+		var oldBlock = await QueryFullInfo()
 			.Where(x => x.Id == id)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Блок #{id} не найден");
@@ -154,6 +288,8 @@ public partial class BlocksRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
+		AccessRepository.Update();
+
 		return true;
 	}
 
@@ -177,6 +313,8 @@ public partial class BlocksRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
+		AccessRepository.Update();
+
 		return true;
 	}
 
@@ -197,10 +335,23 @@ public partial class BlocksRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
+		AccessRepository.Update();
+
 		return true;
 	}
 
-	internal async Task LogAsync(int id, string message, string? details = null)
+	private async Task<BlockWithTagsInfo[]> GetBlocks(UserAuthInfo user)
+	{
+		var blocks = await QuerySimpleInfo().ToArrayAsync();
+		foreach (var block in blocks)
+		{
+			block.AccessRule = AccessRepository.GetAccessToBlock(user, block.Id);
+		}
+
+		return blocks;
+	}
+
+	private async Task LogAsync(int id, string message, string? details = null)
 	{
 		await db.InsertAsync(new Log
 		{
@@ -211,6 +362,108 @@ public partial class BlocksRepository(DatalakeContext db)
 			Type = LogType.Success,
 			Details = details,
 		});
+	}
+
+	#endregion
+
+	#region Запросы
+
+	internal IQueryable<BlockWithTagsInfo> QuerySimpleInfo()
+	{
+		var query =
+			from block in db.Blocks
+			select new BlockWithTagsInfo
+			{
+				Id = block.Id,
+				Guid = block.GlobalId,
+				Name = block.Name,
+				Description = block.Description,
+				ParentId = block.ParentId,
+				Tags =
+					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
+					from tag in db.Tags.InnerJoin(x => x.Id == block_tag.TagId)
+					select new BlockNestedTagInfo
+					{
+						Id = tag.Id,
+						Name = block_tag.Name ?? "",
+						Guid = tag.GlobalGuid,
+						Relation = block_tag.Relation,
+						TagName = tag.Name,
+						TagType = tag.Type,
+						SourceId = tag.SourceId,
+					},
+			};
+
+		return query;
+	}
+
+	internal IQueryable<BlockFullInfo> QueryFullInfo()
+	{
+		var query =
+			from block in db.Blocks
+			from parent in db.Blocks.LeftJoin(x => x.Id == block.ParentId)
+			select new BlockFullInfo
+			{
+				Id = block.Id,
+				Guid = block.GlobalId,
+				Name = block.Name,
+				Description = block.Description,
+				Parent = parent == null ? null : new BlockFullInfo.BlockParentInfo
+				{
+					Id = parent.Id,
+					Name = parent.Name
+				},
+				Children =
+					from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id)
+					select new BlockFullInfo.BlockChildInfo
+					{
+						Id = child.Id,
+						Name = child.Name
+					},
+				Properties =
+					from property in db.BlockProperties.LeftJoin(x => x.BlockId == block.Id)
+					select new BlockFullInfo.BlockPropertyInfo
+					{
+						Id = property.Id,
+						Name = property.Name,
+						Type = property.Type,
+						Value = property.Value,
+					},
+				Tags =
+					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
+					from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId)
+					select new BlockNestedTagInfo
+					{
+						Id = tag.Id,
+						Name = block_tag.Name ?? "",
+						Guid = tag.GlobalGuid,
+						Relation = block_tag.Relation,
+						TagName = tag.Name,
+						TagType = tag.Type,
+					},
+				AccessRights =
+					from rights in db.AccessRights.InnerJoin(x => x.BlockId == block.Id)
+					from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid)
+					from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid)
+					select new AccessRightsForObjectInfo
+					{
+						Id = rights.Id,
+						IsGlobal = rights.IsGlobal,
+						AccessType = rights.AccessType,
+						User = user == null ? null : new UserSimpleInfo
+						{
+							Guid = user.Guid,
+							FullName = user.FullName ?? string.Empty,
+						},
+						UserGroup = usergroup == null ? null : new UserGroupSimpleInfo
+						{
+							Guid = usergroup.Guid,
+							Name = usergroup.Name,
+						},
+					},
+			};
+
+		return query;
 	}
 
 	#endregion

@@ -1,44 +1,55 @@
-/* eslint-disable react-refresh/only-export-components */
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons'
-import { Button, Col, Row, theme } from 'antd'
+import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { freeToken, getName, isAuth } from '../../api/local-auth'
+import { user } from '../../state/user'
 import routes from '../router/routes'
+import AccessTypeEl from './AccessTypeEl'
 
-const UserPanel = () => {
+const UserPanel = observer(() => {
 	const navigate = useNavigate()
-	const { token } = theme.useToken()
 
 	function logout() {
-		freeToken()
+		user.logout()
 		navigate(routes.auth.loginPage)
 	}
 
-	return isAuth() ? (
-		<Row align='middle' className='app-two-items'>
-			<Col span={12}>
-				<span
-					style={{
-						color: token.colorText,
-					}}
-				>
-					<UserOutlined /> {getName()}
-				</span>
-			</Col>
-			<Col span={12} style={{ textAlign: 'right' }}>
-				<Button
-					type='link'
-					onClick={logout}
-					title='Выход из учетной записи'
-				>
-					<LogoutOutlined />
-				</Button>
-			</Col>
-		</Row>
+	return user.isAuth() ? (
+		<table style={{ width: '100%', maxWidth: '100%' }}>
+			<tbody>
+				<tr>
+					<td
+						colSpan={2}
+						style={{
+							padding: '.25em 1em',
+							wordBreak: 'break-word',
+						}}
+					>
+						{user.fullName}
+					</td>
+				</tr>
+				<tr>
+					<td style={{ padding: '.25em 0 .25em 1em', width: '1em' }}>
+						<UserOutlined />
+					</td>
+					<td style={{ padding: '.25em 1em' }}>
+						<AccessTypeEl type={user.globalAccessType} />
+					</td>
+					<td style={{ padding: '.25em 1em .25em 0', width: '1em' }}>
+						<Button
+							type='link'
+							onClick={logout}
+							title='Выход из учетной записи'
+						>
+							<LogoutOutlined />
+						</Button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
 	) : (
 		<Navigate to={routes.auth.loginPage} />
 	)
-}
+})
 
-export default observer(UserPanel)
+export default UserPanel

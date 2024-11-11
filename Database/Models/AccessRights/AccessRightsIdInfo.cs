@@ -1,4 +1,5 @@
 ﻿using Datalake.Database.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.AccessRights;
 
@@ -15,6 +16,7 @@ public class AccessRightsIdInfo
 	/// <summary>
 	/// Уровень доступа
 	/// </summary>
+	[Required]
 	public AccessType AccessType { get; set; }
 
 	/// <summary>

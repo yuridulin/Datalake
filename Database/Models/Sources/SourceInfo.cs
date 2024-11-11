@@ -1,4 +1,6 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Database.Abstractions;
+using Datalake.Database.Enums;
+using Datalake.Database.Models.Auth;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Sources;
@@ -6,7 +8,7 @@ namespace Datalake.Database.Models.Sources;
 /// <summary>
 /// Информация о источнике
 /// </summary>
-public class SourceInfo : SourceSimpleInfo
+public class SourceInfo : SourceSimpleInfo, IProtectedEntity
 {
 	/// <summary>
 	/// Произвольное описание источника
@@ -23,4 +25,7 @@ public class SourceInfo : SourceSimpleInfo
 	/// </summary>
 	[Required]
 	public SourceType Type { get; set; }
+
+	/// <inheritdoc />
+	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

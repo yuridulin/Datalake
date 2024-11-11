@@ -1,4 +1,6 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Database.Abstractions;
+using Datalake.Database.Enums;
+using Datalake.Database.Models.Auth;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Sources;
@@ -6,13 +8,13 @@ namespace Datalake.Database.Models.Sources;
 /// <summary>
 /// Информация о теге, берущем данные из этого источника
 /// </summary>
-public class SourceTagInfo
+public class SourceTagInfo : IProtectedEntity
 {
 	/// <summary>
 	/// Идентификатор тега
 	/// </summary>
 	[Required]
-	public Guid Guid { get; set; }
+	public required Guid Guid { get; set; }
 
 	/// <summary>
 	/// Глобальное наименование тега
@@ -30,11 +32,14 @@ public class SourceTagInfo
 	/// Тип данных тега
 	/// </summary>
 	[Required]
-	public TagType Type { get; set; }
+	public required TagType Type { get; set; }
 
 	/// <summary>
 	/// Интервал обновления тега
 	/// </summary>
 	[Required]
-	public int Interval { get; set; }
+	public required int Interval { get; set; }
+
+	/// <inheritdoc />
+	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

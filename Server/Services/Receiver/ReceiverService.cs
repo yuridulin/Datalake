@@ -23,6 +23,8 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		Converters = { new JsonObjectConverter(), }
 	};
 
+	static HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(1), };
+
 	/// <summary>
 	/// Универсальное получение данных из удаленного источника
 	/// </summary>
@@ -70,14 +72,11 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 			Tags = [],
 		};
 
-		using var client = new HttpClient();
-		client.Timeout = TimeSpan.FromSeconds(1);
-
 		InopcResponse? inopcResponse = null;
 
 		try
 		{
-			var answer = await client.PostAsJsonAsync("http://" + address + ":81/api/storage/read", request, cancellationTokenSource.Token);
+			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":81/api/storage/read", request, cancellationTokenSource.Token);
 			if (answer.IsSuccessStatusCode)
 			{
 				inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>(JsonOptions);
@@ -145,14 +144,11 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 			}
 		};
 
-		using var client = new HttpClient();
-		client.Timeout = TimeSpan.FromSeconds(1);
-
 		List<Models.OldDatalake.HistoryResponse>? historyResponses = null;
 
 		try
 		{
-			var answer = await client.PostAsJsonAsync("http://" + address + ":83/api/tags/live", request);
+			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":83/api/tags/live", request);
 			var content = await answer.Content.ReadAsStringAsync();
 			historyResponses = JsonConvert.DeserializeObject<List<Models.OldDatalake.HistoryResponse>>(content);
 		}
@@ -213,14 +209,11 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 			}
 		};
 
-		using var client = new HttpClient();
-		client.Timeout = TimeSpan.FromSeconds(1);
-
 		List<ValuesResponse>? historyResponses = null;
 
 		try
 		{
-			var answer = await client.PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
+			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
 			historyResponses = await answer.Content.ReadFromJsonAsync<List<ValuesResponse>>(JsonOptions);
 		}
 		catch

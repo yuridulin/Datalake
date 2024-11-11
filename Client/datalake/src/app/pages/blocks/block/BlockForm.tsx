@@ -1,23 +1,26 @@
+import api from '@/api/swagger-api'
+import {
+	AccessType,
+	AttachedTag,
+	BlockTagRelation,
+	BlockUpdateRequest,
+	TagType,
+} from '@/api/swagger/data-contracts'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
+import notify from '@/state/notifications'
+import { user } from '@/state/user'
 import {
 	CreditCardOutlined,
 	MinusCircleOutlined,
 	PlusOutlined,
 } from '@ant-design/icons'
 import { Button, Dropdown, Form, Input, Popconfirm, Select, Space } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import notify from '../../../../api/notifications'
-import api from '../../../../api/swagger-api'
-import {
-	AttachedTag,
-	BlockTagRelation,
-	BlockUpdateRequest,
-	TagType,
-} from '../../../../api/swagger/data-contracts'
-import PageHeader from '../../../components/PageHeader'
-import routes from '../../../router/routes'
 
-export default function BlockForm() {
+const BlockForm = observer(() => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 	const [form] = Form.useForm<BlockUpdateRequest>()
@@ -33,13 +36,9 @@ export default function BlockForm() {
 	}
 
 	const updateBlock = (newInfo: BlockUpdateRequest) => {
-		api.blocksUpdate(Number(id), newInfo)
-			.then(() => {
-				//setBlock(newInfo)
-			})
-			.catch(() => {
-				notify.err('Ошибка при сохранении')
-			})
+		api.blocksUpdate(Number(id), newInfo).catch(() => {
+			notify.err('Ошибка при сохранении')
+		})
 	}
 
 	const deleteBlock = () => {
@@ -76,15 +75,20 @@ export default function BlockForm() {
 				}
 				right={
 					<>
-						<Popconfirm
-							title='Вы уверены, что хотите удалить этот блок?'
-							placement='bottom'
-							onConfirm={deleteBlock}
-							okText='Да'
-							cancelText='Нет'
-						>
-							<Button>Удалить</Button>
-						</Popconfirm>
+						{user.hasAccessToBlock(
+							AccessType.Admin,
+							Number(id),
+						) && (
+							<Popconfirm
+								title='Вы уверены, что хотите удалить этот блок?'
+								placement='bottom'
+								onConfirm={deleteBlock}
+								okText='Да'
+								cancelText='Нет'
+							>
+								<Button>Удалить</Button>
+							</Popconfirm>
+						)}
 						&ensp;
 						<Button type='primary' onClick={() => form.submit()}>
 							Сохранить
@@ -294,4 +298,6 @@ export default function BlockForm() {
 			</Form>
 		</>
 	)
-}
+})
+
+export default BlockForm

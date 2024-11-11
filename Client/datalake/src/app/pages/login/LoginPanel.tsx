@@ -1,17 +1,16 @@
+import api, { identifyUser } from '@/api/swagger-api'
 import { Button, Form, Input, Space } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useAuth } from 'react-oidc-context'
 import { useNavigate } from 'react-router-dom'
-import { setName } from '../../../api/local-auth'
-import notify from '../../../api/notifications'
-import api from '../../../api/swagger-api'
 import { UserLoginPass } from '../../../api/swagger/data-contracts'
-import { useUpdateContext } from '../../../context/updateContext'
+import notify from '../../../state/notifications'
+import { user } from '../../../state/user'
 import routes from '../../router/routes'
 
-export default function LoginPanel() {
+const LoginPanel = observer(() => {
 	const navigate = useNavigate()
 	const auth = useAuth()
-	const { isDarkMode } = useUpdateContext()
 
 	const style = {
 		width: '40em',
@@ -26,8 +25,9 @@ export default function LoginPanel() {
 		})
 			.then((res) => {
 				if (res.status === 200) {
-					setName(res.data.fullName)
+					user.setName(res.data.fullName)
 					navigate(routes.globalRoot)
+					identifyUser()
 				}
 			})
 			.catch(() => {
@@ -49,7 +49,7 @@ export default function LoginPanel() {
 				left: 0,
 				right: 0,
 				bottom: 0,
-				backgroundColor: isDarkMode ? '#121212' : '#fff',
+				backgroundColor: user.isDark() ? '#121212' : '#fff',
 			}}
 		>
 			<div style={style}>
@@ -97,4 +97,6 @@ export default function LoginPanel() {
 			</div>
 		</div>
 	)
-}
+})
+
+export default LoginPanel

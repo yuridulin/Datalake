@@ -1,8 +1,3 @@
-import {
-	AccessObject,
-	AccessObjectToString,
-} from '../../api/models/accessObject'
-
 const withId = (route: string, id: string | number) =>
 	route.replace(':id', String(id))
 
@@ -12,9 +7,13 @@ const routes = {
 		root: '/users',
 		list: '/users/',
 		create: '/users/create',
+		view: '/users/:id/view',
 		edit: '/users/:id/edit',
 		toList() {
 			return this.list
+		},
+		toUserView(guid: string) {
+			return withId(this.view, guid)
 		},
 		toUserForm(guid: string) {
 			return withId(this.edit, guid)
@@ -46,23 +45,28 @@ const routes = {
 		loginPage: '/login',
 		energoId: '/energo-id',
 	},
-	viewer: {
-		root: '/viewer',
-		tagsViewer: '/viewer/tags',
+	values: {
+		root: '/values',
+		tagsViewer: '/values/view',
+		tagsWriter: '/values/write',
 	},
 	tags: {
 		root: '/tags',
 		list: '/tags/all',
 		manual: '/tags/manual',
 		calc: '/tags/calculated',
-		edit: '/tags/:id/edit',
+		view: '/tags/all/:id/view',
+		edit: '/tags/all/:id/edit',
+		toTag(guid: string) {
+			return withId(this.view, guid)
+		},
 		toTagForm(guid: string) {
 			return withId(this.edit, guid)
 		},
 	},
 	blocks: {
 		root: '/blocks',
-		list: '/blocks/',
+		list: '/blocks',
 		mover: '/blocks/mover',
 		view: '/blocks/:id/view',
 		edit: '/blocks/:id/edit',
@@ -85,18 +89,6 @@ const routes = {
 			return withId(this.access.edit, id)
 		},
 	},
-	access: {
-		root: '/access',
-		form: '/form/:object?/:id?',
-		toForm(object: AccessObject, id: string | number) {
-			return (
-				this.root +
-				this.form
-					.replace(':object?', AccessObjectToString(object))
-					.replace(':id?', String(id))
-			)
-		},
-	},
 	sources: {
 		root: '/sources',
 		list: '/sources/',
@@ -104,6 +96,10 @@ const routes = {
 		toEditSource(id: string | number) {
 			return withId(this.edit, id)
 		},
+	},
+	stats: {
+		root: '/stats',
+		logs: '/stats/logs',
 	},
 	globalRoot: '/',
 	offline: '/offline',

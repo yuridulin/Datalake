@@ -2,60 +2,157 @@
 using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Tags;
-using Datalake.Database.Models.Users;
 using Datalake.Database.Tables;
 using LinqToDB;
 using LinqToDB.Data;
 
 namespace Datalake.Database.Repositories;
 
-public partial class TagsRepository(DatalakeContext db)
+/// <summary>
+/// Репозиторий для работы с тегами
+/// </summary>
+public class TagsRepository(DatalakeContext db)
 {
-	public static Dictionary<int, TagCacheInfo> CachedTags { get; set; } = [];
-
 	#region Действия
 
+	/// <summary>
+	/// Создание нового тега
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="tagCreateRequest">Параметры нового тега</param>
+	/// <returns>Информация о созданном теге</returns>
 	public async Task<TagInfo> CreateAsync(
 		UserAuthInfo user,
-		TagCreateRequest tagCreateRequest,
-		Guid? energoId = null)
+		TagCreateRequest tagCreateRequest)
 	{
-		if (tagCreateRequest.SourceId.HasValue)
-		{
-			await db.AccessRepository.CheckAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value, energoId);
-		}
-		else if (tagCreateRequest.BlockId.HasValue)
-		{
-			await db.AccessRepository.CheckAccessToBlockAsync(user, AccessType.Admin, tagCreateRequest.BlockId.Value, energoId);
-		}
-		else
-		{
-			await db.AccessRepository.CheckGlobalAccess(user, AccessType.Admin, energoId);
-		}
+		if (tagCreateRequest.SourceId.HasValue && tagCreateRequest.SourceId.Value > 0)
+			AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value);
+
+		if (tagCreateRequest.BlockId.HasValue)
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, tagCreateRequest.BlockId.Value);
+
+		if ((!tagCreateRequest.SourceId.HasValue || tagCreateRequest.SourceId.Value <= 0) && !tagCreateRequest.BlockId.HasValue)
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
 		User = user.Guid;
 
 		return await CreateAsync(tagCreateRequest);
 	}
 
+	/// <summary>
+	/// Получение информации о теге
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid"></param>
+	/// <returns></returns>
+	public async Task<TagInfo> ReadAsync(UserAuthInfo user, Guid guid)
+	{
+		var rule = AccessRepository.GetAccessToTag(user, guid);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
+
+		var tag = await db.TagsRepository.GetInfoWithSources()
+			.Where(x => x.Guid == guid)
+			.FirstOrDefaultAsync()
+			?? throw new NotFoundException($"Тег {guid}");
+
+		tag.AccessRule = rule;
+
+		return tag;
+	}
+
+	/// <summary>
+	/// Получение информации о тегах с поддержкой фильтров
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <param name="id">Идентификаторы тегов</param>
+	/// <param name="names">Имена тегов</param>
+	/// <param name="guids">Глобальные идентификаторы тегов</param>
+	/// <returns>Список информации о тегах</returns>
+	public async Task<TagInfo[]> ReadAllAsync(UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
+	{
+		var query = db.TagsRepository.GetInfoWithSources();
+
+		if (sourceId.HasValue)
+		{
+			query = query.Where(x => sourceId.Value == x.SourceId);
+		}
+		if (id?.Length > 0)
+		{
+			query = query.Where(x => id.Contains(x.Id));
+		}
+		if (names?.Length > 0)
+		{
+			query = query.Where(x => names.Contains(x.Name));
+		}
+		if (guids?.Length > 0)
+		{
+			query = query.Where(x => guids.Contains(x.Guid));
+		}
+
+		var tags = await query.ToArrayAsync();
+
+		foreach (var tag in tags)
+		{
+			tag.AccessRule = AccessRepository.GetAccessToTag(user, tag.Guid);
+		}
+
+		return tags.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer)).ToArray();
+	}
+
+	/// <summary>
+	/// Получение тегов, которые можно использовать как входные параметры для расчета значения
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
+	/// <returns>Список информации о тегах</returns>
+	public async Task<TagAsInputInfo[]> ReadPossibleInputsAsync(UserAuthInfo user, Guid guid)
+	{
+		var tags = await GetPossibleInputs()
+			.ToArrayAsync();
+
+		// TODO: рекурсивный обход. Нужно исключить циклические зависимости
+		if (guid.Equals(Guid.Empty))
+		{ }
+
+		foreach (var tag in tags)
+		{
+			tag.AccessRule = AccessRepository.GetAccessToTag(user, tag.Guid);
+		}
+
+		return tags.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer)).ToArray();
+	}
+
+	/// <summary>
+	/// Изменение параметров тега
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="updateRequest">Новые параметры тега</param>
 	public async Task UpdateAsync(
 		UserAuthInfo user,
 		Guid guid,
-		TagUpdateRequest updateRequest,
-		Guid? energoId = null)
+		TagUpdateRequest updateRequest)
 	{
-		await db.AccessRepository.CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
+		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Admin, guid);
 		User = user.Guid;
 
 		await UpdateAsync(guid, updateRequest);
 	}
 
+	/// <summary>
+	/// Удаление тега
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
 	public async Task DeleteAsync(
 		UserAuthInfo user,
-		Guid guid,
-		Guid? energoId = null)
+		Guid guid)
 	{
-		await db.AccessRepository.CheckAccessToTagAsync(user, AccessType.Admin, guid, energoId);
+		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Admin, guid);
 		User = user.Guid;
 
 		await DeleteAsync(guid);
@@ -63,11 +160,20 @@ public partial class TagsRepository(DatalakeContext db)
 
 	#endregion
 
+	#region Кэш
+
+	/// <summary>
+	/// Кэшированный список тегов
+	/// </summary>
+	public static Dictionary<int, TagCacheInfo> CachedTags { get; set; } = [];
+
+	static object locker = new();
+
+	#endregion
+
 	#region Реализация
 
 	Guid User { get; set; }
-
-	static object locker = new();
 
 	internal async Task<TagInfo> CreateAsync(TagCreateRequest createRequest)
 	{
@@ -177,6 +283,8 @@ public partial class TagsRepository(DatalakeContext db)
 		var info = await GetInfoWithSources().FirstOrDefaultAsync(x => x.Id == tag.Id)
 			?? throw new NotFoundException(message: "тег после создания");
 
+		AccessRepository.Update();
+
 		return info;
 	}
 
@@ -272,6 +380,8 @@ public partial class TagsRepository(DatalakeContext db)
 		await transaction.CommitAsync();
 
 		await UpdateTagCache(cached.Id);
+
+		AccessRepository.Update();
 	}
 
 	internal async Task UpdateTagCache(int id)
@@ -303,6 +413,84 @@ public partial class TagsRepository(DatalakeContext db)
 			UserGuid = User,
 			Details = details,
 		});
+	}
+
+	#endregion
+
+	#region Запросы
+
+	internal IQueryable<TagInfo> GetInfoWithSources()
+	{
+		var query =
+			from tag in db.Tags
+			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
+			select new TagInfo
+			{
+				Id = tag.Id,
+				Guid = tag.GlobalGuid,
+				Name = tag.Name,
+				Description = tag.Description,
+				IntervalInSeconds = tag.Interval,
+				Type = tag.Type,
+				Formula = tag.Formula ?? string.Empty,
+				FormulaInputs =
+					from input_rel in db.TagInputs.LeftJoin(x => x.TagId == tag.Id)
+					from input in db.Tags.InnerJoin(x => x.Id == input_rel.InputTagId)
+					select new TagInputInfo
+					{
+						Id = input.Id,
+						Guid = input.GlobalGuid,
+						Name = input.Name,
+						VariableName = input_rel.VariableName,
+					},
+				IsScaling = tag.IsScaling,
+				MaxEu = tag.MaxEu,
+				MaxRaw = tag.MaxRaw,
+				MinEu = tag.MinEu,
+				MinRaw = tag.MinRaw,
+				SourceId = tag.SourceId,
+				SourceItem = tag.SourceItem,
+				SourceType = source != null ? source.Type : SourceType.Custom,
+				SourceName = source != null ? source.Name : "Unknown",
+			};
+
+		return query;
+	}
+
+	internal IQueryable<TagAsInputInfo> GetPossibleInputs()
+	{
+		var query = db.Tags
+			.Select(x => new TagAsInputInfo
+			{
+				Id = x.Id,
+				Guid = x.GlobalGuid,
+				Name = x.Name,
+				Type = x.Type,
+			})
+			.OrderBy(x => x.Name);
+
+		return query;
+	}
+
+	internal IQueryable<TagCacheInfo> GetTagsForCache()
+	{
+		var query =
+			from t in db.Tags
+			from s in db.Sources.LeftJoin(x => x.Id == t.SourceId)
+			select new TagCacheInfo
+			{
+				Id = t.Id,
+				Guid = t.GlobalGuid,
+				Name = t.Name,
+				TagType = t.Type,
+				SourceType = s.Type,
+				IsManual = t.SourceId == (int)CustomSource.Manual,
+				ScalingCoefficient = t.IsScaling
+					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
+					: 1,
+			};
+
+		return query;
 	}
 
 	#endregion

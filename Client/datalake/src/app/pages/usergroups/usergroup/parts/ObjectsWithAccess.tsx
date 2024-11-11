@@ -6,9 +6,9 @@ import {
 	AccessType,
 } from '../../../../../api/swagger/data-contracts'
 import AccessTypeEl from '../../../../components/AccessTypeEl'
-import BlockIcon from '../../../../icons/BlockIcon'
-import SourceIcon from '../../../../icons/SourceIcon'
-import TagIcon from '../../../../icons/TagIcon'
+import BlockIcon from '../../../../components/icons/BlockIcon'
+import SourceIcon from '../../../../components/icons/SourceIcon'
+import TagIcon from '../../../../components/icons/TagIcon'
 import routes from '../../../../router/routes'
 
 type ObjectsWithAccessProps = {
@@ -69,9 +69,7 @@ const columns: ColumnsType<AccessRightsForOneInfo> = [
 	},
 ]
 
-export default function ObjectsWithAccess({
-	accessRights,
-}: ObjectsWithAccessProps) {
+const ObjectsWithAccess = ({ accessRights }: ObjectsWithAccessProps) => {
 	return (
 		<Table
 			size='small'
@@ -81,3 +79,5 @@ export default function ObjectsWithAccess({
 		/>
 	)
 }
+
+export default ObjectsWithAccess

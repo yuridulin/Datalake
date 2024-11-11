@@ -13,7 +13,7 @@ public class UserGroupDetailedInfo : UserGroupInfo
 	/// Общий уровень доступа для всех участников группы
 	/// </summary>
 	[Required]
-	public AccessType GlobalAccessType { get; set; }
+	public required AccessType GlobalAccessType { get; set; }
 
 	/// <summary>
 	/// Список пользователей этой группы

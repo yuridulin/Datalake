@@ -5,10 +5,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"build": "tsc -b && vite build",
-		"lint": "eslint .",
-		"preview": "vite preview",
-		"swagger": "npx swagger-typescript-api --path \"http://localhost:8000/swagger/Datalake%20App/swagger.json\" --output \"./src/api/swagger\" --axios --modular --clean-output --extract-request-body --responses"
+		"lint": "tsc -b",
+		"swagger": "npx swagger-typescript-api --path \"http://localhost:8000/swagger/Datalake%20App/swagger.json\" --output \"./src/api/swagger\" --axios --modular --clean-output --extract-request-body --responses",
+		"build": "tsc -b && vite build && npm run update-datalake-client",
+		"update-datalake-client": "node env/update-datalake-client.js"
 	},
 	"dependencies": {
 		"@ant-design/icons": "^5.4.0",
@@ -36,6 +36,7 @@
 		"eslint-plugin-react-hooks": "^5.1.0-rc.0",
 		"eslint-plugin-react-refresh": "^0.4.9",
 		"globals": "^15.9.0",
+		"prettier": "^3.3.3",
 		"typescript": "^5.5.3",
 		"typescript-eslint": "^8.0.0",
 		"vite": "^5.4.0",

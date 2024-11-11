@@ -1,8 +1,9 @@
-﻿using Datalake.Database.Constants;
-using Datalake.Database;
+﻿using Datalake.Database;
+using Datalake.Database.Constants;
 using Datalake.Database.Repositories;
 using Datalake.Server.Services.SessionManager;
 using Datalake.Server.Services.SessionManager.Models;
+using System.Diagnostics;
 
 namespace Datalake.Server.BackgroundServices.SettingsHandler;
 
@@ -26,35 +27,54 @@ public class SettingsHandlerService(
 	{
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			var lastUpdate = SystemRepository.LastUpdate;
+			var lastSystemUpdate = SystemRepository.LastUpdate;
+			var lastAccessUpdate = AccessRepository.LastUpdate;
 
-			if (lastUpdate > StoredUpdate)
+			if (lastSystemUpdate != StoredSystemUpdate || lastAccessUpdate != StoredAccessUpdate)
 			{
-				logger.LogInformation("Обновление настроек");
+				var sw = Stopwatch.StartNew();
 
 				try
 				{
 					using var scope = serviceScopeFactory.CreateScope();
 					using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
+					if (lastAccessUpdate != StoredAccessUpdate)
+					{
+						logger.LogInformation("Обновление настроек прав доступа");
 
-					await WriteStartipFileAsync(db.SystemRepository);
-					LoadStaticUsers(db.UsersRepository);
+						await db.AccessRepository.RebuildUserRightsCacheAsync();
+						StoredAccessUpdate = lastAccessUpdate;
+					}
 
-					StoredUpdate = lastUpdate;
+					if (lastSystemUpdate != StoredSystemUpdate)
+					{
+						logger.LogInformation("Обновление системных настроек");
+
+						await WriteStartipFileAsync(db.SystemRepository);
+						StoredSystemUpdate = lastSystemUpdate;
+					}
+
+					LoadStaticUsers(db.AccessRepository);
 				}
 				catch (Exception ex)
 				{
 					logger.LogError("Ошибка при обновлении настроек: {message}", ex.Message);
 				}
+				finally
+				{
+					sw.Stop();
+					logger.LogInformation("Обновление настроек выполнено за {ms} мс", sw.Elapsed.TotalMilliseconds.ToString("F0"));
+				}
 			}
 
-			await Task.Delay(5000, stoppingToken);
+			await Task.Delay(1000, stoppingToken);
 		}
 	}
 
 
-	private DateTime StoredUpdate;
+	private DateTime StoredSystemUpdate;
+	private DateTime StoredAccessUpdate;
 
 	/// <inheritdoc />
 	public async Task WriteStartipFileAsync(SystemRepository systemRepository)
@@ -63,7 +83,7 @@ public class SettingsHandlerService(
 
 		try
 		{
-			var newSettings = await systemRepository.GetSettingsAsync();
+			var newSettings = await systemRepository.GetSettingsAsSystemAsync();
 
 			File.WriteAllLines(Path.Combine(Program.WebRootPath, "startup.js"), [
 				"var LOCAL_API = true;",
@@ -72,7 +92,7 @@ public class SettingsHandlerService(
 				$"var INSTANCE_NAME = '{newSettings.InstanceName}'",
 			]);
 
-			StoredUpdate = DateFormats.GetCurrentDateTime();
+			StoredSystemUpdate = DateFormats.GetCurrentDateTime();
 		}
 		catch (Exception ex)
 		{
@@ -81,18 +101,25 @@ public class SettingsHandlerService(
 	}
 
 	/// <inheritdoc />
-	public void LoadStaticUsers(UsersRepository usersRepository)
+	public void LoadStaticUsers(AccessRepository accessRepository)
 	{
 		logger.LogDebug("Обновление списка статичных учетных записей");
 
 		try
 		{
-			SessionManagerService.StaticAuthRecords = usersRepository
-				.GetStaticUsers()
-				.Select(x => new AuthSession { ExpirationTime = DateTime.MaxValue, User = x.Item1, StaticHost = x.Item2 })
-				.ToList();
+			var staticUsers = accessRepository
+				.GetStaticUsersAsSystemAsync().Result;
 
-			StoredUpdate = DateFormats.GetCurrentDateTime();
+			SessionManagerService.StaticAuthRecords = staticUsers
+				.Select(x => new AuthSession
+				{
+					ExpirationTime = DateTime.MaxValue,
+					UserGuid = x.Guid,
+					Token = x.AuthInfo.Token,
+					AuthInfo = x.AuthInfo,
+					StaticHost = x.Host
+				})
+				.ToList();
 		}
 		catch (Exception ex)
 		{

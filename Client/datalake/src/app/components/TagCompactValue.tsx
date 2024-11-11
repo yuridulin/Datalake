@@ -1,7 +1,7 @@
-import { WarningOutlined } from '@ant-design/icons'
+import TagQualityEl from '@/app/components/TagQualityEl'
 import { theme } from 'antd'
-import { TagValue } from '../../api/models/tagValue'
 import { TagQuality, TagType } from '../../api/swagger/data-contracts'
+import { TagValue } from '../../types/tagValue'
 
 type TagCompactOptions = {
 	value: TagValue
@@ -17,8 +17,6 @@ export default function TagCompactValue({
 	const { token } = theme.useToken()
 
 	let color = ''
-	const good =
-		quality === TagQuality.Good || quality === TagQuality.GoodManualWrite
 	let v: TagValue = ''
 
 	switch (type) {
@@ -28,7 +26,7 @@ export default function TagCompactValue({
 			break
 		case TagType.Boolean:
 			color = '#5273e0'
-			v = value == 'true' ? 'True' : 'False'
+			v = value ? 'True' : 'False'
 			break
 		case TagType.Number:
 			color = '#e87040'
@@ -38,18 +36,10 @@ export default function TagCompactValue({
 
 	return (
 		<>
-			<span style={{ color: color }}>
-				{!good && (
-					<>
-						<WarningOutlined
-							title='Значение не достоверно'
-							style={{ color: token.colorTextDescription }}
-						/>
-						&ensp;
-					</>
-				)}
-				{v}
-			</span>
+			{<TagQualityEl quality={quality} />}&ensp;
+			<span style={{ color: token.colorBorder }}>|</span>
+			&ensp;
+			<span style={{ color: color }}>{v}</span>
 		</>
 	)
 }

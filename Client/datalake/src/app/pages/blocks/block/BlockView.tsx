@@ -1,24 +1,27 @@
-import { Button, Descriptions, DescriptionsProps, Divider, Table } from 'antd'
-import Column from 'antd/es/table/Column'
-import { useEffect, useState } from 'react'
-import { NavLink, useParams } from 'react-router-dom'
-import api from '../../../../api/swagger-api'
+import api from '@/api/swagger-api'
 import {
+	AccessType,
 	BlockChildInfo,
 	BlockFullInfo,
 	BlockNestedTagInfo,
 	ValueRecord,
-} from '../../../../api/swagger/data-contracts'
-import { useInterval } from '../../../../hooks/useInterval'
-import PageHeader from '../../../components/PageHeader'
-import TagCompactValue from '../../../components/TagCompactValue'
-import routes from '../../../router/routes'
+} from '@/api/swagger/data-contracts'
+import PageHeader from '@/app/components/PageHeader'
+import TagCompactValue from '@/app/components/TagCompactValue'
+import routes from '@/app/router/routes'
+import { useInterval } from '@/hooks/useInterval'
+import { user } from '@/state/user'
+import { Button, Descriptions, DescriptionsProps, Divider, Table } from 'antd'
+import Column from 'antd/es/table/Column'
+import { observer } from 'mobx-react-lite'
+import { useEffect, useState } from 'react'
+import { NavLink, useParams } from 'react-router-dom'
 
 type BlockValues = {
 	[key: number]: ValueRecord
 }
 
-export default function BlockView() {
+const BlockView = observer(() => {
 	const { id } = useParams()
 
 	const [block, setBlock] = useState({} as BlockFullInfo)
@@ -79,15 +82,25 @@ export default function BlockView() {
 				}
 				right={
 					<>
-						<NavLink to={routes.blocks.toEditBlock(Number(id))}>
-							<Button>Редактирование блока</Button>
-						</NavLink>
+						{user.hasAccessToBlock(
+							AccessType.Editor,
+							Number(id),
+						) && (
+							<NavLink to={routes.blocks.toEditBlock(Number(id))}>
+								<Button>Редактирование блока</Button>
+							</NavLink>
+						)}
 						&ensp;
-						<NavLink
-							to={routes.blocks.toBlockAccessForm(Number(id))}
-						>
-							<Button>Редактирование разрешений</Button>
-						</NavLink>
+						{user.hasAccessToBlock(
+							AccessType.Admin,
+							Number(id),
+						) && (
+							<NavLink
+								to={routes.blocks.toBlockAccessForm(Number(id))}
+							>
+								<Button>Редактирование разрешений</Button>
+							</NavLink>
+						)}
 					</>
 				}
 			>
@@ -140,10 +153,15 @@ export default function BlockView() {
 				orientation='left'
 				style={{ fontSize: '1em' }}
 			>
-				Вложенные блоки&emsp;
-				<Button size='small' onClick={createChild}>
-					Создать
-				</Button>
+				Вложенные блоки
+				{user.hasAccessToBlock(AccessType.Manager, Number(id)) && (
+					<>
+						&emsp;
+						<Button size='small' onClick={createChild}>
+							Создать
+						</Button>
+					</>
+				)}
 			</Divider>
 			{block.children?.length > 0 ? (
 				<Table
@@ -170,4 +188,6 @@ export default function BlockView() {
 			)}
 		</>
 	)
-}
+})
+
+export default BlockView

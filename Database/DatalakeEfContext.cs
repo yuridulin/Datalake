@@ -135,7 +135,7 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.HasMany(x => x.Logs)
 			.WithOne(x => x.Author)
 			.HasForeignKey(x => x.UserGuid)
-			.OnDelete(DeleteBehavior.NoAction);
+			.OnDelete(DeleteBehavior.SetNull);
 	}
 
 	#region Таблицы

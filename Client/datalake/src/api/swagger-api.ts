@@ -1,9 +1,10 @@
+import { Api } from '@/api/swagger/Api'
+import { AccessType } from '@/api/swagger/data-contracts'
+import router from '@/app/router/router'
+import routes from '@/app/router/routes'
+import notify from '@/state/notifications'
+import { globalAccessHeader, nameHeader, tokenHeader, user } from '@/state/user'
 import { AxiosError, AxiosResponse } from 'axios'
-import router from '../app/router/router'
-import routes from '../app/router/routes'
-import { getToken, setToken, tokenHeader } from './local-auth'
-import notify from './notifications'
-import { Api } from './swagger/Api'
 
 declare const LOCAL_API: boolean
 
@@ -24,7 +25,7 @@ const api = new Api({
 
 api.instance.interceptors.request.use(
 	(config) => {
-		config.headers[tokenHeader] = getToken()
+		config.headers[tokenHeader] = user.token
 		return config
 	},
 	(err) => Promise.reject(err),
@@ -34,7 +35,11 @@ api.instance.interceptors.response.use(
 	(response: AxiosResponse) => {
 		if (response.config.method === 'OPTIONS') return response
 
-		setToken(response.headers[tokenHeader])
+		user.setName(decodeURIComponent(response.headers[nameHeader]))
+		user.setToken(response.headers[tokenHeader])
+		user.setAccess(
+			response.headers[globalAccessHeader] || AccessType.NoAccess,
+		)
 
 		if (response.status === 204) {
 			notify.done()
@@ -43,14 +48,18 @@ api.instance.interceptors.response.use(
 		return response
 	},
 	(error: AxiosError) => {
-		if (error.response?.status === 403) {
-			router.navigate(routes.auth.loginPage)
-			return Promise.resolve(error.response)
+		if (error.response?.status === 401) {
+			router.navigate(routes.auth.loginPage, { replace: true })
+			return Promise.reject(error.response)
 		}
 
 		if (error.code === 'ERR_NETWORK') {
-			router.navigate(routes.offline)
+			router.navigate(routes.offline, { replace: true })
 			return Promise.resolve(error.response)
+		}
+
+		if (error.response?.status === 403) {
+			return Promise.reject(error.response)
 		}
 
 		if (error.response?.status ?? 0 >= 500) {
@@ -58,15 +67,26 @@ api.instance.interceptors.response.use(
 			if (message.indexOf('\n\n') > -1)
 				message = message.substring(0, message.indexOf('\n\n'))
 			notify.err(message)
-			return Promise.resolve(error.response)
+			return Promise.reject(error.response)
 		}
 
 		return Promise.reject(error)
 	},
 )
 
+const identifyUser = () => {
+	api.usersIdentify()
+		.then((res) => {
+			if (res.status != 200) return
+			user.identify(res.data)
+		})
+		.catch()
+}
+
 if (window.location.pathname !== routes.auth.energoId) {
-	api.usersIdentify().catch()
+	identifyUser()
 }
 
 export default api
+
+export { identifyUser }

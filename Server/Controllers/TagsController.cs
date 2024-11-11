@@ -1,8 +1,6 @@
-﻿using Datalake.Database.Exceptions;
+﻿using Datalake.Database;
 using Datalake.Database.Models.Tags;
-using Datalake.Database;
 using Datalake.Server.Controllers.Base;
-using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -34,16 +32,12 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	/// </summary>
 	/// <param name="guid">Идентификатор тега</param>
 	/// <returns>Объект информации о теге</returns>
-	/// <exception cref="NotFoundException">Ошибка, если тег не найден</exception>
 	[HttpGet("{guid}")]
 	public async Task<ActionResult<TagInfo>> ReadAsync(Guid guid)
 	{
-		var tag = await db.TagsRepository.GetInfoWithSources()
-			.Where(x => x.Guid == guid)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Тег {guid}");
+		var user = Authenticate();
 
-		return tag;
+		return await db.TagsRepository.ReadAsync(user, guid);
 	}
 
 	/// <summary>
@@ -53,51 +47,31 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	/// <param name="id">Список локальных идентификаторов тегов</param>
 	/// <param name="names">Список текущих наименований тегов</param>
 	/// <param name="guids">Список глобальных идентификаторов тегов</param>
-	/// <param name="energoId">Идентификатор учетной записи EnergoId, от имени которой совершается действие</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet]
-	public async Task<ActionResult<TagInfo[]>> ReadAsync(
+	public async Task<ActionResult<TagInfo[]>> ReadAllAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? id,
 		[FromQuery] string[]? names,
-		[FromQuery] Guid[]? guids,
-		Guid? energoId = null)
+		[FromQuery] Guid[]? guids)
 	{
-		var query = db.TagsRepository.GetInfoWithSources(energoId);
+		var user = Authenticate();
 
-		if (sourceId.HasValue)
-		{
-			query = query.Where(x => sourceId.Value == x.SourceId);
-		}
-		if (id?.Length > 0)
-		{
-			query = query.Where(x => id.Contains(x.Id));
-		}
-		if (names?.Length > 0)
-		{
-			query = query.Where(x => names.Contains(x.Name));
-		}
-		if (guids?.Length > 0)
-		{
-			query = query.Where(x => guids.Contains(x.Guid));
-		}
-
-		var tags = await query.ToArrayAsync();
-
-		return tags;
+		return await db.TagsRepository.ReadAllAsync(user, sourceId, id, names, guids);
 	}
 
 	/// <summary>
 	/// Получение списка тегов, подходящих для использования в формулах
 	/// </summary>
+	/// <param name="guid">Идентификатор тега</param>
 	/// <returns>Список тегов</returns>
-	[HttpGet("inputs")]
-	public async Task<ActionResult<TagAsInputInfo[]>> ReadPossibleInputsAsync()
+	[HttpGet("{guid}/inputs")]
+	public async Task<ActionResult<TagAsInputInfo[]>> ReadPossibleInputsAsync(
+		[BindRequired, FromRoute] Guid guid)
 	{
-		var tags = await db.TagsRepository.GetPossibleInputs()
-			.ToArrayAsync();
+		var user = Authenticate();
 
-		return tags;
+		return await db.TagsRepository.ReadPossibleInputsAsync(user, guid);
 	}
 
 	/// <summary>

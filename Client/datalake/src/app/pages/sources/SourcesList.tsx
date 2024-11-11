@@ -1,23 +1,31 @@
+import api from '@/api/swagger-api'
+import {
+	AccessType,
+	SourceInfo,
+	SourceState,
+} from '@/api/swagger/data-contracts'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
+import getSourceTypeName from '@/functions/getSourceTypeName'
+import { useInterval } from '@/hooks/useInterval'
+import { timeAgo } from '@/state/timeAgoInstance'
+import { user } from '@/state/user'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, Table, TableColumnsType, Tag } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { timeAgo } from '../../../api/extensions/timeAgoInstance'
-import getSourceTypeName from '../../../api/models/getSourceTypeName'
-import api from '../../../api/swagger-api'
-import { SourceInfo, SourceState } from '../../../api/swagger/data-contracts'
-import { useInterval } from '../../../hooks/useInterval'
-import PageHeader from '../../components/PageHeader'
-import routes from '../../router/routes'
 
-export default function SourcesList() {
+const SourcesList = observer(() => {
 	const [list, setList] = useState([] as SourceInfo[])
 	const [states, setStates] = useState({} as { [key: number]: SourceState })
 
 	const load = () => {
-		api.sourcesReadAll({ withCustom: false }).then((res) => {
-			setList(res.data)
-		})
+		api.sourcesReadAll({ withCustom: false })
+			.then((res) => {
+				setList(res.data)
+			})
+			.catch(() => setList([]))
 		getStates()
 	}
 
@@ -72,9 +80,9 @@ export default function SourcesList() {
 								title={
 									(state.lastConnection
 										? 'Последний раз связь была ' +
-										  timeAgo.format(
+											timeAgo.format(
 												new Date(state.lastConnection),
-										  )
+											)
 										: 'Успешных подключений не было с момента запуска') +
 									'. Последняя попытка: ' +
 									timeAgo.format(new Date(state.lastTry))
@@ -106,7 +114,11 @@ export default function SourcesList() {
 		<>
 			<PageHeader
 				right={
-					<Button onClick={createSource}>Добавить источник</Button>
+					user.hasGlobalAccess(AccessType.Admin) && (
+						<Button onClick={createSource}>
+							Добавить источник
+						</Button>
+					)
 				}
 			>
 				Зарегистрированные источники данных
@@ -120,4 +132,6 @@ export default function SourcesList() {
 			/>
 		</>
 	)
-}
+})
+
+export default SourcesList

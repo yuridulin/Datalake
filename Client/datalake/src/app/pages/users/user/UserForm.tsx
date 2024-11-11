@@ -1,35 +1,53 @@
-import { Button, Input, Popconfirm, Radio, Select } from 'antd'
+import api from '@/api/swagger-api'
+import hasAccess from '@/functions/hasAccess'
+import { user } from '@/state/user'
+import { accessOptions } from '@/types/accessOptions'
+import { Button, Input, Popconfirm, Radio, Select, Spin } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import api from '../../../../api/swagger-api'
 import {
 	AccessType,
 	EnergoIdInfo,
+	UserDetailInfo,
 	UserType,
 	UserUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
-export default function UserForm() {
+
+type UserInfoProps = UserDetailInfo & {
+	oldType: UserType
+	hash: string
+}
+
+const UserForm = observer(() => {
 	const navigate = useNavigate()
 	const { id } = useParams()
 	const [oldName, setOldName] = useState('')
-	const [user, setUser] = useState({ oldType: UserType.Local, hash: '' })
+	const [userInfo, setUser] = useState({
+		oldType: UserType.Local,
+		hash: '',
+	} as UserInfoProps)
 	const [request, setRequest] = useState({} as UserUpdateRequest)
 	const [newType, setNewType] = useState(UserType.Local)
 	const [keycloakUsers, setKeycloakUsers] = useState({
 		connected: false,
 		energoIdUsers: [],
 	} as EnergoIdInfo)
+	const [loading, setLoading] = useState(true)
 
-	useEffect(load, [id])
-
-	function load() {
+	const load = () => {
 		if (!id) return
+		setLoading(true)
 		api.usersReadWithDetails(String(id)).then((res) => {
 			setNewType(res.data.type)
-			setUser({ oldType: res.data.type, hash: res.data.hash ?? '' })
+			setUser({
+				...res.data,
+				oldType: res.data.type,
+				hash: res.data.hash ?? '',
+			})
 			setRequest({
 				login: res.data.login,
 				accessType: res.data.accessType,
@@ -41,12 +59,15 @@ export default function UserForm() {
 				type: res.data.type,
 			})
 			setOldName(res.data.fullName ?? id)
+			setLoading(false)
 		})
 
 		api.usersGetEnergoIdList({ currentUserGuid: id }).then(
 			(res) => !!res && setKeycloakUsers(res.data),
 		)
 	}
+
+	useEffect(load, [id])
 
 	function update() {
 		api.usersUpdate(String(id), request).then((res) => {
@@ -76,7 +97,9 @@ export default function UserForm() {
 		option?: { label: string; value: string },
 	) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
 
-	return (
+	return loading ? (
+		<Spin />
+	) : (
 		<>
 			<PageHeader
 				left={
@@ -95,6 +118,7 @@ export default function UserForm() {
 						>
 							<Button>Удалить</Button>
 						</Popconfirm>
+						&ensp;
 						<Button type='primary' onClick={update}>
 							Сохранить
 						</Button>
@@ -105,38 +129,41 @@ export default function UserForm() {
 			</PageHeader>
 			<form>
 				<FormRow title='Уровень глобального доступа'>
-					<Radio.Group
-						buttonStyle='solid'
+					<Select
 						value={request.accessType}
+						defaultValue={request.accessType}
+						options={accessOptions.filter((x) =>
+							hasAccess(
+								user.globalAccessType,
+								x.value as AccessType,
+							),
+						)}
+						style={{ width: '12em' }}
+						disabled={
+							!hasAccess(
+								userInfo.accessRule.accessType,
+								AccessType.Manager,
+							)
+						}
 						onChange={(e) =>
 							setRequest({
 								...request,
-								accessType: e.target.value,
+								accessType: e,
 							})
 						}
-					>
-						<Radio.Button value={AccessType.NotSet}>
-							Отключена
-						</Radio.Button>
-						<Radio.Button value={AccessType.NoAccess}>
-							Заблокирована
-						</Radio.Button>
-						<Radio.Button value={AccessType.Viewer}>
-							Наблюдатель
-						</Radio.Button>
-						<Radio.Button value={AccessType.User}>
-							Пользователь
-						</Radio.Button>
-						<Radio.Button value={AccessType.Admin}>
-							Администратор
-						</Radio.Button>
-					</Radio.Group>
+					></Select>
 				</FormRow>
 
 				<FormRow title='Тип учетной записи'>
 					<Radio.Group
 						buttonStyle='solid'
 						value={newType}
+						disabled={
+							!hasAccess(
+								user.globalAccessType,
+								AccessType.Manager,
+							)
+						}
 						onChange={(e) => setNewType(e.target.value)}
 					>
 						<Radio.Button value={UserType.Static}>
@@ -195,7 +222,10 @@ export default function UserForm() {
 				<div
 					style={{
 						display:
-							newType === UserType.Static ? 'inherit' : 'none',
+							user.hasGlobalAccess(AccessType.Admin) &&
+							newType === UserType.Static
+								? 'inherit'
+								: 'none',
 					}}
 				>
 					<FormRow title='Адрес, с которого разрешен доступ'>
@@ -210,15 +240,15 @@ export default function UserForm() {
 							}
 						/>
 					</FormRow>
-					{user.oldType === UserType.Static ? (
+					{userInfo.oldType === UserType.Static ? (
 						<FormRow title='Ключ для доступа'>
-							<Input disabled value={user.hash} />
+							<Input disabled value={userInfo.hash} />
 							<div style={{ marginTop: '.5em' }}>
 								<Button
 									type='primary'
 									onClick={() => {
 										navigator.clipboard.writeText(
-											user.hash ?? '',
+											userInfo.hash ?? '',
 										)
 									}}
 								>
@@ -246,7 +276,7 @@ export default function UserForm() {
 							value={request.password || ''}
 							autoComplete='password'
 							placeholder={
-								user.oldType !== UserType.Local
+								userInfo.oldType !== UserType.Local
 									? 'Введите пароль'
 									: 'Запишите новый пароль, если хотите его изменить'
 							}
@@ -278,6 +308,12 @@ export default function UserForm() {
 								value: x.energoIdGuid,
 								label: x.fullName + ' (' + x.login + ')',
 							}))}
+							disabled={
+								!hasAccess(
+									user.globalAccessType,
+									AccessType.Manager,
+								)
+							}
 							style={{ width: '100%' }}
 							onChange={(value) => {
 								const user = keycloakUsers.energoIdUsers.filter(
@@ -298,4 +334,6 @@ export default function UserForm() {
 			</form>
 		</>
 	)
-}
+})
+
+export default UserForm

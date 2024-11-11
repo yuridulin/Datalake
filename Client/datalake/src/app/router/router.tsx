@@ -1,12 +1,14 @@
-import { createBrowserRouter } from 'react-router-dom'
+import UserView from '@/app/pages/users/user/UserView'
+import TagsWriter from '@/app/pages/values/TagsWriter'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import ErrorBoundary from '../components/ErrorBoundary'
 import SettingsPage from '../pages/admin/SettingsPage'
 import BlockAccessForm from '../pages/blocks/block/access/BlockAccessForm'
 import BlockForm from '../pages/blocks/block/BlockForm'
 import BlockView from '../pages/blocks/block/BlockView'
-import BlocksList from '../pages/blocks/BlocksList'
 import BlocksMover from '../pages/blocks/BlocksMover'
+import BlocksTree from '../pages/blocks/BlocksTree'
 import LogsTable from '../pages/dashboard/LogsTable'
 import EnergoId from '../pages/login/EnergoId'
 import LoginPanel from '../pages/login/LoginPanel'
@@ -25,7 +27,7 @@ import UserGroupsTreeMove from '../pages/usergroups/UserGroupsTreeMove'
 import UserCreate from '../pages/users/user/UserCreate'
 import UserForm from '../pages/users/user/UserForm'
 import UsersList from '../pages/users/UsersList'
-import TagsViewer from '../pages/viewer/TagsViewer'
+import TagsViewer from '../pages/values/TagsViewer'
 import routes from './routes'
 
 const router = createBrowserRouter([
@@ -41,9 +43,13 @@ const router = createBrowserRouter([
 		path: '/',
 		element: <AppLayout />,
 		children: [
-			// root
 			{
 				path: '/',
+				element: <Navigate to={routes.blocks.list} replace={true} />,
+			},
+			// logs
+			{
+				path: routes.stats.logs,
 				element: <LogsTable />,
 			},
 			// users
@@ -57,6 +63,10 @@ const router = createBrowserRouter([
 					{
 						path: routes.users.create,
 						element: <UserCreate />,
+					},
+					{
+						path: routes.users.view,
+						element: <UserView />,
 					},
 					{
 						path: routes.users.edit,
@@ -115,7 +125,16 @@ const router = createBrowserRouter([
 				children: [
 					{
 						path: routes.tags.list,
-						element: <TagsList />,
+						children: [
+							{
+								path: routes.tags.list,
+								element: <TagsList />,
+							},
+							{
+								path: routes.tags.edit,
+								element: <TagForm />,
+							},
+						],
 					},
 					{
 						path: routes.tags.manual,
@@ -125,19 +144,19 @@ const router = createBrowserRouter([
 						path: routes.tags.calc,
 						element: <TagsCalculatedList />,
 					},
-					{
-						path: routes.tags.edit,
-						element: <TagForm />,
-					},
 				],
 			},
 			// values
 			{
-				path: routes.viewer.root,
+				path: routes.values.root,
 				children: [
 					{
-						path: routes.viewer.tagsViewer,
+						path: routes.values.tagsViewer,
 						element: <TagsViewer />,
+					},
+					{
+						path: routes.values.tagsWriter,
+						element: <TagsWriter />,
 					},
 				],
 			},
@@ -147,7 +166,7 @@ const router = createBrowserRouter([
 				children: [
 					{
 						path: routes.blocks.list,
-						element: <BlocksList />,
+						element: <BlocksTree />,
 					},
 					{
 						path: routes.blocks.mover,

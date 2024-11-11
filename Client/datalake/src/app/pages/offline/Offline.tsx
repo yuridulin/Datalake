@@ -1,11 +1,12 @@
+import api from '@/api/swagger-api'
 import { CompressOutlined } from '@ant-design/icons'
 import { Spin, theme } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import api from '../../../api/swagger-api'
 import { useInterval } from '../../../hooks/useInterval'
 
-export default function Offline() {
+const Offline = observer(() => {
 	const [online, setOnline] = useState(false)
 	const { token } = theme.useToken()
 
@@ -36,4 +37,6 @@ export default function Offline() {
 			&emsp; Сервер не отвечает... &emsp;
 		</div>
 	)
-}
+})
+
+export default Offline
