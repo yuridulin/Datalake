@@ -3,7 +3,6 @@ using Datalake.Database.Exceptions;
 using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Users;
 using Datalake.Database.Repositories;
-using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Models;
 using Datalake.Server.Services.SessionManager;
@@ -20,8 +19,7 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class UsersController(
 	DatalakeContext db,
-	SessionManagerService sessionManager,
-	ISettingsUpdater settingsService) : ApiControllerBase
+	SessionManagerService sessionManager) : ApiControllerBase
 {
 	/// <summary>
 	/// Получение списка пользователей, определенных на сервере EnergoId
@@ -144,7 +142,6 @@ public class UsersController(
 		var user = Authenticate();
 
 		var guid = await db.UsersRepository.CreateAsync(user, userAuthRequest);
-		settingsService.LoadStaticUsers(db.AccessRepository);
 
 		return guid;
 	}
@@ -204,7 +201,6 @@ public class UsersController(
 		var user = Authenticate();
 
 		await db.UsersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
-		settingsService.LoadStaticUsers(db.AccessRepository);
 
 		return NoContent();
 	}
@@ -220,7 +216,6 @@ public class UsersController(
 		var user = Authenticate();
 
 		await db.UsersRepository.DeleteAsync(user, userGuid);
-		settingsService.LoadStaticUsers(db.AccessRepository);
 
 		return NoContent();
 	}

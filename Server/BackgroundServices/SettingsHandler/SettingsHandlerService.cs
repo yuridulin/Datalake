@@ -30,7 +30,7 @@ public class SettingsHandlerService(
 			var lastSystemUpdate = SystemRepository.LastUpdate;
 			var lastAccessUpdate = AccessRepository.LastUpdate;
 
-			if (lastSystemUpdate > StoredSystemUpdate || lastAccessUpdate > StoredAccessUpdate)
+			if (lastSystemUpdate != StoredSystemUpdate || lastAccessUpdate != StoredAccessUpdate)
 			{
 				var sw = Stopwatch.StartNew();
 
@@ -39,7 +39,7 @@ public class SettingsHandlerService(
 					using var scope = serviceScopeFactory.CreateScope();
 					using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-					if (lastAccessUpdate > StoredAccessUpdate)
+					if (lastAccessUpdate != StoredAccessUpdate)
 					{
 						logger.LogInformation("Обновление настроек прав доступа");
 
@@ -47,7 +47,7 @@ public class SettingsHandlerService(
 						StoredAccessUpdate = lastAccessUpdate;
 					}
 
-					if (lastSystemUpdate > StoredSystemUpdate)
+					if (lastSystemUpdate != StoredSystemUpdate)
 					{
 						logger.LogInformation("Обновление системных настроек");
 
@@ -120,8 +120,6 @@ public class SettingsHandlerService(
 					StaticHost = x.Host
 				})
 				.ToList();
-
-			StoredSystemUpdate = DateFormats.GetCurrentDateTime();
 		}
 		catch (Exception ex)
 		{

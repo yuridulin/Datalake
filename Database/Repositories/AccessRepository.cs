@@ -763,9 +763,8 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности глобального уровня доступа
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="minimalAccess"></param>
-	/// <returns></returns>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	public static bool HasGlobalAccess(
 		UserAuthInfo user,
 		AccessType minimalAccess)
@@ -783,10 +782,9 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности уровня доступа к источнику данных
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="minimalAccess"></param>
-	/// <param name="sourceId"></param>
-	/// <returns></returns>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
+	/// <param name="sourceId">Идентификатор источника</param>
 	public static bool HasAccessToSource(
 		UserAuthInfo user,
 		AccessType minimalAccess,
@@ -808,10 +806,9 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности уровня доступа к блоку
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="minimalAccess"></param>
-	/// <param name="blockId"></param>
-	/// <returns></returns>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
+	/// <param name="blockId">Идентификатор блока</param>
 	public static bool HasAccessToBlock(
 		UserAuthInfo user,
 		AccessType minimalAccess,
@@ -833,10 +830,9 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности уровня доступа к тегу
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="minimalAccess"></param>
-	/// <param name="guid"></param>
-	/// <returns></returns>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
+	/// <param name="guid">Идентификатор тега</param>
 	public static bool HasAccessToTag(
 		UserAuthInfo user,
 		AccessType minimalAccess,
@@ -858,16 +854,15 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности уровня доступа к группе пользователей
 	/// </summary>
-	/// <param name="userRights"></param>
-	/// <param name="minimalAccess"></param>
-	/// <param name="groupGuid"></param>
-	/// <returns></returns>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
+	/// <param name="groupGuid">Идентификатор группы</param>
 	public static bool HasAccessToUserGroup(
-		UserAuthInfo userRights,
+		UserAuthInfo user,
 		AccessType minimalAccess,
 		Guid groupGuid)
 	{
-		if (!userRights.Groups.TryGetValue(groupGuid, out var rule))
+		if (!user.Groups.TryGetValue(groupGuid, out var rule))
 			return false;
 
 		return rule.AccessType.HasAccess(minimalAccess);
@@ -876,8 +871,8 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности глобального уровня доступа
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="minimalAccess"></param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoGlobalAccess(
 		UserAuthInfo user,
@@ -890,9 +885,9 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности уровня доступа к источнику данных
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="minimalAccess"></param>
-	/// <param name="sourceId"></param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
+	/// <param name="sourceId">Идентификатор источника</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoAccessToSource(
 		UserAuthInfo user,
@@ -906,9 +901,9 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности уровня доступа к блоку
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="minimalAccess"></param>
-	/// <param name="blockId"></param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
+	/// <param name="blockId">Идентификатор блока</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoAccessToBlock(
 		UserAuthInfo user,
@@ -922,9 +917,9 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности уровня доступа к тегу
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="minimalAccess"></param>
-	/// <param name="guid"></param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
+	/// <param name="guid">Идентификатор тега</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoAccessToTag(
 		UserAuthInfo user,
@@ -938,9 +933,9 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Проверка достаточности уровня доступа к группе пользователей
 	/// </summary>
-	/// <param name="user"></param>
-	/// <param name="minimalAccess"></param>
-	/// <param name="groupGuid"></param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
+	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoAccessToUserGroup(
 		UserAuthInfo user,
