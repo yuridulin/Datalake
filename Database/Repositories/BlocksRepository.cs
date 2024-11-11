@@ -288,6 +288,8 @@ public class BlocksRepository(DatalakeContext db)
 
 		await transaction.CommitAsync();
 
+		AccessRepository.Update();
+
 		return true;
 	}
 
@@ -340,8 +342,6 @@ public class BlocksRepository(DatalakeContext db)
 
 	private async Task<BlockWithTagsInfo[]> GetBlocks(UserAuthInfo user)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
-
 		var blocks = await QuerySimpleInfo().ToArrayAsync();
 		foreach (var block in blocks)
 		{
