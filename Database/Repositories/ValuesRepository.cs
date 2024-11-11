@@ -103,7 +103,7 @@ public class ValuesRepository(DatalakeContext db)
 	{
 		var stopwatch = Stopwatch.StartNew();
 
-		var trustedRequests = new List<ValueTrustedWriteRequest>();
+		var trustedRequests = new List<TagHistory>();
 
 		foreach (var request in requests)
 		{
@@ -121,17 +121,16 @@ public class ValuesRepository(DatalakeContext db)
 
 			if (tag != null)
 			{
-				trustedRequests.Add(new()
-				{
-					Tag = tag,
-					Date = request.Date,
-					Quality = request.Quality,
-					Value = request.Value
-				});
+				var record = tag.ToHistory(request.Value, request.Quality);
+				if (!IsValueNew(record))
+					continue;
+				record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
+
+				trustedRequests.Add(record);
 			}
 		}
 
-		await WriteValuesAsync(trustedRequests, false);
+		await WriteNewValuesAsync(trustedRequests);
 
 		stopwatch.Stop();
 		return Convert.ToInt32(stopwatch.Elapsed.TotalMilliseconds);
@@ -264,7 +263,7 @@ public class ValuesRepository(DatalakeContext db)
 	/// <param name="overrided">Обязательная запись, даже если изменений не было</param>
 	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
-	internal async Task<List<ValuesTagResponse>> WriteValuesAsync(
+	private async Task<List<ValuesTagResponse>> WriteValuesAsync(
 		IEnumerable<ValueTrustedWriteRequest> requests,
 		bool overrided = false)
 	{
@@ -336,6 +335,18 @@ public class ValuesRepository(DatalakeContext db)
 			{
 				await UpdateInitialValuesInFuture(db, records, g);
 			}
+		}
+	}
+
+	private async Task WriteNewValuesAsync(IEnumerable<TagHistory> records)
+	{
+		if (!records.Any())
+			return;
+
+		foreach (var g in records.GroupBy(x => x.Date.Date))
+		{
+			var table = db.TablesRepository.GetHistoryTable(g.Key);
+			await table.BulkCopyAsync(g.Select(x => x));
 		}
 	}
 

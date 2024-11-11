@@ -76,7 +76,7 @@ internal class CollectorProcessor(
 		}
 	}
 
-	private DateTime StoredUpdate { get; set; } = DateTime.MinValue;
+	private DateTime StoredUpdate { get; set; } = DateTime.MinValue.AddMinutes(1);
 
 	private List<ICollector> Collectors { get; set; } = [];
 }
