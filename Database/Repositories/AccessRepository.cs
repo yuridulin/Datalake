@@ -342,6 +342,7 @@ public class AccessRepository(DatalakeContext db)
 			{
 				u.Guid,
 				Name = u.FullName ?? u.Login ?? string.Empty,
+				u.EnergoIdGuid,
 			})
 			.ToArrayAsync();
 
@@ -687,6 +688,7 @@ public class AccessRepository(DatalakeContext db)
 					Guid = user.Guid,
 					FullName = user.Name,
 					Token = string.Empty,
+					EnergoId = user.EnergoIdGuid,
 					GlobalAccessType = globalRule.AccessType,
 					Groups = userGroups
 						.ToDictionary(x => x.Guid, x => new AccessRuleInfo { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
@@ -726,6 +728,7 @@ public class AccessRepository(DatalakeContext db)
 			{
 				Guid = user.Guid,
 				FullName = user.FullName ?? "",
+				EnergoId = user.EnergoIdGuid,
 				Token = user.Type == UserType.Static ? (user.PasswordHash ?? string.Empty) : string.Empty,
 				GlobalAccessType = accessRights.GlobalAccessType,
 				Sources = accessRights.Sources,
@@ -753,7 +756,15 @@ public class AccessRepository(DatalakeContext db)
 			return accessRights;
 		}
 		else
-			throw Errors.NoAccess;
+		{
+			var energoIdUser = UserRights.Values.FirstOrDefault(x => x.EnergoId == energoId);
+			if (energoIdUser != null)
+			{
+				return energoIdUser;
+			}
+			else
+				throw Errors.NoAccess;
+		}
 	}
 
 	#endregion

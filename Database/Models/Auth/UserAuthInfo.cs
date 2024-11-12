@@ -48,4 +48,9 @@ public class UserAuthInfo : UserSimpleInfo
 	/// Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
 	/// </summary>
 	public Guid? UnderlyingUserGuid { get; set; } = null;
+
+	/// <summary>
+	/// Идентификатор пользователя в системе EnergoId
+	/// </summary>
+	public Guid? EnergoId { get; set; }
 }
