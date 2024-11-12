@@ -6,7 +6,9 @@ const CollectSettings = () => {
 	const [wait, setWait] = useState(false)
 	const restart = () => {
 		setWait(true)
-		api.systemRestart().then((res) => res.status === 204 && setWait(false))
+		api.systemRestartStorage().then(
+			(res) => res.status === 204 && setWait(false),
+		)
 	}
 
 	return (

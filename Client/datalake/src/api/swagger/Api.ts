@@ -139,20 +139,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request GET:/api/Blocks
 	 * @response `200` `(BlockWithTagsInfo)[]` Список блоков
 	 */
-	blocksReadAll = (
-		query?: {
-			/**
-			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
-			 * @format guid
-			 */
-			energoId?: string | null
-		},
-		params: RequestParams = {},
-	) =>
+	blocksReadAll = (params: RequestParams = {}) =>
 		this.request<BlockWithTagsInfo[], any>({
 			path: `/api/Blocks`,
 			method: 'GET',
-			query: query,
 			format: 'json',
 			...params,
 		})
@@ -239,20 +229,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @request GET:/api/Blocks/tree
 	 * @response `200` `(BlockTreeInfo)[]` Список обособленных блоков с вложенными блоками
 	 */
-	blocksReadAsTree = (
-		query?: {
-			/**
-			 * Идентификатор учетной записи EnergoId, от имени которой совершается действие
-			 * @format guid
-			 */
-			energoId?: string | null
-		},
-		params: RequestParams = {},
-	) =>
+	blocksReadAsTree = (params: RequestParams = {}) =>
 		this.request<BlockTreeInfo[], any>({
 			path: `/api/Blocks/tree`,
 			method: 'GET',
-			query: query,
 			format: 'json',
 			...params,
 		})
@@ -572,15 +552,46 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * No description
 	 *
 	 * @tags System
-	 * @name SystemRestart
+	 * @name SystemRestartStorage
 	 * @summary Перестроение кэша и перезапуск всех сборщиков
-	 * @request PUT:/api/System/restart
+	 * @request PUT:/api/System/restart/storage
 	 * @response `200` `File`
 	 */
-	systemRestart = (params: RequestParams = {}) =>
+	systemRestartStorage = (params: RequestParams = {}) =>
 		this.request<File, any>({
-			path: `/api/System/restart`,
+			path: `/api/System/restart/storage`,
 			method: 'PUT',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemRestartAccess
+	 * @summary Перестроение кэша вычисленных прав доступа
+	 * @request PUT:/api/System/restart/access
+	 * @response `200` `File`
+	 */
+	systemRestartAccess = (params: RequestParams = {}) =>
+		this.request<File, any>({
+			path: `/api/System/restart/access`,
+			method: 'PUT',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemGetAccess
+	 * @summary Получение списка вычисленных прав доступа для каждого пользователя
+	 * @request GET:/api/System/access
+	 * @response `200` `Record<string,UserAuthInfo>`
+	 */
+	systemGetAccess = (params: RequestParams = {}) =>
+		this.request<Record<string, UserAuthInfo>, any>({
+			path: `/api/System/access`,
+			method: 'GET',
+			format: 'json',
 			...params,
 		})
 	/**

@@ -608,6 +608,30 @@ export interface SettingsInfo {
 	instanceName: string
 }
 
+/** Информация о аутентифицированном пользователе */
+export type UserAuthInfo = UserSimpleInfo & {
+	/**
+	 * Идентификатор сессии
+	 * @minLength 1
+	 */
+	token: string
+	/** Глобальный уровень доступа */
+	globalAccessType: AccessType
+	/** Список всех блоков с указанием доступа к ним */
+	groups: Record<string, AccessRuleInfo>
+	/** Список всех блоков с указанием доступа к ним */
+	sources: Record<string, AccessRuleInfo>
+	/** Список всех блоков с указанием доступа к ним */
+	blocks: Record<string, AccessRuleInfo>
+	/** Список всех тегов с указанием доступа к ним */
+	tags: Record<string, AccessRuleInfo>
+	/**
+	 * Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
+	 * @format guid
+	 */
+	underlyingUserGuid?: string | null
+}
+
 /** Информация о теге */
 export type TagInfo = TagSimpleInfo & {
 	/** Произвольное описание тега */
@@ -846,30 +870,6 @@ export interface UserEnergoIdInfo {
 	 * @minLength 1
 	 */
 	fullName: string
-}
-
-/** Информация о аутентифицированном пользователе */
-export type UserAuthInfo = UserSimpleInfo & {
-	/**
-	 * Идентификатор сессии
-	 * @minLength 1
-	 */
-	token: string
-	/** Глобальный уровень доступа */
-	globalAccessType: AccessType
-	/** Список всех блоков с указанием доступа к ним */
-	groups: Record<string, AccessRuleInfo>
-	/** Список всех блоков с указанием доступа к ним */
-	sources: Record<string, AccessRuleInfo>
-	/** Список всех блоков с указанием доступа к ним */
-	blocks: Record<string, AccessRuleInfo>
-	/** Список всех тегов с указанием доступа к ним */
-	tags: Record<string, AccessRuleInfo>
-	/**
-	 * Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
-	 * @format guid
-	 */
-	underlyingUserGuid?: string | null
 }
 
 /** Информация при аутентификации локальной учетной записи */

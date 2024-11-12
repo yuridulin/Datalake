@@ -1,3 +1,4 @@
+import AccessSettings from '@/app/pages/admin/tabs/AccessSettings'
 import { Tabs } from 'antd'
 import PageHeader from '../../components/PageHeader'
 import AuthSettings from './tabs/AuthSettings'
@@ -24,6 +25,11 @@ const SettingsPage = () => {
 						key: '3',
 						label: 'Общие настройки',
 						children: <LocalSettings />,
+					},
+					{
+						key: '4',
+						label: 'Права доступа',
+						children: <AccessSettings />,
 					},
 				]}
 			/>

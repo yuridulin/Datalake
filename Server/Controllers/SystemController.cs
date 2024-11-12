@@ -1,6 +1,7 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Constants;
 using Datalake.Database.Enums;
+using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Logs;
 using Datalake.Database.Models.Settings;
 using Datalake.Database.Repositories;
@@ -133,13 +134,41 @@ public class SystemController(
 	/// Перестроение кэша и перезапуск всех сборщиков
 	/// </summary>
 	/// <returns></returns>
-	[HttpPut("restart")]
-	public async Task<ActionResult> RestartAsync()
+	[HttpPut("restart/storage")]
+	public async Task<ActionResult> RestartStorageAsync()
 	{
 		var user = Authenticate();
 
 		await db.SystemRepository.RebuildStorageCacheAsync(user);
 
 		return NoContent();
+	}
+
+	/// <summary>
+	/// Перестроение кэша вычисленных прав доступа
+	/// </summary>
+	/// <returns></returns>
+	[HttpPut("restart/access")]
+	public async Task<ActionResult> RestartAccessAsync()
+	{
+		var user = Authenticate();
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		await db.AccessRepository.RebuildUserRightsCacheAsync();
+
+		return NoContent();
+	}
+
+	/// <summary>
+	/// Получение списка вычисленных прав доступа для каждого пользователя
+	/// </summary>
+	/// <returns></returns>
+	[HttpGet("access")]
+	public ActionResult<Dictionary<Guid, UserAuthInfo>> GetAccess()
+	{
+		var user = Authenticate();
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		return Ok(AccessRepository.UserRights.ToDictionary(x => x.Key, x => x.Value));
 	}
 }

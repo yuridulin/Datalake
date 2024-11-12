@@ -68,6 +68,7 @@ namespace Datalake.Server
 						AuthConstants.TokenHeader,
 						AuthConstants.GlobalAccessHeader,
 						AuthConstants.NameHeader,
+						AuthConstants.UnderlyingUserGuidHeader,
 					]);
 			});
 			app.UseMiddlewares();
