@@ -103,7 +103,7 @@ public class ValuesRepository(DatalakeContext db)
 	{
 		var stopwatch = Stopwatch.StartNew();
 
-		var trustedRequests = new List<TagHistory>();
+		var recordsToWrite = new List<TagHistory>();
 
 		foreach (var request in requests)
 		{
@@ -126,11 +126,12 @@ public class ValuesRepository(DatalakeContext db)
 					continue;
 				record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
 
-				trustedRequests.Add(record);
+				recordsToWrite.Add(record);
 			}
 		}
 
-		await WriteNewValuesAsync(trustedRequests);
+		WriteLiveValues(recordsToWrite);
+		await WriteNewValuesAsync(recordsToWrite);
 
 		stopwatch.Stop();
 		return Convert.ToInt32(stopwatch.Elapsed.TotalMilliseconds);
