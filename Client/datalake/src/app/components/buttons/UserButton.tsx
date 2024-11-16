@@ -7,10 +7,12 @@ import { NavLink } from 'react-router-dom'
 
 type UserGroupButtonProps = {
 	userInfo: UserSimpleInfo
+	check?: boolean
 }
 
-const UserButton = ({ userInfo }: UserGroupButtonProps) => {
-	return hasAccess(userInfo.accessRule.accessType, AccessType.Viewer) ? (
+const UserButton = ({ userInfo, check = true }: UserGroupButtonProps) => {
+	return !check ||
+		hasAccess(userInfo.accessRule.accessType, AccessType.Viewer) ? (
 		<NavLink to={routes.users.toUserView(userInfo.guid)}>
 			<Button size='small' icon={<UserIcon />}>
 				{userInfo.fullName}
