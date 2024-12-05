@@ -217,7 +217,7 @@ public class UserGroupsRepository(DatalakeContext db)
 
 	#region Реализация
 
-	Guid User { get; set; }
+	Guid? User { get; set; } = null;
 
 	internal async Task<Guid> CreateAsync(UserGroupCreateRequest request)
 	{

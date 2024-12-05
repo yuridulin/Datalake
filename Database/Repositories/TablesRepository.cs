@@ -88,7 +88,8 @@ public class TablesRepository(DatalakeContext db)
 
 	internal static DateTime? GetPreviousTableDate(DateTime date)
 	{
-		return CachedTables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
+		var previousDate = CachedTables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
+		return previousDate == DateTime.MinValue ? null : previousDate;
 	}
 
 	internal ITable<TagHistory> GetHistoryTable(DateTime seekDate)
@@ -129,7 +130,7 @@ public class TablesRepository(DatalakeContext db)
 
 		// заполнение начальных значений
 		DateTime? previous = CachedTables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
-		if (previous != null)
+		if (previous != null && previous != DateTime.MinValue)
 		{
 			var previousTable = db.GetTable<TagHistory>().TableName(GetTableName(previous.Value));
 			await table.BulkCopyAsync(

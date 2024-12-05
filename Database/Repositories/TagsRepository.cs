@@ -173,7 +173,7 @@ public class TagsRepository(DatalakeContext db)
 
 	#region Реализация
 
-	Guid User { get; set; }
+	Guid? User { get; set; } = null;
 
 	internal async Task<TagInfo> CreateAsync(TagCreateRequest createRequest)
 	{
@@ -185,10 +185,8 @@ public class TagsRepository(DatalakeContext db)
 		{
 			createRequest.Name = createRequest.Name.RemoveWhitespaces("_");
 
-#pragma warning disable CA1862
 			if (await db.Tags.AnyAsync(x => x.Name.ToLower() == createRequest.Name.ToLower()))
 				throw new ForbiddenException(message: "уже существует тег с таким именем");
-#pragma warning restore CA1862
 		}
 
 		if (createRequest.SourceId.HasValue)

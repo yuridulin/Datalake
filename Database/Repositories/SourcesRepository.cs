@@ -140,7 +140,7 @@ public class SourcesRepository(DatalakeContext db)
 
 	#region Реализация
 
-	Guid User { get; set; }
+	Guid? User { get; set; } = null;
 
 	internal async Task<int> CreateAsync()
 	{
