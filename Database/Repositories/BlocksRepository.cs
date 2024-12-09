@@ -254,7 +254,7 @@ public class BlocksRepository(DatalakeContext db)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Блок #{id} не найден");
 
-		if (await db.Blocks.AnyAsync(x => x.Id != id && x.Name == block.Name))
+		if (await db.Blocks.AnyAsync(x => x.Id != id && x.ParentId == oldBlock.ParentId && x.Name == block.Name))
 			throw new AlreadyExistException("Блок с таким именем уже существует");
 
 		using var transaction = await db.BeginTransactionAsync();
