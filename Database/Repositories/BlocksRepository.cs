@@ -221,13 +221,13 @@ public class BlocksRepository(DatalakeContext db)
 
 	internal async Task<int> CreateAsync(BlockFullInfo block)
 	{
-		if (await db.Blocks.AnyAsync(x => x.Name == block.Name))
-			throw new AlreadyExistException("Блок с таким именем уже существует");
-
 		if (block.Parent != null)
 		{
 			if (!await db.Blocks.AnyAsync(x => x.Id == block.Parent.Id))
 				throw new NotFoundException($"Родительский блок #{block.Parent.Id} не найден");
+
+			if (await db.Blocks.AnyAsync(x => x.ParentId == block.Parent.Id && x.Name == block.Name))
+				throw new AlreadyExistException("Блок с таким именем уже существует");
 		}
 
 		int? id = await db.Blocks
