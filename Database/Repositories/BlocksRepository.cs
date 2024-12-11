@@ -74,8 +74,7 @@ public class BlocksRepository(DatalakeContext db)
 		if (!rule.AccessType.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
-		var block = await QueryFullInfo().FirstOrDefaultAsync(x => x.Id == id)
-			?? throw new NotFoundException(message: "блок #" + id);
+		var block = await QueryFullInfo(id);
 
 		block.AccessRule = rule;
 
@@ -249,10 +248,7 @@ public class BlocksRepository(DatalakeContext db)
 
 	internal async Task<bool> UpdateAsync(int id, BlockUpdateRequest block)
 	{
-		var oldBlock = await QueryFullInfo()
-			.Where(x => x.Id == id)
-			.FirstOrDefaultAsync()
-			?? throw new NotFoundException($"Блок #{id} не найден");
+		var oldBlock = await QueryFullInfo(id);
 
 		if (await db.Blocks.AnyAsync(x => x.Id != id && x.ParentId == oldBlock.ParentId && x.Name == block.Name))
 			throw new AlreadyExistException("Блок с таким именем уже существует");
@@ -397,10 +393,35 @@ public class BlocksRepository(DatalakeContext db)
 		return query;
 	}
 
-	internal IQueryable<BlockFullInfo> QueryFullInfo()
+	internal async Task<BlockFullInfo> QueryFullInfo(int id)
 	{
+		var parentsCte = db.GetCte<BlockTreeInfo>(cte =>
+		{
+			return (
+				from x in db.Blocks
+				where x.Id == id
+				select new BlockTreeInfo
+				{
+					Id = x.Id,
+					Guid = x.GlobalId,
+					Name = x.Name,
+					ParentId = x.ParentId,
+				}
+			).Concat(
+				from x in db.Blocks
+				join p in cte on x.Id equals p.ParentId
+				select new BlockTreeInfo
+				{
+					Id = x.Id,
+					Guid = x.GlobalId,
+					Name = x.Name,
+					ParentId = x.ParentId,
+				}
+			);
+		});
+
 		var query =
-			from block in db.Blocks
+			from block in db.Blocks.Where(x => x.Id == id)
 			from parent in db.Blocks.LeftJoin(x => x.Id == block.ParentId)
 			select new BlockFullInfo
 			{
@@ -413,6 +434,7 @@ public class BlocksRepository(DatalakeContext db)
 					Id = parent.Id,
 					Name = parent.Name
 				},
+				Adults = parentsCte.Where(x => x.Id != id),
 				Children =
 					from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id)
 					select new BlockFullInfo.BlockChildInfo
@@ -463,7 +485,8 @@ public class BlocksRepository(DatalakeContext db)
 					},
 			};
 
-		return query;
+		return await query.FirstOrDefaultAsync()
+			?? throw new NotFoundException(message: "блок #" + id);
 	}
 
 	#endregion

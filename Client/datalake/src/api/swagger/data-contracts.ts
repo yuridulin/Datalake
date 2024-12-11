@@ -235,6 +235,8 @@ export type BlockFullInfo = BlockWithTagsInfo & {
 	properties: BlockPropertyInfo[]
 	/** Список прав доступа, которые действуют на этот блок */
 	accessRights: AccessRightsForObjectInfo[]
+	/** Список родительских блоков */
+	adults: BlockTreeInfo[]
 }
 
 /** Информация о родительском блоке */
@@ -289,6 +291,12 @@ export type AccessRightsForObjectInfo = AccessRightsSimpleInfo & {
 	user?: UserSimpleInfo | null
 }
 
+/** Информация о блоке в иерархическом представлении */
+export type BlockTreeInfo = BlockWithTagsInfo & {
+	/** Вложенные блоки */
+	children: BlockTreeInfo[]
+}
+
 /** Информация о блоке */
 export type BlockWithTagsInfo = BlockSimpleInfo & {
 	/**
@@ -339,12 +347,6 @@ export enum BlockTagRelation {
 	Static = 0,
 	Input = 1,
 	Output = 2,
-}
-
-/** Информация о блоке в иерархическом представлении */
-export type BlockTreeInfo = BlockWithTagsInfo & {
-	/** Вложенные блоки */
-	children: BlockTreeInfo[]
 }
 
 /** Новая информация о блоке */
@@ -630,6 +632,11 @@ export type UserAuthInfo = UserSimpleInfo & {
 	 * @format guid
 	 */
 	underlyingUserGuid?: string | null
+	/**
+	 * Идентификатор пользователя в системе EnergoId
+	 * @format guid
+	 */
+	energoId?: string | null
 }
 
 /** Информация о теге */

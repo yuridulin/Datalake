@@ -10,18 +10,12 @@ type BlockButtonProps = {
 
 const BlockButton = ({ block }: BlockButtonProps) => {
 	return (
-		/* hasAccess(tag.accessRule.accessType, AccessType.Viewer) ?*/ <NavLink
-			to={routes.blocks.toViewBlock(block.id)}
-		>
+		<NavLink to={routes.blocks.toViewBlock(block.id)}>
 			<Button size='small' icon={<BlockIcon />}>
 				{block.name}
 			</Button>
 		</NavLink>
-	) /* : (
-		<Button size='small' disabled icon={<TagIcon />}>
-			Нет доступа
-		</Button>
-	) */
+	)
 }
 
 export default BlockButton

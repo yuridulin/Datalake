@@ -32,6 +32,12 @@ public class BlockFullInfo : BlockWithTagsInfo
 	[Required]
 	public IEnumerable<AccessRightsForObjectInfo> AccessRights { get; set; } = [];
 
+	/// <summary>
+	/// Список родительских блоков
+	/// </summary>
+	[Required]
+	public IEnumerable<BlockTreeInfo> Adults { get; set; } = [];
+
 
 	/// <summary>
 	/// Информация о родительском блоке

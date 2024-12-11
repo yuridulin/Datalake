@@ -6,12 +6,21 @@ import {
 	BlockNestedTagInfo,
 	ValueRecord,
 } from '@/api/swagger/data-contracts'
+import BlockButton from '@/app/components/buttons/BlockButton'
 import PageHeader from '@/app/components/PageHeader'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import routes from '@/app/router/routes'
 import { useInterval } from '@/hooks/useInterval'
 import { user } from '@/state/user'
-import { Button, Descriptions, DescriptionsProps, Divider, Table } from 'antd'
+import { RightOutlined } from '@ant-design/icons'
+import {
+	Button,
+	Descriptions,
+	DescriptionsProps,
+	Divider,
+	Spin,
+	Table,
+} from 'antd'
 import Column from 'antd/es/table/Column'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
@@ -21,9 +30,15 @@ type BlockValues = {
 	[key: number]: ValueRecord
 }
 
+const dividerStyle = {
+	fontSize: '1em',
+	marginTop: '2em',
+}
+
 const BlockView = observer(() => {
 	const { id } = useParams()
 
+	const [ready, setReady] = useState(false)
 	const [block, setBlock] = useState({} as BlockFullInfo)
 	const [values, setValues] = useState({} as BlockValues)
 
@@ -37,10 +52,13 @@ const BlockView = observer(() => {
 	]
 
 	const getBlock = () => {
+		setReady(false)
 		api.blocksRead(Number(id))
 			.then((res) => {
+				res.data.adults = res.data.adults.reverse()
 				setBlock(res.data)
 				getTagsValues(res.data.tags.map((x) => x.id))
+				setReady(true)
 			})
 			.catch(() => setBlock({} as BlockFullInfo))
 	}
@@ -72,7 +90,9 @@ const BlockView = observer(() => {
 	useEffect(getBlock, [id])
 	useInterval(getValues, 5000)
 
-	return (
+	return !ready ? (
+		<Spin />
+	) : (
 		<>
 			<PageHeader
 				left={
@@ -106,12 +126,70 @@ const BlockView = observer(() => {
 			>
 				{block.name}
 			</PageHeader>
+
 			<Descriptions colon={true} layout='vertical' items={items} />
-			<Divider
-				variant='dashed'
-				orientation='left'
-				style={{ fontSize: '1em' }}
-			>
+
+			<Divider variant='dashed' orientation='left' style={dividerStyle}>
+				Вышестоящие блоки
+			</Divider>
+			{block.adults.length > 0 ? (
+				<div style={{ display: 'flex' }}>
+					<BlockButton block={block.adults[0]} />
+					{block.adults.slice(1).map((x) => (
+						<>
+							<RightOutlined
+								style={{ margin: '0 1em', fontSize: '7px' }}
+							/>
+							<BlockButton block={x} />
+						</>
+					))}
+					<RightOutlined
+						style={{ margin: '0 1em', fontSize: '7px' }}
+					/>
+					<Button size='small' disabled>
+						{block.name}
+					</Button>
+				</div>
+			) : (
+				<i>Это блок верхнего уровня</i>
+			)}
+
+			<Divider variant='dashed' orientation='left' style={dividerStyle}>
+				Вложенные блоки
+				{user.hasAccessToBlock(AccessType.Manager, Number(id)) && (
+					<>
+						&emsp;
+						<Button size='small' onClick={createChild}>
+							Создать
+						</Button>
+					</>
+				)}
+			</Divider>
+			{block.children?.length > 0 ? (
+				<Table
+					dataSource={block.children}
+					size='small'
+					pagination={false}
+					rowKey='id'
+				>
+					<Column
+						dataIndex='id'
+						title='Название'
+						render={(_, record: BlockChildInfo) => (
+							<NavLink
+								key={record.id}
+								to={routes.blocks.toViewBlock(record.id)}
+							>
+								<Button size='small'>{record.name}</Button>
+							</NavLink>
+						)}
+					/>
+				</Table>
+			) : (
+				<i>Нет вложенных блоков</i>
+			)}
+
+			<Divider variant='dashed' orientation='left' style={dividerStyle}>
 				Поля
 			</Divider>
 			<Table
@@ -148,44 +226,6 @@ const BlockView = observer(() => {
 					}}
 				/>
 			</Table>
-			<Divider
-				variant='dashed'
-				orientation='left'
-				style={{ fontSize: '1em' }}
-			>
-				Вложенные блоки
-				{user.hasAccessToBlock(AccessType.Manager, Number(id)) && (
-					<>
-						&emsp;
-						<Button size='small' onClick={createChild}>
-							Создать
-						</Button>
-					</>
-				)}
-			</Divider>
-			{block.children?.length > 0 ? (
-				<Table
-					dataSource={block.children}
-					size='small'
-					pagination={false}
-					rowKey='id'
-				>
-					<Column
-						dataIndex='id'
-						title='Название'
-						render={(_, record: BlockChildInfo) => (
-							<NavLink
-								key={record.id}
-								to={routes.blocks.toViewBlock(record.id)}
-							>
-								<Button size='small'>{record.name}</Button>
-							</NavLink>
-						)}
-					/>
-				</Table>
-			) : (
-				<i>Нет вложенных блоков</i>
-			)}
 		</>
 	)
 })
