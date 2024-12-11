@@ -158,14 +158,14 @@ public class ValuesRepository(DatalakeContext db)
 		var tags = db.Tags.Select(x => x.Id).ToArray();
 		var date = DateFormats.GetCurrentDateTime();
 
-		var table = db.TablesRepository.GetHistoryTable(DateFormats.GetCurrentDateTime().Date);
+		var table = await db.TablesRepository.GetHistoryTableAsync(DateFormats.GetCurrentDateTime().Date);
 		var count = await table.CountAsync();
 
 		if (count == 0)
 		{
 			var lastDate = TablesRepository.GetPreviousTableDate(DateFormats.GetCurrentDateTime().Date);
 			if (lastDate != null)
-				table = db.TablesRepository.GetHistoryTable(lastDate.Value);
+				table = await db.TablesRepository.GetHistoryTableAsync(lastDate.Value);
 			else
 			{
 				lock (locker)
@@ -311,7 +311,7 @@ public class ValuesRepository(DatalakeContext db)
 
 		foreach (var g in records.GroupBy(x => x.Date.Date))
 		{
-			var table = db.TablesRepository.GetHistoryTable(g.Key);
+			var table = await db.TablesRepository.GetHistoryTableAsync(g.Key);
 			var values = g.Select(x => x);
 
 			string tempTableName = "TagsHistoryInserting_" + DateTime.UtcNow.ToFileTimeUtc().ToString();
@@ -346,7 +346,7 @@ public class ValuesRepository(DatalakeContext db)
 
 		foreach (var g in records.GroupBy(x => x.Date.Date))
 		{
-			var table = db.TablesRepository.GetHistoryTable(g.Key);
+			var table = await db.TablesRepository.GetHistoryTableAsync(g.Key);
 			await table.BulkCopyAsync(g.Select(x => x));
 		}
 	}
@@ -364,7 +364,8 @@ public class ValuesRepository(DatalakeContext db)
 			if (!nextDate.HasValue)
 				break;
 
-			var tagsWithoutNextValues = await db.TablesRepository.GetHistoryTable(date)
+			var table = await db.TablesRepository.GetHistoryTableAsync(date);
+			var tagsWithoutNextValues = await table
 				.Where(x => !records.Any(r => r.TagId == x.TagId && r.Date < x.Date))
 				.Select(x => x.TagId)
 				.ToArrayAsync();
@@ -372,7 +373,7 @@ public class ValuesRepository(DatalakeContext db)
 			if (tagsWithoutNextValues.Length == 0)
 				break;
 
-			var nextTable = db.TablesRepository.GetHistoryTable(nextDate.Value);
+			var nextTable = await db.TablesRepository.GetHistoryTableAsync(nextDate.Value);
 
 			var tagsWithNextInitialValues = await nextTable
 				.Where(x => tagsWithoutNextValues.Contains(x.TagId))

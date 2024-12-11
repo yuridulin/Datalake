@@ -1,6 +1,7 @@
 ﻿using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector;
-using Datalake.Server.BackgroundServices.History;
+using Datalake.Server.BackgroundServices.HistoryIndexer;
+using Datalake.Server.BackgroundServices.HistoryInitial;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SessionManager;
@@ -35,6 +36,7 @@ internal static class ServicesSetup
 		builder.Services.AddHostedService<CollectorProcessor>();
 		builder.Services.AddHostedService<CollectorWriter>();
 		builder.Services.AddHostedService<HistoryIndexerService>();
+		builder.Services.AddHostedService<HistoryInitialService>();
 		builder.Services.AddHostedService<SettingsHandlerService>();
 		builder.Services.AddHostedService(provider
 			=> provider.GetRequiredService<SettingsHandlerService>());

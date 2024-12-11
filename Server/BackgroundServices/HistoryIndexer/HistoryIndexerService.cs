@@ -2,7 +2,7 @@
 using Datalake.Database.Constants;
 using System.Diagnostics;
 
-namespace Datalake.Server.BackgroundServices.History;
+namespace Datalake.Server.BackgroundServices.HistoryIndexer;
 
 /// <summary>
 /// Индексирование таблиц истории после завершения активного периода
@@ -48,7 +48,6 @@ public class HistoryIndexerService(
 						LastIndexedTableDate = table.Date;
 
 						sw.Stop();
-
 						logger.LogDebug("Создание индекса для {name} завершено: {ms} мс", table.Name, sw.Elapsed.TotalMilliseconds);
 
 						await Task.Delay(1000, stoppingToken);
@@ -66,7 +65,7 @@ public class HistoryIndexerService(
 				hasError = true;
 			}
 
-			await Task.Delay(hasError ? TimeSpan.FromMinutes(1) : TimeSpan.FromHours(1), stoppingToken);
+			await Task.Delay(hasError ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(5), stoppingToken);
 		}
 	}
 }

@@ -9,7 +9,7 @@ using Datalake.Server.TestRunner.Attributes;
 using Datalake.Server.TestRunner.Extensions;
 using System.Net.Http.Json;
 
-namespace Datalake.Server.TestRunner.Tests.CollectorsTests;
+namespace Datalake.Server.Tests.Tests.CollectorsTests;
 
 public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>>
 {

@@ -39,18 +39,28 @@ public class TablesRepository(DatalakeContext db)
 	}
 
 	/// <summary>
-	/// 
+	/// Вставка при необходимости значений из предыдущей таблицы
 	/// </summary>
-	/// <param name="date"></param>
-	/// <returns></returns>
+	/// <param name="date">дата</param>
+	/// <returns>Количество вставленных записей</returns>
 	public async Task EnsureInitialValues(DateTime date)
 	{
-		var table = db.GetTable<TagHistory>().TableName(GetTableName(date));
+		var tableName = GetTableName(date);
+		var table = await GetHistoryTableAsync(date);
 
 		bool hasInitial = await table.AnyAsync(x => x.Quality == TagQuality.Bad_LOCF || x.Quality == TagQuality.Good_LOCF);
 
 		if (!hasInitial)
-			await WriteInitialValuesAsync(date);
+		{
+			var initialCount = await WriteInitialValuesAsync(date);
+
+			db.Insert(new Log
+			{
+				Category = LogCategory.Database,
+				Type = LogType.Trace,
+				Text = "Для партиции: " + tableName + " добавлены начальные значения. Количество: " + initialCount,
+			});
+		}
 	}
 
 	#endregion
@@ -92,7 +102,7 @@ public class TablesRepository(DatalakeContext db)
 		return previousDate == DateTime.MinValue ? null : previousDate;
 	}
 
-	internal ITable<TagHistory> GetHistoryTable(DateTime seekDate)
+	internal async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime seekDate)
 	{
 		DateTime date = seekDate.Date;
 		ITable<TagHistory> table;
@@ -111,29 +121,29 @@ public class TablesRepository(DatalakeContext db)
 				CachedTables.Add(date, tableName);
 			}
 
-			WriteInitialValuesAsync(date).Wait();
+			var initialCount = await WriteInitialValuesAsync(date);
 
 			db.Insert(new Log
 			{
 				Category = LogCategory.Database,
 				Type = LogType.Trace,
-				Text = "Создана партиция: " + tableName,
+				Text = "Создана партиция: " + tableName + ". Количество начальных значений: " + initialCount,
 			});
 		}
 
 		return table;
 	}
 
-	async Task WriteInitialValuesAsync(DateTime date)
+	async Task<long> WriteInitialValuesAsync(DateTime date)
 	{
-		var table = db.TablesRepository.GetHistoryTable(date);
+		var table = await db.TablesRepository.GetHistoryTableAsync(date);
 
 		// заполнение начальных значений
 		DateTime? previous = CachedTables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
 		if (previous != null && previous != DateTime.MinValue)
 		{
 			var previousTable = db.GetTable<TagHistory>().TableName(GetTableName(previous.Value));
-			await table.BulkCopyAsync(
+			var records = await table.BulkCopyAsync(
 				from rt in
 					from th in previousTable
 					select new
@@ -158,7 +168,11 @@ public class TablesRepository(DatalakeContext db)
 					Number = rt.Number,
 					Quality = (short)rt.Quality >= 192 ? TagQuality.Good_LOCF : TagQuality.Bad_LOCF,
 				});
+
+			return records.RowsCopied;
 		}
+
+		return 0;
 	}
 
 	async Task<HistoryTableInfo[]> PostgreSQL_GetHistoryTablesFromSchema()

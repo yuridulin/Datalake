@@ -285,7 +285,7 @@ public class SystemRepository(DatalakeContext db)
 		// создание таблицы для значений на текущую дату
 		if (!TablesRepository.CachedTables.ContainsKey(DateTime.Today))
 		{
-			db.TablesRepository.GetHistoryTable(DateTime.Today);
+			await db.TablesRepository.GetHistoryTableAsync(DateTime.Today);
 		}
 
 		// актуализация таблицы текущих значений

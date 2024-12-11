@@ -6,7 +6,7 @@ using Datalake.Server.TestRunner.Attributes;
 using Datalake.Server.TestRunner.Extensions;
 using System.Net.Http.Json;
 
-namespace Datalake.Server.TestRunner.Tests.CrudTests;
+namespace Datalake.Server.Tests.Tests.CrudTests;
 
 public class UserGroupCrud : IClassFixture<TestingWebAppFactory<Program>>
 {
