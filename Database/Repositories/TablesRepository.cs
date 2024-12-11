@@ -143,7 +143,7 @@ public class TablesRepository(DatalakeContext db)
 		if (previous != null && previous != DateTime.MinValue)
 		{
 			var previousTable = db.GetTable<TagHistory>().TableName(GetTableName(previous.Value));
-			var records = await table.BulkCopyAsync(
+			var initialValues = await (
 				from rt in
 					from th in previousTable
 					select new
@@ -167,7 +167,9 @@ public class TablesRepository(DatalakeContext db)
 					Text = rt.Text,
 					Number = rt.Number,
 					Quality = (short)rt.Quality >= 192 ? TagQuality.Good_LOCF : TagQuality.Bad_LOCF,
-				});
+				}).ToArrayAsync();
+
+			var records = await table.BulkCopyAsync(initialValues);
 
 			return records.RowsCopied;
 		}
