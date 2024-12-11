@@ -29,8 +29,9 @@ public class HistoryInitialService(
 				var tables = await db.TablesRepository.GetHistoryTablesFromSchema();
 
 				var notCheckedTables = tables
-					.Where(x => x.Date > LastCheckedTableDate)
 					.OrderBy(x => x.Date)
+					.Skip(1)
+					.Where(x => x.Date > LastCheckedTableDate)
 					.ToArray();
 
 				foreach (var table in notCheckedTables)
