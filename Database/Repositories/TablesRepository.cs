@@ -45,15 +45,11 @@ public class TablesRepository(DatalakeContext db)
 	/// <returns>Количество вставленных записей</returns>
 	public async Task EnsureInitialValues(DateTime date)
 	{
-		var tableName = GetTableName(date);
-		var table = await GetHistoryTableAsync(date);
+		var initialCount = await WriteInitialValuesAsync(date);
 
-		bool hasInitial = await table.AnyAsync(x => x.Quality == TagQuality.Bad_LOCF || x.Quality == TagQuality.Good_LOCF);
-
-		if (!hasInitial)
+		if (initialCount > 0)
 		{
-			var initialCount = await WriteInitialValuesAsync(date);
-
+			var tableName = GetTableName(date);
 			db.Insert(new Log
 			{
 				Category = LogCategory.Database,
@@ -138,38 +134,46 @@ public class TablesRepository(DatalakeContext db)
 	{
 		var table = await db.TablesRepository.GetHistoryTableAsync(date);
 
+		var initialValues = await table
+			.Where(x => x.Quality == TagQuality.Bad_LOCF || x.Quality == TagQuality.Good_LOCF)
+			.Select(x => x.TagId)
+			.ToArrayAsync();
+
 		// заполнение начальных значений
 		DateTime? previous = CachedTables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
 		if (previous != null && previous != DateTime.MinValue)
 		{
 			var previousTable = db.GetTable<TagHistory>().TableName(GetTableName(previous.Value));
-			var initialValues = await (
-				from rt in
-					from th in previousTable
+			var lastValuesQuery =
+				from lastValue in
+					from value in previousTable
+					where initialValues.Contains(value.TagId)
 					select new
 					{
-						th.TagId,
-						th.Date,
-						th.Text,
-						th.Number,
-						th.Quality,
+						value.TagId,
+						value.Date,
+						value.Text,
+						value.Number,
+						value.Quality,
 						rn = Sql.Ext
 							.RowNumber().Over()
-							.PartitionBy(th.TagId)
-							.OrderByDesc(th.Date)
+							.PartitionBy(value.TagId)
+							.OrderByDesc(value.Date)
 							.ToValue()
 					}
-				where rt.rn == 1
+				where lastValue.rn == 1
 				select new TagHistory
 				{
-					TagId = rt.TagId,
-					Date = rt.Date > date ? rt.Date : date,
-					Text = rt.Text,
-					Number = rt.Number,
-					Quality = (short)rt.Quality >= 192 ? TagQuality.Good_LOCF : TagQuality.Bad_LOCF,
-				}).ToArrayAsync();
+					TagId = lastValue.TagId,
+					Date = lastValue.Date > date ? lastValue.Date : date,
+					Text = lastValue.Text,
+					Number = lastValue.Number,
+					Quality = (short)lastValue.Quality >= 192 ? TagQuality.Good_LOCF : TagQuality.Bad_LOCF,
+				};
 
-			var records = await table.BulkCopyAsync(initialValues);
+			var lastValues = await lastValuesQuery.ToArrayAsync();
+
+			var records = await table.BulkCopyAsync(lastValues);
 
 			return records.RowsCopied;
 		}

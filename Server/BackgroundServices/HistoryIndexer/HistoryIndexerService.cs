@@ -19,6 +19,8 @@ public class HistoryIndexerService(
 	/// <param name="stoppingToken">Токен остановки</param>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+
 		while (!stoppingToken.IsCancellationRequested)
 		{
 			bool hasError = false;

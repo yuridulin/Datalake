@@ -10,53 +10,43 @@ public class HistoryInitialService(
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<HistoryInitialService> logger) : BackgroundService
 {
-	DateTime LastCheckedTableDate = DateTime.MinValue.AddMinutes(1);
-
 	/// <summary>
 	/// Периодическая проверка необходимости воссоздания начальных значений
 	/// </summary>
 	/// <param name="stoppingToken">Токен остановки</param>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+
 		while (!stoppingToken.IsCancellationRequested)
 		{
 			bool hasError = false;
+
 			try
 			{
 				using var scope = serviceScopeFactory.CreateScope();
 				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
 				var tables = await db.TablesRepository.GetHistoryTablesFromSchema();
+				tables = [.. tables.Skip(1).OrderBy(x => x.Date)];
 
-				var notCheckedTables = tables
-					.OrderBy(x => x.Date)
-					.Skip(1)
-					.Where(x => x.Date > LastCheckedTableDate)
-					.ToArray();
+				logger.LogInformation("Запущена проверка наличия начальных значений");
 
-				foreach (var table in notCheckedTables)
+				foreach (var table in tables)
 				{
 					logger.LogInformation("Проверка наличия начальных значений для {name}", table.Name);
 
-					try
-					{
-						var sw = Stopwatch.StartNew();
-						await db.TablesRepository.EnsureInitialValues(table.Date);
+					var sw = Stopwatch.StartNew();
+					await db.TablesRepository.EnsureInitialValues(table.Date);
 
-						LastCheckedTableDate = table.Date;
+					sw.Stop();
+					logger.LogDebug("Проверка наличия начальных значений для {name} завершена: {ms} мс",
+						table.Name, sw.Elapsed.TotalMilliseconds);
 
-						sw.Stop();
-						logger.LogDebug("Проверка наличия начальных значений для {name} завершена: {ms} мс",
-							table.Name, sw.Elapsed.TotalMilliseconds);
-
-						await Task.Delay(1000, stoppingToken);
-					}
-					catch (Exception ex)
-					{
-						logger.LogWarning("Не удалось проверить наличие начальных значений для {name}: {message}", table.Name, ex);
-						hasError = true;
-					}
+					await Task.Delay(1000, stoppingToken);
 				}
+
+				logger.LogInformation("Ароверка наличия начальных значений завершена");
 			}
 			catch (Exception ex)
 			{
@@ -64,7 +54,7 @@ public class HistoryInitialService(
 				hasError = true;
 			}
 
-			await Task.Delay(hasError ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(5), stoppingToken);
+			await Task.Delay(hasError ? TimeSpan.FromMinutes(5) : TimeSpan.FromMinutes(30), stoppingToken);
 		}
 	}
 }
