@@ -7,6 +7,9 @@ namespace Datalake.Database.Extensions;
 
 internal static class TagExtension
 {
+	static readonly string TrueValue = true.ToString();
+	static readonly string OneValue = 1.ToString();
+
 	internal static TagHistory ToHistory(this TagCacheInfo tag, object? value, ushort qualityRaw)
 	{
 		var quality = !Enum.IsDefined(typeof(TagQuality), (int)qualityRaw)
@@ -54,7 +57,7 @@ internal static class TagExtension
 				break;
 
 			case TagType.Boolean:
-				history.Number = text == "1" || text == "true" ? 1 : 0;
+				history.Number = text == OneValue || text == TrueValue ? 1 : 0;
 				break;
 		}
 
