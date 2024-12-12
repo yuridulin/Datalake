@@ -91,10 +91,11 @@ public class BlocksRepository(DatalakeContext db)
 	{
 		BlockWithTagsInfo[] blocks = await GetBlocks(user);
 
-		return ReadChildren(null);
+		return ReadChildren(null, string.Empty);
 
-		BlockTreeInfo[] ReadChildren(int? id)
+		BlockTreeInfo[] ReadChildren(int? id, string prefix)
 		{
+			var prefixString = prefix + (string.IsNullOrEmpty(prefix) ? string.Empty : ".");
 			return blocks
 				.Where(x => x.ParentId == id)
 				.Select(x =>
@@ -105,10 +106,21 @@ public class BlocksRepository(DatalakeContext db)
 						Guid = x.Guid,
 						ParentId = x.ParentId,
 						Name = x.Name,
+						FullName = prefixString + x.Name,
 						Description = x.Description,
-						Tags = x.Tags,
+						Tags = x.Tags.Select(tag => new BlockNestedTagInfo
+						{
+							Guid = tag.Guid,
+							Name = tag.Name,
+							Id = tag.Id,
+							Relation = tag.Relation,
+							SourceId = tag.SourceId,
+							TagName = tag.TagName,
+							TagType = tag.TagType,
+							FullName = prefixString + x.Name + "." + tag.Name,
+						}),
 						AccessRule = x.AccessRule,
-						Children = ReadChildren(x.Id),
+						Children = ReadChildren(x.Id, prefixString + x.Name),
 					};
 
 					if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))

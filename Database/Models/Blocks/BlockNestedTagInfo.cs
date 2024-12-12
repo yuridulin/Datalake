@@ -37,4 +37,10 @@ public class BlockNestedTagInfo : BlockNestedItem
 	/// </summary>
 	[Required]
 	public int SourceId { get; set; }
+
+	/// <summary>
+	/// Свое имя тега, включающее имена всех родительских блоков по иерархии через "."
+	/// </summary>
+	[Required]
+	public string FullName { get; set; } = string.Empty;
 }

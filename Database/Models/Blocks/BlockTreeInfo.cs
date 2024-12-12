@@ -12,4 +12,10 @@ public class BlockTreeInfo : BlockWithTagsInfo
 	/// </summary>
 	[Required]
 	public BlockTreeInfo[] Children { get; set; } = [];
+
+	/// <summary>
+	/// Полное имя блока, включающее имена всех родительских блоков по иерархии через "."
+	/// </summary>
+	[Required]
+	public string FullName { get; set; } = string.Empty;
 }

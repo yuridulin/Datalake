@@ -137,6 +137,7 @@ public class TablesRepository(DatalakeContext db)
 		var initialValues = await table
 			.Where(x => x.Quality == TagQuality.Bad_LOCF || x.Quality == TagQuality.Good_LOCF)
 			.Select(x => x.TagId)
+			.Distinct()
 			.ToArrayAsync();
 
 		// заполнение начальных значений
