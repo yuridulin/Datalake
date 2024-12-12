@@ -16,7 +16,7 @@ public class HistoryInitialService(
 	/// <param name="stoppingToken">Токен остановки</param>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+		await Task.Delay(TimeSpan.FromSeconds(20), stoppingToken);
 
 		while (!stoppingToken.IsCancellationRequested)
 		{
@@ -46,7 +46,7 @@ public class HistoryInitialService(
 					await Task.Delay(1000, stoppingToken);
 				}
 
-				logger.LogInformation("Ароверка наличия начальных значений завершена");
+				logger.LogInformation("Проверка наличия начальных значений завершена");
 			}
 			catch (Exception ex)
 			{

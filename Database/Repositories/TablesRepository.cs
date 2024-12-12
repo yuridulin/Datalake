@@ -147,7 +147,7 @@ public class TablesRepository(DatalakeContext db)
 			var lastValuesQuery =
 				from lastValue in
 					from value in previousTable
-					where initialValues.Contains(value.TagId)
+					where !initialValues.Contains(value.TagId)
 					select new
 					{
 						value.TagId,

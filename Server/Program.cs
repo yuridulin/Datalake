@@ -96,10 +96,9 @@ namespace Datalake.Server
 			}
 
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
-			{
 				options
-					.UseNpgsql(connectionString, config => config.CommandTimeout(300));
-			});
+					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
+			);
 
 			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
 				options
