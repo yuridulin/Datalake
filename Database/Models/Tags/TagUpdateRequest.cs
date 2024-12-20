@@ -26,32 +26,9 @@ public class TagUpdateRequest
 	public TagType Type { get; set; }
 
 	/// <summary>
-	/// Новый интервал получения значения
-	/// </summary>
-	[Required]
-	public short IntervalInSeconds { get; set; } = 0;
-
-	/// <summary>
-	/// Источник данных
-	/// </summary>
-	[Required]
-	public int SourceId { get; set; } = (int)CustomSource.Manual;
-
-	/// <summary>
-	/// Тип источника данных
-	/// </summary>
-	[Required]
-	public SourceType SourceType { get; set; } = SourceType.Datalake;
-
-	/// <summary>
 	/// Путь к данными в источнике
 	/// </summary>
 	public string? SourceItem { get; set; } = string.Empty;
-
-	/// <summary>
-	/// Формула, по которой рассчитывается значение
-	/// </summary>
-	public string? Formula { get; set; } = string.Empty;
 
 	/// <summary>
 	/// Применяется ли изменение шкалы значения
@@ -84,8 +61,25 @@ public class TagUpdateRequest
 	public float MaxRaw { get; set; } = float.MaxValue;
 
 	/// <summary>
+	/// Источник данных
+	/// </summary>
+	[Required]
+	public int SourceId { get; set; } = (int)CustomSource.Manual;
+
+	/// <summary>
+	/// Новый интервал получения значения
+	/// </summary>
+	[Required]
+	public short IntervalInSeconds { get; set; } = 0;
+
+	/// <summary>
+	/// Формула, по которой рассчитывается значение
+	/// </summary>
+	public string? Formula { get; set; } = string.Empty;
+
+	/// <summary>
 	/// Входные переменные для формулы, по которой рассчитывается значение
 	/// </summary>
 	[Required]
-	public TagInputInfo[] FormulaInputs { get; set; } = [];
+	public TagUpdateInputRequest[] FormulaInputs { get; set; } = [];
 }

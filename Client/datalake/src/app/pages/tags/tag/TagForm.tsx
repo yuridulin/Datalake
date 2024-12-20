@@ -1,5 +1,6 @@
 import api from '@/api/swagger-api'
-import { AppstoreAddOutlined } from '@ant-design/icons'
+import { TagValue } from '@/types/tagValue'
+import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import {
 	AutoComplete,
 	Button,
@@ -10,11 +11,14 @@ import {
 	Radio,
 	Select,
 	Space,
+	Spin,
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
+	TagInfo,
 	TagType,
+	TagUpdateInputRequest,
 	TagUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
 import { useInterval } from '../../../../hooks/useInterval'
@@ -24,48 +28,72 @@ import PageHeader from '../../../components/PageHeader'
 import TagValueEl from '../../../components/TagValueEl'
 import routes from '../../../router/routes'
 
-const TagForm = () => {
-	//#region Данные
+type SourceOption = {
+	value: number
+	label: string
+}
 
+type InputOption = {
+	value: number
+	label: string
+}
+
+enum SourceStrategy {
+	Manual = CustomSource.Manual,
+	Calculated = CustomSource.Calculated,
+	FromSource = 0,
+}
+
+interface UpdateRequest extends TagUpdateRequest {
+	formulaInputs: UpdateInputRequest[]
+}
+
+interface UpdateInputRequest extends TagUpdateInputRequest {
+	key: number
+}
+
+const TagForm = () => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 
-	const [model, setModel] = useState({
-		tag: {} as TagUpdateRequest,
-		sourceSwitcher: CustomSource.NotSet,
-		sourceId: CustomSource.NotSet,
-		oldName: '',
-	})
+	// инфа
+	const [tag, setTag] = useState({} as TagInfo)
+	const [sources, setSources] = useState([] as SourceOption[])
+	const [inputs, setInputs] = useState([] as InputOption[])
+	const [value, setValue] = useState(null as TagValue)
 
-	const [sources, setSources] = useState(
-		[] as { value: number; label: string }[],
-	)
+	// изменяемые
+	const [isLoading, setLoading] = useState(false)
+	const [request, setRequest] = useState({
+		formulaInputs: [] as UpdateInputRequest[],
+	} as UpdateRequest)
 	const [items, setItems] = useState([] as { value: string }[])
+	const [strategy, setStrategy] = useState(SourceStrategy.Manual)
 
-	function getItems() {
-		if (model.tag.sourceId <= 0) return
-		api.sourcesGetItems(model.tag.sourceId).then((res) => {
-			setItems(
-				res.data.map((x) => ({
-					value: x.path ?? '',
-				})),
-			)
-		})
-	}
-
-	function load() {
+	// получение инфы
+	const loadTagData = () => {
 		if (!id) return
+		setLoading(true)
+
 		api.tagsRead(String(id)).then((res) => {
-			setModel({
-				...model,
-				tag: res.data,
-				oldName: res.data.name,
-				sourceId: res.data.sourceId,
-				sourceSwitcher:
-					res.data.sourceId < 0
-						? res.data.sourceId
-						: CustomSource.NotSet,
+			const info = res.data
+			setTag(info)
+			setRequest({
+				...info,
+				formulaInputs: info.formulaInputs.map((x, index) => ({
+					key: index,
+					tagId: x.id,
+					variableName: x.variableName,
+				})),
 			})
+			setLoading(false)
+			setStrategy(
+				info.sourceId == CustomSource.Manual
+					? SourceStrategy.Manual
+					: info.sourceId == CustomSource.Calculated
+						? SourceStrategy.Calculated
+						: SourceStrategy.FromSource,
+			)
 		})
 		api.sourcesReadAll().then((res) => {
 			setSources(
@@ -75,97 +103,114 @@ const TagForm = () => {
 				})),
 			)
 		})
-		//api.tagsPossibleInputs().then((res) =>
-		//setItems(
-		//res.data.map((tag) => ({ value: tag.id, label: tag.name })),
-		//),
-		//)
+		api.tagsReadPossibleInputs(String(id))
+			.then((res) =>
+				setInputs(
+					res.data.map((x) => ({ value: x.id, label: x.name })),
+				),
+			)
+			.catch(() => setInputs([]))
 	}
 
-	const [currentValue, setCurrentValue] = useState(
-		null as string | number | boolean | null,
-	)
-	const getCurrentValue = useCallback(() => {
+	useEffect(loadTagData, [id])
+
+	const getItems = () => {
+		if (!request.sourceId || request.sourceId <= 0) return
+		api.sourcesGetItems(request.sourceId).then((res) => {
+			setItems(
+				res.data.map((x) => ({
+					value: x.path ?? '',
+				})),
+			)
+		})
+	}
+
+	useEffect(getItems, [request])
+
+	const getValue = useCallback(() => {
 		if (!id) return
-		setCurrentValue((prevValue) => {
+		setValue((prevValue) => {
 			api.valuesGet([
 				{
 					requestKey: 'tag-current-value',
-					tags: [id],
+					tags: [String(id)],
 				},
 			])
-				.then((res) =>
-					setCurrentValue(res.data[0].tags[0].values[0].value),
-				)
-				.catch(() => setCurrentValue(null))
+				.then((res) => setValue(res.data[0].tags[0].values[0].value))
+				.catch(() => setValue(null))
 			return prevValue
 		})
 	}, [id])
 
-	useInterval(() => {
-		if (!id) return
-		getCurrentValue()
-	}, 1000)
+	useEffect(getValue, [tag, getValue])
+	useInterval(getValue, 1000)
 
 	useEffect(() => {
-		if (id) load()
+		if (strategy === SourceStrategy.FromSource && request.sourceId < 0) {
+			setRequest({
+				...request,
+				sourceId: CustomSource.NotSet,
+			})
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [id])
+	}, [strategy])
 
-	useEffect(() => {
-		if (model.tag.sourceId > 0) getItems()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [model.tag.sourceId])
-
-	//#endregion
-
-	//#region Действия
-
-	const back = () => {
+	const back = useCallback(() => {
 		navigate(routes.tags.list)
+	}, [navigate])
+
+	const tagUpdate = () => {
+		api.tagsUpdate(String(id), {
+			...request,
+			sourceId:
+				strategy === SourceStrategy.FromSource
+					? request.sourceId
+					: strategy,
+			formulaInputs:
+				strategy === SourceStrategy.Calculated
+					? request.formulaInputs
+					: [],
+			formula:
+				strategy === SourceStrategy.Calculated ? request.formula : null,
+			sourceItem:
+				strategy === SourceStrategy.FromSource
+					? request.sourceItem
+					: null,
+		}).then(back)
 	}
 
-	function tagUpdate() {
-		api.tagsUpdate(String(id), model.tag).then(back)
-	}
-
-	function tagDelete() {
-		api.tagsDelete(String(id)).then(back)
-	}
+	const tagDelete = () => api.tagsDelete(String(id)).then(back)
 
 	const addParam = () => {
-		/* if (!model.tag.calcInfo) return
-		let i = 1
-		let exist = false
-		let varName = 'x1'
-		do {
-			varName = 'x' + i++
-			exist =
-				// eslint-disable-next-line no-loop-func
-				Object.keys(model.tag.calcInfo.inputs).filter(
-					(x) => x === varName,
-				).length > 0
-		} while (exist)
-		let newInputs = model.tag.calcInfo.inputs
-		newInputs[varName] = 0
-		setModel({
-			...model,
-			tag: {
-				...model.tag,
-				calcInfo: { ...model.tag.calcInfo, inputs: newInputs },
-			},
-		}) */
+		if (strategy !== SourceStrategy.Calculated) return
+		const existsId = request.formulaInputs
+			.filter((x) => x.key < 0)
+			.map((x) => x.key)
+		const availableFakeId =
+			existsId.length > 0 ? Math.min.apply(0, existsId) - 1 : -1
+		setRequest({
+			...request,
+			formulaInputs: [
+				...request.formulaInputs,
+				{
+					key: availableFakeId,
+					tagId: 0,
+					variableName: '',
+				},
+			],
+		})
 	}
 
-	/* const removeParam = (param: string) => {
-		let newInputs = tag.calcInfo.inputs
-		delete newInputs[param]
-		setTag({ ...tag, calcInfo: { ...tag.calcInfo, inputs: newInputs } })
-	} */
+	const removeParam = (key: number) => {
+		setRequest({
+			...request,
+			formulaInputs: request.formulaInputs.filter((x) => x.key !== key),
+		})
+	}
 
-	//#endregion
-
-	return (
+	return isLoading ? (
+		<Spin />
+	) : (
 		<>
 			<PageHeader
 				left={
@@ -191,28 +236,28 @@ const TagForm = () => {
 					</>
 				}
 			>
-				Тег {model.oldName}
+				Тег {tag.name}
 			</PageHeader>
 			<FormRow title='Имя'>
 				<Input
-					value={model.tag.name}
+					value={request.name}
 					onChange={(e) =>
-						setModel({
-							...model,
-							tag: { ...model.tag, name: e.target.value },
+						setRequest({
+							...request,
+							name: e.target.value,
 						})
 					}
 				/>
 			</FormRow>
 			<FormRow title='Описание'>
 				<Input.TextArea
-					value={model.tag.description ?? ''}
+					value={request.description ?? ''}
 					rows={4}
 					style={{ resize: 'none' }}
 					onChange={(e) =>
-						setModel({
-							...model,
-							tag: { ...model.tag, description: e.target.value },
+						setRequest({
+							...request,
+							description: e.target.value,
 						})
 					}
 				/>
@@ -220,11 +265,11 @@ const TagForm = () => {
 			<FormRow title='Тип'>
 				<Radio.Group
 					buttonStyle='solid'
-					value={model.tag.type}
+					value={request.type}
 					onChange={(e) =>
-						setModel({
-							...model,
-							tag: { ...model.tag, type: e.target.value },
+						setRequest({
+							...request,
+							type: e.target.value,
 						})
 					}
 				>
@@ -235,20 +280,16 @@ const TagForm = () => {
 			</FormRow>
 			<div
 				style={{
-					display:
-						model.tag.type === TagType.Number ? 'block' : 'none',
+					display: request.type === TagType.Number ? 'block' : 'none',
 				}}
 			>
 				<FormRow>
 					<Checkbox
-						checked={model.tag.isScaling}
+						checked={request.isScaling}
 						onChange={(e) =>
-							setModel({
-								...model,
-								tag: {
-									...model.tag,
-									isScaling: e.target.checked,
-								},
+							setRequest({
+								...request,
+								isScaling: e.target.checked,
 							})
 						}
 					>
@@ -257,7 +298,7 @@ const TagForm = () => {
 				</FormRow>
 				<div
 					style={{
-						display: model.tag.isScaling ? 'block' : 'none',
+						display: request.isScaling ? 'block' : 'none',
 					}}
 				>
 					<FormRow
@@ -266,27 +307,21 @@ const TagForm = () => {
 					>
 						<InputNumber
 							addonBefore='Min'
-							value={model.tag.minEu}
+							value={request.minEu}
 							onChange={(v) =>
-								setModel({
-									...model,
-									tag: {
-										...model.tag,
-										minEu: Number(v),
-									},
+								setRequest({
+									...request,
+									minEu: Number(v),
 								})
 							}
 						/>
 						<InputNumber
 							addonBefore='Max'
-							value={model.tag.maxEu}
+							value={request.maxEu}
 							onChange={(v) =>
-								setModel({
-									...model,
-									tag: {
-										...model.tag,
-										maxEu: Number(v),
-									},
+								setRequest({
+									...request,
+									maxEu: Number(v),
 								})
 							}
 						/>
@@ -297,27 +332,21 @@ const TagForm = () => {
 					>
 						<InputNumber
 							addonBefore='Min'
-							value={model.tag.minRaw}
+							value={request.minRaw}
 							onChange={(v) =>
-								setModel({
-									...model,
-									tag: {
-										...model.tag,
-										minRaw: Number(v),
-									},
+								setRequest({
+									...request,
+									minRaw: Number(v),
 								})
 							}
 						/>
 						<InputNumber
 							addonBefore='Max'
-							value={model.tag.maxRaw}
+							value={request.maxRaw}
 							onChange={(v) =>
-								setModel({
-									...model,
-									tag: {
-										...model.tag,
-										maxRaw: Number(v),
-									},
+								setRequest({
+									...request,
+									maxRaw: Number(v),
 								})
 							}
 						/>
@@ -327,25 +356,16 @@ const TagForm = () => {
 			<FormRow title='Способ получения'>
 				<Radio.Group
 					buttonStyle='solid'
-					value={model.sourceSwitcher}
-					onChange={(e) =>
-						setModel({
-							...model,
-							sourceSwitcher: e.target.value,
-							tag: {
-								...model.tag,
-								sourceId: e.target.value,
-							},
-						})
-					}
+					value={strategy}
+					onChange={(e) => setStrategy(e.target.value)}
 				>
-					<Radio.Button value={CustomSource.Manual}>
+					<Radio.Button value={SourceStrategy.Manual}>
 						Мануальный
 					</Radio.Button>
-					<Radio.Button value={CustomSource.Calculated}>
+					<Radio.Button value={SourceStrategy.Calculated}>
 						Вычисляемый
 					</Radio.Button>
-					<Radio.Button value={CustomSource.NotSet}>
+					<Radio.Button value={SourceStrategy.FromSource}>
 						Из источника
 					</Radio.Button>
 				</Radio.Group>
@@ -353,21 +373,16 @@ const TagForm = () => {
 			<div
 				style={{
 					display:
-						model.sourceSwitcher !== CustomSource.Manual
-							? 'block'
-							: 'none',
+						strategy !== SourceStrategy.Manual ? 'block' : 'none',
 				}}
 			>
 				<FormRow title='Интервал обновления в секундах (0, если только по изменению)'>
 					<InputNumber
-						value={model.tag.intervalInSeconds}
+						value={request.intervalInSeconds}
 						onChange={(value) =>
-							setModel({
-								...model,
-								tag: {
-									...model.tag,
-									intervalInSeconds: Number(value),
-								},
+							setRequest({
+								...request,
+								intervalInSeconds: Number(value),
 							})
 						}
 					/>
@@ -376,30 +391,27 @@ const TagForm = () => {
 			<div
 				style={{
 					display:
-						model.sourceSwitcher === CustomSource.Calculated
+						strategy === SourceStrategy.Calculated
 							? 'block'
 							: 'none',
 				}}
 			>
 				<FormRow title='Формула для вычисления'>
 					<Input
-						value={model.tag.formula ?? ''}
+						value={request.formula ?? ''}
 						onChange={(e) =>
-							setModel({
-								...model,
-								tag: {
-									...model.tag,
-									formula: e.target.value,
-								},
+							setRequest({
+								...request,
+								formula: e.target.value,
 							})
 						}
 					/>
 				</FormRow>
 				<div>
-					{/*<FormRow title='Входные параметры формулы'>
-						{Object.entries(tag.calcInfo.inputs).map((x, index) => (
+					<FormRow title='Входные параметры формулы'>
+						{request.formulaInputs.map((input) => (
 							<div
-								key={index}
+								key={'input' + input.key}
 								style={{
 									marginBottom: '.25em',
 									display: 'grid',
@@ -407,47 +419,63 @@ const TagForm = () => {
 								}}
 							>
 								<Input
-									value={x[0]}
+									value={input.variableName}
+									placeholder='Введите обозначение переменной'
 									onChange={(e) =>
-										setTag({
-											...tag,
-											Inputs: tag.Inputs.map((y, ind) =>
-												ind !== index
-													? y
-													: {
-															...y,
-															VariableName:
-																e.target.value,
-													  },
-											),
+										setRequest({
+											...request,
+											formulaInputs: [
+												...request.formulaInputs.map(
+													(x) =>
+														x.key !== input.key
+															? x
+															: {
+																	...x,
+																	variableName:
+																		e.target
+																			.value,
+																},
+												),
+											],
 										})
 									}
 								/>
 								<Select
 									style={{ minWidth: '16em' }}
-									options={inputs}
-									value={x.InputTagId}
+									options={[
+										{ value: 0, label: 'Не выбран' },
+										...inputs.filter(
+											(x) =>
+												x.value == input.tagId ||
+												!request.formulaInputs
+													.map((f) => f.tagId)
+													.includes(x.value),
+										),
+									]}
+									value={input.tagId}
 									onChange={(v) =>
-										setTag({
-											...tag,
-											Inputs: tag.Inputs.map((y, ind) =>
-												ind !== index
-													? y
-													: {
-															...y,
-															InputTagId: v,
-													  },
-											),
+										setRequest({
+											...request,
+											formulaInputs:
+												request.formulaInputs.map(
+													(x) =>
+														x.key !== input.key
+															? x
+															: {
+																	...x,
+																	tagId: v,
+																},
+												),
 										})
 									}
 								></Select>
 								<Button
 									icon={<DeleteOutlined />}
-									onClick={() => removeParam(index)}
+									onClick={() => removeParam(input.key)}
 								></Button>
 							</div>
 						))}
-					</FormRow>*/}
+					</FormRow>
 					<Button
 						icon={<AppstoreAddOutlined />}
 						onClick={addParam}
@@ -457,7 +485,7 @@ const TagForm = () => {
 			<div
 				style={{
 					display:
-						model.sourceSwitcher === CustomSource.NotSet
+						strategy === SourceStrategy.FromSource
 							? 'block'
 							: 'none',
 				}}
@@ -471,14 +499,11 @@ const TagForm = () => {
 							},
 							...sources,
 						]}
-						value={model.tag.sourceId}
+						value={request.sourceId}
 						onChange={(value) =>
-							setModel({
-								...model,
-								tag: {
-									...model.tag,
-									sourceId: value,
-								},
+							setRequest({
+								...request,
+								sourceId: value,
 							})
 						}
 						style={{ width: '100%' }}
@@ -487,22 +512,19 @@ const TagForm = () => {
 				<div
 					style={{
 						display:
-							model.tag.sourceId === CustomSource.NotSet
+							request.sourceId === CustomSource.NotSet
 								? 'none'
 								: 'inherit',
 					}}
 				>
 					<FormRow title='Путь к данным в источнике'>
 						<AutoComplete
-							value={model.tag.sourceItem}
+							value={request.sourceItem}
 							options={items}
 							onChange={(value) =>
-								setModel({
-									...model,
-									tag: {
-										...model.tag,
-										sourceItem: value,
-									},
+								setRequest({
+									...request,
+									sourceItem: value,
 								})
 							}
 							style={{ width: '100%' }}
@@ -511,10 +533,7 @@ const TagForm = () => {
 				</div>
 				<FormRow title='Значение'>
 					<Space>
-						<TagValueEl
-							value={currentValue}
-							type={model.tag.type}
-						/>
+						<TagValueEl value={value} type={tag.type} />
 					</Space>
 				</FormRow>
 			</div>

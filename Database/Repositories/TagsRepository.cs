@@ -237,7 +237,7 @@ public class TagsRepository(DatalakeContext db)
 
 		using var transaction = await db.BeginTransactionAsync();
 
-		var tag = new Tag
+		var tag = new Tables.Tag
 		{
 			Created = DateFormats.GetCurrentDateTime(),
 			GlobalGuid = Guid.NewGuid(),
@@ -339,7 +339,7 @@ public class TagsRepository(DatalakeContext db)
 			.BulkCopyAsync(updateRequest.FormulaInputs.Select(x => new TagInput
 			{
 				TagId = tag.Id,
-				InputTagId = x.Id,
+				InputTagId = x.TagId,
 				VariableName = x.VariableName,
 			}));
 

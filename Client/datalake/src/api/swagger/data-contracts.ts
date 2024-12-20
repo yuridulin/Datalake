@@ -295,6 +295,11 @@ export type AccessRightsForObjectInfo = AccessRightsSimpleInfo & {
 export type BlockTreeInfo = BlockWithTagsInfo & {
 	/** Вложенные блоки */
 	children: BlockTreeInfo[]
+	/**
+	 * Полное имя блока, включающее имена всех родительских блоков по иерархии через "."
+	 * @minLength 1
+	 */
+	fullName: string
 }
 
 /** Информация о блоке */
@@ -334,6 +339,11 @@ export type BlockNestedTagInfo = BlockNestedItem & {
 	 * @format int32
 	 */
 	sourceId: number
+	/**
+	 * Свое имя тега, включающее имена всех родительских блоков по иерархии через "."
+	 * @minLength 1
+	 */
+	fullName: string
 }
 
 /**
@@ -738,19 +748,8 @@ export interface TagUpdateRequest {
 	description?: string | null
 	/** Новый тип данных */
 	type: TagType
-	/** Новый интервал получения значения */
-	intervalInSeconds: number
-	/**
-	 * Источник данных
-	 * @format int32
-	 */
-	sourceId: number
-	/** Тип источника данных */
-	sourceType: SourceType
 	/** Путь к данными в источнике */
 	sourceItem?: string | null
-	/** Формула, по которой рассчитывается значение */
-	formula?: string | null
 	/** Применяется ли изменение шкалы значения */
 	isScaling: boolean
 	/**
@@ -773,8 +772,31 @@ export interface TagUpdateRequest {
 	 * @format float
 	 */
 	maxRaw: number
+	/**
+	 * Источник данных
+	 * @format int32
+	 */
+	sourceId: number
+	/** Новый интервал получения значения */
+	intervalInSeconds: number
+	/** Формула, по которой рассчитывается значение */
+	formula?: string | null
 	/** Входные переменные для формулы, по которой рассчитывается значение */
-	formulaInputs: TagInputInfo[]
+	formulaInputs: TagUpdateInputRequest[]
+}
+
+/** Необходимая информация для привязки тега в качестве входного для  */
+export interface TagUpdateInputRequest {
+	/**
+	 * Название переменной
+	 * @minLength 1
+	 */
+	variableName: string
+	/**
+	 * Идентификатор закрепленного тега
+	 * @format int32
+	 */
+	tagId: number
 }
 
 /** Данные запроса для создания группы пользователей */
