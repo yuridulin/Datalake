@@ -37,4 +37,9 @@ public class ValuesTagResponse
 	/// </summary>
 	[Required]
 	public required ValueRecord[] Values { get; set; } = [];
+
+	/// <summary>
+	/// Флаг, говорящий о недостаточности доступа для записи у пользователя
+	/// </summary>
+	public bool? NoAccess { get; set; } = null;
 }

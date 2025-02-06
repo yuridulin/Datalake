@@ -62,6 +62,7 @@ public class ValuesRepository(DatalakeContext db)
 		bool overrided = false)
 	{
 		var trustedRequests = new List<ValueTrustedWriteRequest>();
+		var untrustedRequests = new List<ValuesTagResponse>();
 
 		foreach (var request in requests)
 		{
@@ -77,7 +78,10 @@ public class ValuesRepository(DatalakeContext db)
 					.FirstOrDefault();
 			}
 
-			if (tag != null && AccessRepository.HasAccessToTag(user, AccessType.Editor, tag.Guid))
+			if (tag == null)
+				continue;
+
+			if (AccessRepository.HasAccessToTag(user, AccessType.Editor, tag.Guid))
 			{
 				trustedRequests.Add(new()
 				{
@@ -85,6 +89,18 @@ public class ValuesRepository(DatalakeContext db)
 					Date = request.Date,
 					Quality = request.Quality,
 					Value = request.Value
+				});
+			}
+			else
+			{
+				untrustedRequests.Add(new()
+				{
+					Guid = tag.Guid,
+					Id = tag.Id,
+					Name = string.Empty,
+					Type = tag.TagType,
+					Values = [],
+					NoAccess = true,
 				});
 			}
 		}
@@ -617,7 +633,7 @@ public class ValuesRepository(DatalakeContext db)
 				if (seekDate == lastDate)
 					query = query.Where(x => x.Date <= young);
 				if (seekDate == firstDate)
-					query = query.Where(x => x.Date >= old);
+					query = query.Where(x => x.Date > old);
 
 				queries.Add(query);
 			}
@@ -646,7 +662,7 @@ public class ValuesRepository(DatalakeContext db)
 			var tagsBeforeOld =
 				from th in table
 				where identifiers.Contains(th.TagId)
-					&& th.Date < old
+					&& th.Date <= old
 				select new
 				{
 					th.TagId,
@@ -725,7 +741,7 @@ public class ValuesRepository(DatalakeContext db)
 						Date = stepDate,
 						Text = value.Text,
 						Number = value.Number,
-						Quality = value.Quality,
+						Quality = value.Quality.GetLOCFValue(),
 					});
 				}
 				else
