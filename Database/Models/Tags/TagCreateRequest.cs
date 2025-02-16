@@ -20,6 +20,12 @@ public class TagCreateRequest
 	public required TagType TagType { get; set; }
 
 	/// <summary>
+	/// Частота записи тега
+	/// </summary>
+	[Required]
+	public required TagFrequency Frequency { get; set; }
+
+	/// <summary>
 	/// Идентификатор источника данных
 	/// </summary>
 	public int? SourceId { get; set; }

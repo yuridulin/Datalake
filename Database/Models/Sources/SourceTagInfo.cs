@@ -35,10 +35,10 @@ public class SourceTagInfo : IProtectedEntity
 	public required TagType Type { get; set; }
 
 	/// <summary>
-	/// Интервал обновления тега
+	/// Частота записи значений тега
 	/// </summary>
 	[Required]
-	public required int Interval { get; set; }
+	public required TagFrequency Frequency { get; set; }
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;

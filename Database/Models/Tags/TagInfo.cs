@@ -22,10 +22,10 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	public required TagType Type { get; set; }
 
 	/// <summary>
-	/// Интервал опроса источника для получения нового значения
+	/// Частота записи тега
 	/// </summary>
 	[Required]
-	public required short IntervalInSeconds { get; set; }
+	public required TagFrequency Frequency { get; set; }
 
 	/// <summary>
 	/// Идентификатор источника данных

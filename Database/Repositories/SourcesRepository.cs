@@ -76,7 +76,7 @@ public class SourcesRepository(DatalakeContext db)
 			{
 				tag.Guid = Guid.Empty;
 				tag.Name = string.Empty;
-				tag.Interval = 0;
+				tag.Frequency = TagFrequency.NotSet;
 			}
 		}
 
@@ -326,7 +326,7 @@ public class SourcesRepository(DatalakeContext db)
 						Item = tag.SourceItem ?? string.Empty,
 						Name = tag.Name,
 						Type = tag.Type,
-						Interval = tag.Interval,
+						Frequency = tag.Frequency,
 					}
 				).ToArray(),
 			};
@@ -348,7 +348,7 @@ public class SourcesRepository(DatalakeContext db)
 				Name = x.Name,
 				Type = x.Type,
 				Item = x.SourceItem ?? string.Empty,
-				Interval = x.Interval,
+				Frequency = x.Frequency,
 			});
 
 		return query;
