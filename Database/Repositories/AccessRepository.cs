@@ -704,7 +704,7 @@ public class AccessRepository(DatalakeContext db)
 
 		lock (locker)
 		{
-			UserRights = new ConcurrentDictionary<Guid, UserAuthInfo>(userRights);
+			UserRights = new(userRights);
 		}
 	}
 

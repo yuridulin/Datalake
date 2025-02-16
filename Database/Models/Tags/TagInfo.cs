@@ -88,7 +88,7 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// Входные переменные для формулы, по которой рассчитывается значение
 	/// </summary>
 	[Required]
-	public required IEnumerable<TagInputInfo> FormulaInputs { get; set; } = [];
+	public required TagInputInfo[] FormulaInputs { get; set; } = [];
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;

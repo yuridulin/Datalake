@@ -317,7 +317,7 @@ public class SourcesRepository(DatalakeContext db)
 				Address = source.Address,
 				Name = source.Name,
 				Type = source.Type,
-				Tags =
+				Tags = (
 					from tag in db.Tags
 					where tag.SourceId == source.Id
 					select new SourceTagInfo
@@ -328,6 +328,7 @@ public class SourcesRepository(DatalakeContext db)
 						Type = tag.Type,
 						Interval = tag.Interval,
 					}
+				).ToArray(),
 			};
 
 		return query;

@@ -431,7 +431,7 @@ public class TagsRepository(DatalakeContext db)
 				IntervalInSeconds = tag.Interval,
 				Type = tag.Type,
 				Formula = tag.Formula ?? string.Empty,
-				FormulaInputs =
+				FormulaInputs = (
 					from input_rel in db.TagInputs.LeftJoin(x => x.TagId == tag.Id)
 					from input in db.Tags.InnerJoin(x => x.Id == input_rel.InputTagId)
 					select new TagInputInfo
@@ -440,7 +440,8 @@ public class TagsRepository(DatalakeContext db)
 						Guid = input.GlobalGuid,
 						Name = input.Name,
 						VariableName = input_rel.VariableName,
-					},
+					}
+				).ToArray(),
 				IsScaling = tag.IsScaling,
 				MaxEu = tag.MaxEu,
 				MaxRaw = tag.MaxRaw,

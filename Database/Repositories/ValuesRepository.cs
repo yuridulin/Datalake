@@ -29,22 +29,25 @@ public class ValuesRepository(DatalakeContext db)
 		UserAuthInfo user,
 		ValuesRequest[] requests)
 	{
-		var trustedRequests = requests.Select(x => new ValuesTrustedRequest
-		{
-			RequestKey = x.RequestKey,
-			Time = new ValuesTrustedRequest.TimeSettings
+		var trustedRequests = requests
+			.Select(x => new ValuesTrustedRequest
 			{
-				Old = x.Old,
-				Young = x.Young,
-				Exact = x.Exact,
-			},
-			Resolution = x.Resolution,
-			Func = x.Func,
-			Tags = TagsRepository.CachedTags.Values.Where(t => x.TagsId != null && x.TagsId.Contains(t.Id))
-				.Union(TagsRepository.CachedTags.Values.Where(t => x.Tags != null && x.Tags.Contains(t.Guid)))
-				.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Viewer, x.Guid))
-				.ToArray(),
-		});
+				RequestKey = x.RequestKey,
+				Time = new ValuesTrustedRequest.TimeSettings
+				{
+					Old = x.Old,
+					Young = x.Young,
+					Exact = x.Exact,
+				},
+				Resolution = x.Resolution,
+				Func = x.Func,
+				Tags = [..
+					TagsRepository.CachedTags.Values.Where(t => x.TagsId != null && x.TagsId.Contains(t.Id))
+					.Union(TagsRepository.CachedTags.Values.Where(t => x.Tags != null && x.Tags.Contains(t.Guid)))
+					.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Viewer, x.Guid))
+				],
+			})
+			.ToArray();
 
 		return await GetValuesAsync(trustedRequests);
 	}
@@ -164,9 +167,7 @@ public class ValuesRepository(DatalakeContext db)
 
 	internal static List<TagHistory> GetLiveValues(int[] identifiers)
 	{
-		return identifiers
-			.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateFormats.GetCurrentDateTime()))
-			.ToList();
+		return [.. identifiers.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateFormats.GetCurrentDateTime()))];
 	}
 
 	internal async Task CreateLiveValues()
@@ -237,7 +238,7 @@ public class ValuesRepository(DatalakeContext db)
 		}
 	}
 
-	internal static void WriteLiveValues(IEnumerable<TagHistory> values)
+	internal static void WriteLiveValues(List<TagHistory> values)
 	{
 		lock (locker)
 		{
@@ -261,10 +262,8 @@ public class ValuesRepository(DatalakeContext db)
 		{
 			return !old.Equals(value);
 		}
-		else
-		{
-			return true;
-		}
+
+		return true;
 	}
 
 	static object locker = new();
@@ -281,7 +280,7 @@ public class ValuesRepository(DatalakeContext db)
 	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
 	private async Task<List<ValuesTagResponse>> WriteValuesAsync(
-		IEnumerable<ValueTrustedWriteRequest> requests,
+		List<ValueTrustedWriteRequest> requests,
 		bool overrided = false)
 	{
 		List<ValuesTagResponse> responses = [];
@@ -320,9 +319,9 @@ public class ValuesRepository(DatalakeContext db)
 		return responses;
 	}
 
-	private async Task WriteHistoryValuesAsync(IEnumerable<TagHistory> records)
+	private async Task WriteHistoryValuesAsync(List<TagHistory> records)
 	{
-		if (!records.Any())
+		if (records.Count == 0)
 			return;
 
 		foreach (var g in records.GroupBy(x => x.Date.Date))
@@ -355,9 +354,9 @@ public class ValuesRepository(DatalakeContext db)
 		}
 	}
 
-	private async Task WriteNewValuesAsync(IEnumerable<TagHistory> records)
+	private async Task WriteNewValuesAsync(List<TagHistory> records)
 	{
-		if (!records.Any())
+		if (records.Count == 0)
 			return;
 
 		foreach (var g in records.GroupBy(x => x.Date.Date))
@@ -369,7 +368,7 @@ public class ValuesRepository(DatalakeContext db)
 
 	private static async Task UpdateInitialValuesInFuture(
 		DatalakeContext db,
-		IEnumerable<TagHistory> records,
+		List<TagHistory> records,
 		IGrouping<DateTime, TagHistory> g)
 	{
 		DateTime date = g.Key;
@@ -428,7 +427,7 @@ public class ValuesRepository(DatalakeContext db)
 
 	#region Чтение значений
 
-	internal async Task<List<ValuesResponse>> GetValuesAsync(IEnumerable<ValuesTrustedRequest> trustedRequests)
+	internal async Task<List<ValuesResponse>> GetValuesAsync(ValuesTrustedRequest[] trustedRequests)
 	{
 		List<ValuesResponse> responses = [];
 
@@ -448,7 +447,7 @@ public class ValuesRepository(DatalakeContext db)
 					var response = new ValuesResponse
 					{
 						RequestKey = request.RequestKey,
-						Tags = (
+						Tags = [..
 							from value in values
 							join tag in request.Tags on value.TagId equals tag.Id
 							select new ValuesTagResponse
@@ -465,7 +464,7 @@ public class ValuesRepository(DatalakeContext db)
 									Value = value.GetTypedValue(tag.TagType),
 								}]
 							}
-						).ToList(),
+						],
 					};
 
 					responses.Add(response);
@@ -715,7 +714,7 @@ public class ValuesRepository(DatalakeContext db)
 	}
 
 	static List<TagHistory> StretchByResolution(
-		IEnumerable<TagHistory> valuesByChange,
+		List<TagHistory> valuesByChange,
 		DateTime old,
 		DateTime young,
 		int resolution)
