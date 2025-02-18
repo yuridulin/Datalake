@@ -24,6 +24,7 @@ namespace Datalake.Database.Tests.Scenarios
 				Name = tagName,
 				TagType = TagType.Number,
 				SourceId = (int)CustomSource.Manual,
+				Frequency = TagFrequency.NotSet,
 			};
 
 			var createdTag = await db.TagsRepository.CreateAsync(admin, request);
@@ -42,7 +43,7 @@ namespace Datalake.Database.Tests.Scenarios
 			var updateRequest = new TagUpdateRequest
 			{
 				Name = newTagName,
-				IntervalInSeconds = 123,
+				Frequency = TagFrequency.NotSet,
 				Type = TagType.String,
 			};
 			await db.TagsRepository.UpdateAsync(admin, createdTag.Guid, updateRequest);
