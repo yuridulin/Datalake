@@ -140,12 +140,11 @@ public class ValuesRepository(DatalakeContext db)
 
 			if (tag != null)
 			{
-				var record = tag.ToHistory(request.Value, request.Quality);
-				if (!IsValueNew(record))
-					continue;
-				record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
-
-				recordsToWrite.Add(record);
+				var record = TagHistoryExtension.CreateFrom(tag, request);
+				if (IsValueNew(record))
+				{
+					recordsToWrite.Add(record);
+				}
 			}
 		}
 
@@ -288,7 +287,7 @@ public class ValuesRepository(DatalakeContext db)
 
 		foreach (var request in requests)
 		{
-			var record = request.Tag.ToHistory(request.Value, request.Quality);
+			var record = TagHistoryExtension.CreateFrom(request);
 			if (!IsValueNew(record) && !overrided)
 				continue;
 			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();

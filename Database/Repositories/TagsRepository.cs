@@ -482,6 +482,7 @@ public class TagsRepository(DatalakeContext db)
 				TagType = t.Type,
 				SourceType = s.Type,
 				IsManual = t.SourceId == (int)CustomSource.Manual,
+				Frequency = t.Frequency,
 				ScalingCoefficient = t.IsScaling
 					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
 					: 1,

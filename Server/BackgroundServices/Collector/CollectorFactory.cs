@@ -44,6 +44,7 @@ public class CollectorFactory(
 				CustomSource.Manual => null,
 				_ => null
 			},
+
 			_ => null,
 		};
 	}

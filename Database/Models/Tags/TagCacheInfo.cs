@@ -27,6 +27,12 @@ public class TagCacheInfo : TagSimpleInfo
 	public required bool IsManual { get; set; }
 
 	/// <summary>
+	/// Частота записи значения - необходима для преобразования времени записи
+	/// </summary>
+	[Required]
+	public required TagFrequency Frequency { get; set; }
+
+	/// <summary>
 	/// Коэффициент преобразования (соотношение новой и исходной шкал, заданных в настройках тега)
 	/// </summary>
 	[Required]
