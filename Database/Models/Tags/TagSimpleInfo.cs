@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Datalake.Database.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Tags;
 
@@ -24,4 +25,22 @@ public class TagSimpleInfo
 	/// </summary>
 	[Required]
 	public required string Name { get; set; }
+
+	/// <summary>
+	/// Тип данных тега
+	/// </summary>
+	[Required]
+	public required TagType Type { get; set; }
+
+	/// <summary>
+	/// Частота записи тега
+	/// </summary>
+	[Required]
+	public required TagFrequency Frequency { get; set; }
+
+	/// <summary>
+	/// Тип данных источника
+	/// </summary>
+	[Required]
+	public required SourceType SourceType { get; set; } = SourceType.Datalake;
 }

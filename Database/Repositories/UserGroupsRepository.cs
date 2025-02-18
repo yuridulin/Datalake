@@ -406,6 +406,7 @@ public class UserGroupsRepository(DatalakeContext db)
 					from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId)
 					from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)
 					from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId)
+					from tag_source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
 					select new AccessRightsForOneInfo
 					{
 						Id = rights.Id,
@@ -427,6 +428,9 @@ public class UserGroupsRepository(DatalakeContext db)
 							Id = tag.Id,
 							Guid = tag.GlobalGuid,
 							Name = tag.Name,
+							Type = tag.Type,
+							Frequency = tag.Frequency,
+							SourceType = tag_source == null ? SourceType.NotSet : tag_source.Type,
 						},
 					}
 				).ToArray(),

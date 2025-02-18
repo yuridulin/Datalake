@@ -4,6 +4,7 @@ import {
 	AttachedTag,
 	BlockTagRelation,
 	BlockUpdateRequest,
+	TagFrequency,
 	TagType,
 } from '@/api/swagger/data-contracts'
 import PageHeader from '@/app/components/PageHeader'
@@ -136,6 +137,8 @@ const BlockForm = observer(() => {
 																		),
 																	tagType:
 																		TagType.String,
+																	frequency:
+																		TagFrequency.NotSet,
 																}).then(
 																	(res) => {
 																		setTags(
@@ -176,6 +179,8 @@ const BlockForm = observer(() => {
 																		),
 																	tagType:
 																		TagType.Number,
+																	frequency:
+																		TagFrequency.NotSet,
 																}).then(
 																	(res) => {
 																		setTags(
@@ -216,6 +221,8 @@ const BlockForm = observer(() => {
 																		),
 																	tagType:
 																		TagType.Boolean,
+																	frequency:
+																		TagFrequency.NotSet,
 																}).then(
 																	(res) => {
 																		setTags(

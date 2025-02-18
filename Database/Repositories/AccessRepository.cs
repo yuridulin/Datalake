@@ -1094,6 +1094,7 @@ public class AccessRepository(DatalakeContext db)
 			from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId)
 			from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)
 			from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId)
+			from tagSource in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
 			select new AccessRightsInfo
 			{
 				Id = rights.Id,
@@ -1125,6 +1126,9 @@ public class AccessRepository(DatalakeContext db)
 					Id = tag.Id,
 					Guid = tag.GlobalGuid,
 					Name = tag.Name,
+					Type = tag.Type,
+					Frequency = tag.Frequency,
+					SourceType = tagSource != null ? tagSource.Type : SourceType.NotSet,
 				},
 			};
 

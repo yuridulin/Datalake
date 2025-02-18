@@ -23,7 +23,7 @@ namespace Datalake.Database.Tests.Scenarios
 			{
 				Name = tagName,
 				TagType = TagType.Number,
-				SourceId = (int)CustomSource.Manual,
+				SourceId = (int)SourceType.Manual,
 				Frequency = TagFrequency.NotSet,
 			};
 
@@ -37,7 +37,7 @@ namespace Datalake.Database.Tests.Scenarios
 
 			Assert.NotNull(tagInfo);
 			Assert.True(tagInfo.Name == tagName);
-			Assert.True(tagInfo.SourceId == (int)CustomSource.Manual);
+			Assert.True(tagInfo.SourceId == (int)SourceType.Manual);
 
 			// update tag
 			var updateRequest = new TagUpdateRequest

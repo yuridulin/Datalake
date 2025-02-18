@@ -1,4 +1,6 @@
-﻿namespace Datalake.Database.Enums;
+﻿using System.ComponentModel;
+
+namespace Datalake.Database.Enums;
 
 /// <summary>
 /// Тип получения данных с источника
@@ -6,27 +8,41 @@
 public enum SourceType
 {
 	/// <summary>
-	/// Не определен или не известен
+	/// Заглушка для неопределённого источника
 	/// </summary>
-	Unknown = -100,
+	[Description("Заглушка для неопределённого источника")]
+	NotSet = -666,
 
 	/// <summary>
-	/// Уникальный
+	/// Пользовательские теги с ручным вводом значений в произвольный момент времени
 	/// </summary>
-	Custom = -1,
+	[Description("Пользовательские теги с ручным вводом значений в произвольный момент времени")]
+	Manual = -2,
+
+	/// <summary>
+	/// Пользовательские теги, значения которых вычисляются по формулам на основе значений других тегов"
+	/// </summary>
+	[Description("Пользовательские теги, значения которых вычисляются по формулам на основе значений других тегов")]
+	Calculated = -1,
+
+	/// <summary>
+	/// Системные теги с данными о текущей работе различных частей приложения
+	/// </summary>
+	[Description("Системные теги с данными о текущей работе различных частей приложения")]
+	System = 0,
 
 	/// <summary>
 	/// INOPC-сервер
 	/// </summary>
-	Inopc = 0,
+	Inopc = 1,
 
 	/// <summary>
 	/// Другая нода базы данных Datalake
 	/// </summary>
-	Datalake = 1,
+	Datalake = 2,
 
 	/// <summary>
-	/// Обновленный на .NET Core Datalake, версия 1
+	/// Обновленный на .NET Core Datalake
 	/// </summary>
-	DatalakeCore_v1 = 2,
+	Datalake_v2 = 3,
 }

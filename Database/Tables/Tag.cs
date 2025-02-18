@@ -61,12 +61,6 @@ public class Tag
 
 	// специфичные для входящих
 
-	/*/// <summary>
-	/// Интервал опроса значения в секундах
-	/// </summary>
-	[Column]
-	public required short Interval { get; set; }*/
-
 	/// <summary>
 	/// Идентификатор источника
 	/// </summary>

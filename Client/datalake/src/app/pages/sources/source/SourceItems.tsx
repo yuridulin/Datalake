@@ -1,12 +1,13 @@
 import api from '@/api/swagger-api'
+import TagButton from '@/app/components/buttons/TagButton'
 import { PlusCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
 import {
 	SourceEntryInfo,
 	SourceType,
+	TagFrequency,
 	TagInfo,
 	TagType,
 } from '../../../../api/swagger/data-contracts'
@@ -14,7 +15,6 @@ import compareValues from '../../../../functions/compareValues'
 import CreatedTagLinker from '../../../components/CreatedTagsLinker'
 import PageHeader from '../../../components/PageHeader'
 import TagCompactValue from '../../../components/TagCompactValue'
-import routes from '../../../router/routes'
 
 type SourceItemsProps = {
 	type: SourceType
@@ -60,11 +60,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 			render: (_, record) =>
 				record.tagInfo ? (
 					<span>
-						<NavLink
-							to={routes.tags.toTagForm(record.tagInfo.guid)}
-						>
-							<Button>{record.tagInfo.name}</Button>
-						</NavLink>
+						<TagButton tag={record.tagInfo} />
 					</span>
 				) : (
 					<span>
@@ -100,6 +96,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 			tagType: tagType,
 			sourceId: id,
 			sourceItem: item,
+			frequency: TagFrequency.ByMinute,
 		}).then((res) => {
 			if (!res.data?.id) return
 			read()

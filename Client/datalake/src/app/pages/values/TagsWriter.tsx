@@ -13,6 +13,7 @@ import {
 
 import api from '@/api/swagger-api'
 import {
+	SourceType,
 	TagQuality,
 	TagSimpleInfo,
 	TagType,
@@ -20,7 +21,6 @@ import {
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import notify from '@/state/notifications'
-import { CustomSource } from '@/types/customSource'
 import { TagValue } from '@/types/tagValue'
 import { PlaySquareOutlined } from '@ant-design/icons'
 import { DefaultOptionType } from 'antd/es/select'
@@ -51,7 +51,7 @@ const TagsWriter = observer(() => {
 	})
 
 	const loadTags = () => {
-		api.tagsReadAll({ sourceId: CustomSource.Manual })
+		api.tagsReadAll({ sourceId: SourceType.Manual })
 			.then((res) => {
 				setTags(
 					res.data.map((x) => ({
@@ -82,10 +82,7 @@ const TagsWriter = observer(() => {
 					req.tags.map((tag) => {
 						const value = tag.values[0]
 						return {
-							id: tag.id,
-							guid: tag.guid,
-							name: tag.name,
-							type: tag.type,
+							...tag,
 							value: value.value,
 							quality: value.quality,
 							newValue: value.value,
@@ -182,15 +179,7 @@ const TagsWriter = observer(() => {
 						<Column<ExactValue>
 							title='Тег'
 							render={(_, record) => {
-								return (
-									<TagButton
-										tag={{
-											id: record.id,
-											guid: record.guid,
-											name: record.name,
-										}}
-									/>
-								)
+								return <TagButton tag={record} />
 							}}
 						/>
 						<Column<ExactValue>

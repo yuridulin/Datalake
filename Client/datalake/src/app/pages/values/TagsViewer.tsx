@@ -7,9 +7,11 @@ import {
 	Row,
 	Select,
 	Table,
+	TreeSelect,
 } from 'antd'
 
 import api from '@/api/swagger-api'
+import TagButton from '@/app/components/buttons/TagButton'
 import {
 	CheckSquareOutlined,
 	CloseSquareOutlined,
@@ -21,23 +23,40 @@ import Column from 'antd/es/table/Column'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
-import { TagQuality, TagType } from '../../../api/swagger/data-contracts'
+import {
+	BlockTreeInfo,
+	TagQuality,
+	TagSimpleInfo,
+} from '../../../api/swagger/data-contracts'
 import compareValues from '../../../functions/compareValues'
 import { useInterval } from '../../../hooks/useInterval'
 import { TagValue } from '../../../types/tagValue'
 import TagCompactValue from '../../components/TagCompactValue'
 import TagQualityEl from '../../components/TagQualityEl'
 import TagValueEl from '../../components/TagValueEl'
-import routes from '../../router/routes'
 
-type ValueType = {
-	guid: string
-	name: string
-	type: TagType
+type ValueType = TagSimpleInfo & {
 	value?: string | number | boolean | null
 	quality: TagQuality
 	date: string
+}
+
+const convertToTreeSelectNodes = (
+	blockTree: BlockTreeInfo[],
+): DefaultOptionType[] => {
+	return blockTree.map((block) => ({
+		title: block.name,
+		key: block.id,
+		value: 0 - block.id,
+		children: [
+			...block.tags.map((tag) => ({
+				title: tag.localName,
+				key: tag.id,
+				value: tag.id,
+			})),
+			...convertToTreeSelectNodes(block.children),
+		],
+	}))
 }
 
 interface TransformedData {
@@ -63,9 +82,9 @@ const resolutions = [
 const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 
 const TagsViewer = observer(() => {
-	const [tags, setTags] = useState([] as DefaultOptionType[])
+	const [tree, setTree] = useState([] as DefaultOptionType[])
+	const [checkedTags, setCheckedTags] = useState([] as number[])
 	const [values, setValues] = useState([] as ValueType[])
-	const [searchValue, setSearchValue] = useState('')
 	const [rangeValues, setRangeValues] = useState([] as TransformedData[])
 	const [rangeColumns, setRangeColumns] = useState(
 		[] as ColumnsType<TransformedData>,
@@ -85,21 +104,15 @@ const TagsViewer = observer(() => {
 	})
 
 	const loadTags = () => {
-		api.tagsReadAll()
+		api.blocksReadAsTree()
 			.then((res) => {
-				setTags(
-					res.data.map((x) => ({
-						label: x.name,
-						title: x.name,
-						value: x.id,
-					})),
-				)
+				setTree(convertToTreeSelectNodes(res.data))
 			})
-			.catch(() => setTags([]))
+			.catch(() => setTree([]))
 	}
 
 	const getValues = () => {
-		if (request.tags.length === 0) return setValues([])
+		if (checkedTags.length === 0) return setValues([])
 		const timeSettings =
 			request.mode === 'live'
 				? {}
@@ -113,7 +126,7 @@ const TagsViewer = observer(() => {
 		api.valuesGet([
 			{
 				requestKey: 'viewer-tags',
-				tagsId: request.tags,
+				tagsId: checkedTags,
 				...timeSettings,
 			},
 		])
@@ -156,11 +169,7 @@ const TagsViewer = observer(() => {
 						showSorterTooltip: false,
 					},
 					...res.data[0].tags.map((x) => ({
-						title: () => (
-							<NavLink to={routes.tags.toTagForm(x.guid)}>
-								<Button>{x.name}</Button>
-							</NavLink>
-						),
+						title: () => <TagButton tag={x} />,
 						key: x.guid,
 						dataIndex: x.guid,
 						render: (value: {
@@ -181,10 +190,13 @@ const TagsViewer = observer(() => {
 						.map((x) => {
 							const valueObject = x.values[0]
 							return {
+								id: x.id,
 								guid: x.guid,
 								name: x.name,
-								value: valueObject.value,
 								type: x.type,
+								frequency: x.frequency,
+								sourceType: x.sourceType,
+								value: valueObject.value,
 								date: valueObject.dateString,
 								quality: valueObject.quality,
 							}
@@ -200,28 +212,18 @@ const TagsViewer = observer(() => {
 		if (request.mode === 'live' && request.update) getValues()
 	}, 1000)
 
-	function handleSearch(value: string): void {
-		setSearchValue(value)
-	}
-
-	const handleChange = (value: number[]) => {
-		setRequest({ ...request, tags: value })
-	}
-
 	return (
 		<>
 			<div style={{ position: 'sticky' }}>
 				<Row>
-					<Select
-						showSearch
-						mode='multiple'
-						options={tags}
-						optionFilterProp='label'
+					<TreeSelect
+						treeData={tree}
+						treeCheckable={true}
+						showCheckedStrategy={TreeSelect.SHOW_ALL}
+						value={checkedTags}
+						onChange={(value) => setCheckedTags(value)}
 						placeholder='Выберите теги'
 						style={{ width: '100%' }}
-						onSearch={handleSearch}
-						searchValue={searchValue}
-						onChange={handleChange}
 					/>
 				</Row>
 				<Row style={{ marginTop: '1em' }}>
@@ -336,11 +338,7 @@ const TagsViewer = observer(() => {
 					<Column
 						title='Тег'
 						dataIndex='guid'
-						render={(guid, row: ValueType) => (
-							<NavLink to={routes.tags.toTagForm(guid)}>
-								<Button size='small'>{row.name}</Button>
-							</NavLink>
-						)}
+						render={(_, row: ValueType) => <TagButton tag={row} />}
 					/>
 					<Column
 						width='40%'

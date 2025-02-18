@@ -30,20 +30,14 @@ public class CollectorFactory(
 			SourceType.Datalake
 				=> new OldDatalakeCollector(receiverService, stateService, source, loggerFactory.CreateLogger<OldDatalakeCollector>()),
 
-			SourceType.DatalakeCore_v1
+			SourceType.Datalake_v2
 				=> new DatalakeCollector(receiverService, source, loggerFactory.CreateLogger<DatalakeCollector>()),
 
-			SourceType.Custom => (CustomSource)source.Id switch
-			{
-				CustomSource.Calculated
-					=> new CalculateCollector(source, loggerFactory.CreateLogger<CalculateCollector>()),
+			SourceType.Calculated
+				=> new CalculateCollector(source, loggerFactory.CreateLogger<CalculateCollector>()),
 
-				CustomSource.System
-					=> new SystemCollector(source, loggerFactory.CreateLogger<SystemCollector>()),
-
-				CustomSource.Manual => null,
-				_ => null
-			},
+			SourceType.System
+				=> new SystemCollector(source, loggerFactory.CreateLogger<SystemCollector>()),
 
 			_ => null,
 		};

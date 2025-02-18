@@ -109,6 +109,61 @@ export interface TagSimpleInfo {
 	 * @minLength 1
 	 */
 	name: string
+	/** Тип данных тега */
+	type: TagType
+	/** Частота записи тега */
+	frequency: TagFrequency
+	/** Тип данных источника */
+	sourceType: SourceType
+}
+
+/**
+ * Тип данных
+ *
+ * 0 = String
+ * 1 = Number
+ * 2 = Boolean
+ */
+export enum TagType {
+	String = 0,
+	Number = 1,
+	Boolean = 2,
+}
+
+/**
+ * Частота записи значения
+ *
+ * 0 = NotSet
+ * 1 = ByMinute
+ * 2 = ByHour
+ * 3 = ByDay
+ */
+export enum TagFrequency {
+	NotSet = 0,
+	ByMinute = 1,
+	ByHour = 2,
+	ByDay = 3,
+}
+
+/**
+ * Тип получения данных с источника
+ *
+ * 0 = System
+ * 1 = Inopc
+ * 2 = Datalake
+ * 3 = Datalake_v2
+ * -666 = NotSet
+ * -2 = Manual
+ * -1 = Calculated
+ */
+export enum SourceType {
+	System = 0,
+	Inopc = 1,
+	Datalake = 2,
+	DatalakeV2 = 3,
+	NotSet = -666,
+	Manual = -2,
+	Calculated = -1,
 }
 
 /** Базовая информация о блоке, достаточная, чтобы на него сослаться */
@@ -242,18 +297,15 @@ export type BlockFullInfo = BlockWithTagsInfo & {
 /** Информация о родительском блоке */
 export type BlockParentInfo = BlockNestedItem & object
 
-/** Связанный с блоком объект */
+/** Информация о вложенном объекте */
 export interface BlockNestedItem {
 	/**
 	 * Идентификатор
 	 * @format int32
 	 */
-	id: number
-	/**
-	 * Наименование
-	 * @minLength 1
-	 */
-	name: string
+	id?: number
+	/** Наименование */
+	name?: string
 }
 
 /** Информация о дочернем блоке */
@@ -268,19 +320,6 @@ export type BlockPropertyInfo = BlockNestedItem & {
 	 * @minLength 1
 	 */
 	value: string
-}
-
-/**
- * Тип данных
- *
- * 0 = String
- * 1 = Number
- * 2 = Boolean
- */
-export enum TagType {
-	String = 0,
-	Number = 1,
-	Boolean = 2,
 }
 
 /** Информация о разрешении на объект для субьекта */
@@ -318,32 +357,19 @@ export type BlockWithTagsInfo = BlockSimpleInfo & {
 }
 
 /** Информация о закреплённом теге */
-export type BlockNestedTagInfo = BlockNestedItem & {
-	/**
-	 * Идентификатор тега
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
+export type BlockNestedTagInfo = TagSimpleInfo & {
 	/** Тип поля блока для этого тега */
 	relation: BlockTagRelation
-	/** Тип значений тега */
-	tagType: TagType
 	/**
 	 * Свое имя тега в общем списке
 	 * @minLength 1
 	 */
-	tagName: string
+	localName: string
 	/**
 	 * Идентификатор источника данных
 	 * @format int32
 	 */
 	sourceId: number
-	/**
-	 * Свое имя тега, включающее имена всех родительских блоков по иерархии через "."
-	 * @minLength 1
-	 */
-	fullName: string
 }
 
 /**
@@ -400,23 +426,6 @@ export type SourceInfo = SourceSimpleInfo & {
 	accessRule?: AccessRuleInfo
 }
 
-/**
- * Тип получения данных с источника
- *
- * 0 = Inopc
- * 1 = Datalake
- * 2 = DatalakeCore_v1
- * -100 = Unknown
- * -1 = Custom
- */
-export enum SourceType {
-	Inopc = 0,
-	Datalake = 1,
-	DatalakeCoreV1 = 2,
-	Unknown = -100,
-	Custom = -1,
-}
-
 /** Информация о удалённой записи с данными источника */
 export interface SourceItemInfo {
 	/**
@@ -466,30 +475,12 @@ export interface SourceEntryInfo {
 }
 
 /** Информация о теге, берущем данные из этого источника */
-export interface SourceTagInfo {
-	/**
-	 * Идентификатор тега
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Глобальное наименование тега
-	 * @minLength 1
-	 */
-	name: string
+export type SourceTagInfo = TagSimpleInfo & {
 	/**
 	 * Путь к данным в источнике
 	 * @minLength 1
 	 */
 	item: string
-	/** Тип данных тега */
-	type: TagType
-	/**
-	 * Интервал обновления тега
-	 * @format int32
-	 */
-	interval: number
 	/** Правило доступа */
 	accessRule?: AccessRuleInfo
 }
@@ -653,17 +644,11 @@ export type UserAuthInfo = UserSimpleInfo & {
 export type TagInfo = TagSimpleInfo & {
 	/** Произвольное описание тега */
 	description?: string | null
-	/** Тип данных тега */
-	type: TagType
-	/** Интервал опроса источника для получения нового значения */
-	intervalInSeconds: number
 	/**
 	 * Идентификатор источника данных
 	 * @format int32
 	 */
 	sourceId: number
-	/** Тип данных источника */
-	sourceType: SourceType
 	/** Путь к данным в источнике */
 	sourceItem?: string | null
 	/** Имя используемого источника данных */
@@ -715,6 +700,8 @@ export interface TagCreateRequest {
 	name?: string | null
 	/** Тип значений тега */
 	tagType: TagType
+	/** Частота записи тега */
+	frequency: TagFrequency
 	/**
 	 * Идентификатор источника данных
 	 * @format int32
@@ -731,8 +718,6 @@ export interface TagCreateRequest {
 
 /** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
 export type TagAsInputInfo = TagSimpleInfo & {
-	/** Тип данных тега */
-	type: TagType
 	/** Правило доступа */
 	accessRule?: AccessRuleInfo
 }
@@ -778,7 +763,7 @@ export interface TagUpdateRequest {
 	 */
 	sourceId: number
 	/** Новый интервал получения значения */
-	intervalInSeconds: number
+	frequency: TagFrequency
 	/** Формула, по которой рассчитывается значение */
 	formula?: string | null
 	/** Входные переменные для формулы, по которой рассчитывается значение */
@@ -1009,27 +994,11 @@ export interface ValuesResponse {
 }
 
 /** Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения */
-export interface ValuesTagResponse {
-	/**
-	 * Идентификатор тега в локальной базе
-	 * @format int32
-	 */
-	id: number
-	/**
-	 * Глобальный идентификатор тега
-	 * @format guid
-	 * @minLength 1
-	 */
-	guid: string
-	/**
-	 * Полное наименование тега
-	 * @minLength 1
-	 */
-	name: string
-	/** Тип данных */
-	type: TagType
+export type ValuesTagResponse = TagSimpleInfo & {
 	/** Список значений */
 	values: ValueRecord[]
+	/** Флаг, говорящий о недостаточности доступа для записи у пользователя */
+	noAccess?: boolean | null
 }
 
 /** Запись о значении */
@@ -1106,7 +1075,7 @@ export enum AggregationFunc {
 /** Данные запроса на ввод значения */
 export interface ValueWriteRequest {
 	/**
-	 * Глобальные идентификатор тега
+	 * Глобальный идентификатор тега
 	 * @format guid
 	 */
 	guid?: string | null
