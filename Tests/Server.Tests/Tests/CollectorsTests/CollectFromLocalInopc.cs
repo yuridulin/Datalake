@@ -11,16 +11,10 @@ using System.Net.Http.Json;
 
 namespace Datalake.Server.Tests.Tests.CollectorsTests;
 
-public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>>
+public class CollectFromLocalInopc(TestingWebAppFactory<Program> webAppFactory)
+	: IClassFixture<TestingWebAppFactory<Program>>
 {
-	private readonly TestingWebAppFactory<Program> _webAppFactory;
-	private readonly HttpClient _httpClient;
-
-	public CollectFromLocalInopc(TestingWebAppFactory<Program> webAppFactory)
-	{
-		_webAppFactory = webAppFactory;
-		_httpClient = _webAppFactory.CreateDefaultClient();
-	}
+	private readonly HttpClient _httpClient = webAppFactory.CreateDefaultClient();
 
 
 	const string LocalInopcIp = "10.208.4.113";
@@ -29,7 +23,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 	const string TestItemPath = "Test.TestDevice.Num1";
 	const string TestTagName = "TestTag1";
 
-	public async Task<string> Authorization()
+	private async Task<string> Authorization()
 	{
 		var request = new UserLoginPass { Login = "admin", Password = "admin" };
 		var response = await _httpClient.PostAsJsonAsync("api/users/auth", request);
@@ -117,8 +111,6 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 			SourceItem = TestItemPath,
 		});
 
-		Assert.True(guid.GetType() == typeof(Guid));
-
 		await _httpClient.PutAsync("api/tags/" + guid, new TagUpdateRequest
 		{
 			Name = TestTagName,
@@ -127,7 +119,6 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 			SourceId = testSource.Id,
 			SourceItem = TestItemPath,
 			IsScaling = false,
-			SourceType = SourceType.Inopc,
 		});
 	}
 
@@ -142,7 +133,7 @@ public class CollectFromLocalInopc : IClassFixture<TestingWebAppFactory<Program>
 		object? storedValue = null;
 
 		var tags = await _httpClient.GetAsync<TagInfo[]>("api/tags");
-		var tag = tags.Where(x => x.Name == TestTagName).FirstOrDefault();
+		var tag = tags.FirstOrDefault(x => x.Name == TestTagName);
 		Assert.NotNull(tag);
 
 		for (var i = 0; i < 4; i++)

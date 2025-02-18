@@ -2,7 +2,7 @@
 using Datalake.Database.Constants;
 using Datalake.Database.Enums;
 using Datalake.Database.Models.Auth;
-using Datalake.Database.Models.Logs;
+using Datalake.Database.Models.LogModels;
 using Datalake.Database.Models.Settings;
 using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.SettingsHandler;

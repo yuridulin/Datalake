@@ -74,6 +74,12 @@ dotnet_remove_unnecessary_suppression_exclusions = none
 dotnet_style_allow_multiple_blank_lines_experimental = true
 dotnet_style_allow_statement_immediately_after_block_experimental = true
 
+# Запретить использование выражений коллекций, индексаторов диапазона и индекса
+dotnet_diagnostic.CA2013.severity = error
+dotnet_diagnostic.CA2018.severity = error
+dotnet_diagnostic.CA2019.severity = error
+dotnet_diagnostic.CA2036.severity = error
+
 #### Рекомендации по написанию кода C# ####
 
 # Предпочтения var
@@ -248,7 +254,7 @@ dotnet_style_prefer_inferred_tuple_names = true:suggestion
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
 dotnet_style_prefer_compound_assignment = true:suggestion
 dotnet_style_prefer_simplified_interpolation = true:suggestion
-dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
+dotnet_style_prefer_collection_expression = never:suggestion
 dotnet_style_namespace_match_folder = true:suggestion
 end_of_line = crlf
 dotnet_code_quality_unused_parameters = all:suggestion

@@ -8,7 +8,7 @@ services:
       context: ../
       dockerfile: ./Server/Dockerfile
     environment:
-      DATALAKE_HOST: ${DATALAKE_HOST}
+      DATALAKE_HOST: host.docker.internal
       DATALAKE_DB: datalake
       DATALAKE_DB_USER: postgres
       DATALAKE_DB_PASS: postgres

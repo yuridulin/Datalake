@@ -35,5 +35,5 @@ public class UserInfo : UserSimpleInfo
 	/// Список групп, в которые входит пользователь
 	/// </summary>
 	[Required]
-	public IEnumerable<UserGroupSimpleInfo> UserGroups { get; set; } = [];
+	public UserGroupSimpleInfo[] UserGroups { get; set; } = [];
 }

@@ -28,5 +28,5 @@ public class BlockWithTagsInfo : BlockSimpleInfo
 	/// Список прикреплённых тегов
 	/// </summary>
 	[Required]
-	public IEnumerable<BlockNestedTagInfo> Tags { get; set; } = [];
+	public BlockNestedTagInfo[] Tags { get; set; } = [];
 }

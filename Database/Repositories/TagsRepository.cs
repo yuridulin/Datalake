@@ -237,11 +237,11 @@ public class TagsRepository(DatalakeContext db)
 
 		using var transaction = await db.BeginTransactionAsync();
 
-		var tag = new Tables.Tag
+		var tag = new Tag
 		{
 			Created = DateFormats.GetCurrentDateTime(),
 			GlobalGuid = Guid.NewGuid(),
-			Interval = 60,
+			Frequency = createRequest.Frequency,
 			IsScaling = false,
 			Name = createRequest.Name!,
 			SourceId = createRequest.SourceId ?? (int)CustomSource.Manual,
@@ -302,8 +302,6 @@ public class TagsRepository(DatalakeContext db)
 		{
 			if (string.IsNullOrEmpty(updateRequest.SourceItem))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
-			if (updateRequest.IntervalInSeconds < 0)
-				throw new InvalidValueException("интервал обновления должен быть неотрицательным целым числом");
 
 			updateRequest.SourceItem = ValueChecker.RemoveWhitespaces(updateRequest.SourceItem);
 		}
@@ -317,7 +315,7 @@ public class TagsRepository(DatalakeContext db)
 			.Set(x => x.Name, updateRequest.Name)
 			.Set(x => x.Description, updateRequest.Description)
 			.Set(x => x.Type, updateRequest.Type)
-			.Set(x => x.Interval, updateRequest.IntervalInSeconds)
+			.Set(x => x.Frequency, updateRequest.Frequency)
 			.Set(x => x.SourceId, updateRequest.SourceId)
 			.Set(x => x.SourceItem, updateRequest.SourceItem)
 			.Set(x => x.IsScaling, updateRequest.IsScaling)
@@ -428,10 +426,10 @@ public class TagsRepository(DatalakeContext db)
 				Guid = tag.GlobalGuid,
 				Name = tag.Name,
 				Description = tag.Description,
-				IntervalInSeconds = tag.Interval,
+				Frequency = tag.Frequency,
 				Type = tag.Type,
 				Formula = tag.Formula ?? string.Empty,
-				FormulaInputs =
+				FormulaInputs = (
 					from input_rel in db.TagInputs.LeftJoin(x => x.TagId == tag.Id)
 					from input in db.Tags.InnerJoin(x => x.Id == input_rel.InputTagId)
 					select new TagInputInfo
@@ -440,7 +438,8 @@ public class TagsRepository(DatalakeContext db)
 						Guid = input.GlobalGuid,
 						Name = input.Name,
 						VariableName = input_rel.VariableName,
-					},
+					}
+				).ToArray(),
 				IsScaling = tag.IsScaling,
 				MaxEu = tag.MaxEu,
 				MaxRaw = tag.MaxRaw,

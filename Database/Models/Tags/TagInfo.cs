@@ -22,10 +22,10 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	public required TagType Type { get; set; }
 
 	/// <summary>
-	/// Интервал опроса источника для получения нового значения
+	/// Частота записи тега
 	/// </summary>
 	[Required]
-	public required short IntervalInSeconds { get; set; }
+	public required TagFrequency Frequency { get; set; }
 
 	/// <summary>
 	/// Идентификатор источника данных
@@ -88,7 +88,7 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// Входные переменные для формулы, по которой рассчитывается значение
 	/// </summary>
 	[Required]
-	public required IEnumerable<TagInputInfo> FormulaInputs { get; set; } = [];
+	public required TagInputInfo[] FormulaInputs { get; set; } = [];
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;

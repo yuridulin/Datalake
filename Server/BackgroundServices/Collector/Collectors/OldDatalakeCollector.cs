@@ -29,7 +29,15 @@ internal class OldDatalakeCollector : CollectorBase
 			.Select(g => new Item
 			{
 				TagName = g.Key!,
-				PeriodInSeconds = g.Select(x => x.Interval).Min(),
+				PeriodInSeconds = g
+					.Select(x => x.Frequency switch
+					{
+						TagFrequency.NotSet => 0,
+						TagFrequency.ByMinute => 60,
+						TagFrequency.ByHour => 3600,
+						TagFrequency.ByDay => 86400,
+					})
+					.Min(),
 				LastAsk = DateTime.MinValue,
 				Tags = g.Select(x => x.Guid).ToArray(),
 			})
@@ -97,7 +105,7 @@ internal class OldDatalakeCollector : CollectorBase
 
 				if (items.Length > 0)
 				{
-					var response = await _receiverService.AskOldDatalake([.. items.Select(x => x.TagName)], _address);
+					var response = await _receiverService.AskInopc([.. items.Select(x => x.TagName)], _address);
 
 					foreach (var value in response.Tags)
 					{

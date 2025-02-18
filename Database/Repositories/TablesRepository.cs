@@ -191,14 +191,13 @@ public class TablesRepository(DatalakeContext db)
 				WHERE t.table_schema = 'public'
 				AND table_name LIKE '{NamePrefix}_%';");
 
-		return tables
+		return [.. tables
 			.Select(x => new HistoryTableInfo
 			{
 				Name = x.Name,
 				Date = GetTableDate(x.Name),
 				HasIndex = !string.IsNullOrEmpty(x.Index),
-			})
-			.ToArray();
+			})];
 	}
 
 	async Task PostgreSQL_CreateHistoryIndex(string tableName)

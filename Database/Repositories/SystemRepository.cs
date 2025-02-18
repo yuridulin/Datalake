@@ -3,7 +3,7 @@ using Datalake.Database.Enums;
 using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models.Auth;
-using Datalake.Database.Models.Logs;
+using Datalake.Database.Models.LogModels;
 using Datalake.Database.Models.Settings;
 using Datalake.Database.Models.Tags;
 using Datalake.Database.Models.Users;
