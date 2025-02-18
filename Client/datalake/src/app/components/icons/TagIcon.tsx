@@ -8,7 +8,11 @@ import {
 	TagOutlined,
 } from '@ant-design/icons'
 
-const TagIcon = ({ type }: { type: SourceType }) => {
+type TagIconProps = {
+	type: SourceType
+}
+
+const TagIcon = ({ type }: TagIconProps) => {
 	switch (type) {
 		case SourceType.Manual:
 			return <EditOutlined style={{ color: blue[4] }} />

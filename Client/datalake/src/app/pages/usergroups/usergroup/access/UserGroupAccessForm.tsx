@@ -1,4 +1,5 @@
 import api from '@/api/swagger-api'
+import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Select, Spin, Table } from 'antd'
@@ -11,7 +12,6 @@ import {
 	AccessType,
 	UserGroupInfo,
 } from '../../../../../api/swagger/data-contracts'
-import AccessTypeEl from '../../../../components/AccessTypeEl'
 import PageHeader from '../../../../components/PageHeader'
 import routes from '../../../../router/routes'
 

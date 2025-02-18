@@ -53,7 +53,7 @@ const items = [
 				key: routes.tags.list,
 				label: (
 					<NavLink to={routes.tags.list}>
-						<TagIcon />
+						<TagIcon type={1} />
 						&emsp;Все теги
 					</NavLink>
 				),

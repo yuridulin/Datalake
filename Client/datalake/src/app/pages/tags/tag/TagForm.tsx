@@ -393,6 +393,7 @@ const TagForm = () => {
 									<TagFrequencyEl
 										frequency={value as TagFrequency}
 									/>
+									&emsp;
 									{getTagFrequencyName(value as number)}
 								</Radio.Button>
 							))}

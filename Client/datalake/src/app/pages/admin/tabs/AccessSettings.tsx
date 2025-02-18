@@ -2,9 +2,13 @@ import api from '@/api/swagger-api'
 import {
 	AccessRuleInfo,
 	AccessType,
+	SourceType,
+	TagFrequency,
+	TagSimpleInfo,
+	TagType,
 	UserAuthInfo,
 } from '@/api/swagger/data-contracts'
-import AccessTypeEl from '@/app/components/AccessTypeEl'
+import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
@@ -41,9 +45,13 @@ type UserAuthWithNames = {
 		id: string
 	}[]
 	tags: {
-		accessRule: AccessRuleInfo
-		name: string
+		id: number
 		guid: string
+		name: string
+		type: TagType
+		frequency: TagFrequency
+		sourceType: SourceType
+		accessRule: AccessRuleInfo
 	}[]
 }
 
@@ -63,7 +71,7 @@ const AccessSettings = () => {
 		let groups: Record<string, string>
 		let sources: Record<number, string>
 		let blocks: Record<number, string>
-		let tags: Record<string, string>
+		let tags: Record<string, TagSimpleInfo>
 		let auth: Record<string, UserAuthInfo>
 		Promise.all([
 			api.userGroupsReadAll().then((res) => {
@@ -96,10 +104,10 @@ const AccessSettings = () => {
 			api.tagsReadAll().then((res) => {
 				tags = res.data.reduce(
 					(accumulator, item) => {
-						accumulator[item.guid] = item.name
+						accumulator[item.guid] = item
 						return accumulator
 					},
-					{} as Record<string, string>,
+					{} as Record<string, TagSimpleInfo>,
 				)
 			}),
 			api.systemGetAccess().then((res) => {
@@ -139,8 +147,7 @@ const AccessSettings = () => {
 						},
 					})),
 					tags: Object.entries(info.tags).map(([key, value]) => ({
-						guid: key,
-						name: tags[key],
+						...tags[key],
 						accessRule: {
 							ruleId: value.ruleId,
 							accessType: value.accessType,
@@ -245,6 +252,9 @@ const AccessSettings = () => {
 											id: 0,
 											guid: tag.guid,
 											name: tag.name,
+											frequency: tag.frequency,
+											sourceType: tag.sourceType,
+											type: tag.type,
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}

@@ -1,4 +1,5 @@
 import api from '@/api/swagger-api'
+import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
 import { user } from '@/state/user'
 import { Button, Descriptions, DescriptionsProps, Spin, Tabs } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -8,7 +9,6 @@ import {
 	AccessType,
 	UserGroupDetailedInfo,
 } from '../../../../api/swagger/data-contracts'
-import AccessTypeEl from '../../../components/AccessTypeEl'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
 import ObjectsWithAccess from './parts/ObjectsWithAccess'

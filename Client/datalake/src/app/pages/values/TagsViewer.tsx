@@ -7,64 +7,29 @@ import {
 	Row,
 	Select,
 	Table,
-	TreeSelect,
 } from 'antd'
 
 import api from '@/api/swagger-api'
-import TagButton from '@/app/components/buttons/TagButton'
+import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
+import HistoricValuesMode from '@/app/pages/values/tagViewerModes/HistoricValuesMode'
+import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
+import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
+import { TransformedData } from '@/app/pages/values/types/TransformedData'
 import {
 	CheckSquareOutlined,
 	CloseSquareOutlined,
 	PlaySquareOutlined,
 } from '@ant-design/icons'
-import { DefaultOptionType } from 'antd/es/select'
 import { ColumnsType } from 'antd/es/table'
-import Column from 'antd/es/table/Column'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
-import {
-	BlockTreeInfo,
-	TagQuality,
-	TagSimpleInfo,
-} from '../../../api/swagger/data-contracts'
+import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { TagQuality } from '../../../api/swagger/data-contracts'
 import compareValues from '../../../functions/compareValues'
 import { useInterval } from '../../../hooks/useInterval'
 import { TagValue } from '../../../types/tagValue'
 import TagCompactValue from '../../components/TagCompactValue'
-import TagQualityEl from '../../components/TagQualityEl'
-import TagValueEl from '../../components/TagValueEl'
-
-type ValueType = TagSimpleInfo & {
-	value?: string | number | boolean | null
-	quality: TagQuality
-	date: string
-}
-
-const convertToTreeSelectNodes = (
-	blockTree: BlockTreeInfo[],
-): DefaultOptionType[] => {
-	return blockTree.map((block) => ({
-		title: block.name,
-		key: block.id,
-		value: 0 - block.id,
-		children: [
-			...block.tags.map((tag) => ({
-				title: tag.localName,
-				key: tag.id,
-				value: tag.id,
-			})),
-			...convertToTreeSelectNodes(block.children),
-		],
-	}))
-}
-
-interface TransformedData {
-	time: string
-	dateString: string
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[key: string]: any // Для динамических свойств tag1, tag2 и т.д.
-}
 
 const timeMode = [
 	{ label: 'Текущие', value: 'live' },
@@ -82,34 +47,51 @@ const resolutions = [
 const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 
 const TagsViewer = observer(() => {
-	const [tree, setTree] = useState([] as DefaultOptionType[])
-	const [checkedTags, setCheckedTags] = useState([] as number[])
-	const [values, setValues] = useState([] as ValueType[])
+	const [searchParams, setSearchParams] = useSearchParams()
+	const [tagMapping, setTagMapping] = useState({} as FlattenedNestedTagsType)
+
+	// Парсинг параметров из URL при инициализации
+	const initialTags = searchParams.get('tags')?.split('|').map(Number) || []
+	const initialMode =
+		(searchParams.get('mode') as 'live' | 'exact' | 'old-young') || 'live'
+
+	// Функция для парсинга даты из URL
+	const parseDate = (param: string | null, fallback: dayjs.Dayjs) =>
+		param ? dayjs(param, timeMask) : fallback
+
+	const [request, setRequest] = useState({
+		tags: initialTags,
+		old: parseDate(searchParams.get('old'), dayjs().add(-1, 'hour')),
+		young: parseDate(searchParams.get('young'), dayjs()),
+		exact: parseDate(searchParams.get('exact'), dayjs()),
+		resolution: Number(searchParams.get('resolution')) || 0,
+		mode: initialMode,
+		update: false,
+	})
+
+	const [checkedTags, setCheckedTags] = useState(initialTags)
+	const [values, setValues] = useState([] as TagValueWithInfo[])
 	const [rangeValues, setRangeValues] = useState([] as TransformedData[])
 	const [rangeColumns, setRangeColumns] = useState(
 		[] as ColumnsType<TransformedData>,
 	)
 
-	const [request, setRequest] = useState({
-		tags: [] as number[],
-		old: dayjs(new Date())
-			.add(-1, 'hour')
-			.set('minute', 0)
-			.set('second', 0),
-		young: dayjs(new Date()).set('minute', 0).set('second', 0),
-		exact: dayjs(new Date()),
-		resolution: 0,
-		mode: 'live' as 'live' | 'exact' | 'old-young',
-		update: false,
-	})
+	// Оптимизация: мемоизация обработчиков
+	const handleTagChange = useCallback(
+		(value: number[], currentTagMapping: FlattenedNestedTagsType) => {
+			setCheckedTags(value)
+			setTagMapping(currentTagMapping)
+			setRequest((prev) => ({ ...prev, tags: value }))
+		},
+		[],
+	)
 
-	const loadTags = () => {
-		api.blocksReadAsTree()
-			.then((res) => {
-				setTree(convertToTreeSelectNodes(res.data))
-			})
-			.catch(() => setTree([]))
-	}
+	const handleModeChange = useCallback(
+		(value: 'live' | 'exact' | 'old-young') => {
+			setRequest((prev) => ({ ...prev, mode: value }))
+		},
+		[],
+	)
 
 	const getValues = () => {
 		if (checkedTags.length === 0) return setValues([])
@@ -131,100 +113,49 @@ const TagsViewer = observer(() => {
 			},
 		])
 			.then((res) => {
-				// Преобразование данных
-				const transformedData = res.data[0].tags.reduce(
-					(
-						acc: Record<string, TransformedData>,
-						{ id, guid, name, type, values },
-					) => {
-						values.forEach(
-							({ date, dateString, value, quality }) => {
-								if (!acc[date])
-									acc[date] = { time: dateString, dateString }
-								acc[date][guid] = {
-									id,
-									guid,
-									name,
-									type,
-									value,
-									quality,
-								}
-							},
-						)
-						return acc
-					},
-					{},
-				)
-
-				const dataSource = Object.values(transformedData)
-				setRangeValues(dataSource)
-
-				// Определение столбцов
-				setRangeColumns([
-					{
-						title: 'Время',
-						dataIndex: 'time',
-						key: 'time',
-						sorter: (a, b) => compareValues(a.time, b.time),
-						showSorterTooltip: false,
-					},
-					...res.data[0].tags.map((x) => ({
-						title: () => <TagButton tag={x} />,
-						key: x.guid,
-						dataIndex: x.guid,
-						render: (value: {
-							quality: TagQuality
-							value: TagValue
-						}) => (
-							<TagCompactValue
-								type={x.type}
-								value={value?.value ?? null}
-								quality={value?.quality ?? TagQuality.Bad}
-							/>
-						),
-					})),
-				])
-
+				// Обогащаем теги дополнительной информацией
 				setValues(
-					res.data[0].tags
-						.map((x) => {
-							const valueObject = x.values[0]
-							return {
-								id: x.id,
-								guid: x.guid,
-								name: x.name,
-								type: x.type,
-								frequency: x.frequency,
-								sourceType: x.sourceType,
-								value: valueObject.value,
-								date: valueObject.dateString,
-								quality: valueObject.quality,
-							}
-						})
-						.sort((a, b) => -1 * a.name.localeCompare(b.name)),
+					res.data[0].tags.map((tag) => {
+						const mapping = tagMapping[tag.id]
+						return {
+							...tag,
+							localName: mapping?.localName ?? tag.name,
+						} as TagValueWithInfo
+					}),
 				)
+
+
 			})
 			.catch(() => setValues([]))
 	}
 
-	useEffect(loadTags, [])
 	useInterval(() => {
 		if (request.mode === 'live' && request.update) getValues()
 	}, 1000)
+
+	// Эффект для обновления URL при изменении состояния
+	useEffect(() => {
+		const params: Record<string, string> = {
+			tags: checkedTags.join('|'),
+			mode: request.mode,
+			resolution: String(request.resolution),
+		}
+
+		if (request.mode === 'exact') {
+			params.exact = request.exact.format(timeMask)
+		} else if (request.mode === 'old-young') {
+			params.old = request.old.format(timeMask)
+			params.young = request.young.format(timeMask)
+		}
+
+		setSearchParams(params, { replace: true })
+	}, [checkedTags, request, setSearchParams])
 
 	return (
 		<>
 			<div style={{ position: 'sticky' }}>
 				<Row>
-					<TreeSelect
-						treeData={tree}
-						treeCheckable={true}
-						showCheckedStrategy={TreeSelect.SHOW_ALL}
-						value={checkedTags}
-						onChange={(value) => setCheckedTags(value)}
-						placeholder='Выберите теги'
-						style={{ width: '100%' }}
-					/>
+					<QueryTreeSelect onChange={handleTagChange} />
 				</Row>
 				<Row style={{ marginTop: '1em' }}>
 					<Col flex='10em'>
@@ -239,9 +170,7 @@ const TagsViewer = observer(() => {
 							options={timeMode}
 							optionType='button'
 							buttonStyle='solid'
-							onChange={(e) =>
-								setRequest({ ...request, mode: e.target.value })
-							}
+							onChange={(e) => handleModeChange(e.target.value)}
 						/>
 					</Col>
 					<Col flex='auto'>
@@ -327,39 +256,9 @@ const TagsViewer = observer(() => {
 				<Divider orientation='left'>Значения</Divider>
 			</div>
 			{request.mode === 'old-young' ? (
-				<Table
-					columns={rangeColumns}
-					dataSource={rangeValues}
-					size='small'
-					rowKey='date'
-				/>
+
 			) : (
-				<Table dataSource={values} size='small' rowKey='guid'>
-					<Column
-						title='Тег'
-						dataIndex='guid'
-						render={(_, row: ValueType) => <TagButton tag={row} />}
-					/>
-					<Column
-						width='40%'
-						title='Значение'
-						dataIndex='value'
-						render={(value, row: ValueType) => (
-							<TagValueEl
-								type={row.type}
-								guid={row.guid}
-								allowEdit={true}
-								value={value}
-							/>
-						)}
-					/>
-					<Column
-						width='10em'
-						title='Качество'
-						dataIndex='quality'
-						render={(quality) => <TagQualityEl quality={quality} />}
-					/>
-				</Table>
+				<HistoricValuesMode values={values} />
 			)}
 		</>
 	)
