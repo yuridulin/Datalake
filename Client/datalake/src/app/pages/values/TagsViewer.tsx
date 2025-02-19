@@ -1,43 +1,37 @@
-import {
-	Button,
-	Col,
-	DatePicker,
-	Divider,
-	Radio,
-	Row,
-	Select,
-	Table,
-} from 'antd'
+import { Button, Col, DatePicker, Divider, Radio, Row, Select } from 'antd'
 
 import api from '@/api/swagger-api'
 import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
-import HistoricValuesMode from '@/app/pages/values/tagViewerModes/HistoricValuesMode'
+import ExactValuesMode from '@/app/pages/values/tagViewerModes/ExactValuesMode'
+import TimedValuesMode from '@/app/pages/values/tagViewerModes/TimedValuesMode'
 import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
-import { TransformedData } from '@/app/pages/values/types/TransformedData'
 import {
 	CheckSquareOutlined,
 	CloseSquareOutlined,
 	PlaySquareOutlined,
 } from '@ant-design/icons'
-import { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { TagQuality } from '../../../api/swagger/data-contracts'
-import compareValues from '../../../functions/compareValues'
 import { useInterval } from '../../../hooks/useInterval'
-import { TagValue } from '../../../types/tagValue'
-import TagCompactValue from '../../components/TagCompactValue'
 
-const timeMode = [
-	{ label: 'Текущие', value: 'live' },
-	{ label: 'Срез', value: 'exact' },
-	{ label: 'Диапазон', value: 'old-young' },
+const TimeModes = {
+	LIVE: 'live',
+	EXACT: 'exact',
+	OLD_YOUNG: 'old-young',
+} as const
+
+type TimeMode = (typeof TimeModes)[keyof typeof TimeModes]
+
+const timeModeOptions: { label: string; value: TimeMode }[] = [
+	{ label: 'Текущие', value: TimeModes.LIVE },
+	{ label: 'Срез', value: TimeModes.EXACT },
+	{ label: 'Диапазон', value: TimeModes.OLD_YOUNG },
 ]
 
-const resolutions = [
+const resolutionOptions = [
 	{ label: 'По изменению', value: 0 },
 	{ label: 'Посекундно', value: 1000 },
 	{ label: 'Поминутно', value: 1000 * 60 },
@@ -46,24 +40,21 @@ const resolutions = [
 
 const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 
+const parseDate = (param: string | null, fallback: dayjs.Dayjs) =>
+	param ? dayjs(param, timeMask) : fallback
+
 const TagsViewer = observer(() => {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const [tagMapping, setTagMapping] = useState({} as FlattenedNestedTagsType)
 
-	// Парсинг параметров из URL при инициализации
 	const initialTags = searchParams.get('tags')?.split('|').map(Number) || []
-	const initialMode =
-		(searchParams.get('mode') as 'live' | 'exact' | 'old-young') || 'live'
-
-	// Функция для парсинга даты из URL
-	const parseDate = (param: string | null, fallback: dayjs.Dayjs) =>
-		param ? dayjs(param, timeMask) : fallback
+	const initialMode = (searchParams.get('mode') as TimeMode) || TimeModes.LIVE
 
 	const [request, setRequest] = useState({
 		tags: initialTags,
 		old: parseDate(searchParams.get('old'), dayjs().add(-1, 'hour')),
 		young: parseDate(searchParams.get('young'), dayjs()),
-		exact: parseDate(searchParams.get('exact'), dayjs()),
+		exact: parseDate(searchParams.get(TimeModes.EXACT), dayjs()),
 		resolution: Number(searchParams.get('resolution')) || 0,
 		mode: initialMode,
 		update: false,
@@ -71,12 +62,7 @@ const TagsViewer = observer(() => {
 
 	const [checkedTags, setCheckedTags] = useState(initialTags)
 	const [values, setValues] = useState([] as TagValueWithInfo[])
-	const [rangeValues, setRangeValues] = useState([] as TransformedData[])
-	const [rangeColumns, setRangeColumns] = useState(
-		[] as ColumnsType<TransformedData>,
-	)
 
-	// Оптимизация: мемоизация обработчиков
 	const handleTagChange = useCallback(
 		(value: number[], currentTagMapping: FlattenedNestedTagsType) => {
 			setCheckedTags(value)
@@ -86,19 +72,16 @@ const TagsViewer = observer(() => {
 		[],
 	)
 
-	const handleModeChange = useCallback(
-		(value: 'live' | 'exact' | 'old-young') => {
-			setRequest((prev) => ({ ...prev, mode: value }))
-		},
-		[],
-	)
+	const handleModeChange = useCallback((value: TimeMode) => {
+		setRequest((prev) => ({ ...prev, mode: value }))
+	}, [])
 
 	const getValues = () => {
 		if (checkedTags.length === 0) return setValues([])
 		const timeSettings =
-			request.mode === 'live'
+			request.mode === TimeModes.LIVE
 				? {}
-				: request.mode === 'exact'
+				: request.mode === TimeModes.EXACT
 					? { exact: request.exact.format(timeMask) }
 					: {
 							old: request.old.format(timeMask),
@@ -113,7 +96,6 @@ const TagsViewer = observer(() => {
 			},
 		])
 			.then((res) => {
-				// Обогащаем теги дополнительной информацией
 				setValues(
 					res.data[0].tags.map((tag) => {
 						const mapping = tagMapping[tag.id]
@@ -123,17 +105,14 @@ const TagsViewer = observer(() => {
 						} as TagValueWithInfo
 					}),
 				)
-
-
 			})
 			.catch(() => setValues([]))
 	}
 
 	useInterval(() => {
-		if (request.mode === 'live' && request.update) getValues()
+		if (request.mode === TimeModes.LIVE && request.update) getValues()
 	}, 1000)
 
-	// Эффект для обновления URL при изменении состояния
 	useEffect(() => {
 		const params: Record<string, string> = {
 			tags: checkedTags.join('|'),
@@ -141,9 +120,9 @@ const TagsViewer = observer(() => {
 			resolution: String(request.resolution),
 		}
 
-		if (request.mode === 'exact') {
+		if (request.mode === TimeModes.EXACT) {
 			params.exact = request.exact.format(timeMask)
-		} else if (request.mode === 'old-young') {
+		} else if (request.mode === TimeModes.OLD_YOUNG) {
 			params.old = request.old.format(timeMask)
 			params.young = request.young.format(timeMask)
 		}
@@ -166,8 +145,8 @@ const TagsViewer = observer(() => {
 					</Col>
 					<Col flex='20em'>
 						<Radio.Group
-							defaultValue={'live'}
-							options={timeMode}
+							defaultValue={TimeModes.LIVE}
+							options={timeModeOptions}
 							optionType='button'
 							buttonStyle='solid'
 							onChange={(e) => handleModeChange(e.target.value)}
@@ -177,7 +156,7 @@ const TagsViewer = observer(() => {
 						<span
 							style={{
 								display:
-									request.mode === 'live'
+									request.mode === TimeModes.LIVE
 										? 'inherit'
 										: 'none',
 							}}
@@ -202,7 +181,7 @@ const TagsViewer = observer(() => {
 						<span
 							style={{
 								display:
-									request.mode === 'exact'
+									request.mode === TimeModes.EXACT
 										? 'inherit'
 										: 'none',
 							}}
@@ -219,7 +198,7 @@ const TagsViewer = observer(() => {
 						<span
 							style={{
 								display:
-									request.mode === 'old-young'
+									request.mode === TimeModes.OLD_YOUNG
 										? 'inherit'
 										: 'none',
 							}}
@@ -243,7 +222,7 @@ const TagsViewer = observer(() => {
 								}
 							/>
 							<Select
-								options={resolutions}
+								options={resolutionOptions}
 								style={{ width: '12em' }}
 								defaultValue={0}
 								onChange={(e) =>
@@ -255,10 +234,10 @@ const TagsViewer = observer(() => {
 				</Row>
 				<Divider orientation='left'>Значения</Divider>
 			</div>
-			{request.mode === 'old-young' ? (
-
+			{request.mode === TimeModes.OLD_YOUNG ? (
+				<TimedValuesMode values={values} />
 			) : (
-				<HistoricValuesMode values={values} />
+				<ExactValuesMode values={values} />
 			)}
 		</>
 	)
