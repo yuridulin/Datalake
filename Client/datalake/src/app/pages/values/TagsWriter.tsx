@@ -5,7 +5,6 @@ import {
 	Divider,
 	Input,
 	InputNumber,
-	Select,
 	Space,
 	Spin,
 	Table,
@@ -13,21 +12,20 @@ import {
 
 import api from '@/api/swagger-api'
 import {
-	SourceType,
 	TagQuality,
 	TagSimpleInfo,
 	TagType,
 } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/TagCompactValue'
+import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
 import notify from '@/state/notifications'
 import { TagValue } from '@/types/tagValue'
 import { PlaySquareOutlined } from '@ant-design/icons'
-import { DefaultOptionType } from 'antd/es/select'
 import Column from 'antd/es/table/Column'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 type ExactValue = TagSimpleInfo & {
 	value: TagValue
@@ -40,29 +38,13 @@ type ExactValue = TagSimpleInfo & {
 const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 
 const TagsWriter = observer(() => {
-	const [tags, setTags] = useState([] as DefaultOptionType[])
 	const [values, setValues] = useState([] as ExactValue[])
-	const [searchValue, setSearchValue] = useState('')
 	const [loading, setLoading] = useState(false)
 
 	const [request, setRequest] = useState({
 		tags: [] as number[],
 		exact: dayjs(new Date()),
 	})
-
-	const loadTags = () => {
-		api.tagsReadAll({ sourceId: SourceType.Manual })
-			.then((res) => {
-				setTags(
-					res.data.map((x) => ({
-						label: x.name,
-						title: x.name,
-						value: x.id,
-					})),
-				)
-			})
-			.catch(() => setTags([]))
-	}
 
 	const getValues = () => {
 		if (request.tags.length === 0) return setValues([])
@@ -95,8 +77,6 @@ const TagsWriter = observer(() => {
 			.finally(() => setLoading(false))
 	}
 
-	useEffect(loadTags, [])
-
 	const writeValues = () => {
 		const valuesToWrite = values
 			.filter((x) => x.hasNewValue)
@@ -109,10 +89,6 @@ const TagsWriter = observer(() => {
 		if (valuesToWrite.length === 0)
 			return notify.warn('Нет ни одного изменения')
 		api.valuesWrite(valuesToWrite).then(getValues)
-	}
-
-	const handleSearch = (value: string) => {
-		setSearchValue(value)
 	}
 
 	const handleChange = (value: number[]) => {
@@ -133,17 +109,7 @@ const TagsWriter = observer(() => {
 		<>
 			<div style={{ position: 'sticky' }}>
 				<div>
-					<Select
-						showSearch
-						mode='multiple'
-						options={tags}
-						optionFilterProp='label'
-						placeholder='Выберите теги'
-						style={{ width: '100%' }}
-						onSearch={handleSearch}
-						searchValue={searchValue}
-						onChange={handleChange}
-					/>
+					<QueryTreeSelect onChange={handleChange} />
 				</div>
 				<div style={{ marginTop: '1em' }}>
 					<Space>

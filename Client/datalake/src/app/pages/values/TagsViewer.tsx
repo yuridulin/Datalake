@@ -46,12 +46,10 @@ const parseDate = (param: string | null, fallback: dayjs.Dayjs) =>
 const TagsViewer = observer(() => {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const [tagMapping, setTagMapping] = useState({} as FlattenedNestedTagsType)
-
-	const initialTags = searchParams.get('tags')?.split('|').map(Number) || []
 	const initialMode = (searchParams.get('mode') as TimeMode) || TimeModes.LIVE
 
 	const [request, setRequest] = useState({
-		tags: initialTags,
+		tags: [] as number[],
 		old: parseDate(searchParams.get('old'), dayjs().add(-1, 'hour')),
 		young: parseDate(searchParams.get('young'), dayjs()),
 		exact: parseDate(searchParams.get(TimeModes.EXACT), dayjs()),
@@ -60,12 +58,10 @@ const TagsViewer = observer(() => {
 		update: false,
 	})
 
-	const [checkedTags, setCheckedTags] = useState(initialTags)
 	const [values, setValues] = useState([] as TagValueWithInfo[])
 
 	const handleTagChange = useCallback(
 		(value: number[], currentTagMapping: FlattenedNestedTagsType) => {
-			setCheckedTags(value)
 			setTagMapping(currentTagMapping)
 			setRequest((prev) => ({ ...prev, tags: value }))
 		},
@@ -77,7 +73,7 @@ const TagsViewer = observer(() => {
 	}, [])
 
 	const getValues = () => {
-		if (checkedTags.length === 0) return setValues([])
+		if (request.tags.length === 0) return setValues([])
 		const timeSettings =
 			request.mode === TimeModes.LIVE
 				? {}
@@ -91,7 +87,7 @@ const TagsViewer = observer(() => {
 		api.valuesGet([
 			{
 				requestKey: 'viewer-tags',
-				tagsId: checkedTags,
+				tagsId: request.tags,
 				...timeSettings,
 			},
 		])
@@ -114,21 +110,21 @@ const TagsViewer = observer(() => {
 	}, 1000)
 
 	useEffect(() => {
-		const params: Record<string, string> = {
-			tags: checkedTags.join('|'),
-			mode: request.mode,
-			resolution: String(request.resolution),
-		}
+		searchParams.set('mode', request.mode)
+		searchParams.set('resolution', String(request.resolution))
 
 		if (request.mode === TimeModes.EXACT) {
-			params.exact = request.exact.format(timeMask)
+			searchParams.set('exact', request.exact.format(timeMask))
+			searchParams.delete('old')
+			searchParams.delete('young')
 		} else if (request.mode === TimeModes.OLD_YOUNG) {
-			params.old = request.old.format(timeMask)
-			params.young = request.young.format(timeMask)
+			searchParams.delete('exact')
+			searchParams.set('old', request.old.format(timeMask))
+			searchParams.set('young', request.young.format(timeMask))
 		}
 
-		setSearchParams(params, { replace: true })
-	}, [checkedTags, request, setSearchParams])
+		setSearchParams(searchParams, { replace: true })
+	}, [request, searchParams, setSearchParams])
 
 	return (
 		<>

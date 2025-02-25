@@ -1,6 +1,7 @@
 import api from '@/api/swagger-api'
 import { BlockSimpleInfo, BlockTreeInfo } from '@/api/swagger/data-contracts'
 import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
+import isArraysDifferent from '@/functions/isArraysDifferent'
 import { TreeSelect } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -70,8 +71,10 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 	const [treeData, setTreeData] = useState<DefaultOptionType[]>([])
 	const [tagMapping, setTagMapping] = useState<FlattenedNestedTagsType>([])
 	const [searchValue, setSearchValue] = useState<string>('')
+	const [loading, setLoading] = useState<boolean>(false)
 
 	useEffect(() => {
+		setLoading(false)
 		api.blocksReadAsTree()
 			.then((res) => {
 				const mapping = flattenNestedTags(res.data)
@@ -87,12 +90,15 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 
 	const handleTagChange = useCallback(
 		(value: number[], _: React.ReactNode[], extra: DefaultOptionType) => {
+			const currentTags = value.filter((x) => x > 0)
+			if (!isArraysDifferent(checkedTags, currentTags)) return
+
 			setCheckedTags(value)
 			onChange(value, tagMapping, extra?.checkedNodes)
 			searchParams.set('tags', value.filter((x) => x > 0).join('|'))
 			setSearchParams(searchParams, { replace: true })
 		},
-		[onChange, searchParams, setSearchParams, tagMapping],
+		[onChange, searchParams, setSearchParams, tagMapping, checkedTags],
 	)
 
 	const filterTreeNode = (
@@ -117,10 +123,19 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 	}
 
 	useEffect(() => {
-		if (tagMapping && checkedTags) {
+		if (loading) {
+			setLoading(false)
 			onChange(checkedTags, tagMapping, [])
 		}
-	}, [tagMapping, checkedTags, onChange])
+		console.log(
+			'Loading:',
+			loading,
+			'Mapping:',
+			Object.keys(tagMapping).length,
+			'Checked:',
+			checkedTags.length,
+		)
+	}, [loading])
 
 	return (
 		<TreeSelect
