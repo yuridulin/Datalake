@@ -1,4 +1,5 @@
 ﻿using Datalake.Database.Enums;
+using Datalake.Database.Models.Tags;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Values;
@@ -6,32 +7,8 @@ namespace Datalake.Database.Models.Values;
 /// <summary>
 /// Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения
 /// </summary>
-public class ValuesTagResponse
+public class ValuesTagResponse : TagSimpleInfo
 {
-	/// <summary>
-	/// Идентификатор тега в локальной базе
-	/// </summary>
-	[Required]
-	public required int Id { get; set; }
-
-	/// <summary>
-	/// Глобальный идентификатор тега
-	/// </summary>
-	[Required]
-	public required Guid Guid { get; set; }
-
-	/// <summary>
-	/// Полное наименование тега
-	/// </summary>
-	[Required]
-	public required string Name { get; set; }
-
-	/// <summary>
-	/// Тип данных
-	/// </summary>
-	[Required]
-	public required TagType Type { get; set; }
-
 	/// <summary>
 	/// Список значений
 	/// </summary>

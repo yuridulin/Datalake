@@ -1,4 +1,5 @@
 import api from '@/api/swagger-api'
+import BlockButton from '@/app/components/buttons/BlockButton'
 import { user } from '@/state/user'
 import { Button, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -7,16 +8,13 @@ import { NavLink } from 'react-router-dom'
 import {
 	AccessType,
 	BlockNestedTagInfo,
+	BlockSimpleInfo,
 	BlockTreeInfo,
 } from '../../../api/swagger/data-contracts'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 
-interface DataType {
-	key: React.ReactNode
-	id: number
-	name: string
-	description: string
+type DataType = BlockSimpleInfo & {
 	tags: BlockNestedTagInfo[]
 	children?: DataType[]
 }
@@ -24,10 +22,9 @@ interface DataType {
 function transformBlockTreeInfo(blocks: BlockTreeInfo[]): DataType[] {
 	const data = blocks.map((block) => {
 		const transformedBlock: DataType = {
-			key: block.id,
 			id: block.id,
 			name: block.name,
-			description: block.description || '',
+			guid: block.guid,
 			tags: block.tags,
 		}
 
@@ -47,15 +44,7 @@ const columns: TableColumnsType<DataType> = [
 		title: 'Название',
 		dataIndex: 'name',
 		width: '40%',
-		render: (_, record: DataType) => (
-			<NavLink
-				className='table-row'
-				to={routes.blocks.toViewBlock(record.id)}
-				key={record.id}
-			>
-				<Button size='small'>{record.name}</Button>
-			</NavLink>
-		),
+		render: (_, record: DataType) => <BlockButton block={record} />,
 		sorter: (a, b) => a.name.localeCompare(b.name),
 		defaultSortOrder: 'ascend',
 	},

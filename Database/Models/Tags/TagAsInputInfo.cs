@@ -1,7 +1,5 @@
 ﻿using Datalake.Database.Abstractions;
-using Datalake.Database.Enums;
 using Datalake.Database.Models.Auth;
-using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Tags;
 
@@ -10,12 +8,6 @@ namespace Datalake.Database.Models.Tags;
 /// </summary>
 public class TagAsInputInfo : TagSimpleInfo, IProtectedEntity
 {
-	/// <summary>
-	/// Тип данных тега
-	/// </summary>
-	[Required]
-	public required TagType Type { get; set; }
-
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

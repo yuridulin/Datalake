@@ -9,7 +9,7 @@ namespace Datalake.Database.Models.Values;
 public class ValueWriteRequest
 {
 	/// <summary>
-	/// Глобальные идентификатор тега
+	/// Глобальный идентификатор тега
 	/// </summary>
 	public Guid? Guid { get; set; }
 

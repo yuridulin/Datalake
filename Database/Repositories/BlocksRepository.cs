@@ -108,7 +108,7 @@ public class BlocksRepository(DatalakeContext db)
 						Name = x.Name,
 						FullName = prefixString + x.Name,
 						Description = x.Description,
-						Tags = [.. x.Tags
+						Tags = x.Tags
 							.Select(tag => new BlockNestedTagInfo
 							{
 								Guid = tag.Guid,
@@ -116,10 +116,12 @@ public class BlocksRepository(DatalakeContext db)
 								Id = tag.Id,
 								Relation = tag.Relation,
 								SourceId = tag.SourceId,
-								TagName = tag.TagName,
-								TagType = tag.TagType,
-								FullName = prefixString + x.Name + "." + tag.Name,
-							})],
+								LocalName = tag.LocalName,
+								Type = tag.Type,
+								Frequency = tag.Frequency,
+								SourceType = tag.SourceType,
+							})
+							.ToArray(),
 						AccessRule = x.AccessRule,
 						Children = ReadChildren(x.Id, prefixString + x.Name),
 					};
@@ -391,15 +393,18 @@ public class BlocksRepository(DatalakeContext db)
 				Tags = (
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
 					from tag in db.Tags.InnerJoin(x => x.Id == block_tag.TagId)
+					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
 					select new BlockNestedTagInfo
 					{
 						Id = tag.Id,
-						Name = block_tag.Name ?? "",
+						Name = tag.Name,
 						Guid = tag.GlobalGuid,
 						Relation = block_tag.Relation,
-						TagName = tag.Name,
-						TagType = tag.Type,
+						LocalName = block_tag.Name ?? tag.Name,
+						Type = tag.Type,
+						Frequency = tag.Frequency,
 						SourceId = tag.SourceId,
+						SourceType = source == null ? SourceType.NotSet : source.Type,
 					}
 				).ToArray(),
 			};
@@ -470,14 +475,17 @@ public class BlocksRepository(DatalakeContext db)
 				Tags = (
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
 					from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId)
+					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
 					select new BlockNestedTagInfo
 					{
 						Id = tag.Id,
 						Name = block_tag.Name ?? "",
 						Guid = tag.GlobalGuid,
 						Relation = block_tag.Relation,
-						TagName = tag.Name,
-						TagType = tag.Type,
+						LocalName = tag.Name,
+						Type = tag.Type,
+						Frequency = tag.Frequency,
+						SourceType = source == null ? SourceType.NotSet : source.Type,
 					}
 				).ToArray(),
 				AccessRights = (

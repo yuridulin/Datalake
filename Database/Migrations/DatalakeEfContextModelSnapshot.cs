@@ -18,7 +18,7 @@ namespace Datalake.Database.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("public")
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -249,11 +249,11 @@ namespace Datalake.Database.Migrations
                     b.Property<string>("Formula")
                         .HasColumnType("text");
 
+                    b.Property<int>("Frequency")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("GlobalGuid")
                         .HasColumnType("uuid");
-
-                    b.Property<short>("Interval")
-                        .HasColumnType("smallint");
 
                     b.Property<bool>("IsScaling")
                         .HasColumnType("boolean");

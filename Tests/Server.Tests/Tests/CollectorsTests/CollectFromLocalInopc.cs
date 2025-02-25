@@ -109,12 +109,13 @@ public class CollectFromLocalInopc(TestingWebAppFactory<Program> webAppFactory)
 			TagType = TagType.Number,
 			SourceId = testSource.Id,
 			SourceItem = TestItemPath,
+			Frequency = TagFrequency.NotSet,
 		});
 
 		await _httpClient.PutAsync("api/tags/" + guid, new TagUpdateRequest
 		{
 			Name = TestTagName,
-			IntervalInSeconds = 0,
+			Frequency = TagFrequency.NotSet,
 			Type = TagType.Number,
 			SourceId = testSource.Id,
 			SourceItem = TestItemPath,

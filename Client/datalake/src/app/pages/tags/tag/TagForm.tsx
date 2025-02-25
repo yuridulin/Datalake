@@ -1,4 +1,6 @@
 import api from '@/api/swagger-api'
+import TagFrequencyEl from '@/app/components/TagFrequencyEl'
+import getTagFrequencyName from '@/functions/getTagFrequencyName'
 import { TagValue } from '@/types/tagValue'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import {
@@ -16,13 +18,14 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
+	SourceType,
+	TagFrequency,
 	TagInfo,
 	TagType,
 	TagUpdateInputRequest,
 	TagUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
 import { useInterval } from '../../../../hooks/useInterval'
-import { CustomSource } from '../../../../types/customSource'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import TagValueEl from '../../../components/TagValueEl'
@@ -39,8 +42,8 @@ type InputOption = {
 }
 
 enum SourceStrategy {
-	Manual = CustomSource.Manual,
-	Calculated = CustomSource.Calculated,
+	Manual = SourceType.Manual,
+	Calculated = SourceType.Calculated,
 	FromSource = 0,
 }
 
@@ -88,9 +91,9 @@ const TagForm = () => {
 			})
 			setLoading(false)
 			setStrategy(
-				info.sourceId == CustomSource.Manual
+				info.sourceId == SourceType.Manual
 					? SourceStrategy.Manual
-					: info.sourceId == CustomSource.Calculated
+					: info.sourceId == SourceType.Calculated
 						? SourceStrategy.Calculated
 						: SourceStrategy.FromSource,
 			)
@@ -149,7 +152,7 @@ const TagForm = () => {
 		if (strategy === SourceStrategy.FromSource && request.sourceId < 0) {
 			setRequest({
 				...request,
-				sourceId: CustomSource.NotSet,
+				sourceId: SourceType.NotSet,
 			})
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -370,22 +373,31 @@ const TagForm = () => {
 					</Radio.Button>
 				</Radio.Group>
 			</FormRow>
-			<div
-				style={{
-					display:
-						strategy !== SourceStrategy.Manual ? 'block' : 'none',
-				}}
-			>
-				<FormRow title='Интервал обновления в секундах (0, если только по изменению)'>
-					<InputNumber
-						value={request.intervalInSeconds}
-						onChange={(value) =>
+			<div>
+				<FormRow title='Промежуток времени между записью значений'>
+					<Radio.Group
+						buttonStyle='solid'
+						value={request.frequency}
+						onChange={(value) => {
+							console.log(value)
 							setRequest({
 								...request,
-								intervalInSeconds: Number(value),
+								frequency: value.target.value,
 							})
-						}
-					/>
+						}}
+					>
+						{Object.values(TagFrequency)
+							.filter((key) => !isNaN(Number(key)))
+							.map((value) => (
+								<Radio.Button key={value} value={value}>
+									<TagFrequencyEl
+										frequency={value as TagFrequency}
+									/>
+									&emsp;
+									{getTagFrequencyName(value as number)}
+								</Radio.Button>
+							))}
+					</Radio.Group>
 				</FormRow>
 			</div>
 			<div
@@ -494,7 +506,7 @@ const TagForm = () => {
 					<Select
 						options={[
 							{
-								value: CustomSource.NotSet,
+								value: SourceType.NotSet,
 								label: '? не выбран',
 							},
 							...sources,
@@ -512,7 +524,7 @@ const TagForm = () => {
 				<div
 					style={{
 						display:
-							request.sourceId === CustomSource.NotSet
+							request.sourceId === SourceType.NotSet
 								? 'none'
 								: 'inherit',
 					}}

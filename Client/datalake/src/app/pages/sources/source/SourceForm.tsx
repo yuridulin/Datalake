@@ -10,10 +10,10 @@ import routes from '../../../router/routes'
 import SourceItems from './SourceItems'
 
 const AvailableSourceTypes = [
-	SourceType.Unknown,
+	SourceType.NotSet,
 	SourceType.Inopc,
 	SourceType.Datalake,
-	SourceType.DatalakeCoreV1,
+	SourceType.DatalakeV2,
 ]
 
 const SourceForm = () => {
@@ -22,7 +22,7 @@ const SourceForm = () => {
 
 	const [source, setSource] = useState({} as SourceInfo)
 	const [name, setName] = useState('')
-	const [type, setType] = useState(SourceType.Unknown)
+	const [type, setType] = useState(SourceType.NotSet)
 
 	function load() {
 		api.sourcesRead(Number(id)).then((res) => {
@@ -109,7 +109,7 @@ const SourceForm = () => {
 					))}
 				</Radio.Group>
 			</FormRow>
-			{source.type !== SourceType.Unknown && (
+			{source.type > 0 && (
 				<>
 					<FormRow title='Адрес'>
 						<Input

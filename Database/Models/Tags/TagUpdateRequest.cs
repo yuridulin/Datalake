@@ -64,7 +64,7 @@ public class TagUpdateRequest
 	/// Источник данных
 	/// </summary>
 	[Required]
-	public int SourceId { get; set; } = (int)CustomSource.Manual;
+	public int SourceId { get; set; } = (int)SourceType.Manual;
 
 	/// <summary>
 	/// Новый интервал получения значения

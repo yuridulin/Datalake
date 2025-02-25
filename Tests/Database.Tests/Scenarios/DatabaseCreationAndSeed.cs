@@ -24,10 +24,10 @@ namespace Datalake.Database.Tests.Scenarios
 			var customSources = await db.SourcesRepository.QueryInfo(withCustom: true)
 				.ToArrayAsync();
 
-			Assert.Equal(customSources.Length, Enum.GetValues<CustomSource>().Length);
+			Assert.Equal(4, customSources.Length);
 
 			var sourceInfo = await db.SourcesRepository.QueryInfo(withCustom: true)
-				.Where(x => x.Type == SourceType.Custom && x.Id == (int)CustomSource.Manual)
+				.Where(x => x.Id == (int)SourceType.Manual)
 				.FirstOrDefaultAsync();
 
 			Assert.NotNull(sourceInfo);

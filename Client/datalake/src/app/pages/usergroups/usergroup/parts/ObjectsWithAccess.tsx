@@ -1,15 +1,13 @@
-import { Button, Table, Tag } from 'antd'
+import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
+import BlockButton from '@/app/components/buttons/BlockButton'
+import SourceButton from '@/app/components/buttons/SourceButton'
+import TagButton from '@/app/components/buttons/TagButton'
+import { Table, Tag } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { NavLink } from 'react-router-dom'
 import {
 	AccessRightsForOneInfo,
 	AccessType,
 } from '../../../../../api/swagger/data-contracts'
-import AccessTypeEl from '../../../../components/AccessTypeEl'
-import BlockIcon from '../../../../components/icons/BlockIcon'
-import SourceIcon from '../../../../components/icons/SourceIcon'
-import TagIcon from '../../../../components/icons/TagIcon'
-import routes from '../../../../router/routes'
 
 type ObjectsWithAccessProps = {
 	accessRights: AccessRightsForOneInfo[]
@@ -40,30 +38,9 @@ const columns: ColumnsType<AccessRightsForOneInfo> = [
 		dataIndex: 'id',
 		title: 'Объект',
 		render: (_, record) => {
-			if (record.source)
-				return (
-					<NavLink to={routes.sources.toEditSource(record.source.id)}>
-						<Button size='small'>
-							<SourceIcon /> {record.source.name}
-						</Button>
-					</NavLink>
-				)
-			if (record.block)
-				return (
-					<NavLink to={routes.blocks.toViewBlock(record.block.id)}>
-						<Button size='small'>
-							<BlockIcon /> {record.block.name}
-						</Button>
-					</NavLink>
-				)
-			if (record.tag)
-				return (
-					<NavLink to={routes.tags.toTagForm(record.tag.guid)}>
-						<Button size='small'>
-							<TagIcon /> {record.tag.name}
-						</Button>
-					</NavLink>
-				)
+			if (record.source) return <SourceButton source={record.source} />
+			if (record.block) return <BlockButton block={record.block} />
+			if (record.tag) return <TagButton tag={record.tag} />
 			return <>?</>
 		},
 	},

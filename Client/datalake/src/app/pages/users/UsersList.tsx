@@ -1,6 +1,6 @@
 import api from '@/api/swagger-api'
 import { AccessType, UserInfo } from '@/api/swagger/data-contracts'
-import AccessTypeEl from '@/app/components/AccessTypeEl'
+import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
 import UserButton from '@/app/components/buttons/UserButton'
 import FormRow from '@/app/components/FormRow'
 import PageHeader from '@/app/components/PageHeader'

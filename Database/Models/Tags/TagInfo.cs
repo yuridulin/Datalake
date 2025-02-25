@@ -16,28 +16,10 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	public string? Description { get; set; }
 
 	/// <summary>
-	/// Тип данных тега
-	/// </summary>
-	[Required]
-	public required TagType Type { get; set; }
-
-	/// <summary>
-	/// Частота записи тега
-	/// </summary>
-	[Required]
-	public required TagFrequency Frequency { get; set; }
-
-	/// <summary>
 	/// Идентификатор источника данных
 	/// </summary>
 	[Required]
 	public required int SourceId { get; set; }
-
-	/// <summary>
-	/// Тип данных источника
-	/// </summary>
-	[Required]
-	public required SourceType SourceType { get; set; } = SourceType.Datalake;
 
 	/// <summary>
 	/// Путь к данным в источнике

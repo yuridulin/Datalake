@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Database.Models.Blocks;
+namespace Datalake.Database.Abstractions;
 
 /// <summary>
-/// Связанный с блоком объект
+/// Связанный объект
 /// </summary>
-public class BlockNestedItem
+public interface INestedItem
 {
 	/// <summary>
 	/// Идентификатор
@@ -17,5 +17,5 @@ public class BlockNestedItem
 	/// Наименование
 	/// </summary>
 	[Required]
-	public required string Name { get; set; }
+	public string Name { get; set; }
 }

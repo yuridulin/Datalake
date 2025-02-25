@@ -1,59 +1,37 @@
-import {
-	Button,
-	Col,
-	DatePicker,
-	Divider,
-	Radio,
-	Row,
-	Select,
-	Table,
-} from 'antd'
+import { Button, Col, DatePicker, Divider, Radio, Row, Select } from 'antd'
 
 import api from '@/api/swagger-api'
+import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
+import ExactValuesMode from '@/app/pages/values/tagViewerModes/ExactValuesMode'
+import TimedValuesMode from '@/app/pages/values/tagViewerModes/TimedValuesMode'
+import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
+import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
 import {
 	CheckSquareOutlined,
 	CloseSquareOutlined,
 	PlaySquareOutlined,
 } from '@ant-design/icons'
-import { DefaultOptionType } from 'antd/es/select'
-import { ColumnsType } from 'antd/es/table'
-import Column from 'antd/es/table/Column'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
-import { TagQuality, TagType } from '../../../api/swagger/data-contracts'
-import compareValues from '../../../functions/compareValues'
+import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useInterval } from '../../../hooks/useInterval'
-import { TagValue } from '../../../types/tagValue'
-import TagCompactValue from '../../components/TagCompactValue'
-import TagQualityEl from '../../components/TagQualityEl'
-import TagValueEl from '../../components/TagValueEl'
-import routes from '../../router/routes'
 
-type ValueType = {
-	guid: string
-	name: string
-	type: TagType
-	value?: string | number | boolean | null
-	quality: TagQuality
-	date: string
-}
+const TimeModes = {
+	LIVE: 'live',
+	EXACT: 'exact',
+	OLD_YOUNG: 'old-young',
+} as const
 
-interface TransformedData {
-	time: string
-	dateString: string
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[key: string]: any // Для динамических свойств tag1, tag2 и т.д.
-}
+type TimeMode = (typeof TimeModes)[keyof typeof TimeModes]
 
-const timeMode = [
-	{ label: 'Текущие', value: 'live' },
-	{ label: 'Срез', value: 'exact' },
-	{ label: 'Диапазон', value: 'old-young' },
+const timeModeOptions: { label: string; value: TimeMode }[] = [
+	{ label: 'Текущие', value: TimeModes.LIVE },
+	{ label: 'Срез', value: TimeModes.EXACT },
+	{ label: 'Диапазон', value: TimeModes.OLD_YOUNG },
 ]
 
-const resolutions = [
+const resolutionOptions = [
 	{ label: 'По изменению', value: 0 },
 	{ label: 'Посекундно', value: 1000 },
 	{ label: 'Поминутно', value: 1000 * 60 },
@@ -62,48 +40,44 @@ const resolutions = [
 
 const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 
+const parseDate = (param: string | null, fallback: dayjs.Dayjs) =>
+	param ? dayjs(param, timeMask) : fallback
+
 const TagsViewer = observer(() => {
-	const [tags, setTags] = useState([] as DefaultOptionType[])
-	const [values, setValues] = useState([] as ValueType[])
-	const [searchValue, setSearchValue] = useState('')
-	const [rangeValues, setRangeValues] = useState([] as TransformedData[])
-	const [rangeColumns, setRangeColumns] = useState(
-		[] as ColumnsType<TransformedData>,
-	)
+	const [searchParams, setSearchParams] = useSearchParams()
+	const [tagMapping, setTagMapping] = useState({} as FlattenedNestedTagsType)
+	const initialMode = (searchParams.get('mode') as TimeMode) || TimeModes.LIVE
 
 	const [request, setRequest] = useState({
 		tags: [] as number[],
-		old: dayjs(new Date())
-			.add(-1, 'hour')
-			.set('minute', 0)
-			.set('second', 0),
-		young: dayjs(new Date()).set('minute', 0).set('second', 0),
-		exact: dayjs(new Date()),
-		resolution: 0,
-		mode: 'live' as 'live' | 'exact' | 'old-young',
+		old: parseDate(searchParams.get('old'), dayjs().add(-1, 'hour')),
+		young: parseDate(searchParams.get('young'), dayjs()),
+		exact: parseDate(searchParams.get(TimeModes.EXACT), dayjs()),
+		resolution: Number(searchParams.get('resolution')) || 0,
+		mode: initialMode,
 		update: false,
 	})
 
-	const loadTags = () => {
-		api.tagsReadAll()
-			.then((res) => {
-				setTags(
-					res.data.map((x) => ({
-						label: x.name,
-						title: x.name,
-						value: x.id,
-					})),
-				)
-			})
-			.catch(() => setTags([]))
-	}
+	const [values, setValues] = useState([] as TagValueWithInfo[])
+
+	const handleTagChange = useCallback(
+		(value: number[], currentTagMapping: FlattenedNestedTagsType) => {
+			setTagMapping(currentTagMapping)
+			setRequest((prev) => ({ ...prev, tags: value }))
+		},
+		[],
+	)
+
+	const handleModeChange = useCallback((value: TimeMode) => {
+		setRequest((prev) => ({ ...prev, mode: value }))
+	}, [])
 
 	const getValues = () => {
 		if (request.tags.length === 0) return setValues([])
 		const timeSettings =
-			request.mode === 'live'
+			request.mode === TimeModes.LIVE
 				? {}
-				: request.mode === 'exact'
+				: request.mode === TimeModes.EXACT
 					? { exact: request.exact.format(timeMask) }
 					: {
 							old: request.old.format(timeMask),
@@ -118,111 +92,45 @@ const TagsViewer = observer(() => {
 			},
 		])
 			.then((res) => {
-				// Преобразование данных
-				const transformedData = res.data[0].tags.reduce(
-					(
-						acc: Record<string, TransformedData>,
-						{ id, guid, name, type, values },
-					) => {
-						values.forEach(
-							({ date, dateString, value, quality }) => {
-								if (!acc[date])
-									acc[date] = { time: dateString, dateString }
-								acc[date][guid] = {
-									id,
-									guid,
-									name,
-									type,
-									value,
-									quality,
-								}
-							},
-						)
-						return acc
-					},
-					{},
-				)
-
-				const dataSource = Object.values(transformedData)
-				setRangeValues(dataSource)
-
-				// Определение столбцов
-				setRangeColumns([
-					{
-						title: 'Время',
-						dataIndex: 'time',
-						key: 'time',
-						sorter: (a, b) => compareValues(a.time, b.time),
-						showSorterTooltip: false,
-					},
-					...res.data[0].tags.map((x) => ({
-						title: () => (
-							<NavLink to={routes.tags.toTagForm(x.guid)}>
-								<Button>{x.name}</Button>
-							</NavLink>
-						),
-						key: x.guid,
-						dataIndex: x.guid,
-						render: (value: {
-							quality: TagQuality
-							value: TagValue
-						}) => (
-							<TagCompactValue
-								type={x.type}
-								value={value?.value ?? null}
-								quality={value?.quality ?? TagQuality.Bad}
-							/>
-						),
-					})),
-				])
-
 				setValues(
-					res.data[0].tags
-						.map((x) => {
-							const valueObject = x.values[0]
-							return {
-								guid: x.guid,
-								name: x.name,
-								value: valueObject.value,
-								type: x.type,
-								date: valueObject.dateString,
-								quality: valueObject.quality,
-							}
-						})
-						.sort((a, b) => -1 * a.name.localeCompare(b.name)),
+					res.data[0].tags.map((tag) => {
+						const mapping = tagMapping[tag.id]
+						return {
+							...tag,
+							localName: mapping?.localName ?? tag.name,
+						} as TagValueWithInfo
+					}),
 				)
 			})
 			.catch(() => setValues([]))
 	}
 
-	useEffect(loadTags, [])
 	useInterval(() => {
-		if (request.mode === 'live' && request.update) getValues()
+		if (request.mode === TimeModes.LIVE && request.update) getValues()
 	}, 1000)
 
-	function handleSearch(value: string): void {
-		setSearchValue(value)
-	}
+	useEffect(() => {
+		searchParams.set('mode', request.mode)
+		searchParams.set('resolution', String(request.resolution))
 
-	const handleChange = (value: number[]) => {
-		setRequest({ ...request, tags: value })
-	}
+		if (request.mode === TimeModes.EXACT) {
+			searchParams.set('exact', request.exact.format(timeMask))
+			searchParams.delete('old')
+			searchParams.delete('young')
+		} else if (request.mode === TimeModes.OLD_YOUNG) {
+			searchParams.delete('exact')
+			searchParams.set('old', request.old.format(timeMask))
+			searchParams.set('young', request.young.format(timeMask))
+		}
+
+		setSearchParams(searchParams, { replace: true })
+	}, [request, searchParams, setSearchParams])
 
 	return (
 		<>
 			<div style={{ position: 'sticky' }}>
 				<Row>
-					<Select
-						showSearch
-						mode='multiple'
-						options={tags}
-						optionFilterProp='label'
-						placeholder='Выберите теги'
-						style={{ width: '100%' }}
-						onSearch={handleSearch}
-						searchValue={searchValue}
-						onChange={handleChange}
-					/>
+					<QueryTreeSelect onChange={handleTagChange} />
 				</Row>
 				<Row style={{ marginTop: '1em' }}>
 					<Col flex='10em'>
@@ -233,20 +141,18 @@ const TagsViewer = observer(() => {
 					</Col>
 					<Col flex='20em'>
 						<Radio.Group
-							defaultValue={'live'}
-							options={timeMode}
+							defaultValue={TimeModes.LIVE}
+							options={timeModeOptions}
 							optionType='button'
 							buttonStyle='solid'
-							onChange={(e) =>
-								setRequest({ ...request, mode: e.target.value })
-							}
+							onChange={(e) => handleModeChange(e.target.value)}
 						/>
 					</Col>
 					<Col flex='auto'>
 						<span
 							style={{
 								display:
-									request.mode === 'live'
+									request.mode === TimeModes.LIVE
 										? 'inherit'
 										: 'none',
 							}}
@@ -271,7 +177,7 @@ const TagsViewer = observer(() => {
 						<span
 							style={{
 								display:
-									request.mode === 'exact'
+									request.mode === TimeModes.EXACT
 										? 'inherit'
 										: 'none',
 							}}
@@ -288,7 +194,7 @@ const TagsViewer = observer(() => {
 						<span
 							style={{
 								display:
-									request.mode === 'old-young'
+									request.mode === TimeModes.OLD_YOUNG
 										? 'inherit'
 										: 'none',
 							}}
@@ -312,7 +218,7 @@ const TagsViewer = observer(() => {
 								}
 							/>
 							<Select
-								options={resolutions}
+								options={resolutionOptions}
 								style={{ width: '12em' }}
 								defaultValue={0}
 								onChange={(e) =>
@@ -324,44 +230,10 @@ const TagsViewer = observer(() => {
 				</Row>
 				<Divider orientation='left'>Значения</Divider>
 			</div>
-			{request.mode === 'old-young' ? (
-				<Table
-					columns={rangeColumns}
-					dataSource={rangeValues}
-					size='small'
-					rowKey='date'
-				/>
+			{request.mode === TimeModes.OLD_YOUNG ? (
+				<TimedValuesMode values={values} />
 			) : (
-				<Table dataSource={values} size='small' rowKey='guid'>
-					<Column
-						title='Тег'
-						dataIndex='guid'
-						render={(guid, row: ValueType) => (
-							<NavLink to={routes.tags.toTagForm(guid)}>
-								<Button size='small'>{row.name}</Button>
-							</NavLink>
-						)}
-					/>
-					<Column
-						width='40%'
-						title='Значение'
-						dataIndex='value'
-						render={(value, row: ValueType) => (
-							<TagValueEl
-								type={row.type}
-								guid={row.guid}
-								allowEdit={true}
-								value={value}
-							/>
-						)}
-					/>
-					<Column
-						width='10em'
-						title='Качество'
-						dataIndex='quality'
-						render={(quality) => <TagQualityEl quality={quality} />}
-					/>
-				</Table>
+				<ExactValuesMode values={values} />
 			)}
 		</>
 	)

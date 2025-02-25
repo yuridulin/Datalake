@@ -191,7 +191,7 @@ public class TagsRepository(DatalakeContext db)
 
 		if (createRequest.SourceId.HasValue)
 		{
-			if (createRequest.SourceId == (int)CustomSource.NotSet)
+			if (createRequest.SourceId <= 0)
 				throw new InvalidValueException(message: "необходимо выбрать источник");
 
 			if (!string.IsNullOrEmpty(createRequest.SourceItem))
@@ -211,7 +211,7 @@ public class TagsRepository(DatalakeContext db)
 
 			if (string.IsNullOrEmpty(createRequest.Name))
 			{
-				createRequest.Name = (source.Id <= 0 ? ((CustomSource)source.Id).ToString() : source.Name)
+				createRequest.Name = (source.Id <= 0 ? ((SourceType)source.Id).ToString() : source.Name)
 					+ "." + (createRequest.SourceItem ?? "Tag");
 				needToAddIdInName = false;
 			}
@@ -244,7 +244,7 @@ public class TagsRepository(DatalakeContext db)
 			Frequency = createRequest.Frequency,
 			IsScaling = false,
 			Name = createRequest.Name!,
-			SourceId = createRequest.SourceId ?? (int)CustomSource.Manual,
+			SourceId = createRequest.SourceId ?? (int)SourceType.Manual,
 			Type = createRequest.TagType,
 			SourceItem = createRequest.SourceItem,
 		};
@@ -432,12 +432,16 @@ public class TagsRepository(DatalakeContext db)
 				FormulaInputs = (
 					from input_rel in db.TagInputs.LeftJoin(x => x.TagId == tag.Id)
 					from input in db.Tags.InnerJoin(x => x.Id == input_rel.InputTagId)
+					from input_source in db.Sources.LeftJoin(x => x.Id == input.SourceId)
 					select new TagInputInfo
 					{
 						Id = input.Id,
 						Guid = input.GlobalGuid,
 						Name = input.Name,
 						VariableName = input_rel.VariableName,
+						Type = input.Type,
+						Frequency = input.Frequency,
+						SourceType = input_source != null ? input_source.Type : SourceType.NotSet,
 					}
 				).ToArray(),
 				IsScaling = tag.IsScaling,
@@ -447,7 +451,7 @@ public class TagsRepository(DatalakeContext db)
 				MinRaw = tag.MinRaw,
 				SourceId = tag.SourceId,
 				SourceItem = tag.SourceItem,
-				SourceType = source != null ? source.Type : SourceType.Custom,
+				SourceType = source != null ? source.Type : SourceType.NotSet,
 				SourceName = source != null ? source.Name : "Unknown",
 			};
 
@@ -456,15 +460,19 @@ public class TagsRepository(DatalakeContext db)
 
 	internal IQueryable<TagAsInputInfo> GetPossibleInputs()
 	{
-		var query = db.Tags
-			.Select(x => new TagAsInputInfo
+		var query =
+			from tag in db.Tags
+			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
+			orderby tag.Name
+			select new TagAsInputInfo
 			{
-				Id = x.Id,
-				Guid = x.GlobalGuid,
-				Name = x.Name,
-				Type = x.Type,
-			})
-			.OrderBy(x => x.Name);
+				Id = tag.Id,
+				Guid = tag.GlobalGuid,
+				Name = tag.Name,
+				Type = tag.Type,
+				Frequency = tag.Frequency,
+				SourceType = source != null ? source.Type : SourceType.NotSet,
+			};
 
 		return query;
 	}
@@ -479,9 +487,9 @@ public class TagsRepository(DatalakeContext db)
 				Id = t.Id,
 				Guid = t.GlobalGuid,
 				Name = t.Name,
-				TagType = t.Type,
+				Type = t.Type,
 				SourceType = s.Type,
-				IsManual = t.SourceId == (int)CustomSource.Manual,
+				Frequency = t.Frequency,
 				ScalingCoefficient = t.IsScaling
 					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
 					: 1,

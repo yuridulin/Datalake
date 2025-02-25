@@ -273,9 +273,9 @@ public class SystemRepository(DatalakeContext db)
 				Id = t.Id,
 				Guid = t.GlobalGuid,
 				Name = t.Name,
-				TagType = t.Type,
+				Type = t.Type,
 				SourceType = s.Type,
-				IsManual = t.SourceId == (int)CustomSource.Manual,
+				Frequency = t.Frequency,
 				ScalingCoefficient = t.IsScaling
 					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
 					: 1,

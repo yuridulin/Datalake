@@ -101,7 +101,9 @@ public class ValuesRepository(DatalakeContext db)
 					Guid = tag.Guid,
 					Id = tag.Id,
 					Name = string.Empty,
-					Type = tag.TagType,
+					Type = tag.Type,
+					Frequency = tag.Frequency,
+					SourceType = SourceType.NotSet,
 					Values = [],
 					NoAccess = true,
 				});
@@ -140,12 +142,11 @@ public class ValuesRepository(DatalakeContext db)
 
 			if (tag != null)
 			{
-				var record = tag.ToHistory(request.Value, request.Quality);
-				if (!IsValueNew(record))
-					continue;
-				record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
-
-				recordsToWrite.Add(record);
+				var record = TagHistoryExtension.CreateFrom(tag, request);
+				if (IsValueNew(record))
+				{
+					recordsToWrite.Add(record);
+				}
 			}
 		}
 
@@ -288,7 +289,7 @@ public class ValuesRepository(DatalakeContext db)
 
 		foreach (var request in requests)
 		{
-			var record = request.Tag.ToHistory(request.Value, request.Quality);
+			var record = TagHistoryExtension.CreateFrom(request);
 			if (!IsValueNew(record) && !overrided)
 				continue;
 			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
@@ -300,14 +301,16 @@ public class ValuesRepository(DatalakeContext db)
 				Id = request.Tag.Id,
 				Guid = request.Tag.Guid,
 				Name = request.Tag.Name,
-				Type = request.Tag.TagType,
+				Type = request.Tag.Type,
+				Frequency = request.Tag.Frequency,
+				SourceType = request.Tag.SourceType,
 				Values = [
 					new ValueRecord
 					{
 						Date = record.Date,
 						DateString = record.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 						Quality = record.Quality,
-						Value = record.GetTypedValue(request.Tag.TagType),
+						Value = record.GetTypedValue(request.Tag.Type),
 					}
 				]
 			});
@@ -455,13 +458,15 @@ public class ValuesRepository(DatalakeContext db)
 								Id = tag.Id,
 								Guid = tag.Guid,
 								Name = tag.Name,
-								Type = tag.TagType,
+								Type = tag.Type,
+								Frequency = tag.Frequency,
+								SourceType = tag.SourceType,
 								Values = [ new()
 								{
 									Date = value.Date,
 									DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 									Quality = value.Quality,
-									Value = value.GetTypedValue(tag.TagType),
+									Value = value.GetTypedValue(tag.Type),
 								}]
 							}
 						],
@@ -508,7 +513,9 @@ public class ValuesRepository(DatalakeContext db)
 							Guid = tag.Guid,
 							Id = tag.Id,
 							Name = tag.Name,
-							Type = tag.TagType,
+							Type = tag.Type,
+							Frequency = tag.Frequency,
+							SourceType = tag.SourceType,
 							Values = [],
 						};
 						var tagValues = requestValues.Where(x => x.TagId == tag.Id).ToList();
@@ -532,7 +539,7 @@ public class ValuesRepository(DatalakeContext db)
 								tagValues = StretchByResolution(tagValues, old, young, request.Resolution.Value);
 							}
 
-							if (tag.TagType == TagType.Number && request.Func != AggregationFunc.List)
+							if (tag.Type == TagType.Number && request.Func != AggregationFunc.List)
 							{
 								var numericValues = tagValues
 									.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
@@ -579,7 +586,7 @@ public class ValuesRepository(DatalakeContext db)
 										Date = x.Date,
 										DateString = x.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 										Quality = x.Quality,
-										Value = x.GetTypedValue(tag.TagType),
+										Value = x.GetTypedValue(tag.Type),
 									})
 									.OrderBy(x => x.Date)
 								];

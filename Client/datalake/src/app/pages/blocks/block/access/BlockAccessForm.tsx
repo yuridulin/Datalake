@@ -4,7 +4,7 @@ import {
 	AccessType,
 	BlockSimpleInfo,
 } from '@/api/swagger/data-contracts'
-import AccessTypeEl from '@/app/components/AccessTypeEl'
+import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { accessOptions } from '@/types/accessOptions'

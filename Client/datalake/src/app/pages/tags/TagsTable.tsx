@@ -1,14 +1,13 @@
 import api from '@/api/swagger-api'
-import { Button, Input, Table } from 'antd'
+import TagButton from '@/app/components/buttons/TagButton'
+import { Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
 import { TagInfo, ValueRecord } from '../../../api/swagger/data-contracts'
 import compareValues from '../../../functions/compareValues'
 import { useInterval } from '../../../hooks/useInterval'
 import SourceEl from '../../components/SourceEl'
 import TagCompactValue from '../../components/TagCompactValue'
-import routes from '../../router/routes'
 
 interface TagsTableProps {
 	tags: TagInfo[]
@@ -90,11 +89,7 @@ const TagsTable = ({
 				sorter={(a: TagInfo, b: TagInfo) =>
 					(a.name ?? '').localeCompare(b.name ?? '')
 				}
-				render={(_, tag) => (
-					<NavLink to={routes.tags.toTagForm(tag.guid)}>
-						<Button size='small'>{tag.name}</Button>
-					</NavLink>
-				)}
+				render={(_, tag) => <TagButton tag={tag} />}
 			/>
 			<Column<TagInfo>
 				title='Описание'

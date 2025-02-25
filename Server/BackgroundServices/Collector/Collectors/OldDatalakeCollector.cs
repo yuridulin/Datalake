@@ -48,7 +48,7 @@ internal class OldDatalakeCollector : CollectorBase
 			{
 				Value = null,
 				Quality = TagQuality.Unknown,
-				DateTime = DateTime.MinValue,
+				Date = DateTime.MinValue,
 				Guid = x.Guid,
 			});
 	}
@@ -114,7 +114,7 @@ internal class OldDatalakeCollector : CollectorBase
 						{
 							collectedValues.AddRange(item.Tags.Select(guid => new CollectValue
 							{
-								DateTime = DateFormats.GetCurrentDateTime(),
+								Date = DateFormats.GetCurrentDateTime(),
 								Name = value.Name,
 								Quality = value.Quality,
 								Guid = guid,
@@ -125,9 +125,9 @@ internal class OldDatalakeCollector : CollectorBase
 						}
 					}
 
-					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid]).ToList();
+					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid!.Value]).ToList();
 					foreach (var v in collectedValues)
-						_previousValues[v.Guid] = v;
+						_previousValues[v.Guid!.Value] = v;
 
 					CollectValues?.Invoke(this, collectedValues);
 

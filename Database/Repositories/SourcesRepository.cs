@@ -149,7 +149,7 @@ public class SourcesRepository(DatalakeContext db)
 		int? id = await db.Sources
 			.Value(x => x.Name, "INSERTING")
 			.Value(x => x.Address, "")
-			.Value(x => x.Type, SourceType.Unknown)
+			.Value(x => x.Type, SourceType.NotSet)
 			.InsertWithInt32IdentityAsync();
 
 		string name = ValueChecker.RemoveWhitespaces("Новый источник #" + id.Value, "_");
@@ -176,7 +176,7 @@ public class SourcesRepository(DatalakeContext db)
 		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name))
 			throw new AlreadyExistException("Уже существует источник с таким именем");
 
-		if (sourceInfo.Type == SourceType.Custom)
+		if (sourceInfo.Type == SourceType.System)
 			throw new InvalidValueException("Нельзя добавить системный источник");
 
 		var transaction = await db.BeginTransactionAsync();
@@ -251,7 +251,7 @@ public class SourcesRepository(DatalakeContext db)
 		// при удалении источника его теги становятся ручными
 		int tagsCount = await db.Tags
 			.Where(x => x.SourceId == id)
-			.Set(x => x.SourceId, (int)CustomSource.Manual)
+			.Set(x => x.SourceId, (int)SourceType.Manual)
 			.UpdateAsync();
 
 		await LogAsync(id, "Удален источник: " + name + ". Затронуто тегов: " + tagsCount);
@@ -281,7 +281,10 @@ public class SourcesRepository(DatalakeContext db)
 
 	#region Запросы
 
-	static int[] CustomSourcesId = Enum.GetValues<CustomSource>().Cast<int>().ToArray();
+	/// <summary>
+	/// Не настраиваемые источники данных
+	/// </summary>
+	internal static readonly SourceType[] CustomSourcesId = [SourceType.System, SourceType.Calculated, SourceType.Manual, SourceType.NotSet];
 
 	/// <summary>
 	/// Запрос информации о источниках без связей
@@ -291,7 +294,7 @@ public class SourcesRepository(DatalakeContext db)
 	{
 		var query =
 			from source in db.Sources
-			where withCustom || !CustomSourcesId.Contains(source.Id)
+			where withCustom || !CustomSourcesId.Cast<int>().Contains(source.Id)
 			select new SourceInfo
 			{
 				Id = source.Id,
@@ -322,11 +325,13 @@ public class SourcesRepository(DatalakeContext db)
 					where tag.SourceId == source.Id
 					select new SourceTagInfo
 					{
+						Id = tag.Id,
 						Guid = tag.GlobalGuid,
 						Item = tag.SourceItem ?? string.Empty,
 						Name = tag.Name,
 						Type = tag.Type,
 						Frequency = tag.Frequency,
+						SourceType = source.Type,
 					}
 				).ToArray(),
 			};
@@ -340,16 +345,19 @@ public class SourcesRepository(DatalakeContext db)
 	/// <param name="id">Идентификатор источника</param>
 	internal IQueryable<SourceTagInfo> QueryExistTags(int id)
 	{
-		var query = db.Tags
-			.Where(x => x.SourceId == id)
-			.Select(x => new SourceTagInfo
+		var query = 
+			from source in db.Sources.Where(x => x.Id == id)
+			from tag in db.Tags.InnerJoin(x => x.SourceId == source.Id)
+			select new SourceTagInfo
 			{
-				Guid = x.GlobalGuid,
-				Name = x.Name,
-				Type = x.Type,
-				Item = x.SourceItem ?? string.Empty,
-				Frequency = x.Frequency,
-			});
+				Id = tag.Id,
+				Guid = tag.GlobalGuid,
+				Name = tag.Name,
+				Type = tag.Type,
+				Item = tag.SourceItem ?? string.Empty,
+				Frequency = tag.Frequency,
+				SourceType = source.Type,
+			};
 
 		return query;
 	}

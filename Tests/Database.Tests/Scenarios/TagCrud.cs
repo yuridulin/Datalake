@@ -23,7 +23,8 @@ namespace Datalake.Database.Tests.Scenarios
 			{
 				Name = tagName,
 				TagType = TagType.Number,
-				SourceId = (int)CustomSource.Manual,
+				SourceId = (int)SourceType.Manual,
+				Frequency = TagFrequency.NotSet,
 			};
 
 			var createdTag = await db.TagsRepository.CreateAsync(admin, request);
@@ -36,13 +37,13 @@ namespace Datalake.Database.Tests.Scenarios
 
 			Assert.NotNull(tagInfo);
 			Assert.True(tagInfo.Name == tagName);
-			Assert.True(tagInfo.SourceId == (int)CustomSource.Manual);
+			Assert.True(tagInfo.SourceId == (int)SourceType.Manual);
 
 			// update tag
 			var updateRequest = new TagUpdateRequest
 			{
 				Name = newTagName,
-				IntervalInSeconds = 123,
+				Frequency = TagFrequency.NotSet,
 				Type = TagType.String,
 			};
 			await db.TagsRepository.UpdateAsync(admin, createdTag.Guid, updateRequest);

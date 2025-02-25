@@ -11,7 +11,7 @@ namespace Datalake.Database.Migrations
 		/// <inheritdoc />
 		protected override void Up(MigrationBuilder migrationBuilder)
 		{
-			migrationBuilder.Sql($@"UPDATE ""Tags"" SET ""SourceId"" = {(int)CustomSource.Manual} WHERE ""SourceId"" NOT IN (SELECT DISTINCT ""Id"" FROM ""Sources"");");
+			migrationBuilder.Sql($@"UPDATE ""Tags"" SET ""SourceId"" = {(int)SourceType.Manual} WHERE ""SourceId"" NOT IN (SELECT DISTINCT ""Id"" FROM ""Sources"");");
 		}
 
 		/// <inheritdoc />

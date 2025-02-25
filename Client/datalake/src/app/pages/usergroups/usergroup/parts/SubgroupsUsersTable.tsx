@@ -1,3 +1,4 @@
+import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
 import { user } from '@/state/user'
 import { Button, Divider, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
@@ -9,7 +10,6 @@ import {
 	UserGroupSimpleInfo,
 	UserGroupUsersInfo,
 } from '../../../../../api/swagger/data-contracts'
-import AccessTypeEl from '../../../../components/AccessTypeEl'
 import routes from '../../../../router/routes'
 import UserGroupsCreateModal from '../modals/UserGroupsCreateModal'
 
