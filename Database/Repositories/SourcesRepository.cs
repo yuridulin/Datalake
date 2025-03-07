@@ -3,6 +3,7 @@ using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
 using Datalake.Database.Models.Auth;
 using Datalake.Database.Models.Sources;
+using Datalake.Database.Models.Tags;
 using Datalake.Database.Tables;
 using LinqToDB;
 
@@ -328,6 +329,16 @@ public class SourcesRepository(DatalakeContext db)
 						Id = tag.Id,
 						Guid = tag.GlobalGuid,
 						Item = tag.SourceItem ?? string.Empty,
+						Formula = tag.Formula,
+						FormulaInputs = (
+							from rel in db.TagInputs
+							where rel.TagId == tag.Id && rel.InputTagId.HasValue
+							select new SourceTagInfo.TagInputMinimalInfo
+							{
+								InputTagId = rel.InputTagId!.Value,
+								VariableName = rel.VariableName,
+							}
+						).ToArray(),
 						Name = tag.Name,
 						Type = tag.Type,
 						Frequency = tag.Frequency,
@@ -357,6 +368,16 @@ public class SourcesRepository(DatalakeContext db)
 				Item = tag.SourceItem ?? string.Empty,
 				Frequency = tag.Frequency,
 				SourceType = source.Type,
+				Formula = tag.Formula,
+				FormulaInputs = (
+					from rel in db.TagInputs
+					where rel.TagId == tag.Id && rel.InputTagId.HasValue
+					select new SourceTagInfo.TagInputMinimalInfo
+					{
+						InputTagId = rel.InputTagId!.Value,
+						VariableName = rel.VariableName,
+					}
+				).ToArray(),
 			};
 
 		return query;

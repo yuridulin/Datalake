@@ -157,6 +157,20 @@ public class ValuesRepository(DatalakeContext db)
 		return Convert.ToInt32(stopwatch.Elapsed.TotalMilliseconds);
 	}
 
+	/// <summary>
+	/// Получение значения тега по идентификатору.
+	/// Сначала используется числовое, затем строковое значение
+	/// </summary>
+	/// <param name="id">Идентификатор</param>
+	/// <returns>Значение, если тег найден</returns>
+	public static object? GetLiveValue(int id)
+	{
+		LiveValues.TryGetValue(id, out var history);
+		return history == null ? null
+			: history.Number != null ? history.Number
+			: history.Text ?? null;
+	}
+
 	#endregion
 
 	#region Кэш
