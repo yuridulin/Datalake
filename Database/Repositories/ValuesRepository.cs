@@ -157,6 +157,18 @@ public class ValuesRepository(DatalakeContext db)
 		return Convert.ToInt32(stopwatch.Elapsed.TotalMilliseconds);
 	}
 
+	/// <summary>
+	/// Получение значения тега по идентификатору
+	/// </summary>
+	/// <param name="id">Идентификатор</param>
+	/// <param name="type">Необходимый тип значения</param>
+	/// <returns>Значение, если тег найден</returns>
+	public static object? GetLiveValue(int id, TagType type = TagType.String)
+	{
+		LiveValues.TryGetValue(id, out var history);
+		return history?.GetTypedValue(type);
+	}
+
 	#endregion
 
 	#region Кэш

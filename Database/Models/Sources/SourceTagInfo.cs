@@ -16,6 +16,33 @@ public class SourceTagInfo : TagSimpleInfo, IProtectedEntity
 	[Required]
 	public required string Item { get; set; }
 
+	/// <summary>
+	/// Формула, на основе которой вычисляется значение
+	/// </summary>
+	public string? Formula { get; set; } = string.Empty;
+
+	/// <summary>
+	/// Входные переменные для формулы, по которой рассчитывается значение
+	/// </summary>
+	[Required]
+	public required TagInputMinimalInfo[] FormulaInputs { get; set; } = [];
+
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
+
+	/// <summary>
+	/// Минимальная информация о переменных для расчета значений по формуле
+	/// </summary>
+	public class TagInputMinimalInfo
+	{
+		/// <summary>
+		/// Идентификатор входного тега
+		/// </summary>
+		public required int InputTagId { get; set; }
+
+		/// <summary>
+		/// Имя переменной
+		/// </summary>
+		public required string VariableName { get; set; }
+	}
 }

@@ -27,6 +27,7 @@ const BlockForm = observer(() => {
 	const [form] = Form.useForm<BlockUpdateRequest>()
 
 	const [block, setBlock] = useState({} as BlockUpdateRequest)
+	/* const [tagsRaw, setTagsRaw] = useState([] as TagSimpleInfo[]) */
 	const [tags, setTags] = useState([] as { label: string; value: number }[])
 
 	const getBlock = () => {
@@ -48,6 +49,7 @@ const BlockForm = observer(() => {
 
 	const getTags = () => {
 		api.tagsReadAll().then((res) => {
+			/* setTagsRaw(res.data) */
 			setTags(
 				res.data
 					.map((x) => ({
@@ -277,6 +279,12 @@ const BlockForm = observer(() => {
 											<Form.Item
 												{...rest}
 												name={[name, 'id']}
+												/* getValueProps={(value) => ({
+													value,
+												})}
+												getValueFromEvent={(event) =>
+													event
+												} */
 											>
 												<Select
 													showSearch
@@ -284,6 +292,7 @@ const BlockForm = observer(() => {
 													options={tags}
 													placeholder='Выберите тег для прикрепления'
 												></Select>
+												{/* <TagTreeSelect tags={tagsRaw} /> */}
 											</Form.Item>
 										</td>
 										<td>

@@ -55,6 +55,7 @@
 
   <ItemGroup>
     <PackageReference Include="linq2db.PostgreSQL" Version="5.4.1" />
+    <PackageReference Include="NCalcSync" Version="5.4.1" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
   </ItemGroup>
 

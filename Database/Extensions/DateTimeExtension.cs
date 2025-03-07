@@ -19,7 +19,7 @@ public static class DateTimeExtension
 		{
 			TagFrequency.ByDay => dateTime.Date,
 			TagFrequency.ByHour => new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, 0, 0, 0),
-			TagFrequency.ByMinute => new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, 0, 0, 0),
+			TagFrequency.ByMinute => new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, 0, 0),
 			_ => dateTime,
 		};
 	}
