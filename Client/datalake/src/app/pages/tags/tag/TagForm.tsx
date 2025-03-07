@@ -1,4 +1,5 @@
 import api from '@/api/swagger-api'
+import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
 import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
 import getTagFrequencyName from '@/functions/getTagFrequencyName'
@@ -403,7 +404,14 @@ const TagForm = () => {
 							: 'none',
 				}}
 			>
-				<FormRow title='Формула для вычисления'>
+				<FormRow
+					title={
+						<>
+							{'Формула для вычисления'}
+							<HelpNCalc />
+						</>
+					}
+				>
 					<Input
 						value={request.formula ?? ''}
 						onChange={(e) =>
