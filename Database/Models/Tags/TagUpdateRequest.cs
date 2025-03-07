@@ -64,13 +64,13 @@ public class TagUpdateRequest
 	/// Источник данных
 	/// </summary>
 	[Required]
-	public int SourceId { get; set; } = (int)CustomSource.Manual;
+	public int SourceId { get; set; } = (int)SourceType.Manual;
 
 	/// <summary>
 	/// Новый интервал получения значения
 	/// </summary>
 	[Required]
-	public short IntervalInSeconds { get; set; } = 0;
+	public TagFrequency Frequency { get; set; } = TagFrequency.NotSet;
 
 	/// <summary>
 	/// Формула, по которой рассчитывается значение

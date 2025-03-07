@@ -29,7 +29,7 @@ internal class InopcCollector : CollectorBase
 			.Select(x => new Item
 			{
 				TagName = x.Item!,
-				PeriodInSeconds = x.Interval,
+				Frequency = x.Frequency,
 				LastAsk = DateTime.MinValue
 			})
 			.ToList();
@@ -44,7 +44,7 @@ internal class InopcCollector : CollectorBase
 			{
 				Value = null,
 				Quality = TagQuality.Unknown,
-				DateTime = DateTime.MinValue,
+				Date = DateTime.MinValue,
 				Guid = x.Guid,
 			});
 	}
@@ -94,17 +94,24 @@ internal class InopcCollector : CollectorBase
 
 				foreach (var item in _itemsToSend)
 				{
-					if (item.PeriodInSeconds == 0)
+					if (item.LastAsk == null)
 					{
 						tags.Add(item);
 					}
 					else
 					{
-						var diff = (now - item.LastAsk).TotalSeconds;
-						if (diff > item.PeriodInSeconds)
+						var diff = (now - item.LastAsk.Value).TotalSeconds;
+
+						var needToAsk = item.Frequency switch
 						{
+							TagFrequency.NotSet => true,
+							TagFrequency.ByMinute => diff >= 60,
+							TagFrequency.ByHour => diff >= 3600,
+							TagFrequency.ByDay => diff >= 86400,
+						};
+
+						if (needToAsk)
 							tags.Add(item);
-						}
 					}
 				}
 
@@ -120,7 +127,7 @@ internal class InopcCollector : CollectorBase
 						.SelectMany(item => _itemsTags[item.Name]
 							.Select(guid => new CollectValue
 							{
-								DateTime = now,
+								Date = now,
 								Name = item.Name,
 								Quality = item.Quality,
 								Guid = guid,
@@ -128,9 +135,9 @@ internal class InopcCollector : CollectorBase
 							}))
 						.ToArray();
 
-					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid]).ToArray();
+					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid!.Value]).ToArray();
 					foreach (var v in collectedValues)
-						_previousValues[v.Guid] = v;
+						_previousValues[v.Guid!.Value] = v;
 
 					CollectValues?.Invoke(this, collectedValues);
 
@@ -158,9 +165,9 @@ internal class InopcCollector : CollectorBase
 	{
 		public required string TagName { get; set; }
 
-		public DateTime LastAsk { get; set; }
+		public DateTime? LastAsk { get; set; }
 
-		public int PeriodInSeconds { get; set; }
+		public TagFrequency Frequency { get; set; }
 	}
 
 	#endregion

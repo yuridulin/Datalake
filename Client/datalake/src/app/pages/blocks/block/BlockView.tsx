@@ -7,6 +7,7 @@ import {
 	ValueRecord,
 } from '@/api/swagger/data-contracts'
 import BlockButton from '@/app/components/buttons/BlockButton'
+import TagButton from '@/app/components/buttons/TagButton'
 import PageHeader from '@/app/components/PageHeader'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import routes from '@/app/router/routes'
@@ -136,12 +137,12 @@ const BlockView = observer(() => {
 				<div style={{ display: 'flex' }}>
 					<BlockButton block={block.adults[0]} />
 					{block.adults.slice(1).map((x) => (
-						<>
+						<div key={x.id}>
 							<RightOutlined
 								style={{ margin: '0 1em', fontSize: '7px' }}
 							/>
 							<BlockButton block={x} />
-						</>
+						</div>
 					))}
 					<RightOutlined
 						style={{ margin: '0 1em', fontSize: '7px' }}
@@ -176,12 +177,14 @@ const BlockView = observer(() => {
 						dataIndex='id'
 						title='Название'
 						render={(_, record: BlockChildInfo) => (
-							<NavLink
+							<BlockButton
 								key={record.id}
-								to={routes.blocks.toViewBlock(record.id)}
-							>
-								<Button size='small'>{record.name}</Button>
-							</NavLink>
+								block={{
+									id: record.id ?? 0,
+									name: record.name ?? '',
+									guid: '',
+								}}
+							/>
 						)}
 					/>
 				</Table>
@@ -202,11 +205,7 @@ const BlockView = observer(() => {
 					dataIndex='guid'
 					title='Название'
 					render={(_, record: BlockNestedTagInfo) => (
-						<NavLink to={routes.tags.toTagForm(record.guid)}>
-							<Button title={record.tagName} size='small'>
-								{record.name || <i>имя не задано</i>}
-							</Button>
-						</NavLink>
+						<TagButton tag={record} />
 					)}
 				/>
 				<Column
@@ -218,7 +217,7 @@ const BlockView = observer(() => {
 							<></>
 						) : (
 							<TagCompactValue
-								type={record.tagType!}
+								type={record.type}
 								quality={value.quality}
 								value={value.value}
 							/>

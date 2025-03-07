@@ -1,4 +1,5 @@
-import { Alert, Button } from 'antd'
+import TagButton from '@/app/components/buttons/TagButton'
+import { Alert } from 'antd'
 import { NavLink } from 'react-router-dom'
 import { TagInfo } from '../../api/swagger/data-contracts'
 import routes from '../router/routes'
@@ -22,7 +23,7 @@ export default function CreatedTagLinker({
 							to={routes.tags.toTagForm(tag.guid)}
 							target='_blank'
 						>
-							<Button>{tag.name}</Button>
+							<TagButton tag={tag} />
 						</NavLink>
 						. Нажмите, чтобы перейти к нему.
 					</>

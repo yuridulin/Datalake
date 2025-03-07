@@ -20,6 +20,7 @@ namespace Datalake.Database.Tests.Scenarios
 			{
 				Name = "TestTag",
 				TagType = TagType.String,
+				Frequency = TagFrequency.NotSet,
 			});
 
 			// write value

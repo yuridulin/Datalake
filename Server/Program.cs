@@ -84,15 +84,26 @@ namespace Datalake.Server
 		static void ConfigureDatabase(WebApplicationBuilder builder)
 		{
 			var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
+			var expectedVariables = connectionString.Split("${")
+				.Select(part =>
+				{
+					int endSymbol = part.IndexOf('}');
+					if (part.Contains('}'))
+						return part[..endSymbol];
+					else
+						return null;
+				})
+				.Where(x => x != null)
+				.ToArray();
 
 			var env = Environment.GetEnvironmentVariables();
-			foreach (var key in env.Keys)
+			foreach (var variable in expectedVariables)
 			{
-				var arg = "${" + key + "}";
-				if (connectionString.Contains(arg))
-				{
-					connectionString = connectionString.Replace(arg, env[key]?.ToString() ?? arg);
-				}
+				var value = env.Contains(variable!) ? env[variable!]?.ToString() : null;
+				if (string.IsNullOrEmpty(value))
+					throw new Exception("Expected ENV variable is not found: " + variable);
+				else
+					connectionString = connectionString.Replace($"${{{variable}}}", value);
 			}
 
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>

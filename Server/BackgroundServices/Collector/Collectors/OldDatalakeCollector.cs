@@ -29,7 +29,15 @@ internal class OldDatalakeCollector : CollectorBase
 			.Select(g => new Item
 			{
 				TagName = g.Key!,
-				PeriodInSeconds = g.Select(x => x.Interval).Min(),
+				PeriodInSeconds = g
+					.Select(x => x.Frequency switch
+					{
+						TagFrequency.NotSet => 0,
+						TagFrequency.ByMinute => 60,
+						TagFrequency.ByHour => 3600,
+						TagFrequency.ByDay => 86400,
+					})
+					.Min(),
 				LastAsk = DateTime.MinValue,
 				Tags = g.Select(x => x.Guid).ToArray(),
 			})
@@ -40,7 +48,7 @@ internal class OldDatalakeCollector : CollectorBase
 			{
 				Value = null,
 				Quality = TagQuality.Unknown,
-				DateTime = DateTime.MinValue,
+				Date = DateTime.MinValue,
 				Guid = x.Guid,
 			});
 	}
@@ -97,7 +105,7 @@ internal class OldDatalakeCollector : CollectorBase
 
 				if (items.Length > 0)
 				{
-					var response = await _receiverService.AskOldDatalake([.. items.Select(x => x.TagName)], _address);
+					var response = await _receiverService.AskInopc([.. items.Select(x => x.TagName)], _address);
 
 					foreach (var value in response.Tags)
 					{
@@ -106,7 +114,7 @@ internal class OldDatalakeCollector : CollectorBase
 						{
 							collectedValues.AddRange(item.Tags.Select(guid => new CollectValue
 							{
-								DateTime = DateFormats.GetCurrentDateTime(),
+								Date = DateFormats.GetCurrentDateTime(),
 								Name = value.Name,
 								Quality = value.Quality,
 								Guid = guid,
@@ -117,9 +125,9 @@ internal class OldDatalakeCollector : CollectorBase
 						}
 					}
 
-					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid]).ToList();
+					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid!.Value]).ToList();
 					foreach (var v in collectedValues)
-						_previousValues[v.Guid] = v;
+						_previousValues[v.Guid!.Value] = v;
 
 					CollectValues?.Invoke(this, collectedValues);
 

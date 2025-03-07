@@ -391,7 +391,7 @@ public class UserGroupsRepository(DatalakeContext db)
 				Description = usergroup.Description,
 				ParentGroupGuid = usergroup.ParentGuid,
 				GlobalAccessType = globalAccess.AccessType,
-				Users =
+				Users = (
 					from rel in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == usergroup.Guid)
 					from u in db.Users.InnerJoin(x => x.Guid == rel.UserGuid)
 					select new UserGroupUsersInfo
@@ -399,12 +399,14 @@ public class UserGroupsRepository(DatalakeContext db)
 						Guid = u.Guid,
 						FullName = u.FullName,
 						AccessType = rel.AccessType,
-					},
-				AccessRights =
+					}
+				).ToArray(),
+				AccessRights = (
 					from rights in db.AccessRights.InnerJoin(x => x.UserGroupGuid == usergroup.Guid)
 					from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId)
 					from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)
 					from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId)
+					from tag_source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
 					select new AccessRightsForOneInfo
 					{
 						Id = rights.Id,
@@ -426,15 +428,20 @@ public class UserGroupsRepository(DatalakeContext db)
 							Id = tag.Id,
 							Guid = tag.GlobalGuid,
 							Name = tag.Name,
+							Type = tag.Type,
+							Frequency = tag.Frequency,
+							SourceType = tag_source == null ? SourceType.NotSet : tag_source.Type,
 						},
-					},
-				Subgroups =
+					}
+				).ToArray(),
+				Subgroups = (
 					from subgroup in db.UserGroups.LeftJoin(x => x.ParentGuid == usergroup.Guid)
 					select new UserGroupSimpleInfo
 					{
 						Guid = subgroup.Guid,
 						Name = subgroup.Name,
-					},
+					}
+				).ToArray(),
 			};
 
 		return query;

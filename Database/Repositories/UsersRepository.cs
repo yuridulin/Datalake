@@ -60,7 +60,7 @@ public class UsersRepository(DatalakeContext db)
 			}
 		}
 
-		return users.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer)).ToArray();
+		return [.. users.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))];
 	}
 
 	/// <summary>
@@ -424,7 +424,8 @@ public class UsersRepository(DatalakeContext db)
 					{
 						Guid = x.g.Guid,
 						Name = x.g.Name,
-					}),
+					})
+					.ToArray(),
 				AccessType = (AccessType)g
 					.Select(x => Math.Max(
 						(int)(x.urights != null ? x.urights.AccessType : AccessType.NotSet),

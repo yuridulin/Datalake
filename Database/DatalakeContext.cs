@@ -44,13 +44,13 @@ public class DatalakeContext : DataConnection
 	public async Task EnsureDataCreatedAsync()
 	{
 		// запись необходимых источников в список
-		var customSources = Enum.GetValues<CustomSource>()
+		var customSources = SourcesRepository.CustomSourcesId
 			.Select(x => new Source
 			{
 				Id = (int)x,
 				Name = x.ToString(),
 				Description = x.GetDescription(),
-				Type = SourceType.Custom,
+				Type = x,
 			})
 			.ToArray();
 

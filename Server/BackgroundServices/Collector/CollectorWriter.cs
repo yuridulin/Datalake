@@ -1,5 +1,4 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Models.Values;
 using Datalake.Server.BackgroundServices.Collector.Models;
 
 namespace Datalake.Server.BackgroundServices.Collector;
@@ -29,15 +28,15 @@ public class CollectorWriter(
 
 			if (Queue.Count == 0)
 			{
-				await Task.Delay(250, stoppingToken);
+				await Task.Delay(AfterWriteDelay, stoppingToken);
 				continue;
 			}
-			else if (Queue.Count > 1000)
+			else if (Queue.Count > BufferSize)
 			{
-				buffer = Queue.Take(1000).ToArray();
+				buffer = Queue.Take(BufferSize).ToArray();
 				lock (Lock)
 				{
-					Queue = Queue.Skip(1000).ToList();
+					Queue = Queue.Skip(BufferSize).ToList();
 				}
 			}
 			else
@@ -53,17 +52,7 @@ public class CollectorWriter(
 			{
 				try
 				{
-					var writeValues = buffer
-						.Select(x => new ValueWriteRequest
-						{
-							Guid = x.Guid,
-							Date = x.DateTime,
-							Value = x.Value,
-							Quality = x.Quality,
-						})
-						.ToArray();
-
-					var ms = await db.ValuesRepository.WriteValuesAsSystemAsync(writeValues);
+					var ms = await db.ValuesRepository.WriteValuesAsSystemAsync(buffer);
 
 					logger.LogInformation("Запись значений из очереди: {length} из {all} за {ms}мс", buffer.Length, allCount, ms);
 				}
@@ -78,17 +67,39 @@ public class CollectorWriter(
 				}
 			}
 
-			await Task.Delay(250, stoppingToken);
+			await Task.Delay(AfterWriteDelay, stoppingToken);
 		}
 	}
 
 	/// <summary>
+	/// Добавление новых значений в очередь на запись в БД
+	/// </summary>
+	/// <param name="values">Список новых значений</param>
+	public static void AddToQueue(IEnumerable<CollectValue> values)
+	{
+		lock (Lock)
+		{
+			Queue.AddRange(values);
+		}
+	}
+
+	/// <summary>
+	/// Количество элементов, записываемых за один запрос
+	/// </summary>
+	private const int BufferSize = 1000;
+
+	/// <summary>
+	/// Ожидание после завершения записи до начала следующей записи
+	/// </summary>
+	private const int AfterWriteDelay = 250;
+
+	/// <summary>
 	/// Очередь новых значений на запись в БД
 	/// </summary>
-	public static List<CollectValue> Queue { get; set; } = [];
+	private static List<CollectValue> Queue { get; set; } = [];
 
 	/// <summary>
 	/// Объект блокировки операций с очередью
 	/// </summary>
-	public static readonly object Lock = new();
+	private static readonly object Lock = new();
 }

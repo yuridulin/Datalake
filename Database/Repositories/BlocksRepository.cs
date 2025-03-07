@@ -108,17 +108,20 @@ public class BlocksRepository(DatalakeContext db)
 						Name = x.Name,
 						FullName = prefixString + x.Name,
 						Description = x.Description,
-						Tags = x.Tags.Select(tag => new BlockNestedTagInfo
-						{
-							Guid = tag.Guid,
-							Name = tag.Name,
-							Id = tag.Id,
-							Relation = tag.Relation,
-							SourceId = tag.SourceId,
-							TagName = tag.TagName,
-							TagType = tag.TagType,
-							FullName = prefixString + x.Name + "." + tag.Name,
-						}),
+						Tags = x.Tags
+							.Select(tag => new BlockNestedTagInfo
+							{
+								Guid = tag.Guid,
+								Name = tag.Name,
+								Id = tag.Id,
+								Relation = tag.Relation,
+								SourceId = tag.SourceId,
+								LocalName = tag.LocalName,
+								Type = tag.Type,
+								Frequency = tag.Frequency,
+								SourceType = tag.SourceType,
+							})
+							.ToArray(),
 						AccessRule = x.AccessRule,
 						Children = ReadChildren(x.Id, prefixString + x.Name),
 					};
@@ -387,19 +390,23 @@ public class BlocksRepository(DatalakeContext db)
 				Name = block.Name,
 				Description = block.Description,
 				ParentId = block.ParentId,
-				Tags =
+				Tags = (
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
 					from tag in db.Tags.InnerJoin(x => x.Id == block_tag.TagId)
+					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
 					select new BlockNestedTagInfo
 					{
 						Id = tag.Id,
-						Name = block_tag.Name ?? "",
+						Name = tag.Name,
 						Guid = tag.GlobalGuid,
 						Relation = block_tag.Relation,
-						TagName = tag.Name,
-						TagType = tag.Type,
+						LocalName = block_tag.Name ?? tag.Name,
+						Type = tag.Type,
+						Frequency = tag.Frequency,
 						SourceId = tag.SourceId,
-					},
+						SourceType = source == null ? SourceType.NotSet : source.Type,
+					}
+				).ToArray(),
 			};
 
 		return query;
@@ -446,15 +453,16 @@ public class BlocksRepository(DatalakeContext db)
 					Id = parent.Id,
 					Name = parent.Name
 				},
-				Adults = parentsCte.Where(x => x.Id != id),
-				Children =
+				Adults = parentsCte.Where(x => x.Id != id).ToArray(),
+				Children = (
 					from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id)
 					select new BlockFullInfo.BlockChildInfo
 					{
 						Id = child.Id,
 						Name = child.Name
-					},
-				Properties =
+					}
+				).ToArray(),
+				Properties = (
 					from property in db.BlockProperties.LeftJoin(x => x.BlockId == block.Id)
 					select new BlockFullInfo.BlockPropertyInfo
 					{
@@ -462,20 +470,25 @@ public class BlocksRepository(DatalakeContext db)
 						Name = property.Name,
 						Type = property.Type,
 						Value = property.Value,
-					},
-				Tags =
+					}
+				).ToArray(),
+				Tags = (
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
 					from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId)
+					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
 					select new BlockNestedTagInfo
 					{
 						Id = tag.Id,
 						Name = block_tag.Name ?? "",
 						Guid = tag.GlobalGuid,
 						Relation = block_tag.Relation,
-						TagName = tag.Name,
-						TagType = tag.Type,
-					},
-				AccessRights =
+						LocalName = tag.Name,
+						Type = tag.Type,
+						Frequency = tag.Frequency,
+						SourceType = source == null ? SourceType.NotSet : source.Type,
+					}
+				).ToArray(),
+				AccessRights = (
 					from rights in db.AccessRights.InnerJoin(x => x.BlockId == block.Id)
 					from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid)
 					from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid)
@@ -494,7 +507,8 @@ public class BlocksRepository(DatalakeContext db)
 							Guid = usergroup.Guid,
 							Name = usergroup.Name,
 						},
-					},
+					}
+				).ToArray(),
 			};
 
 		return await query.FirstOrDefaultAsync()

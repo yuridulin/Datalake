@@ -19,17 +19,17 @@ public class UserGroupDetailedInfo : UserGroupInfo
 	/// Список пользователей этой группы
 	/// </summary>
 	[Required]
-	public required IEnumerable<UserGroupUsersInfo> Users { get; set; } = [];
+	public required UserGroupUsersInfo[] Users { get; set; } = [];
 
 	/// <summary>
 	/// Список подгрупп этой группы
 	/// </summary>
 	[Required]
-	public required IEnumerable<UserGroupSimpleInfo> Subgroups { get; set; } = [];
+	public required UserGroupSimpleInfo[] Subgroups { get; set; } = [];
 
 	/// <summary>
 	/// Разрешения, выданные на эту группу
 	/// </summary>
 	[Required]
-	public required IEnumerable<AccessRightsForOneInfo> AccessRights { get; set; } = [];
+	public required AccessRightsForOneInfo[] AccessRights { get; set; } = [];
 }

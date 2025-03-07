@@ -48,18 +48,18 @@ public class Tag
 	public required TagType Type { get; set; }
 
 	/// <summary>
+	/// Частота записи значения
+	/// </summary>
+	[Column]
+	public required TagFrequency Frequency { get; set; }
+
+	/// <summary>
 	/// Дата создания
 	/// </summary>
 	[Column, NotNull]
 	public required DateTime Created { get; set; }
 
 	// специфичные для входящих
-
-	/// <summary>
-	/// Интервал опроса значения в секундах
-	/// </summary>
-	[Column]
-	public required short Interval { get; set; }
 
 	/// <summary>
 	/// Идентификатор источника

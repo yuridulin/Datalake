@@ -1,6 +1,6 @@
 ﻿using Datalake.Database.Abstractions;
-using Datalake.Database.Enums;
 using Datalake.Database.Models.Auth;
+using Datalake.Database.Models.Tags;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Database.Models.Sources;
@@ -8,20 +8,8 @@ namespace Datalake.Database.Models.Sources;
 /// <summary>
 /// Информация о теге, берущем данные из этого источника
 /// </summary>
-public class SourceTagInfo : IProtectedEntity
+public class SourceTagInfo : TagSimpleInfo, IProtectedEntity
 {
-	/// <summary>
-	/// Идентификатор тега
-	/// </summary>
-	[Required]
-	public required Guid Guid { get; set; }
-
-	/// <summary>
-	/// Глобальное наименование тега
-	/// </summary>
-	[Required]
-	public required string Name { get; set; }
-
 	/// <summary>
 	/// Путь к данным в источнике
 	/// </summary>
@@ -29,17 +17,32 @@ public class SourceTagInfo : IProtectedEntity
 	public required string Item { get; set; }
 
 	/// <summary>
-	/// Тип данных тега
+	/// Формула, на основе которой вычисляется значение
 	/// </summary>
-	[Required]
-	public required TagType Type { get; set; }
+	public string? Formula { get; set; } = string.Empty;
 
 	/// <summary>
-	/// Интервал обновления тега
+	/// Входные переменные для формулы, по которой рассчитывается значение
 	/// </summary>
 	[Required]
-	public required int Interval { get; set; }
+	public required TagInputMinimalInfo[] FormulaInputs { get; set; } = [];
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
+
+	/// <summary>
+	/// Минимальная информация о переменных для расчета значений по формуле
+	/// </summary>
+	public class TagInputMinimalInfo
+	{
+		/// <summary>
+		/// Идентификатор входного тега
+		/// </summary>
+		public required int InputTagId { get; set; }
+
+		/// <summary>
+		/// Имя переменной
+		/// </summary>
+		public required string VariableName { get; set; }
+	}
 }

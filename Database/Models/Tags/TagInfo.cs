@@ -1,5 +1,4 @@
 ﻿using Datalake.Database.Abstractions;
-using Datalake.Database.Enums;
 using Datalake.Database.Models.Auth;
 using System.ComponentModel.DataAnnotations;
 
@@ -16,28 +15,10 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	public string? Description { get; set; }
 
 	/// <summary>
-	/// Тип данных тега
-	/// </summary>
-	[Required]
-	public required TagType Type { get; set; }
-
-	/// <summary>
-	/// Интервал опроса источника для получения нового значения
-	/// </summary>
-	[Required]
-	public required short IntervalInSeconds { get; set; }
-
-	/// <summary>
 	/// Идентификатор источника данных
 	/// </summary>
 	[Required]
 	public required int SourceId { get; set; }
-
-	/// <summary>
-	/// Тип данных источника
-	/// </summary>
-	[Required]
-	public required SourceType SourceType { get; set; } = SourceType.Datalake;
 
 	/// <summary>
 	/// Путь к данным в источнике
@@ -88,7 +69,7 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// Входные переменные для формулы, по которой рассчитывается значение
 	/// </summary>
 	[Required]
-	public required IEnumerable<TagInputInfo> FormulaInputs { get; set; } = [];
+	public required TagInputInfo[] FormulaInputs { get; set; } = [];
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;

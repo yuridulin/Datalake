@@ -70,10 +70,7 @@ internal class CollectorProcessor(
 
 	private void CollectValues(ICollector collector, IEnumerable<CollectValue> values)
 	{
-		lock (CollectorWriter.Lock)
-		{
-			CollectorWriter.Queue.AddRange(values);
-		}
+		CollectorWriter.AddToQueue(values);
 	}
 
 	private DateTime StoredUpdate { get; set; } = DateTime.MinValue.AddMinutes(1);

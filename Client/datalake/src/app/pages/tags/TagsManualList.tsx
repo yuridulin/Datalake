@@ -1,8 +1,6 @@
 import api from '@/api/swagger-api'
-import { Button } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
-import { CustomSource } from '../../../types/customSource'
+import { SourceType, TagInfo } from '../../../api/swagger/data-contracts'
 import CreatedTagLinker from '../../components/CreatedTagsLinker'
 import PageHeader from '../../components/PageHeader'
 import TagsTable from './TagsTable'
@@ -13,36 +11,18 @@ const TagsManualList = () => {
 
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
-			api.tagsReadAll({ sourceId: CustomSource.Manual })
+			api.tagsReadAll({ sourceId: SourceType.Manual })
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags
 		})
 	}, [])
 
-	function createTag() {
-		api.tagsCreate({
-			sourceId: CustomSource.Manual,
-			tagType: TagType.Number,
-		})
-			.then((res) => {
-				getTags()
-				setCreated(res.data)
-			})
-			.catch()
-	}
-
 	useEffect(getTags, [getTags])
 
 	return (
 		<>
-			<PageHeader
-				right={
-					<Button onClick={createTag}>Создать мануальный тег</Button>
-				}
-			>
-				Список мануальных тегов
-			</PageHeader>
+			<PageHeader>Список мануальных тегов</PageHeader>
 			{!!created && (
 				<CreatedTagLinker
 					tag={created}

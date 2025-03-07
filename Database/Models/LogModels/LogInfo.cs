@@ -2,7 +2,7 @@
 using Datalake.Database.Models.Users;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Database.Models.Logs;
+namespace Datalake.Database.Models.LogModels;
 
 /// <summary>
 /// Запись собщения

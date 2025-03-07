@@ -1,4 +1,8 @@
 import api from '@/api/swagger-api'
+import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
+import TagFrequencyEl from '@/app/components/TagFrequencyEl'
+import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
+import getTagFrequencyName from '@/functions/getTagFrequencyName'
 import { TagValue } from '@/types/tagValue'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import {
@@ -16,13 +20,15 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
+	BlockTreeInfo,
+	SourceType,
+	TagFrequency,
 	TagInfo,
 	TagType,
 	TagUpdateInputRequest,
 	TagUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
 import { useInterval } from '../../../../hooks/useInterval'
-import { CustomSource } from '../../../../types/customSource'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import TagValueEl from '../../../components/TagValueEl'
@@ -33,14 +39,9 @@ type SourceOption = {
 	label: string
 }
 
-type InputOption = {
-	value: number
-	label: string
-}
-
 enum SourceStrategy {
-	Manual = CustomSource.Manual,
-	Calculated = CustomSource.Calculated,
+	Manual = SourceType.Manual,
+	Calculated = SourceType.Calculated,
 	FromSource = 0,
 }
 
@@ -59,8 +60,8 @@ const TagForm = () => {
 	// инфа
 	const [tag, setTag] = useState({} as TagInfo)
 	const [sources, setSources] = useState([] as SourceOption[])
-	const [inputs, setInputs] = useState([] as InputOption[])
 	const [value, setValue] = useState(null as TagValue)
+	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 
 	// изменяемые
 	const [isLoading, setLoading] = useState(false)
@@ -75,41 +76,39 @@ const TagForm = () => {
 		if (!id) return
 		setLoading(true)
 
-		api.tagsRead(String(id)).then((res) => {
-			const info = res.data
-			setTag(info)
-			setRequest({
-				...info,
-				formulaInputs: info.formulaInputs.map((x, index) => ({
-					key: index,
-					tagId: x.id,
-					variableName: x.variableName,
-				})),
-			})
-			setLoading(false)
-			setStrategy(
-				info.sourceId == CustomSource.Manual
-					? SourceStrategy.Manual
-					: info.sourceId == CustomSource.Calculated
-						? SourceStrategy.Calculated
-						: SourceStrategy.FromSource,
-			)
-		})
-		api.sourcesReadAll().then((res) => {
-			setSources(
-				res.data.map((source) => ({
-					value: source.id,
-					label: source.name,
-				})),
-			)
-		})
-		api.tagsReadPossibleInputs(String(id))
-			.then((res) =>
-				setInputs(
-					res.data.map((x) => ({ value: x.id, label: x.name })),
-				),
-			)
-			.catch(() => setInputs([]))
+		Promise.all([
+			api
+				.blocksReadAsTree()
+				.then((res) => setBlocks(res.data))
+				.catch(() => setBlocks([])),
+			api.tagsRead(String(id)).then((res) => {
+				const info = res.data
+				setTag(info)
+				setRequest({
+					...info,
+					formulaInputs: info.formulaInputs.map((x, index) => ({
+						key: index,
+						tagId: x.id,
+						variableName: x.variableName,
+					})),
+				})
+				setStrategy(
+					info.sourceId == SourceType.Manual
+						? SourceStrategy.Manual
+						: info.sourceId == SourceType.Calculated
+							? SourceStrategy.Calculated
+							: SourceStrategy.FromSource,
+				)
+			}),
+			api.sourcesReadAll().then((res) => {
+				setSources(
+					res.data.map((source) => ({
+						value: source.id,
+						label: source.name,
+					})),
+				)
+			}),
+		]).finally(() => setLoading(false))
 	}
 
 	useEffect(loadTagData, [id])
@@ -149,7 +148,7 @@ const TagForm = () => {
 		if (strategy === SourceStrategy.FromSource && request.sourceId < 0) {
 			setRequest({
 				...request,
-				sourceId: CustomSource.NotSet,
+				sourceId: SourceType.NotSet,
 			})
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -176,7 +175,7 @@ const TagForm = () => {
 				strategy === SourceStrategy.FromSource
 					? request.sourceItem
 					: null,
-		}).then(back)
+		})
 	}
 
 	const tagDelete = () => api.tagsDelete(String(id)).then(back)
@@ -370,22 +369,31 @@ const TagForm = () => {
 					</Radio.Button>
 				</Radio.Group>
 			</FormRow>
-			<div
-				style={{
-					display:
-						strategy !== SourceStrategy.Manual ? 'block' : 'none',
-				}}
-			>
-				<FormRow title='Интервал обновления в секундах (0, если только по изменению)'>
-					<InputNumber
-						value={request.intervalInSeconds}
-						onChange={(value) =>
+			<div>
+				<FormRow title='Промежуток времени между записью значений'>
+					<Radio.Group
+						buttonStyle='solid'
+						value={request.frequency}
+						onChange={(value) => {
+							console.log(value)
 							setRequest({
 								...request,
-								intervalInSeconds: Number(value),
+								frequency: value.target.value,
 							})
-						}
-					/>
+						}}
+					>
+						{Object.values(TagFrequency)
+							.filter((key) => !isNaN(Number(key)))
+							.map((value) => (
+								<Radio.Button key={value} value={value}>
+									<TagFrequencyEl
+										frequency={value as TagFrequency}
+									/>
+									&emsp;
+									{getTagFrequencyName(value as number)}
+								</Radio.Button>
+							))}
+					</Radio.Group>
 				</FormRow>
 			</div>
 			<div
@@ -396,7 +404,14 @@ const TagForm = () => {
 							: 'none',
 				}}
 			>
-				<FormRow title='Формула для вычисления'>
+				<FormRow
+					title={
+						<>
+							{'Формула для вычисления'}
+							<HelpNCalc />
+						</>
+					}
+				>
 					<Input
 						value={request.formula ?? ''}
 						onChange={(e) =>
@@ -415,7 +430,7 @@ const TagForm = () => {
 								style={{
 									marginBottom: '.25em',
 									display: 'grid',
-									gridTemplateColumns: '3fr 2fr 1fr',
+									gridTemplateColumns: '3fr 10fr 1fr',
 								}}
 							>
 								<Input
@@ -440,18 +455,8 @@ const TagForm = () => {
 										})
 									}
 								/>
-								<Select
-									style={{ minWidth: '16em' }}
-									options={[
-										{ value: 0, label: 'Не выбран' },
-										...inputs.filter(
-											(x) =>
-												x.value == input.tagId ||
-												!request.formulaInputs
-													.map((f) => f.tagId)
-													.includes(x.value),
-										),
-									]}
+								<TagTreeSelect
+									blocks={blocks}
 									value={input.tagId}
 									onChange={(v) =>
 										setRequest({
@@ -468,7 +473,7 @@ const TagForm = () => {
 												),
 										})
 									}
-								></Select>
+								/>
 								<Button
 									icon={<DeleteOutlined />}
 									onClick={() => removeParam(input.key)}
@@ -494,7 +499,7 @@ const TagForm = () => {
 					<Select
 						options={[
 							{
-								value: CustomSource.NotSet,
+								value: SourceType.NotSet,
 								label: '? не выбран',
 							},
 							...sources,
@@ -512,7 +517,7 @@ const TagForm = () => {
 				<div
 					style={{
 						display:
-							request.sourceId === CustomSource.NotSet
+							request.sourceId === SourceType.NotSet
 								? 'none'
 								: 'inherit',
 					}}

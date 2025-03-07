@@ -1,8 +1,12 @@
 import api from '@/api/swagger-api'
 import { Button } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import { TagInfo, TagType } from '../../../api/swagger/data-contracts'
-import { CustomSource } from '../../../types/customSource'
+import {
+	SourceType,
+	TagFrequency,
+	TagInfo,
+	TagType,
+} from '../../../api/swagger/data-contracts'
 import CreatedTagLinker from '../../components/CreatedTagsLinker'
 import PageHeader from '../../components/PageHeader'
 import TagsTable from './TagsTable'
@@ -13,7 +17,7 @@ const TagsCalculatedList = () => {
 
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
-			api.tagsReadAll({ sourceId: CustomSource.Calculated })
+			api.tagsReadAll({ sourceId: SourceType.Calculated })
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags
@@ -22,8 +26,9 @@ const TagsCalculatedList = () => {
 
 	function createTag() {
 		api.tagsCreate({
-			sourceId: CustomSource.Calculated,
+			sourceId: SourceType.Calculated,
 			tagType: TagType.Number,
+			frequency: TagFrequency.NotSet,
 		})
 			.then((res) => {
 				getTags()

@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.Database.Abstractions;
+using Datalake.Database.Enums;
 using Datalake.Database.Models.AccessRights;
 using System.ComponentModel.DataAnnotations;
 
@@ -18,31 +19,44 @@ public class BlockFullInfo : BlockWithTagsInfo
 	/// Список дочерних блоков
 	/// </summary>
 	[Required]
-	public IEnumerable<BlockChildInfo> Children { get; set; } = [];
+	public BlockChildInfo[] Children { get; set; } = [];
 
 	/// <summary>
 	/// Список статических свойств блока
 	/// </summary>
 	[Required]
-	public IEnumerable<BlockPropertyInfo> Properties { get; set; } = [];
+	public BlockPropertyInfo[] Properties { get; set; } = [];
 
 	/// <summary>
 	/// Список прав доступа, которые действуют на этот блок
 	/// </summary>
 	[Required]
-	public IEnumerable<AccessRightsForObjectInfo> AccessRights { get; set; } = [];
+	public AccessRightsForObjectInfo[] AccessRights { get; set; } = [];
 
 	/// <summary>
 	/// Список родительских блоков
 	/// </summary>
 	[Required]
-	public IEnumerable<BlockTreeInfo> Adults { get; set; } = [];
+	public BlockTreeInfo[] Adults { get; set; } = [];
 
+	/// <summary>
+	/// Информация о вложенном объекте
+	/// </summary>
+	public abstract class BlockNestedItem : INestedItem
+	{
+		/// <inheritdoc/>
+		public int Id { get; set; }
+
+		/// <inheritdoc/>
+		public required string Name { get; set; }
+	}
 
 	/// <summary>
 	/// Информация о родительском блоке
 	/// </summary>
-	public class BlockParentInfo : BlockNestedItem { }
+	public class BlockParentInfo : BlockNestedItem
+	{
+	}
 
 	/// <summary>
 	/// Информация о дочернем блоке
