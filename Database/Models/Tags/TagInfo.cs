@@ -1,5 +1,4 @@
 ﻿using Datalake.Database.Abstractions;
-using Datalake.Database.Enums;
 using Datalake.Database.Models.Auth;
 using System.ComponentModel.DataAnnotations;
 
