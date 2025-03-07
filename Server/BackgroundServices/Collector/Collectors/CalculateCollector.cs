@@ -15,17 +15,33 @@ internal class CalculateCollector : CollectorBase
 	ILogger<CalculateCollector> logger) : base(source, logger)
 	{
 		_logger = logger;
+		_inputs = [];
 		_expressions = [];
-		_previousValues = [];
 		_tokenSource = new CancellationTokenSource();
 
 		foreach (var tag in source.Tags)
 		{
-			var expression = new Expression(tag.Formula);
-			expression.EvaluateParameter += (name, args) => Expression_EvaluateParameter(name, args, tag);
+			var scopedTag = new TagExpressionScope
+			{
+				Guid = tag.Guid,
+				Name = tag.Name,
+				Type = tag.Type,
+				Expression = new Expression(tag.Formula)
+			};
 
-			_expressions.Add((tag, expression));
-			_previousValues.Add(tag.Id, ValuesRepository.GetLiveValue(tag.Id));
+			scopedTag.Expression.EvaluateParameter += (name, args) => Expression_EvaluateParameter(name, args, tag);
+
+			var initial = ValuesRepository.GetLiveValue(tag.Id);
+			if (scopedTag.Type == TagType.Number)
+				scopedTag.PreviousNumber = initial as float?;
+			else
+				scopedTag.PreviousValue = initial;
+			
+
+			_expressions.Add(tag.Id, scopedTag);
+
+			foreach (var input in tag.FormulaInputs)
+				_inputs.Add(input.InputTagId);
 		}
 	}
 
@@ -51,8 +67,8 @@ internal class CalculateCollector : CollectorBase
 
 	private ILogger<CalculateCollector> _logger;
 	private readonly CancellationTokenSource _tokenSource;
-	private readonly Dictionary<int, object?> _previousValues;
-	private readonly List<(SourceTagInfo, Expression)> _expressions;
+	private readonly Dictionary<int, TagExpressionScope> _expressions;
+	private readonly HashSet<int> _inputs;
 
 	private static void Expression_EvaluateParameter(string name, NCalc.Handlers.ParameterArgs args, SourceTagInfo tag)
 	{
@@ -80,13 +96,13 @@ internal class CalculateCollector : CollectorBase
 				var now = DateFormats.GetCurrentDateTime();
 				var countGood = 0;
 
-				foreach (var (tag, expression) in _expressions)
+				foreach (var (tagId, tagScope) in _expressions)
 				{
 					bool isCalculatedCorrectly = true;
 					object? result = null;
 					try
 					{
-						result = expression.Evaluate();
+						result = tagScope.Expression.Evaluate();
 						countGood++;
 					}
 					catch
@@ -94,29 +110,28 @@ internal class CalculateCollector : CollectorBase
 						isCalculatedCorrectly = false;
 					}
 
-					switch (tag.Type)
+					switch (tagScope.Type)
 					{
 						case TagType.Number:
-							var previous = (float?)_previousValues[tag.Id];
 							float value = Convert.ToSingle(result);
-							if (AreAlmostEqual(value, previous))
+							if (AreAlmostEqual(value, tagScope.PreviousNumber))
 								continue;
-							_previousValues[tag.Id] = value;
+							tagScope.PreviousNumber = value;
 							break;
 
 						default:
-							if (Equals(_previousValues[tag.Id], result))
+							if (Equals(result, tagScope.PreviousValue))
 								continue;
-							_previousValues[tag.Id] = result;
+							tagScope.PreviousValue = result;
 							break;
 					}
 
 					batch.Add(new CollectValue
 					{
 						Date = now,
-						Guid = tag.Guid,
-						Id = tag.Id,
-						Name = tag.Name,
+						Id = tagId,
+						Guid = tagScope.Guid,
+						Name = tagScope.Name,
 						Quality = isCalculatedCorrectly ? TagQuality.Good : TagQuality.Bad,
 						Value = result,
 					});
@@ -141,6 +156,16 @@ internal class CalculateCollector : CollectorBase
 	{
 		var rounded = Math.Abs((value1 ?? 0) - (value2 ?? 0));
 		return rounded < epsilon;
+	}
+
+	private class TagExpressionScope
+	{
+		public required Guid Guid;
+		public required string Name;
+		public required TagType Type;
+		public required Expression Expression;
+		public float? PreviousNumber;
+		public object? PreviousValue;
 	}
 }
 
