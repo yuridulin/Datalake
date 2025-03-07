@@ -1,5 +1,14 @@
 import api from '@/api/swagger-api'
-import { BlockSimpleInfo, BlockTreeInfo } from '@/api/swagger/data-contracts'
+import {
+	AccessType,
+	BlockSimpleInfo,
+	BlockTagRelation,
+	BlockTreeInfo,
+	TagSimpleInfo,
+} from '@/api/swagger/data-contracts'
+import BlockIcon from '@/app/components/icons/BlockIcon'
+import TagIcon from '@/app/components/icons/TagIcon'
+import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { TreeSelect } from 'antd'
@@ -42,12 +51,26 @@ const convertToTreeSelectNodes = (
 	blockTree: BlockTreeInfo[],
 ): DefaultOptionType[] => {
 	return blockTree.map((block) => ({
-		title: block.name,
+		title: (
+			<>
+				<BlockIcon />
+				&ensp;{block.name}
+			</>
+		),
+		fullTitle: block.name,
 		key: 0 - block.id,
 		value: 0 - block.id,
 		children: [
 			...block.tags.map((tag) => ({
-				title: tag.localName,
+				title: (
+					<>
+						<TagIcon type={tag.sourceType} />
+						&ensp;
+						{tag.localName}&ensp;
+						<TagFrequencyEl frequency={tag.frequency} />
+					</>
+				),
+				fullTitle: tag.localName,
 				key: tag.id,
 				value: tag.id,
 			})),
@@ -75,17 +98,49 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 
 	useEffect(() => {
 		setLoading(false)
-		api.blocksReadAsTree()
-			.then((res) => {
-				const mapping = flattenNestedTags(res.data)
-				setTagMapping(mapping)
-				const data = convertToTreeSelectNodes(res.data)
-				setTreeData(data)
+		let blocksTree: BlockTreeInfo[]
+		let tags: TagSimpleInfo[]
+		Promise.all([
+			api
+				.blocksReadAsTree()
+				.then((res) => (blocksTree = res.data))
+				.catch(() => (blocksTree = [])),
+			api
+				.tagsReadAll()
+				.then((res) => (tags = res.data))
+				.catch(() => (tags = [])),
+		]).then(() => {
+			const mappingFromBlocks = flattenNestedTags(blocksTree)
+			tags = tags.filter((tag) => !mappingFromBlocks[tag.id])
+
+			const fakeBlock: BlockTreeInfo = {
+				id: 0,
+				guid: 'fake',
+				name: 'Нераспределенные теги',
+				fullName: 'Нераспределенные теги',
+				tags: tags
+					.map((tag) => ({
+						...tag,
+						relation: BlockTagRelation.Static,
+						localName: tag.name,
+						sourceId: 0,
+					}))
+					.sort((a, b) => a.localName.localeCompare(b.localName)),
+				children: [],
+				accessRule: {
+					ruleId: 0,
+					accessType: AccessType.Manager,
+				},
+			}
+			blocksTree.push(fakeBlock)
+
+			setTagMapping({
+				...mappingFromBlocks,
+				...flattenNestedTags([fakeBlock]),
 			})
-			.catch(() => {
-				setTreeData([])
-				setTagMapping({})
-			})
+			setTreeData(convertToTreeSelectNodes(blocksTree))
+			setLoading(true)
+		})
 	}, [])
 
 	const handleTagChange = useCallback(
@@ -110,15 +165,15 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 		const node = treeNode as DefaultOptionType
 		if (!node || !mapping) return false
 
-		const localName = node.title || ''
+		const localName = node.fullTitle || ''
 		const globalName = mapping.name
 		const guid = mapping.guid
 		const id = String(node.value)
 
 		return (
-			[localName, globalName, guid, id].filter((x) =>
-				x.toLowerCase().includes(search),
-			).length > 0
+			[localName, globalName, guid, id].filter((x) => {
+				return x.toLowerCase().includes(search)
+			}).length > 0
 		)
 	}
 
@@ -127,14 +182,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			setLoading(false)
 			onChange(checkedTags, tagMapping, [])
 		}
-		console.log(
-			'Loading:',
-			loading,
-			'Mapping:',
-			Object.keys(tagMapping).length,
-			'Checked:',
-			checkedTags.length,
-		)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [loading])
 
 	return (
@@ -149,7 +197,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			style={{ width: '100%' }}
 			maxTagCount={0}
 			maxTagPlaceholder={(omittedValues) =>
-				`Выбрано тегов: ${omittedValues.length}`
+				`Выбрано тегов: ${omittedValues.filter((x) => Number(x.value) > 0).length}`
 			}
 			filterTreeNode={filterTreeNode}
 			searchValue={searchValue}
