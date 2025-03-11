@@ -191,9 +191,6 @@ public class TagsRepository(DatalakeContext db)
 
 		if (createRequest.SourceId.HasValue)
 		{
-			if (createRequest.SourceId <= 0)
-				throw new InvalidValueException(message: "необходимо выбрать источник");
-
 			if (!string.IsNullOrEmpty(createRequest.SourceItem))
 			{
 				createRequest.SourceItem = createRequest.SourceItem.RemoveWhitespaces();
@@ -213,9 +210,13 @@ public class TagsRepository(DatalakeContext db)
 			{
 				createRequest.Name = (source.Id <= 0 ? ((SourceType)source.Id).ToString() : source.Name)
 					+ "." + (createRequest.SourceItem ?? "Tag");
-				needToAddIdInName = false;
+
+				if (createRequest.SourceId.Value > 0)
+					needToAddIdInName = false;
 			}
 		}
+		else
+			throw new InvalidValueException(message: "необходимо выбрать источник");
 
 		if (createRequest.BlockId.HasValue)
 		{
