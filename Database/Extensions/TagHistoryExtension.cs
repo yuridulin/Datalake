@@ -4,10 +4,12 @@ using Datalake.Database.Extensions;
 using Datalake.Database.Models.Tags;
 using Datalake.Database.Models.Values;
 using Datalake.Database.Tables;
-using System.Globalization;
 
 internal static class TagHistoryExtension
 {
+	static readonly string TrueValue = true.ToString();
+	static readonly string OneValue = 1.ToString();
+
 	internal static object? GetTypedValue(this TagHistory tagHistory, TagType type) => type switch
 	{
 		TagType.String => tagHistory.Text,
@@ -52,81 +54,43 @@ internal static class TagHistoryExtension
 		var history = new TagHistory
 		{
 			Date = (date ?? DateFormats.GetCurrentDateTime()).RoundToFrequency(frequency),
-			TagId = tagId,
-			Quality = quality ?? TagQuality.Unknown,
 			Text = null,
-			Number = null
+			Number = null,
+			Quality = quality ?? TagQuality.Unknown,
+			TagId = tagId,
 		};
 
 		if (value == null)
 			return history;
 
+		string text = value.ToString()!;
+
 		switch (tagType)
 		{
 			case TagType.String:
-				history.Text = value.ToString();
+				history.Text = text;
 				break;
 
 			case TagType.Number:
-				if (TryGetFloat(value, out float number))
+				if (float.TryParse(text ?? "x", out float number))
 				{
-					history.Number = number * scalingCoefficient;
+					// вычисление значения на основе шкалирования
+					if (scalingCoefficient != 1)
+					{
+						history.Number = number * scalingCoefficient;
+					}
+					else
+					{
+						history.Number = number;
+					}
 				}
 				break;
 
 			case TagType.Boolean:
-				history.Number = ConvertToBoolean(value) ? 1 : 0;
+				history.Number = text == OneValue || text == TrueValue ? 1 : 0;
 				break;
 		}
 
 		return history;
-	}
-
-	private static bool TryGetFloat(object value, out float result)
-	{
-		switch (value)
-		{
-			case float f:
-				result = f;
-				return true;
-			case double d:
-				result = (float)d;
-				return true;
-			case int i:
-				result = i;
-				return true;
-			case long l:
-				result = l;
-				return true;
-			case string s when float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed):
-				result = parsed;
-				return true;
-			default:
-				result = 0;
-				return false;
-		}
-	}
-
-	private static bool ConvertToBoolean(object value)
-	{
-		switch (value)
-		{
-			case bool b:
-				return b;
-			case int i:
-				return i != 0;
-			case long l:
-				return l != 0;
-			case float f:
-				return f != 0;
-			case double d:
-				return d != 0;
-			case string s when bool.TryParse(s, out bool parsedBool):
-				return parsedBool;
-			case string s when float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsedFloat):
-				return parsedFloat != 0;
-			default:
-				return false;
-		}
 	}
 }

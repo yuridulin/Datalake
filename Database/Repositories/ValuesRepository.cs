@@ -161,12 +161,12 @@ public class ValuesRepository(DatalakeContext db)
 	/// Получение значения тега по идентификатору
 	/// </summary>
 	/// <param name="id">Идентификатор</param>
-	/// <param name="type">Необходимый тип значения</param>
 	/// <returns>Значение, если тег найден</returns>
-	public static object? GetLiveValue(int id, TagType type = TagType.String)
+	public static object? GetLiveValue(int id)
 	{
+		TagsRepository.CachedTags.TryGetValue(id, out var info);
 		LiveValues.TryGetValue(id, out var history);
-		return history?.GetTypedValue(type);
+		return history?.GetTypedValue(info?.Type ?? TagType.String);
 	}
 
 	#endregion
