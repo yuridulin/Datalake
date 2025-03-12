@@ -1,14 +1,14 @@
 ﻿using Datalake.Database.Constants;
-using Datalake.Database.Enums;
-using Datalake.Database.Exceptions;
 using Datalake.Database.Extensions;
-using Datalake.Database.Models.AccessRights;
-using Datalake.Database.Models.Auth;
-using Datalake.Database.Models.Blocks;
-using Datalake.Database.Models.Sources;
-using Datalake.Database.Models.Tags;
-using Datalake.Database.Models.UserGroups;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.AccessRights;
+using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Blocks;
+using Datalake.PublicApi.Models.Sources;
+using Datalake.PublicApi.Models.Tags;
+using Datalake.PublicApi.Models.UserGroups;
 using LinqToDB;
 using LinqToDB.Data;
 

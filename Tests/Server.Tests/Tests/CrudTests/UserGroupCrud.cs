@@ -1,7 +1,7 @@
 ﻿using Datalake.Database.Enums;
 using Datalake.Database.Models.UserGroups;
 using Datalake.Database.Models.Users;
-using Datalake.Server.Constants;
+using Datalake.PublicApi.Constants;
 using Datalake.Server.TestRunner.Attributes;
 using Datalake.Server.TestRunner.Extensions;
 using System.Net.Http.Json;

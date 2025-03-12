@@ -3,7 +3,7 @@ using Datalake.Database.Models.Sources;
 using Datalake.Database.Models.Tags;
 using Datalake.Database.Models.Users;
 using Datalake.Database.Models.Values;
-using Datalake.Server.Constants;
+using Datalake.PublicApi.Constants;
 using Datalake.Server.Services.Receiver.Models.Inopc;
 using Datalake.Server.TestRunner.Attributes;
 using Datalake.Server.TestRunner.Extensions;

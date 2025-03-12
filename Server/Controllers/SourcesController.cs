@@ -1,7 +1,7 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Exceptions;
-using Datalake.Database.Models.Sources;
 using Datalake.Database.Repositories;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Services.Receiver;
 using LinqToDB;
@@ -121,7 +121,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoAccessToSource(user, Database.Enums.AccessType.Viewer, id);
+		AccessRepository.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Viewer, id);
 
 		var source = await db.SourcesRepository.ReadAsync(user, id);
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
@@ -151,7 +151,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoAccessToSource(user, Database.Enums.AccessType.Editor, id);
+		AccessRepository.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Editor, id);
 
 		var source = await db.SourcesRepository.ReadWithTagsAsync(user, id);
 

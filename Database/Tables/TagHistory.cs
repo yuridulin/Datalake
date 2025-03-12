@@ -1,5 +1,5 @@
-﻿using Datalake.Database.Constants;
-using Datalake.Database.Enums;
+﻿using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Enums;
 using LinqToDB.Mapping;
 
 namespace Datalake.Database.Tables;

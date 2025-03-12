@@ -1,6 +1,6 @@
 using Datalake.Database;
-using Datalake.Database.Enums;
-using Datalake.Server.Constants;
+using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Enums;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services;
 using LinqToDB;

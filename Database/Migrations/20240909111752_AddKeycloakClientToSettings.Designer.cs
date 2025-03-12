@@ -26,7 +26,7 @@ namespace Datalake.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Datalake.Database.Models.AccessRights", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.AccessRights", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -70,7 +70,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("AccessRights", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Block", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Block", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -96,7 +96,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Blocks", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.BlockProperty", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.BlockProperty", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -125,7 +125,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("BlockProperties", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.BlockTag", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.BlockTag", b =>
                 {
                     b.Property<int>("BlockId")
                         .HasColumnType("integer");
@@ -146,7 +146,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("BlockTags", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Log", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Log", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -178,7 +178,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Logs", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Settings", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Settings", b =>
                 {
                     b.Property<string>("EnergoIdApi")
                         .IsRequired()
@@ -198,7 +198,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Settings", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Source", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Source", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -224,7 +224,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Sources", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Tag", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -282,7 +282,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Tags", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.TagHistory", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.TagHistory", b =>
                 {
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
@@ -305,7 +305,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("TagsLive", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.TagHistoryChunk", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.TagHistoryChunk", b =>
                 {
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
@@ -319,7 +319,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("TagHistoryChunks", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.TagInput", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.TagInput", b =>
                 {
                     b.Property<int>("InputTagId")
                         .HasColumnType("integer");
@@ -336,7 +336,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("TagInputs", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.User", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.User", b =>
                 {
                     b.Property<Guid>("Guid")
                         .ValueGeneratedOnAdd()
@@ -365,7 +365,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Users", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.UserGroup", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.UserGroup", b =>
                 {
                     b.Property<Guid>("Guid")
                         .ValueGeneratedOnAdd()
@@ -386,7 +386,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("UserGroups", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.UserGroupRelation", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.UserGroupRelation", b =>
                 {
                     b.Property<Guid>("UserGroupGuid")
                         .HasColumnType("uuid");
@@ -404,25 +404,25 @@ namespace Datalake.Database.Migrations
                     b.ToTable("UserGroupRelation", "public");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.AccessRights", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.AccessRights", b =>
                 {
-                    b.HasOne("Datalake.Database.Models.Block", "Block")
+                    b.HasOne("Datalake.PublicApi.Models.Block", "Block")
                         .WithMany("AccessRightsList")
                         .HasForeignKey("BlockId");
 
-                    b.HasOne("Datalake.Database.Models.Source", "Source")
+                    b.HasOne("Datalake.PublicApi.Models.Source", "Source")
                         .WithMany("AccessRightsList")
                         .HasForeignKey("SourceId");
 
-                    b.HasOne("Datalake.Database.Models.Tag", "Tag")
+                    b.HasOne("Datalake.PublicApi.Models.Tag", "Tag")
                         .WithMany("AccessRightsList")
                         .HasForeignKey("TagId");
 
-                    b.HasOne("Datalake.Database.Models.UserGroup", "UserGroup")
+                    b.HasOne("Datalake.PublicApi.Models.UserGroup", "UserGroup")
                         .WithMany("AccessRightsList")
                         .HasForeignKey("UserGroupGuid");
 
-                    b.HasOne("Datalake.Database.Models.User", "User")
+                    b.HasOne("Datalake.PublicApi.Models.User", "User")
                         .WithMany("AccessRightsList")
                         .HasForeignKey("UserGuid");
 
@@ -437,9 +437,9 @@ namespace Datalake.Database.Migrations
                     b.Navigation("UserGroup");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.BlockProperty", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.BlockProperty", b =>
                 {
-                    b.HasOne("Datalake.Database.Models.Block", "Block")
+                    b.HasOne("Datalake.PublicApi.Models.Block", "Block")
                         .WithMany("Properties")
                         .HasForeignKey("BlockId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -448,15 +448,15 @@ namespace Datalake.Database.Migrations
                     b.Navigation("Block");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.BlockTag", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.BlockTag", b =>
                 {
-                    b.HasOne("Datalake.Database.Models.Block", "Block")
+                    b.HasOne("Datalake.PublicApi.Models.Block", "Block")
                         .WithMany("RelationsToTags")
                         .HasForeignKey("BlockId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("Datalake.Database.Models.Tag", "Tag")
+                    b.HasOne("Datalake.PublicApi.Models.Tag", "Tag")
                         .WithMany("RelationsToBlocks")
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -467,9 +467,9 @@ namespace Datalake.Database.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Tag", b =>
                 {
-                    b.HasOne("Datalake.Database.Models.Source", "Source")
+                    b.HasOne("Datalake.PublicApi.Models.Source", "Source")
                         .WithMany("Tags")
                         .HasForeignKey("SourceId")
                         .OnDelete(DeleteBehavior.SetNull)
@@ -478,9 +478,9 @@ namespace Datalake.Database.Migrations
                     b.Navigation("Source");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.TagInput", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.TagInput", b =>
                 {
-                    b.HasOne("Datalake.Database.Models.Tag", "Tag")
+                    b.HasOne("Datalake.PublicApi.Models.Tag", "Tag")
                         .WithMany()
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -489,15 +489,15 @@ namespace Datalake.Database.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.UserGroupRelation", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.UserGroupRelation", b =>
                 {
-                    b.HasOne("Datalake.Database.Models.User", "User")
+                    b.HasOne("Datalake.PublicApi.Models.User", "User")
                         .WithMany("GroupsRelations")
                         .HasForeignKey("UserGroupGuid")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("Datalake.Database.Models.UserGroup", "UserGroup")
+                    b.HasOne("Datalake.PublicApi.Models.UserGroup", "UserGroup")
                         .WithMany("UsersRelations")
                         .HasForeignKey("UserGuid")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -508,7 +508,7 @@ namespace Datalake.Database.Migrations
                     b.Navigation("UserGroup");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Block", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Block", b =>
                 {
                     b.Navigation("AccessRightsList");
 
@@ -517,28 +517,28 @@ namespace Datalake.Database.Migrations
                     b.Navigation("RelationsToTags");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Source", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Source", b =>
                 {
                     b.Navigation("AccessRightsList");
 
                     b.Navigation("Tags");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Tag", b =>
                 {
                     b.Navigation("AccessRightsList");
 
                     b.Navigation("RelationsToBlocks");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.User", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.User", b =>
                 {
                     b.Navigation("AccessRightsList");
 
                     b.Navigation("GroupsRelations");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.UserGroup", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.UserGroup", b =>
                 {
                     b.Navigation("AccessRightsList");
 

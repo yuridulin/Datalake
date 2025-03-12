@@ -25,7 +25,7 @@ namespace Datalake.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Datalake.Database.Models.Block", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Block", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -48,7 +48,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Blocks");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Log", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Log", b =>
                 {
                     b.Property<int>("Category")
                         .HasColumnType("integer");
@@ -75,7 +75,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Logs");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.RelBlockTag", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.RelBlockTag", b =>
                 {
                     b.Property<int>("BlockId")
                         .HasColumnType("integer");
@@ -92,7 +92,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Rel_Block_Tag", (string)null);
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.RelTagInput", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.RelTagInput", b =>
                 {
                     b.Property<int>("InputTagId")
                         .HasColumnType("integer");
@@ -106,7 +106,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Rel_Tag_Input", (string)null);
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Setting", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Setting", b =>
                 {
                     b.Property<string>("Key")
                         .IsRequired()
@@ -118,7 +118,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Settings");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Source", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Source", b =>
                 {
                     b.Property<string>("Address")
                         .HasColumnType("text");
@@ -138,7 +138,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Sources");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.Tag", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.Tag", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -193,7 +193,7 @@ namespace Datalake.Database.Migrations
                     b.ToTable("Tags");
                 });
 
-            modelBuilder.Entity("Datalake.Database.Models.User", b =>
+            modelBuilder.Entity("Datalake.PublicApi.Models.User", b =>
                 {
                     b.Property<int>("AccessType")
                         .HasColumnType("integer");

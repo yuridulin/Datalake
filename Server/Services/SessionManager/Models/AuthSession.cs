@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Models.Auth;
+﻿using Datalake.PublicApi.Models.Auth;
 
 namespace Datalake.Server.Services.SessionManager.Models;
 

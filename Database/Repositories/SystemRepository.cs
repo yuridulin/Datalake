@@ -1,13 +1,13 @@
-﻿using Datalake.Database.Constants;
-using Datalake.Database.Enums;
-using Datalake.Database.Exceptions;
-using Datalake.Database.Extensions;
-using Datalake.Database.Models.Auth;
-using Datalake.Database.Models.LogModels;
-using Datalake.Database.Models.Settings;
-using Datalake.Database.Models.Tags;
-using Datalake.Database.Models.Users;
+﻿using Datalake.Database.Extensions;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.LogModels;
+using Datalake.PublicApi.Models.Settings;
+using Datalake.PublicApi.Models.Tags;
+using Datalake.PublicApi.Models.Users;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;

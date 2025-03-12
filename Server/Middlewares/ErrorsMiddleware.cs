@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Exceptions;
+﻿using Datalake.PublicApi.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace Datalake.Server.Middlewares;

@@ -1,6 +1,6 @@
-﻿using Datalake.Database.Enums;
-using Datalake.Database.Models.Tables;
-using Datalake.Database.Tables;
+﻿using Datalake.Database.Tables;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Tables;
 using LinqToDB;
 using LinqToDB.Data;
 

@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Models.Values;
+﻿using Datalake.PublicApi.Models.Values;
 
 namespace Datalake.Server.BackgroundServices.Collector.Models;
 

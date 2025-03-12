@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Exceptions;
+﻿using Datalake.PublicApi.Exceptions;
 
 namespace Datalake.Database.Constants;
 

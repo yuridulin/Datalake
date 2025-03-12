@@ -1,4 +1,4 @@
-﻿using Datalake.Server.Constants;
+﻿using Datalake.PublicApi.Constants;
 using Datalake.Server.Services.SessionManager;
 using Datalake.Server.Services.SessionManager.Models;
 using Datalake.Server.Services.StateManager;

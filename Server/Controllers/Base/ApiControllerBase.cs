@@ -1,6 +1,6 @@
-﻿using Datalake.Database.Exceptions;
-using Datalake.Database.Models.Auth;
-using Datalake.Server.Constants;
+﻿using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Auth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Server.Controllers.Base

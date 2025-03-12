@@ -1,5 +1,5 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Models.Tags;
+using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
