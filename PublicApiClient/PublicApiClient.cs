@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
@@ -23,10 +24,11 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// </summary>
 	/// <param name="baseUri">Путь к серверу Datalake</param>
 	/// <param name="token">API ключ для доступа</param>
-	public DatalakePublicApiClient(string baseUri, string token)
+	public DatalakePublicApiClient(ILogger logger, string baseUri, string token)
 	{
 		_baseUri = baseUri;
 		_token = token;
+		_logger = logger;
 
 		_client = new HttpClient
 		{
@@ -38,12 +40,13 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	private string _baseUri;
 	private string _token;
 	private HttpClient _client;
+	private ILogger _logger;
 
-	const string Tags = "tags";
-	const string Values = "tags/values";
-	const string Blocks = "blocks";
-	const string BlocksTree = "blocks/tree";
-	const string Users = "users";
+	const string Tags = "api/tags";
+	const string Values = "api/tags/values";
+	const string Blocks = "api/blocks";
+	const string BlocksTree = "api/blocks/tree";
+	const string Users = "api/users";
 
 	/// <summary>
 	/// Получение списка тегов, включая информацию о источниках и настройках получения данных
@@ -82,6 +85,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 			RequestUri = new Uri(queryString, UriKind.Relative),
 		};
 
+		_logger.LogDebug("Datalake > {name}: {method} {uri}", nameof(GetTagsAsync), request.Method, request.RequestUri);
+
 		ProcessRequest(request);
 
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
@@ -107,6 +112,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 				encoding: Encoding.UTF8,
 				mediaType: MediaTypeNames.Application.Json),
 		};
+
+		_logger.LogDebug("Datalake > {name}: {method} {uri}", nameof(GetValuesAsync), request.Method, request.RequestUri);
 
 		ProcessRequest(request);
 
@@ -134,6 +141,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 				mediaType: MediaTypeNames.Application.Json),
 		};
 
+		_logger.LogDebug("Datalake > {name}: {method} {uri}", nameof(WriteValuesAsync), request.Method, request.RequestUri);
+
 		ProcessRequest(request);
 
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
@@ -153,6 +162,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 			Method = HttpMethod.Get,
 			RequestUri = new Uri(Blocks, UriKind.Relative),
 		};
+
+		_logger.LogWarning("Datalake > {name}: {method} {uri}", nameof(GetBlocksAsync), request.Method, new Uri(_client.BaseAddress!, request.RequestUri));
 
 		ProcessRequest(request);
 
@@ -174,6 +185,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 			RequestUri = new Uri(BlocksTree, UriKind.Relative),
 		};
 
+		_logger.LogDebug("Datalake > {name}: {method} {uri}", nameof(GetBlocksTreeAsync), request.Method, request.RequestUri);
+
 		ProcessRequest(request);
 
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
@@ -193,6 +206,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 			Method = HttpMethod.Get,
 			RequestUri = new Uri(Users, UriKind.Relative),
 		};
+
+		_logger.LogDebug("Datalake > {name}: {method} {uri}", nameof(GetUsersAsync), request.Method, request.RequestUri);
 
 		ProcessRequest(request);
 
@@ -219,6 +234,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 				encoding: Encoding.UTF8,
 				mediaType: MediaTypeNames.Application.Json),
 		};
+
+		_logger.LogDebug("Datalake > {name}: {method} {uri}", nameof(CreateUserAsync), request.Method, request.RequestUri);
 
 		ProcessRequest(request);
 
