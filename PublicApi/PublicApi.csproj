@@ -5,12 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>Datalake.$(MSBuildProjectName)</AssemblyName>
-    <RootNamespace>Datalake.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <SignAssembly>False</SignAssembly>
-    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <PackageId>Viten.$(AssemblyName)</PackageId>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <RootNamespace>Datalake.PublicApi</RootNamespace>
     <Title>Datalake.PublicApi</Title>
+    <PackageId>Viten.Datalake.PublicApi</PackageId>
+    <Version>2.2.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,5 +21,15 @@
   <ItemGroup>
     <Folder Include="Models\" />
   </ItemGroup>
+
+  <Target Name="UpdateCmdFile" AfterTargets="Pack">
+    <PropertyGroup>
+      <!-- Путь до файла cmd -->
+      <CmdFilePath>$(MSBuildProjectDirectory)\update-nuget.cmd</CmdFilePath>
+      <!-- Версия пакета из метаданных сборки -->
+      <PackageVersion>$(Version)</PackageVersion>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(CmdFilePath)" Lines="dotnet nuget push bin\Release\Viten.Datalake.PublicApi.$(PackageVersion).nupkg --api-key oy2dz4oynbbiqjkqtvoazyohbtn5uu2ethackdjxv3co7q --source https://api.nuget.org/v3/index.json" Overwrite="true" />
+  </Target>
 
 </Project>

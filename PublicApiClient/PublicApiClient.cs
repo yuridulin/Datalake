@@ -11,7 +11,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 
-namespace Datalake.PublicApi;
+namespace Datalake.PublicApiClient;
 
 /// <summary>
 /// Клиент для работы с сервером Datalake
@@ -54,7 +54,7 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// <param name="guids">Список глобальных идентификаторов тегов</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet(Tags)]
-	public async Task<ActionResult<TagInfo[]>> GetTagsAsync(
+	public virtual async Task<ActionResult<TagInfo[]>> GetTagsAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? id,
 		[FromQuery] string[]? names,
@@ -82,6 +82,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 			RequestUri = new Uri(queryString, UriKind.Relative),
 		};
 
+		ProcessRequest(request);
+
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
 		return await ReturnStreamResponse(response);
@@ -93,7 +95,7 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// <param name="requests">Список запросов с настройками</param>
 	/// <returns>Список ответов на запросы</returns>
 	[HttpPost(Values)]
-	public async Task<ActionResult<ValuesResponse[]>> GetValuesAsync(
+	public virtual async Task<ActionResult<ValuesResponse[]>> GetValuesAsync(
 		[BindRequired, FromBody] ValuesRequest[] requests)
 	{
 		var request = new HttpRequestMessage
@@ -106,6 +108,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 				mediaType: MediaTypeNames.Application.Json),
 		};
 
+		ProcessRequest(request);
+
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
 		return await ReturnStreamResponse(response);
@@ -117,7 +121,7 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// <param name="requests">Список запросов на изменение</param>
 	/// <returns>Список измененных начений</returns>
 	[HttpPut(Values)]
-	public async Task<ActionResult<ValuesTagResponse>> WriteValuesAsync(
+	public virtual async Task<ActionResult<ValuesTagResponse>> WriteValuesAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests)
 	{
 		var request = new HttpRequestMessage
@@ -130,6 +134,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 				mediaType: MediaTypeNames.Application.Json),
 		};
 
+		ProcessRequest(request);
+
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
 		return await ReturnStreamResponse(response);
@@ -140,13 +146,15 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// </summary>
 	/// <returns>Список блоков</returns>
 	[HttpGet(Blocks)]
-	public async Task<ActionResult<BlockWithTagsInfo[]>> GetBlocksAsync()
+	public virtual async Task<ActionResult<BlockWithTagsInfo[]>> GetBlocksAsync()
 	{
 		var request = new HttpRequestMessage
 		{
 			Method = HttpMethod.Get,
 			RequestUri = new Uri(Blocks, UriKind.Relative),
 		};
+
+		ProcessRequest(request);
 
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
@@ -158,13 +166,15 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// </summary>
 	/// <returns>Список обособленных блоков с вложенными блоками</returns>
 	[HttpGet(BlocksTree)]
-	public async Task<ActionResult<BlockTreeInfo[]>> GetBlocksTreeAsync()
+	public virtual async Task<ActionResult<BlockTreeInfo[]>> GetBlocksTreeAsync()
 	{
 		var request = new HttpRequestMessage
 		{
 			Method = HttpMethod.Get,
 			RequestUri = new Uri(BlocksTree, UriKind.Relative),
 		};
+
+		ProcessRequest(request);
 
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
@@ -176,13 +186,15 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// </summary>
 	/// <returns>Список пользователей</returns>
 	[HttpGet(Users)]
-	public async Task<ActionResult<UserInfo[]>> GetUsersAsync()
+	public virtual async Task<ActionResult<UserInfo[]>> GetUsersAsync()
 	{
 		var request = new HttpRequestMessage
 		{
 			Method = HttpMethod.Get,
 			RequestUri = new Uri(Users, UriKind.Relative),
 		};
+
+		ProcessRequest(request);
 
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
@@ -195,7 +207,7 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// <param name="userAuthRequest">Данные нового пользователя</param>
 	/// <returns>Идентификатор пользователя</returns>
 	[HttpPost(Users)]
-	public async Task<ActionResult<Guid>> CreateUserAsync(
+	public virtual async Task<ActionResult<Guid>> CreateUserAsync(
 		[BindRequired, FromBody] UserCreateRequest userAuthRequest)
 	{
 		var request = new HttpRequestMessage
@@ -208,12 +220,20 @@ public abstract class DatalakePublicApiClient : ControllerBase
 				mediaType: MediaTypeNames.Application.Json),
 		};
 
+		ProcessRequest(request);
+
 		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
 		return await ReturnStreamResponse(response);
 	}
 
+	protected abstract void ProcessRequest(HttpRequestMessage request);
 
+	protected virtual void SetUnderlyingUser(HttpRequestMessage request, Guid? userGuid = null)
+	{
+		if (userGuid != null)
+			request.Headers.Add(AuthConstants.UnderlyingUserGuidHeader, userGuid.ToString());
+	}
 
 	private async Task<FileStreamResult> ReturnStreamResponse(
 		HttpResponseMessage response)
