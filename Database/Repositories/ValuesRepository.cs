@@ -784,5 +784,126 @@ public class ValuesRepository(DatalakeContext db)
 		Quality = TagQuality.Bad,
 	};
 
+	internal async Task<TagHistory[]> GetWeightedAverage(int[] tagIdentifiers, DateTime? moment = null, AggregationPeriod period = AggregationPeriod.Hour)
+	{
+		// Задаем входные параметры
+		var now = moment ?? DateFormats.GetCurrentDateTime();
+
+		DateTime periodStart, periodEnd;
+		switch (period)
+		{
+			case AggregationPeriod.Munite:
+				periodEnd = now.RoundToFrequency(TagFrequency.ByMinute);
+				periodStart = periodEnd.AddMinutes(-1);
+				break;
+			case AggregationPeriod.Hour:
+				periodEnd = now.RoundToFrequency(TagFrequency.ByHour);
+				periodStart = periodEnd.AddHours(-1);
+				break;
+			case AggregationPeriod.Day:
+				periodEnd = now.RoundToFrequency(TagFrequency.ByDay);
+				periodStart = periodEnd.AddDays(-1);
+				break;
+			default:
+				throw new ForbiddenException("задан неподдерживаемый период");
+		}
+
+		var table = await db.TablesRepository.GetHistoryTableAsync(periodEnd);
+
+		// CTE: Последнее значение перед началом периода
+		var historyBefore =
+			from raw in table
+			where tagIdentifiers.Contains(raw.TagId) && raw.Date <= periodStart
+			select new
+			{
+				raw.TagId,
+				Date = periodStart, // Принудительная установка даты
+				raw.Number,
+				Order = Sql.Ext.RowNumber()
+					.Over()
+					.PartitionBy(raw.TagId)
+					.OrderBy(raw.Date)
+					.ToValue()
+			} into historyBeforeTemp
+			where historyBeforeTemp.Order == 1
+			select new
+			{
+				historyBeforeTemp.TagId,
+				historyBeforeTemp.Date,
+				historyBeforeTemp.Number
+			};
+
+		// CTE: Значения в пределах периода
+		var historyBetween =
+			from raw in table
+			where
+				tagIdentifiers.Contains(raw.TagId) &&
+				raw.Date > periodStart &&
+				raw.Date < periodEnd
+			select new
+			{
+				raw.TagId,
+				raw.Date,
+				raw.Number
+			};
+
+		// CTE: Объединение двух выборок (UNION ALL)
+		var history = historyBefore.Concat(historyBetween);
+
+		// CTE: Добавление "следующей даты" (аналог LEAD с оконной функцией)
+		var historyWithNext =
+			from h in history
+			select new
+			{
+				h.TagId,
+				h.Date,
+				h.Number,
+				NextDate = Sql.Ext.Lead(h.Date, 1, periodEnd)
+					.Over()
+					.PartitionBy(h.TagId)
+					.OrderBy(h.Date)
+					.ToValue()
+			};
+
+		// CTE: Вычисление длительности действия каждого значения
+		var weighted =
+			from h in historyWithNext
+			select new
+			{
+				h.TagId,
+				h.Number,
+				Duration = Sql.DateDiff(Sql.DateParts.Second, h.Date, h.NextDate),
+			};
+
+		// Финальный запрос: расчет взвешенного среднего
+		var result =
+			from w in weighted
+			group w by w.TagId into g
+			select new
+			{
+				TagId = g.Key,
+				Average = g.Sum(x => x.Number * x.Duration) / g.Sum(x => x.Duration)
+			};
+
+		var aggregated = await result.ToArrayAsync();
+
+		// Выполнение запроса
+		foreach (var avg in aggregated.OrderBy(x => x.TagId))
+		{
+			Console.WriteLine($"TagId: {avg.TagId}, Average: {avg.Average}");
+		}
+
+		return aggregated
+			.Select(x => new TagHistory
+			{
+				Date = periodEnd,
+				Number = x.Average,
+				Quality = TagQuality.Good,
+				TagId = x.TagId,
+				Text = null,
+			})
+			.ToArray();
+	}
+
 	#endregion
 }

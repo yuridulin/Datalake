@@ -113,6 +113,14 @@ public class Tag
 	[Column]
 	public string? Formula { get; set; }
 
+	// специфичные для агрегированных
+
+	/// <summary>
+	/// Тип агрегации
+	/// </summary>
+	[Column]
+	public TagAggregation Aggregation { get; set; }
+
 	// связи
 
 	/// <summary>
