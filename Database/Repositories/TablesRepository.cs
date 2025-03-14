@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Tables;
+﻿using Datalake.Database.Models;
+using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tables;
 using LinqToDB;
@@ -78,6 +79,23 @@ public class TablesRepository(DatalakeContext db)
 	internal const string DateMask = "yyyy_MM_dd";
 	internal const string IndexPostfix = "_idx";
 
+	/// <summary>
+	/// Обработчик события создания таблицы
+	/// </summary>
+	/// <param name="sender">Репозиторий</param>
+	/// <param name="e">Сопутствующие данные</param>
+	public delegate void TableCreationHandler(object sender, TableCreationEventArgs e);
+
+	/// <summary>
+	/// Событие при создании таблицы
+	/// </summary>
+	public event TableCreationHandler? TableCreation;
+
+	private void TriggerTableCreation(string tableName)
+	{
+		TableCreation?.Invoke(this, new TableCreationEventArgs { TableName = tableName });
+	}
+
 	internal static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
 
 	internal static DateTime GetTableDate(string tableName) => DateTime.TryParseExact(
@@ -125,6 +143,19 @@ public class TablesRepository(DatalakeContext db)
 				Type = LogType.Trace,
 				Text = "Создана партиция: " + tableName + ". Количество начальных значений: " + initialCount,
 			});
+
+			TriggerTableCreation(tableName);
+
+			// если это очередная новая партиция, значит старая закончилась
+			// создаем для нее индекс сразу
+			if (date == DateTime.Today)
+			{
+				var previousTableDate = GetPreviousTableDate(date);
+				if (previousTableDate.HasValue && CachedTables.TryGetValue(previousTableDate.Value, out var previousTableName))
+				{
+					await CreateHistoryIndex(previousTableName);
+				}
+			}
 		}
 
 		return table;
@@ -166,7 +197,7 @@ public class TablesRepository(DatalakeContext db)
 				select new TagHistory
 				{
 					TagId = lastValue.TagId,
-					Date = lastValue.Date > date ? lastValue.Date : date,
+					Date = lastValue.Date,// > date ? lastValue.Date : date,
 					Text = lastValue.Text,
 					Number = lastValue.Number,
 					Quality = (short)lastValue.Quality >= 192 ? TagQuality.Good_LOCF : TagQuality.Bad_LOCF,
@@ -202,7 +233,7 @@ public class TablesRepository(DatalakeContext db)
 
 	async Task PostgreSQL_CreateHistoryIndex(string tableName)
 	{
-		await db.ExecuteAsync($"CREATE INDEX {tableName.ToLower()}{IndexPostfix} " +
+		await db.ExecuteAsync($"CREATE INDEX IF NOT EXISTS {tableName.ToLower()}{IndexPostfix} " +
 			$"ON public.\"{tableName}\" (\"{nameof(TagHistory.TagId)}\", \"{nameof(TagHistory.Date)}\");");
 	}
 
