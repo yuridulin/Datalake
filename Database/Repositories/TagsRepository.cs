@@ -292,7 +292,7 @@ public class TagsRepository(DatalakeContext db)
 	{
 		var transaction = await db.BeginTransactionAsync();
 
-		updateRequest.Name = ValueChecker.RemoveWhitespaces(updateRequest.Name, "_");
+		updateRequest.Name = updateRequest.Name.RemoveWhitespaces("_");
 
 		var tag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
 			?? throw new NotFoundException($"тег {guid}");
@@ -312,6 +312,9 @@ public class TagsRepository(DatalakeContext db)
 			updateRequest.SourceItem = null;
 		}
 
+		if (updateRequest.SourceTagId == tag.Id)
+			throw new InvalidValueException("Тег не может быть источником значений для самого себя");
+
 		int count = await db.Tags
 			.Where(x => x.GlobalGuid == guid)
 			.Set(x => x.Name, updateRequest.Name)
@@ -326,6 +329,9 @@ public class TagsRepository(DatalakeContext db)
 			.Set(x => x.MaxRaw, updateRequest.MaxRaw)
 			.Set(x => x.MinRaw, updateRequest.MinRaw)
 			.Set(x => x.Formula, updateRequest.Formula)
+			.Set(x => x.SourceTagId, updateRequest.SourceTagId)
+			.Set(x => x.Aggregation, updateRequest.Aggregation)
+			.Set(x => x.AggregationPeriod, updateRequest.AggregationPeriod)
 			.UpdateAsync();
 
 		if (count != 1)
@@ -455,6 +461,9 @@ public class TagsRepository(DatalakeContext db)
 				SourceItem = tag.SourceItem,
 				SourceType = source != null ? source.Type : SourceType.NotSet,
 				SourceName = source != null ? source.Name : "Unknown",
+				SourceTagId = tag.SourceTagId,
+				Aggregation = tag.Aggregation,
+				AggregationPeriod = tag.AggregationPeriod,
 			};
 
 		return query;

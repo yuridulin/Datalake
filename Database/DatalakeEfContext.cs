@@ -97,6 +97,13 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.HasForeignKey(input => input.InputTagId)
 			.OnDelete(DeleteBehavior.SetNull);
 
+		// связь тегов с входными тегами для агрегирования
+		modelBuilder.Entity<Tag>()
+			.HasOne(tag => tag.SourceTag)
+			.WithMany()
+			.HasForeignKey(tag => tag.SourceTagId)
+			.OnDelete(DeleteBehavior.SetNull);
+
 		// связи модели прав с объектами
 
 		modelBuilder.Entity<AccessRights>()
