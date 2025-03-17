@@ -1,11 +1,11 @@
-﻿using Datalake.Database.Constants;
-using Datalake.Database.Enums;
-using Datalake.Database.Exceptions;
-using Datalake.Database.Extensions;
-using Datalake.Database.Models.Auth;
-using Datalake.Database.Models.Tags;
-using Datalake.Database.Models.Values;
+﻿using Datalake.Database.Extensions;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Tags;
+using Datalake.PublicApi.Models.Values;
 using LinqToDB;
 using LinqToDB.Data;
 using System.Diagnostics;
@@ -783,6 +783,146 @@ public class ValuesRepository(DatalakeContext db)
 		Number = null,
 		Quality = TagQuality.Bad,
 	};
+
+	/// <summary>
+	/// Расчет средневзвешенных и взвешенных сумм по тегам. Взвешивание по секундам
+	/// </summary>
+	/// <param name="tagIdentifiers">Идентификаторы тегов</param>
+	/// <param name="moment">Момент времени, относительно которого определяется прошедший период</param>
+	/// <param name="period">Размер прошедшего периода</param>
+	/// <returns>По одному значению на каждый тег</returns>
+	/// <exception cref="ForbiddenException"></exception>
+	internal async Task<TagHistory[]> GetWeightedAggregated(int[] tagIdentifiers, DateTime? moment = null, AggregationPeriod period = AggregationPeriod.Hour)
+	{
+		// Задаем входные параметры
+		var now = moment ?? DateFormats.GetCurrentDateTime();
+
+		DateTime periodStart, periodEnd;
+		switch (period)
+		{
+			case AggregationPeriod.Munite:
+				periodEnd = now.RoundToFrequency(TagFrequency.ByMinute);
+				periodStart = periodEnd.AddMinutes(-1);
+				break;
+			case AggregationPeriod.Hour:
+				periodEnd = now.RoundToFrequency(TagFrequency.ByHour);
+				periodStart = periodEnd.AddHours(-1);
+				break;
+			case AggregationPeriod.Day:
+				periodEnd = now.RoundToFrequency(TagFrequency.ByDay);
+				periodStart = periodEnd.AddDays(-1);
+				break;
+			default:
+				throw new ForbiddenException("задан неподдерживаемый период");
+		}
+
+		ITable<TagHistory> tableStart;
+		ITable<TagHistory> tableEnd;
+		IQueryable<TagHistory> source;
+
+		if (periodStart.Date == periodEnd.Date)
+		{
+			tableEnd = await db.TablesRepository.GetHistoryTableAsync(periodEnd);
+			tableStart = tableEnd;
+			source = from value in tableEnd select value;
+		}
+		else
+		{
+			tableStart = await db.TablesRepository.GetHistoryTableAsync(periodStart);
+			tableEnd = await db.TablesRepository.GetHistoryTableAsync(periodEnd);
+			source = tableStart.Concat(tableEnd);
+		}
+
+			// CTE: Последнее значение перед началом периода
+			var historyBefore =
+				from raw in tableStart
+				where tagIdentifiers.Contains(raw.TagId) && raw.Date <= periodStart
+				select new
+				{
+					raw.TagId,
+					Date = periodStart, // Принудительная установка даты
+					raw.Number,
+					Order = Sql.Ext.RowNumber()
+						.Over()
+						.PartitionBy(raw.TagId)
+						.OrderBy(raw.Date)
+						.ToValue()
+				} into historyBeforeTemp
+				where historyBeforeTemp.Order == 1
+				select new
+				{
+					historyBeforeTemp.TagId,
+					historyBeforeTemp.Date,
+					historyBeforeTemp.Number
+				};
+
+		// CTE: Значения в пределах периода
+		var historyBetween =
+			from raw in source
+			where
+				tagIdentifiers.Contains(raw.TagId) &&
+				raw.Date > periodStart &&
+				raw.Date < periodEnd
+			select new
+			{
+				raw.TagId,
+				raw.Date,
+				raw.Number
+			};
+
+		// CTE: Объединение двух выборок (UNION ALL)
+		var history = historyBefore.Concat(historyBetween);
+
+		// CTE: Добавление следующей даты, чтобы относительно ее посчитать длительность актуальности значения
+		var historyWithNext =
+			from h in history
+			select new
+			{
+				h.TagId,
+				h.Date,
+				h.Number,
+				NextDate = Sql.Ext.Lead(h.Date, 1, periodEnd)
+					.Over()
+					.PartitionBy(h.TagId)
+					.OrderBy(h.Date)
+					.ToValue()
+			};
+
+		// CTE: Вычисление длительности действия каждого значения
+		var weighted =
+			from h in historyWithNext
+			select new
+			{
+				h.TagId,
+				h.Number,
+				Weight = Sql.DateDiff(Sql.DateParts.Second, h.Date, h.NextDate),
+			};
+
+		// Финальный запрос - применяем веса
+		var result =
+			from w in weighted
+			group w by w.TagId into g
+			select new
+			{
+				TagId = g.Key,
+				Sum = g.Sum(x => x.Number * x.Weight),
+				Average = g.Sum(x => x.Number * x.Weight) / g.Sum(x => x.Weight),
+			};
+
+		// Выполнение запроса
+		var aggregated = await result.ToArrayAsync();
+
+		return aggregated
+			.Select(x => new TagHistory
+			{
+				Date = now,
+				Number = x.Average,
+				Quality = TagQuality.Good,
+				TagId = x.TagId,
+				Text = null,
+			})
+			.ToArray();
+	}
 
 	#endregion
 }

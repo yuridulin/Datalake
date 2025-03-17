@@ -1,8 +1,8 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Exceptions;
-using Datalake.Database.Models.Auth;
-using Datalake.Database.Models.Users;
 using Datalake.Database.Repositories;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Users;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Models;
 using Datalake.Server.Services.SessionManager;
@@ -31,7 +31,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.HasGlobalAccess(user, Database.Enums.AccessType.Admin);
+		AccessRepository.HasGlobalAccess(user, PublicApi.Enums.AccessType.Admin);
 
 		var settings = await db.SystemRepository.GetSettingsAsSystemAsync();
 

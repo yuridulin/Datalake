@@ -1,6 +1,6 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Exceptions;
-using Datalake.Database.Models.Blocks;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Blocks;
 using Datalake.Server.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

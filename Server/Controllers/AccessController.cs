@@ -1,5 +1,5 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Models.AccessRights;
+using Datalake.PublicApi.Models.AccessRights;
 using Datalake.Server.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 

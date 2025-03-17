@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.PublicApi.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;

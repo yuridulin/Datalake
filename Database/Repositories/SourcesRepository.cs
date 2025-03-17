@@ -1,10 +1,9 @@
-﻿using Datalake.Database.Enums;
-using Datalake.Database.Exceptions;
-using Datalake.Database.Extensions;
-using Datalake.Database.Models.Auth;
-using Datalake.Database.Models.Sources;
-using Datalake.Database.Models.Tags;
+﻿using Datalake.Database.Extensions;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Sources;
 using LinqToDB;
 
 namespace Datalake.Database.Repositories;
@@ -356,7 +355,7 @@ public class SourcesRepository(DatalakeContext db)
 	/// <param name="id">Идентификатор источника</param>
 	internal IQueryable<SourceTagInfo> QueryExistTags(int id)
 	{
-		var query = 
+		var query =
 			from source in db.Sources.Where(x => x.Id == id)
 			from tag in db.Tags.InnerJoin(x => x.SourceId == source.Id)
 			select new SourceTagInfo

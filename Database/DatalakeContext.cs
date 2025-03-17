@@ -1,8 +1,7 @@
-﻿using Datalake.Database.Constants;
-using Datalake.Database.Enums;
-using Datalake.Database.Extensions;
+﻿using Datalake.Database.Extensions;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Constants;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;

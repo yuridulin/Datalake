@@ -1,5 +1,5 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Constants;
+using Datalake.PublicApi.Constants;
 using System.Diagnostics;
 
 namespace Datalake.Server.BackgroundServices.HistoryIndexer;

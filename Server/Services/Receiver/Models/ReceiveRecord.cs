@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.PublicApi.Enums;
 
 namespace Datalake.Server.Services.Receiver.Models;
 

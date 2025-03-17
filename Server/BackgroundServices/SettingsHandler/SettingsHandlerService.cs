@@ -1,6 +1,6 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Constants;
 using Datalake.Database.Repositories;
+using Datalake.PublicApi.Constants;
 using Datalake.Server.Services.SessionManager;
 using Datalake.Server.Services.SessionManager.Models;
 using System.Diagnostics;

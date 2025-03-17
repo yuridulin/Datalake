@@ -1,6 +1,6 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Models.Sources;
 using Datalake.Database.Repositories;
+using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using LinqToDB;

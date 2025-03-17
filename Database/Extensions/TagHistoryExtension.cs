@@ -1,9 +1,9 @@
-﻿using Datalake.Database.Constants;
-using Datalake.Database.Enums;
-using Datalake.Database.Extensions;
-using Datalake.Database.Models.Tags;
-using Datalake.Database.Models.Values;
+﻿using Datalake.Database.Extensions;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Tags;
+using Datalake.PublicApi.Models.Values;
 
 internal static class TagHistoryExtension
 {

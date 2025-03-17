@@ -1,6 +1,6 @@
-﻿using Datalake.Database.Models.Auth;
-using Datalake.Database.Repositories;
-using Datalake.Server.Constants;
+﻿using Datalake.Database.Repositories;
+using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Models.Auth;
 using Datalake.Server.Services.SessionManager.Models;
 
 namespace Datalake.Server.Services.SessionManager;

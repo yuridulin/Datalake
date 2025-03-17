@@ -1,0 +1,35 @@
+﻿using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.AccessRights;
+using System.ComponentModel.DataAnnotations;
+
+namespace Datalake.PublicApi.Models.UserGroups;
+
+/// <summary>
+/// Расширенная информация о группе пользователей, включающая вложенные группы и список пользователей
+/// </summary>
+public class UserGroupDetailedInfo : UserGroupInfo
+{
+	/// <summary>
+	/// Общий уровень доступа для всех участников группы
+	/// </summary>
+	[Required]
+	public required AccessType GlobalAccessType { get; set; }
+
+	/// <summary>
+	/// Список пользователей этой группы
+	/// </summary>
+	[Required]
+	public required UserGroupUsersInfo[] Users { get; set; } = [];
+
+	/// <summary>
+	/// Список подгрупп этой группы
+	/// </summary>
+	[Required]
+	public required UserGroupSimpleInfo[] Subgroups { get; set; } = [];
+
+	/// <summary>
+	/// Разрешения, выданные на эту группу
+	/// </summary>
+	[Required]
+	public required AccessRightsForOneInfo[] AccessRights { get; set; } = [];
+}

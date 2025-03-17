@@ -9,6 +9,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["/Server/Server.csproj", "Server/"]
 COPY ["/Database/Database.csproj", "Database/"]
+COPY ["/PublicApi/PublicApi.csproj", "PublicApi/"]
 RUN dotnet restore "./Server/Server.csproj"
 COPY . .
 WORKDIR "/src/Server"

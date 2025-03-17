@@ -1,7 +1,7 @@
-﻿using Datalake.Database.Constants;
-using Datalake.Database.Enums;
-using Datalake.Database.Models.Sources;
-using Datalake.Database.Repositories;
+﻿using Datalake.Database.Repositories;
+using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using NCalc;
@@ -36,7 +36,7 @@ internal class CalculateCollector : CollectorBase
 				scopedTag.PreviousNumber = initial as float?;
 			else
 				scopedTag.PreviousValue = initial;
-			
+
 
 			_expressions.Add(tag.Id, scopedTag);
 
@@ -168,4 +168,3 @@ internal class CalculateCollector : CollectorBase
 		public object? PreviousValue;
 	}
 }
-

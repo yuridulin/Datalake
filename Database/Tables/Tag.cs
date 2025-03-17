@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Enums;
+﻿using Datalake.PublicApi.Enums;
 using LinqToDB.Mapping;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -112,6 +112,14 @@ public class Tag
 	/// </summary>
 	[Column]
 	public string? Formula { get; set; }
+
+	// специфичные для агрегированных
+
+	/// <summary>
+	/// Тип агрегации
+	/// </summary>
+	[Column]
+	public TagAggregation Aggregation { get; set; }
 
 	// связи
 

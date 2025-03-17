@@ -18,7 +18,7 @@ export default function CreatedTagLinker({
 			<Alert
 				message={
 					<>
-						Создан тег:
+						Создан тег:&ensp;
 						<NavLink
 							to={routes.tags.toTagForm(tag.guid)}
 							target='_blank'
@@ -30,7 +30,7 @@ export default function CreatedTagLinker({
 				}
 				closable
 				afterClose={onClose}
-			></Alert>
+			/>
 			<br />
 		</>
 	)
