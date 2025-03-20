@@ -1,5 +1,5 @@
-﻿using Datalake.Database.Models.Auth;
-using Datalake.Database.Models.Users;
+﻿using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Users;
 using LinqToDB;
 using LinqToDB.AspNet.Logging;
 using Microsoft.EntityFrameworkCore;

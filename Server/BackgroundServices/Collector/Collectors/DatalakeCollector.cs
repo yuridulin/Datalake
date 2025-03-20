@@ -13,7 +13,7 @@ namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 internal class DatalakeCollector(
 	ReceiverService receiverService,
 	SourceWithTagsInfo source,
-	ILogger<DatalakeCollector> logger) : CollectorBase(source, logger)
+	ILogger<DatalakeCollector> logger) : CollectorBase(source.Name, source, logger)
 {
 	public override event CollectEvent? CollectValues;
 

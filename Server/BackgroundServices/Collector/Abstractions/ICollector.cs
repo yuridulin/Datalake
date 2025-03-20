@@ -16,27 +16,17 @@ public delegate void CollectEvent(ICollector collector, IEnumerable<CollectValue
 public interface ICollector
 {
 	/// <summary>
-	/// Имя сборщика данных
-	/// </summary>
-	public string Name { get; set; }
-
-	/// <summary>
-	/// Тип сборщика данных
-	/// </summary>
-	public SourceType Type { get; set; }
-
-	/// <summary>
 	/// Запуск сбора данных
 	/// </summary>
-	public Task Start(CancellationToken stoppingToken);
+	Task Start(CancellationToken stoppingToken);
 
 	/// <summary>
 	/// Прекращение сбора данных
 	/// </summary>
-	public Task Stop();
+	Task Stop();
 
 	/// <summary>
 	/// Событие получения набора новых значений
 	/// </summary>
-	public event CollectEvent CollectValues;
+	event CollectEvent CollectValues;
 }

@@ -4,6 +4,7 @@ import {
 	AttachedTag,
 	BlockTagRelation,
 	BlockUpdateRequest,
+	SourceType,
 	TagFrequency,
 	TagType,
 } from '@/api/swagger/data-contracts'
@@ -11,11 +12,7 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import notify from '@/state/notifications'
 import { user } from '@/state/user'
-import {
-	CreditCardOutlined,
-	MinusCircleOutlined,
-	PlusOutlined,
-} from '@ant-design/icons'
+import { CreditCardOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Dropdown, Form, Input, Popconfirm, Select, Space } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
@@ -27,7 +24,6 @@ const BlockForm = observer(() => {
 	const [form] = Form.useForm<BlockUpdateRequest>()
 
 	const [block, setBlock] = useState({} as BlockUpdateRequest)
-	/* const [tagsRaw, setTagsRaw] = useState([] as TagSimpleInfo[]) */
 	const [tags, setTags] = useState([] as { label: string; value: number }[])
 
 	const getBlock = () => {
@@ -49,7 +45,6 @@ const BlockForm = observer(() => {
 
 	const getTags = () => {
 		api.tagsReadAll().then((res) => {
-			/* setTagsRaw(res.data) */
 			setTags(
 				res.data
 					.map((x) => ({
@@ -67,21 +62,10 @@ const BlockForm = observer(() => {
 	return (
 		<>
 			<PageHeader
-				left={
-					<Button
-						onClick={() =>
-							navigate(routes.blocks.toViewBlock(Number(id)))
-						}
-					>
-						Вернуться
-					</Button>
-				}
+				left={<Button onClick={() => navigate(routes.blocks.toViewBlock(Number(id)))}>Вернуться</Button>}
 				right={
 					<>
-						{user.hasAccessToBlock(
-							AccessType.Admin,
-							Number(id),
-						) && (
+						{user.hasAccessToBlock(AccessType.Admin, Number(id)) && (
 							<Popconfirm
 								title='Вы уверены, что хотите удалить этот блок?'
 								placement='bottom'
@@ -100,8 +84,7 @@ const BlockForm = observer(() => {
 				}
 			>
 				<Space>
-					<CreditCardOutlined style={{ fontSize: '20px' }} />{' '}
-					{block.name}
+					<CreditCardOutlined style={{ fontSize: '20px' }} /> {block.name}
 				</Space>
 			</PageHeader>
 
@@ -110,10 +93,7 @@ const BlockForm = observer(() => {
 					<Input placeholder='Введите простое имя блока' />
 				</Form.Item>
 				<Form.Item label='Описание' name='description'>
-					<Input.TextArea
-						placeholder='Описание блока'
-						autoSize={{ minRows: 2, maxRows: 8 }}
-					/>
+					<Input.TextArea placeholder='Описание блока' autoSize={{ minRows: 2, maxRows: 8 }} />
 				</Form.Item>
 				<Form.List name='tags'>
 					{(fields, { add, remove }) => (
@@ -132,126 +112,81 @@ const BlockForm = observer(() => {
 															key: '1',
 															label: 'Создать строковый мануальный тег и добавить как значение',
 															onClick: () => {
-																api.tagsCreate({
-																	blockId:
-																		Number(
-																			id,
-																		),
-																	tagType:
-																		TagType.String,
-																	frequency:
-																		TagFrequency.NotSet,
-																}).then(
-																	(res) => {
-																		setTags(
-																			[
-																				...tags,
-																				{
-																					label: res
-																						.data
-																						.name,
-																					value: res
-																						.data
-																						.id,
-																				},
-																			],
-																		)
+																api
+																	.tagsCreate({
+																		blockId: Number(id),
+																		tagType: TagType.String,
+																		frequency: TagFrequency.NotSet,
+																		sourceId: SourceType.Manual,
+																	})
+																	.then((res) => {
+																		setTags([
+																			...tags,
+																			{
+																				label: res.data.name,
+																				value: res.data.id,
+																			},
+																		])
 																		add({
-																			id: res
-																				.data
-																				.id,
-																			name: res
-																				.data
-																				.name,
-																			relation:
-																				BlockTagRelation.Static,
+																			id: res.data.id,
+																			name: res.data.name,
+																			relation: BlockTagRelation.Static,
 																		} as AttachedTag)
-																	},
-																)
+																	})
 															},
 														},
 														{
 															key: '2',
 															label: 'Создать числовой мануальный тег и добавить как значение',
 															onClick: () => {
-																api.tagsCreate({
-																	blockId:
-																		Number(
-																			id,
-																		),
-																	tagType:
-																		TagType.Number,
-																	frequency:
-																		TagFrequency.NotSet,
-																}).then(
-																	(res) => {
-																		setTags(
-																			[
-																				...tags,
-																				{
-																					label: res
-																						.data
-																						.name,
-																					value: res
-																						.data
-																						.id,
-																				},
-																			],
-																		)
+																api
+																	.tagsCreate({
+																		blockId: Number(id),
+																		tagType: TagType.Number,
+																		frequency: TagFrequency.NotSet,
+																		sourceId: SourceType.Manual,
+																	})
+																	.then((res) => {
+																		setTags([
+																			...tags,
+																			{
+																				label: res.data.name,
+																				value: res.data.id,
+																			},
+																		])
 																		add({
-																			id: res
-																				.data
-																				.id,
-																			name: res
-																				.data
-																				.name,
-																			relation:
-																				BlockTagRelation.Static,
+																			id: res.data.id,
+																			name: res.data.name,
+																			relation: BlockTagRelation.Static,
 																		} as AttachedTag)
-																	},
-																)
+																	})
 															},
 														},
 														{
 															key: '3',
 															label: 'Создать логический мануальный тег и добавить как значение',
 															onClick: () => {
-																api.tagsCreate({
-																	blockId:
-																		Number(
-																			id,
-																		),
-																	tagType:
-																		TagType.Boolean,
-																	frequency:
-																		TagFrequency.NotSet,
-																}).then(
-																	(res) => {
-																		setTags(
-																			[
-																				...tags,
-																				{
-																					label: res
-																						.data
-																						.name,
-																					value: res
-																						.data
-																						.id,
-																				},
-																			],
-																		)
+																api
+																	.tagsCreate({
+																		blockId: Number(id),
+																		tagType: TagType.Boolean,
+																		frequency: TagFrequency.NotSet,
+																		sourceId: SourceType.Manual,
+																	})
+																	.then((res) => {
+																		setTags([
+																			...tags,
+																			{
+																				label: res.data.name,
+																				value: res.data.id,
+																			},
+																		])
 																		add({
-																			id: res
-																				.data
-																				.id,
-																			name: res
-																				.data
-																				.name,
-																			relation:
-																				BlockTagRelation.Static,
+																			id: res.data.id,
+																			name: res.data.name,
+																			relation: BlockTagRelation.Static,
 																		} as AttachedTag)
-																	},
-																)
+																	})
 															},
 														},
 													],
@@ -268,39 +203,23 @@ const BlockForm = observer(() => {
 								{fields.map(({ key, name, ...rest }) => (
 									<tr key={key}>
 										<td>
-											<Form.Item
-												{...rest}
-												name={[name, 'name']}
-											>
+											<Form.Item {...rest} name={[name, 'name']}>
 												<Input placeholder='Введите имя значения в контексте блока' />
 											</Form.Item>
 										</td>
 										<td>
-											<Form.Item
-												{...rest}
-												name={[name, 'id']}
-												/* getValueProps={(value) => ({
-													value,
-												})}
-												getValueFromEvent={(event) =>
-													event
-												} */
-											>
+											<Form.Item {...rest} name={[name, 'id']}>
 												<Select
 													showSearch
 													optionFilterProp='label'
 													options={tags}
 													placeholder='Выберите тег для прикрепления'
 												></Select>
-												{/* <TagTreeSelect tags={tagsRaw} /> */}
 											</Form.Item>
 										</td>
 										<td>
 											<Form.Item>
-												<Button
-													onClick={() => remove(name)}
-													title='Удалить значение'
-												>
+												<Button onClick={() => remove(name)} title='Удалить значение'>
 													<MinusCircleOutlined />
 												</Button>
 											</Form.Item>

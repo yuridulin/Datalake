@@ -284,7 +284,7 @@ public class SourcesRepository(DatalakeContext db)
 	/// <summary>
 	/// Не настраиваемые источники данных
 	/// </summary>
-	internal static readonly SourceType[] CustomSourcesId = [SourceType.System, SourceType.Calculated, SourceType.Manual, SourceType.NotSet];
+	internal static readonly SourceType[] CustomSourcesId = [SourceType.System, SourceType.Calculated, SourceType.Manual, SourceType.Aggregated, SourceType.NotSet];
 
 	/// <summary>
 	/// Запрос информации о источниках без связей
@@ -322,6 +322,7 @@ public class SourcesRepository(DatalakeContext db)
 				Type = source.Type,
 				Tags = (
 					from tag in db.Tags
+					from sourceTag in db.Tags.LeftJoin(x => x.Id == tag.SourceTagId)
 					where tag.SourceId == source.Id
 					select new SourceTagInfo
 					{
@@ -342,6 +343,9 @@ public class SourcesRepository(DatalakeContext db)
 						Type = tag.Type,
 						Frequency = tag.Frequency,
 						SourceType = source.Type,
+						Aggregation = tag.Aggregation,
+						AggregationPeriod = tag.AggregationPeriod,
+						SourceTag = sourceTag == null ? null : new SourceTagInfo.TagInputMinimalInfo { InputTagId = sourceTag.Id, VariableName = sourceTag.Name },
 					}
 				).ToArray(),
 			};
