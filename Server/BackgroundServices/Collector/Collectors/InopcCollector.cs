@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Constants;
+﻿using Datalake.Database.Tables;
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
@@ -14,9 +15,8 @@ internal class InopcCollector : CollectorBase
 		ReceiverService receiverService,
 		SourcesStateService sourcesStateService,
 		SourceWithTagsInfo source,
-		ILogger<InopcCollector> logger) : base(source, logger)
+		ILogger<InopcCollector> logger) : base(source.Name, source, logger)
 	{
-		_logger = logger;
 		_receiverService = receiverService;
 		_stateService = sourcesStateService;
 		_address = source.Address ?? throw new InvalidOperationException();
@@ -78,7 +78,6 @@ internal class InopcCollector : CollectorBase
 	private readonly SourcesStateService _stateService;
 	private readonly Dictionary<string, Guid[]> _itemsTags;
 	private readonly CancellationTokenSource _tokenSource;
-	private ILogger<InopcCollector> _logger;
 	private readonly Dictionary<Guid, CollectValue> _previousValues;
 
 	private async Task Work()

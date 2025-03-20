@@ -14,10 +14,9 @@ internal class OldDatalakeCollector : CollectorBase
 		ReceiverService receiverService,
 		SourcesStateService sourcesStateService,
 		SourceWithTagsInfo source,
-		ILogger<OldDatalakeCollector> logger) : base(source, logger)
+		ILogger<OldDatalakeCollector> logger) : base(source.Name, source, logger)
 	{
 		_id = source.Id;
-		_logger = logger;
 		_receiverService = receiverService;
 		_stateService = sourcesStateService;
 		_address = source.Address ?? throw new InvalidOperationException();
@@ -81,15 +80,12 @@ internal class OldDatalakeCollector : CollectorBase
 	private readonly ReceiverService _receiverService;
 	private readonly SourcesStateService _stateService;
 	private readonly CancellationTokenSource _tokenSource;
-	private ILogger<OldDatalakeCollector> _logger;
 	private readonly Dictionary<Guid, CollectValue> _previousValues;
 
 	private async Task Work()
 	{
 		List<CollectValue> collectedValues;
 		List<Item> updatedItems;
-
-		_logger.LogDebug("Старт опроса Datalake (old) [{id}][{address}]", _id, _address);
 
 		while (!_tokenSource.Token.IsCancellationRequested)
 		{
@@ -141,7 +137,7 @@ internal class OldDatalakeCollector : CollectorBase
 			}
 			catch (Exception ex)
 			{
-				_logger.LogWarning("Ошибка в сборщике Datalake (old) [{id}]: {message}", _id, ex.Message);
+				_logger.LogWarning("Ошибка в сборщике {name}: {message}", _name, _id, ex.Message);
 				_stateService.UpdateSource(_id, connected: false);
 			}
 			finally

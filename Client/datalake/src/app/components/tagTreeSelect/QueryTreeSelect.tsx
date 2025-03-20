@@ -17,11 +17,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 interface QueryTreeSelectProps {
-	onChange: (
-		value: number[],
-		tagMapping: FlattenedNestedTagsType,
-		checkedNodes: DefaultOptionType[],
-	) => void
+	onChange: (value: number[], tagMapping: FlattenedNestedTagsType, checkedNodes: DefaultOptionType[]) => void
 }
 
 const flattenNestedTags = (
@@ -37,46 +33,45 @@ const flattenNestedTags = (
 				parents: currentParents,
 			}
 		})
-		const childrenMapping = flattenNestedTags(
-			block.children,
-			currentParents,
-		)
+		const childrenMapping = flattenNestedTags(block.children, currentParents)
 		mapping = { ...mapping, ...childrenMapping }
 	})
 
 	return mapping
 }
 
-const convertToTreeSelectNodes = (
-	blockTree: BlockTreeInfo[],
-): DefaultOptionType[] => {
-	return blockTree.map((block) => ({
-		title: (
-			<>
-				<BlockIcon />
-				&ensp;{block.name}
-			</>
-		),
-		fullTitle: block.name,
-		key: 0 - block.id,
-		value: 0 - block.id,
-		children: [
-			...block.tags.map((tag) => ({
-				title: (
-					<>
-						<TagIcon type={tag.sourceType} />
-						&ensp;
-						{tag.localName}&ensp;
-						<TagFrequencyEl frequency={tag.frequency} />
-					</>
-				),
-				fullTitle: tag.localName,
-				key: tag.id,
-				value: tag.id,
-			})),
-			...convertToTreeSelectNodes(block.children),
-		],
-	}))
+const convertToTreeSelectNodes = (blockTree: BlockTreeInfo[]): DefaultOptionType[] => {
+	return blockTree
+		.map((block) => ({
+			title: (
+				<>
+					<BlockIcon />
+					&ensp;{block.name}
+				</>
+			),
+			fullTitle: block.name,
+			key: 0 - block.id,
+			value: 0 - block.id,
+			children: [
+				...block.tags
+					.map((tag) => ({
+						title: (
+							<>
+								<TagIcon type={tag.sourceType} />
+								&ensp;
+								{tag.localName}&ensp;
+								<TagFrequencyEl frequency={tag.frequency} />
+							</>
+						),
+						fullTitle: tag.localName,
+						key: tag.id,
+						value: tag.id,
+					}))
+					.sort((a, b) => a.fullTitle.localeCompare(b.fullTitle)),
+				...convertToTreeSelectNodes(block.children),
+			],
+		}))
+		.sort((a, b) => a.fullTitle.localeCompare(b.fullTitle))
 }
 
 const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
@@ -156,10 +151,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 		[onChange, searchParams, setSearchParams, tagMapping, checkedTags],
 	)
 
-	const filterTreeNode = (
-		inputValue: string,
-		treeNode: DefaultOptionType,
-	) => {
+	const filterTreeNode = (inputValue: string, treeNode: DefaultOptionType) => {
 		const search = inputValue.toLowerCase()
 		const mapping = tagMapping[Number(treeNode.value)]
 		const node = treeNode as DefaultOptionType
@@ -196,9 +188,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			placeholder='Выберите теги'
 			style={{ width: '100%' }}
 			maxTagCount={0}
-			maxTagPlaceholder={(omittedValues) =>
-				`Выбрано тегов: ${omittedValues.filter((x) => Number(x.value) > 0).length}`
-			}
+			maxTagPlaceholder={(omittedValues) => `Выбрано тегов: ${omittedValues.filter((x) => Number(x.value) > 0).length}`}
 			filterTreeNode={filterTreeNode}
 			searchValue={searchValue}
 			onSearch={setSearchValue}

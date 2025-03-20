@@ -12,9 +12,8 @@ internal class CalculateCollector : CollectorBase
 {
 	public CalculateCollector(
 	SourceWithTagsInfo source,
-	ILogger<CalculateCollector> logger) : base(source, logger)
+	ILogger<CalculateCollector> logger) : base("Расчетные значения", source, logger)
 	{
-		_logger = logger;
 		_inputs = [];
 		_expressions = [];
 		_tokenSource = new CancellationTokenSource();
@@ -65,7 +64,6 @@ internal class CalculateCollector : CollectorBase
 		return base.Stop();
 	}
 
-	private ILogger<CalculateCollector> _logger;
 	private readonly CancellationTokenSource _tokenSource;
 	private readonly Dictionary<int, TagExpressionScope> _expressions;
 	private readonly HashSet<int> _inputs;
@@ -136,9 +134,7 @@ internal class CalculateCollector : CollectorBase
 						Value = result,
 					});
 				}
-#if DEBUG
-				_logger.LogInformation("Вычислено: {all} (успешно {good}), новых: {new}", _expressions.Count, countGood, batch.Count);
-#endif
+
 				CollectValues?.Invoke(this, batch);
 			}
 			catch (Exception ex)

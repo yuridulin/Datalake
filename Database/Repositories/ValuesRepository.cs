@@ -1,4 +1,5 @@
 ﻿using Datalake.Database.Extensions;
+using Datalake.Database.Models;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
@@ -792,7 +793,7 @@ public class ValuesRepository(DatalakeContext db)
 	/// <param name="period">Размер прошедшего периода</param>
 	/// <returns>По одному значению на каждый тег</returns>
 	/// <exception cref="ForbiddenException"></exception>
-	internal async Task<TagHistory[]> GetWeightedAggregated(int[] tagIdentifiers, DateTime? moment = null, AggregationPeriod period = AggregationPeriod.Hour)
+	public async Task<TagAggregationWeightedValue[]> GetWeightedAggregated(int[] tagIdentifiers, DateTime? moment = null, AggregationPeriod period = AggregationPeriod.Hour)
 	{
 		// Задаем входные параметры
 		var now = moment ?? DateFormats.GetCurrentDateTime();
@@ -833,28 +834,28 @@ public class ValuesRepository(DatalakeContext db)
 			source = tableStart.Concat(tableEnd);
 		}
 
-			// CTE: Последнее значение перед началом периода
-			var historyBefore =
-				from raw in tableStart
-				where tagIdentifiers.Contains(raw.TagId) && raw.Date <= periodStart
-				select new
-				{
-					raw.TagId,
-					Date = periodStart, // Принудительная установка даты
-					raw.Number,
-					Order = Sql.Ext.RowNumber()
-						.Over()
-						.PartitionBy(raw.TagId)
-						.OrderBy(raw.Date)
-						.ToValue()
-				} into historyBeforeTemp
-				where historyBeforeTemp.Order == 1
-				select new
-				{
-					historyBeforeTemp.TagId,
-					historyBeforeTemp.Date,
-					historyBeforeTemp.Number
-				};
+		// CTE: Последнее значение перед началом периода
+		var historyBefore =
+			from raw in tableStart
+			where tagIdentifiers.Contains(raw.TagId) && raw.Date <= periodStart
+			select new
+			{
+				raw.TagId,
+				Date = periodStart, // Принудительная установка даты
+				raw.Number,
+				Order = Sql.Ext.RowNumber()
+					.Over()
+					.PartitionBy(raw.TagId)
+					.OrderByDesc(raw.Date)
+					.ToValue()
+			} into historyBeforeTemp
+			where historyBeforeTemp.Order == 1
+			select new
+			{
+				historyBeforeTemp.TagId,
+				historyBeforeTemp.Date,
+				historyBeforeTemp.Number
+			};
 
 		// CTE: Значения в пределах периода
 		var historyBetween =
@@ -902,26 +903,18 @@ public class ValuesRepository(DatalakeContext db)
 		var result =
 			from w in weighted
 			group w by w.TagId into g
-			select new
+			select new TagAggregationWeightedValue
 			{
 				TagId = g.Key,
-				Sum = g.Sum(x => x.Number * x.Weight),
-				Average = g.Sum(x => x.Number * x.Weight) / g.Sum(x => x.Weight),
+				Date = periodEnd,
+				SumOfWeights = g.Sum(x => x.Weight) ?? 0,
+				SumValuesWithWeights = g.Sum(x => x.Number * x.Weight) ?? 0,
 			};
 
 		// Выполнение запроса
 		var aggregated = await result.ToArrayAsync();
 
-		return aggregated
-			.Select(x => new TagHistory
-			{
-				Date = now,
-				Number = x.Average,
-				Quality = TagQuality.Good,
-				TagId = x.TagId,
-				Text = null,
-			})
-			.ToArray();
+		return aggregated;
 	}
 
 	#endregion
