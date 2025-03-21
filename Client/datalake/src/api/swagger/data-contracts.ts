@@ -489,6 +489,10 @@ export type SourceTagInfo = TagSimpleInfo & {
 	formulaInputs: TagInputMinimalInfo[]
 	/** Входной тег, по значениям которого считается агрегированное значение */
 	sourceTag?: TagInputMinimalInfo | null
+	/** Тип агрегации */
+	aggregation?: TagAggregation | null
+	/** Временное окно для расчета агрегированного значения */
+	aggregationPeriod?: AggregationPeriod | null
 	/** Правило доступа */
 	accessRule?: AccessRuleInfo
 }
@@ -502,6 +506,30 @@ export interface TagInputMinimalInfo {
 	inputTagId?: number
 	/** Имя переменной */
 	variableName?: string
+}
+
+/**
+ * Способ получения агрегированного значения
+ *
+ * 1 = Sum
+ * 2 = Average
+ */
+export enum TagAggregation {
+	Sum = 1,
+	Average = 2,
+}
+
+/**
+ * Период, за который берутся необходимые для расчета агрегированных значений данные
+ *
+ * 1 = Munite
+ * 2 = Hour
+ * 3 = Day
+ */
+export enum AggregationPeriod {
+	Munite = 1,
+	Hour = 2,
+	Day = 3,
 }
 
 /** Запись собщения */
@@ -720,30 +748,6 @@ export type TagInputInfo = TagSimpleInfo & {
 	variableName: string
 	/** Правило доступа */
 	accessRule?: AccessRuleInfo
-}
-
-/**
- * Способ получения агрегированного значения
- *
- * 1 = Sum
- * 2 = Average
- */
-export enum TagAggregation {
-	Sum = 1,
-	Average = 2,
-}
-
-/**
- * Период, за который берутся необходимые для расчета агрегированных значений данные
- *
- * 1 = Munite
- * 2 = Hour
- * 3 = Day
- */
-export enum AggregationPeriod {
-	Munite = 1,
-	Hour = 2,
-	Day = 3,
 }
 
 /** Необходимые данные для создания тега */
