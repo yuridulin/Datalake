@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +30,7 @@ public class ValuesController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		var responses = await db.ValuesRepository.GetValuesAsync(user, requests);
+		var responses = await ValuesRepository.GetValuesAsync(db, user, requests);
 
 		return responses;
 	}
@@ -46,7 +47,7 @@ public class ValuesController(DatalakeContext db) : ApiControllerBase
 		var user = Authenticate();
 
 		// Флаг отключает проверку на новизну значения по сравнению с текущим
-		var responses = await db.ValuesRepository.WriteValuesAsync(user, requests, overrided: true);
+		var responses = await ValuesRepository.WriteValuesAsync(db, user, requests, overrided: true);
 
 		return responses;
 	}

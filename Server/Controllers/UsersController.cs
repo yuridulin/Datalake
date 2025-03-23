@@ -33,7 +33,7 @@ public class UsersController(
 
 		AccessRepository.HasGlobalAccess(user, PublicApi.Enums.AccessType.Admin);
 
-		var settings = await db.SystemRepository.GetSettingsAsSystemAsync();
+		var settings = await SystemRepository.GetSettingsAsSystemAsync(db);
 
 		EnergoIdUserData[]? energoIdReceivedUsers = null;
 
@@ -57,7 +57,7 @@ public class UsersController(
 			return new EnergoIdInfo();
 		}
 
-		var exists = await db.UsersRepository.GetFlatInfo()
+		var exists = await UsersRepository.GetFlatInfo(db)
 			.Where(x => x.EnergoIdGuid != null && (currentUserGuid == null || x.Guid != currentUserGuid))
 			.Select(x => x.EnergoIdGuid.ToString())
 			.ToArrayAsync();
@@ -89,7 +89,7 @@ public class UsersController(
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
 		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
 	{
-		var userAuthInfo = await db.AccessRepository.AuthenticateAsync(energoIdInfo);
+		var userAuthInfo = await AccessRepository.AuthenticateAsync(db, energoIdInfo);
 
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
@@ -108,7 +108,7 @@ public class UsersController(
 	public async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
 		[BindRequired, FromBody] UserLoginPass loginPass)
 	{
-		var userAuthInfo = await db.AccessRepository.AuthenticateAsync(loginPass);
+		var userAuthInfo = await AccessRepository.AuthenticateAsync(db, loginPass);
 
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
@@ -141,7 +141,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		var guid = await db.UsersRepository.CreateAsync(user, userAuthRequest);
+		var guid = await UsersRepository.CreateAsync(db, user, userAuthRequest);
 
 		return guid;
 	}
@@ -155,7 +155,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		return await db.UsersRepository.ReadAllAsync(user);
+		return await UsersRepository.ReadAllAsync(db, user);
 	}
 
 	/// <summary>
@@ -170,7 +170,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		return await db.UsersRepository.ReadAsync(user, userGuid);
+		return await UsersRepository.ReadAsync(db, user, userGuid);
 	}
 
 	/// <summary>
@@ -185,7 +185,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		return await db.UsersRepository.ReadWithDetailsAsync(user, userGuid);
+		return await UsersRepository.ReadWithDetailsAsync(db, user, userGuid);
 	}
 
 	/// <summary>
@@ -200,7 +200,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		await db.UsersRepository.UpdateAsync(user, userGuid, userUpdateRequest);
+		await UsersRepository.UpdateAsync(db, user, userGuid, userUpdateRequest);
 
 		return NoContent();
 	}
@@ -215,7 +215,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		await db.UsersRepository.DeleteAsync(user, userGuid);
+		await UsersRepository.DeleteAsync(db, user, userGuid);
 
 		return NoContent();
 	}

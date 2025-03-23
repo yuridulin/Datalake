@@ -65,7 +65,7 @@ public class SystemController(
 	{
 		var userAuth = Authenticate();
 
-		return await db.SystemRepository.GetLogsAsync(userAuth, take, lastId, source, block, tag, user, group, categories, types, author);
+		return await SystemRepository.GetLogsAsync(db, userAuth, take, lastId, source, block, tag, user, group, categories, types, author);
 	}
 
 	/// <summary>
@@ -109,7 +109,7 @@ public class SystemController(
 
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
-		var info = await db.SystemRepository.GetSettingsAsync(user);
+		var info = await SystemRepository.GetSettingsAsync(db, user);
 
 		return info;
 	}
@@ -124,8 +124,8 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		await db.SystemRepository.UpdateSettingsAsync(user, newSettings);
-		await settingsService.WriteStartipFileAsync(db.SystemRepository);
+		await SystemRepository.UpdateSettingsAsync(db, user, newSettings);
+		await settingsService.WriteStartipFileAsync(db);
 
 		return NoContent();
 	}
@@ -139,7 +139,7 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		await db.SystemRepository.RebuildStorageCacheAsync(user);
+		await SystemRepository.RebuildStorageCacheAsync(db, user);
 
 		return NoContent();
 	}
@@ -154,7 +154,7 @@ public class SystemController(
 		var user = Authenticate();
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		await db.AccessRepository.RebuildUserRightsCacheAsync();
+		await AccessRepository.RebuildUserRightsCacheAsync(db);
 
 		return NoContent();
 	}

@@ -14,17 +14,19 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы с тегами
 /// </summary>
-public class TagsRepository(DatalakeContext db)
+public static class TagsRepository
 {
 	#region Действия
 
 	/// <summary>
 	/// Создание нового тега
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="tagCreateRequest">Параметры нового тега</param>
 	/// <returns>Информация о созданном теге</returns>
-	public async Task<TagInfo> CreateAsync(
+	public static async Task<TagInfo> CreateAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		TagCreateRequest tagCreateRequest)
 	{
@@ -37,24 +39,24 @@ public class TagsRepository(DatalakeContext db)
 		if ((!tagCreateRequest.SourceId.HasValue || tagCreateRequest.SourceId.Value <= 0) && !tagCreateRequest.BlockId.HasValue)
 			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		User = user.Guid;
-
-		return await CreateAsync(tagCreateRequest);
+		return await CreateAsync(db, user.Guid, tagCreateRequest);
 	}
 
 	/// <summary>
 	/// Получение информации о теге
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="guid"></param>
 	/// <returns></returns>
-	public async Task<TagInfo> ReadAsync(UserAuthInfo user, Guid guid)
+	public static async Task<TagInfo> ReadAsync(
+		DatalakeContext db, UserAuthInfo user, Guid guid)
 	{
 		var rule = AccessRepository.GetAccessToTag(user, guid);
 		if (!rule.AccessType.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
-		var tag = await db.TagsRepository.GetInfoWithSources()
+		var tag = await GetInfoWithSources(db)
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Тег {guid}");
@@ -67,15 +69,17 @@ public class TagsRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение информации о тегах с поддержкой фильтров
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <param name="id">Идентификаторы тегов</param>
 	/// <param name="names">Имена тегов</param>
 	/// <param name="guids">Глобальные идентификаторы тегов</param>
 	/// <returns>Список информации о тегах</returns>
-	public async Task<TagInfo[]> ReadAllAsync(UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
+	public static async Task<TagInfo[]> ReadAllAsync(
+		DatalakeContext db, UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
 	{
-		var query = db.TagsRepository.GetInfoWithSources();
+		var query = GetInfoWithSources(db);
 
 		if (sourceId.HasValue)
 		{
@@ -107,12 +111,14 @@ public class TagsRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение тегов, которые можно использовать как входные параметры для расчета значения
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="guid">Идентификатор тега</param>
 	/// <returns>Список информации о тегах</returns>
-	public async Task<TagAsInputInfo[]> ReadPossibleInputsAsync(UserAuthInfo user, Guid guid)
+	public static async Task<TagAsInputInfo[]> ReadPossibleInputsAsync(
+		DatalakeContext db, UserAuthInfo user, Guid guid)
 	{
-		var tags = await GetPossibleInputs()
+		var tags = await GetPossibleInputs(db)
 			.ToArrayAsync();
 
 		// TODO: рекурсивный обход. Нужно исключить циклические зависимости
@@ -130,33 +136,35 @@ public class TagsRepository(DatalakeContext db)
 	/// <summary>
 	/// Изменение параметров тега
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="guid">Идентификатор тега</param>
 	/// <param name="updateRequest">Новые параметры тега</param>
-	public async Task UpdateAsync(
+	public static async Task UpdateAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		Guid guid,
 		TagUpdateRequest updateRequest)
 	{
 		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Admin, guid);
-		User = user.Guid;
 
-		await UpdateAsync(guid, updateRequest);
+		await UpdateAsync(db, user.Guid, guid, updateRequest);
 	}
 
 	/// <summary>
 	/// Удаление тега
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="guid">Идентификатор тега</param>
-	public async Task DeleteAsync(
+	public static async Task DeleteAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		Guid guid)
 	{
 		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Admin, guid);
-		User = user.Guid;
 
-		await DeleteAsync(guid);
+		await DeleteAsync(db, user.Guid, guid);
 	}
 
 	#endregion
@@ -174,9 +182,10 @@ public class TagsRepository(DatalakeContext db)
 
 	#region Реализация
 
-	Guid? User { get; set; } = null;
-
-	internal async Task<TagInfo> CreateAsync(TagCreateRequest createRequest)
+	internal static async Task<TagInfo> CreateAsync(
+		DatalakeContext db,
+		Guid userGuid,
+		TagCreateRequest createRequest)
 	{
 		if (!createRequest.SourceId.HasValue && !createRequest.BlockId.HasValue)
 			throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или блок");
@@ -275,12 +284,12 @@ public class TagsRepository(DatalakeContext db)
 
 		Guid? guid = await db.Tags.Where(x => x.Id == tag.Id).Select(x => x.GlobalGuid).FirstOrDefaultAsync();
 
-		await LogAsync(guid, $"Создан тег \"{createRequest.Name}\"");
+		await LogAsync(db, userGuid, guid, $"Создан тег \"{createRequest.Name}\"");
 
 		await transaction.CommitAsync();
 
-		await UpdateTagCache(tag.Id);
-		var info = await GetInfoWithSources().FirstOrDefaultAsync(x => x.Id == tag.Id)
+		await UpdateTagCache(db, tag.Id);
+		var info = await GetInfoWithSources(db).FirstOrDefaultAsync(x => x.Id == tag.Id)
 			?? throw new NotFoundException(message: "тег после создания");
 
 		AccessRepository.Update();
@@ -288,7 +297,10 @@ public class TagsRepository(DatalakeContext db)
 		return info;
 	}
 
-	internal async Task UpdateAsync(Guid guid, TagUpdateRequest updateRequest)
+	internal static async Task UpdateAsync(
+		DatalakeContext db, 
+		Guid userGuid,
+		Guid guid, TagUpdateRequest updateRequest)
 	{
 		var transaction = await db.BeginTransactionAsync();
 
@@ -346,14 +358,15 @@ public class TagsRepository(DatalakeContext db)
 		var updatedTag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
 			?? throw new NotFoundException($"тег {guid}");
 
-		await LogAsync(guid, $"Изменен тег \"{tag.Name}\"", ObjectExtension.Difference(tag, updatedTag));
+		await LogAsync(db, userGuid, guid, $"Изменен тег \"{tag.Name}\"", ObjectExtension.Difference(tag, updatedTag));
 
 		await transaction.CommitAsync();
 
-		await UpdateTagCache(tag.Id);
+		await UpdateTagCache(db, tag.Id);
 	}
 
-	internal async Task DeleteAsync(Guid guid)
+	internal static async Task DeleteAsync(
+		DatalakeContext db, Guid userGuid, Guid guid)
 	{
 		var transaction = await db.BeginTransactionAsync();
 
@@ -373,18 +386,19 @@ public class TagsRepository(DatalakeContext db)
 		// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
 		// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
 
-		await LogAsync(guid, $"Удален тег \"{tag.Name}\"");
+		await LogAsync(db, userGuid, guid, $"Удален тег \"{tag.Name}\"");
 
 		await transaction.CommitAsync();
 
-		await UpdateTagCache(cached.Id);
+		await UpdateTagCache(db, cached.Id);
 
 		AccessRepository.Update();
 	}
 
-	internal async Task UpdateTagCache(int id)
+	internal static async Task UpdateTagCache(
+		DatalakeContext db, int id)
 	{
-		var cache = await GetTagsForCache().FirstOrDefaultAsync(x => x.Id == id);
+		var cache = await GetTagsForCache(db).FirstOrDefaultAsync(x => x.Id == id);
 		lock (locker)
 		{
 			if (cache == null)
@@ -400,7 +414,9 @@ public class TagsRepository(DatalakeContext db)
 		SystemRepository.Update();
 	}
 
-	internal async Task LogAsync(Guid? guid, string message, string? details = null)
+	internal static async Task LogAsync(
+		DatalakeContext db, 
+		Guid userGuid, Guid? guid, string message, string? details = null)
 	{
 		await db.InsertAsync(new Log
 		{
@@ -408,7 +424,7 @@ public class TagsRepository(DatalakeContext db)
 			RefId = guid?.ToString() ?? null,
 			Text = message,
 			Type = LogType.Success,
-			UserGuid = User,
+			UserGuid = userGuid,
 			Details = details,
 		});
 	}
@@ -417,7 +433,7 @@ public class TagsRepository(DatalakeContext db)
 
 	#region Запросы
 
-	internal IQueryable<TagInfo> GetInfoWithSources()
+	internal static IQueryable<TagInfo> GetInfoWithSources(DatalakeContext db)
 	{
 		var query =
 			from tag in db.Tags
@@ -460,7 +476,7 @@ public class TagsRepository(DatalakeContext db)
 		return query;
 	}
 
-	internal IQueryable<TagAsInputInfo> GetPossibleInputs()
+	internal static IQueryable<TagAsInputInfo> GetPossibleInputs(DatalakeContext db)
 	{
 		var query =
 			from tag in db.Tags
@@ -479,7 +495,7 @@ public class TagsRepository(DatalakeContext db)
 		return query;
 	}
 
-	internal IQueryable<TagCacheInfo> GetTagsForCache()
+	internal static IQueryable<TagCacheInfo> GetTagsForCache(DatalakeContext db)
 	{
 		var query =
 			from t in db.Tags

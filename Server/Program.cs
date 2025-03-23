@@ -1,4 +1,5 @@
 using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.Server.Middlewares;
@@ -129,7 +130,8 @@ namespace Datalake.Server
 			if (db != null)
 			{
 				await db.EnsureDataCreatedAsync();
-				await db.SystemRepository.WriteLog(
+				await SystemRepository.WriteLog(
+					db,
 					"Сервер запущен",
 					category: LogCategory.Core,
 					type: LogType.Success

@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Models;
-using Datalake.Database.Tables;
+﻿using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tables;
 using LinqToDB;
@@ -10,26 +9,29 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы с партицированными таблицами значений
 /// </summary>
-public class TablesRepository(DatalakeContext db)
+public static class TablesRepository
 {
 	#region Действия
 
 	/// <summary>
 	/// Получение списка существующих таблиц значений из БД, включая данные о наличии индекса
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <returns>Список существующих таблиц</returns>
-	public async Task<HistoryTableInfo[]> GetHistoryTablesFromSchema()
+	public static async Task<HistoryTableInfo[]> GetHistoryTablesFromSchema(DatalakeContext db)
 	{
-		return await PostgreSQL_GetHistoryTablesFromSchema();
+		return await PostgreSQL_GetHistoryTablesFromSchema(db);
 	}
 
 	/// <summary>
 	/// Создание индекса для таблицы значений по идентификаторам тегов и дате
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="tableName">Название таблицы</param>
-	public async Task CreateHistoryIndex(string tableName)
+	public static async Task CreateHistoryIndex(
+		DatalakeContext db, string tableName)
 	{
-		await PostgreSQL_CreateHistoryIndex(tableName);
+		await PostgreSQL_CreateHistoryIndex(db, tableName);
 
 		db.Insert(new Log
 		{
@@ -42,11 +44,13 @@ public class TablesRepository(DatalakeContext db)
 	/// <summary>
 	/// Вставка при необходимости значений из предыдущей таблицы
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="date">дата</param>
 	/// <returns>Количество вставленных записей</returns>
-	public async Task EnsureInitialValues(DateTime date)
+	public static async Task EnsureInitialValues(
+		DatalakeContext db, DateTime date)
 	{
-		var initialCount = await WriteInitialValuesAsync(date);
+		var initialCount = await WriteInitialValuesAsync(db, date);
 
 		if (initialCount > 0)
 		{
@@ -79,23 +83,6 @@ public class TablesRepository(DatalakeContext db)
 	internal const string DateMask = "yyyy_MM_dd";
 	internal const string IndexPostfix = "_idx";
 
-	/// <summary>
-	/// Обработчик события создания таблицы
-	/// </summary>
-	/// <param name="sender">Репозиторий</param>
-	/// <param name="e">Сопутствующие данные</param>
-	public delegate void TableCreationHandler(object sender, TableCreationEventArgs e);
-
-	/// <summary>
-	/// Событие при создании таблицы
-	/// </summary>
-	public event TableCreationHandler? TableCreation;
-
-	private void TriggerTableCreation(string tableName)
-	{
-		TableCreation?.Invoke(this, new TableCreationEventArgs { TableName = tableName });
-	}
-
 	internal static string GetTableName(DateTime date) => NamePrefix + date.ToString(DateMask);
 
 	internal static DateTime GetTableDate(string tableName) => DateTime.TryParseExact(
@@ -116,7 +103,7 @@ public class TablesRepository(DatalakeContext db)
 		return previousDate == DateTime.MinValue ? null : previousDate;
 	}
 
-	internal async Task<ITable<TagHistory>> GetHistoryTableAsync(DateTime seekDate)
+	internal static async Task<ITable<TagHistory>> GetHistoryTableAsync(DatalakeContext db, DateTime seekDate)
 	{
 		DateTime date = seekDate.Date;
 		ITable<TagHistory> table;
@@ -135,7 +122,7 @@ public class TablesRepository(DatalakeContext db)
 				CachedTables.Add(date, tableName);
 			}
 
-			var initialCount = await WriteInitialValuesAsync(date);
+			var initialCount = await WriteInitialValuesAsync(db, date);
 
 			db.Insert(new Log
 			{
@@ -144,8 +131,6 @@ public class TablesRepository(DatalakeContext db)
 				Text = "Создана партиция: " + tableName + ". Количество начальных значений: " + initialCount,
 			});
 
-			TriggerTableCreation(tableName);
-
 			// если это очередная новая партиция, значит старая закончилась
 			// создаем для нее индекс сразу
 			if (date == DateTime.Today)
@@ -153,7 +138,7 @@ public class TablesRepository(DatalakeContext db)
 				var previousTableDate = GetPreviousTableDate(date);
 				if (previousTableDate.HasValue && CachedTables.TryGetValue(previousTableDate.Value, out var previousTableName))
 				{
-					await CreateHistoryIndex(previousTableName);
+					await CreateHistoryIndex(db, previousTableName);
 				}
 			}
 		}
@@ -161,9 +146,9 @@ public class TablesRepository(DatalakeContext db)
 		return table;
 	}
 
-	async Task<long> WriteInitialValuesAsync(DateTime date)
+	async static Task<long> WriteInitialValuesAsync(DatalakeContext db, DateTime date)
 	{
-		var table = await db.TablesRepository.GetHistoryTableAsync(date);
+		var table = await GetHistoryTableAsync(db, date);
 
 		var initialValues = await table
 			.Where(x => x.Quality == TagQuality.Bad_LOCF || x.Quality == TagQuality.Good_LOCF)
@@ -213,7 +198,7 @@ public class TablesRepository(DatalakeContext db)
 		return 0;
 	}
 
-	async Task<HistoryTableInfo[]> PostgreSQL_GetHistoryTablesFromSchema()
+	async static Task<HistoryTableInfo[]> PostgreSQL_GetHistoryTablesFromSchema(DatalakeContext db)
 	{
 		var tables = await db.QueryToArrayAsync<HistoryTableWithIndex>($@"
 			SELECT t.table_name AS ""Name"", i.indexname AS ""Index""
@@ -231,7 +216,7 @@ public class TablesRepository(DatalakeContext db)
 			})];
 	}
 
-	async Task PostgreSQL_CreateHistoryIndex(string tableName)
+	async static Task PostgreSQL_CreateHistoryIndex(DatalakeContext db, string tableName)
 	{
 		await db.ExecuteAsync($"CREATE INDEX IF NOT EXISTS {tableName.ToLower()}{IndexPostfix} " +
 			$"ON public.\"{tableName}\" (\"{nameof(TagHistory.TagId)}\", \"{nameof(TagHistory.Date)}\");");

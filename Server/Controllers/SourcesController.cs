@@ -28,7 +28,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		var id = await db.SourcesRepository.CreateAsync(user);
+		var id = await SourcesRepository.CreateAsync(db, user);
 
 		return id;
 	}
@@ -44,7 +44,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		var id = await db.SourcesRepository.CreateAsync(user, source);
+		var id = await SourcesRepository.CreateAsync(db, user, source);
 
 		return id;
 	}
@@ -61,7 +61,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		return await db.SourcesRepository.ReadAsync(user, id);
+		return await SourcesRepository.ReadAsync(db, user, id);
 	}
 
 	/// <summary>
@@ -74,7 +74,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		return await db.SourcesRepository.ReadAllAsync(user, withCustom);
+		return await SourcesRepository.ReadAllAsync(db, user, withCustom);
 	}
 
 	/// <summary>
@@ -89,7 +89,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		await db.SourcesRepository.UpdateAsync(user, id, source);
+		await SourcesRepository.UpdateAsync(db, user, id, source);
 
 		return NoContent();
 	}
@@ -104,7 +104,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		await db.SourcesRepository.DeleteAsync(user, id);
+		await SourcesRepository.DeleteAsync(db, user, id);
 
 		return NoContent();
 	}
@@ -123,7 +123,7 @@ public class SourcesController(
 
 		AccessRepository.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Viewer, id);
 
-		var source = await db.SourcesRepository.ReadAsync(user, id);
+		var source = await SourcesRepository.ReadAsync(db, user, id);
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 
 		var items = sourceItemsResponse.Tags
@@ -153,7 +153,7 @@ public class SourcesController(
 
 		AccessRepository.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Editor, id);
 
-		var source = await db.SourcesRepository.ReadWithTagsAsync(user, id);
+		var source = await SourcesRepository.ReadWithTagsAsync(db, user, id);
 
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 		var sourceItems = sourceItemsResponse.Tags
