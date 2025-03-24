@@ -288,7 +288,7 @@ public static class SourcesRepository
 	/// <summary>
 	/// Не настраиваемые источники данных
 	/// </summary>
-	internal static readonly SourceType[] CustomSourcesId = [SourceType.System, SourceType.Calculated, SourceType.Manual, SourceType.NotSet];
+	internal static readonly SourceType[] CustomSourcesId = [SourceType.System, SourceType.Calculated, SourceType.Manual, SourceType.Aggregated, SourceType.NotSet];
 
 	/// <summary>
 	/// Запрос информации о источниках без связей
@@ -326,7 +326,42 @@ public static class SourcesRepository
 				Name = source.Name,
 				Type = source.Type,
 				Tags = (
+					from tag in db.Tags.LeftJoin(x => x.SourceId == source.Id)
+					select new SourceTagInfo
+					{
+						Id = tag.Id,
+						Guid = tag.GlobalGuid,
+						Item = tag.SourceItem ?? string.Empty,
+						FormulaInputs = Array.Empty<SourceTagInfo.TagInputMinimalInfo>(),
+						Name = tag.Name,
+						Type = tag.Type,
+						Frequency = tag.Frequency,
+						SourceType = source.Type,
+						Aggregation = tag.Aggregation,
+						AggregationPeriod = tag.AggregationPeriod,
+					}
+				).ToArray(),
+			};
+
+		return query;
+	}
+	
+	/// <summary>
+	/// Запрос информации о источниках вместе со списками зависящих тегов
+	/// </summary>
+	public IQueryable<SourceWithTagsInfo> QueryInfoWithTagsAndSourceTags()
+	{
+		var query =
+			from source in db.Sources
+			select new SourceWithTagsInfo
+			{
+				Id = source.Id,
+				Address = source.Address,
+				Name = source.Name,
+				Type = source.Type,
+				Tags = (
 					from tag in db.Tags
+					from sourceTag in db.Tags.LeftJoin(x => x.Id == tag.SourceTagId)
 					where tag.SourceId == source.Id
 					select new SourceTagInfo
 					{
@@ -347,6 +382,9 @@ public static class SourcesRepository
 						Type = tag.Type,
 						Frequency = tag.Frequency,
 						SourceType = source.Type,
+						Aggregation = tag.Aggregation,
+						AggregationPeriod = tag.AggregationPeriod,
+						SourceTag = sourceTag == null ? null : new SourceTagInfo.TagInputMinimalInfo { InputTagId = sourceTag.Id, VariableName = sourceTag.Name },
 					}
 				).ToArray(),
 			};

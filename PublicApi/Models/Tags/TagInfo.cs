@@ -1,4 +1,5 @@
 ﻿using Datalake.PublicApi.Abstractions;
+using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using System.ComponentModel.DataAnnotations;
 
@@ -70,6 +71,21 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// </summary>
 	[Required]
 	public required TagInputInfo[] FormulaInputs { get; set; } = [];
+
+	/// <summary>
+	/// Тип агрегации
+	/// </summary>
+	public TagAggregation? Aggregation { get; set; }
+
+	/// <summary>
+	/// Временное окно для расчета агрегированного значения
+	/// </summary>
+	public AggregationPeriod? AggregationPeriod { get; set; }
+
+	/// <summary>
+	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения
+	/// </summary>
+	public int? SourceTagId { get; set; }
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;

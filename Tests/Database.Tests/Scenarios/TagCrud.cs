@@ -1,5 +1,5 @@
-﻿using Datalake.Database.Enums;
-using Datalake.Database.Models.Tags;
+﻿using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Tags;
 
 namespace Datalake.Database.Tests.Scenarios
 {

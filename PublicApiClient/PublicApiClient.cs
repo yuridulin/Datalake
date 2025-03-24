@@ -128,7 +128,7 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// <param name="requests">Список запросов на изменение</param>
 	/// <returns>Список измененных начений</returns>
 	[HttpPut(Values)]
-	public virtual async Task<ActionResult<ValuesTagResponse>> WriteValuesAsync(
+	public virtual async Task<ActionResult<List<ValuesTagResponse>>> WriteValuesAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests)
 	{
 		var request = new HttpRequestMessage

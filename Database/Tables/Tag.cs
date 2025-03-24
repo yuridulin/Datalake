@@ -119,7 +119,19 @@ public class Tag
 	/// Тип агрегации
 	/// </summary>
 	[Column]
-	public TagAggregation Aggregation { get; set; }
+	public TagAggregation? Aggregation { get; set; }
+
+	/// <summary>
+	/// Временное окно для расчета агрегированного значения
+	/// </summary>
+	[Column]
+	public AggregationPeriod? AggregationPeriod { get; set; }
+
+	/// <summary>
+	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения
+	/// </summary>
+	[Column]
+	public int? SourceTagId { get; set; }
 
 	// связи
 
@@ -127,6 +139,11 @@ public class Tag
 	/// Источник
 	/// </summary>
 	public Source? Source { get; set; } = null!;
+
+	/// <summary>
+	/// Тег-источник данных для агрегирования
+	/// </summary>
+	public Tag? SourceTag { get; set; }
 
 	/// <summary>
 	/// Входные теги

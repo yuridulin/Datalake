@@ -153,6 +153,7 @@ export enum TagFrequency {
  * 2 = Datalake
  * 3 = Datalake_v2
  * -666 = NotSet
+ * -3 = Aggregated
  * -2 = Manual
  * -1 = Calculated
  */
@@ -162,6 +163,7 @@ export enum SourceType {
 	Datalake = 2,
 	DatalakeV2 = 3,
 	NotSet = -666,
+	Aggregated = -3,
 	Manual = -2,
 	Calculated = -1,
 }
@@ -481,8 +483,53 @@ export type SourceTagInfo = TagSimpleInfo & {
 	 * @minLength 1
 	 */
 	item: string
+	/** Формула, на основе которой вычисляется значение */
+	formula?: string | null
+	/** Входные переменные для формулы, по которой рассчитывается значение */
+	formulaInputs: TagInputMinimalInfo[]
+	/** Входной тег, по значениям которого считается агрегированное значение */
+	sourceTag?: TagInputMinimalInfo | null
+	/** Тип агрегации */
+	aggregation?: TagAggregation | null
+	/** Временное окно для расчета агрегированного значения */
+	aggregationPeriod?: AggregationPeriod | null
 	/** Правило доступа */
 	accessRule?: AccessRuleInfo
+}
+
+/** Минимальная информация о переменных для расчета значений по формуле */
+export interface TagInputMinimalInfo {
+	/**
+	 * Идентификатор входного тега
+	 * @format int32
+	 */
+	inputTagId?: number
+	/** Имя переменной */
+	variableName?: string
+}
+
+/**
+ * Способ получения агрегированного значения
+ *
+ * 1 = Sum
+ * 2 = Average
+ */
+export enum TagAggregation {
+	Sum = 1,
+	Average = 2,
+}
+
+/**
+ * Период, за который берутся необходимые для расчета агрегированных значений данные
+ *
+ * 1 = Munite
+ * 2 = Hour
+ * 3 = Day
+ */
+export enum AggregationPeriod {
+	Munite = 1,
+	Hour = 2,
+	Day = 3,
 }
 
 /** Запись собщения */
@@ -679,6 +726,15 @@ export type TagInfo = TagSimpleInfo & {
 	maxRaw: number
 	/** Входные переменные для формулы, по которой рассчитывается значение */
 	formulaInputs: TagInputInfo[]
+	/** Тип агрегации */
+	aggregation?: TagAggregation | null
+	/** Временное окно для расчета агрегированного значения */
+	aggregationPeriod?: AggregationPeriod | null
+	/**
+	 * Идентификатор тега, который будет источником данных для расчета агрегированного значения
+	 * @format int32
+	 */
+	sourceTagId?: number | null
 	/** Правило доступа */
 	accessRule?: AccessRuleInfo
 }
@@ -768,6 +824,15 @@ export interface TagUpdateRequest {
 	formula?: string | null
 	/** Входные переменные для формулы, по которой рассчитывается значение */
 	formulaInputs: TagUpdateInputRequest[]
+	/** Тип агрегации */
+	aggregation?: TagAggregation | null
+	/** Временное окно для расчета агрегированного значения */
+	aggregationPeriod?: AggregationPeriod | null
+	/**
+	 * Идентификатор тега, который будет источником данных для расчета агрегированного значения
+	 * @format int32
+	 */
+	sourceTagId?: number | null
 }
 
 /** Необходимая информация для привязки тега в качестве входного для  */

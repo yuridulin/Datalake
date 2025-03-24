@@ -6,30 +6,26 @@ namespace Datalake.Server.BackgroundServices.Collector.Abstractions;
 /// <summary>
 /// Базовый класс сборщика с реализацией основных механизмов
 /// </summary>
-/// <param name="source">Источник данных</param>
+/// <param name="name">Название источника данных</param>
+/// <param name="source">Данные источника данных, необходимые для запуска сбора</param>
 /// <param name="logger">Служба сообщений</param>
-public abstract class CollectorBase(SourceWithTagsInfo source, ILogger logger) : ICollector
+internal abstract class CollectorBase(string name, SourceWithTagsInfo source, ILogger logger) : ICollector
 {
-	/// <inheritdoc />
-	public string Name { get; set; } = source.Name;
+	protected readonly string _name = name;
+	protected readonly ILogger _logger = logger;
+	protected readonly SourceType _sourceType = source.Type;
 
-	/// <inheritdoc />
-	public SourceType Type { get; set; } = source.Type;
-
-	/// <inheritdoc />
 	public virtual Task Start(CancellationToken stoppingToken)
 	{
-		logger.LogDebug("Start collect");
+		_logger.LogDebug("Сборщик {name} запущен", _name);
 		return Task.CompletedTask;
 	}
 
-	/// <inheritdoc />
 	public virtual Task Stop()
 	{
-		logger.LogDebug("Stop collect");
+		_logger.LogDebug("Сборщик {name} остановлен", _name);
 		return Task.CompletedTask;
 	}
 
-	/// <inheritdoc />
 	public abstract event CollectEvent CollectValues;
 }

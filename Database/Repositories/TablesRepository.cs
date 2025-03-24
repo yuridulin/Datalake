@@ -116,6 +116,8 @@ public static class TablesRepository
 		{
 			var tableName = GetTableName(date);
 			table = db.CreateTable<TagHistory>(tableName);
+			if (date.Year == 1 && date.Month == 1 && date.Day == 1)
+				throw new Exception("Рот этого казино");
 
 			lock (locker)
 			{

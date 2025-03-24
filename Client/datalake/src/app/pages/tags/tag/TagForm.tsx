@@ -1,29 +1,22 @@
 import api from '@/api/swagger-api'
+import HelpAggregationType from '@/app/components/help-tootip/help-pages/HelpAggregationType'
 import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
 import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
 import getTagFrequencyName from '@/functions/getTagFrequencyName'
 import { TagValue } from '@/types/tagValue'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
-import {
-	AutoComplete,
-	Button,
-	Checkbox,
-	Input,
-	InputNumber,
-	Popconfirm,
-	Radio,
-	Select,
-	Space,
-	Spin,
-} from 'antd'
+import { AutoComplete, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
+	AggregationPeriod,
 	BlockTreeInfo,
 	SourceType,
+	TagAggregation,
 	TagFrequency,
 	TagInfo,
+	TagSimpleInfo,
 	TagType,
 	TagUpdateInputRequest,
 	TagUpdateRequest,
@@ -42,6 +35,7 @@ type SourceOption = {
 enum SourceStrategy {
 	Manual = SourceType.Manual,
 	Calculated = SourceType.Calculated,
+	Aggregated = SourceType.Aggregated,
 	FromSource = 0,
 }
 
@@ -62,6 +56,7 @@ const TagForm = () => {
 	const [sources, setSources] = useState([] as SourceOption[])
 	const [value, setValue] = useState(null as TagValue)
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
+	const [tags, setTags] = useState([] as TagSimpleInfo[])
 
 	// изменяемые
 	const [isLoading, setLoading] = useState(false)
@@ -81,6 +76,12 @@ const TagForm = () => {
 				.blocksReadAsTree()
 				.then((res) => setBlocks(res.data))
 				.catch(() => setBlocks([])),
+			api
+				.tagsReadAll()
+				.then((res) => {
+					setTags(res.data)
+				})
+				.catch(() => setTags([])),
 			api.tagsRead(String(id)).then((res) => {
 				const info = res.data
 				setTag(info)
@@ -97,7 +98,9 @@ const TagForm = () => {
 						? SourceStrategy.Manual
 						: info.sourceId == SourceType.Calculated
 							? SourceStrategy.Calculated
-							: SourceStrategy.FromSource,
+							: info.sourceId == SourceType.Aggregated
+								? SourceStrategy.Aggregated
+								: SourceStrategy.FromSource,
 				)
 			}),
 			api.sourcesReadAll().then((res) => {
@@ -128,18 +131,20 @@ const TagForm = () => {
 
 	const getValue = useCallback(() => {
 		if (!id) return
+		if (strategy !== SourceStrategy.FromSource) return
 		setValue((prevValue) => {
-			api.valuesGet([
-				{
-					requestKey: 'tag-current-value',
-					tags: [String(id)],
-				},
-			])
+			api
+				.valuesGet([
+					{
+						requestKey: 'tag-current-value',
+						tags: [String(id)],
+					},
+				])
 				.then((res) => setValue(res.data[0].tags[0].values[0].value))
 				.catch(() => setValue(null))
 			return prevValue
 		})
-	}, [id])
+	}, [id, strategy])
 
 	useEffect(getValue, [tag, getValue])
 	useInterval(getValue, 1000)
@@ -161,20 +166,12 @@ const TagForm = () => {
 	const tagUpdate = () => {
 		api.tagsUpdate(String(id), {
 			...request,
-			sourceId:
-				strategy === SourceStrategy.FromSource
-					? request.sourceId
-					: strategy,
-			formulaInputs:
-				strategy === SourceStrategy.Calculated
-					? request.formulaInputs
-					: [],
-			formula:
-				strategy === SourceStrategy.Calculated ? request.formula : null,
-			sourceItem:
-				strategy === SourceStrategy.FromSource
-					? request.sourceItem
-					: null,
+			sourceId: strategy === SourceStrategy.FromSource ? request.sourceId : strategy,
+			formulaInputs: strategy === SourceStrategy.Calculated ? request.formulaInputs : [],
+			formula: strategy === SourceStrategy.Calculated ? request.formula : null,
+			sourceItem: strategy === SourceStrategy.FromSource ? request.sourceItem : null,
+			aggregation: strategy === SourceStrategy.Aggregated ? request.aggregation : null,
+			aggregationPeriod: strategy === SourceStrategy.Aggregated ? request.aggregationPeriod : null,
 		})
 	}
 
@@ -182,11 +179,8 @@ const TagForm = () => {
 
 	const addParam = () => {
 		if (strategy !== SourceStrategy.Calculated) return
-		const existsId = request.formulaInputs
-			.filter((x) => x.key < 0)
-			.map((x) => x.key)
-		const availableFakeId =
-			existsId.length > 0 ? Math.min.apply(0, existsId) - 1 : -1
+		const existsId = request.formulaInputs.filter((x) => x.key < 0).map((x) => x.key)
+		const availableFakeId = existsId.length > 0 ? Math.min.apply(0, existsId) - 1 : -1
 		setRequest({
 			...request,
 			formulaInputs: [
@@ -212,11 +206,7 @@ const TagForm = () => {
 	) : (
 		<>
 			<PageHeader
-				left={
-					<Button onClick={() => navigate(routes.tags.list)}>
-						Вернуться
-					</Button>
-				}
+				left={<Button onClick={() => navigate(routes.tags.list)}>Вернуться</Button>}
 				right={
 					<>
 						<Popconfirm
@@ -265,16 +255,19 @@ const TagForm = () => {
 				<Radio.Group
 					buttonStyle='solid'
 					value={request.type}
-					onChange={(e) =>
+					onChange={(e) => {
 						setRequest({
 							...request,
 							type: e.target.value,
 						})
-					}
+						if (strategy === SourceStrategy.Aggregated && e.target.value !== TagType.Number) {
+							setStrategy(SourceStrategy.Manual)
+						}
+					}}
 				>
 					<Radio.Button value={TagType.String}>Строка</Radio.Button>
 					<Radio.Button value={TagType.Number}>Число</Radio.Button>
-					<Radio.Button value={TagType.Boolean}>Дискрет</Radio.Button>
+					<Radio.Button value={TagType.Boolean}>Логическое значение</Radio.Button>
 				</Radio.Group>
 			</FormRow>
 			<div
@@ -292,7 +285,7 @@ const TagForm = () => {
 							})
 						}
 					>
-						Преобразование по шкалам
+						Преобразование по шкале
 					</Checkbox>
 				</FormRow>
 				<div
@@ -300,10 +293,7 @@ const TagForm = () => {
 						display: request.isScaling ? 'block' : 'none',
 					}}
 				>
-					<FormRow
-						title='Шкала реальных значений'
-						style={{ display: 'flex' }}
-					>
+					<FormRow title='Шкала реальных значений' style={{ display: 'flex' }}>
 						<InputNumber
 							addonBefore='Min'
 							value={request.minEu}
@@ -325,10 +315,7 @@ const TagForm = () => {
 							}
 						/>
 					</FormRow>
-					<FormRow
-						title='Шкала преобразованных значений'
-						style={{ display: 'flex' }}
-					>
+					<FormRow title='Шкала преобразованных значений' style={{ display: 'flex' }}>
 						<InputNumber
 							addonBefore='Min'
 							value={request.minRaw}
@@ -352,56 +339,42 @@ const TagForm = () => {
 					</FormRow>
 				</div>
 			</div>
-			<FormRow title='Способ получения'>
+			<FormRow title='Промежуток времени между записью значений'>
 				<Radio.Group
 					buttonStyle='solid'
-					value={strategy}
-					onChange={(e) => setStrategy(e.target.value)}
+					value={request.frequency}
+					onChange={(value) => {
+						console.log(value)
+						setRequest({
+							...request,
+							frequency: value.target.value,
+						})
+					}}
 				>
-					<Radio.Button value={SourceStrategy.Manual}>
-						Мануальный
-					</Radio.Button>
-					<Radio.Button value={SourceStrategy.Calculated}>
-						Вычисляемый
-					</Radio.Button>
-					<Radio.Button value={SourceStrategy.FromSource}>
-						Из источника
+					{Object.values(TagFrequency)
+						.filter((key) => !isNaN(Number(key)))
+						.map((value) => (
+							<Radio.Button key={value} value={value}>
+								<TagFrequencyEl frequency={value as TagFrequency} />
+								&emsp;
+								{getTagFrequencyName(value as number)}
+							</Radio.Button>
+						))}
+				</Radio.Group>
+			</FormRow>
+			<FormRow title='Способ получения'>
+				<Radio.Group buttonStyle='solid' value={strategy} onChange={(e) => setStrategy(e.target.value)}>
+					<Radio.Button value={SourceStrategy.Manual}>Ручной ввод</Radio.Button>
+					<Radio.Button value={SourceStrategy.Calculated}>Вычисление</Radio.Button>
+					<Radio.Button value={SourceStrategy.FromSource}>Из источника</Radio.Button>
+					<Radio.Button value={SourceStrategy.Aggregated} disabled={request.type !== TagType.Number}>
+						Агрегирование
 					</Radio.Button>
 				</Radio.Group>
 			</FormRow>
-			<div>
-				<FormRow title='Промежуток времени между записью значений'>
-					<Radio.Group
-						buttonStyle='solid'
-						value={request.frequency}
-						onChange={(value) => {
-							console.log(value)
-							setRequest({
-								...request,
-								frequency: value.target.value,
-							})
-						}}
-					>
-						{Object.values(TagFrequency)
-							.filter((key) => !isNaN(Number(key)))
-							.map((value) => (
-								<Radio.Button key={value} value={value}>
-									<TagFrequencyEl
-										frequency={value as TagFrequency}
-									/>
-									&emsp;
-									{getTagFrequencyName(value as number)}
-								</Radio.Button>
-							))}
-					</Radio.Group>
-				</FormRow>
-			</div>
 			<div
 				style={{
-					display:
-						strategy === SourceStrategy.Calculated
-							? 'block'
-							: 'none',
+					display: strategy === SourceStrategy.Calculated ? 'block' : 'none',
 				}}
 			>
 				<FormRow
@@ -440,16 +413,13 @@ const TagForm = () => {
 										setRequest({
 											...request,
 											formulaInputs: [
-												...request.formulaInputs.map(
-													(x) =>
-														x.key !== input.key
-															? x
-															: {
-																	...x,
-																	variableName:
-																		e.target
-																			.value,
-																},
+												...request.formulaInputs.map((x) =>
+													x.key !== input.key
+														? x
+														: {
+																...x,
+																variableName: e.target.value,
+															},
 												),
 											],
 										})
@@ -457,42 +427,32 @@ const TagForm = () => {
 								/>
 								<TagTreeSelect
 									blocks={blocks}
+									tags={tags}
 									value={input.tagId}
 									onChange={(v) =>
 										setRequest({
 											...request,
-											formulaInputs:
-												request.formulaInputs.map(
-													(x) =>
-														x.key !== input.key
-															? x
-															: {
-																	...x,
-																	tagId: v,
-																},
-												),
+											formulaInputs: request.formulaInputs.map((x) =>
+												x.key !== input.key
+													? x
+													: {
+															...x,
+															tagId: v,
+														},
+											),
 										})
 									}
 								/>
-								<Button
-									icon={<DeleteOutlined />}
-									onClick={() => removeParam(input.key)}
-								></Button>
+								<Button icon={<DeleteOutlined />} onClick={() => removeParam(input.key)}></Button>
 							</div>
 						))}
 					</FormRow>
-					<Button
-						icon={<AppstoreAddOutlined />}
-						onClick={addParam}
-					></Button>
+					<Button icon={<AppstoreAddOutlined />} onClick={addParam}></Button>
 				</div>
 			</div>
 			<div
 				style={{
-					display:
-						strategy === SourceStrategy.FromSource
-							? 'block'
-							: 'none',
+					display: strategy === SourceStrategy.FromSource ? 'block' : 'none',
 				}}
 			>
 				<FormRow title='Используемый источник'>
@@ -516,10 +476,7 @@ const TagForm = () => {
 				</FormRow>
 				<div
 					style={{
-						display:
-							request.sourceId === SourceType.NotSet
-								? 'none'
-								: 'inherit',
+						display: request.sourceId === SourceType.NotSet ? 'none' : 'inherit',
 					}}
 				>
 					<FormRow title='Путь к данным в источнике'>
@@ -540,6 +497,48 @@ const TagForm = () => {
 					<Space>
 						<TagValueEl value={value} type={tag.type} />
 					</Space>
+				</FormRow>
+			</div>
+			<div
+				style={{
+					display: strategy === SourceStrategy.Aggregated && request.type === TagType.Number ? 'block' : 'none',
+				}}
+			>
+				<FormRow title='Тег-источник'>
+					<TagTreeSelect
+						value={request.sourceTagId ?? 0}
+						blocks={blocks}
+						tags={tags}
+						onChange={(value) => setRequest({ ...request, sourceTagId: value })}
+					/>
+				</FormRow>
+				<FormRow
+					title={
+						<>
+							{'Функция агрегирования'}
+							<HelpAggregationType />
+						</>
+					}
+				>
+					<Radio.Group
+						buttonStyle='solid'
+						value={request.aggregation}
+						onChange={(e) => setRequest({ ...request, aggregation: e.target.value })}
+					>
+						<Radio.Button value={TagAggregation.Average}>Взвешенное среднее</Radio.Button>
+						<Radio.Button value={TagAggregation.Sum}>Взвешенная сумма</Radio.Button>
+					</Radio.Group>
+				</FormRow>
+				<FormRow title='Период агрегирования'>
+					<Radio.Group
+						buttonStyle='solid'
+						value={request.aggregationPeriod}
+						onChange={(e) => setRequest({ ...request, aggregationPeriod: e.target.value })}
+					>
+						<Radio.Button value={AggregationPeriod.Munite}>Прошедшая минута</Radio.Button>
+						<Radio.Button value={AggregationPeriod.Hour}>Прошедший час</Radio.Button>
+						<Radio.Button value={AggregationPeriod.Day}>Прошедшие сутки</Radio.Button>
+					</Radio.Group>
 				</FormRow>
 			</div>
 		</>

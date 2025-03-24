@@ -1,4 +1,5 @@
 ﻿using Datalake.Database.Extensions;
+using Datalake.Database.Models;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
@@ -796,11 +797,15 @@ public static class ValuesRepository
 		Quality = TagQuality.Bad,
 	};
 
-	internal static async Task<TagHistory[]> GetWeightedAverage(
-		DatalakeContext db,
-		int[] tagIdentifiers,
-		DateTime? moment = null,
-		AggregationPeriod period = AggregationPeriod.Hour)
+	/// <summary>
+	/// Расчет средневзвешенных и взвешенных сумм по тегам. Взвешивание по секундам
+	/// </summary>
+	/// <param name="tagIdentifiers">Идентификаторы тегов</param>
+	/// <param name="moment">Момент времени, относительно которого определяется прошедший период</param>
+	/// <param name="period">Размер прошедшего периода</param>
+	/// <returns>По одному значению на каждый тег</returns>
+	/// <exception cref="ForbiddenException"></exception>
+	public async Task<TagAggregationWeightedValue[]> GetWeightedAggregated(int[] tagIdentifiers, DateTime? moment = null, AggregationPeriod period = AggregationPeriod.Hour)
 	{
 		// Задаем входные параметры
 		var now = moment ?? DateFormats.GetCurrentDateTime();
@@ -824,11 +829,26 @@ public static class ValuesRepository
 				throw new ForbiddenException("задан неподдерживаемый период");
 		}
 
-		var table = await TablesRepository.GetHistoryTableAsync(db, periodEnd);
+		ITable<TagHistory> tableStart;
+		ITable<TagHistory> tableEnd;
+		IQueryable<TagHistory> source;
+
+		if (periodStart.Date == periodEnd.Date)
+		{
+			tableEnd = await db.TablesRepository.GetHistoryTableAsync(periodEnd);
+			tableStart = tableEnd;
+			source = from value in tableEnd select value;
+		}
+		else
+		{
+			tableStart = await db.TablesRepository.GetHistoryTableAsync(periodStart);
+			tableEnd = await db.TablesRepository.GetHistoryTableAsync(periodEnd);
+			source = tableStart.Concat(tableEnd);
+		}
 
 		// CTE: Последнее значение перед началом периода
 		var historyBefore =
-			from raw in table
+			from raw in tableStart
 			where tagIdentifiers.Contains(raw.TagId) && raw.Date <= periodStart
 			select new
 			{
@@ -838,7 +858,7 @@ public static class ValuesRepository
 				Order = Sql.Ext.RowNumber()
 					.Over()
 					.PartitionBy(raw.TagId)
-					.OrderBy(raw.Date)
+					.OrderByDesc(raw.Date)
 					.ToValue()
 			} into historyBeforeTemp
 			where historyBeforeTemp.Order == 1
@@ -851,7 +871,7 @@ public static class ValuesRepository
 
 		// CTE: Значения в пределах периода
 		var historyBetween =
-			from raw in table
+			from raw in source
 			where
 				tagIdentifiers.Contains(raw.TagId) &&
 				raw.Date > periodStart &&
@@ -866,7 +886,7 @@ public static class ValuesRepository
 		// CTE: Объединение двух выборок (UNION ALL)
 		var history = historyBefore.Concat(historyBetween);
 
-		// CTE: Добавление "следующей даты" (аналог LEAD с оконной функцией)
+		// CTE: Добавление следующей даты, чтобы относительно ее посчитать длительность актуальности значения
 		var historyWithNext =
 			from h in history
 			select new
@@ -888,37 +908,25 @@ public static class ValuesRepository
 			{
 				h.TagId,
 				h.Number,
-				Duration = Sql.DateDiff(Sql.DateParts.Second, h.Date, h.NextDate),
+				Weight = Sql.DateDiff(Sql.DateParts.Second, h.Date, h.NextDate),
 			};
 
-		// Финальный запрос: расчет взвешенного среднего
+		// Финальный запрос - применяем веса
 		var result =
 			from w in weighted
 			group w by w.TagId into g
-			select new
+			select new TagAggregationWeightedValue
 			{
 				TagId = g.Key,
-				Average = g.Sum(x => x.Number * x.Duration) / g.Sum(x => x.Duration)
+				Date = periodEnd,
+				SumOfWeights = g.Sum(x => x.Weight) ?? 0,
+				SumValuesWithWeights = g.Sum(x => x.Number * x.Weight) ?? 0,
 			};
 
+		// Выполнение запроса
 		var aggregated = await result.ToArrayAsync();
 
-		// Выполнение запроса
-		foreach (var avg in aggregated.OrderBy(x => x.TagId))
-		{
-			Console.WriteLine($"TagId: {avg.TagId}, Average: {avg.Average}");
-		}
-
-		return aggregated
-			.Select(x => new TagHistory
-			{
-				Date = periodEnd,
-				Number = x.Average,
-				Quality = TagQuality.Good,
-				TagId = x.TagId,
-				Text = null,
-			})
-			.ToArray();
+		return aggregated;
 	}
 
 	#endregion

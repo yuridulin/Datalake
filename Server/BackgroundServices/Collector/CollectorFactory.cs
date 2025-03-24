@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.Database;
+using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Collectors;
@@ -13,6 +14,7 @@ namespace Datalake.Server.BackgroundServices.Collector;
 public class CollectorFactory(
 	ReceiverService receiverService,
 	SourcesStateService stateService,
+	IServiceProvider serviceProvider,
 	ILoggerFactory loggerFactory)
 {
 	/// <summary>
@@ -38,6 +40,12 @@ public class CollectorFactory(
 
 			SourceType.System
 				=> new SystemCollector(source, loggerFactory.CreateLogger<SystemCollector>()),
+
+			SourceType.Aggregated
+				=> new AggregateCollector(
+					serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DatalakeContext>(),
+					source,
+					loggerFactory.CreateLogger<AggregateCollector>()),
 
 			_ => null,
 		};

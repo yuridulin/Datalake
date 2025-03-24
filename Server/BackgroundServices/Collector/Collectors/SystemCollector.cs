@@ -10,7 +10,7 @@ namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 /// <param name="logger">Служба сообщений</param>
 internal class SystemCollector(
 	SourceWithTagsInfo source,
-	ILogger<SystemCollector> logger) : CollectorBase(source, logger)
+	ILogger<SystemCollector> logger) : CollectorBase(source.Name, source, logger)
 {
 	public override event CollectEvent? CollectValues;
 
