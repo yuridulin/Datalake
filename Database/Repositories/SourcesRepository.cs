@@ -349,7 +349,7 @@ public static class SourcesRepository
 	/// <summary>
 	/// Запрос информации о источниках вместе со списками зависящих тегов
 	/// </summary>
-	public IQueryable<SourceWithTagsInfo> QueryInfoWithTagsAndSourceTags()
+	public static IQueryable<SourceWithTagsInfo> QueryInfoWithTagsAndSourceTags(DatalakeContext db)
 	{
 		var query =
 			from source in db.Sources

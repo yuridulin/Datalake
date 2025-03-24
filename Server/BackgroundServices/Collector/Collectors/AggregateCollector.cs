@@ -1,5 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Extensions;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
@@ -107,7 +108,7 @@ internal class AggregateCollector : CollectorBase
 
 	private async Task<List<CollectValue>> GetAggregated(TagAggregationRule[] rules, DateTime date, AggregationPeriod period)
 	{
-		var aggregated = await _db.ValuesRepository.GetWeightedAggregated(rules.Select(x => x.TagSourceId).ToArray(), date, period);
+		var aggregated = await ValuesRepository.GetWeightedAggregated(_db, rules.Select(x => x.TagSourceId).ToArray(), date, period);
 
 		return aggregated
 			.Select(value => new

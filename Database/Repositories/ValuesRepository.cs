@@ -800,12 +800,17 @@ public static class ValuesRepository
 	/// <summary>
 	/// Расчет средневзвешенных и взвешенных сумм по тегам. Взвешивание по секундам
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="tagIdentifiers">Идентификаторы тегов</param>
 	/// <param name="moment">Момент времени, относительно которого определяется прошедший период</param>
 	/// <param name="period">Размер прошедшего периода</param>
 	/// <returns>По одному значению на каждый тег</returns>
 	/// <exception cref="ForbiddenException"></exception>
-	public async Task<TagAggregationWeightedValue[]> GetWeightedAggregated(int[] tagIdentifiers, DateTime? moment = null, AggregationPeriod period = AggregationPeriod.Hour)
+	public static async Task<TagAggregationWeightedValue[]> GetWeightedAggregated(
+		DatalakeContext db,
+		int[] tagIdentifiers,
+		DateTime? moment = null,
+		AggregationPeriod period = AggregationPeriod.Hour)
 	{
 		// Задаем входные параметры
 		var now = moment ?? DateFormats.GetCurrentDateTime();
@@ -835,14 +840,14 @@ public static class ValuesRepository
 
 		if (periodStart.Date == periodEnd.Date)
 		{
-			tableEnd = await db.TablesRepository.GetHistoryTableAsync(periodEnd);
+			tableEnd = await TablesRepository.GetHistoryTableAsync(db, periodEnd);
 			tableStart = tableEnd;
 			source = from value in tableEnd select value;
 		}
 		else
 		{
-			tableStart = await db.TablesRepository.GetHistoryTableAsync(periodStart);
-			tableEnd = await db.TablesRepository.GetHistoryTableAsync(periodEnd);
+			tableStart = await TablesRepository.GetHistoryTableAsync(db, periodStart);
+			tableEnd = await TablesRepository.GetHistoryTableAsync(db, periodEnd);
 			source = tableStart.Concat(tableEnd);
 		}
 
