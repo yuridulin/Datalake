@@ -31,7 +31,7 @@ internal class CollectorProcessor(
 					using var scope = serviceScopeFactory.CreateScope();
 					using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-					newSources = await db.SourcesRepository.QueryInfoWithTagsAndSourceTags().ToArrayAsync(token: stoppingToken);
+					newSources = await SourcesRepository.QueryInfoWithTagsAndSourceTags(db).ToArrayAsync(token: stoppingToken);
 				}
 				catch (Exception ex)
 				{

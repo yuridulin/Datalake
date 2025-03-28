@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.Server.BackgroundServices.Collector.Models;
 
 namespace Datalake.Server.BackgroundServices.Collector;
@@ -52,7 +53,7 @@ public class CollectorWriter(
 			{
 				try
 				{
-					var ms = await db.ValuesRepository.WriteValuesAsSystemAsync(buffer);
+					var ms = await ValuesRepository.WriteValuesAsSystemAsync(db, buffer);
 
 					logger.LogInformation("Запись значений из очереди: {length} из {all} за {ms}мс", buffer.Length, allCount, ms);
 				}

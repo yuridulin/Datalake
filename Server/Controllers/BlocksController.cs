@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Blocks;
 using Datalake.Server.Controllers.Base;
@@ -25,7 +26,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.BlocksRepository.CreateAsync(user, blockInfo: blockInfo);
+		return await BlocksRepository.CreateAsync(db, user, blockInfo: blockInfo);
 	}
 
 	/// <summary>
@@ -39,7 +40,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.BlocksRepository.CreateAsync(user, parentId: parentId);
+		return await BlocksRepository.CreateAsync(db, user, parentId: parentId);
 	}
 
 	/// <summary>
@@ -51,7 +52,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.BlocksRepository.ReadAllAsync(user);
+		return await BlocksRepository.ReadAllAsync(db, user);
 	}
 
 	/// <summary>
@@ -66,7 +67,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.BlocksRepository.ReadAsync(user, id);
+		return await BlocksRepository.ReadAsync(db, user, id);
 	}
 
 	/// <summary>
@@ -78,7 +79,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.BlocksRepository.ReadAllAsTreeAsync(user);
+		return await BlocksRepository.ReadAllAsTreeAsync(db, user);
 	}
 
 	/// <summary>
@@ -93,7 +94,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await db.BlocksRepository.UpdateAsync(user, id, block);
+		await BlocksRepository.UpdateAsync(db, user, id, block);
 
 		return NoContent();
 	}
@@ -110,7 +111,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await db.BlocksRepository.MoveAsync(user, id, parentId);
+		await BlocksRepository.MoveAsync(db, user, id, parentId);
 
 		return NoContent();
 	}
@@ -125,7 +126,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await db.BlocksRepository.DeleteAsync(user, id);
+		await BlocksRepository.DeleteAsync(db, user, id);
 
 		return NoContent();
 	}

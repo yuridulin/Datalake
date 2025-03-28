@@ -43,7 +43,7 @@ public class SettingsHandlerService(
 					{
 						logger.LogInformation("Обновление настроек прав доступа");
 
-						await db.AccessRepository.RebuildUserRightsCacheAsync();
+						await AccessRepository.RebuildUserRightsCacheAsync(db);
 						StoredAccessUpdate = lastAccessUpdate;
 					}
 
@@ -51,11 +51,11 @@ public class SettingsHandlerService(
 					{
 						logger.LogInformation("Обновление системных настроек");
 
-						await WriteStartipFileAsync(db.SystemRepository);
+						await WriteStartipFileAsync(db);
 						StoredSystemUpdate = lastSystemUpdate;
 					}
 
-					LoadStaticUsers(db.AccessRepository);
+					LoadStaticUsers(db);
 				}
 				catch (Exception ex)
 				{
@@ -77,13 +77,13 @@ public class SettingsHandlerService(
 	private DateTime StoredAccessUpdate = DateTime.MinValue.AddMinutes(1);
 
 	/// <inheritdoc />
-	public async Task WriteStartipFileAsync(SystemRepository systemRepository)
+	public async Task WriteStartipFileAsync(DatalakeContext db)
 	{
 		logger.LogDebug("Обновление настроек, передаваемых веб-клиенту");
 
 		try
 		{
-			var newSettings = await systemRepository.GetSettingsAsSystemAsync();
+			var newSettings = await SystemRepository.GetSettingsAsSystemAsync(db);
 
 			File.WriteAllLines(Path.Combine(Program.WebRootPath, "startup.js"), [
 				"var LOCAL_API = true;",
@@ -101,14 +101,14 @@ public class SettingsHandlerService(
 	}
 
 	/// <inheritdoc />
-	public void LoadStaticUsers(AccessRepository accessRepository)
+	public void LoadStaticUsers(DatalakeContext db)
 	{
 		logger.LogDebug("Обновление списка статичных учетных записей");
 
 		try
 		{
-			var staticUsers = accessRepository
-				.GetStaticUsersAsSystemAsync().Result;
+			var staticUsers = AccessRepository
+				.GetStaticUsersAsSystemAsync(db).Result;
 
 			SessionManagerService.StaticAuthRecords = staticUsers
 				.Select(x => new AuthSession

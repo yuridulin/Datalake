@@ -16,45 +16,47 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы с блоками
 /// </summary>
-public class BlocksRepository(DatalakeContext db)
+public static class BlocksRepository
 {
 	#region Действия
 
 	/// <summary>
 	/// Создание нового блока
 	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="blockInfo">Параметры нового блока</param>
 	/// <param name="parentId">Идентификатор родительского блока</param>
 	/// <returns>Идентификатор нового блока</returns>
-	public async Task<int> CreateAsync(
+	public static async Task<int> CreateAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		BlockFullInfo? blockInfo = null,
 		int? parentId = null)
 	{
 		if (parentId.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, parentId.Value);
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
 
-		User = user.Guid;
-
-		return blockInfo != null ? await CreateAsync(blockInfo) : await CreateAsync(parentId);
+		return blockInfo != null ? await VerifiedCreateAsync(db, user.Guid, blockInfo) : await VerifiedCreateAsync(db, user.Guid, parentId);
 	}
 
 	/// <summary>
 	/// Получение списка блоков с учетом уровня доступа
 	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <returns>Список блоков с уровнями доступа к ним</returns>
-	public async Task<BlockWithTagsInfo[]> ReadAllAsync(
+	public static async Task<BlockWithTagsInfo[]> ReadAllAsync(
+		DatalakeContext db,
 		UserAuthInfo user)
 	{
-		BlockWithTagsInfo[] blocks = await GetBlocks(user);
+		BlockWithTagsInfo[] blocks = await GetBlocks(db, user);
 
 		return blocks.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer)).ToArray();
 	}
@@ -62,11 +64,13 @@ public class BlocksRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение полной информации о блоке, включая права доступа, поля и дочерние блоки
 	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="id">Идентификатор блока</param>
 	/// <returns>Полная информация о блоке</returns>
 	/// <exception cref="NotFoundException">Блок не найден</exception>
-	public async Task<BlockFullInfo> ReadAsync(
+	public static async Task<BlockFullInfo> ReadAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		int id)
 	{
@@ -74,7 +78,7 @@ public class BlocksRepository(DatalakeContext db)
 		if (!rule.AccessType.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
-		var block = await QueryFullInfo(id);
+		var block = await QueryFullInfo(db, id);
 
 		block.AccessRule = rule;
 
@@ -84,12 +88,14 @@ public class BlocksRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение дерева блоков с учетом уровня доступа
 	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <returns>Дерево блоков с уровнями доступа к ним</returns>
-	public async Task<BlockTreeInfo[]> ReadAllAsTreeAsync(
+	public static async Task<BlockTreeInfo[]> ReadAllAsTreeAsync(
+		DatalakeContext db,
 		UserAuthInfo user)
 	{
-		BlockWithTagsInfo[] blocks = await GetBlocks(user);
+		BlockWithTagsInfo[] blocks = await GetBlocks(db, user);
 
 		return ReadChildren(null, string.Empty);
 
@@ -143,71 +149,72 @@ public class BlocksRepository(DatalakeContext db)
 	/// <summary>
 	/// Изменение параметров блока, включая закрепленные теги
 	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="id">Идентификатор блока</param>
 	/// <param name="block">Новые параметры блока</param>
 	/// <returns>Флаг успешного завершения</returns>
-	public async Task<bool> UpdateAsync(
+	public static async Task<bool> UpdateAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		int id,
 		BlockUpdateRequest block)
 	{
-		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
-		User = user.Guid;
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
 
-		return await UpdateAsync(id, block);
+		return await VerifiedUpdateAsync(db, user.Guid, id, block);
 	}
 
 	/// <summary>
 	/// Изменение расположения блока в иерархии
 	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="id">Идентификатор блока</param>
 	/// <param name="parentId"></param>
 	/// <returns>Флаг успешного завершения</returns>
-	public async Task<bool> MoveAsync(
+	public static async Task<bool> MoveAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		int id,
 		int? parentId)
 	{
-		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
 
 		if (parentId.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, parentId.Value);
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
-		User = user.Guid;
 
-		return await MoveAsync(id, parentId);
+		return await VerifiedMoveAsync(db, user.Guid, id, parentId);
 	}
 
 	/// <summary>
 	/// Удаление блока
 	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="id">Идентификатор блока</param>
 	/// <returns>Флаг успешного завершения</returns>
-	public async Task<bool> DeleteAsync(
+	public static async Task<bool> DeleteAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		int id)
 	{
 		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
-		User = user.Guid;
 
-		return await DeleteAsync(id);
+		return await VerifiedDeleteAsync(db, user.Guid, id);
 	}
 
 	#endregion
 
 	#region Реализация
 
-	Guid? User { get; set; } = null;
-
-	internal async Task<int> CreateAsync(int? parentId = null)
+	internal static async Task<int> VerifiedCreateAsync(DatalakeContext db, Guid userGuid, int? parentId = null)
 	{
 		int? id = await db.Blocks
 			.Value(x => x.GlobalId, Guid.NewGuid())
@@ -226,14 +233,14 @@ public class BlocksRepository(DatalakeContext db)
 			.Set(x => x.Name, name)
 			.UpdateAsync();
 
-		await LogAsync(id.Value, "Создан блок: " + name);
+		await LogAsync(db, userGuid, id.Value, "Создан блок: " + name);
 
 		AccessRepository.Update();
 
 		return id.Value;
 	}
 
-	internal async Task<int> CreateAsync(BlockFullInfo block)
+	internal static async Task<int> VerifiedCreateAsync(DatalakeContext db, Guid userGuid, BlockFullInfo block)
 	{
 		if (block.Parent != null)
 		{
@@ -254,16 +261,16 @@ public class BlocksRepository(DatalakeContext db)
 		if (!id.HasValue)
 			throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
 
-		await LogAsync(id.Value, "Создан блок: " + block.Name);
+		await LogAsync(db, userGuid, id.Value, "Создан блок: " + block.Name);
 
 		AccessRepository.Update();
 
 		return id ?? throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
 	}
 
-	internal async Task<bool> UpdateAsync(int id, BlockUpdateRequest block)
+	internal static async Task<bool> VerifiedUpdateAsync(DatalakeContext db, Guid userGuid, int id, BlockUpdateRequest block)
 	{
-		var oldBlock = await QueryFullInfo(id);
+		var oldBlock = await QueryFullInfo(db, id);
 
 		if (await db.Blocks.AnyAsync(x => x.Id != id && x.ParentId == oldBlock.ParentId && x.Name == block.Name))
 			throw new AlreadyExistException("Блок с таким именем уже существует");
@@ -293,7 +300,7 @@ public class BlocksRepository(DatalakeContext db)
 			}));
 		}
 
-		await LogAsync(id, "Изменен блок: " + block.Name, ObjectExtension.Difference(
+		await LogAsync(db, userGuid, id, "Изменен блок: " + block.Name, ObjectExtension.Difference(
 			new { oldBlock.Name, oldBlock.Description, Tags = oldBlock.Tags.Select(t => t.Id) },
 			new { block.Name, block.Description, Tags = block.Tags.Select(t => t.Id) }));
 
@@ -304,7 +311,7 @@ public class BlocksRepository(DatalakeContext db)
 		return true;
 	}
 
-	internal async Task<bool> MoveAsync(int id, int? parentId)
+	internal static async Task<bool> VerifiedMoveAsync(DatalakeContext db, Guid userGuid, int id, int? parentId)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -318,7 +325,7 @@ public class BlocksRepository(DatalakeContext db)
 			.Set(x => x.ParentId, parentId == 0 ? null : parentId)
 			.UpdateAsync();
 
-		await LogAsync(id, "Изменено расположение блока: " + block.Name, ObjectExtension.Difference(
+		await LogAsync(db, userGuid, id, "Изменено расположение блока: " + block.Name, ObjectExtension.Difference(
 			new { block.ParentId },
 			new { ParentId = parentId == 0 ? null : parentId }));
 
@@ -329,7 +336,7 @@ public class BlocksRepository(DatalakeContext db)
 		return true;
 	}
 
-	internal async Task<bool> DeleteAsync(int id)
+	internal static async Task<bool> VerifiedDeleteAsync(DatalakeContext db, Guid userGuid, int id)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -342,7 +349,7 @@ public class BlocksRepository(DatalakeContext db)
 			.Where(x => x.Id == id)
 			.DeleteAsync();
 
-		await LogAsync(id, "Удален блок: " + blockName);
+		await LogAsync(db, userGuid, id, "Удален блок: " + blockName);
 
 		await transaction.CommitAsync();
 
@@ -351,9 +358,9 @@ public class BlocksRepository(DatalakeContext db)
 		return true;
 	}
 
-	private async Task<BlockWithTagsInfo[]> GetBlocks(UserAuthInfo user)
+	private static async Task<BlockWithTagsInfo[]> GetBlocks(DatalakeContext db, UserAuthInfo user)
 	{
-		var blocks = await QuerySimpleInfo().ToArrayAsync();
+		var blocks = await QuerySimpleInfo(db).ToArrayAsync();
 		foreach (var block in blocks)
 		{
 			block.AccessRule = AccessRepository.GetAccessToBlock(user, block.Id);
@@ -362,13 +369,13 @@ public class BlocksRepository(DatalakeContext db)
 		return blocks;
 	}
 
-	private async Task LogAsync(int id, string message, string? details = null)
+	private static async Task LogAsync(DatalakeContext db, Guid userGuid, int id, string message, string? details = null)
 	{
 		await db.InsertAsync(new Log
 		{
 			Category = LogCategory.Blocks,
 			RefId = id.ToString(),
-			UserGuid = User,
+			UserGuid = userGuid,
 			Text = message,
 			Type = LogType.Success,
 			Details = details,
@@ -379,7 +386,7 @@ public class BlocksRepository(DatalakeContext db)
 
 	#region Запросы
 
-	internal IQueryable<BlockWithTagsInfo> QuerySimpleInfo()
+	internal static IQueryable<BlockWithTagsInfo> QuerySimpleInfo(DatalakeContext db)
 	{
 		var query =
 			from block in db.Blocks
@@ -412,7 +419,7 @@ public class BlocksRepository(DatalakeContext db)
 		return query;
 	}
 
-	internal async Task<BlockFullInfo> QueryFullInfo(int id)
+	internal static async Task<BlockFullInfo> QueryFullInfo(DatalakeContext db, int id)
 	{
 		var parentsCte = db.GetCte<BlockTreeInfo>(cte =>
 		{

@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Repositories;
 using System.Diagnostics;
 
 namespace Datalake.Server.BackgroundServices.HistoryInitial;
@@ -27,7 +28,7 @@ public class HistoryInitialService(
 				using var scope = serviceScopeFactory.CreateScope();
 				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-				var tables = await db.TablesRepository.GetHistoryTablesFromSchema();
+				var tables = await TablesRepository.GetHistoryTablesFromSchema(db);
 				tables = [.. tables.Skip(1).OrderBy(x => x.Date)];
 
 				logger.LogInformation("Запущена проверка наличия начальных значений");
@@ -37,7 +38,7 @@ public class HistoryInitialService(
 					logger.LogInformation("Проверка наличия начальных значений для {name}", table.Name);
 
 					var sw = Stopwatch.StartNew();
-					await db.TablesRepository.EnsureInitialValues(table.Date);
+					await TablesRepository.EnsureInitialValues(db, table.Date);
 
 					sw.Stop();
 					logger.LogDebug("Проверка наличия начальных значений для {name} завершена: {ms} мс",

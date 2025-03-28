@@ -137,7 +137,7 @@ internal class OldDatalakeCollector : CollectorBase
 			}
 			catch (Exception ex)
 			{
-				_logger.LogWarning("Ошибка в сборщике {name}: {message}", _name, _id, ex.Message);
+				_logger.LogWarning("Ошибка в сборщике {name}: {message}", _name, ex.Message);
 				_stateService.UpdateSource(_id, connected: false);
 			}
 			finally

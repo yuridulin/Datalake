@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using System.Diagnostics;
 
@@ -29,7 +30,7 @@ public class HistoryIndexerService(
 				using var scope = serviceScopeFactory.CreateScope();
 				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-				var tables = await db.TablesRepository.GetHistoryTablesFromSchema();
+				var tables = await TablesRepository.GetHistoryTablesFromSchema(db);
 
 				var notIndexedTables = tables
 					.Where(x => x.Date < DateFormats.GetCurrentDateTime().Date)
@@ -45,7 +46,7 @@ public class HistoryIndexerService(
 					try
 					{
 						var sw = Stopwatch.StartNew();
-						await db.TablesRepository.CreateHistoryIndex(table.Name);
+						await TablesRepository.CreateHistoryIndex(db, table.Name);
 
 						LastIndexedTableDate = table.Date;
 

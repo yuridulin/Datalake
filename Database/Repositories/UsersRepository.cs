@@ -15,32 +15,35 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы с учетными записями пользователей
 /// </summary>
-public class UsersRepository(DatalakeContext db)
+public static class UsersRepository
 {
 	#region Действия
 
 	/// <summary>
 	/// Создание нового пользователя
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Идентификатор создающего пользователя</param>
 	/// <param name="userInfo">Параметры новой учетной записи</param>
 	/// <returns>Идентификатор созданного пользователя</returns>
-	public async Task<Guid> CreateAsync(UserAuthInfo user, UserCreateRequest userInfo)
+	public static async Task<Guid> CreateAsync(
+		DatalakeContext db, UserAuthInfo user, UserCreateRequest userInfo)
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-		User = user.Guid;
 
-		return await CreateAsync(userInfo);
+		return await CreateAsync(db, user.Guid, userInfo);
 	}
 
 	/// <summary>
 	/// Получение информации о пользователях
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Идентификатор читающего пользователя</param>
 	/// <returns>Список пользователей</returns>
-	public async Task<UserInfo[]> ReadAllAsync(UserAuthInfo user)
+	public static async Task<UserInfo[]> ReadAllAsync(
+		DatalakeContext db, UserAuthInfo user)
 	{
-		var users = await db.UsersRepository.GetInfo()
+		var users = await GetInfo(db)
 			.ToArrayAsync();
 
 		foreach (var u in users)
@@ -66,15 +69,17 @@ public class UsersRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение информации о пользователе
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Идентификатор читающего пользователя</param>
 	/// <param name="guid">Идентификатор затронутого пользователя</param>
 	/// <returns>Детальная о пользователе</returns>
-	public async Task<UserInfo> ReadAsync(UserAuthInfo user, Guid guid)
+	public static async Task<UserInfo> ReadAsync(
+		DatalakeContext db, UserAuthInfo user, Guid guid)
 	{
 		if (user.Guid != guid)
 			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		var userInfo = await db.UsersRepository.GetInfo()
+		var userInfo = await UsersRepository.GetInfo(db)
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Учётная запись {guid}");
@@ -94,15 +99,17 @@ public class UsersRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение детальной информации о пользователе, включая группы и правила
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Идентификатор читающего пользователя</param>
 	/// <param name="guid">Идентификатор затронутого пользователя</param>
 	/// <returns>Детальная информация о пользователе</returns>
-	public async Task<UserDetailInfo> ReadWithDetailsAsync(UserAuthInfo user, Guid guid)
+	public static async Task<UserDetailInfo> ReadWithDetailsAsync(
+		DatalakeContext db, UserAuthInfo user, Guid guid)
 	{
 		if (user.Guid != guid)
 			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		var userInfo = await db.UsersRepository.GetDetailInfo()
+		var userInfo = await GetDetailInfo(db)
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Учётная запись {guid}");
@@ -122,43 +129,43 @@ public class UsersRepository(DatalakeContext db)
 	/// <summary>
 	/// Изменение параметров пользователя
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Идентификатор изменяющего пользователя</param>
 	/// <param name="userGuid">Идентификатор затронутого пользователя</param>
 	/// <param name="request">Новые параметры учетной записи</param>
 	/// <returns>Флаг успешного завершения</returns>
-	public async Task<bool> UpdateAsync(UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
+	public static async Task<bool> UpdateAsync(
+		DatalakeContext db, UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
 		var accessType = user.Guid == userGuid ? AccessType.Manager : user.GlobalAccessType;
 
 		if (!accessType.HasAccess(AccessType.Manager))
 			throw Errors.NoAccess;
 
-		User = user.Guid;
-
-		return await UpdateAsync(userGuid, request);
+		return await UpdateAsync(db, user.Guid, userGuid, request);
 	}
 
 	/// <summary>
 	/// Удаление пользователя
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Идентификатор удаляющего пользователя</param>
 	/// <param name="userGuid">Идентификатор затронутого пользователя</param>
 	/// <returns>Флаг успешного завершения</returns>
-	public async Task<bool> DeleteAsync(UserAuthInfo user, Guid userGuid)
+	public static async Task<bool> DeleteAsync(
+		DatalakeContext db, UserAuthInfo user, Guid userGuid)
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-		User = user.Guid;
 
-		return await DeleteAsync(userGuid);
+		return await DeleteAsync(db, user.Guid, userGuid);
 	}
 
 	#endregion
 
 	#region Реализация
 
-	Guid? User { get; set; } = null;
-
-	internal async Task<Guid> CreateAsync(UserCreateRequest request)
+	internal static async Task<Guid> CreateAsync(
+		DatalakeContext db, Guid userGuid, UserCreateRequest request)
 	{
 		string? hash = null;
 
@@ -175,7 +182,7 @@ public class UsersRepository(DatalakeContext db)
 				break;
 
 			case UserType.Static:
-				hash = await GenerateNewHashForStaticAsync();
+				hash = await GenerateNewHashForStaticAsync(db);
 				request.Login = string.Empty;
 				break;
 
@@ -189,7 +196,7 @@ public class UsersRepository(DatalakeContext db)
 				break;
 		}
 
-		var user = new User
+		var createdUser = new User
 		{
 			Guid = Guid.NewGuid(),
 			Login = request.Login,
@@ -202,35 +209,36 @@ public class UsersRepository(DatalakeContext db)
 
 		using var transaction = await db.BeginTransactionAsync();
 
-		user = await db.Users
-			.Value(x => x.Guid, user.Guid)
-			.Value(x => x.Login, user.Login)
-			.Value(x => x.FullName, user.FullName)
-			.Value(x => x.PasswordHash, user.PasswordHash)
-			.Value(x => x.StaticHost, user.StaticHost)
-			.Value(x => x.EnergoIdGuid, user.EnergoIdGuid)
-			.Value(x => x.Type, user.Type)
+		createdUser = await db.Users
+			.Value(x => x.Guid, createdUser.Guid)
+			.Value(x => x.Login, createdUser.Login)
+			.Value(x => x.FullName, createdUser.FullName)
+			.Value(x => x.PasswordHash, createdUser.PasswordHash)
+			.Value(x => x.StaticHost, createdUser.StaticHost)
+			.Value(x => x.EnergoIdGuid, createdUser.EnergoIdGuid)
+			.Value(x => x.Type, createdUser.Type)
 			.InsertWithOutputAsync();
 
 		await db.AccessRights
-			.Value(x => x.UserGuid, user.Guid)
+			.Value(x => x.UserGuid, createdUser.Guid)
 			.Value(x => x.IsGlobal, true)
 			.Value(x => x.AccessType, request.AccessType)
 			.InsertAsync();
 
-		await LogAsync(user.Guid, "Создан пользователь " + user.FullName);
+		await LogAsync(db, userGuid, createdUser.Guid, "Создан пользователь " + createdUser.FullName);
 
 		await transaction.CommitAsync();
 
 		AccessRepository.Update();
 
-		return user.Guid;
+		return createdUser.Guid;
 	}
 
-	internal async Task<bool> UpdateAsync(Guid userGuid, UserUpdateRequest request)
+	internal static async Task<bool> UpdateAsync(
+		DatalakeContext db, Guid userGuid, Guid affectedUserGuid, UserUpdateRequest request)
 	{
 		var oldUser = await db.Users
-			.Where(x => x.Guid == userGuid)
+			.Where(x => x.Guid == affectedUserGuid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "пользователь по указанному ключу");
 
@@ -240,7 +248,7 @@ public class UsersRepository(DatalakeContext db)
 			case UserType.Local:
 				if (string.IsNullOrEmpty(request.Login))
 					throw new InvalidValueException(message: "логин не может быть пустым");
-				if (await db.Users.AnyAsync(x => x.Login == request.Login && x.Guid != userGuid))
+				if (await db.Users.AnyAsync(x => x.Login == request.Login && x.Guid != affectedUserGuid))
 					throw new AlreadyExistException(message: "учётная запись с таким логином");
 				if (request.Type != oldUser.Type && string.IsNullOrEmpty(request.Password))
 					throw new InvalidValueException(message: "при смене типа учетной записи необходимо задать пароль");
@@ -251,13 +259,13 @@ public class UsersRepository(DatalakeContext db)
 			case UserType.Static:
 				request.Login ??= string.Empty;
 				if (request.CreateNewStaticHash || request.Type != oldUser.Type)
-					newHash = await GenerateNewHashForStaticAsync();
+					newHash = await GenerateNewHashForStaticAsync(db);
 				break;
 
 			case UserType.EnergoId:
 				if (request.EnergoIdGuid == null)
 					throw new InvalidValueException(message: "необходимо указать учетную запись EnergoId");
-				if (await db.Users.AnyAsync(x => x.EnergoIdGuid == request.EnergoIdGuid && x.Guid != userGuid))
+				if (await db.Users.AnyAsync(x => x.EnergoIdGuid == request.EnergoIdGuid && x.Guid != affectedUserGuid))
 					throw new AlreadyExistException(message: "учётная запись с выбранным EnergoID");
 				break;
 		}
@@ -265,7 +273,7 @@ public class UsersRepository(DatalakeContext db)
 		using var transaction = await db.BeginTransactionAsync();
 
 		int updatedRows = await db.Users
-			.Where(x => x.Guid == userGuid)
+			.Where(x => x.Guid == affectedUserGuid)
 			.Set(x => x.Type, request.Type)
 			.Set(x => x.Login, request.Login)
 			.Set(x => x.FullName, request.FullName)
@@ -275,11 +283,11 @@ public class UsersRepository(DatalakeContext db)
 			.UpdateAsync();
 
 		updatedRows += await db.AccessRights
-			.Where(x => x.UserGuid == userGuid)
+			.Where(x => x.UserGuid == affectedUserGuid)
 			.Set(x => x.AccessType, request.AccessType)
 			.UpdateAsync();
 
-		await LogAsync(userGuid, "Изменен пользователь " + (request.FullName ?? request.Login), ObjectExtension.Difference(
+		await LogAsync(db, userGuid, affectedUserGuid, "Изменен пользователь " + (request.FullName ?? request.Login), ObjectExtension.Difference(
 			new { oldUser.Type, oldUser.Login, oldUser.FullName, oldUser.EnergoIdGuid, oldUser.StaticHost, Hash = "old" },
 			new { request.Type, request.Login, request.FullName, request.EnergoIdGuid, request.StaticHost, Hash = string.IsNullOrEmpty(request.StaticHost) ? "new" : "old" }));
 
@@ -290,28 +298,29 @@ public class UsersRepository(DatalakeContext db)
 		return true;
 	}
 
-	internal async Task<bool> DeleteAsync(Guid userGuid)
+	internal static async Task<bool> DeleteAsync(
+		DatalakeContext db, Guid userGuid, Guid affectedUserGuid)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
 		var user = await db.Users
-			.Where(x => x.Guid == userGuid)
+			.Where(x => x.Guid == affectedUserGuid)
 			.FirstOrDefaultAsync()
-			?? throw new NotFoundException(message: "пользователь " + userGuid);
+			?? throw new NotFoundException(message: "пользователь " + affectedUserGuid);
 
 		await db.AccessRights
-			.Where(x => x.UserGuid == userGuid)
+			.Where(x => x.UserGuid == affectedUserGuid)
 			.DeleteAsync();
 
 		await db.UserGroupRelations
-			.Where(x => x.UserGuid == userGuid)
+			.Where(x => x.UserGuid == affectedUserGuid)
 			.DeleteAsync();
 
 		await db.Users
-			.Where(x => x.Guid == userGuid)
+			.Where(x => x.Guid == affectedUserGuid)
 			.DeleteAsync();
 
-		await LogAsync(userGuid, "Удален пользователь " + (user.FullName ?? user.Login));
+		await LogAsync(db, userGuid, affectedUserGuid, "Удален пользователь " + (user.FullName ?? user.Login));
 
 		await transaction.CommitAsync();
 
@@ -319,7 +328,6 @@ public class UsersRepository(DatalakeContext db)
 
 		return true;
 	}
-
 
 	internal static string GetHashFromPassword(string password)
 	{
@@ -330,7 +338,7 @@ public class UsersRepository(DatalakeContext db)
 		return Convert.ToBase64String(hash);
 	}
 
-	private async Task<string> GenerateNewHashForStaticAsync()
+	private static async Task<string> GenerateNewHashForStaticAsync(DatalakeContext db)
 	{
 		string hash;
 
@@ -366,7 +374,8 @@ public class UsersRepository(DatalakeContext db)
 		return refreshToken;
 	}
 
-	private async Task LogAsync(Guid guid, string message, string? details = null)
+	private static async Task LogAsync(
+		DatalakeContext db, Guid userGuid, Guid guid, string message, string? details = null)
 	{
 		await db.InsertAsync(new Log
 		{
@@ -374,7 +383,7 @@ public class UsersRepository(DatalakeContext db)
 			RefId = guid.ToString(),
 			Text = message,
 			Type = LogType.Success,
-			UserGuid = User,
+			UserGuid = userGuid,
 			Details = details,
 		});
 	}
@@ -386,7 +395,7 @@ public class UsersRepository(DatalakeContext db)
 	/// <summary>
 	/// Запрос информации о учетных записях
 	/// </summary>
-	public IQueryable<UserFlatInfo> GetFlatInfo()
+	public static IQueryable<UserFlatInfo> GetFlatInfo(DatalakeContext db)
 	{
 		return db.Users
 			.Select(x => new UserFlatInfo
@@ -402,7 +411,7 @@ public class UsersRepository(DatalakeContext db)
 	/// <summary>
 	/// Запрос полной информации о учетных записях, включая группы и права доступа
 	/// </summary>
-	internal IQueryable<UserInfo> GetInfo()
+	internal static IQueryable<UserInfo> GetInfo(DatalakeContext db)
 	{
 		var query =
 			from u in db.Users
@@ -441,7 +450,7 @@ public class UsersRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение полной информации о учетных записях, включая группы, права доступа и данные для входа
 	/// </summary>
-	internal IQueryable<UserDetailInfo> GetDetailInfo()
+	internal static IQueryable<UserDetailInfo> GetDetailInfo(DatalakeContext db)
 	{
 		var query =
 			from u in db.Users
