@@ -31,13 +31,13 @@ public static class TagsRepository
 		TagCreateRequest tagCreateRequest)
 	{
 		if (tagCreateRequest.SourceId.HasValue && tagCreateRequest.SourceId.Value > 0)
-			AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Admin, tagCreateRequest.SourceId.Value);
+			AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Manager, tagCreateRequest.SourceId.Value);
 
 		if (tagCreateRequest.BlockId.HasValue)
-			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, tagCreateRequest.BlockId.Value);
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, tagCreateRequest.BlockId.Value);
 
 		if ((!tagCreateRequest.SourceId.HasValue || tagCreateRequest.SourceId.Value <= 0) && !tagCreateRequest.BlockId.HasValue)
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 
 		return await CreateAsync(db, user.Guid, tagCreateRequest);
 	}
@@ -146,7 +146,7 @@ public static class TagsRepository
 		Guid guid,
 		TagUpdateRequest updateRequest)
 	{
-		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Admin, guid);
+		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
 
 		await UpdateAsync(db, user.Guid, guid, updateRequest);
 	}

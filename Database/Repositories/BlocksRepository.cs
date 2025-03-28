@@ -36,11 +36,11 @@ public static class BlocksRepository
 	{
 		if (parentId.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, parentId.Value);
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
 
 		return blockInfo != null ? await VerifiedCreateAsync(db, user.Guid, blockInfo) : await VerifiedCreateAsync(db, user.Guid, parentId);
@@ -160,7 +160,7 @@ public static class BlocksRepository
 		int id,
 		BlockUpdateRequest block)
 	{
-		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
 
 		return await VerifiedUpdateAsync(db, user.Guid, id, block);
 	}
@@ -179,15 +179,15 @@ public static class BlocksRepository
 		int id,
 		int? parentId)
 	{
-		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
 
 		if (parentId.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, parentId.Value);
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
 
 		return await VerifiedMoveAsync(db, user.Guid, id, parentId);
