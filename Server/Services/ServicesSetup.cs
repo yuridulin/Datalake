@@ -23,15 +23,6 @@ internal static class ServicesSetup
 		builder.Services.AddSingleton<SourcesStateService>();
 		builder.Services.AddSingleton<UsersStateService>();
 
-		// временные
-		builder.Services.AddTransient<BlocksRepository>();
-		builder.Services.AddTransient<TagsRepository>();
-		builder.Services.AddTransient<SourcesRepository>();
-		builder.Services.AddTransient<SystemRepository>();
-		builder.Services.AddTransient<UsersRepository>();
-		builder.Services.AddTransient<UserGroupsRepository>();
-		builder.Services.AddTransient<ValuesRepository>();
-
 		// службы
 		builder.Services.AddHostedService<CollectorProcessor>();
 		builder.Services.AddHostedService<CollectorWriter>();

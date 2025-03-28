@@ -20,16 +20,17 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы с правами доступа
 /// </summary>
-public class AccessRepository(DatalakeContext db)
+public static class AccessRepository
 {
 	#region Действия
 
 	/// <summary>
 	/// Получение информации о пользователе по данным из EnergoId
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="info">Данные о учетной записи</param>
 	/// <returns>Информация о пользователе, включая доступ</returns>
-	public async Task<UserAuthInfo> AuthenticateAsync(UserEnergoIdInfo info)
+	public static async Task<UserAuthInfo> AuthenticateAsync(DatalakeContext db, UserEnergoIdInfo info)
 	{
 		var user = await db.Users
 			.Where(x => x.Type == UserType.EnergoId)
@@ -43,9 +44,10 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение информации о пользователе по логину и паролю
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="loginPass">Логин и пароль</param>
 	/// <returns>Информация о пользователе, включая доступ</returns>
-	public async Task<UserAuthInfo> AuthenticateAsync(UserLoginPass loginPass)
+	public static async Task<UserAuthInfo> AuthenticateAsync(DatalakeContext db, UserLoginPass loginPass)
 	{
 		var user = await db.Users
 			.Where(x => x.Type == UserType.Local)
@@ -69,6 +71,7 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение списка правил доступа для запрошенных объектов
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="userGroupGuid">Идентификатор группы пользователей</param>
@@ -76,7 +79,8 @@ public class AccessRepository(DatalakeContext db)
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <returns>Список правил доступа</returns>
-	public async Task<AccessRightsInfo[]> GetRightsAsync(
+	public static async Task<AccessRightsInfo[]> GetRightsAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		Guid? userGuid,
 		Guid? userGroupGuid,
@@ -86,7 +90,7 @@ public class AccessRepository(DatalakeContext db)
 	{
 		ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
-		var rights = await QueryRights(userGuid, userGroupGuid, sourceId, blockId, tagId).ToArrayAsync();
+		var rights = await QueryRights(db, userGuid, userGroupGuid, sourceId, blockId, tagId).ToArrayAsync();
 
 		return rights;
 	}
@@ -95,7 +99,7 @@ public class AccessRepository(DatalakeContext db)
 	/// Получение списка статичный учетных записей вместе с информацией о доступе
 	/// </summary>
 	/// <returns>Список статичных учетных записей</returns>
-	public async Task<UserStaticAuthInfo[]> GetStaticUsersAsSystemAsync()
+	public static async Task<UserStaticAuthInfo[]> GetStaticUsersAsSystemAsync(DatalakeContext db)
 	{
 		var staticUsers = await db.Users
 			.Where(x => x.Type == UserType.Static)
@@ -109,31 +113,32 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Применение изменений прав доступа
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="request">Новые права доступа</param>
-	public async Task ApplyChangesAsync(UserAuthInfo user, AccessRightsApplyRequest request)
+	public static async Task ApplyChangesAsync(DatalakeContext db, UserAuthInfo user, AccessRightsApplyRequest request)
 	{
 		ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		if (request.UserGroupGuid.HasValue)
 		{
-			await SetUserGroupRightsAsync(request.UserGroupGuid.Value, request.Rights);
+			await SetUserGroupRightsAsync(db, request.UserGroupGuid.Value, request.Rights);
 		}
 		else if (request.UserGuid.HasValue)
 		{
-			await SetUserRightsAsync(request.UserGuid.Value, request.Rights);
+			await SetUserRightsAsync(db, request.UserGuid.Value, request.Rights);
 		}
 		else if (request.SourceId.HasValue)
 		{
-			await SetSourceRightsAsync(request.SourceId.Value, request.Rights);
+			await SetSourceRightsAsync(db, request.SourceId.Value, request.Rights);
 		}
 		else if (request.BlockId.HasValue)
 		{
-			await SetBlockRightsAsync(request.BlockId.Value, request.Rights);
+			await SetBlockRightsAsync(db, request.BlockId.Value, request.Rights);
 		}
 		else if (request.TagId.HasValue)
 		{
-			await SetTagRightsAsync(request.TagId.Value, request.Rights);
+			await SetTagRightsAsync(db, request.TagId.Value, request.Rights);
 		}
 	}
 
@@ -141,7 +146,7 @@ public class AccessRepository(DatalakeContext db)
 
 	#region Реализация
 
-	internal async Task SetUserGroupRightsAsync(Guid userGroupGuid, AccessRightsIdInfo[] rights)
+	internal static async Task SetUserGroupRightsAsync(DatalakeContext db, Guid userGroupGuid, AccessRightsIdInfo[] rights)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -173,7 +178,7 @@ public class AccessRepository(DatalakeContext db)
 		}
 	}
 
-	internal async Task SetUserRightsAsync(Guid userGuid, AccessRightsIdInfo[] rights)
+	internal static async Task SetUserRightsAsync(DatalakeContext db, Guid userGuid, AccessRightsIdInfo[] rights)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -205,7 +210,7 @@ public class AccessRepository(DatalakeContext db)
 		}
 	}
 
-	internal async Task SetSourceRightsAsync(int sourceId, AccessRightsIdInfo[] rights)
+	internal static async Task SetSourceRightsAsync(DatalakeContext db, int sourceId, AccessRightsIdInfo[] rights)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -236,7 +241,7 @@ public class AccessRepository(DatalakeContext db)
 		}
 	}
 
-	internal async Task SetBlockRightsAsync(int blockId, AccessRightsIdInfo[] rights)
+	internal static async Task SetBlockRightsAsync(DatalakeContext db, int blockId, AccessRightsIdInfo[] rights)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -267,7 +272,7 @@ public class AccessRepository(DatalakeContext db)
 		}
 	}
 
-	internal async Task SetTagRightsAsync(int tagId, AccessRightsIdInfo[] rights)
+	internal static async Task SetTagRightsAsync(DatalakeContext db, int tagId, AccessRightsIdInfo[] rights)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -327,16 +332,16 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Вычисление доступа ко всем объектам для каждой учетной записи и обновление кэша
 	/// </summary>
-	public async Task RebuildUserRightsCacheAsync()
+	public static async Task RebuildUserRightsCacheAsync(DatalakeContext db)
 	{
 		var userGroupsDb = await db.UserGroups
-				.Select(g => new
-				{
-					g.Guid,
-					g.ParentGuid,
-					g.Name,
-				})
-				.ToArrayAsync();
+			.Select(g => new
+			{
+				g.Guid,
+				g.ParentGuid,
+				g.Name,
+			})
+			.ToArrayAsync();
 
 		var usersDb = await db.Users
 			.Select(u => new
@@ -1074,7 +1079,8 @@ public class AccessRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение списка прав доступа
 	/// </summary>
-	internal IQueryable<AccessRightsInfo> QueryRights(
+	internal static IQueryable<AccessRightsInfo> QueryRights(
+		DatalakeContext db,
 		Guid? userGuid = null,
 		Guid? userGroupGuid = null,
 		int? sourceId = null,

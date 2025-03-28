@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +25,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.TagsRepository.CreateAsync(user, tagCreateRequest);
+		return await TagsRepository.CreateAsync(db, user, tagCreateRequest);
 	}
 
 	/// <summary>
@@ -37,7 +38,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.TagsRepository.ReadAsync(user, guid);
+		return await TagsRepository.ReadAsync(db, user, guid);
 	}
 
 	/// <summary>
@@ -57,7 +58,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.TagsRepository.ReadAllAsync(user, sourceId, id, names, guids);
+		return await TagsRepository.ReadAllAsync(db, user, sourceId, id, names, guids);
 	}
 
 	/// <summary>
@@ -71,7 +72,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.TagsRepository.ReadPossibleInputsAsync(user, guid);
+		return await TagsRepository.ReadPossibleInputsAsync(db, user, guid);
 	}
 
 	/// <summary>
@@ -86,7 +87,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await db.TagsRepository.UpdateAsync(user, guid, tag);
+		await TagsRepository.UpdateAsync(db, user, guid, tag);
 
 		return NoContent();
 	}
@@ -101,7 +102,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await db.TagsRepository.DeleteAsync(user, guid);
+		await TagsRepository.DeleteAsync(db, user, guid);
 
 		return NoContent();
 	}

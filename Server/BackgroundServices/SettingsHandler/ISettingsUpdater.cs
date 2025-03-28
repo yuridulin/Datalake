@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Repositories;
+﻿using Datalake.Database;
 
 namespace Datalake.Server.BackgroundServices.SettingsHandler
 {
@@ -10,13 +10,13 @@ namespace Datalake.Server.BackgroundServices.SettingsHandler
 		/// <summary>
 		/// Определение настроек, передаваемых веб-консоли
 		/// </summary>
-		/// <param name="systemRepository">Репозиторий для работы с настройками</param>
-		Task WriteStartipFileAsync(SystemRepository systemRepository);
+		/// <param name="db">Контекст базы данных</param>
+		Task WriteStartipFileAsync(DatalakeContext db);
 
 		/// <summary>
 		/// Обновление списка статичных учетных записей
 		/// </summary>
-		/// <param name="usersRepository">Репозиторий для работы с учетными данными</param>
-		void LoadStaticUsers(AccessRepository usersRepository);
+		/// <param name="db">Контекст базы данных</param>
+		void LoadStaticUsers(DatalakeContext db);
 	}
 }

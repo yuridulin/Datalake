@@ -15,14 +15,14 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы с настройками и кэшами
 /// </summary>
-/// <param name="db"></param>
-public class SystemRepository(DatalakeContext db)
+public static class SystemRepository
 {
 	#region Действия
 
 	/// <summary>
 	/// Получение списка сообщений
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="take">Сколько сообщений получить за этот запрос</param>
 	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества</param>
@@ -35,7 +35,8 @@ public class SystemRepository(DatalakeContext db)
 	/// <param name="types">Выбранные типы сообщений</param>
 	/// <param name="authorGuid">Идентификатор пользователя, создавшего сообщение</param>
 	/// <returns>Список сообщений</returns>
-	public async Task<LogInfo[]> GetLogsAsync(
+	public static async Task<LogInfo[]> GetLogsAsync(
+		DatalakeContext db,
 		UserAuthInfo user,
 		int? take = null,
 		int? lastId = null,
@@ -50,7 +51,7 @@ public class SystemRepository(DatalakeContext db)
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
-		var query = QueryLogs();
+		var query = QueryLogs(db);
 
 		if (lastId.HasValue)
 			query = query.Where(x => x.Id > lastId.Value);
@@ -92,13 +93,15 @@ public class SystemRepository(DatalakeContext db)
 	/// <summary>
 	/// Создание новой записи в журнале аудита
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="text">Сообщение</param>
 	/// <param name="details">Детали</param>
 	/// <param name="referenceId">Идентификатор связанного объекта</param>
 	/// <param name="category">Категория</param>
 	/// <param name="type">Тип</param>
 	/// <param name="user">идентификатор пользователя, чьё действие вызвало запись сообщения</param>
-	public async Task WriteLog(
+	public static async Task WriteLog(
+		DatalakeContext db,
 		string text,
 		string? details = null,
 		string? referenceId = null,
@@ -121,65 +124,67 @@ public class SystemRepository(DatalakeContext db)
 	/// <summary>
 	/// Получение настроек приложения
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <returns>Настройки</returns>
-	public async Task<SettingsInfo> GetSettingsAsync(UserAuthInfo user)
+	public static async Task<SettingsInfo> GetSettingsAsync(
+		DatalakeContext db, UserAuthInfo user)
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		return await GetSettingsAsync();
+		return await GetSettingsAsync(db);
 	}
 
 	/// <summary>
 	/// Изменение настроек приложения
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="newSettings">Новые настройки</param>
-	public async Task UpdateSettingsAsync(UserAuthInfo user, SettingsInfo newSettings)
+	public static async Task UpdateSettingsAsync(
+		DatalakeContext db, UserAuthInfo user, SettingsInfo newSettings)
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-		User = user.Guid;
 
-		await UpdateSettingsAsync(newSettings);
+		await UpdateSettingsAsync(db, user.Guid, newSettings);
 	}
 
 	/// <summary>
 	/// Перестроение кэша системы получения данных
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
-	public async Task RebuildStorageCacheAsync(UserAuthInfo user)
+	public static async Task RebuildStorageCacheAsync(
+		DatalakeContext db, UserAuthInfo user)
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-		User = user.Guid;
 
-		await RebuildStorageCacheAsync();
+		await RebuildStorageCacheAsync(db);
 
 		await db.InsertAsync(new Log
 		{
 			Category = LogCategory.Core,
 			Type = LogType.Success,
 			Text = "Перезапуск служб получения данных",
-			UserGuid = User,
+			UserGuid = user.Guid,
 		});
 	}
-
 
 	/// <summary>
 	/// Получение настроек приложения от имени приложения
 	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
 	/// <returns>Настройки</returns>
-	public async Task<SettingsInfo> GetSettingsAsSystemAsync()
+	public static async Task<SettingsInfo> GetSettingsAsSystemAsync(DatalakeContext db)
 	{
-		return await GetSettingsAsync();
+		return await GetSettingsAsync(db);
 	}
 
 	#endregion
 
 	#region Реализация
 
-	Guid? User { get; set; } = null;
-
-	internal async Task<SettingsInfo> GetSettingsAsync()
+	internal static async Task<SettingsInfo> GetSettingsAsync(DatalakeContext db)
 	{
 		var setting = await db.Settings
 			.FirstOrDefaultAsync();
@@ -201,11 +206,12 @@ public class SystemRepository(DatalakeContext db)
 		};
 	}
 
-	internal async Task UpdateSettingsAsync(SettingsInfo newSettings)
+	internal static async Task UpdateSettingsAsync(
+		DatalakeContext db, Guid userGuid, SettingsInfo newSettings)
 	{
 		try
 		{
-			var settings = await GetSettingsAsync();
+			var settings = await GetSettingsAsync(db);
 
 			await db.Settings
 				.Set(x => x.KeycloakHost, newSettings.EnergoIdHost)
@@ -219,7 +225,7 @@ public class SystemRepository(DatalakeContext db)
 				Category = LogCategory.Core,
 				Type = LogType.Success,
 				Text = "Изменены настройки",
-				UserGuid = User,
+				UserGuid = userGuid,
 				Details = ObjectExtension.Difference(settings, newSettings),
 			});
 		}
@@ -250,9 +256,9 @@ public class SystemRepository(DatalakeContext db)
 		}
 	}
 
-	internal async Task RebuildStorageCacheAsync()
+	internal static async Task RebuildStorageCacheAsync(DatalakeContext db)
 	{
-		var tables = await db.TablesRepository.GetHistoryTablesFromSchema();
+		var tables = await TablesRepository.GetHistoryTablesFromSchema(db);
 
 		TablesRepository.CachedTables = tables
 			.Where(x => x.Name.StartsWith(TablesRepository.NamePrefix))
@@ -285,11 +291,11 @@ public class SystemRepository(DatalakeContext db)
 		// создание таблицы для значений на текущую дату
 		if (!TablesRepository.CachedTables.ContainsKey(DateTime.Today))
 		{
-			await db.TablesRepository.GetHistoryTableAsync(DateTime.Today);
+			await TablesRepository.GetHistoryTableAsync(db, DateTime.Today);
 		}
 
 		// актуализация таблицы текущих значений
-		await db.ValuesRepository.CreateLiveValues();
+		await ValuesRepository.CreateLiveValues(db);
 	}
 
 	static object locker = new();
@@ -301,7 +307,7 @@ public class SystemRepository(DatalakeContext db)
 	/// <summary>
 	/// Запрос сообщений аудита
 	/// </summary>
-	public IQueryable<LogInfo> QueryLogs()
+	public static IQueryable<LogInfo> QueryLogs(DatalakeContext db)
 	{
 		var query =
 			from log in db.Logs

@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.UserGroups;
 using Datalake.Server.Controllers.Base;
@@ -25,7 +26,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.UserGroupsRepository.CreateAsync(user, request);
+		return await UserGroupsRepository.CreateAsync(db, user, request);
 	}
 
 	/// <summary>
@@ -37,7 +38,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.UserGroupsRepository.ReadAllAsync(user);
+		return await UserGroupsRepository.ReadAllAsync(db, user);
 	}
 
 	/// <summary>
@@ -52,7 +53,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.UserGroupsRepository.ReadAsync(user, groupGuid);
+		return await UserGroupsRepository.ReadAsync(db, user, groupGuid);
 	}
 
 	/// <summary>
@@ -64,7 +65,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.UserGroupsRepository.ReadAllAsTreeAsync(user);
+		return await UserGroupsRepository.ReadAllAsTreeAsync(db, user);
 	}
 
 	/// <summary>
@@ -79,7 +80,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await db.UserGroupsRepository.ReadWithDetailsAsync(user, groupGuid);
+		return await UserGroupsRepository.ReadWithDetailsAsync(db, user, groupGuid);
 	}
 
 	/// <summary>
@@ -94,7 +95,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await db.UserGroupsRepository.UpdateAsync(user, groupGuid, request);
+		await UserGroupsRepository.UpdateAsync(db, user, groupGuid, request);
 
 		return NoContent();
 	}
@@ -111,7 +112,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await db.UserGroupsRepository.MoveAsync(user, groupGuid, parentGuid);
+		await UserGroupsRepository.MoveAsync(db, user, groupGuid, parentGuid);
 
 		return NoContent();
 	}
@@ -126,7 +127,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await db.UserGroupsRepository.DeleteAsync(user, groupGuid);
+		await UserGroupsRepository.DeleteAsync(db, user, groupGuid);
 
 		return NoContent();
 	}

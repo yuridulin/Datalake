@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.AccessRights;
 using Datalake.Server.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +32,8 @@ public class AccessController(DatalakeContext db) : ApiControllerBase
 	{
 		var userAuth = Authenticate();
 
-		return await db.AccessRepository.GetRightsAsync(
+		return await AccessRepository.GetRightsAsync(
+			db,
 			user: userAuth,
 			userGuid: user,
 			userGroupGuid: userGroup,
@@ -50,7 +52,7 @@ public class AccessController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await db.AccessRepository.ApplyChangesAsync(user, request);
+		await AccessRepository.ApplyChangesAsync(db, user, request);
 
 		return NoContent();
 	}
