@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -553,15 +554,18 @@ export interface LogInfo {
 	 * @minLength 1
 	 */
 	text: string
-	/**
-	 * Ссылка на конкретный объект в случае, если это подразумевает категория
-	 *
-	 * Теги, пользователи, группы пользователей: Guid
-	 * Источники, блоки: int
-	 */
-	refId?: string | null
 	/** Информация об авторе сообщения */
 	author?: UserSimpleInfo | null
+	/** Информация о затронутом тэге */
+	affectedTag?: TagSimpleInfo | null
+	/** Информация о затронутом источнике */
+	affectedSource?: SourceSimpleInfo | null
+	/** Информация о затронутом блоке */
+	affectedBlock?: BlockSimpleInfo | null
+	/** Информация о затронутой учетной записи */
+	affectedUser?: UserSimpleInfo | null
+	/** Информация о затронутом группе учетных записей */
+	affectedUserGroup?: UserGroupSimpleInfo | null
 }
 
 /**

@@ -34,6 +34,12 @@ public class User
 	[Column]
 	public string? FullName { get; set; } = string.Empty;
 
+	/// <summary>
+	/// Учетная запись отмечена как удаленная
+	/// </summary>
+	[Column, Required]
+	public bool IsDeleted { get; set; } = false;
+
 	// для локальных
 
 	/// <summary>
@@ -83,7 +89,12 @@ public class User
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
 
 	/// <summary>
-	/// Список сообщений
+	/// Список действий пользователя, записанных в аудит
 	/// </summary>
-	public ICollection<Log> Logs { get; set; } = [];
+	public ICollection<Log> Actions { get; set; } = [];
+
+	/// <summary>
+	/// Список сообщений аудита
+	/// </summary>
+	public ICollection<Log> Logs { get; set; } = null!;
 }

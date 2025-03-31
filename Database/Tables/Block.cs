@@ -46,6 +46,12 @@ public class Block
 	[Column]
 	public string? Description { get; set; }
 
+	/// <summary>
+	/// Блок отмечен как удаленный
+	/// </summary>
+	[Column, Required]
+	public bool IsDeleted { get; set; } = false;
+
 	// связанные данные
 
 	/// <summary>
@@ -77,4 +83,9 @@ public class Block
 	/// Список правил доступа, выданных на этот блок
 	/// </summary>
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
+
+	/// <summary>
+	/// Список сообщений аудита
+	/// </summary>
+	public ICollection<Log> Logs { get; set; } = null!;
 }

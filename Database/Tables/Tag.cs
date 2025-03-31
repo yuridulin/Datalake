@@ -59,6 +59,12 @@ public class Tag
 	[Column, NotNull]
 	public required DateTime Created { get; set; }
 
+	/// <summary>
+	/// Тег отмечен как удаленный
+	/// </summary>
+	[Column, Required]
+	public bool IsDeleted { get; set; } = false;
+
 	// специфичные для входящих
 
 	/// <summary>
@@ -164,4 +170,9 @@ public class Tag
 	/// Список правил доступа, действующих на тег
 	/// </summary>
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
+
+	/// <summary>
+	/// Список сообщений аудита
+	/// </summary>
+	public ICollection<Log> Logs { get; set; } = null!;
 }

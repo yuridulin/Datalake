@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.Database.Repositories;
+using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;
 
 namespace Datalake.Database.Tests.Scenarios
@@ -27,7 +28,7 @@ namespace Datalake.Database.Tests.Scenarios
 				Frequency = TagFrequency.NotSet,
 			};
 
-			var createdTag = await db.TagsRepository.CreateAsync(admin, request);
+			var createdTag = await TagsRepository.CreateAsync(db, admin, request);
 
 			Assert.NotNull(createdTag);
 			Assert.True(createdTag.Id > 0);
@@ -46,14 +47,14 @@ namespace Datalake.Database.Tests.Scenarios
 				Frequency = TagFrequency.NotSet,
 				Type = TagType.String,
 			};
-			await db.TagsRepository.UpdateAsync(admin, createdTag.Guid, updateRequest);
+			await TagsRepository.UpdateAsync(db, admin, createdTag.Guid, updateRequest);
 			var updatedTag = await GetTag(createdTag.Guid);
 
 			Assert.NotNull(updatedTag);
 			Assert.Equal(newTagName, updatedTag.Name);
 
 			// delete tag
-			await db.TagsRepository.DeleteAsync(admin, createdTag.Guid);
+			await TagsRepository.DeleteAsync(db, admin, createdTag.Guid);
 			var deletedTag = await GetTag(createdTag.Guid);
 
 			Assert.Null(deletedTag);
@@ -63,7 +64,7 @@ namespace Datalake.Database.Tests.Scenarios
 
 			async Task<TagInfo?> GetTag(Guid guid)
 			{
-				return await db.TagsRepository.ReadAsync(admin, guid);
+				return await TagsRepository.ReadAsync(db, admin, guid);
 			}
 		}
 	}

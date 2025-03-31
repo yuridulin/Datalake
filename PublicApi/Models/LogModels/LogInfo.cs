@@ -1,4 +1,8 @@
 ﻿using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Blocks;
+using Datalake.PublicApi.Models.Sources;
+using Datalake.PublicApi.Models.Tags;
+using Datalake.PublicApi.Models.UserGroups;
 using Datalake.PublicApi.Models.Users;
 using System.ComponentModel.DataAnnotations;
 
@@ -40,15 +44,32 @@ public class LogInfo
 	public required string Text { get; set; }
 
 	/// <summary>
-	/// Ссылка на конкретный объект в случае, если это подразумевает категория
-	/// <br />
-	/// Теги, пользователи, группы пользователей: Guid
-	/// Источники, блоки: int
-	/// </summary>
-	public string? RefId { get; set; }
-
-	/// <summary>
 	/// Информация об авторе сообщения
 	/// </summary>
 	public UserSimpleInfo? Author { get; set; }
+
+	/// <summary>
+	/// Информация о затронутом тэге
+	/// </summary>
+	public TagSimpleInfo? AffectedTag { get; set; }
+
+	/// <summary>
+	/// Информация о затронутом источнике
+	/// </summary>
+	public SourceSimpleInfo? AffectedSource { get; set; }
+
+	/// <summary>
+	/// Информация о затронутом блоке
+	/// </summary>
+	public BlockSimpleInfo? AffectedBlock { get; set; }
+
+	/// <summary>
+	/// Информация о затронутой учетной записи
+	/// </summary>
+	public UserSimpleInfo? AffectedUser { get; set; }
+
+	/// <summary>
+	/// Информация о затронутом группе учетных записей
+	/// </summary>
+	public UserGroupSimpleInfo? AffectedUserGroup { get; set; }
 }

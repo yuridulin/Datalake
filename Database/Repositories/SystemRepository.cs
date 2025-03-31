@@ -6,6 +6,7 @@ using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Settings;
+using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.Users;
 using LinqToDB;
@@ -51,25 +52,17 @@ public static class SystemRepository
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
-		var query = QueryLogs(db);
+		var query = QueryLogs(db,
+			includeDeletedObjects: false,
+			authorGuid,
+			sourceId,
+			blockId,
+			tagGuid,
+			userGuid,
+			groupGuid);
 
 		if (lastId.HasValue)
 			query = query.Where(x => x.Id > lastId.Value);
-
-		if (sourceId.HasValue)
-			query = query.Where(x => x.RefId == sourceId.Value.ToString());
-
-		if (blockId.HasValue)
-			query = query.Where(x => x.RefId == blockId.Value.ToString());
-
-		if (tagGuid.HasValue)
-			query = query.Where(x => x.RefId == tagGuid.Value.ToString());
-
-		if (userGuid.HasValue)
-			query = query.Where(x => x.RefId == userGuid.Value.ToString());
-
-		if (groupGuid.HasValue)
-			query = query.Where(x => x.RefId == groupGuid.Value.ToString());
 
 		if (categories != null && categories.Length > 0)
 			query = query.Where(x => categories.Contains(x.Category));
@@ -114,7 +107,7 @@ public static class SystemRepository
 			Category = category,
 			Date = DateFormats.GetCurrentDateTime(),
 			Type = type,
-			UserGuid = user,
+			AuthorGuid = user,
 			Text = text,
 			Details = details,
 			RefId = referenceId,
@@ -166,7 +159,7 @@ public static class SystemRepository
 			Category = LogCategory.Core,
 			Type = LogType.Success,
 			Text = "Перезапуск служб получения данных",
-			UserGuid = user.Guid,
+			AuthorGuid = user.Guid,
 		});
 	}
 
@@ -225,7 +218,7 @@ public static class SystemRepository
 				Category = LogCategory.Core,
 				Type = LogType.Success,
 				Text = "Изменены настройки",
-				UserGuid = userGuid,
+				AuthorGuid = userGuid,
 				Details = ObjectExtension.Difference(settings, newSettings),
 			});
 		}
@@ -285,6 +278,7 @@ public static class SystemRepository
 				ScalingCoefficient = t.IsScaling
 					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
 					: 1,
+				IsDeleted = t.IsDeleted,
 			}
 		).ToDictionaryAsync(x => x.Id, x => x);
 
@@ -307,11 +301,32 @@ public static class SystemRepository
 	/// <summary>
 	/// Запрос сообщений аудита
 	/// </summary>
-	public static IQueryable<LogInfo> QueryLogs(DatalakeContext db)
+	public static IQueryable<LogInfo> QueryLogs(
+		DatalakeContext db,
+		bool includeDeletedObjects = false,
+		Guid? authorGuid = null,
+		int? sourceId = null,
+		int? blockId = null,
+		Guid? tagGuid = null,
+		Guid? userGuid = null,
+		Guid? userGroupGuid = null)
 	{
 		var query =
 			from log in db.Logs
-			from user in db.Users.LeftJoin(x => x.Guid == log.UserGuid)
+			from author in db.Users.LeftJoin(x => x.Guid == log.AuthorGuid && (includeDeletedObjects || !x.IsDeleted))
+			from source in db.Sources.LeftJoin(x => x.Id == log.AffectedSourceId && (includeDeletedObjects || !x.IsDeleted))
+			from block in db.Blocks.LeftJoin(x => x.Id == log.AffectedBlockId && (includeDeletedObjects || !x.IsDeleted))
+			from tag in db.Tags.LeftJoin(x => x.Id == log.AffectedTagId && (includeDeletedObjects || !x.IsDeleted))
+			from user in db.Users.LeftJoin(x => x.Guid == log.AffectedUserGuid && (includeDeletedObjects || !x.IsDeleted))
+			from userGroup in db.UserGroups.LeftJoin(x => x.Guid == log.AffectedUserGroupGuid && (includeDeletedObjects || !x.IsDeleted))
+			from tagSource in db.Sources.LeftJoin(x => x.Id == tag.SourceId && (includeDeletedObjects || !x.IsDeleted))
+			where
+				(authorGuid == null || author.Guid == authorGuid.Value) &&
+				(sourceId == null || source.Id == sourceId.Value) &&
+				(blockId == null || block.Id == blockId.Value) &&
+				(tagGuid == null || tag.GlobalGuid == tagGuid.Value) &&
+				(userGuid == null || user.Guid == userGuid.Value) &&
+				(userGroupGuid == null || userGroup.Guid == userGroupGuid.Value)
 			select new LogInfo
 			{
 				Id = log.Id,
@@ -319,11 +334,30 @@ public static class SystemRepository
 				DateString = log.Date.ToString(DateFormats.Standart),
 				Text = log.Text,
 				Type = log.Type,
-				RefId = log.RefId,
-				Author = user == null ? null : new UserSimpleInfo
+				Author = author == null ? null : new UserSimpleInfo
 				{
-					Guid = user.Guid,
-					FullName = user.FullName ?? user.Login ?? string.Empty,
+					Guid = author.Guid,
+					FullName = author.FullName ?? author.Login ?? string.Empty,
+				},
+				AffectedSource = source == null ? null : new SourceSimpleInfo
+				{
+					Id = source.Id,
+					Name = source.Name,
+				},
+				AffectedBlock = block == null ? null : new PublicApi.Models.Blocks.BlockSimpleInfo
+				{
+					Id = block.Id,
+					Guid = block.GlobalId,
+					Name = block.Name,
+				},
+				AffectedTag = tag == null ? null : new TagSimpleInfo
+				{
+					Id = tag.Id,
+					Guid = tag.GlobalGuid,
+					Name = tag.Name,
+					Type = tag.Type,
+					Frequency = tag.Frequency,
+					SourceType = tagSource == null ? SourceType.NotSet : tagSource.Type,
 				}
 			};
 

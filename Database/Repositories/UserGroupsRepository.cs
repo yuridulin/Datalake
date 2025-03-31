@@ -98,7 +98,7 @@ public static class UserGroupsRepository
 	public static async Task<UserGroupTreeInfo[]> ReadAllAsTreeAsync(
 		DatalakeContext db, UserAuthInfo user)
 	{
-		var groups = await db.UserGroups
+		var groups = await UserGroupsNotDeleted(db)
 			.Select(x => new UserGroupTreeInfo
 			{
 				Guid = x.Guid,
@@ -232,7 +232,7 @@ public static class UserGroupsRepository
 	internal static async Task<Guid> CreateAsync(
 		DatalakeContext db, Guid userGuid, UserGroupCreateRequest request)
 	{
-		if (await db.UserGroups.AnyAsync(x => x.Name == request.Name && x.ParentGuid == request.ParentGuid))
+		if (await UserGroupsNotDeleted(db).AnyAsync(x => x.Name == request.Name && x.ParentGuid == request.ParentGuid))
 			throw new AlreadyExistException(message: "группа " + request.Name);
 
 		using var transaction = await db.BeginTransactionAsync();
@@ -267,7 +267,7 @@ public static class UserGroupsRepository
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "группа " + groupGuid);
 
-		if (await db.UserGroups.AnyAsync(x => x.Name == request.Name
+		if (await UserGroupsNotDeleted(db).AnyAsync(x => x.Name == request.Name
 			&& x.ParentGuid == request.ParentGuid
 			&& x.Guid != groupGuid))
 			throw new AlreadyExistException(message: "группа " + request.Name);
@@ -313,7 +313,7 @@ public static class UserGroupsRepository
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
-		var group = await db.UserGroups
+		var group = await UserGroupsNotDeleted(db)
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "группа " + guid);
@@ -339,21 +339,22 @@ public static class UserGroupsRepository
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
-		var group = await db.UserGroups
+		var group = await UserGroupsNotDeleted(db)
 			.FirstOrDefaultAsync(x => x.Guid == groupGuid)
 			?? throw new NotFoundException(message: "группа " + groupGuid);
 
-		await db.AccessRights
+		/*await db.AccessRights
 			.Where(x => x.UserGroupGuid == groupGuid)
 			.DeleteAsync();
 
 		await db.UserGroupRelations
 			.Where(x => x.UserGroupGuid == groupGuid)
-			.DeleteAsync();
+			.DeleteAsync();*/
 
 		await db.UserGroups
 			.Where(x => x.Guid == groupGuid)
-			.DeleteAsync();
+			.Set(x => x.IsDeleted, true)
+			.UpdateAsync();
 
 		await LogAsync(db, userGuid, groupGuid, $"Удалена группа пользователей: {group.Name}");
 
@@ -364,15 +365,16 @@ public static class UserGroupsRepository
 		return true;
 	}
 
-	private static async Task LogAsync(DatalakeContext db, Guid userGuid, Guid guid, string message, string? details = null)
+	private static async Task LogAsync(DatalakeContext db, Guid authorGuid, Guid guid, string message, string? details = null)
 	{
 		await db.InsertAsync(new Log
 		{
 			Category = LogCategory.UserGroups,
 			RefId = guid.ToString(),
+			AffectedUserGroupGuid = guid,
 			Text = message,
 			Type = LogType.Success,
-			UserGuid = userGuid,
+			AuthorGuid = authorGuid,
 			Details = details,
 		});
 	}
@@ -381,9 +383,16 @@ public static class UserGroupsRepository
 
 	#region Запросы
 
+	internal static IQueryable<UserGroup> UserGroupsNotDeleted(DatalakeContext db)
+	{
+		return db.UserGroups
+			.Where(x => !x.IsDeleted);
+	}
+
 	internal static IQueryable<UserGroupInfo> GetInfo(DatalakeContext db)
 	{
 		return db.UserGroups
+			.Where(x => !x.IsDeleted)
 			.Select(x => new UserGroupInfo
 			{
 				Guid = x.Guid,
@@ -396,7 +405,7 @@ public static class UserGroupsRepository
 	internal static IQueryable<UserGroupDetailedInfo> GetWithDetails(DatalakeContext db)
 	{
 		var query =
-			from usergroup in db.UserGroups
+			from usergroup in db.UserGroups.Where(x => !x.IsDeleted)
 			from globalAccess in db.AccessRights.InnerJoin(x => x.UserGroupGuid == usergroup.Guid && x.IsGlobal)
 			select new UserGroupDetailedInfo
 			{
@@ -407,7 +416,7 @@ public static class UserGroupsRepository
 				GlobalAccessType = globalAccess.AccessType,
 				Users = (
 					from rel in db.UserGroupRelations.LeftJoin(x => x.UserGroupGuid == usergroup.Guid)
-					from u in db.Users.InnerJoin(x => x.Guid == rel.UserGuid)
+					from u in db.Users.InnerJoin(x => x.Guid == rel.UserGuid && !x.IsDeleted)
 					select new UserGroupUsersInfo
 					{
 						Guid = u.Guid,
@@ -417,10 +426,10 @@ public static class UserGroupsRepository
 				).ToArray(),
 				AccessRights = (
 					from rights in db.AccessRights.InnerJoin(x => x.UserGroupGuid == usergroup.Guid)
-					from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId)
-					from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)
-					from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId)
-					from tag_source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
+					from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId && !x.IsDeleted)
+					from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId && !x.IsDeleted)
+					from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId && !x.IsDeleted)
+					from tag_source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
 					select new AccessRightsForOneInfo
 					{
 						Id = rights.Id,
@@ -447,9 +456,11 @@ public static class UserGroupsRepository
 							SourceType = tag_source == null ? SourceType.NotSet : tag_source.Type,
 						},
 					}
-				).ToArray(),
+				)
+				.Where(x => x.Tag != null || x.Block != null || x.Source != null)
+				.ToArray(),
 				Subgroups = (
-					from subgroup in db.UserGroups.LeftJoin(x => x.ParentGuid == usergroup.Guid)
+					from subgroup in db.UserGroups.LeftJoin(x => x.ParentGuid == usergroup.Guid && !x.IsDeleted)
 					select new UserGroupSimpleInfo
 					{
 						Guid = subgroup.Guid,

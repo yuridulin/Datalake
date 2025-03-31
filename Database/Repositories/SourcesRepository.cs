@@ -177,7 +177,7 @@ public static class SourcesRepository
 	{
 		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
 
-		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name))
+		if (await SourcesNotDeleted(db).AnyAsync(x => x.Name == sourceInfo.Name))
 			throw new AlreadyExistException("Уже существует источник с таким именем");
 
 		if (sourceInfo.Type == SourceType.System)
@@ -187,6 +187,7 @@ public static class SourcesRepository
 
 		int? id = await db.Sources
 			.Value(x => x.Name, sourceInfo.Name)
+			.Value(x => x.Description, sourceInfo.Description)
 			.Value(x => x.Address, sourceInfo.Address)
 			.Value(x => x.Type, sourceInfo.Type)
 			.InsertWithInt32IdentityAsync();
@@ -205,12 +206,12 @@ public static class SourcesRepository
 	{
 		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
 
-		var source = await db.Sources
+		var source = await SourcesNotDeleted(db)
 			.Where(x => x.Id == id)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Источник #{id} не найден");
 
-		if (await db.Sources.AnyAsync(x => x.Name == sourceInfo.Name && x.Id != id))
+		if (await SourcesNotDeleted(db).AnyAsync(x => x.Name == sourceInfo.Name && x.Id != id))
 			throw new AlreadyExistException("Уже существует источник с таким именем");
 
 		var transaction = await db.BeginTransactionAsync();
@@ -218,6 +219,7 @@ public static class SourcesRepository
 		int count = await db.Sources
 			.Where(x => x.Id == id)
 			.Set(x => x.Name, sourceInfo.Name)
+			.Set(x => x.Description, sourceInfo.Description)
 			.Set(x => x.Address, sourceInfo.Address)
 			.Set(x => x.Type, sourceInfo.Type)
 			.UpdateAsync();
@@ -240,25 +242,20 @@ public static class SourcesRepository
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
-		var name = await db.Sources
+		var name = await SourcesNotDeleted(db)
 			.Where(x => x.Id == id)
 			.Select(x => x.Name)
 			.FirstOrDefaultAsync();
 
 		var count = await db.Sources
 			.Where(x => x.Id == id)
-			.DeleteAsync();
+			.Set(x => x.IsDeleted, true)
+			.UpdateAsync();
 
 		if (count == 0)
 			throw new DatabaseException($"Не удалось удалить источник #{id}", DatabaseStandartError.DeletedZero);
 
-		// при удалении источника его теги становятся ручными
-		int tagsCount = await db.Tags
-			.Where(x => x.SourceId == id)
-			.Set(x => x.SourceId, (int)SourceType.Manual)
-			.UpdateAsync();
-
-		await LogAsync(db, userGuid, id, "Удален источник: " + name + ". Затронуто тегов: " + tagsCount);
+		await LogAsync(db, userGuid, id, "Удален источник: " + name + ".");
 
 		await transaction.CommitAsync();
 
@@ -274,7 +271,8 @@ public static class SourcesRepository
 		{
 			Category = LogCategory.Source,
 			RefId = id.ToString(),
-			UserGuid = userGuid,
+			AffectedSourceId = id,
+			AuthorGuid = userGuid,
 			Text = message,
 			Type = LogType.Success,
 			Details = details,
@@ -290,6 +288,11 @@ public static class SourcesRepository
 	/// </summary>
 	internal static readonly SourceType[] CustomSourcesId = [SourceType.System, SourceType.Calculated, SourceType.Manual, SourceType.Aggregated, SourceType.NotSet];
 
+	internal static IQueryable<Source> SourcesNotDeleted(DatalakeContext db)
+	{
+		return db.Sources.Where(x => !x.IsDeleted);
+	}
+
 	/// <summary>
 	/// Запрос информации о источниках без связей
 	/// </summary>
@@ -299,7 +302,7 @@ public static class SourcesRepository
 	{
 		var query =
 			from source in db.Sources
-			where withCustom || !CustomSourcesId.Cast<int>().Contains(source.Id)
+			where !source.IsDeleted && (withCustom || !CustomSourcesId.Cast<int>().Contains(source.Id))
 			select new SourceInfo
 			{
 				Id = source.Id,
@@ -319,6 +322,7 @@ public static class SourcesRepository
 	{
 		var query =
 			from source in db.Sources
+			where !source.IsDeleted
 			select new SourceWithTagsInfo
 			{
 				Id = source.Id,
@@ -326,7 +330,7 @@ public static class SourcesRepository
 				Name = source.Name,
 				Type = source.Type,
 				Tags = (
-					from tag in db.Tags.LeftJoin(x => x.SourceId == source.Id)
+					from tag in db.Tags.LeftJoin(x => x.SourceId == source.Id && !x.IsDeleted)
 					select new SourceTagInfo
 					{
 						Id = tag.Id,
@@ -353,6 +357,7 @@ public static class SourcesRepository
 	{
 		var query =
 			from source in db.Sources
+			where !source.IsDeleted
 			select new SourceWithTagsInfo
 			{
 				Id = source.Id,
@@ -360,8 +365,8 @@ public static class SourcesRepository
 				Name = source.Name,
 				Type = source.Type,
 				Tags = (
-					from tag in db.Tags
-					from sourceTag in db.Tags.LeftJoin(x => x.Id == tag.SourceTagId)
+					from tag in db.Tags.Where(x => !x.IsDeleted)
+					from sourceTag in db.Tags.LeftJoin(x => x.Id == tag.SourceTagId && !x.IsDeleted)
 					where tag.SourceId == source.Id
 					select new SourceTagInfo
 					{
@@ -400,8 +405,8 @@ public static class SourcesRepository
 	internal static IQueryable<SourceTagInfo> QueryExistTags(DatalakeContext db, int id)
 	{
 		var query =
-			from source in db.Sources.Where(x => x.Id == id)
-			from tag in db.Tags.InnerJoin(x => x.SourceId == source.Id)
+			from source in db.Sources.Where(x => x.Id == id && !x.IsDeleted)
+			from tag in db.Tags.InnerJoin(x => x.SourceId == source.Id && !x.IsDeleted)
 			select new SourceTagInfo
 			{
 				Id = tag.Id,

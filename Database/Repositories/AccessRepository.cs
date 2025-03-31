@@ -32,7 +32,7 @@ public static class AccessRepository
 	/// <returns>Информация о пользователе, включая доступ</returns>
 	public static async Task<UserAuthInfo> AuthenticateAsync(DatalakeContext db, UserEnergoIdInfo info)
 	{
-		var user = await db.Users
+		var user = await UsersRepository.UsersNotDeleted(db)
 			.Where(x => x.Type == UserType.EnergoId)
 			.Where(x => x.EnergoIdGuid != null && x.EnergoIdGuid == info.EnergoIdGuid)
 			.FirstOrDefaultAsync()
@@ -49,7 +49,7 @@ public static class AccessRepository
 	/// <returns>Информация о пользователе, включая доступ</returns>
 	public static async Task<UserAuthInfo> AuthenticateAsync(DatalakeContext db, UserLoginPass loginPass)
 	{
-		var user = await db.Users
+		var user = await UsersRepository.UsersNotDeleted(db)
 			.Where(x => x.Type == UserType.Local)
 			.Where(x => x.Login != null && (x.Login.ToLower().Trim() == loginPass.Login.ToLower().Trim()))
 			.FirstOrDefaultAsync()
@@ -101,7 +101,7 @@ public static class AccessRepository
 	/// <returns>Список статичных учетных записей</returns>
 	public static async Task<UserStaticAuthInfo[]> GetStaticUsersAsSystemAsync(DatalakeContext db)
 	{
-		var staticUsers = await db.Users
+		var staticUsers = await UsersRepository.UsersNotDeleted(db)
 			.Where(x => x.Type == UserType.Static)
 			.ToArrayAsync();
 
@@ -334,7 +334,7 @@ public static class AccessRepository
 	/// </summary>
 	public static async Task RebuildUserRightsCacheAsync(DatalakeContext db)
 	{
-		var userGroupsDb = await db.UserGroups
+		var userGroupsDb = await UserGroupsRepository.UserGroupsNotDeleted(db)
 			.Select(g => new
 			{
 				g.Guid,
@@ -343,7 +343,7 @@ public static class AccessRepository
 			})
 			.ToArrayAsync();
 
-		var usersDb = await db.Users
+		var usersDb = await UsersRepository.UsersNotDeleted(db)
 			.Select(u => new
 			{
 				u.Guid,
@@ -355,7 +355,7 @@ public static class AccessRepository
 		var userRelationsDb = await db.UserGroupRelations
 			.ToArrayAsync();
 
-		var blocksDb = await db.Blocks
+		var blocksDb = await BlocksRepository.BlocksNotDeleted(db)
 			.Select(x => new
 			{
 				x.Id,
@@ -367,7 +367,7 @@ public static class AccessRepository
 		var accessRightsDb = await db.AccessRights
 			.ToArrayAsync();
 
-		var sourcesDb = await db.Sources
+		var sourcesDb = await SourcesRepository.SourcesNotDeleted(db)
 			.Where(x => x.Id > 0)
 			.Select(x => new
 			{
@@ -376,7 +376,7 @@ public static class AccessRepository
 			})
 			.ToArrayAsync();
 
-		var tagsDb = await db.Tags
+		var tagsDb = await TagsRepository.TagsNotDeleted(db)
 			.Select(x => new
 			{
 				x.Id,
@@ -1102,6 +1102,13 @@ public static class AccessRepository
 			from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)
 			from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId)
 			from tagSource in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
+			where
+				!user.IsDeleted &&
+				!usergroup.IsDeleted &&
+				!source.IsDeleted &&
+				!block.IsDeleted &&
+				!tag.IsDeleted &&
+				!tagSource.IsDeleted
 			select new AccessRightsInfo
 			{
 				Id = rights.Id,

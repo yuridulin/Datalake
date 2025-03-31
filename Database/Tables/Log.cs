@@ -37,6 +37,42 @@ public class Log
 	public LogCategory Category { get; set; } = LogCategory.Api;
 
 	/// <summary>
+	/// Идентификатор затронутого источника данных
+	/// </summary>
+	[Column]
+	public int? AffectedSourceId { get; set; }
+
+	/// <summary>
+	/// Идентификатор затронутого тега
+	/// </summary>
+	[Column]
+	public int? AffectedTagId { get; set; }
+
+	/// <summary>
+	/// Идентификатор затронутого блока
+	/// </summary>
+	[Column]
+	public int? AffectedBlockId { get; set; }
+
+	/// <summary>
+	/// Идентификатор затронутой учетной записи
+	/// </summary>
+	[Column]
+	public Guid? AffectedUserGuid { get; set; }
+
+	/// <summary>
+	/// Идентификатор затронутой группы учетных записей
+	/// </summary>
+	[Column]
+	public Guid? AffectedUserGroupGuid { get; set; }
+
+	/// <summary>
+	/// Идентификатор затронутого правила доступа
+	/// </summary>
+	[Column]
+	public int? AffectedAccessRightsId { get; set; }
+
+	/// <summary>
 	/// Идентификатор связанного объекта
 	/// </summary>
 	[Column]
@@ -46,7 +82,7 @@ public class Log
 	/// Идентификатор пользователя, совершившего записанное действие
 	/// </summary>
 	[Column]
-	public Guid? UserGuid { get; set; }
+	public Guid? AuthorGuid { get; set; }
 
 	/// <summary>
 	/// Тип
@@ -72,4 +108,34 @@ public class Log
 	/// Пользователь, совершивший записанное действие
 	/// </summary>
 	public User? Author { get; set; }
+
+	/// <summary>
+	/// Затронутый источник данных
+	/// </summary>
+	public Source? AffectedSource { get; set; }
+
+	/// <summary>
+	/// Затронутый тег
+	/// </summary>
+	public Tag? AffectedTag { get; set; }
+
+	/// <summary>
+	/// Затронутый блок
+	/// </summary>
+	public Block? AffectedBlock { get; set; }
+
+	/// <summary>
+	/// Затронутая учетная запись
+	/// </summary>
+	public User? AffectedUser { get; set; }
+
+	/// <summary>
+	/// Затронутая группа учетных записей
+	/// </summary>
+	public UserGroup? AffectedUserGroup { get; set; }
+
+	/// <summary>
+	/// Затронутое правило доступа
+	/// </summary>
+	public AccessRights? AffectedAccessRights { get; set; }
 }
