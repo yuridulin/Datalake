@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Constants;
+﻿using Datalake.Database.Repositories;
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.Values;
@@ -16,7 +17,7 @@ namespace Datalake.Database.Tests.Scenarios
 			var admin = await db.GetDefaultAdminAsync();
 			var now = DateFormats.GetCurrentDateTime();
 
-			var tag = await db.TagsRepository.CreateAsync(admin, new TagCreateRequest
+			var tag = await TagsRepository.CreateAsync(db, admin, new TagCreateRequest
 			{
 				Name = "TestTag",
 				TagType = TagType.String,
@@ -24,7 +25,7 @@ namespace Datalake.Database.Tests.Scenarios
 			});
 
 			// write value
-			var response = await db.ValuesRepository.WriteValuesAsSystemAsync(
+			var response = await ValuesRepository.WriteValuesAsSystemAsync(db,
 			[
 				new ValueWriteRequest()
 				{
@@ -58,7 +59,7 @@ namespace Datalake.Database.Tests.Scenarios
 				},
 			];
 
-			await db.ValuesRepository.WriteValuesAsSystemAsync(seedResponse);
+			await ValuesRepository.WriteValuesAsSystemAsync(db, seedResponse);
 
 			seedResponse =
 			[
@@ -70,7 +71,7 @@ namespace Datalake.Database.Tests.Scenarios
 				},
 			];
 
-			await db.ValuesRepository.WriteValuesAsSystemAsync(seedResponse);
+			await ValuesRepository.WriteValuesAsSystemAsync(db, seedResponse);
 
 			/*var value = await db.ValuesRepository.GetValuesAsync([
 				new ValuesRequest()

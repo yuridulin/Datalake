@@ -79,7 +79,7 @@ public static class UsersRepository
 		if (user.Guid != guid)
 			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		var userInfo = await UsersRepository.GetInfo(db)
+		var userInfo = await GetInfo(db)
 			.Where(x => x.Guid == guid)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException($"Учётная запись {guid}");
@@ -174,7 +174,7 @@ public static class UsersRepository
 			case UserType.Local:
 				if (string.IsNullOrEmpty(request.Login))
 					throw new InvalidValueException(message: "логин не может быть пустым");
-				if (await db.Users.AnyAsync(x => x.Login == request.Login))
+				if (await UsersNotDeleted(db).AnyAsync(x => x.Login == request.Login && !x.IsDeleted))
 					throw new AlreadyExistException(message: "учётная запись с таким логином");
 				if (string.IsNullOrEmpty(request.Password))
 					throw new InvalidValueException(message: "необходимо указать пароль");
@@ -189,7 +189,7 @@ public static class UsersRepository
 			case UserType.EnergoId:
 				if (request.EnergoIdGuid == null)
 					throw new InvalidValueException(message: "необходимо указать учетную запись EnergoId");
-				if (await db.Users.AnyAsync(x => x.EnergoIdGuid == request.EnergoIdGuid))
+				if (await UsersNotDeleted(db).AnyAsync(x => x.EnergoIdGuid == request.EnergoIdGuid && !x.IsDeleted))
 					throw new AlreadyExistException(message: "учётная запись с выбранным EnergoID");
 				hash = string.Empty;
 				request.Login = string.Empty;
@@ -237,8 +237,8 @@ public static class UsersRepository
 	internal static async Task<bool> UpdateAsync(
 		DatalakeContext db, Guid userGuid, Guid affectedUserGuid, UserUpdateRequest request)
 	{
-		var oldUser = await db.Users
-			.Where(x => x.Guid == affectedUserGuid)
+		var oldUser = await UsersNotDeleted(db)
+			.Where(x => x.Guid == affectedUserGuid && !x.IsDeleted)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "пользователь по указанному ключу");
 
@@ -248,7 +248,7 @@ public static class UsersRepository
 			case UserType.Local:
 				if (string.IsNullOrEmpty(request.Login))
 					throw new InvalidValueException(message: "логин не может быть пустым");
-				if (await db.Users.AnyAsync(x => x.Login == request.Login && x.Guid != affectedUserGuid))
+				if (await UsersNotDeleted(db).AnyAsync(x => x.Login == request.Login && x.Guid != affectedUserGuid && !x.IsDeleted))
 					throw new AlreadyExistException(message: "учётная запись с таким логином");
 				if (request.Type != oldUser.Type && string.IsNullOrEmpty(request.Password))
 					throw new InvalidValueException(message: "при смене типа учетной записи необходимо задать пароль");
@@ -265,7 +265,7 @@ public static class UsersRepository
 			case UserType.EnergoId:
 				if (request.EnergoIdGuid == null)
 					throw new InvalidValueException(message: "необходимо указать учетную запись EnergoId");
-				if (await db.Users.AnyAsync(x => x.EnergoIdGuid == request.EnergoIdGuid && x.Guid != affectedUserGuid))
+				if (await UsersNotDeleted(db).AnyAsync(x => x.EnergoIdGuid == request.EnergoIdGuid && x.Guid != affectedUserGuid && !x.IsDeleted))
 					throw new AlreadyExistException(message: "учётная запись с выбранным EnergoID");
 				break;
 		}
@@ -303,22 +303,23 @@ public static class UsersRepository
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
-		var user = await db.Users
-			.Where(x => x.Guid == affectedUserGuid)
+		var user = await UsersNotDeleted(db)
+			.Where(x => x.Guid == affectedUserGuid && !x.IsDeleted)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "пользователь " + affectedUserGuid);
 
-		await db.AccessRights
+		/*await db.AccessRights
 			.Where(x => x.UserGuid == affectedUserGuid)
 			.DeleteAsync();
 
 		await db.UserGroupRelations
 			.Where(x => x.UserGuid == affectedUserGuid)
-			.DeleteAsync();
+			.DeleteAsync();*/
 
 		await db.Users
 			.Where(x => x.Guid == affectedUserGuid)
-			.DeleteAsync();
+			.Set(x => x.IsDeleted, true)
+			.UpdateAsync();
 
 		await LogAsync(db, userGuid, affectedUserGuid, "Удален пользователь " + (user.FullName ?? user.Login));
 
@@ -343,9 +344,9 @@ public static class UsersRepository
 		string hash;
 
 		var oldHashList = await db.Users
-				.Where(x => !string.IsNullOrEmpty(x.StaticHost))
-				.Select(x => x.PasswordHash)
-				.ToListAsync();
+			.Where(x => !string.IsNullOrEmpty(x.StaticHost))
+			.Select(x => x.PasswordHash)
+			.ToListAsync();
 
 		int countOfGenerations = 0;
 		do
@@ -375,15 +376,16 @@ public static class UsersRepository
 	}
 
 	private static async Task LogAsync(
-		DatalakeContext db, Guid userGuid, Guid guid, string message, string? details = null)
+		DatalakeContext db, Guid authorGuid, Guid guid, string message, string? details = null)
 	{
 		await db.InsertAsync(new Log
 		{
 			Category = LogCategory.Users,
 			RefId = guid.ToString(),
+			AffectedUserGuid = guid,
 			Text = message,
 			Type = LogType.Success,
-			UserGuid = userGuid,
+			AuthorGuid = authorGuid,
 			Details = details,
 		});
 	}
@@ -393,11 +395,20 @@ public static class UsersRepository
 	#region Запросы
 
 	/// <summary>
+	/// Список пользователей в БД без удаленных
+	/// </summary>
+	public static IQueryable<User> UsersNotDeleted(DatalakeContext db)
+	{
+		return db.Users.Where(x => !x.IsDeleted);
+	}
+
+	/// <summary>
 	/// Запрос информации о учетных записях
 	/// </summary>
 	public static IQueryable<UserFlatInfo> GetFlatInfo(DatalakeContext db)
 	{
 		return db.Users
+			.Where(x => !x.IsDeleted)
 			.Select(x => new UserFlatInfo
 			{
 				Guid = x.Guid,
@@ -414,9 +425,9 @@ public static class UsersRepository
 	internal static IQueryable<UserInfo> GetInfo(DatalakeContext db)
 	{
 		var query =
-			from u in db.Users
+			from u in db.Users.Where(x => !x.IsDeleted)
 			from rel in db.UserGroupRelations.LeftJoin(x => x.UserGuid == u.Guid)
-			from g in db.UserGroups.LeftJoin(x => x.Guid == rel.UserGroupGuid)
+			from g in db.UserGroups.LeftJoin(x => x.Guid == rel.UserGroupGuid && !x.IsDeleted)
 			from urights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGuid == u.Guid)
 			from grights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGroupGuid == g.Guid)
 			group new { u, g, urights, grights } by u into g
@@ -453,9 +464,9 @@ public static class UsersRepository
 	internal static IQueryable<UserDetailInfo> GetDetailInfo(DatalakeContext db)
 	{
 		var query =
-			from u in db.Users
+			from u in db.Users.Where(x => !x.IsDeleted)
 			from rel in db.UserGroupRelations.LeftJoin(x => x.UserGuid == u.Guid)
-			from g in db.UserGroups.LeftJoin(x => x.Guid == rel.UserGroupGuid)
+			from g in db.UserGroups.LeftJoin(x => x.Guid == rel.UserGroupGuid && !x.IsDeleted)
 			from urights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGuid == u.Guid)
 			from grights in db.AccessRights.Where(x => x.IsGlobal).LeftJoin(x => x.UserGroupGuid == g.Guid)
 			group new { u, g, urights, grights } by u into g

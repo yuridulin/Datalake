@@ -7,11 +7,12 @@ import { NavLink } from 'react-router-dom'
 
 type TagButtonProps = {
 	tag: TagSimpleInfo
+	openInBlank?: boolean
 }
 
-const TagButton = ({ tag }: TagButtonProps) => {
+const TagButton = ({ tag, openInBlank = false }: TagButtonProps) => {
 	return (
-		<NavLink to={routes.tags.toTagForm(tag.guid)}>
+		<NavLink to={routes.tags.toViewTag(tag.guid)} target={openInBlank ? '_blank' : '_self'}>
 			<Button size='small' icon={<TagIcon type={tag.sourceType} />}>
 				{tag.name}
 				<TagFrequencyEl frequency={tag.frequency} />

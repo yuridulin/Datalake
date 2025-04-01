@@ -205,7 +205,7 @@ public static class BlocksRepository
 		UserAuthInfo user,
 		int id)
 	{
-		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
 
 		return await VerifiedDeleteAsync(db, user.Guid, id);
 	}
@@ -244,10 +244,10 @@ public static class BlocksRepository
 	{
 		if (block.Parent != null)
 		{
-			if (!await db.Blocks.AnyAsync(x => x.Id == block.Parent.Id))
+			if (!await BlocksNotDeleted(db).AnyAsync(x => x.Id == block.Parent.Id))
 				throw new NotFoundException($"Родительский блок #{block.Parent.Id} не найден");
 
-			if (await db.Blocks.AnyAsync(x => x.ParentId == block.Parent.Id && x.Name == block.Name))
+			if (await BlocksNotDeleted(db).AnyAsync(x => x.ParentId == block.Parent.Id && x.Name == block.Name))
 				throw new AlreadyExistException("Блок с таким именем уже существует");
 		}
 
@@ -272,7 +272,7 @@ public static class BlocksRepository
 	{
 		var oldBlock = await QueryFullInfo(db, id);
 
-		if (await db.Blocks.AnyAsync(x => x.Id != id && x.ParentId == oldBlock.ParentId && x.Name == block.Name))
+		if (await BlocksNotDeleted(db).AnyAsync(x => x.Id != id && x.ParentId == oldBlock.ParentId && x.Name == block.Name))
 			throw new AlreadyExistException("Блок с таким именем уже существует");
 
 		using var transaction = await db.BeginTransactionAsync();
@@ -315,7 +315,7 @@ public static class BlocksRepository
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
-		var block = await db.Blocks
+		var block = await BlocksNotDeleted(db)
 			.Where(x => x.Id == id)
 			.FirstOrDefaultAsync()
 			?? throw new NotFoundException(message: "блок " + id);
@@ -340,14 +340,15 @@ public static class BlocksRepository
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
-		var blockName = await db.Blocks
+		var blockName = await BlocksNotDeleted(db)
 			.Where(x => x.Id == id)
 			.Select(x => x.Name)
 			.FirstOrDefaultAsync();
 
 		await db.Blocks
 			.Where(x => x.Id == id)
-			.DeleteAsync();
+			.Set(x => x.IsDeleted, true)
+			.UpdateAsync();
 
 		await LogAsync(db, userGuid, id, "Удален блок: " + blockName);
 
@@ -375,7 +376,8 @@ public static class BlocksRepository
 		{
 			Category = LogCategory.Blocks,
 			RefId = id.ToString(),
-			UserGuid = userGuid,
+			AffectedBlockId = id,
+			AuthorGuid = userGuid,
 			Text = message,
 			Type = LogType.Success,
 			Details = details,
@@ -386,10 +388,16 @@ public static class BlocksRepository
 
 	#region Запросы
 
+	internal static IQueryable<Block> BlocksNotDeleted(DatalakeContext db)
+	{
+		return db.Blocks.Where(x => !x.IsDeleted);
+	}
+
 	internal static IQueryable<BlockWithTagsInfo> QuerySimpleInfo(DatalakeContext db)
 	{
 		var query =
 			from block in db.Blocks
+			where !block.IsDeleted
 			select new BlockWithTagsInfo
 			{
 				Id = block.Id,
@@ -399,8 +407,8 @@ public static class BlocksRepository
 				ParentId = block.ParentId,
 				Tags = (
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
-					from tag in db.Tags.InnerJoin(x => x.Id == block_tag.TagId)
-					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
+					from tag in db.Tags.InnerJoin(x => x.Id == block_tag.TagId && !x.IsDeleted)
+					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
 					select new BlockNestedTagInfo
 					{
 						Id = tag.Id,
@@ -425,7 +433,7 @@ public static class BlocksRepository
 		{
 			return (
 				from x in db.Blocks
-				where x.Id == id
+				where !x.IsDeleted && x.Id == id
 				select new BlockTreeInfo
 				{
 					Id = x.Id,
@@ -436,6 +444,7 @@ public static class BlocksRepository
 			).Concat(
 				from x in db.Blocks
 				join p in cte on x.Id equals p.ParentId
+				where !x.IsDeleted
 				select new BlockTreeInfo
 				{
 					Id = x.Id,
@@ -447,8 +456,8 @@ public static class BlocksRepository
 		});
 
 		var query =
-			from block in db.Blocks.Where(x => x.Id == id)
-			from parent in db.Blocks.LeftJoin(x => x.Id == block.ParentId)
+			from block in db.Blocks.Where(x => x.Id == id && !x.IsDeleted)
+			from parent in db.Blocks.LeftJoin(x => x.Id == block.ParentId && !x.IsDeleted)
 			select new BlockFullInfo
 			{
 				Id = block.Id,
@@ -462,7 +471,7 @@ public static class BlocksRepository
 				},
 				Adults = parentsCte.Where(x => x.Id != id).ToArray(),
 				Children = (
-					from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id)
+					from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id && !x.IsDeleted)
 					select new BlockFullInfo.BlockChildInfo
 					{
 						Id = child.Id,
@@ -481,8 +490,8 @@ public static class BlocksRepository
 				).ToArray(),
 				Tags = (
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
-					from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId)
-					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
+					from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId && !x.IsDeleted)
+					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
 					select new BlockNestedTagInfo
 					{
 						Id = tag.Id,
@@ -497,8 +506,8 @@ public static class BlocksRepository
 				).ToArray(),
 				AccessRights = (
 					from rights in db.AccessRights.InnerJoin(x => x.BlockId == block.Id)
-					from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid)
-					from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid)
+					from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid && !x.IsDeleted)
+					from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid && !x.IsDeleted)
 					select new AccessRightsForObjectInfo
 					{
 						Id = rights.Id,

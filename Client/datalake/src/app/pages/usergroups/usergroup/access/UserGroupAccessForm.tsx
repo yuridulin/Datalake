@@ -7,11 +7,7 @@ import { DefaultOptionType } from 'antd/es/select'
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import {
-	AccessRightsIdInfo,
-	AccessType,
-	UserGroupInfo,
-} from '../../../../../api/swagger/data-contracts'
+import { AccessRightsIdInfo, AccessType, UserGroupInfo } from '../../../../../api/swagger/data-contracts'
 import PageHeader from '../../../../components/PageHeader'
 import routes from '../../../../router/routes'
 
@@ -53,27 +49,9 @@ const UserGroupAccessForm = () => {
 			api.userGroupsRead(String(id)).then((res) => {
 				setGroup(res.data)
 			}),
-			api
-				.sourcesReadAll()
-				.then((res) =>
-					setSources(
-						res.data.map((x) => ({ label: x.name, value: x.id })),
-					),
-				),
-			api
-				.blocksReadAll()
-				.then((res) =>
-					setBlocks(
-						res.data.map((x) => ({ label: x.name, value: x.id })),
-					),
-				),
-			api
-				.tagsReadAll()
-				.then((res) =>
-					setTags(
-						res.data.map((x) => ({ label: x.name, value: x.id })),
-					),
-				),
+			api.sourcesReadAll().then((res) => setSources(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			api.blocksReadAll().then((res) => setBlocks(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			api.tagsReadAll().then((res) => setTags(res.data.map((x) => ({ label: x.name, value: x.id })))),
 			api
 				.accessGet({ userGroup: String(id) })
 				.then((res) => {
@@ -86,12 +64,7 @@ const UserGroupAccessForm = () => {
 								tagId: x.tag?.id ?? null,
 								accessType: x.accessType,
 								key: String(x.id),
-								choosedObject:
-									x.source != null
-										? 'source'
-										: x.block != null
-											? 'block'
-											: 'tag',
+								choosedObject: x.source != null ? 'source' : x.block != null ? 'block' : 'tag',
 							})),
 					)
 				})
@@ -164,17 +137,9 @@ const UserGroupAccessForm = () => {
 						style={{ width: '100%' }}
 						value={record.accessType}
 						onChange={(value) => {
-							setForm(
-								form.map((x) =>
-									x.key === record.key
-										? { ...x, accessType: value }
-										: x,
-								),
-							)
+							setForm(form.map((x) => (x.key === record.key ? { ...x, accessType: value } : x)))
 						}}
-						labelRender={(x) => (
-							<AccessTypeEl type={x.value as AccessType} />
-						)}
+						labelRender={(x) => <AccessTypeEl type={x.value as AccessType} />}
 					/>
 				)
 			},
@@ -284,7 +249,7 @@ const UserGroupAccessForm = () => {
 		<>
 			<PageHeader
 				left={
-					<NavLink to={routes.userGroups.toUserGroup(String(id))}>
+					<NavLink to={routes.userGroups.toViewUserGroup(String(id))}>
 						<Button>К просмотру группы</Button>
 					</NavLink>
 				}
@@ -296,13 +261,7 @@ const UserGroupAccessForm = () => {
 			>
 				Разрешения, выдаваемые группе "{group.name}"
 			</PageHeader>
-			<Table
-				size='small'
-				pagination={false}
-				columns={columns}
-				dataSource={form}
-				rowKey='key'
-			/>
+			<Table size='small' pagination={false} columns={columns} dataSource={form} rowKey='key' />
 		</>
 	)
 }

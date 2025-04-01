@@ -8,20 +8,14 @@ import {
 } from '@/api/swagger/data-contracts'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import TagButton from '@/app/components/buttons/TagButton'
+import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import routes from '@/app/router/routes'
 import { useInterval } from '@/hooks/useInterval'
 import { user } from '@/state/user'
 import { RightOutlined } from '@ant-design/icons'
-import {
-	Button,
-	Descriptions,
-	DescriptionsProps,
-	Divider,
-	Spin,
-	Table,
-} from 'antd'
+import { Button, Descriptions, DescriptionsProps, Divider, Spin, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
@@ -54,7 +48,8 @@ const BlockView = observer(() => {
 
 	const getBlock = () => {
 		setReady(false)
-		api.blocksRead(Number(id))
+		api
+			.blocksRead(Number(id))
 			.then((res) => {
 				res.data.adults = res.data.adults.reverse()
 				setBlock(res.data)
@@ -71,17 +66,17 @@ const BlockView = observer(() => {
 
 	const getTagsValues = (tags: number[]) => {
 		if (tags.length === 0) return
-		api.valuesGet([
-			{
-				requestKey: 'block-values',
-				tagsId: tags,
-			},
-		]).then((res) => {
-			const values = Object.fromEntries(
-				res.data[0].tags.map((x) => [x.id, x.values[0]]),
-			)
-			setValues(values)
-		})
+		api
+			.valuesGet([
+				{
+					requestKey: 'block-values',
+					tagsId: tags,
+				},
+			])
+			.then((res) => {
+				const values = Object.fromEntries(res.data[0].tags.map((x) => [x.id, x.values[0]]))
+				setValues(values)
+			})
 	}
 
 	const createChild = () => {
@@ -103,22 +98,14 @@ const BlockView = observer(() => {
 				}
 				right={
 					<>
-						{user.hasAccessToBlock(
-							AccessType.Editor,
-							Number(id),
-						) && (
+						{user.hasAccessToBlock(AccessType.Editor, Number(id)) && (
 							<NavLink to={routes.blocks.toEditBlock(Number(id))}>
 								<Button>Редактирование блока</Button>
 							</NavLink>
 						)}
 						&ensp;
-						{user.hasAccessToBlock(
-							AccessType.Admin,
-							Number(id),
-						) && (
-							<NavLink
-								to={routes.blocks.toBlockAccessForm(Number(id))}
-							>
+						{user.hasAccessToBlock(AccessType.Admin, Number(id)) && (
+							<NavLink to={routes.blocks.toBlockAccessForm(Number(id))}>
 								<Button>Редактирование разрешений</Button>
 							</NavLink>
 						)}
@@ -138,15 +125,11 @@ const BlockView = observer(() => {
 					<BlockButton block={block.adults[0]} />
 					{block.adults.slice(1).map((x) => (
 						<div key={x.id}>
-							<RightOutlined
-								style={{ margin: '0 1em', fontSize: '7px' }}
-							/>
+							<RightOutlined style={{ margin: '0 1em', fontSize: '7px' }} />
 							<BlockButton block={x} />
 						</div>
 					))}
-					<RightOutlined
-						style={{ margin: '0 1em', fontSize: '7px' }}
-					/>
+					<RightOutlined style={{ margin: '0 1em', fontSize: '7px' }} />
 					<Button size='small' disabled>
 						{block.name}
 					</Button>
@@ -167,12 +150,7 @@ const BlockView = observer(() => {
 				)}
 			</Divider>
 			{block.children?.length > 0 ? (
-				<Table
-					dataSource={block.children}
-					size='small'
-					pagination={false}
-					rowKey='id'
-				>
+				<Table dataSource={block.children} size='small' pagination={false} rowKey='id'>
 					<Column
 						dataIndex='id'
 						title='Название'
@@ -195,36 +173,30 @@ const BlockView = observer(() => {
 			<Divider variant='dashed' orientation='left' style={dividerStyle}>
 				Поля
 			</Divider>
-			<Table
-				dataSource={block.tags}
-				size='small'
-				pagination={false}
-				rowKey='guid'
-			>
+			<Table dataSource={block.tags} size='small' pagination={false} rowKey='guid'>
 				<Column
 					dataIndex='guid'
 					title='Название'
-					render={(_, record: BlockNestedTagInfo) => (
-						<TagButton tag={record} />
-					)}
+					render={(_, record: BlockNestedTagInfo) => <TagButton tag={record} />}
 				/>
 				<Column
 					dataIndex='value'
 					title='Значение'
 					render={(_, record: BlockNestedTagInfo) => {
 						const value = values[record.id]
-						return !value ? (
-							<></>
-						) : (
-							<TagCompactValue
-								type={record.type}
-								quality={value.quality}
-								value={value.value}
-							/>
-						)
+						return !value ? <></> : <TagCompactValue type={record.type} quality={value.quality} value={value.value} />
 					}}
 				/>
 			</Table>
+
+			{!!block && (
+				<>
+					<Divider variant='dashed' orientation='left' style={dividerStyle}>
+						События
+					</Divider>
+					<LogsTableEl blockId={block.id} />
+				</>
+			)}
 		</>
 	)
 })

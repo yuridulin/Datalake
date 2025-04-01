@@ -2,16 +2,14 @@ import AppMenu from '@/app/AppMenu'
 import { Divider, Layout, theme } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
-import { motion } from 'framer-motion'
 import { observer } from 'mobx-react-lite'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { user } from '../state/user'
 import LogoPanel from './components/LogoPanel'
 import UserPanel from './components/UserPanel'
 
 const AppLayout = observer(() => {
 	const { token } = theme.useToken()
-	const { pathname } = useLocation()
 
 	const siderStyle: React.CSSProperties = {
 		backgroundColor: token.colorBgLayout,
@@ -41,10 +39,7 @@ const AppLayout = observer(() => {
 					<Sider width='20em' style={siderStyle}>
 						<LogoPanel />
 						<UserPanel />
-						<Divider
-							variant='dotted'
-							style={{ margin: '.5em 0' }}
-						/>
+						<Divider variant='dotted' style={{ margin: '.5em 0' }} />
 						<AppMenu />
 					</Sider>
 					<Layout
@@ -61,14 +56,7 @@ const AppLayout = observer(() => {
 								backgroundColor: token.colorBgContainer,
 							}}
 						>
-							<motion.div
-								layout
-								key={pathname}
-								initial='initial'
-								animate='in'
-							>
-								<Outlet />
-							</motion.div>
+							<Outlet />
 						</Content>
 					</Layout>
 				</Layout>

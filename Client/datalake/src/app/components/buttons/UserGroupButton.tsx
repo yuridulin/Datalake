@@ -12,7 +12,7 @@ type UserGroupButtonProps = {
 
 const UserGroupButton = ({ group, check = true }: UserGroupButtonProps) =>
 	!check || hasAccess(group.accessRule.accessType, AccessType.Viewer) ? (
-		<NavLink to={routes.userGroups.toUserGroup(group.guid)}>
+		<NavLink to={routes.userGroups.toViewUserGroup(group.guid)}>
 			<Button size='small' icon={<UserGroupIcon />}>
 				{group.name}
 			</Button>
