@@ -26,7 +26,7 @@ const SubgroupsTable = ({ guid, subgroups, onCreateGroup }: SubgroupsTableProps)
 						dataIndex='id'
 						title='Название'
 						render={(_, record) => (
-							<NavLink to={routes.userGroups.toUserGroup(record.guid)}>
+							<NavLink to={routes.userGroups.toViewUserGroup(record.guid)}>
 								<Button size='small'>{record.name}</Button>
 							</NavLink>
 						)}

@@ -292,6 +292,7 @@ public static class TagsRepository
 		var info = await GetInfoWithSources(db).FirstOrDefaultAsync(x => x.Id == tag.Id)
 			?? throw new NotFoundException(message: "тег после создания");
 
+		AccessRepository.AddRightsForNewTag(tag.GlobalGuid, createRequest.BlockId, createRequest.SourceId);
 		AccessRepository.Update();
 
 		return info;
@@ -449,6 +450,8 @@ public static class TagsRepository
 		var query =
 			from tag in db.Tags.Where(x => !x.IsDeleted)
 			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
+			from sourceTag in db.Tags.LeftJoin(x => x.Id == tag.SourceTagId && !x.IsDeleted)
+			from sourceTagSource in db.Sources.LeftJoin(x => x.Id == sourceTag.SourceId && !x.IsDeleted)
 			select new TagInfo
 			{
 				Id = tag.Id,
@@ -482,7 +485,15 @@ public static class TagsRepository
 				SourceItem = tag.SourceItem,
 				SourceType = source != null ? source.Type : SourceType.NotSet,
 				SourceName = source != null ? source.Name : "Unknown",
-				SourceTagId = tag.SourceTagId,
+				SourceTag = sourceTag == null ? null : new TagSimpleInfo
+				{
+					Id = sourceTag.Id,
+					Frequency = sourceTag.Frequency,
+					Guid = sourceTag.GlobalGuid,
+					Name = sourceTag.Name,
+					Type = sourceTag.Type,
+					SourceType = sourceTagSource == null ? SourceType.NotSet : sourceTagSource.Type,
+				},
 				Aggregation = tag.Aggregation,
 				AggregationPeriod = tag.AggregationPeriod,
 			};

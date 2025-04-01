@@ -97,7 +97,7 @@ const UserGroupView = observer(() => {
 				right={
 					<>
 						{user.hasAccessToGroup(AccessType.Editor, String(id)) && (
-							<NavLink to={routes.userGroups.toUserGroupEdit(String(id))}>
+							<NavLink to={routes.userGroups.toEditUserGroup(String(id))}>
 								<Button>Редактирование группы и участников</Button>
 							</NavLink>
 						)}

@@ -4,13 +4,7 @@ import { PlusCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
-import {
-	SourceEntryInfo,
-	SourceType,
-	TagFrequency,
-	TagInfo,
-	TagType,
-} from '../../../../api/swagger/data-contracts'
+import { SourceEntryInfo, SourceType, TagFrequency, TagInfo, TagType } from '../../../../api/swagger/data-contracts'
 import compareValues from '../../../../functions/compareValues'
 import CreatedTagLinker from '../../../components/CreatedTagsLinker'
 import PageHeader from '../../../components/PageHeader'
@@ -33,9 +27,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 		{
 			dataIndex: ['itemInfo', 'item'],
 			title: 'Путь в источнике',
-			render: (_, record) => (
-				<>{record.itemInfo?.path ?? <Tag>Путь не существует</Tag>}</>
-			),
+			render: (_, record) => <>{record.itemInfo?.path ?? <Tag>Путь не существует</Tag>}</>,
 			sorter: (a, b) => compareValues(a.itemInfo?.path, b.itemInfo?.path),
 		},
 		{
@@ -51,8 +43,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 				) : (
 					<></>
 				),
-			sorter: (a, b) =>
-				compareValues(a.itemInfo?.value, b.itemInfo?.value),
+			sorter: (a, b) => compareValues(a.itemInfo?.value, b.itemInfo?.value),
 		},
 		{
 			dataIndex: ['tagInfo', 'guid'],
@@ -67,12 +58,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 						<Button
 							size='small'
 							icon={<PlusCircleOutlined />}
-							onClick={() =>
-								createTag(
-									record.itemInfo?.path ?? '',
-									record.itemInfo?.type || TagType.String,
-								)
-							}
+							onClick={() => createTag(record.itemInfo?.path ?? '', record.itemInfo?.type || TagType.String)}
 						></Button>
 					</span>
 				),
@@ -82,7 +68,8 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 
 	function read() {
 		if (!id) return
-		api.sourcesGetItemsWithTags(id)
+		api
+			.sourcesGetItemsWithTags(id)
 			.then((res) => {
 				setItems(res.data)
 				setErr(false)
@@ -91,17 +78,38 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 	}
 
 	const createTag = async (item: string, tagType: TagType) => {
-		api.tagsCreate({
-			name: '',
-			tagType: tagType,
-			sourceId: id,
-			sourceItem: item,
-			frequency: TagFrequency.ByMinute,
-		}).then((res) => {
-			if (!res.data?.id) return
-			read()
-			setCreated(res.data)
-		})
+		api
+			.tagsCreate({
+				name: '',
+				tagType: tagType,
+				sourceId: id,
+				sourceItem: item,
+				frequency: TagFrequency.ByMinute,
+			})
+			.then((res) => {
+				if (!res.data?.id) return
+				setCreated(res.data)
+				setItems(
+					items.map((x) =>
+						x.itemInfo?.path === item
+							? {
+									...x,
+									tagInfo: {
+										id: res.data.id,
+										guid: res.data.guid,
+										item: res.data.sourceItem ?? item,
+										name: res.data.name,
+										sourceType: id,
+										type: res.data.type,
+										accessRule: { ruleId: 0, accessType: 0 },
+										formulaInputs: [],
+										frequency: res.data.frequency,
+									},
+								}
+							: x,
+					),
+				)
+			})
 	}
 
 	const doSearch = debounce((value: string) => {
@@ -117,12 +125,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 						tokens.filter(
 							(token) =>
 								token.length > 0 &&
-								(
-									(x.itemInfo?.path ?? '') +
-									(x.tagInfo?.name ?? '')
-								)
-									.toLowerCase()
-									.indexOf(token) > -1,
+								((x.itemInfo?.path ?? '') + (x.tagInfo?.name ?? '')).toLowerCase().indexOf(token) > -1,
 						).length == tokens.length,
 				),
 			)
@@ -139,23 +142,15 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 		[items],
 	)
 	useEffect(() => {
-		console.log(
-			'Нашлось элементов: ' +
-				searchedItems.length +
-				' из ' +
-				items.length,
-		)
+		console.log('Нашлось элементов: ' + searchedItems.length + ' из ' + items.length)
 	}, [searchedItems, items])
 	useEffect(read, [id])
 
-	if (type !== newType)
-		return <>Тип источника изменен. Сохраните, чтобы продолжить</>
+	if (type !== newType) return <>Тип источника изменен. Сохраните, чтобы продолжить</>
 
 	return err || items.length === 0 ? (
 		<div>
-			<i>
-				Источник данных не предоставил информацию о доступных значениях
-			</i>
+			<i>Источник данных не предоставил информацию о доступных значениях</i>
 		</div>
 	) : (
 		<>
@@ -168,12 +163,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 			>
 				Доступные значения с этого источника данных
 			</PageHeader>
-			{!!created && (
-				<CreatedTagLinker
-					tag={created}
-					onClose={() => setCreated(null)}
-				/>
-			)}
+			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
 			<Input.Search
 				style={{ marginBottom: '1em' }}
 				placeholder='Введите запрос для поиска по значениям и тегам. Можно написать несколько запросов, разделив пробелами'
@@ -189,9 +179,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 				showSorterTooltip={false}
 				size='small'
 				pagination={{ position: ['bottomCenter'] }}
-				rowKey={(row) =>
-					(row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')
-				}
+				rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')}
 			/>
 		</>
 	)

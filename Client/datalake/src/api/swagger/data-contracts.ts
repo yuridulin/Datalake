@@ -736,11 +736,8 @@ export type TagInfo = TagSimpleInfo & {
 	aggregation?: TagAggregation | null
 	/** Временное окно для расчета агрегированного значения */
 	aggregationPeriod?: AggregationPeriod | null
-	/**
-	 * Идентификатор тега, который будет источником данных для расчета агрегированного значения
-	 * @format int32
-	 */
-	sourceTagId?: number | null
+	/** Идентификатор тега, который будет источником данных для расчета агрегированного значения */
+	sourceTag?: TagSimpleInfo | null
 	/** Правило доступа */
 	accessRule?: AccessRuleInfo
 }

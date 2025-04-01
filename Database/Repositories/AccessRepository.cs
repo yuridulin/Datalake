@@ -716,6 +716,24 @@ public static class AccessRepository
 
 	static object locker = new();
 
+	internal static void AddRightsForNewTag(Guid tagGuid, int? blockId, int? sourceId)
+	{
+		lock (locker)
+		{
+			foreach (var user in UserRights.Values)
+			{
+				user.Blocks.TryGetValue(blockId ?? 0, out var blockRule);
+				user.Sources.TryGetValue(sourceId ?? 0, out var sourceRule);
+
+				var right = blockRule ?? sourceRule ?? null;
+				if (right != null)
+				{
+					user.Tags.TryAdd(tagGuid, right);
+				}
+			}
+		}
+	}
+
 	#endregion
 
 	#region Получение информации о учетной записи

@@ -29,7 +29,7 @@ const columns: ColumnType<LogInfo>[] = [
 	{
 		title: 'Событие',
 		dataIndex: 'text',
-		width: '16em',
+		width: '40%',
 	},
 	{
 		title: 'Описание',
