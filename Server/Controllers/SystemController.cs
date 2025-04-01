@@ -39,8 +39,9 @@ public class SystemController(
 	/// <summary>
 	/// Получение списка сообщений
 	/// </summary>
+	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более поздних</param>
+	/// <param name="firstId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более ранних</param>
 	/// <param name="take">Сколько сообщений получить за этот запрос</param>
-	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества</param>
 	/// <param name="source">Идентификатор затронутого источника</param>
 	/// <param name="block">Идентификатор затронутого блока</param>
 	/// <param name="tag">Идентификатор затронутого тега</param>
@@ -52,8 +53,9 @@ public class SystemController(
 	/// <returns>Список сообщений</returns>
 	[HttpGet("logs")]
 	public async Task<ActionResult<LogInfo[]>> GetLogsAsync(
-		[FromQuery] int? take = null,
 		[FromQuery] int? lastId = null,
+		[FromQuery] int? firstId = null,
+		[FromQuery] int? take = null,
 		[FromQuery] int? source = null,
 		[FromQuery] int? block = null,
 		[FromQuery] Guid? tag = null,
@@ -65,7 +67,7 @@ public class SystemController(
 	{
 		var userAuth = Authenticate();
 
-		return await SystemRepository.GetLogsAsync(db, userAuth, take, lastId, source, block, tag, user, group, categories, types, author);
+		return await SystemRepository.GetLogsAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
 	}
 
 	/// <summary>

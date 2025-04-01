@@ -9,11 +9,7 @@ interface UserGroupsCreateModalProps {
 	parentGuid?: string
 }
 
-const UserGroupsCreateModal = ({
-	onCreate,
-	parentGuid = undefined,
-	isSmall = false,
-}: UserGroupsCreateModalProps) => {
+const UserGroupsCreateModal = ({ onCreate, parentGuid = undefined, isSmall = false }: UserGroupsCreateModalProps) => {
 	const [open, setOpen] = useState(false)
 	const [confirmLoading, setConfirmLoading] = useState(false)
 	const [form] = Form.useForm()
@@ -27,7 +23,8 @@ const UserGroupsCreateModal = ({
 
 	const finishForm = (formData: UserGroupCreateRequest) => {
 		if (parentGuid) formData.parentGuid = parentGuid
-		api.userGroupsCreate(formData)
+		api
+			.userGroupsCreate(formData)
 			.then(() => {
 				closeModal()
 				onCreate()
@@ -44,7 +41,7 @@ const UserGroupsCreateModal = ({
 	return (
 		<>
 			<Button size={isSmall ? 'small' : 'middle'} onClick={showModal}>
-				Создать группу
+				Создать {parentGuid && 'дочернюю'} группу
 			</Button>
 			<Modal
 				title='Создание группы пользователей'
@@ -76,10 +73,7 @@ const UserGroupsCreateModal = ({
 						<Input />
 					</Form.Item>
 
-					<Form.Item<UserGroupCreateRequest>
-						label='Описание'
-						name='description'
-					>
+					<Form.Item<UserGroupCreateRequest> label='Описание' name='description'>
 						<Input.TextArea />
 					</Form.Item>
 				</Form>

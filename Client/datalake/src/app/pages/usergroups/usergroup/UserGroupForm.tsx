@@ -3,20 +3,12 @@ import getAccessTypeName from '@/functions/getAccessTypeName'
 import hasAccess from '@/functions/hasAccess'
 import { user } from '@/state/user'
 import { accessOptions } from '@/types/accessOptions'
-import {
-	MinusCircleOutlined,
-	PlusOutlined,
-	TeamOutlined,
-} from '@ant-design/icons'
+import { MinusCircleOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons'
 import { Button, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
-import {
-	AccessType,
-	UserGroupDetailedInfo,
-	UserGroupUpdateRequest,
-} from '../../../../api/swagger/data-contracts'
+import { AccessType, UserGroupDetailedInfo, UserGroupUpdateRequest } from '../../../../api/swagger/data-contracts'
 import notify from '../../../../state/notifications'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
@@ -49,18 +41,18 @@ const UserGroupForm = observer(() => {
 	}
 
 	const updateGroup = (newInfo: UserGroupUpdateRequest) => {
-		api.userGroupsUpdate(String(id), {
-			...newInfo,
-			users: newInfo.users || group.users || [],
-		}).catch(() => {
-			notify.err('Ошибка при сохранении')
-		})
+		api
+			.userGroupsUpdate(String(id), {
+				...newInfo,
+				users: newInfo.users || group.users || [],
+			})
+			.catch(() => {
+				notify.err('Ошибка при сохранении')
+			})
 	}
 
 	const deleteGroup = () => {
-		api.userGroupsDelete(String(id)).then(() =>
-			navigate(routes.userGroups.toList()),
-		)
+		api.userGroupsDelete(String(id)).then(() => navigate(routes.userGroups.toList()))
 	}
 
 	const getReady = () => setReady(!!group.guid)
@@ -82,10 +74,8 @@ const UserGroupForm = observer(() => {
 		getUsers()
 	}
 
-	const filterUserOption = (
-		input: string,
-		option?: { label: string; value: string },
-	) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+	const filterUserOption = (input: string, option?: { label: string; value: string }) =>
+		(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(load, [id])
@@ -97,16 +87,13 @@ const UserGroupForm = observer(() => {
 		<>
 			<PageHeader
 				left={
-					<NavLink to={routes.userGroups.toUserGroup(String(id))}>
+					<NavLink to={routes.userGroups.toViewUserGroup(String(id))}>
 						<Button>Вернуться</Button>
 					</NavLink>
 				}
 				right={
 					<>
-						{hasAccess(
-							group.accessRule.accessType,
-							AccessType.Editor,
-						) && (
+						{hasAccess(group.accessRule.accessType, AccessType.Editor) && (
 							<Popconfirm
 								title='Вы уверены, что хотите удалить эту группу?'
 								placement='bottom'
@@ -133,27 +120,13 @@ const UserGroupForm = observer(() => {
 				<Form.Item<UserGroupUpdateRequest> label='Название' name='name'>
 					<Input placeholder='Введите имя группы пользователей' />
 				</Form.Item>
-				<Form.Item<UserGroupUpdateRequest>
-					label='Описание'
-					name='description'
-				>
-					<Input.TextArea
-						placeholder='Введите описание группы пользователей'
-						autoSize={{ minRows: 2, maxRows: 8 }}
-					/>
+				<Form.Item<UserGroupUpdateRequest> label='Описание' name='description'>
+					<Input.TextArea placeholder='Введите описание группы пользователей' autoSize={{ minRows: 2, maxRows: 8 }} />
 				</Form.Item>
-				<Form.Item<UserGroupUpdateRequest>
-					label='Базовый уровень доступа группы'
-					name='accessType'
-				>
+				<Form.Item<UserGroupUpdateRequest> label='Базовый уровень доступа группы' name='accessType'>
 					<Select
 						placeholder='Выберите уровень доступа'
-						options={accessOptions.filter((x) =>
-							hasAccess(
-								user.globalAccessType,
-								x.value as AccessType,
-							),
-						)}
+						options={accessOptions.filter((x) => hasAccess(user.globalAccessType, x.value as AccessType))}
 					/>
 				</Form.Item>
 				{user.hasAccessToGroup(AccessType.Manager, String(id)) && (
@@ -163,17 +136,14 @@ const UserGroupForm = observer(() => {
 								<thead>
 									<tr>
 										<td>Пользователь</td>
-										<td style={{ width: '20em' }}>
-											Уровень доступа
-										</td>
+										<td style={{ width: '20em' }}>Уровень доступа</td>
 										<td style={{ width: '3em' }}>
 											<Form.Item>
 												<Button
 													title='Добавить новое значение'
 													onClick={() =>
 														add({
-															accessType:
-																AccessType.NotSet,
+															accessType: AccessType.NotSet,
 														})
 													}
 												>
@@ -187,40 +157,24 @@ const UserGroupForm = observer(() => {
 									{fields.map(({ key, name, ...rest }) => (
 										<tr key={key}>
 											<td>
-												<Form.Item
-													{...rest}
-													name={[name, 'guid']}
-												>
+												<Form.Item {...rest} name={[name, 'guid']}>
 													<Select
 														showSearch
 														optionFilterProp='children'
-														filterOption={
-															filterUserOption
-														}
+														filterOption={filterUserOption}
 														options={users}
 														placeholder='Выберите учетную запись'
 													/>
 												</Form.Item>
 											</td>
 											<td>
-												<Form.Item
-													{...rest}
-													name={[name, 'accessType']}
-												>
-													<Select
-														options={accessOptions}
-														placeholder='Выберите уровень доступа'
-													></Select>
+												<Form.Item {...rest} name={[name, 'accessType']}>
+													<Select options={accessOptions} placeholder='Выберите уровень доступа'></Select>
 												</Form.Item>
 											</td>
 											<td>
 												<Form.Item>
-													<Button
-														onClick={() =>
-															remove(name)
-														}
-														title='Удалить значение'
-													>
+													<Button onClick={() => remove(name)} title='Удалить значение'>
 														<MinusCircleOutlined />
 													</Button>
 												</Form.Item>

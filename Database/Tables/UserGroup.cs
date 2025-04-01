@@ -41,6 +41,12 @@ public class UserGroup
 	[Column]
 	public string? Description { get; set; }
 
+	/// <summary>
+	/// Группа отмечена как удаленная
+	/// </summary>
+	[Column, Required]
+	public bool IsDeleted { get; set; } = false;
+
 	// связи
 
 	/// <summary>
@@ -67,4 +73,9 @@ public class UserGroup
 	/// Список правил доступа, выданных этой группе
 	/// </summary>
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
+
+	/// <summary>
+	/// Список сообщений аудита
+	/// </summary>
+	public ICollection<Log> Logs { get; set; } = null!;
 }

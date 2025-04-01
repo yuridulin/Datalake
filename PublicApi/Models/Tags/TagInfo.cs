@@ -85,7 +85,7 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// <summary>
 	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения
 	/// </summary>
-	public int? SourceTagId { get; set; }
+	public TagSimpleInfo? SourceTag { get; set; }
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;

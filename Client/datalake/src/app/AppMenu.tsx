@@ -1,14 +1,10 @@
+import AggregatedSourceIcon from '@/app/components/icons/AggregatedSourceIcon'
+import CalculatedSourceIcon from '@/app/components/icons/CalculatedSourceIcon'
+import ManualSourceIcon from '@/app/components/icons/ManualSourceIcon'
 import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
 import UserIcon from '@/app/components/icons/UserIcon'
 import { blue } from '@ant-design/colors'
-import {
-	CalculatorOutlined,
-	EditOutlined,
-	FormOutlined,
-	PlaySquareOutlined,
-	SettingOutlined,
-	UnorderedListOutlined,
-} from '@ant-design/icons'
+import { EditOutlined, PlaySquareOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { observer } from 'mobx-react-lite'
@@ -63,7 +59,7 @@ const items = [
 				key: routes.tags.manual,
 				label: (
 					<NavLink to={routes.tags.manual}>
-						<FormOutlined style={{ color: blue[4] }} />
+						<ManualSourceIcon />
 						&emsp;Мануальные теги
 					</NavLink>
 				),
@@ -73,8 +69,18 @@ const items = [
 				key: routes.tags.calc,
 				label: (
 					<NavLink to={routes.tags.calc}>
-						<CalculatorOutlined style={{ color: blue[4] }} />
+						<CalculatedSourceIcon />
 						&emsp;Вычисляемые теги
+					</NavLink>
+				),
+				minimalAccess: AccessType.Viewer,
+			},
+			{
+				key: routes.tags.aggregated,
+				label: (
+					<NavLink to={routes.tags.aggregated}>
+						<AggregatedSourceIcon />
+						&emsp;Агрегатные теги
 					</NavLink>
 				),
 				minimalAccess: AccessType.Viewer,
@@ -195,12 +201,7 @@ const AppMenu = observer(() => {
 			if (menuItem) {
 				if (link.classList.contains('active')) {
 					menuItem.classList.add('ant-menu-item-selected')
-					selectedKeys.push(
-						(menuItem.getAttribute('data-menu-id') || '').replace(
-							'app-menu-',
-							'',
-						),
-					)
+					selectedKeys.push((menuItem.getAttribute('data-menu-id') || '').replace('app-menu-', ''))
 				} else menuItem.classList.remove('ant-menu-item-selected')
 			}
 		})
