@@ -27,7 +27,7 @@ public static class SourcesRepository
 		UserAuthInfo user,
 		SourceInfo? sourceInfo = null)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 
 		if (sourceInfo != null)
 			return await CreateAsync(db, user.Guid, sourceInfo);
@@ -120,7 +120,7 @@ public static class SourcesRepository
 		int id,
 		SourceInfo sourceInfo)
 	{
-		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Editor, id);
 
 		return await UpdateAsync(db, user.Guid, id, sourceInfo);
 	}
@@ -137,7 +137,7 @@ public static class SourcesRepository
 		UserAuthInfo user,
 		int id)
 	{
-		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Manager, id);
 
 		return await DeleteAsync(db, user.Guid, id);
 	}

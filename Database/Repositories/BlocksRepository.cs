@@ -205,7 +205,7 @@ public static class BlocksRepository
 		UserAuthInfo user,
 		int id)
 	{
-		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Admin, id);
+		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
 
 		return await VerifiedDeleteAsync(db, user.Guid, id);
 	}

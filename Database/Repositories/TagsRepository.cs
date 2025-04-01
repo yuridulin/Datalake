@@ -162,7 +162,7 @@ public static class TagsRepository
 		UserAuthInfo user,
 		Guid guid)
 	{
-		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Admin, guid);
+		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
 
 		await DeleteAsync(db, user.Guid, guid);
 	}

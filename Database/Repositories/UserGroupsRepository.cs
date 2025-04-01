@@ -33,11 +33,11 @@ public static class UserGroupsRepository
 	{
 		if (request.ParentGuid.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Admin, request.ParentGuid.Value);
+			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, request.ParentGuid.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
 
 		return await CreateAsync(db, user.Guid, request);
@@ -196,15 +196,15 @@ public static class UserGroupsRepository
 	public static async Task<bool> MoveAsync(
 		DatalakeContext db, UserAuthInfo user, Guid groupGuid, Guid? parentGuid)
 	{
-		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Admin, groupGuid);
+		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
 
 		if (parentGuid.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Editor, parentGuid.Value);
+			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, parentGuid.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
 
 		return await MoveAsync(db, user.Guid, groupGuid, parentGuid);
@@ -220,7 +220,7 @@ public static class UserGroupsRepository
 	public static async Task<bool> DeleteAsync(
 		DatalakeContext db, UserAuthInfo user, Guid groupGuid)
 	{
-		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Admin, groupGuid);
+		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
 
 		return await DeleteAsync(db, user.Guid, groupGuid);
 	}
