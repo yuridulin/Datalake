@@ -4,10 +4,12 @@ using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Blocks;
 using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Settings;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Tags;
+using Datalake.PublicApi.Models.UserGroups;
 using Datalake.PublicApi.Models.Users;
 using LinqToDB;
 
@@ -25,8 +27,9 @@ public static class SystemRepository
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
+	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более поздних</param>
+	/// <param name="firstId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более ранних</param>
 	/// <param name="take">Сколько сообщений получить за этот запрос</param>
-	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества</param>
 	/// <param name="sourceId">Идентификатор затронутого источника</param>
 	/// <param name="blockId">Идентификатор затронутого блока</param>
 	/// <param name="tagGuid">Идентификатор затронутого тега</param>
@@ -39,8 +42,9 @@ public static class SystemRepository
 	public static async Task<LogInfo[]> GetLogsAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
-		int? take = null,
 		int? lastId = null,
+		int? firstId = null,
+		int? take = null,
 		int? sourceId = null,
 		int? blockId = null,
 		Guid? tagGuid = null,
@@ -61,9 +65,6 @@ public static class SystemRepository
 			userGuid,
 			groupGuid);
 
-		if (lastId.HasValue)
-			query = query.Where(x => x.Id > lastId.Value);
-
 		if (categories != null && categories.Length > 0)
 			query = query.Where(x => categories.Contains(x.Category));
 
@@ -75,6 +76,11 @@ public static class SystemRepository
 
 		query = query
 			.OrderByDescending(x => x.Id);
+
+		if (lastId.HasValue)
+			query = query.Where(x => x.Id > lastId.Value);
+		else if (firstId.HasValue)
+			query = query.Where(x => x.Id < firstId.Value);
 
 		if (take.HasValue)
 			query = query.Take(take.Value);
@@ -334,6 +340,7 @@ public static class SystemRepository
 				DateString = log.Date.ToString(DateFormats.Standart),
 				Text = log.Text,
 				Type = log.Type,
+				Details = log.Details,
 				Author = author == null ? null : new UserSimpleInfo
 				{
 					Guid = author.Guid,
@@ -344,7 +351,7 @@ public static class SystemRepository
 					Id = source.Id,
 					Name = source.Name,
 				},
-				AffectedBlock = block == null ? null : new PublicApi.Models.Blocks.BlockSimpleInfo
+				AffectedBlock = block == null ? null : new BlockSimpleInfo
 				{
 					Id = block.Id,
 					Guid = block.GlobalId,
@@ -358,7 +365,17 @@ public static class SystemRepository
 					Type = tag.Type,
 					Frequency = tag.Frequency,
 					SourceType = tagSource == null ? SourceType.NotSet : tagSource.Type,
-				}
+				},
+				AffectedUser = user == null ? null : new UserSimpleInfo
+				{
+					Guid = user.Guid,
+					FullName = user.FullName ?? user.Login ?? string.Empty,
+				},
+				AffectedUserGroup = userGroup == null ? null : new UserGroupSimpleInfo
+				{
+					Guid = userGroup.Guid,
+					Name = userGroup.Name,
+				},
 			};
 
 		return query;

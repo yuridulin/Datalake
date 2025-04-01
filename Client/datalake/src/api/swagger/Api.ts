@@ -431,15 +431,20 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	systemGetLogs = (
 		query?: {
 			/**
+			 * Идентификатор сообщения, с которого начать отсчёт количества в сторону более поздних
+			 * @format int32
+			 */
+			lastId?: number | null
+			/**
+			 * Идентификатор сообщения, с которого начать отсчёт количества в сторону более ранних
+			 * @format int32
+			 */
+			firstId?: number | null
+			/**
 			 * Сколько сообщений получить за этот запрос
 			 * @format int32
 			 */
 			take?: number | null
-			/**
-			 * Идентификатор сообщения, с которого начать отсчёт количества
-			 * @format int32
-			 */
-			lastId?: number | null
 			/**
 			 * Идентификатор затронутого источника
 			 * @format int32

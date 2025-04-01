@@ -13,7 +13,7 @@ import routes from '@/app/router/routes'
 import notify from '@/state/notifications'
 import { user } from '@/state/user'
 import { CreditCardOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Dropdown, Form, Input, Popconfirm, Select, Space } from 'antd'
+import { Button, Dropdown, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -25,6 +25,7 @@ const BlockForm = observer(() => {
 
 	const [block, setBlock] = useState({} as BlockUpdateRequest)
 	const [tags, setTags] = useState([] as { label: string; value: number }[])
+	const [loading, setLoading] = useState(true)
 
 	const getBlock = () => {
 		api.blocksRead(Number(id)).then((res) => {
@@ -44,22 +45,28 @@ const BlockForm = observer(() => {
 	}
 
 	const getTags = () => {
-		api.tagsReadAll().then((res) => {
-			setTags(
-				res.data
-					.map((x) => ({
-						label: x.name,
-						value: x.id,
-					}))
-					.sort((a, b) => a.label.localeCompare(b.label)),
-			)
-		})
+		setLoading(true)
+		api
+			.tagsReadAll()
+			.then((res) => {
+				setTags(
+					res.data
+						.map((x) => ({
+							label: x.name,
+							value: x.id,
+						}))
+						.sort((a, b) => a.label.localeCompare(b.label)),
+				)
+			})
+			.finally(() => setLoading(false))
 	}
 
 	useEffect(getBlock, [id, form])
 	useEffect(getTags, [])
 
-	return (
+	return loading ? (
+		<Spin />
+	) : (
 		<>
 			<PageHeader
 				left={<Button onClick={() => navigate(routes.blocks.toViewBlock(Number(id)))}>Вернуться</Button>}

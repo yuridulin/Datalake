@@ -566,6 +566,8 @@ export interface LogInfo {
 	affectedUser?: UserSimpleInfo | null
 	/** Информация о затронутом группе учетных записей */
 	affectedUserGroup?: UserGroupSimpleInfo | null
+	/** Пояснения и дополнительная информация */
+	details?: string | null
 }
 
 /**

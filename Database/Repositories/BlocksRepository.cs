@@ -456,9 +456,8 @@ public static class BlocksRepository
 		});
 
 		var query =
-			from block in db.Blocks.Where(x => x.Id == id)
-			from parent in db.Blocks.LeftJoin(x => x.Id == block.ParentId)
-			where !block.IsDeleted && !parent.IsDeleted
+			from block in db.Blocks.Where(x => x.Id == id && !x.IsDeleted)
+			from parent in db.Blocks.LeftJoin(x => x.Id == block.ParentId && !x.IsDeleted)
 			select new BlockFullInfo
 			{
 				Id = block.Id,
@@ -472,8 +471,7 @@ public static class BlocksRepository
 				},
 				Adults = parentsCte.Where(x => x.Id != id).ToArray(),
 				Children = (
-					from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id)
-					where !child.IsDeleted
+					from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id && !x.IsDeleted)
 					select new BlockFullInfo.BlockChildInfo
 					{
 						Id = child.Id,
@@ -492,9 +490,8 @@ public static class BlocksRepository
 				).ToArray(),
 				Tags = (
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
-					from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId)
-					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
-					where !tag.IsDeleted && !source.IsDeleted
+					from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId && !x.IsDeleted)
+					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
 					select new BlockNestedTagInfo
 					{
 						Id = tag.Id,
@@ -509,9 +506,8 @@ public static class BlocksRepository
 				).ToArray(),
 				AccessRights = (
 					from rights in db.AccessRights.InnerJoin(x => x.BlockId == block.Id)
-					from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid)
-					from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid)
-					where !user.IsDeleted && !usergroup.IsDeleted
+					from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid && !x.IsDeleted)
+					from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid && !x.IsDeleted)
 					select new AccessRightsForObjectInfo
 					{
 						Id = rights.Id,

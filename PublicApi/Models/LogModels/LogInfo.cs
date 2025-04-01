@@ -72,4 +72,9 @@ public class LogInfo
 	/// Информация о затронутом группе учетных записей
 	/// </summary>
 	public UserGroupSimpleInfo? AffectedUserGroup { get; set; }
+
+	/// <summary>
+	/// Пояснения и дополнительная информация
+	/// </summary>
+	public string? Details { get; set; }
 }
