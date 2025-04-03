@@ -1114,19 +1114,12 @@ public static class AccessRepository
 
 		var query =
 			from rights in rightsQuery
-			from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid)
-			from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid)
-			from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId)
-			from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId)
-			from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId)
-			from tagSource in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
-			where
-				!user.IsDeleted &&
-				!usergroup.IsDeleted &&
-				!source.IsDeleted &&
-				!block.IsDeleted &&
-				!tag.IsDeleted &&
-				!tagSource.IsDeleted
+			from user in db.Users.LeftJoin(x => x.Guid == rights.UserGuid && !x.IsDeleted)
+			from usergroup in db.UserGroups.LeftJoin(x => x.Guid == rights.UserGroupGuid && !x.IsDeleted)
+			from source in db.Sources.LeftJoin(x => x.Id == rights.SourceId && !x.IsDeleted)
+			from block in db.Blocks.LeftJoin(x => x.Id == rights.BlockId && !x.IsDeleted)
+			from tag in db.Tags.LeftJoin(x => x.Id == rights.TagId && !x.IsDeleted)
+			from tagSource in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
 			select new AccessRightsInfo
 			{
 				Id = rights.Id,
