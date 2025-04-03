@@ -21,7 +21,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	/// <param name="blockInfo">Данные о новом блоке</param>
 	/// <returns>Идентификатор блока</returns>
 	[HttpPost]
-	public async Task<ActionResult<int>> CreateAsync(
+	public async Task<ActionResult<BlockWithTagsInfo>> CreateAsync(
 		[BindRequired, FromBody] BlockFullInfo blockInfo)
 	{
 		var user = Authenticate();
@@ -35,7 +35,7 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	/// <param name="parentId">Идентификатор родительского блока</param>
 	/// <returns>Идентификатор блока</returns>
 	[HttpPost("empty")]
-	public async Task<ActionResult<int>> CreateEmptyAsync(
+	public async Task<ActionResult<BlockWithTagsInfo>> CreateEmptyAsync(
 		[FromQuery] int? parentId)
 	{
 		var user = Authenticate();

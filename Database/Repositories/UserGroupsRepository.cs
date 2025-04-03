@@ -28,7 +28,7 @@ public static class UserGroupsRepository
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="request">Параметры новой группы</param>
 	/// <returns>Идентификатор созданной группы</returns>
-	public static async Task<Guid> CreateAsync(
+	public static async Task<UserGroupInfo> CreateAsync(
 		DatalakeContext db, UserAuthInfo user, UserGroupCreateRequest request)
 	{
 		if (request.ParentGuid.HasValue)
@@ -229,7 +229,7 @@ public static class UserGroupsRepository
 
 	#region Реализация
 
-	internal static async Task<Guid> CreateAsync(
+	internal static async Task<UserGroupInfo> CreateAsync(
 		DatalakeContext db, Guid userGuid, UserGroupCreateRequest request)
 	{
 		if (await UserGroupsNotDeleted(db).AnyAsync(x => x.Name == request.Name && x.ParentGuid == request.ParentGuid))
@@ -256,7 +256,10 @@ public static class UserGroupsRepository
 
 		AccessRepository.Update();
 
-		return group.Guid;
+		var info = await GetInfo(db).FirstOrDefaultAsync(x => x.Guid == group.Guid)
+			?? throw new NotFoundException("группа " + group.Guid);
+
+		return info;
 	}
 
 	internal static async Task<bool> UpdateAsync(

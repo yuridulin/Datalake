@@ -28,7 +28,7 @@ public static class BlocksRepository
 	/// <param name="blockInfo">Параметры нового блока</param>
 	/// <param name="parentId">Идентификатор родительского блока</param>
 	/// <returns>Идентификатор нового блока</returns>
-	public static async Task<int> CreateAsync(
+	public static async Task<BlockWithTagsInfo> CreateAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
 		BlockFullInfo? blockInfo = null,
@@ -214,7 +214,7 @@ public static class BlocksRepository
 
 	#region Реализация
 
-	internal static async Task<int> VerifiedCreateAsync(DatalakeContext db, Guid userGuid, int? parentId = null)
+	internal static async Task<BlockWithTagsInfo> VerifiedCreateAsync(DatalakeContext db, Guid userGuid, int? parentId = null)
 	{
 		int? id = await db.Blocks
 			.Value(x => x.GlobalId, Guid.NewGuid())
@@ -237,10 +237,13 @@ public static class BlocksRepository
 
 		AccessRepository.Update();
 
-		return id.Value;
+		var info = await QuerySimpleInfo(db).FirstOrDefaultAsync(x => x.Id == id.Value)
+			?? throw new NotFoundException(message: "блок " + id);
+
+		return info;
 	}
 
-	internal static async Task<int> VerifiedCreateAsync(DatalakeContext db, Guid userGuid, BlockFullInfo block)
+	internal static async Task<BlockWithTagsInfo> VerifiedCreateAsync(DatalakeContext db, Guid userGuid, BlockFullInfo block)
 	{
 		if (block.Parent != null)
 		{
@@ -265,7 +268,10 @@ public static class BlocksRepository
 
 		AccessRepository.Update();
 
-		return id ?? throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
+		var info = await QuerySimpleInfo(db).FirstOrDefaultAsync(x => x.Id == id.Value)
+			?? throw new NotFoundException(message: "блок " + id);
+
+		return info;
 	}
 
 	internal static async Task<bool> VerifiedUpdateAsync(DatalakeContext db, Guid userGuid, int id, BlockUpdateRequest block)
