@@ -59,13 +59,7 @@ const UsersList = observer(() => {
 				return (
 					<Tag
 						icon={<ClockCircleOutlined />}
-						color={
-							late < 120000
-								? 'success'
-								: late < 3600000
-									? 'warning'
-									: 'default'
-						}
+						color={late < 120000 ? 'success' : late < 3600000 ? 'warning' : 'default'}
 					>
 						{timeAgo.format(lastVisit)}
 					</Tag>
@@ -86,11 +80,7 @@ const UsersList = observer(() => {
 	return (
 		<>
 			<PageHeader
-				right={
-					user.hasGlobalAccess(AccessType.Manager) && (
-						<Button onClick={create}>Добавить пользователя</Button>
-					)
-				}
+				right={user.hasGlobalAccess(AccessType.Manager) && <Button onClick={create}>Добавить пользователя</Button>}
 			>
 				Список пользователей
 			</PageHeader>
@@ -106,10 +96,7 @@ const UsersList = observer(() => {
 					<Table
 						size='small'
 						dataSource={users.filter((x) =>
-							((x.login ?? '') + (x.fullName ?? ''))
-								.toLowerCase()
-								.trim()
-								.includes(search.toLowerCase()),
+							((x.login ?? '') + (x.fullName ?? '')).toLowerCase().trim().includes(search.toLowerCase()),
 						)}
 						columns={columns}
 						rowKey='guid'

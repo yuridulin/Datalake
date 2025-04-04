@@ -1,7 +1,4 @@
-import {
-	BlockNestedTagInfo,
-	BlockSimpleInfo,
-} from '@/api/swagger/data-contracts'
+import { BlockNestedTagInfo, BlockSimpleInfo } from '@/api/swagger/data-contracts'
 
 export type BlockFlattenNestedTagInfo = BlockNestedTagInfo & {
 	localName: string

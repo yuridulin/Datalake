@@ -1,9 +1,5 @@
 import { makeAutoObservable } from 'mobx'
-import {
-	AccessRuleInfo,
-	AccessType,
-	UserAuthInfo,
-} from '../api/swagger/data-contracts'
+import { AccessRuleInfo, AccessType, UserAuthInfo } from '../api/swagger/data-contracts'
 import hasAccess from '../functions/hasAccess'
 
 const nameHeader = 'd-name'
@@ -23,11 +19,7 @@ class User implements UserAuthInfo {
 		//debugger
 		const storedTheme = localStorage.getItem(themeKey)
 		if (storedTheme == null) {
-			this.theme =
-				window.matchMedia &&
-				window.matchMedia('(prefers-color-scheme: dark)').matches
-					? 'dark'
-					: 'light'
+			this.theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 			localStorage.setItem(themeKey, this.theme)
 		} else {
 			this.theme = storedTheme == 'dark' ? 'dark' : 'light'

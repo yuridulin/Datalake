@@ -37,9 +37,7 @@ api.instance.interceptors.response.use(
 
 		user.setName(decodeURIComponent(response.headers[nameHeader]))
 		user.setToken(response.headers[tokenHeader])
-		user.setAccess(
-			response.headers[globalAccessHeader] || AccessType.NoAccess,
-		)
+		user.setAccess(response.headers[globalAccessHeader] || AccessType.NoAccess)
 
 		if (response.status === 204) {
 			notify.done()
@@ -64,8 +62,7 @@ api.instance.interceptors.response.use(
 
 		if (error.response?.status ?? 0 >= 500) {
 			let message = error.request?.responseText as string
-			if (message.indexOf('\n\n') > -1)
-				message = message.substring(0, message.indexOf('\n\n'))
+			if (message.indexOf('\n\n') > -1) message = message.substring(0, message.indexOf('\n\n'))
 			notify.err(message)
 			return Promise.reject(error.response)
 		}
@@ -75,7 +72,8 @@ api.instance.interceptors.response.use(
 )
 
 const identifyUser = () => {
-	api.usersIdentify()
+	api
+		.usersIdentify()
 		.then((res) => {
 			if (res.status != 200) return
 			user.identify(res.data)

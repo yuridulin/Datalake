@@ -32,15 +32,10 @@ const BlocksMover = observer(() => {
 	const { token } = theme.useToken()
 
 	function load() {
-		api.blocksReadAsTree().then((res) =>
-			setBlocks(transformBlockTreeInfo(res.data)),
-		)
+		api.blocksReadAsTree().then((res) => setBlocks(transformBlockTreeInfo(res.data)))
 	}
 
-	const findParentKey = (
-		data: TreeDataNode[],
-		key: React.Key,
-	): React.Key | null => {
+	const findParentKey = (data: TreeDataNode[], key: React.Key): React.Key | null => {
 		for (let i = 0; i < data.length; i++) {
 			if (data[i].children) {
 				for (let j = 0; j < data[i].children!.length; j++) {
@@ -64,11 +59,7 @@ const BlocksMover = observer(() => {
 		const loop = (
 			data: TreeDataNode[],
 			key: React.Key,
-			callback: (
-				node: TreeDataNode,
-				i: number,
-				data: TreeDataNode[],
-			) => void,
+			callback: (node: TreeDataNode, i: number, data: TreeDataNode[]) => void,
 		) => {
 			for (let i = 0; i < data.length; i++) {
 				if (data[i].key === key) {
@@ -107,9 +98,10 @@ const BlocksMover = observer(() => {
 		const parentKey = findParentKey(data, dragKey)
 
 		setLoading(true)
-		api.blocksMove(Number(info.dragNode.key), {
-			parentId: Number(parentKey),
-		})
+		api
+			.blocksMove(Number(info.dragNode.key), {
+				parentId: Number(parentKey),
+			})
 			.then(() => {
 				setBlocks(data)
 				setLoading(false)

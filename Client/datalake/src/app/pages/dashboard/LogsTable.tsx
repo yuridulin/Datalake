@@ -4,12 +4,7 @@ import Column from 'antd/es/table/Column'
 import { AxiosResponse } from 'axios'
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import {
-	LogCategory,
-	LogInfo,
-	LogType,
-	UserSimpleInfo,
-} from '../../../api/swagger/data-contracts'
+import { LogCategory, LogInfo, LogType, UserSimpleInfo } from '../../../api/swagger/data-contracts'
 import getLogCategoryName from '../../../functions/getLogCategoryName'
 import getLogTypeName from '../../../functions/getLogTypeName'
 import { useInterval } from '../../../hooks/useInterval'
@@ -36,11 +31,12 @@ const LogsTable = () => {
 	const update = useCallback(() => {
 		if (noAccess) return
 		setLogs((prevLogs) => {
-			api.systemGetLogs({
-				take: count,
-				'categories[]': filter.categories,
-				'types[]': filter.types,
-			})
+			api
+				.systemGetLogs({
+					take: count,
+					'categories[]': filter.categories,
+					'types[]': filter.types,
+				})
 				.then((res) => {
 					setAccess(false)
 					setLogs(res.data)

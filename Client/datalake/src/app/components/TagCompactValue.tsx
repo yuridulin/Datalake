@@ -9,11 +9,7 @@ type TagCompactOptions = {
 	quality?: TagQuality
 }
 
-export default function TagCompactValue({
-	value,
-	type,
-	quality,
-}: TagCompactOptions) {
+export default function TagCompactValue({ value, type, quality }: TagCompactOptions) {
 	const { token } = theme.useToken()
 
 	let color = ''

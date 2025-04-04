@@ -14,15 +14,9 @@ function hasAccess(current: AccessType, minimal: AccessType): boolean {
 				current === AccessType.Admin
 			)
 		case AccessType.Editor:
-			return (
-				current === AccessType.Editor ||
-				current === AccessType.Manager ||
-				current === AccessType.Admin
-			)
+			return current === AccessType.Editor || current === AccessType.Manager || current === AccessType.Admin
 		case AccessType.Manager:
-			return (
-				current === AccessType.Manager || current === AccessType.Admin
-			)
+			return current === AccessType.Manager || current === AccessType.Admin
 		case AccessType.Admin:
 			return current === AccessType.Admin
 		default:

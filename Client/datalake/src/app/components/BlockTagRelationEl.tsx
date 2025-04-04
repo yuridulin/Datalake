@@ -4,16 +4,14 @@ type BlockTagRelationElProps = {
 	relation: BlockTagRelation
 }
 
-export default function BlockTagRelationEl({
-	relation,
-}: BlockTagRelationElProps) {
+export default function BlockTagRelationEl({ relation }: BlockTagRelationElProps) {
 	return (
 		<>
 			{relation === BlockTagRelation.Input
 				? 'входное'
 				: relation === BlockTagRelation.Output
-				? 'выходное'
-				: 'сопутствующее'}
+					? 'выходное'
+					: 'сопутствующее'}
 		</>
 	)
 }

@@ -1,12 +1,7 @@
 import api from '@/api/swagger-api'
 import { Button } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import {
-	SourceType,
-	TagFrequency,
-	TagInfo,
-	TagType,
-} from '../../../api/swagger/data-contracts'
+import { SourceType, TagFrequency, TagInfo, TagType } from '../../../api/swagger/data-contracts'
 import CreatedTagLinker from '../../components/CreatedTagsLinker'
 import PageHeader from '../../components/PageHeader'
 import TagsTable from './TagsTable'
@@ -17,7 +12,8 @@ const TagsCalculatedList = () => {
 
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
-			api.tagsReadAll({ sourceId: SourceType.Calculated })
+			api
+				.tagsReadAll({ sourceId: SourceType.Calculated })
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags
@@ -25,11 +21,12 @@ const TagsCalculatedList = () => {
 	}, [])
 
 	function createTag() {
-		api.tagsCreate({
-			sourceId: SourceType.Calculated,
-			tagType: TagType.Number,
-			frequency: TagFrequency.NotSet,
-		})
+		api
+			.tagsCreate({
+				sourceId: SourceType.Calculated,
+				tagType: TagType.Number,
+				frequency: TagFrequency.NotSet,
+			})
 			.then((res) => {
 				getTags()
 				setCreated(res.data)
@@ -41,19 +38,10 @@ const TagsCalculatedList = () => {
 
 	return (
 		<>
-			<PageHeader
-				right={
-					<Button onClick={createTag}>Создать вычисляемый тег</Button>
-				}
-			>
+			<PageHeader right={<Button onClick={createTag}>Создать вычисляемый тег</Button>}>
 				Список вычисляемых тегов
 			</PageHeader>
-			{!!created && (
-				<CreatedTagLinker
-					tag={created}
-					onClose={() => setCreated(null)}
-				/>
-			)}
+			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
 			<TagsTable tags={tags} hideSource={true} />
 		</>
 	)

@@ -1,9 +1,4 @@
-import {
-	SourceType,
-	TagFrequency,
-	TagQuality,
-	TagType,
-} from '@/api/swagger/data-contracts'
+import { SourceType, TagFrequency, TagQuality, TagType } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import { TagViewerModeProps } from '@/app/pages/values/types/TagViewerModeProps'
@@ -43,19 +38,13 @@ const ExactValuesMode = ({ values }: TagViewerModeProps) => {
 				title='Тег'
 				dataIndex='guid'
 				width='25%'
-				render={(_, row: ExactValuesRowType) => (
-					<TagButton tag={{ ...row, name: row.localName }} />
-				)}
+				render={(_, row: ExactValuesRowType) => <TagButton tag={{ ...row, name: row.localName }} />}
 			/>
 			<Column
 				title='Значение'
 				dataIndex='value'
 				render={(_, row: ExactValuesRowType) => (
-					<TagCompactValue
-						type={row.type}
-						value={row.value ?? null}
-						quality={row.quality ?? TagQuality.Bad}
-					/>
+					<TagCompactValue type={row.type} value={row.value ?? null} quality={row.quality ?? TagQuality.Bad} />
 				)}
 			/>
 		</Table>

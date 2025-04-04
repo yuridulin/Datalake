@@ -5,10 +5,7 @@ import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import {
-	AccessType,
-	UserGroupTreeInfo,
-} from '../../../api/swagger/data-contracts'
+import { AccessType, UserGroupTreeInfo } from '../../../api/swagger/data-contracts'
 import compareValues from '../../../functions/compareValues'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
@@ -38,15 +35,10 @@ const UserGroupsTreeMove = observer(() => {
 	const { token } = theme.useToken()
 
 	function load() {
-		api.userGroupsReadAsTree().then((res) =>
-			setTree(transformToTreeNode(res.data)),
-		)
+		api.userGroupsReadAsTree().then((res) => setTree(transformToTreeNode(res.data)))
 	}
 
-	const findParentKey = (
-		data: TreeDataNode[],
-		key: React.Key,
-	): React.Key | null => {
+	const findParentKey = (data: TreeDataNode[], key: React.Key): React.Key | null => {
 		for (let i = 0; i < data.length; i++) {
 			if (data[i].children) {
 				for (let j = 0; j < data[i].children!.length; j++) {
@@ -70,11 +62,7 @@ const UserGroupsTreeMove = observer(() => {
 		const loop = (
 			data: TreeDataNode[],
 			key: React.Key,
-			callback: (
-				node: TreeDataNode,
-				i: number,
-				data: TreeDataNode[],
-			) => void,
+			callback: (node: TreeDataNode, i: number, data: TreeDataNode[]) => void,
 		) => {
 			for (let i = 0; i < data.length; i++) {
 				if (data[i].key === key) {
@@ -113,9 +101,10 @@ const UserGroupsTreeMove = observer(() => {
 		const parentKey = findParentKey(data, dragKey)
 
 		setLoading(true)
-		api.userGroupsMove(String(info.dragNode.key), {
-			parentGuid: parentKey == null ? null : String(parentKey),
-		})
+		api
+			.userGroupsMove(String(info.dragNode.key), {
+				parentGuid: parentKey == null ? null : String(parentKey),
+			})
 			.then(() => {
 				setTree(data)
 				setLoading(false)

@@ -36,10 +36,7 @@ export default function PageHeader({ left, children, right }: HeaderProps) {
 							}}
 						>
 							<NavLink to={routes.globalRoot} onClick={back}>
-								<Button
-									icon={<ArrowLeftOutlined />}
-									title='Вернуться на предыдущую страницу'
-								>
+								<Button icon={<ArrowLeftOutlined />} title='Вернуться на предыдущую страницу'>
 									Назад
 								</Button>
 							</NavLink>
@@ -50,11 +47,7 @@ export default function PageHeader({ left, children, right }: HeaderProps) {
 					{children}
 				</div>
 			)}
-			{right && (
-				<div style={{ display: 'table-cell', textAlign: 'right' }}>
-					{right}
-				</div>
-			)}
+			{right && <div style={{ display: 'table-cell', textAlign: 'right' }}>{right}</div>}
 		</div>
 	)
 }
