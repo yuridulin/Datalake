@@ -33,7 +33,7 @@ const SubgroupsTable = ({ guid, subgroups, onCreateGroup }: SubgroupsTableProps)
 					/>
 				</Table>
 			) : (
-				<i>Нет подгрупп</i>
+				<i>Нет дочерних групп</i>
 			)}
 		</>
 	)

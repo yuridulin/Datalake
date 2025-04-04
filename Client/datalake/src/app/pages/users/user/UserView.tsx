@@ -1,17 +1,14 @@
 import api from '@/api/swagger-api'
-import {
-	AccessType,
-	UserDetailInfo,
-	UserGroupSimpleInfo,
-} from '@/api/swagger/data-contracts'
+import { AccessType, UserDetailInfo } from '@/api/swagger/data-contracts'
 import PageHeader from '@/app/components/PageHeader'
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
+import InfoTable from '@/app/components/infoTable/InfoTable'
+import TabsView from '@/app/components/tabsView/TabsView'
 import routes from '@/app/router/routes'
 import getUserTypeName from '@/functions/getUserTypeName'
 import hasAccess from '@/functions/hasAccess'
 import { user } from '@/state/user'
-import { Button, Descriptions, Divider, Spin, Table } from 'antd'
-import Column from 'antd/es/table/Column'
+import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
@@ -38,21 +35,12 @@ const UserView = observer(() => {
 	) : info ? (
 		<>
 			<PageHeader
-				left={
-					<Button onClick={() => navigate(-1)}>
-						К предыдущей странице
-					</Button>
-				}
+				left={<Button onClick={() => navigate(-1)}>К предыдущей странице</Button>}
 				right={
 					<>
-						{user.hasGlobalAccess(AccessType.Admin) && (
-							<Button disabled>Редактировать разрешения</Button>
-						)}
+						{user.hasGlobalAccess(AccessType.Admin) && <Button disabled>Редактировать разрешения</Button>}
 						&ensp;
-						{hasAccess(
-							info.accessRule.accessType,
-							AccessType.Manager,
-						) && (
+						{hasAccess(info.accessRule.accessType, AccessType.Manager) && (
 							<NavLink to={routes.users.toUserForm(info.guid)}>
 								<Button>Редактировать учетную запись</Button>
 							</NavLink>
@@ -62,31 +50,33 @@ const UserView = observer(() => {
 			>
 				Учётная запись: {info.fullName}
 			</PageHeader>
-			<Descriptions
+
+			<InfoTable
+				items={{
+					'Полное имя': info.fullName,
+					'Тип учетной записи': getUserTypeName(info.type),
+				}}
+			/>
+			<br />
+
+			<TabsView
 				items={[
 					{
-						key: 'name',
-						label: 'Полное имя',
-						children: info.fullName,
-					},
-					{
-						key: 'type',
-						label: 'Тип учетной записи',
-						children: getUserTypeName(info.type),
+						key: 'groups',
+						label: 'Группы',
+						children:
+							info.userGroups.length > 0 ? (
+								info.userGroups.map((record) => (
+									<div style={{ marginBottom: '1em' }} key={record.guid}>
+										<UserGroupButton group={record} />
+									</div>
+								))
+							) : (
+								<i>нет</i>
+							),
 					},
 				]}
 			/>
-			<Divider orientation='left'>
-				<small>Группы</small>
-			</Divider>
-			<Table size='small' dataSource={info.userGroups} rowKey='guid'>
-				<Column
-					title='Группа'
-					render={(_, record: UserGroupSimpleInfo) => (
-						<UserGroupButton group={record} />
-					)}
-				/>
-			</Table>
 		</>
 	) : (
 		<></>

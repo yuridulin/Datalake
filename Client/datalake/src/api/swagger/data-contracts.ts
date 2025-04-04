@@ -284,6 +284,50 @@ export interface AccessRightsIdInfo {
 }
 
 /** Информация о блоке */
+export type BlockWithTagsInfo = BlockSimpleInfo & {
+	/**
+	 * Идентификатор родительского блока
+	 * @format int32
+	 */
+	parentId?: number | null
+	/** Текстовое описание */
+	description?: string | null
+	/** Уровень доступа к блоку */
+	accessRule: AccessRuleInfo
+	/** Список прикреплённых тегов */
+	tags: BlockNestedTagInfo[]
+}
+
+/** Информация о закреплённом теге */
+export type BlockNestedTagInfo = TagSimpleInfo & {
+	/** Тип поля блока для этого тега */
+	relation: BlockTagRelation
+	/**
+	 * Свое имя тега в общем списке
+	 * @minLength 1
+	 */
+	localName: string
+	/**
+	 * Идентификатор источника данных
+	 * @format int32
+	 */
+	sourceId: number
+}
+
+/**
+ * Тип связи тега и блока
+ *
+ * 0 = Static
+ * 1 = Input
+ * 2 = Output
+ */
+export enum BlockTagRelation {
+	Static = 0,
+	Input = 1,
+	Output = 2,
+}
+
+/** Информация о блоке */
 export type BlockFullInfo = BlockWithTagsInfo & {
 	/** Информация о родительском блоке */
 	parent?: BlockParentInfo | null
@@ -342,50 +386,6 @@ export type BlockTreeInfo = BlockWithTagsInfo & {
 	 * @minLength 1
 	 */
 	fullName: string
-}
-
-/** Информация о блоке */
-export type BlockWithTagsInfo = BlockSimpleInfo & {
-	/**
-	 * Идентификатор родительского блока
-	 * @format int32
-	 */
-	parentId?: number | null
-	/** Текстовое описание */
-	description?: string | null
-	/** Уровень доступа к блоку */
-	accessRule: AccessRuleInfo
-	/** Список прикреплённых тегов */
-	tags: BlockNestedTagInfo[]
-}
-
-/** Информация о закреплённом теге */
-export type BlockNestedTagInfo = TagSimpleInfo & {
-	/** Тип поля блока для этого тега */
-	relation: BlockTagRelation
-	/**
-	 * Свое имя тега в общем списке
-	 * @minLength 1
-	 */
-	localName: string
-	/**
-	 * Идентификатор источника данных
-	 * @format int32
-	 */
-	sourceId: number
-}
-
-/**
- * Тип связи тега и блока
- *
- * 0 = Static
- * 1 = Input
- * 2 = Output
- */
-export enum BlockTagRelation {
-	Static = 0,
-	Input = 1,
-	Output = 2,
 }
 
 /** Новая информация о блоке */
@@ -852,6 +852,17 @@ export interface TagUpdateInputRequest {
 	tagId: number
 }
 
+/** Информация о группе пользователей */
+export type UserGroupInfo = UserGroupSimpleInfo & {
+	/** Произвольное описание группы */
+	description?: string | null
+	/**
+	 * Идентификатор группы, в которой располагается эта группа
+	 * @format guid
+	 */
+	parentGroupGuid?: string | null
+}
+
 /** Данные запроса для создания группы пользователей */
 export interface UserGroupCreateRequest {
 	/**
@@ -866,17 +877,6 @@ export interface UserGroupCreateRequest {
 	parentGuid?: string | null
 	/** Описание */
 	description?: string | null
-}
-
-/** Информация о группе пользователей */
-export type UserGroupInfo = UserGroupSimpleInfo & {
-	/** Произвольное описание группы */
-	description?: string | null
-	/**
-	 * Идентификатор группы, в которой располагается эта группа
-	 * @format guid
-	 */
-	parentGroupGuid?: string | null
 }
 
 /** Информация о группе пользователей в иерархическом представлении */
@@ -968,6 +968,36 @@ export interface UserLoginPass {
 	password: string
 }
 
+/** Информация о пользователе */
+export type UserInfo = UserSimpleInfo & {
+	/** Имя для входа */
+	login?: string | null
+	/** Глобальный уровень доступа */
+	accessType: AccessType
+	/** Тип учётной записи */
+	type: UserType
+	/**
+	 * Идентификатор пользователя в сервере EnergoId
+	 * @format guid
+	 */
+	energoIdGuid?: string | null
+	/** Список групп, в которые входит пользователь */
+	userGroups: UserGroupSimpleInfo[]
+}
+
+/**
+ * Тип учётной записи
+ *
+ * 1 = Local
+ * 2 = Static
+ * 3 = EnergoId
+ */
+export enum UserType {
+	Local = 1,
+	Static = 2,
+	EnergoId = 3,
+}
+
 /** Данные запроса на создание пользователя */
 export interface UserCreateRequest {
 	/** Имя для входа */
@@ -987,36 +1017,6 @@ export interface UserCreateRequest {
 	 * @format guid
 	 */
 	energoIdGuid?: string | null
-}
-
-/**
- * Тип учётной записи
- *
- * 1 = Local
- * 2 = Static
- * 3 = EnergoId
- */
-export enum UserType {
-	Local = 1,
-	Static = 2,
-	EnergoId = 3,
-}
-
-/** Информация о пользователе */
-export type UserInfo = UserSimpleInfo & {
-	/** Имя для входа */
-	login?: string | null
-	/** Глобальный уровень доступа */
-	accessType: AccessType
-	/** Тип учётной записи */
-	type: UserType
-	/**
-	 * Идентификатор пользователя в сервере EnergoId
-	 * @format guid
-	 */
-	energoIdGuid?: string | null
-	/** Список групп, в которые входит пользователь */
-	userGroups: UserGroupSimpleInfo[]
 }
 
 /** Расширенная информация о пользователе, включающая данные для аутентификации */

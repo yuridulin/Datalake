@@ -1,21 +1,17 @@
 import api from '@/api/swagger-api'
-import {
-	AccessType,
-	BlockChildInfo,
-	BlockFullInfo,
-	BlockNestedTagInfo,
-	ValueRecord,
-} from '@/api/swagger/data-contracts'
+import { AccessType, BlockFullInfo, BlockNestedTagInfo, ValueRecord } from '@/api/swagger/data-contracts'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import TagButton from '@/app/components/buttons/TagButton'
+import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
+import TabsView from '@/app/components/tabsView/TabsView'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import routes from '@/app/router/routes'
 import { useInterval } from '@/hooks/useInterval'
 import { user } from '@/state/user'
 import { RightOutlined } from '@ant-design/icons'
-import { Button, Descriptions, DescriptionsProps, Divider, Spin, Table } from 'antd'
+import { Button, Spin, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
@@ -25,9 +21,8 @@ type BlockValues = {
 	[key: number]: ValueRecord
 }
 
-const dividerStyle = {
-	fontSize: '1em',
-	marginTop: '2em',
+const childrenContainerStyle = {
+	marginBottom: '1em',
 }
 
 const BlockView = observer(() => {
@@ -37,14 +32,10 @@ const BlockView = observer(() => {
 	const [block, setBlock] = useState({} as BlockFullInfo)
 	const [values, setValues] = useState({} as BlockValues)
 
-	const items: DescriptionsProps['items'] = [
-		{ key: 'name', label: 'Имя', children: block.name },
-		{
-			key: 'desc',
-			label: 'Описание',
-			children: block.description,
-		},
-	]
+	const items: InfoTableProps['items'] = {
+		Имя: block.name,
+		Описание: block.description ?? <i>нет</i>,
+	}
 
 	const getBlock = () => {
 		setReady(false)
@@ -115,88 +106,101 @@ const BlockView = observer(() => {
 				{block.name}
 			</PageHeader>
 
-			<Descriptions colon={true} layout='vertical' items={items} />
+			<InfoTable items={items} />
+			<br />
 
-			<Divider variant='dashed' orientation='left' style={dividerStyle}>
-				Вышестоящие блоки
-			</Divider>
-			{block.adults.length > 0 ? (
-				<div style={{ display: 'flex' }}>
-					<BlockButton block={block.adults[0]} />
-					{block.adults.slice(1).map((x) => (
-						<div key={x.id}>
-							<RightOutlined style={{ margin: '0 1em', fontSize: '7px' }} />
-							<BlockButton block={x} />
-						</div>
-					))}
-					<RightOutlined style={{ margin: '0 1em', fontSize: '7px' }} />
-					<Button size='small' disabled>
-						{block.name}
-					</Button>
-				</div>
-			) : (
-				<i>Это блок верхнего уровня</i>
-			)}
+			<TabsView
+				items={[
+					{
+						key: 'fields',
+						label: 'Поля',
+						children: (
+							<Table dataSource={block.tags} size='small' pagination={false} rowKey='guid'>
+								<Column
+									dataIndex='guid'
+									title='Название'
+									render={(_, record: BlockNestedTagInfo) => <TagButton tag={record} />}
+								/>
+								<Column
+									dataIndex='value'
+									title='Значение'
+									render={(_, record: BlockNestedTagInfo) => {
+										const value = values[record.id]
+										return !value ? (
+											<></>
+										) : (
+											<TagCompactValue type={record.type} quality={value.quality} value={value.value} />
+										)
+									}}
+								/>
+							</Table>
+						),
+					},
+					{
+						key: 'parents',
+						label: 'Родительские блоки',
+						children:
+							block.adults.length > 0 ? (
+								<div style={{ display: 'flex' }}>
+									<BlockButton block={block.adults[0]} />
+									{block.adults.slice(1).map((x) => (
+										<div key={x.id}>
+											<RightOutlined style={{ margin: '0 1em', fontSize: '7px' }} />
+											<BlockButton block={x} />
+										</div>
+									))}
+									<RightOutlined style={{ margin: '0 1em', fontSize: '7px' }} />
+									<Button size='small' disabled>
+										{block.name}
+									</Button>
+								</div>
+							) : (
+								<div style={childrenContainerStyle}>
+									<i>Это блок верхнего уровня</i>
+								</div>
+							),
+					},
+					{
+						key: 'nested',
+						label: 'Дочерние блоки',
+						children: (
+							<>
+								{block.children?.length > 0 ? (
+									block.children.map((record) => (
+										<div key={record.id} style={childrenContainerStyle}>
+											<BlockButton
+												key={record.id}
+												block={{
+													id: record.id ?? 0,
+													name: record.name ?? '',
+													guid: '',
+												}}
+											/>
+										</div>
+									))
+								) : (
+									<div style={childrenContainerStyle}>
+										<i>Нет дочерних блоков</i>
+									</div>
+								)}
+								{user.hasAccessToBlock(AccessType.Manager, Number(id)) && (
+									<div style={childrenContainerStyle}>
+										<Button size='small' onClick={createChild}>
+											Создать
+										</Button>
+									</div>
+								)}
+							</>
+						),
+					},
 
-			<Divider variant='dashed' orientation='left' style={dividerStyle}>
-				Вложенные блоки
-				{user.hasAccessToBlock(AccessType.Manager, Number(id)) && (
-					<>
-						&emsp;
-						<Button size='small' onClick={createChild}>
-							Создать
-						</Button>
-					</>
-				)}
-			</Divider>
-			{block.children?.length > 0 ? (
-				<Table dataSource={block.children} size='small' pagination={false} rowKey='id'>
-					<Column
-						dataIndex='id'
-						title='Название'
-						render={(_, record: BlockChildInfo) => (
-							<BlockButton
-								key={record.id}
-								block={{
-									id: record.id ?? 0,
-									name: record.name ?? '',
-									guid: '',
-								}}
-							/>
-						)}
-					/>
-				</Table>
-			) : (
-				<i>Нет вложенных блоков</i>
-			)}
-
-			<Divider variant='dashed' orientation='left' style={dividerStyle}>
-				Поля
-			</Divider>
-			<Table dataSource={block.tags} size='small' pagination={false} rowKey='guid'>
-				<Column
-					dataIndex='guid'
-					title='Название'
-					render={(_, record: BlockNestedTagInfo) => <TagButton tag={record} />}
-				/>
-				<Column
-					dataIndex='value'
-					title='Значение'
-					render={(_, record: BlockNestedTagInfo) => {
-						const value = values[record.id]
-						return !value ? <></> : <TagCompactValue type={record.type} quality={value.quality} value={value.value} />
-					}}
-				/>
-			</Table>
-
-			{!!block && (
-				<>
-					<Divider variant='dashed' orientation='left' style={dividerStyle}>
-						События
-					</Divider>
-					<LogsTableEl blockId={block.id} />
-				</>
-			)}
+					{
+						key: 'logs',
+						label: 'События',
+						children: <LogsTableEl blockId={block.id} />,
+					},
+				]}
+			/>
 		</>
 	)
 })
