@@ -21,7 +21,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	/// <param name="request">Данные запроса</param>
 	/// <returns>Идентификатор новой группы пользователей</returns>
 	[HttpPost]
-	public async Task<ActionResult<Guid>> CreateAsync(
+	public async Task<ActionResult<UserGroupInfo>> CreateAsync(
 		[BindRequired, FromBody] UserGroupCreateRequest request)
 	{
 		var user = Authenticate();

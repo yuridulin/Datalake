@@ -15,13 +15,8 @@ const LogoPanel = observer(() => {
 			<Col span={12} style={{ textAlign: 'right' }}>
 				<Button
 					type='link'
-					onClick={() =>
-						user.setTheme(user.isDark() ? 'light' : 'dark')
-					}
-					title={
-						'Изменить тему на ' +
-						(user.isDark() ? 'светлую' : 'темную')
-					}
+					onClick={() => user.setTheme(user.isDark() ? 'light' : 'dark')}
+					title={'Изменить тему на ' + (user.isDark() ? 'светлую' : 'темную')}
 				>
 					{user.isDark() ? <MoonOutlined /> : <SunOutlined />}
 				</Button>

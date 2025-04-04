@@ -1,9 +1,11 @@
 import api from '@/api/swagger-api'
 import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
+import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
+import TabsView from '@/app/components/tabsView/TabsView'
 import SubgroupsTable from '@/app/pages/usergroups/usergroup/parts/SubgroupsTable'
 import { user } from '@/state/user'
-import { Button, Descriptions, DescriptionsProps, Spin, Tabs } from 'antd'
+import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
@@ -20,7 +22,6 @@ type UserGroupTabs = 'members' | 'nested' | 'access' | 'logs'
 const UserGroupView = observer(() => {
 	const [group, setGroup] = useState(defaultGroup)
 	const [ready, setReady] = useState(false)
-	const [activeTab, setActiveTab] = useState<UserGroupTabs>('members')
 	const { id } = useParams()
 
 	const getGlobalAccessRights = () => {
@@ -30,18 +31,10 @@ const UserGroupView = observer(() => {
 		return accessType ?? AccessType.NotSet
 	}
 
-	const items: DescriptionsProps['items'] = [
-		{
-			key: 'desc',
-			label: 'Описание',
-			children: group.description,
-		},
-		{
-			key: 'access',
-			label: 'Общий уровень доступа',
-			children: <AccessTypeEl type={getGlobalAccessRights()} />,
-		},
-	]
+	const items: InfoTableProps['items'] = {
+		Описание: group.description ?? <i>нет</i>,
+		'Общий уровень доступа': <AccessTypeEl type={getGlobalAccessRights()} />,
+	}
 
 	const load = () => {
 		setReady(false)
@@ -59,26 +52,6 @@ const UserGroupView = observer(() => {
 
 	const checkReady = () => {
 		setReady(!!group.guid)
-	}
-
-	useEffect(() => {
-		const hash = window.location.hash.replace('#', '')
-		if (hash) {
-			setActiveTab(hash as UserGroupTabs)
-		}
-	}, [])
-
-	useEffect(() => {
-		const hash = window.location.hash.replace('#', '')
-		if (hash && hash != activeTab) {
-			setActiveTab(hash as UserGroupTabs)
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [window.location.hash])
-
-	const onTabChange = (key: string) => {
-		setActiveTab(key as UserGroupTabs)
-		window.location.hash = key // Обновление хэша в URL
 	}
 
 	useEffect(load, [id])
@@ -112,13 +85,11 @@ const UserGroupView = observer(() => {
 			>
 				{group.name}
 			</PageHeader>
-			<Descriptions colon={true} items={items} />
-			<Tabs
-				activeKey={activeTab}
-				onChange={onTabChange}
-				animated={false}
-				destroyInactiveTabPane
-				tabBarStyle={{ height: '100%' }}
+
+			<InfoTable items={items} />
+			<br />
+
+			<TabsView
 				items={[
 					{
 						key: 'members' as UserGroupTabs,

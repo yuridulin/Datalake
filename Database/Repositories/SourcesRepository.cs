@@ -22,7 +22,7 @@ public static class SourcesRepository
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="sourceInfo">Параметры нового источника</param>
 	/// <returns>Идентификатор нового источника</returns>
-	public static async Task<int> CreateAsync(
+	public static async Task<SourceInfo> CreateAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
 		SourceInfo? sourceInfo = null)
@@ -146,7 +146,7 @@ public static class SourcesRepository
 
 	#region Реализация
 
-	internal static async Task<int> CreateAsync(DatalakeContext db, Guid userGuid)
+	internal static async Task<SourceInfo> CreateAsync(DatalakeContext db, Guid userGuid)
 	{
 		var transaction = await db.BeginTransactionAsync();
 
@@ -170,10 +170,13 @@ public static class SourcesRepository
 		SystemRepository.Update();
 		AccessRepository.Update();
 
-		return id.Value;
+		var info = await QueryInfo(db).FirstOrDefaultAsync(x => x.Id == id.Value)
+			?? throw new NotFoundException($"Источник #{id} не найден");
+
+		return info;
 	}
 
-	internal static async Task<int> CreateAsync(DatalakeContext db, Guid userGuid, SourceInfo sourceInfo)
+	internal static async Task<SourceInfo> CreateAsync(DatalakeContext db, Guid userGuid, SourceInfo sourceInfo)
 	{
 		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
 
@@ -199,7 +202,10 @@ public static class SourcesRepository
 		SystemRepository.Update();
 		AccessRepository.Update();
 
-		return id.Value;
+		var info = await QueryInfo(db).FirstOrDefaultAsync(x => x.Id == id.Value)
+			?? throw new NotFoundException($"Источник #{id} не найден");
+
+		return info;
 	}
 
 	internal static async Task<bool> UpdateAsync(DatalakeContext db, Guid userGuid, int id, SourceInfo sourceInfo)

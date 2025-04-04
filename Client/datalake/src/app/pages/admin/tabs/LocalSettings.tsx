@@ -24,10 +24,7 @@ const LocalSettings = () => {
 
 	return (
 		<Form form={form} layout='vertical' onFinish={update}>
-			<Form.Item<SettingsInfo>
-				label='Название базы данных'
-				name='instanceName'
-			>
+			<Form.Item<SettingsInfo> label='Название базы данных' name='instanceName'>
 				<Input placeholder='Введите название базы данных' />
 			</Form.Item>
 			<Button type='primary' onClick={form.submit}>

@@ -9,7 +9,8 @@ const Tags = () => {
 
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
-			api.tagsReadAll()
+			api
+				.tagsReadAll()
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags

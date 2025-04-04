@@ -6,11 +6,7 @@ import ExactValuesMode from '@/app/pages/values/tagViewerModes/ExactValuesMode'
 import TimedValuesMode from '@/app/pages/values/tagViewerModes/TimedValuesMode'
 import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
-import {
-	CheckSquareOutlined,
-	CloseSquareOutlined,
-	PlaySquareOutlined,
-} from '@ant-design/icons'
+import { CheckSquareOutlined, CloseSquareOutlined, PlaySquareOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useState } from 'react'
@@ -40,8 +36,7 @@ const resolutionOptions = [
 
 const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 
-const parseDate = (param: string | null, fallback: dayjs.Dayjs) =>
-	param ? dayjs(param, timeMask) : fallback
+const parseDate = (param: string | null, fallback: dayjs.Dayjs) => (param ? dayjs(param, timeMask) : fallback)
 
 const TagsViewer = observer(() => {
 	const [searchParams, setSearchParams] = useSearchParams()
@@ -60,13 +55,10 @@ const TagsViewer = observer(() => {
 
 	const [values, setValues] = useState([] as TagValueWithInfo[])
 
-	const handleTagChange = useCallback(
-		(value: number[], currentTagMapping: FlattenedNestedTagsType) => {
-			setTagMapping(currentTagMapping)
-			setRequest((prev) => ({ ...prev, tags: value }))
-		},
-		[],
-	)
+	const handleTagChange = useCallback((value: number[], currentTagMapping: FlattenedNestedTagsType) => {
+		setTagMapping(currentTagMapping)
+		setRequest((prev) => ({ ...prev, tags: value }))
+	}, [])
 
 	const handleModeChange = useCallback((value: TimeMode) => {
 		setRequest((prev) => ({ ...prev, mode: value }))
@@ -84,13 +76,14 @@ const TagsViewer = observer(() => {
 							young: request.young.format(timeMask),
 							resolution: request.resolution,
 						}
-		api.valuesGet([
-			{
-				requestKey: 'viewer-tags',
-				tagsId: request.tags,
-				...timeSettings,
-			},
-		])
+		api
+			.valuesGet([
+				{
+					requestKey: 'viewer-tags',
+					tagsId: request.tags,
+					...timeSettings,
+				},
+			])
 			.then((res) => {
 				setValues(
 					res.data[0].tags.map((tag) => {
@@ -151,10 +144,7 @@ const TagsViewer = observer(() => {
 					<Col flex='auto'>
 						<span
 							style={{
-								display:
-									request.mode === TimeModes.LIVE
-										? 'inherit'
-										: 'none',
+								display: request.mode === TimeModes.LIVE ? 'inherit' : 'none',
 							}}
 						>
 							<Button
@@ -166,37 +156,25 @@ const TagsViewer = observer(() => {
 								}
 								type={request.update ? 'primary' : 'default'}
 							>
-								{request.update ? (
-									<CheckSquareOutlined />
-								) : (
-									<CloseSquareOutlined />
-								)}
+								{request.update ? <CheckSquareOutlined /> : <CloseSquareOutlined />}
 								непрерывное обновление
 							</Button>
 						</span>
 						<span
 							style={{
-								display:
-									request.mode === TimeModes.EXACT
-										? 'inherit'
-										: 'none',
+								display: request.mode === TimeModes.EXACT ? 'inherit' : 'none',
 							}}
 						>
 							<DatePicker
 								showTime
 								placeholder='Дата среза'
 								defaultValue={request.exact}
-								onChange={(e) =>
-									setRequest({ ...request, exact: e })
-								}
+								onChange={(e) => setRequest({ ...request, exact: e })}
 							/>
 						</span>
 						<span
 							style={{
-								display:
-									request.mode === TimeModes.OLD_YOUNG
-										? 'inherit'
-										: 'none',
+								display: request.mode === TimeModes.OLD_YOUNG ? 'inherit' : 'none',
 							}}
 						>
 							<DatePicker
@@ -204,37 +182,27 @@ const TagsViewer = observer(() => {
 								defaultValue={request.old}
 								maxDate={request.young}
 								placeholder='Начальная дата'
-								onChange={(e) =>
-									setRequest({ ...request, old: e })
-								}
+								onChange={(e) => setRequest({ ...request, old: e })}
 							/>
 							<DatePicker
 								showTime
 								defaultValue={request.young}
 								minDate={request.old}
 								placeholder='Конечная дата'
-								onChange={(e) =>
-									setRequest({ ...request, young: e })
-								}
+								onChange={(e) => setRequest({ ...request, young: e })}
 							/>
 							<Select
 								options={resolutionOptions}
 								style={{ width: '12em' }}
 								defaultValue={0}
-								onChange={(e) =>
-									setRequest({ ...request, resolution: e })
-								}
+								onChange={(e) => setRequest({ ...request, resolution: e })}
 							/>
 						</span>
 					</Col>
 				</Row>
 				<Divider orientation='left'>Значения</Divider>
 			</div>
-			{request.mode === TimeModes.OLD_YOUNG ? (
-				<TimedValuesMode values={values} />
-			) : (
-				<ExactValuesMode values={values} />
-			)}
+			{request.mode === TimeModes.OLD_YOUNG ? <TimedValuesMode values={values} /> : <ExactValuesMode values={values} />}
 		</>
 	)
 })

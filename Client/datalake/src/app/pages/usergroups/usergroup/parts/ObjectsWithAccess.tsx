@@ -4,10 +4,7 @@ import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
 import { Table, Tag } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import {
-	AccessRightsForOneInfo,
-	AccessType,
-} from '../../../../../api/swagger/data-contracts'
+import { AccessRightsForOneInfo, AccessType } from '../../../../../api/swagger/data-contracts'
 
 type ObjectsWithAccessProps = {
 	accessRights: AccessRightsForOneInfo[]
@@ -23,9 +20,7 @@ const columns: ColumnsType<AccessRightsForOneInfo> = [
 			if (record.tag) return <Tag>Тег</Tag>
 			return <>?</>
 		},
-		sorter: (a, b) =>
-			(a.source?.id ?? a.block?.id ?? a.tag?.id ?? 0) -
-			(b.source?.id ?? b.block?.id ?? b.tag?.id ?? 0),
+		sorter: (a, b) => (a.source?.id ?? a.block?.id ?? a.tag?.id ?? 0) - (b.source?.id ?? b.block?.id ?? b.tag?.id ?? 0),
 	},
 	{
 		title: 'Уровень доступа',
@@ -47,14 +42,7 @@ const columns: ColumnsType<AccessRightsForOneInfo> = [
 ]
 
 const ObjectsWithAccess = ({ accessRights }: ObjectsWithAccessProps) => {
-	return (
-		<Table
-			size='small'
-			rowKey='id'
-			columns={columns}
-			dataSource={accessRights}
-		/>
-	)
+	return <Table size='small' rowKey='id' columns={columns} dataSource={accessRights} />
 }
 
 export default ObjectsWithAccess

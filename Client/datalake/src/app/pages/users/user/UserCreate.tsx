@@ -6,12 +6,7 @@ import { Button, Input, Radio, Select } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-	AccessType,
-	EnergoIdInfo,
-	UserCreateRequest,
-	UserType,
-} from '../../../../api/swagger/data-contracts'
+import { AccessType, EnergoIdInfo, UserCreateRequest, UserType } from '../../../../api/swagger/data-contracts'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
@@ -30,14 +25,12 @@ const UserCreate = observer(() => {
 	} as EnergoIdInfo)
 
 	function load() {
-		api.usersGetEnergoIdList().then(
-			(res) => !!res && setKeycloakInfo(res.data),
-		)
+		api.usersGetEnergoIdList().then((res) => !!res && setKeycloakInfo(res.data))
 	}
 
 	function create() {
 		api.usersCreate(request).then((res) => {
-			navigate(routes.users.toUserForm(res.data))
+			navigate(routes.users.toUserForm(res.data.guid))
 		})
 	}
 
@@ -46,10 +39,8 @@ const UserCreate = observer(() => {
 	}
 
 	// Filter `option.label` match the user type `input`
-	const filterOption = (
-		input: string,
-		option?: { label: string; value: string },
-	) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+	const filterOption = (input: string, option?: { label: string; value: string }) =>
+		(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
 
 	useEffect(load, [])
 
@@ -58,11 +49,7 @@ const UserCreate = observer(() => {
 	return (
 		<>
 			<PageHeader
-				left={
-					<Button onClick={() => navigate(routes.users.list)}>
-						Вернуться
-					</Button>
-				}
+				left={<Button onClick={() => navigate(routes.users.list)}>Вернуться</Button>}
 				right={
 					<Button type='primary' onClick={create}>
 						Создать
@@ -90,28 +77,17 @@ const UserCreate = observer(() => {
 					<Radio.Group
 						buttonStyle='solid'
 						value={request.type}
-						onChange={(e) =>
-							setRequest({ ...request, type: e.target.value })
-						}
+						onChange={(e) => setRequest({ ...request, type: e.target.value })}
 					>
-						<Radio.Button value={UserType.Static}>
-							Статичная учетная запись
-						</Radio.Button>
-						<Radio.Button value={UserType.Local}>
-							Базовая учетная запись
-						</Radio.Button>
-						<Radio.Button value={UserType.EnergoId}>
-							Учетная запись EnergoID
-						</Radio.Button>
+						<Radio.Button value={UserType.Static}>Статичная учетная запись</Radio.Button>
+						<Radio.Button value={UserType.Local}>Базовая учетная запись</Radio.Button>
+						<Radio.Button value={UserType.EnergoId}>Учетная запись EnergoID</Radio.Button>
 					</Radio.Group>
 				</FormRow>
 
 				<div
 					style={{
-						display:
-							request.type === UserType.Local
-								? 'inherit'
-								: 'none',
+						display: request.type === UserType.Local ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Логин для входа'>
@@ -129,11 +105,7 @@ const UserCreate = observer(() => {
 
 				<div
 					style={{
-						display:
-							request.type === UserType.Local ||
-							request.type === UserType.Static
-								? 'inherit'
-								: 'none',
+						display: request.type === UserType.Local || request.type === UserType.Static ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Полное имя'>
@@ -151,10 +123,7 @@ const UserCreate = observer(() => {
 
 				<div
 					style={{
-						display:
-							request.type === UserType.Static
-								? 'inherit'
-								: 'none',
+						display: request.type === UserType.Static ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Адрес, с которого разрешен доступ'>
@@ -173,10 +142,7 @@ const UserCreate = observer(() => {
 
 				<div
 					style={{
-						display:
-							request.type === UserType.Local
-								? 'inherit'
-								: 'none',
+						display: request.type === UserType.Local ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Пароль'>
@@ -196,10 +162,7 @@ const UserCreate = observer(() => {
 
 				<div
 					style={{
-						display:
-							request.type === UserType.EnergoId
-								? 'inherit'
-								: 'none',
+						display: request.type === UserType.EnergoId ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Учетная запись на сервере EnergoID'>
@@ -216,9 +179,7 @@ const UserCreate = observer(() => {
 							}))}
 							style={{ width: '100%' }}
 							onChange={(value) => {
-								const user = keycloakInfo.energoIdUsers.filter(
-									(x) => x.energoIdGuid === value,
-								)[0]
+								const user = keycloakInfo.energoIdUsers.filter((x) => x.energoIdGuid === value)[0]
 								if (user) {
 									setRequest({
 										...request,

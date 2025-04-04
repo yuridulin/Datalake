@@ -62,9 +62,7 @@ const UserForm = observer(() => {
 			setLoading(false)
 		})
 
-		api.usersGetEnergoIdList({ currentUserGuid: id }).then(
-			(res) => !!res && setKeycloakUsers(res.data),
-		)
+		api.usersGetEnergoIdList({ currentUserGuid: id }).then((res) => !!res && setKeycloakUsers(res.data))
 	}
 
 	useEffect(load, [id])
@@ -81,10 +79,12 @@ const UserForm = observer(() => {
 	}
 
 	function generateNewHash() {
-		api.usersUpdate(String(id), {
-			...request,
-			createNewStaticHash: true,
-		}).then(() => load())
+		api
+			.usersUpdate(String(id), {
+				...request,
+				createNewStaticHash: true,
+			})
+			.then(() => load())
 	}
 
 	const onSearch = (value: string) => {
@@ -92,21 +92,15 @@ const UserForm = observer(() => {
 	}
 
 	// Filter `option.label` match the user type `input`
-	const filterOption = (
-		input: string,
-		option?: { label: string; value: string },
-	) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+	const filterOption = (input: string, option?: { label: string; value: string }) =>
+		(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
 
 	return loading ? (
 		<Spin />
 	) : (
 		<>
 			<PageHeader
-				left={
-					<Button onClick={() => navigate(routes.users.list)}>
-						Вернуться
-					</Button>
-				}
+				left={<Button onClick={() => navigate(routes.users.list)}>Вернуться</Button>}
 				right={
 					<>
 						<Popconfirm
@@ -132,19 +126,9 @@ const UserForm = observer(() => {
 					<Select
 						value={request.accessType}
 						defaultValue={request.accessType}
-						options={accessOptions.filter((x) =>
-							hasAccess(
-								user.globalAccessType,
-								x.value as AccessType,
-							),
-						)}
+						options={accessOptions.filter((x) => hasAccess(user.globalAccessType, x.value as AccessType))}
 						style={{ width: '12em' }}
-						disabled={
-							!hasAccess(
-								userInfo.accessRule.accessType,
-								AccessType.Manager,
-							)
-						}
+						disabled={!hasAccess(userInfo.accessRule.accessType, AccessType.Manager)}
 						onChange={(e) =>
 							setRequest({
 								...request,
@@ -158,30 +142,18 @@ const UserForm = observer(() => {
 					<Radio.Group
 						buttonStyle='solid'
 						value={newType}
-						disabled={
-							!hasAccess(
-								user.globalAccessType,
-								AccessType.Manager,
-							)
-						}
+						disabled={!hasAccess(user.globalAccessType, AccessType.Manager)}
 						onChange={(e) => setNewType(e.target.value)}
 					>
-						<Radio.Button value={UserType.Static}>
-							Статичная учетная запись
-						</Radio.Button>
-						<Radio.Button value={UserType.Local}>
-							Базовая учетная запись
-						</Radio.Button>
-						<Radio.Button value={UserType.EnergoId}>
-							Учетная запись EnergoID
-						</Radio.Button>
+						<Radio.Button value={UserType.Static}>Статичная учетная запись</Radio.Button>
+						<Radio.Button value={UserType.Local}>Базовая учетная запись</Radio.Button>
+						<Radio.Button value={UserType.EnergoId}>Учетная запись EnergoID</Radio.Button>
 					</Radio.Group>
 				</FormRow>
 
 				<div
 					style={{
-						display:
-							newType === UserType.Local ? 'inherit' : 'none',
+						display: newType === UserType.Local ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Логин для входа'>
@@ -199,11 +171,7 @@ const UserForm = observer(() => {
 
 				<div
 					style={{
-						display:
-							newType === UserType.Local ||
-							newType === UserType.Static
-								? 'inherit'
-								: 'none',
+						display: newType === UserType.Local || newType === UserType.Static ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Полное имя'>
@@ -221,11 +189,7 @@ const UserForm = observer(() => {
 
 				<div
 					style={{
-						display:
-							user.hasGlobalAccess(AccessType.Admin) &&
-							newType === UserType.Static
-								? 'inherit'
-								: 'none',
+						display: user.hasGlobalAccess(AccessType.Admin) && newType === UserType.Static ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Адрес, с которого разрешен доступ'>
@@ -247,17 +211,13 @@ const UserForm = observer(() => {
 								<Button
 									type='primary'
 									onClick={() => {
-										navigator.clipboard.writeText(
-											userInfo.hash ?? '',
-										)
+										navigator.clipboard.writeText(userInfo.hash ?? '')
 									}}
 								>
 									Скопировать
 								</Button>
 								&ensp;
-								<Button onClick={generateNewHash}>
-									Создать новый
-								</Button>
+								<Button onClick={generateNewHash}>Создать новый</Button>
 							</div>
 						</FormRow>
 					) : (
@@ -267,8 +227,7 @@ const UserForm = observer(() => {
 
 				<div
 					style={{
-						display:
-							newType === UserType.Local ? 'inherit' : 'none',
+						display: newType === UserType.Local ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Пароль'>
@@ -292,8 +251,7 @@ const UserForm = observer(() => {
 
 				<div
 					style={{
-						display:
-							newType === UserType.EnergoId ? 'inherit' : 'none',
+						display: newType === UserType.EnergoId ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Учетная запись на сервере EnergoID'>
@@ -308,17 +266,10 @@ const UserForm = observer(() => {
 								value: x.energoIdGuid,
 								label: x.fullName + ' (' + x.login + ')',
 							}))}
-							disabled={
-								!hasAccess(
-									user.globalAccessType,
-									AccessType.Manager,
-								)
-							}
+							disabled={!hasAccess(user.globalAccessType, AccessType.Manager)}
 							style={{ width: '100%' }}
 							onChange={(value) => {
-								const user = keycloakUsers.energoIdUsers.filter(
-									(x) => x.energoIdGuid === value,
-								)[0]
+								const user = keycloakUsers.energoIdUsers.filter((x) => x.energoIdGuid === value)[0]
 								if (user) {
 									setRequest({
 										...request,

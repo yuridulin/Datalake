@@ -136,14 +136,14 @@ public class UsersController(
 	/// <param name="userAuthRequest">Данные нового пользователя</param>
 	/// <returns>Идентификатор пользователя</returns>
 	[HttpPost]
-	public async Task<ActionResult<Guid>> CreateAsync(
+	public async Task<ActionResult<UserInfo>> CreateAsync(
 		[BindRequired, FromBody] UserCreateRequest userAuthRequest)
 	{
 		var user = Authenticate();
 
-		var guid = await UsersRepository.CreateAsync(db, user, userAuthRequest);
+		var info = await UsersRepository.CreateAsync(db, user, userAuthRequest);
 
-		return guid;
+		return info;
 	}
 
 	/// <summary>

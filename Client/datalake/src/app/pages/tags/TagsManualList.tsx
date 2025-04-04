@@ -11,7 +11,8 @@ const TagsManualList = () => {
 
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
-			api.tagsReadAll({ sourceId: SourceType.Manual })
+			api
+				.tagsReadAll({ sourceId: SourceType.Manual })
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags
@@ -23,12 +24,7 @@ const TagsManualList = () => {
 	return (
 		<>
 			<PageHeader>Список мануальных тегов</PageHeader>
-			{!!created && (
-				<CreatedTagLinker
-					tag={created}
-					onClose={() => setCreated(null)}
-				/>
-			)}
+			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
 			<TagsTable tags={tags} hideSource={true} />
 		</>
 	)

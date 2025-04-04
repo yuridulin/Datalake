@@ -36,11 +36,7 @@ const UserPanel = observer(() => {
 						<AccessTypeEl type={user.globalAccessType} />
 					</td>
 					<td style={{ padding: '.25em 1em .25em 0', width: '1em' }}>
-						<Button
-							type='link'
-							onClick={logout}
-							title='Выход из учетной записи'
-						>
+						<Button type='link' onClick={logout} title='Выход из учетной записи'>
 							<LogoutOutlined />
 						</Button>
 					</td>

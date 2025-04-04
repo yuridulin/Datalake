@@ -120,10 +120,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name BlocksCreate
 	 * @summary Создание нового блока на основании переданной информации
 	 * @request POST:/api/Blocks
-	 * @response `200` `number` Идентификатор блока
+	 * @response `200` `BlockWithTagsInfo` Идентификатор блока
 	 */
 	blocksCreate = (data: BlockFullInfo, params: RequestParams = {}) =>
-		this.request<number, any>({
+		this.request<BlockWithTagsInfo, any>({
 			path: `/api/Blocks`,
 			method: 'POST',
 			body: data,
@@ -154,7 +154,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name BlocksCreateEmpty
 	 * @summary Создание нового отдельного блока с информацией по умолчанию
 	 * @request POST:/api/Blocks/empty
-	 * @response `200` `number` Идентификатор блока
+	 * @response `200` `BlockWithTagsInfo` Идентификатор блока
 	 */
 	blocksCreateEmpty = (
 		query?: {
@@ -166,7 +166,7 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 		},
 		params: RequestParams = {},
 	) =>
-		this.request<number, any>({
+		this.request<BlockWithTagsInfo, any>({
 			path: `/api/Blocks/empty`,
 			method: 'POST',
 			query: query,
@@ -270,10 +270,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name SourcesCreate
 	 * @summary Создание источника с информацией по умолчанию
 	 * @request POST:/api/Sources/empty
-	 * @response `200` `number` Идентификатор источника
+	 * @response `200` `SourceInfo` Идентификатор источника
 	 */
 	sourcesCreate = (params: RequestParams = {}) =>
-		this.request<number, any>({
+		this.request<SourceInfo, any>({
 			path: `/api/Sources/empty`,
 			method: 'POST',
 			format: 'json',
@@ -286,10 +286,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name SourcesCreate2
 	 * @summary Создание источника на основе переданных данных
 	 * @request POST:/api/Sources
-	 * @response `200` `number` Идентификатор источника
+	 * @response `200` `SourceInfo` Идентификатор источника
 	 */
 	sourcesCreate2 = (data: SourceInfo, params: RequestParams = {}) =>
-		this.request<number, any>({
+		this.request<SourceInfo, any>({
 			path: `/api/Sources`,
 			method: 'POST',
 			body: data,
@@ -721,10 +721,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name UserGroupsCreate
 	 * @summary Создание новой группы пользователей
 	 * @request POST:/api/UserGroups
-	 * @response `200` `string` Идентификатор новой группы пользователей
+	 * @response `200` `UserGroupInfo` Идентификатор новой группы пользователей
 	 */
 	userGroupsCreate = (data: UserGroupCreateRequest, params: RequestParams = {}) =>
-		this.request<string, any>({
+		this.request<UserGroupInfo, any>({
 			path: `/api/UserGroups`,
 			method: 'POST',
 			body: data,
@@ -936,10 +936,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name UsersCreate
 	 * @summary Создание пользователя на основании переданных данных
 	 * @request POST:/api/Users
-	 * @response `200` `string` Идентификатор пользователя
+	 * @response `200` `UserInfo` Идентификатор пользователя
 	 */
 	usersCreate = (data: UserCreateRequest, params: RequestParams = {}) =>
-		this.request<string, any>({
+		this.request<UserInfo, any>({
 			path: `/api/Users`,
 			method: 'POST',
 			body: data,

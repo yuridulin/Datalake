@@ -18,11 +18,7 @@ interface HelpTooltipProps {
 	children: React.ReactNode
 }
 
-const HelpTooltip: React.FC<HelpTooltipProps> = ({
-	delay = 1,
-	iconStyle,
-	children,
-}) => {
+const HelpTooltip: React.FC<HelpTooltipProps> = ({ delay = 1, iconStyle, children }) => {
 	// Состояние: видимость поповера и флаг, открыт ли он по клику
 	const [visible, setVisible] = useState(false)
 	const [isClickTriggered, setIsClickTriggered] = useState(false)

@@ -1,9 +1,5 @@
 import api from '@/api/swagger-api'
-import {
-	AccessType,
-	SourceInfo,
-	SourceState,
-} from '@/api/swagger/data-contracts'
+import { AccessType, SourceInfo, SourceState } from '@/api/swagger/data-contracts'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
@@ -21,7 +17,8 @@ const SourcesList = observer(() => {
 	const [states, setStates] = useState({} as { [key: number]: SourceState })
 
 	const load = () => {
-		api.sourcesReadAll({ withCustom: false })
+		api
+			.sourcesReadAll({ withCustom: false })
 			.then((res) => {
 				setList(res.data)
 			})
@@ -45,11 +42,7 @@ const SourcesList = observer(() => {
 			title: 'Название',
 			width: '30em',
 			render: (_, record) => (
-				<NavLink
-					className='table-row'
-					to={routes.sources.toEditSource(record.id)}
-					key={record.id}
-				>
+				<NavLink className='table-row' to={routes.sources.toEditSource(record.id)} key={record.id}>
 					<Button size='small'>{record.name}</Button>
 				</NavLink>
 			),
@@ -66,10 +59,7 @@ const SourcesList = observer(() => {
 							<Tag
 								icon={<CheckOutlined />}
 								color='success'
-								title={
-									'Последнее подключение: ' +
-									timeAgo.format(new Date(state.lastTry))
-								}
+								title={'Последнее подключение: ' + timeAgo.format(new Date(state.lastTry))}
 							>
 								есть
 							</Tag>
@@ -79,10 +69,7 @@ const SourcesList = observer(() => {
 								color='error'
 								title={
 									(state.lastConnection
-										? 'Последний раз связь была ' +
-											timeAgo.format(
-												new Date(state.lastConnection),
-											)
+										? 'Последний раз связь была ' + timeAgo.format(new Date(state.lastConnection))
 										: 'Успешных подключений не было с момента запуска') +
 									'. Последняя попытка: ' +
 									timeAgo.format(new Date(state.lastTry))
@@ -113,23 +100,11 @@ const SourcesList = observer(() => {
 	return (
 		<>
 			<PageHeader
-				right={
-					user.hasGlobalAccess(AccessType.Admin) && (
-						<Button onClick={createSource}>
-							Добавить источник
-						</Button>
-					)
-				}
+				right={user.hasGlobalAccess(AccessType.Admin) && <Button onClick={createSource}>Добавить источник</Button>}
 			>
 				Зарегистрированные источники данных
 			</PageHeader>
-			<Table
-				dataSource={list}
-				columns={columns}
-				size='small'
-				pagination={false}
-				rowKey='id'
-			/>
+			<Table dataSource={list} columns={columns} size='small' pagination={false} rowKey='id' />
 		</>
 	)
 })

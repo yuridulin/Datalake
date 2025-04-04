@@ -114,47 +114,43 @@ const AccessSettings = () => {
 				auth = res.data
 			}),
 		]).then(() => {
-			const users: UserAuthWithNames[] = Object.values(auth).map(
-				(info) => ({
-					guid: info.guid,
-					fullName: info.fullName,
-					accessRule: info.accessRule,
-					globalAccess: info.globalAccessType,
-					groups: Object.entries(info.groups).map(([key, value]) => ({
-						guid: key,
-						name: groups[key],
-						accessRule: {
-							ruleId: value.ruleId,
-							accessType: value.accessType,
-						},
-					})),
-					sources: Object.entries(info.sources).map(
-						([key, value]) => ({
-							id: key,
-							name: sources[Number(key)],
-							accessRule: {
-								ruleId: value.ruleId,
-								accessType: value.accessType,
-							},
-						}),
-					),
-					blocks: Object.entries(info.blocks).map(([key, value]) => ({
-						id: key,
-						name: blocks[Number(key)],
-						accessRule: {
-							ruleId: value.ruleId,
-							accessType: value.accessType,
-						},
-					})),
-					tags: Object.entries(info.tags).map(([key, value]) => ({
-						...tags[key],
-						accessRule: {
-							ruleId: value.ruleId,
-							accessType: value.accessType,
-						},
-					})),
-				}),
-			)
+			const users: UserAuthWithNames[] = Object.values(auth).map((info) => ({
+				guid: info.guid,
+				fullName: info.fullName,
+				accessRule: info.accessRule,
+				globalAccess: info.globalAccessType,
+				groups: Object.entries(info.groups).map(([key, value]) => ({
+					guid: key,
+					name: groups[key],
+					accessRule: {
+						ruleId: value.ruleId,
+						accessType: value.accessType,
+					},
+				})),
+				sources: Object.entries(info.sources).map(([key, value]) => ({
+					id: key,
+					name: sources[Number(key)],
+					accessRule: {
+						ruleId: value.ruleId,
+						accessType: value.accessType,
+					},
+				})),
+				blocks: Object.entries(info.blocks).map(([key, value]) => ({
+					id: key,
+					name: blocks[Number(key)],
+					accessRule: {
+						ruleId: value.ruleId,
+						accessType: value.accessType,
+					},
+				})),
+				tags: Object.entries(info.tags).map(([key, value]) => ({
+					...tags[key],
+					accessRule: {
+						ruleId: value.ruleId,
+						accessType: value.accessType,
+					},
+				})),
+			}))
 
 			let id = 0
 			const treeData: DataNode[] = users.map((user) => ({
@@ -187,10 +183,7 @@ const AccessSettings = () => {
 										}}
 										check={false}
 									/>{' '}
-									:{' '}
-									<AccessTypeEl
-										type={group.accessRule.accessType}
-									/>
+									: <AccessTypeEl type={group.accessRule.accessType} />
 								</>
 							),
 							key: id++,
@@ -209,10 +202,7 @@ const AccessSettings = () => {
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}
-									:{' '}
-									<AccessTypeEl
-										type={source.accessRule.accessType}
-									/>
+									: <AccessTypeEl type={source.accessRule.accessType} />
 								</>
 							),
 							key: id++,
@@ -232,10 +222,7 @@ const AccessSettings = () => {
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}
-									:{' '}
-									<AccessTypeEl
-										type={block.accessRule.accessType}
-									/>
+									: <AccessTypeEl type={block.accessRule.accessType} />
 								</>
 							),
 							key: id++,
@@ -258,10 +245,7 @@ const AccessSettings = () => {
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}
-									:{' '}
-									<AccessTypeEl
-										type={tag.accessRule.accessType}
-									/>
+									: <AccessTypeEl type={tag.accessRule.accessType} />
 								</>
 							),
 							key: id++,
@@ -279,9 +263,7 @@ const AccessSettings = () => {
 	return (
 		<>
 			<Space onClick={restart}>
-				<Button disabled={wait}>
-					{wait && <Spin />} Перерасчет прав доступа
-				</Button>
+				<Button disabled={wait}>{wait && <Spin />} Перерасчет прав доступа</Button>
 			</Space>
 			<Divider>
 				<small>Текущие права доступа</small>

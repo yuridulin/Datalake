@@ -26,7 +26,7 @@ public static class UsersRepository
 	/// <param name="user">Идентификатор создающего пользователя</param>
 	/// <param name="userInfo">Параметры новой учетной записи</param>
 	/// <returns>Идентификатор созданного пользователя</returns>
-	public static async Task<Guid> CreateAsync(
+	public static async Task<UserInfo> CreateAsync(
 		DatalakeContext db, UserAuthInfo user, UserCreateRequest userInfo)
 	{
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
@@ -164,7 +164,7 @@ public static class UsersRepository
 
 	#region Реализация
 
-	internal static async Task<Guid> CreateAsync(
+	internal static async Task<UserInfo> CreateAsync(
 		DatalakeContext db, Guid userGuid, UserCreateRequest request)
 	{
 		string? hash = null;
@@ -231,7 +231,10 @@ public static class UsersRepository
 
 		AccessRepository.Update();
 
-		return createdUser.Guid;
+		var info = await GetInfo(db).Where(x => x.Guid == createdUser.Guid).FirstOrDefaultAsync()
+			?? throw new NotFoundException("пользователь: " + createdUser.Guid);
+
+		return info;
 	}
 
 	internal static async Task<bool> UpdateAsync(
