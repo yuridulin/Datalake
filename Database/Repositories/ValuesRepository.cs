@@ -204,8 +204,11 @@ public static class ValuesRepository
 	/// </summary>
 	/// <param name="identifiers">Идентификаторы тегов</param>
 	/// <returns>Список значений</returns>
-	public static List<TagHistory> GetLiveValues(int[] identifiers)
+	public static List<TagHistory> GetLiveValues(int[]? identifiers = null)
 	{
+		if (identifiers == null)
+			return LiveValues.Values.ToList();
+
 		return [.. identifiers.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateFormats.GetCurrentDateTime()))];
 	}
 
@@ -214,12 +217,12 @@ public static class ValuesRepository
 		var tags = db.Tags.Select(x => x.Id).ToArray();
 		var date = DateFormats.GetCurrentDateTime();
 
-		var table = await TablesRepository.GetHistoryTableAsync(db, DateFormats.GetCurrentDateTime().Date);
+		var table = await TablesRepository.GetHistoryTableAsync(db, date.Date);
 		var count = await table.CountAsync();
 
 		if (count == 0)
 		{
-			var lastDate = TablesRepository.GetPreviousTableDate(DateFormats.GetCurrentDateTime().Date);
+			var lastDate = TablesRepository.GetPreviousTableDate(date.Date);
 			if (lastDate != null)
 				table = await TablesRepository.GetHistoryTableAsync(db, lastDate.Value);
 			else
@@ -287,9 +290,11 @@ public static class ValuesRepository
 				{
 					LiveValues.Add(value.TagId, value);
 				}
-				else if (exist.Date <= value.Date)
+				else if (exist.Equals(value))
 				{
-					LiveValues[exist.TagId] = value;
+					LiveValues[exist.TagId].Number = value.Number;
+					LiveValues[exist.TagId].Text = value.Text;
+					LiveValues[exist.TagId].Quality = value.Quality;
 				}
 			}
 		}
