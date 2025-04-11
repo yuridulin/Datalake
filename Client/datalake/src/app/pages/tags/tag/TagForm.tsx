@@ -6,7 +6,7 @@ import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
 import getTagFrequencyName from '@/functions/getTagFrequencyName'
 import { TagValue } from '@/types/tagValue'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
-import { AutoComplete, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
+import { Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -457,6 +457,7 @@ const TagForm = () => {
 			>
 				<FormRow title='Используемый источник'>
 					<Select
+						showSearch
 						options={[
 							{
 								value: SourceType.NotSet,
@@ -472,7 +473,7 @@ const TagForm = () => {
 							})
 						}
 						style={{ width: '100%' }}
-					></Select>
+					/>
 				</FormRow>
 				<div
 					style={{
@@ -480,7 +481,8 @@ const TagForm = () => {
 					}}
 				>
 					<FormRow title='Путь к данным в источнике'>
-						<AutoComplete
+						<Select
+							showSearch
 							value={request.sourceItem}
 							options={items}
 							onChange={(value) =>
