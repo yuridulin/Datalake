@@ -187,7 +187,24 @@ public static class ValuesRepository
 	/// </summary>
 	internal static Dictionary<int, TagHistory> LiveValues { get; set; } = [];
 
-	internal static List<TagHistory> GetLiveValues(int[] identifiers)
+	/// <summary>
+	/// Чтение списка текущих значений тегов
+	/// </summary>
+	/// <param name="sourceId">Идентификатор источника данных</param>
+	/// <returns>Список значений</returns>
+	public static List<TagHistory> GetLiveValues(int sourceId)
+	{
+		var identifiers = TagsRepository.CachedTags.Values.Where(x => x.SourceId == sourceId).Select(x => x.Id).ToArray();
+
+		return GetLiveValues(identifiers);
+	}
+
+	/// <summary>
+	/// Чтение списка текущих значений тегов
+	/// </summary>
+	/// <param name="identifiers">Идентификаторы тегов</param>
+	/// <returns>Список значений</returns>
+	public static List<TagHistory> GetLiveValues(int[] identifiers)
 	{
 		return [.. identifiers.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateFormats.GetCurrentDateTime()))];
 	}

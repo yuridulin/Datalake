@@ -531,6 +531,7 @@ public static class TagsRepository
 				Guid = tag.GlobalGuid,
 				Name = tag.Name,
 				Type = tag.Type,
+				SourceId = tag.SourceId,
 				SourceType = source.Type,
 				Frequency = tag.Frequency,
 				ScalingCoefficient = tag.IsScaling

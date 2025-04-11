@@ -279,6 +279,7 @@ public static class SystemRepository
 				Guid = t.GlobalGuid,
 				Name = t.Name,
 				Type = t.Type,
+				SourceId = t.SourceId,
 				SourceType = s.Type,
 				Frequency = t.Frequency,
 				ScalingCoefficient = t.IsScaling
