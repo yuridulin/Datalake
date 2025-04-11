@@ -290,7 +290,7 @@ public static class ValuesRepository
 				{
 					LiveValues.Add(value.TagId, value);
 				}
-				else if (exist.Equals(value))
+				else if (!exist.Equals(value))
 				{
 					LiveValues[exist.TagId].Number = value.Number;
 					LiveValues[exist.TagId].Text = value.Text;
