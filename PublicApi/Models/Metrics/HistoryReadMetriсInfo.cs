@@ -17,6 +17,7 @@ public class HistoryReadMetricInfo
 		TagsId = metric.TagsId;
 		Sql = metric.Sql;
 		RecordsCount = metric.RecordsCount;
+		RequestKeys = metric.RequestKeys;
 
 		Milliseconds = metric.Elapsed.TotalMilliseconds;
 		Elapsed = DateFormats.FormatTimeSpan(metric.Elapsed);
@@ -77,4 +78,10 @@ public class HistoryReadMetricInfo
 	/// </summary>
 	[Required]
 	public int RecordsCount { get; set; }
+
+	/// <summary>
+	/// Список запросов к API, которые являются причиной запроса к БД
+	/// </summary>
+	[Required]
+	public string[] RequestKeys { get; set; }
 }

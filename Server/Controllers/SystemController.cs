@@ -9,8 +9,8 @@ using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Settings;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
-using Datalake.Server.Models.System;
 using Datalake.Server.Services.StateManager;
+using Datalake.Server.Services.StateManager.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -24,6 +24,7 @@ namespace Datalake.Server.Controllers;
 public class SystemController(
 	DatalakeContext db,
 	SourcesStateService sourcesStateService,
+	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
 	ISettingsUpdater settingsService) : ApiControllerBase
 {
@@ -91,7 +92,7 @@ public class SystemController(
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("sources")]
-	public ActionResult<Dictionary<int, SourceState>> GetSources()
+	public ActionResult<Dictionary<int, SourceState>> GetSourcesStates()
 	{
 		var user = Authenticate();
 
@@ -99,6 +100,22 @@ public class SystemController(
 
 		return sourcesStateService.State
 			.Where(x => AccessRepository.HasAccessToSource(user, AccessType.Viewer, x.Key))
+			.ToDictionary();
+	}
+
+	/// <summary>
+	/// Информация о подключении к источникам данных
+	/// </summary>
+	/// <returns></returns>
+	[HttpGet("tags")]
+	public ActionResult<Dictionary<Guid, Dictionary<string, DateTime>>> GetTagsStates()
+	{
+		var user = Authenticate();
+
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+
+		return tagsStateService.GetTagsStates()
+			.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Viewer, x.Key))
 			.ToDictionary();
 	}
 

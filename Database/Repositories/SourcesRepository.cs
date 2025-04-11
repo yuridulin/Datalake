@@ -382,10 +382,12 @@ public static class SourcesRepository
 						Formula = tag.Formula,
 						FormulaInputs = (
 							from rel in db.TagInputs
-							where rel.TagId == tag.Id && rel.InputTagId.HasValue
+							from input in db.Tags.LeftJoin(x => x.Id == rel.InputTagId)
+							where rel.TagId == tag.Id && input != null
 							select new SourceTagInfo.TagInputMinimalInfo
 							{
-								InputTagId = rel.InputTagId!.Value,
+								InputTagId = input.Id,
+								InputTagGuid = input.GlobalGuid,
 								VariableName = rel.VariableName,
 							}
 						).ToArray(),
@@ -395,7 +397,12 @@ public static class SourcesRepository
 						SourceType = source.Type,
 						Aggregation = tag.Aggregation,
 						AggregationPeriod = tag.AggregationPeriod,
-						SourceTag = sourceTag == null ? null : new SourceTagInfo.TagInputMinimalInfo { InputTagId = sourceTag.Id, VariableName = sourceTag.Name },
+						SourceTag = sourceTag == null ? null : new SourceTagInfo.TagInputMinimalInfo
+						{
+							InputTagId = sourceTag.Id,
+							InputTagGuid = sourceTag.GlobalGuid,
+							VariableName = sourceTag.Name
+						},
 					}
 				).ToArray(),
 			};
@@ -425,10 +432,12 @@ public static class SourcesRepository
 				Formula = tag.Formula,
 				FormulaInputs = (
 					from rel in db.TagInputs
-					where rel.TagId == tag.Id && rel.InputTagId.HasValue
+					from input in db.Tags.LeftJoin(x => x.Id == rel.InputTagId)
+					where rel.TagId == tag.Id && input != null
 					select new SourceTagInfo.TagInputMinimalInfo
 					{
-						InputTagId = rel.InputTagId!.Value,
+						InputTagId = input.Id,
+						InputTagGuid = input.GlobalGuid,
 						VariableName = rel.VariableName,
 					}
 				).ToArray(),

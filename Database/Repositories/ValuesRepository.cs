@@ -545,7 +545,10 @@ public static class ValuesRepository
 					old = group.Settings.Old ?? young.Date;
 				}
 
-				var databaseValues = await ReadHistoryValuesAsync(db, group.TagsId, old, young);
+				var (databaseValues, metric) = await ReadHistoryValuesAsync(db, group.TagsId, old, young);
+
+				metric.RequestKeys = group.Requests.Select(x => x.RequestKey).ToArray();
+				MetricsService.AddMetric(metric);
 
 				foreach (var request in group.Requests)
 				{
@@ -658,7 +661,7 @@ public static class ValuesRepository
 		return responses;
 	}
 
-	internal static async Task<List<TagHistory>> ReadHistoryValuesAsync(
+	internal static async Task<(List<TagHistory>, HistoryReadMetric)> ReadHistoryValuesAsync(
 		DatalakeContext db,
 		int[] identifiers,
 		DateTime old,
@@ -783,8 +786,6 @@ public static class ValuesRepository
 			Sql = sql,
 		};
 
-		MetricsService.AddMetric(metric);
-
 		var lost = identifiers
 			.Except(values.Where(x => x.Date == old).Select(x => x.TagId))
 			.Select(id => LostTag(id, old))
@@ -795,7 +796,7 @@ public static class ValuesRepository
 			values.AddRange(lost);
 		}
 
-		return values;
+		return (values, metric);
 	}
 
 	static List<TagHistory> StretchByResolution(

@@ -57,6 +57,11 @@ public class SourceTagInfo : TagSimpleInfo, IProtectedEntity
 		public required int InputTagId { get; set; }
 
 		/// <summary>
+		/// Идентификатор входного тега
+		/// </summary>
+		public required Guid InputTagGuid { get; set; }
+
+		/// <summary>
 		/// Имя переменной
 		/// </summary>
 		public required string VariableName { get; set; }

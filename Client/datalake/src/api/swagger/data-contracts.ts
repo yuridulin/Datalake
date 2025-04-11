@@ -505,6 +505,11 @@ export interface TagInputMinimalInfo {
 	 * @format int32
 	 */
 	inputTagId?: number
+	/**
+	 * Идентификатор входного тега
+	 * @format guid
+	 */
+	inputTagGuid?: string
 	/** Имя переменной */
 	variableName?: string
 }
@@ -731,6 +736,8 @@ export interface HistoryReadMetricInfo {
 	 * @format int32
 	 */
 	recordsCount: number
+	/** Список запросов к API, которые являются причиной запроса к БД */
+	requestKeys: string[]
 }
 
 /** Информация о теге */

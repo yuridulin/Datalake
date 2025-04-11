@@ -21,6 +21,7 @@ internal static class ServicesSetup
 			=> provider.GetRequiredService<SettingsHandlerService>());
 		builder.Services.AddSingleton<SourcesStateService>();
 		builder.Services.AddSingleton<UsersStateService>();
+		builder.Services.AddSingleton<TagsStateService>();
 
 		// службы
 		builder.Services.AddHostedService<CollectorProcessor>();

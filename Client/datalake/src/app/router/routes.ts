@@ -5,7 +5,8 @@ const routes = {
 		settings: '/settings',
 		metrics: {
 			root: '/metrics',
-			read: '/metrics/read',
+			database: '/metrics/database',
+			tags: '/metrics/tags',
 		},
 	},
 	users: {
