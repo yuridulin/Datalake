@@ -31,9 +31,9 @@ public static class MetricsService
 	/// Чтение текущих накопленных метрик по запросам чтения
 	/// </summary>
 	/// <returns>Список метрик</returns>
-	public static HistoryReadMetric[] ReadMetrics()
+	public static HistoryReadMetricInfo[] ReadMetrics()
 	{
-		return _metricsQueue.ToArray();
+		return _metricsQueue.Select(x => new HistoryReadMetricInfo(x)).ToArray();
 	}
 
 	private static async Task ProcessQueueAsync()

@@ -181,7 +181,7 @@ public class SystemController(
 	/// </summary>
 	/// <returns>Список метрик</returns>
 	[HttpGet("metrics/read")]
-	public ActionResult<HistoryReadMetric[]> GetReadMetrics()
+	public ActionResult<HistoryReadMetricInfo[]> GetReadMetrics()
 	{
 		var user = Authenticate();
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);

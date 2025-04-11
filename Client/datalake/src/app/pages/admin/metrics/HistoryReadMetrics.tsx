@@ -1,20 +1,20 @@
 import api from '@/api/swagger-api'
-import { HistoryReadMetric } from '@/api/swagger/data-contracts'
+import { HistoryReadMetricInfo } from '@/api/swagger/data-contracts'
 import { Button, notification, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 
-const columns: ColumnsType<HistoryReadMetric> = [
+const columns: ColumnsType<HistoryReadMetricInfo> = [
 	{
 		title: 'Дата выполнения',
 		dataIndex: 'date',
-		render: (date: string) => dayjs(date).format('HH:mm:ss'),
+		sorter: (a, b) => dayjs(a.date).diff(dayjs(b.date)),
 	},
 	{
-		title: 'Теги',
+		title: 'Кол-во тегов',
 		dataIndex: 'tagsId',
-		render: (tags: number[], row: HistoryReadMetric) => (
+		render: (tags, row) => (
 			<Button
 				size='small'
 				title='Нажмите, чтобы скопировать SQL текст'
@@ -26,16 +26,12 @@ const columns: ColumnsType<HistoryReadMetric> = [
 	},
 	{
 		title: 'Диапазон',
-		dataIndex: 'old',
-		render: (old: string, row: HistoryReadMetric) => (
-			<div>
-				{old} :: {row.young}
-			</div>
-		),
+		dataIndex: 'timeSettings',
 	},
 	{
 		title: 'Время выполнения',
 		dataIndex: 'elapsed',
+		sorter: (a, b) => a.milliseconds - b.milliseconds,
 	},
 	{
 		title: 'Количество записей',
@@ -44,7 +40,7 @@ const columns: ColumnsType<HistoryReadMetric> = [
 ]
 
 const HistoryReadMetrics = () => {
-	const [metrics, setMetrics] = useState([] as HistoryReadMetric[])
+	const [metrics, setMetrics] = useState([] as HistoryReadMetricInfo[])
 	const [pagination, setPagination] = useState({ current: 1, pageSize: 100 })
 
 	const initialLoad = () => {
@@ -63,6 +59,7 @@ const HistoryReadMetrics = () => {
 			size='small'
 			dataSource={metrics}
 			columns={columns}
+			showSorterTooltip={false}
 			rowKey='date'
 			pagination={{
 				...pagination,

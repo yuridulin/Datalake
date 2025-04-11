@@ -697,34 +697,30 @@ export type UserAuthInfo = UserSimpleInfo & {
 	energoId?: string | null
 }
 
-/** Результат выполнения запроса на чтение тегов */
-export interface HistoryReadMetric {
+/** Информация о результате выполнения запроса на чтение тегов */
+export interface HistoryReadMetricInfo {
 	/**
 	 * Время записи значения
-	 * @format date-time
 	 * @minLength 1
 	 */
 	date: string
 	/** Идентификаторы тегов */
 	tagsId: number[]
 	/**
-	 * Дата начала диапазона
-	 * @format date-time
+	 * Настройки времени
 	 * @minLength 1
 	 */
-	old: string
-	/**
-	 * Дата конца диапазона
-	 * @format date-time
-	 * @minLength 1
-	 */
-	young: string
+	timeSettings: string
 	/**
 	 * Время выполнения чтения
-	 * @format duration
 	 * @minLength 1
 	 */
 	elapsed: string
+	/**
+	 * Прошедшее количество миллисекунд
+	 * @format double
+	 */
+	milliseconds: number
 	/**
 	 * Итоговый SQL код запроса
 	 * @minLength 1
