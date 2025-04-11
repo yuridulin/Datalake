@@ -1,10 +1,12 @@
+import AggregatedSourceIcon from '@/app/components/icons/AggregatedSourceIcon'
+import CalculatedSourceIcon from '@/app/components/icons/CalculatedSourceIcon'
+import ManualSourceIcon from '@/app/components/icons/ManualSourceIcon'
 import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
 import UserIcon from '@/app/components/icons/UserIcon'
 import { blue } from '@ant-design/colors'
 import {
-	CalculatorOutlined,
 	EditOutlined,
-	FormOutlined,
+	MenuUnfoldOutlined,
 	PlaySquareOutlined,
 	SettingOutlined,
 	UnorderedListOutlined,
@@ -63,7 +65,7 @@ const items = [
 				key: routes.tags.manual,
 				label: (
 					<NavLink to={routes.tags.manual}>
-						<FormOutlined style={{ color: blue[4] }} />
+						<ManualSourceIcon />
 						&emsp;Мануальные теги
 					</NavLink>
 				),
@@ -73,8 +75,18 @@ const items = [
 				key: routes.tags.calc,
 				label: (
 					<NavLink to={routes.tags.calc}>
-						<CalculatorOutlined style={{ color: blue[4] }} />
+						<CalculatedSourceIcon />
 						&emsp;Вычисляемые теги
+					</NavLink>
+				),
+				minimalAccess: AccessType.Viewer,
+			},
+			{
+				key: routes.tags.aggregated,
+				label: (
+					<NavLink to={routes.tags.aggregated}>
+						<AggregatedSourceIcon />
+						&emsp;Агрегатные теги
 					</NavLink>
 				),
 				minimalAccess: AccessType.Viewer,
@@ -165,11 +177,31 @@ const items = [
 				minimalAccess: AccessType.NotSet,
 			},
 			{
-				key: routes.settings,
+				key: routes.admin.settings,
 				label: (
-					<NavLink to={routes.settings}>
+					<NavLink to={routes.admin.settings}>
 						<SettingOutlined style={{ color: blue[5] }} />
 						&emsp;Настройки
+					</NavLink>
+				),
+				minimalAccess: AccessType.Admin,
+			},
+			{
+				key: routes.admin.metrics.database,
+				label: (
+					<NavLink to={routes.admin.metrics.database}>
+						<MenuUnfoldOutlined style={{ color: blue[5] }} />
+						&emsp;Метрики запросов БД
+					</NavLink>
+				),
+				minimalAccess: AccessType.Admin,
+			},
+			{
+				key: routes.admin.metrics.tags,
+				label: (
+					<NavLink to={routes.admin.metrics.tags}>
+						<MenuUnfoldOutlined style={{ color: blue[5] }} />
+						&emsp;Метрики доступа к тегам
 					</NavLink>
 				),
 				minimalAccess: AccessType.Admin,
@@ -187,7 +219,6 @@ const AppMenu = observer(() => {
 	const currentPath = location.pathname
 
 	useEffect(() => {
-		// Найти все ссылки с классом active
 		const links = document.querySelectorAll('#app-menu a')
 		const selectedKeys = [] as string[]
 		links.forEach((link) => {
@@ -195,12 +226,7 @@ const AppMenu = observer(() => {
 			if (menuItem) {
 				if (link.classList.contains('active')) {
 					menuItem.classList.add('ant-menu-item-selected')
-					selectedKeys.push(
-						(menuItem.getAttribute('data-menu-id') || '').replace(
-							'app-menu-',
-							'',
-						),
-					)
+					selectedKeys.push((menuItem.getAttribute('data-menu-id') || '').replace('app-menu-', ''))
 				} else menuItem.classList.remove('ant-menu-item-selected')
 			}
 		})

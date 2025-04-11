@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -283,6 +284,50 @@ export interface AccessRightsIdInfo {
 }
 
 /** Информация о блоке */
+export type BlockWithTagsInfo = BlockSimpleInfo & {
+	/**
+	 * Идентификатор родительского блока
+	 * @format int32
+	 */
+	parentId?: number | null
+	/** Текстовое описание */
+	description?: string | null
+	/** Уровень доступа к блоку */
+	accessRule: AccessRuleInfo
+	/** Список прикреплённых тегов */
+	tags: BlockNestedTagInfo[]
+}
+
+/** Информация о закреплённом теге */
+export type BlockNestedTagInfo = TagSimpleInfo & {
+	/** Тип поля блока для этого тега */
+	relation: BlockTagRelation
+	/**
+	 * Свое имя тега в общем списке
+	 * @minLength 1
+	 */
+	localName: string
+	/**
+	 * Идентификатор источника данных
+	 * @format int32
+	 */
+	sourceId: number
+}
+
+/**
+ * Тип связи тега и блока
+ *
+ * 0 = Static
+ * 1 = Input
+ * 2 = Output
+ */
+export enum BlockTagRelation {
+	Static = 0,
+	Input = 1,
+	Output = 2,
+}
+
+/** Информация о блоке */
 export type BlockFullInfo = BlockWithTagsInfo & {
 	/** Информация о родительском блоке */
 	parent?: BlockParentInfo | null
@@ -341,50 +386,6 @@ export type BlockTreeInfo = BlockWithTagsInfo & {
 	 * @minLength 1
 	 */
 	fullName: string
-}
-
-/** Информация о блоке */
-export type BlockWithTagsInfo = BlockSimpleInfo & {
-	/**
-	 * Идентификатор родительского блока
-	 * @format int32
-	 */
-	parentId?: number | null
-	/** Текстовое описание */
-	description?: string | null
-	/** Уровень доступа к блоку */
-	accessRule: AccessRuleInfo
-	/** Список прикреплённых тегов */
-	tags: BlockNestedTagInfo[]
-}
-
-/** Информация о закреплённом теге */
-export type BlockNestedTagInfo = TagSimpleInfo & {
-	/** Тип поля блока для этого тега */
-	relation: BlockTagRelation
-	/**
-	 * Свое имя тега в общем списке
-	 * @minLength 1
-	 */
-	localName: string
-	/**
-	 * Идентификатор источника данных
-	 * @format int32
-	 */
-	sourceId: number
-}
-
-/**
- * Тип связи тега и блока
- *
- * 0 = Static
- * 1 = Input
- * 2 = Output
- */
-export enum BlockTagRelation {
-	Static = 0,
-	Input = 1,
-	Output = 2,
 }
 
 /** Новая информация о блоке */
@@ -504,6 +505,11 @@ export interface TagInputMinimalInfo {
 	 * @format int32
 	 */
 	inputTagId?: number
+	/**
+	 * Идентификатор входного тега
+	 * @format guid
+	 */
+	inputTagGuid?: string
 	/** Имя переменной */
 	variableName?: string
 }
@@ -553,15 +559,20 @@ export interface LogInfo {
 	 * @minLength 1
 	 */
 	text: string
-	/**
-	 * Ссылка на конкретный объект в случае, если это подразумевает категория
-	 *
-	 * Теги, пользователи, группы пользователей: Guid
-	 * Источники, блоки: int
-	 */
-	refId?: string | null
 	/** Информация об авторе сообщения */
 	author?: UserSimpleInfo | null
+	/** Информация о затронутом тэге */
+	affectedTag?: TagSimpleInfo | null
+	/** Информация о затронутом источнике */
+	affectedSource?: SourceSimpleInfo | null
+	/** Информация о затронутом блоке */
+	affectedBlock?: BlockSimpleInfo | null
+	/** Информация о затронутой учетной записи */
+	affectedUser?: UserSimpleInfo | null
+	/** Информация о затронутом группе учетных записей */
+	affectedUserGroup?: UserGroupSimpleInfo | null
+	/** Пояснения и дополнительная информация */
+	details?: string | null
 }
 
 /**
@@ -630,6 +641,10 @@ export interface SourceState {
 	lastConnection?: string | null
 	/** Было ли соединение при последнем подключении */
 	isConnected: boolean
+	/** Была ли попытка установить соединение */
+	isTryConnected: boolean
+	/** Список количества секунд с момента записи каждого тега */
+	valuesAfterWriteSeconds: number[]
 }
 
 /** Информация о настройках приложения, задаваемых через UI */
@@ -687,6 +702,44 @@ export type UserAuthInfo = UserSimpleInfo & {
 	energoId?: string | null
 }
 
+/** Информация о результате выполнения запроса на чтение тегов */
+export interface HistoryReadMetricInfo {
+	/**
+	 * Время записи значения
+	 * @minLength 1
+	 */
+	date: string
+	/** Идентификаторы тегов */
+	tagsId: number[]
+	/**
+	 * Настройки времени
+	 * @minLength 1
+	 */
+	timeSettings: string
+	/**
+	 * Время выполнения чтения
+	 * @minLength 1
+	 */
+	elapsed: string
+	/**
+	 * Прошедшее количество миллисекунд
+	 * @format double
+	 */
+	milliseconds: number
+	/**
+	 * Итоговый SQL код запроса
+	 * @minLength 1
+	 */
+	sql: string
+	/**
+	 * Количество прочитанных из БД записей
+	 * @format int32
+	 */
+	recordsCount: number
+	/** Список запросов к API, которые являются причиной запроса к БД */
+	requestKeys: string[]
+}
+
 /** Информация о теге */
 export type TagInfo = TagSimpleInfo & {
 	/** Произвольное описание тега */
@@ -730,11 +783,8 @@ export type TagInfo = TagSimpleInfo & {
 	aggregation?: TagAggregation | null
 	/** Временное окно для расчета агрегированного значения */
 	aggregationPeriod?: AggregationPeriod | null
-	/**
-	 * Идентификатор тега, который будет источником данных для расчета агрегированного значения
-	 * @format int32
-	 */
-	sourceTagId?: number | null
+	/** Идентификатор тега, который будет источником данных для расчета агрегированного значения */
+	sourceTag?: TagSimpleInfo | null
 	/** Правило доступа */
 	accessRule?: AccessRuleInfo
 }
@@ -849,6 +899,17 @@ export interface TagUpdateInputRequest {
 	tagId: number
 }
 
+/** Информация о группе пользователей */
+export type UserGroupInfo = UserGroupSimpleInfo & {
+	/** Произвольное описание группы */
+	description?: string | null
+	/**
+	 * Идентификатор группы, в которой располагается эта группа
+	 * @format guid
+	 */
+	parentGroupGuid?: string | null
+}
+
 /** Данные запроса для создания группы пользователей */
 export interface UserGroupCreateRequest {
 	/**
@@ -863,17 +924,6 @@ export interface UserGroupCreateRequest {
 	parentGuid?: string | null
 	/** Описание */
 	description?: string | null
-}
-
-/** Информация о группе пользователей */
-export type UserGroupInfo = UserGroupSimpleInfo & {
-	/** Произвольное описание группы */
-	description?: string | null
-	/**
-	 * Идентификатор группы, в которой располагается эта группа
-	 * @format guid
-	 */
-	parentGroupGuid?: string | null
 }
 
 /** Информация о группе пользователей в иерархическом представлении */
@@ -965,6 +1015,36 @@ export interface UserLoginPass {
 	password: string
 }
 
+/** Информация о пользователе */
+export type UserInfo = UserSimpleInfo & {
+	/** Имя для входа */
+	login?: string | null
+	/** Глобальный уровень доступа */
+	accessType: AccessType
+	/** Тип учётной записи */
+	type: UserType
+	/**
+	 * Идентификатор пользователя в сервере EnergoId
+	 * @format guid
+	 */
+	energoIdGuid?: string | null
+	/** Список групп, в которые входит пользователь */
+	userGroups: UserGroupSimpleInfo[]
+}
+
+/**
+ * Тип учётной записи
+ *
+ * 1 = Local
+ * 2 = Static
+ * 3 = EnergoId
+ */
+export enum UserType {
+	Local = 1,
+	Static = 2,
+	EnergoId = 3,
+}
+
 /** Данные запроса на создание пользователя */
 export interface UserCreateRequest {
 	/** Имя для входа */
@@ -984,36 +1064,6 @@ export interface UserCreateRequest {
 	 * @format guid
 	 */
 	energoIdGuid?: string | null
-}
-
-/**
- * Тип учётной записи
- *
- * 1 = Local
- * 2 = Static
- * 3 = EnergoId
- */
-export enum UserType {
-	Local = 1,
-	Static = 2,
-	EnergoId = 3,
-}
-
-/** Информация о пользователе */
-export type UserInfo = UserSimpleInfo & {
-	/** Имя для входа */
-	login?: string | null
-	/** Глобальный уровень доступа */
-	accessType: AccessType
-	/** Тип учётной записи */
-	type: UserType
-	/**
-	 * Идентификатор пользователя в сервере EnergoId
-	 * @format guid
-	 */
-	energoIdGuid?: string | null
-	/** Список групп, в которые входит пользователь */
-	userGroups: UserGroupSimpleInfo[]
 }
 
 /** Расширенная информация о пользователе, включающая данные для аутентификации */

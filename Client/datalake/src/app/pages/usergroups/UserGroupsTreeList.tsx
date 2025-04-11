@@ -6,20 +6,14 @@ import { ColumnsType } from 'antd/es/table'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import {
-	AccessType,
-	UserGroupTreeInfo,
-} from '../../../api/swagger/data-contracts'
+import { AccessType, UserGroupTreeInfo } from '../../../api/swagger/data-contracts'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 import UserGroupsCreateModal from './usergroup/modals/UserGroupsCreateModal'
 
 const setEmptyAsLeafs = (group: UserGroupTreeInfo): UserGroupTreeInfo => ({
 	...group,
-	children:
-		group.children.length > 0
-			? group.children.map((x) => setEmptyAsLeafs(x))
-			: (undefined as never),
+	children: group.children.length > 0 ? group.children.map((x) => setEmptyAsLeafs(x)) : (undefined as never),
 })
 
 const UserGroupsTreeList = observer(() => {
@@ -36,15 +30,11 @@ const UserGroupsTreeList = observer(() => {
 	const expandKey = 'expandedUserGroups'
 	const [expandedRowKeys, setExpandedRowKeys] = useState(() => {
 		const savedKeys = localStorage.getItem(expandKey)
-		return savedKeys
-			? (JSON.parse(savedKeys) as string[])
-			: ([] as string[])
+		return savedKeys ? (JSON.parse(savedKeys) as string[]) : ([] as string[])
 	})
 
 	const onExpand = (expanded: boolean, record: UserGroupTreeInfo) => {
-		const keys = expanded
-			? [...expandedRowKeys, record.guid]
-			: expandedRowKeys.filter((key) => key !== record.guid)
+		const keys = expanded ? [...expandedRowKeys, record.guid] : expandedRowKeys.filter((key) => key !== record.guid)
 		setExpandedRowKeys(keys)
 	}
 

@@ -1,3 +1,7 @@
+import HistoryReadMetrics from '@/app/pages/admin/metrics/HistoryReadMetrics'
+import TagsAccessMetrics from '@/app/pages/admin/metrics/TagsAccessMetrics'
+import TagView from '@/app/pages/tags/tag/TagView'
+import TagsAggregatedList from '@/app/pages/tags/TagsAggregatedList'
 import UserView from '@/app/pages/users/user/UserView'
 import TagsWriter from '@/app/pages/values/TagsWriter'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
@@ -102,8 +106,22 @@ const router = createBrowserRouter([
 			},
 			// settings
 			{
-				path: routes.settings,
+				path: routes.admin.settings,
 				element: <SettingsPage />,
+			},
+			// metrics
+			{
+				path: routes.admin.metrics.root,
+				children: [
+					{
+						path: routes.admin.metrics.database,
+						element: <HistoryReadMetrics />,
+					},
+					{
+						path: routes.admin.metrics.tags,
+						element: <TagsAccessMetrics />,
+					},
+				],
 			},
 			// sources
 			{
@@ -131,6 +149,10 @@ const router = createBrowserRouter([
 								element: <TagsList />,
 							},
 							{
+								path: routes.tags.view,
+								element: <TagView />,
+							},
+							{
 								path: routes.tags.edit,
 								element: <TagForm />,
 							},
@@ -143,6 +165,10 @@ const router = createBrowserRouter([
 					{
 						path: routes.tags.calc,
 						element: <TagsCalculatedList />,
+					},
+					{
+						path: routes.tags.aggregated,
+						element: <TagsAggregatedList />,
 					},
 				],
 			},

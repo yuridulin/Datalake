@@ -21,26 +21,14 @@ const AuthSettings = () => {
 
 	return (
 		<Form form={form} layout='vertical' onFinish={update}>
-			<Form.Item<SettingsInfo>
-				label='Адрес Keycloak сервера EnergoId'
-				name='energoIdHost'
-			>
+			<Form.Item<SettingsInfo> label='Адрес Keycloak сервера EnergoId' name='energoIdHost'>
 				<Input placeholder='auth.energo.net' prefix='https://' />
 			</Form.Item>
-			<Form.Item<SettingsInfo>
-				label='Адрес EnergoId'
-				name='energoIdClient'
-			>
+			<Form.Item<SettingsInfo> label='Адрес EnergoId' name='energoIdClient'>
 				<Input placeholder='datalake' />
 			</Form.Item>
-			<Form.Item<SettingsInfo>
-				label='Путь к API EnergoId'
-				name='energoIdApi'
-			>
-				<Input
-					placeholder='api.auth.energo.net/api/v1/users'
-					prefix='https://'
-				/>
+			<Form.Item<SettingsInfo> label='Путь к API EnergoId' name='energoIdApi'>
+				<Input placeholder='api.auth.energo.net/api/v1/users' prefix='https://' />
 			</Form.Item>
 			<Button type='primary' onClick={form.submit}>
 				Сохранить

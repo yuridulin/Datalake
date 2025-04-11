@@ -33,20 +33,14 @@ const flattenNestedTags = (
 				parents: currentParents,
 			}
 		})
-		const childrenMapping = flattenNestedTags(
-			block.children,
-			currentParents,
-		)
+		const childrenMapping = flattenNestedTags(block.children, currentParents)
 		mapping = { ...mapping, ...childrenMapping }
 	})
 
 	return mapping
 }
 
-const convertToTreeSelectNodes = (
-	blockTree: BlockTreeInfo[],
-	parentPath: string[] = [],
-): DefaultOptionType[] => {
+const convertToTreeSelectNodes = (blockTree: BlockTreeInfo[], parentPath: string[] = []): DefaultOptionType[] => {
 	return blockTree.map((block) => {
 		const currentPath = [...parentPath, block.name]
 		return {
@@ -80,10 +74,7 @@ const convertToTreeSelectNodes = (
 	})
 }
 
-const findNodeByValue = (
-	nodes: DefaultOptionType[],
-	value: number,
-): DefaultOptionType | null => {
+const findNodeByValue = (nodes: DefaultOptionType[], value: number): DefaultOptionType | null => {
 	for (const node of nodes) {
 		if (node.value === value) {
 			return node
@@ -100,12 +91,7 @@ const findNodeByValue = (
 
 type SelectValue = { value: number; label: React.ReactNode } | undefined
 
-const TagTreeSelect: React.FC<TagTreeSelectProps> = ({
-	blocks = [],
-	tags = [],
-	value,
-	onChange = () => {},
-}) => {
+const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], value, onChange = () => {} }) => {
 	const [treeData, setTreeData] = useState<DefaultOptionType[]>([])
 	const [tagMapping, setTagMapping] = useState<FlattenedNestedTagsType>({})
 	const [searchValue, setSearchValue] = useState<string>('')
@@ -158,34 +144,20 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [blocks])
 
-	const filterTreeNode = (
-		inputValue: string,
-		treeNode: DefaultOptionType,
-	): boolean => {
+	const filterTreeNode = (inputValue: string, treeNode: DefaultOptionType): boolean => {
 		const search = inputValue.toLowerCase()
 		const nodeValue = treeNode.value as number
 
 		if (nodeValue < 0) {
-			return (
-				treeNode.title?.toString().toLowerCase().includes(search) ??
-				false
-			)
+			return treeNode.title?.toString().toLowerCase().includes(search) ?? false
 		}
 
 		const tagInfo = tagMapping[nodeValue]
 		if (!tagInfo) return false
 
-		const searchFields = [
-			tagInfo.localName,
-			tagInfo.name,
-			tagInfo.guid,
-			String(nodeValue),
-			treeNode.title?.toString(),
-		]
+		const searchFields = [tagInfo.localName, tagInfo.name, tagInfo.guid, String(nodeValue), treeNode.title?.toString()]
 
-		return searchFields.some((field) =>
-			field?.toLowerCase().includes(search),
-		)
+		return searchFields.some((field) => field?.toLowerCase().includes(search))
 	}
 
 	return (

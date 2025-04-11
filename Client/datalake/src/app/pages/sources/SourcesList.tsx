@@ -1,9 +1,5 @@
 import api from '@/api/swagger-api'
-import {
-	AccessType,
-	SourceInfo,
-	SourceState,
-} from '@/api/swagger/data-contracts'
+import { AccessType, SourceInfo, SourceState } from '@/api/swagger/data-contracts'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
@@ -11,22 +7,26 @@ import { useInterval } from '@/hooks/useInterval'
 import { timeAgo } from '@/state/timeAgoInstance'
 import { user } from '@/state/user'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
-import { Button, Table, TableColumnsType, Tag } from 'antd'
+import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 const SourcesList = observer(() => {
-	const [list, setList] = useState([] as SourceInfo[])
-	const [states, setStates] = useState({} as { [key: number]: SourceState })
+	const [sources, setSources] = useState([] as SourceInfo[])
+	const [states, setStates] = useState({} as Record<string, SourceState>)
 
 	const load = () => {
-		api.sourcesReadAll({ withCustom: false })
+		setSources([])
+		api
+			.sourcesReadAll({ withCustom: false })
 			.then((res) => {
-				setList(res.data)
+				setSources(res.data)
+				getStates()
 			})
-			.catch(() => setList([]))
-		getStates()
+			.catch(() => {
+				notification.error({ message: 'Не удалось получить список источников' })
+			})
 	}
 
 	const getStates = () => {
@@ -36,7 +36,13 @@ const SourcesList = observer(() => {
 	}
 
 	const createSource = () => {
-		api.sourcesCreate().then(load)
+		api
+			.sourcesCreate()
+			.then((res) => {
+				setSources([...sources, res.data])
+				notification.success({ message: 'Создан источник ' + res.data.name })
+			})
+			.catch(() => notification.error({ message: 'Не удалось создать источник' }))
 	}
 
 	const columns: TableColumnsType<SourceInfo> = [
@@ -45,11 +51,7 @@ const SourcesList = observer(() => {
 			title: 'Название',
 			width: '30em',
 			render: (_, record) => (
-				<NavLink
-					className='table-row'
-					to={routes.sources.toEditSource(record.id)}
-					key={record.id}
-				>
+				<NavLink className='table-row' to={routes.sources.toEditSource(record.id)} key={record.id}>
 					<Button size='small'>{record.name}</Button>
 				</NavLink>
 			),
@@ -59,17 +61,18 @@ const SourcesList = observer(() => {
 			width: '10em',
 			render: (_, record) => {
 				const state = states[record.id]
-				if (!state) return <></>
+				if (!state) return <Tag>?</Tag>
 				return (
 					<span>
-						{state.isConnected ? (
+						{!state.isTryConnected ? (
+							<Tag icon={<DisconnectOutlined />} color='default' title='Попыток подключения не было'>
+								не исп.
+							</Tag>
+						) : state.isConnected ? (
 							<Tag
 								icon={<CheckOutlined />}
 								color='success'
-								title={
-									'Последнее подключение: ' +
-									timeAgo.format(new Date(state.lastTry))
-								}
+								title={'Последнее подключение: ' + timeAgo.format(new Date(state.lastTry))}
 							>
 								есть
 							</Tag>
@@ -79,10 +82,7 @@ const SourcesList = observer(() => {
 								color='error'
 								title={
 									(state.lastConnection
-										? 'Последний раз связь была ' +
-											timeAgo.format(
-												new Date(state.lastConnection),
-											)
+										? 'Последний раз связь была ' + timeAgo.format(new Date(state.lastConnection))
 										: 'Успешных подключений не было с момента запуска') +
 									'. Последняя попытка: ' +
 									timeAgo.format(new Date(state.lastTry))
@@ -96,6 +96,16 @@ const SourcesList = observer(() => {
 			},
 		},
 		{
+			dataIndex: 'id',
+			title: <span title='Отображает общее количество тегов'>Теги</span>,
+			width: '5em',
+			render: (id) => {
+				const state = states[id]
+				const tagsCount = state?.valuesAfterWriteSeconds.length ?? 0
+				return tagsCount > 0 ? <span>{tagsCount}</span> : <span>нет</span>
+			},
+		},
+		{
 			dataIndex: 'type',
 			title: 'Тип источника',
 			width: '10em',
@@ -105,6 +115,24 @@ const SourcesList = observer(() => {
 			dataIndex: 'description',
 			title: 'Описание',
 		},
+		{
+			title: 'Новые значения за последние полчаса',
+			width: '11em',
+			render: (_, record) => {
+				const state = states[record.id]
+				const tagsLastHalfHourCount = state?.valuesAfterWriteSeconds.filter((x) => x <= 1800).length ?? 0
+				return <Tag color={tagsLastHalfHourCount > 0 ? 'success' : 'default'}>{tagsLastHalfHourCount}</Tag>
+			},
+		},
+		{
+			title: 'Новые значения за последние сутки',
+			width: '11em',
+			render: (_, record) => {
+				const state = states[record.id]
+				const tagsLastDayCount = state?.valuesAfterWriteSeconds.filter((x) => x <= 86400).length ?? 0
+				return <Tag color={tagsLastDayCount > 0 ? 'success' : 'default'}>{tagsLastDayCount}</Tag>
+			},
+		},
 	]
 
 	useEffect(load, [])
@@ -113,23 +141,11 @@ const SourcesList = observer(() => {
 	return (
 		<>
 			<PageHeader
-				right={
-					user.hasGlobalAccess(AccessType.Admin) && (
-						<Button onClick={createSource}>
-							Добавить источник
-						</Button>
-					)
-				}
+				right={user.hasGlobalAccess(AccessType.Admin) && <Button onClick={createSource}>Добавить источник</Button>}
 			>
 				Зарегистрированные источники данных
 			</PageHeader>
-			<Table
-				dataSource={list}
-				columns={columns}
-				size='small'
-				pagination={false}
-				rowKey='id'
-			/>
+			<Table dataSource={sources} columns={columns} size='small' pagination={false} rowKey='id' />
 		</>
 	)
 })

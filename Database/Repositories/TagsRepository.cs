@@ -162,7 +162,7 @@ public static class TagsRepository
 		UserAuthInfo user,
 		Guid guid)
 	{
-		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Admin, guid);
+		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
 
 		await DeleteAsync(db, user.Guid, guid);
 	}
@@ -195,7 +195,7 @@ public static class TagsRepository
 		{
 			createRequest.Name = createRequest.Name.RemoveWhitespaces("_");
 
-			if (await db.Tags.AnyAsync(x => x.Name.ToLower() == createRequest.Name.ToLower()))
+			if (await TagsNotDeleted(db).AnyAsync(x => x.Name.ToLower() == createRequest.Name.ToLower()))
 				throw new ForbiddenException(message: "уже существует тег с таким именем");
 		}
 
@@ -207,7 +207,7 @@ public static class TagsRepository
 			}
 
 			var source = await db.Sources
-				.Where(x => x.Id == createRequest.SourceId)
+				.Where(x => x.Id == createRequest.SourceId && !x.IsDeleted)
 				.Select(x => new
 				{
 					x.Id,
@@ -231,7 +231,7 @@ public static class TagsRepository
 		if (createRequest.BlockId.HasValue)
 		{
 			var block = await db.Blocks
-				.Where(x => x.Id == createRequest.BlockId)
+				.Where(x => x.Id == createRequest.BlockId && !x.IsDeleted)
 				.Select(x => new
 				{
 					x.Id,
@@ -284,7 +284,7 @@ public static class TagsRepository
 
 		Guid? guid = await db.Tags.Where(x => x.Id == tag.Id).Select(x => x.GlobalGuid).FirstOrDefaultAsync();
 
-		await LogAsync(db, userGuid, guid, $"Создан тег \"{createRequest.Name}\"");
+		await LogAsync(db, userGuid, tag.Id, $"Создан тег \"{createRequest.Name}\"");
 
 		await transaction.CommitAsync();
 
@@ -292,6 +292,7 @@ public static class TagsRepository
 		var info = await GetInfoWithSources(db).FirstOrDefaultAsync(x => x.Id == tag.Id)
 			?? throw new NotFoundException(message: "тег после создания");
 
+		AccessRepository.AddRightsForNewTag(tag.GlobalGuid, createRequest.BlockId, createRequest.SourceId);
 		AccessRepository.Update();
 
 		return info;
@@ -306,10 +307,10 @@ public static class TagsRepository
 
 		updateRequest.Name = updateRequest.Name.RemoveWhitespaces("_");
 
-		var tag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
+		var tag = await TagsNotDeleted(db).Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
 			?? throw new NotFoundException($"тег {guid}");
 
-		if (await db.Tags.AnyAsync(x => x.GlobalGuid != guid && x.Name == updateRequest.Name))
+		if (await TagsNotDeleted(db).AnyAsync(x => x.GlobalGuid != guid && x.Name == updateRequest.Name))
 			throw new AlreadyExistException($"тег с именем {updateRequest.Name}");
 
 		if (updateRequest.SourceId > 0)
@@ -364,7 +365,7 @@ public static class TagsRepository
 		var updatedTag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
 			?? throw new NotFoundException($"тег {guid}");
 
-		await LogAsync(db, userGuid, guid, $"Изменен тег \"{tag.Name}\"", ObjectExtension.Difference(tag, updatedTag));
+		await LogAsync(db, userGuid, tag.Id, $"Изменен тег \"{tag.Name}\"", ObjectExtension.Difference(tag, updatedTag));
 
 		await transaction.CommitAsync();
 
@@ -376,7 +377,7 @@ public static class TagsRepository
 	{
 		var transaction = await db.BeginTransactionAsync();
 
-		var tag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
+		var tag = await TagsNotDeleted(db).Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
 			?? throw new NotFoundException($"тег {guid}");
 
 		var cached = CachedTags.Values.FirstOrDefault(x => x.Guid == guid)
@@ -384,15 +385,16 @@ public static class TagsRepository
 
 		var count = await db.Tags
 			.Where(x => x.GlobalGuid == guid)
-			.DeleteAsync();
+			.Set(x => x.IsDeleted, true)
+			.UpdateAsync();
 
 		if (count == 0)
-			throw new DatabaseException($"Не удалось удалить тег {guid}", DatabaseStandartError.DeletedZero);
+			throw new DatabaseException($"Не удалось удалить тег {tag.Name}", DatabaseStandartError.DeletedZero);
 
 		// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
 		// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
 
-		await LogAsync(db, userGuid, guid, $"Удален тег \"{tag.Name}\"");
+		await LogAsync(db, userGuid, tag.Id, $"Удален тег \"{tag.Name}\"");
 
 		await transaction.CommitAsync();
 
@@ -420,17 +422,16 @@ public static class TagsRepository
 		SystemRepository.Update();
 	}
 
-	internal static async Task LogAsync(
-		DatalakeContext db, 
-		Guid userGuid, Guid? guid, string message, string? details = null)
+	internal static async Task LogAsync(DatalakeContext db, Guid userGuid, int tagId, string message, string? details = null)
 	{
 		await db.InsertAsync(new Log
 		{
 			Category = LogCategory.Tag,
-			RefId = guid?.ToString() ?? null,
+			RefId = tagId.ToString(),
+			AffectedTagId = tagId,
 			Text = message,
 			Type = LogType.Success,
-			UserGuid = userGuid,
+			AuthorGuid = userGuid,
 			Details = details,
 		});
 	}
@@ -439,11 +440,18 @@ public static class TagsRepository
 
 	#region Запросы
 
+	internal static IQueryable<Tag> TagsNotDeleted(DatalakeContext db)
+	{
+		return db.Tags.Where(x => !x.IsDeleted);
+	}
+
 	internal static IQueryable<TagInfo> GetInfoWithSources(DatalakeContext db)
 	{
 		var query =
-			from tag in db.Tags
-			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
+			from tag in db.Tags.Where(x => !x.IsDeleted)
+			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
+			from sourceTag in db.Tags.LeftJoin(x => x.Id == tag.SourceTagId && !x.IsDeleted)
+			from sourceTagSource in db.Sources.LeftJoin(x => x.Id == sourceTag.SourceId && !x.IsDeleted)
 			select new TagInfo
 			{
 				Id = tag.Id,
@@ -455,8 +463,8 @@ public static class TagsRepository
 				Formula = tag.Formula ?? string.Empty,
 				FormulaInputs = (
 					from input_rel in db.TagInputs.LeftJoin(x => x.TagId == tag.Id)
-					from input in db.Tags.InnerJoin(x => x.Id == input_rel.InputTagId)
-					from input_source in db.Sources.LeftJoin(x => x.Id == input.SourceId)
+					from input in db.Tags.InnerJoin(x => x.Id == input_rel.InputTagId && !x.IsDeleted)
+					from input_source in db.Sources.LeftJoin(x => x.Id == input.SourceId && !x.IsDeleted)
 					select new TagInputInfo
 					{
 						Id = input.Id,
@@ -477,7 +485,15 @@ public static class TagsRepository
 				SourceItem = tag.SourceItem,
 				SourceType = source != null ? source.Type : SourceType.NotSet,
 				SourceName = source != null ? source.Name : "Unknown",
-				SourceTagId = tag.SourceTagId,
+				SourceTag = sourceTag == null ? null : new TagSimpleInfo
+				{
+					Id = sourceTag.Id,
+					Frequency = sourceTag.Frequency,
+					Guid = sourceTag.GlobalGuid,
+					Name = sourceTag.Name,
+					Type = sourceTag.Type,
+					SourceType = sourceTagSource == null ? SourceType.NotSet : sourceTagSource.Type,
+				},
 				Aggregation = tag.Aggregation,
 				AggregationPeriod = tag.AggregationPeriod,
 			};
@@ -488,8 +504,8 @@ public static class TagsRepository
 	internal static IQueryable<TagAsInputInfo> GetPossibleInputs(DatalakeContext db)
 	{
 		var query =
-			from tag in db.Tags
-			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId)
+			from tag in db.Tags.Where(x => !x.IsDeleted)
+			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
 			orderby tag.Name
 			select new TagAsInputInfo
 			{
@@ -507,19 +523,21 @@ public static class TagsRepository
 	internal static IQueryable<TagCacheInfo> GetTagsForCache(DatalakeContext db)
 	{
 		var query =
-			from t in db.Tags
-			from s in db.Sources.LeftJoin(x => x.Id == t.SourceId)
+			from tag in db.Tags.Where(x => !x.IsDeleted)
+			from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
 			select new TagCacheInfo
 			{
-				Id = t.Id,
-				Guid = t.GlobalGuid,
-				Name = t.Name,
-				Type = t.Type,
-				SourceType = s.Type,
-				Frequency = t.Frequency,
-				ScalingCoefficient = t.IsScaling
-					? ((t.MaxEu - t.MinEu) / (t.MaxRaw - t.MinRaw))
+				Id = tag.Id,
+				Guid = tag.GlobalGuid,
+				Name = tag.Name,
+				Type = tag.Type,
+				SourceId = tag.SourceId,
+				SourceType = source.Type,
+				Frequency = tag.Frequency,
+				ScalingCoefficient = tag.IsScaling
+					? ((tag.MaxEu - tag.MinEu) / (tag.MaxRaw - tag.MinRaw))
 					: 1,
+				IsDeleted = tag.IsDeleted,
 			};
 
 		return query;

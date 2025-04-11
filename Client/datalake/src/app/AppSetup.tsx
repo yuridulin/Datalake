@@ -26,8 +26,7 @@ const AppSetup = observer(() => {
 	const { defaultAlgorithm, darkAlgorithm } = theme
 
 	const oidcConfig = {
-		authority:
-			window.location.protocol + '//' + KEYCLOAK_DB + '/realms/energo',
+		authority: window.location.protocol + '//' + KEYCLOAK_DB + '/realms/energo',
 		redirect_uri: window.location.origin + routes.auth.energoId,
 		client_id: KEYCLOAK_CLIENT,
 	}

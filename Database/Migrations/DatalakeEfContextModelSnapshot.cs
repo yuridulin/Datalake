@@ -81,6 +81,9 @@ namespace Datalake.Database.Migrations
                     b.Property<Guid>("GlobalId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -153,6 +156,27 @@ namespace Datalake.Database.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<int?>("AffectedAccessRightsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("AffectedBlockId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("AffectedSourceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("AffectedTagId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("AffectedUserGroupGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AffectedUserGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AuthorGuid")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Category")
                         .HasColumnType("integer");
 
@@ -172,12 +196,21 @@ namespace Datalake.Database.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("UserGuid")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserGuid");
+                    b.HasIndex("AffectedAccessRightsId");
+
+                    b.HasIndex("AffectedBlockId");
+
+                    b.HasIndex("AffectedSourceId");
+
+                    b.HasIndex("AffectedTagId");
+
+                    b.HasIndex("AffectedUserGroupGuid");
+
+                    b.HasIndex("AffectedUserGuid");
+
+                    b.HasIndex("AuthorGuid");
 
                     b.ToTable("Logs", "public");
                 });
@@ -220,6 +253,9 @@ namespace Datalake.Database.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -260,6 +296,9 @@ namespace Datalake.Database.Migrations
 
                     b.Property<Guid>("GlobalGuid")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsScaling")
                         .HasColumnType("boolean");
@@ -340,6 +379,9 @@ namespace Datalake.Database.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Login")
                         .HasColumnType("text");
 
@@ -365,6 +407,9 @@ namespace Datalake.Database.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -481,10 +526,52 @@ namespace Datalake.Database.Migrations
 
             modelBuilder.Entity("Datalake.Database.Tables.Log", b =>
                 {
-                    b.HasOne("Datalake.Database.Tables.User", "Author")
+                    b.HasOne("Datalake.Database.Tables.AccessRights", "AffectedAccessRights")
                         .WithMany("Logs")
-                        .HasForeignKey("UserGuid")
+                        .HasForeignKey("AffectedAccessRightsId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Datalake.Database.Tables.Block", "AffectedBlock")
+                        .WithMany("Logs")
+                        .HasForeignKey("AffectedBlockId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Datalake.Database.Tables.Source", "AffectedSource")
+                        .WithMany("Logs")
+                        .HasForeignKey("AffectedSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Datalake.Database.Tables.Tag", "AffectedTag")
+                        .WithMany("Logs")
+                        .HasForeignKey("AffectedTagId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Datalake.Database.Tables.UserGroup", "AffectedUserGroup")
+                        .WithMany("Logs")
+                        .HasForeignKey("AffectedUserGroupGuid")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Datalake.Database.Tables.User", "AffectedUser")
+                        .WithMany("Logs")
+                        .HasForeignKey("AffectedUserGuid")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Datalake.Database.Tables.User", "Author")
+                        .WithMany("Actions")
+                        .HasForeignKey("AuthorGuid")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AffectedAccessRights");
+
+                    b.Navigation("AffectedBlock");
+
+                    b.Navigation("AffectedSource");
+
+                    b.Navigation("AffectedTag");
+
+                    b.Navigation("AffectedUser");
+
+                    b.Navigation("AffectedUserGroup");
 
                     b.Navigation("Author");
                 });
@@ -554,11 +641,18 @@ namespace Datalake.Database.Migrations
                     b.Navigation("UserGroup");
                 });
 
+            modelBuilder.Entity("Datalake.Database.Tables.AccessRights", b =>
+                {
+                    b.Navigation("Logs");
+                });
+
             modelBuilder.Entity("Datalake.Database.Tables.Block", b =>
                 {
                     b.Navigation("AccessRightsList");
 
                     b.Navigation("Children");
+
+                    b.Navigation("Logs");
 
                     b.Navigation("Properties");
 
@@ -569,6 +663,8 @@ namespace Datalake.Database.Migrations
                 {
                     b.Navigation("AccessRightsList");
 
+                    b.Navigation("Logs");
+
                     b.Navigation("Tags");
                 });
 
@@ -578,12 +674,16 @@ namespace Datalake.Database.Migrations
 
                     b.Navigation("Inputs");
 
+                    b.Navigation("Logs");
+
                     b.Navigation("RelationsToBlocks");
                 });
 
             modelBuilder.Entity("Datalake.Database.Tables.User", b =>
                 {
                     b.Navigation("AccessRightsList");
+
+                    b.Navigation("Actions");
 
                     b.Navigation("GroupsRelations");
 
@@ -595,6 +695,8 @@ namespace Datalake.Database.Migrations
                     b.Navigation("AccessRightsList");
 
                     b.Navigation("Children");
+
+                    b.Navigation("Logs");
 
                     b.Navigation("UsersRelations");
                 });

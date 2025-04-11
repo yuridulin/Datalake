@@ -5,12 +5,7 @@ import { Button, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import {
-	AccessType,
-	BlockNestedTagInfo,
-	BlockSimpleInfo,
-	BlockTreeInfo,
-} from '../../../api/swagger/data-contracts'
+import { AccessType, BlockNestedTagInfo, BlockSimpleInfo, BlockTreeInfo } from '../../../api/swagger/data-contracts'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 
@@ -64,7 +59,8 @@ const BlocksTree = observer(() => {
 	const [data, setData] = useState([] as DataType[])
 
 	function load() {
-		api.blocksReadAsTree()
+		api
+			.blocksReadAsTree()
 			.then((res) => setData(transformBlockTreeInfo(res.data)))
 			.catch(() => setData([]))
 	}
@@ -78,15 +74,11 @@ const BlocksTree = observer(() => {
 	const expandKey = 'expandedBlocks'
 	const [expandedRowKeys, setExpandedRowKeys] = useState(() => {
 		const savedKeys = localStorage.getItem(expandKey)
-		return savedKeys
-			? (JSON.parse(savedKeys) as number[])
-			: ([] as number[])
+		return savedKeys ? (JSON.parse(savedKeys) as number[]) : ([] as number[])
 	})
 
 	const onExpand = (expanded: boolean, record: DataType) => {
-		const keys = expanded
-			? [...expandedRowKeys, record.id]
-			: expandedRowKeys.filter((key) => key !== record.id)
+		const keys = expanded ? [...expandedRowKeys, record.id] : expandedRowKeys.filter((key) => key !== record.id)
 		setExpandedRowKeys(keys)
 	}
 

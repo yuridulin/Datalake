@@ -1,14 +1,16 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Repositories;
+using Datalake.Database.Services;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
+using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Settings;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
-using Datalake.Server.Models.System;
 using Datalake.Server.Services.StateManager;
+using Datalake.Server.Services.StateManager.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -22,6 +24,7 @@ namespace Datalake.Server.Controllers;
 public class SystemController(
 	DatalakeContext db,
 	SourcesStateService sourcesStateService,
+	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
 	ISettingsUpdater settingsService) : ApiControllerBase
 {
@@ -39,8 +42,9 @@ public class SystemController(
 	/// <summary>
 	/// Получение списка сообщений
 	/// </summary>
+	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более поздних</param>
+	/// <param name="firstId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более ранних</param>
 	/// <param name="take">Сколько сообщений получить за этот запрос</param>
-	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества</param>
 	/// <param name="source">Идентификатор затронутого источника</param>
 	/// <param name="block">Идентификатор затронутого блока</param>
 	/// <param name="tag">Идентификатор затронутого тега</param>
@@ -52,8 +56,9 @@ public class SystemController(
 	/// <returns>Список сообщений</returns>
 	[HttpGet("logs")]
 	public async Task<ActionResult<LogInfo[]>> GetLogsAsync(
-		[FromQuery] int? take = null,
 		[FromQuery] int? lastId = null,
+		[FromQuery] int? firstId = null,
+		[FromQuery] int? take = null,
 		[FromQuery] int? source = null,
 		[FromQuery] int? block = null,
 		[FromQuery] Guid? tag = null,
@@ -65,7 +70,7 @@ public class SystemController(
 	{
 		var userAuth = Authenticate();
 
-		return await SystemRepository.GetLogsAsync(db, userAuth, take, lastId, source, block, tag, user, group, categories, types, author);
+		return await SystemRepository.GetLogsAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
 	}
 
 	/// <summary>
@@ -87,7 +92,7 @@ public class SystemController(
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("sources")]
-	public ActionResult<Dictionary<int, SourceState>> GetSources()
+	public ActionResult<Dictionary<int, SourceState>> GetSourcesStates()
 	{
 		var user = Authenticate();
 
@@ -95,6 +100,22 @@ public class SystemController(
 
 		return sourcesStateService.State
 			.Where(x => AccessRepository.HasAccessToSource(user, AccessType.Viewer, x.Key))
+			.ToDictionary();
+	}
+
+	/// <summary>
+	/// Информация о подключении к источникам данных
+	/// </summary>
+	/// <returns></returns>
+	[HttpGet("tags")]
+	public ActionResult<Dictionary<Guid, Dictionary<string, DateTime>>> GetTagsStates()
+	{
+		var user = Authenticate();
+
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+
+		return tagsStateService.GetTagsStates()
+			.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Viewer, x.Key))
 			.ToDictionary();
 	}
 
@@ -170,5 +191,18 @@ public class SystemController(
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return Ok(AccessRepository.UserRights.ToDictionary(x => x.Key, x => x.Value));
+	}
+
+	/// <summary>
+	/// Получение списка сохраненных метрик
+	/// </summary>
+	/// <returns>Список метрик</returns>
+	[HttpGet("metrics/read")]
+	public ActionResult<HistoryReadMetricInfo[]> GetReadMetrics()
+	{
+		var user = Authenticate();
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		return MetricsService.ReadMetrics();
 	}
 }

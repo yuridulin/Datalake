@@ -49,13 +49,7 @@ export default function TagValueEl({
 		)
 
 	return (
-		<span
-			style={style}
-			onDoubleClick={tryEdit}
-			title={
-				allowEdit ? 'Сделайте двойной клик для изменения значения' : ''
-			}
-		>
+		<span style={style} onDoubleClick={tryEdit} title={allowEdit ? 'Сделайте двойной клик для изменения значения' : ''}>
 			{valuer}
 		</span>
 	)

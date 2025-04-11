@@ -9,12 +9,7 @@ import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
 import SourceItems from './SourceItems'
 
-const AvailableSourceTypes = [
-	SourceType.NotSet,
-	SourceType.Inopc,
-	SourceType.Datalake,
-	SourceType.DatalakeV2,
-]
+const AvailableSourceTypes = [SourceType.NotSet, SourceType.Inopc, SourceType.Datalake, SourceType.DatalakeV2]
 
 const SourceForm = () => {
 	const { id } = useParams()
@@ -33,9 +28,7 @@ const SourceForm = () => {
 	}
 
 	function sourceUpdate() {
-		api.sourcesUpdate(Number(id), source).then(() =>
-			navigate(routes.sources.list),
-		)
+		api.sourcesUpdate(Number(id), source).then(() => navigate(routes.sources.list))
 	}
 
 	function sourceDelete() {
@@ -53,11 +46,7 @@ const SourceForm = () => {
 	return (
 		<>
 			<PageHeader
-				left={
-					<Button onClick={() => navigate(routes.sources.list)}>
-						Вернуться
-					</Button>
-				}
+				left={<Button onClick={() => navigate(routes.sources.list)}>Вернуться</Button>}
 				right={
 					<>
 						<Popconfirm
@@ -79,20 +68,19 @@ const SourceForm = () => {
 				Источник: {name}
 			</PageHeader>
 			<FormRow title='Имя'>
-				<Input
-					value={source.name}
-					onChange={(e) =>
-						setSource({ ...source, name: e.target.value })
-					}
+				<Input value={source.name} onChange={(e) => setSource({ ...source, name: e.target.value })} />
+			</FormRow>
+			<FormRow title='Описание'>
+				<Input.TextArea
+					value={source.description ?? ''}
+					onChange={(e) => setSource({ ...source, description: e.target.value })}
 				/>
 			</FormRow>
 			<FormRow title='Тип источника'>
 				<Radio.Group
 					buttonStyle='solid'
 					value={source.type}
-					onChange={(e) =>
-						setSource({ ...source, type: e.target.value })
-					}
+					onChange={(e) => setSource({ ...source, type: e.target.value })}
 				>
 					{AvailableSourceTypes.map((x) => (
 						<Radio.Button
@@ -100,8 +88,7 @@ const SourceForm = () => {
 							value={x}
 							style={{
 								fontWeight: x === type ? 'bold' : 'inherit',
-								textDecoration:
-									x === type ? 'underline' : 'inherit',
+								textDecoration: x === type ? 'underline' : 'inherit',
 							}}
 						>
 							{getSourceTypeName(x)}
@@ -124,11 +111,7 @@ const SourceForm = () => {
 					</FormRow>
 					<br />
 					<br />
-					<SourceItems
-						type={type}
-						newType={source.type}
-						id={Number(id)}
-					/>
+					<SourceItems type={type} newType={source.type} id={Number(id)} />
 				</>
 			)}
 		</>

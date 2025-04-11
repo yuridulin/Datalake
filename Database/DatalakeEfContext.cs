@@ -139,9 +139,45 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 		// связь логов с пользователем, чьи действия записаны
 
 		modelBuilder.Entity<User>()
-			.HasMany(x => x.Logs)
+			.HasMany(x => x.Actions)
 			.WithOne(x => x.Author)
-			.HasForeignKey(x => x.UserGuid)
+			.HasForeignKey(x => x.AuthorGuid)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<Log>()
+			.HasOne(x => x.AffectedSource)
+			.WithMany(x => x.Logs)
+			.HasForeignKey(x => x.AffectedSourceId)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<Log>()
+			.HasOne(x => x.AffectedBlock)
+			.WithMany(x => x.Logs)
+			.HasForeignKey(x => x.AffectedBlockId)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<Log>()
+			.HasOne(x => x.AffectedTag)
+			.WithMany(x => x.Logs)
+			.HasForeignKey(x => x.AffectedTagId)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<Log>()
+			.HasOne(x => x.AffectedUser)
+			.WithMany(x => x.Logs)
+			.HasForeignKey(x => x.AffectedUserGuid)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<Log>()
+			.HasOne(x => x.AffectedUserGroup)
+			.WithMany(x => x.Logs)
+			.HasForeignKey(x => x.AffectedUserGroupGuid)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<Log>()
+			.HasOne(x => x.AffectedAccessRights)
+			.WithMany(x => x.Logs)
+			.HasForeignKey(x => x.AffectedAccessRightsId)
 			.OnDelete(DeleteBehavior.SetNull);
 	}
 

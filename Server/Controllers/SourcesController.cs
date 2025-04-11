@@ -24,13 +24,13 @@ public class SourcesController(
 	/// </summary>
 	/// <returns>Идентификатор источника</returns>
 	[HttpPost("empty")]
-	public async Task<ActionResult<int>> CreateAsync()
+	public async Task<ActionResult<SourceInfo>> CreateAsync()
 	{
 		var user = Authenticate();
 
-		var id = await SourcesRepository.CreateAsync(db, user);
+		var info = await SourcesRepository.CreateAsync(db, user);
 
-		return id;
+		return info;
 	}
 
 	/// <summary>
@@ -39,14 +39,14 @@ public class SourcesController(
 	/// <param name="source">Данные нового источника</param>
 	/// <returns>Идентификатор источника</returns>
 	[HttpPost]
-	public async Task<ActionResult<int>> CreateAsync(
+	public async Task<ActionResult<SourceInfo>> CreateAsync(
 		[BindRequired, FromBody] SourceInfo source)
 	{
 		var user = Authenticate();
 
-		var id = await SourcesRepository.CreateAsync(db, user, source);
+		var info = await SourcesRepository.CreateAsync(db, user, source);
 
-		return id;
+		return info;
 	}
 
 	/// <summary>

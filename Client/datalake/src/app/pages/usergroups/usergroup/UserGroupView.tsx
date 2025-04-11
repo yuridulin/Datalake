@@ -1,20 +1,23 @@
 import api from '@/api/swagger-api'
 import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
+import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
+import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
+import TabsView from '@/app/components/tabsView/TabsView'
+import SubgroupsTable from '@/app/pages/usergroups/usergroup/parts/SubgroupsTable'
 import { user } from '@/state/user'
-import { Button, Descriptions, DescriptionsProps, Spin, Tabs } from 'antd'
+import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import {
-	AccessType,
-	UserGroupDetailedInfo,
-} from '../../../../api/swagger/data-contracts'
+import { AccessType, UserGroupDetailedInfo } from '../../../../api/swagger/data-contracts'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
+import { default as MembersTable } from './parts/MembersTable'
 import ObjectsWithAccess from './parts/ObjectsWithAccess'
-import SubgroupsUsersTable from './parts/SubgroupsUsersTable'
 
 const defaultGroup = {} as UserGroupDetailedInfo
+
+type UserGroupTabs = 'members' | 'nested' | 'access' | 'logs'
 
 const UserGroupView = observer(() => {
 	const [group, setGroup] = useState(defaultGroup)
@@ -24,28 +27,20 @@ const UserGroupView = observer(() => {
 	const getGlobalAccessRights = () => {
 		if (!group.accessRights) return AccessType.NotSet
 		const parent = group.accessRights.filter((x) => x.isGlobal)
-		const accessType =
-			parent.length > 0 ? parent[0].accessType : AccessType.NotSet
+		const accessType = parent.length > 0 ? parent[0].accessType : AccessType.NotSet
 		return accessType ?? AccessType.NotSet
 	}
 
-	const items: DescriptionsProps['items'] = [
-		{
-			key: 'desc',
-			label: 'Описание',
-			children: group.description,
-		},
-		{
-			key: 'access',
-			label: 'Общий уровень доступа',
-			children: <AccessTypeEl type={getGlobalAccessRights()} />,
-		},
-	]
+	const items: InfoTableProps['items'] = {
+		Описание: group.description ?? <i>нет</i>,
+		'Общий уровень доступа': <AccessTypeEl type={getGlobalAccessRights()} />,
+	}
 
 	const load = () => {
 		setReady(false)
 		if (!id) return
-		api.userGroupsReadWithDetails(id)
+		api
+			.userGroupsReadWithDetails(id)
 			.then((res) => {
 				if (res.data?.guid) {
 					setGroup(res.data)
@@ -74,27 +69,14 @@ const UserGroupView = observer(() => {
 				}
 				right={
 					<>
-						{user.hasAccessToGroup(
-							AccessType.Editor,
-							String(id),
-						) && (
-							<NavLink
-								to={routes.userGroups.toUserGroupEdit(
-									String(id),
-								)}
-							>
-								<Button>
-									Редактирование группы и участников
-								</Button>
+						{user.hasAccessToGroup(AccessType.Editor, String(id)) && (
+							<NavLink to={routes.userGroups.toEditUserGroup(String(id))}>
+								<Button>Редактирование группы и участников</Button>
 							</NavLink>
 						)}
 						&ensp;
 						{user.hasGlobalAccess(AccessType.Admin) && (
-							<NavLink
-								to={routes.userGroups.toUserGroupAccessForm(
-									String(id),
-								)}
-							>
+							<NavLink to={routes.userGroups.toUserGroupAccessForm(String(id))}>
 								<Button>Редактирование разрешений</Button>
 							</NavLink>
 						)}
@@ -103,31 +85,31 @@ const UserGroupView = observer(() => {
 			>
 				{group.name}
 			</PageHeader>
-			<Descriptions colon={true} items={items} />
-			<Tabs
+
+			<InfoTable items={items} />
+			<br />
+
+			<TabsView
 				items={[
 					{
-						key: '1',
-						label: 'Подгруппы и участники',
-						children: (
-							<SubgroupsUsersTable
-								subgroups={group.subgroups}
-								users={group.users}
-								guid={group.guid}
-								onCreateGroup={load}
-							/>
-						),
+						key: 'members' as UserGroupTabs,
+						label: 'Участники',
+						children: <MembersTable users={group.users} />,
 					},
 					{
-						key: '2',
+						key: 'nested' as UserGroupTabs,
+						label: 'Дочерние группы',
+						children: <SubgroupsTable subgroups={group.subgroups} guid={group.guid} onCreateGroup={load} />,
+					},
+					{
+						key: 'access' as UserGroupTabs,
 						label: 'Разрешения',
-						children: (
-							<ObjectsWithAccess
-								accessRights={group.accessRights.filter(
-									(x) => !x.isGlobal,
-								)}
-							/>
-						),
+						children: <ObjectsWithAccess accessRights={group.accessRights.filter((x) => !x.isGlobal)} />,
+					},
+					{
+						key: 'logs' as UserGroupTabs,
+						label: 'События',
+						children: <LogsTableEl userGroupGuid={group.guid} />,
 					},
 				]}
 			/>

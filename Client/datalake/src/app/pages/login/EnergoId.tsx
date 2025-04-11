@@ -16,19 +16,16 @@ const EnergoId = observer(() => {
 	}
 
 	if (auth.error) {
-		return (
-			<div>
-				Ошибка при аутентификации через EnergoId: {auth.error.message}
-			</div>
-		)
+		return <div>Ошибка при аутентификации через EnergoId: {auth.error.message}</div>
 	}
 
 	if (auth.isAuthenticated) {
-		api.usersAuthenticateEnergoIdUser({
-			energoIdGuid: auth.user?.profile.sub ?? '',
-			login: auth.user?.profile.email ?? '',
-			fullName: auth.user?.profile.name ?? '',
-		})
+		api
+			.usersAuthenticateEnergoIdUser({
+				energoIdGuid: auth.user?.profile.sub ?? '',
+				login: auth.user?.profile.email ?? '',
+				fullName: auth.user?.profile.name ?? '',
+			})
 			.then((res) => {
 				if (res.status === 200) {
 					user.setName(res.data.fullName)

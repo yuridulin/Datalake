@@ -11,7 +11,8 @@ const Offline = observer(() => {
 	const { token } = theme.useToken()
 
 	function load() {
-		api.systemGetLastUpdate()
+		api
+			.systemGetLastUpdate()
 			.then((res) => !!res && setOnline(!!res.data))
 			.catch(() => setOnline(false))
 	}

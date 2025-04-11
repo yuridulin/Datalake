@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Server.Models.System;
+namespace Datalake.Server.Services.StateManager.Models;
 
 /// <summary>
 /// Объект состояния источника
@@ -29,4 +29,16 @@ public class SourceState
 	/// </summary>
 	[Required]
 	public bool IsConnected { get; set; } = false;
+
+	/// <summary>
+	/// Была ли попытка установить соединение
+	/// </summary>
+	[Required]
+	public bool IsTryConnected { get; set; } = false;
+
+	/// <summary>
+	/// Список количества секунд с момента записи каждого тега
+	/// </summary>
+	[Required]
+	public int[] ValuesAfterWriteSeconds { get; set; } = [];
 }

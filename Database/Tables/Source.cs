@@ -47,6 +47,12 @@ public class Source
 	[Column]
 	public string? Address { get; set; }
 
+	/// <summary>
+	/// Источник отмечен как удаленный
+	/// </summary>
+	[Column, Required]
+	public bool IsDeleted { get; set; } = false;
+
 	// связи
 
 	/// <summary>
@@ -58,4 +64,9 @@ public class Source
 	/// Список правил доступа, действующих на источник
 	/// </summary>
 	public ICollection<AccessRights> AccessRightsList { get; set; } = [];
+
+	/// <summary>
+	/// Список сообщений аудита
+	/// </summary>
+	public ICollection<Log> Logs { get; set; } = null!;
 }

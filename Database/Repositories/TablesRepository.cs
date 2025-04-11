@@ -184,7 +184,7 @@ public static class TablesRepository
 				select new TagHistory
 				{
 					TagId = lastValue.TagId,
-					Date = lastValue.Date,// > date ? lastValue.Date : date,
+					Date = lastValue.Date,
 					Text = lastValue.Text,
 					Number = lastValue.Number,
 					Quality = (short)lastValue.Quality >= 192 ? TagQuality.Good_LOCF : TagQuality.Bad_LOCF,

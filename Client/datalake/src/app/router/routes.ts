@@ -1,8 +1,14 @@
-const withId = (route: string, id: string | number) =>
-	route.replace(':id', String(id))
+const withId = (route: string, id: string | number) => route.replace(':id', String(id))
 
 const routes = {
-	settings: '/settings',
+	admin: {
+		settings: '/settings',
+		metrics: {
+			root: '/metrics',
+			database: '/metrics/database',
+			tags: '/metrics/tags',
+		},
+	},
 	users: {
 		root: '/users',
 		list: '/users/',
@@ -31,10 +37,10 @@ const routes = {
 		toList() {
 			return this.list
 		},
-		toUserGroup(guid: string) {
+		toViewUserGroup(guid: string) {
 			return withId(this.view, guid)
 		},
-		toUserGroupEdit(guid: string) {
+		toEditUserGroup(guid: string) {
 			return withId(this.edit, guid)
 		},
 		toUserGroupAccessForm(guid: string) {
@@ -55,12 +61,13 @@ const routes = {
 		list: '/tags/all',
 		manual: '/tags/manual',
 		calc: '/tags/calculated',
+		aggregated: '/tags/aggregated',
 		view: '/tags/all/:id/view',
 		edit: '/tags/all/:id/edit',
-		toTag(guid: string) {
+		toViewTag(guid: string) {
 			return withId(this.view, guid)
 		},
-		toTagForm(guid: string) {
+		toEditTag(guid: string) {
 			return withId(this.edit, guid)
 		},
 	},

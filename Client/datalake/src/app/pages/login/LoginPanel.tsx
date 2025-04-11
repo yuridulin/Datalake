@@ -19,10 +19,11 @@ const LoginPanel = observer(() => {
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const onFinish = (values: any) => {
-		api.usersAuthenticate({
-			login: values.login,
-			password: values.password,
-		})
+		api
+			.usersAuthenticate({
+				login: values.login,
+				password: values.password,
+			})
 			.then((res) => {
 				if (res.status === 200) {
 					user.setName(res.data.fullName)
@@ -73,14 +74,9 @@ const LoginPanel = observer(() => {
 					<Form.Item<UserLoginPass>
 						label='Пароль'
 						name='password'
-						rules={[
-							{ required: true, message: 'Пароль не введён' },
-						]}
+						rules={[{ required: true, message: 'Пароль не введён' }]}
 					>
-						<Input.Password
-							name='password'
-							autoComplete='password'
-						/>
+						<Input.Password name='password' autoComplete='password' />
 					</Form.Item>
 
 					<Form.Item wrapperCol={{ offset: 8, span: 16 }}>
@@ -88,9 +84,7 @@ const LoginPanel = observer(() => {
 							<Button type='primary' htmlType='submit'>
 								Вход
 							</Button>
-							<Button onClick={() => void auth.signinRedirect()}>
-								Вход через EnergoID
-							</Button>
+							<Button onClick={() => void auth.signinRedirect()}>Вход через EnergoID</Button>
 						</Space>
 					</Form.Item>
 				</Form>

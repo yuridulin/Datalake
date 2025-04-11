@@ -6,6 +6,7 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
+using Datalake.Server.Services.StateManager;
 
 namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 
@@ -14,16 +15,19 @@ internal class AggregateCollector : CollectorBase
 	public AggregateCollector(
 		DatalakeContext db,
 		SourceWithTagsInfo source,
+		TagsStateService tagsStateService,
 		ILogger<AggregateCollector> logger) : base("Агрегатные значения", source, logger)
 	{
 		_tokenSource = new CancellationTokenSource();
 		_db = db;
+		_tagsStateService = tagsStateService;
 
 		_allRules = source.Tags
 			.Select(tag => new TagAggregationRule
 			{
 				Id = tag.Id,
 				TagSourceId = tag.SourceTag?.InputTagId ?? 0,
+				TagSourceGuid = tag.SourceTag?.InputTagGuid ?? Guid.Empty,
 				Period = tag.AggregationPeriod ?? 0,
 				Type = tag.Aggregation ?? 0,
 				Guid = tag.Guid,
@@ -64,6 +68,7 @@ internal class AggregateCollector : CollectorBase
 	private readonly TagAggregationRule[] _minuteRules;
 	private readonly TagAggregationRule[] _hourRules;
 	private readonly TagAggregationRule[] _dayRules;
+	private readonly TagsStateService _tagsStateService;
 
 	private async Task Work()
 	{
@@ -110,6 +115,13 @@ internal class AggregateCollector : CollectorBase
 	{
 		var aggregated = await ValuesRepository.GetWeightedAggregated(_db, rules.Select(x => x.TagSourceId).ToArray(), date, period);
 
+		_tagsStateService.UpdateTagState([
+			new() {
+				RequestKey = "aggregate-collector",
+				Tags = rules.Select(x => x.TagSourceGuid).ToArray()
+			}
+		]);
+
 		return aggregated
 			.Select(value => new
 			{
@@ -143,6 +155,8 @@ internal class AggregateCollector : CollectorBase
 		public required string Name { get; set; }
 
 		public required int TagSourceId { get; set; }
+
+		public required Guid TagSourceGuid { get; set; }
 
 		public required TagAggregation Type { get; set; }
 

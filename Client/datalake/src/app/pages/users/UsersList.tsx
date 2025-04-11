@@ -5,12 +5,14 @@ import UserButton from '@/app/components/buttons/UserButton'
 import FormRow from '@/app/components/FormRow'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
+import compareAccess from '@/functions/compareAccess'
 import getUserTypeName from '@/functions/getUserTypeName'
 import { useInterval } from '@/hooks/useInterval'
 import { timeAgo } from '@/state/timeAgoInstance'
 import { user } from '@/state/user'
 import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
+import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -37,46 +39,51 @@ const UsersList = observer(() => {
 
 	const columns: TableColumnsType<UserInfo> = [
 		{
-			dataIndex: 'guid',
+			dataIndex: 'fullName',
 			title: 'Учетная запись',
 			render: (_, record) => <UserButton userInfo={record} />,
+			sorter: (a, b) => a.fullName.localeCompare(b.fullName),
 		},
 		{
-			dataIndex: 'accessType',
-			title: 'Глобальный уровень доступа',
-			width: '16em',
-			render: (_, record) => <AccessTypeEl type={record.accessType} />,
-		},
-		{
-			dataIndex: 'accessType',
+			dataIndex: 'guid',
 			title: 'Активность',
 			width: '14em',
 			render: (_, record) => {
 				const state = states[record.guid]
-				if (!state) return <></>
+				if (!state) return <Tag>не замечена</Tag>
 				const lastVisit = new Date(state)
 				const late = Date.now() - Number(lastVisit)
 				return (
 					<Tag
 						icon={<ClockCircleOutlined />}
-						color={
-							late < 120000
-								? 'success'
-								: late < 3600000
-									? 'warning'
-									: 'default'
-						}
+						color={late < 120000 ? 'success' : late < 3600000 ? 'warning' : 'default'}
 					>
 						{timeAgo.format(lastVisit)}
 					</Tag>
 				)
 			},
+			sorter: (a, b) => {
+				const aState = states[a.guid]
+				const bState = states[b.guid]
+				if (!aState && !bState) return 0
+				else if (!aState) return 1
+				else if (!bState) return -1
+				else return dayjs(aState).diff(dayjs(bState))
+			},
 		},
 		{
-			dataIndex: 'guid',
+			dataIndex: 'accessType',
+			title: 'Глобальный уровень доступа',
+			width: '22em',
+			render: (_, record) => <AccessTypeEl type={record.accessType} />,
+			sorter: (a, b) => compareAccess(a.accessType, b.accessType),
+		},
+		{
+			dataIndex: 'type',
 			title: 'Тип учетной записи',
 			width: '20em',
 			render: (_, record) => <>{getUserTypeName(record.type)}</>,
+			sorter: (a, b) => a.type.toString().localeCompare(b.type.toString()),
 		},
 	]
 
@@ -86,11 +93,7 @@ const UsersList = observer(() => {
 	return (
 		<>
 			<PageHeader
-				right={
-					user.hasGlobalAccess(AccessType.Manager) && (
-						<Button onClick={create}>Добавить пользователя</Button>
-					)
-				}
+				right={user.hasGlobalAccess(AccessType.Manager) && <Button onClick={create}>Добавить пользователя</Button>}
 			>
 				Список пользователей
 			</PageHeader>
@@ -105,11 +108,9 @@ const UsersList = observer(() => {
 					</FormRow>
 					<Table
 						size='small'
+						showSorterTooltip={false}
 						dataSource={users.filter((x) =>
-							((x.login ?? '') + (x.fullName ?? ''))
-								.toLowerCase()
-								.trim()
-								.includes(search.toLowerCase()),
+							((x.login ?? '') + (x.fullName ?? '')).toLowerCase().trim().includes(search.toLowerCase()),
 						)}
 						columns={columns}
 						rowKey='guid'
