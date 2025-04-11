@@ -1,10 +1,12 @@
 ﻿using Datalake.Database.Extensions;
 using Datalake.Database.Models;
+using Datalake.Database.Services;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.Values;
 using LinqToDB;
@@ -722,16 +724,36 @@ public static class ValuesRepository
 		}
 
 		// мегазапрос для получения всех необходимых данных
+		string sql;
 		if (queries.Count > 0)
 		{
 			var megaQuery = queries.Aggregate((current, next) => current.UnionAll(next));
 
 			// выполнение мегазапроса
 			values = await megaQuery.ToListAsync();
+			sql = megaQuery.ToString() ?? string.Empty;
+		}
+		else
+		{
+			sql = string.Empty;
 		}
 
 		// заглушки, если значения так и не были проинициализированы
-		d = Stopwatch.StartNew();
+		d.Stop();
+
+		var metric = new HistoryReadMetric
+		{
+			Date = DateFormats.GetCurrentDateTime(),
+			Elapsed = d.Elapsed,
+			TagsId = identifiers,
+			Old = old,
+			Young = young,
+			RecordsCount = values.Count,
+			Sql = sql,
+		};
+
+		MetricsService.AddMetric(metric);
+
 		var lost = identifiers
 			.Except(values.Where(x => x.Date == old).Select(x => x.TagId))
 			.Select(id => LostTag(id, old))

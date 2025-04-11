@@ -18,10 +18,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
   <Target Name="UpdateCmdFile" AfterTargets="Pack">
     <PropertyGroup>
       <!-- Путь до файла cmd -->

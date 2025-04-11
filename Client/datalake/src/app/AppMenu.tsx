@@ -4,7 +4,13 @@ import ManualSourceIcon from '@/app/components/icons/ManualSourceIcon'
 import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
 import UserIcon from '@/app/components/icons/UserIcon'
 import { blue } from '@ant-design/colors'
-import { EditOutlined, PlaySquareOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import {
+	EditOutlined,
+	MenuUnfoldOutlined,
+	PlaySquareOutlined,
+	SettingOutlined,
+	UnorderedListOutlined,
+} from '@ant-design/icons'
 import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { observer } from 'mobx-react-lite'
@@ -171,11 +177,21 @@ const items = [
 				minimalAccess: AccessType.NotSet,
 			},
 			{
-				key: routes.settings,
+				key: routes.admin.settings,
 				label: (
-					<NavLink to={routes.settings}>
+					<NavLink to={routes.admin.settings}>
 						<SettingOutlined style={{ color: blue[5] }} />
 						&emsp;Настройки
+					</NavLink>
+				),
+				minimalAccess: AccessType.Admin,
+			},
+			{
+				key: routes.admin.metrics.read,
+				label: (
+					<NavLink to={routes.admin.metrics.read}>
+						<MenuUnfoldOutlined style={{ color: blue[5] }} />
+						&emsp;Метрики чтения
 					</NavLink>
 				),
 				minimalAccess: AccessType.Admin,
@@ -193,7 +209,6 @@ const AppMenu = observer(() => {
 	const currentPath = location.pathname
 
 	useEffect(() => {
-		// Найти все ссылки с классом active
 		const links = document.querySelectorAll('#app-menu a')
 		const selectedKeys = [] as string[]
 		links.forEach((link) => {

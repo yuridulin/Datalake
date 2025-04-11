@@ -1,7 +1,13 @@
 const withId = (route: string, id: string | number) => route.replace(':id', String(id))
 
 const routes = {
-	settings: '/settings',
+	admin: {
+		settings: '/settings',
+		metrics: {
+			root: '/metrics',
+			read: '/metrics/read',
+		},
+	},
 	users: {
 		root: '/users',
 		list: '/users/',

@@ -1,3 +1,4 @@
+import HistoryReadMetrics from '@/app/pages/admin/metrics/HistoryReadMetrics'
 import TagView from '@/app/pages/tags/tag/TagView'
 import TagsAggregatedList from '@/app/pages/tags/TagsAggregatedList'
 import UserView from '@/app/pages/users/user/UserView'
@@ -104,8 +105,18 @@ const router = createBrowserRouter([
 			},
 			// settings
 			{
-				path: routes.settings,
+				path: routes.admin.settings,
 				element: <SettingsPage />,
+			},
+			// metrics
+			{
+				path: routes.admin.metrics.root,
+				children: [
+					{
+						path: routes.admin.metrics.read,
+						element: <HistoryReadMetrics />,
+					},
+				],
 			},
 			// sources
 			{
