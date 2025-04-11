@@ -40,7 +40,7 @@ public class ValuesTrustedRequest
 	/// <summary>
 	/// Настройки времени
 	/// </summary>
-	public class TimeSettings
+	public record TimeSettings
 	{
 		/// <summary>
 		/// Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
