@@ -3,6 +3,7 @@ using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
+using Datalake.Server.Services.StateManager;
 using LinqToDB;
 using System.Diagnostics;
 
@@ -11,6 +12,7 @@ namespace Datalake.Server.BackgroundServices.Collector;
 internal class CollectorProcessor(
 	CollectorFactory collectorFactory,
 	IServiceScopeFactory serviceScopeFactory,
+	SourcesStateService sourcesStateService,
 	ILogger<CollectorProcessor> logger) : BackgroundService
 {
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -50,6 +52,8 @@ internal class CollectorProcessor(
 						.Where(x => x != null)
 						.Select(x => x!)
 						.ToList();
+
+					sourcesStateService.Initialize(newSources.Select(x => x.Id).ToArray());
 
 					Collectors.ForEach(x =>
 					{

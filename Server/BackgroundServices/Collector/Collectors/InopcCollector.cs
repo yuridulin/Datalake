@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Tables;
-using Datalake.PublicApi.Constants;
+﻿using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;

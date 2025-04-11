@@ -636,6 +636,10 @@ export interface SourceState {
 	lastConnection?: string | null
 	/** Было ли соединение при последнем подключении */
 	isConnected: boolean
+	/** Была ли попытка установить соединение */
+	isTryConnected: boolean
+	/** Список количества секунд с момента записи каждого тега */
+	valuesAfterWriteSeconds: number[]
 }
 
 /** Информация о настройках приложения, задаваемых через UI */
@@ -691,6 +695,46 @@ export type UserAuthInfo = UserSimpleInfo & {
 	 * @format guid
 	 */
 	energoId?: string | null
+}
+
+/** Результат выполнения запроса на чтение тегов */
+export interface HistoryReadMetric {
+	/**
+	 * Время записи значения
+	 * @format date-time
+	 * @minLength 1
+	 */
+	date: string
+	/** Идентификаторы тегов */
+	tagsId: number[]
+	/**
+	 * Дата начала диапазона
+	 * @format date-time
+	 * @minLength 1
+	 */
+	old: string
+	/**
+	 * Дата конца диапазона
+	 * @format date-time
+	 * @minLength 1
+	 */
+	young: string
+	/**
+	 * Время выполнения чтения
+	 * @format duration
+	 * @minLength 1
+	 */
+	elapsed: string
+	/**
+	 * Итоговый SQL код запроса
+	 * @minLength 1
+	 */
+	sql: string
+	/**
+	 * Количество прочитанных из БД записей
+	 * @format int32
+	 */
+	recordsCount: number
 }
 
 /** Информация о теге */

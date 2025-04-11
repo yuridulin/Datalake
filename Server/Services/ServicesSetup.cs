@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Repositories;
-using Datalake.Server.BackgroundServices.Collector;
+﻿using Datalake.Server.BackgroundServices.Collector;
 using Datalake.Server.BackgroundServices.HistoryIndexer;
 using Datalake.Server.BackgroundServices.HistoryInitial;
 using Datalake.Server.BackgroundServices.SettingsHandler;

@@ -18,4 +18,10 @@ public class TagCacheInfo : TagSimpleInfo
 	/// </summary>
 	[Required]
 	public required bool IsDeleted { get; set; } = false;
+
+	/// <summary>
+	/// Идентификатор источника данных тега
+	/// </summary>
+	[Required]
+	public required int SourceId { get; set; }
 }

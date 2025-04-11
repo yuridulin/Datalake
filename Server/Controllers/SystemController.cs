@@ -1,9 +1,11 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Repositories;
+using Datalake.Database.Services;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
+using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Settings;
 using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
@@ -172,5 +174,18 @@ public class SystemController(
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return Ok(AccessRepository.UserRights.ToDictionary(x => x.Key, x => x.Value));
+	}
+
+	/// <summary>
+	/// Получение списка сохраненных метрик
+	/// </summary>
+	/// <returns>Список метрик</returns>
+	[HttpGet("metrics/read")]
+	public ActionResult<HistoryReadMetric[]> GetReadMetrics()
+	{
+		var user = Authenticate();
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		return MetricsService.ReadMetrics();
 	}
 }

@@ -18,6 +18,7 @@ import {
 	BlockUpdateRequest,
 	BlockWithTagsInfo,
 	EnergoIdInfo,
+	HistoryReadMetric,
 	LogCategory,
 	LogInfo,
 	LogType,
@@ -596,6 +597,22 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	systemGetAccess = (params: RequestParams = {}) =>
 		this.request<Record<string, UserAuthInfo>, any>({
 			path: `/api/System/access`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemGetReadMetrics
+	 * @summary Получение списка сохраненных метрик
+	 * @request GET:/api/System/metrics/read
+	 * @response `200` `(HistoryReadMetric)[]` Список метрик
+	 */
+	systemGetReadMetrics = (params: RequestParams = {}) =>
+		this.request<HistoryReadMetric[], any>({
+			path: `/api/System/metrics/read`,
 			method: 'GET',
 			format: 'json',
 			...params,

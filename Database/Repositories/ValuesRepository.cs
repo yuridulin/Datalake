@@ -1,10 +1,12 @@
 ﻿using Datalake.Database.Extensions;
 using Datalake.Database.Models;
+using Datalake.Database.Services;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.Values;
 using LinqToDB;
@@ -185,8 +187,28 @@ public static class ValuesRepository
 	/// </summary>
 	internal static Dictionary<int, TagHistory> LiveValues { get; set; } = [];
 
-	internal static List<TagHistory> GetLiveValues(int[] identifiers)
+	/// <summary>
+	/// Чтение списка текущих значений тегов
+	/// </summary>
+	/// <param name="sourceId">Идентификатор источника данных</param>
+	/// <returns>Список значений</returns>
+	public static List<TagHistory> GetLiveValues(int sourceId)
 	{
+		var identifiers = TagsRepository.CachedTags.Values.Where(x => x.SourceId == sourceId).Select(x => x.Id).ToArray();
+
+		return GetLiveValues(identifiers);
+	}
+
+	/// <summary>
+	/// Чтение списка текущих значений тегов
+	/// </summary>
+	/// <param name="identifiers">Идентификаторы тегов</param>
+	/// <returns>Список значений</returns>
+	public static List<TagHistory> GetLiveValues(int[]? identifiers = null)
+	{
+		if (identifiers == null)
+			return LiveValues.Values.ToList();
+
 		return [.. identifiers.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateFormats.GetCurrentDateTime()))];
 	}
 
@@ -195,12 +217,12 @@ public static class ValuesRepository
 		var tags = db.Tags.Select(x => x.Id).ToArray();
 		var date = DateFormats.GetCurrentDateTime();
 
-		var table = await TablesRepository.GetHistoryTableAsync(db, DateFormats.GetCurrentDateTime().Date);
+		var table = await TablesRepository.GetHistoryTableAsync(db, date.Date);
 		var count = await table.CountAsync();
 
 		if (count == 0)
 		{
-			var lastDate = TablesRepository.GetPreviousTableDate(DateFormats.GetCurrentDateTime().Date);
+			var lastDate = TablesRepository.GetPreviousTableDate(date.Date);
 			if (lastDate != null)
 				table = await TablesRepository.GetHistoryTableAsync(db, lastDate.Value);
 			else
@@ -268,9 +290,11 @@ public static class ValuesRepository
 				{
 					LiveValues.Add(value.TagId, value);
 				}
-				else if (exist.Date <= value.Date)
+				else if (!exist.Equals(value))
 				{
-					LiveValues[exist.TagId] = value;
+					LiveValues[exist.TagId].Number = value.Number;
+					LiveValues[exist.TagId].Text = value.Text;
+					LiveValues[exist.TagId].Quality = value.Quality;
 				}
 			}
 		}
@@ -722,16 +746,36 @@ public static class ValuesRepository
 		}
 
 		// мегазапрос для получения всех необходимых данных
+		string sql;
 		if (queries.Count > 0)
 		{
 			var megaQuery = queries.Aggregate((current, next) => current.UnionAll(next));
 
 			// выполнение мегазапроса
 			values = await megaQuery.ToListAsync();
+			sql = megaQuery.ToString() ?? string.Empty;
+		}
+		else
+		{
+			sql = string.Empty;
 		}
 
 		// заглушки, если значения так и не были проинициализированы
-		d = Stopwatch.StartNew();
+		d.Stop();
+
+		var metric = new HistoryReadMetric
+		{
+			Date = DateFormats.GetCurrentDateTime(),
+			Elapsed = d.Elapsed,
+			TagsId = identifiers,
+			Old = old,
+			Young = young,
+			RecordsCount = values.Count,
+			Sql = sql,
+		};
+
+		MetricsService.AddMetric(metric);
+
 		var lost = identifiers
 			.Except(values.Where(x => x.Date == old).Select(x => x.TagId))
 			.Select(id => LostTag(id, old))
