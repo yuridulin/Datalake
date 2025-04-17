@@ -30,7 +30,7 @@ const SourcesList = observer(() => {
 	}
 
 	const getStates = () => {
-		api.systemGetSources().then((res) => {
+		api.systemGetSourcesStates().then((res) => {
 			setStates(res.data)
 		})
 	}
