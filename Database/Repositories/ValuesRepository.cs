@@ -482,18 +482,24 @@ public static class ValuesRepository
 	{
 		List<ValuesResponse> responses = [];
 
-		foreach (var timeGroup in trustedRequests.GroupBy(x => x.Time))
-		{
-			var timeSettings = timeGroup.Key;
-			var processedRequests = timeGroup.ToArray();
-			var trustedIdentifiers = processedRequests.SelectMany(x => x.Tags.Select(t => t.Id)).ToArray();
-
-			// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
-			if (!timeSettings.Exact.HasValue && !timeSettings.Old.HasValue && !timeSettings.Young.HasValue)
+		var groups = trustedRequests
+			.GroupBy(x => x.Time)
+			.Select(g => new
 			{
-				var values = GetLiveValues(trustedIdentifiers);
+				Settings = g.Key,
+				Requests = g.ToArray(),
+				TagsId = g.SelectMany(r => r.Tags).Select(r => r.Id).ToArray(),
+			})
+			.ToArray();
 
-				foreach (var request in processedRequests)
+		foreach (var group in groups)
+		{
+			// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
+			if (!group.Settings.Exact.HasValue && !group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
+			{
+				var values = GetLiveValues(group.TagsId);
+
+				foreach (var request in group.Requests)
 				{
 					var response = new ValuesResponse
 					{
@@ -525,24 +531,26 @@ public static class ValuesRepository
 			}
 			else
 			{
-				DateTime exact = timeSettings.Exact ?? DateFormats.GetCurrentDateTime();
+				DateTime exact = group.Settings.Exact ?? DateFormats.GetCurrentDateTime();
 				DateTime old, young;
 
-				// Получение истории
-				if (timeSettings.Exact.HasValue)
+				if (group.Settings.Exact.HasValue)
 				{
-					young = timeSettings.Exact.Value;
-					old = timeSettings.Exact.Value;
+					young = group.Settings.Exact.Value;
+					old = group.Settings.Exact.Value;
 				}
 				else
 				{
-					young = timeSettings.Young ?? exact;
-					old = timeSettings.Old ?? young.Date;
+					young = group.Settings.Young ?? exact;
+					old = group.Settings.Old ?? young.Date;
 				}
 
-				var databaseValues = await ReadHistoryValuesAsync(db, trustedIdentifiers, old, young);
+				var (databaseValues, metric) = await ReadHistoryValuesAsync(db, group.TagsId, old, young);
 
-				foreach (var request in processedRequests)
+				metric.RequestKeys = group.Requests.Select(x => x.RequestKey).ToArray();
+				MetricsService.AddMetric(metric);
+
+				foreach (var request in group.Requests)
 				{
 					var response = new ValuesResponse
 					{
@@ -653,7 +661,7 @@ public static class ValuesRepository
 		return responses;
 	}
 
-	internal static async Task<List<TagHistory>> ReadHistoryValuesAsync(
+	internal static async Task<(List<TagHistory>, HistoryReadMetric)> ReadHistoryValuesAsync(
 		DatalakeContext db,
 		int[] identifiers,
 		DateTime old,
@@ -675,27 +683,31 @@ public static class ValuesRepository
 
 		ITable<TagHistory> table = null!;
 
-		// проход по циклу, чтобы выгрузить все данные между old и young
-		do
+		// если запрошен диапазон, а не снимок
+		if (old != young)
 		{
-			if (tables.ContainsKey(seekDate))
+			// проход по циклу, чтобы выгрузить все данные между old и young
+			do
 			{
-				table = db.GetTable<TagHistory>().TableName(TablesRepository.GetTableName(seekDate));
+				if (tables.ContainsKey(seekDate))
+				{
+					table = db.GetTable<TagHistory>().TableName(TablesRepository.GetTableName(seekDate));
 
-				var query = table
-					.Where(x => identifiers.Contains(x.TagId));
+					var query = table
+						.Where(x => identifiers.Contains(x.TagId));
 
-				if (seekDate == lastDate)
-					query = query.Where(x => x.Date <= young);
-				if (seekDate == firstDate)
-					query = query.Where(x => x.Date > old);
+					if (seekDate == lastDate)
+						query = query.Where(x => x.Date <= young);
+					if (seekDate == firstDate)
+						query = query.Where(x => x.Date > old);
 
-				queries.Add(query);
+					queries.Add(query);
+				}
+
+				seekDate = seekDate.AddDays(-1);
 			}
-
-			seekDate = seekDate.AddDays(-1);
+			while (seekDate >= firstDate);
 		}
-		while (seekDate >= firstDate);
 
 		// CTE для поиска последних по дате (перед old) значений для каждого из тегов
 		if (table == null)
@@ -774,8 +786,6 @@ public static class ValuesRepository
 			Sql = sql,
 		};
 
-		MetricsService.AddMetric(metric);
-
 		var lost = identifiers
 			.Except(values.Where(x => x.Date == old).Select(x => x.TagId))
 			.Select(id => LostTag(id, old))
@@ -786,7 +796,7 @@ public static class ValuesRepository
 			values.AddRange(lost);
 		}
 
-		return values;
+		return (values, metric);
 	}
 
 	static List<TagHistory> StretchByResolution(

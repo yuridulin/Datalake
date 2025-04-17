@@ -18,7 +18,7 @@ import {
 	BlockUpdateRequest,
 	BlockWithTagsInfo,
 	EnergoIdInfo,
-	HistoryReadMetric,
+	HistoryReadMetricInfo,
 	LogCategory,
 	LogInfo,
 	LogType,
@@ -510,14 +510,30 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * No description
 	 *
 	 * @tags System
-	 * @name SystemGetSources
+	 * @name SystemGetSourcesStates
 	 * @summary Информация о подключении к источникам данных
 	 * @request GET:/api/System/sources
 	 * @response `200` `Record<string,SourceState>`
 	 */
-	systemGetSources = (params: RequestParams = {}) =>
+	systemGetSourcesStates = (params: RequestParams = {}) =>
 		this.request<Record<string, SourceState>, any>({
 			path: `/api/System/sources`,
+			method: 'GET',
+			format: 'json',
+			...params,
+		})
+	/**
+	 * No description
+	 *
+	 * @tags System
+	 * @name SystemGetTagsStates
+	 * @summary Информация о подключении к источникам данных
+	 * @request GET:/api/System/tags
+	 * @response `200` `Record<string,Record<string,string>>`
+	 */
+	systemGetTagsStates = (params: RequestParams = {}) =>
+		this.request<Record<string, Record<string, string>>, any>({
+			path: `/api/System/tags`,
 			method: 'GET',
 			format: 'json',
 			...params,
@@ -608,10 +624,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
 	 * @name SystemGetReadMetrics
 	 * @summary Получение списка сохраненных метрик
 	 * @request GET:/api/System/metrics/read
-	 * @response `200` `(HistoryReadMetric)[]` Список метрик
+	 * @response `200` `(HistoryReadMetricInfo)[]` Список метрик
 	 */
 	systemGetReadMetrics = (params: RequestParams = {}) =>
-		this.request<HistoryReadMetric[], any>({
+		this.request<HistoryReadMetricInfo[], any>({
 			path: `/api/System/metrics/read`,
 			method: 'GET',
 			format: 'json',

@@ -1,6 +1,6 @@
 ﻿using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
-using Datalake.Server.Models.System;
+using Datalake.Server.Services.StateManager.Models;
 
 namespace Datalake.Server.Services.StateManager;
 

@@ -13,7 +13,8 @@ namespace Datalake.Server.BackgroundServices.Collector;
 /// </summary>
 public class CollectorFactory(
 	ReceiverService receiverService,
-	SourcesStateService stateService,
+	SourcesStateService sourcesStateService,
+	TagsStateService tagsStateService,
 	IServiceProvider serviceProvider,
 	ILoggerFactory loggerFactory)
 {
@@ -27,16 +28,16 @@ public class CollectorFactory(
 		return source.Type switch
 		{
 			SourceType.Inopc
-				=> new InopcCollector(receiverService, stateService, source, loggerFactory.CreateLogger<InopcCollector>()),
+				=> new InopcCollector(receiverService, sourcesStateService, source, loggerFactory.CreateLogger<InopcCollector>()),
 
 			SourceType.Datalake
-				=> new OldDatalakeCollector(receiverService, stateService, source, loggerFactory.CreateLogger<OldDatalakeCollector>()),
+				=> new OldDatalakeCollector(receiverService, sourcesStateService, source, loggerFactory.CreateLogger<OldDatalakeCollector>()),
 
 			SourceType.Datalake_v2
 				=> new DatalakeCollector(receiverService, source, loggerFactory.CreateLogger<DatalakeCollector>()),
 
 			SourceType.Calculated
-				=> new CalculateCollector(source, loggerFactory.CreateLogger<CalculateCollector>()),
+				=> new CalculateCollector(source, tagsStateService, loggerFactory.CreateLogger<CalculateCollector>()),
 
 			SourceType.System
 				=> new SystemCollector(source, loggerFactory.CreateLogger<SystemCollector>()),
@@ -45,6 +46,7 @@ public class CollectorFactory(
 				=> new AggregateCollector(
 					serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DatalakeContext>(),
 					source,
+					tagsStateService,
 					loggerFactory.CreateLogger<AggregateCollector>()),
 
 			_ => null,

@@ -48,4 +48,10 @@ public class HistoryReadMetric
 	/// </summary>
 	[Required]
 	public required int RecordsCount { get; set; }
+
+	/// <summary>
+	/// Список запросов к API, которые являются причиной запроса к БД
+	/// </summary>
+	[Required]
+	public string[] RequestKeys { get; set; } = [];
 }
