@@ -49,7 +49,13 @@ const columns: ColumnType<LogInfo>[] = [
 	{
 		title: 'Описание',
 		dataIndex: 'details',
-		render: (desc) => <div style={{ wordBreak: 'break-all' }}>{desc}</div>,
+		render: (desc) => (
+			<div style={{ wordBreak: 'break-all' }}>
+				{desc.split('\n').map((x: string) => (
+					<div>{x}</div>
+				))}
+			</div>
+		),
 	},
 ]
 
