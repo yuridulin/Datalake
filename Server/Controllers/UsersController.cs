@@ -19,6 +19,7 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class UsersController(
 	DatalakeContext db,
+	ILogger<UsersController> logger,
 	SessionManagerService sessionManager) : ApiControllerBase
 {
 	/// <summary>
@@ -34,6 +35,7 @@ public class UsersController(
 		AccessRepository.HasGlobalAccess(user, PublicApi.Enums.AccessType.Admin);
 
 		var settings = await SystemRepository.GetSettingsAsSystemAsync(db);
+		var address = "https://" + settings.EnergoIdApi;
 
 		EnergoIdUserData[]? energoIdReceivedUsers = null;
 
@@ -45,19 +47,19 @@ public class UsersController(
 			};
 
 			var client = new HttpClient(clientHandler);
-			var users = await client.GetFromJsonAsync<EnergoIdUserData[]>("https://" + settings.EnergoIdHost);
+			var users = await client.GetFromJsonAsync<EnergoIdUserData[]>(address);
 
 			if (users != null)
 				energoIdReceivedUsers = users;
 		}
 		catch (Exception ex)
 		{
-			return Ok(new { ex.Message, ex.StackTrace });
+			logger.LogCritical(ex, "Ошибка при получении пользователей EnergoId. Адрес: {address}", address);
 		}
 
 		if (energoIdReceivedUsers == null)
 		{
-			return new EnergoIdInfo { Connected = false };
+			return new EnergoIdInfo();
 		}
 
 		var exists = await UsersRepository.GetFlatInfo(db)
