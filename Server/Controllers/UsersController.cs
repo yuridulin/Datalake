@@ -50,11 +50,14 @@ public class UsersController(
 			if (users != null)
 				energoIdReceivedUsers = users;
 		}
-		catch { }
+		catch (Exception ex)
+		{
+			return Ok(new { ex.Message, ex.StackTrace });
+		}
 
 		if (energoIdReceivedUsers == null)
 		{
-			return new EnergoIdInfo();
+			return new EnergoIdInfo { Connected = false };
 		}
 
 		var exists = await UsersRepository.GetFlatInfo(db)

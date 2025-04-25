@@ -69,29 +69,43 @@ internal class AggregateCollector : CollectorBase
 	private readonly TagAggregationRule[] _hourRules;
 	private readonly TagAggregationRule[] _dayRules;
 	private readonly TagsStateService _tagsStateService;
+	private int _lastMinute = -1;
+	private int _lastHour = -1;
+	private int _lastDay = -1;
 
 	private async Task Work()
 	{
 		while (!_tokenSource.Token.IsCancellationRequested)
 		{
-			var currentAggregationMoment = DateFormats.GetCurrentDateTime();
-			_logger.LogInformation("Расчет агрегированных: : {currentAggregationMoment}", currentAggregationMoment);
+			var now = DateFormats.GetCurrentDateTime();
+
+			var minute = now.Minute;
+			var hour = now.Hour;
+			var day = now.Day;
 
 			try
 			{
-				bool isDay = currentAggregationMoment.Hour == 0;
-				List<CollectValue> collectValues;
+				List<CollectValue> collectValues = new();
 
-				collectValues = await GetAggregated(_minuteRules, currentAggregationMoment, AggregationPeriod.Munite);
-
-				if (currentAggregationMoment.Minute == 0)
+				if (_lastMinute != minute)
 				{
-					collectValues.AddRange(await GetAggregated(_hourRules, currentAggregationMoment, AggregationPeriod.Hour));
+					_logger.LogInformation("Расчет минутных значений: {now}", now);
+					collectValues.AddRange(await GetAggregated(_minuteRules, now, AggregationPeriod.Munite));
+					_lastMinute = minute;
 				}
 
-				if (currentAggregationMoment.Hour == 0)
+				if (_lastHour != hour)
 				{
-					collectValues.AddRange(await GetAggregated(_dayRules, currentAggregationMoment, AggregationPeriod.Day));
+					_logger.LogInformation("Расчет часовых значений: {now}", now);
+					collectValues.AddRange(await GetAggregated(_hourRules, now, AggregationPeriod.Hour));
+					_lastHour = hour;
+				}
+
+				if (_lastDay != day)
+				{
+					_logger.LogInformation("Расчет суточных значений: {now}", now);
+					collectValues.AddRange(await GetAggregated(_dayRules, now, AggregationPeriod.Day));
+					_lastDay = day;
 				}
 
 				CollectValues?.Invoke(this, collectValues);
@@ -102,11 +116,7 @@ internal class AggregateCollector : CollectorBase
 			}
 			finally
 			{
-				var nextMinute = currentAggregationMoment.RoundToFrequency(TagFrequency.ByMinute).AddMinutes(1);
-				var now = DateFormats.GetCurrentDateTime();
-				var delay = nextMinute - now;
-				_logger.LogInformation("Ожидание следующего выполнения: {delay}", delay);
-				await Task.Delay(delay);
+				await Task.Delay(100);
 			}
 		}
 	}
@@ -117,7 +127,12 @@ internal class AggregateCollector : CollectorBase
 
 		_tagsStateService.UpdateTagState([
 			new() {
-				RequestKey = "aggregate-collector",
+				RequestKey = "aggregate-collector-" + period switch
+				{
+					AggregationPeriod.Munite => "min",
+					AggregationPeriod.Hour => "hour",
+					AggregationPeriod.Day => "day"
+				},
 				Tags = rules.Select(x => x.TagSourceGuid).ToArray()
 			}
 		]);
