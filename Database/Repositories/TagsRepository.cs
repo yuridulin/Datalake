@@ -350,6 +350,10 @@ public static class TagsRepository
 		if (count != 1)
 			throw new DatabaseException($"Не удалось сохранить тег {guid}", DatabaseStandartError.UpdatedZero);
 
+		var inputs = await db.TagInputs
+			.Where(x => x.TagId == tag.Id)
+			.ToListAsync();
+
 		await db.TagInputs
 			.Where(x => x.TagId == tag.Id)
 			.DeleteAsync();
@@ -365,7 +369,56 @@ public static class TagsRepository
 		var updatedTag = await db.Tags.Where(x => x.GlobalGuid == guid).FirstOrDefaultAsync()
 			?? throw new NotFoundException($"тег {guid}");
 
-		await LogAsync(db, userGuid, tag.Id, $"Изменен тег \"{tag.Name}\"", ObjectExtension.Difference(tag, updatedTag));
+		List<string> changes = new();
+		if (tag.Name != updateRequest.Name) changes.Add($"название: [{tag.Name}] > [{updateRequest.Name}]");
+		if (tag.Description != updateRequest.Description) changes.Add($"описание: [{tag.Description}] > [{updateRequest.Description}]");
+		if (tag.Type != updateRequest.Type) changes.Add($"тип значения: [{tag.Type}] > [{ updateRequest.Type}]");
+		if (tag.Frequency != updateRequest.Frequency) changes.Add($"частота: [{tag.Frequency}] > [{ updateRequest.Frequency}]");
+		if (tag.SourceId != updateRequest.SourceId) changes.Add($"источник: [{tag.SourceId}] > [{ updateRequest.SourceId}]");
+		if (tag.SourceItem != updateRequest.SourceItem) changes.Add($"путь в источнике: [{tag.SourceItem}] > [{ updateRequest.SourceItem}]");
+		if (tag.IsScaling != updateRequest.IsScaling) changes.Add($"шкалирование: [{tag.IsScaling}] > [{ updateRequest.IsScaling}]");
+		if (tag.MaxEu != updateRequest.MaxEu) changes.Add($"макс. знач. шкалы: [{tag.MaxEu}] > [{ updateRequest.MaxEu}]");
+		if (tag.MinEu != updateRequest.MinEu) changes.Add($"мин. знач. шкалы: [{tag.MinEu}] > [{ updateRequest.MinEu}]");
+		if (tag.MaxRaw != updateRequest.MaxRaw) changes.Add($"макс. знач. диапазона: [{tag.MaxRaw}] > [{ updateRequest.MaxRaw}]");
+		if (tag.MinRaw != updateRequest.MinRaw) changes.Add($"миню знач. диапазона: [{tag.MinRaw}] > [{ updateRequest.MinRaw}]");
+		if (tag.Formula != updateRequest.Formula) changes.Add($"формула: [{tag.Formula}] > [{ updateRequest.Formula}]");
+		if (tag.SourceTagId != updateRequest.SourceTagId) changes.Add($"тег-источник: [{tag.SourceTagId}] > [{updateRequest.SourceTagId}]");
+		if (tag.Aggregation != updateRequest.Aggregation) changes.Add($"тип агрегации: [{tag.Aggregation}] > [{ updateRequest.Aggregation}]");
+		if (tag.AggregationPeriod != updateRequest.AggregationPeriod) changes.Add($"период агрегации: [{tag.AggregationPeriod}] > [{ updateRequest.AggregationPeriod}]");
+
+		List<string> addedInputs = new();
+		List<string> updatedInputs = new();
+		List<string> deletedInputs = new();
+		foreach (var input in inputs)
+		{
+			var updated = updateRequest.FormulaInputs.FirstOrDefault(x => x.VariableName == input.VariableName);
+			if (updated == null)
+			{
+				deletedInputs.Add(input.VariableName);
+			}
+			else if (input.InputTagId != updated.TagId)
+			{
+				updatedInputs.Add($"{input.VariableName}: [{input.InputTagId}] > [{updated.TagId}]");
+			}
+		}
+		foreach (var updated in updateRequest.FormulaInputs)
+		{
+			if (inputs.Any(x => x.VariableName == updated.VariableName))
+				continue;
+
+			addedInputs.Add($"{updated.VariableName}: [{updated.TagId}]");
+		}
+		if (addedInputs.Count > 0 || updatedInputs.Count > 0 || deletedInputs.Count > 0)
+		{
+			string inputString = "входные параметры формулы: "
+				+ (addedInputs.Count > 0 ? "\tдобавлены: " + string.Join(", ", addedInputs) : string.Empty)
+				+ (updatedInputs.Count > 0 ? "\tизменены: " + string.Join(", ", updatedInputs) : string.Empty)
+				+ (deletedInputs.Count > 0 ? "\tудалены: " + string.Join(", ", deletedInputs) : string.Empty);
+
+			changes.Add(inputString);
+		}
+
+		await LogAsync(db, userGuid, tag.Id, $"Изменен тег \"{tag.Name}\"", string.Join(",\n", changes));
 
 		await transaction.CommitAsync();
 
