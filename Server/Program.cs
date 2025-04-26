@@ -58,6 +58,7 @@ namespace Datalake.Server
 
 			app.UseDefaultFiles();
 			app.UseStaticFiles();
+			app.UseHttpsRedirection();
 			app.UseRouting();
 			app.UseCors(policy =>
 			{

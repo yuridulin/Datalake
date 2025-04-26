@@ -87,6 +87,7 @@ const TagForm = () => {
 				setTag(info)
 				setRequest({
 					...info,
+					sourceTagId: info.sourceTag?.id,
 					formulaInputs: info.formulaInputs.map((x, index) => ({
 						key: index,
 						tagId: x.id,
@@ -172,6 +173,7 @@ const TagForm = () => {
 			sourceItem: strategy === SourceStrategy.FromSource ? request.sourceItem : null,
 			aggregation: strategy === SourceStrategy.Aggregated ? request.aggregation : null,
 			aggregationPeriod: strategy === SourceStrategy.Aggregated ? request.aggregationPeriod : null,
+			sourceTagId: strategy == SourceStrategy.Aggregated ? request.sourceTagId : null,
 		})
 	}
 
