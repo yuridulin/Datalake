@@ -459,14 +459,12 @@ public static class ValuesRepository
 			await nextTable
 				.BulkCopyAsync(records
 					.Where(x => tagsWithoutNextValues.Contains(x.TagId) && !tagsWithNextInitialValues.Contains(x.TagId))
-					.Select(x => new TagHistory
-					{
-						TagId = x.TagId,
-						Date = nextDate.Value,
-						Number = x.Number,
-						Text = x.Text,
-						Quality = x.Quality == TagQuality.Bad_ManualWrite ? TagQuality.Bad_LOCF : TagQuality.Good_LOCF
-					}));
+				.Select(x => new TagHistory
+				{
+					Date = nextDate.Value,
+					Number = x.Number,
+					Text = x.Text,
+				}));
 
 			date = nextDate.Value;
 		}
@@ -694,7 +692,8 @@ public static class ValuesRepository
 					table = db.GetTable<TagHistory>().TableName(TablesRepository.GetTableName(seekDate));
 
 					var query = table
-						.Where(x => identifiers.Contains(x.TagId));
+						.Where(x => identifiers.Contains(x.TagId))
+						.Where(x => x.Quality != TagQuality.Bad_LOCF && x.Quality != TagQuality.Good_LOCF);
 
 					if (seekDate == lastDate)
 						query = query.Where(x => x.Date <= young);
