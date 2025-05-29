@@ -262,13 +262,13 @@ public static class ValuesRepository
 				}
 			where rt.rn == 1
 			select new TagHistory
-		{
+			{
 				TagId = rt.TagId,
 				Date = rt.Date,
 				Text = rt.Text,
 				Number = rt.Number,
 				Quality = rt.Quality,
-		};
+			};
 
 		var values = await query.ToListAsync();
 
@@ -367,38 +367,43 @@ public static class ValuesRepository
 		return responses;
 	}
 
+	/// <summary>
+	/// Запись значений в партицию через временную таблицу
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="records">Список записей для ввода</param>
 	private static async Task WriteHistoryValuesAsync(
 		DatalakeContext db, List<TagHistory> records)
 	{
 		if (records.Count == 0)
 			return;
 
-		foreach (var g in records.GroupBy(x => x.Date.Date))
+		foreach (var dayRecordsGroup in records.GroupBy(x => x.Date.Date))
 		{
-			var table = await TablesRepository.GetHistoryTableAsync(db, g.Key);
-			var values = g.Select(x => x);
+			var dayTable = await TablesRepository.GetHistoryTableAsync(db, dayRecordsGroup.Key);
+			var dayValues = dayRecordsGroup.Select(x => x).ToArray();
 
 			string tempTableName = "TagsHistoryInserting_" + DateTime.UtcNow.ToFileTimeUtc().ToString();
 			var tempTable = await db.CreateTempTableAsync<TagHistory>(tempTableName);
 
-			await tempTable.BulkCopyAsync(values);
+			await tempTable.BulkCopyAsync(dayValues);
 
-			var existValues =
-				from exist in table
+			var previousExistValues =
+				from exist in dayTable
 				from insert in tempTable.LeftJoin(x => x.Date == exist.Date && x.TagId == exist.TagId)
 				where insert != null
 				select exist;
 
-			await existValues.DeleteAsync();
+			await previousExistValues.DeleteAsync();
 
-			await table.BulkCopyAsync(tempTable);
+			await dayTable.BulkCopyAsync(tempTable);
 
 			await db.DropTableAsync<TagHistory>(tempTableName);
 
 			// Если пишем в прошлое, нужно обновить стартовые записи в будущем
-			if (g.Key < DateTime.Today)
+			if (dayRecordsGroup.Key < DateTime.Today)
 			{
-				await UpdateInitialValuesInFuture(db, records, g);
+				await UpdateInitialValuesInFuture(db, dayRecordsGroup.Key, dayValues);
 			}
 		}
 	}
@@ -416,59 +421,51 @@ public static class ValuesRepository
 		}
 	}
 
+	/// <summary>
+	/// Обновление стартовых значений в таблицах будущего после новой записи
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="currentDate"></param>
+	/// <param name="writedRecords"></param>
 	private static async Task UpdateInitialValuesInFuture(
 		DatalakeContext db,
-		List<TagHistory> records,
-		IGrouping<DateTime, TagHistory> g)
+		DateTime currentDate,
+		TagHistory[] writedRecords)
 	{
-		DateTime date = g.Key;
+		var seekDate = currentDate;
+		var valuesToInitial = writedRecords;
 
 		do
 		{
-			var nextDate = TablesRepository.GetNextTableDate(date);
-			if (!nextDate.HasValue)
-				break;
+			var seekTable = await TablesRepository.GetHistoryTableAsync(db, seekDate);
 
-			var table = await TablesRepository.GetHistoryTableAsync(db, date);
-			var tagsWithoutNextValues = await table
-				.Where(x => !records.Any(r => r.TagId == x.TagId && r.Date < x.Date))
-				.Select(x => x.TagId)
+			var tagsWithLaterValues = await seekTable
+				.Where(exist => valuesToInitial.Any(writed => writed.TagId == exist.TagId && exist.Date > writed.Date))
 				.ToArrayAsync();
 
-			if (tagsWithoutNextValues.Length == 0)
+			valuesToInitial = valuesToInitial.Where(x => !tagsWithLaterValues.Select(x => x.TagId).Contains(x.TagId)).ToArray();
+			if (valuesToInitial.Length == 0)
+				break;
+
+			var nextDate = TablesRepository.GetNextTableDate(seekDate);
+			if (nextDate == null)
 				break;
 
 			var nextTable = await TablesRepository.GetHistoryTableAsync(db, nextDate.Value);
-
-			var tagsWithNextInitialValues = await nextTable
-				.Where(x => tagsWithoutNextValues.Contains(x.TagId))
-				.Where(x => x.Quality == TagQuality.Bad_LOCF || x.Quality == TagQuality.Good_LOCF)
-				.Select(x => x.TagId)
-				.ToArrayAsync();
-
-			await nextTable
-				.Join(records.Where(x => tagsWithNextInitialValues.Contains(x.TagId)),
-					data => data.TagId, updated => updated.TagId, (data, updated) => new { data, updated })
-				.Set(joined => joined.data.Text, joined => joined.updated.Text)
-				.Set(joined => joined.data.Number, joined => joined.updated.Number)
-				.Set(joined => joined.data.Quality, joined => joined.updated.Quality == TagQuality.Bad_ManualWrite
-					? TagQuality.Bad_LOCF
-					: TagQuality.Good_LOCF)
-				.UpdateAsync();
-
-			await nextTable
-				.BulkCopyAsync(records
-					.Where(x => tagsWithoutNextValues.Contains(x.TagId) && !tagsWithNextInitialValues.Contains(x.TagId))
+			await nextTable.DeleteAsync(x => x.Quality == TagQuality.Good_LOCF && valuesToInitial.Select(v => v.TagId).Contains(x.TagId));
+			await nextTable.BulkCopyAsync(valuesToInitial
 				.Select(x => new TagHistory
 				{
 					Date = nextDate.Value,
+					Quality = TagQuality.Good_LOCF,
 					Number = x.Number,
+					TagId = x.TagId,
 					Text = x.Text,
 				}));
 
-			date = nextDate.Value;
+			seekDate = nextDate.Value;
 		}
-		while (true);
+		while (seekDate < DateTime.Today);
 	}
 
 	#endregion
