@@ -94,13 +94,18 @@ public static class TablesRepository
 
 	internal static DateTime? GetNextTableDate(DateTime date)
 	{
-		return CachedTables.Keys.Where(x => x > date).OrderBy(x => x).FirstOrDefault();
+		var nextDate = CachedTables.Keys.Where(x => x > date).OrderBy(x => x).FirstOrDefault();
+		if (nextDate == DateTime.MinValue || (nextDate.Year == 1 && nextDate.Month == 1 && nextDate.Day == 1))
+			return null;
+		return nextDate;
 	}
 
 	internal static DateTime? GetPreviousTableDate(DateTime date)
 	{
 		var previousDate = CachedTables.Keys.Where(x => x < date).OrderByDescending(x => x).FirstOrDefault();
-		return previousDate == DateTime.MinValue ? null : previousDate;
+		if (previousDate == DateTime.MinValue || (previousDate.Year == 1 && previousDate.Month == 1 && previousDate.Day == 1))
+			return null;
+		return previousDate;
 	}
 
 	internal static async Task<ITable<TagHistory>> GetHistoryTableAsync(DatalakeContext db, DateTime seekDate)
