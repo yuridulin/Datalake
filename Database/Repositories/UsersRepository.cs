@@ -388,7 +388,7 @@ public static class UsersRepository
 			AffectedUserGuid = guid,
 			Text = message,
 			Type = LogType.Success,
-			AuthorGuid = authorGuid,
+			AuthorGuid = authorGuid == Guid.Empty ? null : authorGuid,
 			Details = details,
 		});
 	}
