@@ -136,7 +136,7 @@ const TagView = observer(() => {
 
 	const info: InfoTableProps['items'] = {
 		Название: <CopyableText text={tag.name} />,
-		Описание: tag.description || <i>нет</i>,
+		Описание: tag.description ? <i>нет</i> : <>{tag.description}</>,
 		Источник: <SourceButton source={{ id: tag.sourceId, name: tag.sourceName || '?' }} />,
 		'Интервал обновления': tag.sourceId !== SourceType.Manual && tag.sourceId !== SourceType.Manual && (
 			<TagFrequencyEl frequency={tag.frequency} full={true} />
