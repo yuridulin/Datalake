@@ -81,7 +81,8 @@ const TagView = observer(() => {
 	}, [id, viewTags])
 
 	const renderFormulaWithValues = (formula: string) => {
-		if (!formula || !tag.formulaInputs?.length) return formula
+		if (!formula) return formula
+		if (!tag.formulaInputs.length) return formula
 
 		// Функция экранирования для RegExp
 		const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
