@@ -4,6 +4,7 @@ using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.Values;
+using System.Globalization;
 
 internal static class TagHistoryExtension
 {
@@ -72,9 +73,10 @@ internal static class TagHistoryExtension
 				break;
 
 			case TagType.Number:
-				if (float.TryParse(text ?? "x", out float number))
+				if (double.TryParse(text ?? "x", NumberStyles.Float, CultureInfo.InvariantCulture, out double dValue))
 				{
-					// вычисление значения на основе шкалирования
+					float number = (float)dValue;
+
 					if (scalingCoefficient != 1)
 					{
 						history.Number = number * scalingCoefficient;
