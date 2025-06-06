@@ -24,7 +24,8 @@ export default function HelpNCalc() {
 						<strong>Функции: </strong>
 						встроенные функции, такие как <code>Sin(x)</code>, <code>Cos(x)</code>, <code>Sqrt(x)</code> и другие.
 						Полный список функций доступен{' '}
-						<a href='https://ncalc.github.io/ncalc/articles/functions.html#built-in-functions'>здесь</a>.
+						<a href='https://ncalc.github.io/ncalc/articles/functions.html#built-in-functions'>здесь</a>.<br />
+						Названия функций - <a>регистрозависимы</a>, необходимо точное соответствие с документацией.
 					</li>
 					<li>
 						<strong>Параметры: </strong>

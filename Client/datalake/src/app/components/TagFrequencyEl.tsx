@@ -32,7 +32,11 @@ const TagFrequencyEl = ({ frequency, full = false }: TagFrequencyElProps) => {
 				</b>
 			)
 		default:
-			return <></>
+			return (
+				<b title={name} style={{ color, fontWeight }}>
+					{full ? 'По изменению' : ''}
+				</b>
+			)
 	}
 }
 

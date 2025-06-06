@@ -142,6 +142,7 @@ public static class BlocksRepository
 					return block;
 				})
 				.Where(x => x.Children.Length > 0 || x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				.OrderBy(x => x.Name)
 				.ToArray();
 		}
 	}
@@ -415,6 +416,7 @@ public static class BlocksRepository
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
 					from tag in db.Tags.InnerJoin(x => x.Id == block_tag.TagId && !x.IsDeleted)
 					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
+					orderby block_tag.Name
 					select new BlockNestedTagInfo
 					{
 						Id = tag.Id,
@@ -478,6 +480,7 @@ public static class BlocksRepository
 				Adults = parentsCte.Where(x => x.Id != id).ToArray(),
 				Children = (
 					from child in db.Blocks.LeftJoin(x => x.ParentId == block.Id && !x.IsDeleted)
+					orderby child.Name
 					select new BlockFullInfo.BlockChildInfo
 					{
 						Id = child.Id,
@@ -486,6 +489,7 @@ public static class BlocksRepository
 				).ToArray(),
 				Properties = (
 					from property in db.BlockProperties.LeftJoin(x => x.BlockId == block.Id)
+					orderby property.Name
 					select new BlockFullInfo.BlockPropertyInfo
 					{
 						Id = property.Id,
@@ -498,6 +502,7 @@ public static class BlocksRepository
 					from block_tag in db.BlockTags.InnerJoin(x => x.BlockId == block.Id)
 					from tag in db.Tags.LeftJoin(x => x.Id == block_tag.TagId && !x.IsDeleted)
 					from source in db.Sources.LeftJoin(x => x.Id == tag.SourceId && !x.IsDeleted)
+					orderby block_tag.Name
 					select new BlockNestedTagInfo
 					{
 						Id = tag.Id,
