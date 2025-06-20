@@ -11,7 +11,7 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице источников
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Source
+public class Source : IReadOnlySource
 {
 	const string TableName = "Sources";
 

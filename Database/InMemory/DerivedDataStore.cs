@@ -15,14 +15,12 @@ public class DerivedDataStore
 	public DerivedDataStore(BlocksMemoryRepository blocksRepository)
 	{
 		_blocksRepository = blocksRepository;
-
-		_blocksRepository.BlocksUpdated += BlocksMemoryRepository_BlocksUpdated;
+		_blocksRepository.BlocksUpdated += (s, e) => Task.Run(RebuildTree);
 	}
 
 	private readonly BlocksMemoryRepository _blocksRepository;
 
 	private BlockTreeInfo[] _currentBlockTree = null!;
-	private BlockTreeInfo[] _nextBlockTree = null!;
 	private readonly object _readModelLock = new();
 
 	/// <summary>
@@ -36,13 +34,6 @@ public class DerivedDataStore
 
 		return _currentBlockTree!;
 	}
-
-	private void BlocksMemoryRepository_BlocksUpdated(object? sender, int e)
-	{
-		ScheduleTreeRebuild();
-	}
-
-	private void ScheduleTreeRebuild() => Task.Run(RebuildTree);
 
 	private void RebuildTree()
 	{
@@ -83,10 +74,10 @@ public class DerivedDataStore
 				})
 				.ToArray();
 
-			_nextBlockTree = ReadChildren(blocksWithTags, null, string.Empty);
+			var nextBlockTree = ReadChildren(blocksWithTags, null, string.Empty);
 
 			// атомарная замена
-			Interlocked.Exchange(ref _currentBlockTree, _nextBlockTree);
+			Interlocked.Exchange(ref _currentBlockTree, nextBlockTree);
 		}
 	}
 

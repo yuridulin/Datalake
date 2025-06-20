@@ -15,20 +15,20 @@ public class BlocksMemoryRepository
 	#region Исходные коллекции
 
 	private readonly ConcurrentDictionary<int, Block> _blocks = [];
-	private readonly ConcurrentDictionary<int, Tag> _tags = [];
+	//private readonly ConcurrentDictionary<int, Tag> _tags = [];
 	private ConcurrentBag<BlockTag> _relationBlockTags = [];
 
 	internal IReadOnlyBlock[] Blocks
 		=> _blocks.Values.Select(x => (IReadOnlyBlock)x).ToArray();
 
-	internal IReadOnlyTag[] Tags
-		=> _tags.Values.Select(x => (IReadOnlyTag)x).ToArray();
+	//internal IReadOnlyTag[] Tags
+		//=> _tags.Values.Select(x => (IReadOnlyTag)x).ToArray();
 
 	internal IReadOnlyDictionary<int, IReadOnlyBlock> BlocksDict
 		=> _blocks.ToDictionary(x => x.Key, x => (IReadOnlyBlock)x.Value);
 
-	internal IReadOnlyDictionary<int, IReadOnlyTag> TagsDict
-		=> _tags.ToDictionary(x => x.Key, x => (IReadOnlyTag)x.Value);
+	//internal IReadOnlyDictionary<int, IReadOnlyTag> TagsDict
+		//=> _tags.ToDictionary(x => x.Key, x => (IReadOnlyTag)x.Value);
 
 	internal IReadOnlyCollection<IReadOnlyBlockTag> RelationsBlockTags
 		=> _relationBlockTags.Select(x => (IReadOnlyBlockTag)x).ToArray();
@@ -180,8 +180,7 @@ public class BlocksMemoryRepository
 
 			await transaction.CommitAsync();
 
-			// 6. Перестроение структур (без блокировки основного потока)
-			//await Task.Run(RebuildTree).ConfigureAwait(false);
+			// 6. Перестроение структур
 			BlocksUpdated?.Invoke(this, 0);
 		}
 		catch (Exception ex)
