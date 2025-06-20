@@ -60,7 +60,7 @@ const BlocksTree = observer(() => {
 
 	function load() {
 		api
-			.blocksReadAsTree()
+			.blocksReadAsTree2()
 			.then((res) => setData(transformBlockTreeInfo(res.data)))
 			.catch(() => setData([]))
 	}
@@ -70,6 +70,7 @@ const BlocksTree = observer(() => {
 	}
 
 	useEffect(load, [])
+	//useInterval(load, 300)
 
 	const expandKey = 'expandedBlocks'
 	const [expandedRowKeys, setExpandedRowKeys] = useState(() => {

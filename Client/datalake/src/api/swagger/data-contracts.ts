@@ -524,6 +524,8 @@ export interface BlockUpdateRequest {
   description?: string | null;
   /** Новый список закрепленных тегов */
   tags: AttachedTag[];
+  /** Версия данных, на основе которых сделан запрос */
+  lastKnownVersion?: string;
 }
 
 /** Информация о закрепленном теге */

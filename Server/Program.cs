@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using System.Reflection;
 
-[assembly: AssemblyVersion("2.2.*")]
+[assembly: AssemblyVersion("2.3.*")]
 
 namespace Datalake.Server
 {
@@ -29,7 +29,10 @@ namespace Datalake.Server
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
-			builder.Services.AddControllers();
+			builder.Services.AddControllers().AddJsonOptions(options =>
+			{
+				options.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
+			});
 			builder.Services.AddOpenApiDocument((options, services) =>
 			{
 				options.DocumentName = "Datalake App";

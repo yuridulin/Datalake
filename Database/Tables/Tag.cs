@@ -11,131 +11,93 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице тегов
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Tag
+public class Tag : IReadOnlyTag
 {
 	const string TableName = "Tags";
 
 	// поля в БД
 
-	/// <summary>
-	/// Идентификатор
-	/// </summary>
+	/// <inheritdoc/>
 	[Key, Identity, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 	public int Id { get; set; }
 
-	/// <summary>
-	/// Глобальный идентификатор
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public required Guid GlobalGuid { get; set; }
 
-	/// <summary>
-	/// Название
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public required string Name { get; set; }
 
-	/// <summary>
-	/// Описание
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public string? Description { get; set; }
 
-	/// <summary>
-	/// Тип значения
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public required TagType Type { get; set; }
 
-	/// <summary>
-	/// Частота записи значения
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public required TagFrequency Frequency { get; set; }
 
-	/// <summary>
-	/// Дата создания
-	/// </summary>
+	/// <inheritdoc/>
 	[Column, NotNull]
 	public required DateTime Created { get; set; }
 
-	/// <summary>
-	/// Тег отмечен как удаленный
-	/// </summary>
+	/// <inheritdoc/>
 	[Column, Required]
 	public bool IsDeleted { get; set; } = false;
 
 	// специфичные для входящих
 
-	/// <summary>
-	/// Идентификатор источника
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public required int SourceId { get; set; }
 
-	/// <summary>
-	/// Адрес внутри источника
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public string? SourceItem { get; set; } = string.Empty;
 
 	// специфичные для числовых
 
-	/// <summary>
-	/// Используется ли преобразование по шкале
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public required bool IsScaling { get; set; } = false;
 
-	/// <summary>
-	/// Минимальное возможное значение по новой шкале
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public float MinEu { get; set; } = float.MinValue;
 
-	/// <summary>
-	/// Максимальное возможное значение по новой шкале
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public float MaxEu { get; set; } = float.MaxValue;
 
-	/// <summary>
-	/// Минимальное возможное значение по старой шкале
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public float MinRaw { get; set; } = float.MinValue;
 
-	/// <summary>
-	/// Максимальное возможное значение по старой шкале
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public float MaxRaw { get; set; } = float.MaxValue;
 
 	// специфичные для вычисляемых
 
-	/// <summary>
-	/// Используемая формула
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public string? Formula { get; set; }
 
 	// специфичные для агрегированных
 
-	/// <summary>
-	/// Тип агрегации
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public TagAggregation? Aggregation { get; set; }
 
-	/// <summary>
-	/// Временное окно для расчета агрегированного значения
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public AggregationPeriod? AggregationPeriod { get; set; }
 
-	/// <summary>
-	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public int? SourceTagId { get; set; }
 

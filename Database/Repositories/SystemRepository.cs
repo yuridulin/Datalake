@@ -12,6 +12,7 @@ using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.UserGroups;
 using Datalake.PublicApi.Models.Users;
 using LinqToDB;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Database.Repositories;
 
@@ -20,6 +21,21 @@ namespace Datalake.Database.Repositories;
 /// </summary>
 public static class SystemRepository
 {
+	/// <summary>
+	/// Логгер репозитория
+	/// </summary>
+	public static readonly ILogger Logger;
+
+	static SystemRepository()
+	{
+		var factory = LoggerFactory.Create(builder =>
+		{
+			builder.AddConsole();
+		});
+
+		Logger = factory.CreateLogger("Repository");
+	}
+
 	#region Действия
 
 	/// <summary>

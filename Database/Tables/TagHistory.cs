@@ -40,24 +40,14 @@ public class TagHistory
 	[Column, NotNull]
 	public TagQuality Quality { get; set; } = TagQuality.Good;
 
-
-
-	[System.ComponentModel.DataAnnotations.Schema.NotMapped]
-	private int? _cachedHashCode;
-
 	/// <inheritdoc/>
 	public override int GetHashCode()
 	{
-		if (!_cachedHashCode.HasValue)
-		{
-			int hashQuality = Quality.GetHashCode();
-			int hashText = Text?.GetHashCode() ?? 0;
-			int hashNumber = Number.GetHashCode();
+		int hashQuality = Quality.GetHashCode();
+		int hashText = Text?.GetHashCode() ?? 0;
+		int hashNumber = Number.GetHashCode();
 
-			_cachedHashCode = hashQuality ^ hashText ^ hashNumber;
-		}
-
-		return _cachedHashCode.Value;
+		return hashQuality ^ hashText ^ hashNumber;
 	}
 
 	/// <inheritdoc/>

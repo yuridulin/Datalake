@@ -1,4 +1,5 @@
-﻿using Datalake.Server.BackgroundServices.Collector;
+﻿using Datalake.Database.InMemory;
+using Datalake.Server.BackgroundServices.Collector;
 using Datalake.Server.BackgroundServices.HistoryIndexer;
 using Datalake.Server.BackgroundServices.HistoryInitial;
 using Datalake.Server.BackgroundServices.SettingsHandler;
@@ -22,6 +23,9 @@ internal static class ServicesSetup
 		builder.Services.AddSingleton<SourcesStateService>();
 		builder.Services.AddSingleton<UsersStateService>();
 		builder.Services.AddSingleton<TagsStateService>();
+
+		builder.Services.AddSingleton<BlocksMemoryRepository>();
+		builder.Services.AddSingleton<DerivedDataStore>();
 
 		// службы
 		builder.Services.AddHostedService<CollectorProcessor>();

@@ -10,45 +10,33 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице блоков
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Block
+public class Block : IReadOnlyBlock
 {
 	const string TableName = "Blocks";
 
 	// поля в БД
 
-	/// <summary>
-	/// Идентификатор
-	/// </summary>
+	/// <inheritdoc/>
 	[Key, Identity, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 	public int Id { get; set; }
 
-	/// <summary>
-	/// Глобальный идентификатор
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public Guid GlobalId { get; set; }
 
-	/// <summary>
-	/// Идентификатор родительского блока
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public int? ParentId { get; set; }
 
-	/// <summary>
-	/// Название
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public string Name { get; set; } = string.Empty;
 
-	/// <summary>
-	/// Описание
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public string? Description { get; set; }
 
-	/// <summary>
-	/// Блок отмечен как удаленный
-	/// </summary>
+	/// <inheritdoc/>
 	[Column, Required]
 	public bool IsDeleted { get; set; } = false;
 
