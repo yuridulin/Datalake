@@ -29,6 +29,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Models\System\**" />
+	  <Content Remove="Models\System\**" />
+	  <EmbeddedResource Remove="Models\System\**" />
+	  <None Remove="Models\System\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="linq2db.AspNet" Version="5.4.1" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.13" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11">
@@ -41,10 +48,6 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Database\Database.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Models\System\" />
 	</ItemGroup>
 
 </Project>
