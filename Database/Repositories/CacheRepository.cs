@@ -1,5 +1,5 @@
 ﻿namespace Datalake.Database.Repositories;
 
-public static class CacheRepository
+internal static class CacheRepository
 {
 }

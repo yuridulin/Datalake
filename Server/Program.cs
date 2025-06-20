@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using System.Reflection;
 
-[assembly: AssemblyVersion("2.2.*")]
+[assembly: AssemblyVersion("2.3.*")]
 
 namespace Datalake.Server
 {

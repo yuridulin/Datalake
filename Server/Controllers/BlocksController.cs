@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Blocks;
@@ -13,7 +14,10 @@ namespace Datalake.Server.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
-public class BlocksController(DatalakeContext db) : ApiControllerBase
+public class BlocksController(
+	DatalakeContext db,
+	BlocksMemoryRepository repository,
+	DerivedDataStore dataStore) : ApiControllerBase
 {
 	/// <summary>
 	/// Создание нового блока на основании переданной информации
@@ -83,6 +87,18 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 	}
 
 	/// <summary>
+	/// Получение иерархической структуры всех блоков
+	/// </summary>
+	/// <returns>Список обособленных блоков с вложенными блоками</returns>
+	[HttpGet("tree2")]
+	public ActionResult<BlockTreeInfo[]> ReadAsTree2()
+	{
+		Authenticate();
+
+		return dataStore.BlocksTree();
+	}
+
+	/// <summary>
 	/// Изменение блока
 	/// </summary>
 	/// <param name="id">Идентификатор блока</param>
@@ -95,6 +111,24 @@ public class BlocksController(DatalakeContext db) : ApiControllerBase
 		var user = Authenticate();
 
 		await BlocksRepository.UpdateAsync(db, user, id, block);
+
+		return NoContent();
+	}
+
+	/// <summary>
+	/// Изменение блока
+	/// </summary>
+	/// <param name="id">Идентификатор блока</param>
+	/// <param name="block">Новые данные блока</param>
+	[HttpPut("{id:int}/2")]
+	public async Task<ActionResult> UpdateAsync2(
+		[BindRequired, FromRoute] int id,
+		[BindRequired, FromBody] BlockUpdateRequest block)
+	{
+		/*var user = */Authenticate();
+
+		await repository.UpdateBlock(db, id, block);
+		//await BlocksRepository.UpdateAsync(db, user, id, block);
 
 		return NoContent();
 	}

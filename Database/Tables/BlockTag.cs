@@ -9,33 +9,25 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице связей блоков и тегов
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class BlockTag
+public class BlockTag : IReadOnlyBlockTag
 {
 	const string TableName = "BlockTags";
 
 	// поля в БД
 
-	/// <summary>
-	/// Идентификатор блока
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public int BlockId { get; set; }
 
-	/// <summary>
-	/// Идентификатор тега
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public int? TagId { get; set; }
 
-	/// <summary>
-	/// Название в рамках блока
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public string? Name { get; set; } = string.Empty;
 
-	/// <summary>
-	/// Тип связи тега к блоку
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public BlockTagRelation Relation { get; set; } = BlockTagRelation.Static;
 
