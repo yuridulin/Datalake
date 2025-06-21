@@ -6,64 +6,27 @@ using LinqToDB.Data;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 
-namespace Datalake.Database.InMemory;
+namespace Datalake.Database.InMemory.Repositories;
 
 /// <summary>
 /// Репозиторий работы с блоками в памяти приложения
 /// </summary>
-public class BlocksMemoryRepository
+public class BlocksMemoryRepository(
+	IServiceScopeFactory serviceScopeFactory,
+	Lazy<InMemoryRepositoriesManager> inMemory) : InMemoryRepositoryBase(serviceScopeFactory, inMemory)
 {
 	#region Исходные коллекции
 
 	private readonly ConcurrentDictionary<int, Block> _blocks = [];
 	private ConcurrentBag<BlockTag> _relationBlockTags = [];
 
-	internal IReadOnlyBlock[] Blocks
-		=> _blocks.Values.Select(x => (IReadOnlyBlock)x).ToArray();
-
-	internal IReadOnlyDictionary<int, IReadOnlyBlock> BlocksDict
-		=> _blocks.ToDictionary(x => x.Key, x => (IReadOnlyBlock)x.Value);
-
-	internal IReadOnlyCollection<IReadOnlyBlockTag> RelationsBlockTags
-		=> _relationBlockTags.Select(x => (IReadOnlyBlockTag)x).ToArray();
-
-	#endregion
-
-
-	#region Версия данных для синхронизации
-
-	private string _globalVersion = string.Empty;
-	private readonly object _versionLock = new();
-
-	/// <summary>
-	/// Событие изменения списка блоков
-	/// </summary>
-	public event EventHandler<int>? BlocksUpdated;
-
 	#endregion
 
 
 	#region Инициализация
 
-	/// <summary>
-	/// Конструктор репозитория
-	/// </summary>
-	/// <param name="serviceScopeFactory">Фабрика сервисов</param>
-	public BlocksMemoryRepository(IServiceScopeFactory serviceScopeFactory)
-	{
-		using var scope = serviceScopeFactory.CreateScope();
-		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-
-		InitializeFromDatabase(db).Wait();
-		BlocksUpdated?.Invoke(this, 0);
-	}
-
-	#endregion
-
-
-	#region Чтение данных из БД
-
-	private async Task InitializeFromDatabase(DatalakeContext db)
+	/// <inheritdoc/>
+	protected override async Task InitializeFromDatabase(DatalakeContext db)
 	{
 		_blocks.Clear();
 		_relationBlockTags.Clear();
@@ -75,8 +38,6 @@ public class BlocksMemoryRepository
 		var relationsBlockTag = await db.BlockTags.ToArrayAsync();
 		foreach (var rel in relationsBlockTag)
 			_relationBlockTags.Add(rel);
-
-		_globalVersion = DateTime.UtcNow.Ticks.ToString();
 	}
 
 	#endregion
@@ -84,22 +45,14 @@ public class BlocksMemoryRepository
 
 	#region Чтение данных внешними источниками
 
-	/// <summary>
-	/// Получение текущей версии данных репозитория
-	/// </summary>
-	public string CurrentVersion
-	{
-		get { lock (_versionLock) return _globalVersion; }
-	}
+	internal IReadOnlyBlock[] Blocks
+		=> _blocks.Values.Select(x => (IReadOnlyBlock)x).ToArray();
 
-	/// <summary>
-	/// Установка новой версии данных репозитория
-	/// </summary>
-	/// <param name="newVersion">Значение новой версии</param>
-	public void UpdateVersion(string newVersion)
-	{
-		lock (_versionLock) _globalVersion = newVersion;
-	}
+	internal IReadOnlyDictionary<int, IReadOnlyBlock> BlocksDict
+		=> _blocks.ToDictionary(x => x.Key, x => (IReadOnlyBlock)x.Value);
+
+	internal IReadOnlyCollection<IReadOnlyBlockTag> RelationsBlockTags
+		=> _relationBlockTags.Select(x => (IReadOnlyBlockTag)x).ToArray();
 
 	#endregion
 
@@ -170,23 +123,13 @@ public class BlocksMemoryRepository
 			await transaction.CommitAsync();
 
 			// 6. Перестроение структур
-			BlocksUpdated?.Invoke(this, 0);
+			Trigger();
 		}
 		catch (Exception ex)
 		{
 			await transaction.RollbackAsync();
 			throw new Exception("Не удалось обновить блок", ex);
 		}
-	}
-
-	/// <summary>
-	/// Обновление данных из БД
-	/// </summary>
-	/// <param name="db">Контекст БД</param>
-	public async Task RefreshFromDatabase(DatalakeContext db)
-	{
-		await InitializeFromDatabase(db);
-		BlocksUpdated?.Invoke(this, 0);
 	}
 
 	#endregion

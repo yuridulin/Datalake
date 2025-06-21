@@ -11,14 +11,14 @@ public class DerivedDataStore
 	/// <summary>
 	/// Инициализация
 	/// </summary>
-	/// <param name="blocksRepository">Репозиторий работы с блоками</param>
-	public DerivedDataStore(BlocksMemoryRepository blocksRepository)
+	public DerivedDataStore(InMemoryRepositoriesManager inMemory)
 	{
-		_blocksRepository = blocksRepository;
-		_blocksRepository.BlocksUpdated += (s, e) => Task.Run(RebuildTree);
+		InMemory = inMemory;
+
+		InMemory.Blocks.Updated += (s, e) => Task.Run(RebuildTree);
 	}
 
-	private readonly BlocksMemoryRepository _blocksRepository;
+	private readonly InMemoryRepositoriesManager InMemory;
 
 	private BlockTreeInfo[] _currentBlockTree = null!;
 	private readonly object _readModelLock = new();
@@ -39,7 +39,7 @@ public class DerivedDataStore
 	{
 		lock (_readModelLock)
 		{
-			var blocksWithTags = _blocksRepository.Blocks
+			var blocksWithTags = InMemory.Blocks.Blocks
 				.Select(block => new BlockWithTagsInfo
 				{
 					Id = block.Id,
@@ -47,11 +47,11 @@ public class DerivedDataStore
 					ParentId = block.ParentId,
 					Description = block.Description,
 					Name = block.Name,
-					Tags = _blocksRepository.RelationsBlockTags
+					Tags = InMemory.Blocks.RelationsBlockTags
 						.Where(x => x.BlockId == block.Id)
 						.Select(x =>
 						{
-							if (x.TagId.HasValue && _blocksRepository.TagsDict.TryGetValue(x.TagId.Value, out var tag))
+							if (x.TagId.HasValue && InMemory.Tags.TagsDict.TryGetValue(x.TagId.Value, out var tag))
 							{
 								return new BlockNestedTagInfo
 								{

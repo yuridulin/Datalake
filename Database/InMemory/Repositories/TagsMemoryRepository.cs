@@ -1,6 +1,5 @@
 ﻿using Datalake.Database.Extensions;
 using Datalake.Database.Interfaces;
-using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
@@ -11,12 +10,14 @@ using LinqToDB.Data;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 
-namespace Datalake.Database.InMemory;
+namespace Datalake.Database.InMemory.Repositories;
 
 /// <summary>
-/// 
+/// Репозиторий тегов
 /// </summary>
-public class TagsMemoryRepository
+public class TagsMemoryRepository(
+	IServiceScopeFactory serviceScopeFactory,
+	Lazy<InMemoryRepositoriesManager> inMemory) : InMemoryRepositoryBase(serviceScopeFactory, inMemory)
 {
 	#region Исходные коллекции
 
@@ -26,55 +27,13 @@ public class TagsMemoryRepository
 
 	private ConcurrentBag<TagInput> _tagInputs = [];
 
-	internal IReadOnlyTag[] Tags => _tags.Values.Select(x => (IReadOnlyTag)x).ToArray();
-
-	internal IReadOnlyDictionary<int, IReadOnlyTag> TagsDict => Tags.ToDictionary(x => x.Id);
-
-	internal IReadOnlyTagInput[] TagInputs => _tagInputs.Select(x => (IReadOnlyTagInput)x).ToArray();
-
-	#endregion
-
-
-	#region Версия данных для синхронизации
-
-	private string _globalVersion = string.Empty;
-	private readonly object _versionLock = new();
-
-	/// <summary>
-	/// Событие изменения списка блоков
-	/// </summary>
-	public event EventHandler<int>? TagsUpdated;
-
 	#endregion
 
 
 	#region Инициализация
 
-	/// <summary>
-	/// Конструктор репозитория
-	/// </summary>
-	public TagsMemoryRepository(
-		IServiceScopeFactory serviceScopeFactory,
-		Lazy<InMemoryRepositoriesManager> inMemory)
-	{
-		using var scope = serviceScopeFactory.CreateScope();
-		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-
-		InitializeFromDatabase(db).Wait();
-		TagsUpdated?.Invoke(this, 0);
-
-		_inMemory = inMemory;
-	}
-
-	private Lazy<InMemoryRepositoriesManager> _inMemory;
-	private InMemoryRepositoriesManager InMemory => _inMemory.Value;
-
-	#endregion
-
-
-	#region Чтение данных из БД
-
-	private async Task InitializeFromDatabase(DatalakeContext db)
+	/// <inheritdoc/>
+	protected override async Task InitializeFromDatabase(DatalakeContext db)
 	{
 		_tags.Clear();
 
@@ -90,8 +49,6 @@ public class TagsMemoryRepository
 		{
 			_tagInputs.Add(tagInput);
 		}
-
-		_globalVersion = DateTime.UtcNow.Ticks.ToString();
 	}
 
 	#endregion
@@ -99,23 +56,11 @@ public class TagsMemoryRepository
 
 	#region Чтение данных внешними источниками
 
-	/// <summary>
-	/// Получение текущей версии данных репозитория
-	/// </summary>
-	public string CurrentVersion
-	{
-		get { lock (_versionLock) return _globalVersion; }
-	}
+	internal IReadOnlyTag[] Tags => _tags.Values.Select(x => (IReadOnlyTag)x).ToArray();
 
-	/// <summary>
-	/// Установка новой версии данных репозитория
-	/// </summary>
-	/// <param name="newVersion">Значение новой версии</param>
-	public void UpdateVersion(string newVersion)
-	{
-		lock (_versionLock)
-			_globalVersion = newVersion;
-	}
+	internal IReadOnlyDictionary<int, IReadOnlyTag> TagsDict => Tags.ToDictionary(x => x.Id);
+
+	internal IReadOnlyTagInput[] TagInputs => _tagInputs.Select(x => (IReadOnlyTagInput)x).ToArray();
 
 	#endregion
 
@@ -228,7 +173,7 @@ public class TagsMemoryRepository
 			await transaction.CommitAsync();
 
 			// 6. Перестроение структур
-			TagsUpdated?.Invoke(this, 0);
+			Trigger();
 
 			// 7. Вернуть ответ
 			var createdTagInfo = new TagInfo
@@ -305,7 +250,7 @@ public class TagsMemoryRepository
 			if (string.IsNullOrEmpty(updateRequest.SourceItem))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
 
-			updateRequest.SourceItem = ValueChecker.RemoveWhitespaces(updateRequest.SourceItem);
+			updateRequest.SourceItem = updateRequest.SourceItem.RemoveWhitespaces();
 		}
 		else
 		{
@@ -502,16 +447,6 @@ public class TagsMemoryRepository
 			AuthorGuid = userGuid,
 			Details = details,
 		});
-	}
-
-	/// <summary>
-	/// Обновление данных из БД
-	/// </summary>
-	/// <param name="db">Контекст БД</param>
-	public async Task RefreshFromDatabase(DatalakeContext db)
-	{
-		await InitializeFromDatabase(db);
-		TagsUpdated?.Invoke(this, 0);
 	}
 
 	#endregion

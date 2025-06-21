@@ -1,5 +1,4 @@
-using Datalake.Database.Tables;
-using LinqToDB;
+using Datalake.Database.InMemory.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Datalake.Database.InMemory;
@@ -63,14 +62,14 @@ public class InMemoryRepositoriesManager
 	public InMemoryRepositoriesManager(IServiceScopeFactory serviceScopeFactory)
 	{
 		// Инициализируем репозитории в правильном порядке для избежания циклических зависимостей
-		Blocks = new BlocksMemoryRepository(serviceScopeFactory);
-		Sources = new SourcesMemoryRepository(serviceScopeFactory);
+		Blocks = new BlocksMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
+		Sources = new SourcesMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
 		Tags = new TagsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
-		Users = new UsersMemoryRepository(serviceScopeFactory);
-		UserGroups = new UserGroupsMemoryRepository(serviceScopeFactory);
-		AccessRights = new AccessRightsMemoryRepository(serviceScopeFactory);
-		Settings = new SettingsMemoryRepository(serviceScopeFactory);
-		Logs = new LogsMemoryRepository(serviceScopeFactory);
+		Users = new UsersMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
+		UserGroups = new UserGroupsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
+		AccessRights = new AccessRightsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
+		Settings = new SettingsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
+		Logs = new LogsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
 
 		// Подписываемся на события обновления для синхронизации
 		SubscribeToEvents();
@@ -84,14 +83,14 @@ public class InMemoryRepositoriesManager
 	private void SubscribeToEvents()
 	{
 		// Подписываемся на события обновления репозиториев
-		Blocks.BlocksUpdated += OnRepositoryUpdated;
-		Tags.TagsUpdated += OnRepositoryUpdated;
-		Sources.SourcesUpdated += OnRepositoryUpdated;
-		Users.UsersUpdated += OnRepositoryUpdated;
-		UserGroups.UserGroupsUpdated += OnRepositoryUpdated;
-		AccessRights.AccessRightsUpdated += OnRepositoryUpdated;
-		Settings.SettingsUpdated += OnRepositoryUpdated;
-		Logs.LogsUpdated += OnRepositoryUpdated;
+		Blocks.Updated += OnRepositoryUpdated;
+		Tags.Updated += OnRepositoryUpdated;
+		Sources.Updated += OnRepositoryUpdated;
+		Users.Updated += OnRepositoryUpdated;
+		UserGroups.Updated += OnRepositoryUpdated;
+		AccessRights.Updated += OnRepositoryUpdated;
+		Settings.Updated += OnRepositoryUpdated;
+		Logs.Updated += OnRepositoryUpdated;
 	}
 
 	private void OnRepositoryUpdated(object? sender, int e)
