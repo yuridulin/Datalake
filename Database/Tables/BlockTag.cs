@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.Database.Interfaces;
+using Datalake.PublicApi.Enums;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;

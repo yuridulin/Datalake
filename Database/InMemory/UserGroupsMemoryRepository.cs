@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Interfaces;
+using Datalake.Database.Interfaces;
 using Datalake.Database.Tables;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,17 +7,19 @@ using System.Collections.Concurrent;
 namespace Datalake.Database.InMemory;
 
 /// <summary>
-/// 
+/// Репозиторий работы с группами пользователей в памяти приложения
 /// </summary>
-public class SourcesMemoryRepository
+public class UserGroupsMemoryRepository
 {
 	#region Исходные коллекции
 
-	private readonly ConcurrentDictionary<int, Source> _sources = [];
+	private readonly ConcurrentDictionary<Guid, UserGroup> _userGroups = [];
 
-	internal IReadOnlySource[] Sources => _sources.Values.Select(x => (IReadOnlySource)x).ToArray();
+	internal IReadOnlyUserGroup[] UserGroups
+		=> _userGroups.Values.Select(x => (IReadOnlyUserGroup)x).ToArray();
 
-	internal IReadOnlyDictionary<int, IReadOnlySource> SourcesDict => Sources.ToDictionary(x => x.Id);
+	internal IReadOnlyDictionary<Guid, IReadOnlyUserGroup> UserGroupsDict
+		=> _userGroups.ToDictionary(x => x.Key, x => (IReadOnlyUserGroup)x.Value);
 
 	#endregion
 
@@ -28,9 +30,9 @@ public class SourcesMemoryRepository
 	private readonly object _versionLock = new();
 
 	/// <summary>
-	/// Событие изменения списка блоков
+	/// Событие изменения списка групп пользователей
 	/// </summary>
-	public event EventHandler<int>? SourcesUpdated;
+	public event EventHandler<int>? UserGroupsUpdated;
 
 	#endregion
 
@@ -40,14 +42,14 @@ public class SourcesMemoryRepository
 	/// <summary>
 	/// Конструктор репозитория
 	/// </summary>
-	public SourcesMemoryRepository(
-		IServiceScopeFactory serviceScopeFactory)
+	/// <param name="serviceScopeFactory">Фабрика сервисов</param>
+	public UserGroupsMemoryRepository(IServiceScopeFactory serviceScopeFactory)
 	{
 		using var scope = serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
 		InitializeFromDatabase(db).Wait();
-		SourcesUpdated?.Invoke(this, 0);
+		UserGroupsUpdated?.Invoke(this, 0);
 	}
 
 	#endregion
@@ -57,11 +59,11 @@ public class SourcesMemoryRepository
 
 	private async Task InitializeFromDatabase(DatalakeContext db)
 	{
-		_sources.Clear();
+		_userGroups.Clear();
 
-		var sources = await db.Sources.ToArrayAsync();
-		foreach (var source in sources)
-			_sources.TryAdd(source.Id, source);
+		var userGroups = await db.UserGroups.ToArrayAsync();
+		foreach (var userGroup in userGroups)
+			_userGroups.TryAdd(userGroup.Guid, userGroup);
 
 		_globalVersion = DateTime.UtcNow.Ticks.ToString();
 	}
@@ -85,8 +87,7 @@ public class SourcesMemoryRepository
 	/// <param name="newVersion">Значение новой версии</param>
 	public void UpdateVersion(string newVersion)
 	{
-		lock (_versionLock)
-			_globalVersion = newVersion;
+		lock (_versionLock) _globalVersion = newVersion;
 	}
 
 	#endregion
@@ -101,9 +102,8 @@ public class SourcesMemoryRepository
 	public async Task RefreshFromDatabase(DatalakeContext db)
 	{
 		await InitializeFromDatabase(db);
-		SourcesUpdated?.Invoke(this, 0);
+		UserGroupsUpdated?.Invoke(this, 0);
 	}
 
 	#endregion
-}
-
+} 

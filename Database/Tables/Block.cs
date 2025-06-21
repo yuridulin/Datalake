@@ -1,4 +1,5 @@
-﻿using LinqToDB.Mapping;
+﻿using Datalake.Database.Interfaces;
+using LinqToDB.Mapping;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;

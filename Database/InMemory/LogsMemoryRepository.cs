@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Interfaces;
+using Datalake.Database.Interfaces;
 using Datalake.Database.Tables;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,17 +7,19 @@ using System.Collections.Concurrent;
 namespace Datalake.Database.InMemory;
 
 /// <summary>
-/// 
+/// Репозиторий работы с логами в памяти приложения
 /// </summary>
-public class SourcesMemoryRepository
+public class LogsMemoryRepository
 {
 	#region Исходные коллекции
 
-	private readonly ConcurrentDictionary<int, Source> _sources = [];
+	private readonly ConcurrentDictionary<long, Log> _logs = [];
 
-	internal IReadOnlySource[] Sources => _sources.Values.Select(x => (IReadOnlySource)x).ToArray();
+	internal IReadOnlyLog[] Logs
+		=> _logs.Values.Select(x => (IReadOnlyLog)x).ToArray();
 
-	internal IReadOnlyDictionary<int, IReadOnlySource> SourcesDict => Sources.ToDictionary(x => x.Id);
+	internal IReadOnlyDictionary<long, IReadOnlyLog> LogsDict
+		=> _logs.ToDictionary(x => x.Key, x => (IReadOnlyLog)x.Value);
 
 	#endregion
 
@@ -28,9 +30,9 @@ public class SourcesMemoryRepository
 	private readonly object _versionLock = new();
 
 	/// <summary>
-	/// Событие изменения списка блоков
+	/// Событие изменения списка логов
 	/// </summary>
-	public event EventHandler<int>? SourcesUpdated;
+	public event EventHandler<int>? LogsUpdated;
 
 	#endregion
 
@@ -40,14 +42,14 @@ public class SourcesMemoryRepository
 	/// <summary>
 	/// Конструктор репозитория
 	/// </summary>
-	public SourcesMemoryRepository(
-		IServiceScopeFactory serviceScopeFactory)
+	/// <param name="serviceScopeFactory">Фабрика сервисов</param>
+	public LogsMemoryRepository(IServiceScopeFactory serviceScopeFactory)
 	{
 		using var scope = serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
 		InitializeFromDatabase(db).Wait();
-		SourcesUpdated?.Invoke(this, 0);
+		LogsUpdated?.Invoke(this, 0);
 	}
 
 	#endregion
@@ -57,11 +59,16 @@ public class SourcesMemoryRepository
 
 	private async Task InitializeFromDatabase(DatalakeContext db)
 	{
-		_sources.Clear();
+		_logs.Clear();
 
-		var sources = await db.Sources.ToArrayAsync();
-		foreach (var source in sources)
-			_sources.TryAdd(source.Id, source);
+		// Загружаем только последние логи для экономии памяти
+		var logs = await db.Logs
+			.OrderByDescending(x => x.Date)
+			.Take(10000) // Ограничиваем количество логов в памяти
+			.ToArrayAsync();
+			
+		foreach (var log in logs)
+			_logs.TryAdd(log.Id, log);
 
 		_globalVersion = DateTime.UtcNow.Ticks.ToString();
 	}
@@ -85,8 +92,7 @@ public class SourcesMemoryRepository
 	/// <param name="newVersion">Значение новой версии</param>
 	public void UpdateVersion(string newVersion)
 	{
-		lock (_versionLock)
-			_globalVersion = newVersion;
+		lock (_versionLock) _globalVersion = newVersion;
 	}
 
 	#endregion
@@ -101,9 +107,23 @@ public class SourcesMemoryRepository
 	public async Task RefreshFromDatabase(DatalakeContext db)
 	{
 		await InitializeFromDatabase(db);
-		SourcesUpdated?.Invoke(this, 0);
+		LogsUpdated?.Invoke(this, 0);
+	}
+
+	/// <summary>
+	/// Добавление нового лога в память
+	/// </summary>
+	/// <param name="log">Новый лог</param>
+	public void AddLog(Log log)
+	{
+		_logs.TryAdd(log.Id, log);
+		
+		// Обновляем версию
+		var newVersion = DateTime.UtcNow.Ticks.ToString();
+		UpdateVersion(newVersion);
+		
+		LogsUpdated?.Invoke(this, 0);
 	}
 
 	#endregion
-}
-
+} 

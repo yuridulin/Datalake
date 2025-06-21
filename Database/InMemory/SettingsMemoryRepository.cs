@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Interfaces;
+using Datalake.Database.Interfaces;
 using Datalake.Database.Tables;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,17 +7,19 @@ using System.Collections.Concurrent;
 namespace Datalake.Database.InMemory;
 
 /// <summary>
-/// 
+/// Репозиторий работы с настройками в памяти приложения
 /// </summary>
-public class SourcesMemoryRepository
+public class SettingsMemoryRepository
 {
 	#region Исходные коллекции
 
-	private readonly ConcurrentDictionary<int, Source> _sources = [];
+	private readonly ConcurrentDictionary<string, Settings> _settings = [];
 
-	internal IReadOnlySource[] Sources => _sources.Values.Select(x => (IReadOnlySource)x).ToArray();
+	internal IReadOnlySettings[] Settings
+		=> _settings.Values.Select(x => (IReadOnlySettings)x).ToArray();
 
-	internal IReadOnlyDictionary<int, IReadOnlySource> SourcesDict => Sources.ToDictionary(x => x.Id);
+	internal IReadOnlySettings? CurrentSettings
+		=> _settings.Values.FirstOrDefault();
 
 	#endregion
 
@@ -28,9 +30,9 @@ public class SourcesMemoryRepository
 	private readonly object _versionLock = new();
 
 	/// <summary>
-	/// Событие изменения списка блоков
+	/// Событие изменения настроек
 	/// </summary>
-	public event EventHandler<int>? SourcesUpdated;
+	public event EventHandler<int>? SettingsUpdated;
 
 	#endregion
 
@@ -40,14 +42,14 @@ public class SourcesMemoryRepository
 	/// <summary>
 	/// Конструктор репозитория
 	/// </summary>
-	public SourcesMemoryRepository(
-		IServiceScopeFactory serviceScopeFactory)
+	/// <param name="serviceScopeFactory">Фабрика сервисов</param>
+	public SettingsMemoryRepository(IServiceScopeFactory serviceScopeFactory)
 	{
 		using var scope = serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
 		InitializeFromDatabase(db).Wait();
-		SourcesUpdated?.Invoke(this, 0);
+		SettingsUpdated?.Invoke(this, 0);
 	}
 
 	#endregion
@@ -57,11 +59,11 @@ public class SourcesMemoryRepository
 
 	private async Task InitializeFromDatabase(DatalakeContext db)
 	{
-		_sources.Clear();
+		_settings.Clear();
 
-		var sources = await db.Sources.ToArrayAsync();
-		foreach (var source in sources)
-			_sources.TryAdd(source.Id, source);
+		var settings = await db.Settings.ToArrayAsync();
+		foreach (var setting in settings)
+			_settings.TryAdd(setting.InstanceName, setting);
 
 		_globalVersion = DateTime.UtcNow.Ticks.ToString();
 	}
@@ -85,8 +87,7 @@ public class SourcesMemoryRepository
 	/// <param name="newVersion">Значение новой версии</param>
 	public void UpdateVersion(string newVersion)
 	{
-		lock (_versionLock)
-			_globalVersion = newVersion;
+		lock (_versionLock) _globalVersion = newVersion;
 	}
 
 	#endregion
@@ -101,9 +102,8 @@ public class SourcesMemoryRepository
 	public async Task RefreshFromDatabase(DatalakeContext db)
 	{
 		await InitializeFromDatabase(db);
-		SourcesUpdated?.Invoke(this, 0);
+		SettingsUpdated?.Invoke(this, 0);
 	}
 
 	#endregion
-}
-
+} 

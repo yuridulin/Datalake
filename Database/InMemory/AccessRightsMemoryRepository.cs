@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Interfaces;
+using Datalake.Database.Interfaces;
 using Datalake.Database.Tables;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,17 +7,19 @@ using System.Collections.Concurrent;
 namespace Datalake.Database.InMemory;
 
 /// <summary>
-/// 
+/// Репозиторий работы с правами доступа в памяти приложения
 /// </summary>
-public class SourcesMemoryRepository
+public class AccessRightsMemoryRepository
 {
 	#region Исходные коллекции
 
-	private readonly ConcurrentDictionary<int, Source> _sources = [];
+	private readonly ConcurrentDictionary<int, AccessRights> _accessRights = [];
 
-	internal IReadOnlySource[] Sources => _sources.Values.Select(x => (IReadOnlySource)x).ToArray();
+	internal IReadOnlyAccessRights[] AccessRights
+		=> _accessRights.Values.Select(x => (IReadOnlyAccessRights)x).ToArray();
 
-	internal IReadOnlyDictionary<int, IReadOnlySource> SourcesDict => Sources.ToDictionary(x => x.Id);
+	internal IReadOnlyDictionary<int, IReadOnlyAccessRights> AccessRightsDict
+		=> _accessRights.ToDictionary(x => x.Key, x => (IReadOnlyAccessRights)x.Value);
 
 	#endregion
 
@@ -28,9 +30,9 @@ public class SourcesMemoryRepository
 	private readonly object _versionLock = new();
 
 	/// <summary>
-	/// Событие изменения списка блоков
+	/// Событие изменения списка прав доступа
 	/// </summary>
-	public event EventHandler<int>? SourcesUpdated;
+	public event EventHandler<int>? AccessRightsUpdated;
 
 	#endregion
 
@@ -40,14 +42,14 @@ public class SourcesMemoryRepository
 	/// <summary>
 	/// Конструктор репозитория
 	/// </summary>
-	public SourcesMemoryRepository(
-		IServiceScopeFactory serviceScopeFactory)
+	/// <param name="serviceScopeFactory">Фабрика сервисов</param>
+	public AccessRightsMemoryRepository(IServiceScopeFactory serviceScopeFactory)
 	{
 		using var scope = serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
 		InitializeFromDatabase(db).Wait();
-		SourcesUpdated?.Invoke(this, 0);
+		AccessRightsUpdated?.Invoke(this, 0);
 	}
 
 	#endregion
@@ -57,11 +59,11 @@ public class SourcesMemoryRepository
 
 	private async Task InitializeFromDatabase(DatalakeContext db)
 	{
-		_sources.Clear();
+		_accessRights.Clear();
 
-		var sources = await db.Sources.ToArrayAsync();
-		foreach (var source in sources)
-			_sources.TryAdd(source.Id, source);
+		var accessRights = await db.AccessRights.ToArrayAsync();
+		foreach (var accessRight in accessRights)
+			_accessRights.TryAdd(accessRight.Id, accessRight);
 
 		_globalVersion = DateTime.UtcNow.Ticks.ToString();
 	}
@@ -85,8 +87,7 @@ public class SourcesMemoryRepository
 	/// <param name="newVersion">Значение новой версии</param>
 	public void UpdateVersion(string newVersion)
 	{
-		lock (_versionLock)
-			_globalVersion = newVersion;
+		lock (_versionLock) _globalVersion = newVersion;
 	}
 
 	#endregion
@@ -101,9 +102,8 @@ public class SourcesMemoryRepository
 	public async Task RefreshFromDatabase(DatalakeContext db)
 	{
 		await InitializeFromDatabase(db);
-		SourcesUpdated?.Invoke(this, 0);
+		AccessRightsUpdated?.Invoke(this, 0);
 	}
 
 	#endregion
-}
-
+} 

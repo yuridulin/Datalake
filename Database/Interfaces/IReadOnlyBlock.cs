@@ -1,5 +1,4 @@
-﻿
-namespace Datalake.Database.Tables;
+﻿namespace Datalake.Database.Interfaces;
 
 /// <summary>
 /// Модель блока, защищенная от записи

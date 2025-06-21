@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Tables;
+﻿using Datalake.Database.Interfaces;
+using Datalake.Database.Tables;
 using Datalake.PublicApi.Models.Blocks;
 using LinqToDB;
 using LinqToDB.Data;
@@ -15,20 +16,13 @@ public class BlocksMemoryRepository
 	#region Исходные коллекции
 
 	private readonly ConcurrentDictionary<int, Block> _blocks = [];
-	//private readonly ConcurrentDictionary<int, Tag> _tags = [];
 	private ConcurrentBag<BlockTag> _relationBlockTags = [];
 
 	internal IReadOnlyBlock[] Blocks
 		=> _blocks.Values.Select(x => (IReadOnlyBlock)x).ToArray();
 
-	//internal IReadOnlyTag[] Tags
-		//=> _tags.Values.Select(x => (IReadOnlyTag)x).ToArray();
-
 	internal IReadOnlyDictionary<int, IReadOnlyBlock> BlocksDict
 		=> _blocks.ToDictionary(x => x.Key, x => (IReadOnlyBlock)x.Value);
-
-	//internal IReadOnlyDictionary<int, IReadOnlyTag> TagsDict
-		//=> _tags.ToDictionary(x => x.Key, x => (IReadOnlyTag)x.Value);
 
 	internal IReadOnlyCollection<IReadOnlyBlockTag> RelationsBlockTags
 		=> _relationBlockTags.Select(x => (IReadOnlyBlockTag)x).ToArray();
@@ -72,16 +66,11 @@ public class BlocksMemoryRepository
 	private async Task InitializeFromDatabase(DatalakeContext db)
 	{
 		_blocks.Clear();
-		_tags.Clear();
 		_relationBlockTags.Clear();
 
 		var blocks = await db.Blocks.ToArrayAsync();
 		foreach (var block in blocks)
 			_blocks.TryAdd(block.Id, block);
-
-		var tags = await db.Tags.ToArrayAsync();
-		foreach (var tag in tags)
-			_tags.TryAdd(tag.Id, tag);
 
 		var relationsBlockTag = await db.BlockTags.ToArrayAsync();
 		foreach (var rel in relationsBlockTag)
@@ -188,6 +177,16 @@ public class BlocksMemoryRepository
 			await transaction.RollbackAsync();
 			throw new Exception("Не удалось обновить блок", ex);
 		}
+	}
+
+	/// <summary>
+	/// Обновление данных из БД
+	/// </summary>
+	/// <param name="db">Контекст БД</param>
+	public async Task RefreshFromDatabase(DatalakeContext db)
+	{
+		await InitializeFromDatabase(db);
+		BlocksUpdated?.Invoke(this, 0);
 	}
 
 	#endregion

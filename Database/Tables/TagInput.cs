@@ -1,4 +1,5 @@
-﻿using LinqToDB.Mapping;
+﻿using Datalake.Database.Interfaces;
+using LinqToDB.Mapping;
 using System.ComponentModel.DataAnnotations;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
@@ -9,33 +10,25 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице связей тега с другими тегами для вычисления значений
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class TagInput
+public class TagInput : IReadOnlyTagInput
 {
 	const string TableName = "TagInputs";
 
 	// поля в БД
 
-	/// <summary>
-	/// Идентификатор
-	/// </summary>
+	/// <inheritdoc/>
 	[Column, Key, Identity]
 	public int Id { get; set; }
 
-	/// <summary>
-	/// Идентификатор результиющего тега
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public int TagId { get; set; }
 
-	/// <summary>
-	/// Идентификатор входного тега
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public int? InputTagId { get; set; }
 
-	/// <summary>
-	/// Имя переменной в формуле
-	/// </summary>
+	/// <inheritdoc/>
 	[Column]
 	public string VariableName { get; set; } = string.Empty;
 

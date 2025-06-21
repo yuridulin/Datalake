@@ -1,6 +1,6 @@
 ﻿using Datalake.PublicApi.Enums;
 
-namespace Datalake.Database.Tables;
+namespace Datalake.Database.Interfaces;
 
 /// <summary>
 /// Модель тега, защищенная от записи
