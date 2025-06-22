@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-/// <summary>
+/*/// <summary>
 /// Репозиторий работы с пользователями в памяти приложения
 /// </summary>
 public class UsersMemoryRepository(
@@ -51,4 +51,4 @@ public class UsersMemoryRepository(
 
 
 	#endregion
-} 
+} */

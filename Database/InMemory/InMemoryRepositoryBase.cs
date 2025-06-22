@@ -72,7 +72,7 @@ public abstract class InMemoryRepositoryBase
 	/// Обновление данных из БД
 	/// </summary>
 	/// <param name="db">Контекст БД</param>
-	public async Task RefreshFromDatabase(DatalakeContext db)
+	public virtual async Task RefreshFromDatabase(DatalakeContext db)
 	{
 		await InitializeFromDatabaseAndTrigger(db);
 	}

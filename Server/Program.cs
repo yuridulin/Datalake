@@ -1,4 +1,5 @@
 using Datalake.Database;
+using Datalake.Database.InMemory;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
@@ -52,6 +53,8 @@ namespace Datalake.Server
 
 			WebRootPath = app.Environment.WebRootPath;
 			StartWorkWithDatabase(app);
+
+			var stateHolder = app.Services.GetRequiredService<DatalakeStateHolder>();
 
 			if (app.Environment.IsDevelopment())
 			{

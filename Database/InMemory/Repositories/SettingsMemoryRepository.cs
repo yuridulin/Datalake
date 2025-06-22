@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-/// <summary>
+/*/// <summary>
 /// Репозиторий работы с настройками в памяти приложения
 /// </summary>
 public class SettingsMemoryRepository(
@@ -47,4 +47,4 @@ public class SettingsMemoryRepository(
 
 
 	#endregion
-} 
+} */

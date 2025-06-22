@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-/// <summary>
+/*/// <summary>
 /// Репозиторий работы с правами доступа в памяти приложения
 /// </summary>
 public class AccessRightsMemoryRepository(
@@ -50,4 +50,4 @@ public class AccessRightsMemoryRepository(
 
 
 	#endregion
-} 
+} */

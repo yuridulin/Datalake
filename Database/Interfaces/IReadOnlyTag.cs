@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.Database.Tables;
+using Datalake.PublicApi.Enums;
 
 namespace Datalake.Database.Interfaces;
 

@@ -6,22 +6,11 @@ namespace Datalake.Database.InMemory;
 /// <summary>
 /// Хранилище производных данных
 /// </summary>
-public class DerivedDataStore
+public class DerivedDataStore(DatalakeStateHolder stateHolder)
 {
-	/// <summary>
-	/// Инициализация
-	/// </summary>
-	public DerivedDataStore(InMemoryRepositoriesManager inMemory)
-	{
-		InMemory = inMemory;
+	private long _lastProcessedVersion = -1;
 
-		InMemory.Blocks.Updated += (s, e) => Task.Run(RebuildTree);
-	}
-
-	private readonly InMemoryRepositoriesManager InMemory;
-
-	private BlockTreeInfo[] _currentBlockTree = null!;
-	private readonly object _readModelLock = new();
+	#region Дерево блоков
 
 	/// <summary>
 	/// Получение дерева блоков со списком полей каждого блока
@@ -29,59 +18,74 @@ public class DerivedDataStore
 	/// <returns>Коллекция корневых элементом дерева</returns>
 	public BlockTreeInfo[] BlocksTree()
 	{
-		if (_currentBlockTree == null)
-			RebuildTree();
+		var currentState = stateHolder.CurrentState;
 
-		return _currentBlockTree!;
-	}
+		// Если состояние не изменилось - возвращаем кэш
+		if (currentState.Version == _lastProcessedVersion)
+			return _cachedBlockTree;
 
-	private void RebuildTree()
-	{
-		lock (_readModelLock)
+		lock (this)
 		{
-			var blocksWithTags = InMemory.Blocks.Blocks
-				.Select(block => new BlockWithTagsInfo
-				{
-					Id = block.Id,
-					Guid = block.GlobalId,
-					ParentId = block.ParentId,
-					Description = block.Description,
-					Name = block.Name,
-					Tags = InMemory.Blocks.RelationsBlockTags
-						.Where(x => x.BlockId == block.Id)
-						.Select(x =>
-						{
-							if (x.TagId.HasValue && InMemory.Tags.TagsDict.TryGetValue(x.TagId.Value, out var tag))
-							{
-								return new BlockNestedTagInfo
-								{
-									Id = tag.Id,
-									Guid = tag.GlobalGuid,
-									Name = tag.Name,
-									Frequency = tag.Frequency,
-									Type = tag.Type,
-									SourceType = SourceType.NotSet,
-									LocalName = x.Name ?? string.Empty,
-									Relation = x.Relation,
-									SourceId = tag.SourceId,
-								};
-							}
-							else
-								return null!;
-						})
-						.Where(x => x != null)
-						.ToArray(),
-				})
-				.ToArray();
-
-			var nextBlockTree = ReadChildren(blocksWithTags, null, string.Empty);
+			// Двойная проверка
+			if (currentState.Version == _lastProcessedVersion)
+				return _cachedBlockTree;
 
 			// атомарная замена
-			Interlocked.Exchange(ref _currentBlockTree, nextBlockTree);
+			Interlocked.Exchange(ref _cachedBlockTree, RebuildTree(currentState));
+
+			_lastProcessedVersion = currentState.Version;
+
+			return _cachedBlockTree;
 		}
 	}
 
-	private static BlockTreeInfo[] ReadChildren(BlockWithTagsInfo[] blocks, int? id, string prefix)
+	private BlockTreeInfo[] _cachedBlockTree = null!;
+
+	private static BlockTreeInfo[] RebuildTree(DatalakeState state)
+	{
+		var tagsDict = state.Tags.ToDictionary(x => x.Id);
+
+		var blocksWithTags = state.Blocks
+			.Select(block => new BlockWithTagsInfo
+			{
+				Id = block.Id,
+				Guid = block.GlobalId,
+				ParentId = block.ParentId,
+				Description = block.Description,
+				Name = block.Name,
+				Tags = state.BlockTags
+					.Where(x => x.BlockId == block.Id)
+					.Select(x =>
+					{
+						if (x.TagId.HasValue && tagsDict.TryGetValue(x.TagId.Value, out var tag))
+						{
+							return new BlockNestedTagInfo
+							{
+								Id = tag.Id,
+								Guid = tag.GlobalGuid,
+								Name = tag.Name,
+								Frequency = tag.Frequency,
+								Type = tag.Type,
+								SourceType = SourceType.NotSet,
+								LocalName = x.Name ?? string.Empty,
+								Relation = x.Relation,
+								SourceId = tag.SourceId,
+							};
+						}
+						else
+							return null!;
+					})
+					.Where(x => x != null)
+					.ToArray(),
+			})
+			.ToArray();
+
+		var nextBlockTree = ReadBlockChildren(blocksWithTags, null, string.Empty);
+
+		return nextBlockTree;
+	}
+
+	private static BlockTreeInfo[] ReadBlockChildren(BlockWithTagsInfo[] blocks, int? id, string prefix)
 	{
 		var prefixString = prefix + (string.IsNullOrEmpty(prefix) ? string.Empty : ".");
 		return blocks
@@ -111,7 +115,7 @@ public class DerivedDataStore
 						})
 						.ToArray(),
 					AccessRule = x.AccessRule,
-					Children = ReadChildren(blocks, x.Id, prefixString + x.Name),
+					Children = ReadBlockChildren(blocks, x.Id, prefixString + x.Name),
 				};
 
 				/*if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
@@ -127,4 +131,8 @@ public class DerivedDataStore
 			.OrderBy(x => x.Name)
 			.ToArray();
 	}
+
+	#endregion
+
+	// другие зависимые структуры
 }

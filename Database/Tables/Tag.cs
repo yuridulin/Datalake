@@ -12,9 +12,14 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице тегов
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Tag : IReadOnlyTag
+public record class Tag : IReadOnlyTag
 {
 	const string TableName = "Tags";
+
+	/// <summary>
+	/// Да это же конструктор! Пустой для LinqToDB
+	/// </summary>
+	public Tag() { }
 
 	// поля в БД
 
@@ -48,7 +53,7 @@ public class Tag : IReadOnlyTag
 
 	/// <inheritdoc/>
 	[Column, Required]
-	public bool IsDeleted { get; set; } = false;
+	public bool IsDeleted { get; set; }
 
 	// специфичные для входящих
 
@@ -58,29 +63,29 @@ public class Tag : IReadOnlyTag
 
 	/// <inheritdoc/>
 	[Column]
-	public string? SourceItem { get; set; } = string.Empty;
+	public string? SourceItem { get; set; }
 
 	// специфичные для числовых
 
 	/// <inheritdoc/>
 	[Column]
-	public required bool IsScaling { get; set; } = false;
+	public required bool IsScaling { get; set; }
 
 	/// <inheritdoc/>
 	[Column]
-	public float MinEu { get; set; } = float.MinValue;
+	public float MinEu { get; set; }
 
 	/// <inheritdoc/>
 	[Column]
-	public float MaxEu { get; set; } = float.MaxValue;
+	public float MaxEu { get; set; }
 
 	/// <inheritdoc/>
 	[Column]
-	public float MinRaw { get; set; } = float.MinValue;
+	public float MinRaw { get; set; }
 
 	/// <inheritdoc/>
 	[Column]
-	public float MaxRaw { get; set; } = float.MaxValue;
+	public float MaxRaw { get; set; }
 
 	// специфичные для вычисляемых
 

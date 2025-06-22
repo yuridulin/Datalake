@@ -17,7 +17,6 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class BlocksController(
 	DatalakeContext db,
-	BlocksMemoryRepository repository,
 	DerivedDataStore dataStore) : ApiControllerBase
 {
 	/// <summary>
@@ -112,24 +111,6 @@ public class BlocksController(
 		var user = Authenticate();
 
 		await BlocksRepository.UpdateAsync(db, user, id, block);
-
-		return NoContent();
-	}
-
-	/// <summary>
-	/// Изменение блока
-	/// </summary>
-	/// <param name="id">Идентификатор блока</param>
-	/// <param name="block">Новые данные блока</param>
-	[HttpPut("{id:int}/2")]
-	public async Task<ActionResult> UpdateAsync2(
-		[BindRequired, FromRoute] int id,
-		[BindRequired, FromBody] BlockUpdateRequest block)
-	{
-		/*var user = */Authenticate();
-
-		await repository.UpdateBlock(db, id, block);
-		//await BlocksRepository.UpdateAsync(db, user, id, block);
 
 		return NoContent();
 	}

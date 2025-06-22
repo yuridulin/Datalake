@@ -1,5 +1,4 @@
 ﻿using Datalake.Database.Extensions;
-using Datalake.Database.Interfaces;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
@@ -7,72 +6,22 @@ using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Tags;
 using LinqToDB;
 using LinqToDB.Data;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Concurrent;
 
 namespace Datalake.Database.InMemory.Repositories;
 
 /// <summary>
 /// Репозиторий тегов
 /// </summary>
-public class TagsMemoryRepository(
-	IServiceScopeFactory serviceScopeFactory,
-	Lazy<InMemoryRepositoriesManager> inMemory) : InMemoryRepositoryBase(serviceScopeFactory, inMemory)
+public class TagsMemoryRepository(DatalakeStateHolder stateHolder)
 {
-	#region Исходные коллекции
-
-	private readonly ConcurrentDictionary<int, Tag> _tags = [];
-
-	private readonly ConcurrentDictionary<Guid, Tag> _tagGuids = [];
-
-	private ConcurrentBag<TagInput> _tagInputs = [];
-
-	#endregion
-
-
-	#region Инициализация
-
-	/// <inheritdoc/>
-	protected override async Task InitializeFromDatabase(DatalakeContext db)
-	{
-		_tags.Clear();
-
-		var tags = await db.Tags.ToArrayAsync();
-		foreach (var tag in tags)
-		{
-			_tags.TryAdd(tag.Id, tag);
-			_tagGuids.TryAdd(tag.GlobalGuid, tag);
-		}
-
-		var tagInputs = await db.TagInputs.ToArrayAsync();
-		foreach (var tagInput in tagInputs)
-		{
-			_tagInputs.Add(tagInput);
-		}
-	}
-
-	#endregion
-
-
-	#region Чтение данных внешними источниками
-
-	internal IReadOnlyTag[] Tags => _tags.Values.Select(x => (IReadOnlyTag)x).ToArray();
-
-	internal IReadOnlyDictionary<int, IReadOnlyTag> TagsDict => Tags.ToDictionary(x => x.Id);
-
-	internal IReadOnlyTagInput[] TagInputs => _tagInputs.Select(x => (IReadOnlyTagInput)x).ToArray();
-
-	#endregion
-
-
-	#region Изменение данных внешними источниками
-
 	internal async Task<TagInfo> CreateAsync(
 		DatalakeContext db,
 		Guid userGuid,
 		TagCreateRequest createRequest)
 	{
 		// 1. Проверка версии данных, на основе которых сделан запрос
+
+		var state = stateHolder.CurrentState;
 
 		if (!createRequest.SourceId.HasValue && !createRequest.BlockId.HasValue)
 			throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или блок");
@@ -82,12 +31,13 @@ public class TagsMemoryRepository(
 		{
 			createRequest.Name = createRequest.Name.RemoveWhitespaces("_");
 
-			if (_tags.Values.Any(x => !x.IsDeleted && x.Name.ToLower() == createRequest.Name.ToLower()))
+			if (state.Tags.Any(x => !x.IsDeleted && x.Name.ToLower() == createRequest.Name.ToLower()))
 				throw new ForbiddenException(message: "уже существует тег с таким именем");
 		}
 
-		IReadOnlySource? source = null;
-		IReadOnlyBlock? block = null;
+		Source? source = null;
+		Block? block = null;
+		BlockTag? relationToBlock = null;
 		if (createRequest.SourceId.HasValue)
 		{
 			if (!string.IsNullOrEmpty(createRequest.SourceItem))
@@ -95,8 +45,8 @@ public class TagsMemoryRepository(
 				createRequest.SourceItem = createRequest.SourceItem.RemoveWhitespaces();
 			}
 
-			if (!InMemory.Sources.SourcesDict.TryGetValue(createRequest.SourceId.Value, out source) || source.IsDeleted)
-				throw new NotFoundException(message: $"источник #{createRequest.SourceId}");
+			source = state.Sources.FirstOrDefault(x => x.Id == createRequest.SourceId.Value && !x.IsDeleted)
+				?? throw new NotFoundException(message: $"источник #{createRequest.SourceId}");
 
 			if (string.IsNullOrEmpty(createRequest.Name))
 			{
@@ -112,8 +62,8 @@ public class TagsMemoryRepository(
 
 		if (createRequest.BlockId.HasValue)
 		{
-			if (!InMemory.Blocks.BlocksDict.TryGetValue(createRequest.BlockId.Value, out block) || block.IsDeleted)
-				throw new NotFoundException(message: $"блок #{createRequest.BlockId}");
+			block = state.Blocks.FirstOrDefault(x => x.Id == createRequest.BlockId.Value && !x.IsDeleted)
+				?? throw new NotFoundException(message: $"блок #{createRequest.BlockId}");
 
 			if (string.IsNullOrEmpty(createRequest.Name))
 			{
@@ -138,7 +88,8 @@ public class TagsMemoryRepository(
 		try
 		{
 			// 2. Обновление в БД
-			tag.Id = await db.InsertWithInt32IdentityAsync(tag);
+			var newId = await db.InsertWithInt32IdentityAsync(tag);
+			tag = tag with { Id = newId };
 
 			if (needToAddIdInName)
 			{
@@ -150,32 +101,37 @@ public class TagsMemoryRepository(
 					.UpdateAsync();
 			}
 
-			if (createRequest.BlockId.HasValue)
+			if (block != null && relationToBlock != null)
 			{
+				relationToBlock.TagId = tag.Id;
+
 				await db.BlockTags
-					.Value(x => x.TagId, tag.Id)
-					.Value(x => x.BlockId, createRequest.BlockId)
-					.Value(x => x.Name, createRequest.Name)
-					.Value(x => x.Relation, BlockTagRelation.Static)
+					.Value(x => x.TagId, relationToBlock.TagId)
+					.Value(x => x.BlockId, relationToBlock.BlockId)
+					.Value(x => x.Name, relationToBlock.Name)
+					.Value(x => x.Relation, relationToBlock.Relation)
 					.InsertAsync();
 			}
 
-			// 3. Обновление связей
-			// 4. Обновление in-memory
-			_tags.TryAdd(tag.Id, tag);
-
 			await LogAsync(db, userGuid, tag.Id, $"Создан тег \"{createRequest.Name}\"");
-
-			// 5. Обновление глобальной версии
-			var newVersion = DateTime.UtcNow.Ticks.ToString();
-			UpdateVersion(newVersion);
 
 			await transaction.CommitAsync();
 
 			// 6. Перестроение структур
-			Trigger();
+			stateHolder.UpdateState(state => state with
+			{
+				Blocks = state.Blocks,
+				Tags = state.Tags.Add(tag),
+				BlockTags = relationToBlock != null
+					? state.BlockTags.Add(relationToBlock)
+					: state.BlockTags,
+				Version = DateTime.UtcNow.Ticks,
+			});
 
 			// 7. Вернуть ответ
+			Tag? sourceTag;
+			Source? sourceTagSource;
+
 			var createdTagInfo = new TagInfo
 			{
 				Id = tag.Id,
@@ -209,14 +165,14 @@ public class TagsMemoryRepository(
 				SourceItem = tag.SourceItem,
 				SourceType = source != null ? source.Type : SourceType.NotSet,
 				SourceName = source != null ? source.Name : "Unknown",
-				SourceTag = !_tags.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : new TagSimpleInfo
+				SourceTag = (sourceTag = state.Tags.FirstOrDefault(x => x.Id == tag.SourceTagId && !x.IsDeleted)) == null ? null : new TagSimpleInfo
 				{
 					Id = sourceTag.Id,
 					Frequency = sourceTag.Frequency,
 					Guid = sourceTag.GlobalGuid,
 					Name = sourceTag.Name,
 					Type = sourceTag.Type,
-					SourceType = !InMemory.Sources.SourcesDict.TryGetValue(sourceTag.SourceId, out var sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
+					SourceType = (sourceTagSource = state.Sources.FirstOrDefault(x => x.Id == sourceTag.SourceId && !x.IsDeleted)) == null ? SourceType.NotSet : sourceTagSource.Type,
 				},
 				Aggregation = tag.Aggregation,
 				AggregationPeriod = tag.AggregationPeriod,
@@ -239,10 +195,31 @@ public class TagsMemoryRepository(
 	{
 		updateRequest.Name = updateRequest.Name.RemoveWhitespaces("_");
 
-		if (!_tagGuids.TryGetValue(guid, out var tag))
-			throw new NotFoundException($"тег {guid}");
+		var state = stateHolder.CurrentState;
 
-		if (_tags.Values.Any(x => x.GlobalGuid != guid && x.Name == updateRequest.Name))
+		var tag = state.Tags.FirstOrDefault(x => x.GlobalGuid == guid && !x.IsDeleted)
+			?? throw new NotFoundException($"тег {guid}");
+
+		var updatedTag = tag with
+		{
+			Name = updateRequest.Name,
+			Description = updateRequest.Description,
+			Type = updateRequest.Type,
+			Frequency = updateRequest.Frequency,
+			SourceId = updateRequest.SourceId,
+			SourceItem = updateRequest.SourceItem,
+			IsScaling = updateRequest.IsScaling,
+			MaxEu = updateRequest.MaxEu,
+			MinEu = updateRequest.MinEu,
+			MaxRaw = updateRequest.MaxRaw,
+			MinRaw = updateRequest.MinRaw,
+			Formula = updateRequest.Formula,
+			SourceTagId = updateRequest.SourceTagId,
+			Aggregation = updateRequest.Aggregation,
+			AggregationPeriod = updateRequest.AggregationPeriod,
+		};
+
+		if (state.Tags.Any(x => x.GlobalGuid != guid && x.Name == updateRequest.Name))
 			throw new AlreadyExistException($"тег с именем {updateRequest.Name}");
 
 		if (updateRequest.SourceId > 0)
@@ -337,7 +314,7 @@ public class TagsMemoryRepository(
 
 		try
 		{
-			int count = await db.Tags
+			var createdTagBag = await db.Tags
 				.Where(x => x.GlobalGuid == guid)
 				.Set(x => x.Name, updateRequest.Name)
 				.Set(x => x.Description, updateRequest.Description)
@@ -354,9 +331,9 @@ public class TagsMemoryRepository(
 				.Set(x => x.SourceTagId, updateRequest.SourceTagId)
 				.Set(x => x.Aggregation, updateRequest.Aggregation)
 				.Set(x => x.AggregationPeriod, updateRequest.AggregationPeriod)
-				.UpdateAsync();
+				.UpdateWithOutputAsync();
 
-			if (count != 1)
+			if (createdTagBag.Length != 1)
 				throw new DatabaseException($"Не удалось сохранить тег {guid}", DatabaseStandartError.UpdatedZero);
 
 			await db.TagInputs
@@ -365,32 +342,15 @@ public class TagsMemoryRepository(
 
 			await db.TagInputs.BulkCopyAsync(inputs);
 
-			tag.Name = updateRequest.Name;
-			tag.Description = updateRequest.Description;
-			tag.Type = updateRequest.Type;
-			tag.Frequency = updateRequest.Frequency;
-			tag.SourceId = updateRequest.SourceId;
-			tag.SourceItem = updateRequest.SourceItem;
-			tag.IsScaling = updateRequest.IsScaling;
-			tag.MaxEu = updateRequest.MaxEu;
-			tag.MinEu = updateRequest.MinEu;
-			tag.MaxRaw = updateRequest.MaxRaw;
-			tag.MinRaw = updateRequest.MinRaw;
-			tag.Formula = updateRequest.Formula;
-			tag.SourceTagId = updateRequest.SourceTagId;
-			tag.Aggregation = updateRequest.Aggregation;
-			tag.AggregationPeriod = updateRequest.AggregationPeriod;
-
 			await LogAsync(db, userGuid, tag.Id, $"Изменен тег \"{tag.Name}\"", string.Join(",\n", changes));
 
-			var _nextTagInputs = new ConcurrentBag<TagInput>(_tagInputs
-				.ToArray()
-				.Where(x => x.TagId != tag.Id)
-				.Concat(inputs));
-
-			Interlocked.Exchange(ref _tagInputs, _nextTagInputs);
-
 			await transaction.CommitAsync();
+
+			stateHolder.UpdateState(state => state with
+			{
+				Tags = state.Tags.Replace(tag, updatedTag),
+				TagInputs = state.TagInputs.RemoveAll(x => x.TagId == tag.Id).AddRange(inputs),
+			});
 		}
 		catch (Exception ex)
 		{
@@ -402,10 +362,10 @@ public class TagsMemoryRepository(
 	internal async Task DeleteAsync(
 		DatalakeContext db, Guid userGuid, Guid guid)
 	{
-		if (!_tagGuids.TryGetValue(guid, out var tag))
-			throw new NotFoundException($"тег {guid}");
+		var state = stateHolder.CurrentState;
 
-		int id = tag.Id;
+		var tag = state.Tags.FirstOrDefault(x => x.GlobalGuid == guid && !x.IsDeleted)
+			?? throw new NotFoundException($"тег {guid}");
 
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -422,11 +382,16 @@ public class TagsMemoryRepository(
 			// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
 			// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
 
-			await LogAsync(db, userGuid, id, $"Удален тег \"{tag.Name}\"");
-
-			tag.IsDeleted = true;
+			await LogAsync(db, userGuid, tag.Id, $"Удален тег \"{tag.Name}\"");
 
 			await transaction.CommitAsync();
+
+			var updatedTag = tag with { IsDeleted = true };
+
+			stateHolder.UpdateState(state => state with
+			{
+				Tags = state.Tags.Remove(tag).Add(updatedTag),
+			});
 		}
 		catch (Exception ex)
 		{
@@ -448,6 +413,4 @@ public class TagsMemoryRepository(
 			Details = details,
 		});
 	}
-
-	#endregion
 }

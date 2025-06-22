@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-/// <summary>
+/*/// <summary>
 /// Репозиторий работы с блоками в памяти приложения
 /// </summary>
 public class BlocksMemoryRepository(
@@ -133,4 +133,4 @@ public class BlocksMemoryRepository(
 	}
 
 	#endregion
-}
+}*/

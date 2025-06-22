@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-/// <summary>
+/*/// <summary>
 /// Репозиторий работы с логами в памяти приложения
 /// </summary>
 public class LogsMemoryRepository(
@@ -65,4 +65,4 @@ public class LogsMemoryRepository(
 	}
 
 	#endregion
-} 
+} */

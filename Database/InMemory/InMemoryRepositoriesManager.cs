@@ -10,17 +10,17 @@ public class InMemoryRepositoriesManager
 {
 	#region Репозитории
 
-	/// <summary>
+	/*/// <summary>
 	/// Репозиторий блоков
 	/// </summary>
-	public BlocksMemoryRepository Blocks { get; }
+	public BlocksMemoryRepository Blocks { get; }*/
 
 	/// <summary>
 	/// Репозиторий тегов
 	/// </summary>
-	public TagsMemoryRepository Tags { get; }
+	public TagsMemoryRepository TagsRepository { get; }
 
-	/// <summary>
+	/*/// <summary>
 	/// Репозиторий источников
 	/// </summary>
 	public SourcesMemoryRepository Sources { get; }
@@ -48,7 +48,9 @@ public class InMemoryRepositoriesManager
 	/// <summary>
 	/// Репозиторий логов
 	/// </summary>
-	public LogsMemoryRepository Logs { get; }
+	public LogsMemoryRepository Logs { get; }*/
+
+	private DatalakeStateHolder _stateHolder;
 
 	#endregion
 
@@ -61,15 +63,18 @@ public class InMemoryRepositoriesManager
 	/// <param name="serviceScopeFactory">Фабрика сервисов</param>
 	public InMemoryRepositoriesManager(IServiceScopeFactory serviceScopeFactory)
 	{
+		using var serviceScope = serviceScopeFactory.CreateScope();
+		_stateHolder = serviceScope.ServiceProvider.GetRequiredService<DatalakeStateHolder>();
+
 		// Инициализируем репозитории в правильном порядке для избежания циклических зависимостей
-		Blocks = new BlocksMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
-		Sources = new SourcesMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
-		Tags = new TagsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
-		Users = new UsersMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
-		UserGroups = new UserGroupsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
-		AccessRights = new AccessRightsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
-		Settings = new SettingsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
-		Logs = new LogsMemoryRepository(serviceScopeFactory, new Lazy<InMemoryRepositoriesManager>(this));
+		/*Blocks = new BlocksMemoryRepository(stateHolder);
+		Sources = new SourcesMemoryRepository(stateHolder);*/
+		TagsRepository = new TagsMemoryRepository(_stateHolder);
+		/*Users = new UsersMemoryRepository(stateHolder);
+		UserGroups = new UserGroupsMemoryRepository(stateHolder);
+		AccessRights = new AccessRightsMemoryRepository(stateHolder);
+		Settings = new SettingsMemoryRepository(stateHolder);
+		Logs = new LogsMemoryRepository(stateHolder);*/
 
 		// Подписываемся на события обновления для синхронизации
 		SubscribeToEvents();
@@ -82,90 +87,13 @@ public class InMemoryRepositoriesManager
 
 	private void SubscribeToEvents()
 	{
-		// Подписываемся на события обновления репозиториев
-		Blocks.Updated += OnRepositoryUpdated;
-		Tags.Updated += OnRepositoryUpdated;
-		Sources.Updated += OnRepositoryUpdated;
-		Users.Updated += OnRepositoryUpdated;
-		UserGroups.Updated += OnRepositoryUpdated;
-		AccessRights.Updated += OnRepositoryUpdated;
-		Settings.Updated += OnRepositoryUpdated;
-		Logs.Updated += OnRepositoryUpdated;
+		_stateHolder.StateChanged += OnRepositoryUpdated;
 	}
 
-	private void OnRepositoryUpdated(object? sender, int e)
+	private void OnRepositoryUpdated(object? holder, DatalakeState newState)
 	{
 		// Здесь можно добавить логику для обработки обновлений репозиториев
 		// Например, логирование, уведомления и т.д.
-	}
-
-	#endregion
-
-
-	#region Обновление данных
-
-	/// <summary>
-	/// Обновление всех репозиториев из БД
-	/// </summary>
-	/// <param name="db">Контекст БД</param>
-	public async Task RefreshAllFromDatabase(DatalakeContext db)
-	{
-		await Task.WhenAll(
-			Blocks.RefreshFromDatabase(db),
-			Tags.RefreshFromDatabase(db),
-			Sources.RefreshFromDatabase(db),
-			Users.RefreshFromDatabase(db),
-			UserGroups.RefreshFromDatabase(db),
-			AccessRights.RefreshFromDatabase(db),
-			Settings.RefreshFromDatabase(db),
-			Logs.RefreshFromDatabase(db)
-		);
-	}
-
-	/// <summary>
-	/// Получение общей версии всех репозиториев
-	/// </summary>
-	/// <returns>Объединенная версия всех репозиториев</returns>
-	public string GetCombinedVersion()
-	{
-		var versions = new[]
-		{
-			Blocks.CurrentVersion,
-			Tags.CurrentVersion,
-			Sources.CurrentVersion,
-			Users.CurrentVersion,
-			UserGroups.CurrentVersion,
-			AccessRights.CurrentVersion,
-			Settings.CurrentVersion,
-			Logs.CurrentVersion,
-		};
-
-		// Объединяем версии в одну строку
-		return string.Join("|", versions);
-	}
-
-	#endregion
-
-
-	#region Утилиты
-
-	/// <summary>
-	/// Получение статистики по репозиториям
-	/// </summary>
-	/// <returns>Словарь с количеством элементов в каждом репозитории</returns>
-	public Dictionary<string, int> GetRepositoriesStatistics()
-	{
-		return new Dictionary<string, int>
-		{
-			["Blocks"] = Blocks.Blocks.Length,
-			["Tags"] = Tags.Tags.Length,
-			["Sources"] = Sources.Sources.Length,
-			["Users"] = Users.Users.Length,
-			["UserGroups"] = UserGroups.UserGroups.Length,
-			["AccessRights"] = AccessRights.AccessRights.Length,
-			["Settings"] = Settings.Settings.Length,
-			["Logs"] = Logs.Logs.Length,
-		};
 	}
 
 	#endregion
