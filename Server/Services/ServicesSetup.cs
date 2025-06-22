@@ -25,9 +25,8 @@ internal static class ServicesSetup
 		builder.Services.AddSingleton<UsersStateService>();
 		builder.Services.AddSingleton<TagsStateService>();
 
-		builder.Services.AddSingleton<DatalakeStateHolder>(); // стейт-менеджер с инициализацией
-		builder.Services.AddSingleton<InMemoryRepositoriesManager>(); // репозитории
-		builder.Services.AddSingleton<DerivedDataStore>(); // стейт-менеджер зависимых данных
+		builder.Services.AddSingleton<DatalakeDataStore>(); // стейт-менеджер исходных данных
+		builder.Services.AddSingleton<DatalakeDerivedDataStore>(); // стейт-менеджер зависимых данных
 
 		// службы
 		builder.Services.AddHostedService<CollectorProcessor>();

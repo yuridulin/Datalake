@@ -54,8 +54,6 @@ namespace Datalake.Server
 			WebRootPath = app.Environment.WebRootPath;
 			StartWorkWithDatabase(app);
 
-			var stateHolder = app.Services.GetRequiredService<DatalakeStateHolder>();
-
 			if (app.Environment.IsDevelopment())
 			{
 				app.UseOpenApi();

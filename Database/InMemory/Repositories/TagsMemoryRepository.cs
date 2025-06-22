@@ -1,8 +1,10 @@
 ﻿using Datalake.Database.Extensions;
+using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Tags;
 using LinqToDB;
 using LinqToDB.Data;
@@ -12,215 +14,265 @@ namespace Datalake.Database.InMemory.Repositories;
 /// <summary>
 /// Репозиторий тегов
 /// </summary>
-public class TagsMemoryRepository(DatalakeStateHolder stateHolder)
+public class TagsMemoryRepository(DatalakeDataStore dataStore)
 {
-	internal async Task<TagInfo> CreateAsync(
+	#region Действия
+
+	/// <summary>
+	/// Создание нового тега
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="tagCreateRequest">Параметры нового тега</param>
+	/// <returns>Информация о созданном теге</returns>
+	public async Task<TagInfo> CreateAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		TagCreateRequest tagCreateRequest)
+	{
+		if (tagCreateRequest.SourceId.HasValue && tagCreateRequest.SourceId.Value > 0)
+			AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Manager, tagCreateRequest.SourceId.Value);
+
+		if (tagCreateRequest.BlockId.HasValue)
+			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, tagCreateRequest.BlockId.Value);
+
+		if ((!tagCreateRequest.SourceId.HasValue || tagCreateRequest.SourceId.Value <= 0) && !tagCreateRequest.BlockId.HasValue)
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+
+		return await ProtectedCreateAsync(db, user.Guid, tagCreateRequest);
+	}
+
+	/// <summary>
+	/// Изменение параметров тега
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="updateRequest">Новые параметры тега</param>
+	public async Task UpdateAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		Guid guid,
+		TagUpdateRequest updateRequest)
+	{
+		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
+
+		await ProtectedUpdateAsync(db, user.Guid, guid, updateRequest);
+	}
+
+	/// <summary>
+	/// Удаление тега
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
+	public async Task DeleteAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		Guid guid)
+	{
+		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
+
+		await ProtectedDeleteAsync(db, user.Guid, guid);
+	}
+
+	#endregion
+
+	internal async Task<TagInfo> ProtectedCreateAsync(
 		DatalakeContext db,
 		Guid userGuid,
 		TagCreateRequest createRequest)
 	{
-		// 1. Проверка версии данных, на основе которых сделан запрос
-
-		var state = stateHolder.CurrentState;
-
-		if (!createRequest.SourceId.HasValue && !createRequest.BlockId.HasValue)
-			throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или блок");
+		// Проверки, не требующие стейта
+		createRequest.Name = createRequest.Name?.RemoveWhitespaces("_");
+		createRequest.SourceItem = createRequest.SourceItem?.RemoveWhitespaces();
 
 		bool needToAddIdInName = string.IsNullOrEmpty(createRequest.Name);
-		if (!string.IsNullOrEmpty(createRequest.Name))
-		{
-			createRequest.Name = createRequest.Name.RemoveWhitespaces("_");
 
-			if (state.Tags.Any(x => !x.IsDeleted && x.Name.ToLower() == createRequest.Name.ToLower()))
-				throw new ForbiddenException(message: "уже существует тег с таким именем");
-		}
+		if (!createRequest.SourceId.HasValue)
+			throw new InvalidValueException(message: "необходимо выбрать источник");
 
+		DatalakeDataState currentState;
 		Source? source = null;
 		Block? block = null;
 		BlockTag? relationToBlock = null;
-		if (createRequest.SourceId.HasValue)
+		Tag createdTag;
+
+		// Блокируем стейт до завершения обновления
+		using (await dataStore.AcquireWriteLockAsync())
 		{
-			if (!string.IsNullOrEmpty(createRequest.SourceItem))
+			// Проверки на актуальном стейте
+			currentState = dataStore.State;
+
+			if (!createRequest.SourceId.HasValue && !createRequest.BlockId.HasValue)
+				throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или блок");
+
+			if (!needToAddIdInName)
 			{
-				createRequest.SourceItem = createRequest.SourceItem.RemoveWhitespaces();
+				if (currentState.Tags.Any(x => !x.IsDeleted && x.Name.ToLower() == createRequest.Name?.ToLower()))
+					throw new ForbiddenException(message: "уже существует тег с таким именем");
 			}
 
-			source = state.Sources.FirstOrDefault(x => x.Id == createRequest.SourceId.Value && !x.IsDeleted)
-				?? throw new NotFoundException(message: $"источник #{createRequest.SourceId}");
-
-			if (string.IsNullOrEmpty(createRequest.Name))
+			if (createRequest.SourceId.HasValue)
 			{
-				createRequest.Name = (source.Id <= 0 ? ((SourceType)source.Id).ToString() : source.Name)
-					+ "." + (createRequest.SourceItem ?? "Tag");
+				if (!currentState.SourcesById.TryGetValue(createRequest.SourceId.Value, out source))
+					throw new NotFoundException(message: $"источник #{createRequest.SourceId}");
 
-				if (createRequest.SourceId.Value > 0)
-					needToAddIdInName = false;
-			}
-		}
-		else
-			throw new InvalidValueException(message: "необходимо выбрать источник");
+				if (string.IsNullOrEmpty(createRequest.Name))
+				{
+					createRequest.Name = (source.Id <= 0 ? ((SourceType)source.Id).ToString() : source.Name)
+						+ "." + (createRequest.SourceItem ?? "Tag");
 
-		if (createRequest.BlockId.HasValue)
-		{
-			block = state.Blocks.FirstOrDefault(x => x.Id == createRequest.BlockId.Value && !x.IsDeleted)
-				?? throw new NotFoundException(message: $"блок #{createRequest.BlockId}");
-
-			if (string.IsNullOrEmpty(createRequest.Name))
-			{
-				createRequest.Name = block.Name + ".Tag";
-			}
-		}
-
-		var tag = new Tag
-		{
-			Created = DateFormats.GetCurrentDateTime(),
-			GlobalGuid = Guid.NewGuid(),
-			Frequency = createRequest.Frequency,
-			IsScaling = false,
-			Name = createRequest.Name!,
-			SourceId = createRequest.SourceId ?? (int)SourceType.Manual,
-			Type = createRequest.TagType,
-			SourceItem = createRequest.SourceItem,
-		};
-
-		using var transaction = await db.BeginTransactionAsync();
-
-		try
-		{
-			// 2. Обновление в БД
-			var newId = await db.InsertWithInt32IdentityAsync(tag);
-			tag = tag with { Id = newId };
-
-			if (needToAddIdInName)
-			{
-				createRequest.Name += tag.Id.ToString();
-
-				await db.Tags
-					.Where(x => x.Id == tag.Id)
-					.Set(x => x.Name, createRequest.Name)
-					.UpdateAsync();
+					if (createRequest.SourceId.Value > 0)
+						needToAddIdInName = false;
+				}
 			}
 
-			if (block != null && relationToBlock != null)
+			if (createRequest.BlockId.HasValue)
 			{
-				relationToBlock.TagId = tag.Id;
+				if (!currentState.BlocksById.TryGetValue(createRequest.BlockId.Value, out block))
+					throw new NotFoundException(message: $"блок #{createRequest.BlockId}");
 
-				await db.BlockTags
-					.Value(x => x.TagId, relationToBlock.TagId)
-					.Value(x => x.BlockId, relationToBlock.BlockId)
-					.Value(x => x.Name, relationToBlock.Name)
-					.Value(x => x.Relation, relationToBlock.Relation)
-					.InsertAsync();
+				if (string.IsNullOrEmpty(createRequest.Name))
+				{
+					createRequest.Name = block.Name + ".Tag";
+				}
 			}
 
-			await LogAsync(db, userGuid, tag.Id, $"Создан тег \"{createRequest.Name}\"");
+			createdTag = new Tag
+			{
+				Created = DateFormats.GetCurrentDateTime(),
+				GlobalGuid = Guid.NewGuid(),
+				Frequency = createRequest.Frequency,
+				IsScaling = false,
+				Name = createRequest.Name!,
+				SourceId = createRequest.SourceId ?? (int)SourceType.Manual,
+				Type = createRequest.TagType,
+				SourceItem = createRequest.SourceItem,
+			};
 
-			await transaction.CommitAsync();
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
 
-			// 6. Перестроение структур
-			stateHolder.UpdateState(state => state with
+			try
+			{
+				var newId = await db.InsertWithInt32IdentityAsync(createdTag);
+				createdTag = createdTag with { Id = newId };
+
+				if (needToAddIdInName)
+				{
+					createRequest.Name += createdTag.Id.ToString();
+
+					await db.Tags
+						.Where(x => x.Id == createdTag.Id)
+						.Set(x => x.Name, createRequest.Name)
+						.UpdateAsync();
+				}
+
+				if (block != null)
+				{
+					relationToBlock = new BlockTag
+					{
+						BlockId = block.Id,
+						TagId = createdTag.Id,
+					};
+
+					await db.BlockTags
+						.Value(x => x.TagId, relationToBlock.TagId)
+						.Value(x => x.BlockId, relationToBlock.BlockId)
+						.Value(x => x.Name, relationToBlock.Name)
+						.Value(x => x.Relation, relationToBlock.Relation)
+						.InsertAsync();
+				}
+
+				await LogAsync(db, userGuid, createdTag.Id, $"Создан тег \"{createRequest.Name}\"");
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
 			{
 				Blocks = state.Blocks,
-				Tags = state.Tags.Add(tag),
+				Tags = state.Tags.Add(createdTag),
 				BlockTags = relationToBlock != null
 					? state.BlockTags.Add(relationToBlock)
 					: state.BlockTags,
-				Version = DateTime.UtcNow.Ticks,
 			});
-
-			// 7. Вернуть ответ
-			Tag? sourceTag;
-			Source? sourceTagSource;
-
-			var createdTagInfo = new TagInfo
-			{
-				Id = tag.Id,
-				Guid = tag.GlobalGuid,
-				Name = tag.Name,
-				Description = tag.Description,
-				Frequency = tag.Frequency,
-				Type = tag.Type,
-				Formula = tag.Formula ?? string.Empty,
-				FormulaInputs = (
-					from input_rel in db.TagInputs.LeftJoin(x => x.TagId == tag.Id)
-					from input in db.Tags.InnerJoin(x => x.Id == input_rel.InputTagId && !x.IsDeleted)
-					from input_source in db.Sources.LeftJoin(x => x.Id == input.SourceId && !x.IsDeleted)
-					select new TagInputInfo
-					{
-						Id = input.Id,
-						Guid = input.GlobalGuid,
-						Name = input.Name,
-						VariableName = input_rel.VariableName,
-						Type = input.Type,
-						Frequency = input.Frequency,
-						SourceType = input_source != null ? input_source.Type : SourceType.NotSet,
-					}
-				).ToArray(),
-				IsScaling = tag.IsScaling,
-				MaxEu = tag.MaxEu,
-				MaxRaw = tag.MaxRaw,
-				MinEu = tag.MinEu,
-				MinRaw = tag.MinRaw,
-				SourceId = tag.SourceId,
-				SourceItem = tag.SourceItem,
-				SourceType = source != null ? source.Type : SourceType.NotSet,
-				SourceName = source != null ? source.Name : "Unknown",
-				SourceTag = (sourceTag = state.Tags.FirstOrDefault(x => x.Id == tag.SourceTagId && !x.IsDeleted)) == null ? null : new TagSimpleInfo
-				{
-					Id = sourceTag.Id,
-					Frequency = sourceTag.Frequency,
-					Guid = sourceTag.GlobalGuid,
-					Name = sourceTag.Name,
-					Type = sourceTag.Type,
-					SourceType = (sourceTagSource = state.Sources.FirstOrDefault(x => x.Id == sourceTag.SourceId && !x.IsDeleted)) == null ? SourceType.NotSet : sourceTagSource.Type,
-				},
-				Aggregation = tag.Aggregation,
-				AggregationPeriod = tag.AggregationPeriod,
-			};
-
-			return createdTagInfo;
 		}
-		catch (Exception ex)
+
+		// Возвращение ответа
+		Tag? sourceTag;
+		Source? sourceTagSource;
+
+		var createdTagInfo = new TagInfo
 		{
-			await transaction.RollbackAsync();
-			throw new Exception("Не удалось создать тег", ex);
-		}
+			Id = createdTag.Id,
+			Guid = createdTag.GlobalGuid,
+			Name = createdTag.Name,
+			Description = createdTag.Description,
+			Frequency = createdTag.Frequency,
+			Type = createdTag.Type,
+			Formula = createdTag.Formula ?? string.Empty,
+			FormulaInputs = currentState.TagInputs
+				.Where(rel => rel.TagId == createdTag.Id)
+				.Join(currentState.Tags,
+					rel => rel.InputTagId,
+					tag => tag.Id,
+					(rel, tag) => new { rel, input = tag })
+				.Select(x =>
+				{
+					currentState.SourcesById.TryGetValue(x.input.SourceId, out var inputSource);
+					return new TagInputInfo
+					{
+						Id = x.input.Id,
+						Guid = x.input.GlobalGuid,
+						Name = x.input.Name,
+						VariableName = x.rel.VariableName,
+						Type = x.input.Type,
+						Frequency = x.input.Frequency,
+						SourceType = inputSource != null ? inputSource.Type : SourceType.NotSet,
+					};
+				})
+				.ToArray(),
+			IsScaling = createdTag.IsScaling,
+			MaxEu = createdTag.MaxEu,
+			MaxRaw = createdTag.MaxRaw,
+			MinEu = createdTag.MinEu,
+			MinRaw = createdTag.MinRaw,
+			SourceId = createdTag.SourceId,
+			SourceItem = createdTag.SourceItem,
+			SourceType = source != null ? source.Type : SourceType.NotSet,
+			SourceName = source != null ? source.Name : "Unknown",
+			SourceTag = !currentState.TagsById.TryGetValue(createdTag.SourceTagId ?? 0, out sourceTag) ? null : new TagSimpleInfo
+			{
+				Id = sourceTag.Id,
+				Frequency = sourceTag.Frequency,
+				Guid = sourceTag.GlobalGuid,
+				Name = sourceTag.Name,
+				Type = sourceTag.Type,
+				SourceType = !currentState.SourcesById.TryGetValue(sourceTag.SourceId, out sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
+			},
+			Aggregation = createdTag.Aggregation,
+			AggregationPeriod = createdTag.AggregationPeriod,
+		};
+
+		return createdTagInfo;
 	}
 
-	internal async Task UpdateAsync(
+	internal async Task ProtectedUpdateAsync(
 		DatalakeContext db,
 		Guid userGuid,
 		Guid guid,
 		TagUpdateRequest updateRequest)
 	{
+		// Проверки, не требующие стейта
 		updateRequest.Name = updateRequest.Name.RemoveWhitespaces("_");
-
-		var state = stateHolder.CurrentState;
-
-		var tag = state.Tags.FirstOrDefault(x => x.GlobalGuid == guid && !x.IsDeleted)
-			?? throw new NotFoundException($"тег {guid}");
-
-		var updatedTag = tag with
-		{
-			Name = updateRequest.Name,
-			Description = updateRequest.Description,
-			Type = updateRequest.Type,
-			Frequency = updateRequest.Frequency,
-			SourceId = updateRequest.SourceId,
-			SourceItem = updateRequest.SourceItem,
-			IsScaling = updateRequest.IsScaling,
-			MaxEu = updateRequest.MaxEu,
-			MinEu = updateRequest.MinEu,
-			MaxRaw = updateRequest.MaxRaw,
-			MinRaw = updateRequest.MinRaw,
-			Formula = updateRequest.Formula,
-			SourceTagId = updateRequest.SourceTagId,
-			Aggregation = updateRequest.Aggregation,
-			AggregationPeriod = updateRequest.AggregationPeriod,
-		};
-
-		if (state.Tags.Any(x => x.GlobalGuid != guid && x.Name == updateRequest.Name))
-			throw new AlreadyExistException($"тег с именем {updateRequest.Name}");
 
 		if (updateRequest.SourceId > 0)
 		{
@@ -234,173 +286,222 @@ public class TagsMemoryRepository(DatalakeStateHolder stateHolder)
 			updateRequest.SourceItem = null;
 		}
 
-		if (updateRequest.SourceTagId == tag.Id)
-			throw new InvalidValueException("Тег не может быть источником значений для самого себя");
-
-		List<string> changes = new();
-		if (tag.Name != updateRequest.Name)
-			changes.Add($"название: [{tag.Name}] > [{updateRequest.Name}]");
-		if (tag.Description != updateRequest.Description)
-			changes.Add($"описание: [{tag.Description}] > [{updateRequest.Description}]");
-		if (tag.Type != updateRequest.Type)
-			changes.Add($"тип значения: [{tag.Type}] > [{updateRequest.Type}]");
-		if (tag.Frequency != updateRequest.Frequency)
-			changes.Add($"частота: [{tag.Frequency}] > [{updateRequest.Frequency}]");
-		if (tag.SourceId != updateRequest.SourceId)
-			changes.Add($"источник: [{tag.SourceId}] > [{updateRequest.SourceId}]");
-		if (tag.SourceItem != updateRequest.SourceItem)
-			changes.Add($"путь в источнике: [{tag.SourceItem}] > [{updateRequest.SourceItem}]");
-		if (tag.IsScaling != updateRequest.IsScaling)
-			changes.Add($"шкалирование: [{tag.IsScaling}] > [{updateRequest.IsScaling}]");
-		if (tag.MaxEu != updateRequest.MaxEu)
-			changes.Add($"макс. знач. шкалы: [{tag.MaxEu}] > [{updateRequest.MaxEu}]");
-		if (tag.MinEu != updateRequest.MinEu)
-			changes.Add($"мин. знач. шкалы: [{tag.MinEu}] > [{updateRequest.MinEu}]");
-		if (tag.MaxRaw != updateRequest.MaxRaw)
-			changes.Add($"макс. знач. диапазона: [{tag.MaxRaw}] > [{updateRequest.MaxRaw}]");
-		if (tag.MinRaw != updateRequest.MinRaw)
-			changes.Add($"миню знач. диапазона: [{tag.MinRaw}] > [{updateRequest.MinRaw}]");
-		if (tag.Formula != updateRequest.Formula)
-			changes.Add($"формула: [{tag.Formula}] > [{updateRequest.Formula}]");
-		if (tag.SourceTagId != updateRequest.SourceTagId)
-			changes.Add($"тег-источник: [{tag.SourceTagId}] > [{updateRequest.SourceTagId}]");
-		if (tag.Aggregation != updateRequest.Aggregation)
-			changes.Add($"тип агрегации: [{tag.Aggregation}] > [{updateRequest.Aggregation}]");
-		if (tag.AggregationPeriod != updateRequest.AggregationPeriod)
-			changes.Add($"период агрегации: [{tag.AggregationPeriod}] > [{updateRequest.AggregationPeriod}]");
-
-		var inputs = updateRequest.FormulaInputs
-			.Select(x => new TagInput
-			{
-				TagId = tag.Id,
-				InputTagId = x.TagId,
-				VariableName = x.VariableName,
-			})
-			.ToArray();
-
-		List<string> addedInputs = new();
-		List<string> updatedInputs = new();
-		List<string> deletedInputs = new();
-		foreach (var input in inputs)
+		// Блокируем стейт до завершения обновления
+		using (await dataStore.AcquireWriteLockAsync())
 		{
-			var updated = updateRequest.FormulaInputs.FirstOrDefault(x => x.VariableName == input.VariableName);
-			if (updated == null)
+			// Проверки на актуальном стейте
+			var state = dataStore.State;
+
+			if (!state.TagsByGuid.TryGetValue(guid, out var tag))
+				throw new NotFoundException($"тег {guid}");
+
+			var updatedTag = tag with
 			{
-				deletedInputs.Add(input.VariableName);
+				Name = updateRequest.Name,
+				Description = updateRequest.Description,
+				Type = updateRequest.Type,
+				Frequency = updateRequest.Frequency,
+				SourceId = updateRequest.SourceId,
+				SourceItem = updateRequest.SourceItem,
+				IsScaling = updateRequest.IsScaling,
+				MaxEu = updateRequest.MaxEu,
+				MinEu = updateRequest.MinEu,
+				MaxRaw = updateRequest.MaxRaw,
+				MinRaw = updateRequest.MinRaw,
+				Formula = updateRequest.Formula,
+				SourceTagId = updateRequest.SourceTagId,
+				Aggregation = updateRequest.Aggregation,
+				AggregationPeriod = updateRequest.AggregationPeriod,
+			};
+
+			if (state.Tags.Any(x => x.GlobalGuid != guid && !x.IsDeleted && x.Name == updateRequest.Name))
+				throw new AlreadyExistException($"тег с именем {updateRequest.Name}");
+
+			if (updateRequest.SourceTagId == tag.Id)
+				throw new InvalidValueException("Тег не может быть источником значений для самого себя");
+
+			List<string> changes = new();
+			if (tag.Name != updateRequest.Name)
+				changes.Add($"название: [{tag.Name}] > [{updateRequest.Name}]");
+			if (tag.Description != updateRequest.Description)
+				changes.Add($"описание: [{tag.Description}] > [{updateRequest.Description}]");
+			if (tag.Type != updateRequest.Type)
+				changes.Add($"тип значения: [{tag.Type}] > [{updateRequest.Type}]");
+			if (tag.Frequency != updateRequest.Frequency)
+				changes.Add($"частота: [{tag.Frequency}] > [{updateRequest.Frequency}]");
+			if (tag.SourceId != updateRequest.SourceId)
+				changes.Add($"источник: [{tag.SourceId}] > [{updateRequest.SourceId}]");
+			if (tag.SourceItem != updateRequest.SourceItem)
+				changes.Add($"путь в источнике: [{tag.SourceItem}] > [{updateRequest.SourceItem}]");
+			if (tag.IsScaling != updateRequest.IsScaling)
+				changes.Add($"шкалирование: [{tag.IsScaling}] > [{updateRequest.IsScaling}]");
+			if (tag.MaxEu != updateRequest.MaxEu)
+				changes.Add($"макс. знач. шкалы: [{tag.MaxEu}] > [{updateRequest.MaxEu}]");
+			if (tag.MinEu != updateRequest.MinEu)
+				changes.Add($"мин. знач. шкалы: [{tag.MinEu}] > [{updateRequest.MinEu}]");
+			if (tag.MaxRaw != updateRequest.MaxRaw)
+				changes.Add($"макс. знач. диапазона: [{tag.MaxRaw}] > [{updateRequest.MaxRaw}]");
+			if (tag.MinRaw != updateRequest.MinRaw)
+				changes.Add($"миню знач. диапазона: [{tag.MinRaw}] > [{updateRequest.MinRaw}]");
+			if (tag.Formula != updateRequest.Formula)
+				changes.Add($"формула: [{tag.Formula}] > [{updateRequest.Formula}]");
+			if (tag.SourceTagId != updateRequest.SourceTagId)
+				changes.Add($"тег-источник: [{tag.SourceTagId}] > [{updateRequest.SourceTagId}]");
+			if (tag.Aggregation != updateRequest.Aggregation)
+				changes.Add($"тип агрегации: [{tag.Aggregation}] > [{updateRequest.Aggregation}]");
+			if (tag.AggregationPeriod != updateRequest.AggregationPeriod)
+				changes.Add($"период агрегации: [{tag.AggregationPeriod}] > [{updateRequest.AggregationPeriod}]");
+
+			var inputs = updateRequest.FormulaInputs
+				.Select(x => new TagInput
+				{
+					TagId = tag.Id,
+					InputTagId = x.TagId,
+					VariableName = x.VariableName,
+				})
+				.ToArray();
+
+			List<string> addedInputs = new();
+			List<string> updatedInputs = new();
+			List<string> deletedInputs = new();
+			foreach (var input in inputs)
+			{
+				var updated = updateRequest.FormulaInputs.FirstOrDefault(x => x.VariableName == input.VariableName);
+				if (updated == null)
+				{
+					deletedInputs.Add(input.VariableName);
+				}
+				else if (input.InputTagId != updated.TagId)
+				{
+					updatedInputs.Add($"{input.VariableName}: [{input.InputTagId}] > [{updated.TagId}]");
+				}
 			}
-			else if (input.InputTagId != updated.TagId)
+			foreach (var updated in updateRequest.FormulaInputs)
 			{
-				updatedInputs.Add($"{input.VariableName}: [{input.InputTagId}] > [{updated.TagId}]");
+				if (inputs.Any(x => x.VariableName == updated.VariableName))
+					continue;
+
+				addedInputs.Add($"{updated.VariableName}: [{updated.TagId}]");
 			}
-		}
-		foreach (var updated in updateRequest.FormulaInputs)
-		{
-			if (inputs.Any(x => x.VariableName == updated.VariableName))
-				continue;
+			if (addedInputs.Count > 0 || updatedInputs.Count > 0 || deletedInputs.Count > 0)
+			{
+				string inputString = "входные параметры формулы: "
+					+ (addedInputs.Count > 0 ? "\tдобавлены: " + string.Join(", ", addedInputs) : string.Empty)
+					+ (updatedInputs.Count > 0 ? "\tизменены: " + string.Join(", ", updatedInputs) : string.Empty)
+					+ (deletedInputs.Count > 0 ? "\tудалены: " + string.Join(", ", deletedInputs) : string.Empty);
 
-			addedInputs.Add($"{updated.VariableName}: [{updated.TagId}]");
-		}
-		if (addedInputs.Count > 0 || updatedInputs.Count > 0 || deletedInputs.Count > 0)
-		{
-			string inputString = "входные параметры формулы: "
-				+ (addedInputs.Count > 0 ? "\tдобавлены: " + string.Join(", ", addedInputs) : string.Empty)
-				+ (updatedInputs.Count > 0 ? "\tизменены: " + string.Join(", ", updatedInputs) : string.Empty)
-				+ (deletedInputs.Count > 0 ? "\tудалены: " + string.Join(", ", deletedInputs) : string.Empty);
+				changes.Add(inputString);
+			}
 
-			changes.Add(inputString);
-		}
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
 
-		var transaction = await db.BeginTransactionAsync();
+			try
+			{
+				var createdTagBag = await db.Tags
+					.Where(x => x.GlobalGuid == guid)
+					.Set(x => x.Name, updateRequest.Name)
+					.Set(x => x.Description, updateRequest.Description)
+					.Set(x => x.Type, updateRequest.Type)
+					.Set(x => x.Frequency, updateRequest.Frequency)
+					.Set(x => x.SourceId, updateRequest.SourceId)
+					.Set(x => x.SourceItem, updateRequest.SourceItem)
+					.Set(x => x.IsScaling, updateRequest.IsScaling)
+					.Set(x => x.MaxEu, updateRequest.MaxEu)
+					.Set(x => x.MinEu, updateRequest.MinEu)
+					.Set(x => x.MaxRaw, updateRequest.MaxRaw)
+					.Set(x => x.MinRaw, updateRequest.MinRaw)
+					.Set(x => x.Formula, updateRequest.Formula)
+					.Set(x => x.SourceTagId, updateRequest.SourceTagId)
+					.Set(x => x.Aggregation, updateRequest.Aggregation)
+					.Set(x => x.AggregationPeriod, updateRequest.AggregationPeriod)
+					.UpdateWithOutputAsync();
 
-		try
-		{
-			var createdTagBag = await db.Tags
-				.Where(x => x.GlobalGuid == guid)
-				.Set(x => x.Name, updateRequest.Name)
-				.Set(x => x.Description, updateRequest.Description)
-				.Set(x => x.Type, updateRequest.Type)
-				.Set(x => x.Frequency, updateRequest.Frequency)
-				.Set(x => x.SourceId, updateRequest.SourceId)
-				.Set(x => x.SourceItem, updateRequest.SourceItem)
-				.Set(x => x.IsScaling, updateRequest.IsScaling)
-				.Set(x => x.MaxEu, updateRequest.MaxEu)
-				.Set(x => x.MinEu, updateRequest.MinEu)
-				.Set(x => x.MaxRaw, updateRequest.MaxRaw)
-				.Set(x => x.MinRaw, updateRequest.MinRaw)
-				.Set(x => x.Formula, updateRequest.Formula)
-				.Set(x => x.SourceTagId, updateRequest.SourceTagId)
-				.Set(x => x.Aggregation, updateRequest.Aggregation)
-				.Set(x => x.AggregationPeriod, updateRequest.AggregationPeriod)
-				.UpdateWithOutputAsync();
+				if (createdTagBag.Length != 1)
+					throw new DatabaseException($"Не удалось сохранить тег {guid}", DatabaseStandartError.UpdatedZero);
 
-			if (createdTagBag.Length != 1)
-				throw new DatabaseException($"Не удалось сохранить тег {guid}", DatabaseStandartError.UpdatedZero);
+				await db.TagInputs
+					.Where(x => x.TagId == tag.Id)
+					.DeleteAsync();
 
-			await db.TagInputs
-				.Where(x => x.TagId == tag.Id)
-				.DeleteAsync();
+				await db.TagInputs.BulkCopyAsync(inputs);
 
-			await db.TagInputs.BulkCopyAsync(inputs);
+				await LogAsync(db, userGuid, tag.Id, $"Изменен тег \"{tag.Name}\"", string.Join(",\n", changes));
 
-			await LogAsync(db, userGuid, tag.Id, $"Изменен тег \"{tag.Name}\"", string.Join(",\n", changes));
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось обновить тег в БД", ex);
+			}
 
-			await transaction.CommitAsync();
-
-			stateHolder.UpdateState(state => state with
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
 			{
 				Tags = state.Tags.Replace(tag, updatedTag),
 				TagInputs = state.TagInputs.RemoveAll(x => x.TagId == tag.Id).AddRange(inputs),
 			});
 		}
-		catch (Exception ex)
-		{
-			await transaction.RollbackAsync();
-			throw new Exception("Не удалось обновить тег", ex);
-		}
+
+		// Возвращение ответа
 	}
 
-	internal async Task DeleteAsync(
-		DatalakeContext db, Guid userGuid, Guid guid)
+	internal async Task ProtectedDeleteAsync(
+		DatalakeContext db,
+		Guid userGuid,
+		Guid guid)
 	{
-		var state = stateHolder.CurrentState;
+		// Проверки, не требующие стейта
 
-		var tag = state.Tags.FirstOrDefault(x => x.GlobalGuid == guid && !x.IsDeleted)
-			?? throw new NotFoundException($"тег {guid}");
-
-		using var transaction = await db.BeginTransactionAsync();
-
-		try
+		// Блокируем стейт до завершения обновления
+		using (await dataStore.AcquireWriteLockAsync())
 		{
-			var count = await db.Tags
-				.Where(x => x.GlobalGuid == guid)
-				.Set(x => x.IsDeleted, true)
-				.UpdateAsync();
+			// Проверки на актуальном стейте
+			var state = dataStore.State;
 
-			if (count == 0)
-				throw new DatabaseException($"Не удалось удалить тег {tag.Name}", DatabaseStandartError.DeletedZero);
-
-			// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
-			// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
-
-			await LogAsync(db, userGuid, tag.Id, $"Удален тег \"{tag.Name}\"");
-
-			await transaction.CommitAsync();
+			if (!state.TagsByGuid.TryGetValue(guid, out var tag))
+				throw new NotFoundException($"тег {guid}");
 
 			var updatedTag = tag with { IsDeleted = true };
 
-			stateHolder.UpdateState(state => state with
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				var count = await db.Tags
+					.Where(x => x.GlobalGuid == guid)
+					.Set(x => x.IsDeleted, true)
+					.UpdateAsync();
+
+				if (count == 0)
+					throw new DatabaseException($"Не удалось удалить тег {tag.Name}", DatabaseStandartError.DeletedZero);
+
+				// TODO: удаление истории тега. Так как доступ идёт по id, получить её после пересоздания не получится
+				// Либо нужно сделать отслеживание соответствий локальный и глобальных id, и при получении истории обогащать выборку предыдущей историей
+
+				await LogAsync(db, userGuid, tag.Id, $"Удален тег \"{tag.Name}\"");
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось удалить тег", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
 			{
 				Tags = state.Tags.Remove(tag).Add(updatedTag),
 			});
 		}
-		catch (Exception ex)
-		{
-			await transaction.RollbackAsync();
-			throw new Exception("Не удалось удалить тег", ex);
-		}
+
+		// Возвращение ответа
 	}
 
-	internal static async Task LogAsync(DatalakeContext db, Guid userGuid, int tagId, string message, string? details = null)
+	private static async Task LogAsync(DatalakeContext db, Guid userGuid, int tagId, string message, string? details = null)
 	{
 		await db.InsertAsync(new Log
 		{

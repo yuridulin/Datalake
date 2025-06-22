@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Controllers.Base;
@@ -12,7 +13,9 @@ namespace Datalake.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class TagsController(DatalakeContext db) : ApiControllerBase
+public class TagsController(
+	TagsMemoryRepository tagsRepository,
+	DatalakeContext db) : ApiControllerBase
 {
 	/// <summary>
 	/// Создание нового тега
@@ -25,7 +28,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await TagsRepository.CreateAsync(db, user, tagCreateRequest);
+		return await tagsRepository.CreateAsync(db, user, tagCreateRequest);
 	}
 
 	/// <summary>
@@ -87,7 +90,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await TagsRepository.UpdateAsync(db, user, guid, tag);
+		await tagsRepository.UpdateAsync(db, user, guid, tag);
 
 		return NoContent();
 	}
@@ -102,7 +105,7 @@ public class TagsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await TagsRepository.DeleteAsync(db, user, guid);
+		await tagsRepository.DeleteAsync(db, user, guid);
 
 		return NoContent();
 	}

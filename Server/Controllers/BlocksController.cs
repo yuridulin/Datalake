@@ -1,6 +1,5 @@
 ﻿using Datalake.Database;
 using Datalake.Database.InMemory;
-using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Blocks;
@@ -17,7 +16,7 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class BlocksController(
 	DatalakeContext db,
-	DerivedDataStore dataStore) : ApiControllerBase
+	DatalakeDerivedDataStore dataStore) : ApiControllerBase
 {
 	/// <summary>
 	/// Создание нового блока на основании переданной информации
