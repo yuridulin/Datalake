@@ -1,52 +1,349 @@
-﻿using Datalake.Database.Interfaces;
+﻿using Datalake.Database.Extensions;
+using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Sources;
 using LinqToDB;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Concurrent;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-/*/// <summary>
-/// 
+/// <summary>
+/// Репозиторий источников данных
 /// </summary>
-public class SourcesMemoryRepository(
-	IServiceScopeFactory serviceScopeFactory,
-	Lazy<InMemoryRepositoriesManager> inMemory) : InMemoryRepositoryBase(serviceScopeFactory, inMemory)
+public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Исходные коллекции
+	#region Действия
 
-	private readonly ConcurrentDictionary<int, Source> _sources = [];
-
-	#endregion
-
-
-	#region Инициализация
-
-	/// <inheritdoc/>
-	protected override async Task InitializeFromDatabase(DatalakeContext db)
+	/// <summary>
+	/// Создание нового источника
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="sourceInfo">Параметры нового источника</param>
+	/// <returns>Идентификатор нового источника</returns>
+	public async Task<SourceInfo> CreateAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		SourceInfo? sourceInfo = null)
 	{
-		_sources.Clear();
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 
-		var sources = await db.Sources.ToArrayAsync();
-		foreach (var source in sources)
-			_sources.TryAdd(source.Id, source);
+		if (sourceInfo != null)
+			return await ProtectedCreateAsync(db, user.Guid, sourceInfo);
+
+		return await ProtectedCreateAsync(db, user.Guid);
+	}
+
+	/// <summary>
+	/// Изменение параметров источника
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <param name="sourceInfo">Новые параметры источника</param>
+	/// <returns>Флаг успешного завершения</returns>
+	public async Task<bool> UpdateAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		int id,
+		SourceInfo sourceInfo)
+	{
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Editor, id);
+
+		return await ProtectedUpdateAsync(db, user.Guid, id, sourceInfo);
+	}
+
+	/// <summary>
+	/// Удаление источника
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Флаг успешного завершения</returns>
+	public async Task<bool> DeleteAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		int id)
+	{
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Manager, id);
+
+		return await ProtectedDeleteAsync(db, user.Guid, id);
 	}
 
 	#endregion
 
+	internal async Task<SourceInfo> ProtectedCreateAsync(DatalakeContext db, Guid userGuid)
+	{
+		// Проверки, не требующие стейта
+		Source newSource = new()
+		{
+			Name = "INSERTING",
+			Description = string.Empty,
+			Address = "",
+			Type = SourceType.NotSet,
+			IsDeleted = false,
+		};
 
-	#region Чтение данных внешними источниками
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
 
-	internal IReadOnlySource[] Sources => _sources.Values.Select(x => (IReadOnlySource)x).ToArray();
+			// Проверки на актуальном стейте
 
-	internal IReadOnlyDictionary<int, IReadOnlySource> SourcesDict => Sources.ToDictionary(x => x.Id);
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
 
-	#endregion
+			try
+			{
+				int id = await db.Sources
+					.Value(x => x.Name, newSource.Name)
+					.Value(x => x.Description, newSource.Description)
+					.Value(x => x.Address, newSource.Address)
+					.Value(x => x.Type, newSource.Type)
+					.InsertWithInt32IdentityAsync()
+					?? throw new Exception("Не получен id из БД");
 
+				newSource.Id = id;
+				newSource.Name = ValueChecker.RemoveWhitespaces("Новый источник #" + id, "_");
 
-	#region Изменение данных внешними источниками
+				await db.Sources
+					.Where(x => x.Id == id)
+					.Set(x => x.Name, newSource.Name)
+					.UpdateAsync();
 
+				await LogAsync(db, userGuid, id, "Создан источник: " + newSource.Name);
 
-	#endregion
-}*/
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
 
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Sources = state.Sources.Add(newSource),
+			});
+		}
+
+		// Возвращение ответа
+		var info = new SourceInfo
+		{
+			Id = newSource.Id,
+			Name = newSource.Name,
+			Address = newSource.Address,
+			Type = newSource.Type,
+			Description = newSource.Description,
+		};
+
+		return info;
+	}
+
+	internal async Task<SourceInfo> ProtectedCreateAsync(DatalakeContext db, Guid userGuid, SourceInfo sourceInfo)
+	{
+		// Проверки, не требующие стейта
+		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
+
+		if (sourceInfo.Type == SourceType.System)
+			throw new InvalidValueException("Нельзя добавить системный источник");
+
+		Source newSource = new()
+		{
+			Name = sourceInfo.Name,
+			Address = sourceInfo.Address,
+			Type = sourceInfo.Type,
+			Description = sourceInfo.Description,
+			IsDeleted = false,
+		};
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (currentState.Sources.Any(x => !x.IsDeleted && x.Name == sourceInfo.Name))
+				throw new AlreadyExistException("Уже существует источник с таким именем");
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				int id = await db.Sources
+					.Value(x => x.Name, newSource.Name)
+					.Value(x => x.Description, newSource.Description)
+					.Value(x => x.Address, newSource.Address)
+					.Value(x => x.Type, newSource.Type)
+					.InsertWithInt32IdentityAsync()
+					?? throw new Exception("Не получен id из БД");
+
+				newSource.Id = id;
+
+				await LogAsync(db, userGuid, id, "Создан источник: " + sourceInfo.Name);
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Sources = state.Sources.Add(newSource),
+			});
+		}
+
+		// Возвращение ответа
+		var info = new SourceInfo
+		{
+			Id = newSource.Id,
+			Name = newSource.Name,
+			Address = newSource.Address,
+			Type = newSource.Type,
+			Description = newSource.Description,
+		};
+
+		return info;
+	}
+
+	internal async Task<bool> ProtectedUpdateAsync(DatalakeContext db, Guid userGuid, int id, SourceInfo sourceInfo)
+	{
+		// Проверки, не требующие стейта
+		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
+
+		Source? newSource;
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (!currentState.SourcesById.TryGetValue(id, out var source))
+				throw new NotFoundException($"Источник #{id} не найден");
+
+			if (currentState.Sources.Any(x => !x.IsDeleted && x.Id != id && x.Name == sourceInfo.Name))
+				throw new AlreadyExistException("Уже существует источник с таким именем");
+
+			newSource = source with
+			{
+				Id = id,
+				Name = sourceInfo.Name,
+				Address = sourceInfo.Address,
+				Type = sourceInfo.Type,
+				Description = sourceInfo.Description,
+				IsDeleted = false,
+			};
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				int count = await db.Sources
+					.Where(x => x.Id == id)
+					.Set(x => x.Name, newSource.Name)
+					.Set(x => x.Description, newSource.Description)
+					.Set(x => x.Address, newSource.Address)
+					.Set(x => x.Type, newSource.Type)
+					.UpdateAsync();
+
+				if (count == 0)
+					throw new DatabaseException($"Не удалось обновить источник #{id}", DatabaseStandartError.UpdatedZero);
+
+				await LogAsync(db, userGuid, id, "Изменен источник: " + source.Name, ObjectExtension.Difference(
+					new { source.Name, source.Address, source.Type },
+					new { newSource.Name, newSource.Address, newSource.Type }));
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Sources = state.Sources.Remove(source).Add(newSource),
+			});
+		}
+
+		// Возвращение ответа
+		return true;
+	}
+
+	internal async Task<bool> ProtectedDeleteAsync(DatalakeContext db, Guid userGuid, int id)
+	{
+		// Проверки, не требующие стейта
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (!currentState.SourcesById.TryGetValue(id, out var source))
+				throw new NotFoundException($"Источник #{id} не найден");
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+			try
+			{
+				var count = await db.Sources
+					.Where(x => x.Id == id)
+					.Set(x => x.IsDeleted, true)
+					.UpdateAsync();
+
+				if (count == 0)
+					throw new DatabaseException($"Не удалось удалить источник #{id}", DatabaseStandartError.DeletedZero);
+
+				await LogAsync(db, userGuid, id, "Удален источник: " + source.Name + ".");
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Sources = state.Sources.Remove(source),
+			});
+		}
+
+		// Возвращение ответа
+		return true;
+	}
+
+	private static async Task LogAsync(DatalakeContext db, Guid userGuid, int id, string message, string? details = null)
+	{
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.Source,
+			RefId = id.ToString(),
+			AffectedSourceId = id,
+			AuthorGuid = userGuid,
+			Text = message,
+			Type = LogType.Success,
+			Details = details,
+		});
+	}
+}

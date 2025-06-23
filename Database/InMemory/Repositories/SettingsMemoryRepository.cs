@@ -1,50 +1,92 @@
-using Datalake.Database.Interfaces;
+using Datalake.Database.Extensions;
+using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.Settings;
 using LinqToDB;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Concurrent;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-/*/// <summary>
+/// <summary>
 /// Репозиторий работы с настройками в памяти приложения
 /// </summary>
-public class SettingsMemoryRepository(
-	IServiceScopeFactory serviceScopeFactory,
-	Lazy<InMemoryRepositoriesManager> inMemory) : InMemoryRepositoryBase(serviceScopeFactory, inMemory)
+public class SettingsMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Исходные коллекции
+	#region Действия
 
-	private readonly ConcurrentDictionary<string, Settings> _settings = [];
-
-	#endregion
-
-
-	#region Инициализация
-
-	/// <inheritdoc/>
-	protected override async Task InitializeFromDatabase(DatalakeContext db)
+	/// <summary>
+	/// Изменение настроек приложения
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="newSettings">Новые настройки</param>
+	public async Task UpdateSettingsAsync(
+		DatalakeContext db, UserAuthInfo user, SettingsInfo newSettings)
 	{
-		_settings.Clear();
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		var settings = await db.Settings.ToArrayAsync();
-		foreach (var setting in settings)
-			_settings.TryAdd(setting.InstanceName, setting);
+		await ProtectedUpdateSettingsAsync(db, user.Guid, newSettings);
 	}
 
 	#endregion
 
+	internal async Task ProtectedUpdateSettingsAsync(
+		DatalakeContext db, Guid userGuid, SettingsInfo request)
+	{
+		// Проверки, не требующие стейта
 
-	#region Чтение данных внешними источниками
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
 
-	internal IReadOnlySettings[] Settings
-		=> _settings.Values.Select(x => (IReadOnlySettings)x).ToArray();
+			// Проверки на актуальном стейте
+			var newSettings = currentState.Settings with
+			{
+				KeycloakHost = request.EnergoIdHost,
+				KeycloakClient = request.EnergoIdClient,
+				EnergoIdApi = request.EnergoIdApi,
+				InstanceName = request.InstanceName,
+				LastUpdate = DateTime.UtcNow,
+			};
 
-	#endregion
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+			try
+			{
+				await db.Settings
+					.Set(x => x.KeycloakHost, newSettings.KeycloakHost)
+					.Set(x => x.KeycloakClient, newSettings.KeycloakClient)
+					.Set(x => x.EnergoIdApi, newSettings.EnergoIdApi)
+					.Set(x => x.InstanceName, newSettings.InstanceName)
+					.UpdateAsync();
 
+				await db.InsertAsync(new Log
+				{
+					Category = LogCategory.Core,
+					Type = LogType.Success,
+					Text = "Изменены настройки",
+					AuthorGuid = userGuid,
+					Details = ObjectExtension.Difference(currentState.Settings, newSettings),
+				});
 
-	#region Изменение данных внешними источниками
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
 
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Settings = newSettings,
+			});
+		}
 
-	#endregion
-} */
+		// Возвращение ответа
+	}
+}

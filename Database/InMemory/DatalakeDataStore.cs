@@ -38,11 +38,18 @@ public class DatalakeDataStore
 			var blockProperties = await db.BlockProperties.ToArrayAsync();
 			var blockTags = await db.BlockTags.ToArrayAsync();
 			var sources = await db.Sources.ToArrayAsync();
+			var settings = await db.Settings.ToArrayAsync();
 			var tags = await db.Tags.ToArrayAsync();
 			var tagInputs = await db.TagInputs.ToArrayAsync();
 			var users = await db.Users.ToArrayAsync();
 			var userGroups = await db.UserGroups.ToArrayAsync();
 			var userGroupRelations = await db.UserGroupRelations.ToArrayAsync();
+
+			if (settings.Length == 0)
+			{
+				await db.EnsureDataCreatedAsync();
+				settings = await db.Settings.ToArrayAsync();
+			}
 
 			t.Stop();
 			_logger.LogInformation("Загрузка БД: {ms}", t.Elapsed.TotalMilliseconds);
@@ -53,6 +60,7 @@ public class DatalakeDataStore
 				Blocks = blocks.ToImmutableList(),
 				BlockProperties = blockProperties.ToImmutableList(),
 				BlockTags = blockTags.ToImmutableList(),
+				Settings = settings[0],
 				Sources = sources.ToImmutableList(),
 				Tags = tags.ToImmutableList(),
 				TagInputs = tagInputs.ToImmutableList(),
@@ -135,6 +143,8 @@ public struct DatalakeDataState
 
 	public ImmutableList<Source> Sources { get; init; }
 
+	public Settings Settings { get; init; }
+
 	public ImmutableList<Tag> Tags { get; init; }
 
 	public ImmutableList<TagInput> TagInputs { get; init; }
@@ -149,20 +159,27 @@ public struct DatalakeDataState
 
 	public void InitDictionaries()
 	{
-		TagsById = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		TagsByGuid = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.GlobalGuid);
-		SourcesById = Sources.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
 		BlocksById = Blocks.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
+		SourcesById = Sources.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
+		TagsByGuid = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.GlobalGuid);
+		TagsById = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
+		UsersByGuid = Users.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
+		UserGroupsByGuid = UserGroups.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
+
 		Version = DateTime.UtcNow.Ticks;
 	}
 
-	public ImmutableDictionary<int, Tag> TagsById { get; private set; }
-
-	public ImmutableDictionary<Guid, Tag> TagsByGuid { get; private set; }
+	public ImmutableDictionary<int, Block> BlocksById { get; private set; }
 
 	public ImmutableDictionary<int, Source> SourcesById { get; private set; }
 
-	public ImmutableDictionary<int, Block> BlocksById { get; private set; }
+	public ImmutableDictionary<Guid, Tag> TagsByGuid { get; private set; }
+
+	public ImmutableDictionary<int, Tag> TagsById { get; private set; }
+
+	public ImmutableDictionary<Guid, User> UsersByGuid { get; private set; }
+
+	public ImmutableDictionary<Guid, UserGroup> UserGroupsByGuid { get; private set; }
 }
 
 #pragma warning restore CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена

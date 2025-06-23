@@ -10,7 +10,7 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице связей тега с другими тегами для вычисления значений
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class TagInput : IReadOnlyTagInput
+public record class TagInput : IReadOnlyTagInput
 {
 	const string TableName = "TagInputs";
 

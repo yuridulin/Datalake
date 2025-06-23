@@ -28,6 +28,14 @@ internal static class ServicesSetup
 		builder.Services.AddSingleton<DatalakeDataStore>(); // стейт-менеджер исходных данных
 		builder.Services.AddSingleton<DatalakeDerivedDataStore>(); // стейт-менеджер зависимых данных
 
+		builder.Services.AddScoped<AccessRightsMemoryRepository>();
+		builder.Services.AddScoped<BlocksMemoryRepository>();
+		builder.Services.AddScoped<SettingsMemoryRepository>();
+		builder.Services.AddScoped<SourcesMemoryRepository>();
+		builder.Services.AddScoped<TagsMemoryRepository>();
+		builder.Services.AddScoped<UserGroupsMemoryRepository>();
+		builder.Services.AddScoped<UsersMemoryRepository>();
+
 		// службы
 		builder.Services.AddHostedService<CollectorProcessor>();
 		builder.Services.AddHostedService<CollectorWriter>();

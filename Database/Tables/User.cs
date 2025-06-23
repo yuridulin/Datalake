@@ -10,7 +10,7 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице учетных записей
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class User
+public record class User
 {
 	const string TableName = "Users";
 

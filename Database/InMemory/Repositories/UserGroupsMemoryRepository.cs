@@ -1,53 +1,394 @@
-using Datalake.Database.Interfaces;
+using Datalake.Database.Extensions;
+using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Auth;
+using Datalake.PublicApi.Models.UserGroups;
 using LinqToDB;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Concurrent;
+using LinqToDB.Data;
+using System.Collections.Immutable;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-/*/// <summary>
+/// <summary>
 /// Репозиторий работы с группами пользователей в памяти приложения
 /// </summary>
-public class UserGroupsMemoryRepository(
-	IServiceScopeFactory serviceScopeFactory,
-	Lazy<InMemoryRepositoriesManager> inMemory) : InMemoryRepositoryBase(serviceScopeFactory, inMemory)
+public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Исходные коллекции
+	#region Действия
 
-	private readonly ConcurrentDictionary<Guid, UserGroup> _userGroups = [];
-
-	#endregion
-
-
-	#region Инициализация
-
-	/// <inheritdoc/>
-	protected override async Task InitializeFromDatabase(DatalakeContext db)
+	/// <summary>
+	/// Создание новой группы пользователей
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="request">Параметры новой группы</param>
+	/// <returns>Идентификатор созданной группы</returns>
+	public async Task<UserGroupInfo> CreateAsync(
+		DatalakeContext db, UserAuthInfo user, UserGroupCreateRequest request)
 	{
-		_userGroups.Clear();
+		if (request.ParentGuid.HasValue)
+		{
+			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, request.ParentGuid.Value);
+		}
+		else
+		{
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+		}
 
-		var userGroups = await db.UserGroups.ToArrayAsync();
-		foreach (var userGroup in userGroups)
-			_userGroups.TryAdd(userGroup.Guid, userGroup);
+		return await ProtectedCreateAsync(db, user.Guid, request);
+	}
+
+	/// <summary>
+	/// Изменение параметров группы пользователей
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="groupGuid">Идентификатор группы</param>
+	/// <param name="request">Новые параметры группы</param>
+	/// <returns>Флаг успешного завершения</returns>
+	public async Task<bool> UpdateAsync(
+		DatalakeContext db, UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
+	{
+		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Editor, groupGuid);
+
+		return await ProtectedUpdateAsync(db, user.Guid, groupGuid, request);
+	}
+
+	/// <summary>
+	/// Изменение положения группы пользователей в иерархии
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="groupGuid">Идентификатор группы</param>
+	/// <param name="parentGuid">Идентификатор вышестоящей группы</param>
+	/// <returns>Флаг успешного завершения</returns>
+	public async Task<bool> MoveAsync(
+		DatalakeContext db, UserAuthInfo user, Guid groupGuid, Guid? parentGuid)
+	{
+		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
+
+		if (parentGuid.HasValue)
+		{
+			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, parentGuid.Value);
+		}
+		else
+		{
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+		}
+
+		return await ProtectedMoveAsync(db, user.Guid, groupGuid, parentGuid);
+	}
+
+	/// <summary>
+	/// Удаление группы пользователей
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="groupGuid">Идентификатор группы</param>
+	/// <returns>Флаг успешного завершения</returns>
+	public async Task<bool> DeleteAsync(
+		DatalakeContext db, UserAuthInfo user, Guid groupGuid)
+	{
+		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
+
+		return await ProtectedDeleteAsync(db, user.Guid, groupGuid);
 	}
 
 	#endregion
 
+	internal async Task<UserGroupInfo> ProtectedCreateAsync(
+		DatalakeContext db, Guid userGuid, UserGroupCreateRequest request)
+	{
+		// Проверки, не требующие стейта
+		UserGroup newUserGroup = new()
+		{
+			Guid = Guid.NewGuid(),
+			ParentGuid = request.ParentGuid,
+			Name = request.Name,
+			Description = request.Description,
+		};
 
-	#region Чтение данных внешними источниками
+		AccessRights directRuleForUserGroup = new()
+		{
+			UserGroupGuid = newUserGroup.Guid,
+			IsGlobal = true,
+			AccessType = AccessType.Viewer,
+		};
 
-	internal IReadOnlyUserGroup[] UserGroups
-		=> _userGroups.Values.Select(x => (IReadOnlyUserGroup)x).ToArray();
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
 
-	internal IReadOnlyDictionary<Guid, IReadOnlyUserGroup> UserGroupsDict
-		=> _userGroups.ToDictionary(x => x.Key, x => (IReadOnlyUserGroup)x.Value);
+			// Проверки на актуальном стейте
+			if (currentState.UserGroups.Any(x => !x.IsDeleted && x.ParentGuid == request.ParentGuid && x.Name == request.Name))
+				throw new AlreadyExistException(message: "группа " + request.Name);
 
-	#endregion
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
 
+			try
+			{
+				var group = await db.UserGroups
+					.Value(x => x.Guid, newUserGroup.Guid)
+					.Value(x => x.Name, newUserGroup.Name)
+					.Value(x => x.ParentGuid, newUserGroup.ParentGuid)
+					.Value(x => x.Description, newUserGroup.Description)
+					.InsertWithOutputAsync();
 
-	#region Изменение данных внешними источниками
+				await db.AccessRights
+					.Value(x => x.UserGroupGuid, directRuleForUserGroup.UserGroupGuid)
+					.Value(x => x.IsGlobal, directRuleForUserGroup.IsGlobal)
+					.Value(x => x.AccessType, directRuleForUserGroup.AccessType)
+					.InsertAsync();
 
+				await LogAsync(db, userGuid, group.Guid, $"Создана группа пользователей \"{group.Name}\"");
 
-	#endregion
-} */
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				AccessRights = state.AccessRights.Add(directRuleForUserGroup),
+				UserGroups = state.UserGroups.Add(newUserGroup),
+			});
+		}
+
+		// Возвращение ответа
+		var info = new UserGroupInfo
+		{
+			Guid = newUserGroup.Guid,
+			Name = newUserGroup.Name,
+			Description = newUserGroup.Description,
+			ParentGroupGuid = newUserGroup.ParentGuid,
+		};
+
+		return info;
+	}
+
+	internal async Task<bool> ProtectedUpdateAsync(
+		DatalakeContext db, Guid userGuid, Guid groupGuid, UserGroupUpdateRequest request)
+	{
+		// Проверки, не требующие стейта
+		UserGroup updatedUserGroup;
+		AccessRights? updatedAccessRights = null;
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (!currentState.UserGroupsByGuid.TryGetValue(groupGuid, out var userGroup))
+				throw new NotFoundException(message: "группа " + groupGuid);
+
+			if (currentState.UserGroups.Any(x =>
+				!x.IsDeleted &&
+				x.Guid != groupGuid &&
+				x.ParentGuid == userGroup.ParentGuid
+				&& x.Name == request.Name))
+				throw new AlreadyExistException(message: "группа с таким же именем");
+
+			updatedUserGroup = userGroup with
+			{
+				Name = request.Name,
+				Description = request.Description,
+			};
+
+			var accessRights = currentState.AccessRights.FirstOrDefault(x => x.UserGroupGuid == groupGuid && x.IsGlobal);
+			if (accessRights != null && accessRights.AccessType != request.AccessType)
+				updatedAccessRights = accessRights with
+				{
+					Id = accessRights.Id,
+					UserGroupGuid = accessRights.UserGroupGuid,
+					IsGlobal = accessRights.IsGlobal,
+					AccessType = request.AccessType,
+				};
+
+			var newUsersRelations = request.Users
+				.Select(u => new UserGroupRelation
+				{
+					UserGuid = u.Guid,
+					UserGroupGuid = groupGuid,
+					AccessType = u.AccessType,
+				})
+				.ToArray();
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				await db.UserGroups
+					.Where(x => x.Guid == groupGuid)
+					.Set(x => x.Name, updatedUserGroup.Name)
+					.Set(x => x.Description, updatedUserGroup.Description)
+					.UpdateAsync();
+
+				if (updatedAccessRights != null)
+				{
+					await db.AccessRights
+						.Where(x => x.Id == updatedAccessRights.Id)
+						.Set(x => x.AccessType, updatedAccessRights.AccessType)
+						.UpdateAsync();
+				}
+
+				await db.UserGroupRelations
+					.Where(x => x.UserGroupGuid == groupGuid)
+					.DeleteAsync();
+
+				await db.UserGroupRelations
+					.BulkCopyAsync(newUsersRelations);
+
+				await LogAsync(db, userGuid, groupGuid, $"Изменена группа пользователей: {userGroup.Name}", ObjectExtension.Difference(
+					new { userGroup.Name, userGroup.Description, userGroup.ParentGuid, },
+					new { request.Name, request.Description, request.ParentGuid, }));
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				UserGroups = state.UserGroups.Add(updatedUserGroup),
+				AccessRights = updatedAccessRights == null ? state.AccessRights : state.AccessRights.Add(updatedAccessRights),
+				UserGroupRelations = state.UserGroupRelations.Where(x => x.UserGroupGuid != groupGuid).Concat(newUsersRelations).ToImmutableList(),
+			});
+		}
+
+		// Возвращение ответа
+		return true;
+	}
+
+	internal async Task<bool> ProtectedMoveAsync(
+		DatalakeContext db, Guid userGuid, Guid guid, Guid? parentGuid)
+	{
+		// Проверки, не требующие стейта
+		UserGroup movedUserGroup;
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (!currentState.UserGroupsByGuid.TryGetValue(guid, out var movingUserGroup))
+				throw new NotFoundException(message: "группа " + guid);
+
+			movedUserGroup = movingUserGroup with
+			{
+				ParentGuid = parentGuid,
+			};
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				await db.UserGroups
+					.Where(x => x.Guid == guid)
+					.Set(x => x.ParentGuid, parentGuid)
+					.UpdateAsync();
+
+				await LogAsync(db, userGuid, guid, $"Изменено расположение группы пользователей: {movingUserGroup.Name}", ObjectExtension.Difference(
+					new { movingUserGroup.ParentGuid },
+					new { movedUserGroup.ParentGuid }));
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				UserGroups = state.UserGroups.Remove(movingUserGroup).Add(movedUserGroup),
+			});
+		}
+
+		// Возвращение ответа
+		return true;
+	}
+
+	internal async Task<bool> ProtectedDeleteAsync(
+		DatalakeContext db, Guid userGuid, Guid groupGuid)
+	{
+		// Проверки, не требующие стейта
+		UserGroup updatedUserGroup;
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (!currentState.UserGroupsByGuid.TryGetValue(groupGuid, out var userGroup))
+				throw new NotFoundException(message: "группа " + groupGuid);
+
+			updatedUserGroup = userGroup with { IsDeleted = true };
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				await db.UserGroups
+					.Where(x => x.Guid == groupGuid)
+					.Set(x => x.IsDeleted, true)
+					.UpdateAsync();
+
+				await LogAsync(db, userGuid, groupGuid, $"Удалена группа пользователей: {userGroup.Name}");
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				UserGroups = state.UserGroups.Remove(userGroup).Add(updatedUserGroup),
+			});
+		}
+
+		// Возвращение ответа
+		return true;
+	}
+
+	private static async Task LogAsync(DatalakeContext db, Guid authorGuid, Guid guid, string message, string? details = null)
+	{
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.UserGroups,
+			RefId = guid.ToString(),
+			AffectedUserGroupGuid = guid,
+			Text = message,
+			Type = LogType.Success,
+			AuthorGuid = authorGuid,
+			Details = details,
+		});
+	}
+}

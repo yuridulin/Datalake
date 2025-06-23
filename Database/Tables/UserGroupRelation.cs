@@ -11,7 +11,7 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице связей учетных записей и групп пользователей
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class UserGroupRelation
+public record class UserGroupRelation
 {
 	const string TableName = "UserGroupRelation";
 

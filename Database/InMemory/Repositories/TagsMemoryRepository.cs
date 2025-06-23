@@ -92,18 +92,18 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		if (!createRequest.SourceId.HasValue)
 			throw new InvalidValueException(message: "необходимо выбрать источник");
 
-		DatalakeDataState currentState;
 		Source? source = null;
 		Block? block = null;
 		BlockTag? relationToBlock = null;
 		Tag createdTag;
 
 		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
 		using (await dataStore.AcquireWriteLockAsync())
 		{
-			// Проверки на актуальном стейте
 			currentState = dataStore.State;
 
+			// Проверки на актуальном стейте
 			if (!createRequest.SourceId.HasValue && !createRequest.BlockId.HasValue)
 				throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или блок");
 
@@ -207,9 +207,6 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		}
 
 		// Возвращение ответа
-		Tag? sourceTag;
-		Source? sourceTagSource;
-
 		var createdTagInfo = new TagInfo
 		{
 			Id = createdTag.Id,
@@ -249,14 +246,14 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			SourceItem = createdTag.SourceItem,
 			SourceType = source != null ? source.Type : SourceType.NotSet,
 			SourceName = source != null ? source.Name : "Unknown",
-			SourceTag = !currentState.TagsById.TryGetValue(createdTag.SourceTagId ?? 0, out sourceTag) ? null : new TagSimpleInfo
+			SourceTag = !currentState.TagsById.TryGetValue(createdTag.SourceTagId ?? 0, out Tag? sourceTag) ? null : new TagSimpleInfo
 			{
 				Id = sourceTag.Id,
 				Frequency = sourceTag.Frequency,
 				Guid = sourceTag.GlobalGuid,
 				Name = sourceTag.Name,
 				Type = sourceTag.Type,
-				SourceType = !currentState.SourcesById.TryGetValue(sourceTag.SourceId, out sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
+				SourceType = !currentState.SourcesById.TryGetValue(sourceTag.SourceId, out Source? sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
 			},
 			Aggregation = createdTag.Aggregation,
 			AggregationPeriod = createdTag.AggregationPeriod,

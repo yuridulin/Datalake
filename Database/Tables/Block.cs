@@ -11,7 +11,7 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице блоков
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Block : IReadOnlyBlock
+public record class Block : IReadOnlyBlock
 {
 	const string TableName = "Blocks";
 

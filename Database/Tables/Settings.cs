@@ -9,7 +9,7 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице настроек приложения
 /// </summary>
 [Keyless, Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Settings
+public record class Settings
 {
 	const string TableName = "Settings";
 

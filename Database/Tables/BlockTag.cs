@@ -10,7 +10,7 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице связей блоков и тегов
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class BlockTag : IReadOnlyBlockTag
+public record class BlockTag : IReadOnlyBlockTag
 {
 	const string TableName = "BlockTags";
 
