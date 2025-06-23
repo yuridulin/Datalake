@@ -15,6 +15,9 @@ public record class UserGroupRelation
 {
 	const string TableName = "UserGroupRelation";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public UserGroupRelation() { }
+
 	// поля в БД
 
 	/// <summary>

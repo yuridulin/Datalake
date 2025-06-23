@@ -14,6 +14,9 @@ public record class TagInput : IReadOnlyTagInput
 {
 	const string TableName = "TagInputs";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public TagInput() { }
+
 	// поля в БД
 
 	/// <inheritdoc/>

@@ -27,6 +27,7 @@ internal static class ServicesSetup
 
 		builder.Services.AddSingleton<DatalakeDataStore>(); // стейт-менеджер исходных данных
 		builder.Services.AddSingleton<DatalakeDerivedDataStore>(); // стейт-менеджер зависимых данных
+		builder.Services.AddSingleton<DatalakeCurrentValuesStore>(); // кэш последних значений
 
 		builder.Services.AddScoped<AccessRightsMemoryRepository>();
 		builder.Services.AddScoped<BlocksMemoryRepository>();

@@ -16,6 +16,9 @@ public record class Source : IReadOnlySource
 {
 	const string TableName = "Sources";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public Source() { }
+
 	// поля в БД
 
 	/// <summary>

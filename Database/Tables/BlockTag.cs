@@ -14,6 +14,9 @@ public record class BlockTag : IReadOnlyBlockTag
 {
 	const string TableName = "BlockTags";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public BlockTag() { }
+
 	// поля в БД
 
 	/// <inheritdoc/>

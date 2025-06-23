@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Tables;
+﻿using Datalake.Database.InMemory.Models;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -87,7 +87,7 @@ public class DatalakeDataStore
 	/// Этот метод должен вызываться только внутри активной блокировки <see cref="AcquireWriteLockAsync"/>
 	/// </summary>
 	/// <param name="update">Текущий стейт</param>
-	public void UpdateStateWithinLock(Func<DatalakeDataState, DatalakeDataState> update)
+	public DatalakeDataState UpdateStateWithinLock(Func<DatalakeDataState, DatalakeDataState> update)
 	{
 		try
 		{
@@ -97,11 +97,15 @@ public class DatalakeDataStore
 			_currentState = newState;
 
 			StateChanged?.Invoke(this, _currentState);
+
+			return newState;
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Ошибка при изменении стейта");
 			StateCorrupted?.Invoke(this, 0);
+
+			return _currentState;
 		}
 	}
 
@@ -109,77 +113,21 @@ public class DatalakeDataStore
 
 	public event EventHandler<int>? StateCorrupted;
 
-}
-
-public sealed class AsyncLock
-{
-	private readonly SemaphoreSlim _semaphore = new(1, 1);
-
-	public async Task<IDisposable> LockAsync()
+	public sealed class AsyncLock
 	{
-		await _semaphore.WaitAsync();
-		return new Releaser(_semaphore);
+		private readonly SemaphoreSlim _semaphore = new(1, 1);
+
+		public async Task<IDisposable> LockAsync()
+		{
+			await _semaphore.WaitAsync();
+			return new Releaser(_semaphore);
+		}
+
+		private sealed class Releaser(SemaphoreSlim semaphore) : IDisposable
+		{
+			public void Dispose() => semaphore.Release();
+		}
 	}
-
-	private sealed class Releaser(SemaphoreSlim semaphore) : IDisposable
-	{
-		public void Dispose() => semaphore.Release();
-	}
-}
-
-public struct DatalakeDataState
-{
-	public long Version { get; private set; }
-
-	// Таблицы
-
-	public ImmutableList<AccessRights> AccessRights { get; init; }
-
-	public ImmutableList<Block> Blocks { get; init; }
-
-	public ImmutableList<BlockProperty> BlockProperties { get; init; }
-
-	public ImmutableList<BlockTag> BlockTags { get; init; }
-
-	public ImmutableList<Source> Sources { get; init; }
-
-	public Settings Settings { get; init; }
-
-	public ImmutableList<Tag> Tags { get; init; }
-
-	public ImmutableList<TagInput> TagInputs { get; init; }
-
-	public ImmutableList<User> Users { get; init; }
-
-	public ImmutableList<UserGroup> UserGroups { get; init; }
-
-	public ImmutableList<UserGroupRelation> UserGroupRelations { get; init; }
-
-	// Словари
-
-	public void InitDictionaries()
-	{
-		BlocksById = Blocks.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		SourcesById = Sources.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		TagsByGuid = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.GlobalGuid);
-		TagsById = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		UsersByGuid = Users.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
-		UserGroupsByGuid = UserGroups.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
-
-		Version = DateTime.UtcNow.Ticks;
-	}
-
-	public ImmutableDictionary<int, Block> BlocksById { get; private set; }
-
-	public ImmutableDictionary<int, Source> SourcesById { get; private set; }
-
-	public ImmutableDictionary<Guid, Tag> TagsByGuid { get; private set; }
-
-	public ImmutableDictionary<int, Tag> TagsById { get; private set; }
-
-	public ImmutableDictionary<Guid, User> UsersByGuid { get; private set; }
-
-	public ImmutableDictionary<Guid, UserGroup> UserGroupsByGuid { get; private set; }
 }
 
 #pragma warning restore CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена

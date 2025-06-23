@@ -16,6 +16,9 @@ public record class Log
 {
 	const string TableName = "Logs";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public Log() { }
+
 	// поля в БД
 
 	/// <summary>

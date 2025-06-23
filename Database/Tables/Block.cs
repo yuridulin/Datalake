@@ -15,6 +15,9 @@ public record class Block : IReadOnlyBlock
 {
 	const string TableName = "Blocks";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public Block() { }
+
 	// поля в БД
 
 	/// <inheritdoc/>

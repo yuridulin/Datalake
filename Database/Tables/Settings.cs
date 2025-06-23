@@ -13,6 +13,9 @@ public record class Settings
 {
 	const string TableName = "Settings";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public Settings() { }
+
 	// поля в БД
 
 	/// <summary>

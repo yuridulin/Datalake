@@ -16,6 +16,9 @@ public record class AccessRights
 {
 	const string TableName = "AccessRights";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public AccessRights() { }
+
 	// поля в БД
 
 	/// <summary>

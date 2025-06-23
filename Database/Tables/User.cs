@@ -14,6 +14,9 @@ public record class User
 {
 	const string TableName = "Users";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public User() { }
+
 	// поля в БД
 
 	/// <summary>

@@ -16,6 +16,9 @@ public record class BlockProperty
 {
 	const string TableName = "BlockProperties";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public BlockProperty() { }
+
 	// поля в БД
 
 	/// <summary>

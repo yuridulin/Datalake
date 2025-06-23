@@ -1,4 +1,6 @@
 ﻿using Datalake.Database.Extensions;
+using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
@@ -34,6 +36,76 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			return await ProtectedCreateAsync(db, user.Guid, sourceInfo);
 
 		return await ProtectedCreateAsync(db, user.Guid);
+	}
+
+	/// <summary>
+	/// Получение информации об источнике
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Информация об источнике</returns>
+	public SourceInfo Read(UserAuthInfo user, int id)
+	{
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
+
+		var source = dataStore.State.SourcesInfo().FirstOrDefault(x => x.Id == id)
+			?? throw new NotFoundException(message: "источник #" + id);
+
+		source.AccessRule = user.Sources[id];
+
+		return source;
+	}
+
+	/// <summary>
+	/// Получение информации об источнике, включая теги, зависящие от него
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор источника</param>
+	/// <returns>Информация об источнике</returns>
+	public SourceWithTagsInfo ReadWithTags(UserAuthInfo user, int id)
+	{
+		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
+
+		var source = dataStore.State.SourcesInfoWithTags().FirstOrDefault(x => x.Id == id)
+			?? throw new NotFoundException(message: "источник #" + id);
+
+		source.AccessRule = user.Sources[id];
+
+		foreach (var tag in source.Tags)
+		{
+			var rule = user.Tags.TryGetValue(tag.Guid, out var r) ? r : AccessRuleInfo.Default;
+			tag.AccessRule = rule;
+
+			if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			{
+				tag.Guid = Guid.Empty;
+				tag.Name = string.Empty;
+				tag.Frequency = TagFrequency.NotSet;
+			}
+		}
+
+		return source;
+	}
+
+	/// <summary>
+	/// Получение списка источников
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="withCustom">Включать в список системные источники</param>
+	/// <returns>Список источников</returns>
+	public SourceInfo[] ReadAll(UserAuthInfo user, bool withCustom)
+	{
+		var sources = dataStore.State.SourcesInfo(withCustom).ToArray();
+
+		foreach (var source in sources)
+		{
+			var rule = user.Sources.TryGetValue(source.Id, out var r) ? r : AccessRuleInfo.Default;
+			source.AccessRule = rule;
+		}
+
+		return sources
+			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			.ToArray();
 	}
 
 	/// <summary>

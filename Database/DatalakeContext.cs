@@ -98,6 +98,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	internal ITable<TagInput> TagInputs
 		=> this.GetTable<TagInput>();
 
+	internal ITable<TagHistory> TagsHistory
+		=> this.GetTable<TagHistory>();
+
 	internal ITable<User> Users
 		=> this.GetTable<User>();
 

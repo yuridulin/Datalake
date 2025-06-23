@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Tables;
+﻿using Datalake.Database.InMemory.Models;
+using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Blocks;

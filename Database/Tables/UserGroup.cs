@@ -15,6 +15,9 @@ public record class UserGroup
 {
 	const string TableName = "UserGroups";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public UserGroup() { }
+
 	// поля в БД
 
 	/// <summary>
