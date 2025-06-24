@@ -14,8 +14,8 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class TagsController(
-	TagsMemoryRepository tagsRepository,
-	DatalakeContext db) : ApiControllerBase
+	DatalakeContext db,
+	TagsMemoryRepository tagsRepository) : ApiControllerBase
 {
 	/// <summary>
 	/// Создание нового тега

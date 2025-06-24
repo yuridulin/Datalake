@@ -1,5 +1,6 @@
 ﻿using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Values;
+using System.Collections.Concurrent;
 
 namespace Datalake.Server.Services.StateManager;
 
@@ -8,18 +9,14 @@ namespace Datalake.Server.Services.StateManager;
 /// </summary>
 public class TagsStateService
 {
-	object locker = new();
-
-	private Dictionary<Guid, Dictionary<string, DateTime>> _states = [];
+	private ConcurrentDictionary<Guid, Dictionary<string, DateTime>> _states = [];
 
 	/// <summary>
 	/// Получение информации о запросах к тегам
 	/// </summary>
 	/// <returns></returns>
 	public Dictionary<Guid, Dictionary<string, DateTime>> GetTagsStates()
-	{
-		return new(_states);
-	}
+		=> _states.ToDictionary(x => x.Key, x => new Dictionary<string, DateTime>(x.Value));
 
 	/// <summary>
 	/// Добавление информации о запросах к тегам
@@ -30,20 +27,20 @@ public class TagsStateService
 	{
 		var now = DateFormats.GetCurrentDateTime();
 
-		lock (locker)
-		{
-			if (_states.TryGetValue(tagGuid, out var value))
+		_states.AddOrUpdate(
+			tagGuid,
+			guid => new Dictionary<string, DateTime>
 			{
-				value[requestKey] = now;
-			}
-			else
+				{ requestKey, now },
+			},
+			(guid, requests) =>
 			{
-				_states[tagGuid] = new()
+				var newRequests = new Dictionary<string, DateTime>(requests)
 				{
 					[requestKey] = now
 				};
-			}
-		}
+				return newRequests;
+			});
 	}
 
 	/// <summary>
@@ -52,29 +49,14 @@ public class TagsStateService
 	/// <param name="requests">Запросы</param>
 	public void UpdateTagState(ValuesRequest[] requests)
 	{
-		var now = DateFormats.GetCurrentDateTime();
-
-		lock (locker)
+		foreach (var request in requests)
 		{
-			foreach (var request in requests)
-			{
-				if (request.Tags == null)
-					continue;
+			if (request.Tags == null)
+				continue;
 
-				foreach (var tagGuid in request.Tags)
-				{
-					if (_states.TryGetValue(tagGuid, out var value))
-					{
-						value[request.RequestKey] = now;
-					}
-					else
-					{
-						_states[tagGuid] = new()
-						{
-							[request.RequestKey] = now
-						};
-					}
-				}
+			foreach (var tagGuid in request.Tags)
+			{
+				UpdateTagState(tagGuid, request.RequestKey);
 			}
 		}
 	}

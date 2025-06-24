@@ -1,4 +1,5 @@
 ﻿using Datalake.PublicApi.Constants;
+using System.Collections.Concurrent;
 
 namespace Datalake.Server.Services.StateManager;
 
@@ -7,12 +8,12 @@ namespace Datalake.Server.Services.StateManager;
 /// </summary>
 public class UsersStateService
 {
-	object locker = new();
+	private ConcurrentDictionary<Guid, DateTime> _state = [];
 
 	/// <summary>
-	/// Текущее состояние
+	/// Получение текущего списка визитов пользователей
 	/// </summary>
-	public Dictionary<Guid, DateTime> State { get; set; } = [];
+	public Dictionary<Guid, DateTime> State() => new(_state);
 
 	/// <summary>
 	/// Запись визита пользователя
@@ -20,9 +21,9 @@ public class UsersStateService
 	/// <param name="guid">Идентификатор пользователя</param>
 	public void WriteVisit(Guid guid)
 	{
-		lock (locker)
-		{
-			State[guid] = DateFormats.GetCurrentDateTime();
-		}
+		_state.AddOrUpdate(
+			guid,
+			(_) => DateFormats.GetCurrentDateTime(),
+			(_, _) => DateFormats.GetCurrentDateTime());
 	}
 }

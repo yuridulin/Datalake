@@ -1,5 +1,7 @@
-﻿using Datalake.Database.Extensions;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Extensions;
 using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
@@ -41,6 +43,87 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 
 		return await ProtectedCreateAsync(db, user.Guid, tagCreateRequest);
+	}
+
+	/// <summary>
+	/// Получение информации о теге
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid"></param>
+	/// <returns></returns>
+	public TagInfo Read(UserAuthInfo user, Guid guid)
+	{
+		var rule = AccessRepository.GetAccessToTag(user, guid);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
+
+		var tag = dataStore.State.TagsInfoWithSources()
+			.FirstOrDefault(x => x.Guid == guid)
+			?? throw new NotFoundException($"Тег {guid}");
+
+		tag.AccessRule = rule;
+
+		return tag;
+	}
+
+	/// <summary>
+	/// Получение информации о тегах с поддержкой фильтров
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <param name="id">Идентификаторы тегов</param>
+	/// <param name="names">Имена тегов</param>
+	/// <param name="guids">Глобальные идентификаторы тегов</param>
+	/// <returns>Список информации о тегах</returns>
+	public TagInfo[] ReadAll(UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
+	{
+		var tags = dataStore.State.TagsInfoWithSources();
+
+		if (sourceId.HasValue)
+		{
+			tags = tags.Where(x => sourceId.Value == x.SourceId);
+		}
+		if (id?.Length > 0)
+		{
+			tags = tags.Where(x => id.Contains(x.Id));
+		}
+		if (names?.Length > 0)
+		{
+			tags = tags.Where(x => names.Contains(x.Name));
+		}
+		if (guids?.Length > 0)
+		{
+			tags = tags.Where(x => guids.Contains(x.Guid));
+		}
+
+		foreach (var tag in tags)
+			tag.AccessRule = AccessRepository.GetAccessToTag(user, tag.Guid);
+
+		return tags
+			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			.ToArray();
+	}
+
+	/// <summary>
+	/// Получение тегов, которые можно использовать как входные параметры для расчета значения
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
+	/// <returns>Список информации о тегах</returns>
+	public TagAsInputInfo[] ReadPossibleInputs(UserAuthInfo user, Guid guid)
+	{
+		var tags = dataStore.State.TagsInfoAsPossibleInputs();
+
+		// TODO: рекурсивный обход. Нужно исключить циклические зависимости
+		if (guid.Equals(Guid.Empty))
+		{ }
+
+		foreach (var tag in tags)
+			tag.AccessRule = AccessRepository.GetAccessToTag(user, tag.Guid);
+
+		return tags
+			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			.ToArray();
 	}
 
 	/// <summary>

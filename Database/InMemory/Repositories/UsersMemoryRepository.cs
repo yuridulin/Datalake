@@ -1,6 +1,7 @@
 using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
 using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
@@ -33,6 +34,98 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return await ProtectedCreateAsync(db, user.Guid, userInfo);
+	}
+
+	/// <summary>
+	/// Получение информации о пользователях
+	/// </summary>
+	/// <param name="user">Идентификатор читающего пользователя</param>
+	/// <returns>Список пользователей</returns>
+	public UserInfo[] ReadAll(UserAuthInfo user)
+	{
+		var users = dataStore.State.UsersInfo();
+
+		foreach (var u in users)
+		{
+			u.AccessRule = (user.Guid == u.Guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
+				? new AccessRuleInfo { AccessType = AccessType.Manager }
+				: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
+
+			if (!u.AccessRule.AccessType.HasAccess(AccessType.Manager))
+			{
+				u.FullName = string.Empty;
+				u.AccessType = AccessType.NotSet;
+				u.Login = string.Empty;
+				u.Type = UserType.Local;
+				u.UserGroups = [];
+				u.Guid = Guid.Empty;
+			}
+		}
+
+		return users
+			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			.ToArray();
+	}
+
+	/// <summary>
+	/// Получение простой информации о всех пользователях (без прав)
+	/// </summary>
+	/// <param name="user">Идентификатор читающего пользователя</param>
+	/// <returns>Список пользователей</returns>
+	public UserFlatInfo[] ReadFlatUsers(UserAuthInfo user)
+	{
+		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		return dataStore.State.UsersFlatInfo().ToArray();
+	}
+
+	/// <summary>
+	/// Получение информации о пользователе
+	/// </summary>
+	/// <param name="user">Идентификатор читающего пользователя</param>
+	/// <param name="guid">Идентификатор затронутого пользователя</param>
+	/// <returns>Детальная о пользователе</returns>
+	public UserInfo Read(UserAuthInfo user, Guid guid)
+	{
+		if (user.Guid != guid)
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+
+		var userInfo = dataStore.State.UsersInfo().FirstOrDefault(x => x.Guid == guid)
+			?? throw new NotFoundException($"Учётная запись {guid}");
+
+		foreach (var group in userInfo.UserGroups)
+			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+
+		userInfo.AccessRule = (user.Guid == guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
+			? new AccessRuleInfo { AccessType = AccessType.Manager, RuleId = 0 }
+			: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
+
+		return userInfo;
+	}
+
+	/// <summary>
+	/// Получение детальной информации о пользователе, включая группы и правила
+	/// </summary>
+	/// <param name="user">Идентификатор читающего пользователя</param>
+	/// <param name="guid">Идентификатор затронутого пользователя</param>
+	/// <returns>Детальная информация о пользователе</returns>
+	public UserDetailInfo ReadWithDetails(UserAuthInfo user, Guid guid)
+	{
+		if (user.Guid != guid)
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+
+		var userInfo = dataStore.State.UsersDetailInfo().FirstOrDefault(x => x.Guid == guid)
+			?? throw new NotFoundException($"Учётная запись {guid}");
+
+		userInfo.AccessRule = (user.Guid == guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
+			? new AccessRuleInfo { AccessType = AccessType.Manager, RuleId = 0 }
+			: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
+
+		foreach (var group in userInfo.UserGroups)
+			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+
+
+		return userInfo;
 	}
 
 	/// <summary>
@@ -361,7 +454,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		return true;
 	}
 
-	internal static string GetHashFromPassword(string password)
+	private static string GetHashFromPassword(string password)
 	{
 		if (string.IsNullOrEmpty(password))
 			throw new InvalidValueException(message: "пароль не может быть пустым");

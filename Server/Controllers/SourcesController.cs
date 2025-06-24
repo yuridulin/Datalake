@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Sources;
@@ -17,6 +18,7 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class SourcesController(
 	DatalakeContext db,
+	SourcesMemoryRepository sourcesRepository,
 	ReceiverService receiverService) : ApiControllerBase
 {
 	/// <summary>
@@ -28,7 +30,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		var info = await SourcesRepository.CreateAsync(db, user);
+		var info = await sourcesRepository.CreateAsync(db, user);
 
 		return info;
 	}
@@ -44,7 +46,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		var info = await SourcesRepository.CreateAsync(db, user, source);
+		var info = await sourcesRepository.CreateAsync(db, user, source);
 
 		return info;
 	}
@@ -56,12 +58,12 @@ public class SourcesController(
 	/// <returns>Данные о источнике</returns>
 	/// <exception cref="NotFoundException">Источник не найден по идентификатору</exception>
 	[HttpGet("{id:int}")]
-	public async Task<ActionResult<SourceInfo>> ReadAsync(
+	public ActionResult<SourceInfo> Read(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = Authenticate();
 
-		return await SourcesRepository.ReadAsync(db, user, id);
+		return sourcesRepository.Read(user, id);
 	}
 
 	/// <summary>
@@ -70,11 +72,11 @@ public class SourcesController(
 	/// <param name="withCustom">Включить ли в список системные источники</param>
 	/// <returns>Список источников</returns>
 	[HttpGet]
-	public async Task<ActionResult<SourceInfo[]>> ReadAsync(bool withCustom = false)
+	public ActionResult<SourceInfo[]> Read(bool withCustom = false)
 	{
 		var user = Authenticate();
 
-		return await SourcesRepository.ReadAllAsync(db, user, withCustom);
+		return sourcesRepository.ReadAll(user, withCustom);
 	}
 
 	/// <summary>
@@ -89,7 +91,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		await SourcesRepository.UpdateAsync(db, user, id, source);
+		await sourcesRepository.UpdateAsync(db, user, id, source);
 
 		return NoContent();
 	}
@@ -104,7 +106,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		await SourcesRepository.DeleteAsync(db, user, id);
+		await sourcesRepository.DeleteAsync(db, user, id);
 
 		return NoContent();
 	}
@@ -123,7 +125,7 @@ public class SourcesController(
 
 		AccessRepository.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Viewer, id);
 
-		var source = await SourcesRepository.ReadAsync(db, user, id);
+		var source = sourcesRepository.Read(user, id);
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 
 		var items = sourceItemsResponse.Tags
@@ -153,7 +155,7 @@ public class SourcesController(
 
 		AccessRepository.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Editor, id);
 
-		var source = await SourcesRepository.ReadWithTagsAsync(db, user, id);
+		var source = sourcesRepository.ReadWithTags(user, id);
 
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 		var sourceItems = sourceItemsResponse.Tags

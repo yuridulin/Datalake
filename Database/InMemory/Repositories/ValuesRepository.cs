@@ -16,7 +16,7 @@ using System.Diagnostics;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-internal class ValuesRepository(DatalakeDataStore dataStore)
+public class ValuesRepository(DatalakeDataStore dataStore)
 {
 	#region Действия
 

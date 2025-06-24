@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
@@ -20,6 +21,8 @@ namespace Datalake.Server.Controllers;
 public class UsersController(
 	DatalakeContext db,
 	ILogger<UsersController> logger,
+	UsersMemoryRepository usersRepository,
+	SettingsMemoryRepository settingsRepository,
 	SessionManagerService sessionManager) : ApiControllerBase
 {
 	/// <summary>
@@ -34,7 +37,7 @@ public class UsersController(
 
 		AccessRepository.HasGlobalAccess(user, PublicApi.Enums.AccessType.Admin);
 
-		var settings = await SystemRepository.GetSettingsAsSystemAsync(db);
+		var settings = settingsRepository.GetSettings(null);
 		var address = "https://" + settings.EnergoIdApi;
 
 		EnergoIdUserData[]? energoIdReceivedUsers = null;
@@ -62,10 +65,10 @@ public class UsersController(
 			return new EnergoIdInfo();
 		}
 
-		var exists = await UsersRepository.GetFlatInfo(db)
+		var exists = usersRepository.ReadFlatUsers(user)
 			.Where(x => x.EnergoIdGuid != null && (currentUserGuid == null || x.Guid != currentUserGuid))
 			.Select(x => x.EnergoIdGuid.ToString())
-			.ToArrayAsync();
+			.ToArray();
 
 		var response = new EnergoIdInfo
 		{
@@ -146,7 +149,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		var info = await UsersRepository.CreateAsync(db, user, userAuthRequest);
+		var info = await usersRepository.CreateAsync(db, user, userAuthRequest);
 
 		return info;
 	}
@@ -156,11 +159,11 @@ public class UsersController(
 	/// </summary>
 	/// <returns>Список пользователей</returns>
 	[HttpGet]
-	public async Task<ActionResult<UserInfo[]>> ReadAsync()
+	public ActionResult<UserInfo[]> Read()
 	{
 		var user = Authenticate();
 
-		return await UsersRepository.ReadAllAsync(db, user);
+		return usersRepository.ReadAll(user);
 	}
 
 	/// <summary>
@@ -170,12 +173,12 @@ public class UsersController(
 	/// <returns>Данные пользователя</returns>
 	/// <exception cref="NotFoundException">Пользователь не найден по ключу</exception>
 	[HttpGet("{userGuid}")]
-	public async Task<ActionResult<UserInfo>> ReadAsync(
+	public ActionResult<UserInfo> Read(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
 		var user = Authenticate();
 
-		return await UsersRepository.ReadAsync(db, user, userGuid);
+		return usersRepository.Read(user, userGuid);
 	}
 
 	/// <summary>
@@ -185,12 +188,12 @@ public class UsersController(
 	/// <returns>Данные о пользователе</returns>
 	/// <exception cref="NotFoundException">Пользователь не найден по ключу</exception>
 	[HttpGet("{userGuid}/detailed")]
-	public async Task<ActionResult<UserDetailInfo>> ReadWithDetailsAsync(
+	public ActionResult<UserDetailInfo> ReadWithDetails(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
 		var user = Authenticate();
 
-		return await UsersRepository.ReadWithDetailsAsync(db, user, userGuid);
+		return usersRepository.ReadWithDetails(user, userGuid);
 	}
 
 	/// <summary>
@@ -205,7 +208,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		await UsersRepository.UpdateAsync(db, user, userGuid, userUpdateRequest);
+		await usersRepository.UpdateAsync(db, user, userGuid, userUpdateRequest);
 
 		return NoContent();
 	}
@@ -220,7 +223,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		await UsersRepository.DeleteAsync(db, user, userGuid);
+		await usersRepository.DeleteAsync(db, user, userGuid);
 
 		return NoContent();
 	}

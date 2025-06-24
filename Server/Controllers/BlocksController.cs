@@ -1,6 +1,5 @@
 ﻿using Datalake.Database;
-using Datalake.Database.InMemory;
-using Datalake.Database.Repositories;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Blocks;
 using Datalake.Server.Controllers.Base;
@@ -16,7 +15,7 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class BlocksController(
 	DatalakeContext db,
-	DatalakeDerivedDataStore dataStore) : ApiControllerBase
+	BlocksMemoryRepository blocksRepository) : ApiControllerBase
 {
 	/// <summary>
 	/// Создание нового блока на основании переданной информации
@@ -29,7 +28,7 @@ public class BlocksController(
 	{
 		var user = Authenticate();
 
-		return await BlocksRepository.CreateAsync(db, user, blockInfo: blockInfo);
+		return await blocksRepository.CreateAsync(db, user, blockInfo: blockInfo);
 	}
 
 	/// <summary>
@@ -43,7 +42,7 @@ public class BlocksController(
 	{
 		var user = Authenticate();
 
-		return await BlocksRepository.CreateAsync(db, user, parentId: parentId);
+		return await blocksRepository.CreateAsync(db, user, parentId: parentId);
 	}
 
 	/// <summary>
@@ -51,11 +50,11 @@ public class BlocksController(
 	/// </summary>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public async Task<ActionResult<BlockWithTagsInfo[]>> ReadAsync()
+	public ActionResult<BlockWithTagsInfo[]> Read()
 	{
 		var user = Authenticate();
 
-		return await BlocksRepository.ReadAllAsync(db, user);
+		return blocksRepository.ReadAll(user);
 	}
 
 	/// <summary>
@@ -65,12 +64,12 @@ public class BlocksController(
 	/// <returns>Информация о блоке</returns>
 	/// <exception cref="NotFoundException">Блок не найден по идентификатору</exception>
 	[HttpGet("{id:int}")]
-	public async Task<ActionResult<BlockFullInfo>> ReadAsync(
+	public ActionResult<BlockFullInfo> Read(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = Authenticate();
 
-		return await BlocksRepository.ReadAsync(db, user, id);
+		return blocksRepository.Read(user, id);
 	}
 
 	/// <summary>
@@ -78,23 +77,11 @@ public class BlocksController(
 	/// </summary>
 	/// <returns>Список обособленных блоков с вложенными блоками</returns>
 	[HttpGet("tree")]
-	public async Task<ActionResult<BlockTreeInfo[]>> ReadAsTreeAsync()
+	public ActionResult<BlockTreeInfo[]> ReadAsTree()
 	{
 		var user = Authenticate();
 
-		return await BlocksRepository.ReadAllAsTreeAsync(db, user);
-	}
-
-	/// <summary>
-	/// Получение иерархической структуры всех блоков
-	/// </summary>
-	/// <returns>Список обособленных блоков с вложенными блоками</returns>
-	[HttpGet("tree2")]
-	public ActionResult<BlockTreeInfo[]> ReadAsTree2()
-	{
-		Authenticate();
-
-		return dataStore.BlocksTree();
+		return blocksRepository.ReadAllAsTree(user);
 	}
 
 	/// <summary>
@@ -109,7 +96,7 @@ public class BlocksController(
 	{
 		var user = Authenticate();
 
-		await BlocksRepository.UpdateAsync(db, user, id, block);
+		await blocksRepository.UpdateAsync(db, user, id, block);
 
 		return NoContent();
 	}
@@ -126,7 +113,7 @@ public class BlocksController(
 	{
 		var user = Authenticate();
 
-		await BlocksRepository.MoveAsync(db, user, id, parentId);
+		await blocksRepository.MoveAsync(db, user, id, parentId);
 
 		return NoContent();
 	}
@@ -141,7 +128,7 @@ public class BlocksController(
 	{
 		var user = Authenticate();
 
-		await BlocksRepository.DeleteAsync(db, user, id);
+		await blocksRepository.DeleteAsync(db, user, id);
 
 		return NoContent();
 	}

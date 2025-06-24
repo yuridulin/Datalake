@@ -1,5 +1,7 @@
+using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
 using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
@@ -39,6 +41,118 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 		}
 
 		return await ProtectedCreateAsync(db, user.Guid, request);
+	}
+
+	/// <summary>
+	/// Получение информации о группе пользователей
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор группы</param>
+	/// <returns>Информация о группе</returns>
+	public UserGroupInfo Read(UserAuthInfo user, Guid guid)
+	{
+		var rule = AccessRepository.GetAccessToUserGroup(user, guid);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
+
+		var group = dataStore.State.UserGroupsInfo()
+			.FirstOrDefault(x => x.Guid == guid)
+			?? throw new NotFoundException($"группа {guid}");
+
+		group.AccessRule = rule;
+
+		return group;
+	}
+
+	/// <summary>
+	/// Получение информации о группах пользователей
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Список групп</returns>
+	public UserGroupInfo[] ReadAll(UserAuthInfo user)
+	{
+		var groups = dataStore.State.UserGroupsInfo();
+
+		foreach (var group in groups)
+			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+
+		return groups
+			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			.ToArray();
+	}
+
+	/// <summary>
+	/// Получение информации о группе пользователей в иерархической структуре
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Дерево групп</returns>
+	public UserGroupTreeInfo[] ReadAllAsTree(UserAuthInfo user)
+	{
+		var query = dataStore.State.UserGroups
+			.Select(x => new UserGroupTreeInfo
+			{
+				Guid = x.Guid,
+				Name = x.Name,
+				ParentGuid = x.ParentGuid,
+				Description = x.Description,
+			});
+
+		foreach (var group in query)
+			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+
+		var groups = query.ToArray();
+
+		return ReadChildren(null);
+
+		UserGroupTreeInfo[] ReadChildren(Guid? guid)
+		{
+			return groups
+				.Where(x => x.ParentGuid == guid)
+				.Select(x =>
+				{
+					var group = new UserGroupTreeInfo
+					{
+						Guid = x.Guid,
+						Name = x.Name,
+						ParentGuid = x.ParentGuid,
+						Description = x.Description,
+						AccessRule = x.AccessRule,
+						ParentGroupGuid = x.ParentGroupGuid,
+						Children = ReadChildren(x.Guid),
+					};
+
+					if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+					{
+						group.Name = string.Empty;
+						group.Description = string.Empty;
+					}
+
+					return group;
+				})
+				.Where(x => x.Children.Length > 0 || x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				.ToArray();
+		}
+	}
+
+	/// <summary>
+	/// Получение информации о группе пользователей, включая пользователей, подгруппы и правила
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор группы</param>
+	/// <returns>Детальная информация о группе</returns>
+	public UserGroupDetailedInfo ReadWithDetails(UserAuthInfo user, Guid guid)
+	{
+		var rule = AccessRepository.GetAccessToUserGroup(user, guid);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
+
+		var group = dataStore.State.UserGroupsInfoWithDetails()
+			.FirstOrDefault(x => x.Guid == guid)
+			?? throw new NotFoundException(message: $"группа пользователей \"{guid}\"");
+
+		group.AccessRule = rule;
+
+		return group;
 	}
 
 	/// <summary>

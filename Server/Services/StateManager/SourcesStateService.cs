@@ -1,20 +1,23 @@
-﻿using Datalake.Database.Repositories;
+﻿using Datalake.Database.InMemory;
 using Datalake.PublicApi.Constants;
 using Datalake.Server.Services.StateManager.Models;
+using System.Collections.Concurrent;
 
 namespace Datalake.Server.Services.StateManager;
 
 /// <summary>
 /// Кэш состояний источников данных
 /// </summary>
-public class SourcesStateService
+public class SourcesStateService(
+	DatalakeDataStore dataStore,
+	DatalakeCurrentValuesStore valuesStore)
 {
-	object locker = new();
+	private ConcurrentDictionary<int, SourceState> _state = [];
 
 	/// <summary>
-	/// Текущие состояния источников данных
+	/// Получение текущего состояния источников данных
 	/// </summary>
-	public Dictionary<int, SourceState> State { get; set; } = [];
+	public Dictionary<int, SourceState> State() => new(_state);
 
 	/// <summary>
 	/// Инициализация списка информации
@@ -23,23 +26,19 @@ public class SourcesStateService
 	public void Initialize(int[] sourcesId)
 	{
 		var now = DateFormats.GetCurrentDateTime();
-		lock (locker)
-		{
-			State.Clear();
 
-			foreach (var sourceId in sourcesId)
+		var newState = new ConcurrentDictionary<int, SourceState>(
+			sourcesId.ToDictionary(id => id, id => new SourceState
 			{
-				var state = new SourceState
-				{
-					SourceId = sourceId,
-					IsTryConnected = false,
-				};
+				SourceId = id,
+				IsTryConnected = false,
+				LastTry = null,
+				IsConnected = false,
+				LastConnection = null,
+				ValuesAfterWriteSeconds = GetSecondsAfterLastUpdate(id, now),
+			}));
 
-				UpdateValuesInfo(state, now);
-
-				State[sourceId] = state;
-			}
-		}
+		Interlocked.Exchange(ref _state, newState);
 	}
 
 	/// <summary>
@@ -48,38 +47,39 @@ public class SourcesStateService
 	public void UpdateSource(int sourceId, bool connected = false)
 	{
 		var now = DateFormats.GetCurrentDateTime();
-		lock (locker)
-		{
-			var value = State.TryGetValue(sourceId, out var state);
-			if (state != null)
-			{
-				state.LastTry = now;
-				state.IsConnected = connected;
-			}
-			else
-			{
-				state = new SourceState
-				{
-					SourceId = sourceId,
-					LastTry = now,
-					IsConnected = connected
-				};
-				State[sourceId] = state;
-			}
 
-			if (!state.IsTryConnected) state.IsTryConnected = true;
-			if (connected)
-			{
-				state.LastConnection = now;
-			}
+		double[] secondsAfterLastUpdate = GetSecondsAfterLastUpdate(sourceId, now);
 
-			UpdateValuesInfo(state, now);
-		}
+		_state.AddOrUpdate(
+			sourceId,
+			(id) => new SourceState
+			{
+				SourceId = id,
+				LastTry = now,
+				IsTryConnected = true,
+				LastConnection = now,
+				IsConnected = connected,
+				ValuesAfterWriteSeconds = secondsAfterLastUpdate,
+			},
+			(id, state) => new SourceState
+			{
+				SourceId = id,
+				LastTry = now,
+				IsTryConnected = true,
+				LastConnection = now,
+				IsConnected = connected,
+				ValuesAfterWriteSeconds = secondsAfterLastUpdate,
+			});
 	}
 
-	private static void UpdateValuesInfo(SourceState sourceState, DateTime now)
+	private double[] GetSecondsAfterLastUpdate(int sourceId, DateTime now)
 	{
-		var tags = ValuesRepository.GetLiveValues(sourceState.SourceId);
-		sourceState.ValuesAfterWriteSeconds = tags.Select(x => (int)(now - x.Date).TotalSeconds).ToArray();
+		return dataStore.State.CachesTags
+			.Where(tag => tag.SourceId == sourceId)
+			.Select(tag => tag.Id)
+			.Select(valuesStore.Get)
+			.Where(history => history != null)
+			.Select(history => (now - history!.Date).TotalSeconds)
+			.ToArray();
 	}
 }

@@ -1,4 +1,6 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.Database.Services;
 using Datalake.PublicApi.Constants;
@@ -23,9 +25,12 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class SystemController(
 	DatalakeContext db,
+	DatalakeDataStore dataStore,
+	DatalakeDerivedDataStore derivedDataStore,
 	SourcesStateService sourcesStateService,
 	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
+	SettingsMemoryRepository settingsRepository,
 	ISettingsUpdater settingsService) : ApiControllerBase
 {
 	/// <summary>
@@ -84,7 +89,7 @@ public class SystemController(
 
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		return usersStateService.State;
+		return usersStateService.State();
 	}
 
 	/// <summary>
@@ -98,7 +103,7 @@ public class SystemController(
 
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		return sourcesStateService.State
+		return sourcesStateService.State()
 			.Where(x => AccessRepository.HasAccessToSource(user, AccessType.Viewer, x.Key))
 			.ToDictionary();
 	}
@@ -124,13 +129,13 @@ public class SystemController(
 	/// </summary>
 	/// <returns>Информация о настройках</returns>
 	[HttpGet("settings")]
-	public async Task<ActionResult<SettingsInfo>> GetSettingsAsync()
+	public ActionResult<SettingsInfo> GetSettings()
 	{
 		var user = Authenticate();
 
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
-		var info = await SystemRepository.GetSettingsAsync(db, user);
+		var info = settingsRepository.GetSettings(user);
 
 		return info;
 	}
@@ -145,37 +150,24 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		await SystemRepository.UpdateSettingsAsync(db, user, newSettings);
+		await settingsRepository.UpdateSettingsAsync(db, user, newSettings);
 		await settingsService.WriteStartipFileAsync(db);
 
 		return NoContent();
 	}
 
 	/// <summary>
-	/// Перестроение кэша и перезапуск всех сборщиков
+	/// Перестроение кэша
 	/// </summary>
 	/// <returns></returns>
-	[HttpPut("restart/storage")]
-	public async Task<ActionResult> RestartStorageAsync()
+	[HttpPut("restart")]
+	public async Task<ActionResult> RestartAsync()
 	{
 		var user = Authenticate();
 
-		await SystemRepository.RebuildStorageCacheAsync(db, user);
-
-		return NoContent();
-	}
-
-	/// <summary>
-	/// Перестроение кэша вычисленных прав доступа
-	/// </summary>
-	/// <returns></returns>
-	[HttpPut("restart/access")]
-	public async Task<ActionResult> RestartAccessAsync()
-	{
-		var user = Authenticate();
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		await AccessRepository.RebuildUserRightsCacheAsync(db);
+		await dataStore.LoadStateFromDatabaseAsync();
 
 		return NoContent();
 	}
@@ -188,9 +180,10 @@ public class SystemController(
 	public ActionResult<Dictionary<Guid, UserAuthInfo>> GetAccess()
 	{
 		var user = Authenticate();
+
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		return Ok(AccessRepository.UserRights.ToDictionary(x => x.Key, x => x.Value));
+		return derivedDataStore.CalculatedRights();
 	}
 
 	/// <summary>
@@ -201,6 +194,7 @@ public class SystemController(
 	public ActionResult<HistoryReadMetricInfo[]> GetReadMetrics()
 	{
 		var user = Authenticate();
+
 		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return MetricsService.ReadMetrics();

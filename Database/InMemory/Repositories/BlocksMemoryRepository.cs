@@ -1,5 +1,7 @@
-﻿using Datalake.Database.Extensions;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Extensions;
 using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
@@ -43,6 +45,102 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		}
 
 		return blockInfo != null ? await ProtectedCreateAsync(db, user.Guid, blockInfo) : await ProtectedCreateAsync(db, user.Guid, parentId);
+	}
+
+	/// <summary>
+	/// Получение списка блоков с учетом уровня доступа
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Список блоков с уровнями доступа к ним</returns>
+	public BlockWithTagsInfo[] ReadAll(UserAuthInfo user)
+	{
+		var blocks = dataStore.State.BlocksInfoWithTags();
+
+		foreach (var block in blocks)
+			block.AccessRule = AccessRepository.GetAccessToBlock(user, block.Id);
+
+		return blocks
+			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			.ToArray();
+	}
+
+	/// <summary>
+	/// Получение полной информации о блоке, включая права доступа, поля и дочерние блоки
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <returns>Полная информация о блоке</returns>
+	/// <exception cref="NotFoundException">Блок не найден</exception>
+	public BlockFullInfo Read(UserAuthInfo user, int id)
+	{
+		var rule = AccessRepository.GetAccessToBlock(user, id);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
+
+		var block = dataStore.State.BlockInfoWithParentsAndTags(id);
+
+		block.AccessRule = rule;
+
+		return block;
+	}
+
+	/// <summary>
+	/// Получение дерева блоков с учетом уровня доступа
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Дерево блоков с уровнями доступа к ним</returns>
+	public BlockTreeInfo[] ReadAllAsTree(UserAuthInfo user)
+	{
+		var blocks = ReadAll(user);
+
+		return ReadChildren(null, string.Empty);
+
+		BlockTreeInfo[] ReadChildren(int? id, string prefix)
+		{
+			var prefixString = prefix + (string.IsNullOrEmpty(prefix) ? string.Empty : ".");
+			return blocks
+				.Where(x => x.ParentId == id)
+				.Select(x =>
+				{
+					var block = new BlockTreeInfo
+					{
+						Id = x.Id,
+						Guid = x.Guid,
+						ParentId = x.ParentId,
+						Name = x.Name,
+						FullName = prefixString + x.Name,
+						Description = x.Description,
+						Tags = x.Tags
+							.Select(tag => new BlockNestedTagInfo
+							{
+								Guid = tag.Guid,
+								Name = tag.Name,
+								Id = tag.Id,
+								Relation = tag.Relation,
+								SourceId = tag.SourceId,
+								LocalName = tag.LocalName,
+								Type = tag.Type,
+								Frequency = tag.Frequency,
+								SourceType = tag.SourceType,
+							})
+							.ToArray(),
+						AccessRule = x.AccessRule,
+						Children = ReadChildren(x.Id, prefixString + x.Name),
+					};
+
+					if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+					{
+						block.Name = string.Empty;
+						block.Description = string.Empty;
+						block.Tags = [];
+					}
+
+					return block;
+				})
+				.Where(x => x.Children.Length > 0 || x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				.OrderBy(x => x.Name)
+				.ToArray();
+		}
 	}
 
 	/// <summary>
@@ -441,5 +539,4 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			Details = details,
 		});
 	}
-
 }

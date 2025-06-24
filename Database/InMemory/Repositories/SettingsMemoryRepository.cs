@@ -1,5 +1,6 @@
 using Datalake.Database.Extensions;
 using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
@@ -15,6 +16,19 @@ namespace Datalake.Database.InMemory.Repositories;
 public class SettingsMemoryRepository(DatalakeDataStore dataStore)
 {
 	#region Действия
+
+	/// <summary>
+	/// Получение настроек приложения
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Настройки</returns>
+	public SettingsInfo GetSettings(UserAuthInfo? user)
+	{
+		if (user != null)
+			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		return dataStore.State.SettingsInfo();
+	}
 
 	/// <summary>
 	/// Изменение настроек приложения
