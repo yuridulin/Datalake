@@ -97,15 +97,15 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	{
 		var sources = dataStore.State.SourcesInfo(withCustom).ToArray();
 
+		List<SourceInfo> sourcesWithAccess = [];
 		foreach (var source in sources)
 		{
-			var rule = user.Sources.TryGetValue(source.Id, out var r) ? r : AccessRuleInfo.Default;
-			source.AccessRule = rule;
+			source.AccessRule = user.Sources.TryGetValue(source.Id, out var r) ? r : AccessRuleInfo.Default;
+			if (source.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				sourcesWithAccess.Add(source);
 		}
 
-		return sources
-			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
-			.ToArray();
+		return sourcesWithAccess.ToArray();
 	}
 
 	/// <summary>

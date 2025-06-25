@@ -61,7 +61,7 @@ const AccessSettings = () => {
 
 	const restart = () => {
 		setWait(true)
-		api.systemRestartAccess().then(() => {
+		api.systemRestart().then(() => {
 			setWait(false)
 			load()
 		})

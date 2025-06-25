@@ -60,7 +60,7 @@ const BlocksTree = observer(() => {
 
 	function load() {
 		api
-			.blocksReadAsTree2()
+			.blocksReadAsTree()
 			.then((res) => setData(transformBlockTreeInfo(res.data)))
 			.catch(() => setData([]))
 	}

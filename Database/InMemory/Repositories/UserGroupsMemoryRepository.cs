@@ -73,12 +73,15 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	{
 		var groups = dataStore.State.UserGroupsInfo();
 
+		List<UserGroupInfo> groupsWithAccess = [];
 		foreach (var group in groups)
+		{
 			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
+			if (group.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				groupsWithAccess.Add(group);
+		}
 
-		return groups
-			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
-			.ToArray();
+		return groupsWithAccess.ToArray();
 	}
 
 	/// <summary>

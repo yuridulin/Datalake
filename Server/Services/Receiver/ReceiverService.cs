@@ -125,7 +125,6 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		return response;
 	}
 
-
 	/// <summary>
 	/// Запрос данных из ноды Datalake, версия .NET Framework
 	/// </summary>

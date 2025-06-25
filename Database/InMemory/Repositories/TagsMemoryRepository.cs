@@ -96,12 +96,15 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			tags = tags.Where(x => guids.Contains(x.Guid));
 		}
 
+		List<TagInfo> tagsWithAccess = [];
 		foreach (var tag in tags)
+		{
 			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Guid);
+			if (tag.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				tagsWithAccess.Add(tag);
+		}
 
-		return tags
-			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
-			.ToArray();
+		return tagsWithAccess.ToArray();
 	}
 
 	/// <summary>
@@ -118,12 +121,15 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		if (guid.Equals(Guid.Empty))
 		{ }
 
+		List<TagAsInputInfo> tagsWithAccess = [];
 		foreach (var tag in tags)
+		{
 			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Guid);
+			if (tag.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				tagsWithAccess.Add(tag);
+		}
 
-		return tags
-			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
-			.ToArray();
+		return tagsWithAccess.ToArray();
 	}
 
 	/// <summary>

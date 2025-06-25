@@ -1,9 +1,9 @@
 ﻿using Datalake.Database.InMemory;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Auth;
-using Datalake.Server.Services.SessionManager.Models;
+using Datalake.Server.Services.Auth.Models;
 
-namespace Datalake.Server.Services.SessionManager;
+namespace Datalake.Server.Services.Auth;
 
 /// <summary>
 /// Менеджер сессий пользователей

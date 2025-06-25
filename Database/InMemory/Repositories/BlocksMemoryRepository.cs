@@ -56,12 +56,15 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	{
 		var blocks = dataStore.State.BlocksInfoWithTags();
 
+		List<BlockWithTagsInfo> blocksWithAccess = [];
 		foreach (var block in blocks)
+		{
 			block.AccessRule = AccessChecks.GetAccessToBlock(user, block.Id);
+			if (block.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				blocksWithAccess.Add(block);
+		}
 
-		return blocks
-			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
-			.ToArray();
+		return blocksWithAccess.ToArray();
 	}
 
 	/// <summary>

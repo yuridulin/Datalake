@@ -5,7 +5,7 @@ using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 
-namespace Datalake.Server.Services;
+namespace Datalake.Server.Services.Auth;
 
 /// <summary>
 /// Сервис аутентификации пользователей по входным данным

@@ -2,11 +2,11 @@
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
-using Datalake.Server.BackgroundServices.Collector.Abstractions;
+using Datalake.Server.Services.Collector.Abstractions;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.StateManager;
 
-namespace Datalake.Server.BackgroundServices.Collector.Collectors;
+namespace Datalake.Server.Services.Collector.Collectors;
 
 internal class OldDatalakeCollector : CollectorBase
 {

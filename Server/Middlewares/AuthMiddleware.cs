@@ -1,6 +1,6 @@
 ﻿using Datalake.PublicApi.Constants;
-using Datalake.Server.Services.SessionManager;
-using Datalake.Server.Services.SessionManager.Models;
+using Datalake.Server.Services.Auth;
+using Datalake.Server.Services.Auth.Models;
 using Datalake.Server.Services.StateManager;
 using System.Text;
 

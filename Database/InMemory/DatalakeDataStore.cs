@@ -18,10 +18,10 @@ public class DatalakeDataStore
 		_serviceScopeFactory = serviceScopeFactory;
 		_logger = logger;
 
-		StateChanged += (_, _) => _logger.LogInformation("Стейт перезагружен");
+		StateChanged += (_, _) => _logger.LogInformation("Стейт изменён");
 		StateCorrupted += (_, _) => Task.Run(LoadStateFromDatabaseAsync);
 
-		_ = LoadStateFromDatabaseAsync();
+		//_ = LoadStateFromDatabaseAsync(); // Инициализатор БД сделает это сам
 	}
 
 	public async Task LoadStateFromDatabaseAsync()
@@ -46,7 +46,7 @@ public class DatalakeDataStore
 			var userGroupRelations = await db.UserGroupRelations.ToArrayAsync();
 
 			t.Stop();
-			_logger.LogInformation("Загрузка БД: {ms}", t.Elapsed.TotalMilliseconds);
+			_logger.LogInformation("Загрузка стейта из БД: {ms}", t.Elapsed.TotalMilliseconds);
 
 			var newState = new DatalakeDataState
 			{

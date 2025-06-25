@@ -43,6 +43,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	{
 		var users = dataStore.State.UsersInfo();
 
+		List<UserInfo> usersWithAccess = [];
 		foreach (var u in users)
 		{
 			u.AccessRule = (user.Guid == u.Guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
@@ -58,11 +59,12 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 				u.UserGroups = [];
 				u.Guid = Guid.Empty;
 			}
+
+			if (u.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				usersWithAccess.Add(u);
 		}
 
-		return users
-			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
-			.ToArray();
+		return usersWithAccess.ToArray();
 	}
 
 	/// <summary>
@@ -121,7 +123,6 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 
 		foreach (var group in userInfo.UserGroups)
 			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
-
 
 		return userInfo;
 	}

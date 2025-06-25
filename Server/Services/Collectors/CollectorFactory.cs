@@ -2,12 +2,12 @@
 using Datalake.Database.InMemory;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
-using Datalake.Server.BackgroundServices.Collector.Abstractions;
-using Datalake.Server.BackgroundServices.Collector.Collectors;
+using Datalake.Server.Services.Collector.Abstractions;
+using Datalake.Server.Services.Collector.Collectors;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.StateManager;
 
-namespace Datalake.Server.BackgroundServices.Collector;
+namespace Datalake.Server.Services.Collector;
 
 /// <summary>
 /// Получение нужного сборщика данных для выбранного источника

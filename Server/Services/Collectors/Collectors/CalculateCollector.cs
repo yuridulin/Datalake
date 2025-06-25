@@ -3,11 +3,11 @@ using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
-using Datalake.Server.BackgroundServices.Collector.Abstractions;
+using Datalake.Server.Services.Collector.Abstractions;
 using Datalake.Server.Services.StateManager;
 using NCalc;
 
-namespace Datalake.Server.BackgroundServices.Collector.Collectors;
+namespace Datalake.Server.Services.Collector.Collectors;
 
 internal class CalculateCollector : CollectorBase
 {

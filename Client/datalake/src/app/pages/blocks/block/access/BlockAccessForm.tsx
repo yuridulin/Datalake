@@ -1,9 +1,5 @@
 import api from '@/api/swagger-api'
-import {
-	AccessRightsIdInfo,
-	AccessType,
-	BlockSimpleInfo,
-} from '@/api/swagger/data-contracts'
+import { AccessRightsIdInfo, AccessType, BlockSimpleInfo } from '@/api/swagger/data-contracts'
 import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
@@ -48,13 +44,7 @@ const BlockAccessForm = () => {
 			api.blocksRead(Number(id)).then((res) => {
 				setBlock(res.data)
 			}),
-			api
-				.userGroupsReadAll()
-				.then((res) =>
-					setUserGroups(
-						res.data.map((x) => ({ label: x.name, value: x.guid })),
-					),
-				),
+			api.userGroupsReadAll().then((res) => setUserGroups(res.data.map((x) => ({ label: x.name, value: x.guid })))),
 			api.usersReadAll().then((res) =>
 				setUsers(
 					res.data.map((x) => ({
@@ -64,7 +54,7 @@ const BlockAccessForm = () => {
 				),
 			),
 			api
-				.accessGet({ block: Number(id) })
+				.accessRead({ block: Number(id) })
 				.then((res) => {
 					setForm(
 						res.data
@@ -74,8 +64,7 @@ const BlockAccessForm = () => {
 								userGuid: x.user?.guid ?? null,
 								accessType: x.accessType,
 								key: String(x.id),
-								choosedObject:
-									x.userGroup != null ? 'group' : 'user',
+								choosedObject: x.userGroup != null ? 'group' : 'user',
 							})),
 					)
 				})
@@ -145,17 +134,9 @@ const BlockAccessForm = () => {
 						style={{ width: '100%' }}
 						value={record.accessType}
 						onChange={(value) => {
-							setForm(
-								form.map((x) =>
-									x.key === record.key
-										? { ...x, accessType: value }
-										: x,
-								),
-							)
+							setForm(form.map((x) => (x.key === record.key ? { ...x, accessType: value } : x)))
 						}}
-						labelRender={(x) => (
-							<AccessTypeEl type={x.value as AccessType} />
-						)}
+						labelRender={(x) => <AccessTypeEl type={x.value as AccessType} />}
 					/>
 				)
 			},
@@ -257,13 +238,7 @@ const BlockAccessForm = () => {
 			>
 				Разрешения на доступ к блоку "{block.name}"
 			</PageHeader>
-			<Table
-				size='small'
-				pagination={false}
-				columns={columns}
-				dataSource={form}
-				rowKey='key'
-			/>
+			<Table size='small' pagination={false} columns={columns} dataSource={form} rowKey='key' />
 		</>
 	)
 }

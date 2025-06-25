@@ -35,7 +35,7 @@ public class DatalakeCurrentValuesStore
 		Interlocked.Exchange(ref _currentValues, newValues);
 
 		t.Stop();
-		_logger.LogInformation("Загрузка БД: {ms}", t.Elapsed.TotalMilliseconds);
+		_logger.LogInformation("Загрузка текущих значений из БД: {ms}", t.Elapsed.TotalMilliseconds);
 	}
 
 	private readonly IServiceScopeFactory _serviceScopeFactory;

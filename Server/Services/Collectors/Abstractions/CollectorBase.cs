@@ -3,7 +3,7 @@ using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
 using System.Threading.Channels;
 
-namespace Datalake.Server.BackgroundServices.Collector.Abstractions;
+namespace Datalake.Server.Services.Collector.Abstractions;
 
 /// <summary>
 /// Базовый класс сборщика с реализацией основных механизмов

@@ -1,10 +1,10 @@
 ﻿using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Models;
-using Datalake.Server.Services.SessionManager;
-using Datalake.Server.Services.SessionManager.Models;
+using Datalake.Server.Services.Auth;
+using Datalake.Server.Services.Auth.Models;
 using System.Threading.Channels;
 
-namespace Datalake.Server.BackgroundServices.SettingsHandler;
+namespace Datalake.Server.Services.SettingsHandler;
 
 /// <summary>
 /// Сервис обновления настроек по изменению данных

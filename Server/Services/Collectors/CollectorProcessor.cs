@@ -1,14 +1,22 @@
 ﻿using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Queries;
-using Datalake.Server.BackgroundServices.Collector.Abstractions;
+using Datalake.Server.Services.Collector.Abstractions;
 using Datalake.Server.Services.StateManager;
 using LinqToDB;
 using System.Collections.Concurrent;
 
-namespace Datalake.Server.BackgroundServices.Collector;
+namespace Datalake.Server.Services.Collector;
 
-internal class CollectorProcessor(
+/// <summary>
+/// Менеджер сборщиков данных
+/// </summary>
+/// <param name="collectorFactory">Фабрика сборщиков</param>
+/// <param name="collectorWriter">Сервис записи данных в БД</param>
+/// <param name="sourcesStateService">Сервис отслеживания активности источников данных</param>
+/// <param name="dataStore">Хранилище данных приложения</param>
+/// <param name="logger">Логгер</param>
+public class CollectorProcessor(
 	CollectorFactory collectorFactory,
 	CollectorWriter collectorWriter,
 	SourcesStateService sourcesStateService,
@@ -20,6 +28,7 @@ internal class CollectorProcessor(
 	private readonly ConcurrentDictionary<ICollector, Task> _processingTasks = new();
 	private readonly SemaphoreSlim _restartLock = new(1, 1);
 
+	/// <inheritdoc/>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		_stoppingToken = stoppingToken;
@@ -29,6 +38,7 @@ internal class CollectorProcessor(
 		await Task.Delay(Timeout.Infinite, stoppingToken);
 	}
 
+	/// <inheritdoc/>
 	public override async Task StopAsync(CancellationToken cancellationToken)
 	{
 		// Останавливаем все сборщики

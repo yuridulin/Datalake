@@ -722,11 +722,8 @@ export type UserAuthInfo = UserSimpleInfo & {
   blocks: Record<string, AccessRuleInfo>;
   /** Список всех тегов с указанием доступа к ним */
   tags: Record<string, AccessRuleInfo>;
-  /**
-   * Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
-   * @format guid
-   */
-  underlyingUserGuid?: string | null;
+  /** Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись */
+  underlyingUser?: UserAuthInfo | null;
   /**
    * Идентификатор пользователя в системе EnergoId
    * @format guid

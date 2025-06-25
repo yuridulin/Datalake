@@ -1,7 +1,7 @@
 ﻿using Datalake.PublicApi.Models.Sources;
-using Datalake.Server.BackgroundServices.Collector.Abstractions;
+using Datalake.Server.Services.Collector.Abstractions;
 
-namespace Datalake.Server.BackgroundServices.Collector.Collectors;
+namespace Datalake.Server.Services.Collector.Collectors;
 
 /// <summary>
 /// Системный сборщик данных, собирающий информацию о работе сервера
