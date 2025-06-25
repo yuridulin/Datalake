@@ -15,6 +15,23 @@ public class DatalakeDataStore
 		IServiceScopeFactory serviceScopeFactory,
 		ILogger<DatalakeDataStore> logger)
 	{
+		var initialState = new DatalakeDataState
+		{
+			AccessRights = [],
+			BlockProperties = [],
+			Blocks = [],
+			BlockTags = [],
+			Settings = new(),
+			Sources = [],
+			TagInputs = [],
+			Tags = [],
+			UserGroupRelations = [],
+			UserGroups = [],
+			Users = [],
+		};
+		initialState.InitDictionaries();
+		_currentState = initialState;
+
 		_serviceScopeFactory = serviceScopeFactory;
 		_logger = logger;
 
@@ -70,7 +87,7 @@ public class DatalakeDataStore
 	private readonly IServiceScopeFactory _serviceScopeFactory;
 	private readonly ILogger<DatalakeDataStore> _logger;
 	private readonly AsyncLock _writeLock = new();
-	private DatalakeDataState _currentState = new();
+	private DatalakeDataState _currentState;
 
 	public DatalakeDataState State => _currentState;
 	
