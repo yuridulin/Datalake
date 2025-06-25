@@ -1,7 +1,7 @@
 using Datalake.Database.Extensions;
+using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Queries;
-using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
@@ -25,7 +25,7 @@ public class SettingsMemoryRepository(DatalakeDataStore dataStore)
 	public SettingsInfo GetSettings(UserAuthInfo? user)
 	{
 		if (user != null)
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return dataStore.State.SettingsInfo();
 	}
@@ -39,7 +39,7 @@ public class SettingsMemoryRepository(DatalakeDataStore dataStore)
 	public async Task UpdateSettingsAsync(
 		DatalakeContext db, UserAuthInfo user, SettingsInfo newSettings)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		await ProtectedUpdateSettingsAsync(db, user.Guid, newSettings);
 	}

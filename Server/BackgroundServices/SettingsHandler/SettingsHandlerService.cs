@@ -1,129 +1,135 @@
-﻿using Datalake.Database;
-using Datalake.Database.Repositories;
-using Datalake.PublicApi.Constants;
+﻿using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Models;
 using Datalake.Server.Services.SessionManager;
 using Datalake.Server.Services.SessionManager.Models;
-using System.Diagnostics;
+using System.Threading.Channels;
 
 namespace Datalake.Server.BackgroundServices.SettingsHandler;
 
 /// <summary>
-/// Загрузчик настроек из БД
+/// Сервис обновления настроек по изменению данных
 /// </summary>
-/// <remarks>
-/// Запуск отслеживания настроек БД
-/// </remarks>
-/// <param name="serviceScopeFactory"></param>
-/// <param name="logger"></param>
 public class SettingsHandlerService(
-	IServiceScopeFactory serviceScopeFactory,
-	ILogger<SettingsHandlerService> logger) : BackgroundService, ISettingsUpdater
+	DatalakeDataStore dataStore,
+	DatalakeDerivedDataStore derivedDataStore,
+	ILogger<SettingsHandlerService> logger) : BackgroundService, IDisposable
 {
-	/// <summary>
-	/// Проверка, обновились ли настройки в БД
-	/// </summary>
-	/// <param name="stoppingToken">Сигнал о остановке выполнения</param>
+	private readonly object _fileLock = new();
+	private readonly object _usersLock = new();
+
+	// Каналы для обработки событий
+	private readonly Channel<DatalakeDataState> _stateChannel =
+		Channel.CreateUnbounded<DatalakeDataState>();
+	private readonly Channel<DatalakeAccessState> _accessChannel =
+		Channel.CreateUnbounded<DatalakeAccessState>();
+
+	/// <inheritdoc/>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		while (!stoppingToken.IsCancellationRequested)
-		{
-			var lastSystemUpdate = SystemRepository.LastUpdate;
-			var lastAccessUpdate = AccessRepository.LastUpdate;
+		// Подписываемся на события
+		dataStore.StateChanged += OnStateChanged;
+		derivedDataStore.AccessChanged += OnAccessChanged;
 
-			if (lastSystemUpdate != StoredSystemUpdate || lastAccessUpdate != StoredAccessUpdate)
+		// Обработчики событий
+		var stateHandler = ProcessStateChangesAsync(stoppingToken);
+		var accessHandler = ProcessAccessChangesAsync(stoppingToken);
+
+		await Task.WhenAll(stateHandler, accessHandler);
+	}
+
+	/// <inheritdoc/>
+	public override void Dispose()
+	{
+		dataStore.StateChanged -= OnStateChanged;
+		derivedDataStore.AccessChanged -= OnAccessChanged;
+
+		GC.SuppressFinalize(this);
+	}
+
+	private void OnStateChanged(object? sender, DatalakeDataState state)
+		=> _stateChannel.Writer.TryWrite(state);
+
+	private void OnAccessChanged(object? sender, DatalakeAccessState access)
+		=> _accessChannel.Writer.TryWrite(access);
+
+	private async Task ProcessStateChangesAsync(CancellationToken ct)
+	{
+		await foreach (var state in _stateChannel.Reader.ReadAllAsync(ct))
+		{
+			await Task.Run(() => WriteStartupFile(state), ct);
+		}
+	}
+
+	private async Task ProcessAccessChangesAsync(CancellationToken ct)
+	{
+		await foreach (var access in _accessChannel.Reader.ReadAllAsync(ct))
+		{
+			await Task.Run(() => LoadStaticUsers(dataStore.State, access), ct);
+		}
+	}
+
+	/// <summary>
+	/// Запись файла с настройками для клиента
+	/// </summary>
+	public void WriteStartupFile(DatalakeDataState state)
+	{
+		lock (_fileLock)
+		{
+			logger.LogDebug("Обновление настроек...");
+			try
 			{
-				var sw = Stopwatch.StartNew();
-
-				try
-				{
-					using var scope = serviceScopeFactory.CreateScope();
-					using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-
-					if (lastAccessUpdate != StoredAccessUpdate)
-					{
-						logger.LogInformation("Обновление настроек прав доступа");
-
-						await AccessRepository.RebuildUserRightsCacheAsync(db);
-						StoredAccessUpdate = lastAccessUpdate;
-					}
-
-					if (lastSystemUpdate != StoredSystemUpdate)
-					{
-						logger.LogInformation("Обновление системных настроек");
-
-						await WriteStartipFileAsync(db);
-						StoredSystemUpdate = lastSystemUpdate;
-					}
-
-					LoadStaticUsers(db);
-				}
-				catch (Exception ex)
-				{
-					logger.LogError("Ошибка при обновлении настроек: {message}", ex.Message);
-				}
-				finally
-				{
-					sw.Stop();
-					logger.LogInformation("Обновление настроек выполнено за {ms} мс", sw.Elapsed.TotalMilliseconds.ToString("F0"));
-				}
+				var newSettings = state.Settings;
+				File.WriteAllLines(Path.Combine(Program.WebRootPath, "startup.js"),
+				[
+					"var LOCAL_API = true;",
+					$"var KEYCLOAK_DB = '{newSettings.KeycloakHost}';",
+					$"var KEYCLOAK_CLIENT = '{newSettings.KeycloakClient}';",
+					$"var INSTANCE_NAME = '{newSettings.InstanceName}'"
+				]);
+				logger.LogDebug("Настройки обновлены");
 			}
-
-			await Task.Delay(1000, stoppingToken);
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "Ошибка обновления настроек");
+			}
 		}
 	}
 
-
-	private DateTime StoredSystemUpdate = DateTime.MinValue.AddMinutes(1);
-	private DateTime StoredAccessUpdate = DateTime.MinValue.AddMinutes(1);
-
-	/// <inheritdoc />
-	public async Task WriteStartipFileAsync(DatalakeContext db)
+	/// <summary>
+	/// Обновление сессий пользователей
+	/// </summary>
+	/// <param name="state"></param>
+	/// <param name="access"></param>
+	public void LoadStaticUsers(DatalakeDataState state, DatalakeAccessState access)
 	{
-		logger.LogDebug("Обновление настроек, передаваемых веб-клиенту");
-
-		try
+		lock (_usersLock)
 		{
-			var newSettings = await SystemRepository.GetSettingsAsSystemAsync(db);
+			logger.LogDebug("Обновление статичных пользователей...");
+			try
+			{
+				var staticUsers = state.Users
+					.Where(x => x.Type == PublicApi.Enums.UserType.Static)
+					.ToList();
 
-			File.WriteAllLines(Path.Combine(Program.WebRootPath, "startup.js"), [
-				"var LOCAL_API = true;",
-				$"var KEYCLOAK_DB = '{newSettings.EnergoIdHost}';",
-				$"var KEYCLOAK_CLIENT = '{newSettings.EnergoIdClient}';",
-				$"var INSTANCE_NAME = '{newSettings.InstanceName}'",
-			]);
+				var sessions = staticUsers
+					.Select(user => !access.TryGet(user.Guid, out var rights) ? null : new AuthSession
+					{
+						ExpirationTime = DateTime.MaxValue,
+						UserGuid = user.Guid,
+						Token = rights.Token,
+						AuthInfo = rights,
+						StaticHost = user.StaticHost
+					})
+					.Where(session => session != null)
+					.ToList();
 
-			StoredSystemUpdate = DateFormats.GetCurrentDateTime();
-		}
-		catch (Exception ex)
-		{
-			logger.LogError("Ошибка при обновлении настроек, передаваемых веб-клиенту: {message}", ex.Message);
-		}
-	}
-
-	/// <inheritdoc />
-	public void LoadStaticUsers(DatalakeContext db)
-	{
-		logger.LogDebug("Обновление списка статичных учетных записей");
-
-		try
-		{
-			var staticUsers = AccessRepository
-				.GetStaticUsersAsSystemAsync(db).Result;
-
-			SessionManagerService.StaticAuthRecords = staticUsers
-				.Select(x => new AuthSession
-				{
-					ExpirationTime = DateTime.MaxValue,
-					UserGuid = x.Guid,
-					Token = x.AuthInfo.Token,
-					AuthInfo = x.AuthInfo,
-					StaticHost = x.Host
-				})
-				.ToList();
-		}
-		catch (Exception ex)
-		{
-			logger.LogError("Ошибка при обновлении списка статичных учетных записей: {message}", ex.Message);
+				SessionManagerService.StaticAuthRecords = sessions!;
+				logger.LogDebug("Пользователи обновлены");
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "Ошибка обновления пользователей");
+			}
 		}
 	}
 }

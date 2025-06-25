@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.UserGroups;
@@ -15,7 +16,8 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class UserGroupsController(
 	DatalakeContext db,
-	UserGroupsMemoryRepository userGroupsRepository) : ApiControllerBase
+	DatalakeDerivedDataStore derivedDataStore,
+	UserGroupsMemoryRepository userGroupsRepository) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Создание новой группы пользователей

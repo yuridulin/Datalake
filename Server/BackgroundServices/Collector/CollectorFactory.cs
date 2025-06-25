@@ -1,4 +1,5 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
@@ -37,7 +38,7 @@ public class CollectorFactory(
 				=> new DatalakeCollector(receiverService, source, loggerFactory.CreateLogger<DatalakeCollector>()),
 
 			SourceType.Calculated
-				=> new CalculateCollector(source, tagsStateService, loggerFactory.CreateLogger<CalculateCollector>()),
+				=> new CalculateCollector(serviceProvider.GetRequiredService<DatalakeCurrentValuesStore>(), source, tagsStateService, loggerFactory.CreateLogger<CalculateCollector>()),
 
 			SourceType.System
 				=> new SystemCollector(source, loggerFactory.CreateLogger<SystemCollector>()),

@@ -1,5 +1,7 @@
-﻿using Datalake.Database.Extensions;
-using Datalake.Database.Repositories;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Extensions;
+using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using LinqToDB;
@@ -24,10 +26,12 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	/// <summary>
 	/// Необходимые для работы записи, которые должны быть в базе данных
 	/// </summary>
-	public async Task EnsureDataCreatedAsync()
+	public async Task EnsureDataCreatedAsync(
+		DatalakeDataStore dataStore,
+		UsersMemoryRepository usersRepository)
 	{
 		// запись необходимых источников в список
-		var customSources = SourcesRepository.CustomSourcesId
+		var customSources = Lists.CustomSources
 			.Select(x => new Source
 			{
 				Id = (int)x,
@@ -59,14 +63,10 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		// создание администратора по умолчанию, если его учетки нет
 		if (!Users.Any(x => x.Login == "admin"))
 		{
-			await UsersRepository.CreateAsync(this, Guid.Empty, Defaults.InitialAdmin);
+			await usersRepository.ProtectedCreateAsync(this, Guid.Empty, Defaults.InitialAdmin);
 		}
 
-		// заполнение кэша
-		await SystemRepository.RebuildStorageCacheAsync(this);
-		await AccessRepository.RebuildUserRightsCacheAsync(this);
-		SystemRepository.Update();
-		AccessRepository.Update();
+		_ = Task.Run(dataStore.LoadStateFromDatabaseAsync);
 	}
 
 	#region Таблицы

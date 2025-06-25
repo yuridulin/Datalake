@@ -1,5 +1,6 @@
+using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
-using Datalake.Database.Repositories;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.AccessRights;
@@ -25,9 +26,33 @@ public class AccessRightsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="request">Новые права доступа</param>
 	public async Task ApplyChangesAsync(DatalakeContext db, UserAuthInfo user, AccessRightsApplyRequest request)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		await ProtectedApplyChangesAsync(db, request);
+	}
+
+	/// <summary>
+	/// Получение списка правил доступа для запрошенных объектов
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="userGuid">Идентификатор пользователя</param>
+	/// <param name="userGroupGuid">Идентификатор группы пользователей</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <param name="blockId">Идентификатор блока</param>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <returns>Список правил доступа</returns>
+	public AccessRightsInfo[] Read(
+		UserAuthInfo user,
+		Guid? userGuid,
+		Guid? userGroupGuid,
+		int? sourceId,
+		int? blockId,
+		int? tagId)
+	{
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Editor);
+
+		return dataStore.State.AccessRightsInfo(userGuid, userGroupGuid, sourceId, blockId, tagId)
+			.ToArray();
 	}
 
 	#endregion

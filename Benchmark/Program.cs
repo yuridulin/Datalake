@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Repositories;
+﻿using Datalake.Database.Functions;
 using Datalake.PublicApi.Enums;
 
 namespace Benchmark;
@@ -7,7 +7,7 @@ internal class Program
 {
 	static void Main(string[] _)
 	{
-#if DEBUG
+/*#if DEBUG
 		var bench = new CreateAccessRightsCacheBenchmark();
 		bench.Setup();
 
@@ -53,7 +53,7 @@ internal class Program
 		Console.WriteLine($"Количество ошибок: {mismatchCount}");
 #else
 		BenchmarkDotNet.Running.BenchmarkRunner.Run<CreateAccessRightsCacheBenchmark>();
-#endif
+#endif*/
 	}
 }
 

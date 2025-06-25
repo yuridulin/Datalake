@@ -1,6 +1,7 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Functions;
+using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
-using Datalake.Database.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.Controllers.Base;
@@ -18,8 +19,9 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class SourcesController(
 	DatalakeContext db,
+	DatalakeDerivedDataStore derivedDataStore,
 	SourcesMemoryRepository sourcesRepository,
-	ReceiverService receiverService) : ApiControllerBase
+	ReceiverService receiverService) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Создание источника с информацией по умолчанию
@@ -123,7 +125,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Viewer, id);
+		AccessChecks.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Viewer, id);
 
 		var source = sourcesRepository.Read(user, id);
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
@@ -153,7 +155,7 @@ public class SourcesController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Editor, id);
+		AccessChecks.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Editor, id);
 
 		var source = sourcesRepository.ReadWithTags(user, id);
 

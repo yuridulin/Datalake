@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Repositories;
+﻿using Datalake.Database.Functions;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;

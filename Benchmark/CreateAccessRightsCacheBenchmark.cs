@@ -2,20 +2,20 @@
 using Datalake.PublicApi.Models.Auth;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using static Datalake.Database.Repositories.AccessRepository;
+using static Datalake.Database.Functions.AccessChecks;
 
 namespace Benchmark;
 
-[MemoryDiagnoser]
+/*[MemoryDiagnoser]
 public class CreateAccessRightsCacheBenchmark
 {
-	/*const string ConnectionString =
+	*//*const string ConnectionString =
 		"Server=10.208.4.113; " +
 		"Port=5432; " +
 		"Database=datalake; " +
 		"User Id=postgres; " +
 		"Password=postgres; " +
-		"Pooling=true; MinPoolSize=10; MaxPoolSize=100;";*/
+		"Pooling=true; MinPoolSize=10; MaxPoolSize=100;";*//*
 
 	//private DatalakeContext _db = null!;
 	public DbMinimal _minimal = null!;
@@ -6652,7 +6652,7 @@ public class CreateAccessRightsCacheBenchmark
 		return RebuildUserRightsCacheOptimized(_minimal);
 	}
 
-	/*[GlobalCleanup]
+	*//*[GlobalCleanup]
 	public void Cleanup() => _db.Dispose();*/
 
 	/*public static DatalakeEfContext CreateEfContext()
@@ -6682,5 +6682,6 @@ public class CreateAccessRightsCacheBenchmark
 		await dbContext.EnsureDataCreatedAsync();
 
 		return dbContext;
-	}*/
+	}*//*
 }
+*/

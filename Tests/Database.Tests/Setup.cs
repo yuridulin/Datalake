@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Repositories;
+﻿using Datalake.Database.Functions;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 using LinqToDB;
@@ -60,7 +60,7 @@ namespace Datalake.Database.Tests
 
 		public static async Task<UserAuthInfo> GetDefaultAdminAsync(this DatalakeContext db)
 		{
-			var userAuthInfo = await AccessRepository.AuthenticateAsync(db, new UserLoginPass
+			var userAuthInfo = await AccessChecks.AuthenticateAsync(db, new UserLoginPass
 			{
 				Login = "admin",
 				Password = "admin",

@@ -1,4 +1,4 @@
-﻿using Datalake.Database.InMemory.Repositories;
+﻿using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,7 +29,7 @@ public class DatalakeCurrentValuesStore
 
 		var t = Stopwatch.StartNew();
 
-		var dbValues = await ValuesRepository.ReadLastValuesAsync(db);
+		var dbValues = await ValuesRepository.ProtectedReadLastValuesAsync(db);
 		var newValues = new ConcurrentDictionary<int, TagHistory>(dbValues);
 
 		Interlocked.Exchange(ref _currentValues, newValues);

@@ -1,5 +1,6 @@
 ﻿using Datalake.Database;
-using Datalake.Database.InMemory.Repositories;
+using Datalake.Database.InMemory;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Services.StateManager;
@@ -15,8 +16,9 @@ namespace Datalake.Server.Controllers;
 [Route("api/Tags/[controller]")]
 public class ValuesController(
 	DatalakeContext db,
+	DatalakeDerivedDataStore derivedDataStore,
 	ValuesRepository valuesRepository,
-	TagsStateService tagsStateService) : ApiControllerBase
+	TagsStateService tagsStateService) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Путь для получения текущих данные

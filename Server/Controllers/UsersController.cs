@@ -1,11 +1,13 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Functions;
+using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
-using Datalake.Database.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Models;
+using Datalake.Server.Services;
 using Datalake.Server.Services.SessionManager;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -20,10 +22,12 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class UsersController(
 	DatalakeContext db,
+	DatalakeDerivedDataStore derivedDataStore,
 	ILogger<UsersController> logger,
+	AuthenticationService authService,
 	UsersMemoryRepository usersRepository,
 	SettingsMemoryRepository settingsRepository,
-	SessionManagerService sessionManager) : ApiControllerBase
+	SessionManagerService sessionManager) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Получение списка пользователей, определенных на сервере EnergoId
@@ -35,7 +39,7 @@ public class UsersController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.HasGlobalAccess(user, PublicApi.Enums.AccessType.Admin);
+		AccessChecks.HasGlobalAccess(user, PublicApi.Enums.AccessType.Admin);
 
 		var settings = settingsRepository.GetSettings(null);
 		var address = "https://" + settings.EnergoIdApi;
@@ -94,10 +98,10 @@ public class UsersController(
 	/// <param name="energoIdInfo">Данные пользователя Keycloak</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("energo-id")]
-	public async Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
+	public ActionResult<UserAuthInfo> AuthenticateEnergoIdUser(
 		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
 	{
-		var userAuthInfo = await AccessRepository.AuthenticateAsync(db, energoIdInfo);
+		var userAuthInfo = authService.Authenticate(energoIdInfo);
 
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
@@ -113,10 +117,10 @@ public class UsersController(
 	/// <param name="loginPass">Данные для входа</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("auth")]
-	public async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
+	public ActionResult<UserAuthInfo> Authenticate(
 		[BindRequired, FromBody] UserLoginPass loginPass)
 	{
-		var userAuthInfo = await AccessRepository.AuthenticateAsync(db, loginPass);
+		var userAuthInfo = authService.Authenticate(loginPass);
 
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);

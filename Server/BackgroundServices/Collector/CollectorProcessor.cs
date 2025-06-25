@@ -1,83 +1,62 @@
-﻿using Datalake.Database;
-using Datalake.Database.Repositories;
-using Datalake.PublicApi.Models.Sources;
+﻿using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
 using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.StateManager;
 using LinqToDB;
-using System.Diagnostics;
 
 namespace Datalake.Server.BackgroundServices.Collector;
 
 internal class CollectorProcessor(
 	CollectorFactory collectorFactory,
-	IServiceScopeFactory serviceScopeFactory,
 	SourcesStateService sourcesStateService,
+	DatalakeDataStore dataStore,
 	ILogger<CollectorProcessor> logger) : BackgroundService
 {
+
+	private List<ICollector> _collectors = [];
+
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		dataStore.StateChanged += (_, state) => Task.Run(() => RestartCollectors(state, stoppingToken));
+
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			var lastUpdate = SystemRepository.LastUpdate;
-
-			if (lastUpdate > StoredUpdate)
-			{
-				var sw = Stopwatch.StartNew();
-				logger.LogInformation("Обновление сборщиков");
-
-				SourceWithTagsInfo[] newSources = [];
-
-				try
-				{
-					using var scope = serviceScopeFactory.CreateScope();
-					using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-
-					newSources = await SourcesRepository.QueryInfoWithTagsAndSourceTags(db).ToArrayAsync(token: stoppingToken);
-				}
-				catch (Exception ex)
-				{
-					logger.LogError("Ошибка при получении информации о источниках: {message}", ex.Message);
-				}
-
-				if (newSources.Length > 0)
-				{
-					Collectors.ForEach(x =>
-					{
-						x.Stop();
-						x.CollectValues -= CollectValues;
-					});
-
-					Collectors = newSources.Select(collectorFactory.GetCollector)
-						.Where(x => x != null)
-						.Select(x => x!)
-						.ToList();
-
-					sourcesStateService.Initialize(newSources.Select(x => x.Id).ToArray());
-
-					Collectors.ForEach(x =>
-					{
-						x.CollectValues += CollectValues;
-						x.Start(stoppingToken);
-					});
-
-					StoredUpdate = lastUpdate;
-				}
-
-				sw.Stop();
-				logger.LogInformation("Обновление сборщиков завершено: [{n}] за {ms} мс", Collectors.Count, sw.Elapsed.TotalMilliseconds);
-			}
-
-			await Task.Delay(5000, stoppingToken);
+			await Task.Delay(1000, stoppingToken);
 		}
+	}
+
+	private void RestartCollectors(DatalakeDataState state, CancellationToken stoppingToken)
+	{
+		logger.LogInformation("Выполняется обновление сборщиков");
+
+		var newSources = state.SourcesInfoWithTagsAndSourceTags().ToArray();
+
+		_collectors.ForEach(x =>
+		{
+			x.Stop();
+			x.CollectValues -= CollectValues;
+		});
+
+		_collectors = newSources.Select(collectorFactory.GetCollector)
+			.Where(x => x != null)
+			.Select(x => x!)
+			.ToList();
+
+		sourcesStateService.Initialize(newSources.Select(x => x.Id).ToArray());
+
+		_collectors.ForEach(x =>
+		{
+			x.CollectValues += CollectValues;
+			x.Start(stoppingToken);
+		});
+
+		logger.LogInformation("Обновление сборщиков завершено");
 	}
 
 	private void CollectValues(ICollector collector, IEnumerable<CollectValue> values)
 	{
 		CollectorWriter.AddToQueue(values);
 	}
-
-	private DateTime StoredUpdate { get; set; } = DateTime.MinValue.AddMinutes(1);
-
-	private List<ICollector> Collectors { get; set; } = [];
 }

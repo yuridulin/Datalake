@@ -123,7 +123,7 @@ internal class AggregateCollector : CollectorBase
 
 	private async Task<List<CollectValue>> GetAggregated(TagAggregationRule[] rules, DateTime date, AggregationPeriod period)
 	{
-		var aggregated = await ValuesRepository.GetWeightedAggregated(_db, rules.Select(x => x.TagSourceId).ToArray(), date, period);
+		var aggregated = await ValuesRepository.GetWeightedAggregatedValuesAsync(_db, rules.Select(x => x.TagSourceId).ToArray(), date, period);
 
 		_tagsStateService.UpdateTagState([
 			new() {

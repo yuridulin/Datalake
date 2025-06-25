@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Interfaces;
-using Datalake.PublicApi.Enums;
+﻿using Datalake.PublicApi.Enums;
 using LinqToDB.Mapping;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -12,7 +11,7 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице источников
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public record class Source : IReadOnlySource
+public record class Source
 {
 	const string TableName = "Sources";
 

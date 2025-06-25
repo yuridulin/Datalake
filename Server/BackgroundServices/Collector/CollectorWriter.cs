@@ -21,11 +21,13 @@ public class CollectorWriter(
 	{
 		using var scope = serviceScopeFactory.CreateScope();
 		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+		var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
 
 		while (!stoppingToken.IsCancellationRequested)
 		{
 			CollectValue[] buffer;
 			int allCount = Queue.Count;
+			int remains;
 
 			if (Queue.Count == 0)
 			{
@@ -38,6 +40,7 @@ public class CollectorWriter(
 				lock (Lock)
 				{
 					Queue = Queue.Skip(BufferSize).ToList();
+					remains = Queue.Count;
 				}
 			}
 			else
@@ -46,6 +49,7 @@ public class CollectorWriter(
 				lock (Lock)
 				{
 					Queue = [];
+					remains = 0;
 				}
 			}
 
@@ -53,9 +57,9 @@ public class CollectorWriter(
 			{
 				try
 				{
-					var ms = await ValuesRepository.WriteValuesAsSystemAsync(db, buffer);
+					await valuesRepository.WriteCollectedValuesAsync(db, buffer);
 
-					logger.LogInformation("Запись значений из очереди: {length} из {all} за {ms}мс", buffer.Length, allCount, ms);
+					logger.LogInformation("Запись значений из очереди: {writed}. Осталось: {remains}", buffer.Length, remains);
 				}
 				catch (Exception ex)
 				{

@@ -1,7 +1,7 @@
 ﻿using Datalake.Database.Extensions;
+using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Queries;
-using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
@@ -30,7 +30,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		UserAuthInfo user,
 		SourceInfo? sourceInfo = null)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 
 		if (sourceInfo != null)
 			return await ProtectedCreateAsync(db, user.Guid, sourceInfo);
@@ -46,7 +46,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Информация об источнике</returns>
 	public SourceInfo Read(UserAuthInfo user, int id)
 	{
-		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
+		AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
 
 		var source = dataStore.State.SourcesInfo().FirstOrDefault(x => x.Id == id)
 			?? throw new NotFoundException(message: "источник #" + id);
@@ -64,7 +64,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Информация об источнике</returns>
 	public SourceWithTagsInfo ReadWithTags(UserAuthInfo user, int id)
 	{
-		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
+		AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
 
 		var source = dataStore.State.SourcesInfoWithTags().FirstOrDefault(x => x.Id == id)
 			?? throw new NotFoundException(message: "источник #" + id);
@@ -122,7 +122,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		int id,
 		SourceInfo sourceInfo)
 	{
-		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Editor, id);
+		AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Editor, id);
 
 		return await ProtectedUpdateAsync(db, user.Guid, id, sourceInfo);
 	}
@@ -139,7 +139,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		UserAuthInfo user,
 		int id)
 	{
-		AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Manager, id);
+		AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Manager, id);
 
 		return await ProtectedDeleteAsync(db, user.Guid, id);
 	}
@@ -180,7 +180,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 					?? throw new Exception("Не получен id из БД");
 
 				newSource.Id = id;
-				newSource.Name = ValueChecker.RemoveWhitespaces("Новый источник #" + id, "_");
+				newSource.Name = StringExtensions.RemoveWhitespaces("Новый источник #" + id, "_");
 
 				await db.Sources
 					.Where(x => x.Id == id)
@@ -220,7 +220,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	internal async Task<SourceInfo> ProtectedCreateAsync(DatalakeContext db, Guid userGuid, SourceInfo sourceInfo)
 	{
 		// Проверки, не требующие стейта
-		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
+		sourceInfo.Name = StringExtensions.RemoveWhitespaces(sourceInfo.Name, "_");
 
 		if (sourceInfo.Type == SourceType.System)
 			throw new InvalidValueException("Нельзя добавить системный источник");
@@ -292,7 +292,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	internal async Task<bool> ProtectedUpdateAsync(DatalakeContext db, Guid userGuid, int id, SourceInfo sourceInfo)
 	{
 		// Проверки, не требующие стейта
-		sourceInfo.Name = ValueChecker.RemoveWhitespaces(sourceInfo.Name, "_");
+		sourceInfo.Name = StringExtensions.RemoveWhitespaces(sourceInfo.Name, "_");
 
 		Source? newSource;
 

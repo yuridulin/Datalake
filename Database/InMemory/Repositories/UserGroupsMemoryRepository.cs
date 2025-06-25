@@ -1,8 +1,8 @@
 using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
+using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Queries;
-using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
@@ -33,11 +33,11 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	{
 		if (request.ParentGuid.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, request.ParentGuid.Value);
+			AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, request.ParentGuid.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
 
 		return await ProtectedCreateAsync(db, user.Guid, request);
@@ -51,7 +51,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Информация о группе</returns>
 	public UserGroupInfo Read(UserAuthInfo user, Guid guid)
 	{
-		var rule = AccessRepository.GetAccessToUserGroup(user, guid);
+		var rule = AccessChecks.GetAccessToUserGroup(user, guid);
 		if (!rule.AccessType.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
@@ -74,7 +74,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 		var groups = dataStore.State.UserGroupsInfo();
 
 		foreach (var group in groups)
-			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
 
 		return groups
 			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
@@ -98,7 +98,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			});
 
 		foreach (var group in query)
-			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
 
 		var groups = query.ToArray();
 
@@ -142,7 +142,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Детальная информация о группе</returns>
 	public UserGroupDetailedInfo ReadWithDetails(UserAuthInfo user, Guid guid)
 	{
-		var rule = AccessRepository.GetAccessToUserGroup(user, guid);
+		var rule = AccessChecks.GetAccessToUserGroup(user, guid);
 		if (!rule.AccessType.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
@@ -166,7 +166,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<bool> UpdateAsync(
 		DatalakeContext db, UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
 	{
-		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Editor, groupGuid);
+		AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Editor, groupGuid);
 
 		return await ProtectedUpdateAsync(db, user.Guid, groupGuid, request);
 	}
@@ -182,15 +182,15 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<bool> MoveAsync(
 		DatalakeContext db, UserAuthInfo user, Guid groupGuid, Guid? parentGuid)
 	{
-		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
+		AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
 
 		if (parentGuid.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, parentGuid.Value);
+			AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, parentGuid.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
 
 		return await ProtectedMoveAsync(db, user.Guid, groupGuid, parentGuid);
@@ -206,7 +206,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<bool> DeleteAsync(
 		DatalakeContext db, UserAuthInfo user, Guid groupGuid)
 	{
-		AccessRepository.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
+		AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
 
 		return await ProtectedDeleteAsync(db, user.Guid, groupGuid);
 	}

@@ -1,6 +1,6 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
-using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +15,8 @@ namespace Datalake.Server.Controllers;
 [Route("api/[controller]")]
 public class TagsController(
 	DatalakeContext db,
-	TagsMemoryRepository tagsRepository) : ApiControllerBase
+	DatalakeDerivedDataStore derivedDataStore,
+	TagsMemoryRepository tagsRepository) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Создание нового тега
@@ -37,11 +38,11 @@ public class TagsController(
 	/// <param name="guid">Идентификатор тега</param>
 	/// <returns>Объект информации о теге</returns>
 	[HttpGet("{guid}")]
-	public async Task<ActionResult<TagInfo>> ReadAsync(Guid guid)
+	public ActionResult<TagInfo> Read(Guid guid)
 	{
 		var user = Authenticate();
 
-		return await TagsRepository.ReadAsync(db, user, guid);
+		return tagsRepository.Read(user, guid);
 	}
 
 	/// <summary>
@@ -53,7 +54,7 @@ public class TagsController(
 	/// <param name="guids">Список глобальных идентификаторов тегов</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet]
-	public async Task<ActionResult<TagInfo[]>> ReadAllAsync(
+	public ActionResult<TagInfo[]> ReadAll(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? id,
 		[FromQuery] string[]? names,
@@ -61,7 +62,7 @@ public class TagsController(
 	{
 		var user = Authenticate();
 
-		return await TagsRepository.ReadAllAsync(db, user, sourceId, id, names, guids);
+		return tagsRepository.ReadAll(user, sourceId, id, names, guids);
 	}
 
 	/// <summary>
@@ -70,12 +71,12 @@ public class TagsController(
 	/// <param name="guid">Идентификатор тега</param>
 	/// <returns>Список тегов</returns>
 	[HttpGet("{guid}/inputs")]
-	public async Task<ActionResult<TagAsInputInfo[]>> ReadPossibleInputsAsync(
+	public ActionResult<TagAsInputInfo[]> ReadPossibleInputs(
 		[BindRequired, FromRoute] Guid guid)
 	{
 		var user = Authenticate();
 
-		return await TagsRepository.ReadPossibleInputsAsync(db, user, guid);
+		return tagsRepository.ReadPossibleInputs(user, guid);
 	}
 
 	/// <summary>

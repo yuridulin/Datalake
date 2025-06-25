@@ -1,15 +1,14 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.Database.Services;
-using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Settings;
-using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Services.StateManager;
 using Datalake.Server.Services.StateManager.Models;
@@ -30,8 +29,7 @@ public class SystemController(
 	SourcesStateService sourcesStateService,
 	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
-	SettingsMemoryRepository settingsRepository,
-	ISettingsUpdater settingsService) : ApiControllerBase
+	SettingsMemoryRepository settingsRepository) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Получение даты последнего изменения структуры базы данных
@@ -40,8 +38,8 @@ public class SystemController(
 	[HttpGet("last")]
 	public ActionResult<string> GetLastUpdate()
 	{
-		var lastUpdate = SystemRepository.LastUpdate;
-		return lastUpdate.ToString(DateFormats.HierarchicalWithMilliseconds);
+		var lastUpdate = dataStore.State.Version;
+		return lastUpdate.ToString();
 	}
 
 	/// <summary>
@@ -75,7 +73,7 @@ public class SystemController(
 	{
 		var userAuth = Authenticate();
 
-		return await SystemRepository.GetLogsAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
+		return await AuditRepository.ReadAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
 	}
 
 	/// <summary>
@@ -87,7 +85,7 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
 		return usersStateService.State();
 	}
@@ -101,10 +99,10 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
 		return sourcesStateService.State()
-			.Where(x => AccessRepository.HasAccessToSource(user, AccessType.Viewer, x.Key))
+			.Where(x => AccessChecks.HasAccessToSource(user, AccessType.Viewer, x.Key))
 			.ToDictionary();
 	}
 
@@ -117,10 +115,10 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
 		return tagsStateService.GetTagsStates()
-			.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Viewer, x.Key))
+			.Where(x => AccessChecks.HasAccessToTag(user, AccessType.Viewer, x.Key))
 			.ToDictionary();
 	}
 
@@ -133,7 +131,7 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
 		var info = settingsRepository.GetSettings(user);
 
@@ -151,7 +149,6 @@ public class SystemController(
 		var user = Authenticate();
 
 		await settingsRepository.UpdateSettingsAsync(db, user, newSettings);
-		await settingsService.WriteStartipFileAsync(db);
 
 		return NoContent();
 	}
@@ -165,7 +162,7 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		await dataStore.LoadStateFromDatabaseAsync();
 
@@ -181,9 +178,9 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		return derivedDataStore.CalculatedRights();
+		return DerivedDataStore.Access.GetAll();
 	}
 
 	/// <summary>
@@ -195,7 +192,7 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return MetricsService.ReadMetrics();
 	}

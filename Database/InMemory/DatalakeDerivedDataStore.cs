@@ -130,13 +130,13 @@ public class DatalakeDerivedDataStore
 	/// Получение дерева блоков со списком полей каждого блока
 	/// </summary>
 	/// <returns>Коллекция корневых элементом дерева</returns>
-	public BlockTreeInfo[] BlocksTree() => _cachedBlockTree;
+	public BlockTreeInfo[] BlocksTree => _cachedBlockTree;
 
 	#endregion
 
 	#region Права пользователей
 
-	private Dictionary<Guid, UserAuthInfo> _rights = [];
+	private DatalakeAccessState _accessState = new();
 
 	private void RebuildUserRightsCacheOptimized(DatalakeDataState state)
 	{
@@ -517,14 +517,23 @@ public class DatalakeDerivedDataStore
 
 		#endregion
 
-		Interlocked.Exchange(ref _rights, userRights);
+		var accessState = new DatalakeAccessState(userRights);
+
+		Interlocked.Exchange(ref _accessState, accessState);
+
+		AccessChanged?.Invoke(this, accessState);
 	}
 
 	/// <summary>
 	/// Разрешения пользователей, рассчитанные на каждый объект системы
 	/// </summary>
 	/// <returns>Разрешения, сгруппированные по идентификатору пользователя</returns>
-	public Dictionary<Guid, UserAuthInfo> CalculatedRights() => _rights;
+	public DatalakeAccessState Access => _accessState;
+
+	/// <summary>
+	/// Событие при изменении разрешений пользователей
+	/// </summary>
+	public event EventHandler<DatalakeAccessState>? AccessChanged;
 
 	#endregion
 }

@@ -1,8 +1,8 @@
 ﻿using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
+using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Queries;
-using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
@@ -37,11 +37,11 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	{
 		if (parentId.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
+			AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
 
 		return blockInfo != null ? await ProtectedCreateAsync(db, user.Guid, blockInfo) : await ProtectedCreateAsync(db, user.Guid, parentId);
@@ -57,7 +57,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		var blocks = dataStore.State.BlocksInfoWithTags();
 
 		foreach (var block in blocks)
-			block.AccessRule = AccessRepository.GetAccessToBlock(user, block.Id);
+			block.AccessRule = AccessChecks.GetAccessToBlock(user, block.Id);
 
 		return blocks
 			.Where(x => x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
@@ -73,7 +73,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	/// <exception cref="NotFoundException">Блок не найден</exception>
 	public BlockFullInfo Read(UserAuthInfo user, int id)
 	{
-		var rule = AccessRepository.GetAccessToBlock(user, id);
+		var rule = AccessChecks.GetAccessToBlock(user, id);
 		if (!rule.AccessType.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
@@ -157,7 +157,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		int id,
 		BlockUpdateRequest block)
 	{
-		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
+		AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
 
 		return await ProtectedUpdateAsync(db, user.Guid, id, block);
 	}
@@ -176,15 +176,15 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		int id,
 		int? parentId)
 	{
-		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
+		AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
 
 		if (parentId.HasValue)
 		{
-			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
+			AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
 		}
 		else
 		{
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 		}
 
 		return await ProtectedMoveAsync(db, user.Guid, id, parentId);
@@ -202,7 +202,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		UserAuthInfo user,
 		int id)
 	{
-		AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
+		AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
 
 		return await ProtectedDeleteAsync(db, user.Guid, id);
 	}

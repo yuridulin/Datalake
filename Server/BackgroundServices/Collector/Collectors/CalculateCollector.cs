@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Repositories;
+﻿using Datalake.Database.InMemory;
+using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
@@ -12,13 +13,15 @@ namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 internal class CalculateCollector : CollectorBase
 {
 	public CalculateCollector(
-	SourceWithTagsInfo source,
-	TagsStateService tagsStateService,
-	ILogger<CalculateCollector> logger) : base("Расчетные значения", source, logger)
+		DatalakeCurrentValuesStore valuesStore,
+		SourceWithTagsInfo source,
+		TagsStateService tagsStateService,
+		ILogger<CalculateCollector> logger) : base("Расчетные значения", source, logger)
 	{
 		_inputs = [];
 		_expressions = [];
 		_tokenSource = new CancellationTokenSource();
+		_valuesStore = valuesStore;
 
 		foreach (var tag in source.Tags)
 		{
@@ -32,11 +35,12 @@ internal class CalculateCollector : CollectorBase
 
 			scopedTag.Expression.EvaluateParameter += (name, args) => Expression_EvaluateParameter(name, args, tag, tagsStateService);
 
-			var initial = ValuesRepository.GetLiveValue(tag.Id);
+			var initial = _valuesStore.Get(tag.Id);
+
 			if (scopedTag.Type == TagType.Number)
-				scopedTag.PreviousNumber = initial as float?;
+				scopedTag.PreviousNumber = initial?.Number;
 			else
-				scopedTag.PreviousValue = initial;
+				scopedTag.PreviousValue = initial?.Text;
 
 			_expressions.Add(tag.Id, scopedTag);
 
@@ -66,17 +70,18 @@ internal class CalculateCollector : CollectorBase
 	}
 
 	private readonly CancellationTokenSource _tokenSource;
+	private readonly DatalakeCurrentValuesStore _valuesStore;
 	private readonly Dictionary<int, TagExpressionScope> _expressions;
 	private readonly HashSet<int> _inputs;
 
-	private static void Expression_EvaluateParameter(string name, NCalc.Handlers.ParameterArgs args, SourceTagInfo tag, TagsStateService tagsStateService)
+	private void Expression_EvaluateParameter(string name, NCalc.Handlers.ParameterArgs args, SourceTagInfo tag, TagsStateService tagsStateService)
 	{
 		var inputTag = tag.FormulaInputs.FirstOrDefault(x => x.VariableName == name);
 		if (inputTag != null)
 		{
-			var value = ValuesRepository.GetLiveValue(inputTag.InputTagId);
+			var value = _valuesStore.Get(inputTag.InputTagId);
 			tagsStateService.UpdateTagState(inputTag.InputTagGuid, "calculate-collector");
-			args.Result = value ?? 0;
+			args.Result = value?.Number ?? 0;
 		}
 		else
 		{

@@ -1,16 +1,14 @@
 using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
+using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Queries;
-using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 using LinqToDB;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Datalake.Database.InMemory.Repositories;
 
@@ -31,7 +29,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<UserInfo> CreateAsync(
 		DatalakeContext db, UserAuthInfo user, UserCreateRequest userInfo)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return await ProtectedCreateAsync(db, user.Guid, userInfo);
 	}
@@ -74,7 +72,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Список пользователей</returns>
 	public UserFlatInfo[] ReadFlatUsers(UserAuthInfo user)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return dataStore.State.UsersFlatInfo().ToArray();
 	}
@@ -88,13 +86,13 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public UserInfo Read(UserAuthInfo user, Guid guid)
 	{
 		if (user.Guid != guid)
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
 		var userInfo = dataStore.State.UsersInfo().FirstOrDefault(x => x.Guid == guid)
 			?? throw new NotFoundException($"Учётная запись {guid}");
 
 		foreach (var group in userInfo.UserGroups)
-			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
 
 		userInfo.AccessRule = (user.Guid == guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
 			? new AccessRuleInfo { AccessType = AccessType.Manager, RuleId = 0 }
@@ -112,7 +110,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public UserDetailInfo ReadWithDetails(UserAuthInfo user, Guid guid)
 	{
 		if (user.Guid != guid)
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
 		var userInfo = dataStore.State.UsersDetailInfo().FirstOrDefault(x => x.Guid == guid)
 			?? throw new NotFoundException($"Учётная запись {guid}");
@@ -122,7 +120,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
 
 		foreach (var group in userInfo.UserGroups)
-			group.AccessRule = AccessRepository.GetAccessToUserGroup(user, group.Guid);
+			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
 
 
 		return userInfo;
@@ -157,7 +155,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<bool> DeleteAsync(
 		DatalakeContext db, UserAuthInfo user, Guid userGuid)
 	{
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return await ProtectedDeleteAsync(db, user.Guid, userGuid);
 	}
@@ -177,11 +175,11 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 					throw new InvalidValueException(message: "логин не может быть пустым");
 				if (string.IsNullOrEmpty(request.Password))
 					throw new InvalidValueException(message: "необходимо указать пароль");
-				hash = GetHashFromPassword(request.Password);
+				hash = Passwords.GetHashFromPassword(request.Password);
 				break;
 
 			case UserType.Static:
-				hash = await GenerateNewHashForStaticAsync(db);
+				hash = await CreateNewStaticHash(db, request.StaticHost!);
 				request.Login = string.Empty;
 				break;
 
@@ -295,7 +293,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 				if (string.IsNullOrEmpty(request.Login))
 					throw new InvalidValueException(message: "логин не может быть пустым");
 				if (!string.IsNullOrEmpty(request.Password))
-					newHash = GetHashFromPassword(request.Password);
+					newHash = Passwords.GetHashFromPassword(request.Password);
 				break;
 
 			case UserType.Static:
@@ -336,7 +334,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 
 				case UserType.Static:
 					if (request.CreateNewStaticHash || request.Type != oldUser.Type)
-						newHash = await GenerateNewHashForStaticAsync(db);
+						newHash = await CreateNewStaticHash(db, request.StaticHost!);
 					break;
 
 				case UserType.EnergoId:
@@ -454,51 +452,6 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		return true;
 	}
 
-	private static string GetHashFromPassword(string password)
-	{
-		if (string.IsNullOrEmpty(password))
-			throw new InvalidValueException(message: "пароль не может быть пустым");
-
-		var hash = SHA1.HashData(Encoding.UTF8.GetBytes(password));
-		return Convert.ToBase64String(hash);
-	}
-
-	private static async Task<string> GenerateNewHashForStaticAsync(DatalakeContext db)
-	{
-		string hash;
-
-		var oldHashList = await db.Users
-			.Where(x => !string.IsNullOrEmpty(x.StaticHost))
-			.Select(x => x.PasswordHash)
-			.ToListAsync();
-
-		int countOfGenerations = 0;
-		do
-		{
-			hash = RandomHash();
-			countOfGenerations++;
-		}
-		while (oldHashList.Any(x => x == hash) && countOfGenerations < 100);
-
-		if (countOfGenerations >= 100)
-		{
-			throw new DatabaseException(message: "не удалось создать новый уникальный api-ключ за 100 шагов", innerException: null);
-		}
-
-		return hash;
-	}
-
-	private static string RandomHash()
-	{
-		using var rng = RandomNumberGenerator.Create();
-
-		var randomNumber = new byte[32];
-		rng.GetBytes(randomNumber);
-
-		string refreshToken = Convert.ToBase64String(randomNumber);
-		return refreshToken;
-	}
-
 	private static async Task LogAsync(
 		DatalakeContext db, Guid authorGuid, Guid guid, string message, string? details = null)
 	{
@@ -512,5 +465,16 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			AuthorGuid = authorGuid == Guid.Empty ? null : authorGuid,
 			Details = details,
 		});
+	}
+
+	private static async Task<string?> CreateNewStaticHash(DatalakeContext db, string host)
+	{
+		var oldHashes = await db.Users
+			.Where(user => user.Type == UserType.Static && user.StaticHost == host)
+			.Where(x => !string.IsNullOrEmpty(x.PasswordHash))
+			.Select(x => x.PasswordHash!)
+			.ToArrayAsync();
+
+		return Passwords.GenerateNewHashForStatic(oldHashes.ToHashSet());
 	}
 }

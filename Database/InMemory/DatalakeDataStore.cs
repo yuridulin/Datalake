@@ -45,12 +45,6 @@ public class DatalakeDataStore
 			var userGroups = await db.UserGroups.ToArrayAsync();
 			var userGroupRelations = await db.UserGroupRelations.ToArrayAsync();
 
-			if (settings.Length == 0)
-			{
-				await db.EnsureDataCreatedAsync();
-				settings = await db.Settings.ToArrayAsync();
-			}
-
 			t.Stop();
 			_logger.LogInformation("Загрузка БД: {ms}", t.Elapsed.TotalMilliseconds);
 
@@ -60,7 +54,7 @@ public class DatalakeDataStore
 				Blocks = blocks.ToImmutableList(),
 				BlockProperties = blockProperties.ToImmutableList(),
 				BlockTags = blockTags.ToImmutableList(),
-				Settings = settings[0],
+				Settings = settings.FirstOrDefault() ?? new(),
 				Sources = sources.ToImmutableList(),
 				Tags = tags.ToImmutableList(),
 				TagInputs = tagInputs.ToImmutableList(),
