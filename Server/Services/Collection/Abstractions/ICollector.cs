@@ -1,7 +1,7 @@
 ﻿using Datalake.PublicApi.Models.Values;
 using System.Threading.Channels;
 
-namespace Datalake.Server.Services.Collector.Abstractions;
+namespace Datalake.Server.Services.Collection.Abstractions;
 
 /// <summary>
 /// Обработка собранных значений

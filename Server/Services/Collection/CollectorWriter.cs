@@ -3,7 +3,7 @@ using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Values;
 using System.Threading.Channels;
 
-namespace Datalake.Server.Services.Collector;
+namespace Datalake.Server.Services.Collection;
 
 /// <summary>
 /// Служба записи новых значений в БД

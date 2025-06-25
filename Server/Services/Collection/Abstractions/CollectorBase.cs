@@ -3,7 +3,7 @@ using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
 using System.Threading.Channels;
 
-namespace Datalake.Server.Services.Collector.Abstractions;
+namespace Datalake.Server.Services.Collection.Abstractions;
 
 /// <summary>
 /// Базовый класс сборщика с реализацией основных механизмов
@@ -42,5 +42,8 @@ internal abstract class CollectorBase(
 	}
 
 	protected virtual async Task WriteAsync(IEnumerable<ValueWriteRequest> values)
-		=> await _outputChannel.Writer.WriteAsync(values, _stoppingToken);
+	{
+		if (values.Any())
+			await _outputChannel.Writer.WriteAsync(values, _stoppingToken);
+	}
 }

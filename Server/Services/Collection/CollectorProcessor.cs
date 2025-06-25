@@ -1,12 +1,12 @@
 ﻿using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Queries;
-using Datalake.Server.Services.Collector.Abstractions;
+using Datalake.Server.Services.Collection.Abstractions;
 using Datalake.Server.Services.StateManager;
 using LinqToDB;
 using System.Collections.Concurrent;
 
-namespace Datalake.Server.Services.Collector;
+namespace Datalake.Server.Services.Collection;
 
 /// <summary>
 /// Менеджер сборщиков данных
@@ -32,6 +32,8 @@ public class CollectorProcessor(
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		_stoppingToken = stoppingToken;
+
+		await OnStateChanged(dataStore.State);
 
 		dataStore.StateChanged += (_, state) => Task.Run(() => OnStateChanged(state), stoppingToken);
 

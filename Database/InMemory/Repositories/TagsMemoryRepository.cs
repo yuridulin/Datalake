@@ -485,7 +485,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 
 			try
 			{
-				var createdTagBag = await db.Tags
+				int records = await db.Tags
 					.Where(x => x.GlobalGuid == guid)
 					.Set(x => x.Name, updateRequest.Name)
 					.Set(x => x.Description, updateRequest.Description)
@@ -502,9 +502,9 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.Set(x => x.SourceTagId, updateRequest.SourceTagId)
 					.Set(x => x.Aggregation, updateRequest.Aggregation)
 					.Set(x => x.AggregationPeriod, updateRequest.AggregationPeriod)
-					.UpdateWithOutputAsync();
+					.UpdateAsync();
 
-				if (createdTagBag.Length != 1)
+				if (records != 1)
 					throw new DatabaseException($"Не удалось сохранить тег {guid}", DatabaseStandartError.UpdatedZero);
 
 				await db.TagInputs

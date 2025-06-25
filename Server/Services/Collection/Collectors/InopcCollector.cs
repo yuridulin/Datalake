@@ -2,12 +2,11 @@
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
-using Datalake.Server.Services.Collector.Abstractions;
+using Datalake.Server.Services.Collection.Abstractions;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.StateManager;
-using System.Collections.Concurrent;
 
-namespace Datalake.Server.Services.Collector.Collectors;
+namespace Datalake.Server.Services.Collection.Collectors;
 
 internal class InopcCollector : CollectorBase
 {
@@ -38,15 +37,6 @@ internal class InopcCollector : CollectorBase
 			.Where(x => x.Item != null)
 			.GroupBy(x => x.Item)
 			.ToDictionary(g => g.Key!, g => g.Select(x => x.Guid).ToArray());
-
-		_previousValues = new ConcurrentDictionary<Guid, ValueWriteRequest>(source.Tags
-			.ToDictionary(x => x.Guid, x => new ValueWriteRequest
-			{
-				Value = null,
-				Quality = TagQuality.Unknown,
-				Date = DateTime.MinValue,
-				Guid = x.Guid,
-			}));
 	}
 
 
@@ -73,7 +63,6 @@ internal class InopcCollector : CollectorBase
 	private readonly SourcesStateService _stateService;
 	private readonly Dictionary<string, Guid[]> _itemsTags;
 	private readonly CancellationTokenSource _tokenSource;
-	private readonly ConcurrentDictionary<Guid, ValueWriteRequest> _previousValues;
 
 	private async Task Work()
 	{
@@ -128,15 +117,6 @@ internal class InopcCollector : CollectorBase
 								Value = item.Value,
 							}))
 						.ToArray();
-
-					collectedValues = collectedValues
-						.Where(x =>
-							x.Value != _previousValues[x.Guid!.Value].Value &&
-							x.Quality != _previousValues[x.Guid!.Value].Quality)
-						.ToArray();
-
-					foreach (var v in collectedValues)
-						_previousValues[v.Guid!.Value] = v;
 
 					await WriteAsync(collectedValues);
 

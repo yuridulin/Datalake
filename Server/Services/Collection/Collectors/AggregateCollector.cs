@@ -4,10 +4,10 @@ using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
-using Datalake.Server.Services.Collector.Abstractions;
+using Datalake.Server.Services.Collection.Abstractions;
 using Datalake.Server.Services.StateManager;
 
-namespace Datalake.Server.Services.Collector.Collectors;
+namespace Datalake.Server.Services.Collection.Collectors;
 
 internal class AggregateCollector : CollectorBase
 {
