@@ -3,6 +3,7 @@ using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Blocks;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Database.InMemory;
 
@@ -12,24 +13,35 @@ namespace Datalake.Database.InMemory;
 public class DatalakeDerivedDataStore
 {
 	/// <summary>Конструктор</summary>
-	public DatalakeDerivedDataStore(DatalakeDataStore stateHolder)
+	public DatalakeDerivedDataStore(
+		DatalakeDataStore dataStore,
+		ILogger<DatalakeDerivedDataStore> logger)
 	{
-		stateHolder.StateChanged += (_, newState) =>
+		_logger = logger;
+		dataStore.StateChanged += (_, newState) =>
 		{
 			if (newState.Version > _lastProcessingVersion)
 			{
 				_lastProcessingVersion = newState.Version;
 
-				Task.Run(() =>
-				{
-					RebuildTree(newState);
-					RebuildUserRightsCacheOptimized(newState);
-				});
+				Task.Run(() => Rebuild(newState));
 			}
 		};
+
+		if (_lastProcessingVersion == -1)
+			Task.Run(() => Rebuild(dataStore.State));
+	}
+
+	private void Rebuild(DatalakeDataState newState)
+	{
+		RebuildTree(newState);
+		RebuildUserRightsCacheOptimized(newState);
+
+		_logger.LogInformation("Завершено обновление зависимых данных");
 	}
 
 	private long _lastProcessingVersion = -1;
+	private readonly ILogger<DatalakeDerivedDataStore> _logger;
 
 	#region Дерево блоков
 
