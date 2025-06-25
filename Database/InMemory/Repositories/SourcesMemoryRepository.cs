@@ -154,7 +154,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			Name = "INSERTING",
 			Description = string.Empty,
 			Address = "",
-			Type = SourceType.NotSet,
+			Type = SourceType.Inopc,
 			IsDeleted = false,
 		};
 
