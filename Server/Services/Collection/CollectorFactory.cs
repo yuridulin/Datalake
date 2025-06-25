@@ -2,6 +2,7 @@
 using Datalake.Database.InMemory;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
+using Datalake.Server.Services.Collection.Collectors;
 using Datalake.Server.Services.Collector.Abstractions;
 using Datalake.Server.Services.Collector.Collectors;
 using Datalake.Server.Services.Receiver;

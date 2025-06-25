@@ -7,7 +7,7 @@ using Datalake.Server.Services.Collector.Abstractions;
 using Datalake.Server.Services.StateManager;
 using NCalc;
 
-namespace Datalake.Server.Services.Collector.Collectors;
+namespace Datalake.Server.Services.Collection.Collectors;
 
 internal class CalculateCollector : CollectorBase
 {
