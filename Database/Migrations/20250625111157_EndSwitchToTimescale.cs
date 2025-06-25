@@ -15,11 +15,6 @@ namespace Datalake.Database.Migrations
 			migrationBuilder.Sql(@"SELECT create_hypertable('""TagsHistory""', by_range('Date', INTERVAL '1 day'));");
 
 			migrationBuilder.Sql(@"
-				ALTER TABLE ""TagsHistory""
-				ALTER COLUMN ""Date"" TYPE timestamptz
-				USING ""Date"" AT TIME ZONE 'Europe/Moscow';");
-
-			migrationBuilder.Sql(@"
 				DO $$
 				DECLARE
 						tbl text;
@@ -31,7 +26,7 @@ namespace Datalake.Database.Migrations
 						LOOP
 								EXECUTE format(
 										'INSERT INTO ""TagsHistory"" (""TagId"", ""Date"", ""Text"", ""Number"", ""Quality"")
-										 SELECT ""TagId"", ""Date"" AT TIME ZONE ''Europe/Moscow'', ""Text"", ""Number"", ""Quality""
+										 SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
 										 FROM %s',
 										tbl
 								);
