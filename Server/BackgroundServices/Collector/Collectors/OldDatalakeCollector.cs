@@ -1,8 +1,8 @@
 ﻿using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
+using Datalake.PublicApi.Models.Values;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
-using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.StateManager;
 
@@ -43,7 +43,7 @@ internal class OldDatalakeCollector : CollectorBase
 			.ToList();
 
 		_previousValues = source.Tags
-			.ToDictionary(x => x.Guid, x => new CollectValue
+			.ToDictionary(x => x.Guid, x => new ValueWriteRequest
 			{
 				Value = null,
 				Quality = TagQuality.Unknown,
@@ -52,23 +52,17 @@ internal class OldDatalakeCollector : CollectorBase
 			});
 	}
 
-	public override event CollectEvent? CollectValues;
-
-	public override Task Start(CancellationToken stoppingToken)
+	public override void Start(CancellationToken stoppingToken)
 	{
 		if (_itemsToSend.Count == 0)
-			return Task.CompletedTask;
+		{
+			_logger.LogWarning("Сборщик \"{name}\" не имеет значений для запроса и не будет запущен", _name);
+			return;
+		}
 
 		Task.Run(Work, stoppingToken);
 
-		return base.Start(stoppingToken);
-	}
-
-	public override Task Stop()
-	{
-		_tokenSource.Cancel();
-
-		return base.Stop();
+		base.Start(stoppingToken);
 	}
 
 
@@ -80,11 +74,11 @@ internal class OldDatalakeCollector : CollectorBase
 	private readonly ReceiverService _receiverService;
 	private readonly SourcesStateService _stateService;
 	private readonly CancellationTokenSource _tokenSource;
-	private readonly Dictionary<Guid, CollectValue> _previousValues;
+	private readonly Dictionary<Guid, ValueWriteRequest> _previousValues;
 
 	private async Task Work()
 	{
-		List<CollectValue> collectedValues;
+		List<ValueWriteRequest> collectedValues;
 		List<Item> updatedItems;
 
 		while (!_tokenSource.Token.IsCancellationRequested)
@@ -108,7 +102,7 @@ internal class OldDatalakeCollector : CollectorBase
 						var item = items.FirstOrDefault(x => x.TagName == value.Name);
 						if (item != null)
 						{
-							collectedValues.AddRange(item.Tags.Select(guid => new CollectValue
+							collectedValues.AddRange(item.Tags.Select(guid => new ValueWriteRequest
 							{
 								Date = DateFormats.GetCurrentDateTime(),
 								Name = value.Name,
@@ -125,7 +119,7 @@ internal class OldDatalakeCollector : CollectorBase
 					foreach (var v in collectedValues)
 						_previousValues[v.Guid!.Value] = v;
 
-					CollectValues?.Invoke(this, collectedValues);
+					await WriteAsync(collectedValues);
 
 					foreach (var tag in updatedItems)
 					{

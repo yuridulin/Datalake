@@ -2,61 +2,117 @@
 using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Queries;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
-using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.StateManager;
 using LinqToDB;
+using System.Collections.Concurrent;
 
 namespace Datalake.Server.BackgroundServices.Collector;
 
 internal class CollectorProcessor(
 	CollectorFactory collectorFactory,
+	CollectorWriter collectorWriter,
 	SourcesStateService sourcesStateService,
 	DatalakeDataStore dataStore,
 	ILogger<CollectorProcessor> logger) : BackgroundService
 {
-
+	private CancellationToken _stoppingToken;
 	private List<ICollector> _collectors = [];
+	private readonly ConcurrentDictionary<ICollector, Task> _processingTasks = new();
+	private readonly SemaphoreSlim _restartLock = new(1, 1);
 
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		dataStore.StateChanged += (_, state) => Task.Run(() => RestartCollectors(state, stoppingToken));
+		_stoppingToken = stoppingToken;
 
-		while (!stoppingToken.IsCancellationRequested)
+		dataStore.StateChanged += (_, state) => Task.Run(() => OnStateChanged(state), stoppingToken);
+
+		await Task.Delay(Timeout.Infinite, stoppingToken);
+	}
+
+	public override async Task StopAsync(CancellationToken cancellationToken)
+	{
+		// Останавливаем все сборщики
+		foreach (var collector in _collectors)
 		{
-			await Task.Delay(1000, stoppingToken);
+			collector.Stop();
+		}
+
+		// Ожидаем завершения всех задач обработки
+		await Task.WhenAll(_processingTasks.Values);
+
+		await base.StopAsync(cancellationToken);
+	}
+
+	private async Task OnStateChanged(DatalakeDataState state)
+	{
+		if (!await _restartLock.WaitAsync(0, _stoppingToken))
+			return;
+
+		try
+		{
+			await RestartCollectors(state, _stoppingToken);
+		}
+		finally
+		{
+			_restartLock.Release();
 		}
 	}
 
-	private void RestartCollectors(DatalakeDataState state, CancellationToken stoppingToken)
+	private async Task RestartCollectors(DatalakeDataState state, CancellationToken stoppingToken)
 	{
 		logger.LogInformation("Выполняется обновление сборщиков");
 
-		var newSources = state.SourcesInfoWithTagsAndSourceTags().ToArray();
-
-		_collectors.ForEach(x =>
+		// Останавливаем текущие сборщики
+		foreach (var collector in _collectors)
 		{
-			x.Stop();
-			x.CollectValues -= CollectValues;
-		});
+			collector.Stop();
 
-		_collectors = newSources.Select(collectorFactory.GetCollector)
+			if (_processingTasks.TryRemove(collector, out var task))
+			{
+				await task; // Дожидаемся завершения обработки
+			}
+		}
+
+		// Создаём новые сборщики
+		var newSources = state.SourcesInfoWithTagsAndSourceTags().ToArray();
+		_collectors = newSources
+			.Select(collectorFactory.GetCollector)
 			.Where(x => x != null)
 			.Select(x => x!)
 			.ToList();
 
 		sourcesStateService.Initialize(newSources.Select(x => x.Id).ToArray());
 
-		_collectors.ForEach(x =>
+		// Запускаем новые сборщики и обработчики их каналов
+		foreach (var collector in _collectors)
 		{
-			x.CollectValues += CollectValues;
-			x.Start(stoppingToken);
-		});
+			collector.Start(stoppingToken);
+			var processingTask = ProcessCollectorOutput(collector, stoppingToken);
+			_processingTasks[collector] = processingTask;
+		}
 
 		logger.LogInformation("Обновление сборщиков завершено");
 	}
 
-	private void CollectValues(ICollector collector, IEnumerable<CollectValue> values)
+	private async Task ProcessCollectorOutput(ICollector collector, CancellationToken stoppingToken)
 	{
-		CollectorWriter.AddToQueue(values);
+		try
+		{
+			await foreach (var batch in collector.OutputChannel.Reader.ReadAllAsync(stoppingToken))
+			{
+				if (batch?.Any() ?? false)
+				{
+					collectorWriter.AddToQueue(batch);
+				}
+			}
+		}
+		catch (OperationCanceledException)
+		{
+			// Корректное завершение при отмене
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "Ошибка обработки вывода сборщика {CollectorName}", collector.Name);
+		}
 	}
 }

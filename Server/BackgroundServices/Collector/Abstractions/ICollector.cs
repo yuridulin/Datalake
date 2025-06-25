@@ -1,4 +1,5 @@
-﻿using Datalake.Server.BackgroundServices.Collector.Models;
+﻿using Datalake.PublicApi.Models.Values;
+using System.Threading.Channels;
 
 namespace Datalake.Server.BackgroundServices.Collector.Abstractions;
 
@@ -7,7 +8,7 @@ namespace Datalake.Server.BackgroundServices.Collector.Abstractions;
 /// </summary>
 /// <param name="collector">Сборщик данных, значения которого собраны</param>
 /// <param name="values">Список собранных значений</param>
-public delegate void CollectEvent(ICollector collector, IEnumerable<CollectValue> values);
+public delegate void CollectEvent(ICollector collector, IEnumerable<ValueWriteRequest> values);
 
 /// <summary>
 /// Сборщик данных
@@ -17,15 +18,20 @@ public interface ICollector
 	/// <summary>
 	/// Запуск сбора данных
 	/// </summary>
-	Task Start(CancellationToken stoppingToken);
+	void Start(CancellationToken stoppingToken);
 
 	/// <summary>
 	/// Прекращение сбора данных
 	/// </summary>
-	Task Stop();
+	void Stop();
 
 	/// <summary>
-	/// Событие получения набора новых значений
+	/// Имя сборщика
 	/// </summary>
-	event CollectEvent CollectValues;
+	string Name { get; }
+
+	/// <summary>
+	/// Выходной канал данных
+	/// </summary>
+	Channel<IEnumerable<ValueWriteRequest>> OutputChannel { get; }
 }

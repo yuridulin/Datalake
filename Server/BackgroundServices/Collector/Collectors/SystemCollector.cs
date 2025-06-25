@@ -12,16 +12,4 @@ internal class SystemCollector(
 	SourceWithTagsInfo source,
 	ILogger<SystemCollector> logger) : CollectorBase(source.Name, source, logger)
 {
-	public override event CollectEvent? CollectValues;
-
-	public override Task Start(CancellationToken stoppingToken)
-	{
-		CollectValues?.Invoke(this, []);
-		return base.Start(stoppingToken);
-	}
-
-	public override Task Stop()
-	{
-		return base.Stop();
-	}
 }

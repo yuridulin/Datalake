@@ -1,10 +1,11 @@
 ﻿using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
+using Datalake.PublicApi.Models.Values;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
-using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.StateManager;
+using System.Collections.Concurrent;
 
 namespace Datalake.Server.BackgroundServices.Collector.Collectors;
 
@@ -38,33 +39,28 @@ internal class InopcCollector : CollectorBase
 			.GroupBy(x => x.Item)
 			.ToDictionary(g => g.Key!, g => g.Select(x => x.Guid).ToArray());
 
-		_previousValues = source.Tags
-			.ToDictionary(x => x.Guid, x => new CollectValue
+		_previousValues = new ConcurrentDictionary<Guid, ValueWriteRequest>(source.Tags
+			.ToDictionary(x => x.Guid, x => new ValueWriteRequest
 			{
 				Value = null,
 				Quality = TagQuality.Unknown,
 				Date = DateTime.MinValue,
 				Guid = x.Guid,
-			});
+			}));
 	}
 
-	public override event CollectEvent? CollectValues;
 
-	public override Task Start(CancellationToken stoppingToken)
+	public override void Start(CancellationToken stoppingToken)
 	{
 		if (_itemsToSend.Count == 0)
-			return Task.CompletedTask;
+		{
+			_logger.LogWarning("Сборщик \"{name}\" не имеет значений для запроса и не будет запущен", _name);
+			return;
+		}
 
 		Task.Run(Work, stoppingToken);
 
-		return base.Start(stoppingToken);
-	}
-
-	public override Task Stop()
-	{
-		_tokenSource.Cancel();
-
-		return base.Stop();
+		base.Start(stoppingToken);
 	}
 
 
@@ -77,7 +73,7 @@ internal class InopcCollector : CollectorBase
 	private readonly SourcesStateService _stateService;
 	private readonly Dictionary<string, Guid[]> _itemsTags;
 	private readonly CancellationTokenSource _tokenSource;
-	private readonly Dictionary<Guid, CollectValue> _previousValues;
+	private readonly ConcurrentDictionary<Guid, ValueWriteRequest> _previousValues;
 
 	private async Task Work()
 	{
@@ -123,7 +119,7 @@ internal class InopcCollector : CollectorBase
 
 					var collectedValues = response.Tags
 						.SelectMany(item => _itemsTags[item.Name]
-							.Select(guid => new CollectValue
+							.Select(guid => new ValueWriteRequest
 							{
 								Date = now,
 								Name = item.Name,
@@ -133,11 +129,16 @@ internal class InopcCollector : CollectorBase
 							}))
 						.ToArray();
 
-					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid!.Value]).ToArray();
+					collectedValues = collectedValues
+						.Where(x =>
+							x.Value != _previousValues[x.Guid!.Value].Value &&
+							x.Quality != _previousValues[x.Guid!.Value].Quality)
+						.ToArray();
+
 					foreach (var v in collectedValues)
 						_previousValues[v.Guid!.Value] = v;
 
-					CollectValues?.Invoke(this, collectedValues);
+					await WriteAsync(collectedValues);
 
 					foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
 					{

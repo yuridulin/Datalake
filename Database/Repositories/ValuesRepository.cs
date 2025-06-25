@@ -75,7 +75,7 @@ public class ValuesRepository(DatalakeDataStore dataStore)
 	/// <param name="db"></param>
 	/// <param name="requests"></param>
 	/// <returns></returns>
-	public async Task WriteCollectedValuesAsync(DatalakeContext db, ValueWriteRequest[] requests)
+	public async Task WriteCollectedValuesAsync(DatalakeContext db, IEnumerable<ValueWriteRequest> requests)
 	{
 		List<TagHistory> records = [];
 

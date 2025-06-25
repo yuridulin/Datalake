@@ -1,11 +1,10 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Extensions;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
+using Datalake.PublicApi.Models.Values;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
-using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.StateManager;
 
 namespace Datalake.Server.BackgroundServices.Collector.Collectors;
@@ -18,7 +17,6 @@ internal class AggregateCollector : CollectorBase
 		TagsStateService tagsStateService,
 		ILogger<AggregateCollector> logger) : base("Агрегатные значения", source, logger)
 	{
-		_tokenSource = new CancellationTokenSource();
 		_db = db;
 		_tagsStateService = tagsStateService;
 
@@ -41,28 +39,20 @@ internal class AggregateCollector : CollectorBase
 		_dayRules = _allRules.Where(x => x.Period == AggregationPeriod.Day).ToArray();
 	}
 
-	public override Task Start(CancellationToken stoppingToken)
+	public override void Start(CancellationToken stoppingToken)
 	{
 		if (_allRules.Length == 0)
-			return Task.CompletedTask;
+		{
+			_logger.LogWarning("Сборщик \"{name}\" не имеет правил агрегирования и не будет запущен", _name);
+			return;
+		}
 
 		Task.Run(Work, stoppingToken);
-
-		return base.Start(stoppingToken);
+		base.Start(stoppingToken);
 	}
-
-	public override Task Stop()
-	{
-		_tokenSource.Cancel();
-
-		return base.Stop();
-	}
-
-	public override event CollectEvent? CollectValues;
 
 	#region Реализация
 
-	private readonly CancellationTokenSource _tokenSource;
 	private readonly DatalakeContext _db;
 	private readonly TagAggregationRule[] _allRules;
 	private readonly TagAggregationRule[] _minuteRules;
@@ -75,7 +65,7 @@ internal class AggregateCollector : CollectorBase
 
 	private async Task Work()
 	{
-		while (!_tokenSource.Token.IsCancellationRequested)
+		while (!tokenSource.Token.IsCancellationRequested)
 		{
 			var now = DateFormats.GetCurrentDateTime();
 
@@ -85,30 +75,30 @@ internal class AggregateCollector : CollectorBase
 
 			try
 			{
-				List<CollectValue> collectValues = new();
+				List<ValueWriteRequest> ValueWriteRequests = new();
 
 				if (_lastMinute != minute)
 				{
 					_logger.LogInformation("Расчет минутных значений: {now}", now);
-					collectValues.AddRange(await GetAggregated(_minuteRules, now, AggregationPeriod.Munite));
+					ValueWriteRequests.AddRange(await GetAggregated(_minuteRules, now, AggregationPeriod.Munite));
 					_lastMinute = minute;
 				}
 
 				if (_lastHour != hour)
 				{
 					_logger.LogInformation("Расчет часовых значений: {now}", now);
-					collectValues.AddRange(await GetAggregated(_hourRules, now, AggregationPeriod.Hour));
+					ValueWriteRequests.AddRange(await GetAggregated(_hourRules, now, AggregationPeriod.Hour));
 					_lastHour = hour;
 				}
 
 				if (_lastDay != day)
 				{
 					_logger.LogInformation("Расчет суточных значений: {now}", now);
-					collectValues.AddRange(await GetAggregated(_dayRules, now, AggregationPeriod.Day));
+					ValueWriteRequests.AddRange(await GetAggregated(_dayRules, now, AggregationPeriod.Day));
 					_lastDay = day;
 				}
 
-				CollectValues?.Invoke(this, collectValues);
+				await WriteAsync(ValueWriteRequests);
 			}
 			catch (Exception ex)
 			{
@@ -121,7 +111,7 @@ internal class AggregateCollector : CollectorBase
 		}
 	}
 
-	private async Task<List<CollectValue>> GetAggregated(TagAggregationRule[] rules, DateTime date, AggregationPeriod period)
+	private async Task<List<ValueWriteRequest>> GetAggregated(TagAggregationRule[] rules, DateTime date, AggregationPeriod period)
 	{
 		var aggregated = await ValuesRepository.GetWeightedAggregatedValuesAsync(_db, rules.Select(x => x.TagSourceId).ToArray(), date, period);
 
@@ -144,7 +134,7 @@ internal class AggregateCollector : CollectorBase
 				Tag = rules.FirstOrDefault(x => x.TagSourceId == value.TagId),
 			})
 			.Where(x => x.Tag != null)
-			.Select(x => new CollectValue
+			.Select(x => new ValueWriteRequest
 			{
 				Date = x.Value.Date,
 				Guid = x.Tag!.Guid,

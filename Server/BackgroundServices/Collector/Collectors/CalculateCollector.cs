@@ -1,10 +1,9 @@
 ﻿using Datalake.Database.InMemory;
-using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
+using Datalake.PublicApi.Models.Values;
 using Datalake.Server.BackgroundServices.Collector.Abstractions;
-using Datalake.Server.BackgroundServices.Collector.Models;
 using Datalake.Server.Services.StateManager;
 using NCalc;
 
@@ -50,24 +49,20 @@ internal class CalculateCollector : CollectorBase
 	}
 
 
-	public override event CollectEvent? CollectValues;
 
-	public override Task Start(CancellationToken stoppingToken)
+	public override void Start(CancellationToken stoppingToken)
 	{
 		if (_expressions.Count == 0)
-			return Task.CompletedTask;
+		{
+			_logger.LogWarning("Сборщик \"{name}\" не имеет правил агрегирования и не будет запущен", _name);
+			return;
+		}
 
 		Task.Run(Work, stoppingToken);
 
-		return base.Start(stoppingToken);
+		base.Start(stoppingToken);
 	}
 
-	public override Task Stop()
-	{
-		_tokenSource.Cancel();
-
-		return base.Stop();
-	}
 
 	private readonly CancellationTokenSource _tokenSource;
 	private readonly DatalakeCurrentValuesStore _valuesStore;
@@ -97,7 +92,7 @@ internal class CalculateCollector : CollectorBase
 		{
 			try
 			{
-				List<CollectValue> batch = new();
+				List<ValueWriteRequest> batch = new();
 				var now = DateFormats.GetCurrentDateTime();
 				var countGood = 0;
 
@@ -131,7 +126,7 @@ internal class CalculateCollector : CollectorBase
 							break;
 					}
 
-					batch.Add(new CollectValue
+					batch.Add(new ValueWriteRequest
 					{
 						Date = now,
 						Id = tagId,
@@ -142,7 +137,7 @@ internal class CalculateCollector : CollectorBase
 					});
 				}
 
-				CollectValues?.Invoke(this, batch);
+				await WriteAsync(batch);
 			}
 			catch (Exception ex)
 			{

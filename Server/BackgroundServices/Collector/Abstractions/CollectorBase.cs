@@ -1,5 +1,7 @@
 ﻿using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
+using Datalake.PublicApi.Models.Values;
+using System.Threading.Channels;
 
 namespace Datalake.Server.BackgroundServices.Collector.Abstractions;
 
@@ -9,23 +11,36 @@ namespace Datalake.Server.BackgroundServices.Collector.Abstractions;
 /// <param name="name">Название источника данных</param>
 /// <param name="source">Данные источника данных, необходимые для запуска сбора</param>
 /// <param name="logger">Служба сообщений</param>
-internal abstract class CollectorBase(string name, SourceWithTagsInfo source, ILogger logger) : ICollector
+internal abstract class CollectorBase(
+	string name,
+	SourceWithTagsInfo source,
+	ILogger logger) : ICollector
 {
-	protected readonly string _name = name;
+	protected readonly CancellationTokenSource tokenSource = new();
+	protected readonly string _name = $"{name} #{source.Id}";
 	protected readonly ILogger _logger = logger;
 	protected readonly SourceType _sourceType = source.Type;
+	protected readonly Channel<IEnumerable<ValueWriteRequest>> _outputChannel = Channel.CreateUnbounded<IEnumerable<ValueWriteRequest>>();
+	protected CancellationToken _stoppingToken;
 
-	public virtual Task Start(CancellationToken stoppingToken)
+	public Channel<IEnumerable<ValueWriteRequest>> OutputChannel => _outputChannel;
+
+	public string Name => _name;
+
+	public virtual void Start(CancellationToken stoppingToken)
 	{
+		_stoppingToken = stoppingToken;
 		_logger.LogDebug("Сборщик {name} запущен", _name);
-		return Task.CompletedTask;
 	}
 
-	public virtual Task Stop()
+	public virtual void Stop()
 	{
+		tokenSource.Cancel();
+		_outputChannel.Writer.Complete();
+
 		_logger.LogDebug("Сборщик {name} остановлен", _name);
-		return Task.CompletedTask;
 	}
 
-	public abstract event CollectEvent CollectValues;
+	protected virtual async Task WriteAsync(IEnumerable<ValueWriteRequest> values)
+		=> await _outputChannel.Writer.WriteAsync(values, _stoppingToken);
 }

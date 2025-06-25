@@ -15,11 +15,8 @@ internal class DatalakeCollector(
 	SourceWithTagsInfo source,
 	ILogger<DatalakeCollector> logger) : CollectorBase(source.Name, source, logger)
 {
-	public override event CollectEvent? CollectValues;
-
-	public override Task Start(CancellationToken stoppingToken)
+	public override void Start(CancellationToken stoppingToken)
 	{
-		CollectValues?.Invoke(this, []);
 		try
 		{
 			if (!string.IsNullOrEmpty(_address))
@@ -27,13 +24,9 @@ internal class DatalakeCollector(
 		}
 		catch { }
 
-		return base.Start(stoppingToken);
+		base.Start(stoppingToken);
 	}
 
-	public override Task Stop()
-	{
-		return base.Stop();
-	}
 
 	private readonly string? _address = source.Address;
 }

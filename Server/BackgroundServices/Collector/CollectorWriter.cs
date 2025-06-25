@@ -1,6 +1,7 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Repositories;
-using Datalake.Server.BackgroundServices.Collector.Models;
+using Datalake.PublicApi.Models.Values;
+using System.Threading.Channels;
 
 namespace Datalake.Server.BackgroundServices.Collector;
 
@@ -13,66 +14,65 @@ public class CollectorWriter(
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<CollectorWriter> logger) : BackgroundService
 {
+	private const int BatchSize = 1000;
+	private const int MaxBatchDelayMs = 250;
+	private const int MinBatchDelayMs = 50;
+	private const int MaxRetryAttempts = 3;
+	private const int RetryBaseDelayMs = 1000;
+
+	private readonly Channel<ValueWriteRequest> _channel = Channel.CreateUnbounded<ValueWriteRequest>(
+		new UnboundedChannelOptions
+		{
+			SingleWriter = false,
+			SingleReader = true,
+			AllowSynchronousContinuations = false
+		});
+
 	/// <summary>
 	/// Цикличная запись значений из очереди в БД
 	/// </summary>
 	/// <param name="stoppingToken">Токен остановки</param>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		using var scope = serviceScopeFactory.CreateScope();
-		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-		var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
-
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			CollectValue[] buffer;
-			int allCount = Queue.Count;
-			int remains;
-
-			if (Queue.Count == 0)
+			try
 			{
-				await Task.Delay(AfterWriteDelay, stoppingToken);
-				continue;
+				// Создаем новый скоуп для каждого цикла обработки
+				using var scope = serviceScopeFactory.CreateScope();
+				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+				var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
+
+				// Ждем первого элемента с таймаутом
+				var batch = new List<ValueWriteRequest>(BatchSize);
+				var firstItem = await ReadWithTimeoutAsync(stoppingToken);
+				if (firstItem != null)
+				{
+					batch.Add(firstItem);
+				}
+				else
+				{
+					// Если данных нет, делаем паузу перед следующей проверкой
+					await Task.Delay(MaxBatchDelayMs, stoppingToken);
+					continue;
+				}
+
+				// Быстро собираем остальные элементы
+				await FillBatchAsync(batch, BatchSize - 1, stoppingToken);
+
+				// Записываем пачку в БД
+				await WriteBatchWithRetryAsync(db, valuesRepository, batch, stoppingToken);
 			}
-			else if (Queue.Count > BufferSize)
+			catch (OperationCanceledException)
 			{
-				buffer = Queue.Take(BufferSize).ToArray();
-				lock (Lock)
-				{
-					Queue = Queue.Skip(BufferSize).ToList();
-					remains = Queue.Count;
-				}
+				// Корректное завершение при отмене
+				break;
 			}
-			else
+			catch (Exception ex)
 			{
-				buffer = [.. Queue];
-				lock (Lock)
-				{
-					Queue = [];
-					remains = 0;
-				}
+				logger.LogError(ex, "Критическая ошибка в обработчике записи");
+				await Task.Delay(5000, stoppingToken); // Задержка перед повторной попыткой
 			}
-
-			if (buffer.Length > 0)
-			{
-				try
-				{
-					await valuesRepository.WriteCollectedValuesAsync(db, buffer);
-
-					logger.LogInformation("Запись значений из очереди: {writed}. Осталось: {remains}", buffer.Length, remains);
-				}
-				catch (Exception ex)
-				{
-					logger.LogError("Ошибка при записи значений: {message}", ex.Message);
-
-					lock (Lock)
-					{
-						Queue.AddRange(buffer);
-					}
-				}
-			}
-
-			await Task.Delay(AfterWriteDelay, stoppingToken);
 		}
 	}
 
@@ -80,31 +80,83 @@ public class CollectorWriter(
 	/// Добавление новых значений в очередь на запись в БД
 	/// </summary>
 	/// <param name="values">Список новых значений</param>
-	public static void AddToQueue(IEnumerable<CollectValue> values)
+	public void AddToQueue(IEnumerable<ValueWriteRequest> values)
 	{
-		lock (Lock)
+		foreach (var value in values)
 		{
-			Queue.AddRange(values);
+			_channel.Writer.TryWrite(value);
 		}
 	}
 
-	/// <summary>
-	/// Количество элементов, записываемых за один запрос
-	/// </summary>
-	private const int BufferSize = 1000;
+	private async Task<ValueWriteRequest?> ReadWithTimeoutAsync(CancellationToken ct)
+	{
+		try
+		{
+			var readTask = _channel.Reader.ReadAsync(ct).AsTask();
+			var timeoutTask = Task.Delay(MaxBatchDelayMs, ct);
 
-	/// <summary>
-	/// Ожидание после завершения записи до начала следующей записи
-	/// </summary>
-	private const int AfterWriteDelay = 250;
+			var completedTask = await Task.WhenAny(readTask, timeoutTask);
+			if (completedTask == readTask)
+			{
+				return await readTask;
+			}
+		}
+		catch (OperationCanceledException) { }
+		return null;
+	}
 
-	/// <summary>
-	/// Очередь новых значений на запись в БД
-	/// </summary>
-	private static List<CollectValue> Queue { get; set; } = [];
+	private async Task FillBatchAsync(List<ValueWriteRequest> batch, int maxItems, CancellationToken ct)
+	{
+		var delayTask = Task.Delay(MinBatchDelayMs, ct);
+		while (batch.Count < maxItems && !ct.IsCancellationRequested)
+		{
+			if (_channel.Reader.TryRead(out var item))
+			{
+				batch.Add(item);
+			}
+			else
+			{
+				// Если элементов нет, ждем минимальную задержку или завершение задачи задержки
+				if (await Task.WhenAny(_channel.Reader.WaitToReadAsync(ct).AsTask(), delayTask) == delayTask)
+				{
+					break;
+				}
+			}
+		}
+	}
+	private async Task WriteBatchWithRetryAsync(
+		DatalakeContext db,
+		ValuesRepository valuesRepository,
+		List<ValueWriteRequest> batch,
+		CancellationToken ct)
+	{
+		var attempt = 0;
+		while (attempt < MaxRetryAttempts && !ct.IsCancellationRequested)
+		{
+			try
+			{
+				await valuesRepository.WriteCollectedValuesAsync(db, batch);
+				logger.LogDebug("Записано {Count} значений", batch.Count);
+				return; // Успешная запись
+			}
+			catch (Exception ex)
+			{
+				attempt++;
+				logger.LogWarning(ex, "Ошибка записи (попытка {Attempt}/{Max})", attempt, MaxRetryAttempts);
 
-	/// <summary>
-	/// Объект блокировки операций с очередью
-	/// </summary>
-	private static readonly object Lock = new();
+				if (attempt < MaxRetryAttempts)
+				{
+					// Экспоненциальная задержка
+					var delay = TimeSpan.FromMilliseconds(RetryBaseDelayMs * Math.Pow(2, attempt - 1));
+					await Task.Delay(delay, ct);
+				}
+			}
+		}
+
+		if (attempt >= MaxRetryAttempts)
+		{
+			logger.LogError("Не удалось записать пачку из {Count} значений после {Max} попыток",
+				batch.Count, MaxRetryAttempts);
+		}
+	}
 }
