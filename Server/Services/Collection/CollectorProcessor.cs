@@ -44,13 +44,7 @@ public class CollectorProcessor(
 	public override async Task StopAsync(CancellationToken cancellationToken)
 	{
 		// Останавливаем все сборщики
-		foreach (var collector in _collectors)
-		{
-			collector.Stop();
-		}
-
-		// Ожидаем завершения всех задач обработки
-		await Task.WhenAll(_processingTasks.Values);
+		await StopCollecting();
 
 		await base.StopAsync(cancellationToken);
 	}
@@ -75,15 +69,7 @@ public class CollectorProcessor(
 		logger.LogInformation("Выполняется обновление сборщиков");
 
 		// Останавливаем текущие сборщики
-		foreach (var collector in _collectors)
-		{
-			collector.Stop();
-
-			if (_processingTasks.TryRemove(collector, out var task))
-			{
-				await task; // Дожидаемся завершения обработки
-			}
-		}
+		await StopCollecting();
 
 		// Создаём новые сборщики
 		var newSources = state.SourcesInfoWithTagsAndSourceTags().ToArray();
@@ -104,6 +90,21 @@ public class CollectorProcessor(
 		}
 
 		logger.LogInformation("Обновление сборщиков завершено");
+	}
+
+	private async Task StopCollecting()
+	{
+		foreach (var collector in _collectors)
+		{
+			collector.PrepareToStop();
+		}
+
+		await Task.WhenAll(_processingTasks.Values);
+
+		foreach (var collector in _collectors)
+		{
+			collector.FinalStop();
+		}
 	}
 
 	private async Task ProcessCollectorOutput(ICollector collector, CancellationToken stoppingToken)

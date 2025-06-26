@@ -25,7 +25,7 @@ public class DatalakeCurrentValuesStore
 	{
 		using var scope = _serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-		var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
+		//var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
 
 		var t = Stopwatch.StartNew();
 
@@ -46,22 +46,25 @@ public class DatalakeCurrentValuesStore
 
 	public bool TryUpdate(int id, TagHistory incomingValue)
 	{
-		bool updated = false;
+		bool updated = true;
 
 		_currentValues.AddOrUpdate(
 			id,
 			incomingValue,
 			(key, existingValue) =>
 			{
-				if (incomingValue.Date > existingValue.Date && (
+				bool isIncomingNew = incomingValue.Date > existingValue.Date && (
 					incomingValue.Number != existingValue.Number ||
 					incomingValue.Text != existingValue.Text ||
-					incomingValue.Quality != existingValue.Quality))
+					incomingValue.Quality != existingValue.Quality);
+
+				if (!isIncomingNew)
 				{
-					updated = true;
-					return incomingValue;
+					updated = false;
+					return existingValue;
 				}
-				return existingValue;
+
+				return incomingValue;
 			});
 
 		return updated;

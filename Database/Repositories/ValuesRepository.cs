@@ -20,7 +20,7 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы со значениями тегов
 /// </summary>
-public class ValuesRepository(DatalakeDataStore dataStore)
+public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValuesStore valuesStore)
 {
 	#region Действия
 
@@ -83,7 +83,11 @@ public class ValuesRepository(DatalakeDataStore dataStore)
 		{
 			if (dataStore.State.CachedTagsById.TryGetValue(request.Id ?? 0, out var tag))
 			{
-				records.Add(TagHistoryExtension.CreateFrom(tag, request));
+				// проверка на уникальность
+				var record = TagHistoryExtension.CreateFrom(tag, request);
+
+				if (valuesStore.TryUpdate(record.TagId, record))
+					records.Add(record);
 			}
 		}
 
@@ -154,7 +158,7 @@ public class ValuesRepository(DatalakeDataStore dataStore)
 
 	#region Чтение
 
-	internal static async Task<List<ValuesResponse>> ProtectedGetValuesAsync(
+	internal async Task<List<ValuesResponse>> ProtectedGetValuesAsync(
 		DatalakeContext db, ValuesTrustedRequest[] trustedRequests)
 	{
 		List<ValuesResponse> responses = [];
@@ -174,7 +178,8 @@ public class ValuesRepository(DatalakeDataStore dataStore)
 			// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
 			if (!group.Settings.Exact.HasValue && !group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
 			{
-				var lastValues = await ProtectedReadLastValuesAsync(db, group.TagsId);
+				//var lastValues = await ProtectedReadLastValuesAsync(db, group.TagsId);
+				var lastValues = group.TagsId.ToDictionary(x => x, valuesStore.Get);
 
 				foreach (var request in group.Requests)
 				{
@@ -190,7 +195,7 @@ public class ValuesRepository(DatalakeDataStore dataStore)
 								Type = tag.Type,
 								Frequency = tag.Frequency,
 								SourceType = tag.SourceType,
-								Values = !lastValues.TryGetValue(tag.Id, out var value) ? [] : [
+								Values = !lastValues.TryGetValue(tag.Id, out var value) || value == null ? [] : [
 									new()
 									{
 										Date = value.Date,
@@ -618,7 +623,7 @@ public class ValuesRepository(DatalakeDataStore dataStore)
 	/// <param name="requests">Список запросов на запись</param>
 	/// <returns>Ответ со списком значений, как при чтении</returns>
 	/// <exception cref="NotFoundException">Тег не найден</exception>
-	private static async Task<List<ValuesTagResponse>> ProtectedWriteManualValuesAsync(
+	private async Task<List<ValuesTagResponse>> ProtectedWriteManualValuesAsync(
 		DatalakeContext db,
 		List<ValueTrustedWriteRequest> requests)
 	{
@@ -631,6 +636,8 @@ public class ValuesRepository(DatalakeDataStore dataStore)
 			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
 
 			recordsToWrite.Add(record);
+			valuesStore.TryUpdate(record.TagId, record);
+
 			responses.Add(new ValuesTagResponse
 			{
 				Id = request.Tag.Id,
@@ -661,24 +668,19 @@ public class ValuesRepository(DatalakeDataStore dataStore)
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="records">Список записей для ввода</param>
-	public static async Task ProtectedWriteValuesAsync(
+	public async Task ProtectedWriteValuesAsync(
 		DatalakeContext db,
 		List<TagHistory> records)
 	{
 		if (records.Count == 0)
 			return;
 
-		//string tempTableName = "TagsHistoryInserting_" + DateTime.UtcNow.ToFileTimeUtc().ToString();
-		//var tempTable = await db.CreateTempTableAsync<TagHistory>(tempTableName);
-		//await tempTable.BulkCopyAsync(records);
-		//await db.DropTableAsync<TagHistory>(tempTableName);
-
 		await db.TagsHistory.BulkCopyAsync(records);
 
-		var lastValues = records
-			.GroupBy(x => x.TagId)
-			.Select(g => g.OrderByDescending(x => x.Date).First())
-			.ToDictionary(x => x.TagId);
+		foreach (var record in records)
+		{
+			valuesStore.TryUpdate(record.TagId, record);
+		}
 	}
 
 	#endregion

@@ -36,7 +36,7 @@ internal class InopcCollector : CollectorBase
 		_itemsTags = source.Tags
 			.Where(x => x.Item != null)
 			.GroupBy(x => x.Item)
-			.ToDictionary(g => g.Key!, g => g.Select(x => x.Guid).ToArray());
+			.ToDictionary(g => g.Key!, g => g.ToArray());
 	}
 
 
@@ -61,7 +61,7 @@ internal class InopcCollector : CollectorBase
 	private readonly List<Item> _itemsToSend;
 	private readonly ReceiverService _receiverService;
 	private readonly SourcesStateService _stateService;
-	private readonly Dictionary<string, Guid[]> _itemsTags;
+	private readonly Dictionary<string, SourceTagInfo[]> _itemsTags;
 	private readonly CancellationTokenSource _tokenSource;
 
 	private async Task Work()
@@ -108,12 +108,13 @@ internal class InopcCollector : CollectorBase
 
 					var collectedValues = response.Tags
 						.SelectMany(item => _itemsTags[item.Name]
-							.Select(guid => new ValueWriteRequest
+							.Select(tagInfo => new ValueWriteRequest
 							{
+								Id = tagInfo.Id,
+								Name = tagInfo.Name,
+								Guid = tagInfo.Guid,
 								Date = now,
-								Name = item.Name,
 								Quality = item.Quality,
-								Guid = guid,
 								Value = item.Value,
 							}))
 						.ToArray();
@@ -128,14 +129,19 @@ internal class InopcCollector : CollectorBase
 
 				_stateService.UpdateSource(_id, connected: true);
 			}
-			catch (Exception ex)
+			catch (OperationCanceledException)
+			{
+				_stateService.UpdateSource(_id, connected: false);
+				break; // Выход при отмене
+			}
+			catch (Exception ex) when (ex is not OperationCanceledException)
 			{
 				_logger.LogWarning("Ошибка в сборщике INOPC [{id}]: {message}", _id, ex.Message);
 				_stateService.UpdateSource(_id, connected: false);
 			}
 			finally
 			{
-				await Task.Delay(1000);
+				await Task.Delay(1000, _tokenSource.Token);
 			}
 		}
 	}

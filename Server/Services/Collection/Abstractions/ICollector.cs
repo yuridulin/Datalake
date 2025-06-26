@@ -23,7 +23,12 @@ public interface ICollector
 	/// <summary>
 	/// Прекращение сбора данных
 	/// </summary>
-	void Stop();
+	void PrepareToStop();
+
+	/// <summary>
+	/// Прекращение сбора данных
+	/// </summary>
+	void FinalStop();
 
 	/// <summary>
 	/// Имя сборщика
