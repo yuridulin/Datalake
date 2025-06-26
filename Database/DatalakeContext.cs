@@ -24,6 +24,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		Configuration.Linq.GuardGrouping = false;
 	}
 
+	/// <summary>
+	/// Сохраненная ссылка на настроенную фабрику логгеров
+	/// </summary>
 	public static ILoggerFactory? LoggerFactory { get; set; }
 
 	/// <summary>
