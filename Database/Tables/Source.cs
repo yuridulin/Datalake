@@ -56,6 +56,12 @@ public record class Source
 	[Column, Required]
 	public bool IsDeleted { get; set; } = false;
 
+	/// <summary>
+	/// Источник отмечен как отключенный (не участвует в сборе данных)
+	/// </summary>
+	[Column, Required]
+	public bool IsDisabled { get; set; } = false;
+
 	// связи
 
 	/// <summary>

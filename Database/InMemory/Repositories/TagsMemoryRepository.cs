@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Constants;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
@@ -75,26 +76,29 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="names">Имена тегов</param>
 	/// <param name="guids">Глобальные идентификаторы тегов</param>
 	/// <returns>Список информации о тегах</returns>
+	[LogExecutionTime]
 	public TagInfo[] ReadAll(UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
 	{
-		var tags = dataStore.State.TagsInfoWithSources();
+		var tagsChain = dataStore.State.TagsInfoWithSources();
 
 		if (sourceId.HasValue)
 		{
-			tags = tags.Where(x => sourceId.Value == x.SourceId);
+			tagsChain = tagsChain.Where(x => sourceId.Value == x.SourceId);
 		}
 		if (id?.Length > 0)
 		{
-			tags = tags.Where(x => id.Contains(x.Id));
+			tagsChain = tagsChain.Where(x => id.Contains(x.Id));
 		}
 		if (names?.Length > 0)
 		{
-			tags = tags.Where(x => names.Contains(x.Name));
+			tagsChain = tagsChain.Where(x => names.Contains(x.Name));
 		}
 		if (guids?.Length > 0)
 		{
-			tags = tags.Where(x => guids.Contains(x.Guid));
+			tagsChain = tagsChain.Where(x => guids.Contains(x.Guid));
 		}
+
+		var tags = tagsChain.ToArray();
 
 		List<TagInfo> tagsWithAccess = [];
 		foreach (var tag in tags)

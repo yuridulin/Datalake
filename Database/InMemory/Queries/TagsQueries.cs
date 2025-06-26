@@ -1,5 +1,4 @@
 ﻿using Datalake.Database.InMemory.Models;
-using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;
 using LinqToDB;

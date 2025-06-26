@@ -156,6 +156,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			Address = "",
 			Type = SourceType.Inopc,
 			IsDeleted = false,
+			IsDisabled = false,
 		};
 
 		// Блокируем стейт до завершения обновления
@@ -212,6 +213,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			Address = newSource.Address,
 			Type = newSource.Type,
 			Description = newSource.Description,
+			IsDisabled = newSource.IsDisabled,
 		};
 
 		return info;
@@ -232,6 +234,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			Type = sourceInfo.Type,
 			Description = sourceInfo.Description,
 			IsDeleted = false,
+			IsDisabled = false,
 		};
 
 		// Блокируем стейт до завершения обновления
@@ -254,6 +257,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 					.Value(x => x.Description, newSource.Description)
 					.Value(x => x.Address, newSource.Address)
 					.Value(x => x.Type, newSource.Type)
+					.Value(x => x.IsDisabled, newSource.IsDisabled)
 					.InsertWithInt32IdentityAsync()
 					?? throw new Exception("Не получен id из БД");
 
@@ -284,6 +288,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			Address = newSource.Address,
 			Type = newSource.Type,
 			Description = newSource.Description,
+			IsDisabled = newSource.IsDisabled,
 		};
 
 		return info;
@@ -317,6 +322,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 				Type = sourceInfo.Type,
 				Description = sourceInfo.Description,
 				IsDeleted = false,
+				IsDisabled = sourceInfo.IsDisabled,
 			};
 
 			// Обновление в БД
@@ -330,14 +336,15 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 					.Set(x => x.Description, newSource.Description)
 					.Set(x => x.Address, newSource.Address)
 					.Set(x => x.Type, newSource.Type)
+					.Set(x => x.IsDisabled, newSource.IsDisabled)
 					.UpdateAsync();
 
 				if (count == 0)
 					throw new DatabaseException($"Не удалось обновить источник #{id}", DatabaseStandartError.UpdatedZero);
 
 				await LogAsync(db, userGuid, id, "Изменен источник: " + source.Name, ObjectExtension.Difference(
-					new { source.Name, source.Address, source.Type },
-					new { newSource.Name, newSource.Address, newSource.Type }));
+					new { source.Name, source.Address, source.Type, source.IsDisabled },
+					new { newSource.Name, newSource.Address, newSource.Type, source.IsDisabled }));
 
 				await transaction.CommitAsync();
 			}

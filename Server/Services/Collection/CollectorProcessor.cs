@@ -74,6 +74,7 @@ public class CollectorProcessor(
 		// Создаём новые сборщики
 		var newSources = state.SourcesInfoWithTagsAndSourceTags().ToArray();
 		_collectors = newSources
+			.Where(x => !x.IsDisabled)
 			.Select(collectorFactory.GetCollector)
 			.Where(x => x != null)
 			.Select(x => x!)

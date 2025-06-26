@@ -25,6 +25,7 @@ public static class SourceQueries
 				Address = source.Address,
 				Description = source.Description,
 				Type = source.Type,
+				IsDisabled = source.IsDisabled,
 			});
 	}
 
@@ -41,6 +42,7 @@ public static class SourceQueries
 				Address = source.Address,
 				Name = source.Name,
 				Type = source.Type,
+				IsDisabled = source.IsDisabled,
 				Tags = state.Tags
 					.Where(tag => !tag.IsDeleted && tag.SourceId == source.Id)
 					.Select(tag => new SourceTagInfo
@@ -73,6 +75,7 @@ public static class SourceQueries
 				Address = source.Address,
 				Name = source.Name,
 				Type = source.Type,
+				IsDisabled = source.IsDisabled,
 				Tags = state.Tags
 					.Where(tag => !tag.IsDeleted && tag.SourceId == source.Id)
 					.Select(tag => new SourceTagInfo
