@@ -7,33 +7,33 @@ namespace Datalake.Database.InMemory.Models;
 
 #pragma warning disable CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
 
-public struct DatalakeDataState
+public record class DatalakeDataState
 {
 	public long Version { get; private set; }
 
 	// Таблицы
 
-	public ImmutableList<AccessRights> AccessRights { get; init; }
+	public required ImmutableList<AccessRights> AccessRights { get; init; }
 
-	public ImmutableList<Block> Blocks { get; init; }
+	public required ImmutableList<Block> Blocks { get; init; }
 
-	public ImmutableList<BlockProperty> BlockProperties { get; init; }
+	public required ImmutableList<BlockProperty> BlockProperties { get; init; }
 
-	public ImmutableList<BlockTag> BlockTags { get; init; }
+	public required ImmutableList<BlockTag> BlockTags { get; init; }
 
-	public ImmutableList<Source> Sources { get; init; }
+	public required ImmutableList<Source> Sources { get; init; }
 
-	public Settings Settings { get; init; }
+	public required Settings Settings { get; init; }
 
-	public ImmutableList<Tag> Tags { get; init; }
+	public required ImmutableList<Tag> Tags { get; init; }
 
-	public ImmutableList<TagInput> TagInputs { get; init; }
+	public required ImmutableList<TagInput> TagInputs { get; init; }
 
-	public ImmutableList<User> Users { get; init; }
+	public required ImmutableList<User> Users { get; init; }
 
-	public ImmutableList<UserGroup> UserGroups { get; init; }
+	public required ImmutableList<UserGroup> UserGroups { get; init; }
 
-	public ImmutableList<UserGroupRelation> UserGroupRelations { get; init; }
+	public required ImmutableList<UserGroupRelation> UserGroupRelations { get; init; }
 
 	// Словари
 
@@ -71,23 +71,23 @@ public struct DatalakeDataState
 		Version = DateTime.UtcNow.Ticks;
 	}
 
-	public ImmutableDictionary<int, Block> BlocksById { get; private set; }
+	public ImmutableDictionary<int, Block> BlocksById { get; private set; } = ImmutableDictionary<int, Block>.Empty;
 
-	public ImmutableDictionary<int, Source> SourcesById { get; private set; }
+	public ImmutableDictionary<int, Source> SourcesById { get; private set; } = ImmutableDictionary<int, Source>.Empty;
 
-	public ImmutableDictionary<Guid, Tag> TagsByGuid { get; private set; }
+	public ImmutableDictionary<Guid, Tag> TagsByGuid { get; private set; } = ImmutableDictionary<Guid, Tag>.Empty;
 
-	public ImmutableDictionary<int, Tag> TagsById { get; private set; }
+	public ImmutableDictionary<int, Tag> TagsById { get; private set; } = ImmutableDictionary<int, Tag>.Empty;
 
-	public ImmutableDictionary<Guid, User> UsersByGuid { get; private set; }
+	public ImmutableDictionary<Guid, User> UsersByGuid { get; private set; } = ImmutableDictionary<Guid, User>.Empty;
 
-	public ImmutableDictionary<Guid, UserGroup> UserGroupsByGuid { get; private set; }
+	public ImmutableDictionary<Guid, UserGroup> UserGroupsByGuid { get; private set; } = ImmutableDictionary<Guid, UserGroup>.Empty;
 
-	public ImmutableList<TagCacheInfo> CachesTags { get; private set; }
+	public ImmutableList<TagCacheInfo> CachesTags { get; private set; } = ImmutableList<TagCacheInfo>.Empty;
 
-	public ImmutableDictionary<int, TagCacheInfo> CachedTagsById { get; private set; }
+	public ImmutableDictionary<int, TagCacheInfo> CachedTagsById { get; private set; } = ImmutableDictionary<int, TagCacheInfo>.Empty;
 
-	public ImmutableDictionary<Guid, TagCacheInfo> CachedTagsByGuid { get; private set; }
+	public ImmutableDictionary<Guid, TagCacheInfo> CachedTagsByGuid { get; private set; } = ImmutableDictionary<Guid, TagCacheInfo>.Empty;
 }
 
 #pragma warning restore CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
