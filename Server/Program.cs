@@ -10,6 +10,7 @@ using LinqToDB;
 using LinqToDB.AspNet;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
+using Serilog;
 using System.Reflection;
 
 [assembly: AssemblyVersion("2.3.*")]
@@ -30,6 +31,13 @@ namespace Datalake.Server
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
+			var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage");
+			builder.Configuration
+				.SetBasePath(storage)
+				.AddJsonFile(Path.Combine(Path.Combine(storage, "config"), "appsettings.json"), false, true)
+				.AddJsonFile(Path.Combine(Path.Combine(storage, "config"), $"appsettings.{builder.Environment.EnvironmentName}.json"), true,
+					true);
+			Directory.CreateDirectory(Path.Combine(storage, "logs"));
 
 			builder.Services.AddControllers().AddJsonOptions(options =>
 			{
@@ -49,6 +57,12 @@ namespace Datalake.Server
 			builder.AddMiddlewares();
 			ConfigureDatabase(builder);
 			builder.AddServices();
+
+			Log.Logger = new LoggerConfiguration()
+				.ReadFrom.Configuration(builder.Configuration)
+				.CreateLogger();
+
+			builder.Host.UseSerilog();
 
 			var app = builder.Build();
 
@@ -132,6 +146,7 @@ namespace Datalake.Server
 			var ef = serviceScope.ServiceProvider.GetRequiredService<DatalakeEfContext>();
 			ef.Database.Migrate();
 
+			DatalakeContext.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
 			DatalakeContext.SetupLinqToDB();
 
 			var db = serviceScope.ServiceProvider.GetRequiredService<DatalakeContext>();

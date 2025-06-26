@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Extensions;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.Models;
@@ -31,6 +32,7 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="requests">Список запрошенных тегов с настройками получения</param>
 	/// <returns>Список ответов со значениями тегов</returns>
+	[LogExecutionTime]
 	public async Task<List<ValuesResponse>> GetValuesAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
@@ -75,6 +77,7 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 	/// <param name="db"></param>
 	/// <param name="requests"></param>
 	/// <returns></returns>
+	[LogExecutionTime]
 	public async Task WriteCollectedValuesAsync(DatalakeContext db, IEnumerable<ValueWriteRequest> requests)
 	{
 		List<TagHistory> records = [];
@@ -101,6 +104,7 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="requests">Список тегов с новыми значениями</param>
 	/// <returns>Список записанных значений</returns>
+	[LogExecutionTime]
 	public async Task<List<ValuesTagResponse>> WriteManualValuesAsync(
 		DatalakeContext db,
 		UserAuthInfo user,

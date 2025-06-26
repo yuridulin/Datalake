@@ -7,6 +7,7 @@ using Datalake.PublicApi.Constants;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Database;
 
@@ -22,6 +23,8 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	{
 		Configuration.Linq.GuardGrouping = false;
 	}
+
+	public static ILoggerFactory? LoggerFactory { get; set; }
 
 	/// <summary>
 	/// Необходимые для работы записи, которые должны быть в базе данных
