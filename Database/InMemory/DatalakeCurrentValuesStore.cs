@@ -25,7 +25,6 @@ public class DatalakeCurrentValuesStore
 	{
 		using var scope = _serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-		//var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
 
 		var t = Stopwatch.StartNew();
 

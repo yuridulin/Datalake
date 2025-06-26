@@ -1,4 +1,5 @@
-﻿using Datalake.Database.InMemory.Models;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.InMemory.Models;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
@@ -47,6 +48,7 @@ public class DatalakeDerivedDataStore
 
 	private BlockTreeInfo[] _cachedBlockTree = [];
 
+	[LogExecutionTime]
 	private void RebuildTree(DatalakeDataState state)
 	{
 		var tagsDict = state.Tags.ToDictionary(x => x.Id);
@@ -150,6 +152,7 @@ public class DatalakeDerivedDataStore
 
 	private DatalakeAccessState _accessState = new();
 
+	[LogExecutionTime]
 	private void RebuildUserRightsCacheOptimized(DatalakeDataState state)
 	{
 		AccessRights defaultRule = new() { Id = 0, AccessType = AccessType.NotSet };

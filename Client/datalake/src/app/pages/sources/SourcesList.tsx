@@ -57,6 +57,12 @@ const SourcesList = observer(() => {
 			),
 		},
 		{
+			dataIndex: 'isDisabled',
+			title: 'Активность',
+			width: '8em',
+			render: (flag) => (!flag ? <Tag color='green'>Запущен</Tag> : <Tag>Остановлен</Tag>),
+		},
+		{
 			title: 'Подключение',
 			width: '10em',
 			render: (_, record) => {

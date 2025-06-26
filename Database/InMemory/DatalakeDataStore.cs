@@ -1,4 +1,5 @@
-﻿using Datalake.Database.InMemory.Models;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.InMemory.Models;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -41,6 +42,7 @@ public class DatalakeDataStore
 		//_ = LoadStateFromDatabaseAsync(); // Инициализатор БД сделает это сам
 	}
 
+	[LogExecutionTime]
 	public async Task LoadStateFromDatabaseAsync()
 	{
 		using (await AcquireWriteLockAsync())
@@ -98,6 +100,7 @@ public class DatalakeDataStore
 	/// Этот метод должен вызываться только внутри активной блокировки <see cref="AcquireWriteLockAsync"/>
 	/// </summary>
 	/// <param name="update">Текущий стейт</param>
+	[LogExecutionTime]
 	public DatalakeDataState UpdateStateWithinLock(Func<DatalakeDataState, DatalakeDataState> update)
 	{
 		try

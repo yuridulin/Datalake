@@ -552,6 +552,8 @@ export type SourceInfo = SourceSimpleInfo & {
   address?: string | null;
   /** Тип протокола, по которому запрашиваются данные */
   type: SourceType;
+  /** Источник отмечен как удаленный */
+  isDisabled: boolean;
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
@@ -1211,6 +1213,8 @@ export interface ValueWriteRequest {
   quality?: TagQuality | null;
 }
 
+/** Список запросов с настройками */
 export type ValuesGetPayload = ValuesRequest[];
 
+/** Список запросов на изменение */
 export type ValuesWritePayload = ValueWriteRequest[];
