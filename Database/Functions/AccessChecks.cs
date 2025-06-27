@@ -89,7 +89,7 @@ public static class AccessChecks
 
 		return access;
 	}
-	
+
 	/// <summary>
 	/// Проверка достаточности уровня доступа к группе пользователей
 	/// </summary>

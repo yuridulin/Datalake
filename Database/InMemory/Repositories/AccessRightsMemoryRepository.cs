@@ -139,16 +139,16 @@ public class AccessRightsMemoryRepository(DatalakeDataStore dataStore)
 			AccessRights[] oldRules = [];
 			if (request.UserGroupGuid.HasValue)
 				oldRules = currentState.AccessRights.Where(x => !x.IsGlobal && x.UserGroupGuid == request.UserGroupGuid).ToArray();
-			
+
 			else if (request.UserGuid.HasValue)
 				oldRules = currentState.AccessRights.Where(x => !x.IsGlobal && x.UserGuid == request.UserGuid).ToArray();
-			
+
 			else if (request.SourceId.HasValue)
 				oldRules = currentState.AccessRights.Where(x => !x.IsGlobal && x.SourceId == request.SourceId).ToArray();
-			
+
 			else if (request.BlockId.HasValue)
 				oldRules = currentState.AccessRights.Where(x => !x.IsGlobal && x.BlockId == request.BlockId).ToArray();
-			
+
 			else if (request.TagId.HasValue)
 				oldRules = currentState.AccessRights.Where(x => !x.IsGlobal && x.TagId == request.TagId).ToArray();
 

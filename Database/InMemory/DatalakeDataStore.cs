@@ -92,7 +92,7 @@ public class DatalakeDataStore
 	private DatalakeDataState _currentState;
 
 	public DatalakeDataState State => _currentState;
-	
+
 	public async Task<IDisposable> AcquireWriteLockAsync() => await _writeLock.LockAsync();
 
 	/// <summary>

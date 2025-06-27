@@ -49,7 +49,7 @@ public static class UsersGroupsQueries
 				GlobalAccessType = state.AccessRights
 					.FirstOrDefault(rule => rule.IsGlobal && rule.UserGroupGuid == userGroup.Guid)?.AccessType ?? AccessType.NotSet,
 				Users = state.UserGroupRelations
-					.Join(state.Users.Where(user => !user.IsDeleted), relation => relation.UserGuid, user => user.Guid, (relation, user) =>	new UserGroupUsersInfo
+					.Join(state.Users.Where(user => !user.IsDeleted), relation => relation.UserGuid, user => user.Guid, (relation, user) => new UserGroupUsersInfo
 					{
 						Guid = user.Guid,
 						FullName = user.FullName,

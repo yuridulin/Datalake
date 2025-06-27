@@ -133,7 +133,7 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 
 			if (tag == null || tag.SourceType != SourceType.Manual || AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Guid))
 				continue;
-			
+
 			var record = TagHistoryExtension.CreateFrom(tag, request);
 			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
 

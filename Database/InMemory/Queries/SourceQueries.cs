@@ -101,7 +101,7 @@ public static class SourceQueries
 						SourceType = source.Type,
 						Aggregation = tag.Aggregation,
 						AggregationPeriod = tag.AggregationPeriod,
-						SourceTag = !state.TagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : 
+						SourceTag = !state.TagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null :
 							new SourceTagInfo.TagInputMinimalInfo
 							{
 								InputTagId = sourceTag.Id,
