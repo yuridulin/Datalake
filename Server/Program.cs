@@ -8,9 +8,12 @@ using Datalake.Server.Middlewares;
 using Datalake.Server.Services;
 using LinqToDB;
 using LinqToDB.AspNet;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using NJsonSchema.Generation;
 using Serilog;
+using Serilog.Events;
 using System.Reflection;
 
 [assembly: AssemblyVersion("2.3.*")]
@@ -74,6 +77,38 @@ namespace Datalake.Server
 				app.UseOpenApi();
 				app.UseSwaggerUi();
 			}
+
+			app.UseSerilogRequestLogging(options =>
+			{
+				// шаблон одного сообщения на запрос
+				options.MessageTemplate = "HTTP: [{Controller}.{Action}] > {StatusCode} in {Elapsed:0.0000} ms";
+
+				// если упало — логируем Error, иначе Information
+				options.GetLevel = (httpContext, elapsed, ex) =>
+				httpContext.Request.Method == "OPTIONS"
+						? LogEventLevel.Verbose // или LogEventLevel.None, если используешь фильтрацию
+						: ex != null || httpContext.Response.StatusCode >= 500
+							? LogEventLevel.Error
+							: LogEventLevel.Information;
+
+				options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+				{
+					var endpoint = httpContext.GetEndpoint();
+					var routePattern = endpoint?.Metadata.GetMetadata<RouteNameMetadata>();
+					var actionDescriptor = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>();
+
+					if (actionDescriptor != null)
+					{
+						diagnosticContext.Set("Controller", actionDescriptor.ControllerName);
+						diagnosticContext.Set("Action", actionDescriptor.ActionName);
+					}
+					else
+					{
+						diagnosticContext.Set("Controller", "unknown");
+						diagnosticContext.Set("Action", "unknown");
+					}
+				};
+			});
 
 			app.UseDefaultFiles();
 			app.UseStaticFiles();
