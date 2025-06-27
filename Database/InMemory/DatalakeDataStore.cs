@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Tables;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.InMemory.Models;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,15 +16,33 @@ public class DatalakeDataStore
 		IServiceScopeFactory serviceScopeFactory,
 		ILogger<DatalakeDataStore> logger)
 	{
+		var initialState = new DatalakeDataState
+		{
+			AccessRights = [],
+			BlockProperties = [],
+			Blocks = [],
+			BlockTags = [],
+			Settings = new(),
+			Sources = [],
+			TagInputs = [],
+			Tags = [],
+			UserGroupRelations = [],
+			UserGroups = [],
+			Users = [],
+		};
+		initialState.InitDictionaries();
+		_currentState = initialState;
+
 		_serviceScopeFactory = serviceScopeFactory;
 		_logger = logger;
 
-		StateChanged += (_, _) => _logger.LogInformation("Стейт перезагружен");
+		StateChanged += (_, _) => _logger.LogInformation("Стейт изменён");
 		StateCorrupted += (_, _) => Task.Run(LoadStateFromDatabaseAsync);
 
-		_ = LoadStateFromDatabaseAsync();
+		//_ = LoadStateFromDatabaseAsync(); // Инициализатор БД сделает это сам
 	}
 
+	[LogExecutionTime]
 	public async Task LoadStateFromDatabaseAsync()
 	{
 		using (await AcquireWriteLockAsync())
@@ -38,6 +57,7 @@ public class DatalakeDataStore
 			var blockProperties = await db.BlockProperties.ToArrayAsync();
 			var blockTags = await db.BlockTags.ToArrayAsync();
 			var sources = await db.Sources.ToArrayAsync();
+			var settings = await db.Settings.ToArrayAsync();
 			var tags = await db.Tags.ToArrayAsync();
 			var tagInputs = await db.TagInputs.ToArrayAsync();
 			var users = await db.Users.ToArrayAsync();
@@ -45,7 +65,7 @@ public class DatalakeDataStore
 			var userGroupRelations = await db.UserGroupRelations.ToArrayAsync();
 
 			t.Stop();
-			_logger.LogInformation("Загрузка БД: {ms}", t.Elapsed.TotalMilliseconds);
+			_logger.LogInformation("Загрузка стейта из БД: {ms}", t.Elapsed.TotalMilliseconds);
 
 			var newState = new DatalakeDataState
 			{
@@ -53,6 +73,7 @@ public class DatalakeDataStore
 				Blocks = blocks.ToImmutableList(),
 				BlockProperties = blockProperties.ToImmutableList(),
 				BlockTags = blockTags.ToImmutableList(),
+				Settings = settings.FirstOrDefault() ?? new(),
 				Sources = sources.ToImmutableList(),
 				Tags = tags.ToImmutableList(),
 				TagInputs = tagInputs.ToImmutableList(),
@@ -68,10 +89,10 @@ public class DatalakeDataStore
 	private readonly IServiceScopeFactory _serviceScopeFactory;
 	private readonly ILogger<DatalakeDataStore> _logger;
 	private readonly AsyncLock _writeLock = new();
-	private DatalakeDataState _currentState = new();
+	private DatalakeDataState _currentState;
 
 	public DatalakeDataState State => _currentState;
-	
+
 	public async Task<IDisposable> AcquireWriteLockAsync() => await _writeLock.LockAsync();
 
 	/// <summary>
@@ -79,7 +100,8 @@ public class DatalakeDataStore
 	/// Этот метод должен вызываться только внутри активной блокировки <see cref="AcquireWriteLockAsync"/>
 	/// </summary>
 	/// <param name="update">Текущий стейт</param>
-	public void UpdateStateWithinLock(Func<DatalakeDataState, DatalakeDataState> update)
+	[LogExecutionTime]
+	public DatalakeDataState UpdateStateWithinLock(Func<DatalakeDataState, DatalakeDataState> update)
 	{
 		try
 		{
@@ -89,11 +111,15 @@ public class DatalakeDataStore
 			_currentState = newState;
 
 			StateChanged?.Invoke(this, _currentState);
+
+			return newState;
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Ошибка при изменении стейта");
 			StateCorrupted?.Invoke(this, 0);
+
+			return _currentState;
 		}
 	}
 
@@ -101,68 +127,21 @@ public class DatalakeDataStore
 
 	public event EventHandler<int>? StateCorrupted;
 
-}
-
-public sealed class AsyncLock
-{
-	private readonly SemaphoreSlim _semaphore = new(1, 1);
-
-	public async Task<IDisposable> LockAsync()
+	public sealed class AsyncLock
 	{
-		await _semaphore.WaitAsync();
-		return new Releaser(_semaphore);
+		private readonly SemaphoreSlim _semaphore = new(1, 1);
+
+		public async Task<IDisposable> LockAsync()
+		{
+			await _semaphore.WaitAsync();
+			return new Releaser(_semaphore);
+		}
+
+		private sealed class Releaser(SemaphoreSlim semaphore) : IDisposable
+		{
+			public void Dispose() => semaphore.Release();
+		}
 	}
-
-	private sealed class Releaser(SemaphoreSlim semaphore) : IDisposable
-	{
-		public void Dispose() => semaphore.Release();
-	}
-}
-
-public struct DatalakeDataState
-{
-	public long Version { get; private set; }
-
-	// Таблицы
-
-	public ImmutableList<AccessRights> AccessRights { get; init; }
-
-	public ImmutableList<Block> Blocks { get; init; }
-
-	public ImmutableList<BlockProperty> BlockProperties { get; init; }
-
-	public ImmutableList<BlockTag> BlockTags { get; init; }
-
-	public ImmutableList<Source> Sources { get; init; }
-
-	public ImmutableList<Tag> Tags { get; init; }
-
-	public ImmutableList<TagInput> TagInputs { get; init; }
-
-	public ImmutableList<User> Users { get; init; }
-
-	public ImmutableList<UserGroup> UserGroups { get; init; }
-
-	public ImmutableList<UserGroupRelation> UserGroupRelations { get; init; }
-
-	// Словари
-
-	public void InitDictionaries()
-	{
-		TagsById = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		TagsByGuid = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.GlobalGuid);
-		SourcesById = Sources.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		BlocksById = Blocks.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		Version = DateTime.UtcNow.Ticks;
-	}
-
-	public ImmutableDictionary<int, Tag> TagsById { get; private set; }
-
-	public ImmutableDictionary<Guid, Tag> TagsByGuid { get; private set; }
-
-	public ImmutableDictionary<int, Source> SourcesById { get; private set; }
-
-	public ImmutableDictionary<int, Block> BlocksById { get; private set; }
 }
 
 #pragma warning restore CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена

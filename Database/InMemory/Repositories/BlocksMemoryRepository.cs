@@ -1,95 +1,383 @@
-﻿using Datalake.Database.Interfaces;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Extensions;
+using Datalake.Database.Functions;
+using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Blocks;
 using LinqToDB;
 using LinqToDB.Data;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Concurrent;
+using System.Collections.Immutable;
 
 namespace Datalake.Database.InMemory.Repositories;
 
-/*/// <summary>
+/// <summary>
 /// Репозиторий работы с блоками в памяти приложения
 /// </summary>
-public class BlocksMemoryRepository(
-	IServiceScopeFactory serviceScopeFactory,
-	Lazy<InMemoryRepositoriesManager> inMemory) : InMemoryRepositoryBase(serviceScopeFactory, inMemory)
+public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Исходные коллекции
+	#region Действия
 
-	private readonly ConcurrentDictionary<int, Block> _blocks = [];
-	private ConcurrentBag<BlockTag> _relationBlockTags = [];
-
-	#endregion
-
-
-	#region Инициализация
-
-	/// <inheritdoc/>
-	protected override async Task InitializeFromDatabase(DatalakeContext db)
+	/// <summary>
+	/// Создание нового блока
+	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="blockInfo">Параметры нового блока</param>
+	/// <param name="parentId">Идентификатор родительского блока</param>
+	/// <returns>Идентификатор нового блока</returns>
+	public async Task<BlockWithTagsInfo> CreateAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		BlockFullInfo? blockInfo = null,
+		int? parentId = null)
 	{
-		_blocks.Clear();
-		_relationBlockTags.Clear();
+		if (parentId.HasValue)
+		{
+			AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
+		}
+		else
+		{
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+		}
 
-		var blocks = await db.Blocks.ToArrayAsync();
+		return blockInfo != null ? await ProtectedCreateAsync(db, user.Guid, blockInfo) : await ProtectedCreateAsync(db, user.Guid, parentId);
+	}
+
+	/// <summary>
+	/// Получение списка блоков с учетом уровня доступа
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Список блоков с уровнями доступа к ним</returns>
+	public BlockWithTagsInfo[] ReadAll(UserAuthInfo user)
+	{
+		var blocks = dataStore.State.BlocksInfoWithTags();
+
+		List<BlockWithTagsInfo> blocksWithAccess = [];
 		foreach (var block in blocks)
-			_blocks.TryAdd(block.Id, block);
+		{
+			block.AccessRule = AccessChecks.GetAccessToBlock(user, block.Id);
+			if (block.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				blocksWithAccess.Add(block);
+		}
 
-		var relationsBlockTag = await db.BlockTags.ToArrayAsync();
-		foreach (var rel in relationsBlockTag)
-			_relationBlockTags.Add(rel);
+		return blocksWithAccess.ToArray();
+	}
+
+	/// <summary>
+	/// Получение полной информации о блоке, включая права доступа, поля и дочерние блоки
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <returns>Полная информация о блоке</returns>
+	/// <exception cref="NotFoundException">Блок не найден</exception>
+	public BlockFullInfo Read(UserAuthInfo user, int id)
+	{
+		var rule = AccessChecks.GetAccessToBlock(user, id);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
+
+		var block = dataStore.State.BlockInfoWithParentsAndTags(id);
+
+		block.AccessRule = rule;
+
+		return block;
+	}
+
+	/// <summary>
+	/// Получение дерева блоков с учетом уровня доступа
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <returns>Дерево блоков с уровнями доступа к ним</returns>
+	public BlockTreeInfo[] ReadAllAsTree(UserAuthInfo user)
+	{
+		var blocks = ReadAll(user);
+
+		return ReadChildren(null, string.Empty);
+
+		BlockTreeInfo[] ReadChildren(int? id, string prefix)
+		{
+			var prefixString = prefix + (string.IsNullOrEmpty(prefix) ? string.Empty : ".");
+			return blocks
+				.Where(x => x.ParentId == id)
+				.Select(x =>
+				{
+					var block = new BlockTreeInfo
+					{
+						Id = x.Id,
+						Guid = x.Guid,
+						ParentId = x.ParentId,
+						Name = x.Name,
+						FullName = prefixString + x.Name,
+						Description = x.Description,
+						Tags = x.Tags
+							.Select(tag => new BlockNestedTagInfo
+							{
+								Guid = tag.Guid,
+								Name = tag.Name,
+								Id = tag.Id,
+								Relation = tag.Relation,
+								SourceId = tag.SourceId,
+								LocalName = tag.LocalName,
+								Type = tag.Type,
+								Frequency = tag.Frequency,
+								SourceType = tag.SourceType,
+							})
+							.ToArray(),
+						AccessRule = x.AccessRule,
+						Children = ReadChildren(x.Id, prefixString + x.Name),
+					};
+
+					if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+					{
+						block.Name = string.Empty;
+						block.Description = string.Empty;
+						block.Tags = [];
+					}
+
+					return block;
+				})
+				.Where(x => x.Children.Length > 0 || x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				.OrderBy(x => x.Name)
+				.ToArray();
+		}
+	}
+
+	/// <summary>
+	/// Изменение параметров блока, включая закрепленные теги
+	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <param name="block">Новые параметры блока</param>
+	/// <returns>Флаг успешного завершения</returns>
+	public async Task<bool> UpdateAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		int id,
+		BlockUpdateRequest block)
+	{
+		AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
+
+		return await ProtectedUpdateAsync(db, user.Guid, id, block);
+	}
+
+	/// <summary>
+	/// Изменение расположения блока в иерархии
+	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <param name="parentId"></param>
+	/// <returns>Флаг успешного завершения</returns>
+	public async Task<bool> MoveAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		int id,
+		int? parentId)
+	{
+		AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
+
+		if (parentId.HasValue)
+		{
+			AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
+		}
+		else
+		{
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+		}
+
+		return await ProtectedMoveAsync(db, user.Guid, id, parentId);
+	}
+
+	/// <summary>
+	/// Удаление блока
+	/// </summary>
+	/// <param name="db">Текущий контекс базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="id">Идентификатор блока</param>
+	/// <returns>Флаг успешного завершения</returns>
+	public async Task<bool> DeleteAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		int id)
+	{
+		AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
+
+		return await ProtectedDeleteAsync(db, user.Guid, id);
 	}
 
 	#endregion
 
-
-	#region Чтение данных внешними источниками
-
-	internal IReadOnlyBlock[] Blocks
-		=> _blocks.Values.Select(x => (IReadOnlyBlock)x).ToArray();
-
-	internal IReadOnlyDictionary<int, IReadOnlyBlock> BlocksDict
-		=> _blocks.ToDictionary(x => x.Key, x => (IReadOnlyBlock)x.Value);
-
-	internal IReadOnlyCollection<IReadOnlyBlockTag> RelationsBlockTags
-		=> _relationBlockTags.Select(x => (IReadOnlyBlockTag)x).ToArray();
-
-	#endregion
-
-
-	#region Изменение данных внешними источниками
-
-	/// <summary>
-	/// Изменение блока
-	/// </summary>
-	/// <param name="db">Контекст БД</param>
-	/// <param name="id">Идентификатор блока</param>
-	/// <param name="request">Новые данные</param>
-	public async Task UpdateBlock(DatalakeContext db, int id, BlockUpdateRequest request)
+	internal async Task<BlockWithTagsInfo> ProtectedCreateAsync(DatalakeContext db, Guid userGuid, int? parentId = null)
 	{
-		// 1. Проверка версии данных, на основе которых сделан запрос
-		//if (request.LastKnownVersion != CurrentVersion)
-			//throw new Exception("Данные не актуальны");
-
-		if (!_blocks.TryGetValue(id, out var storedBlock))
-			throw new Exception("Блок не найден по id");
-
-		if (_blocks.Values.Any(x => x.Name == request.Name && x.Id != id))
-			throw new Exception("Блок с таким именем уже существует");
-
-		using var transaction = await db.BeginTransactionAsync();
-
-		try
+		// Проверки, не требующие стейта
+		Block createdBlock = new()
 		{
-			// 2. Обновление в БД
-			int count = await db.Blocks
-				.Where(x => x.Id == id)
-				.Set(x => x.Name, request.Name)
-				.Set(x => x.Description, request.Description)
-				.UpdateAsync();
+			GlobalId = Guid.NewGuid(),
+			ParentId = parentId,
+			Name = "INSERTING BLOCK",
+			Description = string.Empty,
+			IsDeleted = false,
+		};
 
-			// 3. Обновление связей
-			var newTagsRelations = request.Tags
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				int id = await db.Blocks
+					.Value(x => x.GlobalId, createdBlock.GlobalId)
+					.Value(x => x.ParentId, createdBlock.ParentId)
+					.Value(x => x.Name, createdBlock.Name)
+					.Value(x => x.Description, createdBlock.Description)
+					.InsertWithInt32IdentityAsync()
+					?? throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
+
+				createdBlock.Id = id;
+				createdBlock.Name = "Блок #" + id;
+
+				await db.Blocks
+					.Where(x => x.Id == createdBlock.Id)
+					.Set(x => x.Name, createdBlock.Name)
+					.UpdateAsync();
+
+				await LogAsync(db, userGuid, createdBlock.Id, "Создан блок: " + createdBlock.Name);
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Blocks = state.Blocks.Add(createdBlock),
+			});
+		}
+
+		// Возвращение ответа
+		var info = new BlockWithTagsInfo
+		{
+			Guid = createdBlock.GlobalId,
+			Id = createdBlock.Id,
+			Name = createdBlock.Name,
+			Description = createdBlock.Description,
+			ParentId = createdBlock.ParentId,
+		};
+
+		return info;
+	}
+
+	internal async Task<BlockWithTagsInfo> ProtectedCreateAsync(DatalakeContext db, Guid userGuid, BlockFullInfo block)
+	{
+		// Проверки, не требующие стейта
+		Block createdBlock = new()
+		{
+			GlobalId = Guid.NewGuid(),
+			Name = block.Name,
+			Description = block.Description,
+			ParentId = block.ParentId,
+			IsDeleted = false,
+		};
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (createdBlock.ParentId.HasValue && !currentState.BlocksById.ContainsKey(createdBlock.ParentId.Value))
+				throw new NotFoundException($"Родительский блок #{createdBlock.ParentId.Value} не найден");
+
+			if (currentState.Blocks.Any(x => !x.IsDeleted && x.ParentId == createdBlock.ParentId && x.Name == createdBlock.Name))
+				throw new AlreadyExistException("Блок с таким именем уже существует");
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				int id = await db.Blocks
+					.Value(x => x.GlobalId, createdBlock.GlobalId)
+					.Value(x => x.ParentId, createdBlock.ParentId)
+					.Value(x => x.Name, createdBlock.Name)
+					.Value(x => x.Description, createdBlock.Description)
+					.InsertWithInt32IdentityAsync()
+					?? throw new DatabaseException(message: "не удалось создать блок", DatabaseStandartError.IdIsNull);
+
+				createdBlock.Id = id;
+
+				await LogAsync(db, userGuid, id, "Создан блок: " + block.Name);
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Blocks = state.Blocks.Add(createdBlock),
+			});
+		}
+
+		// Возвращение ответа
+		var info = new BlockWithTagsInfo
+		{
+			Guid = createdBlock.GlobalId,
+			Id = createdBlock.Id,
+			Name = createdBlock.Name,
+			Description = createdBlock.Description,
+			ParentId = createdBlock.ParentId,
+		};
+
+		return info;
+	}
+
+	internal async Task<bool> ProtectedUpdateAsync(DatalakeContext db, Guid userGuid, int id, BlockUpdateRequest request)
+	{
+		// Проверки, не требующие стейта
+		Block updatedBlock;
+		BlockTag[] newTagsRelations;
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (!currentState.BlocksById.TryGetValue(id, out var oldBlock))
+				throw new NotFoundException($"Блок #{id} не найден");
+
+			if (currentState.Blocks.Any(x => !x.IsDeleted && x.Id != id && x.ParentId == oldBlock.ParentId && x.Name == request.Name))
+				throw new AlreadyExistException("Блок с таким именем уже существует");
+
+			updatedBlock = oldBlock with
+			{
+				Name = request.Name,
+				Description = request.Description,
+			};
+
+			newTagsRelations = request.Tags
 				.Select(x => new BlockTag
 				{
 					BlockId = id,
@@ -99,38 +387,159 @@ public class BlocksMemoryRepository(
 				})
 				.ToArray();
 
-			await db.BlockTags
-				.Where(x => x.BlockId == id)
-				.DeleteAsync();
+			// Обновление в БД
 
-			if (newTagsRelations.Length > 0)
-				await db.BlockTags.BulkCopyAsync(newTagsRelations);
+			using var transaction = await db.BeginTransactionAsync();
+			try
+			{
+				int count = 0;
 
-			// 4. Обновление in-memory
-			storedBlock.Name = request.Name;
+				count += await db.Blocks
+					.Where(x => x.Id == id)
+					.Set(x => x.Name, request.Name)
+					.Set(x => x.Description, request.Description)
+					.UpdateAsync();
 
-			var nextRelationBlockTags = new ConcurrentBag<BlockTag>(_relationBlockTags
-				.ToArray()
-				.Where(x => x.BlockId != id)
-				.Concat(newTagsRelations!));
+				await db.BlockTags
+					.Where(x => x.BlockId == id)
+					.DeleteAsync();
 
-			Interlocked.Exchange(ref _relationBlockTags, nextRelationBlockTags);
+				if (newTagsRelations.Length > 0)
+					await db.BlockTags.BulkCopyAsync(newTagsRelations);
 
-			// 5. Обновление глобальной версии
-			var newVersion = DateTime.UtcNow.Ticks.ToString();
-			UpdateVersion(newVersion);
+				await LogAsync(db, userGuid, id, "Изменен блок: " + request.Name, ObjectExtension.Difference(
+					new { oldBlock.Name, oldBlock.Description, },
+					new { updatedBlock.Name, updatedBlock.Description, }));
 
-			await transaction.CommitAsync();
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
 
-			// 6. Перестроение структур
-			Trigger();
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Blocks = state.Blocks.Remove(oldBlock).Add(updatedBlock),
+				BlockTags = state.BlockTags.Where(x => x.BlockId != id).Concat(newTagsRelations).ToImmutableList(),
+			});
 		}
-		catch (Exception ex)
-		{
-			await transaction.RollbackAsync();
-			throw new Exception("Не удалось обновить блок", ex);
-		}
+
+		// Возвращение ответа
+		return true;
 	}
 
-	#endregion
-}*/
+	internal async Task<bool> ProtectedMoveAsync(DatalakeContext db, Guid userGuid, int id, int? parentId)
+	{
+		// Проверки, не требующие стейта
+		Block updatedBlock;
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (!currentState.BlocksById.TryGetValue(id, out var oldBlock))
+				throw new NotFoundException(message: "блок " + id);
+
+			updatedBlock = oldBlock with { ParentId = parentId == 0 ? null : parentId };
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				await db.Blocks
+					.Where(x => x.Id == id)
+					.Set(x => x.ParentId, updatedBlock.ParentId)
+					.UpdateAsync();
+
+				await LogAsync(db, userGuid, id, "Изменено расположение блока: " + oldBlock.Name, ObjectExtension.Difference(
+					new { oldBlock.ParentId },
+					new { updatedBlock.ParentId }));
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Blocks = state.Blocks.Remove(oldBlock).Add(updatedBlock),
+			});
+		}
+
+		// Возвращение ответа
+		return true;
+	}
+
+	internal async Task<bool> ProtectedDeleteAsync(DatalakeContext db, Guid userGuid, int id)
+	{
+		// Проверки, не требующие стейта
+		Block updatedBlock;
+
+		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
+		using (await dataStore.AcquireWriteLockAsync())
+		{
+			currentState = dataStore.State;
+
+			// Проверки на актуальном стейте
+			if (!currentState.BlocksById.TryGetValue(id, out var oldBlock))
+				throw new NotFoundException(message: "блок " + id);
+
+			updatedBlock = oldBlock with { IsDeleted = true };
+
+			// Обновление в БД
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				await db.Blocks
+					.Where(x => x.Id == id)
+					.Set(x => x.IsDeleted, updatedBlock.IsDeleted)
+					.UpdateAsync();
+
+				await LogAsync(db, userGuid, id, "Удален блок: " + oldBlock.Name);
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new Exception("Не удалось создать тег в БД", ex);
+			}
+
+			// Обновление стейта в случае успешного обновления БД
+			dataStore.UpdateStateWithinLock(state => state with
+			{
+				Blocks = state.Blocks.Remove(oldBlock).Add(updatedBlock),
+			});
+		}
+
+		// Возвращение ответа
+		return true;
+	}
+
+	private static async Task LogAsync(DatalakeContext db, Guid userGuid, int id, string message, string? details = null)
+	{
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.Blocks,
+			RefId = id.ToString(),
+			AffectedBlockId = id,
+			AuthorGuid = userGuid,
+			Text = message,
+			Type = LogType.Success,
+			Details = details,
+		});
+	}
+}

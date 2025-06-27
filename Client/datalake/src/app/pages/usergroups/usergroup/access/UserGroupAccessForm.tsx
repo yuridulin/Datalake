@@ -53,7 +53,7 @@ const UserGroupAccessForm = () => {
 			api.blocksReadAll().then((res) => setBlocks(res.data.map((x) => ({ label: x.name, value: x.id })))),
 			api.tagsReadAll().then((res) => setTags(res.data.map((x) => ({ label: x.name, value: x.id })))),
 			api
-				.accessGet({ userGroup: String(id) })
+				.accessRead({ userGroup: String(id) })
 				.then((res) => {
 					setForm(
 						res.data

@@ -1,7 +1,10 @@
-﻿using Datalake.Database.Tables;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.InMemory.Models;
+using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Blocks;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Database.InMemory;
 
@@ -11,29 +14,41 @@ namespace Datalake.Database.InMemory;
 public class DatalakeDerivedDataStore
 {
 	/// <summary>Конструктор</summary>
-	public DatalakeDerivedDataStore(DatalakeDataStore stateHolder)
+	public DatalakeDerivedDataStore(
+		DatalakeDataStore dataStore,
+		ILogger<DatalakeDerivedDataStore> logger)
 	{
-		stateHolder.StateChanged += (_, newState) =>
+		_logger = logger;
+		dataStore.StateChanged += (_, newState) =>
 		{
 			if (newState.Version > _lastProcessingVersion)
 			{
 				_lastProcessingVersion = newState.Version;
 
-				Task.Run(() =>
-				{
-					RebuildTree(newState);
-					RebuildUserRightsCacheOptimized(newState);
-				});
+				Task.Run(() => Rebuild(newState));
 			}
 		};
+
+		if (_lastProcessingVersion == -1)
+			Task.Run(() => Rebuild(dataStore.State));
+	}
+
+	private void Rebuild(DatalakeDataState newState)
+	{
+		RebuildTree(newState);
+		RebuildUserRightsCacheOptimized(newState);
+
+		_logger.LogInformation("Завершено обновление зависимых данных");
 	}
 
 	private long _lastProcessingVersion = -1;
+	private readonly ILogger<DatalakeDerivedDataStore> _logger;
 
 	#region Дерево блоков
 
 	private BlockTreeInfo[] _cachedBlockTree = [];
 
+	[LogExecutionTime]
 	private void RebuildTree(DatalakeDataState state)
 	{
 		var tagsDict = state.Tags.ToDictionary(x => x.Id);
@@ -129,14 +144,15 @@ public class DatalakeDerivedDataStore
 	/// Получение дерева блоков со списком полей каждого блока
 	/// </summary>
 	/// <returns>Коллекция корневых элементом дерева</returns>
-	public BlockTreeInfo[] BlocksTree() => _cachedBlockTree;
+	public BlockTreeInfo[] BlocksTree => _cachedBlockTree;
 
 	#endregion
 
 	#region Права пользователей
 
-	private Dictionary<Guid, UserAuthInfo> _rights = [];
+	private DatalakeAccessState _accessState = new();
 
+	[LogExecutionTime]
 	private void RebuildUserRightsCacheOptimized(DatalakeDataState state)
 	{
 		AccessRights defaultRule = new() { Id = 0, AccessType = AccessType.NotSet };
@@ -516,14 +532,23 @@ public class DatalakeDerivedDataStore
 
 		#endregion
 
-		Interlocked.Exchange(ref _rights, userRights);
+		var accessState = new DatalakeAccessState(userRights);
+
+		Interlocked.Exchange(ref _accessState, accessState);
+
+		AccessChanged?.Invoke(this, accessState);
 	}
 
 	/// <summary>
 	/// Разрешения пользователей, рассчитанные на каждый объект системы
 	/// </summary>
 	/// <returns>Разрешения, сгруппированные по идентификатору пользователя</returns>
-	public Dictionary<Guid, UserAuthInfo> CalculatedRights() => _rights;
+	public DatalakeAccessState Access => _accessState;
+
+	/// <summary>
+	/// Событие при изменении разрешений пользователей
+	/// </summary>
+	public event EventHandler<DatalakeAccessState>? AccessChanged;
 
 	#endregion
 }

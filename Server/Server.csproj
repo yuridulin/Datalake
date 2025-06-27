@@ -29,13 +29,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Models\System\**" />
-	  <Content Remove="Models\System\**" />
-	  <EmbeddedResource Remove="Models\System\**" />
-	  <None Remove="Models\System\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="linq2db.AspNet" Version="5.4.1" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.13" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11">
@@ -44,10 +37,16 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.1" />
 		<PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
+		<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Database\Database.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Services\Collection\Models\" />
+	  <Folder Include="storage\logs\" />
 	</ItemGroup>
 
 </Project>

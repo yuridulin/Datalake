@@ -1,5 +1,6 @@
 using Datalake.Database;
 using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
@@ -7,8 +8,12 @@ using Datalake.Server.Middlewares;
 using Datalake.Server.Services;
 using LinqToDB;
 using LinqToDB.AspNet;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using NJsonSchema.Generation;
+using Serilog;
+using Serilog.Events;
 using System.Reflection;
 
 [assembly: AssemblyVersion("2.3.*")]
@@ -29,6 +34,13 @@ namespace Datalake.Server
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
+			var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage");
+			builder.Configuration
+				.SetBasePath(storage)
+				.AddJsonFile(Path.Combine(Path.Combine(storage, "config"), "appsettings.json"), false, true)
+				.AddJsonFile(Path.Combine(Path.Combine(storage, "config"), $"appsettings.{builder.Environment.EnvironmentName}.json"), true,
+					true);
+			Directory.CreateDirectory(Path.Combine(storage, "logs"));
 
 			builder.Services.AddControllers().AddJsonOptions(options =>
 			{
@@ -49,6 +61,12 @@ namespace Datalake.Server
 			ConfigureDatabase(builder);
 			builder.AddServices();
 
+			Log.Logger = new LoggerConfiguration()
+				.ReadFrom.Configuration(builder.Configuration)
+				.CreateLogger();
+
+			builder.Host.UseSerilog();
+
 			var app = builder.Build();
 
 			WebRootPath = app.Environment.WebRootPath;
@@ -59,6 +77,38 @@ namespace Datalake.Server
 				app.UseOpenApi();
 				app.UseSwaggerUi();
 			}
+
+			app.UseSerilogRequestLogging(options =>
+			{
+				// шаблон одного сообщения на запрос
+				options.MessageTemplate = "HTTP: [{Controller}.{Action}] > {StatusCode} in {Elapsed:0.0000} ms";
+
+				// если упало — логируем Error, иначе Information
+				options.GetLevel = (httpContext, elapsed, ex) =>
+				httpContext.Request.Method == "OPTIONS"
+						? LogEventLevel.Verbose // или LogEventLevel.None, если используешь фильтрацию
+						: ex != null || httpContext.Response.StatusCode >= 500
+							? LogEventLevel.Error
+							: LogEventLevel.Information;
+
+				options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+				{
+					var endpoint = httpContext.GetEndpoint();
+					var routePattern = endpoint?.Metadata.GetMetadata<RouteNameMetadata>();
+					var actionDescriptor = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>();
+
+					if (actionDescriptor != null)
+					{
+						diagnosticContext.Set("Controller", actionDescriptor.ControllerName);
+						diagnosticContext.Set("Action", actionDescriptor.ActionName);
+					}
+					else
+					{
+						diagnosticContext.Set("Controller", "unknown");
+						diagnosticContext.Set("Action", "unknown");
+					}
+				};
+			});
 
 			app.UseDefaultFiles();
 			app.UseStaticFiles();
@@ -125,23 +175,26 @@ namespace Datalake.Server
 
 		static async void StartWorkWithDatabase(WebApplication app)
 		{
-			using var serviceScope = app.Services?.GetService<IServiceScopeFactory>()?.CreateScope();
+			using var serviceScope = app.Services.GetService<IServiceScopeFactory>()?.CreateScope()
+				?? throw new Exception("Серьезно?");
 
-			var context = serviceScope?.ServiceProvider.GetRequiredService<DatalakeEfContext>();
-			context?.Database.Migrate();
+			var ef = serviceScope.ServiceProvider.GetRequiredService<DatalakeEfContext>();
+			ef.Database.Migrate();
 
+			DatalakeContext.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
 			DatalakeContext.SetupLinqToDB();
-			var db = serviceScope?.ServiceProvider.GetRequiredService<DatalakeContext>();
-			if (db != null)
-			{
-				await db.EnsureDataCreatedAsync();
-				await SystemRepository.WriteLog(
-					db,
-					"Сервер запущен",
-					category: LogCategory.Core,
-					type: LogType.Success
-				);
-			}
+
+			var db = serviceScope.ServiceProvider.GetRequiredService<DatalakeContext>();
+			var dataStore = serviceScope.ServiceProvider.GetRequiredService<DatalakeDataStore>();
+			var usersRepository = serviceScope.ServiceProvider.GetRequiredService<UsersMemoryRepository>();
+
+			await db.EnsureDataCreatedAsync(dataStore, usersRepository);
+			await AuditRepository.WriteAsync(
+				db,
+				"Сервер запущен",
+				category: LogCategory.Core,
+				type: LogType.Success
+			);
 		}
 
 		internal class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor

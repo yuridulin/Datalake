@@ -8,13 +8,13 @@ namespace Datalake.Database.Extensions;
 public static class ObjectExtension
 {
 	/// <summary>
-	 /// Запись различий двух однотипных объектов
-	 /// </summary>
-	 /// <typeparam name="T">Тип объектов</typeparam>
-	 /// <param name="old">Исходный объект</param>
-	 /// <param name="new">Измененный объект</param>
-	 /// <param name="collectionKeys">Ключи для сравнения коллекций</param>
-	 /// <returns>Строковая запись различий</returns>
+	/// Запись различий двух однотипных объектов
+	/// </summary>
+	/// <typeparam name="T">Тип объектов</typeparam>
+	/// <param name="old">Исходный объект</param>
+	/// <param name="new">Измененный объект</param>
+	/// <param name="collectionKeys">Ключи для сравнения коллекций</param>
+	/// <returns>Строковая запись различий</returns>
 	public static string Difference<T>(T old, T @new, Dictionary<string, Func<object, object>>? collectionKeys = null) where T : class
 	{
 		var type = typeof(T);

@@ -1,5 +1,6 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Repositories;
+using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Models.AccessRights;
 using Datalake.Server.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,10 @@ namespace Datalake.Server.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
-public class AccessController(DatalakeContext db) : ApiControllerBase
+public class AccessController(
+	DatalakeContext db,
+	DatalakeDerivedDataStore derivedDataStore,
+	AccessRightsMemoryRepository accessRepository) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Получение списка прямых (не глобальных) разрешений субъекта на объект
@@ -23,7 +27,7 @@ public class AccessController(DatalakeContext db) : ApiControllerBase
 	/// <param name="tag">Идентификатор тега</param>
 	/// <returns>Список разрешений</returns>
 	[HttpGet]
-	public async Task<ActionResult<AccessRightsInfo[]>> GetAsync(
+	public ActionResult<AccessRightsInfo[]> Read(
 		[FromQuery] Guid? user = null,
 		[FromQuery] Guid? userGroup = null,
 		[FromQuery] int? source = null,
@@ -32,8 +36,7 @@ public class AccessController(DatalakeContext db) : ApiControllerBase
 	{
 		var userAuth = Authenticate();
 
-		return await AccessRepository.GetRightsAsync(
-			db,
+		return accessRepository.Read(
 			user: userAuth,
 			userGuid: user,
 			userGroupGuid: userGroup,
@@ -52,7 +55,7 @@ public class AccessController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await AccessRepository.ApplyChangesAsync(db, user, request);
+		await accessRepository.ApplyChangesAsync(db, user, request);
 
 		return NoContent();
 	}

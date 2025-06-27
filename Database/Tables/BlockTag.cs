@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Interfaces;
-using Datalake.PublicApi.Enums;
+﻿using Datalake.PublicApi.Enums;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
@@ -10,25 +9,36 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице связей блоков и тегов
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class BlockTag : IReadOnlyBlockTag
+public record class BlockTag
 {
 	const string TableName = "BlockTags";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public BlockTag() { }
+
 	// поля в БД
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Идентификатор блока
+	/// </summary>
 	[Column]
 	public int BlockId { get; set; }
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Идентификатор тега
+	/// </summary>
 	[Column]
 	public int? TagId { get; set; }
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Название в рамках блока
+	/// </summary>
 	[Column]
 	public string? Name { get; set; } = string.Empty;
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Тип связи тега к блоку
+	/// </summary>
 	[Column]
 	public BlockTagRelation Relation { get; set; } = BlockTagRelation.Static;
 

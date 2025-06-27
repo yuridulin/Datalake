@@ -57,12 +57,12 @@ export class Api<
    * No description
    *
    * @tags Access
-   * @name AccessGet
+   * @name AccessRead
    * @summary Получение списка прямых (не глобальных) разрешений субъекта на объект
    * @request GET:/api/Access
    * @response `200` `(AccessRightsInfo)[]` Список разрешений
    */
-  accessGet = (
+  accessRead = (
     query?: {
       /**
        * Идентификтатор пользователя
@@ -245,43 +245,6 @@ export class Api<
       path: `/api/Blocks/tree`,
       method: "GET",
       format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Blocks
-   * @name BlocksReadAsTree2
-   * @summary Получение иерархической структуры всех блоков
-   * @request GET:/api/Blocks/tree2
-   * @response `200` `(BlockTreeInfo)[]` Список обособленных блоков с вложенными блоками
-   */
-  blocksReadAsTree2 = (params: RequestParams = {}) =>
-    this.request<BlockTreeInfo[], any>({
-      path: `/api/Blocks/tree2`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Blocks
-   * @name BlocksUpdateAsync2
-   * @summary Изменение блока
-   * @request PUT:/api/Blocks/{id}/2
-   * @response `200` `File`
-   */
-  blocksUpdateAsync2 = (
-    id: number,
-    data: BlockUpdateRequest,
-    params: RequestParams = {},
-  ) =>
-    this.request<File, any>({
-      path: `/api/Blocks/${id}/2`,
-      method: "PUT",
-      body: data,
-      type: ContentType.Json,
       ...params,
     });
   /**
@@ -621,29 +584,14 @@ export class Api<
    * No description
    *
    * @tags System
-   * @name SystemRestartStorage
-   * @summary Перестроение кэша и перезапуск всех сборщиков
-   * @request PUT:/api/System/restart/storage
+   * @name SystemRestart
+   * @summary Перестроение кэша
+   * @request PUT:/api/System/restart
    * @response `200` `File`
    */
-  systemRestartStorage = (params: RequestParams = {}) =>
+  systemRestart = (params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/System/restart/storage`,
-      method: "PUT",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemRestartAccess
-   * @summary Перестроение кэша вычисленных прав доступа
-   * @request PUT:/api/System/restart/access
-   * @response `200` `File`
-   */
-  systemRestartAccess = (params: RequestParams = {}) =>
-    this.request<File, any>({
-      path: `/api/System/restart/access`,
+      path: `/api/System/restart`,
       method: "PUT",
       ...params,
     });

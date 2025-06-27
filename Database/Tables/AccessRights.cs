@@ -12,9 +12,12 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице правил доступа
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class AccessRights
+public record class AccessRights
 {
 	const string TableName = "AccessRights";
+
+	/// <summary>Конструктор для LinqToDB</summary>
+	public AccessRights() { }
 
 	// поля в БД
 

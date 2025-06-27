@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Interfaces;
-using LinqToDB.Mapping;
+﻿using LinqToDB.Mapping;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
@@ -11,33 +10,48 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице блоков
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Block : IReadOnlyBlock
+public record class Block
 {
 	const string TableName = "Blocks";
 
+	/// <summary>Конструктор для LinqToDB</summary>
+	public Block() { }
+
 	// поля в БД
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Идентификатор
+	/// </summary>
 	[Key, Identity, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 	public int Id { get; set; }
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Глобальный идентификатор
+	/// </summary>
 	[Column]
 	public Guid GlobalId { get; set; }
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Идентификатор родительского блока
+	/// </summary>
 	[Column]
 	public int? ParentId { get; set; }
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Название
+	/// </summary>
 	[Column]
 	public string Name { get; set; } = string.Empty;
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Описание
+	/// </summary>
 	[Column]
 	public string? Description { get; set; }
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Блок отмечен как удаленный
+	/// </summary>
 	[Column, Required]
 	public bool IsDeleted { get; set; } = false;
 

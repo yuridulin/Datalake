@@ -552,6 +552,8 @@ export type SourceInfo = SourceSimpleInfo & {
   address?: string | null;
   /** Тип протокола, по которому запрашиваются данные */
   type: SourceType;
+  /** Источник отмечен как удаленный */
+  isDisabled: boolean;
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
@@ -722,11 +724,8 @@ export type UserAuthInfo = UserSimpleInfo & {
   blocks: Record<string, AccessRuleInfo>;
   /** Список всех тегов с указанием доступа к ним */
   tags: Record<string, AccessRuleInfo>;
-  /**
-   * Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
-   * @format guid
-   */
-  underlyingUserGuid?: string | null;
+  /** Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись */
+  underlyingUser?: UserAuthInfo | null;
   /**
    * Идентификатор пользователя в системе EnergoId
    * @format guid
@@ -1214,6 +1213,8 @@ export interface ValueWriteRequest {
   quality?: TagQuality | null;
 }
 
+/** Список запросов с настройками */
 export type ValuesGetPayload = ValuesRequest[];
 
+/** Список запросов на изменение */
 export type ValuesWritePayload = ValueWriteRequest[];

@@ -1,8 +1,9 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Controllers.Base;
-using Datalake.Server.Services.StateManager;
+using Datalake.Server.Services.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -15,7 +16,9 @@ namespace Datalake.Server.Controllers;
 [Route("api/Tags/[controller]")]
 public class ValuesController(
 	DatalakeContext db,
-	TagsStateService tagsStateService) : ApiControllerBase
+	DatalakeDerivedDataStore derivedDataStore,
+	ValuesRepository valuesRepository,
+	TagsStateService tagsStateService) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Путь для получения текущих данные
@@ -34,7 +37,7 @@ public class ValuesController(
 		var user = Authenticate();
 
 		tagsStateService.UpdateTagState(requests);
-		var responses = await ValuesRepository.GetValuesAsync(db, user, requests);
+		var responses = await valuesRepository.GetValuesAsync(db, user, requests);
 
 		return responses;
 	}
@@ -50,8 +53,7 @@ public class ValuesController(
 	{
 		var user = Authenticate();
 
-		// Флаг отключает проверку на новизну значения по сравнению с текущим
-		var responses = await ValuesRepository.WriteValuesAsync(db, user, requests, overrided: true);
+		var responses = await valuesRepository.WriteManualValuesAsync(db, user, requests);
 
 		return responses;
 	}

@@ -35,7 +35,7 @@ const BlockForm = observer(() => {
 	}
 
 	const updateBlock = (newInfo: BlockUpdateRequest) => {
-		api.blocksUpdateAsync2(Number(id), newInfo).catch(() => {
+		api.blocksUpdate(Number(id), newInfo).catch(() => {
 			notify.err('Ошибка при сохранении')
 		})
 	}

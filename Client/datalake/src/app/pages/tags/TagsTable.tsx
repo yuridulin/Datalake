@@ -43,17 +43,22 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false }: TagsTablePro
 		<Table size='small' dataSource={viewingTags} showSorterTooltip={false} rowKey='id'>
 			<Column<TagInfo>
 				title={
-					<Input
-						placeholder='Поиск по имени тега'
-						value={search}
-						onClick={(e) => {
-							e.preventDefault()
-							e.stopPropagation()
-						}}
-						onChange={(e) => {
-							setSearch(e.target.value)
-						}}
-					/>
+					<div style={{ display: 'flex', alignItems: 'center' }}>
+						<div style={{ padding: '0 1em' }}>Название</div>
+						<div style={{ width: '100%' }}>
+							<Input
+								placeholder='Поиск...'
+								value={search}
+								onClick={(e) => {
+									e.preventDefault()
+									e.stopPropagation()
+								}}
+								onChange={(e) => {
+									setSearch(e.target.value)
+								}}
+							/>
+						</div>
+					</div>
 				}
 				dataIndex='name'
 				defaultSortOrder='ascend'

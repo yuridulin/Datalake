@@ -1,15 +1,23 @@
 ﻿using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using LinqToDB.Mapping;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
+using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
 namespace Datalake.Database.Tables;
 
 /// <summary>
 /// Запись в таблице истории значений тегов
 /// </summary>
-[Table]
-public class TagHistory
+[Table(TableName), LinqToDB.Mapping.Table(TableName), Keyless]
+public record class TagHistory
 {
+	const string TableName = "TagsHistory";
+
+	// поля в БД
+
 	/// <summary>
 	/// Идентификатор тега
 	/// </summary>
@@ -39,20 +47,4 @@ public class TagHistory
 	/// </summary>
 	[Column, NotNull]
 	public TagQuality Quality { get; set; } = TagQuality.Good;
-
-	/// <inheritdoc/>
-	public override int GetHashCode()
-	{
-		int hashQuality = Quality.GetHashCode();
-		int hashText = Text?.GetHashCode() ?? 0;
-		int hashNumber = Number.GetHashCode();
-
-		return hashQuality ^ hashText ^ hashNumber;
-	}
-
-	/// <inheritdoc/>
-	public override bool Equals(object? obj)
-	{
-		return obj is TagHistory history && GetHashCode() == history.GetHashCode();
-	}
 }

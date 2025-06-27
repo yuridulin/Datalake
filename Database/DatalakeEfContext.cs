@@ -229,6 +229,11 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 	public virtual DbSet<TagInput> TagInputs { get; set; }
 
 	/// <summary>
+	/// Гипер-таблица архивных значений тегов
+	/// </summary>
+	public virtual DbSet<TagHistory> TagsHistory { get; set; }
+
+	/// <summary>
 	/// Таблица пользователей
 	/// </summary>
 	public virtual DbSet<User> Users { get; set; }

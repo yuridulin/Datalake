@@ -12,9 +12,12 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице записей аудита
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Log
+public record class Log
 {
 	const string TableName = "Logs";
+
+	/// <summary>Конструктор для LinqToDB</summary>
+	public Log() { }
 
 	// поля в БД
 

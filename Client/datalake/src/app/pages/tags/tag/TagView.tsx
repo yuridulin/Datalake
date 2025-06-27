@@ -19,6 +19,7 @@ import {
 	SourceType,
 	TagAggregation,
 	TagInfo,
+	TagQuality,
 	ValueRecord,
 } from '../../../../api/swagger/data-contracts'
 import { useInterval } from '../../../../hooks/useInterval'
@@ -69,8 +70,10 @@ const TagView = observer(() => {
 			.then((res) => {
 				const newViewValues = {} as Record<number, ValueRecord>
 				res.data[0].tags.forEach((tag) => {
-					newViewValues[tag.id] = tag.values[0]
-					if (tag.guid === id) setThisTagValue(tag.values[0])
+					newViewValues[tag.id] = tag.values.length
+						? tag.values[0]
+						: { date: '', dateString: '', quality: TagQuality.BadNoValues, value: null }
+					if (tag.guid === id) setThisTagValue(newViewValues[tag.id])
 				})
 				setViewValues(newViewValues)
 			})

@@ -1,5 +1,9 @@
-﻿using Datalake.Database.Extensions;
-using Datalake.Database.Repositories;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.Constants;
+using Datalake.Database.Extensions;
+using Datalake.Database.Functions;
+using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Queries;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
@@ -31,15 +35,105 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		TagCreateRequest tagCreateRequest)
 	{
 		if (tagCreateRequest.SourceId.HasValue && tagCreateRequest.SourceId.Value > 0)
-			AccessRepository.ThrowIfNoAccessToSource(user, AccessType.Manager, tagCreateRequest.SourceId.Value);
+			AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Manager, tagCreateRequest.SourceId.Value);
 
 		if (tagCreateRequest.BlockId.HasValue)
-			AccessRepository.ThrowIfNoAccessToBlock(user, AccessType.Manager, tagCreateRequest.BlockId.Value);
+			AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, tagCreateRequest.BlockId.Value);
 
 		if ((!tagCreateRequest.SourceId.HasValue || tagCreateRequest.SourceId.Value <= 0) && !tagCreateRequest.BlockId.HasValue)
-			AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
 
 		return await ProtectedCreateAsync(db, user.Guid, tagCreateRequest);
+	}
+
+	/// <summary>
+	/// Получение информации о теге
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid"></param>
+	/// <returns></returns>
+	public TagInfo Read(UserAuthInfo user, Guid guid)
+	{
+		var rule = AccessChecks.GetAccessToTag(user, guid);
+		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			throw Errors.NoAccess;
+
+		var tag = dataStore.State.TagsInfoWithSources()
+			.FirstOrDefault(x => x.Guid == guid)
+			?? throw new NotFoundException($"Тег {guid}");
+
+		tag.AccessRule = rule;
+
+		return tag;
+	}
+
+	/// <summary>
+	/// Получение информации о тегах с поддержкой фильтров
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <param name="id">Идентификаторы тегов</param>
+	/// <param name="names">Имена тегов</param>
+	/// <param name="guids">Глобальные идентификаторы тегов</param>
+	/// <returns>Список информации о тегах</returns>
+	[LogExecutionTime]
+	public TagInfo[] ReadAll(UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
+	{
+		var tagsChain = dataStore.State.TagsInfoWithSources();
+
+		if (sourceId.HasValue)
+		{
+			tagsChain = tagsChain.Where(x => sourceId.Value == x.SourceId);
+		}
+		if (id?.Length > 0)
+		{
+			tagsChain = tagsChain.Where(x => id.Contains(x.Id));
+		}
+		if (names?.Length > 0)
+		{
+			tagsChain = tagsChain.Where(x => names.Contains(x.Name));
+		}
+		if (guids?.Length > 0)
+		{
+			tagsChain = tagsChain.Where(x => guids.Contains(x.Guid));
+		}
+
+		var tags = tagsChain.ToArray();
+
+		List<TagInfo> tagsWithAccess = [];
+		foreach (var tag in tags)
+		{
+			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Guid);
+			if (tag.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				tagsWithAccess.Add(tag);
+		}
+
+		return tagsWithAccess.ToArray();
+	}
+
+	/// <summary>
+	/// Получение тегов, которые можно использовать как входные параметры для расчета значения
+	/// </summary>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="guid">Идентификатор тега</param>
+	/// <returns>Список информации о тегах</returns>
+	public TagAsInputInfo[] ReadPossibleInputs(UserAuthInfo user, Guid guid)
+	{
+		var tags = dataStore.State.TagsInfoAsPossibleInputs();
+
+		// TODO: рекурсивный обход. Нужно исключить циклические зависимости
+		if (guid.Equals(Guid.Empty))
+		{ }
+
+		List<TagAsInputInfo> tagsWithAccess = [];
+		foreach (var tag in tags)
+		{
+			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Guid);
+			if (tag.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				tagsWithAccess.Add(tag);
+		}
+
+		return tagsWithAccess.ToArray();
 	}
 
 	/// <summary>
@@ -55,7 +149,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		Guid guid,
 		TagUpdateRequest updateRequest)
 	{
-		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
+		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
 
 		await ProtectedUpdateAsync(db, user.Guid, guid, updateRequest);
 	}
@@ -71,7 +165,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		UserAuthInfo user,
 		Guid guid)
 	{
-		AccessRepository.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
+		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
 
 		await ProtectedDeleteAsync(db, user.Guid, guid);
 	}
@@ -92,18 +186,18 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		if (!createRequest.SourceId.HasValue)
 			throw new InvalidValueException(message: "необходимо выбрать источник");
 
-		DatalakeDataState currentState;
 		Source? source = null;
 		Block? block = null;
 		BlockTag? relationToBlock = null;
 		Tag createdTag;
 
 		// Блокируем стейт до завершения обновления
+		DatalakeDataState currentState;
 		using (await dataStore.AcquireWriteLockAsync())
 		{
-			// Проверки на актуальном стейте
 			currentState = dataStore.State;
 
+			// Проверки на актуальном стейте
 			if (!createRequest.SourceId.HasValue && !createRequest.BlockId.HasValue)
 				throw new InvalidValueException(message: "тег не может быть создан без привязок, нужно указать или источник, или блок");
 
@@ -207,9 +301,6 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		}
 
 		// Возвращение ответа
-		Tag? sourceTag;
-		Source? sourceTagSource;
-
 		var createdTagInfo = new TagInfo
 		{
 			Id = createdTag.Id,
@@ -249,14 +340,14 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			SourceItem = createdTag.SourceItem,
 			SourceType = source != null ? source.Type : SourceType.NotSet,
 			SourceName = source != null ? source.Name : "Unknown",
-			SourceTag = !currentState.TagsById.TryGetValue(createdTag.SourceTagId ?? 0, out sourceTag) ? null : new TagSimpleInfo
+			SourceTag = !currentState.TagsById.TryGetValue(createdTag.SourceTagId ?? 0, out Tag? sourceTag) ? null : new TagSimpleInfo
 			{
 				Id = sourceTag.Id,
 				Frequency = sourceTag.Frequency,
 				Guid = sourceTag.GlobalGuid,
 				Name = sourceTag.Name,
 				Type = sourceTag.Type,
-				SourceType = !currentState.SourcesById.TryGetValue(sourceTag.SourceId, out sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
+				SourceType = !currentState.SourcesById.TryGetValue(sourceTag.SourceId, out Source? sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
 			},
 			Aggregation = createdTag.Aggregation,
 			AggregationPeriod = createdTag.AggregationPeriod,
@@ -398,7 +489,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 
 			try
 			{
-				var createdTagBag = await db.Tags
+				int records = await db.Tags
 					.Where(x => x.GlobalGuid == guid)
 					.Set(x => x.Name, updateRequest.Name)
 					.Set(x => x.Description, updateRequest.Description)
@@ -415,9 +506,9 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.Set(x => x.SourceTagId, updateRequest.SourceTagId)
 					.Set(x => x.Aggregation, updateRequest.Aggregation)
 					.Set(x => x.AggregationPeriod, updateRequest.AggregationPeriod)
-					.UpdateWithOutputAsync();
+					.UpdateAsync();
 
-				if (createdTagBag.Length != 1)
+				if (records != 1)
 					throw new DatabaseException($"Не удалось сохранить тег {guid}", DatabaseStandartError.UpdatedZero);
 
 				await db.TagInputs

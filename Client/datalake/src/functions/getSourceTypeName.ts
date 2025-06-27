@@ -10,6 +10,12 @@ function getSourceTypeName(sourceType: SourceType) {
 			return 'Inopc'
 		case SourceType.System:
 			return 'Служебный'
+		case SourceType.Aggregated:
+			return 'Агрегатор'
+		case SourceType.Manual:
+			return 'Ручной ввод'
+		case SourceType.Calculated:
+			return 'Вычислитель'
 		default:
 			return 'Не определён'
 	}

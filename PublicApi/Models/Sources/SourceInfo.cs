@@ -26,6 +26,12 @@ public class SourceInfo : SourceSimpleInfo, IProtectedEntity
 	[Required]
 	public SourceType Type { get; set; }
 
+	/// <summary>
+	/// Источник отмечен как удаленный
+	/// </summary>
+	[Required]
+	public required bool IsDisabled { get; set; }
+
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }
