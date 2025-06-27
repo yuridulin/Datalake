@@ -4,7 +4,7 @@ using Datalake.Server.Services.Maintenance;
 
 namespace Datalake.Server.Services.Collection.Collectors;
 
-internal class SystemCollector(
+internal class ManualCollector(
 	SourceWithTagsInfo source,
 	SourcesStateService sourcesStateService,
 	ILogger<SystemCollector> logger) : CollectorBase(source.Name, source, sourcesStateService, logger)
@@ -14,3 +14,4 @@ internal class SystemCollector(
 		await WriteAsync([]);
 	}
 }
+

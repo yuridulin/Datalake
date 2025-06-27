@@ -4,7 +4,7 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Collection.Abstractions;
-using Datalake.Server.Services.StateManager;
+using Datalake.Server.Services.Maintenance;
 using NCalc;
 
 namespace Datalake.Server.Services.Collection.Collectors;
@@ -13,48 +13,28 @@ internal class CalculateCollector : CollectorBase
 {
 	public CalculateCollector(
 		DatalakeCurrentValuesStore valuesStore,
-		SourceWithTagsInfo source,
 		TagsStateService tagsStateService,
-		ILogger<CalculateCollector> logger) : base("Расчетные значения", source, logger)
+		SourceWithTagsInfo source,
+		SourcesStateService sourcesStateService,
+		ILogger<CalculateCollector> logger) : base("Расчетные значения", source, sourcesStateService, logger)
 	{
-		_inputs = [];
-		_expressions = [];
-		_tokenSource = new CancellationTokenSource();
 		_valuesStore = valuesStore;
-
-		foreach (var tag in source.Tags)
-		{
-			var scopedTag = new TagExpressionScope
+		_expressions = source.Tags
+			.Select(tag =>
 			{
-				Guid = tag.Guid,
-				Name = tag.Name,
-				Type = tag.Type,
-				Expression = new Expression(tag.Formula)
-			};
+				var expresssion = new Expression(tag.Formula);
+				expresssion.EvaluateParameter += (name, args) => Expression_EvaluateParameter(name, args, tag, tagsStateService);
 
-			scopedTag.Expression.EvaluateParameter += (name, args) => Expression_EvaluateParameter(name, args, tag, tagsStateService);
-
-			var initial = _valuesStore.Get(tag.Id);
-
-			if (scopedTag.Type == TagType.Number)
-				scopedTag.PreviousNumber = initial?.Number;
-			else
-				scopedTag.PreviousValue = initial?.Text;
-
-			_expressions.Add(tag.Id, scopedTag);
-
-			foreach (var input in tag.FormulaInputs)
-				_inputs.Add(input.InputTagId);
-		}
+				return (tag, expresssion);
+			})
+			.ToArray();
 	}
-
-
 
 	public override void Start(CancellationToken stoppingToken)
 	{
-		if (_expressions.Count == 0)
+		if (_expressions.Length == 0)
 		{
-			_logger.LogWarning("Сборщик \"{name}\" не имеет правил агрегирования и не будет запущен", _name);
+			_logger.LogWarning("Сборщик \"{name}\" не имеет правил расчета и не будет запущен", _name);
 			return;
 		}
 
@@ -64,10 +44,8 @@ internal class CalculateCollector : CollectorBase
 	}
 
 
-	private readonly CancellationTokenSource _tokenSource;
 	private readonly DatalakeCurrentValuesStore _valuesStore;
-	private readonly Dictionary<int, TagExpressionScope> _expressions;
-	private readonly HashSet<int> _inputs;
+	private readonly (SourceTagInfo tag, Expression expression)[] _expressions;
 
 	private void Expression_EvaluateParameter(string name, NCalc.Handlers.ParameterArgs args, SourceTagInfo tag, TagsStateService tagsStateService)
 	{
@@ -84,85 +62,51 @@ internal class CalculateCollector : CollectorBase
 		}
 	}
 
-	private async Task Work()
+	protected override async Task Work()
 	{
-		_logger.LogDebug("Старт вычислителя");
+		List<ValueWriteRequest> batch = new();
+		var now = DateFormats.GetCurrentDateTime();
 
-		while (!_tokenSource.Token.IsCancellationRequested)
+		foreach (var (tag, expression) in _expressions)
 		{
+			var record = new ValueWriteRequest
+			{
+				Date = now,
+				Guid = tag.Guid,
+				Id = tag.Id,
+				Name = tag.Name,
+				Value = null,
+				Quality = TagQuality.Bad_NoConnect,
+			};
+
 			try
 			{
-				List<ValueWriteRequest> batch = new();
-				var now = DateFormats.GetCurrentDateTime();
-				var countGood = 0;
+				var result = expression.Evaluate();
 
-				foreach (var (tagId, tagScope) in _expressions)
+				if (tag.Type == TagType.Number)
 				{
-					bool isCalculatedCorrectly = true;
-					object? result = null;
-					try
-					{
-						result = tagScope.Expression.Evaluate();
-						countGood++;
-					}
-					catch
-					{
-						isCalculatedCorrectly = false;
-					}
-
-					switch (tagScope.Type)
-					{
-						case TagType.Number:
-							float value = Convert.ToSingle(result);
-							if (AreAlmostEqual(value, tagScope.PreviousNumber))
-								continue;
-							tagScope.PreviousNumber = value;
-							break;
-
-						default:
-							if (Equals(result, tagScope.PreviousValue))
-								continue;
-							tagScope.PreviousValue = result;
-							break;
-					}
-
-					batch.Add(new ValueWriteRequest
-					{
-						Date = now,
-						Id = tagId,
-						Guid = tagScope.Guid,
-						Name = tagScope.Name,
-						Quality = isCalculatedCorrectly ? TagQuality.Good : TagQuality.Bad,
-						Value = result,
-					});
+					record.Value = result == null ? null : Convert.ToSingle(result);
+				}
+				else if (tag.Type == TagType.String)
+				{
+					record.Value = result == null ? null : Convert.ToString(result);
+				}
+				else if (tag.Type == TagType.Boolean)
+				{
+					record.Value = result == null ? null : Convert.ToString(result);
 				}
 
-				await WriteAsync(batch);
+				record.Quality = TagQuality.Good;
 			}
 			catch (Exception ex)
 			{
-				_logger.LogWarning("Ошибка в вычислителе: {message}", ex.Message);
+				record.Quality = TagQuality.Bad_NoValues;
+				record.Value = ex.Message;
 			}
-			finally
-			{
-				await Task.Delay(1000);
-			}
+
+			batch.Add(record);
 		}
-	}
 
-	private static bool AreAlmostEqual(float? value1, float? value2, double epsilon = 0.00001)
-	{
-		var rounded = Math.Abs((value1 ?? 0) - (value2 ?? 0));
-		return rounded < epsilon;
-	}
-
-	private class TagExpressionScope
-	{
-		public required Guid Guid;
-		public required string Name;
-		public required TagType Type;
-		public required Expression Expression;
-		public float? PreviousNumber;
-		public object? PreviousValue;
+		await WriteAsync(batch);
 	}
 }

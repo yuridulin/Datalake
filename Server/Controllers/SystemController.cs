@@ -10,8 +10,8 @@ using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Settings;
 using Datalake.Server.Controllers.Base;
-using Datalake.Server.Services.StateManager;
-using Datalake.Server.Services.StateManager.Models;
+using Datalake.Server.Services.Maintenance;
+using Datalake.Server.Services.Maintenance.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 

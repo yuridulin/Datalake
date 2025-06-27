@@ -3,8 +3,8 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Collection.Abstractions;
+using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
-using Datalake.Server.Services.StateManager;
 
 namespace Datalake.Server.Services.Collection.Collectors;
 
@@ -12,15 +12,11 @@ internal class InopcCollector : CollectorBase
 {
 	public InopcCollector(
 		ReceiverService receiverService,
-		SourcesStateService sourcesStateService,
 		SourceWithTagsInfo source,
-		ILogger<InopcCollector> logger) : base(source.Name, source, logger)
+		SourcesStateService sourcesStateService,
+		ILogger<InopcCollector> logger) : base(source.Name, source, sourcesStateService, logger)
 	{
 		_receiverService = receiverService;
-		_stateService = sourcesStateService;
-		_address = source.Address ?? throw new InvalidOperationException();
-		_tokenSource = new CancellationTokenSource();
-		_id = source.Id;
 
 		_itemsToSend = source.Tags
 			.Where(x => !string.IsNullOrEmpty(x.Item))
@@ -48,6 +44,12 @@ internal class InopcCollector : CollectorBase
 			return;
 		}
 
+		if (string.IsNullOrEmpty(_source.Address))
+		{
+			_logger.LogWarning("Сборщик \"{name}\" не имеет адреса для получения данных и не будет запущен", _name);
+			return;
+		}
+
 		Task.Run(Work, stoppingToken);
 
 		base.Start(stoppingToken);
@@ -56,92 +58,64 @@ internal class InopcCollector : CollectorBase
 
 	#region Реализация
 
-	private readonly int _id;
-	private readonly string _address;
 	private readonly List<Item> _itemsToSend;
 	private readonly ReceiverService _receiverService;
-	private readonly SourcesStateService _stateService;
 	private readonly Dictionary<string, SourceTagInfo[]> _itemsTags;
-	private readonly CancellationTokenSource _tokenSource;
 
-	private async Task Work()
+	protected override async Task Work()
 	{
-		_logger.LogDebug("Старт опроса INOPC [{id}][{address}]", _id, _address);
+		var now = DateFormats.GetCurrentDateTime();
+		List<Item> tags = [];
 
-		while (!_tokenSource.Token.IsCancellationRequested)
+		foreach (var item in _itemsToSend)
 		{
-			try
+			if (item.LastAsk == null)
 			{
-				var now = DateFormats.GetCurrentDateTime();
-				List<Item> tags = [];
+				tags.Add(item);
+			}
+			else
+			{
+				var diff = (now - item.LastAsk.Value).TotalSeconds;
 
-				foreach (var item in _itemsToSend)
+				var needToAsk = item.Frequency switch
 				{
-					if (item.LastAsk == null)
-					{
-						tags.Add(item);
-					}
-					else
-					{
-						var diff = (now - item.LastAsk.Value).TotalSeconds;
+					TagFrequency.NotSet => true,
+					TagFrequency.ByMinute => diff >= 60,
+					TagFrequency.ByHour => diff >= 3600,
+					TagFrequency.ByDay => diff >= 86400,
+				};
 
-						var needToAsk = item.Frequency switch
-						{
-							TagFrequency.NotSet => true,
-							TagFrequency.ByMinute => diff >= 60,
-							TagFrequency.ByHour => diff >= 3600,
-							TagFrequency.ByDay => diff >= 86400,
-						};
-
-						if (needToAsk)
-							tags.Add(item);
-					}
-				}
-
-				if (tags.Count > 0)
-				{
-					var items = tags.Select(x => x.TagName).ToArray();
-
-					var response = await _receiverService.AskInopc(items, _address, true);
-					var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
-					now = DateFormats.GetCurrentDateTime();
-
-					var collectedValues = response.Tags
-						.SelectMany(item => _itemsTags[item.Name]
-							.Select(tagInfo => new ValueWriteRequest
-							{
-								Id = tagInfo.Id,
-								Name = tagInfo.Name,
-								Guid = tagInfo.Guid,
-								Date = now,
-								Quality = item.Quality,
-								Value = item.Value,
-							}))
-						.ToArray();
-
-					await WriteAsync(collectedValues);
-
-					foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
-					{
-						tag.LastAsk = now;
-					}
-				}
-
-				_stateService.UpdateSource(_id, connected: true);
+				if (needToAsk)
+					tags.Add(item);
 			}
-			catch (OperationCanceledException)
+		}
+
+		if (tags.Count > 0)
+		{
+			var items = tags.Select(x => x.TagName).ToArray();
+
+			var response = await _receiverService.AskInopc(items, _source.Address!);
+			var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
+			now = DateFormats.GetCurrentDateTime();
+
+			var collectedValues = response.Tags
+				.SelectMany(item => _itemsTags[item.Name]
+					.Select(tagInfo => new ValueWriteRequest
+					{
+						Id = tagInfo.Id,
+						Name = tagInfo.Name,
+						Guid = tagInfo.Guid,
+						Date = now,
+						Quality = item.Quality,
+						Value = item.Value,
+					}))
+				.ToArray();
+
+			await WriteAsync(collectedValues, response.IsConnected);
+
+			foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
 			{
-				_stateService.UpdateSource(_id, connected: false);
-				break; // Выход при отмене
-			}
-			catch (Exception ex) when (ex is not OperationCanceledException)
-			{
-				_logger.LogWarning("Ошибка в сборщике INOPC [{id}]: {message}", _id, ex.Message);
-				_stateService.UpdateSource(_id, connected: false);
-			}
-			finally
-			{
-				await Task.Delay(1000, _tokenSource.Token);
+				tag.LastAsk = now;
 			}
 		}
 	}

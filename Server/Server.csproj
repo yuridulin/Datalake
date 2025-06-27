@@ -45,7 +45,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="BackgroundServices\" />
 	  <Folder Include="Services\Collection\Models\" />
 	  <Folder Include="storage\logs\" />
 	</ItemGroup>

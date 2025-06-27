@@ -1,9 +1,9 @@
 ﻿using Datalake.Database.InMemory;
 using Datalake.PublicApi.Constants;
-using Datalake.Server.Services.StateManager.Models;
+using Datalake.Server.Services.Maintenance.Models;
 using System.Collections.Concurrent;
 
-namespace Datalake.Server.Services.StateManager;
+namespace Datalake.Server.Services.Maintenance;
 
 /// <summary>
 /// Кэш состояний источников данных

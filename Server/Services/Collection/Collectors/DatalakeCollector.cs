@@ -1,19 +1,15 @@
 ﻿using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.Services.Collection.Abstractions;
+using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 
 namespace Datalake.Server.Services.Collection.Collectors;
 
-/// <summary>
-/// Сборщик данных из ноды Datalake
-/// </summary>
-/// <param name="receiverService">Служба получения данных</param>
-/// <param name="source">Источник</param>
-/// <param name="logger">Служба сообщений</param>
 internal class DatalakeCollector(
 	ReceiverService receiverService,
 	SourceWithTagsInfo source,
-	ILogger<DatalakeCollector> logger) : CollectorBase(source.Name, source, logger)
+	SourcesStateService sourcesStateService,
+	ILogger<DatalakeCollector> logger) : CollectorBase(source.Name, source, sourcesStateService, logger)
 {
 	public override void Start(CancellationToken stoppingToken)
 	{
@@ -25,6 +21,11 @@ internal class DatalakeCollector(
 		catch { }
 
 		base.Start(stoppingToken);
+	}
+
+	protected override Task Work()
+	{
+		return Task.CompletedTask;
 	}
 
 

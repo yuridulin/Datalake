@@ -1,6 +1,6 @@
-﻿using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Models.Sources;
+﻿using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
+using Datalake.Server.Services.Maintenance;
 using System.Threading.Channels;
 
 namespace Datalake.Server.Services.Collection.Abstractions;
@@ -8,19 +8,33 @@ namespace Datalake.Server.Services.Collection.Abstractions;
 /// <summary>
 /// Базовый класс сборщика с реализацией основных механизмов
 /// </summary>
-/// <param name="name">Название источника данных</param>
-/// <param name="source">Данные источника данных, необходимые для запуска сбора</param>
-/// <param name="logger">Служба сообщений</param>
-internal abstract class CollectorBase(
-	string name,
-	SourceWithTagsInfo source,
-	ILogger logger) : ICollector
+internal abstract class CollectorBase : ICollector
 {
-	protected readonly CancellationTokenSource tokenSource = new();
-	protected readonly string _name = $"{name} #{source.Id}";
-	protected readonly ILogger _logger = logger;
-	protected readonly SourceType _sourceType = source.Type;
+	public CollectorBase(
+		string name,
+		SourceWithTagsInfo source,
+		SourcesStateService sourcesStateService,
+		ILogger logger,
+		int workInterval = 1000)
+	{
+		_source = source;
+		_name = $"{name} #{source.Id}";
+		_logger = logger;
+		_stateService = sourcesStateService;
+		_workInterval = workInterval;
+
+		_stateService.UpdateSource(source.Id, false);
+	}
+
+	protected readonly SourcesStateService _stateService;
+	protected readonly SourceWithTagsInfo _source;
+	protected readonly string _name;
+	protected readonly ILogger _logger;
+	private readonly int _workInterval;
+
+	protected readonly CancellationTokenSource _tokenSource = new();
 	protected readonly Channel<IEnumerable<ValueWriteRequest>> _outputChannel = Channel.CreateUnbounded<IEnumerable<ValueWriteRequest>>();
+
 	protected CancellationToken _stoppingToken;
 	private volatile bool _stopped = false;
 
@@ -33,24 +47,40 @@ internal abstract class CollectorBase(
 		_stopped = false;
 		_stoppingToken = stoppingToken;
 		_logger.LogDebug("Сборщик {name} запущен", _name);
+
+		_stateService.UpdateSource(_source.Id, false);
+
+		_ = WorkLoop();
 	}
 
-	/*public virtual void Stop()
+	protected virtual async Task WorkLoop()
 	{
-		if (_stopped)
-			return;
-		_stopped = true;
+		while (!_tokenSource.Token.IsCancellationRequested)
+		{
+			try
+			{
+				await Work();
+				await Task.Delay(_workInterval, _tokenSource.Token);
+			}
+			catch (OperationCanceledException)
+			{
+				await WriteAsync([], false);
+				break; // Выход при отмене
+			}
+			catch (Exception ex) when(ex is not OperationCanceledException)
+			{
+				_logger.LogDebug("Сборщик {name}: {err}", _name, ex.Message);
+				await WriteAsync([], false);
+				await Task.Delay(5000, _tokenSource.Token);
+			}
+		}
+	}
 
-		tokenSource.Cancel();
-		_outputChannel.Writer.Complete();
-
-		_logger.LogDebug("Сборщик {name} остановлен", _name);
-	}*/
+	protected abstract Task Work();
 
 	public virtual void PrepareToStop()
 	{
-		// Устанавливаем флаг остановки
-		tokenSource.Cancel();
+		_tokenSource.Cancel();
 		_logger.LogDebug("Сборщик {name} готовится к остановке", _name);
 	}
 
@@ -60,13 +90,20 @@ internal abstract class CollectorBase(
 			return;
 		_stopped = true;
 
+		_stateService.UpdateSource(_source.Id, false);
+
 		_outputChannel.Writer.Complete();
 		_logger.LogDebug("Сборщик {name} окончательно остановлен", _name);
 	}
 
-	protected virtual async Task WriteAsync(IEnumerable<ValueWriteRequest> values)
+	protected virtual async Task WriteAsync(IEnumerable<ValueWriteRequest> values, bool connected = true)
 	{
-		if (_stopped || tokenSource.IsCancellationRequested || !values.Any())
+		if (_stopped || _tokenSource.IsCancellationRequested)
+			return;
+
+		_stateService.UpdateSource(_source.Id, connected);
+
+		if (!values.Any())
 			return;
 
 		try
@@ -75,7 +112,6 @@ internal abstract class CollectorBase(
 		}
 		catch (ChannelClosedException)
 		{
-			// Корректно игнорируем после остановки
 		}
 	}
 }

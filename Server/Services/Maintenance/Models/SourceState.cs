@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Server.Services.StateManager.Models;
+namespace Datalake.Server.Services.Maintenance.Models;
 
 /// <summary>
 /// Объект состояния источника

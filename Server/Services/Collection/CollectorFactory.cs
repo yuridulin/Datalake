@@ -4,8 +4,8 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.Services.Collection.Abstractions;
 using Datalake.Server.Services.Collection.Collectors;
+using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
-using Datalake.Server.Services.StateManager;
 
 namespace Datalake.Server.Services.Collection;
 
@@ -29,25 +29,46 @@ public class CollectorFactory(
 		return source.Type switch
 		{
 			SourceType.Inopc
-				=> new InopcCollector(receiverService, sourcesStateService, source, loggerFactory.CreateLogger<InopcCollector>()),
+				=> new InopcCollector(
+					receiverService,
+					source,
+					sourcesStateService,
+					loggerFactory.CreateLogger<InopcCollector>()),
 
 			SourceType.Datalake
-				=> new OldDatalakeCollector(receiverService, sourcesStateService, source, loggerFactory.CreateLogger<OldDatalakeCollector>()),
+				=> new OldDatalakeCollector(
+					receiverService,
+					source,
+					sourcesStateService,
+					loggerFactory.CreateLogger<OldDatalakeCollector>()),
 
 			SourceType.Datalake_v2
-				=> new DatalakeCollector(receiverService, source, loggerFactory.CreateLogger<DatalakeCollector>()),
+				=> new DatalakeCollector(
+					receiverService,
+					source,
+					sourcesStateService,
+					loggerFactory.CreateLogger<DatalakeCollector>()),
 
 			SourceType.Calculated
-				=> new CalculateCollector(serviceProvider.GetRequiredService<DatalakeCurrentValuesStore>(), source, tagsStateService, loggerFactory.CreateLogger<CalculateCollector>()),
+				=> new CalculateCollector(
+					serviceProvider.GetRequiredService<DatalakeCurrentValuesStore>(),
+					tagsStateService,
+					source,
+					sourcesStateService,
+					loggerFactory.CreateLogger<CalculateCollector>()),
 
 			SourceType.System
-				=> new SystemCollector(source, loggerFactory.CreateLogger<SystemCollector>()),
+				=> new SystemCollector(
+				source,
+				sourcesStateService,
+				loggerFactory.CreateLogger<SystemCollector>()),
 
 			SourceType.Aggregated
 				=> new AggregateCollector(
 					serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DatalakeContext>(),
-					source,
 					tagsStateService,
+					source,
+					sourcesStateService,
 					loggerFactory.CreateLogger<AggregateCollector>()),
 
 			_ => null,

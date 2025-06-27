@@ -3,8 +3,8 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Collection.Abstractions;
+using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
-using Datalake.Server.Services.StateManager;
 
 namespace Datalake.Server.Services.Collection.Collectors;
 
@@ -12,15 +12,13 @@ internal class OldDatalakeCollector : CollectorBase
 {
 	public OldDatalakeCollector(
 		ReceiverService receiverService,
-		SourcesStateService sourcesStateService,
 		SourceWithTagsInfo source,
-		ILogger<OldDatalakeCollector> logger) : base(source.Name, source, logger)
+		SourcesStateService sourcesStateService,
+		ILogger<OldDatalakeCollector> logger) : base(source.Name, source, sourcesStateService, logger)
 	{
 		_id = source.Id;
 		_receiverService = receiverService;
-		_stateService = sourcesStateService;
 		_address = source.Address ?? throw new InvalidOperationException();
-		_tokenSource = new CancellationTokenSource();
 
 		_itemsToSend = source.Tags
 			.Where(x => !string.IsNullOrEmpty(x.Item))
@@ -72,73 +70,52 @@ internal class OldDatalakeCollector : CollectorBase
 	private readonly string _address;
 	private readonly List<Item> _itemsToSend;
 	private readonly ReceiverService _receiverService;
-	private readonly SourcesStateService _stateService;
-	private readonly CancellationTokenSource _tokenSource;
 	private readonly Dictionary<Guid, ValueWriteRequest> _previousValues;
+	private List<ValueWriteRequest> collectedValues = [];
+	private List<Item> updatedItems = [];
 
-	private async Task Work()
+	protected override async Task Work()
 	{
-		List<ValueWriteRequest> collectedValues;
-		List<Item> updatedItems;
+		var now = DateFormats.GetCurrentDateTime();
+		var items = _itemsToSend
+			.Where(x => x.PeriodInSeconds == 0 || (now - x.LastAsk).TotalSeconds > x.PeriodInSeconds)
+			.ToArray();
 
-		while (!_tokenSource.Token.IsCancellationRequested)
+		if (items.Length > 0)
 		{
-			try
+			var response = await _receiverService.AskInopc([.. items.Select(x => x.TagName)], _address);
+
+			foreach (var value in response.Tags)
 			{
-				collectedValues = [];
-				updatedItems = [];
-
-				var now = DateFormats.GetCurrentDateTime();
-				var items = _itemsToSend
-					.Where(x => x.PeriodInSeconds == 0 || (now - x.LastAsk).TotalSeconds > x.PeriodInSeconds)
-					.ToArray();
-
-				if (items.Length > 0)
+				var item = items.FirstOrDefault(x => x.TagName == value.Name);
+				if (item != null)
 				{
-					var response = await _receiverService.AskInopc([.. items.Select(x => x.TagName)], _address);
-
-					foreach (var value in response.Tags)
+					collectedValues.AddRange(item.Tags.Select(guid => new ValueWriteRequest
 					{
-						var item = items.FirstOrDefault(x => x.TagName == value.Name);
-						if (item != null)
-						{
-							collectedValues.AddRange(item.Tags.Select(guid => new ValueWriteRequest
-							{
-								Date = DateFormats.GetCurrentDateTime(),
-								Name = value.Name,
-								Quality = value.Quality,
-								Guid = guid,
-								Value = value.Value,
-							}));
+						Date = DateFormats.GetCurrentDateTime(),
+						Name = value.Name,
+						Quality = value.Quality,
+						Guid = guid,
+						Value = value.Value,
+					}));
 
-							updatedItems.Add(item);
-						}
-					}
-
-					collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid!.Value]).ToList();
-					foreach (var v in collectedValues)
-						_previousValues[v.Guid!.Value] = v;
-
-					await WriteAsync(collectedValues);
-
-					foreach (var tag in updatedItems)
-					{
-						tag.LastAsk = response.Timestamp;
-					}
+					updatedItems.Add(item);
 				}
+			}
 
-				_stateService.UpdateSource(_id, connected: true);
-			}
-			catch (Exception ex)
+			collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid!.Value]).ToList();
+			foreach (var v in collectedValues)
+				_previousValues[v.Guid!.Value] = v;
+
+			await WriteAsync(collectedValues);
+
+			foreach (var tag in updatedItems)
 			{
-				_logger.LogWarning("Ошибка в сборщике {name}: {message}", _name, ex.Message);
-				_stateService.UpdateSource(_id, connected: false);
-			}
-			finally
-			{
-				await Task.Delay(1000);
+				tag.LastAsk = response.Timestamp;
 			}
 		}
+
+		_stateService.UpdateSource(_id, connected: true);
 	}
 
 	class Item

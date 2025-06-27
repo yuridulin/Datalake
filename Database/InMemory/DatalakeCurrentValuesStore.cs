@@ -53,7 +53,7 @@ public class DatalakeCurrentValuesStore
 			(key, existingValue) =>
 			{
 				bool isIncomingNew = incomingValue.Date > existingValue.Date && (
-					incomingValue.Number != existingValue.Number ||
+					!AreAlmostEqual(incomingValue.Number, existingValue.Number) ||
 					incomingValue.Text != existingValue.Text ||
 					incomingValue.Quality != existingValue.Quality);
 
@@ -67,6 +67,12 @@ public class DatalakeCurrentValuesStore
 			});
 
 		return updated;
+	}
+
+	private static bool AreAlmostEqual(float? value1, float? value2, double epsilon = 0.00001)
+	{
+		var rounded = Math.Abs((value1 ?? 0) - (value2 ?? 0));
+		return rounded < epsilon;
 	}
 }
 

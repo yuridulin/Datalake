@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Attributes;
-using Datalake.Database.Extensions;
+﻿using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.Models;
@@ -32,7 +31,6 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="requests">Список запрошенных тегов с настройками получения</param>
 	/// <returns>Список ответов со значениями тегов</returns>
-	[LogExecutionTime]
 	public async Task<List<ValuesResponse>> GetValuesAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
@@ -77,43 +75,11 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 	/// <param name="db"></param>
 	/// <param name="requests"></param>
 	/// <returns></returns>
-	[LogExecutionTime]
 	public async Task WriteCollectedValuesAsync(DatalakeContext db, IEnumerable<ValueWriteRequest> requests)
-	{
-		List<TagHistory> records = [];
-
-		foreach (var request in requests)
-		{
-			if (dataStore.State.CachedTagsById.TryGetValue(request.Id ?? 0, out var tag))
-			{
-				// проверка на уникальность
-				var record = TagHistoryExtension.CreateFrom(tag, request);
-
-				if (valuesStore.TryUpdate(record.TagId, record))
-					records.Add(record);
-			}
-		}
-
-		await ProtectedWriteValuesAsync(db, records);
-	}
-
-	/// <summary>
-	/// Запись новых значений для указанных тегов
-	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
-	/// <param name="user">Информация о пользователе</param>
-	/// <param name="requests">Список тегов с новыми значениями</param>
-	/// <returns>Список записанных значений</returns>
-	[LogExecutionTime]
-	public async Task<List<ValuesTagResponse>> WriteManualValuesAsync(
-		DatalakeContext db,
-		UserAuthInfo user,
-		ValueWriteRequest[] requests)
 	{
 		var currentState = dataStore.State;
 
-		var trustedRequests = new List<ValueTrustedWriteRequest>();
-		var untrustedRequests = new List<ValuesTagResponse>();
+		List<TagHistory> records = [];
 
 		foreach (var request in requests)
 		{
@@ -127,35 +93,76 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 			if (tag == null)
 				continue;
 
-			currentState.SourcesById.TryGetValue(tag.SourceId, out var source);
+			var record = TagHistoryExtension.CreateFrom(tag, request);
 
-			if (source?.Type == SourceType.Manual && AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Guid))
-			{
-				trustedRequests.Add(new()
-				{
-					Tag = tag,
-					Date = request.Date,
-					Quality = request.Quality,
-					Value = request.Value
-				});
-			}
-			else
-			{
-				untrustedRequests.Add(new()
-				{
-					Guid = tag.Guid,
-					Id = tag.Id,
-					Name = string.Empty,
-					Type = tag.Type,
-					Frequency = tag.Frequency,
-					SourceType = source?.Type ?? SourceType.NotSet,
-					Values = [],
-					NoAccess = true,
-				});
-			}
+			// проверка на уникальность (новизну)
+			if (!valuesStore.TryUpdate(record.TagId, record))
+				continue;
+
+			records.Add(record);
 		}
 
-		return await ProtectedWriteManualValuesAsync(db, trustedRequests);
+		await ProtectedWriteValuesAsync(db, records);
+	}
+
+	/// <summary>
+	/// Запись новых значений для указанных тегов
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="user">Информация о пользователе</param>
+	/// <param name="requests">Список тегов с новыми значениями</param>
+	/// <returns>Список записанных значений</returns>
+	public async Task<List<ValuesTagResponse>> WriteManualValuesAsync(
+		DatalakeContext db,
+		UserAuthInfo user,
+		ValueWriteRequest[] requests)
+	{
+		var currentState = dataStore.State;
+
+		List<ValuesTagResponse> responses = [];
+		List<TagHistory> recordsToWrite = [];
+
+		foreach (var request in requests)
+		{
+			TagCacheInfo? tag = null;
+
+			if (request.Id.HasValue)
+				currentState.CachedTagsById.TryGetValue(request.Id.Value, out tag);
+			else if (request.Guid.HasValue)
+				currentState.CachedTagsByGuid.TryGetValue(request.Guid.Value, out tag);
+
+			if (tag == null || tag.SourceType != SourceType.Manual || AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Guid))
+				continue;
+			
+			var record = TagHistoryExtension.CreateFrom(tag, request);
+			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
+
+			recordsToWrite.Add(record);
+			valuesStore.TryUpdate(record.TagId, record);
+
+			responses.Add(new ValuesTagResponse
+			{
+				Id = tag.Id,
+				Guid = tag.Guid,
+				Name = tag.Name,
+				Type = tag.Type,
+				Frequency = tag.Frequency,
+				SourceType = tag.SourceType,
+				Values = [
+					new ValueRecord
+					{
+						Date = record.Date,
+						DateString = record.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
+						Quality = record.Quality,
+						Value = record.GetTypedValue(tag.Type),
+					}
+				]
+			});
+		}
+
+		await ProtectedWriteValuesAsync(db, recordsToWrite);
+
+		return responses;
 	}
 
 	#endregion
@@ -621,58 +628,11 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 	#region Запись
 
 	/// <summary>
-	/// Запись новых значений, с обновлением текущих при необходимости
-	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
-	/// <param name="requests">Список запросов на запись</param>
-	/// <returns>Ответ со списком значений, как при чтении</returns>
-	/// <exception cref="NotFoundException">Тег не найден</exception>
-	private async Task<List<ValuesTagResponse>> ProtectedWriteManualValuesAsync(
-		DatalakeContext db,
-		List<ValueTrustedWriteRequest> requests)
-	{
-		List<ValuesTagResponse> responses = [];
-		List<TagHistory> recordsToWrite = [];
-
-		foreach (var request in requests)
-		{
-			var record = TagHistoryExtension.CreateFrom(request);
-			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
-
-			recordsToWrite.Add(record);
-			valuesStore.TryUpdate(record.TagId, record);
-
-			responses.Add(new ValuesTagResponse
-			{
-				Id = request.Tag.Id,
-				Guid = request.Tag.Guid,
-				Name = request.Tag.Name,
-				Type = request.Tag.Type,
-				Frequency = request.Tag.Frequency,
-				SourceType = request.Tag.SourceType,
-				Values = [
-					new ValueRecord
-					{
-						Date = record.Date,
-						DateString = record.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
-						Quality = record.Quality,
-						Value = record.GetTypedValue(request.Tag.Type),
-					}
-				]
-			});
-		}
-
-		await ProtectedWriteValuesAsync(db, recordsToWrite);
-
-		return responses;
-	}
-
-	/// <summary>
 	/// Запись значений в партицию через временную таблицу
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="records">Список записей для ввода</param>
-	public async Task ProtectedWriteValuesAsync(
+	internal static async Task ProtectedWriteValuesAsync(
 		DatalakeContext db,
 		List<TagHistory> records)
 	{
@@ -680,11 +640,6 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 			return;
 
 		await db.TagsHistory.BulkCopyAsync(records);
-
-		foreach (var record in records)
-		{
-			valuesStore.TryUpdate(record.TagId, record);
-		}
 	}
 
 	#endregion

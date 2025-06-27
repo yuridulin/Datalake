@@ -5,7 +5,7 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Collection.Abstractions;
-using Datalake.Server.Services.StateManager;
+using Datalake.Server.Services.Maintenance;
 
 namespace Datalake.Server.Services.Collection.Collectors;
 
@@ -13,9 +13,10 @@ internal class AggregateCollector : CollectorBase
 {
 	public AggregateCollector(
 		DatalakeContext db,
-		SourceWithTagsInfo source,
 		TagsStateService tagsStateService,
-		ILogger<AggregateCollector> logger) : base("Агрегатные значения", source, logger)
+		SourceWithTagsInfo source,
+		SourcesStateService sourcesStateService,
+		ILogger<AggregateCollector> logger) : base("Агрегатные значения", source, sourcesStateService, logger, 100)
 	{
 		_db = db;
 		_tagsStateService = tagsStateService;
@@ -63,52 +64,39 @@ internal class AggregateCollector : CollectorBase
 	private int _lastHour = -1;
 	private int _lastDay = -1;
 
-	private async Task Work()
+	protected override async Task Work()
 	{
-		while (!tokenSource.Token.IsCancellationRequested)
+		var now = DateFormats.GetCurrentDateTime();
+
+		var minute = now.Minute;
+		var hour = now.Hour;
+		var day = now.Day;
+
+
+		List<ValueWriteRequest> ValueWriteRequests = new();
+
+		if (_lastMinute != minute)
 		{
-			var now = DateFormats.GetCurrentDateTime();
-
-			var minute = now.Minute;
-			var hour = now.Hour;
-			var day = now.Day;
-
-			try
-			{
-				List<ValueWriteRequest> ValueWriteRequests = new();
-
-				if (_lastMinute != minute)
-				{
-					_logger.LogInformation("Расчет минутных значений: {now}", now);
-					ValueWriteRequests.AddRange(await GetAggregated(_minuteRules, now, AggregationPeriod.Munite));
-					_lastMinute = minute;
-				}
-
-				if (_lastHour != hour)
-				{
-					_logger.LogInformation("Расчет часовых значений: {now}", now);
-					ValueWriteRequests.AddRange(await GetAggregated(_hourRules, now, AggregationPeriod.Hour));
-					_lastHour = hour;
-				}
-
-				if (_lastDay != day)
-				{
-					_logger.LogInformation("Расчет суточных значений: {now}", now);
-					ValueWriteRequests.AddRange(await GetAggregated(_dayRules, now, AggregationPeriod.Day));
-					_lastDay = day;
-				}
-
-				await WriteAsync(ValueWriteRequests);
-			}
-			catch (Exception ex)
-			{
-				_logger.LogWarning("Ошибка при расчете агрегатных значений: {message}", ex.Message);
-			}
-			finally
-			{
-				await Task.Delay(100);
-			}
+			_logger.LogInformation("Расчет минутных значений: {now}", now);
+			ValueWriteRequests.AddRange(await GetAggregated(_minuteRules, now, AggregationPeriod.Munite));
+			_lastMinute = minute;
 		}
+
+		if (_lastHour != hour)
+		{
+			_logger.LogInformation("Расчет часовых значений: {now}", now);
+			ValueWriteRequests.AddRange(await GetAggregated(_hourRules, now, AggregationPeriod.Hour));
+			_lastHour = hour;
+		}
+
+		if (_lastDay != day)
+		{
+			_logger.LogInformation("Расчет суточных значений: {now}", now);
+			ValueWriteRequests.AddRange(await GetAggregated(_dayRules, now, AggregationPeriod.Day));
+			_lastDay = day;
+		}
+
+		await WriteAsync(ValueWriteRequests);
 	}
 
 	private async Task<List<ValueWriteRequest>> GetAggregated(TagAggregationRule[] rules, DateTime date, AggregationPeriod period)

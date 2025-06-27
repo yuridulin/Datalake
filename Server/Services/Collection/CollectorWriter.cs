@@ -136,7 +136,6 @@ public class CollectorWriter(
 			try
 			{
 				await valuesRepository.WriteCollectedValuesAsync(db, batch);
-				logger.LogDebug("Записано {Count} значений", batch.Count);
 				return; // Успешная запись
 			}
 			catch (Exception ex)
