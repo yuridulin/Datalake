@@ -1,11 +1,18 @@
 import api from '@/api/swagger-api'
 import BlockButton from '@/app/components/buttons/BlockButton'
+import { useInterval } from '@/hooks/useInterval'
 import { user } from '@/state/user'
-import { Button, Table, TableColumnsType } from 'antd'
+import { Button, Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { AccessType, BlockNestedTagInfo, BlockSimpleInfo, BlockTreeInfo } from '../../../api/swagger/data-contracts'
+import {
+	AccessType,
+	BlockNestedTagInfo,
+	BlockSimpleInfo,
+	BlockTreeInfo,
+	BlockWithTagsInfo,
+} from '../../../api/swagger/data-contracts'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 
@@ -14,64 +21,106 @@ type DataType = BlockSimpleInfo & {
 	children?: DataType[]
 }
 
-function transformBlockTreeInfo(blocks: BlockTreeInfo[]): DataType[] {
-	const data = blocks.map((block) => {
-		const transformedBlock: DataType = {
-			id: block.id,
-			name: block.name,
-			guid: block.guid,
-			tags: block.tags,
-		}
+const makeTree = (blocks: BlockWithTagsInfo[]): [DataType[], Record<number, string>] => {
+	const meta = {} as Record<number, string>
 
-		const children = transformBlockTreeInfo(block.children)
-		if (children.length > 0) {
-			transformedBlock.children = children
-		}
+	const readBlockChildren = (blocks: BlockWithTagsInfo[], id: number | null, prefix?: string): DataType[] =>
+		blocks
+			.filter((block) => block.parentId === id)
+			.map((block) => {
+				const fullName = prefix ? `${prefix} > ${block.name}` : block.name
+				meta[block.id] = fullName
+				return {
+					...block,
+					fullName: fullName,
+					children: readBlockChildren(blocks, block.id, fullName),
+				} as BlockTreeInfo
+			})
+			.sort((a, b) => a.name.localeCompare(b.name))
 
-		return transformedBlock
-	})
+	const hierarchy = readBlockChildren(blocks, null)
 
-	return data.sort((a, b) => a.name.localeCompare(b.name))
+	return [hierarchy, meta]
 }
 
-const columns: TableColumnsType<DataType> = [
-	{
-		title: 'Название',
-		dataIndex: 'name',
-		width: '40%',
-		render: (_, record: DataType) => <BlockButton block={record} />,
-		sorter: (a, b) => a.name.localeCompare(b.name),
-		defaultSortOrder: 'ascend',
-	},
-	{
-		title: 'Описание',
-		dataIndex: 'description',
-	},
-	{
-		title: 'Количество тегов',
-		dataIndex: 'tags',
-		render: (_, record: DataType) => record.tags.length,
-		sorter: (a, b) => (a.tags.length > b.tags.length ? 1 : -1),
-	},
-]
-
 const BlocksTree = observer(() => {
-	const [data, setData] = useState([] as DataType[])
+	const [view, setView] = useState([] as DataType[])
+	const [data, setData] = useState([] as BlockWithTagsInfo[])
+	const [tree, setTree] = useState([] as DataType[])
+	const [meta, setMeta] = useState({} as Record<number, string>)
+	const [search, setSearch] = useState('')
+
+	const columns: TableColumnsType<DataType> = [
+		{
+			title: (
+				<div style={{ display: 'flex', alignItems: 'center' }}>
+					<div style={{ padding: '0 1em' }}>Название</div>
+					<div style={{ width: '100%' }}>
+						<Input
+							placeholder='Поиск...'
+							value={search}
+							onClick={(e) => {
+								e.preventDefault()
+								e.stopPropagation()
+							}}
+							onChange={(e) => {
+								setSearch(e.target.value)
+							}}
+						/>
+					</div>
+				</div>
+			),
+			dataIndex: 'name',
+			width: '40%',
+			render: (_, record: DataType) => <BlockButton block={record} />,
+			sorter: (a, b) => a.name.localeCompare(b.name),
+			defaultSortOrder: 'ascend',
+		},
+		{
+			title: 'Описание',
+			dataIndex: 'description',
+		},
+		{
+			title: 'Количество тегов',
+			dataIndex: 'tags',
+			render: (_, record: DataType) => record.tags.length,
+			sorter: (a, b) => (a.tags.length > b.tags.length ? 1 : -1),
+		},
+	]
 
 	function load() {
 		api
-			.blocksReadAsTree()
-			.then((res) => setData(transformBlockTreeInfo(res.data)))
+			.blocksReadAll()
+			.then((res) => setData(res.data))
 			.catch(() => setData([]))
 	}
 
 	function createBlock() {
-		api.blocksCreateEmpty().then(() => load())
+		api.blocksCreateEmpty().then(load)
 	}
 
 	useEffect(load, [])
-	//useInterval(load, 300)
+	useInterval(load, 60000)
 
+	useEffect(() => {
+		const [treeData, treeMeta] = makeTree(data)
+		setTree(treeData)
+		setMeta(treeMeta)
+	}, [data])
+
+	useEffect(
+		() =>
+			setView(
+				search.length > 0
+					? data
+							.filter((x) => !!x.name && x.name.toLowerCase().includes(search.toLowerCase()))
+							.map((x) => ({ ...x, name: meta[x.id] ?? x.name }))
+					: tree,
+			),
+		[search, data, meta, tree],
+	)
+
+	//#region Expand
 	const expandKey = 'expandedBlocks'
 	const [expandedRowKeys, setExpandedRowKeys] = useState(() => {
 		const savedKeys = localStorage.getItem(expandKey)
@@ -86,6 +135,8 @@ const BlocksTree = observer(() => {
 	useEffect(() => {
 		localStorage.setItem(expandKey, JSON.stringify(expandedRowKeys))
 	}, [expandedRowKeys])
+
+	//#endregion
 
 	return (
 		<>
@@ -105,9 +156,10 @@ const BlocksTree = observer(() => {
 				Блоки верхнего уровня
 			</PageHeader>
 			<Table
+				showSorterTooltip={false}
 				size='small'
 				columns={columns}
-				dataSource={data}
+				dataSource={view}
 				pagination={false}
 				expandable={{
 					expandedRowKeys,
