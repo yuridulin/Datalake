@@ -67,7 +67,9 @@ const SourcesList = observer(() => {
 					}
 					return agg
 				}, [])
-				setSources([system, user])
+				system.children = system.children?.sort((a, b) => a.name.localeCompare(b.name))
+				user.children = user.children?.sort((a, b) => a.name.localeCompare(b.name))
+				setSources([user, system])
 				getStates()
 			})
 			.catch(() => {
@@ -96,9 +98,10 @@ const SourcesList = observer(() => {
 			dataIndex: 'name',
 			title: 'Название',
 			width: '20em',
+			sorter: (a, b) => a.name.localeCompare(b.name),
 			render: (_, record) =>
 				record.isGroup ? (
-					<>{record.name}</>
+					<b>{record.name}</b>
 				) : (
 					<NavLink className='table-row' to={record.link} key={record.id}>
 						<Button size='small'>{record.name}</Button>
@@ -109,8 +112,9 @@ const SourcesList = observer(() => {
 			dataIndex: 'isDisabled',
 			title: 'Активность',
 			width: '8em',
+			sorter: (a, b) => Number(a.isDisabled) - Number(b.isDisabled),
 			render: (flag, record) =>
-				record.isGroup ? <></> : !flag ? <Tag color='green'>Запущен</Tag> : <Tag>Остановлен</Tag>,
+				record.isGroup ? <></> : !flag ? <Tag>Активен</Tag> : <Tag color='warning'>Остановлен</Tag>,
 		},
 		{
 			title: 'Подключение',
@@ -156,6 +160,8 @@ const SourcesList = observer(() => {
 			dataIndex: 'id',
 			title: <span title='Отображает общее количество тегов'>Теги</span>,
 			width: '5em',
+			sorter: (a, b) =>
+				(states[a.id]?.valuesAfterWriteSeconds.length ?? 0) - (states[b.id]?.valuesAfterWriteSeconds.length ?? 0),
 			render: (id, record) => {
 				if (record.isGroup) return <></>
 				const state = states[id]
@@ -175,7 +181,10 @@ const SourcesList = observer(() => {
 		},
 		{
 			title: 'Новые значения за последние полчаса',
-			width: '11em',
+			width: '13em',
+			sorter: (a, b) =>
+				(states[a.id]?.valuesAfterWriteSeconds.filter((x) => x <= 1800).length ?? 0) -
+				(states[b.id]?.valuesAfterWriteSeconds.filter((x) => x <= 1800).length ?? 0),
 			render: (_, record) => {
 				if (record.isGroup) return <></>
 				const state = states[record.id]
@@ -185,7 +194,10 @@ const SourcesList = observer(() => {
 		},
 		{
 			title: 'Новые значения за последние сутки',
-			width: '11em',
+			width: '13em',
+			sorter: (a, b) =>
+				(states[a.id]?.valuesAfterWriteSeconds.filter((x) => x <= 86400).length ?? 0) -
+				(states[b.id]?.valuesAfterWriteSeconds.filter((x) => x <= 86400).length ?? 0),
 			render: (_, record) => {
 				if (record.isGroup) return <></>
 				const state = states[record.id]
