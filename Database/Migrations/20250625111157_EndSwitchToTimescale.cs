@@ -33,6 +33,21 @@ namespace Datalake.Database.Migrations
 						END LOOP;
 				END;
 				$$;");
+
+			migrationBuilder.Sql(@"
+				DO $$
+				DECLARE
+						tbl text;
+				BEGIN
+						FOR tbl IN
+								SELECT quote_ident(tablename)
+								FROM pg_tables
+								WHERE tablename ~ '^TagsHistory_\d{4}_\d{2}_\d{2}$'
+						LOOP
+								EXECUTE format('DROP TABLE %s', tbl);
+						END LOOP;
+				END;
+				$$;");
 		}
 
 		/// <inheritdoc />
