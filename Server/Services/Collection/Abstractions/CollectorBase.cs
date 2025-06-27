@@ -18,7 +18,7 @@ internal abstract class CollectorBase : ICollector
 		int workInterval = 1000)
 	{
 		_source = source;
-		_name = $"{name} #{source.Id}";
+		_name = source.Id > 0 ? $"{name} [{source.Id}]" : source.Type.ToString();
 		_logger = logger;
 		_stateService = sourcesStateService;
 		_workInterval = workInterval;

@@ -44,7 +44,6 @@ public class CollectorFactory(
 
 			SourceType.Datalake_v2
 				=> new DatalakeCollector(
-					receiverService,
 					source,
 					sourcesStateService,
 					loggerFactory.CreateLogger<DatalakeCollector>()),
@@ -70,6 +69,12 @@ public class CollectorFactory(
 					source,
 					sourcesStateService,
 					loggerFactory.CreateLogger<AggregateCollector>()),
+
+			SourceType.Manual
+				=> new ManualCollector(
+					source,
+					sourcesStateService,
+					loggerFactory.CreateLogger<ManualCollector>()),
 
 			_ => null,
 		};

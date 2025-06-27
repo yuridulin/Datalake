@@ -16,9 +16,7 @@ internal class OldDatalakeCollector : CollectorBase
 		SourcesStateService sourcesStateService,
 		ILogger<OldDatalakeCollector> logger) : base(source.Name, source, sourcesStateService, logger)
 	{
-		_id = source.Id;
 		_receiverService = receiverService;
-		_address = source.Address ?? throw new InvalidOperationException();
 
 		_itemsToSend = source.Tags
 			.Where(x => !string.IsNullOrEmpty(x.Item))
@@ -38,16 +36,7 @@ internal class OldDatalakeCollector : CollectorBase
 				LastAsk = DateTime.MinValue,
 				Tags = g.Select(x => x.Guid).ToArray(),
 			})
-			.ToList();
-
-		_previousValues = source.Tags
-			.ToDictionary(x => x.Guid, x => new ValueWriteRequest
-			{
-				Value = null,
-				Quality = TagQuality.Unknown,
-				Date = DateTime.MinValue,
-				Guid = x.Guid,
-			});
+			.ToDictionary(x => x.TagName);
 	}
 
 	public override void Start(CancellationToken stoppingToken)
@@ -58,7 +47,11 @@ internal class OldDatalakeCollector : CollectorBase
 			return;
 		}
 
-		Task.Run(Work, stoppingToken);
+		if (string.IsNullOrEmpty(_source.Address))
+		{
+			_logger.LogWarning("Сборщик \"{name}\" не имеет адреса для получения данных и не будет запущен", _name);
+			return;
+		}
 
 		base.Start(stoppingToken);
 	}
@@ -66,56 +59,41 @@ internal class OldDatalakeCollector : CollectorBase
 
 	#region Реализация
 
-	private readonly int _id;
-	private readonly string _address;
-	private readonly List<Item> _itemsToSend;
+	private readonly Dictionary<string, Item> _itemsToSend;
 	private readonly ReceiverService _receiverService;
-	private readonly Dictionary<Guid, ValueWriteRequest> _previousValues;
 	private List<ValueWriteRequest> collectedValues = [];
-	private List<Item> updatedItems = [];
 
 	protected override async Task Work()
 	{
 		var now = DateFormats.GetCurrentDateTime();
 		var items = _itemsToSend
-			.Where(x => x.PeriodInSeconds == 0 || (now - x.LastAsk).TotalSeconds > x.PeriodInSeconds)
-			.ToArray();
+			.Where(x => x.Value.PeriodInSeconds == 0 || (now - x.Value.LastAsk).TotalSeconds > x.Value.PeriodInSeconds)
+			.ToDictionary();
 
-		if (items.Length > 0)
+		if (items.Count > 0)
 		{
-			var response = await _receiverService.AskInopc([.. items.Select(x => x.TagName)], _address);
+			var response = await _receiverService.AskInopc([.. items.Select(x => x.Value.TagName)], _source.Address!);
 
 			foreach (var value in response.Tags)
 			{
-				var item = items.FirstOrDefault(x => x.TagName == value.Name);
+				items.TryGetValue(value.Name, out var item);
 				if (item != null)
 				{
 					collectedValues.AddRange(item.Tags.Select(guid => new ValueWriteRequest
 					{
-						Date = DateFormats.GetCurrentDateTime(),
+						Date = now,
 						Name = value.Name,
 						Quality = value.Quality,
 						Guid = guid,
 						Value = value.Value,
 					}));
 
-					updatedItems.Add(item);
+					item.LastAsk = now;
 				}
 			}
 
-			collectedValues = collectedValues.Where(x => x != _previousValues[x.Guid!.Value]).ToList();
-			foreach (var v in collectedValues)
-				_previousValues[v.Guid!.Value] = v;
-
 			await WriteAsync(collectedValues);
-
-			foreach (var tag in updatedItems)
-			{
-				tag.LastAsk = response.Timestamp;
-			}
 		}
-
-		_stateService.UpdateSource(_id, connected: true);
 	}
 
 	class Item

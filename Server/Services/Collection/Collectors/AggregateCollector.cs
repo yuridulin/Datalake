@@ -48,7 +48,6 @@ internal class AggregateCollector : CollectorBase
 			return;
 		}
 
-		Task.Run(Work, stoppingToken);
 		base.Start(stoppingToken);
 	}
 
@@ -72,31 +71,33 @@ internal class AggregateCollector : CollectorBase
 		var hour = now.Hour;
 		var day = now.Day;
 
-
-		List<ValueWriteRequest> ValueWriteRequests = new();
+		List<ValueWriteRequest> records = [];
 
 		if (_lastMinute != minute)
 		{
 			_logger.LogInformation("Расчет минутных значений: {now}", now);
-			ValueWriteRequests.AddRange(await GetAggregated(_minuteRules, now, AggregationPeriod.Munite));
+			var minuteValues = await GetAggregated(_minuteRules, now, AggregationPeriod.Munite);
+			records.AddRange(minuteValues);
 			_lastMinute = minute;
 		}
 
 		if (_lastHour != hour)
 		{
 			_logger.LogInformation("Расчет часовых значений: {now}", now);
-			ValueWriteRequests.AddRange(await GetAggregated(_hourRules, now, AggregationPeriod.Hour));
+			var hourValues = await GetAggregated(_hourRules, now, AggregationPeriod.Hour);
+			records.AddRange(hourValues);
 			_lastHour = hour;
 		}
 
 		if (_lastDay != day)
 		{
 			_logger.LogInformation("Расчет суточных значений: {now}", now);
-			ValueWriteRequests.AddRange(await GetAggregated(_dayRules, now, AggregationPeriod.Day));
+			var dayValues = await GetAggregated(_dayRules, now, AggregationPeriod.Day);
+			records.AddRange(dayValues);
 			_lastDay = day;
 		}
 
-		await WriteAsync(ValueWriteRequests);
+		await WriteAsync(records);
 	}
 
 	private async Task<List<ValueWriteRequest>> GetAggregated(TagAggregationRule[] rules, DateTime date, AggregationPeriod period)

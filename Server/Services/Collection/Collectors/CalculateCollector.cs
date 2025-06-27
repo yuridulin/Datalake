@@ -38,8 +38,6 @@ internal class CalculateCollector : CollectorBase
 			return;
 		}
 
-		Task.Run(Work, stoppingToken);
-
 		base.Start(stoppingToken);
 	}
 

@@ -50,8 +50,6 @@ internal class InopcCollector : CollectorBase
 			return;
 		}
 
-		Task.Run(Work, stoppingToken);
-
 		base.Start(stoppingToken);
 	}
 
