@@ -543,7 +543,7 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 		// CTE: Последнее значение перед началом периода
 		var historyBefore =
 			from raw in source
-			where identifiers.Contains(raw.TagId) && raw.Date <= periodStart
+			where raw.Date <= periodStart
 			select new
 			{
 				raw.TagId,
@@ -567,9 +567,8 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 		var historyBetween =
 			from raw in source
 			where
-				identifiers.Contains(raw.TagId) &&
-				raw.Date > periodStart &&
-				raw.Date < periodEnd
+				raw.Date >  periodStart &&
+				raw.Date <= periodEnd
 			select new
 			{
 				raw.TagId,
