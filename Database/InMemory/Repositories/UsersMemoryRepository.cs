@@ -47,8 +47,8 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		foreach (var u in users)
 		{
 			u.AccessRule = (user.Guid == u.Guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
-				? new AccessRuleInfo { AccessType = AccessType.Manager }
-				: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
+				? new(0, AccessType.Manager)
+				: new(0, user.GlobalAccessType);
 
 			if (!u.AccessRule.AccessType.HasAccess(AccessType.Manager))
 			{
@@ -97,8 +97,8 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
 
 		userInfo.AccessRule = (user.Guid == guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
-			? new AccessRuleInfo { AccessType = AccessType.Manager, RuleId = 0 }
-			: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
+			? new(0, AccessType.Manager)
+			: new(0, user.GlobalAccessType);
 
 		return userInfo;
 	}
@@ -118,8 +118,8 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			?? throw new NotFoundException($"Учётная запись {guid}");
 
 		userInfo.AccessRule = (user.Guid == guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
-			? new AccessRuleInfo { AccessType = AccessType.Manager, RuleId = 0 }
-			: new AccessRuleInfo { AccessType = user.GlobalAccessType, RuleId = 0 };
+			? new(0, AccessType.Manager)
+			: new(0, user.GlobalAccessType);
 
 		foreach (var group in userInfo.UserGroups)
 			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);

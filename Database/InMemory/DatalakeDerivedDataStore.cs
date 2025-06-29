@@ -160,10 +160,10 @@ public class DatalakeDerivedDataStore
 		#region ПОДГОТОВКА
 
 		// Словари для быстрого доступа
-		var userGroupsDict = state.UserGroups.ToDictionary(x => x.Guid);
-		var blocksDict = state.Blocks.ToDictionary(x => x.Id);
-		var sourcesDict = state.Sources.ToDictionary(x => x.Id);
-		var tagsDict = state.Tags.ToDictionary(x => x.Id);
+		var userGroupsDict = state.UserGroupsByGuid;
+		var blocksDict = state.BlocksById;
+		var sourcesDict = state.SourcesById;
+		var tagsDict = state.TagsById;
 
 		// Предварительный расчет иерархии групп
 		var groupAncestors = new Dictionary<Guid, List<Guid>>();
@@ -519,13 +519,13 @@ public class DatalakeDerivedDataStore
 					EnergoId = user.EnergoIdGuid,
 					GlobalAccessType = globalRule.AccessType,
 					Groups = userGroups
-						.ToDictionary(x => x.Guid, x => new AccessRuleInfo { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+						.ToDictionary(x => x.Guid, x => new AccessRuleInfo(x.Rule.Id, x.Rule.AccessType)),
 					Sources = userSources
-						.ToDictionary(x => x.Id, x => new AccessRuleInfo { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+						.ToDictionary(x => x.Id, x => new AccessRuleInfo(x.Rule.Id, x.Rule.AccessType)),
 					Blocks = userBlocks
-						.ToDictionary(x => x.Id, x => new AccessRuleInfo { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+						.ToDictionary(x => x.Id, x => new AccessRuleInfo(x.Rule.Id, x.Rule.AccessType)),
 					Tags = userTags
-						.ToDictionary(x => x.GlobalGuid, x => new AccessRuleInfo { RuleId = x.Rule.Id, AccessType = x.Rule.AccessType, }),
+						.ToDictionary(x => x.GlobalGuid, x => new AccessRuleInfo(x.Rule.Id, x.Rule.AccessType)),
 				};
 			})
 			.ToDictionary(x => x.Guid);
