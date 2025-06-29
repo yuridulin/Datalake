@@ -8,19 +8,19 @@ namespace Datalake.PublicApi.Models.Auth;
 /// Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ
 /// </summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly struct AccessRuleInfo(int ruleId, AccessType type)
+public record AccessRuleInfo(int RuleId, AccessType Type)
 {
 	/// <summary>
 	/// Идентификатор правила доступа
 	/// </summary>
 	[Required]
-	public readonly int RuleId = ruleId;
+	public readonly int RuleId = RuleId;
 
 	/// <summary>
 	/// Уровень доступа
 	/// </summary>
 	[Required]
-	public readonly AccessType AccessType = type;
+	public readonly AccessType AccessType = Type;
 
 	/// <summary>
 	/// Заглушка для неопределенного уровня доступа

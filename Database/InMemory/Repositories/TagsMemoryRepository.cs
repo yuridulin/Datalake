@@ -76,7 +76,6 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="names">Имена тегов</param>
 	/// <param name="guids">Глобальные идентификаторы тегов</param>
 	/// <returns>Список информации о тегах</returns>
-	[LogExecutionTime]
 	public TagInfo[] ReadAll(UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
 	{
 		var tagsChain = dataStore.State.TagsInfoWithSources();

@@ -1,4 +1,6 @@
-﻿namespace Bench;
+﻿using BenchmarkDotNet.Running;
+
+namespace Bench;
 
 internal class Program
 {
@@ -7,7 +9,7 @@ internal class Program
 #if DEBUG
 		// Создать тестовые данные
 		Console.WriteLine("CreateTestData");
-		var testState = Generator.CreateTestData();
+		var testState = Generator.CreateTestData(200, 1000, 400);
 		Console.WriteLine("CreateTestData done");
 
 		// Запустить оригинальную реализацию
@@ -22,10 +24,10 @@ internal class Program
 
 		// Сравнить результаты
 		Console.WriteLine("CompareAccessStates");
-		AccessStateComparer.CompareAccessStates(originalState, optimizedState);
+		AccessStateComparer.CompareAccessStates(testState, originalState, optimizedState);
 		Console.WriteLine("CompareAccessStates done");
 #else
-	
+		BenchmarkRunner.Run<AccessComputations>();
 #endif
 	}
 }

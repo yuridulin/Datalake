@@ -11,24 +11,24 @@ public enum AccessType : byte
 	NotSet = 0,
 
 	/// <summary>
-	/// Доступа нет
-	/// </summary>
-	NoAccess = 1,
-
-	/// <summary>
 	/// Разрешен только просмотр
 	/// </summary>
-	Viewer = 2,
+	Viewer = 1,
 
 	/// <summary>
-	/// Возможность изменения без наследования
+	/// Разрешен только просмотр и запись значений
 	/// </summary>
-	Editor = 3,
+	Editor = 2,
 
 	/// <summary>
-	/// Возможность изменения с наследованием такого же уровня и к подчиненным объектам
+	/// Доступ ко всем операциям
 	/// </summary>
-	Manager = 4,
+	Manager = 3,
+
+	/// <summary>
+	/// Доступа нет
+	/// </summary>
+	NoAccess = 4,
 
 	/// <summary>
 	/// Полный доступ

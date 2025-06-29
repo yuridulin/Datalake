@@ -14,10 +14,10 @@ namespace Datalake.Database.Migrations
 				UPDATE ""UserGroupRelation"" SET
 					""AccessType"" = CASE ""AccessType""
 						WHEN -100 THEN 0
-						WHEN 0 THEN 1
-						WHEN 5 THEN 2
-						WHEN 10 THEN 3
-						WHEN 50 THEN 4
+						WHEN 0 THEN 4
+						WHEN 5 THEN 1
+						WHEN 10 THEN 2
+						WHEN 50 THEN 3
 						WHEN 100 THEN 5
 						ELSE 0 
 					END;");
@@ -26,10 +26,10 @@ namespace Datalake.Database.Migrations
 				UPDATE ""AccessRights"" SET
 					""AccessType"" = CASE ""AccessType""
 						WHEN -100 THEN 0
-						WHEN 0 THEN 1
-						WHEN 5 THEN 2
-						WHEN 10 THEN 3
-						WHEN 50 THEN 4
+						WHEN 0 THEN 4
+						WHEN 5 THEN 1
+						WHEN 10 THEN 2
+						WHEN 50 THEN 3
 						WHEN 100 THEN 5
 						ELSE 0 
 					END;");
@@ -79,10 +79,10 @@ namespace Datalake.Database.Migrations
 				UPDATE ""UserGroupRelation"" SET
 					""AccessType"" = CASE ""AccessType""
 						WHEN 0 THEN -100
-						WHEN 1 THEN 0
-						WHEN 2 THEN 5
-						WHEN 3 THEN 10
-						WHEN 4 THEN 50
+						WHEN 4 THEN 0
+						WHEN 1 THEN 5
+						WHEN 2 THEN 10
+						WHEN 3 THEN 50
 						WHEN 5 THEN 100
 						ELSE 0 
 					END;");
@@ -91,10 +91,10 @@ namespace Datalake.Database.Migrations
 				UPDATE ""AccessRights"" SET
 					""AccessType"" = CASE ""AccessType""
 						WHEN 0 THEN -100
-						WHEN 1 THEN 0
-						WHEN 2 THEN 5
-						WHEN 3 THEN 10
-						WHEN 4 THEN 50
+						WHEN 4 THEN 0
+						WHEN 1 THEN 5
+						WHEN 2 THEN 10
+						WHEN 3 THEN 50
 						WHEN 5 THEN 100
 						ELSE 0 
 					END;");

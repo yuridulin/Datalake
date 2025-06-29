@@ -1,14 +1,26 @@
 ﻿using Microsoft.Extensions.Logging;
-using PostSharp.Aspects;
-using PostSharp.Serialization;
 using System.Diagnostics;
 
 namespace Datalake.Database.Attributes;
 
-/// <summary>
-/// Замер времени, которое тратится на вызов методов
-/// </summary>
-[PSerializable]
+public static class Measures
+{
+	/// <summary>
+	/// Замер времени, которое тратится на вызов методов
+	/// </summary>
+	public static T Measure<T>(Func<T> action, ILogger logger, string methodName)
+	{
+		var sw = Stopwatch.StartNew();
+		T result = action();
+		sw.Stop();
+
+		logger.LogInformation("[Timing] {Method} took {Elapsed} ms", methodName, sw.ElapsedMilliseconds);
+		return result;
+	}
+}
+
+
+/*[PSerializable]
 public class LogExecutionTimeAttribute : OnMethodBoundaryAspect
 {
 	[NonSerialized]
@@ -38,11 +50,16 @@ public class LogExecutionTimeAttribute : OnMethodBoundaryAspect
 	public override void OnExit(MethodExecutionArgs args)
 	{
 		_sw?.Stop();
-		if (_logger != null && _sw != null)
+		if (_sw == null)
+			return;
+
+		if (_logger != null)
 		{
 			var method = $"{args.Method.DeclaringType?.Name}.{args.Method.Name}";
 			_logger.LogInformation("[Timing] {Method} took {Elapsed} ms", method, _sw.ElapsedMilliseconds);
 		}
+
+		Console.WriteLine($"[Timing] {args.Method.DeclaringType?.Name}.{args.Method.Name} took {_sw.ElapsedMilliseconds} ms");
 	}
-}
+}*/
 
