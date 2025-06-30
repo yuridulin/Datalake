@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Functions;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Blocks;
@@ -34,7 +35,7 @@ public class DatalakeDerivedDataStore
 	private void Rebuild(DatalakeDataState newState)
 	{
 		RebuildTree(newState);
-		RebuildAccess(newState);
+		Measures.Measure(() => RebuildAccess(newState), _logger, nameof(RebuildAccess));
 
 		_logger.LogInformation("Завершено обновление зависимых данных");
 	}

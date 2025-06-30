@@ -1,9 +1,9 @@
-﻿using Datalake.Database.InMemory.Models;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.InMemory.Models;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace Datalake.Database.InMemory;
 
@@ -36,20 +36,27 @@ public class DatalakeDataStore
 		_logger = logger;
 
 		StateChanged += (_, _) => _logger.LogInformation("Стейт изменён");
-		StateCorrupted += (_, _) => Task.Run(LoadStateFromDatabaseAsync);
+		StateCorrupted += (_, _) => Task.Run(ReloadStateFromDatabaseAsync);
 
 		//_ = LoadStateFromDatabaseAsync(); // Инициализатор БД сделает это сам
 	}
 
-	public async Task LoadStateFromDatabaseAsync()
+	public async Task ReloadStateFromDatabaseAsync()
 	{
 		using (await AcquireWriteLockAsync())
 		{
 			using var scope = _serviceScopeFactory.CreateScope();
 			var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-			var t = Stopwatch.StartNew();
+			var newState = await LoadStateFromDatabaseAsync(db);
+			UpdateStateWithinLock(_ => newState);
+		}
+	}
 
+	private async Task<DatalakeDataState> LoadStateFromDatabaseAsync(DatalakeContext db)
+	{
+		return await Measures.Measure(async () =>
+		{
 			var accessRights = await db.AccessRights.ToArrayAsync();
 			var blocks = await db.Blocks.ToArrayAsync();
 			var blockProperties = await db.BlockProperties.ToArrayAsync();
@@ -61,9 +68,6 @@ public class DatalakeDataStore
 			var users = await db.Users.ToArrayAsync();
 			var userGroups = await db.UserGroups.ToArrayAsync();
 			var userGroupRelations = await db.UserGroupRelations.ToArrayAsync();
-
-			t.Stop();
-			_logger.LogInformation("Загрузка стейта из БД: {ms}", t.Elapsed.TotalMilliseconds);
 
 			var newState = new DatalakeDataState
 			{
@@ -79,9 +83,8 @@ public class DatalakeDataStore
 				UserGroups = userGroups.ToImmutableList(),
 				UserGroupRelations = userGroupRelations.ToImmutableList(),
 			};
-
-			UpdateStateWithinLock(_ => newState);
-		}
+			return newState;
+		}, _logger, nameof(LoadStateFromDatabaseAsync));
 	}
 
 	private readonly IServiceScopeFactory _serviceScopeFactory;

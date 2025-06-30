@@ -164,7 +164,7 @@ public class SystemController(
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		await dataStore.LoadStateFromDatabaseAsync();
+		await dataStore.ReloadStateFromDatabaseAsync();
 
 		return NoContent();
 	}

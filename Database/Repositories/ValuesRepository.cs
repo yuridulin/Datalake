@@ -1,4 +1,5 @@
-﻿using Datalake.Database.Extensions;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.Models;
@@ -13,6 +14,7 @@ using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.Values;
 using LinqToDB;
 using LinqToDB.Data;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
@@ -20,7 +22,10 @@ namespace Datalake.Database.Repositories;
 /// <summary>
 /// Репозиторий для работы со значениями тегов
 /// </summary>
-public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValuesStore valuesStore)
+public class ValuesRepository(
+	DatalakeDataStore dataStore,
+	DatalakeCurrentValuesStore valuesStore,
+	ILogger<ValuesRepository> logger)
 {
 	#region Действия
 
@@ -66,7 +71,7 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 			})
 			.ToArray();
 
-		return await ProtectedGetValuesAsync(db, trustedRequests);
+		return await Measures.Measure(() => ProtectedGetValuesAsync(db, trustedRequests), logger, nameof(ProtectedGetValuesAsync));
 	}
 
 	/// <summary>

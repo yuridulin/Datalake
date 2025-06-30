@@ -1,9 +1,9 @@
-﻿using Datalake.Database.Repositories;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace Datalake.Database.InMemory;
 
@@ -18,23 +18,27 @@ public class DatalakeCurrentValuesStore
 		_serviceScopeFactory = serviceScopeFactory;
 		_logger = logger;
 
-		_ = LoadValuesFromDatabaseAsync();
+		_ = Measures.Measure(ReloadValuesAsync, _logger, nameof(ReloadValuesAsync));
 	}
 
-	public async Task LoadValuesFromDatabaseAsync()
+	public async Task ReloadValuesAsync()
+	{
+		var values = await Measures.Measure(LoadValuesFromDatabaseAsync, _logger, nameof(LoadValuesFromDatabaseAsync));
+		var newValues = new ConcurrentDictionary<int, TagHistory>(values);
+
+		Interlocked.Exchange(ref _currentValues, newValues);
+
+		_logger.LogInformation("Завершено обновление текущих значений");
+	}
+
+	public async Task<Dictionary<int, TagHistory>> LoadValuesFromDatabaseAsync()
 	{
 		using var scope = _serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-		var t = Stopwatch.StartNew();
-
 		var dbValues = await ValuesRepository.ProtectedReadLastValuesAsync(db);
-		var newValues = new ConcurrentDictionary<int, TagHistory>(dbValues);
-
-		Interlocked.Exchange(ref _currentValues, newValues);
-
-		t.Stop();
-		_logger.LogInformation("Загрузка текущих значений из БД: {ms}", t.Elapsed.TotalMilliseconds);
+		var newValues = new Dictionary<int, TagHistory>(dbValues);
+		return newValues;
 	}
 
 	private readonly IServiceScopeFactory _serviceScopeFactory;

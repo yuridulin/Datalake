@@ -72,7 +72,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			await usersRepository.ProtectedCreateAsync(this, Guid.Empty, Defaults.InitialAdmin);
 		}
 
-		_ = Task.Run(dataStore.LoadStateFromDatabaseAsync);
+		_ = Task.Run(dataStore.ReloadStateFromDatabaseAsync);
 	}
 
 	#region Таблицы
