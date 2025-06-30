@@ -83,7 +83,7 @@ public class SessionManagerService(
 	{
 		response.Headers[AuthConstants.TokenHeader] = session.Token;
 		response.Headers[AuthConstants.NameHeader] = Uri.EscapeDataString(session.AuthInfo.FullName);
-		response.Headers[AuthConstants.GlobalAccessHeader] = session.AuthInfo.RootRule.ToString();
+		response.Headers[AuthConstants.GlobalAccessHeader] = session.AuthInfo.RootRule.Access.ToString();
 	}
 
 	/// <summary>
