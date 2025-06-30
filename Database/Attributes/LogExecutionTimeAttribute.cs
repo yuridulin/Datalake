@@ -3,6 +3,9 @@ using System.Diagnostics;
 
 namespace Datalake.Database.Attributes;
 
+/// <summary>
+/// 
+/// </summary>
 public static class Measures
 {
 	/// <summary>

@@ -8,7 +8,7 @@ namespace Datalake.PublicApi.Models.Auth;
 /// Информация о уровне доступа с указанием на правило, на основе которого получен этот доступ
 /// </summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public record AccessRuleInfo(int RuleId, AccessType Type)
+public record AccessRuleInfo(int RuleId, AccessType Access)
 {
 	/// <summary>
 	/// Идентификатор правила доступа
@@ -20,7 +20,7 @@ public record AccessRuleInfo(int RuleId, AccessType Type)
 	/// Уровень доступа
 	/// </summary>
 	[Required]
-	public readonly AccessType AccessType = Type;
+	public readonly AccessType Access = Access;
 
 	/// <summary>
 	/// Заглушка для неопределенного уровня доступа

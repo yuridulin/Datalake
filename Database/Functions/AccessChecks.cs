@@ -20,7 +20,7 @@ public static class AccessChecks
 		UserAuthInfo user,
 		AccessType minimalAccess)
 	{
-		bool access = user.GlobalAccessType.HasAccess(minimalAccess);
+		bool access = user.RootRule.Access.HasAccess(minimalAccess);
 		if (user.UnderlyingUser != null)
 			access = access && HasGlobalAccess(user.UnderlyingUser, minimalAccess);
 
@@ -41,7 +41,7 @@ public static class AccessChecks
 		if (!user.Sources.TryGetValue(sourceId, out var rule))
 			return false;
 
-		bool access = rule.AccessType.HasAccess(minimalAccess);
+		bool access = rule.Access.HasAccess(minimalAccess);
 		if (user.UnderlyingUser != null)
 			access = access && HasAccessToSource(user.UnderlyingUser, minimalAccess, sourceId);
 
@@ -62,7 +62,7 @@ public static class AccessChecks
 		if (!user.Blocks.TryGetValue(blockId, out var rule))
 			return false;
 
-		bool access = rule.AccessType.HasAccess(minimalAccess);
+		bool access = rule.Access.HasAccess(minimalAccess);
 		if (user.UnderlyingUser != null)
 			access = access && HasAccessToBlock(user.UnderlyingUser, minimalAccess, blockId);
 
@@ -74,18 +74,18 @@ public static class AccessChecks
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
-	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="id">Идентификатор тега</param>
 	public static bool HasAccessToTag(
 		UserAuthInfo user,
 		AccessType minimalAccess,
-		Guid guid)
+		int id)
 	{
-		if (!user.Tags.TryGetValue(guid, out var rule))
+		if (!user.Tags.TryGetValue(id, out var rule))
 			return false;
 
-		bool access = rule.AccessType.HasAccess(minimalAccess);
+		bool access = rule.Access.HasAccess(minimalAccess);
 		if (user.UnderlyingUser != null)
-			access = access && HasAccessToTag(user.UnderlyingUser, minimalAccess, guid);
+			access = access && HasAccessToTag(user.UnderlyingUser, minimalAccess, id);
 
 		return access;
 	}
@@ -104,7 +104,7 @@ public static class AccessChecks
 		if (!user.Groups.TryGetValue(groupGuid, out var rule))
 			return false;
 
-		return rule.AccessType.HasAccess(minimalAccess);
+		return rule.Access.HasAccess(minimalAccess);
 	}
 
 	/// <summary>
@@ -158,14 +158,14 @@ public static class AccessChecks
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
-	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="id">Идентификатор тега</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoAccessToTag(
 		UserAuthInfo user,
 		AccessType minimalAccess,
-		Guid guid)
+		int id)
 	{
-		if (!HasAccessToTag(user, minimalAccess, guid))
+		if (!HasAccessToTag(user, minimalAccess, id))
 			throw Errors.NoAccess;
 	}
 
@@ -193,7 +193,7 @@ public static class AccessChecks
 	public static AccessType GetGlobalAccess(
 		UserAuthInfo user)
 	{
-		return user.UnderlyingUser?.GlobalAccessType ?? user.GlobalAccessType;
+		return user.UnderlyingUser?.RootRule.Access ?? user.RootRule.Access;
 	}
 
 	/// <summary>
@@ -240,17 +240,17 @@ public static class AccessChecks
 	/// Получение правила доступа к тегу
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
-	/// <param name="tagGuid">Идентификатор тега</param>
+	/// <param name="id">Идентификатор тега</param>
 	/// <returns>Правило доступа</returns>
 	public static AccessRuleInfo GetAccessToTag(
 		UserAuthInfo user,
-		Guid tagGuid)
+		int id)
 	{
-		if (!user.Tags.TryGetValue(tagGuid, out var rule))
+		if (!user.Tags.TryGetValue(id, out var rule))
 			return AccessRuleInfo.Default;
 
 		if (user.UnderlyingUser != null)
-			if (!user.UnderlyingUser.Tags.TryGetValue(tagGuid, out rule))
+			if (!user.UnderlyingUser.Tags.TryGetValue(id, out rule))
 				return AccessRuleInfo.Default;
 
 		return rule;

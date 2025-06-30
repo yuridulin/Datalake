@@ -73,10 +73,10 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 
 		foreach (var tag in source.Tags)
 		{
-			var rule = user.Tags.TryGetValue(tag.Guid, out var r) ? r : AccessRuleInfo.Default;
+			var rule = user.Tags.TryGetValue(tag.Id, out var r) ? r : AccessRuleInfo.Default;
 			tag.AccessRule = rule;
 
-			if (!rule.AccessType.HasAccess(AccessType.Viewer))
+			if (!rule.Access.HasAccess(AccessType.Viewer))
 			{
 				tag.Guid = Guid.Empty;
 				tag.Name = string.Empty;
@@ -101,7 +101,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		foreach (var source in sources)
 		{
 			source.AccessRule = user.Sources.TryGetValue(source.Id, out var r) ? r : AccessRuleInfo.Default;
-			if (source.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			if (source.AccessRule.Access.HasAccess(AccessType.Viewer))
 				sourcesWithAccess.Add(source);
 		}
 

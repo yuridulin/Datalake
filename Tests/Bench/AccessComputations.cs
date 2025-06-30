@@ -21,33 +21,30 @@ public class AccessComputations
 	}
 
 	[Benchmark]
-	public void Original()
+	public void Deepseek()
 	{
-		Methods.Original(_state);
+		Methods.Deepseek(_state);
 	}
 
 	[Benchmark]
-	public void Optimized()
+	public void Copilot()
 	{
-		Methods.Optimized(_state);
+		Methods.Copilot(_state);
 	}
 }
 
 public static class Methods
 {
-	public static DatalakeAccessState Original(DatalakeDataState state)
+	public static DatalakeAccessState Deepseek(DatalakeDataState state)
 	{
-		return AccessBuild.ComputateRightsFromState(state);
+		var access = AccessFunctions.ComputeAccessDeepseeked(state);
+		return AccessFunctions.CreateAccessState(access);
 	}
 
-	public static DatalakeAccessState Optimized(DatalakeDataState state)
+	public static DatalakeAccessState Copilot(DatalakeDataState state)
 	{
-		var info = OptimizedFunctions.ComputeMeta(state);
-		var groups = OptimizedFunctions.ComputeUserGroups(state, info);
-		var users = OptimizedFunctions.ComputeUsers(state, info, groups);
-		var accessState = new DatalakeAccessState(users);
-
-		return accessState;
+		var access = AccessFunctions.ComputeAccessCopiloted(state);
+		return AccessFunctions.CreateAccessState(access);
 	}
 }
 
@@ -348,60 +345,67 @@ public class AccessStateComparer
 {
 	public static void CompareAccessStates(
 		DatalakeDataState state,
-		DatalakeAccessState originalAccessState,
-		DatalakeAccessState optimizedAccessState)
+		DatalakeAccessState deepseekAccess,
+		DatalakeAccessState copilotAccess)
 	{
+		bool hasDifferences = false;
 		foreach (var user in state.Users)
 		{
-			var originalUser = originalAccessState.Get(user.Guid);
-			var optimizedUser = optimizedAccessState.Get(user.Guid);
+			var deepseekUser = deepseekAccess.Get(user.Guid);
+			var copilotUser = copilotAccess.Get(user.Guid);
 
 			List<string> messages = [];
 
-			if (originalUser.GlobalAccessType != optimizedUser.GlobalAccessType)
-				messages.Add($"Глобальный доступ: {originalUser.GlobalAccessType} != {optimizedUser.GlobalAccessType}");
+			if (deepseekUser.RootRule.Access != copilotUser.RootRule.Access)
+				messages.Add($"Глобальный доступ: {deepseekUser.RootRule} != {copilotUser.RootRule}");
 
 			foreach (var group in state.UserGroups)
 			{
-				var original = originalUser.Groups[group.Guid];
-				var optimized = optimizedUser.Groups[group.Guid];
+				var deepseek = deepseekUser.Groups.TryGetValue(group.Guid, out var or) ? or : deepseekUser.RootRule;
+				var copilot = copilotUser.Groups.TryGetValue(group.Guid, out var op) ? op : deepseekUser.RootRule;
 
-				if (original.AccessType != optimized.AccessType)
-					messages.Add($"Группа {group.Guid}: {original.AccessType} != {optimized.AccessType}");
+				if (deepseek.Access != copilot.Access)
+					messages.Add($"Группа {group.Guid}: {deepseek.Access} != {copilot.Access}");
 			}
 
 			foreach (var source in state.Sources)
 			{
-				var original = originalUser.Sources[source.Id];
-				var optimized = optimizedUser.Sources[source.Id];
+				var deepseek = deepseekUser.Sources.TryGetValue(source.Id, out var or) ? or : deepseekUser.RootRule;
+				var copilot = copilotUser.Sources.TryGetValue(source.Id, out var op) ? op : deepseekUser.RootRule;
 
-				if (original.AccessType != optimized.AccessType)
-					messages.Add($"Источник {source.Id}: {original.AccessType} != {optimized.AccessType}");
+				if (deepseek.Access != copilot.Access)
+					messages.Add($"Источник {source.Id}: {deepseek.Access} != {copilot.Access}");
 			}
 
 			foreach (var block in state.Blocks)
 			{
-				var original = originalUser.Blocks[block.Id];
-				var optimized = optimizedUser.Blocks[block.Id];
+				var deepseek = deepseekUser.Blocks.TryGetValue(block.Id, out var or) ? or : deepseekUser.RootRule;
+				var copilot = copilotUser.Blocks.TryGetValue(block.Id, out var op) ? op : deepseekUser.RootRule;
 
-				if (original.AccessType != optimized.AccessType)
-					messages.Add($"Блок {block.Id}: {original.AccessType} != {optimized.AccessType}");
+				if (deepseek.Access != copilot.Access)
+					messages.Add($"Блок {block.Id}: {deepseek.Access} != {copilot.Access}");
 			}
 
 			foreach (var tag in state.Tags)
 			{
-				var original = originalUser.Tags[tag.GlobalGuid];
-				var optimized = optimizedUser.Tags[tag.GlobalGuid];
+				var deepseek = deepseekUser.Tags.TryGetValue(tag.Id, out var or) ? or : deepseekUser.RootRule;
+				var copilot = copilotUser.Tags.TryGetValue(tag.Id, out var op) ? op : deepseekUser.RootRule;
 
-				if (original.AccessType != optimized.AccessType)
-					messages.Add($"Тег {tag.GlobalGuid}: {original.AccessType} != {optimized.AccessType}");
+				if (deepseek.Access != copilot.Access)
+					messages.Add($"Тег {tag.GlobalGuid}: {deepseek.Access} != {copilot.Access}");
 			}
 
 			if (messages.Count > 0)
 			{
-				Console.WriteLine($"Пользователь {user.Guid}: {originalUser.GlobalAccessType}");
+				hasDifferences = true;
+				Console.WriteLine($"\n\nПользователь {user.Guid}: {deepseekUser.RootRule.Access} | {deepseekUser.RootRule.Access}");
 				Console.WriteLine(string.Join("\n", messages));
 			}
+		}
+
+		if (!hasDifferences)
+		{
+			Console.WriteLine("Различий нет");
 		}
 	}
 }

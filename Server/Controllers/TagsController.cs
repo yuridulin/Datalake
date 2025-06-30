@@ -35,14 +35,14 @@ public class TagsController(
 	/// <summary>
 	/// Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
 	/// </summary>
-	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="id">Идентификатор тега</param>
 	/// <returns>Объект информации о теге</returns>
-	[HttpGet("{guid}")]
-	public ActionResult<TagInfo> Read(Guid guid)
+	[HttpGet("{id}")]
+	public ActionResult<TagInfo> Read(int id)
 	{
 		var user = Authenticate();
 
-		return tagsRepository.Read(user, guid);
+		return tagsRepository.Read(user, id);
 	}
 
 	/// <summary>
@@ -82,16 +82,16 @@ public class TagsController(
 	/// <summary>
 	/// Изменение тега
 	/// </summary>
-	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="id">Идентификатор тега</param>
 	/// <param name="tag">Новые данные тега</param>
-	[HttpPut("{guid}")]
+	[HttpPut("{id}")]
 	public async Task<ActionResult> UpdateAsync(
-		[BindRequired, FromRoute] Guid guid,
+		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] TagUpdateRequest tag)
 	{
 		var user = Authenticate();
 
-		await tagsRepository.UpdateAsync(db, user, guid, tag);
+		await tagsRepository.UpdateAsync(db, user, id, tag);
 
 		return NoContent();
 	}
@@ -99,14 +99,14 @@ public class TagsController(
 	/// <summary>
 	/// Удаление тега
 	/// </summary>
-	/// <param name="guid">Идентификатор тега</param>
-	[HttpDelete("{guid}")]
+	/// <param name="id">Идентификатор тега</param>
+	[HttpDelete("{id}")]
 	public async Task<ActionResult> DeleteAsync(
-		[BindRequired, FromRoute] Guid guid)
+		[BindRequired, FromRoute] int id)
 	{
 		var user = Authenticate();
 
-		await tagsRepository.DeleteAsync(db, user, guid);
+		await tagsRepository.DeleteAsync(db, user, id);
 
 		return NoContent();
 	}

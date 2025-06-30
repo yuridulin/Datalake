@@ -47,7 +47,7 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 				var cachedTags = currentState.CachesTags
 					.Where(tag => !tag.IsDeleted)
 					.Where(tag => identifiers.Contains(tag.Id) || guids.Contains(tag.Guid))
-					.Where(tag => AccessChecks.HasAccessToTag(user, AccessType.Viewer, tag.Guid))
+					.Where(tag => AccessChecks.HasAccessToTag(user, AccessType.Viewer, tag.Id))
 					.ToArray();
 
 				return new ValuesTrustedRequest
@@ -131,7 +131,7 @@ public class ValuesRepository(DatalakeDataStore dataStore, DatalakeCurrentValues
 			else if (request.Guid.HasValue)
 				currentState.CachedTagsByGuid.TryGetValue(request.Guid.Value, out tag);
 
-			if (tag == null || tag.SourceType != SourceType.Manual || AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Guid))
+			if (tag == null || tag.SourceType != SourceType.Manual || AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Id))
 				continue;
 
 			var record = TagHistoryExtension.CreateFrom(tag, request);

@@ -50,17 +50,17 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	/// Получение информации о теге
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
-	/// <param name="guid"></param>
+	/// <param name="id">Идентификатор тега</param>
 	/// <returns></returns>
-	public TagInfo Read(UserAuthInfo user, Guid guid)
+	public TagInfo Read(UserAuthInfo user, int id)
 	{
-		var rule = AccessChecks.GetAccessToTag(user, guid);
-		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+		var rule = AccessChecks.GetAccessToTag(user, id);
+		if (!rule.Access.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
 		var tag = dataStore.State.TagsInfoWithSources()
-			.FirstOrDefault(x => x.Guid == guid)
-			?? throw new NotFoundException($"Тег {guid}");
+			.FirstOrDefault(x => x.Id == id)
+			?? throw new NotFoundException($"Тег {id}");
 
 		tag.AccessRule = rule;
 
@@ -102,8 +102,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		List<TagInfo> tagsWithAccess = [];
 		foreach (var tag in tags)
 		{
-			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Guid);
-			if (tag.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Id);
+			if (tag.AccessRule.Access.HasAccess(AccessType.Viewer))
 				tagsWithAccess.Add(tag);
 		}
 
@@ -127,8 +127,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		List<TagAsInputInfo> tagsWithAccess = [];
 		foreach (var tag in tags)
 		{
-			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Guid);
-			if (tag.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Id);
+			if (tag.AccessRule.Access.HasAccess(AccessType.Viewer))
 				tagsWithAccess.Add(tag);
 		}
 
@@ -140,17 +140,17 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
-	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="id">Идентификатор тега</param>
 	/// <param name="updateRequest">Новые параметры тега</param>
 	public async Task UpdateAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
-		Guid guid,
+		int id,
 		TagUpdateRequest updateRequest)
 	{
-		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
+		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Manager, id);
 
-		await ProtectedUpdateAsync(db, user.Guid, guid, updateRequest);
+		await ProtectedUpdateAsync(db, user.Guid, id, updateRequest);
 	}
 
 	/// <summary>
@@ -158,15 +158,15 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
-	/// <param name="guid">Идентификатор тега</param>
+	/// <param name="id">Идентификатор тега</param>
 	public async Task DeleteAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
-		Guid guid)
+		int id)
 	{
-		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Manager, guid);
+		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Manager, id);
 
-		await ProtectedDeleteAsync(db, user.Guid, guid);
+		await ProtectedDeleteAsync(db, user.Guid, id);
 	}
 
 	#endregion
@@ -358,7 +358,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	internal async Task ProtectedUpdateAsync(
 		DatalakeContext db,
 		Guid userGuid,
-		Guid guid,
+		int id,
 		TagUpdateRequest updateRequest)
 	{
 		// Проверки, не требующие стейта
@@ -382,8 +382,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			// Проверки на актуальном стейте
 			var state = dataStore.State;
 
-			if (!state.TagsByGuid.TryGetValue(guid, out var tag))
-				throw new NotFoundException($"тег {guid}");
+			if (!state.TagsById.TryGetValue(id, out var tag))
+				throw new NotFoundException($"тег {id}");
 
 			var updatedTag = tag with
 			{
@@ -404,7 +404,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 				AggregationPeriod = updateRequest.AggregationPeriod,
 			};
 
-			if (state.Tags.Any(x => x.GlobalGuid != guid && !x.IsDeleted && x.Name == updateRequest.Name))
+			if (state.Tags.Any(x => x.Id != id && !x.IsDeleted && x.Name == updateRequest.Name))
 				throw new AlreadyExistException($"тег с именем {updateRequest.Name}");
 
 			if (updateRequest.SourceTagId == tag.Id)
@@ -489,7 +489,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			try
 			{
 				int records = await db.Tags
-					.Where(x => x.GlobalGuid == guid)
+					.Where(x => x.Id == id)
 					.Set(x => x.Name, updateRequest.Name)
 					.Set(x => x.Description, updateRequest.Description)
 					.Set(x => x.Type, updateRequest.Type)
@@ -508,7 +508,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.UpdateAsync();
 
 				if (records != 1)
-					throw new DatabaseException($"Не удалось сохранить тег {guid}", DatabaseStandartError.UpdatedZero);
+					throw new DatabaseException($"Не удалось сохранить тег {id}", DatabaseStandartError.UpdatedZero);
 
 				await db.TagInputs
 					.Where(x => x.TagId == tag.Id)
@@ -540,7 +540,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	internal async Task ProtectedDeleteAsync(
 		DatalakeContext db,
 		Guid userGuid,
-		Guid guid)
+		int id)
 	{
 		// Проверки, не требующие стейта
 
@@ -550,8 +550,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			// Проверки на актуальном стейте
 			var state = dataStore.State;
 
-			if (!state.TagsByGuid.TryGetValue(guid, out var tag))
-				throw new NotFoundException($"тег {guid}");
+			if (!state.TagsById.TryGetValue(id, out var tag))
+				throw new NotFoundException($"тег {id}");
 
 			var updatedTag = tag with { IsDeleted = true };
 
@@ -561,7 +561,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			try
 			{
 				var count = await db.Tags
-					.Where(x => x.GlobalGuid == guid)
+					.Where(x => x.Id == id)
 					.Set(x => x.IsDeleted, true)
 					.UpdateAsync();
 

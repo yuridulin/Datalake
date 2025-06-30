@@ -68,138 +68,6 @@ public static class AccessBuild
 		return meta;
 	}
 
-	private static GroupTransfer[] ComputeUserGroups(
-		DatalakeDataState state,
-		DatalakeAccessStateMeta meta)
-	{
-		return state.UserGroups
-			.Select(group =>
-			{
-				// заранее вычисляем уровни доступа каждой группы к каждому объекту, чтобы облегчить дальнейший расчет по пользователям
-				GroupTransfer auth = new()
-				{
-					Guid = group.Guid,
-					IdWithParents = meta.GroupsIdWithParents[group.Guid],
-				};
-
-				// получаем базовое правило группы, такое есть у каждой группы
-				var globalRule = meta.GroupGlobalRights.TryGetValue(group.Guid, out var rr) ? rr : meta.DefaultRule;
-
-				// если базовый уровень доступа уже максимальный, незачем проверять остальное
-				// если нет, начинаем искать для каждого объекта правило с наибольшим уровнем доступа
-				if (globalRule.AccessType == AccessType.Admin)
-				{
-					foreach (var source in state.Sources)
-						auth.Sources[source.Id] = globalRule;
-
-					foreach (var block in state.Blocks)
-						auth.Blocks[block.Id] = globalRule;
-
-					foreach (var tag in state.Tags)
-						auth.Tags[tag.Id] = globalRule;
-
-					return auth;
-				}
-
-				// проверяем прямые правила группы на источник
-				if (meta.GroupSourceRights.TryGetValue(group.Guid, out var directAccessToSource))
-				{
-					foreach (var source in state.Sources)
-					{
-						// если уровень доступа на прямом правиле на источник выше, чем на базовом, то берем его
-						if (directAccessToSource.TryGetValue(source.Id, out var directRule) &&
-							directRule.AccessType > globalRule.AccessType)
-						{
-							auth.Sources[source.Id] = directRule;
-						}
-						else
-						{
-							auth.Sources[source.Id] = globalRule;
-						}
-					}
-				}
-				// если прямых правил нет, базовое правило группы остается в силе
-				else
-				{
-					foreach (var source in state.Sources)
-					{
-						auth.Sources[source.Id] = globalRule;
-					}
-				}
-
-				// проверяем прямые правила группы на блок тегов
-				if (meta.GroupBlockRights.TryGetValue(group.Guid, out var directAccessToBlock))
-				{
-					foreach (var block in state.Blocks)
-					{
-						// берем базовое правило группы за основу
-						var chosenRule = globalRule;
-
-						// получаем ранее вычисленную цепочку наследования
-						var blockIdWithParents = meta.BlocksIdWithParents[block.Id];
-
-						// поднимаемся по иерархии в поисках правила выше
-						foreach (var id in blockIdWithParents)
-						{
-							if (directAccessToBlock.TryGetValue(id, out var candidateRule) &&
-								candidateRule.AccessType > chosenRule.AccessType)
-							{
-								chosenRule = candidateRule;
-							}
-						}
-
-						// сохраняем итог
-						auth.Blocks[block.Id] = chosenRule;
-					}
-				}
-				// если прямых правил нет, базовое правило группы остается в силе
-				else
-				{
-					foreach (var block in state.Blocks)
-					{
-						auth.Blocks[block.Id] = globalRule;
-					}
-				}
-
-				// проверяем прямые правила группы на каждый отдельный тег
-				meta.GroupTagRights.TryGetValue(group.Guid, out var directAccessToTag);
-				foreach (var tag in state.Tags)
-				{
-					// берем базовое правило группы за основу
-					var chosenRule = globalRule;
-
-					// проверка прямого правила группы на тег, при доступе выше базового запоминаем его
-					if (directAccessToTag != null &&
-						directAccessToTag.TryGetValue(tag.Id, out var directRule) &&
-						directRule.AccessType > globalRule.AccessType)
-					{
-						chosenRule = directRule;
-					}
-
-					// проверяем блоки, в которых есть тег
-					if (meta.TagBlocksRelation.TryGetValue(tag.Id, out var blockIds))
-					{
-						foreach (var blockId in blockIds)
-						{
-							// если доступ к какому-то блоку выше базового, это работает и на его теги
-							if (auth.Blocks.TryGetValue(blockId, out var blockRule) &&
-								blockRule.AccessType > chosenRule.AccessType)
-							{
-								chosenRule = blockRule;
-							}
-						}
-					}
-
-					// сохраняем результат
-					auth.Tags[tag.Id] = chosenRule;
-				}
-
-				// возвращаем рассчитанный доступ группы
-				return auth;
-			})
-			.ToArray();
-	}
-
 	private static Dictionary<Guid, UserAuthInfo> ComputeUsers(
 		DatalakeDataState state,
 		DatalakeAccessStateMeta meta,
@@ -217,11 +85,11 @@ public static class AccessBuild
 					Guid = user.Guid,
 					FullName = user.FullName ?? user.Login ?? string.Empty,
 					Token = string.Empty,
-					GlobalAccessType = globalRule.AccessType,
+					RootRule = globalRule,
 				};
 
 				// если у пользователя уже полный доступ, проверять остальное незачем
-				if (globalRule.AccessType == AccessType.Admin)
+				if (globalRule.Access == AccessType.Admin)
 				{
 					foreach (var group in state.UserGroups)
 						auth.Groups[group.Guid] = globalRule;
@@ -233,7 +101,7 @@ public static class AccessBuild
 						auth.Blocks[block.Id] = globalRule;
 
 					foreach (var tag in state.Tags)
-						auth.Tags[tag.GlobalGuid] = globalRule;
+						auth.Tags[tag.Id] = globalRule;
 
 					return auth;
 				}
@@ -254,7 +122,7 @@ public static class AccessBuild
 					{
 						foreach (var guid in group.IdWithParents)
 						{
-							if (groupsRelations.TryGetValue(guid, out var directRule) && directRule.AccessType > chosenRule.AccessType)
+							if (groupsRelations.TryGetValue(guid, out var directRule) && directRule.Access > chosenRule.Access)
 								chosenRule = directRule;
 						}
 					}
@@ -270,14 +138,14 @@ public static class AccessBuild
 					{
 						foreach (var id in meta.BlocksIdWithParents[block.Id])
 						{
-							if (directAccessToBlock.TryGetValue(id, out var directRule) && directRule.AccessType > chosenRule.AccessType)
+							if (directAccessToBlock.TryGetValue(id, out var directRule) && directRule.Access > chosenRule.Access)
 								chosenRule = directRule;
 						}
 					}
 
 					foreach (var groupMap in groupsWithAccess)
 					{
-						if (groupMap.Blocks.TryGetValue(block.Id, out var groupToBlock) && groupToBlock.AccessType > chosenRule.AccessType)
+						if (groupMap.Blocks.TryGetValue(block.Id, out var groupToBlock) && groupToBlock.Access > chosenRule.Access)
 							chosenRule = groupToBlock;
 					}
 
@@ -291,13 +159,13 @@ public static class AccessBuild
 					if (directAccessToSource != null)
 					{
 						if (directAccessToSource.TryGetValue(source.Id, out var directRule)
-							&& directRule.AccessType > chosenRule.AccessType)
+							&& directRule.Access > chosenRule.Access)
 							chosenRule = directRule;
 					}
 
 					foreach (var groupMap in groupsWithAccess)
 					{
-						if (groupMap.Sources.TryGetValue(source.Id, out var rule) && rule.AccessType > chosenRule.AccessType)
+						if (groupMap.Sources.TryGetValue(source.Id, out var rule) && rule.Access > chosenRule.Access)
 							chosenRule = rule;
 					}
 
@@ -310,7 +178,7 @@ public static class AccessBuild
 
 					if (directAccessToTags != null)
 					{
-						if (directAccessToTags.TryGetValue(tag.Id, out var directRule) && directRule.AccessType > chosenRule.AccessType)
+						if (directAccessToTags.TryGetValue(tag.Id, out var directRule) && directRule.Access > chosenRule.Access)
 							chosenRule = directRule;
 					}
 
@@ -318,18 +186,18 @@ public static class AccessBuild
 					{
 						foreach (var tagBlockId in tagBlocks)
 						{
-							if (auth.Blocks.TryGetValue(tagBlockId, out var rule) && rule.AccessType > chosenRule.AccessType)
+							if (auth.Blocks.TryGetValue(tagBlockId, out var rule) && rule.Access > chosenRule.Access)
 								chosenRule = rule;
 						}
 					}
 
 					foreach (var groupMap in groupsWithAccess)
 					{
-						if (groupMap.Tags.TryGetValue(tag.Id, out var rule) && rule.AccessType > chosenRule.AccessType)
+						if (groupMap.Tags.TryGetValue(tag.Id, out var rule) && rule.Access > chosenRule.Access)
 							chosenRule = rule;
 					}
 
-					auth.Tags[tag.GlobalGuid] = chosenRule;
+					auth.Tags[tag.Id] = chosenRule;
 				}
 
 				return auth;
@@ -346,10 +214,12 @@ public static class AccessBuild
 	/// <returns>Новое состояние прав доступа</returns>
 	public static DatalakeAccessState ComputateRightsFromState(DatalakeDataState state)
 	{
-		var meta = ComputeMeta(state);
-		var userGroupsRights = ComputeUserGroups(state, meta);
-		var userRights = ComputeUsers(state, meta, userGroupsRights);
-		var accessState = new DatalakeAccessState(userRights);
+		ComputeMeta(state);
+		//var userGroupsRights = ComputeUserGroups(state, meta);
+		//var userRights = ComputeUsers(state, meta, userGroupsRights);
+		//var accessState = new DatalakeAccessState(userRights);
+
+		var accessState = new DatalakeAccessState();
 
 		return accessState;
 	}
@@ -374,6 +244,7 @@ public static class AccessBuild
 	private class GroupTransfer
 	{
 		public Guid Guid { get; set; }
+		public required AccessRuleInfo GlobalRule { get; set; }
 		public List<Guid> IdWithParents { get; set; } = [];
 		public Dictionary<int, AccessRuleInfo> Sources { get; set; } = [];
 		public Dictionary<int, AccessRuleInfo> Blocks { get; set; } = [];

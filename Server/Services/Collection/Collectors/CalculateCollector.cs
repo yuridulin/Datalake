@@ -51,7 +51,7 @@ internal class CalculateCollector : CollectorBase
 		if (inputTag != null)
 		{
 			var value = _valuesStore.Get(inputTag.InputTagId);
-			tagsStateService.UpdateTagState(inputTag.InputTagGuid, "calculate-collector");
+			tagsStateService.UpdateTagState(inputTag.InputTagId, "calculate-collector");
 			args.Result = value?.Number ?? 0;
 		}
 		else

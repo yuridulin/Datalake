@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Constants;
+﻿using Datalake.Database.InMemory;
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Values;
 using System.Collections.Concurrent;
 
@@ -7,28 +8,28 @@ namespace Datalake.Server.Services.Maintenance;
 /// <summary>
 /// Кэш обращений к тегам
 /// </summary>
-public class TagsStateService
+public class TagsStateService(DatalakeDataStore dataStore)
 {
-	private ConcurrentDictionary<Guid, Dictionary<string, DateTime>> _states = [];
+	private ConcurrentDictionary<int, Dictionary<string, DateTime>> _states = [];
 
 	/// <summary>
 	/// Получение информации о запросах к тегам
 	/// </summary>
 	/// <returns></returns>
-	public Dictionary<Guid, Dictionary<string, DateTime>> GetTagsStates()
+	public Dictionary<int, Dictionary<string, DateTime>> GetTagsStates()
 		=> _states.ToDictionary(x => x.Key, x => new Dictionary<string, DateTime>(x.Value));
 
 	/// <summary>
 	/// Добавление информации о запросах к тегам
 	/// </summary>
-	/// <param name="tagGuid">Идентификатор тега</param>
+	/// <param name="tagId">Идентификатор тега</param>
 	/// <param name="requestKey">Код запроса</param>
-	public void UpdateTagState(Guid tagGuid, string requestKey)
+	public void UpdateTagState(int tagId, string requestKey)
 	{
 		var now = DateFormats.GetCurrentDateTime();
 
 		_states.AddOrUpdate(
-			tagGuid,
+			tagId,
 			guid => new Dictionary<string, DateTime>
 			{
 				{ requestKey, now },
@@ -49,14 +50,25 @@ public class TagsStateService
 	/// <param name="requests">Запросы</param>
 	public void UpdateTagState(ValuesRequest[] requests)
 	{
+		var state = dataStore.State;
+
 		foreach (var request in requests)
 		{
-			if (request.Tags == null)
-				continue;
+			var tagsId = request.TagsId;
 
-			foreach (var tagGuid in request.Tags)
+			if (tagsId == null)
 			{
-				UpdateTagState(tagGuid, request.RequestKey);
+				if (request.Tags != null)
+				{
+					tagsId = request.Tags.Select(guid => state.TagsByGuid.TryGetValue(guid, out var tag) ? tag.Id : 0).ToArray();
+				}
+				else
+					continue;
+			}
+
+			foreach (var tagId in tagsId)
+			{
+				UpdateTagState(tagId, request.RequestKey);
 			}
 		}
 	}

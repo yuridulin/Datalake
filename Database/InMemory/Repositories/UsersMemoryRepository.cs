@@ -46,11 +46,11 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		List<UserInfo> usersWithAccess = [];
 		foreach (var u in users)
 		{
-			u.AccessRule = (user.Guid == u.Guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
+			u.AccessRule = (user.Guid == u.Guid && !user.RootRule.Access.HasAccess(AccessType.Manager))
 				? new(0, AccessType.Manager)
-				: new(0, user.GlobalAccessType);
+				: new(0, user.RootRule.Access);
 
-			if (!u.AccessRule.AccessType.HasAccess(AccessType.Manager))
+			if (!u.AccessRule.Access.HasAccess(AccessType.Manager))
 			{
 				u.FullName = string.Empty;
 				u.AccessType = AccessType.NotSet;
@@ -60,7 +60,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 				u.Guid = Guid.Empty;
 			}
 
-			if (u.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			if (u.AccessRule.Access.HasAccess(AccessType.Viewer))
 				usersWithAccess.Add(u);
 		}
 
@@ -96,9 +96,9 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		foreach (var group in userInfo.UserGroups)
 			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
 
-		userInfo.AccessRule = (user.Guid == guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
+		userInfo.AccessRule = (user.Guid == guid && !user.RootRule.Access.HasAccess(AccessType.Manager))
 			? new(0, AccessType.Manager)
-			: new(0, user.GlobalAccessType);
+			: new(0, user.RootRule.Access);
 
 		return userInfo;
 	}
@@ -117,9 +117,9 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		var userInfo = dataStore.State.UsersDetailInfo().FirstOrDefault(x => x.Guid == guid)
 			?? throw new NotFoundException($"Учётная запись {guid}");
 
-		userInfo.AccessRule = (user.Guid == guid && !user.GlobalAccessType.HasAccess(AccessType.Manager))
+		userInfo.AccessRule = (user.Guid == guid && !user.RootRule.Access.HasAccess(AccessType.Manager))
 			? new(0, AccessType.Manager)
-			: new(0, user.GlobalAccessType);
+			: new(0, user.RootRule.Access);
 
 		foreach (var group in userInfo.UserGroups)
 			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
@@ -138,7 +138,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<bool> UpdateAsync(
 		DatalakeContext db, UserAuthInfo user, Guid userGuid, UserUpdateRequest request)
 	{
-		var accessType = user.Guid == userGuid ? AccessType.Manager : user.GlobalAccessType;
+		var accessType = user.Guid == userGuid ? AccessType.Manager : user.RootRule.Access;
 
 		if (!accessType.HasAccess(AccessType.Manager))
 			throw Errors.NoAccess;

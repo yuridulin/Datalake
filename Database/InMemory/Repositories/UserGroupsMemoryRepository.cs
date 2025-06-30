@@ -52,7 +52,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	public UserGroupInfo Read(UserAuthInfo user, Guid guid)
 	{
 		var rule = AccessChecks.GetAccessToUserGroup(user, guid);
-		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+		if (!rule.Access.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
 		var group = dataStore.State.UserGroupsInfo()
@@ -77,7 +77,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 		foreach (var group in groups)
 		{
 			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
-			if (group.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			if (group.AccessRule.Access.HasAccess(AccessType.Viewer))
 				groupsWithAccess.Add(group);
 		}
 
@@ -124,7 +124,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 						Children = ReadChildren(x.Guid),
 					};
 
-					if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+					if (!x.AccessRule.Access.HasAccess(AccessType.Viewer))
 					{
 						group.Name = string.Empty;
 						group.Description = string.Empty;
@@ -132,7 +132,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 
 					return group;
 				})
-				.Where(x => x.Children.Length > 0 || x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				.Where(x => x.Children.Length > 0 || x.AccessRule.Access.HasAccess(AccessType.Viewer))
 				.ToArray();
 		}
 	}
@@ -146,7 +146,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	public UserGroupDetailedInfo ReadWithDetails(UserAuthInfo user, Guid guid)
 	{
 		var rule = AccessChecks.GetAccessToUserGroup(user, guid);
-		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+		if (!rule.Access.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
 		var group = dataStore.State.UserGroupsInfoWithDetails()

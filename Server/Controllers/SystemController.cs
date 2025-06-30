@@ -111,7 +111,7 @@ public class SystemController(
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("tags")]
-	public ActionResult<Dictionary<Guid, Dictionary<string, DateTime>>> GetTagsStates()
+	public ActionResult<Dictionary<int, Dictionary<string, DateTime>>> GetTagsStates()
 	{
 		var user = Authenticate();
 

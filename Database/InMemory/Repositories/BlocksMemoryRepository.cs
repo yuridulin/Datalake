@@ -60,7 +60,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		foreach (var block in blocks)
 		{
 			block.AccessRule = AccessChecks.GetAccessToBlock(user, block.Id);
-			if (block.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+			if (block.AccessRule.Access.HasAccess(AccessType.Viewer))
 				blocksWithAccess.Add(block);
 		}
 
@@ -77,7 +77,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	public BlockFullInfo Read(UserAuthInfo user, int id)
 	{
 		var rule = AccessChecks.GetAccessToBlock(user, id);
-		if (!rule.AccessType.HasAccess(AccessType.Viewer))
+		if (!rule.Access.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
 		var block = dataStore.State.BlockInfoWithParentsAndTags(id);
@@ -131,7 +131,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 						Children = ReadChildren(x.Id, prefixString + x.Name),
 					};
 
-					if (!x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+					if (!x.AccessRule.Access.HasAccess(AccessType.Viewer))
 					{
 						block.Name = string.Empty;
 						block.Description = string.Empty;
@@ -140,7 +140,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 
 					return block;
 				})
-				.Where(x => x.Children.Length > 0 || x.AccessRule.AccessType.HasAccess(AccessType.Viewer))
+				.Where(x => x.Children.Length > 0 || x.AccessRule.Access.HasAccess(AccessType.Viewer))
 				.OrderBy(x => x.Name)
 				.ToArray();
 		}
