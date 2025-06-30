@@ -14,7 +14,7 @@ class User implements UserAuthInfo {
 		this.globalAccessType = AccessType[
 			(localStorage.getItem(accessHeader) || '') as unknown as AccessType
 		] as unknown as AccessType
-		this.accessRule = { ruleId: 0, accessType: this.globalAccessType }
+		this.accessRule = { ruleId: 0, access: this.globalAccessType }
 
 		//debugger
 		const storedTheme = localStorage.getItem(themeKey)
@@ -27,6 +27,9 @@ class User implements UserAuthInfo {
 
 		makeAutoObservable(this)
 	}
+	rootRule!: AccessRuleInfo
+	underlyingUser?: UserAuthInfo | null | undefined
+	energoId?: string | null | undefined
 
 	guid: string = ''
 	fullName: string
@@ -88,23 +91,23 @@ class User implements UserAuthInfo {
 	}
 
 	hasAccessToSource(minimal: AccessType, id: number) {
-		const rule = this.sources[id]
-		return hasAccess(rule?.accessType ?? AccessType.NotSet, minimal)
+		const rule = this.sources[id] as AccessRuleInfo
+		return hasAccess(rule?.access ?? AccessType.NotSet, minimal)
 	}
 
 	hasAccessToBlock(minimal: AccessType, id: number) {
 		const rule = this.blocks[id]
-		return hasAccess(rule?.accessType ?? AccessType.NotSet, minimal)
+		return hasAccess(rule?.access ?? AccessType.NotSet, minimal)
 	}
 
-	hasAccessToTag(minimal: AccessType, guid: string) {
-		const rule = this.tags[guid]
-		return hasAccess(rule?.accessType ?? AccessType.NotSet, minimal)
+	hasAccessToTag(minimal: AccessType, id: number) {
+		const rule = this.tags[id]
+		return hasAccess(rule?.access ?? AccessType.NotSet, minimal)
 	}
 
 	hasAccessToGroup(minimal: AccessType, guid: string) {
 		const rule = this.groups[guid]
-		return hasAccess(rule?.accessType ?? AccessType.NotSet, minimal)
+		return hasAccess(rule?.access ?? AccessType.NotSet, minimal)
 	}
 }
 

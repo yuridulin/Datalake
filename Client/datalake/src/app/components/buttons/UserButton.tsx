@@ -11,7 +11,7 @@ type UserGroupButtonProps = {
 }
 
 const UserButton = ({ userInfo, check = true }: UserGroupButtonProps) => {
-	return !check || hasAccess(userInfo.accessRule.accessType, AccessType.Viewer) ? (
+	return !check || hasAccess(userInfo.accessRule.access, AccessType.Viewer) ? (
 		<NavLink to={routes.users.toUserView(userInfo.guid)}>
 			<Button size='small' icon={<UserIcon />}>
 				{userInfo.fullName}

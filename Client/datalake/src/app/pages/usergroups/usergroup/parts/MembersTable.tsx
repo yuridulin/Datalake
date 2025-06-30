@@ -18,7 +18,7 @@ const columns: ColumnsType<UserGroupUsersInfo> = [
 					userInfo={{
 						guid: record.guid,
 						fullName: record.fullName || '?',
-						accessRule: { ruleId: 0, accessType: AccessType.Viewer },
+						accessRule: { ruleId: 0, access: AccessType.Viewer },
 					}}
 				></UserButton>
 			) : (

@@ -683,12 +683,12 @@ export class Api<
    * @tags Tags
    * @name TagsRead
    * @summary Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
-   * @request GET:/api/Tags/{guid}
+   * @request GET:/api/Tags/{id}
    * @response `200` `TagInfo` Объект информации о теге
    */
-  tagsRead = (guid: string, params: RequestParams = {}) =>
+  tagsRead = (id: number, params: RequestParams = {}) =>
     this.request<TagInfo, any>({
-      path: `/api/Tags/${guid}`,
+      path: `/api/Tags/${id}`,
       method: "GET",
       format: "json",
       ...params,
@@ -699,16 +699,16 @@ export class Api<
    * @tags Tags
    * @name TagsUpdate
    * @summary Изменение тега
-   * @request PUT:/api/Tags/{guid}
+   * @request PUT:/api/Tags/{id}
    * @response `200` `File`
    */
   tagsUpdate = (
-    guid: string,
+    id: number,
     data: TagUpdateRequest,
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/Tags/${guid}`,
+      path: `/api/Tags/${id}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
@@ -720,12 +720,12 @@ export class Api<
    * @tags Tags
    * @name TagsDelete
    * @summary Удаление тега
-   * @request DELETE:/api/Tags/{guid}
+   * @request DELETE:/api/Tags/{id}
    * @response `200` `File`
    */
-  tagsDelete = (guid: string, params: RequestParams = {}) =>
+  tagsDelete = (id: number, params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/Tags/${guid}`,
+      path: `/api/Tags/${id}`,
       method: "DELETE",
       ...params,
     });

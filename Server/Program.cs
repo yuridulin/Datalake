@@ -10,7 +10,6 @@ using LinqToDB;
 using LinqToDB.AspNet;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using NJsonSchema.Generation;
 using Serilog;
 using Serilog.Events;

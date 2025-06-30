@@ -12,7 +12,7 @@ type TagButtonProps = {
 
 const TagButton = ({ tag, openInBlank = false }: TagButtonProps) => {
 	return (
-		<NavLink to={routes.tags.toViewTag(tag.guid)} target={openInBlank ? '_blank' : '_self'}>
+		<NavLink to={routes.tags.toViewTag(tag.id)} target={openInBlank ? '_blank' : '_self'}>
 			<Button size='small' icon={<TagIcon type={tag.sourceType} />}>
 				{tag.name}
 				<TagFrequencyEl frequency={tag.frequency} />

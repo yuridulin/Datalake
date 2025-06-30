@@ -14,13 +14,13 @@ public record AccessRuleInfo(int RuleId, AccessType Access)
 	/// Идентификатор правила доступа
 	/// </summary>
 	[Required]
-	public readonly int RuleId = RuleId;
+	public int RuleId { get; } = RuleId;
 
 	/// <summary>
 	/// Уровень доступа
 	/// </summary>
 	[Required]
-	public readonly AccessType Access = Access;
+	public AccessType Access { get; } = Access;
 
 	/// <summary>
 	/// Заглушка для неопределенного уровня доступа

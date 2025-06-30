@@ -43,7 +43,7 @@ const TagView = observer(() => {
 		setLoading(true)
 
 		api
-			.tagsRead(String(id))
+			.tagsRead(Number(id))
 			.then((res) => {
 				setTag(res.data)
 				if (res.data.sourceId === SourceType.Calculated) {
@@ -220,8 +220,8 @@ const TagView = observer(() => {
 				}
 				right={
 					<>
-						{user.hasAccessToTag(AccessType.Editor, tag.guid) && (
-							<NavLink to={routes.tags.toEditTag(String(id))}>
+						{user.hasAccessToTag(AccessType.Editor, tag.id) && (
+							<NavLink to={routes.tags.toEditTag(Number(id))}>
 								<Button>Редактирование тега</Button>
 							</NavLink>
 						)}

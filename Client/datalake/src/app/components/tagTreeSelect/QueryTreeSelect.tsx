@@ -124,7 +124,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 				children: [],
 				accessRule: {
 					ruleId: 0,
-					accessType: AccessType.Manager,
+					access: AccessType.Manager,
 				},
 			}
 			blocksTree.push(fakeBlock)

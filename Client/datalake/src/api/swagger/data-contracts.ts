@@ -202,20 +202,20 @@ export enum TagType {
 /**
  * Уровень доступа
  *
- * 0 = NoAccess
- * 5 = Viewer
- * 10 = Editor
- * 50 = Manager
- * 100 = Admin
- * -100 = NotSet
+ * 0 = NotSet
+ * 1 = Viewer
+ * 2 = Editor
+ * 3 = Manager
+ * 4 = NoAccess
+ * 5 = Admin
  */
 export enum AccessType {
-  NoAccess = 0,
-  Viewer = 5,
-  Editor = 10,
-  Manager = 50,
-  Admin = 100,
-  NotSet = -100,
+  NotSet = 0,
+  Viewer = 1,
+  Editor = 2,
+  Manager = 3,
+  NoAccess = 4,
+  Admin = 5,
 }
 
 /** Информация о разрешении пользователя или группы на доступ к какому-либо объекту */
@@ -251,7 +251,7 @@ export interface AccessRuleInfo {
    */
   ruleId: number;
   /** Уровень доступа */
-  accessType: AccessType;
+  access: AccessType;
 }
 
 /** Базовая информация о пользователе */
@@ -715,7 +715,7 @@ export type UserAuthInfo = UserSimpleInfo & {
    */
   token: string;
   /** Глобальный уровень доступа */
-  globalAccessType: AccessType;
+  rootRule: AccessRuleInfo;
   /** Список всех блоков с указанием доступа к ним */
   groups: Record<string, AccessRuleInfo>;
   /** Список всех блоков с указанием доступа к ним */

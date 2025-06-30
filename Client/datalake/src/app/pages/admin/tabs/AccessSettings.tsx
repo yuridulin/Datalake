@@ -118,13 +118,13 @@ const AccessSettings = () => {
 				guid: info.guid,
 				fullName: info.fullName,
 				accessRule: info.accessRule,
-				globalAccess: info.globalAccessType,
+				globalAccess: info.rootRule.access,
 				groups: Object.entries(info.groups).map(([key, value]) => ({
 					guid: key,
 					name: groups[key],
 					accessRule: {
 						ruleId: value.ruleId,
-						accessType: value.accessType,
+						access: value.access,
 					},
 				})),
 				sources: Object.entries(info.sources).map(([key, value]) => ({
@@ -132,7 +132,7 @@ const AccessSettings = () => {
 					name: sources[Number(key)],
 					accessRule: {
 						ruleId: value.ruleId,
-						accessType: value.accessType,
+						access: value.access,
 					},
 				})),
 				blocks: Object.entries(info.blocks).map(([key, value]) => ({
@@ -140,14 +140,14 @@ const AccessSettings = () => {
 					name: blocks[Number(key)],
 					accessRule: {
 						ruleId: value.ruleId,
-						accessType: value.accessType,
+						access: value.access,
 					},
 				})),
 				tags: Object.entries(info.tags).map(([key, value]) => ({
 					...tags[key],
 					accessRule: {
 						ruleId: value.ruleId,
-						accessType: value.accessType,
+						access: value.access,
 					},
 				})),
 			}))
@@ -183,7 +183,7 @@ const AccessSettings = () => {
 										}}
 										check={false}
 									/>{' '}
-									: <AccessTypeEl type={group.accessRule.accessType} />
+									: <AccessTypeEl type={group.accessRule.access} />
 								</>
 							),
 							key: id++,
@@ -202,7 +202,7 @@ const AccessSettings = () => {
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}
-									: <AccessTypeEl type={source.accessRule.accessType} />
+									: <AccessTypeEl type={source.accessRule.access} />
 								</>
 							),
 							key: id++,
@@ -222,7 +222,7 @@ const AccessSettings = () => {
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}
-									: <AccessTypeEl type={block.accessRule.accessType} />
+									: <AccessTypeEl type={block.accessRule.access} />
 								</>
 							),
 							key: id++,
@@ -245,7 +245,7 @@ const AccessSettings = () => {
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}
-									: <AccessTypeEl type={tag.accessRule.accessType} />
+									: <AccessTypeEl type={tag.accessRule.access} />
 								</>
 							),
 							key: id++,

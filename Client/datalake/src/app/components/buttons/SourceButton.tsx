@@ -12,7 +12,7 @@ type SourceButtonProps = {
 }
 
 const SourceButton = ({ source }: SourceButtonProps) => {
-	/* if (!hasAccess(source.accessRule.accessType, AccessType.Viewer)) {
+	/* if (!hasAccess(source.accessRule.access, AccessType.Viewer)) {
 		return <Button size='small' disabled icon={<UserIcon />}>
 			Нет доступа
 		</Button>
