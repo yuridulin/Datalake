@@ -34,7 +34,7 @@ public class DatalakeDerivedDataStore
 	private void Rebuild(DatalakeDataState newState)
 	{
 		RebuildTree(newState);
-		RebuildUserRightsCacheOptimized(newState);
+		RebuildAccess(newState);
 
 		_logger.LogInformation("Завершено обновление зависимых данных");
 	}
@@ -149,9 +149,9 @@ public class DatalakeDerivedDataStore
 
 	private DatalakeAccessState _accessState = new();
 
-	private void RebuildUserRightsCacheOptimized(DatalakeDataState state)
+	private void RebuildAccess(DatalakeDataState state)
 	{
-		var accessState = AccessBuild.ComputateRightsFromState(state);
+		var accessState = AccessFunctions.ComputeAccess(state);
 		Interlocked.Exchange(ref _accessState, accessState);
 		AccessChanged?.Invoke(this, accessState);
 	}

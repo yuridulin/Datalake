@@ -15,32 +15,6 @@ public static class AccessTypeExtension
 	/// <returns>Флаг достаточности</returns>
 	public static bool HasAccess(this AccessType current, AccessType minimal)
 	{
-		return minimal switch
-		{
-			AccessType.NotSet => true,
-
-			AccessType.NoAccess =>
-				current != AccessType.NoAccess,
-
-			AccessType.Viewer =>
-				current == AccessType.Viewer
-				|| current == AccessType.Editor
-				|| current == AccessType.Manager
-				|| current == AccessType.Admin,
-
-			AccessType.Editor =>
-				current == AccessType.Editor
-				|| current == AccessType.Manager
-				|| current == AccessType.Admin,
-
-			AccessType.Manager =>
-				current == AccessType.Manager
-				|| current == AccessType.Admin,
-
-			AccessType.Admin =>
-				current == AccessType.Admin,
-
-			_ => false,
-		};
+		return current >= minimal;
 	}
 }
