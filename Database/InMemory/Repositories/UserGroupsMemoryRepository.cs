@@ -91,35 +91,24 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Дерево групп</returns>
 	public UserGroupTreeInfo[] ReadAllAsTree(UserAuthInfo user)
 	{
-		var query = dataStore.State.UserGroups
-			.Select(x => new UserGroupTreeInfo
-			{
-				Guid = x.Guid,
-				Name = x.Name,
-				ParentGuid = x.ParentGuid,
-				Description = x.Description,
-			});
-
-		foreach (var group in query)
-			group.AccessRule = user.GetAccessToUserGroup(group.Guid);
-
-		var groups = query.ToArray();
+		var groups = ReadAll(user);
 
 		return ReadChildren(null);
 
 		UserGroupTreeInfo[] ReadChildren(Guid? guid)
 		{
 			return groups
-				.Where(x => x.ParentGuid == guid)
+				.Where(x => x.ParentGroupGuid == guid)
 				.Select(x =>
 				{
 					var group = new UserGroupTreeInfo
 					{
 						Guid = x.Guid,
 						Name = x.Name,
-						ParentGuid = x.ParentGuid,
+						ParentGuid = x.ParentGroupGuid,
 						Description = x.Description,
 						AccessRule = x.AccessRule,
+						GlobalAccessType = x.GlobalAccessType,
 						ParentGroupGuid = x.ParentGroupGuid,
 						Children = ReadChildren(x.Guid),
 					};
@@ -234,7 +223,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 		{
 			UserGroupGuid = newUserGroup.Guid,
 			IsGlobal = true,
-			AccessType = AccessType.Viewer,
+			AccessType = AccessType.NotSet,
 		};
 
 		// Блокируем стейт до завершения обновления
@@ -290,6 +279,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			Name = newUserGroup.Name,
 			Description = newUserGroup.Description,
 			ParentGroupGuid = newUserGroup.ParentGuid,
+			GlobalAccessType = directRuleForUserGroup.AccessType,
 		};
 
 		return info;

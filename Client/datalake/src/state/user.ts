@@ -76,8 +76,7 @@ class User implements UserAuthInfo {
 		this.blocks = authInfo.blocks
 		this.tags = authInfo.tags
 		this.groups = authInfo.groups
-
-		console.log('user:', JSON.parse(JSON.stringify(this)))
+		this.rootRule = authInfo.rootRule
 	}
 
 	logout() {
@@ -91,23 +90,23 @@ class User implements UserAuthInfo {
 	}
 
 	hasAccessToSource(minimal: AccessType, id: number) {
-		const rule = this.sources[id] as AccessRuleInfo
-		return hasAccess(rule?.access ?? AccessType.NotSet, minimal)
+		const rule = this.sources[id] ?? this.rootRule
+		return hasAccess(rule.access ?? this.globalAccessType, minimal)
 	}
 
 	hasAccessToBlock(minimal: AccessType, id: number) {
-		const rule = this.blocks[id]
-		return hasAccess(rule?.access ?? AccessType.NotSet, minimal)
+		const rule = this.blocks[id] ?? this.rootRule
+		return hasAccess(rule.access ?? this.globalAccessType, minimal)
 	}
 
 	hasAccessToTag(minimal: AccessType, id: number) {
-		const rule = this.tags[id]
-		return hasAccess(rule?.access ?? AccessType.NotSet, minimal)
+		const rule = this.tags[id] ?? this.rootRule
+		return hasAccess(rule.access ?? this.globalAccessType, minimal)
 	}
 
 	hasAccessToGroup(minimal: AccessType, guid: string) {
-		const rule = this.groups[guid]
-		return hasAccess(rule?.access ?? AccessType.NotSet, minimal)
+		const rule = this.groups[guid] ?? this.rootRule
+		return hasAccess(rule.access ?? this.globalAccessType, minimal)
 	}
 }
 

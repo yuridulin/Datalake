@@ -939,6 +939,8 @@ export type UserGroupInfo = UserGroupSimpleInfo & {
    * @format guid
    */
   parentGroupGuid?: string | null;
+  /** Общий уровень доступа для всех участников группы */
+  globalAccessType: AccessType;
 };
 
 /** Данные запроса для создания группы пользователей */
@@ -972,8 +974,6 @@ export type UserGroupTreeInfo = UserGroupInfo & {
 
 /** Расширенная информация о группе пользователей, включающая вложенные группы и список пользователей */
 export type UserGroupDetailedInfo = UserGroupInfo & {
-  /** Общий уровень доступа для всех участников группы */
-  globalAccessType: AccessType;
   /** Список пользователей этой группы */
   users: UserGroupUsersInfo[];
   /** Список подгрупп этой группы */

@@ -26,7 +26,7 @@ const columns: ColumnsType<UserGroupUsersInfo> = [
 			),
 	},
 	{
-		title: 'Разрешение на доступ к группе',
+		title: 'Уровень доступа к управлению группой и подгруппами',
 		dataIndex: 'access',
 		render: (_, record) => <AccessTypeEl type={record.accessType} />,
 		sorter: (a, b) => (a > b ? 1 : -1),

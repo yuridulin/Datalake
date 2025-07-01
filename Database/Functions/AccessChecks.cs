@@ -1,5 +1,6 @@
 ﻿using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
+using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
@@ -20,7 +21,7 @@ public static class AccessChecks
 		this UserAuthInfo user,
 		AccessType minimalAccess)
 	{
-		bool hasAccess = user.RootRule.Access.HasAccess(minimalAccess);
+		bool hasAccess = user.RootRule.HasAccess(minimalAccess);
 
 		if (hasAccess && user.UnderlyingUser != null)
 			hasAccess = HasGlobalAccess(user.UnderlyingUser, minimalAccess);
@@ -39,7 +40,7 @@ public static class AccessChecks
 		AccessType minimalAccess,
 		int sourceId)
 	{
-		var access = user.Sources.TryGetValue(sourceId, out var rule) ? rule.Access : user.RootRule.Access;
+		var access = user.Sources.TryGetValue(sourceId, out var rule) ? rule : user.RootRule;
 		var hasAccess = access.HasAccess(minimalAccess);
 
 		if (hasAccess && user.UnderlyingUser != null)
@@ -59,7 +60,7 @@ public static class AccessChecks
 		AccessType minimalAccess,
 		int blockId)
 	{
-		var access = user.Blocks.TryGetValue(blockId, out var rule) ? rule.Access : user.RootRule.Access;
+		var access = user.Blocks.TryGetValue(blockId, out var rule) ? rule : user.RootRule;
 		var hasAccess = access.HasAccess(minimalAccess);
 
 		if (hasAccess && user.UnderlyingUser != null)
@@ -79,7 +80,7 @@ public static class AccessChecks
 		AccessType minimalAccess,
 		int tagId)
 	{
-		var access = user.Tags.TryGetValue(tagId, out var rule) ? rule.Access : user.RootRule.Access;
+		var access = user.Tags.TryGetValue(tagId, out var rule) ? rule : user.RootRule;
 		var hasAccess = access.HasAccess(minimalAccess);
 
 		if (hasAccess && user.UnderlyingUser != null)
@@ -99,10 +100,13 @@ public static class AccessChecks
 		AccessType minimalAccess,
 		Guid groupGuid)
 	{
-		if (!user.Groups.TryGetValue(groupGuid, out var rule))
-			return false;
+		var access = user.Groups.TryGetValue(groupGuid, out var rule) ? rule : user.RootRule;
+		var hasAccess = access.HasAccess(minimalAccess);
 
-		return rule.Access.HasAccess(minimalAccess);
+		if (hasAccess && user.UnderlyingUser != null)
+			hasAccess = HasAccessToUserGroup(user.UnderlyingUser, minimalAccess, groupGuid);
+
+		return hasAccess;
 	}
 
 	/// <summary>
@@ -253,13 +257,13 @@ public static class AccessChecks
 		this UserAuthInfo user,
 		Guid groupGuid)
 	{
-		if (!user.Groups.TryGetValue(groupGuid, out var rule))
-			return AccessRuleInfo.Default;
-
-		if (user.UnderlyingUser != null)
-			if (!user.UnderlyingUser.Groups.TryGetValue(groupGuid, out rule))
-				return AccessRuleInfo.Default;
-
-		return rule;
+		if (user.UnderlyingUser == null)
+		{
+			return user.Groups.TryGetValue(groupGuid, out var rule) ? rule : user.RootRule;
+		}
+		else
+		{
+			return user.UnderlyingUser.Groups.TryGetValue(groupGuid, out var rule) ? rule : user.UnderlyingUser.RootRule;
+		}
 	}
 }

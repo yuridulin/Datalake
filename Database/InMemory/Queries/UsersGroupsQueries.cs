@@ -14,6 +14,8 @@ namespace Datalake.Database.InMemory.Queries;
 /// </summary>
 public static class UsersGroupsQueries
 {
+	static readonly int UnsetSource = (int)SourceType.NotSet - 1;
+
 	/// <summary>
 	/// Запрос краткой информации о группах пользователей
 	/// </summary>
@@ -22,13 +24,18 @@ public static class UsersGroupsQueries
 	{
 		return state.UserGroups
 			.Where(userGroup => !userGroup.IsDeleted)
-			.Select(userGroup => new UserGroupInfo
-			{
-				Guid = userGroup.Guid,
-				Name = userGroup.Name,
-				Description = userGroup.Description,
-				ParentGroupGuid = userGroup.ParentGuid,
-			});
+			.Join(
+				state.AccessRights.Where(rule => rule.IsGlobal && rule.UserGroupGuid.HasValue),
+				userGroup => userGroup.Guid,
+				rule => rule.UserGroupGuid,
+				(userGroup, rule) => new UserGroupInfo
+				{
+					Guid = userGroup.Guid,
+					Name = userGroup.Name,
+					Description = userGroup.Description,
+					ParentGroupGuid = userGroup.ParentGuid,
+					GlobalAccessType = rule.AccessType,
+				});
 	}
 
 	/// <summary>
@@ -40,59 +47,67 @@ public static class UsersGroupsQueries
 		var activeUserGroups = state.UserGroups.Where(userGroup => !userGroup.IsDeleted);
 
 		return activeUserGroups
-			.Select(userGroup => new UserGroupDetailedInfo
-			{
-				Guid = userGroup.Guid,
-				Name = userGroup.Name,
-				Description = userGroup.Description,
-				ParentGroupGuid = userGroup.ParentGuid,
-				GlobalAccessType = state.AccessRights
-					.FirstOrDefault(rule => rule.IsGlobal && rule.UserGroupGuid == userGroup.Guid)?.AccessType ?? AccessType.NotSet,
-				Users = state.UserGroupRelations
-					.Join(state.Users.Where(user => !user.IsDeleted), relation => relation.UserGuid, user => user.Guid, (relation, user) => new UserGroupUsersInfo
-					{
-						Guid = user.Guid,
-						FullName = user.FullName,
-						AccessType = relation.AccessType,
-					})
-					.ToArray(),
-				AccessRights = state.AccessRights
-					.Select(rule => new AccessRightsForOneInfo
-					{
-						Id = rule.Id,
-						IsGlobal = rule.IsGlobal,
-						AccessType = rule.AccessType,
-						Source = !state.SourcesById.TryGetValue(rule.SourceId ?? 0, out var source) ? null : new SourceSimpleInfo
+			.Join(
+				state.AccessRights.Where(rule => rule.IsGlobal && rule.UserGroupGuid.HasValue),
+				userGroup => userGroup.Guid,
+				rule => rule.UserGroupGuid,
+				(userGroup, rule) => new UserGroupDetailedInfo
+				{
+					Guid = userGroup.Guid,
+					Name = userGroup.Name,
+					Description = userGroup.Description,
+					ParentGroupGuid = userGroup.ParentGuid,
+					GlobalAccessType = rule.AccessType,
+					Users = state.UserGroupRelations
+						.Join(
+							state.Users.Where(user => !user.IsDeleted),
+							relation => relation.UserGuid,
+							user => user.Guid,
+							(relation, user) => new UserGroupUsersInfo
+							{
+								Guid = user.Guid,
+								FullName = user.FullName,
+								AccessType = relation.AccessType,
+							})
+						.ToArray(),
+					AccessRights = state.AccessRights
+						.Where(rule => !rule.IsGlobal && rule.UserGroupGuid == userGroup.Guid)
+						.Select(rule => new AccessRightsForOneInfo
 						{
-							Id = source.Id,
-							Name = source.Name,
-						},
-						Block = !state.BlocksById.TryGetValue(rule.BlockId ?? 0, out var block) ? null : new BlockSimpleInfo
+							Id = rule.Id,
+							IsGlobal = rule.IsGlobal,
+							AccessType = rule.AccessType,
+							Source = !state.SourcesById.TryGetValue(rule.SourceId ?? UnsetSource, out var source) ? null : new SourceSimpleInfo
+							{
+								Id = source.Id,
+								Name = source.Name,
+							},
+							Block = !state.BlocksById.TryGetValue(rule.BlockId ?? 0, out var block) ? null : new BlockSimpleInfo
+							{
+								Id = block.Id,
+								Guid = block.GlobalId,
+								Name = block.Name,
+							},
+							Tag = !state.TagsById.TryGetValue(rule.TagId ?? 0, out var tag) ? null : new TagSimpleInfo
+							{
+								Id = tag.Id,
+								Guid = tag.GlobalGuid,
+								Name = tag.Name,
+								Type = tag.Type,
+								Frequency = tag.Frequency,
+								SourceType = !state.SourcesById.TryGetValue(tag.SourceId, out var tagSource) ? SourceType.NotSet : tagSource.Type,
+							},
+						})
+						.Where(x => x.Tag != null || x.Block != null || x.Source != null)
+						.ToArray(),
+					Subgroups = activeUserGroups
+						.Where(subGroup => subGroup.ParentGuid == userGroup.Guid)
+						.Select(subGroup => new UserGroupSimpleInfo
 						{
-							Id = block.Id,
-							Guid = block.GlobalId,
-							Name = block.Name,
-						},
-						Tag = !state.TagsById.TryGetValue(rule.TagId ?? 0, out var tag) ? null : new TagSimpleInfo
-						{
-							Id = tag.Id,
-							Guid = tag.GlobalGuid,
-							Name = tag.Name,
-							Type = tag.Type,
-							Frequency = tag.Frequency,
-							SourceType = !state.SourcesById.TryGetValue(tag.SourceId, out var tagSource) ? SourceType.NotSet : tagSource.Type,
-						},
-					})
-					.Where(x => x.Tag != null || x.Block != null || x.Source != null)
-					.ToArray(),
-				Subgroups = activeUserGroups
-					.Where(subGroup => subGroup.ParentGuid == userGroup.Guid)
-					.Select(subGroup => new UserGroupSimpleInfo
-					{
-						Guid = subGroup.Guid,
-						Name = subGroup.Name,
-					}
-				).ToArray(),
-			});
+							Guid = subGroup.Guid,
+							Name = subGroup.Name,
+						}
+					).ToArray(),
+				});
 	}
 }

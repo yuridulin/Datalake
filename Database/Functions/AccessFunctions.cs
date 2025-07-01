@@ -10,11 +10,6 @@ namespace Datalake.Database.Functions;
 public static class AccessFunctions
 {
 	/// <summary>
-	/// Правило доступа по умолчанию с минимальным приоритетом
-	/// </summary>
-	public readonly static AccessRuleInfo DefaultRule = new(0, AccessType.NotSet);
-
-	/// <summary>
 	/// Расчет прав доступа по пользователям на основании текущих данных
 	/// </summary>
 	/// <param name="state">Состояние с текущими данными</param>
@@ -116,6 +111,7 @@ public static class AccessFunctions
 		}
 
 		// Оптимизация: связь пользователь-группы
+		var directUserGroupRules = new Dictionary<Guid, Dictionary<Guid, AccessRuleInfo>>();
 		var userGroups = new Dictionary<Guid, HashSet<Guid>>();
 		foreach (var relation in state.UserGroupRelations)
 		{
@@ -128,6 +124,23 @@ public static class AccessFunctions
 			if (groupAncestors.TryGetValue(relation.UserGroupGuid, out var ancestors))
 			{
 				groups.UnionWith(ancestors);
+			}
+
+			var userId = relation.UserGuid;
+			var groupId = relation.UserGroupGuid;
+			var rule = new AccessRuleInfo(relation.Id, relation.AccessType);
+
+			if (!directUserGroupRules.TryGetValue(userId, out var userRules))
+			{
+				userRules = new Dictionary<Guid, AccessRuleInfo>();
+				directUserGroupRules[userId] = userRules;
+			}
+
+			// Обновляем правило если найден более высокий уровень доступа
+			if (!userRules.TryGetValue(groupId, out var existing) ||
+					rule.Access > existing.Access)
+			{
+				userRules[groupId] = rule;
 			}
 		}
 
@@ -156,11 +169,11 @@ public static class AccessFunctions
 			{
 				Guid = userGuid,
 				FullName = user.FullName ?? user.Login ?? string.Empty,
-				RootRule = DefaultRule,
+				RootRule = AccessRuleInfo.Default,
 				Token = string.Empty
 			};
 
-			AccessRuleInfo globalRule = DefaultRule;
+			AccessRuleInfo globalRule = AccessRuleInfo.Default;
 
 			// Глобальные правила пользователя
 			if (userGlobalRules.TryGetValue(userGuid, out var userGlobalRule))
@@ -182,6 +195,19 @@ public static class AccessFunctions
 							groupRule.Access > globalRule.Access)
 					{
 						globalRule = groupRule;
+					}
+				}
+				
+				// Получаем прямые правила пользователя
+				directUserGroupRules.TryGetValue(userGuid, out var userDirectGroupRules);
+
+				foreach (var groupGuid in userGroupSet)
+				{
+					// Проверяем наличие прямого правила
+					if (userDirectGroupRules != null &&
+							userDirectGroupRules.TryGetValue(groupGuid, out var rule))
+					{
+						access.Groups[groupGuid] = rule;
 					}
 				}
 
