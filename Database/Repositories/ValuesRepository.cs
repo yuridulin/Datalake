@@ -590,9 +590,17 @@ public class ValuesRepository(
 	/// Параметры: нет
 	/// </summary>
 	const string ReadAllLast = @"
-		SELECT DISTINCT ON (""TagId"") *
-		FROM public.""TagsHistory""
-		ORDER BY ""TagId"", ""Date"" DESC;";
+		SELECT
+			t.""Id"" AS ""TagId"",
+			h.""Date"",
+			h.""Text"",
+			h.""Number"",
+			h.""Quality""
+		FROM ""Tags"" t 
+		LEFT JOIN (
+			SELECT DISTINCT ON (""TagId"") *
+			FROM public.""TagsHistory""
+			ORDER BY ""TagId"", ""Date"" DESC) AS h ON t.""Id"" = h.""TagId""";
 
 	/// <summary>
 	/// Параметры: теги

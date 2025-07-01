@@ -1,6 +1,7 @@
 ﻿using Datalake.Database.Attributes;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
+using Datalake.PublicApi.Constants;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -21,7 +22,7 @@ public class DatalakeCurrentValuesStore
 		_ = Measures.Measure(ReloadValuesAsync, _logger, nameof(ReloadValuesAsync));
 	}
 
-	public async Task ReloadValuesAsync()
+	private async Task ReloadValuesAsync()
 	{
 		var values = await Measures.Measure(LoadValuesFromDatabaseAsync, _logger, nameof(LoadValuesFromDatabaseAsync));
 		var newValues = new ConcurrentDictionary<int, TagHistory>(values);
@@ -31,7 +32,7 @@ public class DatalakeCurrentValuesStore
 		_logger.LogInformation("Завершено обновление текущих значений");
 	}
 
-	public async Task<Dictionary<int, TagHistory>> LoadValuesFromDatabaseAsync()
+	private async Task<Dictionary<int, TagHistory>> LoadValuesFromDatabaseAsync()
 	{
 		using var scope = _serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
@@ -50,10 +51,22 @@ public class DatalakeCurrentValuesStore
 	public Dictionary<int, TagHistory> GetByIdentifiers(int[] identifiers)
 	{
 		var state = _currentValues;
+		var now = DateFormats.GetCurrentDateTime();
+
 		Dictionary<int, TagHistory> result = [];
 		foreach (var id in identifiers)
-			if (state.TryGetValue(id, out var value))
-				result.Add(id, value);
+		{
+			state.TryGetValue(id, out var value);
+			result.Add(id, value ?? new()
+			{
+				TagId = id,
+				Date = now,
+				Text = null,
+				Number = null,
+				Quality = PublicApi.Enums.TagQuality.Bad_NoValues,
+			});
+		}
+
 		return result;
 	}
 
