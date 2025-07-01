@@ -48,7 +48,7 @@ public class SourcesStateService(
 	{
 		var now = DateFormats.GetCurrentDateTime();
 
-		double[] secondsAfterLastUpdate = GetSecondsAfterLastUpdate(sourceId, now);
+		var secondsAfterLastUpdate = GetSecondsAfterLastUpdate(sourceId, now);
 
 		_state.AddOrUpdate(
 			sourceId,
@@ -72,14 +72,23 @@ public class SourcesStateService(
 			});
 	}
 
-	private double[] GetSecondsAfterLastUpdate(int sourceId, DateTime now)
+	private List<double> GetSecondsAfterLastUpdate(int sourceId, DateTime now)
 	{
-		return dataStore.State.CachesTags
-			.Where(tag => tag.SourceId == sourceId)
-			.Select(tag => tag.Id)
-			.Select(valuesStore.Get)
-			.Where(history => history != null)
-			.Select(history => (now - history!.Date).TotalSeconds)
-			.ToArray();
+		List<double> seconds = [];
+		var tags = dataStore.State.CachesTags;
+
+		foreach (var tag in tags)
+		{
+			if (tag.SourceId != sourceId)
+				continue;
+
+			var history = valuesStore.Get(tag.Id);
+			if (history == null)
+				continue;
+
+			seconds.Add((now - history.Date).TotalSeconds);
+		}
+
+		return seconds;
 	}
 }

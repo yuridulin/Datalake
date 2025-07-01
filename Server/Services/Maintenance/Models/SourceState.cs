@@ -40,5 +40,5 @@ public class SourceState
 	/// Список количества секунд с момента записи каждого тега
 	/// </summary>
 	[Required]
-	public required double[] ValuesAfterWriteSeconds { get; init; }
+	public required List<double> ValuesAfterWriteSeconds { get; set; }
 }
