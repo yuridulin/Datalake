@@ -26,33 +26,20 @@ namespace Datalake.Database.Migrations
 				{
 					for (int day = 1; day <= 31; day++)
 					{
+						string tableDate = $"{year}_{month:D2}_{day:D2}";
 						migrationBuilder.Sql($@"
-							DO $$
-							BEGIN
-									IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'TagsHistory_{year}_{month:D2}_{day:D2}') THEN
-											INSERT INTO ""TagsHistory"" (""TagId"", ""Date"", ""Text"", ""Number"", ""Quality"")
-											SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
-											FROM ""TagsHistory_{year}_{month:D2}_{day:D2}"";
-									END IF;
-							END $$;", true);
+						DO $$
+						BEGIN
+							IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'TagsHistory_{tableDate}') THEN
+								INSERT INTO ""TagsHistory"" (""TagId"", ""Date"", ""Text"", ""Number"", ""Quality"")
+								SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
+								FROM ""TagsHistory_{tableDate}"";
+								DROP TABLE ""TagsHistory_{tableDate}"";
+							END IF;
+						END $$;", true);
 					}
 				}
 			}
-
-			migrationBuilder.Sql(@"
-				DO $$
-				DECLARE
-						tbl text;
-				BEGIN
-						FOR tbl IN
-								SELECT quote_ident(tablename)
-								FROM pg_tables
-								WHERE tablename ~ '^TagsHistory_\d{4}_\d{2}_\d{2}$'
-						LOOP
-								EXECUTE format('DROP TABLE %s', tbl);
-						END LOOP;
-				END;
-				$$;", true);
 		}
 
 		/// <inheritdoc />
