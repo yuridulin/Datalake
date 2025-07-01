@@ -5,20 +5,20 @@ using Datalake.PublicApi.Models.Auth;
 namespace Datalake.Database.Functions;
 
 /// <summary>
-/// 
+/// Функции предварительного расчета прав доступа для пользователей
 /// </summary>
 public static class AccessFunctions
 {
 	/// <summary>
-	/// 
+	/// Правило доступа по умолчанию с минимальным приоритетом
 	/// </summary>
 	public readonly static AccessRuleInfo DefaultRule = new(0, AccessType.NotSet);
 
 	/// <summary>
-	/// 
+	/// Расчет прав доступа по пользователям на основании текущих данных
 	/// </summary>
-	/// <param name="state"></param>
-	/// <returns></returns>
+	/// <param name="state">Состояние с текущими данными</param>
+	/// <returns>Состояние актуальных прав доступа</returns>
 	public static DatalakeAccessState ComputeAccess(DatalakeDataState state)
 	{
 		// Оптимизация: ленивая инициализация словарей правил

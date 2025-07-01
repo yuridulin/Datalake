@@ -16,7 +16,7 @@ namespace Datalake.Database.InMemory.Repositories;
 /// </summary>
 public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Действия
+	#region API
 
 	/// <summary>
 	/// Создание нового источника
@@ -30,7 +30,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		UserAuthInfo user,
 		SourceInfo? sourceInfo = null)
 	{
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+		user.ThrowIfNoGlobalAccess(AccessType.Manager);
 
 		if (sourceInfo != null)
 			return await ProtectedCreateAsync(db, user.Guid, sourceInfo);
@@ -46,12 +46,13 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Информация об источнике</returns>
 	public SourceInfo Read(UserAuthInfo user, int id)
 	{
-		AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
+		var rule = user.GetAccessToSource(id);
+		user.ThrowIfNoAccessToSource(AccessType.Viewer, id);
 
 		var source = dataStore.State.SourcesInfo().FirstOrDefault(x => x.Id == id)
 			?? throw new NotFoundException(message: "источник #" + id);
 
-		source.AccessRule = user.Sources[id];
+		source.AccessRule = rule;
 
 		return source;
 	}
@@ -64,19 +65,18 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Информация об источнике</returns>
 	public SourceWithTagsInfo ReadWithTags(UserAuthInfo user, int id)
 	{
-		AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Viewer, id);
+		user.ThrowIfNoAccessToSource(AccessType.Viewer, id);
 
 		var source = dataStore.State.SourcesInfoWithTags().FirstOrDefault(x => x.Id == id)
 			?? throw new NotFoundException(message: "источник #" + id);
 
-		source.AccessRule = user.Sources[id];
+		source.AccessRule = user.GetAccessToSource(id);
 
 		foreach (var tag in source.Tags)
 		{
-			var rule = user.Tags.TryGetValue(tag.Id, out var r) ? r : AccessRuleInfo.Default;
-			tag.AccessRule = rule;
+			tag.AccessRule = user.GetAccessToTag(tag.Id);
 
-			if (!rule.Access.HasAccess(AccessType.Viewer))
+			if (!tag.AccessRule.HasAccess(AccessType.Viewer))
 			{
 				tag.Guid = Guid.Empty;
 				tag.Name = string.Empty;
@@ -100,8 +100,8 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		List<SourceInfo> sourcesWithAccess = [];
 		foreach (var source in sources)
 		{
-			source.AccessRule = user.Sources.TryGetValue(source.Id, out var r) ? r : AccessRuleInfo.Default;
-			if (source.AccessRule.Access.HasAccess(AccessType.Viewer))
+			source.AccessRule = user.GetAccessToSource(source.Id);
+			if (source.AccessRule.HasAccess(AccessType.Viewer))
 				sourcesWithAccess.Add(source);
 		}
 
@@ -122,7 +122,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		int id,
 		SourceInfo sourceInfo)
 	{
-		AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Editor, id);
+		user.ThrowIfNoAccessToSource(AccessType.Editor, id);
 
 		return await ProtectedUpdateAsync(db, user.Guid, id, sourceInfo);
 	}
@@ -139,12 +139,14 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		UserAuthInfo user,
 		int id)
 	{
-		AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Manager, id);
+		user.ThrowIfNoAccessToSource(AccessType.Manager, id);
 
 		return await ProtectedDeleteAsync(db, user.Guid, id);
 	}
 
 	#endregion
+
+	#region Действия
 
 	internal async Task<SourceInfo> ProtectedCreateAsync(DatalakeContext db, Guid userGuid)
 	{
@@ -425,4 +427,6 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			Details = details,
 		});
 	}
+
+	#endregion
 }

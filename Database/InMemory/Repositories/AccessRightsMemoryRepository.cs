@@ -16,7 +16,7 @@ namespace Datalake.Database.InMemory.Repositories;
 /// </summary>
 public class AccessRightsMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Действия
+	#region API
 
 	/// <summary>
 	/// Применение изменений прав доступа
@@ -26,7 +26,7 @@ public class AccessRightsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="request">Новые права доступа</param>
 	public async Task ApplyChangesAsync(DatalakeContext db, UserAuthInfo user, AccessRightsApplyRequest request)
 	{
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		user.ThrowIfNoGlobalAccess(AccessType.Admin);
 
 		await ProtectedApplyChangesAsync(db, request);
 	}
@@ -49,13 +49,15 @@ public class AccessRightsMemoryRepository(DatalakeDataStore dataStore)
 		int? blockId,
 		int? tagId)
 	{
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Editor);
+		user.ThrowIfNoGlobalAccess(AccessType.Editor);
 
 		return dataStore.State.AccessRightsInfo(userGuid, userGroupGuid, sourceId, blockId, tagId)
 			.ToArray();
 	}
 
 	#endregion
+
+	#region Действия
 
 	internal async Task ProtectedApplyChangesAsync(DatalakeContext db, AccessRightsApplyRequest request)
 	{
@@ -195,4 +197,6 @@ public class AccessRightsMemoryRepository(DatalakeDataStore dataStore)
 
 		// Возвращение ответа
 	}
+
+	#endregion
 }

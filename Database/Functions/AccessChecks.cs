@@ -17,14 +17,15 @@ public static class AccessChecks
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	public static bool HasGlobalAccess(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess)
 	{
-		bool access = user.RootRule.Access.HasAccess(minimalAccess);
-		if (user.UnderlyingUser != null)
-			access = access && HasGlobalAccess(user.UnderlyingUser, minimalAccess);
+		bool hasAccess = user.RootRule.Access.HasAccess(minimalAccess);
 
-		return access;
+		if (hasAccess && user.UnderlyingUser != null)
+			hasAccess = HasGlobalAccess(user.UnderlyingUser, minimalAccess);
+
+		return hasAccess;
 	}
 
 	/// <summary>
@@ -34,18 +35,17 @@ public static class AccessChecks
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="sourceId">Идентификатор источника</param>
 	public static bool HasAccessToSource(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess,
 		int sourceId)
 	{
-		if (!user.Sources.TryGetValue(sourceId, out var rule))
-			return false;
+		var access = user.Sources.TryGetValue(sourceId, out var rule) ? rule.Access : user.RootRule.Access;
+		var hasAccess = access.HasAccess(minimalAccess);
 
-		bool access = rule.Access.HasAccess(minimalAccess);
-		if (user.UnderlyingUser != null)
-			access = access && HasAccessToSource(user.UnderlyingUser, minimalAccess, sourceId);
+		if (hasAccess && user.UnderlyingUser != null)
+			hasAccess = HasAccessToSource(user.UnderlyingUser, minimalAccess, sourceId);
 
-		return access;
+		return hasAccess;
 	}
 
 	/// <summary>
@@ -55,18 +55,17 @@ public static class AccessChecks
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="blockId">Идентификатор блока</param>
 	public static bool HasAccessToBlock(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess,
 		int blockId)
 	{
-		if (!user.Blocks.TryGetValue(blockId, out var rule))
-			return false;
+		var access = user.Blocks.TryGetValue(blockId, out var rule) ? rule.Access : user.RootRule.Access;
+		var hasAccess = access.HasAccess(minimalAccess);
 
-		bool access = rule.Access.HasAccess(minimalAccess);
-		if (user.UnderlyingUser != null)
-			access = access && HasAccessToBlock(user.UnderlyingUser, minimalAccess, blockId);
+		if (hasAccess && user.UnderlyingUser != null)
+			hasAccess = HasAccessToBlock(user.UnderlyingUser, minimalAccess, blockId);
 
-		return access;
+		return hasAccess;
 	}
 
 	/// <summary>
@@ -74,20 +73,19 @@ public static class AccessChecks
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
-	/// <param name="id">Идентификатор тега</param>
+	/// <param name="tagId">Идентификатор тега</param>
 	public static bool HasAccessToTag(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess,
-		int id)
+		int tagId)
 	{
-		if (!user.Tags.TryGetValue(id, out var rule))
-			return false;
+		var access = user.Tags.TryGetValue(tagId, out var rule) ? rule.Access : user.RootRule.Access;
+		var hasAccess = access.HasAccess(minimalAccess);
 
-		bool access = rule.Access.HasAccess(minimalAccess);
-		if (user.UnderlyingUser != null)
-			access = access && HasAccessToTag(user.UnderlyingUser, minimalAccess, id);
+		if (hasAccess && user.UnderlyingUser != null)
+			hasAccess = HasAccessToTag(user.UnderlyingUser, minimalAccess, tagId);
 
-		return access;
+		return hasAccess;
 	}
 
 	/// <summary>
@@ -97,7 +95,7 @@ public static class AccessChecks
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	public static bool HasAccessToUserGroup(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess,
 		Guid groupGuid)
 	{
@@ -114,7 +112,7 @@ public static class AccessChecks
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoGlobalAccess(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess)
 	{
 		if (!HasGlobalAccess(user, minimalAccess))
@@ -129,7 +127,7 @@ public static class AccessChecks
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoAccessToSource(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess,
 		int sourceId)
 	{
@@ -145,7 +143,7 @@ public static class AccessChecks
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoAccessToBlock(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess,
 		int blockId)
 	{
@@ -158,14 +156,14 @@ public static class AccessChecks
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
-	/// <param name="id">Идентификатор тега</param>
+	/// <param name="tagId">Идентификатор тега</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoAccessToTag(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess,
-		int id)
+		int tagId)
 	{
-		if (!HasAccessToTag(user, minimalAccess, id))
+		if (!HasAccessToTag(user, minimalAccess, tagId))
 			throw Errors.NoAccess;
 	}
 
@@ -177,23 +175,12 @@ public static class AccessChecks
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <exception cref="ForbiddenException">Нет доступа</exception>
 	public static void ThrowIfNoAccessToUserGroup(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		AccessType minimalAccess,
 		Guid groupGuid)
 	{
 		if (!HasAccessToUserGroup(user, minimalAccess, groupGuid))
 			throw Errors.NoAccess;
-	}
-
-	/// <summary>
-	/// Получение глобального уровня доступа
-	/// </summary>
-	/// <param name="user">Информация о пользователе</param>
-	/// <returns>Глобальный уровень доступа</returns>
-	public static AccessType GetGlobalAccess(
-		UserAuthInfo user)
-	{
-		return user.UnderlyingUser?.RootRule.Access ?? user.RootRule.Access;
 	}
 
 	/// <summary>
@@ -203,17 +190,17 @@ public static class AccessChecks
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <returns>Правило доступа</returns>
 	public static AccessRuleInfo GetAccessToSource(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		int sourceId)
 	{
-		if (!user.Sources.TryGetValue(sourceId, out var rule))
-			return AccessRuleInfo.Default;
-
-		if (user.UnderlyingUser != null)
-			if (!user.UnderlyingUser.Sources.TryGetValue(sourceId, out rule))
-				return AccessRuleInfo.Default;
-
-		return rule;
+		if (user.UnderlyingUser == null)
+		{
+			return user.Sources.TryGetValue(sourceId, out var rule) ? rule : user.RootRule;
+		}
+		else
+		{
+			return user.UnderlyingUser.Sources.TryGetValue(sourceId, out var rule) ? rule : user.UnderlyingUser.RootRule;
+		}
 	}
 
 	/// <summary>
@@ -223,37 +210,37 @@ public static class AccessChecks
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <returns>Правило доступа</returns>
 	public static AccessRuleInfo GetAccessToBlock(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		int blockId)
 	{
-		if (!user.Blocks.TryGetValue(blockId, out var rule))
-			return AccessRuleInfo.Default;
-
-		if (user.UnderlyingUser != null)
-			if (!user.UnderlyingUser.Blocks.TryGetValue(blockId, out rule))
-				return AccessRuleInfo.Default;
-
-		return rule;
+		if (user.UnderlyingUser == null)
+		{
+			return user.Blocks.TryGetValue(blockId, out var rule) ? rule : user.RootRule;
+		}
+		else
+		{
+			return user.UnderlyingUser.Blocks.TryGetValue(blockId, out var rule) ? rule : user.UnderlyingUser.RootRule;
+		}
 	}
 
 	/// <summary>
 	/// Получение правила доступа к тегу
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
-	/// <param name="id">Идентификатор тега</param>
+	/// <param name="tagId">Идентификатор тега</param>
 	/// <returns>Правило доступа</returns>
 	public static AccessRuleInfo GetAccessToTag(
-		UserAuthInfo user,
-		int id)
+		this UserAuthInfo user,
+		int tagId)
 	{
-		if (!user.Tags.TryGetValue(id, out var rule))
-			return AccessRuleInfo.Default;
-
-		if (user.UnderlyingUser != null)
-			if (!user.UnderlyingUser.Tags.TryGetValue(id, out rule))
-				return AccessRuleInfo.Default;
-
-		return rule;
+		if (user.UnderlyingUser == null)
+		{
+			return user.Tags.TryGetValue(tagId, out var rule) ? rule : user.RootRule;
+		}
+		else
+		{
+			return user.UnderlyingUser.Tags.TryGetValue(tagId, out var rule) ? rule : user.UnderlyingUser.RootRule;
+		}
 	}
 
 	/// <summary>
@@ -263,7 +250,7 @@ public static class AccessChecks
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <returns>Правило доступа</returns>
 	public static AccessRuleInfo GetAccessToUserGroup(
-		UserAuthInfo user,
+		this UserAuthInfo user,
 		Guid groupGuid)
 	{
 		if (!user.Groups.TryGetValue(groupGuid, out var rule))

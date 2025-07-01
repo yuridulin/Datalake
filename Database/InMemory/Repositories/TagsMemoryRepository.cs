@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Attributes;
-using Datalake.Database.Constants;
+﻿using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
@@ -20,7 +19,7 @@ namespace Datalake.Database.InMemory.Repositories;
 /// </summary>
 public class TagsMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Действия
+	#region API
 
 	/// <summary>
 	/// Создание нового тега
@@ -35,13 +34,13 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		TagCreateRequest tagCreateRequest)
 	{
 		if (tagCreateRequest.SourceId.HasValue && tagCreateRequest.SourceId.Value > 0)
-			AccessChecks.ThrowIfNoAccessToSource(user, AccessType.Manager, tagCreateRequest.SourceId.Value);
+			user.ThrowIfNoAccessToSource(AccessType.Manager, tagCreateRequest.SourceId.Value);
 
 		if (tagCreateRequest.BlockId.HasValue)
-			AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, tagCreateRequest.BlockId.Value);
+			user.ThrowIfNoAccessToBlock(AccessType.Manager, tagCreateRequest.BlockId.Value);
 
 		if ((!tagCreateRequest.SourceId.HasValue || tagCreateRequest.SourceId.Value <= 0) && !tagCreateRequest.BlockId.HasValue)
-			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			user.ThrowIfNoGlobalAccess(AccessType.Manager);
 
 		return await ProtectedCreateAsync(db, user.Guid, tagCreateRequest);
 	}
@@ -54,8 +53,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns></returns>
 	public TagInfo Read(UserAuthInfo user, int id)
 	{
-		var rule = AccessChecks.GetAccessToTag(user, id);
-		if (!rule.Access.HasAccess(AccessType.Viewer))
+		var rule = user.GetAccessToTag(id);
+		if (!rule.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
 		var tag = dataStore.State.TagsInfoWithSources()
@@ -102,8 +101,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		List<TagInfo> tagsWithAccess = [];
 		foreach (var tag in tags)
 		{
-			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Id);
-			if (tag.AccessRule.Access.HasAccess(AccessType.Viewer))
+			tag.AccessRule = user.GetAccessToTag(tag.Id);
+			if (tag.AccessRule.HasAccess(AccessType.Viewer))
 				tagsWithAccess.Add(tag);
 		}
 
@@ -127,8 +126,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		List<TagAsInputInfo> tagsWithAccess = [];
 		foreach (var tag in tags)
 		{
-			tag.AccessRule = AccessChecks.GetAccessToTag(user, tag.Id);
-			if (tag.AccessRule.Access.HasAccess(AccessType.Viewer))
+			tag.AccessRule = user.GetAccessToTag(tag.Id);
+			if (tag.AccessRule.HasAccess(AccessType.Viewer))
 				tagsWithAccess.Add(tag);
 		}
 
@@ -148,7 +147,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		int id,
 		TagUpdateRequest updateRequest)
 	{
-		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Manager, id);
+		user.ThrowIfNoAccessToTag(AccessType.Manager, id);
 
 		await ProtectedUpdateAsync(db, user.Guid, id, updateRequest);
 	}
@@ -164,12 +163,14 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		UserAuthInfo user,
 		int id)
 	{
-		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Manager, id);
+		user.ThrowIfNoAccessToTag(AccessType.Manager, id);
 
 		await ProtectedDeleteAsync(db, user.Guid, id);
 	}
 
 	#endregion
+
+	#region Действия
 
 	internal async Task<TagInfo> ProtectedCreateAsync(
 		DatalakeContext db,
@@ -604,4 +605,6 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			Details = details,
 		});
 	}
+
+	#endregion
 }

@@ -19,7 +19,7 @@ namespace Datalake.Database.InMemory.Repositories;
 /// </summary>
 public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Действия
+	#region API
 
 	/// <summary>
 	/// Создание новой группы пользователей
@@ -33,11 +33,11 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	{
 		if (request.ParentGuid.HasValue)
 		{
-			AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, request.ParentGuid.Value);
+			user.ThrowIfNoAccessToUserGroup(AccessType.Manager, request.ParentGuid.Value);
 		}
 		else
 		{
-			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			user.ThrowIfNoGlobalAccess(AccessType.Manager);
 		}
 
 		return await ProtectedCreateAsync(db, user.Guid, request);
@@ -51,8 +51,8 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Информация о группе</returns>
 	public UserGroupInfo Read(UserAuthInfo user, Guid guid)
 	{
-		var rule = AccessChecks.GetAccessToUserGroup(user, guid);
-		if (!rule.Access.HasAccess(AccessType.Viewer))
+		var rule = user.GetAccessToUserGroup(guid);
+		if (!rule.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
 		var group = dataStore.State.UserGroupsInfo()
@@ -76,8 +76,8 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 		List<UserGroupInfo> groupsWithAccess = [];
 		foreach (var group in groups)
 		{
-			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
-			if (group.AccessRule.Access.HasAccess(AccessType.Viewer))
+			group.AccessRule = user.GetAccessToUserGroup(group.Guid);
+			if (group.AccessRule.HasAccess(AccessType.Viewer))
 				groupsWithAccess.Add(group);
 		}
 
@@ -101,7 +101,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			});
 
 		foreach (var group in query)
-			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
+			group.AccessRule = user.GetAccessToUserGroup(group.Guid);
 
 		var groups = query.ToArray();
 
@@ -124,7 +124,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 						Children = ReadChildren(x.Guid),
 					};
 
-					if (!x.AccessRule.Access.HasAccess(AccessType.Viewer))
+					if (!x.AccessRule.HasAccess(AccessType.Viewer))
 					{
 						group.Name = string.Empty;
 						group.Description = string.Empty;
@@ -132,7 +132,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 
 					return group;
 				})
-				.Where(x => x.Children.Length > 0 || x.AccessRule.Access.HasAccess(AccessType.Viewer))
+				.Where(x => x.Children.Length > 0 || x.AccessRule.HasAccess(AccessType.Viewer))
 				.ToArray();
 		}
 	}
@@ -145,8 +145,8 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Детальная информация о группе</returns>
 	public UserGroupDetailedInfo ReadWithDetails(UserAuthInfo user, Guid guid)
 	{
-		var rule = AccessChecks.GetAccessToUserGroup(user, guid);
-		if (!rule.Access.HasAccess(AccessType.Viewer))
+		var rule = user.GetAccessToUserGroup(guid);
+		if (!rule.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
 		var group = dataStore.State.UserGroupsInfoWithDetails()
@@ -169,7 +169,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<bool> UpdateAsync(
 		DatalakeContext db, UserAuthInfo user, Guid groupGuid, UserGroupUpdateRequest request)
 	{
-		AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Editor, groupGuid);
+		user.ThrowIfNoAccessToUserGroup(AccessType.Editor, groupGuid);
 
 		return await ProtectedUpdateAsync(db, user.Guid, groupGuid, request);
 	}
@@ -185,15 +185,15 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<bool> MoveAsync(
 		DatalakeContext db, UserAuthInfo user, Guid groupGuid, Guid? parentGuid)
 	{
-		AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
+		user.ThrowIfNoAccessToUserGroup(AccessType.Manager, groupGuid);
 
 		if (parentGuid.HasValue)
 		{
-			AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, parentGuid.Value);
+			user.ThrowIfNoAccessToUserGroup(AccessType.Manager, parentGuid.Value);
 		}
 		else
 		{
-			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			user.ThrowIfNoGlobalAccess(AccessType.Manager);
 		}
 
 		return await ProtectedMoveAsync(db, user.Guid, groupGuid, parentGuid);
@@ -209,12 +209,14 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<bool> DeleteAsync(
 		DatalakeContext db, UserAuthInfo user, Guid groupGuid)
 	{
-		AccessChecks.ThrowIfNoAccessToUserGroup(user, AccessType.Manager, groupGuid);
+		user.ThrowIfNoAccessToUserGroup(AccessType.Manager, groupGuid);
 
 		return await ProtectedDeleteAsync(db, user.Guid, groupGuid);
 	}
 
 	#endregion
+
+	#region Действия
 
 	internal async Task<UserGroupInfo> ProtectedCreateAsync(
 		DatalakeContext db, Guid userGuid, UserGroupCreateRequest request)
@@ -509,4 +511,6 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			Details = details,
 		});
 	}
+
+	#endregion
 }

@@ -19,7 +19,7 @@ namespace Datalake.Database.InMemory.Repositories;
 /// </summary>
 public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Действия
+	#region API
 
 	/// <summary>
 	/// Создание нового блока
@@ -37,11 +37,11 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	{
 		if (parentId.HasValue)
 		{
-			AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
+			user.ThrowIfNoAccessToBlock(AccessType.Manager, parentId.Value);
 		}
 		else
 		{
-			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			user.ThrowIfNoGlobalAccess(AccessType.Manager);
 		}
 
 		return blockInfo != null ? await ProtectedCreateAsync(db, user.Guid, blockInfo) : await ProtectedCreateAsync(db, user.Guid, parentId);
@@ -59,8 +59,8 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		List<BlockWithTagsInfo> blocksWithAccess = [];
 		foreach (var block in blocks)
 		{
-			block.AccessRule = AccessChecks.GetAccessToBlock(user, block.Id);
-			if (block.AccessRule.Access.HasAccess(AccessType.Viewer))
+			block.AccessRule = user.GetAccessToBlock(block.Id);
+			if (block.AccessRule.HasAccess(AccessType.Viewer))
 				blocksWithAccess.Add(block);
 		}
 
@@ -76,8 +76,8 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	/// <exception cref="NotFoundException">Блок не найден</exception>
 	public BlockFullInfo Read(UserAuthInfo user, int id)
 	{
-		var rule = AccessChecks.GetAccessToBlock(user, id);
-		if (!rule.Access.HasAccess(AccessType.Viewer))
+		var rule = user.GetAccessToBlock(id);
+		if (!rule.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
 		var block = dataStore.State.BlockInfoWithParentsAndTags(id);
@@ -131,7 +131,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 						Children = ReadChildren(x.Id, prefixString + x.Name),
 					};
 
-					if (!x.AccessRule.Access.HasAccess(AccessType.Viewer))
+					if (!x.AccessRule.HasAccess(AccessType.Viewer))
 					{
 						block.Name = string.Empty;
 						block.Description = string.Empty;
@@ -140,7 +140,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 
 					return block;
 				})
-				.Where(x => x.Children.Length > 0 || x.AccessRule.Access.HasAccess(AccessType.Viewer))
+				.Where(x => x.Children.Length > 0 || x.AccessRule.HasAccess(AccessType.Viewer))
 				.OrderBy(x => x.Name)
 				.ToArray();
 		}
@@ -160,7 +160,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		int id,
 		BlockUpdateRequest block)
 	{
-		AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
+		user.ThrowIfNoAccessToBlock(AccessType.Manager, id);
 
 		return await ProtectedUpdateAsync(db, user.Guid, id, block);
 	}
@@ -179,15 +179,15 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		int id,
 		int? parentId)
 	{
-		AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
+		user.ThrowIfNoAccessToBlock(AccessType.Manager, id);
 
 		if (parentId.HasValue)
 		{
-			AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, parentId.Value);
+			user.ThrowIfNoAccessToBlock(AccessType.Manager, parentId.Value);
 		}
 		else
 		{
-			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Manager);
+			user.ThrowIfNoGlobalAccess(AccessType.Manager);
 		}
 
 		return await ProtectedMoveAsync(db, user.Guid, id, parentId);
@@ -205,12 +205,14 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		UserAuthInfo user,
 		int id)
 	{
-		AccessChecks.ThrowIfNoAccessToBlock(user, AccessType.Manager, id);
+		user.ThrowIfNoAccessToBlock(AccessType.Manager, id);
 
 		return await ProtectedDeleteAsync(db, user.Guid, id);
 	}
 
 	#endregion
+
+	#region Действия
 
 	internal async Task<BlockWithTagsInfo> ProtectedCreateAsync(DatalakeContext db, Guid userGuid, int? parentId = null)
 	{
@@ -542,4 +544,6 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			Details = details,
 		});
 	}
+
+	#endregion
 }

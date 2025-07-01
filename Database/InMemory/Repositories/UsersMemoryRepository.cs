@@ -17,7 +17,7 @@ namespace Datalake.Database.InMemory.Repositories;
 /// </summary>
 public class UsersMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Действия
+	#region API
 
 	/// <summary>
 	/// Создание нового пользователя
@@ -29,7 +29,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<UserInfo> CreateAsync(
 		DatalakeContext db, UserAuthInfo user, UserCreateRequest userInfo)
 	{
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		user.ThrowIfNoGlobalAccess(AccessType.Admin);
 
 		return await ProtectedCreateAsync(db, user.Guid, userInfo);
 	}
@@ -46,11 +46,11 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		List<UserInfo> usersWithAccess = [];
 		foreach (var u in users)
 		{
-			u.AccessRule = (user.Guid == u.Guid && !user.RootRule.Access.HasAccess(AccessType.Manager))
+			u.AccessRule = (user.Guid == u.Guid && !user.RootRule.HasAccess(AccessType.Manager))
 				? new(0, AccessType.Manager)
 				: new(0, user.RootRule.Access);
 
-			if (!u.AccessRule.Access.HasAccess(AccessType.Manager))
+			if (!u.AccessRule.HasAccess(AccessType.Manager))
 			{
 				u.FullName = string.Empty;
 				u.AccessType = AccessType.NotSet;
@@ -60,7 +60,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 				u.Guid = Guid.Empty;
 			}
 
-			if (u.AccessRule.Access.HasAccess(AccessType.Viewer))
+			if (u.AccessRule.HasAccess(AccessType.Viewer))
 				usersWithAccess.Add(u);
 		}
 
@@ -74,7 +74,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Список пользователей</returns>
 	public UserFlatInfo[] ReadFlatUsers(UserAuthInfo user)
 	{
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		user.ThrowIfNoGlobalAccess(AccessType.Admin);
 
 		return dataStore.State.UsersFlatInfo().ToArray();
 	}
@@ -88,13 +88,13 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public UserInfo Read(UserAuthInfo user, Guid guid)
 	{
 		if (user.Guid != guid)
-			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+			user.ThrowIfNoGlobalAccess(AccessType.Viewer);
 
 		var userInfo = dataStore.State.UsersInfo().FirstOrDefault(x => x.Guid == guid)
 			?? throw new NotFoundException($"Учётная запись {guid}");
 
 		foreach (var group in userInfo.UserGroups)
-			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
+			group.AccessRule = user.GetAccessToUserGroup(group.Guid);
 
 		userInfo.AccessRule = (user.Guid == guid && !user.RootRule.Access.HasAccess(AccessType.Manager))
 			? new(0, AccessType.Manager)
@@ -112,7 +112,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public UserDetailInfo ReadWithDetails(UserAuthInfo user, Guid guid)
 	{
 		if (user.Guid != guid)
-			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+			user.ThrowIfNoGlobalAccess(AccessType.Viewer);
 
 		var userInfo = dataStore.State.UsersDetailInfo().FirstOrDefault(x => x.Guid == guid)
 			?? throw new NotFoundException($"Учётная запись {guid}");
@@ -122,7 +122,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			: new(0, user.RootRule.Access);
 
 		foreach (var group in userInfo.UserGroups)
-			group.AccessRule = AccessChecks.GetAccessToUserGroup(user, group.Guid);
+			group.AccessRule = user.GetAccessToUserGroup(group.Guid);
 
 		return userInfo;
 	}
@@ -156,12 +156,14 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public async Task<bool> DeleteAsync(
 		DatalakeContext db, UserAuthInfo user, Guid userGuid)
 	{
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		user.ThrowIfNoGlobalAccess(AccessType.Admin);
 
 		return await ProtectedDeleteAsync(db, user.Guid, userGuid);
 	}
 
 	#endregion
+
+	#region Действия
 
 	internal async Task<UserInfo> ProtectedCreateAsync(
 		DatalakeContext db, Guid userGuid, UserCreateRequest request)
@@ -478,4 +480,6 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 
 		return Passwords.GenerateNewHashForStatic(oldHashes.ToHashSet());
 	}
+
+	#endregion
 }

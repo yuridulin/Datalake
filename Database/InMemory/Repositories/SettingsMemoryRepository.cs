@@ -15,7 +15,7 @@ namespace Datalake.Database.InMemory.Repositories;
 /// </summary>
 public class SettingsMemoryRepository(DatalakeDataStore dataStore)
 {
-	#region Действия
+	#region API
 
 	/// <summary>
 	/// Получение настроек приложения
@@ -24,8 +24,7 @@ public class SettingsMemoryRepository(DatalakeDataStore dataStore)
 	/// <returns>Настройки</returns>
 	public SettingsInfo GetSettings(UserAuthInfo? user)
 	{
-		if (user != null)
-			AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		user?.ThrowIfNoGlobalAccess(AccessType.Admin);
 
 		return dataStore.State.SettingsInfo();
 	}
@@ -39,12 +38,14 @@ public class SettingsMemoryRepository(DatalakeDataStore dataStore)
 	public async Task UpdateSettingsAsync(
 		DatalakeContext db, UserAuthInfo user, SettingsInfo newSettings)
 	{
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+		user.ThrowIfNoGlobalAccess(AccessType.Admin);
 
 		await ProtectedUpdateSettingsAsync(db, user.Guid, newSettings);
 	}
 
 	#endregion
+
+	#region Действия
 
 	internal async Task ProtectedUpdateSettingsAsync(
 		DatalakeContext db, Guid userGuid, SettingsInfo request)
@@ -104,4 +105,6 @@ public class SettingsMemoryRepository(DatalakeDataStore dataStore)
 
 		// Возвращение ответа
 	}
+
+	#endregion
 }
