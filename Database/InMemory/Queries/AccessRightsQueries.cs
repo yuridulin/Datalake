@@ -1,4 +1,5 @@
-﻿using Datalake.Database.InMemory.Models;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.InMemory.Models;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.AccessRights;
 using Datalake.PublicApi.Models.Blocks;
@@ -26,8 +27,9 @@ public static class AccessRightsQueries
 		int? tagId = null)
 	{
 		return state.AccessRights
+			.Where(rule => !rule.IsGlobal)
 			.Where(rule => !userGuid.HasValue || rule.UserGuid == userGuid)
-			.Where(rule => !userGroupGuid.HasValue || rule.UserGuid == userGroupGuid)
+			.Where(rule => !userGroupGuid.HasValue || rule.UserGroupGuid == userGroupGuid)
 			.Where(rule => !sourceId.HasValue || rule.SourceId == sourceId)
 			.Where(rule => !blockId.HasValue || rule.BlockId == blockId)
 			.Where(rule => !tagId.HasValue || rule.TagId == tagId)
@@ -46,7 +48,7 @@ public static class AccessRightsQueries
 					Guid = usergroup.Guid,
 					Name = usergroup.Name,
 				},
-				Source = !state.SourcesById.TryGetValue(rule.SourceId ?? 0, out var source) ? null : new SourceSimpleInfo
+				Source = !state.SourcesById.TryGetValue(rule.SourceId ?? Identifiers.UnsetSource, out var source) ? null : new SourceSimpleInfo
 				{
 					Id = source.Id,
 					Name = source.Name,
@@ -64,7 +66,7 @@ public static class AccessRightsQueries
 					Name = tag.Name,
 					Type = tag.Type,
 					Frequency = tag.Frequency,
-					SourceType = state.SourcesById.TryGetValue(rule.SourceId ?? 0, out var tagSource) ? tagSource.Type : SourceType.NotSet,
+					SourceType = state.SourcesById.TryGetValue(rule.SourceId ?? Identifiers.UnsetSource, out var tagSource) ? tagSource.Type : SourceType.NotSet,
 				},
 			});
 	}

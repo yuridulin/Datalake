@@ -1,4 +1,5 @@
-﻿using Datalake.Database.InMemory.Models;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.InMemory.Models;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.AccessRights;
 using Datalake.PublicApi.Models.Blocks;
@@ -14,8 +15,6 @@ namespace Datalake.Database.InMemory.Queries;
 /// </summary>
 public static class UsersGroupsQueries
 {
-	static readonly int UnsetSource = (int)SourceType.NotSet - 1;
-
 	/// <summary>
 	/// Запрос краткой информации о группах пользователей
 	/// </summary>
@@ -77,7 +76,7 @@ public static class UsersGroupsQueries
 							Id = rule.Id,
 							IsGlobal = rule.IsGlobal,
 							AccessType = rule.AccessType,
-							Source = !state.SourcesById.TryGetValue(rule.SourceId ?? UnsetSource, out var source) ? null : new SourceSimpleInfo
+							Source = !state.SourcesById.TryGetValue(rule.SourceId ?? Identifiers.UnsetSource, out var source) ? null : new SourceSimpleInfo
 							{
 								Id = source.Id,
 								Name = source.Name,
