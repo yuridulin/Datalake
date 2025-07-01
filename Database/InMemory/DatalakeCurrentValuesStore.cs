@@ -36,8 +36,8 @@ public class DatalakeCurrentValuesStore
 		using var scope = _serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-		var dbValues = await ValuesRepository.ProtectedReadLastValuesAsync(db);
-		var newValues = new Dictionary<int, TagHistory>(dbValues);
+		var dbValues = await ValuesRepository.ProtectedReadAllLastValuesAsync(db);
+		var newValues = dbValues.ToDictionary(x => x.TagId);
 		return newValues;
 	}
 
@@ -46,6 +46,16 @@ public class DatalakeCurrentValuesStore
 	private ConcurrentDictionary<int, TagHistory> _currentValues = [];
 
 	public TagHistory? Get(int id) => _currentValues.TryGetValue(id, out var value) ? value : null;
+
+	public Dictionary<int, TagHistory> GetByIdentifiers(int[] identifiers)
+	{
+		var state = _currentValues;
+		Dictionary<int, TagHistory> result = [];
+		foreach (var id in identifiers)
+			if (state.TryGetValue(id, out var value))
+				result.Add(id, value);
+		return result;
+	}
 
 	public bool TryUpdate(int id, TagHistory incomingValue)
 	{

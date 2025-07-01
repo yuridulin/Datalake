@@ -27,7 +27,7 @@ public class ValuesRepository(
 	DatalakeCurrentValuesStore valuesStore,
 	ILogger<ValuesRepository> logger)
 {
-	#region Действия
+	#region API
 
 	/// <summary>
 	/// Получение значений по списку запрошенных тегов
@@ -191,11 +191,22 @@ public class ValuesRepository(
 
 		foreach (var group in groups)
 		{
-			// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
-			if (!group.Settings.Exact.HasValue && !group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
+			TagHistory[] databaseValues;
+
+			if (!group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
 			{
-				//var lastValues = await ProtectedReadLastValuesAsync(db, group.TagsId);
-				var lastValues = group.TagsId.ToDictionary(x => x, valuesStore.Get);
+				Dictionary<int, TagHistory> databaseValuesById;
+
+				if (group.Settings.Exact.HasValue)
+				{
+					databaseValues = await ProtectedReadLastValuesBeforeDateAsync(db, group.TagsId, group.Settings.Exact.Value);
+					databaseValuesById = databaseValues.ToDictionary(x => x.TagId);
+				}
+				else
+				{
+					// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
+					databaseValuesById = valuesStore.GetByIdentifiers(group.TagsId);
+				}
 
 				foreach (var request in group.Requests)
 				{
@@ -203,23 +214,27 @@ public class ValuesRepository(
 					{
 						RequestKey = request.RequestKey,
 						Tags = request.Tags
-							.Select(tag => new ValuesTagResponse
+							.Select(tag =>
 							{
-								Id = tag.Id,
-								Guid = tag.Guid,
-								Name = tag.Name,
-								Type = tag.Type,
-								Frequency = tag.Frequency,
-								SourceType = tag.SourceType,
-								Values = !lastValues.TryGetValue(tag.Id, out var value) || value == null ? [] : [
-									new()
+								var value = databaseValuesById[tag.Id];
+								return new ValuesTagResponse
+								{
+									Id = tag.Id,
+									Guid = tag.Guid,
+									Name = tag.Name,
+									Type = tag.Type,
+									Frequency = tag.Frequency,
+									SourceType = tag.SourceType,
+									Values = [
+										new()
 									{
 										Date = value.Date,
 										DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 										Quality = value.Quality,
 										Value = value.GetTypedValue(tag.Type),
 									}
-								],
+									],
+								};
 							})
 							.ToList(),
 					};
@@ -229,24 +244,11 @@ public class ValuesRepository(
 			}
 			else
 			{
-				DateTime exact = group.Settings.Exact ?? DateFormats.GetCurrentDateTime();
-				DateTime old, young;
-
-				if (group.Settings.Exact.HasValue)
-				{
-					young = group.Settings.Exact.Value;
-					old = group.Settings.Exact.Value;
-				}
-				else
-				{
-					young = group.Settings.Young ?? exact;
+				DateTime
+					young = group.Settings.Young ?? DateFormats.GetCurrentDateTime(),
 					old = group.Settings.Old ?? young.Date;
-				}
 
-				var (databaseValues, metric) = await ProtectedReadValuesAsync(db, group.TagsId, old, young);
-
-				metric.RequestKeys = group.Requests.Select(x => x.RequestKey).ToArray();
-				MetricsService.AddMetric(metric);
+				databaseValues = await ProtectedReadValuesAsync(db, group.TagsId, old, young);
 
 				foreach (var request in group.Requests)
 				{
@@ -279,8 +281,8 @@ public class ValuesRepository(
 							tagResponse.Values = [
 								new()
 								{
-									Date = exact,
-									DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
+									Date = old,
+									DateString = old.ToString(DateFormats.HierarchicalWithMilliseconds),
 									Quality = TagQuality.Bad_NoValues,
 									Value = 0,
 								}
@@ -320,8 +322,8 @@ public class ValuesRepository(
 
 									tagResponse.Values = [
 										new() {
-											Date = exact,
-											DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
+											Date = old,
+											DateString = old.ToString(DateFormats.HierarchicalWithMilliseconds),
 											Quality = TagQuality.Good,
 											Value = value,
 										}
@@ -359,108 +361,42 @@ public class ValuesRepository(
 		return responses;
 	}
 
-	internal static async Task<(List<TagHistory>, HistoryReadMetric)> ProtectedReadValuesAsync(
+	internal static async Task<TagHistory[]> ProtectedReadValuesAsync(
 		DatalakeContext db,
 		int[] identifiers,
 		DateTime old,
 		DateTime young)
 	{
-		var time = Stopwatch.StartNew();
-
-		var historySet = db.TagsHistory.Where(tag => identifiers.Contains(tag.TagId));
-
-		var historyBeforeOld =
-			from rt in
-				from th in historySet
-				where th.Date <= old
-				select new
-				{
-					th.TagId,
-					th.Date,
-					th.Text,
-					th.Number,
-					th.Quality,
-					rn = Sql.Ext
-						.RowNumber().Over()
-						.PartitionBy(th.TagId)
-						.OrderByDesc(th.Date)
-						.ToValue()
-				}
-			where rt.rn == 1
-			select new TagHistory
-			{
-				TagId = rt.TagId,
-				Date = old,
-				Text = rt.Text,
-				Number = rt.Number,
-				Quality = rt.Quality,
-			};
-
-		var historyBetweenRange = historySet
-			.Where(tag => tag.Date > old && tag.Date <= young);
-
-		var historyAll = historyBeforeOld
-			.Concat(historyBetweenRange)
-			.OrderBy(x => x.TagId)
-			.ThenBy(x => x.Date);
-
-		var values = await historyAll.ToListAsync();
-
-		time.Stop();
-
-		var metric = new HistoryReadMetric
-		{
-			Date = DateFormats.GetCurrentDateTime(),
-			Elapsed = time.Elapsed,
-			TagsId = identifiers,
-			Old = old,
-			Young = young,
-			RecordsCount = values.Count,
-			Sql = historyAll.ToString() ?? string.Empty,
-		};
-
-		return (values, metric);
-	}
-
-	internal static async Task<Dictionary<int, TagHistory>> ProtectedReadLastValuesAsync(
-		DatalakeContext db,
-		int[]? identifiers = null)
-	{
-		var time = Stopwatch.StartNew();
-
-		var historySet = db.TagsHistory.Where(tag => identifiers == null || identifiers.Contains(tag.TagId));
-
-		var historyLast =
-			from rt in
-				from th in historySet
-				select new
-				{
-					th.TagId,
-					th.Date,
-					th.Text,
-					th.Number,
-					th.Quality,
-					rn = Sql.Ext
-						.RowNumber().Over()
-						.PartitionBy(th.TagId)
-						.OrderByDesc(th.Date)
-						.ToValue()
-				}
-			where rt.rn == 1
-			select new TagHistory
-			{
-				TagId = rt.TagId,
-				Date = rt.Date,
-				Text = rt.Text,
-				Number = rt.Number,
-				Quality = rt.Quality,
-			};
-
-		var values = await historyLast.ToDictionaryAsync(x => x.TagId);
-
-		time.Stop();
+		var values = await db.QueryToArrayAsync<TagHistory>(ReadBetweenDates
+			.MapIdentifiers(identifiers)
+			.MapDate("@old", old)
+			.MapDate("@young", young));
 
 		return values;
+	}
+
+	internal static async Task<TagHistory[]> ProtectedReadAllLastValuesAsync(
+		DatalakeContext db)
+	{
+		return await db.QueryToArrayAsync<TagHistory>(ReadAllLast);
+	}
+
+	internal static async Task<TagHistory[]> ProtectedReadLastValuesAsync(
+		DatalakeContext db,
+		int[] identifiers)
+	{
+		return await db.QueryToArrayAsync<TagHistory>(ReadLast
+			.MapIdentifiers(identifiers));
+	}
+
+	internal static async Task<TagHistory[]> ProtectedReadLastValuesBeforeDateAsync(
+		DatalakeContext db,
+		int[] identifiers,
+		DateTime date)
+	{
+		return await db.QueryToArrayAsync<TagHistory>(ReadLastBeforeDate
+			.MapIdentifiers(identifiers)
+			.MapDate("@old", date));
 	}
 
 	private static List<TagHistory> StretchByResolution(
@@ -645,6 +581,53 @@ public class ValuesRepository(
 
 		await db.TagsHistory.BulkCopyAsync(records);
 	}
+
+	#endregion
+
+	#region SQL
+
+	/// <summary>
+	/// Параметры: нет
+	/// </summary>
+	const string ReadAllLast = @"
+		SELECT DISTINCT ON (""TagId"") *
+		FROM public.""TagsHistory""
+		ORDER BY ""TagId"", ""Date"" DESC;";
+
+	/// <summary>
+	/// Параметры: теги
+	/// </summary>
+	const string ReadLast = @"
+		SELECT DISTINCT ON (""TagId"") *
+		FROM public.""TagsHistory""
+		WHERE ""TagId"" IN (@tags)
+		ORDER BY ""TagId"", ""Date"" DESC;";
+
+	/// <summary>
+	/// Параметры: теги, дата начала
+	/// </summary>
+	const string ReadLastBeforeDate = @"
+		SELECT DISTINCT ON (""TagId"") *
+		FROM public.""TagsHistory""
+		WHERE 
+			""TagId"" IN (@tags)
+			AND ""Date"" <= '@old'
+		ORDER BY ""TagId"", ""Date"" DESC";
+
+	/// <summary>
+	/// Параметры: теги, дата начала, дата конца
+	/// </summary>
+	const string ReadBetweenDates = $@"
+		SELECT * FROM (
+			{ReadLastBeforeDate}
+		) AS valuesBefore
+		UNION ALL
+		SELECT *
+		FROM public.""TagsHistory""
+		WHERE 
+			""TagId"" IN (@tags)
+			AND ""Date"" > '@old'
+			AND ""Date"" <= '@young';";
 
 	#endregion
 }
