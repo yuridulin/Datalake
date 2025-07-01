@@ -201,11 +201,6 @@ public static class TagsRepository
 
 		if (createRequest.SourceId.HasValue)
 		{
-			if (!string.IsNullOrEmpty(createRequest.SourceItem))
-			{
-				createRequest.SourceItem = createRequest.SourceItem.RemoveWhitespaces();
-			}
-
 			var source = await db.Sources
 				.Where(x => x.Id == createRequest.SourceId && !x.IsDeleted)
 				.Select(x => new
@@ -317,8 +312,6 @@ public static class TagsRepository
 		{
 			if (string.IsNullOrEmpty(updateRequest.SourceItem))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
-
-			updateRequest.SourceItem = ValueChecker.RemoveWhitespaces(updateRequest.SourceItem);
 		}
 		else
 		{
