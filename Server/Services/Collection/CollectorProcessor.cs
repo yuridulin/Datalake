@@ -100,7 +100,16 @@ public class CollectorProcessor(
 			collector.PrepareToStop();
 		}
 
-		await Task.WhenAll(_processingTasks.Values);
+		var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
+		var completedTask = await Task.WhenAny(
+				Task.WhenAll(_processingTasks.Values),
+				timeoutTask
+		);
+
+		if (completedTask == timeoutTask)
+		{
+			logger.LogWarning("Таймаут остановки обработчиков!");
+		}
 
 		foreach (var collector in _collectors)
 		{

@@ -82,7 +82,7 @@ internal class AggregateCollector : CollectorBase
 			_lastMinute = minute;
 		}
 
-		if (_lastHour != hour)
+		if (_lastHour != hour && !_tokenSource.IsCancellationRequested)
 		{
 			_logger.LogInformation("Расчет часовых значений: {now}", now);
 			var hourValues = await GetAggregated(_hourRules, now, AggregationPeriod.Hour);
@@ -90,7 +90,7 @@ internal class AggregateCollector : CollectorBase
 			_lastHour = hour;
 		}
 
-		if (_lastDay != day)
+		if (_lastDay != day && !_tokenSource.IsCancellationRequested)
 		{
 			_logger.LogInformation("Расчет суточных значений: {now}", now);
 			var dayValues = await GetAggregated(_dayRules, now, AggregationPeriod.Day);

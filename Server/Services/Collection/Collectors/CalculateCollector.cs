@@ -67,6 +67,9 @@ internal class CalculateCollector : CollectorBase
 
 		foreach (var (tag, expression) in _expressions)
 		{
+			if (_tokenSource.IsCancellationRequested)
+				break;
+
 			var record = new ValueWriteRequest
 			{
 				Date = now,

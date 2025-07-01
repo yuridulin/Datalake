@@ -74,6 +74,7 @@ internal abstract class CollectorBase : ICollector
 				await Task.Delay(5000, _tokenSource.Token);
 			}
 		}
+		_logger.LogDebug("Сборщик {name} завершил работу", _name);
 	}
 
 	protected abstract Task Work();
@@ -81,6 +82,7 @@ internal abstract class CollectorBase : ICollector
 	public virtual void PrepareToStop()
 	{
 		_tokenSource.Cancel();
+		_outputChannel.Writer.TryComplete();
 		_logger.LogDebug("Сборщик {name} готовится к остановке", _name);
 	}
 
@@ -91,8 +93,6 @@ internal abstract class CollectorBase : ICollector
 		_stopped = true;
 
 		_stateService.UpdateSource(_source.Id, false);
-
-		_outputChannel.Writer.Complete();
 		_logger.LogDebug("Сборщик {name} окончательно остановлен", _name);
 	}
 
