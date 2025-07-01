@@ -15,6 +15,7 @@ using Datalake.PublicApi.Models.Values;
 using LinqToDB;
 using LinqToDB.Data;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
@@ -210,33 +211,48 @@ public class ValuesRepository(
 
 				foreach (var request in group.Requests)
 				{
+					List<ValuesTagResponse> tags = [];
+					TagHistory? value = null;
+					foreach (var tag in request.Tags)
+					{
+						try
+						{
+							value = databaseValuesById[tag.Id];
+							string dateString;
+						
+							dateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds);
+
+							var tagValue = new ValueRecord
+							{
+								Date = value.Date,
+								DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
+								Quality = value.Quality,
+								Value = value.GetTypedValue(tag.Type),
+							};
+
+							var tagResponse = new ValuesTagResponse
+							{
+								Id = tag.Id,
+								Guid = tag.Guid,
+								Name = tag.Name,
+								Type = tag.Type,
+								Frequency = tag.Frequency,
+								SourceType = tag.SourceType,
+								Values = [tagValue],
+							};
+
+							tags.Add(tagResponse);
+						}
+						catch (Exception e)
+						{
+							logger.LogCritical("Окак", tag, value);
+						}
+					}
+
 					var response = new ValuesResponse
 					{
 						RequestKey = request.RequestKey,
-						Tags = request.Tags
-							.Select(tag =>
-							{
-								var value = databaseValuesById[tag.Id];
-								return new ValuesTagResponse
-								{
-									Id = tag.Id,
-									Guid = tag.Guid,
-									Name = tag.Name,
-									Type = tag.Type,
-									Frequency = tag.Frequency,
-									SourceType = tag.SourceType,
-									Values = [
-										new()
-									{
-										Date = value.Date,
-										DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
-										Quality = value.Quality,
-										Value = value.GetTypedValue(tag.Type),
-									}
-									],
-								};
-							})
-							.ToList(),
+						Tags = tags,
 					};
 
 					responses.Add(response);
@@ -592,10 +608,10 @@ public class ValuesRepository(
 	const string ReadAllLast = @"
 		SELECT
 			t.""Id"" AS ""TagId"",
-			h.""Date"",
+			CASE WHEN h.""Date"" IS NULL THEN Now() ELSE h.""Date"" END AS ""Date"",
 			h.""Text"",
 			h.""Number"",
-			h.""Quality""
+			CASE WHEN h.""Quality"" IS NULL THEN 8 ELSE h.""Quality"" END AS ""Quality""
 		FROM ""Tags"" t 
 		LEFT JOIN (
 			SELECT DISTINCT ON (""TagId"") *
