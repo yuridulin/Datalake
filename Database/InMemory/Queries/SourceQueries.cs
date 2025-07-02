@@ -90,7 +90,7 @@ public static class SourceQueries
 								new SourceTagInfo.TagInputMinimalInfo
 								{
 									InputTagId = input.Id,
-									InputTagGuid = inputTag.GlobalGuid,
+									InputTagType = inputTag.Type,
 									VariableName = input.VariableName,
 								})
 							.Where(x => x != null)
@@ -105,7 +105,7 @@ public static class SourceQueries
 							new SourceTagInfo.TagInputMinimalInfo
 							{
 								InputTagId = sourceTag.Id,
-								InputTagGuid = sourceTag.GlobalGuid,
+								InputTagType = sourceTag.Type,
 								VariableName = sourceTag.Name
 							},
 					})

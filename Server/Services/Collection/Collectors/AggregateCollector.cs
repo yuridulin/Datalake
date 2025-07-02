@@ -27,7 +27,6 @@ internal class AggregateCollector : CollectorBase
 			{
 				Id = tag.Id,
 				TagSourceId = tag.SourceTag?.InputTagId ?? 0,
-				TagSourceGuid = tag.SourceTag?.InputTagGuid ?? Guid.Empty,
 				Period = tag.AggregationPeriod ?? 0,
 				Type = tag.Aggregation ?? 0,
 				Guid = tag.Guid,
@@ -106,14 +105,15 @@ internal class AggregateCollector : CollectorBase
 		var aggregated = await Measures.Measure(() => ValuesRepository.GetWeightedAggregatedValuesAsync(_db, rules.Select(x => x.TagSourceId).ToArray(), date, period), _logger, nameof(ValuesRepository.GetWeightedAggregatedValuesAsync));
 
 		_tagsStateService.UpdateTagState([
-			new() {
+			new()
+			{
 				RequestKey = "aggregate-collector-" + period switch
 				{
 					AggregationPeriod.Munite => "min",
 					AggregationPeriod.Hour => "hour",
 					AggregationPeriod.Day => "day"
 				},
-				Tags = rules.Select(x => x.TagSourceGuid).ToArray()
+				TagsId = rules.Select(x => x.TagSourceId).ToArray()
 			}
 		]);
 
@@ -150,8 +150,6 @@ internal class AggregateCollector : CollectorBase
 		public required string Name { get; set; }
 
 		public required int TagSourceId { get; set; }
-
-		public required Guid TagSourceGuid { get; set; }
 
 		public required TagAggregation Type { get; set; }
 

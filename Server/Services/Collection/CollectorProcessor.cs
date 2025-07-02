@@ -102,8 +102,8 @@ public class CollectorProcessor(
 
 		var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
 		var completedTask = await Task.WhenAny(
-				Task.WhenAll(_processingTasks.Values),
-				timeoutTask
+			Task.WhenAll(_processingTasks.Values),
+			timeoutTask
 		);
 
 		if (completedTask == timeoutTask)
@@ -115,6 +115,8 @@ public class CollectorProcessor(
 		{
 			collector.FinalStop();
 		}
+
+		_processingTasks.Clear();
 	}
 
 	private async Task ProcessCollectorOutput(ICollector collector, CancellationToken stoppingToken)

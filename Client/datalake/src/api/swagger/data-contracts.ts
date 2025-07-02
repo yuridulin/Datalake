@@ -609,11 +609,8 @@ export interface TagInputMinimalInfo {
    * @format int32
    */
   inputTagId?: number;
-  /**
-   * Идентификатор входного тега
-   * @format guid
-   */
-  inputTagGuid?: string;
+  /** Тип данных входного тега */
+  inputTagType?: TagType;
   /** Имя переменной */
   variableName?: string;
 }

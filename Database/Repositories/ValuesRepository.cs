@@ -3,20 +3,16 @@ using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.Models;
-using Datalake.Database.Services;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
-using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.Values;
 using LinqToDB;
 using LinqToDB.Data;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using System.Diagnostics;
 
 namespace Datalake.Database.Repositories;
 
@@ -215,38 +211,31 @@ public class ValuesRepository(
 					TagHistory? value = null;
 					foreach (var tag in request.Tags)
 					{
-						try
-						{
-							value = databaseValuesById[tag.Id];
-							string dateString;
+						value = databaseValuesById[tag.Id];
+						string dateString;
 						
-							dateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds);
+						dateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds);
 
-							var tagValue = new ValueRecord
-							{
-								Date = value.Date,
-								DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
-								Quality = value.Quality,
-								Value = value.GetTypedValue(tag.Type),
-							};
-
-							var tagResponse = new ValuesTagResponse
-							{
-								Id = tag.Id,
-								Guid = tag.Guid,
-								Name = tag.Name,
-								Type = tag.Type,
-								Frequency = tag.Frequency,
-								SourceType = tag.SourceType,
-								Values = [tagValue],
-							};
-
-							tags.Add(tagResponse);
-						}
-						catch (Exception e)
+						var tagValue = new ValueRecord
 						{
-							logger.LogCritical("Окак", tag, value);
-						}
+							Date = value.Date,
+							DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
+							Quality = value.Quality,
+							Value = value.GetTypedValue(tag.Type),
+						};
+
+						var tagResponse = new ValuesTagResponse
+						{
+							Id = tag.Id,
+							Guid = tag.Guid,
+							Name = tag.Name,
+							Type = tag.Type,
+							Frequency = tag.Frequency,
+							SourceType = tag.SourceType,
+							Values = [tagValue],
+						};
+
+						tags.Add(tagResponse);
 					}
 
 					var response = new ValuesResponse

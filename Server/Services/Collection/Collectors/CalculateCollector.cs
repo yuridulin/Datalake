@@ -9,27 +9,13 @@ using NCalc;
 
 namespace Datalake.Server.Services.Collection.Collectors;
 
-internal class CalculateCollector : CollectorBase
+internal class CalculateCollector(
+	DatalakeCurrentValuesStore valuesStore,
+	TagsStateService tagsStateService,
+	SourceWithTagsInfo source,
+	SourcesStateService sourcesStateService,
+	ILogger<CalculateCollector> logger) : CollectorBase("Расчетные значения", source, sourcesStateService, logger)
 {
-	public CalculateCollector(
-		DatalakeCurrentValuesStore valuesStore,
-		TagsStateService tagsStateService,
-		SourceWithTagsInfo source,
-		SourcesStateService sourcesStateService,
-		ILogger<CalculateCollector> logger) : base("Расчетные значения", source, sourcesStateService, logger)
-	{
-		_valuesStore = valuesStore;
-		_expressions = source.Tags
-			.Select(tag =>
-			{
-				var expresssion = new Expression(tag.Formula);
-				expresssion.EvaluateParameter += (name, args) => Expression_EvaluateParameter(name, args, tag, tagsStateService);
-
-				return (tag, expresssion);
-			})
-			.ToArray();
-	}
-
 	public override void Start(CancellationToken stoppingToken)
 	{
 		if (_expressions.Length == 0)
@@ -41,29 +27,18 @@ internal class CalculateCollector : CollectorBase
 		base.Start(stoppingToken);
 	}
 
-
-	private readonly DatalakeCurrentValuesStore _valuesStore;
-	private readonly (SourceTagInfo tag, Expression expression)[] _expressions;
-
-	private void Expression_EvaluateParameter(string name, NCalc.Handlers.ParameterArgs args, SourceTagInfo tag, TagsStateService tagsStateService)
+	public override void PrepareToStop()
 	{
-		var inputTag = tag.FormulaInputs.FirstOrDefault(x => x.VariableName == name);
-		if (inputTag != null)
-		{
-			var value = _valuesStore.Get(inputTag.InputTagId);
-			tagsStateService.UpdateTagState(inputTag.InputTagId, "calculate-collector");
-			args.Result = value?.Number ?? 0;
-		}
-		else
-		{
-			args.Result = 0;
-		}
+		base.PrepareToStop();
+
+		_expressions = [];
 	}
 
 	protected override async Task Work()
 	{
-		List<ValueWriteRequest> batch = new();
 		var now = DateFormats.GetCurrentDateTime();
+		List<ValueWriteRequest> batch = [];
+		HashSet<int> usedTags = [];
 
 		foreach (var (tag, expression) in _expressions)
 		{
@@ -82,6 +57,28 @@ internal class CalculateCollector : CollectorBase
 
 			try
 			{
+				expression.Parameters.Clear();
+				foreach (var input in tag.FormulaInputs)
+				{
+					var inputValue = valuesStore.Get(input.InputTagId);
+
+					if (inputValue != null)
+					{
+						if (input.InputTagType == TagType.String)
+							expression.Parameters[input.VariableName] = inputValue.Text ?? string.Empty;
+						else if (input.InputTagType == TagType.Boolean)
+							expression.Parameters[input.VariableName] = inputValue.Number == 1;
+						else
+							expression.Parameters[input.VariableName] = inputValue.Number ?? 0;
+
+						usedTags.Add(inputValue.TagId);
+					}
+					else
+					{
+						expression.Parameters[input.VariableName] = 0;
+					}
+				}
+
 				var result = expression.Evaluate();
 
 				if (tag.Type == TagType.Number)
@@ -109,5 +106,13 @@ internal class CalculateCollector : CollectorBase
 		}
 
 		await WriteAsync(batch);
+
+		foreach (var tagId in usedTags)
+			tagsStateService.UpdateTagState(tagId, CollectorRequestKey);
 	}
+
+	const string CollectorRequestKey = "calculate-collector";
+	private (SourceTagInfo tag, Expression expression)[] _expressions = source.Tags
+		.Select(tag => (tag, new Expression(tag.Formula)))
+		.ToArray();
 }
