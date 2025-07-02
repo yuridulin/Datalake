@@ -22,25 +22,25 @@ internal static class TagHistoryExtension
 	internal static TagHistory CreateFrom(TagCacheInfo tag, ValueWriteRequest request)
 	{
 		return CreateTagHistory(
-				tag.Type,
-				tag.Id,
-				tag.Frequency,
-				tag.ScalingCoefficient,
-				request.Date,
-				request.Value,
-				request.Quality);
+			tag.Type,
+			tag.Id,
+			tag.Frequency,
+			tag.ScalingCoefficient,
+			request.Date,
+			request.Value,
+			request.Quality);
 	}
 
 	internal static TagHistory CreateFrom(ValueTrustedWriteRequest request)
 	{
 		return CreateTagHistory(
-				request.Tag.Type,
-				request.Tag.Id,
-				request.Tag.Frequency,
-				request.Tag.ScalingCoefficient,
-				request.Date,
-				request.Value,
-				request.Quality);
+			request.Tag.Type,
+			request.Tag.Id,
+			request.Tag.Frequency,
+			request.Tag.ScalingCoefficient,
+			request.Date,
+			request.Value,
+			request.Quality);
 	}
 
 	private static TagHistory CreateTagHistory(

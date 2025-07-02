@@ -98,7 +98,7 @@ public class ValuesRepository(
 			var record = TagHistoryExtension.CreateFrom(tag, request);
 
 			// проверка на уникальность (новизну)
-			if (!valuesStore.TryUpdate(record.TagId, record))
+			if (!valuesStore.IsNew(record.TagId, record))
 				continue;
 
 			records.Add(record);
@@ -140,7 +140,6 @@ public class ValuesRepository(
 			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
 
 			recordsToWrite.Add(record);
-			valuesStore.TryUpdate(record.TagId, record);
 
 			responses.Add(new ValuesTagResponse
 			{
@@ -192,13 +191,14 @@ public class ValuesRepository(
 
 			if (!group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
 			{
-				Dictionary<int, TagHistory> databaseValuesById;
+				Dictionary<int, TagHistory?> databaseValuesById;
 				DateTime date;
 
 				if (group.Settings.Exact.HasValue)
 				{
 					databaseValues = await ProtectedReadLastValuesBeforeDateAsync(db, group.TagsId, group.Settings.Exact.Value);
-					databaseValuesById = databaseValues.ToDictionary(x => x.TagId);
+					databaseValuesById = databaseValues.ToDictionary(x => x.TagId)!;
+
 					date = group.Settings.Exact.Value;
 				}
 				else
@@ -213,7 +213,7 @@ public class ValuesRepository(
 					List<ValuesTagResponse> tags = [];
 					foreach (var tag in request.Tags)
 					{
-						if (!databaseValuesById.TryGetValue(tag.Id, out var value))
+						if (!databaseValuesById.TryGetValue(tag.Id, out var value) || value == null)
 						{
 							value = new TagHistory { TagId = tag.Id, Date = date, Quality = TagQuality.Bad_NoValues };
 						}
@@ -579,7 +579,7 @@ public class ValuesRepository(
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="records">Список записей для ввода</param>
-	internal static async Task ProtectedWriteValuesAsync(
+	internal async Task ProtectedWriteValuesAsync(
 		DatalakeContext db,
 		List<TagHistory> records)
 	{
@@ -587,6 +587,9 @@ public class ValuesRepository(
 			return;
 
 		await db.TagsHistory.BulkCopyAsync(records);
+
+		foreach (var record in records)
+			valuesStore.TryUpdate(record.TagId, record);
 	}
 
 	#endregion
