@@ -220,10 +220,12 @@ const TagView = observer(() => {
 				}
 				right={
 					<>
-						{user.hasAccessToTag(AccessType.Editor, tag.id) && (
+						{user.hasAccessToTag(AccessType.Editor, tag.id) ? (
 							<NavLink to={routes.tags.toEditTag(Number(id))}>
 								<Button>Редактирование тега</Button>
 							</NavLink>
+						) : (
+							<Button disabled>Редактирование тега</Button>
 						)}
 					</>
 				}
