@@ -26,6 +26,7 @@ public class SystemController(
 	DatalakeContext db,
 	DatalakeDataStore dataStore,
 	DatalakeDerivedDataStore derivedDataStore,
+	DatalakeCurrentValuesStore valuesStore,
 	SourcesStateService sourcesStateService,
 	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
@@ -157,14 +158,30 @@ public class SystemController(
 	/// Перестроение кэша
 	/// </summary>
 	/// <returns></returns>
-	[HttpPut("restart")]
-	public async Task<ActionResult> RestartAsync()
+	[HttpPut("restart/state")]
+	public async Task<ActionResult> RestartStateAsync()
 	{
 		var user = Authenticate();
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		await dataStore.ReloadStateFromDatabaseAsync();
+		await dataStore.ReloadStateAsync();
+
+		return NoContent();
+	}
+
+	/// <summary>
+	/// Перестроение кэша текущих (последних) значений
+	/// </summary>
+	/// <returns></returns>
+	[HttpPut("restart/values")]
+	public async Task<ActionResult> RestartValuesAsync()
+	{
+		var user = Authenticate();
+
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		await valuesStore.ReloadValuesAsync();
 
 		return NoContent();
 	}

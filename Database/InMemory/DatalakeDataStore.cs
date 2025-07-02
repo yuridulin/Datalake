@@ -1,5 +1,8 @@
 ﻿using Datalake.Database.Attributes;
+using Datalake.Database.Extensions;
 using Datalake.Database.InMemory.Models;
+using Datalake.Database.Tables;
+using Datalake.PublicApi.Enums;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -36,12 +39,12 @@ public class DatalakeDataStore
 		_logger = logger;
 
 		StateChanged += (_, _) => _logger.LogInformation("Стейт изменён");
-		StateCorrupted += (_, _) => Task.Run(ReloadStateFromDatabaseAsync);
+		StateCorrupted += (_, _) => Task.Run(ReloadStateAsync);
 
 		//_ = LoadStateFromDatabaseAsync(); // Инициализатор БД сделает это сам
 	}
 
-	public async Task ReloadStateFromDatabaseAsync()
+	public async Task ReloadStateAsync()
 	{
 		using (await AcquireWriteLockAsync())
 		{
@@ -50,6 +53,13 @@ public class DatalakeDataStore
 
 			var newState = await LoadStateFromDatabaseAsync(db);
 			UpdateStateWithinLock(_ => newState);
+
+			await db.InsertAsync(new Log
+			{
+				Category = LogCategory.Core,
+				Type = LogType.Success,
+				Text = "Состояние данных перезагружено",
+			});
 		}
 	}
 

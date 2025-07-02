@@ -584,14 +584,29 @@ export class Api<
    * No description
    *
    * @tags System
-   * @name SystemRestart
+   * @name SystemRestartState
    * @summary Перестроение кэша
-   * @request PUT:/api/System/restart
+   * @request PUT:/api/System/restart/state
    * @response `200` `File`
    */
-  systemRestart = (params: RequestParams = {}) =>
+  systemRestartState = (params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/System/restart`,
+      path: `/api/System/restart/state`,
+      method: "PUT",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags System
+   * @name SystemRestartValues
+   * @summary Перестроение кэша текущих (последних) значений
+   * @request PUT:/api/System/restart/values
+   * @response `200` `File`
+   */
+  systemRestartValues = (params: RequestParams = {}) =>
+    this.request<File, any>({
+      path: `/api/System/restart/values`,
       method: "PUT",
       ...params,
     });
