@@ -25,18 +25,10 @@ public class SourcesStateService(
 	/// <param name="sourcesId">Идентификаторы источников</param>
 	public void Initialize(int[] sourcesId)
 	{
-		var now = DateFormats.GetCurrentDateTime();
+		var newState = new ConcurrentDictionary<int, SourceState>();
 
-		var newState = new ConcurrentDictionary<int, SourceState>(
-			sourcesId.ToDictionary(id => id, id => new SourceState
-			{
-				SourceId = id,
-				IsTryConnected = false,
-				LastTry = null,
-				IsConnected = false,
-				LastConnection = null,
-				ValuesAfterWriteSeconds = GetSecondsAfterLastUpdate(id, now),
-			}));
+		foreach (var sourceId in sourcesId)
+			UpdateSource(sourceId, false);
 
 		Interlocked.Exchange(ref _state, newState);
 	}
@@ -48,34 +40,10 @@ public class SourcesStateService(
 	{
 		var now = DateFormats.GetCurrentDateTime();
 
-		var secondsAfterLastUpdate = GetSecondsAfterLastUpdate(sourceId, now);
-
-		_state.AddOrUpdate(
-			sourceId,
-			(id) => new SourceState
-			{
-				SourceId = id,
-				LastTry = now,
-				IsTryConnected = true,
-				LastConnection = now,
-				IsConnected = connected,
-				ValuesAfterWriteSeconds = secondsAfterLastUpdate,
-			},
-			(id, state) => new SourceState
-			{
-				SourceId = id,
-				LastTry = now,
-				IsTryConnected = true,
-				LastConnection = now,
-				IsConnected = connected,
-				ValuesAfterWriteSeconds = secondsAfterLastUpdate,
-			});
-	}
-
-	private List<double> GetSecondsAfterLastUpdate(int sourceId, DateTime now)
-	{
-		List<double> seconds = [];
 		var tags = dataStore.State.CachesTags;
+		int allCount = tags.Count;
+		int lastHalfHour = 0;
+		int lastDay = 0;
 
 		foreach (var tag in tags)
 		{
@@ -86,9 +54,45 @@ public class SourcesStateService(
 			if (history == null)
 				continue;
 
-			seconds.Add((now - history.Date).TotalSeconds);
+			var lastUpdate = now - history.Date;
+
+			if (lastUpdate <= HalfHour)
+			{
+				lastHalfHour++;
+				lastDay++;
+			}
+			else if (lastUpdate <= Day)
+			{
+				lastDay++;
+			}
 		}
 
-		return seconds;
+		_state.AddOrUpdate(
+			sourceId,
+			(id) => new SourceState
+			{
+				SourceId = id,
+				LastTry = now,
+				IsTryConnected = true,
+				LastConnection = now,
+				IsConnected = connected,
+				ValuesAll = allCount,
+				ValuesLastHalfHour = lastHalfHour,
+				ValuesLastDay = lastDay,
+			},
+			(id, state) => new SourceState
+			{
+				SourceId = id,
+				LastTry = now,
+				IsTryConnected = true,
+				LastConnection = now,
+				IsConnected = connected,
+				ValuesAll = allCount,
+				ValuesLastHalfHour = lastHalfHour,
+				ValuesLastDay = lastDay,
+			});
 	}
+
+	static readonly TimeSpan HalfHour = TimeSpan.FromMinutes(30);
+	static readonly TimeSpan Day = TimeSpan.FromDays(1);
 }

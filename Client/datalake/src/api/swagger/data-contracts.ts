@@ -674,8 +674,21 @@ export interface SourceState {
   isConnected: boolean;
   /** Была ли попытка установить соединение */
   isTryConnected: boolean;
-  /** Список количества секунд с момента записи каждого тега */
-  valuesAfterWriteSeconds: number[];
+  /**
+   * Список количества тегов этого источника
+   * @format int32
+   */
+  valuesAll: number;
+  /**
+   * Список количества тегов, которые обновлены за последние полчаса
+   * @format int32
+   */
+  valuesLastHalfHour: number;
+  /**
+   * Список количества тегов, которые обновлены за последние сутки
+   * @format int32
+   */
+  valuesLastDay: number;
 }
 
 /** Информация о настройках приложения, задаваемых через UI */

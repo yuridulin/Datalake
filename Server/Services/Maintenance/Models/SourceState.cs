@@ -37,8 +37,20 @@ public class SourceState
 	public required bool IsTryConnected { get; init; }
 
 	/// <summary>
-	/// Список количества секунд с момента записи каждого тега
+	/// Список количества тегов этого источника
 	/// </summary>
 	[Required]
-	public required List<double> ValuesAfterWriteSeconds { get; set; }
+	public required int ValuesAll { get; set; } = 0;
+
+	/// <summary>
+	/// Список количества тегов, которые обновлены за последние полчаса
+	/// </summary>
+	[Required]
+	public required int ValuesLastHalfHour { get; set; } = 0;
+
+	/// <summary>
+	/// Список количества тегов, которые обновлены за последние сутки
+	/// </summary>
+	[Required]
+	public required int ValuesLastDay { get; set; } = 0;
 }

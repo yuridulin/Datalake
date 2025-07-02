@@ -160,12 +160,11 @@ const SourcesList = observer(() => {
 			dataIndex: 'id',
 			title: <span title='Отображает общее количество тегов'>Теги</span>,
 			width: '5em',
-			sorter: (a, b) =>
-				(states[a.id]?.valuesAfterWriteSeconds.length ?? 0) - (states[b.id]?.valuesAfterWriteSeconds.length ?? 0),
+			sorter: (a, b) => (states[a.id]?.valuesAll ?? 0) - (states[b.id]?.valuesAll ?? 0),
 			render: (id, record) => {
 				if (record.isGroup) return <></>
 				const state = states[id]
-				const tagsCount = state?.valuesAfterWriteSeconds.length ?? 0
+				const tagsCount = state?.valuesAll ?? 0
 				return tagsCount > 0 ? <span>{tagsCount}</span> : <span>нет</span>
 			},
 		},
@@ -182,26 +181,22 @@ const SourcesList = observer(() => {
 		{
 			title: 'Новые значения за последние полчаса',
 			width: '13em',
-			sorter: (a, b) =>
-				(states[a.id]?.valuesAfterWriteSeconds.filter((x) => x <= 1800).length ?? 0) -
-				(states[b.id]?.valuesAfterWriteSeconds.filter((x) => x <= 1800).length ?? 0),
+			sorter: (a, b) => (states[a.id]?.valuesLastHalfHour ?? 0) - (states[b.id]?.valuesLastHalfHour ?? 0),
 			render: (_, record) => {
 				if (record.isGroup) return <></>
 				const state = states[record.id]
-				const tagsLastHalfHourCount = state?.valuesAfterWriteSeconds.filter((x) => x <= 1800).length ?? 0
+				const tagsLastHalfHourCount = state?.valuesLastHalfHour ?? 0
 				return <Tag color={tagsLastHalfHourCount > 0 ? 'success' : 'default'}>{tagsLastHalfHourCount}</Tag>
 			},
 		},
 		{
 			title: 'Новые значения за последние сутки',
 			width: '13em',
-			sorter: (a, b) =>
-				(states[a.id]?.valuesAfterWriteSeconds.filter((x) => x <= 86400).length ?? 0) -
-				(states[b.id]?.valuesAfterWriteSeconds.filter((x) => x <= 86400).length ?? 0),
+			sorter: (a, b) => (states[a.id]?.valuesLastDay ?? 0) - (states[b.id]?.valuesLastDay ?? 0),
 			render: (_, record) => {
 				if (record.isGroup) return <></>
 				const state = states[record.id]
-				const tagsLastDayCount = state?.valuesAfterWriteSeconds.filter((x) => x <= 86400).length ?? 0
+				const tagsLastDayCount = state?.valuesLastDay ?? 0
 				return <Tag color={tagsLastDayCount > 0 ? 'success' : 'default'}>{tagsLastDayCount}</Tag>
 			},
 		},
