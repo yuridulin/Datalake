@@ -133,7 +133,7 @@ public class ValuesRepository(
 			else if (request.Guid.HasValue)
 				currentState.CachedTagsByGuid.TryGetValue(request.Guid.Value, out tag);
 
-			if (tag == null || tag.SourceType != SourceType.Manual || AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Id))
+			if (tag == null || tag.SourceType != SourceType.Manual || !AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Id))
 				continue;
 
 			var record = TagHistoryExtension.CreateFrom(tag, request);
@@ -193,28 +193,30 @@ public class ValuesRepository(
 			if (!group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
 			{
 				Dictionary<int, TagHistory> databaseValuesById;
+				DateTime date;
 
 				if (group.Settings.Exact.HasValue)
 				{
 					databaseValues = await ProtectedReadLastValuesBeforeDateAsync(db, group.TagsId, group.Settings.Exact.Value);
 					databaseValuesById = databaseValues.ToDictionary(x => x.TagId);
+					date = group.Settings.Exact.Value;
 				}
 				else
 				{
 					// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
 					databaseValuesById = valuesStore.GetByIdentifiers(group.TagsId);
+					date = DateFormats.GetCurrentDateTime();
 				}
 
 				foreach (var request in group.Requests)
 				{
 					List<ValuesTagResponse> tags = [];
-					TagHistory? value = null;
 					foreach (var tag in request.Tags)
 					{
-						value = databaseValuesById[tag.Id];
-						string dateString;
-						
-						dateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds);
+						if (!databaseValuesById.TryGetValue(tag.Id, out var value))
+						{
+							value = new TagHistory { TagId = tag.Id, Date = date, Quality = TagQuality.Bad_NoValues };
+						}
 
 						var tagValue = new ValueRecord
 						{
