@@ -63,6 +63,9 @@ public class DatalakeCurrentValuesStore
 		Dictionary<int, TagHistory?> result = [];
 		foreach (var id in identifiers)
 		{
+			if (result.ContainsKey(id)) // если один тег запрошен несколько раз за один запрос
+				continue;
+
 			state.TryGetValue(id, out var value);
 			result.Add(id, value);
 		}
