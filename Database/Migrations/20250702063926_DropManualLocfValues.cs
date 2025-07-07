@@ -14,11 +14,11 @@ namespace Datalake.Database.Migrations
 				DELETE FROM ""TagsHistory""
 				WHERE ""TagId"" NOT IN (
 					SELECT ""Id"" FROM ""Tags""
-				)");
+				)", true);
 
 			migrationBuilder.Sql(@"
 				DELETE FROM ""TagsHistory""
-				WHERE ""Quality"" = ANY(ARRAY[100,200])");
+				WHERE ""Quality"" = ANY(ARRAY[100,200])", true);
 		}
 
 		/// <inheritdoc />

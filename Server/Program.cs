@@ -32,6 +32,8 @@ namespace Datalake.Server
 		/// <param name="args">Аргументы, с которыми оно запускается</param>
 		public static void Main(string[] args)
 		{
+			Console.WriteLine("Started");
+
 			var builder = WebApplication.CreateBuilder(args);
 			var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage");
 			builder.Configuration
