@@ -98,8 +98,7 @@ internal class CalculateCollector(
 			}
 			catch (Exception ex)
 			{
-				record.Quality = TagQuality.Bad_NoValues;
-				record.Value = ex.Message;
+				_logger.LogDebug("Расчетный тег #{tag}: {message}", record.Id, ex.Message);
 			}
 
 			batch.Add(record);
