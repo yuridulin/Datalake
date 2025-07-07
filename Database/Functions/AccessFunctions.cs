@@ -168,9 +168,10 @@ public static class AccessFunctions
 			var access = new UserAuthInfo
 			{
 				Guid = userGuid,
+				EnergoId = user.EnergoIdGuid,
 				FullName = user.FullName ?? user.Login ?? string.Empty,
 				RootRule = AccessRuleInfo.Default,
-				Token = string.Empty
+				Token = string.Empty,
 			};
 
 			AccessRuleInfo globalRule = AccessRuleInfo.Default;
