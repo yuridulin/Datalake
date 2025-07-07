@@ -586,15 +586,49 @@ public class ValuesRepository(
 		if (records.Count == 0)
 			return;
 
-		await db.TagsHistory.BulkCopyAsync(records);
+		using var transaction = await db.BeginTransactionAsync();
 
-		foreach (var record in records)
-			valuesStore.TryUpdate(record.TagId, record);
+		try
+		{
+			await db.ExecuteAsync(CreateTempForWrite);
+			await db.BulkCopyAsync(bulkCopyOptions, records);
+			await db.ExecuteAsync(Write);
+
+			await transaction.CommitAsync();
+
+			// обновление в кэше текущих данных
+			foreach (var record in records)
+				valuesStore.TryUpdate(record.TagId, record);
+		}
+		catch (Exception e)
+		{
+			logger.LogError(e, "Не удалось записать данные");
+			await transaction.RollbackAsync();
+		}
 	}
 
 	#endregion
 
 	#region SQL
+
+	const string StagingTable = "TagsHistoryState";
+
+	static BulkCopyOptions bulkCopyOptions = new() { TableName = StagingTable, BulkCopyType = BulkCopyType.ProviderSpecific, };
+
+	const string CreateTempForWrite = $@"
+		CREATE TEMPORARY TABLE ""{StagingTable}"" (LIKE public.""TagsHistory"" EXCLUDING INDEXES) 
+		ON COMMIT DROP;";
+
+	const string Write = $@"
+		INSERT INTO public.""TagsHistory""(
+			""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
+		)
+		SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality"" 
+			FROM ""{StagingTable}""
+		ON CONFLICT (""TagId"", ""Date"") DO UPDATE
+			SET ""Text""   = EXCLUDED.""Text"",
+					""Number"" = EXCLUDED.""Number"",
+					""Quality""= EXCLUDED.""Quality"";";
 
 	/// <summary>
 	/// Параметры: нет

@@ -1,5 +1,6 @@
 ﻿using Datalake.Database.Tables;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Datalake.Database;
 
@@ -103,6 +104,13 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.WithMany()
 			.HasForeignKey(tag => tag.SourceTagId)
 			.OnDelete(DeleteBehavior.SetNull);
+
+		// уникальность значений тегов
+		modelBuilder.Entity<TagHistory>()
+			.HasIndex(record => new { record.TagId, record.Date })
+			.HasDatabaseName("TagsHistory_TagId_Date_idx")
+			.IsDescending([false, true])
+			.IsUnique();
 
 		// связи модели прав с объектами
 
