@@ -116,7 +116,7 @@ public class SettingsHandlerService(
 					{
 						ExpirationTime = DateTime.MaxValue,
 						UserGuid = user.Guid,
-						Token = rights.Token,
+						Token = user.PasswordHash ?? string.Empty,
 						AuthInfo = rights,
 						StaticHost = user.StaticHost
 					})
