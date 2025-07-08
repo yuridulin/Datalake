@@ -122,6 +122,20 @@ public class SystemController(
 	}
 
 	/// <summary>
+	/// Информация о подключении к источникам данных
+	/// </summary>
+	/// <returns></returns>
+	[HttpGet("tags/{id}")]
+	public ActionResult<Dictionary<string, DateTime>> GetTagState(int id)
+	{
+		var user = Authenticate();
+
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+
+		return tagsStateService.GetTagsStates().TryGetValue(id, out var state) ? state : [];
+	}
+
+	/// <summary>
 	/// Получение информации о настройках сервера
 	/// </summary>
 	/// <returns>Информация о настройках</returns>

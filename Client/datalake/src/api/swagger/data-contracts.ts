@@ -827,6 +827,18 @@ export interface TagCreateRequest {
   blockId?: number | null;
 }
 
+/** Полная информация о теге */
+export type TagFullInfo = TagInfo & {
+  /** Список блоков, в которых используется этот тег */
+  blocks: TagBlockRelationInfo[];
+};
+
+/** Краткая информация о блоке, имеющем связь с тегом, включая локальное имя тега в блоке */
+export type TagBlockRelationInfo = BlockSimpleInfo & {
+  /** Локальное имя тега в блоке */
+  localName?: string | null;
+};
+
 /** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
 export type TagAsInputInfo = TagSimpleInfo & {
   /** Правило доступа */

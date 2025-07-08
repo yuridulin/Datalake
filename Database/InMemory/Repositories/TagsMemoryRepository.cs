@@ -51,13 +51,13 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="id">Идентификатор тега</param>
 	/// <returns></returns>
-	public TagInfo Read(UserAuthInfo user, int id)
+	public TagFullInfo Read(UserAuthInfo user, int id)
 	{
 		var rule = user.GetAccessToTag(id);
 		if (!rule.HasAccess(AccessType.Viewer))
 			throw Errors.NoAccess;
 
-		var tag = dataStore.State.TagsInfoWithSources()
+		var tag = dataStore.State.TagsInfoFull()
 			.FirstOrDefault(x => x.Id == id)
 			?? throw new NotFoundException($"Тег {id}");
 

@@ -28,6 +28,7 @@ import {
   SourceState,
   TagAsInputInfo,
   TagCreateRequest,
+  TagFullInfo,
   TagInfo,
   TagUpdateRequest,
   UserAuthInfo,
@@ -550,6 +551,22 @@ export class Api<
    * No description
    *
    * @tags System
+   * @name SystemGetTagState
+   * @summary Информация о подключении к источникам данных
+   * @request GET:/api/System/tags/{id}
+   * @response `200` `Record<string,string>`
+   */
+  systemGetTagState = (id: number, params: RequestParams = {}) =>
+    this.request<Record<string, string>, any>({
+      path: `/api/System/tags/${id}`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags System
    * @name SystemGetSettings
    * @summary Получение информации о настройках сервера
    * @request GET:/api/System/settings
@@ -682,10 +699,10 @@ export class Api<
    * @name TagsRead
    * @summary Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
    * @request GET:/api/Tags/{id}
-   * @response `200` `TagInfo` Объект информации о теге
+   * @response `200` `TagFullInfo` Объект информации о теге
    */
   tagsRead = (id: number, params: RequestParams = {}) =>
-    this.request<TagInfo, any>({
+    this.request<TagFullInfo, any>({
       path: `/api/Tags/${id}`,
       method: "GET",
       format: "json",

@@ -38,7 +38,7 @@ public class TagsController(
 	/// <param name="id">Идентификатор тега</param>
 	/// <returns>Объект информации о теге</returns>
 	[HttpGet("{id}")]
-	public ActionResult<TagInfo> Read(int id)
+	public ActionResult<TagFullInfo> Read(int id)
 	{
 		var user = Authenticate();
 
