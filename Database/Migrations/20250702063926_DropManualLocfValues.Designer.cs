@@ -3,6 +3,7 @@ using System;
 using Datalake.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Datalake.Database.Migrations
 {
     [DbContext(typeof(DatalakeEfContext))]
-    partial class DatalakeEfContextModelSnapshot : ModelSnapshot
+    [Migration("20250702063926_DropManualLocfValues")]
+    partial class DropManualLocfValues
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -359,11 +362,6 @@ namespace Datalake.Database.Migrations
 
                     b.Property<string>("Text")
                         .HasColumnType("text");
-
-                    b.HasIndex("TagId", "Date")
-                        .IsUnique()
-                        .IsDescending(false, true)
-                        .HasDatabaseName("TagsHistory_TagId_Date_idx");
 
                     b.ToTable("TagsHistory", "public");
                 });

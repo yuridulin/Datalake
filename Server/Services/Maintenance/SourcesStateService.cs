@@ -41,7 +41,7 @@ public class SourcesStateService(
 		var now = DateFormats.GetCurrentDateTime();
 
 		var tags = dataStore.State.CachesTags;
-		int allCount = tags.Count;
+		int allCount = 0;
 		int lastHalfHour = 0;
 		int lastDay = 0;
 
@@ -49,6 +49,8 @@ public class SourcesStateService(
 		{
 			if (tag.SourceId != sourceId)
 				continue;
+
+			allCount++;
 
 			var history = valuesStore.Get(tag.Id);
 			if (history == null)

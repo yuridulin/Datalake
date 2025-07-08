@@ -1,7 +1,8 @@
 ﻿using Datalake.Database.Attributes;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
-using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Enums;
+using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -22,21 +23,28 @@ public class DatalakeCurrentValuesStore
 		_ = Measures.Measure(ReloadValuesAsync, _logger, nameof(ReloadValuesAsync));
 	}
 
-	private async Task ReloadValuesAsync()
-	{
-		var values = await Measures.Measure(LoadValuesFromDatabaseAsync, _logger, nameof(LoadValuesFromDatabaseAsync));
-		var newValues = new ConcurrentDictionary<int, TagHistory>(values);
-
-		Interlocked.Exchange(ref _currentValues, newValues);
-
-		_logger.LogInformation("Завершено обновление текущих значений");
-	}
-
-	private async Task<Dictionary<int, TagHistory>> LoadValuesFromDatabaseAsync()
+	public async Task ReloadValuesAsync()
 	{
 		using var scope = _serviceScopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
+		var values = await Measures.Measure(() => LoadValuesFromDatabaseAsync(db), _logger, nameof(LoadValuesFromDatabaseAsync));
+		var newValues = new ConcurrentDictionary<int, TagHistory>(values);
+
+		Interlocked.Exchange(ref _currentValues, newValues);
+
+		await db.InsertAsync(new Log
+		{
+			Category = LogCategory.Core,
+			Type = LogType.Success,
+			Text = "Состояние текущих значений перезагружено",
+		});
+
+		_logger.LogInformation("Завершено обновление текущих значений");
+	}
+
+	private static async Task<Dictionary<int, TagHistory>> LoadValuesFromDatabaseAsync(DatalakeContext db)
+	{
 		var dbValues = await ValuesRepository.ProtectedReadAllLastValuesAsync(db);
 		var newValues = dbValues.ToDictionary(x => x.TagId);
 		return newValues;
@@ -48,23 +56,18 @@ public class DatalakeCurrentValuesStore
 
 	public TagHistory? Get(int id) => _currentValues.TryGetValue(id, out var value) ? value : null;
 
-	public Dictionary<int, TagHistory> GetByIdentifiers(int[] identifiers)
+	public Dictionary<int, TagHistory?> GetByIdentifiers(int[] identifiers)
 	{
 		var state = _currentValues;
-		var now = DateFormats.GetCurrentDateTime();
 
-		Dictionary<int, TagHistory> result = [];
+		Dictionary<int, TagHistory?> result = [];
 		foreach (var id in identifiers)
 		{
+			if (result.ContainsKey(id)) // если один тег запрошен несколько раз за один запрос
+				continue;
+
 			state.TryGetValue(id, out var value);
-			result.Add(id, value ?? new()
-			{
-				TagId = id,
-				Date = now,
-				Text = null,
-				Number = null,
-				Quality = PublicApi.Enums.TagQuality.Bad_NoValues,
-			});
+			result.Add(id, value);
 		}
 
 		return result;
@@ -79,21 +82,36 @@ public class DatalakeCurrentValuesStore
 			incomingValue,
 			(key, existingValue) =>
 			{
-				bool isIncomingNew = incomingValue.Date > existingValue.Date && (
-					!AreAlmostEqual(incomingValue.Number, existingValue.Number) ||
-					incomingValue.Text != existingValue.Text ||
-					incomingValue.Quality != existingValue.Quality);
+				if (IsNew(existingValue, incomingValue))
+					return incomingValue;
 
-				if (!isIncomingNew)
-				{
-					updated = false;
-					return existingValue;
-				}
-
-				return incomingValue;
+				updated = false;
+				return existingValue;
 			});
 
 		return updated;
+	}
+
+	public bool IsNew(int id, TagHistory incoming)
+	{
+		var existing = Get(id);
+		if (existing == null)
+			return true;
+
+		return IsNew(existing, incoming);
+	}
+
+	private static bool IsNew(TagHistory existing, TagHistory incoming)
+	{
+		if (incoming.Date < existing.Date)
+			return false; // запись в прошлое
+		else
+		{
+			if (!AreAlmostEqual(incoming.Number, existing.Number) || incoming.Text != existing.Text || incoming.Quality != existing.Quality)
+				return true; // значения не совпадают
+
+			return false; // значения совпали, значит повтор
+		}
 	}
 
 	private static bool AreAlmostEqual(float? value1, float? value2, double epsilon = 0.00001)

@@ -98,7 +98,7 @@ public class ValuesRepository(
 			var record = TagHistoryExtension.CreateFrom(tag, request);
 
 			// проверка на уникальность (новизну)
-			if (!valuesStore.TryUpdate(record.TagId, record))
+			if (!valuesStore.IsNew(record.TagId, record))
 				continue;
 
 			records.Add(record);
@@ -133,14 +133,13 @@ public class ValuesRepository(
 			else if (request.Guid.HasValue)
 				currentState.CachedTagsByGuid.TryGetValue(request.Guid.Value, out tag);
 
-			if (tag == null || tag.SourceType != SourceType.Manual || AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Id))
+			if (tag == null || tag.SourceType != SourceType.Manual || !AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Id))
 				continue;
 
 			var record = TagHistoryExtension.CreateFrom(tag, request);
 			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
 
 			recordsToWrite.Add(record);
-			valuesStore.TryUpdate(record.TagId, record);
 
 			responses.Add(new ValuesTagResponse
 			{
@@ -192,29 +191,32 @@ public class ValuesRepository(
 
 			if (!group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
 			{
-				Dictionary<int, TagHistory> databaseValuesById;
+				Dictionary<int, TagHistory?> databaseValuesById;
+				DateTime date;
 
 				if (group.Settings.Exact.HasValue)
 				{
 					databaseValues = await ProtectedReadLastValuesBeforeDateAsync(db, group.TagsId, group.Settings.Exact.Value);
-					databaseValuesById = databaseValues.ToDictionary(x => x.TagId);
+					databaseValuesById = databaseValues.ToDictionary(x => x.TagId)!;
+
+					date = group.Settings.Exact.Value;
 				}
 				else
 				{
 					// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
 					databaseValuesById = valuesStore.GetByIdentifiers(group.TagsId);
+					date = DateFormats.GetCurrentDateTime();
 				}
 
 				foreach (var request in group.Requests)
 				{
 					List<ValuesTagResponse> tags = [];
-					TagHistory? value = null;
 					foreach (var tag in request.Tags)
 					{
-						value = databaseValuesById[tag.Id];
-						string dateString;
-						
-						dateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds);
+						if (!databaseValuesById.TryGetValue(tag.Id, out var value) || value == null)
+						{
+							value = new TagHistory { TagId = tag.Id, Date = date, Quality = TagQuality.Bad_NoValues };
+						}
 
 						var tagValue = new ValueRecord
 						{
@@ -577,19 +579,56 @@ public class ValuesRepository(
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="records">Список записей для ввода</param>
-	internal static async Task ProtectedWriteValuesAsync(
+	internal async Task ProtectedWriteValuesAsync(
 		DatalakeContext db,
 		List<TagHistory> records)
 	{
 		if (records.Count == 0)
 			return;
 
-		await db.TagsHistory.BulkCopyAsync(records);
+		using var transaction = await db.BeginTransactionAsync();
+
+		try
+		{
+			await db.ExecuteAsync(CreateTempForWrite);
+			await db.BulkCopyAsync(bulkCopyOptions, records);
+			await db.ExecuteAsync(Write);
+
+			await transaction.CommitAsync();
+
+			// обновление в кэше текущих данных
+			foreach (var record in records)
+				valuesStore.TryUpdate(record.TagId, record);
+		}
+		catch (Exception e)
+		{
+			logger.LogError(e, "Не удалось записать данные");
+			await transaction.RollbackAsync();
+		}
 	}
 
 	#endregion
 
 	#region SQL
+
+	const string StagingTable = "TagsHistoryState";
+
+	static BulkCopyOptions bulkCopyOptions = new() { TableName = StagingTable, BulkCopyType = BulkCopyType.ProviderSpecific, };
+
+	const string CreateTempForWrite = $@"
+		CREATE TEMPORARY TABLE ""{StagingTable}"" (LIKE public.""TagsHistory"" EXCLUDING INDEXES) 
+		ON COMMIT DROP;";
+
+	const string Write = $@"
+		INSERT INTO public.""TagsHistory""(
+			""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
+		)
+		SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality"" 
+			FROM ""{StagingTable}""
+		ON CONFLICT (""TagId"", ""Date"") DO UPDATE
+			SET ""Text""   = EXCLUDED.""Text"",
+					""Number"" = EXCLUDED.""Number"",
+					""Quality""= EXCLUDED.""Quality"";";
 
 	/// <summary>
 	/// Параметры: нет

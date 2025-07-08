@@ -23,7 +23,11 @@ public class AuthenticationService(
 	/// <returns>Информация о пользователе, включая доступ</returns>
 	public UserAuthInfo Authenticate(UserEnergoIdInfo info)
 	{
-		return derivedDataStore.Access.Get(info.EnergoIdGuid);
+		var user = dataStore.State.Users
+			.FirstOrDefault(x => x.EnergoIdGuid == info.EnergoIdGuid)
+			?? throw new NotFoundException(message: $"указанная учётная запись по идентификатору EnergoId [{info.EnergoIdGuid}]");
+
+		return derivedDataStore.Access.Get(user.Guid);
 	}
 
 	/// <summary>

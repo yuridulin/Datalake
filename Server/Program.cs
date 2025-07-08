@@ -32,6 +32,8 @@ namespace Datalake.Server
 		/// <param name="args">Аргументы, с которыми оно запускается</param>
 		public static void Main(string[] args)
 		{
+			Console.WriteLine("Started");
+
 			var builder = WebApplication.CreateBuilder(args);
 			var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage");
 			builder.Configuration
@@ -174,26 +176,33 @@ namespace Datalake.Server
 
 		static async void StartWorkWithDatabase(WebApplication app)
 		{
-			using var serviceScope = app.Services.GetService<IServiceScopeFactory>()?.CreateScope()
-				?? throw new Exception("Серьезно?");
+			try
+			{
+				using var serviceScope = app.Services.GetService<IServiceScopeFactory>()?.CreateScope()
+					?? throw new Exception("Серьезно?");
 
-			var ef = serviceScope.ServiceProvider.GetRequiredService<DatalakeEfContext>();
-			ef.Database.Migrate();
+				var ef = serviceScope.ServiceProvider.GetRequiredService<DatalakeEfContext>();
+				ef.Database.Migrate();
 
-			DatalakeContext.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
-			DatalakeContext.SetupLinqToDB();
+				DatalakeContext.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+				DatalakeContext.SetupLinqToDB();
 
-			var db = serviceScope.ServiceProvider.GetRequiredService<DatalakeContext>();
-			var dataStore = serviceScope.ServiceProvider.GetRequiredService<DatalakeDataStore>();
-			var usersRepository = serviceScope.ServiceProvider.GetRequiredService<UsersMemoryRepository>();
+				var db = serviceScope.ServiceProvider.GetRequiredService<DatalakeContext>();
+				var dataStore = serviceScope.ServiceProvider.GetRequiredService<DatalakeDataStore>();
+				var usersRepository = serviceScope.ServiceProvider.GetRequiredService<UsersMemoryRepository>();
 
-			await db.EnsureDataCreatedAsync(dataStore, usersRepository);
-			await AuditRepository.WriteAsync(
-				db,
-				"Сервер запущен",
-				category: LogCategory.Core,
-				type: LogType.Success
-			);
+				await db.EnsureDataCreatedAsync(dataStore, usersRepository);
+				await AuditRepository.WriteAsync(
+					db,
+					"Сервер запущен",
+					category: LogCategory.Core,
+					type: LogType.Success
+				);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("Startup error: " + ex.Message);
+			}
 		}
 
 		internal class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor

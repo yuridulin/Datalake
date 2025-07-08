@@ -15,7 +15,7 @@ import TagButton from '@/app/components/buttons/TagButton'
 import UserButton from '@/app/components/buttons/UserButton'
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
 import { user } from '@/state/user'
-import { Button, Divider, Space, Spin, Tree } from 'antd'
+import { Divider, Tree } from 'antd'
 import { DataNode } from 'antd/es/tree'
 import { useEffect, useState } from 'react'
 import 'react18-json-view/src/style.css'
@@ -57,15 +57,6 @@ type UserAuthWithNames = {
 
 const AccessSettings = () => {
 	const [rights, setRights] = useState([] as DataNode[])
-	const [wait, setWait] = useState(false)
-
-	const restart = () => {
-		setWait(true)
-		api.systemRestart().then(() => {
-			setWait(false)
-			load()
-		})
-	}
 
 	const load = () => {
 		let groups: Record<string, string>
@@ -262,16 +253,10 @@ const AccessSettings = () => {
 
 	return (
 		<>
-			<Space onClick={restart}>
-				<Button disabled={wait}>{wait && <Spin />} Перерасчет прав доступа</Button>
-			</Space>
 			<Divider>
 				<small>Текущие права доступа</small>
 			</Divider>
 			<Tree treeData={rights} showLine />
-			{/* <React.Fragment>
-				<JsonView src={rights} />
-			</React.Fragment> */}
 		</>
 	)
 }

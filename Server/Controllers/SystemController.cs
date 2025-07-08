@@ -3,11 +3,9 @@ using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
-using Datalake.Database.Services;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
-using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Settings;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Services.Maintenance;
@@ -26,6 +24,7 @@ public class SystemController(
 	DatalakeContext db,
 	DatalakeDataStore dataStore,
 	DatalakeDerivedDataStore derivedDataStore,
+	DatalakeCurrentValuesStore valuesStore,
 	SourcesStateService sourcesStateService,
 	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
@@ -157,14 +156,30 @@ public class SystemController(
 	/// Перестроение кэша
 	/// </summary>
 	/// <returns></returns>
-	[HttpPut("restart")]
-	public async Task<ActionResult> RestartAsync()
+	[HttpPut("restart/state")]
+	public async Task<ActionResult> RestartStateAsync()
 	{
 		var user = Authenticate();
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		await dataStore.ReloadStateFromDatabaseAsync();
+		await dataStore.ReloadStateAsync();
+
+		return NoContent();
+	}
+
+	/// <summary>
+	/// Перестроение кэша текущих (последних) значений
+	/// </summary>
+	/// <returns></returns>
+	[HttpPut("restart/values")]
+	public async Task<ActionResult> RestartValuesAsync()
+	{
+		var user = Authenticate();
+
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		await valuesStore.ReloadValuesAsync();
 
 		return NoContent();
 	}
@@ -181,19 +196,5 @@ public class SystemController(
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return DerivedDataStore.Access.GetAll();
-	}
-
-	/// <summary>
-	/// Получение списка сохраненных метрик
-	/// </summary>
-	/// <returns>Список метрик</returns>
-	[HttpGet("metrics/read")]
-	public ActionResult<HistoryReadMetricInfo[]> GetReadMetrics()
-	{
-		var user = Authenticate();
-
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-
-		return MetricsService.ReadMetrics();
 	}
 }
