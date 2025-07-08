@@ -89,7 +89,7 @@ public static class SourceQueries
 							.Select(input => !state.TagsById.TryGetValue(input.InputTagId ?? 0, out var inputTag) ? null :
 								new SourceTagInfo.TagInputMinimalInfo
 								{
-									InputTagId = input.Id,
+									InputTagId = inputTag.Id,
 									InputTagType = inputTag.Type,
 									VariableName = input.VariableName,
 								})
