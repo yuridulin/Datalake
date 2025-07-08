@@ -55,57 +55,71 @@ internal class CalculateCollector(
 				Quality = TagQuality.Bad_NoConnect,
 			};
 
-			try
+			expression.Parameters.Clear();
+
+			string? error = null;
+
+			foreach (var input in tag.FormulaInputs)
 			{
-				expression.Parameters.Clear();
-				foreach (var input in tag.FormulaInputs)
+				var inputRecord = valuesStore.Get(input.InputTagId);
+
+				if (inputRecord == null)
 				{
-					var inputValue = valuesStore.Get(input.InputTagId);
+					error = $"Не найден входной тег #{input.InputTagId}";
+					break;
+				}
 
-					if (inputValue != null)
+				usedTags.Add(inputRecord.TagId);
+
+				object? inputValue = input.InputTagType switch
+				{
+					TagType.String => inputRecord.Text,
+					TagType.Number => inputRecord.Number,
+					TagType.Boolean => inputRecord.Number.HasValue ? inputRecord.Number == 1 : null,
+				};
+
+				if (inputValue == null)
+				{
+					error = $"У входного тега #{input.InputTagId} нет значения";
+					break;
+				}
+
+				expression.Parameters[input.VariableName] = inputValue;
+			}
+
+			if (error == null)
+			{
+				try
+				{
+					var result = expression.Evaluate();
+
+					if (result == null)
 					{
-						if (input.InputTagType == TagType.String)
-							expression.Parameters[input.VariableName] = inputValue.Text ?? string.Empty;
-						else if (input.InputTagType == TagType.Boolean)
-							expression.Parameters[input.VariableName] = inputValue.Number == 1;
-						else
-							expression.Parameters[input.VariableName] = inputValue.Number ?? 0;
-
-						usedTags.Add(inputValue.TagId);
+						error = "Итоговое значение не получено";
 					}
 					else
 					{
-						expression.Parameters[input.VariableName] = 0;
+						record.Value = tag.Type switch
+						{
+							TagType.Number => Convert.ToSingle(result),
+							TagType.String => Convert.ToString(result),
+							TagType.Boolean => Convert.ToString(result),
+						};
+						record.Quality = TagQuality.Good;
 					}
 				}
-
-				var result = expression.Evaluate();
-
-				if (result != null)
+				catch (Exception ex)
 				{
-					record.Value = result;
+					error = ex.Message;
 				}
-				else
-				{
-					record.Value = tag.Type switch
-					{
-						TagType.Number => Convert.ToSingle(result),
-						TagType.String => Convert.ToString(result),
-						TagType.Boolean => Convert.ToString(result),
-					};
-				}
-
-				record.Quality = TagQuality.Good;
 			}
-			catch (Exception ex)
+
+			if (error != null)
 			{
+				record.Value = null;
 				record.Quality = TagQuality.Bad_CalcError;
 
-				_logger.LogDebug("CALC | #{tag}: {message}." +
-					"\nFormula [{formula}]" +
-					"\nType {type}" +
-					"\nResult {result}",
-					tag.Id, ex.Message, expression.ExpressionString, tag.Type, record.Value);
+				_logger.LogDebug("CALC | #{tag}: {message}", tag.Id, error);
 			}
 
 			batch.Add(record);

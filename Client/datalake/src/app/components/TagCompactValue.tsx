@@ -6,7 +6,7 @@ import { TagValue } from '../../types/tagValue'
 type TagCompactOptions = {
 	value: TagValue
 	type: TagType
-	quality?: TagQuality
+	quality: TagQuality
 }
 
 export default function TagCompactValue({ value, type, quality }: TagCompactOptions) {

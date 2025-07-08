@@ -5,7 +5,6 @@ const routes = {
 		settings: '/settings',
 		metrics: {
 			root: '/metrics',
-			database: '/metrics/database',
 			tags: '/metrics/tags',
 		},
 	},

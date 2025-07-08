@@ -1,10 +1,10 @@
 import api from '@/api/swagger-api'
 import HelpAggregationType from '@/app/components/help-tootip/help-pages/HelpAggregationType'
 import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
+import TagCompactValue from '@/app/components/TagCompactValue'
 import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
 import getTagFrequencyName from '@/functions/getTagFrequencyName'
-import { TagValue } from '@/types/tagValue'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
@@ -16,15 +16,16 @@ import {
 	TagAggregation,
 	TagFrequency,
 	TagInfo,
+	TagQuality,
 	TagSimpleInfo,
 	TagType,
 	TagUpdateInputRequest,
 	TagUpdateRequest,
+	ValueRecord,
 } from '../../../../api/swagger/data-contracts'
 import { useInterval } from '../../../../hooks/useInterval'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
-import TagValueEl from '../../../components/TagValueEl'
 import routes from '../../../router/routes'
 
 type SourceOption = {
@@ -54,7 +55,7 @@ const TagForm = () => {
 	// инфа
 	const [tag, setTag] = useState({} as TagInfo)
 	const [sources, setSources] = useState([] as SourceOption[])
-	const [value, setValue] = useState(null as TagValue)
+	const [value, setValue] = useState({ quality: TagQuality.Unknown } as ValueRecord)
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 	const [tags, setTags] = useState([] as TagSimpleInfo[])
 
@@ -141,8 +142,8 @@ const TagForm = () => {
 						tags: [String(id)],
 					},
 				])
-				.then((res) => setValue(res.data[0].tags[0].values[0].value))
-				.catch(() => setValue(null))
+				.then((res) => setValue(res.data[0].tags[0].values[0]))
+				.catch(() => setValue({ date: '', dateString: '', quality: TagQuality.BadNoConnect }))
 			return prevValue
 		})
 	}, [id, strategy])
@@ -499,7 +500,7 @@ const TagForm = () => {
 				</div>
 				<FormRow title='Значение'>
 					<Space>
-						<TagValueEl value={value} type={tag.type} />
+						<TagCompactValue value={value.value} type={tag.type} quality={value.quality} />
 					</Space>
 				</FormRow>
 			</div>

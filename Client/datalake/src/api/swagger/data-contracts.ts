@@ -116,6 +116,7 @@ export enum TagAggregation {
  * 0 = Bad
  * 4 = Bad_NoConnect
  * 8 = Bad_NoValues
+ * 12 = Bad_CalcError
  * 26 = Bad_ManualWrite
  * 100 = Bad_LOCF
  * 192 = Good
@@ -127,6 +128,7 @@ export enum TagQuality {
   Bad = 0,
   BadNoConnect = 4,
   BadNoValues = 8,
+  BadCalcError = 12,
   BadManualWrite = 26,
   BadLOCF = 100,
   Good = 192,
@@ -742,44 +744,6 @@ export type UserAuthInfo = UserSimpleInfo & {
    */
   energoId?: string | null;
 };
-
-/** Информация о результате выполнения запроса на чтение тегов */
-export interface HistoryReadMetricInfo {
-  /**
-   * Время записи значения
-   * @minLength 1
-   */
-  date: string;
-  /** Идентификаторы тегов */
-  tagsId: number[];
-  /**
-   * Настройки времени
-   * @minLength 1
-   */
-  timeSettings: string;
-  /**
-   * Время выполнения чтения
-   * @minLength 1
-   */
-  elapsed: string;
-  /**
-   * Прошедшее количество миллисекунд
-   * @format double
-   */
-  milliseconds: number;
-  /**
-   * Итоговый SQL код запроса
-   * @minLength 1
-   */
-  sql: string;
-  /**
-   * Количество прочитанных из БД записей
-   * @format int32
-   */
-  recordsCount: number;
-  /** Список запросов к API, которые являются причиной запроса к БД */
-  requestKeys: string[];
-}
 
 /** Информация о теге */
 export type TagInfo = TagSimpleInfo & {
