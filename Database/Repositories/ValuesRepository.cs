@@ -586,18 +586,22 @@ public class ValuesRepository(
 		if (records.Count == 0)
 			return;
 
+		var uniqueRecords = records.GroupBy(x => new { x.TagId, x.Date })
+			.Select(g => g.First())
+			.ToArray();
+
 		using var transaction = await db.BeginTransactionAsync();
 
 		try
 		{
 			await db.ExecuteAsync(CreateTempForWrite);
-			await db.BulkCopyAsync(bulkCopyOptions, records);
+			await db.BulkCopyAsync(bulkCopyOptions, uniqueRecords);
 			await db.ExecuteAsync(Write);
 
 			await transaction.CommitAsync();
 
 			// обновление в кэше текущих данных
-			foreach (var record in records)
+			foreach (var record in uniqueRecords)
 				valuesStore.TryUpdate(record.TagId, record);
 		}
 		catch (Exception e)
