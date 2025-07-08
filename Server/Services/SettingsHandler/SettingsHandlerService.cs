@@ -87,7 +87,7 @@ public class SettingsHandlerService(
 					$"var KEYCLOAK_DB = '{newSettings.KeycloakHost}';",
 					$"var KEYCLOAK_CLIENT = '{newSettings.KeycloakClient}';",
 					$"var INSTANCE_NAME = '{newSettings.InstanceName}';",
-					$"var VERSION = '{version}",
+					version != null ? $"var VERSION = '{version.Major}.{version.Minor}.{version.Build}';" : string.Empty,
 				]);
 				logger.LogDebug("Настройки обновлены");
 			}
