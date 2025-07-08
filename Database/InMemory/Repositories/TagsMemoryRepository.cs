@@ -255,11 +255,11 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 
 				if (needToAddIdInName)
 				{
-					createRequest.Name += createdTag.Id.ToString();
+					createdTag.Name += createdTag.Id.ToString();
 
 					await db.Tags
 						.Where(x => x.Id == createdTag.Id)
-						.Set(x => x.Name, createRequest.Name)
+						.Set(x => x.Name, createdTag.Name)
 						.UpdateAsync();
 				}
 
@@ -269,6 +269,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					{
 						BlockId = block.Id,
 						TagId = createdTag.Id,
+						Relation = BlockTagRelation.Static,
+						Name = createdTag.Name,
 					};
 
 					await db.BlockTags
