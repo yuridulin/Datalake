@@ -133,20 +133,19 @@ const TagForm = () => {
 
 	const getValue = useCallback(() => {
 		if (!id) return
-		if (strategy !== SourceStrategy.FromSource) return
 		setValue((prevValue) => {
 			api
 				.valuesGet([
 					{
 						requestKey: 'tag-current-value',
-						tags: [String(id)],
+						tagsId: [Number(id)],
 					},
 				])
 				.then((res) => setValue(res.data[0].tags[0].values[0]))
 				.catch(() => setValue({ date: '', dateString: '', quality: TagQuality.BadNoConnect }))
 			return prevValue
 		})
-	}, [id, strategy])
+	}, [id])
 
 	useEffect(getValue, [tag, getValue])
 	useInterval(getValue, 1000)
@@ -375,6 +374,11 @@ const TagForm = () => {
 					</Radio.Button>
 				</Radio.Group>
 			</FormRow>
+			<FormRow title='Значение'>
+				<Space>
+					<TagCompactValue value={value.value} type={tag.type} quality={value.quality} />
+				</Space>
+			</FormRow>
 			<div
 				style={{
 					display: strategy === SourceStrategy.Calculated ? 'block' : 'none',
@@ -498,11 +502,6 @@ const TagForm = () => {
 						/>
 					</FormRow>
 				</div>
-				<FormRow title='Значение'>
-					<Space>
-						<TagCompactValue value={value.value} type={tag.type} quality={value.quality} />
-					</Space>
-				</FormRow>
 			</div>
 			<div
 				style={{
