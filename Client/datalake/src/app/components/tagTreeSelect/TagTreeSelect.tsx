@@ -117,7 +117,7 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], v
 				children: [],
 				accessRule: {
 					ruleId: 0,
-					accessType: AccessType.Manager,
+					access: AccessType.Manager,
 				},
 			}
 			blocks.push(fakeBlock)

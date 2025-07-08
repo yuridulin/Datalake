@@ -5,8 +5,13 @@ using Datalake.Server.Controllers;
 using Datalake.Server.Services.Receiver.Models;
 using Datalake.Server.Services.Receiver.Models.Inopc;
 using Datalake.Server.Services.Receiver.Models.Inopc.Enums;
+using Datalake.Server.Services.Receiver.Models.OldDatalake;
 using Newtonsoft.Json;
 using System.Text.Json;
+using OldDatalakeTagQuality = Datalake.Server.Services.Receiver.Models.OldDatalake.TagQuality;
+using OldDatalakeTagType = Datalake.Server.Services.Receiver.Models.OldDatalake.TagType;
+using TagQuality = Datalake.PublicApi.Enums.TagQuality;
+using TagType = Datalake.PublicApi.Enums.TagType;
 
 namespace Datalake.Server.Services.Receiver;
 
@@ -37,6 +42,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 		{
 			return new ReceiveResponse
 			{
+				IsConnected = false,
 				Tags = [],
 				Timestamp = DateFormats.GetCurrentDateTime(),
 			};
@@ -55,20 +61,12 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 	/// </summary>
 	/// <param name="tags">Список имен запрашиваемых тегов</param>
 	/// <param name="address">Адрес сервера</param>
-	/// <param name="throwNoConnect">Обработка отсутствия связи</param>
 	/// <returns>Ответ с данными</returns>
-	public async Task<ReceiveResponse> AskInopc(string[] tags, string address, bool throwNoConnect = false)
+	public async Task<ReceiveResponse> AskInopc(string[] tags, string address)
 	{
-		logger.LogDebug("Ask iNOPC with address: {address}", address);
-
-		var request = new InopcRequest
-		{
-			Tags = tags
-		};
-
 		ReceiveResponse response = new()
 		{
-			Timestamp = DateFormats.GetCurrentDateTime(),
+			IsConnected = false,
 			Tags = [],
 		};
 
@@ -76,55 +74,50 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 
 		try
 		{
+			var request = new InopcRequest
+			{
+				Tags = tags
+			};
+
 			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":81/api/storage/read", request, cancellationTokenSource.Token);
 			if (answer.IsSuccessStatusCode)
 			{
 				inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>(JsonOptions);
 			}
 		}
-		catch
-		{
-			logger.LogDebug("Ask iNOPC with address: {address} fail", address);
-			if (throwNoConnect)
-			{
-				throw new Exception("Нет связи с источником INOPC по адресу: " + address);
-			}
-		}
+		catch { }
 
+		response.Timestamp = inopcResponse?.Timestamp ?? DateFormats.GetCurrentDateTime();
 		if (inopcResponse != null)
 		{
-			response = new ReceiveResponse
-			{
-				Timestamp = inopcResponse.Timestamp,
-				Tags = inopcResponse.Tags
-					.Select(x => new ReceiveRecord
+			response.IsConnected = true;
+			response.Tags = inopcResponse.Tags
+				.Select(x => new ReceiveRecord
+				{
+					Name = x.Name,
+					Quality = x.Quality switch
 					{
-						Name = x.Name,
-						Quality = x.Quality switch
-						{
-							InopcTagQuality.Good => TagQuality.Good,
-							InopcTagQuality.Good_ManualWrite => TagQuality.Good_ManualWrite,
-							InopcTagQuality.Bad => TagQuality.Bad,
-							InopcTagQuality.Bad_NoConnect => TagQuality.Bad_NoConnect,
-							InopcTagQuality.Bad_NoValues => TagQuality.Bad_NoValues,
-							InopcTagQuality.Bad_ManualWrite => TagQuality.Bad_ManualWrite,
-							_ => TagQuality.Unknown,
-						},
-						Type = x.Type switch
-						{
-							InopcTagType.Boolean => TagType.Boolean,
-							InopcTagType.String => TagType.String,
-							_ => TagType.Number,
-						},
-						Value = x.Value,
-					})
-					.ToArray(),
-			};
+						InopcTagQuality.Good => TagQuality.Good,
+						InopcTagQuality.Good_ManualWrite => TagQuality.Good_ManualWrite,
+						InopcTagQuality.Bad => TagQuality.Bad,
+						InopcTagQuality.Bad_NoConnect => TagQuality.Bad_NoConnect,
+						InopcTagQuality.Bad_NoValues => TagQuality.Bad_NoValues,
+						InopcTagQuality.Bad_ManualWrite => TagQuality.Bad_ManualWrite,
+						_ => TagQuality.Unknown,
+					},
+					Type = x.Type switch
+					{
+						InopcTagType.Boolean => TagType.Boolean,
+						InopcTagType.String => TagType.String,
+						_ => TagType.Number,
+					},
+					Value = x.Value,
+				})
+				.ToArray();
 		}
 
 		return response;
 	}
-
 
 	/// <summary>
 	/// Запрос данных из ноды Datalake, версия .NET Framework
@@ -134,58 +127,58 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 	/// <returns>Ответ с данными</returns>
 	public async Task<ReceiveResponse> AskOldDatalake(string[] tags, string address)
 	{
-		logger.LogDebug("Ask old datalake with address: {address}", address);
-
-		var request = new
+		ReceiveResponse response = new()
 		{
-			Request = new Models.OldDatalake.LiveRequest
-			{
-				TagNames = [.. tags],
-			}
+			IsConnected = false,
+			Tags = [],
 		};
 
-		List<Models.OldDatalake.HistoryResponse>? historyResponses = null;
+		HistoryResponse[]? historyResponses = null;
 
 		try
 		{
+			var request = new
+			{
+				Request = new LiveRequest
+				{
+					TagNames = [.. tags],
+				}
+			};
+
 			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":83/api/tags/live", request);
 			var content = await answer.Content.ReadAsStringAsync();
-			historyResponses = JsonConvert.DeserializeObject<List<Models.OldDatalake.HistoryResponse>>(content);
+			historyResponses = JsonConvert.DeserializeObject<HistoryResponse[]> (content);
 		}
-		catch (Exception ex)
-		{
-			logger.LogError(ex, "Получение значений из OldDatalake");
-		}
+		catch { }
 
-		historyResponses ??= [];
-
-		var response = new ReceiveResponse
+		response.Timestamp = DateFormats.GetCurrentDateTime();
+		if (historyResponses != null)
 		{
-			Timestamp = DateFormats.GetCurrentDateTime(),
-			Tags = historyResponses
-					.SelectMany(t => t.Values.Select(v => new ReceiveRecord
+			response.IsConnected = true;
+			response.Tags = historyResponses
+				.SelectMany(t => t.Values.Select(v => new ReceiveRecord
+				{
+					Name = t.TagName,
+					Type = t.Type switch
 					{
-						Name = t.TagName,
-						Type = t.Type switch
-						{
-							Models.OldDatalake.TagType.Number => TagType.Number,
-							Models.OldDatalake.TagType.Boolean => TagType.Boolean,
-							_ => TagType.String,
-						},
-						Quality = v.Quality switch
-						{
-							Models.OldDatalake.TagQuality.Bad => TagQuality.Bad,
-							Models.OldDatalake.TagQuality.Bad_NoConnect => TagQuality.Bad_NoConnect,
-							Models.OldDatalake.TagQuality.Bad_NoValues => TagQuality.Bad_NoValues,
-							Models.OldDatalake.TagQuality.Bad_ManualWrite => TagQuality.Bad_ManualWrite,
-							Models.OldDatalake.TagQuality.Good => TagQuality.Good,
-							Models.OldDatalake.TagQuality.Good_ManualWrite => TagQuality.Good_ManualWrite,
-							_ => TagQuality.Unknown,
-						},
-						Value = v.Value,
-					}))
-					.ToArray(),
-		};
+						OldDatalakeTagType.Number => TagType.Number,
+						OldDatalakeTagType.Boolean => TagType.Boolean,
+						_ => TagType.String,
+					},
+					Quality = v.Quality switch
+					{
+						OldDatalakeTagQuality.Bad => TagQuality.Bad,
+						OldDatalakeTagQuality.Bad_NoConnect => TagQuality.Bad_NoConnect,
+						OldDatalakeTagQuality.Bad_NoValues => TagQuality.Bad_NoValues,
+						OldDatalakeTagQuality.Bad_ManualWrite => TagQuality.Bad_ManualWrite,
+						OldDatalakeTagQuality.Good => TagQuality.Good,
+						OldDatalakeTagQuality.Good_ManualWrite => TagQuality.Good_ManualWrite,
+						_ => TagQuality.Unknown,
+					},
+					Value = v.Value,
+				}))
+				.ToArray();
+		}
 
 		return response;
 	}
@@ -198,48 +191,48 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 	/// <returns>Ответ с данными</returns>
 	public async Task<ReceiveResponse> AskDatalake(Guid[] tags, string address)
 	{
-		logger.LogDebug("Ask datalake with address: {address}", address);
-
-		var request = new
+		ReceiveResponse response = new()
 		{
-			Request = new ValuesRequest
-			{
-				RequestKey = "1",
-				Tags = tags,
-			}
+			IsConnected = false,
+			Tags = [],
 		};
 
-		List<ValuesResponse>? historyResponses = null;
+		ValuesResponse? historyResponse = null;
 
 		try
 		{
+			var request = new
+			{
+				Request = new ValuesRequest
+				{
+					RequestKey = "1",
+					Tags = tags,
+				}
+			};
+
 			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
-			historyResponses = await answer.Content.ReadFromJsonAsync<List<ValuesResponse>>(JsonOptions);
+			var historyResponses = await answer.Content.ReadFromJsonAsync<ValuesResponse[]>(JsonOptions);
+			historyResponse = historyResponses?.FirstOrDefault();
 		}
-		catch
+		catch (Exception ex)
 		{
-			logger.LogDebug("Ask datalake with address: {address} fail", address);
+			logger.LogWarning("Ask Old Datalake {address}: {err}", address, ex.Message);
 		}
 
-		historyResponses ??= [];
-
-		var historyResponse = historyResponses.FirstOrDefault();
-
-		var response = new ReceiveResponse
+		response.Timestamp = DateFormats.GetCurrentDateTime();
+		if (historyResponse != null)
 		{
-			Timestamp = DateFormats.GetCurrentDateTime(),
-			Tags = historyResponse != null
-				? historyResponse.Tags
-					.SelectMany(t => t.Values.Select(v => new ReceiveRecord
-					{
-						Name = t.Guid.ToString(),
-						Type = t.Type,
-						Quality = v.Quality,
-						Value = v.Value,
-					}))
-					.ToArray()
-				: [],
-		};
+			response.IsConnected = true;
+			response.Tags = historyResponse.Tags
+				.SelectMany(t => t.Values.Select(v => new ReceiveRecord
+				{
+					Name = t.Guid.ToString(),
+					Type = t.Type,
+					Quality = v.Quality,
+					Value = v.Value,
+				}))
+				.ToArray();
+		}
 
 		return response;
 	}

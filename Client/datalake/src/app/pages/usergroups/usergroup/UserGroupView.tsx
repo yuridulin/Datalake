@@ -24,16 +24,9 @@ const UserGroupView = observer(() => {
 	const [ready, setReady] = useState(false)
 	const { id } = useParams()
 
-	const getGlobalAccessRights = () => {
-		if (!group.accessRights) return AccessType.NotSet
-		const parent = group.accessRights.filter((x) => x.isGlobal)
-		const accessType = parent.length > 0 ? parent[0].accessType : AccessType.NotSet
-		return accessType ?? AccessType.NotSet
-	}
-
 	const items: InfoTableProps['items'] = {
 		Описание: group.description ?? <i>нет</i>,
-		'Общий уровень доступа': <AccessTypeEl type={getGlobalAccessRights()} />,
+		'Общий уровень доступа группы': <AccessTypeEl type={group.globalAccessType} />,
 	}
 
 	const load = () => {

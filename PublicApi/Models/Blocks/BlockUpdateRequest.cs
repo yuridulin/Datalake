@@ -48,4 +48,9 @@ public class BlockUpdateRequest
 		[Required]
 		public BlockTagRelation Relation { get; set; } = BlockTagRelation.Static;
 	}
+
+	/// <summary>
+	/// Версия данных, на основе которых сделан запрос
+	/// </summary>
+	public string LastKnownVersion { get; set; } = string.Empty;
 }

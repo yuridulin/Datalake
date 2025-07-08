@@ -1,16 +1,15 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Functions;
+using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
-using Datalake.Database.Services;
-using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
-using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Settings;
-using Datalake.Server.BackgroundServices.SettingsHandler;
 using Datalake.Server.Controllers.Base;
-using Datalake.Server.Services.StateManager;
-using Datalake.Server.Services.StateManager.Models;
+using Datalake.Server.Services.Maintenance;
+using Datalake.Server.Services.Maintenance.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -23,10 +22,13 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class SystemController(
 	DatalakeContext db,
+	DatalakeDataStore dataStore,
+	DatalakeDerivedDataStore derivedDataStore,
+	DatalakeCurrentValuesStore valuesStore,
 	SourcesStateService sourcesStateService,
 	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
-	ISettingsUpdater settingsService) : ApiControllerBase
+	SettingsMemoryRepository settingsRepository) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Получение даты последнего изменения структуры базы данных
@@ -35,8 +37,8 @@ public class SystemController(
 	[HttpGet("last")]
 	public ActionResult<string> GetLastUpdate()
 	{
-		var lastUpdate = SystemRepository.LastUpdate;
-		return lastUpdate.ToString(DateFormats.HierarchicalWithMilliseconds);
+		var lastUpdate = dataStore.State.Version;
+		return lastUpdate.ToString();
 	}
 
 	/// <summary>
@@ -70,7 +72,7 @@ public class SystemController(
 	{
 		var userAuth = Authenticate();
 
-		return await SystemRepository.GetLogsAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
+		return await AuditRepository.ReadAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
 	}
 
 	/// <summary>
@@ -82,9 +84,9 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		return usersStateService.State;
+		return usersStateService.State();
 	}
 
 	/// <summary>
@@ -96,10 +98,10 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		return sourcesStateService.State
-			.Where(x => AccessRepository.HasAccessToSource(user, AccessType.Viewer, x.Key))
+		return sourcesStateService.State()
+			.Where(x => AccessChecks.HasAccessToSource(user, AccessType.Viewer, x.Key))
 			.ToDictionary();
 	}
 
@@ -108,14 +110,14 @@ public class SystemController(
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("tags")]
-	public ActionResult<Dictionary<Guid, Dictionary<string, DateTime>>> GetTagsStates()
+	public ActionResult<Dictionary<int, Dictionary<string, DateTime>>> GetTagsStates()
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
 		return tagsStateService.GetTagsStates()
-			.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Viewer, x.Key))
+			.Where(x => AccessChecks.HasAccessToTag(user, AccessType.Viewer, x.Key))
 			.ToDictionary();
 	}
 
@@ -124,13 +126,13 @@ public class SystemController(
 	/// </summary>
 	/// <returns>Информация о настройках</returns>
 	[HttpGet("settings")]
-	public async Task<ActionResult<SettingsInfo>> GetSettingsAsync()
+	public ActionResult<SettingsInfo> GetSettings()
 	{
 		var user = Authenticate();
 
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Editor);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
-		var info = await SystemRepository.GetSettingsAsync(db, user);
+		var info = settingsRepository.GetSettings(user);
 
 		return info;
 	}
@@ -145,37 +147,39 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		await SystemRepository.UpdateSettingsAsync(db, user, newSettings);
-		await settingsService.WriteStartipFileAsync(db);
+		await settingsRepository.UpdateSettingsAsync(db, user, newSettings);
 
 		return NoContent();
 	}
 
 	/// <summary>
-	/// Перестроение кэша и перезапуск всех сборщиков
+	/// Перестроение кэша
 	/// </summary>
 	/// <returns></returns>
-	[HttpPut("restart/storage")]
-	public async Task<ActionResult> RestartStorageAsync()
+	[HttpPut("restart/state")]
+	public async Task<ActionResult> RestartStateAsync()
 	{
 		var user = Authenticate();
 
-		await SystemRepository.RebuildStorageCacheAsync(db, user);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		await dataStore.ReloadStateAsync();
 
 		return NoContent();
 	}
 
 	/// <summary>
-	/// Перестроение кэша вычисленных прав доступа
+	/// Перестроение кэша текущих (последних) значений
 	/// </summary>
 	/// <returns></returns>
-	[HttpPut("restart/access")]
-	public async Task<ActionResult> RestartAccessAsync()
+	[HttpPut("restart/values")]
+	public async Task<ActionResult> RestartValuesAsync()
 	{
 		var user = Authenticate();
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		await AccessRepository.RebuildUserRightsCacheAsync(db);
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		await valuesStore.ReloadValuesAsync();
 
 		return NoContent();
 	}
@@ -188,21 +192,9 @@ public class SystemController(
 	public ActionResult<Dictionary<Guid, UserAuthInfo>> GetAccess()
 	{
 		var user = Authenticate();
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		return Ok(AccessRepository.UserRights.ToDictionary(x => x.Key, x => x.Value));
-	}
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-	/// <summary>
-	/// Получение списка сохраненных метрик
-	/// </summary>
-	/// <returns>Список метрик</returns>
-	[HttpGet("metrics/read")]
-	public ActionResult<HistoryReadMetricInfo[]> GetReadMetrics()
-	{
-		var user = Authenticate();
-		AccessRepository.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-
-		return MetricsService.ReadMetrics();
+		return DerivedDataStore.Access.GetAll();
 	}
 }

@@ -34,7 +34,7 @@ const UserGroupForm = observer(() => {
 					users: res.data.users,
 				} as UserGroupUpdateRequest)
 				console.log(
-					`Доступ к групе: ${getAccessTypeName(res.data.accessRule.accessType)} по правилу ${res.data.accessRule.ruleId}`,
+					`Доступ к групе: ${getAccessTypeName(res.data.accessRule.access)} по правилу ${res.data.accessRule.ruleId}`,
 				)
 			}
 		})
@@ -93,7 +93,7 @@ const UserGroupForm = observer(() => {
 				}
 				right={
 					<>
-						{hasAccess(group.accessRule.accessType, AccessType.Editor) && (
+						{hasAccess(group.accessRule.access, AccessType.Editor) && (
 							<Popconfirm
 								title='Вы уверены, что хотите удалить эту группу?'
 								placement='bottom'

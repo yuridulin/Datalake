@@ -9,9 +9,12 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице связей блоков и тегов
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class BlockTag
+public record class BlockTag
 {
 	const string TableName = "BlockTags";
+
+	/// <summary>Конструктор для LinqToDB</summary>
+	public BlockTag() { }
 
 	// поля в БД
 

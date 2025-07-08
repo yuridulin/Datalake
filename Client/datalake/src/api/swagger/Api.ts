@@ -57,12 +57,12 @@ export class Api<
    * No description
    *
    * @tags Access
-   * @name AccessGet
+   * @name AccessRead
    * @summary Получение списка прямых (не глобальных) разрешений субъекта на объект
    * @request GET:/api/Access
    * @response `200` `(AccessRightsInfo)[]` Список разрешений
    */
-  accessGet = (
+  accessRead = (
     query?: {
       /**
        * Идентификтатор пользователя
@@ -584,14 +584,14 @@ export class Api<
    * No description
    *
    * @tags System
-   * @name SystemRestartStorage
-   * @summary Перестроение кэша и перезапуск всех сборщиков
-   * @request PUT:/api/System/restart/storage
+   * @name SystemRestartState
+   * @summary Перестроение кэша
+   * @request PUT:/api/System/restart/state
    * @response `200` `File`
    */
-  systemRestartStorage = (params: RequestParams = {}) =>
+  systemRestartState = (params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/System/restart/storage`,
+      path: `/api/System/restart/state`,
       method: "PUT",
       ...params,
     });
@@ -599,14 +599,14 @@ export class Api<
    * No description
    *
    * @tags System
-   * @name SystemRestartAccess
-   * @summary Перестроение кэша вычисленных прав доступа
-   * @request PUT:/api/System/restart/access
+   * @name SystemRestartValues
+   * @summary Перестроение кэша текущих (последних) значений
+   * @request PUT:/api/System/restart/values
    * @response `200` `File`
    */
-  systemRestartAccess = (params: RequestParams = {}) =>
+  systemRestartValues = (params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/System/restart/access`,
+      path: `/api/System/restart/values`,
       method: "PUT",
       ...params,
     });
@@ -698,12 +698,12 @@ export class Api<
    * @tags Tags
    * @name TagsRead
    * @summary Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
-   * @request GET:/api/Tags/{guid}
+   * @request GET:/api/Tags/{id}
    * @response `200` `TagInfo` Объект информации о теге
    */
-  tagsRead = (guid: string, params: RequestParams = {}) =>
+  tagsRead = (id: number, params: RequestParams = {}) =>
     this.request<TagInfo, any>({
-      path: `/api/Tags/${guid}`,
+      path: `/api/Tags/${id}`,
       method: "GET",
       format: "json",
       ...params,
@@ -714,16 +714,16 @@ export class Api<
    * @tags Tags
    * @name TagsUpdate
    * @summary Изменение тега
-   * @request PUT:/api/Tags/{guid}
+   * @request PUT:/api/Tags/{id}
    * @response `200` `File`
    */
   tagsUpdate = (
-    guid: string,
+    id: number,
     data: TagUpdateRequest,
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/Tags/${guid}`,
+      path: `/api/Tags/${id}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
@@ -735,12 +735,12 @@ export class Api<
    * @tags Tags
    * @name TagsDelete
    * @summary Удаление тега
-   * @request DELETE:/api/Tags/{guid}
+   * @request DELETE:/api/Tags/{id}
    * @response `200` `File`
    */
-  tagsDelete = (guid: string, params: RequestParams = {}) =>
+  tagsDelete = (id: number, params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/Tags/${guid}`,
+      path: `/api/Tags/${id}`,
       method: "DELETE",
       ...params,
     });

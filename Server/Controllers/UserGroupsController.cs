@@ -1,5 +1,6 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Repositories;
+using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.UserGroups;
 using Datalake.Server.Controllers.Base;
@@ -13,7 +14,10 @@ namespace Datalake.Server.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
-public class UserGroupsController(DatalakeContext db) : ApiControllerBase
+public class UserGroupsController(
+	DatalakeContext db,
+	DatalakeDerivedDataStore derivedDataStore,
+	UserGroupsMemoryRepository userGroupsRepository) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Создание новой группы пользователей
@@ -26,7 +30,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		return await UserGroupsRepository.CreateAsync(db, user, request);
+		return await userGroupsRepository.CreateAsync(db, user, request);
 	}
 
 	/// <summary>
@@ -34,11 +38,11 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	/// </summary>
 	/// <returns>Список групп</returns>
 	[HttpGet]
-	public async Task<ActionResult<UserGroupInfo[]>> ReadAllAsync()
+	public ActionResult<UserGroupInfo[]> ReadAll()
 	{
 		var user = Authenticate();
 
-		return await UserGroupsRepository.ReadAllAsync(db, user);
+		return userGroupsRepository.ReadAll(user);
 	}
 
 	/// <summary>
@@ -48,12 +52,12 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	/// <returns>Информация о группе</returns>
 	/// <exception cref="NotFoundException">Группа не найдена по ключу</exception>
 	[HttpGet("{groupGuid}")]
-	public async Task<ActionResult<UserGroupInfo>> ReadAsync(
+	public ActionResult<UserGroupInfo> Read(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
 		var user = Authenticate();
 
-		return await UserGroupsRepository.ReadAsync(db, user, groupGuid);
+		return userGroupsRepository.Read(user, groupGuid);
 	}
 
 	/// <summary>
@@ -61,11 +65,11 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	/// </summary>
 	/// <returns>Список обособленных групп с вложенными подгруппами</returns>
 	[HttpGet("tree")]
-	public async Task<ActionResult<UserGroupTreeInfo[]>> ReadAsTreeAsync()
+	public ActionResult<UserGroupTreeInfo[]> ReadAsTree()
 	{
 		var user = Authenticate();
 
-		return await UserGroupsRepository.ReadAllAsTreeAsync(db, user);
+		return userGroupsRepository.ReadAllAsTree(user);
 	}
 
 	/// <summary>
@@ -75,12 +79,12 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	/// <returns>Информация о группе с подгруппами и списком пользователей</returns>
 	/// <exception cref="NotFoundException">Группа не найдена по ключу</exception>
 	[HttpGet("{groupGuid}/detailed")]
-	public async Task<ActionResult<UserGroupDetailedInfo>> ReadWithDetailsAsync(
+	public ActionResult<UserGroupDetailedInfo> ReadWithDetails(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
 		var user = Authenticate();
 
-		return await UserGroupsRepository.ReadWithDetailsAsync(db, user, groupGuid);
+		return userGroupsRepository.ReadWithDetails(user, groupGuid);
 	}
 
 	/// <summary>
@@ -95,7 +99,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await UserGroupsRepository.UpdateAsync(db, user, groupGuid, request);
+		await userGroupsRepository.UpdateAsync(db, user, groupGuid, request);
 
 		return NoContent();
 	}
@@ -112,7 +116,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await UserGroupsRepository.MoveAsync(db, user, groupGuid, parentGuid);
+		await userGroupsRepository.MoveAsync(db, user, groupGuid, parentGuid);
 
 		return NoContent();
 	}
@@ -127,7 +131,7 @@ public class UserGroupsController(DatalakeContext db) : ApiControllerBase
 	{
 		var user = Authenticate();
 
-		await UserGroupsRepository.DeleteAsync(db, user, groupGuid);
+		await userGroupsRepository.DeleteAsync(db, user, groupGuid);
 
 		return NoContent();
 	}

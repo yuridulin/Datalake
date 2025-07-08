@@ -1,5 +1,4 @@
-﻿using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Models.AccessRights;
+﻿using Datalake.PublicApi.Models.AccessRights;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.PublicApi.Models.UserGroups;
@@ -9,12 +8,6 @@ namespace Datalake.PublicApi.Models.UserGroups;
 /// </summary>
 public class UserGroupDetailedInfo : UserGroupInfo
 {
-	/// <summary>
-	/// Общий уровень доступа для всех участников группы
-	/// </summary>
-	[Required]
-	public required AccessType GlobalAccessType { get; set; }
-
 	/// <summary>
 	/// Список пользователей этой группы
 	/// </summary>

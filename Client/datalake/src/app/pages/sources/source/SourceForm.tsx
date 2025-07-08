@@ -76,6 +76,19 @@ const SourceForm = () => {
 					onChange={(e) => setSource({ ...source, description: e.target.value })}
 				/>
 			</FormRow>
+			<FormRow title='Активность'>
+				<Radio.Group
+					value={source.isDisabled ?? false}
+					onChange={(e) => setSource({ ...source, isDisabled: e.target.value })}
+				>
+					<Radio.Button key={1} value={false}>
+						Запущен
+					</Radio.Button>
+					<Radio.Button key={0} value={true}>
+						Остановлен
+					</Radio.Button>
+				</Radio.Group>
+			</FormRow>
 			<FormRow title='Тип источника'>
 				<Radio.Group
 					buttonStyle='solid'

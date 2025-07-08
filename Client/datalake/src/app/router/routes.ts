@@ -64,11 +64,11 @@ const routes = {
 		aggregated: '/tags/aggregated',
 		view: '/tags/all/:id/view',
 		edit: '/tags/all/:id/edit',
-		toViewTag(guid: string) {
-			return withId(this.view, guid)
+		toViewTag(id: number) {
+			return withId(this.view, id)
 		},
-		toEditTag(guid: string) {
-			return withId(this.edit, guid)
+		toEditTag(id: number) {
+			return withId(this.edit, id)
 		},
 	},
 	blocks: {

@@ -11,9 +11,14 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице тегов
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Tag
+public record class Tag
 {
 	const string TableName = "Tags";
+
+	/// <summary>
+	/// Да это же конструктор! Пустой для LinqToDB
+	/// </summary>
+	public Tag() { }
 
 	// поля в БД
 

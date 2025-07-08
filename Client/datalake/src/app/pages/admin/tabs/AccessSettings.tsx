@@ -15,7 +15,7 @@ import TagButton from '@/app/components/buttons/TagButton'
 import UserButton from '@/app/components/buttons/UserButton'
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
 import { user } from '@/state/user'
-import { Button, Divider, Space, Spin, Tree } from 'antd'
+import { Divider, Tree } from 'antd'
 import { DataNode } from 'antd/es/tree'
 import { useEffect, useState } from 'react'
 import 'react18-json-view/src/style.css'
@@ -57,15 +57,6 @@ type UserAuthWithNames = {
 
 const AccessSettings = () => {
 	const [rights, setRights] = useState([] as DataNode[])
-	const [wait, setWait] = useState(false)
-
-	const restart = () => {
-		setWait(true)
-		api.systemRestartAccess().then(() => {
-			setWait(false)
-			load()
-		})
-	}
 
 	const load = () => {
 		let groups: Record<string, string>
@@ -118,13 +109,13 @@ const AccessSettings = () => {
 				guid: info.guid,
 				fullName: info.fullName,
 				accessRule: info.accessRule,
-				globalAccess: info.globalAccessType,
+				globalAccess: info.rootRule.access,
 				groups: Object.entries(info.groups).map(([key, value]) => ({
 					guid: key,
 					name: groups[key],
 					accessRule: {
 						ruleId: value.ruleId,
-						accessType: value.accessType,
+						access: value.access,
 					},
 				})),
 				sources: Object.entries(info.sources).map(([key, value]) => ({
@@ -132,7 +123,7 @@ const AccessSettings = () => {
 					name: sources[Number(key)],
 					accessRule: {
 						ruleId: value.ruleId,
-						accessType: value.accessType,
+						access: value.access,
 					},
 				})),
 				blocks: Object.entries(info.blocks).map(([key, value]) => ({
@@ -140,14 +131,14 @@ const AccessSettings = () => {
 					name: blocks[Number(key)],
 					accessRule: {
 						ruleId: value.ruleId,
-						accessType: value.accessType,
+						access: value.access,
 					},
 				})),
 				tags: Object.entries(info.tags).map(([key, value]) => ({
 					...tags[key],
 					accessRule: {
 						ruleId: value.ruleId,
-						accessType: value.accessType,
+						access: value.access,
 					},
 				})),
 			}))
@@ -183,7 +174,7 @@ const AccessSettings = () => {
 										}}
 										check={false}
 									/>{' '}
-									: <AccessTypeEl type={group.accessRule.accessType} />
+									: <AccessTypeEl type={group.accessRule.access} />
 								</>
 							),
 							key: id++,
@@ -202,7 +193,7 @@ const AccessSettings = () => {
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}
-									: <AccessTypeEl type={source.accessRule.accessType} />
+									: <AccessTypeEl type={source.accessRule.access} />
 								</>
 							),
 							key: id++,
@@ -222,7 +213,7 @@ const AccessSettings = () => {
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}
-									: <AccessTypeEl type={block.accessRule.accessType} />
+									: <AccessTypeEl type={block.accessRule.access} />
 								</>
 							),
 							key: id++,
@@ -245,7 +236,7 @@ const AccessSettings = () => {
 											//accessRule: user.accessRule,
 										}}
 									/>{' '}
-									: <AccessTypeEl type={tag.accessRule.accessType} />
+									: <AccessTypeEl type={tag.accessRule.access} />
 								</>
 							),
 							key: id++,
@@ -262,16 +253,10 @@ const AccessSettings = () => {
 
 	return (
 		<>
-			<Space onClick={restart}>
-				<Button disabled={wait}>{wait && <Spin />} Перерасчет прав доступа</Button>
-			</Space>
 			<Divider>
 				<small>Текущие права доступа</small>
 			</Divider>
 			<Tree treeData={rights} showLine />
-			{/* <React.Fragment>
-				<JsonView src={rights} />
-			</React.Fragment> */}
 		</>
 	)
 }

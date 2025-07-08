@@ -4,14 +4,24 @@ import { useState } from 'react'
 
 const CollectSettings = () => {
 	const [wait, setWait] = useState(false)
-	const restart = () => {
+
+	const restartState = () => {
 		setWait(true)
-		api.systemRestartStorage().then((res) => res.status === 204 && setWait(false))
+		api.systemRestartState().then((res) => res.status === 204 && setWait(false))
+	}
+	const restartValues = () => {
+		setWait(true)
+		api.systemRestartValues().then((res) => res.status === 204 && setWait(false))
 	}
 
 	return (
-		<Space onClick={restart}>
-			<Button disabled={wait}>{wait && <Spin />} Перезапуск всех опросов</Button>
+		<Space>
+			<Button onClick={restartState} disabled={wait}>
+				{wait && <Spin />} Перезагрузка состояния данных из БД
+			</Button>
+			<Button onClick={restartValues} disabled={wait}>
+				{wait && <Spin />} Перезагрузка текущих данных из БД
+			</Button>
 		</Space>
 	)
 }
