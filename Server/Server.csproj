@@ -12,7 +12,6 @@
 		<Product>$(AssemblyName)</Product>
 		<AssemblyName>Datalake.$(MSBuildProjectName)</AssemblyName>
 		<RootNamespace>Datalake.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-		<VersionPrefix>2.1</VersionPrefix>
 	</PropertyGroup>
 
 	<PropertyGroup>

@@ -2,6 +2,7 @@
 using Datalake.Database.InMemory.Models;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Auth.Models;
+using System.Reflection;
 using System.Threading.Channels;
 
 namespace Datalake.Server.Services.SettingsHandler;
@@ -79,12 +80,14 @@ public class SettingsHandlerService(
 			try
 			{
 				var newSettings = state.Settings;
+				var version = Assembly.GetExecutingAssembly().GetName().Version;
 				File.WriteAllLines(Path.Combine(Program.WebRootPath, "startup.js"),
 				[
 					"var LOCAL_API = true;",
 					$"var KEYCLOAK_DB = '{newSettings.KeycloakHost}';",
 					$"var KEYCLOAK_CLIENT = '{newSettings.KeycloakClient}';",
-					$"var INSTANCE_NAME = '{newSettings.InstanceName}'"
+					$"var INSTANCE_NAME = '{newSettings.InstanceName}';",
+					$"var VERSION = '{version}",
 				]);
 				logger.LogDebug("Настройки обновлены");
 			}
