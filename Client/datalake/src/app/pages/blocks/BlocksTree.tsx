@@ -10,11 +10,11 @@ import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 
-const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[], Record<number, string>] => {
+const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<number, string>] => {
 	const meta: Record<number, string> = {}
 
-	const buildHierarchy = (id: number | null, prefix = ''): BlockTreeInfo[] => {
-		return blocks
+	const buildHierarchy = (id: number | null, prefix = ''): BlockTreeInfo[] | null => {
+		const hierarchy = blocks
 			.filter((block) => block.parentId === id)
 			.map((block) => {
 				const fullName = prefix ? `${prefix} > ${block.name}` : block.name
@@ -26,6 +26,8 @@ const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[], Record<number,
 				}
 			})
 			.sort((a, b) => a.name.localeCompare(b.name))
+
+		return hierarchy.length === 0 ? null : hierarchy
 	}
 
 	return [buildHierarchy(null), meta]
@@ -46,7 +48,7 @@ const BlocksTree = observer(() => {
 
 	// Filter and transform data based on search
 	const viewData = useMemo(() => {
-		if (!search) return tree
+		if (!search) return tree ?? []
 
 		return data
 			.filter((block) => block.name?.toLowerCase().includes(search.toLowerCase()))

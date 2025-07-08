@@ -106,6 +106,7 @@ public class DatalakeDerivedDataStore
 				.Where(x => x.ParentId == id)
 				.Select(x =>
 				{
+					var blockChildren = ReadBlockChildren(blocks, x.Id, prefixString + x.Name);
 					var block = new BlockTreeInfo
 					{
 						Id = x.Id,
@@ -129,7 +130,7 @@ public class DatalakeDerivedDataStore
 							})
 							.ToArray(),
 						AccessRule = x.AccessRule,
-						Children = ReadBlockChildren(blocks, x.Id, prefixString + x.Name),
+						Children = blockChildren.Length == 0 ? null : blockChildren,
 					};
 					return block;
 				})

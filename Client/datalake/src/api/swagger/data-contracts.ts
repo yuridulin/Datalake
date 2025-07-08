@@ -507,7 +507,7 @@ export type AccessRightsForObjectInfo = AccessRightsSimpleInfo & {
 /** Информация о блоке в иерархическом представлении */
 export type BlockTreeInfo = BlockWithTagsInfo & {
   /** Вложенные блоки */
-  children: BlockTreeInfo[];
+  children?: BlockTreeInfo[] | null;
   /**
    * Полное имя блока, включающее имена всех родительских блоков по иерархии через "."
    * @minLength 1
