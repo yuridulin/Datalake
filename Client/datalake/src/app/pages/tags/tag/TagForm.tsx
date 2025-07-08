@@ -82,7 +82,7 @@ const TagForm = () => {
 					setTags(res.data)
 				})
 				.catch(() => setTags([])),
-			api.tagsRead(String(id)).then((res) => {
+			api.tagsRead(Number(id)).then((res) => {
 				const info = res.data
 				setTag(info)
 				setRequest({
@@ -165,7 +165,7 @@ const TagForm = () => {
 	}, [navigate])
 
 	const tagUpdate = () => {
-		api.tagsUpdate(String(id), {
+		api.tagsUpdate(Number(id), {
 			...request,
 			sourceId: strategy === SourceStrategy.FromSource ? request.sourceId : strategy,
 			formulaInputs: strategy === SourceStrategy.Calculated ? request.formulaInputs : [],
@@ -177,7 +177,7 @@ const TagForm = () => {
 		})
 	}
 
-	const tagDelete = () => api.tagsDelete(String(id)).then(back)
+	const tagDelete = () => api.tagsDelete(Number(id)).then(back)
 
 	const addParam = () => {
 		if (strategy !== SourceStrategy.Calculated) return

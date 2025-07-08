@@ -202,20 +202,20 @@ export enum TagType {
 /**
  * Уровень доступа
  *
- * 0 = NoAccess
- * 5 = Viewer
- * 10 = Editor
- * 50 = Manager
- * 100 = Admin
- * -100 = NotSet
+ * 0 = NotSet
+ * 1 = Viewer
+ * 2 = Editor
+ * 3 = Manager
+ * 4 = NoAccess
+ * 5 = Admin
  */
 export enum AccessType {
-  NoAccess = 0,
-  Viewer = 5,
-  Editor = 10,
-  Manager = 50,
-  Admin = 100,
-  NotSet = -100,
+  NotSet = 0,
+  Viewer = 1,
+  Editor = 2,
+  Manager = 3,
+  NoAccess = 4,
+  Admin = 5,
 }
 
 /** Информация о разрешении пользователя или группы на доступ к какому-либо объекту */
@@ -251,7 +251,7 @@ export interface AccessRuleInfo {
    */
   ruleId: number;
   /** Уровень доступа */
-  accessType: AccessType;
+  access: AccessType;
 }
 
 /** Базовая информация о пользователе */
@@ -524,6 +524,8 @@ export interface BlockUpdateRequest {
   description?: string | null;
   /** Новый список закрепленных тегов */
   tags: AttachedTag[];
+  /** Версия данных, на основе которых сделан запрос */
+  lastKnownVersion?: string;
 }
 
 /** Информация о закрепленном теге */
@@ -550,6 +552,8 @@ export type SourceInfo = SourceSimpleInfo & {
   address?: string | null;
   /** Тип протокола, по которому запрашиваются данные */
   type: SourceType;
+  /** Источник отмечен как удаленный */
+  isDisabled: boolean;
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
@@ -605,11 +609,8 @@ export interface TagInputMinimalInfo {
    * @format int32
    */
   inputTagId?: number;
-  /**
-   * Идентификатор входного тега
-   * @format guid
-   */
-  inputTagGuid?: string;
+  /** Тип данных входного тега */
+  inputTagType?: TagType;
   /** Имя переменной */
   variableName?: string;
 }
@@ -673,8 +674,21 @@ export interface SourceState {
   isConnected: boolean;
   /** Была ли попытка установить соединение */
   isTryConnected: boolean;
-  /** Список количества секунд с момента записи каждого тега */
-  valuesAfterWriteSeconds: number[];
+  /**
+   * Список количества тегов этого источника
+   * @format int32
+   */
+  valuesAll: number;
+  /**
+   * Список количества тегов, которые обновлены за последние полчаса
+   * @format int32
+   */
+  valuesLastHalfHour: number;
+  /**
+   * Список количества тегов, которые обновлены за последние сутки
+   * @format int32
+   */
+  valuesLastDay: number;
 }
 
 /** Информация о настройках приложения, задаваемых через UI */
@@ -711,7 +725,7 @@ export type UserAuthInfo = UserSimpleInfo & {
    */
   token: string;
   /** Глобальный уровень доступа */
-  globalAccessType: AccessType;
+  rootRule: AccessRuleInfo;
   /** Список всех блоков с указанием доступа к ним */
   groups: Record<string, AccessRuleInfo>;
   /** Список всех блоков с указанием доступа к ним */
@@ -720,11 +734,8 @@ export type UserAuthInfo = UserSimpleInfo & {
   blocks: Record<string, AccessRuleInfo>;
   /** Список всех тегов с указанием доступа к ним */
   tags: Record<string, AccessRuleInfo>;
-  /**
-   * Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
-   * @format guid
-   */
-  underlyingUserGuid?: string | null;
+  /** Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись */
+  underlyingUser?: UserAuthInfo | null;
   /**
    * Идентификатор пользователя в системе EnergoId
    * @format guid
@@ -938,6 +949,8 @@ export type UserGroupInfo = UserGroupSimpleInfo & {
    * @format guid
    */
   parentGroupGuid?: string | null;
+  /** Общий уровень доступа для всех участников группы */
+  globalAccessType: AccessType;
 };
 
 /** Данные запроса для создания группы пользователей */
@@ -971,8 +984,6 @@ export type UserGroupTreeInfo = UserGroupInfo & {
 
 /** Расширенная информация о группе пользователей, включающая вложенные группы и список пользователей */
 export type UserGroupDetailedInfo = UserGroupInfo & {
-  /** Общий уровень доступа для всех участников группы */
-  globalAccessType: AccessType;
   /** Список пользователей этой группы */
   users: UserGroupUsersInfo[];
   /** Список подгрупп этой группы */
@@ -1212,6 +1223,8 @@ export interface ValueWriteRequest {
   quality?: TagQuality | null;
 }
 
+/** Список запросов с настройками */
 export type ValuesGetPayload = ValuesRequest[];
 
+/** Список запросов на изменение */
 export type ValuesWritePayload = ValueWriteRequest[];

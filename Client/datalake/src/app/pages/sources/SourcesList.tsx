@@ -1,5 +1,5 @@
 import api from '@/api/swagger-api'
-import { AccessType, SourceInfo, SourceState } from '@/api/swagger/data-contracts'
+import { AccessType, SourceInfo, SourceState, SourceType } from '@/api/swagger/data-contracts'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
@@ -12,16 +12,64 @@ import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
+interface DataCell extends SourceInfo {
+	isGroup: boolean
+	children?: DataCell[]
+	link: string
+}
+
+const ExcludedTypes = [SourceType.NotSet, SourceType.System]
+const NotEnteredTypes = [SourceType.Aggregated, SourceType.Calculated, SourceType.Manual]
+
 const SourcesList = observer(() => {
-	const [sources, setSources] = useState([] as SourceInfo[])
+	const [sources, setSources] = useState([] as DataCell[])
 	const [states, setStates] = useState({} as Record<string, SourceState>)
 
 	const load = () => {
 		setSources([])
 		api
-			.sourcesReadAll({ withCustom: false })
+			.sourcesReadAll({ withCustom: true })
 			.then((res) => {
-				setSources(res.data)
+				const [system, user]: DataCell[] = [
+					{
+						isGroup: true,
+						id: -2000,
+						name: 'Системные источники',
+						isDisabled: false,
+						type: SourceType.NotSet,
+						children: [],
+						link: '',
+					},
+					{
+						isGroup: true,
+						id: -1000,
+						name: 'Пользовательские источники',
+						isDisabled: false,
+						type: SourceType.NotSet,
+						children: [],
+						link: '',
+					},
+				]
+				res.data.reduce((agg, next) => {
+					if (ExcludedTypes.includes(next.type)) return agg
+					if (NotEnteredTypes.includes(next.type)) {
+						const link =
+							next.type === SourceType.Aggregated
+								? routes.tags.aggregated
+								: next.type === SourceType.Calculated
+									? routes.tags.calc
+									: next.type === SourceType.Manual
+										? routes.tags.manual
+										: ''
+						system.children?.push({ ...next, isGroup: false, link })
+					} else {
+						user.children?.push({ ...next, isGroup: false, link: routes.sources.toEditSource(next.id) })
+					}
+					return agg
+				}, [])
+				system.children = system.children?.sort((a, b) => a.name.localeCompare(b.name))
+				user.children = user.children?.sort((a, b) => a.name.localeCompare(b.name))
+				setSources([user, system])
 				getStates()
 			})
 			.catch(() => {
@@ -39,27 +87,40 @@ const SourcesList = observer(() => {
 		api
 			.sourcesCreate()
 			.then((res) => {
-				setSources([...sources, res.data])
+				load()
 				notification.success({ message: 'Создан источник ' + res.data.name })
 			})
 			.catch(() => notification.error({ message: 'Не удалось создать источник' }))
 	}
 
-	const columns: TableColumnsType<SourceInfo> = [
+	const columns: TableColumnsType<DataCell> = [
 		{
 			dataIndex: 'name',
 			title: 'Название',
-			width: '30em',
-			render: (_, record) => (
-				<NavLink className='table-row' to={routes.sources.toEditSource(record.id)} key={record.id}>
-					<Button size='small'>{record.name}</Button>
-				</NavLink>
-			),
+			width: '20em',
+			sorter: (a, b) => a.name.localeCompare(b.name),
+			render: (_, record) =>
+				record.isGroup ? (
+					<b>{record.name}</b>
+				) : (
+					<NavLink className='table-row' to={record.link} key={record.id}>
+						<Button size='small'>{record.name}</Button>
+					</NavLink>
+				),
+		},
+		{
+			dataIndex: 'isDisabled',
+			title: 'Активность',
+			width: '8em',
+			sorter: (a, b) => Number(a.isDisabled) - Number(b.isDisabled),
+			render: (flag, record) =>
+				record.isGroup ? <></> : !flag ? <Tag>Активен</Tag> : <Tag color='warning'>Остановлен</Tag>,
 		},
 		{
 			title: 'Подключение',
 			width: '10em',
 			render: (_, record) => {
+				if (record.isGroup) return <></>
 				const state = states[record.id]
 				if (!state) return <Tag>?</Tag>
 				return (
@@ -99,9 +160,11 @@ const SourcesList = observer(() => {
 			dataIndex: 'id',
 			title: <span title='Отображает общее количество тегов'>Теги</span>,
 			width: '5em',
-			render: (id) => {
+			sorter: (a, b) => (states[a.id]?.valuesAll ?? 0) - (states[b.id]?.valuesAll ?? 0),
+			render: (id, record) => {
+				if (record.isGroup) return <></>
 				const state = states[id]
-				const tagsCount = state?.valuesAfterWriteSeconds.length ?? 0
+				const tagsCount = state?.valuesAll ?? 0
 				return tagsCount > 0 ? <span>{tagsCount}</span> : <span>нет</span>
 			},
 		},
@@ -109,7 +172,7 @@ const SourcesList = observer(() => {
 			dataIndex: 'type',
 			title: 'Тип источника',
 			width: '10em',
-			render: (type) => <>{getSourceTypeName(type)}</>,
+			render: (type, record) => (record.isGroup ? <></> : <>{getSourceTypeName(type)}</>),
 		},
 		{
 			dataIndex: 'description',
@@ -117,19 +180,23 @@ const SourcesList = observer(() => {
 		},
 		{
 			title: 'Новые значения за последние полчаса',
-			width: '11em',
+			width: '13em',
+			sorter: (a, b) => (states[a.id]?.valuesLastHalfHour ?? 0) - (states[b.id]?.valuesLastHalfHour ?? 0),
 			render: (_, record) => {
+				if (record.isGroup) return <></>
 				const state = states[record.id]
-				const tagsLastHalfHourCount = state?.valuesAfterWriteSeconds.filter((x) => x <= 1800).length ?? 0
+				const tagsLastHalfHourCount = state?.valuesLastHalfHour ?? 0
 				return <Tag color={tagsLastHalfHourCount > 0 ? 'success' : 'default'}>{tagsLastHalfHourCount}</Tag>
 			},
 		},
 		{
 			title: 'Новые значения за последние сутки',
-			width: '11em',
+			width: '13em',
+			sorter: (a, b) => (states[a.id]?.valuesLastDay ?? 0) - (states[b.id]?.valuesLastDay ?? 0),
 			render: (_, record) => {
+				if (record.isGroup) return <></>
 				const state = states[record.id]
-				const tagsLastDayCount = state?.valuesAfterWriteSeconds.filter((x) => x <= 86400).length ?? 0
+				const tagsLastDayCount = state?.valuesLastDay ?? 0
 				return <Tag color={tagsLastDayCount > 0 ? 'success' : 'default'}>{tagsLastDayCount}</Tag>
 			},
 		},
@@ -145,7 +212,19 @@ const SourcesList = observer(() => {
 			>
 				Зарегистрированные источники данных
 			</PageHeader>
-			<Table dataSource={sources} columns={columns} size='small' pagination={false} rowKey='id' />
+			<Table
+				dataSource={sources}
+				columns={columns}
+				size='small'
+				pagination={false}
+				expandable={{
+					expandedRowKeys: [-1000, -2000],
+					defaultExpandAllRows: true,
+					expandRowByClick: false,
+					showExpandColumn: false,
+				}}
+				rowKey='id'
+			/>
 		</>
 	)
 })

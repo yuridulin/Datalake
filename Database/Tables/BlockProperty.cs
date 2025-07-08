@@ -12,9 +12,12 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице свойств блоков
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class BlockProperty
+public record class BlockProperty
 {
 	const string TableName = "BlockProperties";
+
+	/// <summary>Конструктор для LinqToDB</summary>
+	public BlockProperty() { }
 
 	// поля в БД
 

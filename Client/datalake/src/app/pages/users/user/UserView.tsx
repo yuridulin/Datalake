@@ -40,7 +40,7 @@ const UserView = observer(() => {
 					<>
 						{user.hasGlobalAccess(AccessType.Admin) && <Button disabled>Редактировать разрешения</Button>}
 						&ensp;
-						{hasAccess(info.accessRule.accessType, AccessType.Manager) && (
+						{hasAccess(info.accessRule.access, AccessType.Manager) && (
 							<NavLink to={routes.users.toUserForm(info.guid)}>
 								<Button>Редактировать учетную запись</Button>
 							</NavLink>

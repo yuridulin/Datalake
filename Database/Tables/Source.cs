@@ -11,9 +11,12 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице источников
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Source
+public record class Source
 {
 	const string TableName = "Sources";
+
+	/// <summary>Конструктор для LinqToDB</summary>
+	public Source() { }
 
 	// поля в БД
 
@@ -52,6 +55,12 @@ public class Source
 	/// </summary>
 	[Column, Required]
 	public bool IsDeleted { get; set; } = false;
+
+	/// <summary>
+	/// Источник отмечен как отключенный (не участвует в сборе данных)
+	/// </summary>
+	[Column, Required]
+	public bool IsDisabled { get; set; } = false;
 
 	// связи
 

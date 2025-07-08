@@ -31,8 +31,8 @@ namespace Datalake.Database.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AccessType")
-                        .HasColumnType("integer");
+                    b.Property<byte>("AccessType")
+                        .HasColumnType("smallint");
 
                     b.Property<int?>("BlockId")
                         .HasColumnType("integer");
@@ -256,6 +256,9 @@ namespace Datalake.Database.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsDisabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -338,6 +341,31 @@ namespace Datalake.Database.Migrations
                     b.HasIndex("SourceTagId");
 
                     b.ToTable("Tags", "public");
+                });
+
+            modelBuilder.Entity("Datalake.Database.Tables.TagHistory", b =>
+                {
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<float?>("Number")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Quality")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
+                    b.HasIndex("TagId", "Date")
+                        .IsUnique()
+                        .IsDescending(false, true)
+                        .HasDatabaseName("TagsHistory_TagId_Date_idx");
+
+                    b.ToTable("TagsHistory", "public");
                 });
 
             modelBuilder.Entity("Datalake.Database.Tables.TagInput", b =>
@@ -433,8 +461,8 @@ namespace Datalake.Database.Migrations
                     b.Property<Guid>("UserGuid")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("AccessType")
-                        .HasColumnType("integer");
+                    b.Property<byte>("AccessType")
+                        .HasColumnType("smallint");
 
                     b.Property<int>("Id")
                         .HasColumnType("integer");

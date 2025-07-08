@@ -11,9 +11,12 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице групп пользователей
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class UserGroup
+public record class UserGroup
 {
 	const string TableName = "UserGroups";
+
+	/// <summary>Конструктор для LinqToDB</summary>
+	public UserGroup() { }
 
 	// поля в БД
 

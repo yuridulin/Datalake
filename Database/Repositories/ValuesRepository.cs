@@ -1,26 +1,30 @@
-﻿using Datalake.Database.Extensions;
+﻿using Datalake.Database.Attributes;
+using Datalake.Database.Extensions;
+using Datalake.Database.Functions;
+using Datalake.Database.InMemory;
 using Datalake.Database.Models;
-using Datalake.Database.Services;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
-using Datalake.PublicApi.Models.Metrics;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.Values;
 using LinqToDB;
 using LinqToDB.Data;
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Database.Repositories;
 
 /// <summary>
 /// Репозиторий для работы со значениями тегов
 /// </summary>
-public static class ValuesRepository
+public class ValuesRepository(
+	DatalakeDataStore dataStore,
+	DatalakeCurrentValuesStore valuesStore,
+	ILogger<ValuesRepository> logger)
 {
-	#region Действия
+	#region API
 
 	/// <summary>
 	/// Получение значений по списку запрошенных тегов
@@ -29,32 +33,78 @@ public static class ValuesRepository
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="requests">Список запрошенных тегов с настройками получения</param>
 	/// <returns>Список ответов со значениями тегов</returns>
-	public static async Task<List<ValuesResponse>> GetValuesAsync(
+	public async Task<List<ValuesResponse>> GetValuesAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
 		ValuesRequest[] requests)
 	{
+		var currentState = dataStore.State;
+
 		var trustedRequests = requests
-			.Select(x => new ValuesTrustedRequest
+			.Select(request =>
 			{
-				RequestKey = x.RequestKey,
-				Time = new ValuesTrustedRequest.TimeSettings
+				var identifiers = request.TagsId?.ToHashSet() ?? [];
+				var guids = request.Tags?.ToHashSet() ?? [];
+
+				var cachedTags = currentState.CachesTags
+					.Where(tag => !tag.IsDeleted)
+					.Where(tag => identifiers.Contains(tag.Id) || guids.Contains(tag.Guid))
+					.Where(tag => AccessChecks.HasAccessToTag(user, AccessType.Viewer, tag.Id))
+					.ToArray();
+
+				return new ValuesTrustedRequest
 				{
-					Old = x.Old,
-					Young = x.Young,
-					Exact = x.Exact,
-				},
-				Resolution = x.Resolution,
-				Func = x.Func,
-				Tags = [..
-					TagsRepository.CachedTags.Values.Where(t => x.TagsId != null && x.TagsId.Contains(t.Id))
-					.Union(TagsRepository.CachedTags.Values.Where(t => x.Tags != null && x.Tags.Contains(t.Guid)))
-					.Where(x => AccessRepository.HasAccessToTag(user, AccessType.Viewer, x.Guid))
-				],
+					RequestKey = request.RequestKey,
+					Time = new ValuesTrustedRequest.TimeSettings
+					{
+						Old = request.Old,
+						Young = request.Young,
+						Exact = request.Exact,
+					},
+					Resolution = request.Resolution,
+					Func = request.Func,
+					Tags = cachedTags,
+				};
 			})
 			.ToArray();
 
-		return await GetValuesAsync(db, trustedRequests);
+		return await Measures.Measure(() => ProtectedGetValuesAsync(db, trustedRequests), logger, nameof(ProtectedGetValuesAsync));
+	}
+
+	/// <summary>
+	/// Запись очередных новых значений, собранных из
+	/// </summary>
+	/// <param name="db"></param>
+	/// <param name="requests"></param>
+	/// <returns></returns>
+	public async Task WriteCollectedValuesAsync(DatalakeContext db, IEnumerable<ValueWriteRequest> requests)
+	{
+		var currentState = dataStore.State;
+
+		List<TagHistory> records = [];
+
+		foreach (var request in requests)
+		{
+			TagCacheInfo? tag = null;
+
+			if (request.Id.HasValue)
+				currentState.CachedTagsById.TryGetValue(request.Id.Value, out tag);
+			else if (request.Guid.HasValue)
+				currentState.CachedTagsByGuid.TryGetValue(request.Guid.Value, out tag);
+
+			if (tag == null)
+				continue;
+
+			var record = TagHistoryExtension.CreateFrom(tag, request);
+
+			// проверка на уникальность (новизну)
+			if (!valuesStore.IsNew(record.TagId, record))
+				continue;
+
+			records.Add(record);
+		}
+
+		await ProtectedWriteValuesAsync(db, records);
 	}
 
 	/// <summary>
@@ -63,416 +113,64 @@ public static class ValuesRepository
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="requests">Список тегов с новыми значениями</param>
-	/// <param name="overrided">Нужно ли выполнять запись, если нет изменений с текущим значением</param>
 	/// <returns>Список записанных значений</returns>
-	public static async Task<List<ValuesTagResponse>> WriteValuesAsync(
+	public async Task<List<ValuesTagResponse>> WriteManualValuesAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
-		ValueWriteRequest[] requests,
-		bool overrided = false)
-	{
-		var trustedRequests = new List<ValueTrustedWriteRequest>();
-		var untrustedRequests = new List<ValuesTagResponse>();
-
-		foreach (var request in requests)
-		{
-			TagCacheInfo? tag = null;
-			if (request.Id.HasValue && TagsRepository.CachedTags.TryGetValue(request.Id.Value, out var t))
-			{
-				tag = t;
-			}
-			else if (request.Guid.HasValue)
-			{
-				tag = TagsRepository.CachedTags.Values
-					.Where(x => x.Guid == request.Guid)
-					.FirstOrDefault();
-			}
-
-			if (tag == null)
-				continue;
-
-			if (AccessRepository.HasAccessToTag(user, AccessType.Editor, tag.Guid))
-			{
-				trustedRequests.Add(new()
-				{
-					Tag = tag,
-					Date = request.Date,
-					Quality = request.Quality,
-					Value = request.Value
-				});
-			}
-			else
-			{
-				untrustedRequests.Add(new()
-				{
-					Guid = tag.Guid,
-					Id = tag.Id,
-					Name = string.Empty,
-					Type = tag.Type,
-					Frequency = tag.Frequency,
-					SourceType = SourceType.NotSet,
-					Values = [],
-					NoAccess = true,
-				});
-			}
-		}
-
-		return await WriteValuesAsync(db, trustedRequests, overrided);
-	}
-
-	/// <summary>
-	/// Запись значений на уровне приложения, без проверок на уровень доступа.
-	/// Используется для сборщиков
-	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
-	/// <param name="requests">Список записанных значений</param>
-	/// <returns>Затраченное на запись время в миллисекундах</returns>
-	public static async Task<int> WriteValuesAsSystemAsync(
-		DatalakeContext db,
 		ValueWriteRequest[] requests)
 	{
-		var stopwatch = Stopwatch.StartNew();
+		var currentState = dataStore.State;
 
-		var recordsToWrite = new List<TagHistory>();
-
-		foreach (var request in requests)
-		{
-			TagCacheInfo? tag = null;
-			if (request.Id.HasValue && TagsRepository.CachedTags.TryGetValue(request.Id.Value, out var t))
-			{
-				tag = t;
-			}
-			else if (request.Guid.HasValue)
-			{
-				tag = TagsRepository.CachedTags.Values
-					.Where(x => x.Guid == request.Guid)
-					.FirstOrDefault();
-			}
-
-			if (tag != null)
-			{
-				var record = TagHistoryExtension.CreateFrom(tag, request);
-				if (IsValueNew(record))
-				{
-					recordsToWrite.Add(record);
-				}
-			}
-		}
-
-		WriteLiveValues(recordsToWrite);
-		await WriteNewValuesAsync(db, recordsToWrite);
-
-		stopwatch.Stop();
-		return Convert.ToInt32(stopwatch.Elapsed.TotalMilliseconds);
-	}
-
-	/// <summary>
-	/// Получение значения тега по идентификатору
-	/// </summary>
-	/// <param name="id">Идентификатор</param>
-	/// <returns>Значение, если тег найден</returns>
-	public static object? GetLiveValue(int id)
-	{
-		TagsRepository.CachedTags.TryGetValue(id, out var info);
-		LiveValues.TryGetValue(id, out var history);
-		return history?.GetTypedValue(info?.Type ?? TagType.String);
-	}
-
-	#endregion
-
-	#region Кэш
-
-	/// <summary>
-	/// Кэшированные текущие значения тегов, сопоставленные с идентификаторами
-	/// </summary>
-	internal static Dictionary<int, TagHistory> LiveValues { get; set; } = [];
-
-	/// <summary>
-	/// Чтение списка текущих значений тегов
-	/// </summary>
-	/// <param name="sourceId">Идентификатор источника данных</param>
-	/// <returns>Список значений</returns>
-	public static List<TagHistory> GetLiveValues(int sourceId)
-	{
-		var identifiers = TagsRepository.CachedTags.Values.Where(x => x.SourceId == sourceId).Select(x => x.Id).ToArray();
-
-		return GetLiveValues(identifiers);
-	}
-
-	/// <summary>
-	/// Чтение списка текущих значений тегов
-	/// </summary>
-	/// <param name="identifiers">Идентификаторы тегов</param>
-	/// <returns>Список значений</returns>
-	public static List<TagHistory> GetLiveValues(int[]? identifiers = null)
-	{
-		if (identifiers == null)
-			return LiveValues.Values.ToList();
-
-		return [.. identifiers.Select(id => LiveValues.TryGetValue(id, out var value) ? value : LostTag(id, DateFormats.GetCurrentDateTime()))];
-	}
-
-	internal static async Task CreateLiveValues(DatalakeContext db)
-	{
-		var tags = db.Tags.Select(x => x.Id).ToArray();
-		var date = DateFormats.GetCurrentDateTime();
-
-		var table = await TablesRepository.GetHistoryTableAsync(db, date.Date);
-		var count = await table.CountAsync();
-
-		if (count == 0)
-		{
-			var lastDate = TablesRepository.GetPreviousTableDate(date.Date);
-			if (lastDate != null)
-				table = await TablesRepository.GetHistoryTableAsync(db, lastDate.Value);
-			else
-			{
-				lock (locker)
-				{
-					LiveValues = tags.ToDictionary(x => x, x => new TagHistory
-					{
-						TagId = x,
-						Date = DateTime.MinValue,
-						Number = null,
-						Text = null,
-						Quality = TagQuality.Bad,
-					});
-				}
-
-				return;
-			}
-		}
-
-		var query =
-			from rt in
-				from th in table
-				where tags.Contains(th.TagId)
-				select new
-				{
-					th.TagId,
-					th.Date,
-					th.Text,
-					th.Number,
-					th.Quality,
-					rn = Sql.Ext
-						.RowNumber().Over()
-						.PartitionBy(th.TagId)
-						.OrderByDesc(th.Date)
-						.ToValue()
-				}
-			where rt.rn == 1
-			select new TagHistory
-			{
-				TagId = rt.TagId,
-				Date = rt.Date,
-				Text = rt.Text,
-				Number = rt.Number,
-				Quality = rt.Quality,
-			};
-
-		var values = await query.ToListAsync();
-
-		lock (locker)
-		{
-			LiveValues = values
-				.DistinctBy(x => x.TagId)
-				.ToDictionary(x => x.TagId, x => x);
-		}
-	}
-
-	internal static void WriteLiveValues(List<TagHistory> values)
-	{
-		lock (locker)
-		{
-			foreach (var value in values)
-			{
-				if (!LiveValues.TryGetValue(value.TagId, out TagHistory? exist))
-				{
-					LiveValues.Add(value.TagId, value);
-				}
-				else if (!exist.Equals(value))
-				{
-					LiveValues[exist.TagId].Number = value.Number;
-					LiveValues[exist.TagId].Text = value.Text;
-					LiveValues[exist.TagId].Quality = value.Quality;
-				}
-			}
-		}
-	}
-
-	internal static bool IsValueNew(TagHistory value)
-	{
-		if (LiveValues.TryGetValue(value.TagId, out var old))
-		{
-			return !old.Equals(value);
-		}
-
-		return true;
-	}
-
-	static object locker = new();
-
-	#endregion
-
-	#region Запись значений
-
-	/// <summary>
-	/// Запись новых значений, с обновлением текущих при необходимости
-	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
-	/// <param name="requests">Список запросов на запись</param>
-	/// <param name="overrided">Обязательная запись, даже если изменений не было</param>
-	/// <returns>Ответ со списком значений, как при чтении</returns>
-	/// <exception cref="NotFoundException">Тег не найден</exception>
-	private static async Task<List<ValuesTagResponse>> WriteValuesAsync(
-		DatalakeContext db,
-		List<ValueTrustedWriteRequest> requests,
-		bool overrided = false)
-	{
 		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToWrite = [];
 
 		foreach (var request in requests)
 		{
-			var record = TagHistoryExtension.CreateFrom(request);
-			if (!IsValueNew(record) && !overrided)
+			TagCacheInfo? tag = null;
+
+			if (request.Id.HasValue)
+				currentState.CachedTagsById.TryGetValue(request.Id.Value, out tag);
+			else if (request.Guid.HasValue)
+				currentState.CachedTagsByGuid.TryGetValue(request.Guid.Value, out tag);
+
+			if (tag == null || tag.SourceType != SourceType.Manual || !AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Id))
 				continue;
+
+			var record = TagHistoryExtension.CreateFrom(tag, request);
 			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
 
 			recordsToWrite.Add(record);
 
 			responses.Add(new ValuesTagResponse
 			{
-				Id = request.Tag.Id,
-				Guid = request.Tag.Guid,
-				Name = request.Tag.Name,
-				Type = request.Tag.Type,
-				Frequency = request.Tag.Frequency,
-				SourceType = request.Tag.SourceType,
+				Id = tag.Id,
+				Guid = tag.Guid,
+				Name = tag.Name,
+				Type = tag.Type,
+				Frequency = tag.Frequency,
+				SourceType = tag.SourceType,
 				Values = [
 					new ValueRecord
 					{
 						Date = record.Date,
 						DateString = record.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 						Quality = record.Quality,
-						Value = record.GetTypedValue(request.Tag.Type),
+						Value = record.GetTypedValue(tag.Type),
 					}
 				]
 			});
 		}
 
-		WriteLiveValues(recordsToWrite);
-		await WriteHistoryValuesAsync(db, recordsToWrite);
+		await ProtectedWriteValuesAsync(db, recordsToWrite);
 
 		return responses;
 	}
 
-	/// <summary>
-	/// Запись значений в партицию через временную таблицу
-	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
-	/// <param name="records">Список записей для ввода</param>
-	private static async Task WriteHistoryValuesAsync(
-		DatalakeContext db, List<TagHistory> records)
-	{
-		if (records.Count == 0)
-			return;
-
-		foreach (var dayRecordsGroup in records.GroupBy(x => x.Date.Date))
-		{
-			var dayTable = await TablesRepository.GetHistoryTableAsync(db, dayRecordsGroup.Key);
-			var dayValues = dayRecordsGroup.Select(x => x).ToArray();
-
-			string tempTableName = "TagsHistoryInserting_" + DateTime.UtcNow.ToFileTimeUtc().ToString();
-			var tempTable = await db.CreateTempTableAsync<TagHistory>(tempTableName);
-
-			await tempTable.BulkCopyAsync(dayValues);
-
-			var previousExistValues =
-				from exist in dayTable
-				from insert in tempTable.LeftJoin(x => x.Date == exist.Date && x.TagId == exist.TagId)
-				where insert != null
-				select exist;
-
-			await previousExistValues.DeleteAsync();
-
-			await dayTable.BulkCopyAsync(tempTable);
-
-			await db.DropTableAsync<TagHistory>(tempTableName);
-
-			// Если пишем в прошлое, нужно обновить стартовые записи в будущем
-			if (dayRecordsGroup.Key < DateTime.Today)
-			{
-				await UpdateInitialValuesInFuture(db, dayRecordsGroup.Key, dayValues);
-			}
-		}
-	}
-
-	private static async Task WriteNewValuesAsync(
-		DatalakeContext db, List<TagHistory> records)
-	{
-		if (records.Count == 0)
-			return;
-
-		foreach (var g in records.GroupBy(x => x.Date.Date))
-		{
-			var table = await TablesRepository.GetHistoryTableAsync(db, g.Key);
-			await table.BulkCopyAsync(g.Select(x => x));
-		}
-	}
-
-	/// <summary>
-	/// Обновление стартовых значений в таблицах будущего после новой записи
-	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
-	/// <param name="currentDate"></param>
-	/// <param name="writedRecords"></param>
-	private static async Task UpdateInitialValuesInFuture(
-		DatalakeContext db,
-		DateTime currentDate,
-		TagHistory[] writedRecords)
-	{
-		var seekDate = currentDate;
-		var valuesToInitial = writedRecords;
-
-		do
-		{
-			var seekTable = await TablesRepository.GetHistoryTableAsync(db, seekDate);
-
-			var tagsWithLaterValues = await seekTable
-				.Where(exist => valuesToInitial.Any(writed => writed.TagId == exist.TagId && exist.Date > writed.Date))
-				.ToArrayAsync();
-
-			valuesToInitial = valuesToInitial.Where(x => !tagsWithLaterValues.Select(x => x.TagId).Contains(x.TagId)).ToArray();
-			if (valuesToInitial.Length == 0)
-				break;
-
-			var nextDate = TablesRepository.GetNextTableDate(seekDate);
-			if (nextDate == null)
-				break;
-
-			var nextTable = await TablesRepository.GetHistoryTableAsync(db, nextDate.Value);
-			await nextTable.DeleteAsync(x => x.Quality == TagQuality.Good_LOCF && valuesToInitial.Select(v => v.TagId).Contains(x.TagId));
-			await nextTable.BulkCopyAsync(valuesToInitial
-				.Select(x => new TagHistory
-				{
-					Date = nextDate.Value,
-					Quality = TagQuality.Good_LOCF,
-					Number = x.Number,
-					TagId = x.TagId,
-					Text = x.Text,
-				}));
-
-			seekDate = nextDate.Value;
-		}
-		while (seekDate < DateTime.Today);
-	}
-
 	#endregion
 
-	#region Чтение значений
+	#region Чтение
 
-	internal static async Task<List<ValuesResponse>> GetValuesAsync(
+	internal async Task<List<ValuesResponse>> ProtectedGetValuesAsync(
 		DatalakeContext db, ValuesTrustedRequest[] trustedRequests)
 	{
 		List<ValuesResponse> responses = [];
@@ -489,36 +187,63 @@ public static class ValuesRepository
 
 		foreach (var group in groups)
 		{
-			// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
-			if (!group.Settings.Exact.HasValue && !group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
+			TagHistory[] databaseValues;
+
+			if (!group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
 			{
-				var values = GetLiveValues(group.TagsId);
+				Dictionary<int, TagHistory?> databaseValuesById;
+				DateTime date;
+
+				if (group.Settings.Exact.HasValue)
+				{
+					databaseValues = await ProtectedReadLastValuesBeforeDateAsync(db, group.TagsId, group.Settings.Exact.Value);
+					databaseValuesById = databaseValues.ToDictionary(x => x.TagId)!;
+
+					date = group.Settings.Exact.Value;
+				}
+				else
+				{
+					// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
+					databaseValuesById = valuesStore.GetByIdentifiers(group.TagsId);
+					date = DateFormats.GetCurrentDateTime();
+				}
 
 				foreach (var request in group.Requests)
 				{
+					List<ValuesTagResponse> tags = [];
+					foreach (var tag in request.Tags)
+					{
+						if (!databaseValuesById.TryGetValue(tag.Id, out var value) || value == null)
+						{
+							value = new TagHistory { TagId = tag.Id, Date = date, Quality = TagQuality.Bad_NoValues };
+						}
+
+						var tagValue = new ValueRecord
+						{
+							Date = value.Date,
+							DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
+							Quality = value.Quality,
+							Value = value.GetTypedValue(tag.Type),
+						};
+
+						var tagResponse = new ValuesTagResponse
+						{
+							Id = tag.Id,
+							Guid = tag.Guid,
+							Name = tag.Name,
+							Type = tag.Type,
+							Frequency = tag.Frequency,
+							SourceType = tag.SourceType,
+							Values = [tagValue],
+						};
+
+						tags.Add(tagResponse);
+					}
+
 					var response = new ValuesResponse
 					{
 						RequestKey = request.RequestKey,
-						Tags = [..
-							from value in values
-							join tag in request.Tags on value.TagId equals tag.Id
-							select new ValuesTagResponse
-							{
-								Id = tag.Id,
-								Guid = tag.Guid,
-								Name = tag.Name,
-								Type = tag.Type,
-								Frequency = tag.Frequency,
-								SourceType = tag.SourceType,
-								Values = [ new()
-								{
-									Date = value.Date,
-									DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
-									Quality = value.Quality,
-									Value = value.GetTypedValue(tag.Type),
-								}]
-							}
-						],
+						Tags = tags,
 					};
 
 					responses.Add(response);
@@ -526,24 +251,11 @@ public static class ValuesRepository
 			}
 			else
 			{
-				DateTime exact = group.Settings.Exact ?? DateFormats.GetCurrentDateTime();
-				DateTime old, young;
-
-				if (group.Settings.Exact.HasValue)
-				{
-					young = group.Settings.Exact.Value;
-					old = group.Settings.Exact.Value;
-				}
-				else
-				{
-					young = group.Settings.Young ?? exact;
+				DateTime
+					young = group.Settings.Young ?? DateFormats.GetCurrentDateTime(),
 					old = group.Settings.Old ?? young.Date;
-				}
 
-				var (databaseValues, metric) = await ReadHistoryValuesAsync(db, group.TagsId, old, young);
-
-				metric.RequestKeys = group.Requests.Select(x => x.RequestKey).ToArray();
-				MetricsService.AddMetric(metric);
+				databaseValues = await ProtectedReadValuesAsync(db, group.TagsId, old, young);
 
 				foreach (var request in group.Requests)
 				{
@@ -576,8 +288,8 @@ public static class ValuesRepository
 							tagResponse.Values = [
 								new()
 								{
-									Date = exact,
-									DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
+									Date = old,
+									DateString = old.ToString(DateFormats.HierarchicalWithMilliseconds),
 									Quality = TagQuality.Bad_NoValues,
 									Value = 0,
 								}
@@ -617,8 +329,8 @@ public static class ValuesRepository
 
 									tagResponse.Values = [
 										new() {
-											Date = exact,
-											DateString = exact.ToString(DateFormats.HierarchicalWithMilliseconds),
+											Date = old,
+											DateString = old.ToString(DateFormats.HierarchicalWithMilliseconds),
 											Quality = TagQuality.Good,
 											Value = value,
 										}
@@ -656,146 +368,45 @@ public static class ValuesRepository
 		return responses;
 	}
 
-	internal static async Task<(List<TagHistory>, HistoryReadMetric)> ReadHistoryValuesAsync(
+	internal static async Task<TagHistory[]> ProtectedReadValuesAsync(
 		DatalakeContext db,
 		int[] identifiers,
 		DateTime old,
 		DateTime young)
 	{
-		var firstDate = old.Date;
-		var lastDate = young.Date;
-		var seekDate = lastDate;
-		var values = new List<TagHistory>();
-		Stopwatch d;
+		var values = await db.QueryToArrayAsync<TagHistory>(ReadBetweenDates
+			.MapIdentifiers(identifiers)
+			.MapDate("@old", old)
+			.MapDate("@young", young));
 
-		var tables = TablesRepository.CachedTables
-			.Where(x => x.Key >= firstDate && x.Key <= lastDate)
-			.Union(TablesRepository.CachedTables.Where(x => x.Key <= firstDate).OrderByDescending(x => x.Key).Take(1))
-			.ToDictionary();
-
-		d = Stopwatch.StartNew();
-		List<IQueryable<TagHistory>> queries = [];
-
-		ITable<TagHistory> table = null!;
-
-		// если запрошен диапазон, а не снимок
-		if (old != young)
-		{
-			// проход по циклу, чтобы выгрузить все данные между old и young
-			do
-			{
-				if (tables.ContainsKey(seekDate))
-				{
-					table = db.GetTable<TagHistory>().TableName(TablesRepository.GetTableName(seekDate));
-
-					var query = table
-						.Where(x => identifiers.Contains(x.TagId))
-						.Where(x => x.Quality != TagQuality.Bad_LOCF && x.Quality != TagQuality.Good_LOCF);
-
-					if (seekDate == lastDate)
-						query = query.Where(x => x.Date <= young);
-					if (seekDate == firstDate)
-						query = query.Where(x => x.Date > old);
-
-					queries.Add(query);
-				}
-
-				seekDate = seekDate.AddDays(-1);
-			}
-			while (seekDate >= firstDate);
-		}
-
-		// CTE для поиска последних по дате (перед old) значений для каждого из тегов
-		if (table == null)
-		{
-			var lastStoredDate = tables.Keys
-				.Where(x => x <= lastDate)
-				.OrderByDescending(x => x)
-				.DefaultIfEmpty(DateTime.MinValue)
-				.FirstOrDefault();
-
-			if (lastStoredDate != DateTime.MinValue)
-			{
-				table = db.GetTable<TagHistory>().TableName(TablesRepository.GetTableName(lastStoredDate));
-			}
-		}
-
-		if (table != null)
-		{
-			var tagsBeforeOld =
-				from th in table
-				where identifiers.Contains(th.TagId)
-					&& th.Date <= old
-				select new
-				{
-					th.TagId,
-					th.Date,
-					th.Text,
-					th.Number,
-					th.Quality,
-					rn = Sql.Ext
-						.RowNumber().Over()
-						.PartitionBy(th.TagId)
-						.OrderByDesc(th.Date)
-						.ToValue()
-				};
-
-			queries.Add(
-				from rt in tagsBeforeOld
-				where rt.rn == 1
-				select new TagHistory
-				{
-					TagId = rt.TagId,
-					Date = old,
-					Text = rt.Text,
-					Number = rt.Number,
-					Quality = rt.Quality,
-				});
-		}
-
-		// мегазапрос для получения всех необходимых данных
-		string sql;
-		if (queries.Count > 0)
-		{
-			var megaQuery = queries.Aggregate((current, next) => current.UnionAll(next));
-
-			// выполнение мегазапроса
-			values = await megaQuery.ToListAsync();
-			sql = megaQuery.ToString() ?? string.Empty;
-		}
-		else
-		{
-			sql = string.Empty;
-		}
-
-		// заглушки, если значения так и не были проинициализированы
-		d.Stop();
-
-		var metric = new HistoryReadMetric
-		{
-			Date = DateFormats.GetCurrentDateTime(),
-			Elapsed = d.Elapsed,
-			TagsId = identifiers,
-			Old = old,
-			Young = young,
-			RecordsCount = values.Count,
-			Sql = sql,
-		};
-
-		var lost = identifiers
-			.Except(values.Where(x => x.Date == old).Select(x => x.TagId))
-			.Select(id => LostTag(id, old))
-			.ToArray();
-
-		if (lost.Length > 0)
-		{
-			values.AddRange(lost);
-		}
-
-		return (values, metric);
+		return values;
 	}
 
-	static List<TagHistory> StretchByResolution(
+	internal static async Task<TagHistory[]> ProtectedReadAllLastValuesAsync(
+		DatalakeContext db)
+	{
+		return await db.QueryToArrayAsync<TagHistory>(ReadAllLast);
+	}
+
+	internal static async Task<TagHistory[]> ProtectedReadLastValuesAsync(
+		DatalakeContext db,
+		int[] identifiers)
+	{
+		return await db.QueryToArrayAsync<TagHistory>(ReadLast
+			.MapIdentifiers(identifiers));
+	}
+
+	internal static async Task<TagHistory[]> ProtectedReadLastValuesBeforeDateAsync(
+		DatalakeContext db,
+		int[] identifiers,
+		DateTime date)
+	{
+		return await db.QueryToArrayAsync<TagHistory>(ReadLastBeforeDate
+			.MapIdentifiers(identifiers)
+			.MapDate("@old", date));
+	}
+
+	private static List<TagHistory> StretchByResolution(
 		List<TagHistory> valuesByChange,
 		DateTime old,
 		DateTime young,
@@ -838,27 +449,18 @@ public static class ValuesRepository
 		return continuous;
 	}
 
-	static TagHistory LostTag(int id, DateTime date) => new()
-	{
-		TagId = id,
-		Date = date,
-		Text = null,
-		Number = null,
-		Quality = TagQuality.Bad,
-	};
-
 	/// <summary>
 	/// Расчет средневзвешенных и взвешенных сумм по тегам. Взвешивание по секундам
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
-	/// <param name="tagIdentifiers">Идентификаторы тегов</param>
+	/// <param name="identifiers">Идентификаторы тегов</param>
 	/// <param name="moment">Момент времени, относительно которого определяется прошедший период</param>
 	/// <param name="period">Размер прошедшего периода</param>
 	/// <returns>По одному значению на каждый тег</returns>
 	/// <exception cref="ForbiddenException"></exception>
-	public static async Task<TagAggregationWeightedValue[]> GetWeightedAggregated(
+	public static async Task<TagAggregationWeightedValue[]> GetWeightedAggregatedValuesAsync(
 		DatalakeContext db,
-		int[] tagIdentifiers,
+		int[] identifiers,
 		DateTime? moment = null,
 		AggregationPeriod period = AggregationPeriod.Hour)
 	{
@@ -884,27 +486,12 @@ public static class ValuesRepository
 				throw new ForbiddenException("задан неподдерживаемый период");
 		}
 
-		ITable<TagHistory> tableStart;
-		ITable<TagHistory> tableEnd;
-		IQueryable<TagHistory> source;
-
-		if (periodStart.Date == periodEnd.Date)
-		{
-			tableEnd = await TablesRepository.GetHistoryTableAsync(db, periodEnd);
-			tableStart = tableEnd;
-			source = from value in tableEnd select value;
-		}
-		else
-		{
-			tableStart = await TablesRepository.GetHistoryTableAsync(db, periodStart);
-			tableEnd = await TablesRepository.GetHistoryTableAsync(db, periodEnd);
-			source = tableStart.Concat(tableEnd);
-		}
+		var source = db.TagsHistory.Where(tag => identifiers.Contains(tag.TagId));
 
 		// CTE: Последнее значение перед началом периода
 		var historyBefore =
-			from raw in tableStart
-			where tagIdentifiers.Contains(raw.TagId) && raw.Date <= periodStart
+			from raw in source
+			where raw.Date <= periodStart
 			select new
 			{
 				raw.TagId,
@@ -928,9 +515,8 @@ public static class ValuesRepository
 		var historyBetween =
 			from raw in source
 			where
-				tagIdentifiers.Contains(raw.TagId) &&
-				raw.Date > periodStart &&
-				raw.Date < periodEnd
+				raw.Date >  periodStart &&
+				raw.Date <= periodEnd
 			select new
 			{
 				raw.TagId,
@@ -983,6 +569,117 @@ public static class ValuesRepository
 
 		return aggregated;
 	}
+
+	#endregion
+
+	#region Запись
+
+	/// <summary>
+	/// Запись значений в партицию через временную таблицу
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="records">Список записей для ввода</param>
+	internal async Task ProtectedWriteValuesAsync(
+		DatalakeContext db,
+		List<TagHistory> records)
+	{
+		if (records.Count == 0)
+			return;
+
+		using var transaction = await db.BeginTransactionAsync();
+
+		try
+		{
+			await db.ExecuteAsync(CreateTempForWrite);
+			await db.BulkCopyAsync(bulkCopyOptions, records);
+			await db.ExecuteAsync(Write);
+
+			await transaction.CommitAsync();
+
+			// обновление в кэше текущих данных
+			foreach (var record in records)
+				valuesStore.TryUpdate(record.TagId, record);
+		}
+		catch (Exception e)
+		{
+			logger.LogError(e, "Не удалось записать данные");
+			await transaction.RollbackAsync();
+		}
+	}
+
+	#endregion
+
+	#region SQL
+
+	const string StagingTable = "TagsHistoryState";
+
+	static BulkCopyOptions bulkCopyOptions = new() { TableName = StagingTable, BulkCopyType = BulkCopyType.ProviderSpecific, };
+
+	const string CreateTempForWrite = $@"
+		CREATE TEMPORARY TABLE ""{StagingTable}"" (LIKE public.""TagsHistory"" EXCLUDING INDEXES) 
+		ON COMMIT DROP;";
+
+	const string Write = $@"
+		INSERT INTO public.""TagsHistory""(
+			""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
+		)
+		SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality"" 
+			FROM ""{StagingTable}""
+		ON CONFLICT (""TagId"", ""Date"") DO UPDATE
+			SET ""Text""   = EXCLUDED.""Text"",
+					""Number"" = EXCLUDED.""Number"",
+					""Quality""= EXCLUDED.""Quality"";";
+
+	/// <summary>
+	/// Параметры: нет
+	/// </summary>
+	const string ReadAllLast = @"
+		SELECT
+			t.""Id"" AS ""TagId"",
+			CASE WHEN h.""Date"" IS NULL THEN Now() ELSE h.""Date"" END AS ""Date"",
+			h.""Text"",
+			h.""Number"",
+			CASE WHEN h.""Quality"" IS NULL THEN 8 ELSE h.""Quality"" END AS ""Quality""
+		FROM ""Tags"" t 
+		LEFT JOIN (
+			SELECT DISTINCT ON (""TagId"") *
+			FROM public.""TagsHistory""
+			ORDER BY ""TagId"", ""Date"" DESC) AS h ON t.""Id"" = h.""TagId""";
+
+	/// <summary>
+	/// Параметры: теги
+	/// </summary>
+	const string ReadLast = @"
+		SELECT DISTINCT ON (""TagId"") *
+		FROM public.""TagsHistory""
+		WHERE ""TagId"" IN (@tags)
+		ORDER BY ""TagId"", ""Date"" DESC;";
+
+	/// <summary>
+	/// Параметры: теги, дата начала
+	/// </summary>
+	const string ReadLastBeforeDate = @"
+		SELECT DISTINCT ON (""TagId"") *
+		FROM public.""TagsHistory""
+		WHERE 
+			""TagId"" IN (@tags)
+			AND ""Date"" <= '@old'
+		ORDER BY ""TagId"", ""Date"" DESC";
+
+	/// <summary>
+	/// Параметры: теги, дата начала, дата конца
+	/// </summary>
+	const string ReadBetweenDates = $@"
+		SELECT * FROM (
+			{ReadLastBeforeDate}
+		) AS valuesBefore
+		UNION ALL
+		SELECT *
+		FROM public.""TagsHistory""
+		WHERE 
+			""TagId"" IN (@tags)
+			AND ""Date"" > '@old'
+			AND ""Date"" <= '@young';";
 
 	#endregion
 }

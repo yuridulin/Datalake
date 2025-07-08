@@ -2,12 +2,11 @@
   "profiles": {
     "http": {
       "commandName": "Project",
-      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "http://localhost:5018"
+      "applicationUrl": "http://localhost:8000"
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -33,7 +32,7 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:19163",
+      "applicationUrl": "http://localhost:8000",
       "sslPort": 44313
     }
   }

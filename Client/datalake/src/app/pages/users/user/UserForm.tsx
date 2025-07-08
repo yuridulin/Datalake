@@ -128,7 +128,7 @@ const UserForm = observer(() => {
 						defaultValue={request.accessType}
 						options={accessOptions.filter((x) => hasAccess(user.globalAccessType, x.value as AccessType))}
 						style={{ width: '12em' }}
-						disabled={!hasAccess(userInfo.accessRule.accessType, AccessType.Manager)}
+						disabled={!hasAccess(userInfo.accessRule.access, AccessType.Manager)}
 						onChange={(e) =>
 							setRequest({
 								...request,

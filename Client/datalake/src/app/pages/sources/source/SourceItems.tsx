@@ -101,7 +101,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 										name: res.data.name,
 										sourceType: id,
 										type: res.data.type,
-										accessRule: { ruleId: 0, accessType: 0 },
+										accessRule: { ruleId: 0, access: 0 },
 										formulaInputs: [],
 										frequency: res.data.frequency,
 									},

@@ -10,9 +10,12 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице блоков
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class Block
+public record class Block
 {
 	const string TableName = "Blocks";
+
+	/// <summary>Конструктор для LinqToDB</summary>
+	public Block() { }
 
 	// поля в БД
 

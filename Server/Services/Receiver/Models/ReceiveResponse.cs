@@ -6,6 +6,11 @@
 public class ReceiveResponse
 {
 	/// <summary>
+	/// Наличие связи с источником
+	/// </summary>
+	public required bool IsConnected { get; set; }
+
+	/// <summary>
 	/// Дата получения данных
 	/// </summary>
 	public DateTime Timestamp { get; set; }

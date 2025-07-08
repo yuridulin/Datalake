@@ -9,9 +9,12 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице связей тега с другими тегами для вычисления значений
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
-public class TagInput
+public record class TagInput
 {
 	const string TableName = "TagInputs";
+
+	/// <summary>Конструктор для LinqToDB</summary>
+	public TagInput() { }
 
 	// поля в БД
 

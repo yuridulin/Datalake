@@ -1,4 +1,5 @@
 import api from '@/api/swagger-api'
+import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
 import { user } from '@/state/user'
 import { Button, Table } from 'antd'
@@ -55,6 +56,14 @@ const UserGroupsTreeList = observer(() => {
 			title: 'Описание',
 			dataIndex: 'description',
 			key: 'description',
+		},
+		{
+			title: 'Общий уровень доступа',
+			dataIndex: 'globalAccessType',
+			key: 'globalAccessType',
+			render(value) {
+				return <AccessTypeEl type={value} />
+			},
 		},
 	]
 

@@ -1,4 +1,4 @@
-import { SourceType, TagFrequency, TagQuality, TagType } from '@/api/swagger/data-contracts'
+import { SourceType, TagFrequency, TagQuality, TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import { TagViewerModeProps } from '@/app/pages/values/types/TagViewerModeProps'
@@ -19,7 +19,9 @@ type ExactValuesRowType = {
 
 const ExactValuesMode = ({ values }: TagViewerModeProps) => {
 	const exactValues: ExactValuesRowType[] = values.map((x) => {
-		const valueObject = x.values[0]
+		const valueObject: ValueRecord = x.values.length
+			? x.values[0]
+			: { date: '', dateString: '', quality: TagQuality.BadNoValues, value: null }
 		return {
 			id: x.id,
 			frequency: x.frequency,

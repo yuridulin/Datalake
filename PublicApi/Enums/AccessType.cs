@@ -3,35 +3,35 @@
 /// <summary>
 /// Уровень доступа
 /// </summary>
-public enum AccessType
+public enum AccessType : byte
 {
 	/// <summary>
 	/// Правило не применяется
 	/// </summary>
-	NotSet = -100,
-
-	/// <summary>
-	/// Доступа нет
-	/// </summary>
-	NoAccess = 0,
+	NotSet = 0,
 
 	/// <summary>
 	/// Разрешен только просмотр
 	/// </summary>
-	Viewer = 5,
+	Viewer = 1,
 
 	/// <summary>
-	/// Возможность изменения без наследования
+	/// Разрешен только просмотр и запись значений
 	/// </summary>
-	Editor = 10,
+	Editor = 2,
 
 	/// <summary>
-	/// Возможность изменения с наследованием такого же уровня и к подчиненным объектам
+	/// Доступ ко всем операциям
 	/// </summary>
-	Manager = 50,
+	Manager = 3,
+
+	/// <summary>
+	/// Доступа нет
+	/// </summary>
+	NoAccess = 4,
 
 	/// <summary>
 	/// Полный доступ
 	/// </summary>
-	Admin = 100,
+	Admin = 5,
 }
