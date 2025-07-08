@@ -30,7 +30,10 @@ const BlockForm = observer(() => {
 	const getBlock = () => {
 		api.blocksRead(Number(id)).then((res) => {
 			setBlock(res.data)
-			form.setFieldsValue(res.data)
+			form.setFieldsValue({
+				...res.data,
+				tags: res.data.tags.map((tag) => ({ id: tag.id, name: tag.localName, relation: tag.relation })),
+			} as BlockUpdateRequest)
 		})
 	}
 

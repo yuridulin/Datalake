@@ -119,7 +119,7 @@ const BlockView = observer(() => {
 								<Column
 									dataIndex='guid'
 									title='Название'
-									render={(_, record: BlockNestedTagInfo) => <TagButton tag={record} />}
+									render={(_, record: BlockNestedTagInfo) => <TagButton tag={{ ...record, name: record.localName }} />}
 								/>
 								<Column
 									dataIndex='value'
