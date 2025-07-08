@@ -68,12 +68,13 @@ const TagView = observer(() => {
 				},
 			])
 			.then((res) => {
+				const thisId = Number(id)
 				const newViewValues = {} as Record<number, ValueRecord>
 				res.data[0].tags.forEach((tag) => {
 					newViewValues[tag.id] = tag.values.length
 						? tag.values[0]
 						: { date: '', dateString: '', quality: TagQuality.BadNoValues, value: null }
-					if (tag.guid === id) setThisTagValue(newViewValues[tag.id])
+					if (tag.id === thisId) setThisTagValue(newViewValues[tag.id])
 				})
 				setViewValues(newViewValues)
 			})
