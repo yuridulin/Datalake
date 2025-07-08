@@ -187,16 +187,6 @@ const items = [
 				minimalAccess: AccessType.Admin,
 			},
 			{
-				key: routes.admin.metrics.database,
-				label: (
-					<NavLink to={routes.admin.metrics.database}>
-						<MenuUnfoldOutlined style={{ color: blue[5] }} />
-						&emsp;Метрики запросов БД
-					</NavLink>
-				),
-				minimalAccess: AccessType.Admin,
-			},
-			{
 				key: routes.admin.metrics.tags,
 				label: (
 					<NavLink to={routes.admin.metrics.tags}>

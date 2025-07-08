@@ -18,7 +18,6 @@ import {
   BlockUpdateRequest,
   BlockWithTagsInfo,
   EnergoIdInfo,
-  HistoryReadMetricInfo,
   LogCategory,
   LogInfo,
   LogType,
@@ -622,22 +621,6 @@ export class Api<
   systemGetAccess = (params: RequestParams = {}) =>
     this.request<Record<string, UserAuthInfo>, any>({
       path: `/api/System/access`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemGetReadMetrics
-   * @summary Получение списка сохраненных метрик
-   * @request GET:/api/System/metrics/read
-   * @response `200` `(HistoryReadMetricInfo)[]` Список метрик
-   */
-  systemGetReadMetrics = (params: RequestParams = {}) =>
-    this.request<HistoryReadMetricInfo[], any>({
-      path: `/api/System/metrics/read`,
       method: "GET",
       format: "json",
       ...params,
