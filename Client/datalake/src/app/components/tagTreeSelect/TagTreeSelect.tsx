@@ -21,10 +21,11 @@ interface TagTreeSelectProps {
 }
 
 const flattenNestedTags = (
-	blockTree: BlockTreeInfo[],
+	blockTree: BlockTreeInfo[] | null | undefined,
 	parentNames: BlockSimpleInfo[] = [],
 ): FlattenedNestedTagsType => {
 	let mapping: FlattenedNestedTagsType = {}
+	if (!blockTree) return []
 	blockTree.forEach((block) => {
 		const currentParents = [...parentNames, { ...block }]
 		block.tags.forEach((tag) => {
@@ -40,7 +41,11 @@ const flattenNestedTags = (
 	return mapping
 }
 
-const convertToTreeSelectNodes = (blockTree: BlockTreeInfo[], parentPath: string[] = []): DefaultOptionType[] => {
+const convertToTreeSelectNodes = (
+	blockTree: BlockTreeInfo[] | null | undefined,
+	parentPath: string[] = [],
+): DefaultOptionType[] => {
+	if (!blockTree) return []
 	return blockTree.map((block) => {
 		const currentPath = [...parentPath, block.name]
 		return {
