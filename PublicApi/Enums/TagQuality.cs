@@ -21,6 +21,11 @@ public enum TagQuality
 	Bad_NoValues = 8,
 
 	/// <summary>
+	/// Недостоверно - ошибка вычисления значения по формуле в случае вычисляемых тегов
+	/// </summary>
+	Bad_CalcError = 12,
+
+	/// <summary>
 	/// Недостоверно после ручного ввода
 	/// </summary>
 	Bad_ManualWrite = 26,

@@ -81,24 +81,31 @@ internal class CalculateCollector(
 
 				var result = expression.Evaluate();
 
-				if (tag.Type == TagType.Number)
+				if (result != null)
 				{
-					record.Value = result == null ? null : Convert.ToSingle(result);
+					record.Value = result;
 				}
-				else if (tag.Type == TagType.String)
+				else
 				{
-					record.Value = result == null ? null : Convert.ToString(result);
-				}
-				else if (tag.Type == TagType.Boolean)
-				{
-					record.Value = result == null ? null : Convert.ToString(result);
+					record.Value = tag.Type switch
+					{
+						TagType.Number => Convert.ToSingle(result),
+						TagType.String => Convert.ToString(result),
+						TagType.Boolean => Convert.ToString(result),
+					};
 				}
 
 				record.Quality = TagQuality.Good;
 			}
 			catch (Exception ex)
 			{
-				_logger.LogDebug("Расчетный тег #{tag}: {message}", record.Id, ex.Message);
+				record.Quality = TagQuality.Bad_CalcError;
+
+				_logger.LogDebug("CALC | #{tag}: {message}." +
+					"\nFormula [{formula}]" +
+					"\nType {type}" +
+					"\nResult {result}",
+					tag.Id, ex.Message, expression.ExpressionString, tag.Type, record.Value);
 			}
 
 			batch.Add(record);
