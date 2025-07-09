@@ -66,20 +66,6 @@ public class TagsController(
 	}
 
 	/// <summary>
-	/// Получение списка тегов, подходящих для использования в формулах
-	/// </summary>
-	/// <param name="guid">Идентификатор тега</param>
-	/// <returns>Список тегов</returns>
-	[HttpGet("{guid}/inputs")]
-	public ActionResult<TagAsInputInfo[]> ReadPossibleInputs(
-		[BindRequired, FromRoute] Guid guid)
-	{
-		var user = Authenticate();
-
-		return tagsRepository.ReadPossibleInputs(user, guid);
-	}
-
-	/// <summary>
 	/// Изменение тега
 	/// </summary>
 	/// <param name="id">Идентификатор тега</param>

@@ -46,12 +46,13 @@ public class DatalakeDataStore
 
 	public async Task ReloadStateAsync()
 	{
+		using var scope = _serviceScopeFactory.CreateScope();
+		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+
+		var newState = await LoadStateFromDatabaseAsync(db);
+
 		using (await AcquireWriteLockAsync())
 		{
-			using var scope = _serviceScopeFactory.CreateScope();
-			var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-
-			var newState = await LoadStateFromDatabaseAsync(db);
 			UpdateStateWithinLock(_ => newState);
 
 			await db.InsertAsync(new Log

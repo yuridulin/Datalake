@@ -144,6 +144,12 @@ public record class Tag
 	[Column]
 	public int? SourceTagId { get; set; }
 
+	/// <summary>
+	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения
+	/// </summary>
+	[Column]
+	public int? SourceTagRelationId { get; set; }
+
 	// связи
 
 	/// <summary>

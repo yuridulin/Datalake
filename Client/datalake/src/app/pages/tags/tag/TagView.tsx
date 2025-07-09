@@ -305,7 +305,8 @@ const TagView = observer(() => {
 							date: dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
 							requestKey: requestKey,
 						}))
-						.filter((x) => !['block-values', 'tag-current-value'].includes(x.requestKey))}
+						// внутренние запросы, игнорируем их
+						.filter((x) => !['block-values', 'tag-current-value', 'tags-table'].includes(x.requestKey))}
 				/>
 			),
 		})

@@ -166,11 +166,12 @@ public class SourcesController(
 
 		var sourceTags = source.Tags.ToList();
 
-		var all = sourceTags.Select(tag => new SourceEntryInfo
-		{
-			TagInfo = tag,
-			ItemInfo = sourceItems.TryGetValue(tag.Item, out var itemInfo) ? itemInfo : null,
-		})
+		var all = sourceTags
+			.Select(tag => new SourceEntryInfo
+			{
+				TagInfo = tag,
+				ItemInfo = sourceItems.TryGetValue(tag.Item, out var itemInfo) ? itemInfo : null,
+			})
 			.Union(sourceItems
 				.Where(itemKeyValue => !sourceTags.Select(tag => tag.Item).Contains(itemKeyValue.Key))
 				.Select(itemKeyValue => new SourceEntryInfo

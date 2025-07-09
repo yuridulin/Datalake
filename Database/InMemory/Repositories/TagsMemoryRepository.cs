@@ -110,31 +110,6 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	}
 
 	/// <summary>
-	/// Получение тегов, которые можно использовать как входные параметры для расчета значения
-	/// </summary>
-	/// <param name="user">Информация о пользователе</param>
-	/// <param name="guid">Идентификатор тега</param>
-	/// <returns>Список информации о тегах</returns>
-	public TagAsInputInfo[] ReadPossibleInputs(UserAuthInfo user, Guid guid)
-	{
-		var tags = dataStore.State.TagsInfoAsPossibleInputs();
-
-		// TODO: рекурсивный обход. Нужно исключить циклические зависимости
-		if (guid.Equals(Guid.Empty))
-		{ }
-
-		List<TagAsInputInfo> tagsWithAccess = [];
-		foreach (var tag in tags)
-		{
-			tag.AccessRule = user.GetAccessToTag(tag.Id);
-			if (tag.AccessRule.HasAccess(AccessType.Viewer))
-				tagsWithAccess.Add(tag);
-		}
-
-		return tagsWithAccess.ToArray();
-	}
-
-	/// <summary>
 	/// Изменение параметров тега
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
@@ -309,27 +284,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			Frequency = createdTag.Frequency,
 			Type = createdTag.Type,
 			Formula = createdTag.Formula ?? string.Empty,
-			FormulaInputs = currentState.TagInputs
-				.Where(rel => rel.TagId == createdTag.Id)
-				.Join(currentState.Tags,
-					rel => rel.InputTagId,
-					tag => tag.Id,
-					(rel, tag) => new { rel, input = tag })
-				.Select(x =>
-				{
-					currentState.SourcesById.TryGetValue(x.input.SourceId, out var inputSource);
-					return new TagInputInfo
-					{
-						Id = x.input.Id,
-						Guid = x.input.GlobalGuid,
-						Name = x.input.Name,
-						VariableName = x.rel.VariableName,
-						Type = x.input.Type,
-						Frequency = x.input.Frequency,
-						SourceType = inputSource != null ? inputSource.Type : SourceType.NotSet,
-					};
-				})
-				.ToArray(),
+			FormulaInputs = [], // их не может быть при создании
 			IsScaling = createdTag.IsScaling,
 			MaxEu = createdTag.MaxEu,
 			MaxRaw = createdTag.MaxRaw,
@@ -339,15 +294,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			SourceItem = createdTag.SourceItem,
 			SourceType = source != null ? source.Type : SourceType.NotSet,
 			SourceName = source != null ? source.Name : "Unknown",
-			SourceTag = !currentState.TagsById.TryGetValue(createdTag.SourceTagId ?? 0, out Tag? sourceTag) ? null : new TagSimpleInfo
-			{
-				Id = sourceTag.Id,
-				Frequency = sourceTag.Frequency,
-				Guid = sourceTag.GlobalGuid,
-				Name = sourceTag.Name,
-				Type = sourceTag.Type,
-				SourceType = !currentState.SourcesById.TryGetValue(sourceTag.SourceId, out Source? sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
-			},
+			SourceTag = null, // его не может быть при создании
 			Aggregation = createdTag.Aggregation,
 			AggregationPeriod = createdTag.AggregationPeriod,
 		};
@@ -396,6 +343,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 				MinRaw = updateRequest.MinRaw,
 				Formula = updateRequest.Formula,
 				SourceTagId = updateRequest.SourceTagId,
+				SourceTagRelationId = updateRequest.SourceTagRelationId,
 				Aggregation = updateRequest.Aggregation,
 				AggregationPeriod = updateRequest.AggregationPeriod,
 			};
@@ -444,6 +392,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					TagId = tag.Id,
 					InputTagId = x.TagId,
 					VariableName = x.VariableName,
+					InputTagRelationId = x.TagRelationId,
 				})
 				.ToArray();
 
@@ -499,6 +448,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.Set(x => x.MinRaw, updateRequest.MinRaw)
 					.Set(x => x.Formula, updateRequest.Formula)
 					.Set(x => x.SourceTagId, updateRequest.SourceTagId)
+					.Set(x => x.SourceTagRelationId, updateRequest.SourceTagRelationId)
 					.Set(x => x.Aggregation, updateRequest.Aggregation)
 					.Set(x => x.AggregationPeriod, updateRequest.AggregationPeriod)
 					.UpdateAsync();

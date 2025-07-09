@@ -1,4 +1,5 @@
 ﻿using Datalake.PublicApi.Models.Blocks;
+using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.PublicApi.Models.Tags;
 
@@ -7,6 +8,12 @@ namespace Datalake.PublicApi.Models.Tags;
 /// </summary>
 public class TagBlockRelationInfo : BlockSimpleInfo
 {
+	/// <summary>
+	/// Идентификатор связи
+	/// </summary>
+	[Required]
+	public required int RelationId { get; set; }
+
 	/// <summary>
 	/// Локальное имя тега в блоке
 	/// </summary>

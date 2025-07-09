@@ -37,6 +37,12 @@ public record class TagInput
 	public int? InputTagId { get; set; }
 
 	/// <summary>
+	/// Идентификатор связи, по которой получен входной тег
+	/// </summary>
+	[Column]
+	public int? InputTagRelationId { get; set; }
+
+	/// <summary>
 	/// Имя переменной в формуле
 	/// </summary>
 	[Column]

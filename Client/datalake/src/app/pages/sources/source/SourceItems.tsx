@@ -1,7 +1,7 @@
 import api from '@/api/swagger-api'
 import TagButton from '@/app/components/buttons/TagButton'
-import { PlusCircleOutlined } from '@ant-design/icons'
-import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
+import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons'
+import { Button, Input, Popconfirm, Table, TableColumnsType, Tag } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
 import { SourceEntryInfo, SourceType, TagFrequency, TagInfo, TagType } from '../../../../api/swagger/data-contracts'
@@ -47,19 +47,28 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 		},
 		{
 			dataIndex: ['tagInfo', 'guid'],
-			title: 'Сопоставленный тег',
+			title: 'Сопоставленные теги',
 			render: (_, record) =>
-				record.tagInfo ? (
-					<span>
-						<TagButton tag={record.tagInfo} />
-					</span>
-				) : (
+				!record.tagInfo ? (
 					<span>
 						<Button
 							size='small'
 							icon={<PlusCircleOutlined />}
 							onClick={() => createTag(record.itemInfo?.path ?? '', record.itemInfo?.type || TagType.String)}
 						></Button>
+					</span>
+				) : (
+					<span>
+						<TagButton tag={record.tagInfo} />
+						<Popconfirm
+							title='Вы уверены, что хотите удалить тег? Убедитесь, что он не используется где-то еще, перед удалением'
+							placement='bottom'
+							onConfirm={() => deleteTag(record.tagInfo!.id)}
+							okText='Да'
+							cancelText='Нет'
+						>
+							<Button size='small' icon={<MinusCircleOutlined />}></Button>
+						</Popconfirm>
 					</span>
 				),
 			sorter: (a, b) => compareValues(a.tagInfo?.name, b.tagInfo?.name),
@@ -110,6 +119,10 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 					),
 				)
 			})
+	}
+
+	const deleteTag = (tagId: number) => {
+		api.tagsDelete(tagId).then(read)
 	}
 
 	const doSearch = debounce((value: string) => {

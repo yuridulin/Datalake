@@ -89,11 +89,15 @@ const TagForm = () => {
 				setRequest({
 					...info,
 					sourceTagId: info.sourceTag?.id,
-					formulaInputs: info.formulaInputs.map((x, index) => ({
-						key: index,
-						tagId: x.id,
-						variableName: x.variableName,
-					})),
+					formulaInputs: info.formulaInputs.map(
+						(x, index) =>
+							({
+								key: index,
+								tagId: x.id,
+								tagRelationId: x.relationId,
+								variableName: x.variableName,
+							}) as UpdateInputRequest,
+					),
 				})
 				setStrategy(
 					info.sourceId == SourceType.Manual
@@ -190,8 +194,9 @@ const TagForm = () => {
 				{
 					key: availableFakeId,
 					tagId: 0,
+					tagRelationId: -1,
 					variableName: '',
-				},
+				} as UpdateInputRequest,
 			],
 		})
 	}

@@ -41,6 +41,7 @@ public static class TagsQueries
 							Guid = inputTag.GlobalGuid,
 							Name = inputTag.Name,
 							VariableName = relation.VariableName,
+							RelationId = relation.Id,
 							Type = inputTag.Type,
 							Frequency = inputTag.Frequency,
 							SourceType = !state.SourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.NotSet : inputTagSource.Type,
@@ -55,13 +56,14 @@ public static class TagsQueries
 					SourceItem = tag.SourceItem,
 					SourceType = source != null ? source.Type : SourceType.NotSet,
 					SourceName = source != null ? source.Name : "Unknown",
-					SourceTag = !state.TagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : new TagSimpleInfo
+					SourceTag = !state.TagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : new TagAsInputInfo
 					{
 						Id = sourceTag.Id,
 						Frequency = sourceTag.Frequency,
 						Guid = sourceTag.GlobalGuid,
 						Name = sourceTag.Name,
 						Type = sourceTag.Type,
+						RelationId = tag.SourceTagRelationId,
 						SourceType = !state.SourcesById.TryGetValue(sourceTag.SourceId, out var sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
 					},
 					Aggregation = tag.Aggregation,
@@ -73,6 +75,7 @@ public static class TagsQueries
 							Id = block.Id,
 							Guid = block.GlobalId,
 							Name = block.Name,
+							RelationId = relation.Id,
 							LocalName = relation.Name,
 						})
 						.Where(block => block != null)
@@ -113,6 +116,7 @@ public static class TagsQueries
 							VariableName = relation.VariableName,
 							Type = inputTag.Type,
 							Frequency = inputTag.Frequency,
+							RelationId = relation.Id,
 							SourceType = !state.SourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.NotSet : inputTagSource.Type,
 						})
 						.ToArray(),
@@ -125,37 +129,19 @@ public static class TagsQueries
 					SourceItem = tag.SourceItem,
 					SourceType = source != null ? source.Type : SourceType.NotSet,
 					SourceName = source != null ? source.Name : "Unknown",
-					SourceTag = !state.TagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : new TagSimpleInfo
+					SourceTag = !state.TagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : new TagAsInputInfo
 					{
 						Id = sourceTag.Id,
 						Frequency = sourceTag.Frequency,
 						Guid = sourceTag.GlobalGuid,
 						Name = sourceTag.Name,
 						Type = sourceTag.Type,
+						RelationId = tag.SourceTagRelationId,
 						SourceType = !state.SourcesById.TryGetValue(sourceTag.SourceId, out var sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
 					},
 					Aggregation = tag.Aggregation,
 					AggregationPeriod = tag.AggregationPeriod,
 				};
-			});
-	}
-
-	/// <summary>
-	/// Запрос информации о тегах, которые могут быть входящими параметрами для формул
-	/// </summary>
-	/// <param name="state">Текущее состояние данных</param>
-	public static IEnumerable<TagAsInputInfo> TagsInfoAsPossibleInputs(this DatalakeDataState state)
-	{
-		return state.Tags
-			.Where(tag => !tag.IsDeleted)
-			.Select(tag => new TagAsInputInfo
-			{
-				Id = tag.Id,
-				Guid = tag.GlobalGuid,
-				Name = tag.Name,
-				Type = tag.Type,
-				Frequency = tag.Frequency,
-				SourceType = !state.SourcesById.TryGetValue(tag.SourceId, out var source) ? SourceType.NotSet : source.Type,
 			});
 	}
 }

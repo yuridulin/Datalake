@@ -8,6 +8,11 @@ namespace Datalake.PublicApi.Models.Tags;
 /// </summary>
 public class TagAsInputInfo : TagSimpleInfo, IProtectedEntity
 {
+	/// <summary>
+	/// Идентификатор связи, по которой тег был выбран
+	/// </summary>
+	public int? RelationId { get; set; }
+
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

@@ -1,5 +1,6 @@
 import {
 	AccessType,
+	BlockNestedTagInfo,
 	BlockSimpleInfo,
 	BlockTagRelation,
 	BlockTreeInfo,
@@ -112,12 +113,16 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], v
 				name: 'Нераспределенные теги',
 				fullName: 'Нераспределенные теги',
 				tags: notUsedTags
-					.map((tag) => ({
-						...tag,
-						relation: BlockTagRelation.Static,
-						localName: tag.name,
-						sourceId: 0,
-					}))
+					.map(
+						(tag) =>
+							({
+								...tag,
+								relationType: BlockTagRelation.Static,
+								relationId: -1,
+								localName: tag.name,
+								sourceId: 0,
+							}) as BlockNestedTagInfo,
+					)
 					.sort((a, b) => a.localName.localeCompare(b.localName)),
 				children: [],
 				accessRule: {

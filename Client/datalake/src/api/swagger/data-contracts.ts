@@ -440,8 +440,13 @@ export type BlockWithTagsInfo = BlockSimpleInfo & {
 
 /** Информация о закреплённом теге */
 export type BlockNestedTagInfo = TagSimpleInfo & {
+  /**
+   * Идентификатор связи
+   * @format int32
+   */
+  relationId: number;
   /** Тип поля блока для этого тега */
-  relation: BlockTagRelation;
+  relationType: BlockTagRelation;
   /**
    * Свое имя тега в общем списке
    * @minLength 1
@@ -789,7 +794,7 @@ export type TagInfo = TagSimpleInfo & {
   /** Временное окно для расчета агрегированного значения */
   aggregationPeriod?: AggregationPeriod | null;
   /** Идентификатор тега, который будет источником данных для расчета агрегированного значения */
-  sourceTag?: TagSimpleInfo | null;
+  sourceTag?: TagAsInputInfo | null;
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
@@ -801,6 +806,22 @@ export type TagInputInfo = TagSimpleInfo & {
    * @minLength 1
    */
   variableName: string;
+  /**
+   * Идентификатор связи
+   * @format int32
+   */
+  relationId?: number | null;
+  /** Правило доступа */
+  accessRule?: AccessRuleInfo;
+};
+
+/** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
+export type TagAsInputInfo = TagSimpleInfo & {
+  /**
+   * Идентификатор связи, по которой тег был выбран
+   * @format int32
+   */
+  relationId?: number | null;
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
@@ -835,14 +856,13 @@ export type TagFullInfo = TagInfo & {
 
 /** Краткая информация о блоке, имеющем связь с тегом, включая локальное имя тега в блоке */
 export type TagBlockRelationInfo = BlockSimpleInfo & {
+  /**
+   * Идентификатор связи
+   * @format int32
+   */
+  relationId: number;
   /** Локальное имя тега в блоке */
   localName?: string | null;
-};
-
-/** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
-export type TagAsInputInfo = TagSimpleInfo & {
-  /** Правило доступа */
-  accessRule?: AccessRuleInfo;
 };
 
 /** Данные запроса для изменение тега */
@@ -900,6 +920,11 @@ export interface TagUpdateRequest {
    * @format int32
    */
   sourceTagId?: number | null;
+  /**
+   * Идентификатор связи, по которой выбран тег-источник данных для расчета агрегированного значения
+   * @format int32
+   */
+  sourceTagRelationId?: number | null;
 }
 
 /** Необходимая информация для привязки тега в качестве входного для  */
@@ -914,6 +939,11 @@ export interface TagUpdateInputRequest {
    * @format int32
    */
   tagId: number;
+  /**
+   * Идентификатор связи, по которой выбран закрепленный тег
+   * @format int32
+   */
+  tagRelationId: number;
 }
 
 /** Информация о группе пользователей */

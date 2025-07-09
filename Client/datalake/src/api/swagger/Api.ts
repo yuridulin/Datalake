@@ -26,7 +26,6 @@ import {
   SourceInfo,
   SourceItemInfo,
   SourceState,
-  TagAsInputInfo,
   TagCreateRequest,
   TagFullInfo,
   TagInfo,
@@ -742,22 +741,6 @@ export class Api<
     this.request<File, any>({
       path: `/api/Tags/${id}`,
       method: "DELETE",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Tags
-   * @name TagsReadPossibleInputs
-   * @summary Получение списка тегов, подходящих для использования в формулах
-   * @request GET:/api/Tags/{guid}/inputs
-   * @response `200` `(TagAsInputInfo)[]` Список тегов
-   */
-  tagsReadPossibleInputs = (guid: string, params: RequestParams = {}) =>
-    this.request<TagAsInputInfo[], any>({
-      path: `/api/Tags/${guid}/inputs`,
-      method: "GET",
-      format: "json",
       ...params,
     });
   /**

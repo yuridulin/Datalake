@@ -1,5 +1,8 @@
 ﻿using Datalake.PublicApi.Enums;
+using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
@@ -17,6 +20,12 @@ public record class BlockTag
 	public BlockTag() { }
 
 	// поля в БД
+
+	/// <summary>
+	/// Идентификатор
+	/// </summary>
+	[Key, Identity, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+	public int Id { get; set; }
 
 	/// <summary>
 	/// Идентификатор блока

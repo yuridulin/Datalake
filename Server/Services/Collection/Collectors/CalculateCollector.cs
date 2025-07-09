@@ -118,8 +118,6 @@ internal class CalculateCollector(
 			{
 				record.Value = null;
 				record.Quality = TagQuality.Bad_CalcError;
-
-				_logger.LogDebug("CALC | #{tag}: {message}", tag.Id, error);
 			}
 
 			batch.Add(record);

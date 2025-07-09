@@ -113,20 +113,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 						Name = x.Name,
 						FullName = prefixString + x.Name,
 						Description = x.Description,
-						Tags = x.Tags
-							.Select(tag => new BlockNestedTagInfo
-							{
-								Guid = tag.Guid,
-								Name = tag.Name,
-								Id = tag.Id,
-								Relation = tag.Relation,
-								SourceId = tag.SourceId,
-								LocalName = tag.LocalName,
-								Type = tag.Type,
-								Frequency = tag.Frequency,
-								SourceType = tag.SourceType,
-							})
-							.ToArray(),
+						Tags = x.Tags,
 						AccessRule = x.AccessRule,
 						Children = ReadChildren(x.Id, prefixString + x.Name),
 					};

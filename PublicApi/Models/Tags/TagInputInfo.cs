@@ -15,6 +15,11 @@ public class TagInputInfo : TagSimpleInfo, IProtectedEntity
 	[Required]
 	public required string VariableName { get; set; }
 
+	/// <summary>
+	/// Идентификатор связи
+	/// </summary>
+	public int? RelationId { get; set; }
+
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }
