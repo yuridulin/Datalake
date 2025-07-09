@@ -178,9 +178,6 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		TagCreateRequest createRequest)
 	{
 		// Проверки, не требующие стейта
-		createRequest.Name = createRequest.Name?.RemoveWhitespaces("_");
-		createRequest.SourceItem = createRequest.SourceItem?.RemoveWhitespaces();
-
 		bool needToAddIdInName = string.IsNullOrEmpty(createRequest.Name);
 
 		if (!createRequest.SourceId.HasValue)
@@ -365,14 +362,10 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		TagUpdateRequest updateRequest)
 	{
 		// Проверки, не требующие стейта
-		updateRequest.Name = updateRequest.Name.RemoveWhitespaces("_");
-
 		if (updateRequest.SourceId > 0)
 		{
 			if (string.IsNullOrEmpty(updateRequest.SourceItem))
 				throw new InvalidValueException("Для несистемного источника обязателен путь к значению");
-
-			updateRequest.SourceItem = updateRequest.SourceItem.RemoveWhitespaces();
 		}
 		else
 		{

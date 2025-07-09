@@ -140,7 +140,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 
 					return block;
 				})
-				.Where(x => x.Children.Length > 0 || x.AccessRule.HasAccess(AccessType.Viewer))
+				.Where(x => x.Children!.Length > 0 || x.AccessRule.HasAccess(AccessType.Viewer))
 				.OrderBy(x => x.Name)
 				.ToArray();
 		}
