@@ -17,4 +17,11 @@ public class Lists
 		SourceType.Aggregated,
 		SourceType.NotSet
 	];
+
+	/// <summary>
+	/// Запросы на чтение тегов, которые не являются запросами для просмотра в веб-консоли
+	/// </summary>
+	public static readonly HashSet<string> InnerRequests = [
+		"block-values", "tag-current-value", "tags-table"
+	];
 }

@@ -1,10 +1,12 @@
 ﻿using Datalake.Database;
+using Datalake.Database.Constants;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.Controllers.Base;
+using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +23,8 @@ public class SourcesController(
 	DatalakeContext db,
 	DatalakeDerivedDataStore derivedDataStore,
 	SourcesMemoryRepository sourcesRepository,
-	ReceiverService receiverService) : ApiControllerBase(derivedDataStore)
+	ReceiverService receiverService,
+	TagsStateService tagsStateService) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Создание источника с информацией по умолчанию
@@ -165,12 +168,14 @@ public class SourcesController(
 			.ToDictionary(x => x.Name, x => new SourceItemInfo { Path = x.Name, Type = x.Type, Value = x.Value, Quality = x.Quality });
 
 		var sourceTags = source.Tags.ToList();
+		var tagsStates = tagsStateService.GetTagsStates();
 
 		var all = sourceTags
 			.Select(tag => new SourceEntryInfo
 			{
 				TagInfo = tag,
 				ItemInfo = sourceItems.TryGetValue(tag.Item, out var itemInfo) ? itemInfo : null,
+				IsTagInUse = tagsStates.TryGetValue(tag.Id, out var metrics) && metrics.Any(x => !Lists.InnerRequests.Contains(x.Key))
 			})
 			.Union(sourceItems
 				.Where(itemKeyValue => !sourceTags.Select(tag => tag.Item).Contains(itemKeyValue.Key))
@@ -178,6 +183,7 @@ public class SourcesController(
 				{
 					TagInfo = null,
 					ItemInfo = itemKeyValue.Value,
+					IsTagInUse = false,
 				}));
 
 		return all

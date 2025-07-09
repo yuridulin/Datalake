@@ -586,6 +586,8 @@ export interface SourceEntryInfo {
   itemInfo?: SourceItemInfo | null;
   /** Сопоставленный тег в базе */
   tagInfo?: SourceTagInfo | null;
+  /** Используется ли тег в запросах */
+  isTagInUse?: boolean;
 }
 
 /** Информация о теге, берущем данные из этого источника */
