@@ -14,7 +14,10 @@ namespace Datalake.Database.Tables;
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public record class BlockTag
 {
-	const string TableName = "BlockTags";
+	/// <summary>
+	/// Название таблицы
+	/// </summary>
+	public const string TableName = "BlockTags";
 
 	/// <summary>Конструктор для LinqToDB</summary>
 	public BlockTag() { }

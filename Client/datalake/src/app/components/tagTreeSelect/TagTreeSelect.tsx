@@ -36,13 +36,11 @@ function convertToTreeSelectNodes(
 					<BlockIcon /> {block.name}
 				</>
 			),
-			value: -10000000 - block.id,
-			key: `block-${block.id}`,
+			value: -1000000 - block.id, // специально берем большое значение, чтобы не конфликтовать с фейковыми связями
 			selectable: false,
 			fullTitle,
 			data: block,
 			children: [
-				// все теги в этом блоке
 				...block.tags.map((tag) => ({
 					title: (
 						<>
@@ -50,18 +48,16 @@ function convertToTreeSelectNodes(
 						</>
 					),
 					value: tag.relationId,
-					key: `tag-${tag.id}-${tag.relationId}`,
 					fullTitle: `${fullTitle}.${tag.localName}`,
 					data: tag,
 				})),
-				// рекурсивно вложенные блоки
 				...convertToTreeSelectNodes(block.children || undefined, currentPath),
 			],
 		}
 	})
 }
 
-// Поиск узла по прямому relationId
+// Поиск узла по relationId
 function findNodeByValue(nodes: DefaultOptionType[], value: number): DefaultOptionType | null {
 	for (const node of nodes) {
 		if (node.value === value) return node
@@ -73,34 +69,24 @@ function findNodeByValue(nodes: DefaultOptionType[], value: number): DefaultOpti
 	return null
 }
 
-// Поиск первой доступной связи для заданного tagId
+// Поиск тега по tagId
 function findFirstNodeByTagId(nodes: DefaultOptionType[], tagId: number): DefaultOptionType | null {
 	for (const node of nodes) {
 		if (node.children) {
 			const foundInChild = findFirstNodeByTagId(node.children, tagId)
 			if (foundInChild) return foundInChild
 		}
-		if (node.data?.id === tagId) {
+		if (node.data?.relationId !== undefined && node.data.id === tagId) {
 			return node
 		}
 	}
 	return null
 }
 
-// Рекурсивная проверка наличия тега в дереве блоков
-/* function isTagInTree(blocks: BlockTreeInfo[] | null | undefined, tagId: number): boolean {
-	if (!blocks) return false
-	for (const block of blocks) {
-		if (block.tags.some(tag => tag.id === tagId)) return true
-		if (isTagInTree(block.children, tagId)) return true
-	}
-	return false
-} */
-
 const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], value, onChange = () => {} }) => {
 	// Формируем дерево с виртуальным блоком для нераспределенных тегов
 	const treeData = useMemo(() => {
-		// Получаем все ID тегов, которые есть в дереве (включая вложенные)
+		// Собираем все ID тегов в дереве (включая вложенные)
 		const allTagIds = new Set<number>()
 		const collectTagIds = (blocks: BlockTreeInfo[] | null | undefined) => {
 			if (!blocks) return
@@ -111,7 +97,7 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], v
 		}
 		collectTagIds(blocks)
 
-		// Фильтруем теги, которых нет в дереве
+		// Фильтруем теги, отсутствующие в дереве
 		const orphanTags = tags.filter((tag) => !allTagIds.has(tag.id))
 
 		// Виртуальный блок для нераспределенных тегов
@@ -148,17 +134,13 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], v
 		// Поиск по точному relationId
 		if (relationId) {
 			const node = findNodeByValue(treeData, relationId)
-			if (node) {
-				return { value: node.value as number, label: node.fullTitle }
-			}
+			if (node) return { value: node.value as number, label: node.fullTitle }
 		}
 
 		// Поиск первого подходящего tagId
 		if (tagId) {
 			const node = findFirstNodeByTagId(treeData, tagId)
-			if (node) {
-				return { value: node.value as number, label: node.fullTitle }
-			}
+			if (node) return { value: node.value as number, label: node.fullTitle }
 		}
 
 		return undefined
@@ -182,45 +164,34 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], v
 	const filterTreeNode = (input: string, treeNode: DefaultOptionType): boolean => {
 		const searchText = input.toLowerCase()
 
-		// Поиск по fullTitle (полному пути)
-		if (treeNode.fullTitle && treeNode.fullTitle.toLowerCase().includes(searchText)) {
-			return true
-		}
+		// Поиск по полному пути
+		if (treeNode.fullTitle?.toLowerCase().includes(searchText)) return true
 
 		// Поиск по данным узла
 		if (treeNode.data) {
 			const data = treeNode.data
 
 			// Поиск по ID
-			if (typeof data.id === 'number' && data.id.toString().includes(searchText)) {
-				return true
-			}
+			if (data.id?.toString().includes(searchText)) return true
 
 			// Поиск по GUID
-			if (data.guid && data.guid.toLowerCase().includes(searchText)) {
-				return true
-			}
+			if (data.guid?.toLowerCase().includes(searchText)) return true
 
-			// Обработка блоков
+			// Блоки
 			if ('fullName' in data) {
 				const block = data as BlockTreeInfo
-				if (
-					(block.name && block.name.toLowerCase().includes(searchText)) ||
-					(block.fullName && block.fullName.toLowerCase().includes(searchText))
-				) {
+				if (block.name?.toLowerCase().includes(searchText) || block.fullName?.toLowerCase().includes(searchText))
 					return true
-				}
 			}
-			// Обработка тегов
-			else {
+			// Теги
+			else if ('relationId' in data) {
 				const tag = data as BlockNestedTagInfo
 				if (
-					(tag.name && tag.name.toLowerCase().includes(searchText)) ||
-					(tag.localName && tag.localName.toLowerCase().includes(searchText)) ||
-					(typeof tag.relationId === 'number' && tag.relationId.toString().includes(searchText))
-				) {
+					tag.name?.toLowerCase().includes(searchText) ||
+					tag.localName?.toLowerCase().includes(searchText) ||
+					tag.relationId?.toString().includes(searchText)
+				)
 					return true
-				}
 			}
 		}
 

@@ -18,11 +18,13 @@ type LogsTableElProps = {
 
 const columns: ColumnType<LogInfo>[] = [
 	{
+		key: 'dateString',
 		dataIndex: 'dateString',
 		title: 'Дата',
 		width: '10em',
 	},
 	{
+		key: 'category',
 		dataIndex: 'category',
 		title: 'Категория',
 		width: '12em',
@@ -36,17 +38,20 @@ const columns: ColumnType<LogInfo>[] = [
 		onFilter: (value, record) => record.category === value,
 	},
 	{
+		key: 'author',
 		title: 'Автор',
 		dataIndex: 'author',
 		width: '14em',
 		render: (author) => (author ? <UserButton userInfo={author} /> : <i>нет</i>),
 	},
 	{
+		key: 'text',
 		title: 'Событие',
 		dataIndex: 'text',
 		width: '22em',
 	},
 	{
+		key: 'details',
 		title: 'Описание',
 		dataIndex: 'details',
 		render: (desc) =>
@@ -66,15 +71,15 @@ const step = 10
 const globalStep = 100
 
 const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: LogsTableElProps) => {
+	const [init, setInit] = useState(true)
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const [loading, setLoading] = useState(false)
 	const [reachEnd, setReachEnd] = useState(false)
 	const [isGlobal, setGlobal] = useState(false)
 
 	const initialLoad = () => {
-		console.log('initialLoad')
+		setInit(true)
 		const global = !sourceId && !blockId && !tagGuid && !userGuid && !userGroupGuid
-		console.log('is global?', global)
 		setGlobal(global)
 		api
 			.systemGetLogs({
@@ -91,11 +96,11 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 				if (res.data.length < (global ? globalStep : step)) setReachEnd(true)
 			})
 			.catch(() => setLogs([]))
+			.finally(() => setInit(false))
 	}
 
 	const loadNewLogs = () => {
 		const lastId = logs.reduce((acc, log) => (log.id > acc ? log.id : acc), 0)
-		console.log('loadNewLogs: lastId = ' + String(lastId))
 		api
 			.systemGetLogs({
 				lastId: lastId,
@@ -135,7 +140,9 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 	useEffect(initialLoad, [sourceId, blockId, tagGuid, userGuid, userGroupGuid])
 	useInterval(loadNewLogs, 10000)
 
-	return (
+	return init ? (
+		<></>
+	) : (
 		<>
 			<Table
 				size='small'

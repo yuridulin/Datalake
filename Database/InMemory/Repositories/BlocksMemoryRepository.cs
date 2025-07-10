@@ -11,6 +11,7 @@ using Datalake.PublicApi.Models.Blocks;
 using LinqToDB;
 using LinqToDB.Data;
 using System.Collections.Immutable;
+using System.Text;
 
 namespace Datalake.Database.InMemory.Repositories;
 
@@ -385,7 +386,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 					.DeleteAsync();
 
 				if (newTagsRelations.Length > 0)
-					await db.BlockTags.BulkCopyAsync(newTagsRelations);
+					await BulkCopyWithOutputAsync(db, newTagsRelations);
 
 				await LogAsync(db, userGuid, id, "Изменен блок: " + request.Name, ObjectExtension.Difference(
 					new { oldBlock.Name, oldBlock.Description, },
@@ -525,6 +526,39 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 
 	private static string AppendPrefix(string prefix, string name) =>
 		string.IsNullOrEmpty(prefix) ? name : $"{prefix}.{name}";
+
+	private static async Task BulkCopyWithOutputAsync(DatalakeContext db, BlockTag[] newTagsRelations)
+	{
+		// Формируем параметризованный SQL запрос
+		var insertSql = $"""
+        INSERT INTO "{BlockTag.TableName}" 
+        ("BlockId", "TagId", "Name", "Relation")
+        VALUES {string.Join(", ", newTagsRelations.Select((_, i) =>
+						$"(:b{i}, :t{i}, :n{i}, :r{i})"))}
+        RETURNING "Id";
+        """;
+
+		// Создаем параметры
+		var parameters = new List<DataParameter>();
+		for (var i = 0; i < newTagsRelations.Length; i++)
+		{
+			var item = newTagsRelations[i];
+			parameters.Add(new DataParameter($"b{i}", item.BlockId));
+			parameters.Add(new DataParameter($"t{i}", item.TagId));
+			parameters.Add(new DataParameter($"n{i}", item.Name ?? ""));
+			parameters.Add(new DataParameter($"r{i}", (int)item.Relation));
+		}
+
+		// Выполняем запрос и получаем Id
+		var insertedIds = (await db.QueryToArrayAsync<int>(insertSql, parameters.ToArray()))
+			.ToList();
+
+		// Обновляем исходные объекты
+		for (var i = 0; i < newTagsRelations.Length; i++)
+		{
+			newTagsRelations[i].Id = insertedIds[i];
+		}
+	}
 
 	#endregion
 }
