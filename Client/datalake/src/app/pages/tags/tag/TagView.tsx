@@ -176,6 +176,7 @@ const TagView = observer(() => {
 					indentSize={1}
 					pagination={false}
 					dataSource={tag.formulaInputs}
+					rowKey={'relationId'}
 					columns={[
 						{
 							key: 'name',

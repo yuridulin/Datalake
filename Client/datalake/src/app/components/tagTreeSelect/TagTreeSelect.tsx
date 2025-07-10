@@ -15,7 +15,7 @@ import React, { useMemo } from 'react'
 interface TagTreeSelectProps {
 	blocks?: BlockTreeInfo[]
 	tags?: TagSimpleInfo[]
-	value?: [number, number?]
+	value?: [number, number | null | undefined]
 	onChange?: (value: [tagId: number, relationId: number]) => void
 }
 

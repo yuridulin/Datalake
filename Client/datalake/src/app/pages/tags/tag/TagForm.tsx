@@ -117,6 +117,7 @@ const TagForm = () => {
 				setRequest({
 					...info,
 					sourceTagId: info.sourceTag?.id,
+					sourceTagRelationId: info.sourceTag?.relationId,
 					formulaInputs: info.formulaInputs.map(
 						(x, index) =>
 							({
@@ -534,12 +535,12 @@ const TagForm = () => {
 			>
 				<FormRow title='Тег-источник'>
 					<TagTreeSelect
-						value={[request.sourceTagId ?? 0, request.sourceTagRelationId || undefined]}
+						value={[request.sourceTagId ?? 0, request.sourceTagRelationId]}
 						blocks={blocks}
 						tags={tags}
-						onChange={([sourceTagId, sourceTagRelationId]) =>
+						onChange={([sourceTagId, sourceTagRelationId]) => {
 							setRequest({ ...request, sourceTagId, sourceTagRelationId })
-						}
+						}}
 					/>
 				</FormRow>
 				<FormRow
