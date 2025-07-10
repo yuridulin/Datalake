@@ -98,39 +98,30 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 
 		return ReadChildren(null, string.Empty);
 
-		BlockTreeInfo[] ReadChildren(int? id, string prefix)
-		{
-			var prefixString = prefix + (string.IsNullOrEmpty(prefix) ? string.Empty : ".");
-			return blocks
-				.Where(x => x.ParentId == id)
-				.Select(x =>
+		BlockTreeInfo[] ReadChildren(int? parentId, string prefix) => blocks
+			.Where(x => x.ParentId == parentId)
+			.Select(x => new {
+				Node = x,
+				Children = ReadChildren(x.Id, AppendPrefix(prefix, x.Name))
+			})
+			.Where(p => p.Node.AccessRule.HasAccess(AccessType.Viewer) || p.Children.Length > 0)
+			.Select(p => {
+				var hasViewer = p.Node.AccessRule.HasAccess(AccessType.Viewer);
+				return new BlockTreeInfo
 				{
-					var block = new BlockTreeInfo
-					{
-						Id = x.Id,
-						Guid = x.Guid,
-						ParentId = x.ParentId,
-						Name = x.Name,
-						FullName = prefixString + x.Name,
-						Description = x.Description,
-						Tags = x.Tags,
-						AccessRule = x.AccessRule,
-						Children = ReadChildren(x.Id, prefixString + x.Name),
-					};
-
-					if (!x.AccessRule.HasAccess(AccessType.Viewer))
-					{
-						block.Name = string.Empty;
-						block.Description = string.Empty;
-						block.Tags = [];
-					}
-
-					return block;
-				})
-				.Where(x => x.Children!.Length > 0 || x.AccessRule.HasAccess(AccessType.Viewer))
-				.OrderBy(x => x.Name)
-				.ToArray();
-		}
+					Id = p.Node.Id,
+					Guid = p.Node.Guid,
+					ParentId = p.Node.ParentId,
+					Name = hasViewer ? p.Node.Name : string.Empty,
+					FullName = AppendPrefix(prefix, p.Node.Name),
+					Description = hasViewer ? p.Node.Description : string.Empty,
+					Tags = hasViewer ? p.Node.Tags : Array.Empty<BlockNestedTagInfo>(),
+					AccessRule = p.Node.AccessRule,
+					Children = p.Children
+				};
+			})
+			.OrderBy(x => x.Name)
+			.ToArray();
 	}
 
 	/// <summary>
@@ -531,6 +522,9 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			Details = details,
 		});
 	}
+
+	private static string AppendPrefix(string prefix, string name) =>
+		string.IsNullOrEmpty(prefix) ? name : $"{prefix}.{name}";
 
 	#endregion
 }

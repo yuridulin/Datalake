@@ -1,7 +1,6 @@
 import {
 	AccessType,
 	BlockNestedTagInfo,
-	BlockSimpleInfo,
 	BlockTagRelation,
 	BlockTreeInfo,
 	TagSimpleInfo,
@@ -9,189 +8,238 @@ import {
 import BlockIcon from '@/app/components/icons/BlockIcon'
 import TagIcon from '@/app/components/icons/TagIcon'
 import TagFrequencyEl from '@/app/components/TagFrequencyEl'
-import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import { TreeSelect } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
-import React, { useEffect, useState } from 'react'
+import React, { useMemo } from 'react'
 
 interface TagTreeSelectProps {
 	blocks?: BlockTreeInfo[]
 	tags?: TagSimpleInfo[]
-	value?: number
-	onChange?: (value: number) => void
+	value?: [number, number?]
+	onChange?: (value: [tagId: number, relationId: number]) => void
 }
 
-const flattenNestedTags = (
-	blockTree: BlockTreeInfo[] | null | undefined,
-	parentNames: BlockSimpleInfo[] = [],
-): FlattenedNestedTagsType => {
-	let mapping: FlattenedNestedTagsType = {}
-	if (!blockTree) return []
-	blockTree.forEach((block) => {
-		const currentParents = [...parentNames, { ...block }]
-		block.tags.forEach((tag) => {
-			mapping[tag.id] = {
-				...tag,
-				parents: currentParents,
-			}
-		})
-		const childrenMapping = flattenNestedTags(block.children, currentParents)
-		mapping = { ...mapping, ...childrenMapping }
-	})
-
-	return mapping
-}
-
-const convertToTreeSelectNodes = (
-	blockTree: BlockTreeInfo[] | null | undefined,
+// Преобразовать BlockTreeInfo[] в формат, понятный Antd TreeSelect
+function convertToTreeSelectNodes(
+	blockTree: BlockTreeInfo[] | undefined,
 	parentPath: string[] = [],
-): DefaultOptionType[] => {
+): DefaultOptionType[] {
 	if (!blockTree) return []
+
 	return blockTree.map((block) => {
 		const currentPath = [...parentPath, block.name]
+		const fullTitle = currentPath.join('.')
+
 		return {
 			title: (
 				<>
-					<BlockIcon />
-					&ensp;{block.name}
+					<BlockIcon /> {block.name}
 				</>
 			),
-			fullTitle: block.name,
-			value: -block.id,
-			key: -block.id,
+			value: -10000000 - block.id,
+			key: `block-${block.id}`,
 			selectable: false,
+			fullTitle,
+			data: block,
 			children: [
+				// все теги в этом блоке
 				...block.tags.map((tag) => ({
 					title: (
 						<>
-							<TagIcon type={tag.sourceType} />
-							&ensp;
-							{tag.localName}&ensp;
-							<TagFrequencyEl frequency={tag.frequency} />
+							<TagIcon type={tag.sourceType} /> {tag.localName} #{tag.id} <TagFrequencyEl frequency={tag.frequency} />
 						</>
 					),
-					fullTitle: `${currentPath.join('.')}.${tag.localName}`,
-					value: tag.id,
-					key: tag.id.toString(),
+					value: tag.relationId,
+					key: `tag-${tag.id}-${tag.relationId}`,
+					fullTitle: `${fullTitle}.${tag.localName}`,
+					data: tag,
 				})),
-				...convertToTreeSelectNodes(block.children, currentPath),
+				// рекурсивно вложенные блоки
+				...convertToTreeSelectNodes(block.children || undefined, currentPath),
 			],
 		}
 	})
 }
 
-const findNodeByValue = (nodes: DefaultOptionType[], value: number): DefaultOptionType | null => {
+// Поиск узла по прямому relationId
+function findNodeByValue(nodes: DefaultOptionType[], value: number): DefaultOptionType | null {
 	for (const node of nodes) {
-		if (node.value === value) {
-			return node
-		}
+		if (node.value === value) return node
 		if (node.children) {
 			const found = findNodeByValue(node.children, value)
-			if (found) {
-				return found
-			}
+			if (found) return found
 		}
 	}
 	return null
 }
 
-type SelectValue = { value: number; label: React.ReactNode } | undefined
+// Поиск первой доступной связи для заданного tagId
+function findFirstNodeByTagId(nodes: DefaultOptionType[], tagId: number): DefaultOptionType | null {
+	for (const node of nodes) {
+		if (node.children) {
+			const foundInChild = findFirstNodeByTagId(node.children, tagId)
+			if (foundInChild) return foundInChild
+		}
+		if (node.data?.id === tagId) {
+			return node
+		}
+	}
+	return null
+}
+
+// Рекурсивная проверка наличия тега в дереве блоков
+/* function isTagInTree(blocks: BlockTreeInfo[] | null | undefined, tagId: number): boolean {
+	if (!blocks) return false
+	for (const block of blocks) {
+		if (block.tags.some(tag => tag.id === tagId)) return true
+		if (isTagInTree(block.children, tagId)) return true
+	}
+	return false
+} */
 
 const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], value, onChange = () => {} }) => {
-	const [treeData, setTreeData] = useState<DefaultOptionType[]>([])
-	const [tagMapping, setTagMapping] = useState<FlattenedNestedTagsType>({})
-	const [searchValue, setSearchValue] = useState<string>('')
-	const [selected, setSelected] = useState<SelectValue>(undefined)
-
-	useEffect(() => {
-		const mappingFromBlocks = flattenNestedTags(blocks)
-		const notUsedTags = tags.filter((tag) => !mappingFromBlocks[tag.id])
-		if (notUsedTags.length > 0) {
-			const fakeBlock: BlockTreeInfo = {
-				id: 0,
-				guid: 'fake',
-				name: 'Нераспределенные теги',
-				fullName: 'Нераспределенные теги',
-				tags: notUsedTags
-					.map(
-						(tag) =>
-							({
-								...tag,
-								relationType: BlockTagRelation.Static,
-								relationId: -1,
-								localName: tag.name,
-								sourceId: 0,
-							}) as BlockNestedTagInfo,
-					)
-					.sort((a, b) => a.localName.localeCompare(b.localName)),
-				children: [],
-				accessRule: {
-					ruleId: 0,
-					access: AccessType.Manager,
-				},
+	// Формируем дерево с виртуальным блоком для нераспределенных тегов
+	const treeData = useMemo(() => {
+		// Получаем все ID тегов, которые есть в дереве (включая вложенные)
+		const allTagIds = new Set<number>()
+		const collectTagIds = (blocks: BlockTreeInfo[] | null | undefined) => {
+			if (!blocks) return
+			for (const block of blocks) {
+				block.tags.forEach((tag) => allTagIds.add(tag.id))
+				collectTagIds(block.children)
 			}
-			blocks.push(fakeBlock)
+		}
+		collectTagIds(blocks)
 
-			setTagMapping({
-				...mappingFromBlocks,
-				...flattenNestedTags([fakeBlock]),
-			})
+		// Фильтруем теги, которых нет в дереве
+		const orphanTags = tags.filter((tag) => !allTagIds.has(tag.id))
+
+		// Виртуальный блок для нераспределенных тегов
+		const virtualBlock: BlockTreeInfo = {
+			id: 0,
+			guid: 'virtual',
+			name: 'Нераспределенные теги',
+			fullName: 'Нераспределенные теги',
+			tags: orphanTags.map((tag, index) => ({
+				...tag,
+				relationId: -(index + 1),
+				relationType: BlockTagRelation.Static,
+				localName: tag.name,
+				sourceId: 0,
+			})),
+			children: [],
+			accessRule: {
+				access: AccessType.Manager,
+				ruleId: 0,
+			},
+		}
+
+		// Объединяем реальное дерево и виртуальный блок
+		const treeSource = orphanTags.length ? [...blocks, virtualBlock] : blocks
+		return convertToTreeSelectNodes(treeSource)
+	}, [blocks, tags])
+
+	// Вычисляем выбранное значение
+	const selected = useMemo(() => {
+		if (!value) return undefined
+
+		const [tagId, relationId] = value
+
+		// Поиск по точному relationId
+		if (relationId) {
+			const node = findNodeByValue(treeData, relationId)
+			if (node) {
+				return { value: node.value as number, label: node.fullTitle }
+			}
+		}
+
+		// Поиск первого подходящего tagId
+		if (tagId) {
+			const node = findFirstNodeByTagId(treeData, tagId)
+			if (node) {
+				return { value: node.value as number, label: node.fullTitle }
+			}
+		}
+
+		return undefined
+	}, [value, treeData])
+
+	// Обработчик изменения значения
+	const handleChange = (sel: { value: number; label: React.ReactNode } | undefined) => {
+		if (!sel) {
+			onChange([0, 0])
+			return
+		}
+		const node = findNodeByValue(treeData, sel.value)
+		if (node?.data) {
+			onChange([node.data.id, sel.value])
 		} else {
-			setTagMapping(mappingFromBlocks)
+			onChange([0, 0])
 		}
-		const data = convertToTreeSelectNodes(blocks)
-		setTreeData(data)
+	}
 
-		if (value === 0 || value === undefined) {
-			setSelected(undefined)
-		} else if (!selected || selected.value !== value) {
-			const node = findNodeByValue(data, value)
-			setSelected({
-				value: value,
-				label: node ? node.fullTitle : 'Неизвестный тег',
-			})
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [blocks])
+	// Функция фильтрации узлов
+	const filterTreeNode = (input: string, treeNode: DefaultOptionType): boolean => {
+		const searchText = input.toLowerCase()
 
-	const filterTreeNode = (inputValue: string, treeNode: DefaultOptionType): boolean => {
-		const search = inputValue.toLowerCase()
-		const nodeValue = treeNode.value as number
-
-		if (nodeValue < 0) {
-			return treeNode.title?.toString().toLowerCase().includes(search) ?? false
+		// Поиск по fullTitle (полному пути)
+		if (treeNode.fullTitle && treeNode.fullTitle.toLowerCase().includes(searchText)) {
+			return true
 		}
 
-		const tagInfo = tagMapping[nodeValue]
-		if (!tagInfo) return false
+		// Поиск по данным узла
+		if (treeNode.data) {
+			const data = treeNode.data
 
-		const searchFields = [tagInfo.localName, tagInfo.name, tagInfo.guid, String(nodeValue), treeNode.title?.toString()]
+			// Поиск по ID
+			if (typeof data.id === 'number' && data.id.toString().includes(searchText)) {
+				return true
+			}
 
-		return searchFields.some((field) => field?.toLowerCase().includes(search))
+			// Поиск по GUID
+			if (data.guid && data.guid.toLowerCase().includes(searchText)) {
+				return true
+			}
+
+			// Обработка блоков
+			if ('fullName' in data) {
+				const block = data as BlockTreeInfo
+				if (
+					(block.name && block.name.toLowerCase().includes(searchText)) ||
+					(block.fullName && block.fullName.toLowerCase().includes(searchText))
+				) {
+					return true
+				}
+			}
+			// Обработка тегов
+			else {
+				const tag = data as BlockNestedTagInfo
+				if (
+					(tag.name && tag.name.toLowerCase().includes(searchText)) ||
+					(tag.localName && tag.localName.toLowerCase().includes(searchText)) ||
+					(typeof tag.relationId === 'number' && tag.relationId.toString().includes(searchText))
+				) {
+					return true
+				}
+			}
+		}
+
+		return false
 	}
 
 	return (
 		<TreeSelect
 			treeData={treeData}
 			value={selected}
-			onChange={(newValue) => {
-				const node = findNodeByValue(treeData, newValue.value)
-				const newLabel = node ? node.fullTitle : newValue.label
-				const newSelected = { value: newValue.value, label: newLabel }
-				setSelected(newSelected)
-				onChange(newValue.value)
-			}}
+			onChange={handleChange}
 			showSearch
-			searchValue={searchValue}
-			onSearch={setSearchValue}
-			autoClearSearchValue={false}
-			filterTreeNode={filterTreeNode}
-			labelInValue
 			allowClear
+			labelInValue
+			filterTreeNode={filterTreeNode}
+			placeholder='Выберите тег'
 			treeDefaultExpandAll
 			style={{ width: '100%' }}
 			dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
-			placeholder='Выберите тег'
 		/>
 	)
 }

@@ -11,10 +11,11 @@ import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagTypeEl from '@/app/components/TagTypeEl'
 import TagValueText from '@/app/components/TagValue'
 import { user } from '@/state/user'
+import { INNER_REQUESTS } from '@/types/constants'
 import { Button, Spin, Table, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import {
 	AccessType,
@@ -225,91 +226,92 @@ const TagView = observer(() => {
 		<TagCompactValue value={thisTagValue.value} type={tag.type} quality={thisTagValue.quality} />
 	)
 
-	const tabs = [
-		{
-			key: 'blocks',
-			label: 'Блоки с этим тегом',
-			children:
-				!tag.blocks || tag.blocks.length === 0 ? (
-					<i>нет</i>
-				) : (
+	const tabs = useMemo(
+		() => [
+			{
+				key: 'blocks',
+				label: 'Блоки с этим тегом',
+				children:
+					!tag.blocks || tag.blocks.length === 0 ? (
+						<i>нет</i>
+					) : (
+						<Table
+							size='small'
+							dataSource={tag.blocks}
+							columns={[
+								{
+									key: 'block',
+									title: 'Блок',
+									dataIndex: 'id',
+									width: '40%',
+									render: (_, block) => <BlockButton block={block} />,
+								},
+								{
+									key: 'name',
+									title: 'Название в блоке',
+									dataIndex: 'localName',
+								},
+							]}
+						/>
+					),
+			},
+			{
+				key: 'logs',
+				label: 'События',
+				children: <LogsTableEl tagGuid={tag.guid} />,
+			},
+			{
+				key: 'metrics',
+				label: 'Обращения к этому тегу',
+				children: (
 					<Table
 						size='small'
-						dataSource={tag.blocks}
 						columns={[
 							{
-								key: 'block',
-								title: 'Блок',
-								dataIndex: 'id',
-								width: '40%',
-								render: (_, block) => <BlockButton block={block} />,
+								key: 'date',
+								dataIndex: 'date',
+								title: 'Последнее обращение',
+								width: '14em',
 							},
 							{
-								key: 'name',
-								title: 'Название в блоке',
-								dataIndex: 'localName',
+								key: 'requestKey',
+								dataIndex: 'requestKey',
+								title: 'Идентификатор запроса',
+								render: (key) => {
+									switch (key) {
+										case 'calculate-collector':
+											return (
+												<>
+													<Tag>внутренний</Tag> вычислитель
+												</>
+											)
+										case 'aggregate-collector-min':
+										case 'aggregate-collector-hour':
+										case 'aggregate-collector-day':
+											return (
+												<>
+													<Tag>внутренний</Tag> агрегатор
+												</>
+											)
+										default:
+											return <>{key}</>
+									}
+								},
 							},
 						]}
+						dataSource={Object.entries(metrics)
+							.map(([requestKey, date]) => ({
+								date: dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
+								requestKey: requestKey,
+							}))
+							// внутренние запросы, игнорируем их
+							.filter((x) => !INNER_REQUESTS.includes(x.requestKey))}
 					/>
 				),
-		},
-		{
-			key: 'logs',
-			label: 'События',
-			children: <LogsTableEl tagGuid={tag.guid} />,
-		},
-	]
-
-	if (user.hasGlobalAccess(AccessType.Admin))
-		tabs.push({
-			key: 'metrics',
-			label: 'Обращения к этому тегу',
-			children: (
-				<Table
-					size='small'
-					columns={[
-						{
-							key: 'date',
-							dataIndex: 'date',
-							title: 'Последнее обращение',
-							width: '14em',
-						},
-						{
-							key: 'requestKey',
-							dataIndex: 'requestKey',
-							title: 'Идентификатор запроса',
-							render: (key) => {
-								switch (key) {
-									case 'calculate-collector':
-										return (
-											<>
-												<Tag>внутренний</Tag> вычислитель
-											</>
-										)
-									case 'aggregate-collector-min':
-									case 'aggregate-collector-hour':
-									case 'aggregate-collector-day':
-										return (
-											<>
-												<Tag>внутренний</Tag> агрегатор
-											</>
-										)
-									default:
-										return <>{key}</>
-								}
-							},
-						},
-					]}
-					dataSource={Object.entries(metrics)
-						.map(([requestKey, date]) => ({
-							date: dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
-							requestKey: requestKey,
-						}))
-						// внутренние запросы, игнорируем их
-						.filter((x) => !['block-values', 'tag-current-value', 'tags-table'].includes(x.requestKey))}
-				/>
-			),
-		})
+			},
+		],
+		[tag, metrics],
+	)
 
 	return isLoading ? (
 		<Spin />

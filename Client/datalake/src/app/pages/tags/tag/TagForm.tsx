@@ -3,6 +3,7 @@ import HelpAggregationType from '@/app/components/help-tootip/help-pages/HelpAgg
 import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import TagFrequencyEl from '@/app/components/TagFrequencyEl'
+import TagQualityEl from '@/app/components/TagQualityEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
 import getTagFrequencyName from '@/functions/getTagFrequencyName'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
@@ -52,10 +53,37 @@ const TagForm = () => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 
+	//#region Значение
+
+	// 1. Состояние
+	const [value, setValue] = useState<ValueRecord | null>(null)
+
+	// 2. Функция получения и сравнения
+	const getValue = useCallback(() => {
+		if (!id) return
+		api
+			.valuesGet([
+				{
+					requestKey: 'tag-current-value',
+					tagsId: [Number(id)],
+				},
+			])
+			.then((res) => {
+				const next = res.data[0].tags[0].values[0]
+				setValue((prev) => (prev && prev.value == next.value && prev.quality == next.quality ? prev : next))
+			})
+			.catch(() => setValue(null))
+	}, [id])
+
+	// 3. Запускаем на старте и по таймеру
+	useEffect(() => getValue(), [id, getValue])
+	useInterval(() => getValue(), 1000)
+
+	//#endregion
+
 	// инфа
 	const [tag, setTag] = useState({} as TagInfo)
 	const [sources, setSources] = useState([] as SourceOption[])
-	const [value, setValue] = useState({ quality: TagQuality.Unknown } as ValueRecord)
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
 	const [tags, setTags] = useState([] as TagSimpleInfo[])
 
@@ -120,8 +148,6 @@ const TagForm = () => {
 		]).finally(() => setLoading(false))
 	}
 
-	useEffect(loadTagData, [id])
-
 	const getItems = () => {
 		if (!request.sourceId || request.sourceId <= 0) return
 		api.sourcesGetItems(request.sourceId).then((res) => {
@@ -133,26 +159,8 @@ const TagForm = () => {
 		})
 	}
 
+	useEffect(loadTagData, [id])
 	useEffect(getItems, [request])
-
-	const getValue = useCallback(() => {
-		if (!id) return
-		setValue((prevValue) => {
-			api
-				.valuesGet([
-					{
-						requestKey: 'tag-current-value',
-						tagsId: [Number(id)],
-					},
-				])
-				.then((res) => setValue(res.data[0].tags[0].values[0]))
-				.catch(() => setValue({ date: '', dateString: '', quality: TagQuality.BadNoConnect }))
-			return prevValue
-		})
-	}, [id])
-
-	useEffect(getValue, [tag, getValue])
-	useInterval(getValue, 1000)
 
 	useEffect(() => {
 		if (strategy === SourceStrategy.FromSource && request.sourceId < 0) {
@@ -234,6 +242,7 @@ const TagForm = () => {
 			>
 				Тег {tag.name}
 			</PageHeader>
+
 			<FormRow title='Имя'>
 				<Input
 					value={request.name}
@@ -277,6 +286,7 @@ const TagForm = () => {
 					<Radio.Button value={TagType.Boolean}>Логическое значение</Radio.Button>
 				</Radio.Group>
 			</FormRow>
+			{/* Числовые настройки */}
 			<div
 				style={{
 					display: request.type === TagType.Number ? 'block' : 'none',
@@ -381,9 +391,15 @@ const TagForm = () => {
 			</FormRow>
 			<FormRow title='Значение'>
 				<Space>
-					<TagCompactValue value={value.value} type={tag.type} quality={value.quality} />
+					{value ? (
+						<TagCompactValue value={value.value} type={tag.type} quality={value.quality} />
+					) : (
+						<TagQualityEl quality={TagQuality.BadNoConnect} />
+					)}
 				</Space>
 			</FormRow>
+
+			{/* Настройки вычисления */}
 			<div
 				style={{
 					display: strategy === SourceStrategy.Calculated ? 'block' : 'none',
@@ -440,8 +456,8 @@ const TagForm = () => {
 								<TagTreeSelect
 									blocks={blocks}
 									tags={tags}
-									value={input.tagId}
-									onChange={(v) =>
+									value={[input.tagId, input.tagRelationId]}
+									onChange={([inputTagId, inputTagRelationId]) =>
 										setRequest({
 											...request,
 											formulaInputs: request.formulaInputs.map((x) =>
@@ -449,7 +465,8 @@ const TagForm = () => {
 													? x
 													: {
 															...x,
-															tagId: v,
+															tagId: inputTagId,
+															tagRelationId: inputTagRelationId,
 														},
 											),
 										})
@@ -462,6 +479,7 @@ const TagForm = () => {
 					<Button icon={<AppstoreAddOutlined />} onClick={addParam}></Button>
 				</div>
 			</div>
+			{/* Настройки получения */}
 			<div
 				style={{
 					display: strategy === SourceStrategy.FromSource ? 'block' : 'none',
@@ -508,6 +526,7 @@ const TagForm = () => {
 					</FormRow>
 				</div>
 			</div>
+			{/* Настройки агрегации */}
 			<div
 				style={{
 					display: strategy === SourceStrategy.Aggregated && request.type === TagType.Number ? 'block' : 'none',
@@ -515,10 +534,12 @@ const TagForm = () => {
 			>
 				<FormRow title='Тег-источник'>
 					<TagTreeSelect
-						value={request.sourceTagId ?? 0}
+						value={[request.sourceTagId ?? 0, request.sourceTagRelationId || undefined]}
 						blocks={blocks}
 						tags={tags}
-						onChange={(value) => setRequest({ ...request, sourceTagId: value })}
+						onChange={([sourceTagId, sourceTagRelationId]) =>
+							setRequest({ ...request, sourceTagId, sourceTagRelationId })
+						}
 					/>
 				</FormRow>
 				<FormRow
