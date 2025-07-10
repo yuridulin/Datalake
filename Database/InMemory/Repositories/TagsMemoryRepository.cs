@@ -460,7 +460,9 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.Where(x => x.TagId == tag.Id)
 					.DeleteAsync();
 
-				await db.TagInputs.BulkCopyAsync(inputs);
+				if (inputs.Length > 0)
+					await BulkCopyWithOutputAsync(db, inputs);
+				//await db.TagInputs.BulkCopyAsync(inputs);
 
 				await LogAsync(db, userGuid, tag.Id, $"Изменен тег \"{tag.Name}\"", string.Join(",\n", changes));
 
@@ -549,6 +551,39 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			AuthorGuid = userGuid,
 			Details = details,
 		});
+	}
+
+	private static async Task BulkCopyWithOutputAsync(DatalakeContext db, TagInput[] newInputs)
+	{
+		// Формируем параметризованный SQL запрос
+		var insertSql = $"""
+			INSERT INTO "{TagInput.TableName}" 
+			("TagId", "InputTagId", "InputTagRelationId", "VariableName")
+			VALUES {string.Join(", ", newInputs.Select((_, i) =>
+				$"(:t{i}, :it{i}, :ir{i}, :v{i})"))}
+			RETURNING "Id";
+		""";
+
+		// Создаем параметры
+		var parameters = new List<DataParameter>();
+		for (var i = 0; i < newInputs.Length; i++)
+		{
+			var item = newInputs[i];
+			parameters.Add(new DataParameter($"t{i}", item.TagId));
+			parameters.Add(new DataParameter($"it{i}", item.InputTagId));
+			parameters.Add(new DataParameter($"ir{i}", item.InputTagRelationId));
+			parameters.Add(new DataParameter($"v{i}", item.VariableName));
+		}
+
+		// Выполняем запрос и получаем Id
+		var insertedIds = (await db.QueryToArrayAsync<int>(insertSql, parameters.ToArray()))
+			.ToList();
+
+		// Обновляем исходные объекты
+		for (var i = 0; i < newInputs.Length; i++)
+		{
+			newInputs[i].Id = insertedIds[i];
+		}
 	}
 
 	#endregion

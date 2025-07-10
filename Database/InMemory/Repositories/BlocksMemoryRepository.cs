@@ -531,12 +531,12 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	{
 		// Формируем параметризованный SQL запрос
 		var insertSql = $"""
-        INSERT INTO "{BlockTag.TableName}" 
-        ("BlockId", "TagId", "Name", "Relation")
-        VALUES {string.Join(", ", newTagsRelations.Select((_, i) =>
-						$"(:b{i}, :t{i}, :n{i}, :r{i})"))}
-        RETURNING "Id";
-        """;
+			INSERT INTO "{BlockTag.TableName}" 
+			("BlockId", "TagId", "Name", "Relation")
+			VALUES {string.Join(", ", newTagsRelations.Select((_, i) =>
+				$"(:b{i}, :t{i}, :n{i}, :r{i})"))}
+			RETURNING "Id";
+		""";
 
 		// Создаем параметры
 		var parameters = new List<DataParameter>();

@@ -11,7 +11,10 @@ namespace Datalake.Database.Tables;
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public record class TagInput
 {
-	const string TableName = "TagInputs";
+	/// <summary>
+	/// Название таблицы
+	/// </summary>
+	public const string TableName = "TagInputs";
 
 	/// <summary>Конструктор для LinqToDB</summary>
 	public TagInput() { }
