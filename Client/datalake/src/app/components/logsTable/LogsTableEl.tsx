@@ -57,8 +57,8 @@ const columns: ColumnType<LogInfo>[] = [
 		render: (desc) =>
 			desc ? (
 				<div style={{ wordBreak: 'break-all' }}>
-					{desc.split('\n').map((x: string) => (
-						<div>{x}</div>
+					{desc.split('\n').map((x: string, i: number) => (
+						<div key={i}>{x}</div>
 					))}
 				</div>
 			) : (
