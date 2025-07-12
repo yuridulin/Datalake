@@ -9,10 +9,9 @@ import {
 } from '@/api/swagger/data-contracts'
 import BlockIcon from '@/app/components/icons/BlockIcon'
 import TagIcon from '@/app/components/icons/TagIcon'
-import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { TreeSelect } from 'antd'
+import { GlobalToken, theme, TreeSelect } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -30,6 +29,7 @@ const VIRTUAL_RELATION_SHIFT: number = 1000000
 function convertToTreeSelectNodes(
 	blockTree: BlockTreeInfo[] | null | undefined,
 	parentPath: string[] = [],
+	token: GlobalToken,
 ): DefaultOptionType[] {
 	if (!blockTree) return []
 
@@ -52,14 +52,20 @@ function convertToTreeSelectNodes(
 					...block.tags.map((tag) => ({
 						title: (
 							<>
-								<TagIcon type={tag.sourceType} /> {tag.localName} <TagFrequencyEl frequency={tag.frequency} />
+								<TagIcon type={tag.sourceType} />
+								&ensp;{tag.localName}
+								&emsp;
+								<pre style={{ display: 'inline-block', color: token.colorTextDisabled }}>
+									#{tag.id}
+									{tag.relationId > 0 && tag.relationId < VIRTUAL_RELATION_SHIFT ? <>&emsp;{tag.name}</> : <></>}
+								</pre>
 							</>
 						),
 						value: tag.relationId, // Используем relationId как идентификатор
 						fullTitle: `${fullTitle}.${tag.localName}`,
 						data: tag,
 					})),
-					...convertToTreeSelectNodes(block.children, currentPath),
+					...convertToTreeSelectNodes(block.children, currentPath, token),
 				],
 			}
 		})
@@ -96,6 +102,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 	const [tagMapping, setTagMapping] = useState<FlattenedNestedTagsType>({})
 	const [searchValue, setSearchValue] = useState<string>('')
 	const [loading, setLoading] = useState<boolean>(false)
+	const { token } = theme.useToken()
 
 	// Инициализация выбранных значений из query-параметров
 	const initialSelections = useMemo(() => {
@@ -180,7 +187,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 				fullName: '3. Все теги',
 				tags: allTags.map((tag) => ({
 					...tag,
-					relationId: VIRTUAL_RELATION_SHIFT - tag.id, // Виртуальные связи
+					relationId: VIRTUAL_RELATION_SHIFT + tag.id, // Виртуальные связи
 					relationType: BlockTagRelation.Static,
 					localName: tag.name,
 					sourceId: 0,
@@ -208,10 +215,10 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			buildRelationMap(fullTree)
 
 			setTagMapping(flattenNestedTags(fullTree))
-			setTreeData(convertToTreeSelectNodes(fullTree))
+			setTreeData(convertToTreeSelectNodes(fullTree, undefined, token))
 			setLoading(true)
 		})
-	}, [])
+	}, [token])
 
 	// Восстановление выбранных значений при загрузке
 	useEffect(() => {
@@ -254,7 +261,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			})
 
 			// Вызываем внешний обработчик с relationId
-			onChange(tagValues, tagMapping) // Исправлено: передаем relationId
+			onChange(tagValues, tagMapping)
 
 			// Обновляем query-параметры
 			searchParams.set('tags', selections.join(SELECTED_SEPARATOR))
@@ -275,12 +282,6 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 		if (node.data) {
 			const data = node.data
 
-			// Поиск по ID
-			if (data.id?.toString().includes(searchText)) return true
-
-			// Поиск по GUID
-			if (data.guid?.toLowerCase().includes(searchText)) return true
-
 			// Для блоков
 			if ('fullName' in data) {
 				const block = data as BlockTreeInfo
@@ -294,7 +295,8 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 				if (
 					tag.name?.toLowerCase().includes(searchText) ||
 					tag.localName?.toLowerCase().includes(searchText) ||
-					tag.relationId?.toString().includes(searchText)
+					String(tag.id) == searchText ||
+					tag.guid?.toLowerCase() == searchText
 				) {
 					return true
 				}
@@ -319,6 +321,9 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			onChange={handleTagChange}
 			placeholder='Выберите теги'
 			style={{ width: '100%' }}
+			dropdownStyle={{ maxHeight: '80vh', overflow: 'auto' }}
+			listHeight={1000}
+			virtual={true}
 			maxTagCount={0}
 			maxTagPlaceholder={() => `Выбрано тегов: ${countSelectedTags()}`}
 			filterTreeNode={filterTreeNode}
