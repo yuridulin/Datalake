@@ -145,10 +145,10 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 	) : (
 		<>
 			<Table
+				rowKey='id'
 				size='small'
 				columns={columns.filter((x) => isGlobal || x.dataIndex != 'category')}
 				dataSource={logs}
-				rowKey={'id'}
 				pagination={false}
 				scroll={isGlobal ? { y: 760 } : {}}
 			/>

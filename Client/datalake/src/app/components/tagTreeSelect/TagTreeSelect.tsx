@@ -1,14 +1,10 @@
+import { BlockTreeInfo, TagSimpleInfo } from '@/api/swagger/data-contracts'
 import {
-	AccessType,
-	BlockNestedTagInfo,
-	BlockTagRelation,
-	BlockTreeInfo,
-	TagSimpleInfo,
-} from '@/api/swagger/data-contracts'
-import BlockIcon from '@/app/components/icons/BlockIcon'
-import TagIcon from '@/app/components/icons/TagIcon'
-import TagFrequencyEl from '@/app/components/TagFrequencyEl'
-import { TreeSelect } from 'antd'
+	convertToTreeSelectNodes,
+	createFullTree,
+	filterTreeNode,
+} from '@/app/components/tagTreeSelect/treeSelectShared'
+import { theme, TreeSelect } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
 import React, { useMemo } from 'react'
 
@@ -17,44 +13,6 @@ interface TagTreeSelectProps {
 	tags?: TagSimpleInfo[]
 	value?: [number, number | null | undefined]
 	onChange?: (value: [tagId: number, relationId: number]) => void
-}
-
-// Преобразовать BlockTreeInfo[] в формат, понятный Antd TreeSelect
-function convertToTreeSelectNodes(
-	blockTree: BlockTreeInfo[] | undefined,
-	parentPath: string[] = [],
-): DefaultOptionType[] {
-	if (!blockTree) return []
-
-	return blockTree.map((block) => {
-		const currentPath = [...parentPath, block.name]
-		const fullTitle = currentPath.join('.')
-
-		return {
-			title: (
-				<>
-					<BlockIcon /> {block.name}
-				</>
-			),
-			value: -1000000 - block.id, // специально берем большое значение, чтобы не конфликтовать с фейковыми связями
-			selectable: false,
-			fullTitle,
-			data: block,
-			children: [
-				...block.tags.map((tag) => ({
-					title: (
-						<>
-							<TagIcon type={tag.sourceType} /> {tag.localName} #{tag.id} <TagFrequencyEl frequency={tag.frequency} />
-						</>
-					),
-					value: tag.relationId,
-					fullTitle: `${fullTitle}.${tag.localName}`,
-					data: tag,
-				})),
-				...convertToTreeSelectNodes(block.children || undefined, currentPath),
-			],
-		}
-	})
 }
 
 // Поиск узла по relationId
@@ -84,46 +42,13 @@ function findFirstNodeByTagId(nodes: DefaultOptionType[], tagId: number): Defaul
 }
 
 const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], value, onChange = () => {} }) => {
+	const { token } = theme.useToken()
+
 	// Формируем дерево с виртуальным блоком для нераспределенных тегов
 	const treeData = useMemo(() => {
-		// Собираем все ID тегов в дереве (включая вложенные)
-		const allTagIds = new Set<number>()
-		const collectTagIds = (blocks: BlockTreeInfo[] | null | undefined) => {
-			if (!blocks) return
-			for (const block of blocks) {
-				block.tags.forEach((tag) => allTagIds.add(tag.id))
-				collectTagIds(block.children)
-			}
-		}
-		collectTagIds(blocks)
-
-		// Фильтруем теги, отсутствующие в дереве
-		const orphanTags = tags.filter((tag) => !allTagIds.has(tag.id))
-
-		// Виртуальный блок для нераспределенных тегов
-		const virtualBlock: BlockTreeInfo = {
-			id: 0,
-			guid: 'virtual',
-			name: 'Нераспределенные теги',
-			fullName: 'Нераспределенные теги',
-			tags: orphanTags.map((tag, index) => ({
-				...tag,
-				relationId: -(index + 1),
-				relationType: BlockTagRelation.Static,
-				localName: tag.name,
-				sourceId: 0,
-			})),
-			children: [],
-			accessRule: {
-				access: AccessType.Manager,
-				ruleId: 0,
-			},
-		}
-
-		// Объединяем реальное дерево и виртуальный блок
-		const treeSource = orphanTags.length ? [...blocks, virtualBlock] : blocks
-		return convertToTreeSelectNodes(treeSource)
-	}, [blocks, tags])
+		const fullTree = createFullTree([blocks, tags])
+		return convertToTreeSelectNodes(fullTree, undefined, token)
+	}, [blocks, tags, token])
 
 	// Вычисляем выбранное значение
 	const selected = useMemo(() => {
@@ -158,44 +83,6 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], v
 		} else {
 			onChange([0, 0])
 		}
-	}
-
-	// Функция фильтрации узлов
-	const filterTreeNode = (input: string, treeNode: DefaultOptionType): boolean => {
-		const searchText = input.toLowerCase()
-
-		// Поиск по полному пути
-		if (treeNode.fullTitle?.toLowerCase().includes(searchText)) return true
-
-		// Поиск по данным узла
-		if (treeNode.data) {
-			const data = treeNode.data
-
-			// Поиск по ID
-			if (data.id?.toString().includes(searchText)) return true
-
-			// Поиск по GUID
-			if (data.guid?.toLowerCase().includes(searchText)) return true
-
-			// Блоки
-			if ('fullName' in data) {
-				const block = data as BlockTreeInfo
-				if (block.name?.toLowerCase().includes(searchText) || block.fullName?.toLowerCase().includes(searchText))
-					return true
-			}
-			// Теги
-			else if ('relationId' in data) {
-				const tag = data as BlockNestedTagInfo
-				if (
-					tag.name?.toLowerCase().includes(searchText) ||
-					tag.localName?.toLowerCase().includes(searchText) ||
-					tag.relationId?.toString().includes(searchText)
-				)
-					return true
-			}
-		}
-
-		return false
 	}
 
 	return (

@@ -1,75 +1,22 @@
 import api from '@/api/swagger-api'
+import { BlockSimpleInfo, BlockTreeInfo, TagSimpleInfo } from '@/api/swagger/data-contracts'
 import {
-	AccessType,
-	BlockNestedTagInfo,
-	BlockSimpleInfo,
-	BlockTagRelation,
-	BlockTreeInfo,
-	TagInfo,
-} from '@/api/swagger/data-contracts'
-import BlockIcon from '@/app/components/icons/BlockIcon'
-import TagIcon from '@/app/components/icons/TagIcon'
+	BLOCK_ID_SHIFT,
+	convertToTreeSelectNodes,
+	createFullTree,
+	filterTreeNode,
+	RELATION_TAG_SEPARATOR,
+	SELECTED_SEPARATOR,
+} from '@/app/components/tagTreeSelect/treeSelectShared'
 import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { GlobalToken, theme, TreeSelect } from 'antd'
+import { theme, TreeSelect } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 interface QueryTreeSelectProps {
 	onChange: (value: number[], tagMapping: FlattenedNestedTagsType) => void
-}
-
-const SELECTED_SEPARATOR: string = '~'
-const RELATION_TAG_SEPARATOR: string = '.'
-const BLOCK_ID_SHIFT: number = -1000000
-const VIRTUAL_RELATION_SHIFT: number = 1000000
-
-// Функция для преобразования BlockTreeInfo[] в древовидную структуру
-function convertToTreeSelectNodes(
-	blockTree: BlockTreeInfo[] | null | undefined,
-	parentPath: string[] = [],
-	token: GlobalToken,
-): DefaultOptionType[] {
-	if (!blockTree) return []
-
-	return blockTree
-		.map((block) => {
-			const currentPath = [...parentPath, block.name]
-			const fullTitle = currentPath.join('.')
-
-			return {
-				title: (
-					<>
-						<BlockIcon /> {block.name}
-					</>
-				),
-				value: BLOCK_ID_SHIFT - 3 - block.id, // Отрицательные значения для блоков (и поправка на 3 из-за тех, которые мы создаем сами)
-				fullTitle,
-				selectable: false, // Блоки не выбираются
-				data: block,
-				children: [
-					...block.tags.map((tag) => ({
-						title: (
-							<>
-								<TagIcon type={tag.sourceType} />
-								&ensp;{tag.localName}
-								&emsp;
-								<pre style={{ display: 'inline-block', color: token.colorTextDisabled }}>
-									#{tag.id}
-									{tag.relationId > 0 && tag.relationId < VIRTUAL_RELATION_SHIFT ? <>&emsp;{tag.name}</> : <></>}
-								</pre>
-							</>
-						),
-						value: tag.relationId, // Используем relationId как идентификатор
-						fullTitle: `${fullTitle}.${tag.localName}`,
-						data: tag,
-					})),
-					...convertToTreeSelectNodes(block.children, currentPath, token),
-				],
-			}
-		})
-		.sort((a, b) => a.fullTitle!.localeCompare(b.fullTitle!))
 }
 
 // Функция для создания маппинга тегов
@@ -128,91 +75,10 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			api
 				.tagsReadAll()
 				.then((res) => res.data)
-				.catch(() => [] as TagInfo[]),
-		]).then(([blocksTree, allTags]) => {
-			// Собираем ID всех тегов в дереве
-			const allTagIds = new Set<number>()
-			const collectTagIds = (blocks: BlockTreeInfo[]) => {
-				blocks.forEach((block) => {
-					block.tags.forEach((tag) => allTagIds.add(tag.id))
-					if (block.children) collectTagIds(block.children)
-				})
-			}
-			collectTagIds(blocksTree)
-
-			// Фильтруем нераспределенные теги
-			const orphanTags = allTags
-				.filter((tag) => !allTagIds.has(tag.id))
-				.map((tag, index) => ({
-					...tag,
-					relationId: -(index + 1), // Уникальные отрицательные ID для связей
-					relationType: BlockTagRelation.Static,
-					localName: tag.name,
-					sourceId: 0,
-				}))
-
-			// Создаем общий контейнер для дерева блоков
-			const allBlocksBlock: BlockTreeInfo = {
-				id: -1,
-				guid: 'virtual',
-				name: '1. Дерево блоков',
-				fullName: '1. Дерево блоков',
-				tags: [],
-				children: blocksTree,
-				accessRule: {
-					ruleId: 0,
-					access: AccessType.Manager,
-				},
-			}
-
-			// Создаем виртуальный блок для нераспределенных тегов
-			const orphanTagsBlock: BlockTreeInfo = {
-				id: -2,
-				guid: 'virtual',
-				name: '2. Нераспределенные теги',
-				fullName: '2. Нераспределенные теги',
-				tags: orphanTags,
-				children: [],
-				accessRule: {
-					ruleId: 0,
-					access: AccessType.Manager,
-				},
-			}
-
-			// Создаем виртуальный блок для всех тегов
-			const allTagsBlock: BlockTreeInfo = {
-				id: -3, // Уникальный ID
-				guid: 'all-tags',
-				name: '3. Все теги',
-				fullName: '3. Все теги',
-				tags: allTags.map((tag) => ({
-					...tag,
-					relationId: VIRTUAL_RELATION_SHIFT + tag.id, // Виртуальные связи
-					relationType: BlockTagRelation.Static,
-					localName: tag.name,
-					sourceId: 0,
-				})),
-				children: [],
-				accessRule: {
-					ruleId: 0,
-					access: AccessType.Manager,
-				},
-			}
-
+				.catch(() => [] as TagSimpleInfo[]),
+		]).then((data) => {
 			// Создаем полное дерево
-			const fullTree = [allBlocksBlock, orphanTagsBlock, allTagsBlock]
-
-			// Формируем маппинг relationId -> tagId
-			const relationMap: Record<number, number> = {}
-			const buildRelationMap = (blocks: BlockTreeInfo[]) => {
-				blocks.forEach((block) => {
-					block.tags.forEach((tag) => {
-						relationMap[tag.relationId] = tag.id
-					})
-					if (block.children) buildRelationMap(block.children)
-				})
-			}
-			buildRelationMap(fullTree)
+			const fullTree = createFullTree(data)
 
 			setTagMapping(flattenNestedTags(fullTree))
 			setTreeData(convertToTreeSelectNodes(fullTree, undefined, token))
@@ -269,42 +135,6 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 		},
 		[onChange, searchParams, setSearchParams, tagMapping, checkedRelations],
 	)
-
-	// Функция фильтрации узлов
-	const filterTreeNode = (inputValue: string, treeNode: DefaultOptionType): boolean => {
-		const searchText = inputValue.toLowerCase()
-		const node = treeNode
-
-		// Поиск по полному пути
-		if (node.fullTitle?.toLowerCase().includes(searchText)) return true
-
-		// Поиск по данным узла
-		if (node.data) {
-			const data = node.data
-
-			// Для блоков
-			if ('fullName' in data) {
-				const block = data as BlockTreeInfo
-				if (block.name?.toLowerCase().includes(searchText) || block.fullName?.toLowerCase().includes(searchText)) {
-					return true
-				}
-			}
-			// Для тегов
-			else if ('relationId' in data) {
-				const tag = data as BlockNestedTagInfo
-				if (
-					tag.name?.toLowerCase().includes(searchText) ||
-					tag.localName?.toLowerCase().includes(searchText) ||
-					String(tag.id) == searchText ||
-					tag.guid?.toLowerCase() == searchText
-				) {
-					return true
-				}
-			}
-		}
-
-		return false
-	}
 
 	// Подсчет уникальных выбранных тегов
 	const countSelectedTags = useCallback(() => {
