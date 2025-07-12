@@ -7,9 +7,10 @@ import { Table } from 'antd'
 import Column from 'antd/lib/table/Column'
 
 type ExactValuesRowType = {
+	relationId: number // Добавляем идентификатор связи
 	id: number
 	guid: string
-	localName: string
+	localName: string // Используем локальное имя из связи
 	type: TagType
 	value: TagValue
 	quality: TagQuality
@@ -17,16 +18,17 @@ type ExactValuesRowType = {
 	sourceType: SourceType
 }
 
-const ExactValuesMode = ({ values }: TagViewerModeProps) => {
-	const exactValues: ExactValuesRowType[] = values.map((x) => {
+const ExactValuesMode = ({ relations }: TagViewerModeProps) => {
+	const exactValues: ExactValuesRowType[] = relations.map(({ relationId, value: x }) => {
 		const valueObject: ValueRecord = x.values.length
 			? x.values[0]
 			: { date: '', dateString: '', quality: TagQuality.BadNoValues, value: null }
 		return {
+			relationId, // Сохраняем идентификатор связи
 			id: x.id,
 			frequency: x.frequency,
 			guid: x.guid,
-			localName: x.localName,
+			localName: x.localName, // Локальное имя из связи
 			type: x.type,
 			value: valueObject.value,
 			quality: valueObject.quality,
@@ -35,7 +37,7 @@ const ExactValuesMode = ({ values }: TagViewerModeProps) => {
 	})
 
 	return (
-		<Table dataSource={exactValues} size='small' rowKey='guid'>
+		<Table dataSource={exactValues} size='small' rowKey='relationId'>
 			<Column
 				title='Тег'
 				dataIndex='guid'

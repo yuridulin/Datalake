@@ -1,6 +1,7 @@
 import { Button, Col, DatePicker, Divider, Radio, Row, Select } from 'antd'
 
 import api from '@/api/swagger-api'
+import { ValueRecord } from '@/api/swagger/data-contracts'
 import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
 import ExactValuesMode from '@/app/pages/values/tagViewerModes/ExactValuesMode'
 import TimedValuesMode from '@/app/pages/values/tagViewerModes/TimedValuesMode'
@@ -43,8 +44,11 @@ const TagsViewer = observer(() => {
 	const [tagMapping, setTagMapping] = useState({} as FlattenedNestedTagsType)
 	const initialMode = (searchParams.get('mode') as TimeMode) || TimeModes.LIVE
 
+	// Добавляем состояние для выбранных связей
+	//const [selectedRelations, setSelectedRelations] = useState<number[]>([])
+
 	const [request, setRequest] = useState({
-		tags: [] as number[],
+		relations: [] as number[],
 		old: parseDate(searchParams.get('old'), dayjs().add(-1, 'hour')),
 		young: parseDate(searchParams.get('young'), dayjs()),
 		exact: parseDate(searchParams.get(TimeModes.EXACT), dayjs()),
@@ -53,11 +57,12 @@ const TagsViewer = observer(() => {
 		update: false,
 	})
 
-	const [values, setValues] = useState([] as TagValueWithInfo[])
+	// Изменяем тип значений на массив объектов с информацией о связи
+	const [values, setValues] = useState<{ relationId: number; value: TagValueWithInfo }[]>([])
 
 	const handleTagChange = useCallback((value: number[], currentTagMapping: FlattenedNestedTagsType) => {
 		setTagMapping(currentTagMapping)
-		setRequest((prev) => ({ ...prev, tags: value }))
+		setRequest((prev) => ({ ...prev, relations: value })) // Исправляем на relations
 	}, [])
 
 	const handleModeChange = useCallback((value: TimeMode) => {
@@ -65,7 +70,11 @@ const TagsViewer = observer(() => {
 	}, [])
 
 	const getValues = () => {
-		if (request.tags.length === 0) return setValues([])
+		if (request.relations.length === 0) return setValues([])
+
+		// Получаем уникальные tagId из выбранных связей
+		const tagIds = Array.from(new Set(request.relations.map((relId) => tagMapping[relId]?.id).filter(Boolean)))
+
 		const timeSettings =
 			request.mode === TimeModes.LIVE
 				? {}
@@ -80,20 +89,32 @@ const TagsViewer = observer(() => {
 			.valuesGet([
 				{
 					requestKey: 'viewer-tags',
-					tagsId: request.tags,
+					tagsId: tagIds,
 					...timeSettings,
 				},
 			])
 			.then((res) => {
-				setValues(
-					res.data[0].tags.map((tag) => {
-						const mapping = tagMapping[tag.id]
-						return {
-							...tag,
-							localName: mapping?.localName ?? tag.name,
-						} as TagValueWithInfo
-					}),
-				)
+				// Создаем маппинг tagId -> значения
+				const tagValuesMap = new Map<number, ValueRecord[]>()
+				res.data[0].tags.forEach((tag) => {
+					tagValuesMap.set(tag.id, tag.values)
+				})
+
+				// Формируем значения для каждой связи
+				const newValues = request.relations.map((relId) => {
+					const relationInfo = tagMapping[relId]
+					const tagValues = tagValuesMap.get(relationInfo.id) || []
+
+					return {
+						relationId: relId,
+						value: {
+							...relationInfo,
+							values: tagValues,
+						} as TagValueWithInfo,
+					}
+				})
+
+				setValues(newValues)
 			})
 			.catch(() => setValues([]))
 	}
@@ -202,7 +223,11 @@ const TagsViewer = observer(() => {
 				</Row>
 				<Divider orientation='left'>Значения</Divider>
 			</div>
-			{request.mode === TimeModes.OLD_YOUNG ? <TimedValuesMode values={values} /> : <ExactValuesMode values={values} />}
+			{request.mode === TimeModes.OLD_YOUNG ? (
+				<TimedValuesMode relations={values} />
+			) : (
+				<ExactValuesMode relations={values} />
+			)}
 		</>
 	)
 })
