@@ -1,4 +1,3 @@
-import HistoryReadMetrics from '@/app/pages/admin/metrics/HistoryReadMetrics'
 import TagsAccessMetrics from '@/app/pages/admin/metrics/TagsAccessMetrics'
 import TagView from '@/app/pages/tags/tag/TagView'
 import TagsAggregatedList from '@/app/pages/tags/TagsAggregatedList'
@@ -15,7 +14,6 @@ import BlocksMover from '../pages/blocks/BlocksMover'
 import BlocksTree from '../pages/blocks/BlocksTree'
 import LogsTable from '../pages/dashboard/LogsTable'
 import EnergoId from '../pages/login/EnergoId'
-import LoginPanel from '../pages/login/LoginPanel'
 import Offline from '../pages/offline/Offline'
 import SourceForm from '../pages/sources/source/SourceForm'
 import SourcesList from '../pages/sources/SourcesList'
@@ -37,7 +35,10 @@ import routes from './routes'
 const router = createBrowserRouter([
 	{
 		path: routes.auth.loginPage,
-		element: <LoginPanel />,
+		lazy: () =>
+			import('@/app/pages/login/LoginPanel').then((mod) => ({
+				Component: mod.default,
+			})),
 	},
 	{
 		path: routes.auth.energoId,
@@ -113,10 +114,6 @@ const router = createBrowserRouter([
 			{
 				path: routes.admin.metrics.root,
 				children: [
-					{
-						path: routes.admin.metrics.database,
-						element: <HistoryReadMetrics />,
-					},
 					{
 						path: routes.admin.metrics.tags,
 						element: <TagsAccessMetrics />,

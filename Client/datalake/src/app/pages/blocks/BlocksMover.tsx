@@ -8,7 +8,8 @@ import compareValues from '../../../functions/compareValues'
 import PageHeader from '../../components/PageHeader'
 import routes from '../../router/routes'
 
-function transformBlockTreeInfo(blocks: BlockTreeInfo[]): TreeDataNode[] {
+function transformBlockTreeInfo(blocks: BlockTreeInfo[] | null | undefined): TreeDataNode[] {
+	if (!blocks) return []
 	const data = blocks.map((block) => {
 		const transformedBlock: TreeDataNode = {
 			key: block.id,
@@ -114,8 +115,6 @@ const BlocksMover = observer(() => {
 	}
 
 	useEffect(load, [])
-
-	console.log(token)
 
 	return (
 		<>

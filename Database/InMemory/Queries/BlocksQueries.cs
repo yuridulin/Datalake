@@ -37,7 +37,8 @@ public static class BlocksQueries
 						Id = tag.Id,
 						Name = tag.Name,
 						Guid = tag.GlobalGuid,
-						Relation = relation.Relation,
+						RelationId = relation.Id,
+						RelationType = relation.Relation,
 						LocalName = relation.Name ?? tag.Name,
 						Type = tag.Type,
 						Frequency = tag.Frequency,
@@ -111,19 +112,21 @@ public static class BlocksQueries
 				.ToArray(),
 			Tags = state.BlockTags
 				.Where(relation => relation.BlockId == block.Id)
-				.Join(state.Tags, relation => relation.TagId, tag => tag.Id, (relation, tag) => new BlockNestedTagInfo
+				.Select(relation => !state.TagsById.TryGetValue(relation.TagId ?? 0, out var tag) ? null : new BlockNestedTagInfo
 				{
 					Id = tag.Id,
 					Name = tag.Name,
 					Guid = tag.GlobalGuid,
-					Relation = relation.Relation,
+					RelationId = relation.Id,
+					RelationType = relation.Relation,
 					LocalName = relation.Name ?? tag.Name,
 					Type = tag.Type,
 					Frequency = tag.Frequency,
 					SourceId = tag.SourceId,
 					SourceType = state.SourcesById.TryGetValue(tag.SourceId, out var source) ? source.Type : SourceType.NotSet,
 				})
-				.ToArray(),
+				.Where(x => x != null)
+				.ToArray()!,
 			AccessRights = state.AccessRights
 				.Where(rule => rule.BlockId == block.Id)
 				.Select(rule => new AccessRightsForObjectInfo

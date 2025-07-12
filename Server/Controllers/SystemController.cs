@@ -114,11 +114,23 @@ public class SystemController(
 	{
 		var user = Authenticate();
 
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
-
 		return tagsStateService.GetTagsStates()
 			.Where(x => AccessChecks.HasAccessToTag(user, AccessType.Viewer, x.Key))
 			.ToDictionary();
+	}
+
+	/// <summary>
+	/// Информация о подключении к источникам данных
+	/// </summary>
+	/// <returns></returns>
+	[HttpGet("tags/{id}")]
+	public ActionResult<Dictionary<string, DateTime>> GetTagState(int id)
+	{
+		var user = Authenticate();
+
+		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Viewer, id);
+
+		return tagsStateService.GetTagsStates().TryGetValue(id, out var state) ? state : [];
 	}
 
 	/// <summary>

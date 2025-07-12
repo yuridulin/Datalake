@@ -10,8 +10,7 @@ public class BlockTreeInfo : BlockWithTagsInfo
 	/// <summary>
 	/// Вложенные блоки
 	/// </summary>
-	[Required]
-	public BlockTreeInfo[] Children { get; set; } = [];
+	public BlockTreeInfo[]? Children { get; set; }
 
 	/// <summary>
 	/// Полное имя блока, включающее имена всех родительских блоков по иерархии через "."

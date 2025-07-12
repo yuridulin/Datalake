@@ -14,4 +14,9 @@ public class SourceEntryInfo
 	/// Сопоставленный тег в базе
 	/// </summary>
 	public SourceTagInfo? TagInfo { get; set; }
+
+	/// <summary>
+	/// Используется ли тег в запросах
+	/// </summary>
+	public bool IsTagInUse { get; set; }
 }

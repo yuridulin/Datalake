@@ -85,7 +85,8 @@ public class DatalakeDerivedDataStore
 								Type = tag.Type,
 								SourceType = SourceType.NotSet,
 								LocalName = x.Name ?? string.Empty,
-								Relation = x.Relation,
+								RelationId = x.Id,
+								RelationType = x.Relation,
 								SourceId = tag.SourceId,
 							};
 						}
@@ -106,6 +107,7 @@ public class DatalakeDerivedDataStore
 				.Where(x => x.ParentId == id)
 				.Select(x =>
 				{
+					var blockChildren = ReadBlockChildren(blocks, x.Id, prefixString + x.Name);
 					var block = new BlockTreeInfo
 					{
 						Id = x.Id,
@@ -114,22 +116,9 @@ public class DatalakeDerivedDataStore
 						Name = x.Name,
 						FullName = prefixString + x.Name,
 						Description = x.Description,
-						Tags = x.Tags
-							.Select(tag => new BlockNestedTagInfo
-							{
-								Guid = tag.Guid,
-								Name = tag.Name,
-								Id = tag.Id,
-								Relation = tag.Relation,
-								SourceId = tag.SourceId,
-								LocalName = tag.LocalName,
-								Type = tag.Type,
-								Frequency = tag.Frequency,
-								SourceType = tag.SourceType,
-							})
-							.ToArray(),
+						Tags = x.Tags,
 						AccessRule = x.AccessRule,
-						Children = ReadBlockChildren(blocks, x.Id, prefixString + x.Name),
+						Children = blockChildren.Length == 0 ? null : blockChildren,
 					};
 					return block;
 				})

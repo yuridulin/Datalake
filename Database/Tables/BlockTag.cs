@@ -1,5 +1,8 @@
 ﻿using Datalake.PublicApi.Enums;
+using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
@@ -11,12 +14,21 @@ namespace Datalake.Database.Tables;
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public record class BlockTag
 {
-	const string TableName = "BlockTags";
+	/// <summary>
+	/// Название таблицы
+	/// </summary>
+	public const string TableName = "BlockTags";
 
 	/// <summary>Конструктор для LinqToDB</summary>
 	public BlockTag() { }
 
 	// поля в БД
+
+	/// <summary>
+	/// Идентификатор
+	/// </summary>
+	[Key, Identity, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+	public int Id { get; set; }
 
 	/// <summary>
 	/// Идентификатор блока

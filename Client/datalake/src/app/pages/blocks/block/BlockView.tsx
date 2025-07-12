@@ -115,11 +115,11 @@ const BlockView = observer(() => {
 						key: 'fields',
 						label: 'Поля',
 						children: (
-							<Table dataSource={block.tags} size='small' pagination={false} rowKey='guid'>
+							<Table dataSource={block.tags} size='small' pagination={false} rowKey='relationId'>
 								<Column
-									dataIndex='guid'
+									dataIndex='id'
 									title='Название'
-									render={(_, record: BlockNestedTagInfo) => <TagButton tag={record} />}
+									render={(_, record: BlockNestedTagInfo) => <TagButton tag={{ ...record, name: record.localName }} />}
 								/>
 								<Column
 									dataIndex='value'
@@ -166,8 +166,8 @@ const BlockView = observer(() => {
 						children: (
 							<>
 								{block.children?.length > 0 ? (
-									block.children.map((record) => (
-										<div key={record.id} style={childrenContainerStyle}>
+									block.children.map((record, i) => (
+										<div key={i} style={childrenContainerStyle}>
 											<BlockButton
 												key={record.id}
 												block={{

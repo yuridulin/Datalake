@@ -1,5 +1,4 @@
 import api from '@/api/swagger-api'
-import getAccessTypeName from '@/functions/getAccessTypeName'
 import hasAccess from '@/functions/hasAccess'
 import { user } from '@/state/user'
 import { accessOptions } from '@/types/accessOptions'
@@ -33,9 +32,6 @@ const UserGroupForm = observer(() => {
 					accessType: res.data.globalAccessType,
 					users: res.data.users,
 				} as UserGroupUpdateRequest)
-				console.log(
-					`Доступ к групе: ${getAccessTypeName(res.data.accessRule.access)} по правилу ${res.data.accessRule.ruleId}`,
-				)
 			}
 		})
 	}

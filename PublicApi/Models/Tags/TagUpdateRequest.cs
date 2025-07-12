@@ -97,4 +97,9 @@ public class TagUpdateRequest
 	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения
 	/// </summary>
 	public int? SourceTagId { get; set; }
+
+	/// <summary>
+	/// Идентификатор связи, по которой выбран тег-источник данных для расчета агрегированного значения
+	/// </summary>
+	public int? SourceTagRelationId { get; set; }
 }

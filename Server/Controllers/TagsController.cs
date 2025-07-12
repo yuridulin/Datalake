@@ -38,7 +38,7 @@ public class TagsController(
 	/// <param name="id">Идентификатор тега</param>
 	/// <returns>Объект информации о теге</returns>
 	[HttpGet("{id}")]
-	public ActionResult<TagInfo> Read(int id)
+	public ActionResult<TagFullInfo> Read(int id)
 	{
 		var user = Authenticate();
 
@@ -63,20 +63,6 @@ public class TagsController(
 		var user = Authenticate();
 
 		return tagsRepository.ReadAll(user, sourceId, id, names, guids);
-	}
-
-	/// <summary>
-	/// Получение списка тегов, подходящих для использования в формулах
-	/// </summary>
-	/// <param name="guid">Идентификатор тега</param>
-	/// <returns>Список тегов</returns>
-	[HttpGet("{guid}/inputs")]
-	public ActionResult<TagAsInputInfo[]> ReadPossibleInputs(
-		[BindRequired, FromRoute] Guid guid)
-	{
-		var user = Authenticate();
-
-		return tagsRepository.ReadPossibleInputs(user, guid);
 	}
 
 	/// <summary>

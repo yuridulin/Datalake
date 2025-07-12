@@ -4,7 +4,7 @@ import TagButton from '@/app/components/buttons/TagButton'
 import { Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
-import { TagInfo, ValueRecord } from '../../../api/swagger/data-contracts'
+import { TagInfo, TagQuality, ValueRecord } from '../../../api/swagger/data-contracts'
 import compareValues from '../../../functions/compareValues'
 import { useInterval } from '../../../hooks/useInterval'
 import TagCompactValue from '../../components/TagCompactValue'
@@ -92,7 +92,13 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false }: TagsTablePro
 					sorter={(a: TagInfo, b: TagInfo) => compareValues(values[a.id]?.value, values[b.id]?.value)}
 					render={(_, record: TagInfo) => {
 						const value = values[record.id]
-						return <TagCompactValue value={value?.value} type={record.type} quality={value?.quality} />
+						return (
+							<TagCompactValue
+								value={value?.value}
+								type={record.type}
+								quality={value?.quality ?? TagQuality.BadNoConnect}
+							/>
+						)
 					}}
 				/>
 			)}

@@ -87,10 +87,6 @@ const UserForm = observer(() => {
 			.then(() => load())
 	}
 
-	const onSearch = (value: string) => {
-		console.log('search:', value)
-	}
-
 	// Filter `option.label` match the user type `input`
 	const filterOption = (input: string, option?: { label: string; value: string }) =>
 		(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -258,7 +254,6 @@ const UserForm = observer(() => {
 						<Select
 							showSearch
 							optionFilterProp='children'
-							onSearch={onSearch}
 							filterOption={filterOption}
 							value={request.energoIdGuid || ''}
 							placeholder='Укажите учетную запись EnergoID'

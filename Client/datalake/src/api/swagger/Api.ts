@@ -18,7 +18,6 @@ import {
   BlockUpdateRequest,
   BlockWithTagsInfo,
   EnergoIdInfo,
-  HistoryReadMetricInfo,
   LogCategory,
   LogInfo,
   LogType,
@@ -27,8 +26,8 @@ import {
   SourceInfo,
   SourceItemInfo,
   SourceState,
-  TagAsInputInfo,
   TagCreateRequest,
+  TagFullInfo,
   TagInfo,
   TagUpdateRequest,
   UserAuthInfo,
@@ -551,6 +550,22 @@ export class Api<
    * No description
    *
    * @tags System
+   * @name SystemGetTagState
+   * @summary Информация о подключении к источникам данных
+   * @request GET:/api/System/tags/{id}
+   * @response `200` `Record<string,string>`
+   */
+  systemGetTagState = (id: number, params: RequestParams = {}) =>
+    this.request<Record<string, string>, any>({
+      path: `/api/System/tags/${id}`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags System
    * @name SystemGetSettings
    * @summary Получение информации о настройках сервера
    * @request GET:/api/System/settings
@@ -629,22 +644,6 @@ export class Api<
   /**
    * No description
    *
-   * @tags System
-   * @name SystemGetReadMetrics
-   * @summary Получение списка сохраненных метрик
-   * @request GET:/api/System/metrics/read
-   * @response `200` `(HistoryReadMetricInfo)[]` Список метрик
-   */
-  systemGetReadMetrics = (params: RequestParams = {}) =>
-    this.request<HistoryReadMetricInfo[], any>({
-      path: `/api/System/metrics/read`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
    * @tags Tags
    * @name TagsCreate
    * @summary Создание нового тега
@@ -699,10 +698,10 @@ export class Api<
    * @name TagsRead
    * @summary Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
    * @request GET:/api/Tags/{id}
-   * @response `200` `TagInfo` Объект информации о теге
+   * @response `200` `TagFullInfo` Объект информации о теге
    */
   tagsRead = (id: number, params: RequestParams = {}) =>
-    this.request<TagInfo, any>({
+    this.request<TagFullInfo, any>({
       path: `/api/Tags/${id}`,
       method: "GET",
       format: "json",
@@ -742,22 +741,6 @@ export class Api<
     this.request<File, any>({
       path: `/api/Tags/${id}`,
       method: "DELETE",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Tags
-   * @name TagsReadPossibleInputs
-   * @summary Получение списка тегов, подходящих для использования в формулах
-   * @request GET:/api/Tags/{guid}/inputs
-   * @response `200` `(TagAsInputInfo)[]` Список тегов
-   */
-  tagsReadPossibleInputs = (guid: string, params: RequestParams = {}) =>
-    this.request<TagAsInputInfo[], any>({
-      path: `/api/Tags/${guid}/inputs`,
-      method: "GET",
-      format: "json",
       ...params,
     });
   /**

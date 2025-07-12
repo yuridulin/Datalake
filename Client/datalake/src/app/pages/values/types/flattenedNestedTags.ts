@@ -5,6 +5,4 @@ export type BlockFlattenNestedTagInfo = BlockNestedTagInfo & {
 	parents: BlockSimpleInfo[]
 }
 
-export type FlattenedNestedTagsType = {
-	[tagId: number]: BlockFlattenNestedTagInfo
-}
+export type FlattenedNestedTagsType = Record<number, BlockFlattenNestedTagInfo>

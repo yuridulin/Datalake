@@ -18,4 +18,10 @@ public class TagUpdateInputRequest
 	/// </summary>
 	[Required]
 	public required int TagId { get; set; }
+
+	/// <summary>
+	/// Идентификатор связи, по которой выбран закрепленный тег
+	/// </summary>
+	[Required]
+	public required int TagRelationId { get; set; }
 }

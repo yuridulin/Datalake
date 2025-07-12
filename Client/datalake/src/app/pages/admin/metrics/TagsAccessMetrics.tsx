@@ -5,7 +5,7 @@ import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 
 type TagWithMetric = {
-	guid: string
+	id: number
 	name: string
 	requests: {
 		key: string
@@ -19,7 +19,7 @@ const columns: ColumnsType<TagWithMetric> = [
 		title: 'Тег',
 	},
 	{
-		dataIndex: 'guid',
+		dataIndex: 'id',
 		title: 'Был ли доступ',
 		render: (_, row) => (row.requests.length > 0 ? 'Да' : 'Нет'),
 	},
@@ -53,9 +53,9 @@ const TagsAccessMetrics = () => {
 			.then(() => {
 				setTagsMetrics(
 					tags.map((tag) => {
-						const metric = metrics[tag.guid]
+						const metric = metrics[tag.id]
 						return {
-							guid: tag.guid,
+							id: tag.id,
 							name: tag.name,
 							requests: metric ? Object.entries(metric).map((x) => ({ key: x[0], date: x[1] })) : [],
 						}
@@ -63,7 +63,7 @@ const TagsAccessMetrics = () => {
 				)
 			})
 			.catch((e) => {
-				console.log(e)
+				console.error(e)
 				notification.error({ message: 'Ошибка при построении списка метрик' })
 			})
 	}

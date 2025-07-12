@@ -11,7 +11,10 @@ namespace Datalake.Database.Tables;
 [Table(TableName), LinqToDB.Mapping.Table(TableName)]
 public record class TagInput
 {
-	const string TableName = "TagInputs";
+	/// <summary>
+	/// Название таблицы
+	/// </summary>
+	public const string TableName = "TagInputs";
 
 	/// <summary>Конструктор для LinqToDB</summary>
 	public TagInput() { }
@@ -35,6 +38,12 @@ public record class TagInput
 	/// </summary>
 	[Column]
 	public int? InputTagId { get; set; }
+
+	/// <summary>
+	/// Идентификатор связи, по которой получен входной тег
+	/// </summary>
+	[Column]
+	public int? InputTagRelationId { get; set; }
 
 	/// <summary>
 	/// Имя переменной в формуле

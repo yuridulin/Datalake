@@ -1,24 +1,28 @@
 import api from '@/api/swagger-api'
+import BlockButton from '@/app/components/buttons/BlockButton'
 import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
 import CopyableText from '@/app/components/CopyableText'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
+import TabsView from '@/app/components/tabsView/TabsView'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagTypeEl from '@/app/components/TagTypeEl'
 import TagValueText from '@/app/components/TagValue'
 import { user } from '@/state/user'
-import { Button, Spin, Table } from 'antd'
+import { INNER_REQUESTS } from '@/types/constants'
+import { Button, Spin, Table, Tag } from 'antd'
+import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import {
 	AccessType,
 	AggregationPeriod,
 	SourceType,
 	TagAggregation,
-	TagInfo,
+	TagFullInfo,
 	TagQuality,
 	ValueRecord,
 } from '../../../../api/swagger/data-contracts'
@@ -30,14 +34,26 @@ const TagView = observer(() => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 
-	const [tag, setTag] = useState({} as TagInfo)
+	const [tag, setTag] = useState({} as TagFullInfo)
 	const [isLoading, setLoading] = useState(false)
 
 	const [viewTags, setViewTags] = useState([] as number[])
 	const [viewValues, setViewValues] = useState({} as Record<number, ValueRecord>)
 	const [thisTagValue, setThisTagValue] = useState({} as ValueRecord)
+	const [metrics, setMetrics] = useState({} as Record<string, string>)
 
 	// получение инфы
+	const getMetrics = useCallback(() => {
+		api
+			.systemGetTagState(Number(id))
+			.then((res) => {
+				setMetrics(res.data)
+			})
+			.catch(() => {
+				setMetrics({})
+			})
+	}, [id])
+
 	const loadTagData = () => {
 		if (!id) return
 		setLoading(true)
@@ -51,11 +67,12 @@ const TagView = observer(() => {
 				} else {
 					setViewTags([res.data.id])
 				}
+				getMetrics()
 			})
 			.finally(() => setLoading(false))
 	}
 
-	useEffect(loadTagData, [id])
+	useEffect(loadTagData, [id, getMetrics])
 
 	const getViewValues = useCallback(() => {
 		if (!id) return
@@ -68,12 +85,13 @@ const TagView = observer(() => {
 				},
 			])
 			.then((res) => {
+				const thisId = Number(id)
 				const newViewValues = {} as Record<number, ValueRecord>
 				res.data[0].tags.forEach((tag) => {
 					newViewValues[tag.id] = tag.values.length
 						? tag.values[0]
 						: { date: '', dateString: '', quality: TagQuality.BadNoValues, value: null }
-					if (tag.guid === id) setThisTagValue(newViewValues[tag.id])
+					if (tag.id === thisId) setThisTagValue(newViewValues[tag.id])
 				})
 				setViewValues(newViewValues)
 			})
@@ -158,6 +176,7 @@ const TagView = observer(() => {
 					indentSize={1}
 					pagination={false}
 					dataSource={tag.formulaInputs}
+					rowKey={'relationId'}
 					columns={[
 						{
 							key: 'name',
@@ -208,6 +227,93 @@ const TagView = observer(() => {
 		<TagCompactValue value={thisTagValue.value} type={tag.type} quality={thisTagValue.quality} />
 	)
 
+	const tabs = useMemo(
+		() => [
+			{
+				key: 'blocks',
+				label: 'Блоки с этим тегом',
+				children:
+					!tag.blocks || tag.blocks.length === 0 ? (
+						<i>нет</i>
+					) : (
+						<Table
+							size='small'
+							dataSource={tag.blocks}
+							columns={[
+								{
+									key: 'block',
+									title: 'Блок',
+									dataIndex: 'id',
+									width: '40%',
+									render: (_, block) => <BlockButton block={block} />,
+								},
+								{
+									key: 'name',
+									title: 'Название в блоке',
+									dataIndex: 'localName',
+								},
+							]}
+						/>
+					),
+			},
+			{
+				key: 'logs',
+				label: 'События',
+				children: <LogsTableEl tagGuid={tag.guid} />,
+			},
+			{
+				key: 'metrics',
+				label: 'Обращения к этому тегу',
+				children: (
+					<Table
+						size='small'
+						columns={[
+							{
+								key: 'date',
+								dataIndex: 'date',
+								title: 'Последнее обращение',
+								width: '14em',
+							},
+							{
+								key: 'requestKey',
+								dataIndex: 'requestKey',
+								title: 'Идентификатор запроса',
+								render: (key) => {
+									switch (key) {
+										case 'calculate-collector':
+											return (
+												<>
+													<Tag>внутренний</Tag> вычислитель
+												</>
+											)
+										case 'aggregate-collector-min':
+										case 'aggregate-collector-hour':
+										case 'aggregate-collector-day':
+											return (
+												<>
+													<Tag>внутренний</Tag> агрегатор
+												</>
+											)
+										default:
+											return <>{key}</>
+									}
+								},
+							},
+						]}
+						dataSource={Object.entries(metrics)
+							.map(([requestKey, date]) => ({
+								date: dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
+								requestKey: requestKey,
+							}))
+							// внутренние запросы, игнорируем их
+							.filter((x) => !INNER_REQUESTS.includes(x.requestKey))}
+					/>
+				),
+			},
+		],
+		[tag, metrics],
+	)
+
 	return isLoading ? (
 		<Spin />
 	) : (
@@ -235,8 +341,7 @@ const TagView = observer(() => {
 
 			<InfoTable items={info} />
 			<br />
-
-			<LogsTableEl tagGuid={tag.guid} />
+			<TabsView items={tabs} />
 		</>
 	)
 })

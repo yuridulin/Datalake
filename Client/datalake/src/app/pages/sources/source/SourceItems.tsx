@@ -1,7 +1,7 @@
 import api from '@/api/swagger-api'
 import TagButton from '@/app/components/buttons/TagButton'
-import { PlusCircleOutlined } from '@ant-design/icons'
-import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
+import { CheckCircleOutlined, CloseCircleOutlined, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons'
+import { Button, Input, Popconfirm, Table, TableColumnsType, Tag, theme } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
 import { SourceEntryInfo, SourceType, TagFrequency, TagInfo, TagType } from '../../../../api/swagger/data-contracts'
@@ -22,17 +22,20 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 	const [err, setErr] = useState(true)
 	const [created, setCreated] = useState(null as TagInfo | null)
 	const [search, setSearch] = useState('')
+	const { token } = theme.useToken()
 
 	const columns: TableColumnsType<SourceEntryInfo> = [
 		{
 			dataIndex: ['itemInfo', 'item'],
 			title: 'Путь в источнике',
+			width: '30%',
 			render: (_, record) => <>{record.itemInfo?.path ?? <Tag>Путь не существует</Tag>}</>,
 			sorter: (a, b) => compareValues(a.itemInfo?.path, b.itemInfo?.path),
 		},
 		{
 			dataIndex: ['itemInfo', 'value'],
 			title: 'Последнее значение',
+			width: '20em',
 			render: (_, record) =>
 				record.itemInfo ? (
 					<TagCompactValue
@@ -47,13 +50,9 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 		},
 		{
 			dataIndex: ['tagInfo', 'guid'],
-			title: 'Сопоставленный тег',
+			title: 'Сопоставленные теги',
 			render: (_, record) =>
-				record.tagInfo ? (
-					<span>
-						<TagButton tag={record.tagInfo} />
-					</span>
-				) : (
+				!record.tagInfo ? (
 					<span>
 						<Button
 							size='small'
@@ -61,8 +60,48 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 							onClick={() => createTag(record.itemInfo?.path ?? '', record.itemInfo?.type || TagType.String)}
 						></Button>
 					</span>
+				) : (
+					<span>
+						<TagButton tag={record.tagInfo} />
+						<Popconfirm
+							title={
+								<>
+									Вы уверены, что хотите удалить тег?
+									<br />
+									Убедитесь, что он не используется где-то еще, перед удалением
+								</>
+							}
+							placement='bottom'
+							onConfirm={() => deleteTag(record.tagInfo!.id)}
+							okText='Да'
+							cancelText='Нет'
+						>
+							<Button size='small' icon={<MinusCircleOutlined />}></Button>
+						</Popconfirm>
+					</span>
 				),
 			sorter: (a, b) => compareValues(a.tagInfo?.name, b.tagInfo?.name),
+		},
+		{
+			dataIndex: ['isTagInUse'],
+			width: '3em',
+			align: 'center',
+			title: (
+				<span title='Показывает, используется ли тег в запросах получения данных, внутренних или внешних. Подробнее о запросах можно узнать, перейдя на страницу просмотра информации о теге'>
+					Исп.
+				</span>
+			),
+			render: (_, record) =>
+				record.tagInfo ? (
+					record.isTagInUse ? (
+						<CheckCircleOutlined style={{ color: token.colorSuccess }} title='Тег используется' />
+					) : (
+						<CloseCircleOutlined title='Тег не используется' />
+					)
+				) : (
+					<></>
+				),
+			sorter: (a, b) => compareValues(a.tagInfo && a.isTagInUse, b.tagInfo && b.isTagInUse),
 		},
 	]
 
@@ -112,12 +151,15 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 			})
 	}
 
+	const deleteTag = (tagId: number) => {
+		api.tagsDelete(tagId).then(read)
+	}
+
 	const doSearch = debounce((value: string) => {
 		const tokens = value
 			.toLowerCase()
 			.split(' ')
 			.filter((x) => x.length > 0)
-		console.log('ищем по строкам:', tokens)
 		if (value.length > 0) {
 			setSearchedItems(
 				items.filter(
@@ -141,9 +183,6 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[items],
 	)
-	useEffect(() => {
-		console.log('Нашлось элементов: ' + searchedItems.length + ' из ' + items.length)
-	}, [searchedItems, items])
 	useEffect(read, [id])
 
 	if (type !== newType) return <>Тип источника изменен. Сохраните, чтобы продолжить</>

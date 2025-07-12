@@ -1,6 +1,7 @@
 import {
 	ApiOutlined,
 	BorderOutlined,
+	CalculatorOutlined,
 	CheckCircleOutlined,
 	CloseCircleOutlined,
 	FormOutlined,
@@ -28,6 +29,8 @@ const TagQualityEl = ({ quality }: TagQualityElProps) => {
 			return <ApiOutlined style={{ color: token.colorError }} title='Потеря связи' />
 		case TagQuality.BadNoValues:
 			return <BorderOutlined style={{ color: token.colorError }} title='Значения не существует' />
+		case TagQuality.BadCalcError:
+			return <CalculatorOutlined style={{ color: token.colorError }} title='Ошибка при вычислении' />
 
 		case TagQuality.GoodManualWrite:
 			return <FormOutlined style={{ color: token.colorSuccess }} title='Достоверное значение, ручной ввод' />
@@ -40,7 +43,7 @@ const TagQualityEl = ({ quality }: TagQualityElProps) => {
 			return <MoreOutlined style={{ color: token.colorError }} title='Значение не достоверно, протянуто' />
 
 		default:
-			return <QuestionOutlined />
+			return <QuestionOutlined title={String(quality)} />
 	}
 }
 

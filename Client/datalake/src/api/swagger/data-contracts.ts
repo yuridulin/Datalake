@@ -116,6 +116,7 @@ export enum TagAggregation {
  * 0 = Bad
  * 4 = Bad_NoConnect
  * 8 = Bad_NoValues
+ * 12 = Bad_CalcError
  * 26 = Bad_ManualWrite
  * 100 = Bad_LOCF
  * 192 = Good
@@ -127,6 +128,7 @@ export enum TagQuality {
   Bad = 0,
   BadNoConnect = 4,
   BadNoValues = 8,
+  BadCalcError = 12,
   BadManualWrite = 26,
   BadLOCF = 100,
   Good = 192,
@@ -438,8 +440,13 @@ export type BlockWithTagsInfo = BlockSimpleInfo & {
 
 /** Информация о закреплённом теге */
 export type BlockNestedTagInfo = TagSimpleInfo & {
+  /**
+   * Идентификатор связи
+   * @format int32
+   */
+  relationId: number;
   /** Тип поля блока для этого тега */
-  relation: BlockTagRelation;
+  relationType: BlockTagRelation;
   /**
    * Свое имя тега в общем списке
    * @minLength 1
@@ -505,7 +512,7 @@ export type AccessRightsForObjectInfo = AccessRightsSimpleInfo & {
 /** Информация о блоке в иерархическом представлении */
 export type BlockTreeInfo = BlockWithTagsInfo & {
   /** Вложенные блоки */
-  children: BlockTreeInfo[];
+  children?: BlockTreeInfo[] | null;
   /**
    * Полное имя блока, включающее имена всех родительских блоков по иерархии через "."
    * @minLength 1
@@ -579,6 +586,8 @@ export interface SourceEntryInfo {
   itemInfo?: SourceItemInfo | null;
   /** Сопоставленный тег в базе */
   tagInfo?: SourceTagInfo | null;
+  /** Используется ли тег в запросах */
+  isTagInUse?: boolean;
 }
 
 /** Информация о теге, берущем данные из этого источника */
@@ -743,44 +752,6 @@ export type UserAuthInfo = UserSimpleInfo & {
   energoId?: string | null;
 };
 
-/** Информация о результате выполнения запроса на чтение тегов */
-export interface HistoryReadMetricInfo {
-  /**
-   * Время записи значения
-   * @minLength 1
-   */
-  date: string;
-  /** Идентификаторы тегов */
-  tagsId: number[];
-  /**
-   * Настройки времени
-   * @minLength 1
-   */
-  timeSettings: string;
-  /**
-   * Время выполнения чтения
-   * @minLength 1
-   */
-  elapsed: string;
-  /**
-   * Прошедшее количество миллисекунд
-   * @format double
-   */
-  milliseconds: number;
-  /**
-   * Итоговый SQL код запроса
-   * @minLength 1
-   */
-  sql: string;
-  /**
-   * Количество прочитанных из БД записей
-   * @format int32
-   */
-  recordsCount: number;
-  /** Список запросов к API, которые являются причиной запроса к БД */
-  requestKeys: string[];
-}
-
 /** Информация о теге */
 export type TagInfo = TagSimpleInfo & {
   /** Произвольное описание тега */
@@ -825,7 +796,7 @@ export type TagInfo = TagSimpleInfo & {
   /** Временное окно для расчета агрегированного значения */
   aggregationPeriod?: AggregationPeriod | null;
   /** Идентификатор тега, который будет источником данных для расчета агрегированного значения */
-  sourceTag?: TagSimpleInfo | null;
+  sourceTag?: TagAsInputInfo | null;
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
@@ -837,6 +808,22 @@ export type TagInputInfo = TagSimpleInfo & {
    * @minLength 1
    */
   variableName: string;
+  /**
+   * Идентификатор связи
+   * @format int32
+   */
+  relationId?: number | null;
+  /** Правило доступа */
+  accessRule?: AccessRuleInfo;
+};
+
+/** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
+export type TagAsInputInfo = TagSimpleInfo & {
+  /**
+   * Идентификатор связи, по которой тег был выбран
+   * @format int32
+   */
+  relationId?: number | null;
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
@@ -863,10 +850,21 @@ export interface TagCreateRequest {
   blockId?: number | null;
 }
 
-/** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
-export type TagAsInputInfo = TagSimpleInfo & {
-  /** Правило доступа */
-  accessRule?: AccessRuleInfo;
+/** Полная информация о теге */
+export type TagFullInfo = TagInfo & {
+  /** Список блоков, в которых используется этот тег */
+  blocks: TagBlockRelationInfo[];
+};
+
+/** Краткая информация о блоке, имеющем связь с тегом, включая локальное имя тега в блоке */
+export type TagBlockRelationInfo = BlockSimpleInfo & {
+  /**
+   * Идентификатор связи
+   * @format int32
+   */
+  relationId: number;
+  /** Локальное имя тега в блоке */
+  localName?: string | null;
 };
 
 /** Данные запроса для изменение тега */
@@ -924,6 +922,11 @@ export interface TagUpdateRequest {
    * @format int32
    */
   sourceTagId?: number | null;
+  /**
+   * Идентификатор связи, по которой выбран тег-источник данных для расчета агрегированного значения
+   * @format int32
+   */
+  sourceTagRelationId?: number | null;
 }
 
 /** Необходимая информация для привязки тега в качестве входного для  */
@@ -938,6 +941,11 @@ export interface TagUpdateInputRequest {
    * @format int32
    */
   tagId: number;
+  /**
+   * Идентификатор связи, по которой выбран закрепленный тег
+   * @format int32
+   */
+  tagRelationId: number;
 }
 
 /** Информация о группе пользователей */

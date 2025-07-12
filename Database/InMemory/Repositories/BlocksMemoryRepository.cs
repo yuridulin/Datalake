@@ -11,6 +11,7 @@ using Datalake.PublicApi.Models.Blocks;
 using LinqToDB;
 using LinqToDB.Data;
 using System.Collections.Immutable;
+using System.Text;
 
 namespace Datalake.Database.InMemory.Repositories;
 
@@ -98,52 +99,30 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 
 		return ReadChildren(null, string.Empty);
 
-		BlockTreeInfo[] ReadChildren(int? id, string prefix)
-		{
-			var prefixString = prefix + (string.IsNullOrEmpty(prefix) ? string.Empty : ".");
-			return blocks
-				.Where(x => x.ParentId == id)
-				.Select(x =>
+		BlockTreeInfo[] ReadChildren(int? parentId, string prefix) => blocks
+			.Where(x => x.ParentId == parentId)
+			.Select(x => new {
+				Node = x,
+				Children = ReadChildren(x.Id, AppendPrefix(prefix, x.Name))
+			})
+			.Where(p => p.Node.AccessRule.HasAccess(AccessType.Viewer) || p.Children.Length > 0)
+			.Select(p => {
+				var hasViewer = p.Node.AccessRule.HasAccess(AccessType.Viewer);
+				return new BlockTreeInfo
 				{
-					var block = new BlockTreeInfo
-					{
-						Id = x.Id,
-						Guid = x.Guid,
-						ParentId = x.ParentId,
-						Name = x.Name,
-						FullName = prefixString + x.Name,
-						Description = x.Description,
-						Tags = x.Tags
-							.Select(tag => new BlockNestedTagInfo
-							{
-								Guid = tag.Guid,
-								Name = tag.Name,
-								Id = tag.Id,
-								Relation = tag.Relation,
-								SourceId = tag.SourceId,
-								LocalName = tag.LocalName,
-								Type = tag.Type,
-								Frequency = tag.Frequency,
-								SourceType = tag.SourceType,
-							})
-							.ToArray(),
-						AccessRule = x.AccessRule,
-						Children = ReadChildren(x.Id, prefixString + x.Name),
-					};
-
-					if (!x.AccessRule.HasAccess(AccessType.Viewer))
-					{
-						block.Name = string.Empty;
-						block.Description = string.Empty;
-						block.Tags = [];
-					}
-
-					return block;
-				})
-				.Where(x => x.Children.Length > 0 || x.AccessRule.HasAccess(AccessType.Viewer))
-				.OrderBy(x => x.Name)
-				.ToArray();
-		}
+					Id = p.Node.Id,
+					Guid = p.Node.Guid,
+					ParentId = p.Node.ParentId,
+					Name = hasViewer ? p.Node.Name : string.Empty,
+					FullName = AppendPrefix(prefix, p.Node.Name),
+					Description = hasViewer ? p.Node.Description : string.Empty,
+					Tags = hasViewer ? p.Node.Tags : Array.Empty<BlockNestedTagInfo>(),
+					AccessRule = p.Node.AccessRule,
+					Children = p.Children
+				};
+			})
+			.OrderBy(x => x.Name)
+			.ToArray();
 	}
 
 	/// <summary>
@@ -407,7 +386,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 					.DeleteAsync();
 
 				if (newTagsRelations.Length > 0)
-					await db.BlockTags.BulkCopyAsync(newTagsRelations);
+					await BulkCopyWithOutputAsync(db, newTagsRelations);
 
 				await LogAsync(db, userGuid, id, "Изменен блок: " + request.Name, ObjectExtension.Difference(
 					new { oldBlock.Name, oldBlock.Description, },
@@ -543,6 +522,42 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			Type = LogType.Success,
 			Details = details,
 		});
+	}
+
+	private static string AppendPrefix(string prefix, string name) =>
+		string.IsNullOrEmpty(prefix) ? name : $"{prefix}.{name}";
+
+	private static async Task BulkCopyWithOutputAsync(DatalakeContext db, BlockTag[] newTagsRelations)
+	{
+		// Формируем параметризованный SQL запрос
+		var insertSql = $"""
+			INSERT INTO "{BlockTag.TableName}" 
+			("BlockId", "TagId", "Name", "Relation")
+			VALUES {string.Join(", ", newTagsRelations.Select((_, i) =>
+				$"(:b{i}, :t{i}, :n{i}, :r{i})"))}
+			RETURNING "Id";
+		""";
+
+		// Создаем параметры
+		var parameters = new List<DataParameter>();
+		for (var i = 0; i < newTagsRelations.Length; i++)
+		{
+			var item = newTagsRelations[i];
+			parameters.Add(new DataParameter($"b{i}", item.BlockId));
+			parameters.Add(new DataParameter($"t{i}", item.TagId));
+			parameters.Add(new DataParameter($"n{i}", item.Name ?? ""));
+			parameters.Add(new DataParameter($"r{i}", (int)item.Relation));
+		}
+
+		// Выполняем запрос и получаем Id
+		var insertedIds = (await db.QueryToArrayAsync<int>(insertSql, parameters.ToArray()))
+			.ToList();
+
+		// Обновляем исходные объекты
+		for (var i = 0; i < newTagsRelations.Length; i++)
+		{
+			newTagsRelations[i].Id = insertedIds[i];
+		}
 	}
 
 	#endregion
