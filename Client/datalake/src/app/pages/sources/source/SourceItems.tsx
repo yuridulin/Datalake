@@ -160,7 +160,6 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 			.toLowerCase()
 			.split(' ')
 			.filter((x) => x.length > 0)
-		console.log('ищем по строкам:', tokens)
 		if (value.length > 0) {
 			setSearchedItems(
 				items.filter(
@@ -184,9 +183,6 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[items],
 	)
-	useEffect(() => {
-		console.log('Нашлось элементов: ' + searchedItems.length + ' из ' + items.length)
-	}, [searchedItems, items])
 	useEffect(read, [id])
 
 	if (type !== newType) return <>Тип источника изменен. Сохраните, чтобы продолжить</>

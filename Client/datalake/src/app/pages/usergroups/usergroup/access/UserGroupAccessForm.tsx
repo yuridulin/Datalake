@@ -239,8 +239,6 @@ const UserGroupAccessForm = () => {
 		},
 	]
 
-	useEffect(() => console.log(form), [form])
-
 	return loading ? (
 		<Spin />
 	) : err ? (

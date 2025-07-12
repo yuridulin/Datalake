@@ -40,17 +40,15 @@ const TimedValuesMode = ({ relations }: TagViewerModeProps) => {
 		},
 		...relations.map(({ relationId, value: x }) => ({
 			title: x.localName, // Используем локальное имя из связи
-			key: `${relationId}`,
-			dataIndex: `${relationId}`,
+			key: String(relationId),
+			dataIndex: String(relationId),
 			render: (value: { quality: TagQuality; value: TagValue } | undefined) => (
 				<TagCompactValue type={x.type} value={value?.value ?? null} quality={value?.quality ?? TagQuality.Bad} />
 			),
 		})),
 	]
 
-	console.log(tagsValuesByTime, timeWithTagsColumns)
-
-	return <Table columns={timeWithTagsColumns} dataSource={tagsValuesByTime} size='small' rowKey='date' />
+	return <Table columns={timeWithTagsColumns} dataSource={tagsValuesByTime} size='small' rowKey='time' />
 }
 
 export default TimedValuesMode

@@ -116,8 +116,6 @@ const BlocksMover = observer(() => {
 
 	useEffect(load, [])
 
-	console.log(token)
-
 	return (
 		<>
 			<PageHeader

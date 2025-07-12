@@ -23,6 +23,7 @@ const ExactValuesMode = ({ relations }: TagViewerModeProps) => {
 		const valueObject: ValueRecord = x.values.length
 			? x.values[0]
 			: { date: '', dateString: '', quality: TagQuality.BadNoValues, value: null }
+
 		return {
 			relationId, // Сохраняем идентификатор связи
 			id: x.id,

@@ -362,7 +362,6 @@ const TagForm = () => {
 					buttonStyle='solid'
 					value={request.frequency}
 					onChange={(value) => {
-						console.log(value)
 						setRequest({
 							...request,
 							frequency: value.target.value,

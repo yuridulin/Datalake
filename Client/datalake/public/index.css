@@ -107,3 +107,8 @@ code {
 
 .dark * {scrollbar-color: #444 #111;
 }
+
+/* Скрываем стандартный футер внутри попапа */
+.no-default-footer .ant-picker-popup .ant-picker-footer {
+  display: none;
+}

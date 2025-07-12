@@ -5,6 +5,7 @@ import {
 	BlockSimpleInfo,
 	BlockTagRelation,
 	BlockTreeInfo,
+	TagInfo,
 } from '@/api/swagger/data-contracts'
 import BlockIcon from '@/app/components/icons/BlockIcon'
 import TagIcon from '@/app/components/icons/TagIcon'
@@ -13,17 +14,17 @@ import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNeste
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { TreeSelect } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
-import { ChangeEventExtra } from 'rc-tree-select/lib/TreeSelect'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 interface QueryTreeSelectProps {
-	onChange: (value: number[], tagMapping: FlattenedNestedTagsType, checkedNodes: DefaultOptionType[]) => void
+	onChange: (value: number[], tagMapping: FlattenedNestedTagsType) => void
 }
 
 const SELECTED_SEPARATOR: string = '~'
 const RELATION_TAG_SEPARATOR: string = '.'
 const BLOCK_ID_SHIFT: number = -1000000
+const VIRTUAL_RELATION_SHIFT: number = 1000000
 
 // Функция для преобразования BlockTreeInfo[] в древовидную структуру
 function convertToTreeSelectNodes(
@@ -43,7 +44,7 @@ function convertToTreeSelectNodes(
 						<BlockIcon /> {block.name}
 					</>
 				),
-				value: BLOCK_ID_SHIFT - block.id, // Отрицательные значения для блоков
+				value: BLOCK_ID_SHIFT - 3 - block.id, // Отрицательные значения для блоков (и поправка на 3 из-за тех, которые мы создаем сами)
 				fullTitle,
 				selectable: false, // Блоки не выбираются
 				data: block,
@@ -103,7 +104,6 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 
 		const parsed = param.split(SELECTED_SEPARATOR).map((pair) => {
 			const [tagId, relationId] = pair.split(RELATION_TAG_SEPARATOR).map(Number)
-			console.log('get', [tagId, relationId], 'from pair', pair)
 			return { tagId, relationId }
 		})
 
@@ -117,11 +117,11 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			api
 				.blocksReadAsTree()
 				.then((res) => res.data)
-				.catch(() => []),
+				.catch(() => [] as BlockTreeInfo[]),
 			api
 				.tagsReadAll()
 				.then((res) => res.data)
-				.catch(() => []),
+				.catch(() => [] as TagInfo[]),
 		]).then(([blocksTree, allTags]) => {
 			// Собираем ID всех тегов в дереве
 			const allTagIds = new Set<number>()
@@ -144,12 +144,26 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 					sourceId: 0,
 				}))
 
-			// Создаем виртуальный блок для нераспределенных тегов
-			const virtualBlock: BlockTreeInfo = {
-				id: BLOCK_ID_SHIFT,
+			// Создаем общий контейнер для дерева блоков
+			const allBlocksBlock: BlockTreeInfo = {
+				id: -1,
 				guid: 'virtual',
-				name: 'Нераспределенные теги',
-				fullName: 'Нераспределенные теги',
+				name: '1. Дерево блоков',
+				fullName: '1. Дерево блоков',
+				tags: [],
+				children: blocksTree,
+				accessRule: {
+					ruleId: 0,
+					access: AccessType.Manager,
+				},
+			}
+
+			// Создаем виртуальный блок для нераспределенных тегов
+			const orphanTagsBlock: BlockTreeInfo = {
+				id: -2,
+				guid: 'virtual',
+				name: '2. Нераспределенные теги',
+				fullName: '2. Нераспределенные теги',
 				tags: orphanTags,
 				children: [],
 				accessRule: {
@@ -158,8 +172,28 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 				},
 			}
 
+			// Создаем виртуальный блок для всех тегов
+			const allTagsBlock: BlockTreeInfo = {
+				id: -3, // Уникальный ID
+				guid: 'all-tags',
+				name: '3. Все теги',
+				fullName: '3. Все теги',
+				tags: allTags.map((tag) => ({
+					...tag,
+					relationId: VIRTUAL_RELATION_SHIFT - tag.id, // Виртуальные связи
+					relationType: BlockTagRelation.Static,
+					localName: tag.name,
+					sourceId: 0,
+				})),
+				children: [],
+				accessRule: {
+					ruleId: 0,
+					access: AccessType.Manager,
+				},
+			}
+
 			// Создаем полное дерево
-			const fullTree = orphanTags.length ? [...blocksTree, virtualBlock] : blocksTree
+			const fullTree = [allBlocksBlock, orphanTagsBlock, allTagsBlock]
 
 			// Формируем маппинг relationId -> tagId
 			const relationMap: Record<number, number> = {}
@@ -184,14 +218,26 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 		if (loading && treeData.length > 0) {
 			// Восстанавливаем relationId из начальных значений
 			const relationsToSelect = initialSelections.map((sel) => sel.relationId)
-			console.log('restored:', relationsToSelect)
 			setCheckedRelations(relationsToSelect)
+
+			// ВЫЗОВ ONCHANGE ПРИ ИНИЦИАЛИЗАЦИИ
+			if (relationsToSelect.length > 0) {
+				// Создаем маппинг для передачи
+				const initialMapping: FlattenedNestedTagsType = {}
+				relationsToSelect.forEach((relId) => {
+					if (tagMapping[relId]) {
+						initialMapping[relId] = tagMapping[relId]
+					}
+				})
+
+				onChange(relationsToSelect, initialMapping)
+			}
 		}
-	}, [loading, treeData, initialSelections])
+	}, [loading, treeData, initialSelections, onChange, tagMapping])
 
 	// Обработчик изменения выбранных значений
 	const handleTagChange = useCallback(
-		(values: number[], _: React.ReactNode[], extra: ChangeEventExtra) => {
+		(values: number[]) => {
 			// Фильтруем только теги (исключаем блоки)
 			const tagValues = values.filter((val) => val > BLOCK_ID_SHIFT) // Исключаем блоки, оставляем фейковые связи (отрицательные)
 
@@ -208,7 +254,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			})
 
 			// Вызываем внешний обработчик с relationId
-			onChange(tagValues, tagMapping, extra.allCheckedNodes) // Исправлено: передаем relationId
+			onChange(tagValues, tagMapping) // Исправлено: передаем relationId
 
 			// Обновляем query-параметры
 			searchParams.set('tags', selections.join(SELECTED_SEPARATOR))

@@ -63,7 +63,7 @@ const TagsAccessMetrics = () => {
 				)
 			})
 			.catch((e) => {
-				console.log(e)
+				console.error(e)
 				notification.error({ message: 'Ошибка при построении списка метрик' })
 			})
 	}

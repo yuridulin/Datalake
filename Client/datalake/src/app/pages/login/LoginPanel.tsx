@@ -39,7 +39,7 @@ const LoginPanel = observer(() => {
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const onFinishFailed = (errorInfo: any) => {
-		console.log('Failed:', errorInfo)
+		console.warn('Failed:', errorInfo)
 	}
 
 	return (

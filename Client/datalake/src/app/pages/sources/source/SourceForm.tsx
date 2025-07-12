@@ -41,8 +41,6 @@ const SourceForm = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id])
 
-	console.log()
-
 	return (
 		<>
 			<PageHeader
