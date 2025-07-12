@@ -30,14 +30,6 @@ namespace Datalake.Database.Migrations
 					-- Создаём уникальный индекс с нужным порядком сортировки
 					CREATE UNIQUE INDEX ""TagsHistory_TagId_Date_idx""
 					ON ""TagsHistory"" (""TagId"" ASC, ""Date"" DESC);");
-
-			migrationBuilder.CreateIndex(
-					name: "TagsHistory_TagId_Date_idx",
-					schema: "public",
-					table: "TagsHistory",
-					columns: new[] { "TagId", "Date" },
-					unique: true,
-					descending: new[] { false, true });
 		}
 
 		/// <inheritdoc />
