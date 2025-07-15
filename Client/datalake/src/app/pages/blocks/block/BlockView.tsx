@@ -11,6 +11,7 @@ import { TagValuesViewer } from '@/app/components/values/TagValuesViewer'
 import routes from '@/app/router/routes'
 import { useInterval } from '@/hooks/useInterval'
 import { user } from '@/state/user'
+import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { RightOutlined } from '@ant-design/icons'
 import { Button, Spin, Table } from 'antd'
 import Column from 'antd/es/table/Column'
@@ -61,7 +62,7 @@ const BlockView = observer(() => {
 		api
 			.valuesGet([
 				{
-					requestKey: 'block-values',
+					requestKey: CLIENT_REQUESTKEY,
 					tagsId: tags,
 				},
 			])

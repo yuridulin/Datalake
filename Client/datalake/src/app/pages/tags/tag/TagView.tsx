@@ -11,7 +11,7 @@ import TagTypeEl from '@/app/components/TagTypeEl'
 import { TagValuesViewer } from '@/app/components/values/TagValuesViewer'
 import TagFormulaView from '@/app/pages/tags/tag/views/TagFormulaView'
 import { user } from '@/state/user'
-import { INNER_REQUESTS } from '@/types/constants'
+import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Button, Spin, Table, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
@@ -197,7 +197,7 @@ const TagView = observer(() => {
 								requestKey: requestKey,
 							}))
 							// внутренние запросы, игнорируем их
-							.filter((x) => !INNER_REQUESTS.includes(x.requestKey))}
+							.filter((x) => CLIENT_REQUESTKEY != x.requestKey)}
 					/>
 				),
 			},

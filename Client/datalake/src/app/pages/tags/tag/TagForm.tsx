@@ -6,6 +6,7 @@ import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagQualityEl from '@/app/components/TagQualityEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
 import getTagFrequencyName from '@/functions/getTagFrequencyName'
+import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
@@ -64,7 +65,7 @@ const TagForm = () => {
 		api
 			.valuesGet([
 				{
-					requestKey: 'tag-current-value',
+					requestKey: CLIENT_REQUESTKEY,
 					tagsId: [Number(id)],
 				},
 			])

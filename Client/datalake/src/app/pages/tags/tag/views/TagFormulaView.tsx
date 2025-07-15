@@ -5,6 +5,7 @@ import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import TagValueText from '@/app/components/TagValue'
 import { useInterval } from '@/hooks/useInterval'
+import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Table } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -78,7 +79,7 @@ const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
 
 	const getValues = useCallback(() => {
 		if (!inputs.length) return
-		api.valuesGet([{ requestKey: 'tags-table', tagsId: inputs.map((x) => x.id) }]).then((res) => {
+		api.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: inputs.map((x) => x.id) }]).then((res) => {
 			const newValues = res.data[0].tags.reduce((acc, next) => {
 				acc[next.id] = next.values[0]
 				return acc

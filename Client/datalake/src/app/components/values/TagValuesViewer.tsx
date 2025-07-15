@@ -6,6 +6,7 @@ import TimedValuesMode from '@/app/pages/values/tagViewerModes/TimedValuesMode'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { useInterval } from '@/hooks/useInterval'
+import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
 import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
@@ -105,7 +106,7 @@ export const TagValuesViewer = observer(({ relations, tagMapping, integrated = f
 		api
 			.valuesGet([
 				{
-					requestKey: 'tag-values-viewer',
+					requestKey: CLIENT_REQUESTKEY,
 					tagsId: tagIds,
 					...timeSettings,
 				},
