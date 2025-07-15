@@ -1,8 +1,9 @@
 import api from '@/api/swagger-api'
 import { TagType, ValueRecord } from '@/api/swagger/data-contracts'
-import ExactValuesMode from '@/app/pages/values/tagViewerModes/ExactValuesMode'
-import TimedValuesMode from '@/app/pages/values/tagViewerModes/TimedValuesMode'
+import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
+import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
+import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
@@ -25,13 +26,6 @@ const timeModeOptions: { label: string; value: TimeMode }[] = [
 	{ label: 'Текущие', value: TimeModes.LIVE },
 	{ label: 'Срез', value: TimeModes.EXACT },
 	{ label: 'Диапазон', value: TimeModes.OLD_YOUNG },
-]
-
-const resolutionOptions = [
-	{ label: 'По изменению', value: 0 },
-	{ label: 'Посекундно', value: 1000 },
-	{ label: 'Поминутно', value: 1000 * 60 },
-	{ label: 'Почасово', value: 1000 * 60 * 60 },
 ]
 
 const timeMask = 'YYYY-MM-DDTHH:mm:ss'
@@ -139,7 +133,6 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 	useEffect(() => {
 		if (!integrated) return
-		console.log('getValuesFromInitial')
 		getValues()
 	}, [settings, integrated, getValues])
 
@@ -163,7 +156,6 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 	// Для автоматического обновления
 	useInterval(() => {
 		if (settings.mode === TimeModes.LIVE && settings.update) {
-			console.log('getValuesFromInterval')
 			getValues()
 		}
 	}, 1000)
@@ -211,150 +203,93 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 		</Space>
 	)
 
+	const DateRange = () => (
+		<>
+			{' '}
+			<Col flex='20em'>
+				<Radio.Group
+					value={settings.mode}
+					options={timeModeOptions}
+					optionType='button'
+					onChange={(e) => setSettings({ ...settings, mode: e.target.value })}
+				/>
+			</Col>
+			<Col flex='auto'>
+				<span style={{ display: settings.mode === TimeModes.EXACT ? 'inherit' : 'none' }}>
+					<DatePicker
+						showTime
+						style={{ width: '13em' }}
+						placeholder='Дата среза'
+						value={settings.exact}
+						onChange={(e) => setSettings({ ...settings, exact: e })}
+					/>
+				</span>
+				<span style={{ display: settings.mode === TimeModes.OLD_YOUNG ? 'inherit' : 'none' }}>
+					<span style={{ padding: '0 .5em' }}>c</span>
+					<DatePicker
+						showTime
+						style={{ width: '13em' }}
+						value={settings.old}
+						maxDate={settings.young}
+						placeholder='Начальная дата'
+						onChange={(e) => setSettings({ ...settings, old: e })}
+						allowClear={false}
+						needConfirm={false}
+						renderExtraFooter={renderFooterOld}
+						popupClassName='no-default-footer'
+					/>
+					<span style={{ padding: '0 .5em' }}>по</span>
+					<DatePicker
+						showTime
+						style={{ width: '13em' }}
+						value={settings.young}
+						minDate={settings.old}
+						placeholder='Конечная дата'
+						onChange={(e) => setSettings({ ...settings, young: e })}
+						allowClear={false}
+						needConfirm={false}
+						renderExtraFooter={renderFooterYoung}
+						popupClassName='no-default-footer'
+					/>
+					<span style={{ padding: '0 .5em' }}>шаг</span>
+					<Select
+						options={Object.entries(TagResolutionNames).map((x) => ({ label: x[1], value: Number(x[0]) }))}
+						style={{ width: '12em' }}
+						value={settings.resolution}
+						onChange={(e) => setSettings({ ...settings, resolution: e })}
+					/>
+				</span>
+			</Col>
+		</>
+	)
+
 	return (
 		<>
 			<style>{`ul.ant-picker-ranges { visibility: hidden; height: 0; }`}</style>
 			{!integrated ? (
 				<div style={{ position: 'sticky' }}>
 					<Row style={{ marginTop: '1em' }}>
-						{!integrated && (
-							<Col flex='10em'>
-								<Button
-									onClick={getValues}
-									icon={<PlaySquareOutlined />}
-									type='primary'
-									disabled={!settings.activeRelations.length || isLoading}
-									title={
-										!settings.activeRelations.length ? 'Выберите хотя бы один тег' : isLoading ? 'Идет загрузка...' : ''
-									}
-								>
-									Запрос
-								</Button>
-							</Col>
-						)}
-						<Col flex='20em'>
-							<Radio.Group
-								value={settings.mode}
-								options={timeModeOptions}
-								optionType='button'
-								onChange={(e) => setSettings({ ...settings, mode: e.target.value })}
-							/>
+						<Col flex='10em'>
+							<Button
+								onClick={getValues}
+								icon={<PlaySquareOutlined />}
+								type='primary'
+								disabled={!settings.activeRelations.length || isLoading}
+								title={
+									!settings.activeRelations.length ? 'Выберите хотя бы один тег' : isLoading ? 'Идет загрузка...' : ''
+								}
+							>
+								Запрос
+							</Button>
 						</Col>
-						<Col flex='auto'>
-							<span style={{ display: settings.mode === TimeModes.EXACT ? 'inherit' : 'none' }}>
-								<DatePicker
-									showTime
-									placeholder='Дата среза'
-									value={settings.exact}
-									onChange={(e) => setSettings({ ...settings, exact: e })}
-								/>
-							</span>
-							<span style={{ display: settings.mode === TimeModes.OLD_YOUNG ? 'inherit' : 'none' }}>
-								<span style={{ padding: '0 .5em' }}>c</span>
-								<DatePicker
-									showTime
-									value={settings.old}
-									maxDate={settings.young}
-									placeholder='Начальная дата'
-									onChange={(e) => setSettings({ ...settings, old: e })}
-									allowClear={false}
-									needConfirm={false}
-									renderExtraFooter={renderFooterOld}
-									popupClassName='no-default-footer'
-								/>
-								<span style={{ padding: '0 .5em' }}>по</span>
-								<DatePicker
-									showTime
-									value={settings.young}
-									minDate={settings.old}
-									placeholder='Конечная дата'
-									onChange={(e) => setSettings({ ...settings, young: e })}
-									allowClear={false}
-									needConfirm={false}
-									renderExtraFooter={renderFooterYoung}
-									popupClassName='no-default-footer'
-								/>
-								<span style={{ padding: '0 .5em' }}>как</span>
-								<Select
-									options={resolutionOptions}
-									style={{ width: '12em' }}
-									value={settings.resolution}
-									onChange={(e) => setSettings({ ...settings, resolution: e })}
-								/>
-							</span>
-						</Col>
+						<DateRange />
 					</Row>
 					<Divider orientation='left'>Значения</Divider>
 				</div>
 			) : (
 				<>
 					<Row style={{ marginBottom: '1em' }}>
-						{!integrated && (
-							<Col flex='10em'>
-								<Button
-									onClick={getValues}
-									icon={<PlaySquareOutlined />}
-									type='primary'
-									disabled={!settings.activeRelations.length || isLoading}
-									title={
-										!settings.activeRelations.length ? 'Выберите хотя бы один тег' : isLoading ? 'Идет загрузка...' : ''
-									}
-								>
-									Запрос
-								</Button>
-							</Col>
-						)}
-						<Col flex='20em'>
-							<Radio.Group
-								value={settings.mode}
-								options={timeModeOptions}
-								optionType='button'
-								onChange={(e) => setSettings({ ...settings, mode: e.target.value })}
-							/>
-						</Col>
-						<Col flex='auto'>
-							<span style={{ display: settings.mode === TimeModes.EXACT ? 'inherit' : 'none' }}>
-								<DatePicker
-									showTime
-									placeholder='Дата среза'
-									value={settings.exact}
-									onChange={(e) => setSettings({ ...settings, exact: e })}
-								/>
-							</span>
-							<span style={{ display: settings.mode === TimeModes.OLD_YOUNG ? 'inherit' : 'none' }}>
-								<span style={{ padding: '0 .5em' }}>c</span>
-								<DatePicker
-									showTime
-									value={settings.old}
-									maxDate={settings.young}
-									placeholder='Начальная дата'
-									onChange={(e) => setSettings({ ...settings, old: e })}
-									allowClear={false}
-									needConfirm={false}
-									renderExtraFooter={renderFooterOld}
-									popupClassName='no-default-footer'
-								/>
-								<span style={{ padding: '0 .5em' }}>по</span>
-								<DatePicker
-									showTime
-									value={settings.young}
-									minDate={settings.old}
-									placeholder='Конечная дата'
-									onChange={(e) => setSettings({ ...settings, young: e })}
-									allowClear={false}
-									needConfirm={false}
-									renderExtraFooter={renderFooterYoung}
-									popupClassName='no-default-footer'
-								/>
-								<span style={{ padding: '0 .5em' }}>как</span>
-								<Select
-									options={resolutionOptions}
-									style={{ width: '12em' }}
-									value={settings.resolution}
-									onChange={(e) => setSettings({ ...settings, resolution: e })}
-								/>
-							</span>
-						</Col>
+						<DateRange />
 					</Row>
 				</>
 			)}

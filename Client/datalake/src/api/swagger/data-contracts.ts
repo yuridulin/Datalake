@@ -177,23 +177,33 @@ export enum SourceType {
  * Частота записи/чтения значения
  *
  * 0 = NotSet
- * 1 = ByMinute
- * 2 = ByHour
- * 3 = ByDay
- * 4 = ByHalfHour
- * 5 = ByWeek
- * 6 = ByMonth
- * 7 = BySecond
+ * 1 = Minute
+ * 2 = Hour
+ * 3 = Day
+ * 4 = HalfHour
+ * 5 = Week
+ * 6 = Month
+ * 7 = Second
+ * 8 = Minute3
+ * 9 = Minute5
+ * 10 = Minute10
+ * 11 = Minute15
+ * 12 = Minute20
  */
 export enum TagResolution {
   NotSet = 0,
-  ByMinute = 1,
-  ByHour = 2,
-  ByDay = 3,
-  ByHalfHour = 4,
-  ByWeek = 5,
-  ByMonth = 6,
-  BySecond = 7,
+  Minute = 1,
+  Hour = 2,
+  Day = 3,
+  HalfHour = 4,
+  Week = 5,
+  Month = 6,
+  Second = 7,
+  Minute3 = 8,
+  Minute5 = 9,
+  Minute10 = 10,
+  Minute15 = 11,
+  Minute20 = 12,
 }
 
 /**

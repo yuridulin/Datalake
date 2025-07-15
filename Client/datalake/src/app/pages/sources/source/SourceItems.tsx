@@ -123,7 +123,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 				tagType: tagType,
 				sourceId: id,
 				sourceItem: item,
-				resolution: TagResolution.ByMinute,
+				resolution: TagResolution.Minute,
 			})
 			.then((res) => {
 				if (!res.data?.id) return

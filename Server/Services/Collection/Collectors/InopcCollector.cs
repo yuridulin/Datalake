@@ -77,7 +77,7 @@ internal class InopcCollector : CollectorBase
 			}
 			else
 			{
-				var needToAsk = item.Resolution.AddToDate(item.LastAsk.Value) <= now;
+				var needToAsk = item.LastAsk.Value.AddByResolution(item.Resolution) <= now;
 
 				if (needToAsk)
 					tags.Add(item);

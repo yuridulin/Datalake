@@ -16,6 +16,7 @@ type ExactValuesRowType = {
 	quality: TagQuality
 	resolution: TagResolution
 	sourceType: SourceType
+	date: string
 }
 
 const ExactValuesMode = ({ relations }: TagViewerModeProps) => {
@@ -34,7 +35,8 @@ const ExactValuesMode = ({ relations }: TagViewerModeProps) => {
 			value: valueObject.value,
 			quality: valueObject.quality,
 			sourceType: x.sourceType,
-		}
+			date: valueObject.dateString,
+		} as ExactValuesRowType
 	})
 
 	return (
@@ -52,6 +54,7 @@ const ExactValuesMode = ({ relations }: TagViewerModeProps) => {
 					<TagCompactValue type={row.type} value={row.value ?? null} quality={row.quality ?? TagQuality.Bad} />
 				)}
 			/>
+			<Column title='Время записи' dataIndex='value' render={(_, row: ExactValuesRowType) => row.date} />
 		</Table>
 	)
 }

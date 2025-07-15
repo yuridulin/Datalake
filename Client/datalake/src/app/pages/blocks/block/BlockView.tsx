@@ -1,5 +1,12 @@
 import api from '@/api/swagger-api'
-import { AccessType, BlockFullInfo, BlockNestedTagInfo, TagType, ValueRecord } from '@/api/swagger/data-contracts'
+import {
+	AccessType,
+	BlockFullInfo,
+	BlockNestedTagInfo,
+	TagResolution,
+	TagType,
+	ValueRecord,
+} from '@/api/swagger/data-contracts'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import TagButton from '@/app/components/buttons/TagButton'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
@@ -81,12 +88,13 @@ const BlockView = observer(() => {
 
 	// Создаем маппинг тегов для TagValuesViewer
 	const tagMapping = useMemo(() => {
-		const mapping: Record<number, { id: number; localName: string; type: TagType }> = {}
+		const mapping: Record<number, { id: number; localName: string; type: TagType; resolution: TagResolution }> = {}
 		block.tags?.forEach((tag) => {
 			mapping[tag.relationId] = {
 				id: tag.id,
 				localName: tag.localName,
 				type: tag.type,
+				resolution: tag.resolution,
 			}
 		})
 		return mapping

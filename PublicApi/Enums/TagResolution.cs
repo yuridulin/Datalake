@@ -6,42 +6,67 @@
 public enum TagResolution
 {
 	/// <summary>
-	/// Неопределенная частота (произвольные моменты/по изменению)
+	/// По изменению
 	/// </summary>
 	NotSet = 0,
 
 	/// <summary>
-	/// Поминутная частота
+	/// Минута
 	/// </summary>
-	ByMinute = 1,
+	Minute = 1,
 
 	/// <summary>
-	/// Почасовая частота
+	/// Час
 	/// </summary>
-	ByHour = 2,
+	Hour = 2,
 
 	/// <summary>
-	/// Посуточная частота
+	/// Сутки
 	/// </summary>
-	ByDay = 3,
+	Day = 3,
 
 	/// <summary>
-	/// Получасы (30 минут)
+	/// Получас
 	/// </summary>
-	ByHalfHour = 4,
+	HalfHour = 4,
 
 	/// <summary>
-	/// Понедельная частота
+	/// Неделя
 	/// </summary>
-	ByWeek = 5,
+	Week = 5,
 
 	/// <summary>
-	/// Помесячная частота
+	/// Месяц
 	/// </summary>
-	ByMonth = 6,
+	Month = 6,
 
 	/// <summary>
-	/// Посекундная частота
+	/// Секунда
 	/// </summary>
-	BySecond = 7,
+	Second = 7,
+
+	/// <summary>
+	/// 3 минуты
+	/// </summary>
+	Minute3 = 8,
+
+	/// <summary>
+	/// 5 минут
+	/// </summary>
+	Minute5 = 9,
+
+	/// <summary>
+	/// 10 минут
+	/// </summary>
+	Minute10 = 10,
+
+	/// <summary>
+	/// 15 минут
+	/// </summary>
+	Minute15 = 11,
+
+	/// <summary>
+	/// 20 минут
+	/// </summary>
+	Minute20 = 12,
 }

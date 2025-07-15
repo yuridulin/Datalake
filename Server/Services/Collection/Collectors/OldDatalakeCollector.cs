@@ -63,7 +63,7 @@ internal class OldDatalakeCollector : CollectorBase
 	{
 		var now = DateFormats.GetCurrentDateTime();
 		var items = _itemsToSend
-			.Where(x => x.Value.Resolution == TagResolution.NotSet || x.Value.Resolution.AddToDate(x.Value.LastAsk) <= now)
+			.Where(x => x.Value.Resolution == TagResolution.NotSet || x.Value.LastAsk.AddByResolution(x.Value.Resolution) <= now)
 			.ToDictionary();
 
 		if (items.Count > 0)

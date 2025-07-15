@@ -442,17 +442,7 @@ public class ValuesRepository(
 				}
 			}
 
-			stepDate = resolution switch
-			{
-				TagResolution.BySecond => stepDate.AddSeconds(1),
-				TagResolution.ByMinute => stepDate.AddMinutes(1),
-				TagResolution.ByHalfHour => stepDate.AddMinutes(30),
-				TagResolution.ByHour => stepDate.AddHours(1),
-				TagResolution.ByDay => stepDate.AddDays(1),
-				TagResolution.ByWeek => stepDate.AddDays(7),
-				TagResolution.ByMonth => stepDate.AddMonths(1),
-				_ => young,
-			};
+			stepDate = stepDate.AddByResolution(resolution);
 		}
 		while (stepDate <= young);
 
@@ -481,15 +471,15 @@ public class ValuesRepository(
 		switch (period)
 		{
 			case AggregationPeriod.Munite:
-				periodEnd = now.RoundByResolution(TagResolution.ByMinute);
+				periodEnd = now.RoundByResolution(TagResolution.Minute);
 				periodStart = periodEnd.AddMinutes(-1);
 				break;
 			case AggregationPeriod.Hour:
-				periodEnd = now.RoundByResolution(TagResolution.ByHour);
+				periodEnd = now.RoundByResolution(TagResolution.Hour);
 				periodStart = periodEnd.AddHours(-1);
 				break;
 			case AggregationPeriod.Day:
-				periodEnd = now.RoundByResolution(TagResolution.ByDay);
+				periodEnd = now.RoundByResolution(TagResolution.Day);
 				periodStart = periodEnd.AddDays(-1);
 				break;
 			default:

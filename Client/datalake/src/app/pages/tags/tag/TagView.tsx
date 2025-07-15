@@ -23,6 +23,7 @@ import {
 	SourceType,
 	TagAggregation,
 	TagFullInfo,
+	TagResolution,
 	TagType,
 } from '../../../../api/swagger/data-contracts'
 import PageHeader from '../../../components/PageHeader'
@@ -83,7 +84,7 @@ const TagView = observer(() => {
 	info['Тип данных'] = <TagTypeEl tagType={tag.type} />
 
 	const { tagMapping, relations } = useMemo(() => {
-		const mapping: Record<number, { id: number; localName: string; type: TagType }> = {}
+		const mapping: Record<number, { id: number; localName: string; type: TagType; resolution: TagResolution }> = {}
 		const rels: number[] = []
 
 		// Основной тег
@@ -92,21 +93,9 @@ const TagView = observer(() => {
 			id: tag.id,
 			localName: tag.name,
 			type: tag.type,
+			resolution: tag.resolution,
 		}
 		rels.push(mainRelId)
-
-		// Входные теги (для расчетных)
-		/* if (tag.sourceId === SourceType.Calculated) {
-			tag.formulaInputs?.forEach((input) => {
-				const inputRelId = input.id * -1 // Виртуальный ID
-				mapping[inputRelId] = {
-					id: input.id,
-					localName: input.variableName,
-					type: input.type,
-				}
-				rels.push(inputRelId)
-			})
-		} */
 
 		return { tagMapping: mapping, relations: rels }
 	}, [tag])

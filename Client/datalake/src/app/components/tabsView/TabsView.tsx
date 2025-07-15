@@ -10,8 +10,6 @@ const TabsView = ({ items }: TabsViewProps) => {
 	const [activeTab, setActiveTab] = useState<string>()
 	const [searchParams, setSearchParams] = useSearchParams()
 
-	useEffect(() => console.log(searchParams), [searchParams])
-
 	const onTabChange = (key: string) => {
 		searchParams.set('page', key)
 		setSearchParams(searchParams)

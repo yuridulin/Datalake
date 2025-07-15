@@ -11,7 +11,7 @@
     <RootNamespace>Datalake.PublicApi</RootNamespace>
     <Title>Datalake.PublicApi</Title>
     <PackageId>Viten.Datalake.PublicApi</PackageId>
-    <Version>2.4.0</Version>
+    <Version>2.4.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
