@@ -288,7 +288,7 @@ export const TagValuesViewer = observer(({ relations, tagMapping, integrated = f
 				</div>
 			) : (
 				<>
-					<Row style={{ marginBottom: '.5em' }}>
+					<Row style={{ marginBottom: '1em' }}>
 						{!integrated && (
 							<Col flex='10em'>
 								<Button
