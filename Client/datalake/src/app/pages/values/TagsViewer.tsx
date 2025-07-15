@@ -1,5 +1,5 @@
 import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
-import { TagValuesViewer } from '@/app/components/values/TagValuesViewer'
+import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import { Row } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -19,7 +19,7 @@ const TagsViewer = observer(() => {
 			<Row>
 				<QueryTreeSelect onChange={handleTagChange} />
 			</Row>
-			<TagValuesViewer relations={relations} tagMapping={tagMapping} />
+			<TagsValuesViewer relations={relations} tagMapping={tagMapping} />
 		</>
 	)
 })

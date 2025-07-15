@@ -1,4 +1,3 @@
-// TagValuesViewer.tsx
 import api from '@/api/swagger-api'
 import { TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import ExactValuesMode from '@/app/pages/values/tagViewerModes/ExactValuesMode'
@@ -61,7 +60,7 @@ interface ViewerSettings {
 	update: boolean
 }
 
-export const TagValuesViewer = observer(({ relations, tagMapping, integrated = false }: TagValuesViewerProps) => {
+const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }: TagValuesViewerProps) => {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const initialMode = (searchParams.get(ModeParam) as TimeMode) || TimeModes.LIVE
 	const [isLoading, setLoading] = useState(false)
@@ -376,3 +375,5 @@ export const TagValuesViewer = observer(({ relations, tagMapping, integrated = f
 		</>
 	)
 })
+
+export default TagsValuesViewer

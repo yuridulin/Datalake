@@ -8,7 +8,7 @@ import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import TabsView from '@/app/components/tabsView/TabsView'
 import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagTypeEl from '@/app/components/TagTypeEl'
-import { TagValuesViewer } from '@/app/components/values/TagValuesViewer'
+import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import TagFormulaView from '@/app/pages/tags/tag/views/TagFormulaView'
 import { user } from '@/state/user'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
@@ -116,7 +116,7 @@ const TagView = observer(() => {
 			{
 				key: 'history',
 				label: 'Значения',
-				children: <TagValuesViewer relations={relations} tagMapping={tagMapping} integrated={true} />,
+				children: <TagsValuesViewer relations={relations} tagMapping={tagMapping} integrated={true} />,
 			},
 			{
 				key: 'blocks',

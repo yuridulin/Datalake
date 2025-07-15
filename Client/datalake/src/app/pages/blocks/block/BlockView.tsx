@@ -7,7 +7,7 @@ import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
 import TagCompactValue from '@/app/components/TagCompactValue'
-import { TagValuesViewer } from '@/app/components/values/TagValuesViewer'
+import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
 import { useInterval } from '@/hooks/useInterval'
 import { user } from '@/state/user'
@@ -131,7 +131,7 @@ const BlockView = observer(() => {
 					{
 						key: 'history',
 						label: 'История значений',
-						children: <TagValuesViewer relations={relations} tagMapping={tagMapping} integrated={true} />,
+						children: <TagsValuesViewer relations={relations} tagMapping={tagMapping} integrated={true} />,
 					},
 					{
 						key: 'fields',
