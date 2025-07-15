@@ -4,7 +4,7 @@ import { CheckCircleOutlined, CloseCircleOutlined, MinusCircleOutlined, PlusCirc
 import { Button, Input, Popconfirm, Table, TableColumnsType, Tag, theme } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
-import { SourceEntryInfo, SourceType, TagFrequency, TagInfo, TagType } from '../../../../api/swagger/data-contracts'
+import { SourceEntryInfo, SourceType, TagInfo, TagResolution, TagType } from '../../../../api/swagger/data-contracts'
 import compareValues from '../../../../functions/compareValues'
 import CreatedTagLinker from '../../../components/CreatedTagsLinker'
 import PageHeader from '../../../components/PageHeader'
@@ -123,7 +123,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 				tagType: tagType,
 				sourceId: id,
 				sourceItem: item,
-				frequency: TagFrequency.ByMinute,
+				resolution: TagResolution.Minute,
 			})
 			.then((res) => {
 				if (!res.data?.id) return
@@ -142,7 +142,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 										type: res.data.type,
 										accessRule: { ruleId: 0, access: 0 },
 										formulaInputs: [],
-										frequency: res.data.frequency,
+										resolution: res.data.resolution,
 									},
 								}
 							: x,

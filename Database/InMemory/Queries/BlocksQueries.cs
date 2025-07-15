@@ -41,7 +41,7 @@ public static class BlocksQueries
 						RelationType = relation.Relation,
 						LocalName = relation.Name ?? tag.Name,
 						Type = tag.Type,
-						Frequency = tag.Frequency,
+						Resolution = tag.Resolution,
 						SourceId = tag.SourceId,
 						SourceType = state.SourcesById.TryGetValue(tag.SourceId, out var source) ? source.Type : SourceType.NotSet,
 					})
@@ -121,7 +121,7 @@ public static class BlocksQueries
 					RelationType = relation.Relation,
 					LocalName = relation.Name ?? tag.Name,
 					Type = tag.Type,
-					Frequency = tag.Frequency,
+					Resolution = tag.Resolution,
 					SourceId = tag.SourceId,
 					SourceType = state.SourcesById.TryGetValue(tag.SourceId, out var source) ? source.Type : SourceType.NotSet,
 				})

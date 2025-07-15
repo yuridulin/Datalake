@@ -81,7 +81,7 @@ public class DatalakeDerivedDataStore
 								Id = tag.Id,
 								Guid = tag.GlobalGuid,
 								Name = tag.Name,
-								Frequency = tag.Frequency,
+								Resolution = tag.Resolution,
 								Type = tag.Type,
 								SourceType = SourceType.NotSet,
 								LocalName = x.Name ?? string.Empty,

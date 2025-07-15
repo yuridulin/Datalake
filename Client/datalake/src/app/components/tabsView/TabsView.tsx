@@ -1,5 +1,6 @@
 import { Tabs, TabsProps } from 'antd'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 type TabsViewProps = {
 	items: TabsProps['items']
@@ -7,27 +8,20 @@ type TabsViewProps = {
 
 const TabsView = ({ items }: TabsViewProps) => {
 	const [activeTab, setActiveTab] = useState<string>()
+	const [searchParams, setSearchParams] = useSearchParams()
 
 	const onTabChange = (key: string) => {
-		setActiveTab(key)
-		window.location.hash = key // Обновление хэша в URL
+		searchParams.set('page', key)
+		setSearchParams(searchParams)
 	}
 
 	useEffect(() => {
-		const hash = window.location.hash.replace('#', '')
-		if (hash != activeTab) {
-			if (!hash && items) setActiveTab(items[0].key)
-			else setActiveTab(hash)
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [window.location.hash])
+		const tabFromQuery = searchParams.get('page')
+		if (tabFromQuery === activeTab) return
 
-	useEffect(() => {
-		const hash = window.location.hash.replace('#', '')
-		if (hash) {
-			setActiveTab(hash)
-		}
-	}, [])
+		if (tabFromQuery) setActiveTab(tabFromQuery)
+		else if (items?.length) setActiveTab(items[0].key)
+	}, [searchParams, activeTab, items])
 
 	return (
 		<Tabs

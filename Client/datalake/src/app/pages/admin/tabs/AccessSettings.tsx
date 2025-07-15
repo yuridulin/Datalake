@@ -3,7 +3,7 @@ import {
 	AccessRuleInfo,
 	AccessType,
 	SourceType,
-	TagFrequency,
+	TagResolution,
 	TagSimpleInfo,
 	TagType,
 	UserAuthInfo,
@@ -49,7 +49,7 @@ type UserAuthWithNames = {
 		guid: string
 		name: string
 		type: TagType
-		frequency: TagFrequency
+		resolution: TagResolution
 		sourceType: SourceType
 		accessRule: AccessRuleInfo
 	}[]
@@ -230,7 +230,7 @@ const AccessSettings = () => {
 											id: 0,
 											guid: tag.guid,
 											name: tag.name,
-											frequency: tag.frequency,
+											resolution: tag.resolution,
 											sourceType: tag.sourceType,
 											type: tag.type,
 											//accessRule: user.accessRule,

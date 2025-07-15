@@ -2,10 +2,10 @@ import api from '@/api/swagger-api'
 import HelpAggregationType from '@/app/components/help-tootip/help-pages/HelpAggregationType'
 import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
 import TagCompactValue from '@/app/components/TagCompactValue'
-import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagQualityEl from '@/app/components/TagQualityEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
-import getTagFrequencyName from '@/functions/getTagFrequencyName'
+import { TagResolutionNames } from '@/functions/getTagResolutionName'
+import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
@@ -15,7 +15,6 @@ import {
 	BlockTreeInfo,
 	SourceType,
 	TagAggregation,
-	TagFrequency,
 	TagInfo,
 	TagQuality,
 	TagSimpleInfo,
@@ -64,7 +63,7 @@ const TagForm = () => {
 		api
 			.valuesGet([
 				{
-					requestKey: 'tag-current-value',
+					requestKey: CLIENT_REQUESTKEY,
 					tagsId: [Number(id)],
 				},
 			])
@@ -358,26 +357,20 @@ const TagForm = () => {
 				</div>
 			</div>
 			<FormRow title='Промежуток времени между записью значений'>
-				<Radio.Group
-					buttonStyle='solid'
-					value={request.frequency}
+				<Select
+					style={{ width: '12em' }}
+					value={request.resolution}
 					onChange={(value) => {
 						setRequest({
 							...request,
-							frequency: value.target.value,
+							resolution: value,
 						})
 					}}
-				>
-					{Object.values(TagFrequency)
-						.filter((key) => !isNaN(Number(key)))
-						.map((value) => (
-							<Radio.Button key={value} value={value}>
-								<TagFrequencyEl frequency={value as TagFrequency} />
-								&emsp;
-								{getTagFrequencyName(value as number)}
-							</Radio.Button>
-						))}
-				</Radio.Group>
+					options={Object.entries(TagResolutionNames).map(([value, text]) => ({
+						value: Number(value),
+						label: text,
+					}))}
+				/>
 			</FormRow>
 			<FormRow title='Способ получения'>
 				<Radio.Group buttonStyle='solid' value={strategy} onChange={(e) => setStrategy(e.target.value)}>

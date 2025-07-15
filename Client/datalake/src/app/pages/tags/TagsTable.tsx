@@ -1,6 +1,7 @@
 import api from '@/api/swagger-api'
 import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
+import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
@@ -22,7 +23,7 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false }: TagsTablePro
 
 	const loadValues = () => {
 		api
-			.valuesGet([{ requestKey: 'tags-table', tagsId: viewingTags.map((x) => x.id) }])
+			.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: viewingTags.map((x) => x.id) }])
 			.then((res) => {
 				setValues(Object.fromEntries(res.data[0].tags.map((x) => [x.id, x.values[0]])))
 			})

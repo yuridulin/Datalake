@@ -5,6 +5,7 @@ using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Collection.Abstractions;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
+using Datalake.Database.Extensions;
 
 namespace Datalake.Server.Services.Collection.Collectors;
 
@@ -24,15 +25,7 @@ internal class OldDatalakeCollector : CollectorBase
 			.Select(g => new Item
 			{
 				TagName = g.Key!,
-				PeriodInSeconds = g
-					.Select(x => x.Frequency switch
-					{
-						TagFrequency.NotSet => 0,
-						TagFrequency.ByMinute => 60,
-						TagFrequency.ByHour => 3600,
-						TagFrequency.ByDay => 86400,
-					})
-					.Min(),
+				Resolution = g.MinBy(x => x.Resolution.GetSortOrder())?.Resolution ?? TagResolution.NotSet,
 				LastAsk = DateTime.MinValue,
 				Tags = g.Select(x => x.Guid).ToArray(),
 			})
@@ -43,16 +36,19 @@ internal class OldDatalakeCollector : CollectorBase
 	{
 		if (_itemsToSend.Count == 0)
 		{
+			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет значений для запроса и не будет запущен", _name);
 			return;
 		}
 
 		if (string.IsNullOrEmpty(_source.Address))
 		{
+			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет адреса для получения данных и не будет запущен", _name);
 			return;
 		}
 
+		Task.Run(() => WriteAsync([], true), stoppingToken);
 		base.Start(stoppingToken);
 	}
 
@@ -67,7 +63,7 @@ internal class OldDatalakeCollector : CollectorBase
 	{
 		var now = DateFormats.GetCurrentDateTime();
 		var items = _itemsToSend
-			.Where(x => x.Value.PeriodInSeconds == 0 || (now - x.Value.LastAsk).TotalSeconds > x.Value.PeriodInSeconds)
+			.Where(x => x.Value.Resolution == TagResolution.NotSet || x.Value.LastAsk.AddByResolution(x.Value.Resolution) <= now)
 			.ToDictionary();
 
 		if (items.Count > 0)
@@ -102,7 +98,7 @@ internal class OldDatalakeCollector : CollectorBase
 
 		public DateTime LastAsk { get; set; }
 
-		public int PeriodInSeconds { get; set; }
+		public TagResolution Resolution { get; set; }
 
 		public required Guid[] Tags { get; set; }
 	}

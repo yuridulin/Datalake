@@ -5,6 +5,7 @@ import { TransformedData } from '@/app/pages/values/types/TransformedData'
 import compareValues from '@/functions/compareValues'
 import { TagValue } from '@/types/tagValue'
 import { Table } from 'antd'
+import { ColumnType } from 'antd/es/table'
 
 const TimedValuesMode = ({ relations }: TagViewerModeProps) => {
 	const tagsValuesByTime = Object.values(
@@ -28,15 +29,15 @@ const TimedValuesMode = ({ relations }: TagViewerModeProps) => {
 			})
 			return acc
 		}, {}),
-	)
+	).sort((a, b) => compareValues(a.time, b.time))
 
-	const timeWithTagsColumns = [
+	const timeWithTagsColumns: ColumnType<TransformedData>[] = [
 		{
 			title: 'Время',
 			dataIndex: 'time',
 			key: 'time',
 			sorter: (a: TransformedData, b: TransformedData) => compareValues(a.time, b.time),
-			showSorterTooltip: false,
+			defaultSortOrder: 'ascend',
 		},
 		...relations.map(({ relationId, value: x }) => ({
 			title: x.localName, // Используем локальное имя из связи
@@ -48,7 +49,15 @@ const TimedValuesMode = ({ relations }: TagViewerModeProps) => {
 		})),
 	]
 
-	return <Table columns={timeWithTagsColumns} dataSource={tagsValuesByTime} size='small' rowKey='time' />
+	return (
+		<Table
+			columns={timeWithTagsColumns}
+			dataSource={tagsValuesByTime}
+			size='small'
+			rowKey='time'
+			showSorterTooltip={false}
+		/>
+	)
 }
 
 export default TimedValuesMode

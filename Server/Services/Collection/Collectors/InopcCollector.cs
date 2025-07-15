@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Constants;
+﻿using Datalake.Database.Extensions;
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
@@ -24,7 +25,7 @@ internal class InopcCollector : CollectorBase
 			.Select(x => new Item
 			{
 				TagName = x.Item!,
-				Frequency = x.Frequency,
+				Resolution = x.Resolution,
 				LastAsk = DateTime.MinValue
 			})
 			.ToList();
@@ -40,16 +41,19 @@ internal class InopcCollector : CollectorBase
 	{
 		if (_itemsToSend.Count == 0)
 		{
+			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет значений для запроса и не будет запущен", _name);
 			return;
 		}
 
 		if (string.IsNullOrEmpty(_source.Address))
 		{
+			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет адреса для получения данных и не будет запущен", _name);
 			return;
 		}
 
+		Task.Run(() => WriteAsync([], true), stoppingToken);
 		base.Start(stoppingToken);
 	}
 
@@ -73,15 +77,7 @@ internal class InopcCollector : CollectorBase
 			}
 			else
 			{
-				var diff = (now - item.LastAsk.Value).TotalSeconds;
-
-				var needToAsk = item.Frequency switch
-				{
-					TagFrequency.NotSet => true,
-					TagFrequency.ByMinute => diff >= 60,
-					TagFrequency.ByHour => diff >= 3600,
-					TagFrequency.ByDay => diff >= 86400,
-				};
+				var needToAsk = item.LastAsk.Value.AddByResolution(item.Resolution) <= now;
 
 				if (needToAsk)
 					tags.Add(item);
@@ -124,7 +120,7 @@ internal class InopcCollector : CollectorBase
 
 		public DateTime? LastAsk { get; set; }
 
-		public TagFrequency Frequency { get; set; }
+		public TagResolution Resolution { get; set; }
 	}
 
 	#endregion

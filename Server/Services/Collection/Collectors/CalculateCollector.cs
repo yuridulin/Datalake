@@ -20,10 +20,12 @@ internal class CalculateCollector(
 	{
 		if (_expressions.Length == 0)
 		{
+			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет правил расчета и не будет запущен", _name);
 			return;
 		}
 
+		Task.Run(() => WriteAsync([], true), stoppingToken);
 		base.Start(stoppingToken);
 	}
 

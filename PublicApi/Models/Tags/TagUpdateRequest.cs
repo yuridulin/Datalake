@@ -70,7 +70,7 @@ public class TagUpdateRequest
 	/// Новый интервал получения значения
 	/// </summary>
 	[Required]
-	public TagFrequency Frequency { get; set; } = TagFrequency.NotSet;
+	public TagResolution Resolution { get; set; } = TagResolution.NotSet;
 
 	/// <summary>
 	/// Формула, по которой рассчитывается значение

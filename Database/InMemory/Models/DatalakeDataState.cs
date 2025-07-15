@@ -57,7 +57,7 @@ public record class DatalakeDataState
 				Type = tag.Type,
 				SourceId = tag.SourceId,
 				SourceType = self.SourcesById.TryGetValue(tag.SourceId, out var source) ? source.Type : SourceType.NotSet,
-				Frequency = tag.Frequency,
+				Resolution = tag.Resolution,
 				ScalingCoefficient = tag.IsScaling
 					? ((tag.MaxEu - tag.MinEu) / (tag.MaxRaw - tag.MinRaw))
 					: 1,

@@ -65,7 +65,7 @@ public static class AccessRightsQueries
 					Guid = tag.GlobalGuid,
 					Name = tag.Name,
 					Type = tag.Type,
-					Frequency = tag.Frequency,
+					Resolution = tag.Resolution,
 					SourceType = state.SourcesById.TryGetValue(rule.SourceId ?? Identifiers.UnsetSource, out var tagSource) ? tagSource.Type : SourceType.NotSet,
 				},
 			});

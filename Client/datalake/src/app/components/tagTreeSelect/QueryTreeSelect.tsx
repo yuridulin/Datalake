@@ -19,6 +19,8 @@ interface QueryTreeSelectProps {
 	onChange: (value: number[], tagMapping: FlattenedNestedTagsType) => void
 }
 
+const TagsParam = 'T'
+
 // Функция для создания маппинга тегов
 const flattenNestedTags = (
 	blockTree: BlockTreeInfo[] | null | undefined,
@@ -53,7 +55,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 
 	// Инициализация выбранных значений из query-параметров
 	const initialSelections = useMemo(() => {
-		const param = searchParams.get('tags')
+		const param = searchParams.get(TagsParam)
 		if (!param) return []
 
 		const parsed = param.split(SELECTED_SEPARATOR).map((pair) => {
@@ -130,7 +132,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 			onChange(tagValues, tagMapping)
 
 			// Обновляем query-параметры
-			searchParams.set('tags', selections.join(SELECTED_SEPARATOR))
+			searchParams.set(TagsParam, selections.join(SELECTED_SEPARATOR))
 			setSearchParams(searchParams, { replace: true })
 		},
 		[onChange, searchParams, setSearchParams, tagMapping, checkedRelations],

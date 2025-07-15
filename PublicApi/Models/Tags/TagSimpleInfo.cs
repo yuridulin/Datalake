@@ -36,7 +36,7 @@ public class TagSimpleInfo
 	/// Частота записи тега
 	/// </summary>
 	[Required]
-	public required TagFrequency Frequency { get; set; }
+	public required TagResolution Resolution { get; set; }
 
 	/// <summary>
 	/// Тип данных источника

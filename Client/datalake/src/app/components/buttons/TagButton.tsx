@@ -1,6 +1,6 @@
 import { TagSimpleInfo } from '@/api/swagger/data-contracts'
 import TagIcon from '@/app/components/icons/TagIcon'
-import TagFrequencyEl from '@/app/components/TagFrequencyEl'
+import TagResolutionEl from '@/app/components/TagResolutionEl'
 import routes from '@/app/router/routes'
 import { Button } from 'antd'
 import { NavLink } from 'react-router-dom'
@@ -15,7 +15,7 @@ const TagButton = ({ tag, openInBlank = false }: TagButtonProps) => {
 		<NavLink to={routes.tags.toViewTag(tag.id)} target={openInBlank ? '_blank' : '_self'}>
 			<Button size='small' icon={<TagIcon type={tag.sourceType} />}>
 				{tag.name}
-				<TagFrequencyEl frequency={tag.frequency} />
+				<TagResolutionEl resolution={tag.resolution} />
 			</Button>
 		</NavLink>
 	)

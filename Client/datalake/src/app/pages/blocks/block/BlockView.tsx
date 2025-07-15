@@ -1,25 +1,18 @@
 import api from '@/api/swagger-api'
-import { AccessType, BlockFullInfo, BlockNestedTagInfo, ValueRecord } from '@/api/swagger/data-contracts'
+import { AccessType, BlockFullInfo, TagResolution, TagType } from '@/api/swagger/data-contracts'
 import BlockButton from '@/app/components/buttons/BlockButton'
-import TagButton from '@/app/components/buttons/TagButton'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
-import TagCompactValue from '@/app/components/TagCompactValue'
+import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
-import { useInterval } from '@/hooks/useInterval'
 import { user } from '@/state/user'
 import { RightOutlined } from '@ant-design/icons'
-import { Button, Spin, Table } from 'antd'
-import Column from 'antd/es/table/Column'
+import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-
-type BlockValues = {
-	[key: number]: ValueRecord
-}
 
 const childrenContainerStyle = {
 	marginBottom: '1em',
@@ -30,11 +23,10 @@ const BlockView = observer(() => {
 
 	const [ready, setReady] = useState(false)
 	const [block, setBlock] = useState({} as BlockFullInfo)
-	const [values, setValues] = useState({} as BlockValues)
 
 	const items: InfoTableProps['items'] = {
 		Имя: block.name,
-		Описание: block.description ?? <i>нет</i>,
+		Описание: block.description || <i>нет</i>,
 	}
 
 	const getBlock = () => {
@@ -44,30 +36,9 @@ const BlockView = observer(() => {
 			.then((res) => {
 				res.data.adults = res.data.adults.reverse()
 				setBlock(res.data)
-				getTagsValues(res.data.tags.map((x) => x.id))
 				setReady(true)
 			})
 			.catch(() => setBlock({} as BlockFullInfo))
-	}
-
-	const getValues = () => {
-		if (block.tags?.length === 0) return
-		getTagsValues(block.tags.map((x) => x.id))
-	}
-
-	const getTagsValues = (tags: number[]) => {
-		if (tags.length === 0) return
-		api
-			.valuesGet([
-				{
-					requestKey: 'block-values',
-					tagsId: tags,
-				},
-			])
-			.then((res) => {
-				const values = Object.fromEntries(res.data[0].tags.map((x) => [x.id, x.values[0]]))
-				setValues(values)
-			})
 	}
 
 	const createChild = () => {
@@ -75,7 +46,22 @@ const BlockView = observer(() => {
 	}
 
 	useEffect(getBlock, [id])
-	useInterval(getValues, 5000)
+
+	// Создаем маппинг тегов для TagValuesViewer
+	const tagMapping = useMemo(() => {
+		const mapping: Record<number, { id: number; localName: string; type: TagType; resolution: TagResolution }> = {}
+		block.tags?.forEach((tag) => {
+			mapping[tag.relationId] = {
+				id: tag.id,
+				localName: tag.localName,
+				type: tag.type,
+				resolution: tag.resolution,
+			}
+		})
+		return mapping
+	}, [block.tags])
+
+	const relations = useMemo(() => block.tags?.map((tag) => tag.relationId) || [], [block.tags])
 
 	return !ready ? (
 		<Spin />
@@ -112,29 +98,9 @@ const BlockView = observer(() => {
 			<TabsView
 				items={[
 					{
-						key: 'fields',
-						label: 'Поля',
-						children: (
-							<Table dataSource={block.tags} size='small' pagination={false} rowKey='relationId'>
-								<Column
-									dataIndex='id'
-									title='Название'
-									render={(_, record: BlockNestedTagInfo) => <TagButton tag={{ ...record, name: record.localName }} />}
-								/>
-								<Column
-									dataIndex='value'
-									title='Значение'
-									render={(_, record: BlockNestedTagInfo) => {
-										const value = values[record.id]
-										return !value ? (
-											<></>
-										) : (
-											<TagCompactValue type={record.type} quality={value.quality} value={value.value} />
-										)
-									}}
-								/>
-							</Table>
-						),
+						key: 'history',
+						label: 'История значений',
+						children: <TagsValuesViewer relations={relations} tagMapping={tagMapping} integrated={true} />,
 					},
 					{
 						key: 'parents',
@@ -193,7 +159,6 @@ const BlockView = observer(() => {
 							</>
 						),
 					},
-
 					{
 						key: 'logs',
 						label: 'События',

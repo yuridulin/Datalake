@@ -29,7 +29,7 @@ public class ValuesTrustedRequest
 	/// <summary>
 	/// Шаг времени, по которому нужно разбить значения. Если не задан, будут оставлены записи о изменениях значений
 	/// </summary>
-	public int? Resolution { get; set; } = 0;
+	public TagResolution? Resolution { get; set; } = TagResolution.NotSet;
 
 	/// <summary>
 	/// Тип агрегирования значений, который нужно применить к этому запросу. По умолчанию - список

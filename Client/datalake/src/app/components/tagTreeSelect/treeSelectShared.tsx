@@ -7,7 +7,7 @@ import {
 } from '@/api/swagger/data-contracts'
 import BlockIcon from '@/app/components/icons/BlockIcon'
 import TagIcon from '@/app/components/icons/TagIcon'
-import getTagFrequencyName from '@/functions/getTagFrequencyName'
+import getTagResolutionName from '@/functions/getTagResolutionName'
 import { GlobalToken } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
 
@@ -54,7 +54,7 @@ export const convertToTreeSelectNodes = (
 								&emsp;
 								<pre style={{ display: 'inline-block', color: token.colorTextDisabled }}>
 									{tag.relationId > 0 && tag.relationId < VIRTUAL_RELATION_SHIFT && <>{tag.name}&emsp;</>}#{tag.id}
-									{tag.frequency > 0 && <>&emsp;{getTagFrequencyName(tag.frequency)}</>}
+									{tag.resolution > 0 && <>&emsp;{getTagResolutionName(tag.resolution)}</>}
 								</pre>
 							</>
 						),

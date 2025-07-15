@@ -1,4 +1,4 @@
-import { SourceType, TagFrequency, TagQuality, TagType, ValueRecord } from '@/api/swagger/data-contracts'
+import { SourceType, TagQuality, TagResolution, TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import { TagViewerModeProps } from '@/app/pages/values/types/TagViewerModeProps'
@@ -14,8 +14,9 @@ type ExactValuesRowType = {
 	type: TagType
 	value: TagValue
 	quality: TagQuality
-	frequency: TagFrequency
+	resolution: TagResolution
 	sourceType: SourceType
+	date: string
 }
 
 const ExactValuesMode = ({ relations }: TagViewerModeProps) => {
@@ -27,14 +28,15 @@ const ExactValuesMode = ({ relations }: TagViewerModeProps) => {
 		return {
 			relationId, // Сохраняем идентификатор связи
 			id: x.id,
-			frequency: x.frequency,
+			resolution: x.resolution,
 			guid: x.guid,
 			localName: x.localName, // Локальное имя из связи
 			type: x.type,
 			value: valueObject.value,
 			quality: valueObject.quality,
 			sourceType: x.sourceType,
-		}
+			date: valueObject.dateString,
+		} as ExactValuesRowType
 	})
 
 	return (
@@ -52,6 +54,7 @@ const ExactValuesMode = ({ relations }: TagViewerModeProps) => {
 					<TagCompactValue type={row.type} value={row.value ?? null} quality={row.quality ?? TagQuality.Bad} />
 				)}
 			/>
+			<Column title='Время записи' dataIndex='value' render={(_, row: ExactValuesRowType) => row.date} />
 		</Table>
 	)
 }
