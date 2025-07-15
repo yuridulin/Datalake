@@ -6,6 +6,7 @@ import {
 	BlockUpdateRequest,
 	SourceType,
 	TagResolution,
+	TagSimpleInfo,
 	TagType,
 } from '@/api/swagger/data-contracts'
 import PageHeader from '@/app/components/PageHeader'
@@ -18,13 +19,18 @@ import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+interface TagInfo extends TagSimpleInfo {
+	label: string
+	value: number
+}
+
 const BlockForm = observer(() => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 	const [form] = Form.useForm<BlockUpdateRequest>()
 
 	const [block, setBlock] = useState({} as BlockUpdateRequest)
-	const [tags, setTags] = useState([] as { label: string; value: number }[])
+	const [tags, setTags] = useState([] as TagInfo[])
 	const [loading, setLoading] = useState(true)
 
 	const getBlock = () => {
@@ -63,6 +69,7 @@ const BlockForm = observer(() => {
 				setTags(
 					res.data
 						.map((x) => ({
+							...x,
 							label: x.name,
 							value: x.id,
 						}))
@@ -74,6 +81,9 @@ const BlockForm = observer(() => {
 
 	useEffect(getBlock, [id, form])
 	useEffect(getTags, [])
+
+	// Получаем текущие значения формы для проверки дубликатов
+	const attachedTagsList = Form.useWatch('tags', form) || []
 
 	return loading ? (
 		<Spin />
@@ -107,7 +117,16 @@ const BlockForm = observer(() => {
 			</PageHeader>
 
 			<Form form={form} onFinish={updateBlock}>
-				<Form.Item label='Название' name='name'>
+				<Form.Item
+					label='Название'
+					name='name'
+					rules={[
+						{
+							required: true,
+							message: 'Название - обязательный параметр',
+						},
+					]}
+				>
 					<Input placeholder='Введите простое имя блока' />
 				</Form.Item>
 				<Form.Item label='Описание' name='description'>
@@ -118,17 +137,17 @@ const BlockForm = observer(() => {
 						<table className='form-subtable'>
 							<thead>
 								<tr>
-									<td>Значение блока</td>
+									<td style={{ width: '40%' }}>Поле блока</td>
 									<td>Закрепленный тег</td>
 									<td style={{ width: '3em' }}>
 										<Form.Item>
 											<Dropdown.Button
-												title='Добавить новое значение'
+												title='Добавить новое поле'
 												menu={{
 													items: [
 														{
 															key: '1',
-															label: 'Создать строковый мануальный тег и добавить как значение',
+															label: 'Создать строковый мануальный тег и добавить как поле',
 															onClick: () => {
 																api
 																	.tagsCreate({
@@ -141,6 +160,7 @@ const BlockForm = observer(() => {
 																		setTags([
 																			...tags,
 																			{
+																				...res.data,
 																				label: res.data.name,
 																				value: res.data.id,
 																			},
@@ -155,7 +175,7 @@ const BlockForm = observer(() => {
 														},
 														{
 															key: '2',
-															label: 'Создать числовой мануальный тег и добавить как значение',
+															label: 'Создать числовой мануальный тег и добавить как поле',
 															onClick: () => {
 																api
 																	.tagsCreate({
@@ -168,6 +188,7 @@ const BlockForm = observer(() => {
 																		setTags([
 																			...tags,
 																			{
+																				...res.data,
 																				label: res.data.name,
 																				value: res.data.id,
 																			},
@@ -182,7 +203,7 @@ const BlockForm = observer(() => {
 														},
 														{
 															key: '3',
-															label: 'Создать логический мануальный тег и добавить как значение',
+															label: 'Создать логический мануальный тег и добавить как поле',
 															onClick: () => {
 																api
 																	.tagsCreate({
@@ -195,6 +216,7 @@ const BlockForm = observer(() => {
 																		setTags([
 																			...tags,
 																			{
+																				...res.data,
 																				label: res.data.name,
 																				value: res.data.id,
 																			},
@@ -218,32 +240,69 @@ const BlockForm = observer(() => {
 								</tr>
 							</thead>
 							<tbody>
-								{fields.map(({ key, name, ...rest }) => (
-									<tr key={key}>
-										<td>
-											<Form.Item {...rest} name={[name, 'name']}>
-												<Input placeholder='Введите имя значения в контексте блока' />
-											</Form.Item>
-										</td>
-										<td>
-											<Form.Item {...rest} name={[name, 'id']}>
-												<Select
-													showSearch
-													optionFilterProp='label'
-													options={tags}
-													placeholder='Выберите тег для прикрепления'
-												></Select>
-											</Form.Item>
-										</td>
-										<td>
-											<Form.Item>
-												<Button onClick={() => remove(name)} title='Удалить значение'>
-													<MinusCircleOutlined />
-												</Button>
-											</Form.Item>
-										</td>
-									</tr>
-								))}
+								{fields.map(({ key, name, ...rest }) => {
+									// Проверка дублирования тегов
+									const currentTagId = attachedTagsList[name]?.id
+									const duplicateCount = currentTagId
+										? attachedTagsList.filter((t: AttachedTag, idx: number) => idx !== name && t.id === currentTagId)
+												.length
+										: 0
+									const isDuplicate = duplicateCount > 0
+
+									return (
+										<tr key={key}>
+											<td>
+												<Form.Item
+													{...rest}
+													name={[name, 'name']}
+													rules={[
+														{
+															required: true,
+															message: 'Введите имя значения',
+														},
+														({ getFieldValue }) => ({
+															validator(_, value) {
+																if (!value) return Promise.resolve()
+																const tags = getFieldValue('tags') || []
+																const names = tags
+																	.map((t: AttachedTag, index: number) => (index === name ? null : t.name))
+																	.filter(Boolean)
+																if (names.includes(value)) {
+																	return Promise.reject(new Error('Имя поля должно быть уникальным'))
+																}
+																return Promise.resolve()
+															},
+														}),
+													]}
+												>
+													<Input placeholder='Введите имя поля в контексте блока' />
+												</Form.Item>
+											</td>
+											<td>
+												<Form.Item
+													{...rest}
+													name={[name, 'id']}
+													validateStatus={isDuplicate ? 'warning' : undefined}
+													help={isDuplicate ? 'Дублирование тега' : undefined}
+												>
+													<Select
+														showSearch
+														optionFilterProp='label'
+														options={tags}
+														placeholder='Выберите тег для прикрепления'
+													></Select>
+												</Form.Item>
+											</td>
+											<td>
+												<Form.Item>
+													<Button onClick={() => remove(name)} title='Удалить значение'>
+														<MinusCircleOutlined />
+													</Button>
+												</Form.Item>
+											</td>
+										</tr>
+									)
+								})}
 							</tbody>
 						</table>
 					)}
