@@ -2,10 +2,10 @@ import api from '@/api/swagger-api'
 import HelpAggregationType from '@/app/components/help-tootip/help-pages/HelpAggregationType'
 import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
 import TagCompactValue from '@/app/components/TagCompactValue'
-import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagQualityEl from '@/app/components/TagQualityEl'
+import TagResolutionEl from '@/app/components/TagResolutionEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
-import getTagFrequencyName from '@/functions/getTagFrequencyName'
+import getTagResolutionName from '@/functions/getTagResolutionName'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
@@ -16,9 +16,9 @@ import {
 	BlockTreeInfo,
 	SourceType,
 	TagAggregation,
-	TagFrequency,
 	TagInfo,
 	TagQuality,
+	TagResolution,
 	TagSimpleInfo,
 	TagType,
 	TagUpdateInputRequest,
@@ -361,21 +361,21 @@ const TagForm = () => {
 			<FormRow title='Промежуток времени между записью значений'>
 				<Radio.Group
 					buttonStyle='solid'
-					value={request.frequency}
+					value={request.resolution}
 					onChange={(value) => {
 						setRequest({
 							...request,
-							frequency: value.target.value,
+							resolution: value.target.value,
 						})
 					}}
 				>
-					{Object.values(TagFrequency)
+					{Object.values(TagResolution)
 						.filter((key) => !isNaN(Number(key)))
 						.map((value) => (
 							<Radio.Button key={value} value={value}>
-								<TagFrequencyEl frequency={value as TagFrequency} />
+								<TagResolutionEl resolution={value as TagResolution} />
 								&emsp;
-								{getTagFrequencyName(value as number)}
+								{getTagResolutionName(value as number)}
 							</Radio.Button>
 						))}
 				</Radio.Group>

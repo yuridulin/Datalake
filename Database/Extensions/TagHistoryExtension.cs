@@ -24,7 +24,7 @@ internal static class TagHistoryExtension
 		return CreateTagHistory(
 			tag.Type,
 			tag.Id,
-			tag.Frequency,
+			tag.Resolution,
 			tag.ScalingCoefficient,
 			request.Date,
 			request.Value,
@@ -36,7 +36,7 @@ internal static class TagHistoryExtension
 		return CreateTagHistory(
 			request.Tag.Type,
 			request.Tag.Id,
-			request.Tag.Frequency,
+			request.Tag.Resolution,
 			request.Tag.ScalingCoefficient,
 			request.Date,
 			request.Value,
@@ -46,7 +46,7 @@ internal static class TagHistoryExtension
 	private static TagHistory CreateTagHistory(
 			TagType tagType,
 			int tagId,
-			TagFrequency frequency,
+			TagResolution frequency,
 			float scalingCoefficient,
 			DateTime? date,
 			object? value,
@@ -54,7 +54,7 @@ internal static class TagHistoryExtension
 	{
 		var history = new TagHistory
 		{
-			Date = (date ?? DateFormats.GetCurrentDateTime()).RoundToFrequency(frequency),
+			Date = (date ?? DateFormats.GetCurrentDateTime()).RoundByResolution(frequency),
 			Text = null,
 			Number = null,
 			Quality = quality ?? TagQuality.Unknown,

@@ -30,7 +30,7 @@ public static class TagsQueries
 					Guid = tag.GlobalGuid,
 					Name = tag.Name,
 					Description = tag.Description,
-					Frequency = tag.Frequency,
+					Resolution = tag.Resolution,
 					Type = tag.Type,
 					Formula = tag.Formula ?? string.Empty,
 					FormulaInputs = state.TagInputs
@@ -43,7 +43,7 @@ public static class TagsQueries
 							VariableName = relation.VariableName,
 							RelationId = relation.Id,
 							Type = inputTag.Type,
-							Frequency = inputTag.Frequency,
+							Resolution = inputTag.Resolution,
 							SourceType = !state.SourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.NotSet : inputTagSource.Type,
 						})
 						.ToArray(),
@@ -59,7 +59,7 @@ public static class TagsQueries
 					SourceTag = !state.TagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : new TagAsInputInfo
 					{
 						Id = sourceTag.Id,
-						Frequency = sourceTag.Frequency,
+						Resolution = sourceTag.Resolution,
 						Guid = sourceTag.GlobalGuid,
 						Name = sourceTag.Name,
 						Type = sourceTag.Type,
@@ -103,7 +103,7 @@ public static class TagsQueries
 					Guid = tag.GlobalGuid,
 					Name = tag.Name,
 					Description = tag.Description,
-					Frequency = tag.Frequency,
+					Resolution = tag.Resolution,
 					Type = tag.Type,
 					Formula = tag.Formula ?? string.Empty,
 					FormulaInputs = state.TagInputs
@@ -115,7 +115,7 @@ public static class TagsQueries
 							Name = inputTag.Name,
 							VariableName = relation.VariableName,
 							Type = inputTag.Type,
-							Frequency = inputTag.Frequency,
+							Resolution = inputTag.Resolution,
 							RelationId = relation.Id,
 							SourceType = !state.SourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.NotSet : inputTagSource.Type,
 						})
@@ -132,7 +132,7 @@ public static class TagsQueries
 					SourceTag = !state.TagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : new TagAsInputInfo
 					{
 						Id = sourceTag.Id,
-						Frequency = sourceTag.Frequency,
+						Resolution = sourceTag.Resolution,
 						Guid = sourceTag.GlobalGuid,
 						Name = sourceTag.Name,
 						Type = sourceTag.Type,

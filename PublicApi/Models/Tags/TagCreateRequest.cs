@@ -23,7 +23,7 @@ public class TagCreateRequest
 	/// Частота записи тега
 	/// </summary>
 	[Required]
-	public required TagFrequency Frequency { get; set; }
+	public required TagResolution Resolution { get; set; }
 
 	/// <summary>
 	/// Идентификатор источника данных

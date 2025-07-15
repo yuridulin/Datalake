@@ -5,7 +5,7 @@ import {
 	BlockTagRelation,
 	BlockUpdateRequest,
 	SourceType,
-	TagFrequency,
+	TagResolution,
 	TagType,
 } from '@/api/swagger/data-contracts'
 import PageHeader from '@/app/components/PageHeader'
@@ -134,7 +134,7 @@ const BlockForm = observer(() => {
 																	.tagsCreate({
 																		blockId: Number(id),
 																		tagType: TagType.String,
-																		frequency: TagFrequency.NotSet,
+																		resolution: TagResolution.NotSet,
 																		sourceId: SourceType.Manual,
 																	})
 																	.then((res) => {
@@ -161,7 +161,7 @@ const BlockForm = observer(() => {
 																	.tagsCreate({
 																		blockId: Number(id),
 																		tagType: TagType.Number,
-																		frequency: TagFrequency.NotSet,
+																		resolution: TagResolution.NotSet,
 																		sourceId: SourceType.Manual,
 																	})
 																	.then((res) => {
@@ -188,7 +188,7 @@ const BlockForm = observer(() => {
 																	.tagsCreate({
 																		blockId: Number(id),
 																		tagType: TagType.Boolean,
-																		frequency: TagFrequency.NotSet,
+																		resolution: TagResolution.NotSet,
 																		sourceId: SourceType.Manual,
 																	})
 																	.then((res) => {

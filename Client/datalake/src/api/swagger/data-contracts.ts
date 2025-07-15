@@ -174,18 +174,26 @@ export enum SourceType {
 }
 
 /**
- * Частота записи значения
+ * Частота записи/чтения значения
  *
  * 0 = NotSet
  * 1 = ByMinute
  * 2 = ByHour
  * 3 = ByDay
+ * 4 = ByHalfHour
+ * 5 = ByWeek
+ * 6 = ByMonth
+ * 7 = BySecond
  */
-export enum TagFrequency {
+export enum TagResolution {
   NotSet = 0,
   ByMinute = 1,
   ByHour = 2,
   ByDay = 3,
+  ByHalfHour = 4,
+  ByWeek = 5,
+  ByMonth = 6,
+  BySecond = 7,
 }
 
 /**
@@ -304,7 +312,7 @@ export interface TagSimpleInfo {
   /** Тип данных тега */
   type: TagType;
   /** Частота записи тега */
-  frequency: TagFrequency;
+  resolution: TagResolution;
   /** Тип данных источника */
   sourceType: SourceType;
 }
@@ -835,7 +843,7 @@ export interface TagCreateRequest {
   /** Тип значений тега */
   tagType: TagType;
   /** Частота записи тега */
-  frequency: TagFrequency;
+  resolution: TagResolution;
   /**
    * Идентификатор источника данных
    * @format int32
@@ -908,7 +916,7 @@ export interface TagUpdateRequest {
    */
   sourceId: number;
   /** Новый интервал получения значения */
-  frequency: TagFrequency;
+  resolution: TagResolution;
   /** Формула, по которой рассчитывается значение */
   formula?: string | null;
   /** Входные переменные для формулы, по которой рассчитывается значение */
@@ -1197,11 +1205,8 @@ export interface ValuesRequest {
    * @format date-time
    */
   exact?: string | null;
-  /**
-   * Шаг времени, по которому нужно разбить значения. Если не задан, будут оставлены записи о изменениях значений
-   * @format int32
-   */
-  resolution?: number | null;
+  /** Шаг времени, по которому нужно разбить значения. Если не задан, будут оставлены записи о изменениях значений */
+  resolution?: TagResolution | null;
   /** Тип агрегирования значений, который нужно применить к этому запросу. По умолчанию - список */
   func?: AggregationFunc | null;
 }

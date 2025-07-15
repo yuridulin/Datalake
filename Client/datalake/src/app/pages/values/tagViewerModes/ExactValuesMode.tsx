@@ -1,4 +1,4 @@
-import { SourceType, TagFrequency, TagQuality, TagType, ValueRecord } from '@/api/swagger/data-contracts'
+import { SourceType, TagQuality, TagResolution, TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/TagCompactValue'
 import { TagViewerModeProps } from '@/app/pages/values/types/TagViewerModeProps'
@@ -14,7 +14,7 @@ type ExactValuesRowType = {
 	type: TagType
 	value: TagValue
 	quality: TagQuality
-	frequency: TagFrequency
+	resolution: TagResolution
 	sourceType: SourceType
 }
 
@@ -27,7 +27,7 @@ const ExactValuesMode = ({ relations }: TagViewerModeProps) => {
 		return {
 			relationId, // Сохраняем идентификатор связи
 			id: x.id,
-			frequency: x.frequency,
+			resolution: x.resolution,
 			guid: x.guid,
 			localName: x.localName, // Локальное имя из связи
 			type: x.type,

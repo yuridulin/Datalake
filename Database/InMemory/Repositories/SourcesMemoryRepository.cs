@@ -80,7 +80,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			{
 				tag.Guid = Guid.Empty;
 				tag.Name = string.Empty;
-				tag.Frequency = TagFrequency.NotSet;
+				tag.Resolution = TagResolution.NotSet;
 			}
 		}
 

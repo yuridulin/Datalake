@@ -56,7 +56,7 @@ public record class Tag
 	/// Частота записи значения
 	/// </summary>
 	[Column]
-	public required TagFrequency Frequency { get; set; }
+	public required TagResolution Resolution { get; set; }
 
 	/// <summary>
 	/// Дата создания

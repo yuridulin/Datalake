@@ -13,10 +13,12 @@ internal class DatalakeCollector(
 	{
 		if (string.IsNullOrEmpty(_source.Address))
 		{
+			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет адреса для получения данных и не будет запущен", _name);
 			return;
 		}
 
+		Task.Run(() => WriteAsync([], true), stoppingToken);
 		base.Start(stoppingToken);
 	}
 

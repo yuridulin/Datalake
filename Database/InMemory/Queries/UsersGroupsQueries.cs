@@ -93,7 +93,7 @@ public static class UsersGroupsQueries
 								Guid = tag.GlobalGuid,
 								Name = tag.Name,
 								Type = tag.Type,
-								Frequency = tag.Frequency,
+								Resolution = tag.Resolution,
 								SourceType = !state.SourcesById.TryGetValue(tag.SourceId, out var tagSource) ? SourceType.NotSet : tagSource.Type,
 							},
 						})

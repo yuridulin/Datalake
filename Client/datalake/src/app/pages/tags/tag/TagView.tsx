@@ -6,7 +6,7 @@ import CopyableText from '@/app/components/CopyableText'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import TabsView from '@/app/components/tabsView/TabsView'
-import TagFrequencyEl from '@/app/components/TagFrequencyEl'
+import TagResolutionEl from '@/app/components/TagResolutionEl'
 import TagTypeEl from '@/app/components/TagTypeEl'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import TagFormulaView from '@/app/pages/tags/tag/views/TagFormulaView'
@@ -56,7 +56,7 @@ const TagView = observer(() => {
 		Описание: tag.description == null ? <i>нет</i> : <pre>{tag.description}</pre>,
 		Источник: <SourceButton source={{ id: tag.sourceId, name: tag.sourceName || '?' }} />,
 		'Интервал обновления': tag.sourceId !== SourceType.Manual && tag.sourceId !== SourceType.Manual && (
-			<TagFrequencyEl frequency={tag.frequency} full={true} />
+			<TagResolutionEl resolution={tag.resolution} full={true} />
 		),
 	}
 

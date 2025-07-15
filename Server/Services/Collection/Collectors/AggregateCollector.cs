@@ -44,10 +44,12 @@ internal class AggregateCollector : CollectorBase
 	{
 		if (_allRules.Length == 0)
 		{
+			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет правил агрегирования и не будет запущен", _name);
 			return;
 		}
 
+		Task.Run(() => WriteAsync([], true), stoppingToken);
 		base.Start(stoppingToken);
 	}
 

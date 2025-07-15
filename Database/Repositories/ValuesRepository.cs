@@ -147,7 +147,7 @@ public class ValuesRepository(
 				Guid = tag.Guid,
 				Name = tag.Name,
 				Type = tag.Type,
-				Frequency = tag.Frequency,
+				Resolution = tag.Resolution,
 				SourceType = tag.SourceType,
 				Values = [
 					new ValueRecord
@@ -232,7 +232,7 @@ public class ValuesRepository(
 							Guid = tag.Guid,
 							Name = tag.Name,
 							Type = tag.Type,
-							Frequency = tag.Frequency,
+							Resolution = tag.Resolution,
 							SourceType = tag.SourceType,
 							Values = [tagValue],
 						};
@@ -277,7 +277,7 @@ public class ValuesRepository(
 							Id = tag.Id,
 							Name = tag.Name,
 							Type = tag.Type,
-							Frequency = tag.Frequency,
+							Resolution = tag.Resolution,
 							SourceType = tag.SourceType,
 							Values = [],
 						};
@@ -410,7 +410,7 @@ public class ValuesRepository(
 		List<TagHistory> valuesByChange,
 		DateTime old,
 		DateTime young,
-		int resolution)
+		TagResolution resolution)
 	{
 		var timeRange = (young - old).TotalMilliseconds;
 		var continuous = new List<TagHistory>();
@@ -442,7 +442,17 @@ public class ValuesRepository(
 				}
 			}
 
-			stepDate = stepDate.AddMilliseconds(resolution);
+			stepDate = resolution switch
+			{
+				TagResolution.BySecond => stepDate.AddSeconds(1),
+				TagResolution.ByMinute => stepDate.AddMinutes(1),
+				TagResolution.ByHalfHour => stepDate.AddMinutes(30),
+				TagResolution.ByHour => stepDate.AddHours(1),
+				TagResolution.ByDay => stepDate.AddDays(1),
+				TagResolution.ByWeek => stepDate.AddDays(7),
+				TagResolution.ByMonth => stepDate.AddMonths(1),
+				_ => young,
+			};
 		}
 		while (stepDate <= young);
 
@@ -471,15 +481,15 @@ public class ValuesRepository(
 		switch (period)
 		{
 			case AggregationPeriod.Munite:
-				periodEnd = now.RoundToFrequency(TagFrequency.ByMinute);
+				periodEnd = now.RoundByResolution(TagResolution.ByMinute);
 				periodStart = periodEnd.AddMinutes(-1);
 				break;
 			case AggregationPeriod.Hour:
-				periodEnd = now.RoundToFrequency(TagFrequency.ByHour);
+				periodEnd = now.RoundByResolution(TagResolution.ByHour);
 				periodStart = periodEnd.AddHours(-1);
 				break;
 			case AggregationPeriod.Day:
-				periodEnd = now.RoundToFrequency(TagFrequency.ByDay);
+				periodEnd = now.RoundByResolution(TagResolution.ByDay);
 				periodStart = periodEnd.AddDays(-1);
 				break;
 			default:
@@ -620,14 +630,14 @@ public class ValuesRepository(
 	static BulkCopyOptions bulkCopyOptions = new() { TableName = StagingTable, BulkCopyType = BulkCopyType.ProviderSpecific, };
 
 	const string CreateTempForWrite = $@"
-		CREATE TEMPORARY TABLE ""{StagingTable}"" (LIKE public.""TagsHistory"" EXCLUDING INDEXES) 
+		CREATE TEMPORARY TABLE ""{StagingTable}"" (LIKE public.""TagsHistory"" EXCLUDING INDEXES)
 		ON COMMIT DROP;";
 
 	const string Write = $@"
 		INSERT INTO public.""TagsHistory""(
 			""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
 		)
-		SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality"" 
+		SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
 			FROM ""{StagingTable}""
 		ON CONFLICT (""TagId"", ""Date"") DO UPDATE
 			SET ""Text""   = EXCLUDED.""Text"",
@@ -644,7 +654,7 @@ public class ValuesRepository(
 			h.""Text"",
 			h.""Number"",
 			CASE WHEN h.""Quality"" IS NULL THEN 8 ELSE h.""Quality"" END AS ""Quality""
-		FROM ""Tags"" t 
+		FROM ""Tags"" t
 		LEFT JOIN (
 			SELECT DISTINCT ON (""TagId"") *
 			FROM public.""TagsHistory""
@@ -665,7 +675,7 @@ public class ValuesRepository(
 	const string ReadLastBeforeDate = @"
 		SELECT DISTINCT ON (""TagId"") *
 		FROM public.""TagsHistory""
-		WHERE 
+		WHERE
 			""TagId"" IN (@tags)
 			AND ""Date"" <= '@old'
 		ORDER BY ""TagId"", ""Date"" DESC";
@@ -680,7 +690,7 @@ public class ValuesRepository(
 		UNION ALL
 		SELECT *
 		FROM public.""TagsHistory""
-		WHERE 
+		WHERE
 			""TagId"" IN (@tags)
 			AND ""Date"" > '@old'
 			AND ""Date"" <= '@young';";

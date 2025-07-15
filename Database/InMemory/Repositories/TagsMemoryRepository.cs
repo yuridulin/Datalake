@@ -209,7 +209,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			{
 				Created = DateFormats.GetCurrentDateTime(),
 				GlobalGuid = Guid.NewGuid(),
-				Frequency = createRequest.Frequency,
+				Resolution = createRequest.Resolution,
 				IsScaling = false,
 				Name = createRequest.Name!,
 				SourceId = createRequest.SourceId ?? (int)SourceType.Manual,
@@ -281,7 +281,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			Guid = createdTag.GlobalGuid,
 			Name = createdTag.Name,
 			Description = createdTag.Description,
-			Frequency = createdTag.Frequency,
+			Resolution = createdTag.Resolution,
 			Type = createdTag.Type,
 			Formula = createdTag.Formula ?? string.Empty,
 			FormulaInputs = [], // их не может быть при создании
@@ -333,7 +333,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 				Name = updateRequest.Name,
 				Description = updateRequest.Description,
 				Type = updateRequest.Type,
-				Frequency = updateRequest.Frequency,
+				Resolution = updateRequest.Resolution,
 				SourceId = updateRequest.SourceId,
 				SourceItem = updateRequest.SourceItem,
 				IsScaling = updateRequest.IsScaling,
@@ -361,8 +361,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 				changes.Add($"описание: [{tag.Description}] > [{updateRequest.Description}]");
 			if (tag.Type != updateRequest.Type)
 				changes.Add($"тип значения: [{tag.Type}] > [{updateRequest.Type}]");
-			if (tag.Frequency != updateRequest.Frequency)
-				changes.Add($"частота: [{tag.Frequency}] > [{updateRequest.Frequency}]");
+			if (tag.Resolution != updateRequest.Resolution)
+				changes.Add($"частота: [{tag.Resolution}] > [{updateRequest.Resolution}]");
 			if (tag.SourceId != updateRequest.SourceId)
 				changes.Add($"источник: [{tag.SourceId}] > [{updateRequest.SourceId}]");
 			if (tag.SourceItem != updateRequest.SourceItem)
@@ -438,7 +438,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.Set(x => x.Name, updateRequest.Name)
 					.Set(x => x.Description, updateRequest.Description)
 					.Set(x => x.Type, updateRequest.Type)
-					.Set(x => x.Frequency, updateRequest.Frequency)
+					.Set(x => x.Resolution, updateRequest.Resolution)
 					.Set(x => x.SourceId, updateRequest.SourceId)
 					.Set(x => x.SourceItem, updateRequest.SourceItem)
 					.Set(x => x.IsScaling, updateRequest.IsScaling)
@@ -557,7 +557,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	{
 		// Формируем параметризованный SQL запрос
 		var insertSql = $"""
-			INSERT INTO "{TagInput.TableName}" 
+			INSERT INTO "{TagInput.TableName}"
 			("TagId", "InputTagId", "InputTagRelationId", "VariableName")
 			VALUES {string.Join(", ", newInputs.Select((_, i) =>
 				$"(:t{i}, :it{i}, :ir{i}, :v{i})"))}

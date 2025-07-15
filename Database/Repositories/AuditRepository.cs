@@ -176,7 +176,7 @@ public class AuditRepository
 					Guid = tag.GlobalGuid,
 					Name = tag.Name,
 					Type = tag.Type,
-					Frequency = tag.Frequency,
+					Resolution = tag.Resolution,
 					SourceType = tagSource == null ? SourceType.NotSet : tagSource.Type,
 				},
 				AffectedUser = user == null ? null : new UserSimpleInfo

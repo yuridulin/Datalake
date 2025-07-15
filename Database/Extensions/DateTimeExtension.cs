@@ -11,15 +11,19 @@ public static class DateTimeExtension
 	/// Усечение даты по частоте записи (округление)
 	/// </summary>
 	/// <param name="dateTime">Оригинальная дата записи</param>
-	/// <param name="frequency">Заданная частота записи</param>
+	/// <param name="resolution">Заданная частота записи</param>
 	/// <returns>Преобразованная дата</returns>
-	public static DateTime RoundToFrequency(this DateTime dateTime, TagFrequency frequency)
+	public static DateTime RoundByResolution(this DateTime dateTime, TagResolution resolution)
 	{
-		return frequency switch
+		return resolution switch
 		{
-			TagFrequency.ByDay => dateTime.Date,
-			TagFrequency.ByHour => new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, 0, 0, 0),
-			TagFrequency.ByMinute => new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, 0, 0),
+			TagResolution.ByMonth => new DateTime(dateTime.Year, dateTime.Month, 1),
+			TagResolution.ByWeek => dateTime.Date.AddDays(-(dateTime.DayOfWeek == DayOfWeek.Sunday ? 7 : dateTime.DayOfWeek - DayOfWeek.Monday)),
+			TagResolution.ByDay => dateTime.Date,
+			TagResolution.ByHalfHour => new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute >= 30 ? 30 : 0, 0, 0),
+			TagResolution.ByHour => new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, 0, 0, 0),
+			TagResolution.ByMinute => new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, 0, 0),
+			TagResolution.BySecond => new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, dateTime.Second, 0),
 			_ => dateTime,
 		};
 	}
