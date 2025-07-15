@@ -1,5 +1,5 @@
 import api from '@/api/swagger-api'
-import { AccessType, BlockFullInfo, BlockNestedTagInfo, ValueRecord } from '@/api/swagger/data-contracts'
+import { AccessType, BlockFullInfo, BlockNestedTagInfo, TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import TagButton from '@/app/components/buttons/TagButton'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
@@ -7,6 +7,7 @@ import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
 import TagCompactValue from '@/app/components/TagCompactValue'
+import { TagValuesViewer } from '@/app/components/values/TagValuesViewer'
 import routes from '@/app/router/routes'
 import { useInterval } from '@/hooks/useInterval'
 import { user } from '@/state/user'
@@ -14,7 +15,7 @@ import { RightOutlined } from '@ant-design/icons'
 import { Button, Spin, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 
 type BlockValues = {
@@ -77,6 +78,21 @@ const BlockView = observer(() => {
 	useEffect(getBlock, [id])
 	useInterval(getValues, 5000)
 
+	// Создаем маппинг тегов для TagValuesViewer
+	const tagMapping = useMemo(() => {
+		const mapping: Record<number, { id: number; localName: string; type: TagType }> = {}
+		block.tags?.forEach((tag) => {
+			mapping[tag.relationId] = {
+				id: tag.id,
+				localName: tag.localName,
+				type: tag.type,
+			}
+		})
+		return mapping
+	}, [block.tags])
+
+	const relations = useMemo(() => block.tags?.map((tag) => tag.relationId) || [], [block.tags])
+
 	return !ready ? (
 		<Spin />
 	) : (
@@ -111,6 +127,11 @@ const BlockView = observer(() => {
 
 			<TabsView
 				items={[
+					{
+						key: 'history',
+						label: 'История значений',
+						children: <TagValuesViewer relations={relations} tagMapping={tagMapping} integrated={true} />,
+					},
 					{
 						key: 'fields',
 						label: 'Поля',
@@ -193,7 +214,6 @@ const BlockView = observer(() => {
 							</>
 						),
 					},
-
 					{
 						key: 'logs',
 						label: 'События',

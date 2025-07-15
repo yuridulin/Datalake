@@ -10,6 +10,7 @@ import TagCompactValue from '@/app/components/TagCompactValue'
 import TagFrequencyEl from '@/app/components/TagFrequencyEl'
 import TagTypeEl from '@/app/components/TagTypeEl'
 import TagValueText from '@/app/components/TagValue'
+import { TagValuesViewer } from '@/app/components/values/TagValuesViewer'
 import { user } from '@/state/user'
 import { INNER_REQUESTS } from '@/types/constants'
 import { Button, Spin, Table, Tag } from 'antd'
@@ -24,6 +25,7 @@ import {
 	TagAggregation,
 	TagFullInfo,
 	TagQuality,
+	TagType,
 	ValueRecord,
 } from '../../../../api/swagger/data-contracts'
 import { useInterval } from '../../../../hooks/useInterval'
@@ -227,11 +229,45 @@ const TagView = observer(() => {
 		<TagCompactValue value={thisTagValue.value} type={tag.type} quality={thisTagValue.quality} />
 	)
 
+	const { tagMapping, relations } = useMemo(() => {
+		const mapping: Record<number, { id: number; localName: string; type: TagType }> = {}
+		const rels: number[] = []
+
+		// Основной тег
+		const mainRelId = tag.id * -1 // Виртуальный ID для связи
+		mapping[mainRelId] = {
+			id: tag.id,
+			localName: tag.name,
+			type: tag.type,
+		}
+		rels.push(mainRelId)
+
+		// Входные теги (для расчетных)
+		if (tag.sourceId === SourceType.Calculated) {
+			tag.formulaInputs?.forEach((input) => {
+				const inputRelId = input.id * -1 // Виртуальный ID
+				mapping[inputRelId] = {
+					id: input.id,
+					localName: input.variableName,
+					type: input.type,
+				}
+				rels.push(inputRelId)
+			})
+		}
+
+		return { tagMapping: mapping, relations: rels }
+	}, [tag])
+
 	const tabs = useMemo(
 		() => [
 			{
+				key: 'history',
+				label: 'Значения',
+				children: <TagValuesViewer relations={relations} tagMapping={tagMapping} integrated={true} />,
+			},
+			{
 				key: 'blocks',
-				label: 'Блоки с этим тегом',
+				label: 'Блоки',
 				children:
 					!tag.blocks || tag.blocks.length === 0 ? (
 						<i>нет</i>
@@ -239,6 +275,7 @@ const TagView = observer(() => {
 						<Table
 							size='small'
 							dataSource={tag.blocks}
+							rowKey={'relationId'}
 							columns={[
 								{
 									key: 'block',
@@ -263,10 +300,11 @@ const TagView = observer(() => {
 			},
 			{
 				key: 'metrics',
-				label: 'Обращения к этому тегу',
+				label: 'Запросы',
 				children: (
 					<Table
 						size='small'
+						rowKey={'requestKey'}
 						columns={[
 							{
 								key: 'date',
@@ -311,7 +349,7 @@ const TagView = observer(() => {
 				),
 			},
 		],
-		[tag, metrics],
+		[tag, metrics, relations, tagMapping],
 	)
 
 	return isLoading ? (
