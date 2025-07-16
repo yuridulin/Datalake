@@ -8,7 +8,7 @@ import isArraysDifferent from '@/functions/isArraysDifferent'
 import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
-import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space } from 'antd'
+import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useState } from 'react'
@@ -70,6 +70,18 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 		update: integrated,
 	})
 
+	// последние настройки на момент успешного запроса
+	const [lastFetchSettings, setLastFetchSettings] = useState<ViewerSettings>(settings)
+
+	// Проверка «грязности» настроек
+	const isDirty =
+		settings.mode !== lastFetchSettings.mode ||
+		settings.resolution !== lastFetchSettings.resolution ||
+		!settings.exact.isSame(lastFetchSettings.exact) ||
+		!settings.old.isSame(lastFetchSettings.old) ||
+		!settings.young.isSame(lastFetchSettings.young) ||
+		isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations)
+
 	useEffect(() => {
 		if (isArraysDifferent(settings.activeRelations, relations)) {
 			setSettings({ ...settings, activeRelations: relations })
@@ -126,6 +138,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 					})
 
 				setValues(newValues)
+				setLastFetchSettings(settings)
 			})
 			.catch(console.error)
 			.finally(() => setLoading(false))
@@ -155,7 +168,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 	// Для автоматического обновления
 	useInterval(() => {
-		if (settings.mode === TimeModes.LIVE && settings.update) {
+		if (settings.mode === TimeModes.LIVE) {
 			getValues()
 		}
 	}, 1000)
@@ -205,7 +218,6 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 	const DateRange = () => (
 		<>
-			{' '}
 			<Col flex='20em'>
 				<Radio.Group
 					value={settings.mode}
@@ -221,6 +233,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 						style={{ width: '13em' }}
 						placeholder='Дата среза'
 						value={settings.exact}
+						allowClear={false}
+						needConfirm={false}
 						onChange={(e) => setSettings({ ...settings, exact: e })}
 					/>
 				</span>
@@ -260,11 +274,21 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 					/>
 				</span>
 			</Col>
+
+			{/* Компактное предупреждение об устаревших данных */}
+			{isDirty && !integrated && (
+				<Col flex='10em'>
+					<Typography.Text type='warning' style={{ marginLeft: '1em' }}>
+						Данные устарели
+					</Typography.Text>
+				</Col>
+			)}
 		</>
 	)
 
 	return (
 		<>
+			{/* Панель управления: кнопка «Запрос», Radio, DatePicker, Select */}
 			<style>{`ul.ant-picker-ranges { visibility: hidden; height: 0; }`}</style>
 			{!integrated ? (
 				<div style={{ position: 'sticky' }}>
