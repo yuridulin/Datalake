@@ -1,5 +1,5 @@
 import api from '@/api/swagger-api'
-import { TagType, ValueRecord } from '@/api/swagger/data-contracts'
+import { TagResolution, TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
 import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
@@ -296,7 +296,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 			{values.length ? (
 				settings.mode === TimeModes.OLD_YOUNG ? (
-					<TimedValuesMode relations={values} />
+					<TimedValuesMode relations={values} locf={settings.resolution === TagResolution.NotSet} />
 				) : (
 					<ExactValuesMode relations={values} />
 				)
