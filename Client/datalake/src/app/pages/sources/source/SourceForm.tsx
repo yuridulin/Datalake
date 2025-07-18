@@ -2,7 +2,7 @@ import api from '@/api/swagger-api'
 import { Button, Input, Popconfirm, Radio } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { SourceInfo, SourceType } from '../../../../api/swagger/data-contracts'
+import { SourceInfo, SourceType, SourceUpdateRequest } from '../../../../api/swagger/data-contracts'
 import getSourceTypeName from '../../../../functions/getSourceTypeName'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
@@ -15,20 +15,29 @@ const SourceForm = () => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 
+	const [request, setRequest] = useState<SourceUpdateRequest>({
+		name: '',
+		type: SourceType.NotSet,
+		isDisabled: false,
+	})
 	const [source, setSource] = useState({} as SourceInfo)
-	const [name, setName] = useState('')
-	const [type, setType] = useState(SourceType.NotSet)
 
 	function load() {
 		api.sourcesRead(Number(id)).then((res) => {
-			setSource(res.data)
-			setName(res.data.name)
-			setType(res.data.type)
+			const sourceInfo = res.data
+			setSource(sourceInfo)
+			setRequest({
+				isDisabled: sourceInfo.isDisabled,
+				name: sourceInfo.name,
+				type: sourceInfo.type,
+				address: sourceInfo.address,
+				description: sourceInfo.description,
+			})
 		})
 	}
 
 	function sourceUpdate() {
-		api.sourcesUpdate(Number(id), source).then(() => navigate(routes.sources.list))
+		api.sourcesUpdate(Number(id), request).then(load)
 	}
 
 	function sourceDelete() {
@@ -63,21 +72,21 @@ const SourceForm = () => {
 					</>
 				}
 			>
-				Источник: {name}
+				Источник: {source.name}
 			</PageHeader>
 			<FormRow title='Имя'>
-				<Input value={source.name} onChange={(e) => setSource({ ...source, name: e.target.value })} />
+				<Input value={request.name} onChange={(e) => setRequest({ ...request, name: e.target.value })} />
 			</FormRow>
 			<FormRow title='Описание'>
 				<Input.TextArea
-					value={source.description ?? ''}
-					onChange={(e) => setSource({ ...source, description: e.target.value })}
+					value={request.description ?? ''}
+					onChange={(e) => setRequest({ ...request, description: e.target.value })}
 				/>
 			</FormRow>
 			<FormRow title='Активность'>
 				<Radio.Group
-					value={source.isDisabled ?? false}
-					onChange={(e) => setSource({ ...source, isDisabled: e.target.value })}
+					value={request.isDisabled ?? false}
+					onChange={(e) => setRequest({ ...request, isDisabled: e.target.value })}
 				>
 					<Radio.Button key={1} value={false}>
 						Запущен
@@ -90,16 +99,16 @@ const SourceForm = () => {
 			<FormRow title='Тип источника'>
 				<Radio.Group
 					buttonStyle='solid'
-					value={source.type}
-					onChange={(e) => setSource({ ...source, type: e.target.value })}
+					value={request.type}
+					onChange={(e) => setRequest({ ...request, type: e.target.value })}
 				>
 					{AvailableSourceTypes.map((x) => (
 						<Radio.Button
 							key={x}
 							value={x}
 							style={{
-								fontWeight: x === type ? 'bold' : 'inherit',
-								textDecoration: x === type ? 'underline' : 'inherit',
+								fontWeight: x === source.type ? 'bold' : 'inherit',
+								textDecoration: x === source.type ? 'underline' : 'inherit',
 							}}
 						>
 							{getSourceTypeName(x)}
@@ -107,22 +116,22 @@ const SourceForm = () => {
 					))}
 				</Radio.Group>
 			</FormRow>
-			{source.type > 0 && (
+			{request.type > 0 && (
 				<>
 					<FormRow title='Адрес'>
 						<Input
-							value={source.address ?? ''}
+							value={request.address ?? ''}
 							onChange={(e) =>
-								setSource({
-									...source,
+								setRequest({
+									...request,
 									address: e.target.value,
 								})
 							}
 						/>
 					</FormRow>
-					<br />
-					<br />
-					<SourceItems type={type} newType={source.type} id={Number(id)} />
+					<FormRow title='Доступные значения'>
+						<SourceItems source={source} request={request} />
+					</FormRow>
 				</>
 			)}
 		</>

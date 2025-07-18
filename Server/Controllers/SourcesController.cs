@@ -88,15 +88,15 @@ public class SourcesController(
 	/// Изменение источника
 	/// </summary>
 	/// <param name="id">Идентификатор источника</param>
-	/// <param name="source">Новые данные источника</param>
+	/// <param name="request">Новые данные источника</param>
 	[HttpPut("{id:int}")]
 	public async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int id,
-		[BindRequired, FromBody] SourceInfo source)
+		[BindRequired, FromBody] SourceUpdateRequest request)
 	{
 		var user = Authenticate();
 
-		await sourcesRepository.UpdateAsync(db, user, id, source);
+		await sourcesRepository.UpdateAsync(db, user, id, request);
 
 		return NoContent();
 	}

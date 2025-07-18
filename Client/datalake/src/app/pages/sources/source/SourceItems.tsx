@@ -1,22 +1,27 @@
 import api from '@/api/swagger-api'
 import TagButton from '@/app/components/buttons/TagButton'
 import { CheckCircleOutlined, CloseCircleOutlined, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons'
-import { Button, Input, Popconfirm, Table, TableColumnsType, Tag, theme } from 'antd'
+import { Alert, Button, Col, Input, Popconfirm, Row, Table, TableColumnsType, Tag, theme } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
-import { SourceEntryInfo, SourceType, TagInfo, TagResolution, TagType } from '../../../../api/swagger/data-contracts'
+import {
+	SourceEntryInfo,
+	SourceInfo,
+	SourceUpdateRequest,
+	TagInfo,
+	TagResolution,
+	TagType,
+} from '../../../../api/swagger/data-contracts'
 import compareValues from '../../../../functions/compareValues'
 import CreatedTagLinker from '../../../components/CreatedTagsLinker'
-import PageHeader from '../../../components/PageHeader'
 import TagCompactValue from '../../../components/TagCompactValue'
 
 type SourceItemsProps = {
-	type: SourceType
-	newType: SourceType
-	id: number
+	source: SourceInfo
+	request: SourceUpdateRequest
 }
 
-const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
+const SourceItems = ({ source, request }: SourceItemsProps) => {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
 	const [searchedItems, setSearchedItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
@@ -106,9 +111,9 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 	]
 
 	function read() {
-		if (!id) return
+		if (!source.id) return
 		api
-			.sourcesGetItemsWithTags(id)
+			.sourcesGetItemsWithTags(source.id)
 			.then((res) => {
 				setItems(res.data)
 				setErr(false)
@@ -121,7 +126,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 			.tagsCreate({
 				name: '',
 				tagType: tagType,
-				sourceId: id,
+				sourceId: source.id,
 				sourceItem: item,
 				resolution: TagResolution.Minute,
 			})
@@ -138,7 +143,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 										guid: res.data.guid,
 										item: res.data.sourceItem ?? item,
 										name: res.data.name,
-										sourceType: id,
+										sourceType: source.id,
 										type: res.data.type,
 										accessRule: { ruleId: 0, access: 0 },
 										formulaInputs: [],
@@ -183,43 +188,48 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[items],
 	)
-	useEffect(read, [id])
+	useEffect(read, [source])
 
-	if (type !== newType) return <>Тип источника изменен. Сохраните, чтобы продолжить</>
+	if (source.address !== request.address || source.type !== request.type)
+		return <Alert message='Тип источника изменен. Сохраните, чтобы продолжить' />
 
-	return err || items.length === 0 ? (
-		<div>
-			<i>Источник данных не предоставил информацию о доступных значениях</i>
-		</div>
+	return err ? (
+		<Alert message='Ошибка при получении данных' />
 	) : (
 		<>
-			<PageHeader
-				right={
-					<>
-						<Button onClick={read}>Обновить</Button>
-					</>
-				}
-			>
-				Доступные значения с этого источника данных
-			</PageHeader>
-			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
-			<Input.Search
-				style={{ marginBottom: '1em' }}
-				placeholder='Введите запрос для поиска по значениям и тегам. Можно написать несколько запросов, разделив пробелами'
-				value={search}
-				onChange={(e) => {
-					setSearch(e.target.value)
-					doSearch(e.target.value.toLowerCase())
-				}}
-			/>
-			<Table
-				dataSource={searchedItems}
-				columns={columns}
-				showSorterTooltip={false}
-				size='small'
-				pagination={{ position: ['bottomCenter'] }}
-				rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')}
-			/>
+			{items.length === 0 ? (
+				<div>
+					<i>Источник данных не предоставил информацию о доступных значениях</i>
+				</div>
+			) : (
+				<>
+					{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
+					<Row>
+						<Col flex='auto'>
+							<Input.Search
+								style={{ marginBottom: '1em', alignItems: 'center', justifyContent: 'space-between' }}
+								placeholder='Введите запрос для поиска по значениям и тегам. Можно написать несколько запросов, разделив пробелами'
+								value={search}
+								onChange={(e) => {
+									setSearch(e.target.value)
+									doSearch(e.target.value.toLowerCase())
+								}}
+							/>
+						</Col>
+						<Col>
+							<Button onClick={read}>Обновить</Button>
+						</Col>
+					</Row>
+					<Table
+						dataSource={searchedItems}
+						columns={columns}
+						showSorterTooltip={false}
+						size='small'
+						pagination={{ position: ['bottomCenter'] }}
+						rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')}
+					/>
+				</>
+			)}
 		</>
 	)
 }

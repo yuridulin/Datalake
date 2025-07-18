@@ -26,6 +26,7 @@ import {
   SourceInfo,
   SourceItemInfo,
   SourceState,
+  SourceUpdateRequest,
   TagCreateRequest,
   TagFullInfo,
   TagInfo,
@@ -357,7 +358,11 @@ export class Api<
    * @request PUT:/api/Sources/{id}
    * @response `200` `File`
    */
-  sourcesUpdate = (id: number, data: SourceInfo, params: RequestParams = {}) =>
+  sourcesUpdate = (
+    id: number,
+    data: SourceUpdateRequest,
+    params: RequestParams = {},
+  ) =>
     this.request<File, any>({
       path: `/api/Sources/${id}`,
       method: "PUT",

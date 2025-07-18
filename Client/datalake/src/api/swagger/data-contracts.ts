@@ -583,6 +583,23 @@ export type SourceInfo = SourceSimpleInfo & {
   accessRule?: AccessRuleInfo;
 };
 
+/** Данные для изменения источника данных */
+export interface SourceUpdateRequest {
+  /**
+   * Название источника
+   * @minLength 1
+   */
+  name: string;
+  /** Произвольное описание источника */
+  description?: string | null;
+  /** Используемый для получения данных адрес */
+  address?: string | null;
+  /** Тип протокола, по которому запрашиваются данные */
+  type: SourceType;
+  /** Источник отмечен как удаленный */
+  isDisabled: boolean;
+}
+
 /** Информация о удалённой записи с данными источника */
 export interface SourceItemInfo {
   /**

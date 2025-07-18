@@ -114,17 +114,17 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="id">Идентификатор источника</param>
-	/// <param name="sourceInfo">Новые параметры источника</param>
+	/// <param name="request">Новые параметры источника</param>
 	/// <returns>Флаг успешного завершения</returns>
 	public async Task<bool> UpdateAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
 		int id,
-		SourceInfo sourceInfo)
+		SourceUpdateRequest request)
 	{
 		user.ThrowIfNoAccessToSource(AccessType.Editor, id);
 
-		return await ProtectedUpdateAsync(db, user.Guid, id, sourceInfo);
+		return await ProtectedUpdateAsync(db, user.Guid, id, request);
 	}
 
 	/// <summary>
@@ -296,12 +296,9 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		return info;
 	}
 
-	internal async Task<bool> ProtectedUpdateAsync(DatalakeContext db, Guid userGuid, int id, SourceInfo sourceInfo)
+	internal async Task<bool> ProtectedUpdateAsync(DatalakeContext db, Guid userGuid, int id, SourceUpdateRequest request)
 	{
-		// Проверки, не требующие стейта
-		sourceInfo.Name = StringExtensions.RemoveWhitespaces(sourceInfo.Name, "_");
-
-		Source? newSource;
+		Source? updatedSource;
 
 		// Блокируем стейт до завершения обновления
 		DatalakeDataState currentState;
@@ -310,21 +307,19 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			currentState = dataStore.State;
 
 			// Проверки на актуальном стейте
-			if (!currentState.SourcesById.TryGetValue(id, out var source))
+			if (!currentState.SourcesById.TryGetValue(id, out var currentSource))
 				throw new NotFoundException($"Источник #{id} не найден");
 
-			if (currentState.Sources.Any(x => !x.IsDeleted && x.Id != id && x.Name == sourceInfo.Name))
+			if (currentState.Sources.Any(x => !x.IsDeleted && x.Id != id && x.Name == request.Name))
 				throw new AlreadyExistException("Уже существует источник с таким именем");
 
-			newSource = source with
+			updatedSource = currentSource with
 			{
-				Id = id,
-				Name = sourceInfo.Name,
-				Address = sourceInfo.Address,
-				Type = sourceInfo.Type,
-				Description = sourceInfo.Description,
-				IsDeleted = false,
-				IsDisabled = sourceInfo.IsDisabled,
+				Name = request.Name,
+				Address = request.Address,
+				Type = request.Type,
+				Description = request.Description,
+				IsDisabled = request.IsDisabled,
 			};
 
 			// Обновление в БД
@@ -334,19 +329,19 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			{
 				int count = await db.Sources
 					.Where(x => x.Id == id)
-					.Set(x => x.Name, newSource.Name)
-					.Set(x => x.Description, newSource.Description)
-					.Set(x => x.Address, newSource.Address)
-					.Set(x => x.Type, newSource.Type)
-					.Set(x => x.IsDisabled, newSource.IsDisabled)
+					.Set(x => x.Name, updatedSource.Name)
+					.Set(x => x.Description, updatedSource.Description)
+					.Set(x => x.Address, updatedSource.Address)
+					.Set(x => x.Type, updatedSource.Type)
+					.Set(x => x.IsDisabled, updatedSource.IsDisabled)
 					.UpdateAsync();
 
 				if (count == 0)
 					throw new DatabaseException($"Не удалось обновить источник #{id}", DatabaseStandartError.UpdatedZero);
 
-				await LogAsync(db, userGuid, id, "Изменен источник: " + source.Name, ObjectExtension.Difference(
-					new { source.Name, source.Address, source.Type, source.IsDisabled },
-					new { newSource.Name, newSource.Address, newSource.Type, source.IsDisabled }));
+				await LogAsync(db, userGuid, id, "Изменен источник: " + currentSource.Name, ObjectExtension.Difference(
+					new { currentSource.Name, currentSource.Address, currentSource.Type, currentSource.IsDisabled },
+					new { updatedSource.Name, updatedSource.Address, updatedSource.Type, updatedSource.IsDisabled }));
 
 				await transaction.CommitAsync();
 			}
@@ -359,7 +354,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				Sources = state.Sources.Remove(source).Add(newSource),
+				Sources = state.Sources.Replace(currentSource, updatedSource),
 			});
 		}
 
@@ -370,6 +365,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	internal async Task<bool> ProtectedDeleteAsync(DatalakeContext db, Guid userGuid, int id)
 	{
 		// Проверки, не требующие стейта
+		Source updatedSource;
 
 		// Блокируем стейт до завершения обновления
 		DatalakeDataState currentState;
@@ -378,8 +374,13 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			currentState = dataStore.State;
 
 			// Проверки на актуальном стейте
-			if (!currentState.SourcesById.TryGetValue(id, out var source))
+			if (!currentState.SourcesById.TryGetValue(id, out var currentSource))
 				throw new NotFoundException($"Источник #{id} не найден");
+
+			updatedSource = currentSource with
+			{
+				IsDeleted = true,
+			};
 
 			// Обновление в БД
 			using var transaction = await db.BeginTransactionAsync();
@@ -387,13 +388,13 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			{
 				var count = await db.Sources
 					.Where(x => x.Id == id)
-					.Set(x => x.IsDeleted, true)
+					.Set(x => x.IsDeleted, updatedSource.IsDeleted)
 					.UpdateAsync();
 
 				if (count == 0)
 					throw new DatabaseException($"Не удалось удалить источник #{id}", DatabaseStandartError.DeletedZero);
 
-				await LogAsync(db, userGuid, id, "Удален источник: " + source.Name + ".");
+				await LogAsync(db, userGuid, id, "Удален источник: " + currentSource.Name + ".");
 
 				await transaction.CommitAsync();
 			}
@@ -406,7 +407,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				Sources = state.Sources.Remove(source),
+				Sources = state.Sources.Replace(currentSource, updatedSource),
 			});
 		}
 
