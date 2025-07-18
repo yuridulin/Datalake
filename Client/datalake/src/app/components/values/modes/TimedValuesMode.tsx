@@ -1,11 +1,16 @@
 import { TagQuality } from '@/api/swagger/data-contracts'
 import TagCompactValue from '@/app/components/TagCompactValue'
+import { ExcelExportModeHandles, getQualityStyle } from '@/app/components/values/functions/exportExcel'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
 import { TransformedData } from '@/app/pages/values/types/TransformedData'
 import compareValues from '@/functions/compareValues'
+import { TagTypeName } from '@/functions/getTagTypeName'
 import { TagValue } from '@/types/tagValue'
 import { Table } from 'antd'
 import { ColumnType } from 'antd/es/table'
+import ExcelJS from 'exceljs'
+import saveAs from 'file-saver'
+import { forwardRef, useImperativeHandle } from 'react'
 
 type TimedValuesModeProps = {
 	relations: {
@@ -15,7 +20,7 @@ type TimedValuesModeProps = {
 	locf: boolean // признак, что нужно выполнять протягивание
 }
 
-const TimedValuesMode = ({ relations, locf }: TimedValuesModeProps) => {
+const TimedValuesMode = forwardRef<ExcelExportModeHandles, TimedValuesModeProps>(({ relations, locf }, ref) => {
 	// 1. Собираем и объединяем все точки по уникальному ключу date
 	const dateMap = new Map<string, TransformedData>()
 
@@ -87,7 +92,75 @@ const TimedValuesMode = ({ relations, locf }: TimedValuesModeProps) => {
 		})),
 	]
 
-	return <Table columns={columns} dataSource={rows} size='small' rowKey='time' showSorterTooltip={false} />
-}
+	useImperativeHandle(
+		ref,
+		() => ({
+			exportToExcel: async () => {
+				const workbook = new ExcelJS.Workbook()
+				const worksheet = workbook.addWorksheet('Исторические данные')
+
+				// Заголовки
+				const headerRow = ['Время']
+				relations.forEach((rel) => {
+					headerRow.push(`${rel.value.localName} [${TagTypeName[rel.value.type]}]`)
+				})
+				worksheet.addRow(headerRow)
+
+				// Данные
+				rows.forEach((row) => {
+					const dataRow = [row.time]
+					const qualities: (number | null)[] = []
+
+					relations.forEach((rel) => {
+						const key = String(rel.relationId)
+						const cellData = row[key]
+
+						if (cellData) {
+							dataRow.push(`${cellData.value ?? ''}`)
+							qualities.push(cellData.quality)
+						} else {
+							dataRow.push('')
+							qualities.push(null)
+						}
+					})
+
+					worksheet.addRow(dataRow)
+				})
+
+				// Применение стилей
+				worksheet.eachRow((row, rowIndex) => {
+					if (rowIndex > 1) {
+						// Пропускаем заголовок
+						for (let colIndex = 2; colIndex <= relations.length + 1; colIndex++) {
+							const cell = row.getCell(colIndex)
+							const value = cell.value as string
+
+							if (value && value.includes(';')) {
+								const parts = value.split(';')
+								const quality = Number(parts[parts.length - 1])
+
+								if (!isNaN(quality)) {
+									cell.style = getQualityStyle(quality)
+									cell.value = value // Сохраняем исходное значение
+								}
+							}
+						}
+					}
+				})
+
+				// Сохранение файла
+				const buffer = await workbook.xlsx.writeBuffer()
+				saveAs(new Blob([buffer]), 'Исторические_данные.xlsx')
+			},
+		}),
+		[relations, rows],
+	)
+
+	return (
+		<>
+			<Table columns={columns} dataSource={rows} size='small' rowKey='time' showSorterTooltip={false} />
+		</>
+	)
+})
 
 export default TimedValuesMode

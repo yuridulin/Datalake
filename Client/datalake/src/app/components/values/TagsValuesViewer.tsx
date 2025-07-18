@@ -1,5 +1,6 @@
 import api from '@/api/swagger-api'
 import { TagResolution, TagType, ValueRecord } from '@/api/swagger/data-contracts'
+import { ExcelExportModeHandles } from '@/app/components/values/functions/exportExcel'
 import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
 import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
@@ -11,7 +12,7 @@ import { PlaySquareOutlined } from '@ant-design/icons'
 import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 const TimeModes = {
@@ -59,6 +60,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 	const initialMode = (searchParams.get(ModeParam) as TimeMode) || TimeModes.LIVE
 	const [isLoading, setLoading] = useState(false)
 	const [values, setValues] = useState<{ relationId: number; value: TagValueWithInfo }[]>([])
+
+	const tableRef = useRef<ExcelExportModeHandles>(null)
 
 	const [settings, setSettings] = useState<ViewerSettings>({
 		activeRelations: relations,
@@ -218,6 +221,13 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 	const DateRange = () => (
 		<>
+			{values.length ? (
+				<Col flex='8em'>
+					<Button onClick={() => tableRef.current?.exportToExcel()}>Экспорт</Button>
+				</Col>
+			) : (
+				<></>
+			)}
 			<Col flex='20em'>
 				<Radio.Group
 					value={settings.mode}
@@ -320,9 +330,9 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 			{values.length ? (
 				settings.mode === TimeModes.OLD_YOUNG ? (
-					<TimedValuesMode relations={values} locf={settings.resolution === TagResolution.NotSet} />
+					<TimedValuesMode ref={tableRef} relations={values} locf={settings.resolution === TagResolution.NotSet} />
 				) : (
-					<ExactValuesMode relations={values} />
+					<ExactValuesMode ref={tableRef} relations={values} />
 				)
 			) : integrated ? (
 				''

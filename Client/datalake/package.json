@@ -17,6 +17,8 @@
 		"axios": "^1.7.3",
 		"dayjs": "^1.11.13",
 		"debounce": "^2.1.1",
+		"exceljs": "^4.4.0",
+		"file-saver": "^2.0.5",
 		"framer-motion": "^11.11.1",
 		"javascript-time-ago": "^2.5.11",
 		"mobx-react-lite": "^4.0.7",
@@ -30,6 +32,8 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.8.0",
+		"@types/file-saver": "^2.0.7",
+		"@types/node": "^24.0.14",
 		"@types/react": "^18.3.3",
 		"@types/react-dom": "^18.3.0",
 		"@vitejs/plugin-react": "^4.3.1",
@@ -40,7 +44,7 @@
 		"prettier": "^3.3.3",
 		"typescript": "^5.5.3",
 		"typescript-eslint": "^8.0.0",
-		"vite": "^5.4.0",
+		"vite": "^7.0.4",
 		"vite-plugin-html": "^3.2.2",
 		"web-vitals": "^4.2.3"
 	}

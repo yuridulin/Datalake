@@ -81,6 +81,7 @@ code {
 
 .form-subtable td {
 	padding: .25em .5em;
+	vertical-align: top;
 }
 
 .form-subtable td div {
