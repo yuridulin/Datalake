@@ -101,7 +101,7 @@ const SourcesList = observer(() => {
 			sorter: (a, b) => a.name.localeCompare(b.name),
 			render: (_, record) =>
 				record.isGroup ? (
-					<b>{record.name}</b>
+					<i style={{ paddingLeft: '2em' }}>{record.name}</i>
 				) : (
 					<NavLink className='table-row' to={record.link} key={record.id}>
 						<Button size='small'>{record.name}</Button>
@@ -223,6 +223,7 @@ const SourcesList = observer(() => {
 					expandRowByClick: false,
 					showExpandColumn: false,
 				}}
+				showSorterTooltip={false}
 				rowKey='id'
 			/>
 		</>
