@@ -15,7 +15,7 @@ using Serilog;
 using Serilog.Events;
 using System.Reflection;
 
-[assembly: AssemblyVersion("2.4.1.*")]
+[assembly: AssemblyVersion("2.4.2.*")]
 
 namespace Datalake.Server
 {
