@@ -35,6 +35,8 @@ public abstract class DatalakePublicApiClient : ControllerBase
 			BaseAddress = new Uri(_baseUri)
 		};
 		_client.DefaultRequestHeaders.Add(AuthConstants.TokenHeader, _token);
+
+		_logger.LogDebug("Datalake:\n\t{base}\n\t[{token}]", _client.BaseAddress, token);
 	}
 
 	private string _baseUri;
@@ -248,8 +250,11 @@ public abstract class DatalakePublicApiClient : ControllerBase
 
 	protected virtual void SetUnderlyingUser(HttpRequestMessage request, Guid? userGuid = null)
 	{
-		if (userGuid != null)
-			request.Headers.Add(AuthConstants.UnderlyingUserGuidHeader, userGuid.ToString());
+		if (userGuid == null)
+			return;
+
+		request.Headers.Add(AuthConstants.UnderlyingUserGuidHeader, userGuid.ToString());
+		_logger.LogDebug("Datalake > as user [{user}]", userGuid);
 	}
 
 	private async Task<FileStreamResult> ReturnStreamResponse(

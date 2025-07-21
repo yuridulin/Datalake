@@ -163,6 +163,8 @@ namespace Datalake.Server
 					connectionString = connectionString.Replace($"${{{variable}}}", value);
 			}
 
+			Log.Information($"ConnectionString: {connectionString}");
+
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 				options
 					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
@@ -201,7 +203,7 @@ namespace Datalake.Server
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Startup error: " + ex.Message);
+				Log.Warning("Startup error: " + ex.Message);
 			}
 		}
 
