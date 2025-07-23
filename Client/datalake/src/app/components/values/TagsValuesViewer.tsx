@@ -174,7 +174,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 		if (settings.mode === TimeModes.LIVE) {
 			getValues()
 		}
-	}, 1000)
+	}, 5000)
 
 	const renderFooterOld = () => (
 		<Space style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px' }}>

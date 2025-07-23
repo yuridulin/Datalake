@@ -89,7 +89,7 @@ const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
 	}, [inputs])
 
 	useEffect(getValues, [getValues])
-	useInterval(getValues, 3000)
+	useInterval(getValues, 5000)
 
 	return formula ? (
 		<>
