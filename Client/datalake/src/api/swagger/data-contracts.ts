@@ -11,6 +11,19 @@
  */
 
 /**
+ * Тип учётной записи
+ *
+ * 1 = Local
+ * 2 = Static
+ * 3 = EnergoId
+ */
+export enum UserType {
+  Local = 1,
+  Static = 2,
+  EnergoId = 3,
+}
+
+/**
  * Тип агрегирования данных
  *
  * 0 = List
@@ -25,19 +38,6 @@ export enum AggregationFunc {
   Avg = 2,
   Min = 3,
   Max = 4,
-}
-
-/**
- * Тип учётной записи
- *
- * 1 = Local
- * 2 = Static
- * 3 = EnergoId
- */
-export enum UserType {
-  Local = 1,
-  Static = 2,
-  EnergoId = 3,
 }
 
 /**
@@ -786,6 +786,65 @@ export type UserAuthInfo = UserSimpleInfo & {
    */
   energoId?: string | null;
 };
+
+export interface KeyValuePairOfValuesRequestKeyAndValuesRequestUsage {
+  /** Уникальная подпись для метрики запроса к данным */
+  key?: ValuesRequestKey;
+  value?: ValuesRequestUsage | null;
+}
+
+/** Уникальная подпись для метрики запроса к данным */
+export interface ValuesRequestKey {
+  /** Ключ запроса */
+  requestKey?: string;
+  /** Список идентификаторов тегов */
+  tags?: string[];
+  /** Список глобальных идентификаторов тегов */
+  tagsId?: number[] | null;
+  /**
+   * Дата начала диапазона
+   * @format date-time
+   */
+  old?: string | null;
+  /**
+   * Дата конца диапазона
+   * @format date-time
+   */
+  young?: string | null;
+  /**
+   * Дата среза
+   * @format date-time
+   */
+  exact?: string | null;
+  /** Шаг */
+  resolution?: TagResolution;
+  /** Агрегирующая функция */
+  func?: AggregationFunc;
+}
+
+/** Метрика запроса на чтение данных */
+export interface ValuesRequestUsage {
+  /**
+   * Время последнего выполнения
+   * @format duration
+   */
+  lastExecutionTime?: string;
+  /**
+   * Время последнего завершения выполнения
+   * @format date-time
+   */
+  lastExecutedAt?: string;
+  /**
+   * Количество значений в последнем запросе
+   * @format int32
+   */
+  lastValuesCount?: number;
+  /**
+   * Подсчет количества запросов за последние сутки
+   * @format int32
+   */
+  requestsLast24h?: number;
+}
 
 /** Информация о теге */
 export type TagInfo = TagSimpleInfo & {

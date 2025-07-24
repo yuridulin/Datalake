@@ -6,6 +6,7 @@ using Datalake.Server.Controllers.Base;
 using Datalake.Server.Services.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Diagnostics;
 
 namespace Datalake.Server.Controllers;
 
@@ -18,7 +19,8 @@ public class ValuesController(
 	DatalakeContext db,
 	DatalakeDerivedDataStore derivedDataStore,
 	ValuesRepository valuesRepository,
-	TagsStateService tagsStateService) : ApiControllerBase(derivedDataStore)
+	TagsStateService tagsStateService,
+	RequestsStateService requestsStateService) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Путь для получения текущих данные
@@ -36,8 +38,12 @@ public class ValuesController(
 	{
 		var user = Authenticate();
 
-		tagsStateService.UpdateTagState(requests);
+		var sw = Stopwatch.StartNew();
 		var responses = await valuesRepository.GetValuesAsync(db, user, requests);
+		sw.Stop();
+
+		tagsStateService.UpdateTagState(requests);
+		requestsStateService.RecordBatch(requests, sw.Elapsed, responses);
 
 		return responses;
 	}

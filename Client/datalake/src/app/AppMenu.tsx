@@ -196,6 +196,16 @@ const items = [
 				),
 				minimalAccess: AccessType.Admin,
 			},
+			{
+				key: routes.admin.metrics.values,
+				label: (
+					<NavLink to={routes.admin.metrics.values}>
+						<MenuUnfoldOutlined style={{ color: blue[5] }} />
+						&emsp;Метрики запросов на чтение
+					</NavLink>
+				),
+				minimalAccess: AccessType.Admin,
+			},
 		],
 	},
 ]
