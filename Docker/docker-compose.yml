@@ -1,15 +1,34 @@
-version: '3.4'
+version: '3.9'
 
 services:
+  postgres:
+    image: timescale/timescaledb:2.21.0-pg17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: datalake-docker
+    volumes:
+      - ../Server/storage/database:/var/lib/postgresql/data
+    ports:
+      - "2345:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   datalakeserver:
     image: ${DOCKER_REGISTRY-}datalakeserver
-    container_name: datalake-server
+    container_name: datalakeserver
     build:
       context: ../
       dockerfile: ./Server/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       DATALAKE_HOST: host.docker.internal
-      DATALAKE_DB: datalake
+      DATALAKE_DB: datalake-docker
       DATALAKE_DB_USER: postgres
       DATALAKE_DB_PASS: postgres
     ports:

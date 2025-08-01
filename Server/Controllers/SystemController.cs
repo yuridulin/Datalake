@@ -28,7 +28,8 @@ public class SystemController(
 	SourcesStateService sourcesStateService,
 	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
-	SettingsMemoryRepository settingsRepository) : ApiControllerBase(derivedDataStore)
+	SettingsMemoryRepository settingsRepository,
+	RequestsStateService requestsStateService) : ApiControllerBase(derivedDataStore)
 {
 	/// <summary>
 	/// Получение даты последнего изменения структуры базы данных
@@ -199,14 +200,24 @@ public class SystemController(
 	/// <summary>
 	/// Получение списка вычисленных прав доступа для каждого пользователя
 	/// </summary>
-	/// <returns></returns>
 	[HttpGet("access")]
 	public ActionResult<Dictionary<Guid, UserAuthInfo>> GetAccess()
 	{
 		var user = Authenticate();
-
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return DerivedDataStore.Access.GetAll();
+	}
+
+	/// <summary>
+	/// Получение метрик запросов на чтение
+	/// </summary>
+	[HttpGet("reads")]
+	public ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsage>[]> GetReadMetricsAsync()
+	{
+		var user = Authenticate();
+		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
+
+		return requestsStateService.GetAllStats().ToArray();
 	}
 }

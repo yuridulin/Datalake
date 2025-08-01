@@ -18,6 +18,7 @@ import {
   BlockUpdateRequest,
   BlockWithTagsInfo,
   EnergoIdInfo,
+  KeyValuePairOfValuesRequestKeyAndValuesRequestUsage,
   LogCategory,
   LogInfo,
   LogType,
@@ -26,6 +27,7 @@ import {
   SourceInfo,
   SourceItemInfo,
   SourceState,
+  SourceUpdateRequest,
   TagCreateRequest,
   TagFullInfo,
   TagInfo,
@@ -357,7 +359,11 @@ export class Api<
    * @request PUT:/api/Sources/{id}
    * @response `200` `File`
    */
-  sourcesUpdate = (id: number, data: SourceInfo, params: RequestParams = {}) =>
+  sourcesUpdate = (
+    id: number,
+    data: SourceUpdateRequest,
+    params: RequestParams = {},
+  ) =>
     this.request<File, any>({
       path: `/api/Sources/${id}`,
       method: "PUT",
@@ -637,6 +643,22 @@ export class Api<
   systemGetAccess = (params: RequestParams = {}) =>
     this.request<Record<string, UserAuthInfo>, any>({
       path: `/api/System/access`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags System
+   * @name SystemGetReadMetrics
+   * @summary Получение метрик запросов на чтение
+   * @request GET:/api/System/reads
+   * @response `200` `(KeyValuePairOfValuesRequestKeyAndValuesRequestUsage)[]`
+   */
+  systemGetReadMetrics = (params: RequestParams = {}) =>
+    this.request<KeyValuePairOfValuesRequestKeyAndValuesRequestUsage[], any>({
+      path: `/api/System/reads`,
       method: "GET",
       format: "json",
       ...params,

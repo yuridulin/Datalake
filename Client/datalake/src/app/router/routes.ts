@@ -6,6 +6,7 @@ const routes = {
 		metrics: {
 			root: '/metrics',
 			tags: '/metrics/tags',
+			values: '/metrics/values',
 		},
 	},
 	users: {

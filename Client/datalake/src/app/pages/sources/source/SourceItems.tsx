@@ -1,28 +1,217 @@
 import api from '@/api/swagger-api'
 import TagButton from '@/app/components/buttons/TagButton'
-import { CheckCircleOutlined, CloseCircleOutlined, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons'
-import { Button, Input, Popconfirm, Table, TableColumnsType, Tag, theme } from 'antd'
+import {
+	CheckCircleOutlined,
+	CloseCircleOutlined,
+	DownOutlined,
+	MinusCircleOutlined,
+	PlusCircleOutlined,
+} from '@ant-design/icons'
+import { Alert, Button, Col, Input, Popconfirm, Radio, Row, Table, TableColumnsType, Tag, theme, Tree } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
-import { SourceEntryInfo, SourceType, TagInfo, TagResolution, TagType } from '../../../../api/swagger/data-contracts'
+import {
+	SourceEntryInfo,
+	SourceInfo,
+	SourceTagInfo,
+	SourceUpdateRequest,
+	TagInfo,
+	TagResolution,
+	TagType,
+} from '../../../../api/swagger/data-contracts'
 import compareValues from '../../../../functions/compareValues'
 import CreatedTagLinker from '../../../components/CreatedTagsLinker'
-import PageHeader from '../../../components/PageHeader'
 import TagCompactValue from '../../../components/TagCompactValue'
 
-type SourceItemsProps = {
-	type: SourceType
-	newType: SourceType
-	id: number
+interface GroupedEntry {
+	path: string
+	itemInfo?: SourceEntryInfo['itemInfo']
+	tagInfoArray: SourceTagInfo[]
 }
 
-const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
+function groupEntries(items: SourceEntryInfo[]): GroupedEntry[] {
+	const map = items.reduce<Record<string, GroupedEntry>>((acc, x) => {
+		const key = x.itemInfo?.path || '__no_path__'
+		if (!acc[key]) {
+			acc[key] = { path: key, itemInfo: x.itemInfo, tagInfoArray: [] }
+		}
+		if (x.tagInfo) {
+			acc[key].tagInfoArray.push(x.tagInfo)
+		}
+		return acc
+	}, {})
+
+	return Object.values(map)
+}
+
+interface TreeNodeData {
+	key: string
+	title: React.ReactNode
+	children?: TreeNodeData[]
+	isLeaf: boolean
+	path: string
+	group?: GroupedEntry // Добавлено поле group
+	countLeaves: number
+	countTags: number
+}
+
+type SourceItemsProps = {
+	source: SourceInfo
+	request: SourceUpdateRequest
+}
+
+// Функция для форматирования чисел
+const formatCount = (count: number) => (count > 0 ? `: ${count}` : ' нет')
+
+const localStorageKey = 'sourceItemsViewMode'
+
+const SourceItems = ({ source, request }: SourceItemsProps) => {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
 	const [searchedItems, setSearchedItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
 	const [created, setCreated] = useState(null as TagInfo | null)
 	const [search, setSearch] = useState('')
+	const [viewMode, setViewMode] = useState<'table' | 'tree'>(() => {
+		const saved = localStorage.getItem(localStorageKey) as 'table' | 'tree' | null
+		return saved || 'table'
+	})
 	const { token } = theme.useToken()
+
+	// Функция для построения дерева
+	const buildTree = (groups: GroupedEntry[]): TreeNodeData[] => {
+		// Интерфейс для временного узла при построении дерева
+		interface TempTreeNode {
+			children: Record<string, TempTreeNode>
+			countLeaves: number
+			countTags: number
+			path: string
+			group?: GroupedEntry
+			isLeaf?: boolean
+		}
+
+		// создаём единый корень
+		const root: TempTreeNode = {
+			children: {},
+			countLeaves: 0,
+			countTags: 0,
+			path: '',
+		}
+
+		groups.forEach((group) => {
+			const parts = group.path === '__no_path__' ? ['Без пути'] : group.path.split('.')
+			let current = root
+
+			parts.forEach((part, idx) => {
+				if (!current.children[part]) {
+					current.children[part] = {
+						children: {},
+						countLeaves: 0,
+						countTags: 0,
+						path: parts.slice(0, idx + 1).join('.'),
+					}
+				}
+				current = current.children[part]
+			})
+
+			// leaf: сохраняем инфо
+			current.group = group
+			current.isLeaf = true
+			current.countLeaves = 1
+			current.countTags = group.tagInfoArray.length
+		})
+
+		// рекурсивная сборка дерева
+		const buildNode = (node: TempTreeNode, keyPath: string): TreeNodeData[] => {
+			return Object.entries(node.children).map(([name, child]) => {
+				const fullKey = `${keyPath}.${name}`
+				const isLeaf = !!child.isLeaf
+
+				// считаем суммарные метрики
+				const sub = buildNode(child, fullKey)
+				const leavesCount = sub.reduce((sum, n) => sum + n.countLeaves, 0) + (child.isLeaf ? 1 : 0)
+				const tagsCount = sub.reduce((sum, n) => sum + n.countTags, 0) + (child.countTags || 0)
+
+				// заголовок: если лист, на первой строке — value
+				const title = isLeaf ? (
+					<div style={{ display: 'flex', flexDirection: 'row' }}>
+						{/* 2) Имя узла */}
+						<span>{name}</span>
+						&emsp;
+						{/* 1) Значение */}
+						{child.group?.itemInfo && (
+							<TagCompactValue
+								type={child.group.itemInfo.type}
+								quality={child.group.itemInfo.quality}
+								value={child.group.itemInfo.value}
+							/>
+						)}
+					</div>
+				) : (
+					<div style={{ display: 'flex', alignItems: 'center' }}>
+						<span style={{ flex: 1 }}>{name}</span>&emsp;
+						<span style={{ color: token.colorTextSecondary, fontSize: '0.85em' }}>
+							значений{formatCount(leavesCount)}, тегов{formatCount(tagsCount)}
+						</span>
+					</div>
+				)
+
+				return {
+					key: fullKey,
+					title,
+					path: child.path,
+					isLeaf,
+					countLeaves: leavesCount,
+					countTags: tagsCount,
+					children: sub.length > 0 ? sub : undefined,
+					group: child.group, // Сохраняем группу в узле
+				}
+			})
+		}
+
+		return buildNode(root, 'root')
+	}
+
+	// Рендер содержимого для листового узла
+	const renderLeafContent = (group?: GroupedEntry) => {
+		if (!group) return null
+
+		return (
+			<div style={{ marginLeft: '1.5em' }}>
+				{/* все связанные теги */}
+				{group.tagInfoArray.map((tag) => (
+					<div key={tag.id} style={{ marginTop: '.5em', display: 'flex', alignItems: 'center' }}>
+						<TagButton tag={tag} />
+						<Popconfirm
+							title={
+								<>
+									Вы уверены, что хотите удалить тег?
+									<br />
+									Убедитесь, что он не используется где-то еще
+								</>
+							}
+							onConfirm={() => deleteTag(tag.id)}
+							okText='Да'
+							cancelText='Нет'
+						>
+							<Button size='small' icon={<MinusCircleOutlined />} style={{ marginLeft: 8 }} />
+						</Popconfirm>
+					</div>
+				))}
+				{/* кнопка создания нового тега */}
+				{group.itemInfo && (
+					<div style={{ marginTop: '.5em', display: 'flex', alignItems: 'center' }}>
+						<Button
+							size='small'
+							icon={<PlusCircleOutlined />}
+							onClick={() => createTag(group.path, group.itemInfo!.type || TagType.String)}
+						>
+							Создать тег
+						</Button>
+					</div>
+				)}
+			</div>
+		)
+	}
 
 	const columns: TableColumnsType<SourceEntryInfo> = [
 		{
@@ -106,9 +295,9 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 	]
 
 	function read() {
-		if (!id) return
+		if (!source.id) return
 		api
-			.sourcesGetItemsWithTags(id)
+			.sourcesGetItemsWithTags(source.id)
 			.then((res) => {
 				setItems(res.data)
 				setErr(false)
@@ -121,7 +310,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 			.tagsCreate({
 				name: '',
 				tagType: tagType,
-				sourceId: id,
+				sourceId: source.id,
 				sourceItem: item,
 				resolution: TagResolution.Minute,
 			})
@@ -138,7 +327,7 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 										guid: res.data.guid,
 										item: res.data.sourceItem ?? item,
 										name: res.data.name,
-										sourceType: id,
+										sourceType: source.id,
 										type: res.data.type,
 										accessRule: { ruleId: 0, access: 0 },
 										formulaInputs: [],
@@ -183,43 +372,75 @@ const SourceItems = ({ type, newType, id }: SourceItemsProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[items],
 	)
-	useEffect(read, [id])
+	useEffect(read, [source])
 
-	if (type !== newType) return <>Тип источника изменен. Сохраните, чтобы продолжить</>
+	useEffect(() => {
+		localStorage.setItem(localStorageKey, viewMode)
+	}, [viewMode])
 
-	return err || items.length === 0 ? (
-		<div>
-			<i>Источник данных не предоставил информацию о доступных значениях</i>
-		</div>
+	if (source.address !== request.address || source.type !== request.type)
+		return <Alert message='Тип источника изменен. Сохраните, чтобы продолжить' />
+
+	return err ? (
+		<Alert message='Ошибка при получении данных' />
 	) : (
 		<>
-			<PageHeader
-				right={
-					<>
-						<Button onClick={read}>Обновить</Button>
-					</>
-				}
-			>
-				Доступные значения с этого источника данных
-			</PageHeader>
-			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
-			<Input.Search
-				style={{ marginBottom: '1em' }}
-				placeholder='Введите запрос для поиска по значениям и тегам. Можно написать несколько запросов, разделив пробелами'
-				value={search}
-				onChange={(e) => {
-					setSearch(e.target.value)
-					doSearch(e.target.value.toLowerCase())
-				}}
-			/>
-			<Table
-				dataSource={searchedItems}
-				columns={columns}
-				showSorterTooltip={false}
-				size='small'
-				pagination={{ position: ['bottomCenter'] }}
-				rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')}
-			/>
+			{items.length === 0 ? (
+				<div>
+					<i>Источник данных не предоставил информацию о доступных значениях</i>
+				</div>
+			) : (
+				<>
+					{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
+					<Row>
+						<Col flex='auto'>
+							<Input.Search
+								style={{ marginBottom: '1em', alignItems: 'center', justifyContent: 'space-between' }}
+								placeholder='Введите запрос для поиска по значениям и тегам. Можно написать несколько запросов, разделив пробелами'
+								value={search}
+								onChange={(e) => {
+									setSearch(e.target.value)
+									doSearch(e.target.value.toLowerCase())
+								}}
+							/>
+						</Col>
+						<Col flex='14em'>
+							&emsp;
+							{/* Переключатель режимов просмотра */}
+							<Radio.Group value={viewMode} onChange={(e) => setViewMode(e.target.value)} style={{ marginRight: 16 }}>
+								<Radio.Button value='table'>Таблица</Radio.Button>
+								<Radio.Button value='tree'>Дерево</Radio.Button>
+							</Radio.Group>
+						</Col>
+						<Col flex='6em'>
+							<Button onClick={read}>Обновить</Button>
+						</Col>
+					</Row>
+
+					{viewMode === 'table' ? (
+						<Table
+							dataSource={searchedItems}
+							columns={columns}
+							showSorterTooltip={false}
+							size='small'
+							pagination={{ position: ['bottomCenter'] }}
+							rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')}
+						/>
+					) : (
+						<Tree
+							showLine
+							switcherIcon={<DownOutlined />}
+							treeData={buildTree(groupEntries(searchedItems))}
+							titleRender={(node) => (
+								<div>
+									{node.title}
+									{node.isLeaf && renderLeafContent(node.group)} {/* Передаем group */}
+								</div>
+							)}
+						/>
+					)}
+				</>
+			)}
 		</>
 	)
 }

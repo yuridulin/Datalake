@@ -370,3 +370,4 @@ dist/
 desktop.ini
 .idea/*
 /Bench
+/Server/storage/database

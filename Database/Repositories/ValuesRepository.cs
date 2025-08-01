@@ -406,6 +406,8 @@ public class ValuesRepository(
 			.MapDate("@old", date));
 	}
 
+	const int _stretchLimit = 100000;
+
 	private static List<TagHistory> StretchByResolution(
 		List<TagHistory> valuesByChange,
 		DateTime old,
@@ -415,6 +417,7 @@ public class ValuesRepository(
 		var timeRange = (young - old).TotalMilliseconds;
 		var continuous = new List<TagHistory>();
 		DateTime stepDate = old;
+		int step = 0;
 
 		do
 		{
@@ -443,8 +446,9 @@ public class ValuesRepository(
 			}
 
 			stepDate = stepDate.AddByResolution(resolution);
+			step++;
 		}
-		while (stepDate <= young);
+		while (stepDate <= young && step < _stretchLimit);
 
 		return continuous;
 	}

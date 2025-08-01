@@ -244,7 +244,7 @@ const BlockForm = observer(() => {
 									// Проверка дублирования тегов
 									const currentTagId = attachedTagsList[name]?.id
 									const duplicateCount = currentTagId
-										? attachedTagsList.filter((t: AttachedTag, idx: number) => idx !== name && t.id === currentTagId)
+										? attachedTagsList.filter((t: AttachedTag, idx: number) => idx !== name && t?.id === currentTagId)
 												.length
 										: 0
 									const isDuplicate = duplicateCount > 0

@@ -39,6 +39,7 @@ internal static class ServicesSetup
 		builder.Services.AddSingleton<SourcesStateService>();
 		builder.Services.AddSingleton<UsersStateService>();
 		builder.Services.AddSingleton<TagsStateService>();
+		builder.Services.AddSingleton<RequestsStateService>();
 
 		// система сбора данных
 		builder.Services.AddSingleton<CollectorWriter>();

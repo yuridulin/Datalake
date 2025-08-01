@@ -1,5 +1,6 @@
 import api from '@/api/swagger-api'
-import { TagType, ValueRecord } from '@/api/swagger/data-contracts'
+import { TagResolution, TagType, ValueRecord } from '@/api/swagger/data-contracts'
+import { ExcelExportModeHandles } from '@/app/components/values/functions/exportExcel'
 import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
 import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
@@ -8,10 +9,10 @@ import isArraysDifferent from '@/functions/isArraysDifferent'
 import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
-import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space } from 'antd'
+import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 const TimeModes = {
@@ -60,6 +61,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 	const [isLoading, setLoading] = useState(false)
 	const [values, setValues] = useState<{ relationId: number; value: TagValueWithInfo }[]>([])
 
+	const tableRef = useRef<ExcelExportModeHandles>(null)
+
 	const [settings, setSettings] = useState<ViewerSettings>({
 		activeRelations: relations,
 		old: parseDate(searchParams.get(OldParam), dayjs().startOf('hour')),
@@ -69,6 +72,18 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 		mode: initialMode,
 		update: integrated,
 	})
+
+	// последние настройки на момент успешного запроса
+	const [lastFetchSettings, setLastFetchSettings] = useState<ViewerSettings>(settings)
+
+	// Проверка «грязности» настроек
+	const isDirty =
+		settings.mode !== lastFetchSettings.mode ||
+		settings.resolution !== lastFetchSettings.resolution ||
+		!settings.exact.isSame(lastFetchSettings.exact) ||
+		!settings.old.isSame(lastFetchSettings.old) ||
+		!settings.young.isSame(lastFetchSettings.young) ||
+		isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations)
 
 	useEffect(() => {
 		if (isArraysDifferent(settings.activeRelations, relations)) {
@@ -126,6 +141,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 					})
 
 				setValues(newValues)
+				setLastFetchSettings(settings)
 			})
 			.catch(console.error)
 			.finally(() => setLoading(false))
@@ -155,10 +171,10 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 	// Для автоматического обновления
 	useInterval(() => {
-		if (settings.mode === TimeModes.LIVE && settings.update) {
+		if (settings.mode === TimeModes.LIVE) {
 			getValues()
 		}
-	}, 1000)
+	}, 5000)
 
 	const renderFooterOld = () => (
 		<Space style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px' }}>
@@ -205,7 +221,13 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 	const DateRange = () => (
 		<>
-			{' '}
+			{values.length ? (
+				<Col flex='8em'>
+					<Button onClick={() => tableRef.current?.exportToExcel()}>Экспорт</Button>
+				</Col>
+			) : (
+				<></>
+			)}
 			<Col flex='20em'>
 				<Radio.Group
 					value={settings.mode}
@@ -221,6 +243,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 						style={{ width: '13em' }}
 						placeholder='Дата среза'
 						value={settings.exact}
+						allowClear={false}
+						needConfirm={false}
 						onChange={(e) => setSettings({ ...settings, exact: e })}
 					/>
 				</span>
@@ -260,11 +284,21 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 					/>
 				</span>
 			</Col>
+
+			{/* Компактное предупреждение об устаревших данных */}
+			{isDirty && !integrated && (
+				<Col flex='10em'>
+					<Typography.Text type='warning' style={{ marginLeft: '1em' }}>
+						Данные устарели
+					</Typography.Text>
+				</Col>
+			)}
 		</>
 	)
 
 	return (
 		<>
+			{/* Панель управления: кнопка «Запрос», Radio, DatePicker, Select */}
 			<style>{`ul.ant-picker-ranges { visibility: hidden; height: 0; }`}</style>
 			{!integrated ? (
 				<div style={{ position: 'sticky' }}>
@@ -296,9 +330,9 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 			{values.length ? (
 				settings.mode === TimeModes.OLD_YOUNG ? (
-					<TimedValuesMode relations={values} />
+					<TimedValuesMode ref={tableRef} relations={values} locf={settings.resolution === TagResolution.NotSet} />
 				) : (
-					<ExactValuesMode relations={values} />
+					<ExactValuesMode ref={tableRef} relations={values} />
 				)
 			) : integrated ? (
 				''

@@ -15,7 +15,7 @@ using Serilog;
 using Serilog.Events;
 using System.Reflection;
 
-[assembly: AssemblyVersion("2.4.1.*")]
+[assembly: AssemblyVersion("2.4.2.*")]
 
 namespace Datalake.Server
 {
@@ -163,6 +163,8 @@ namespace Datalake.Server
 					connectionString = connectionString.Replace($"${{{variable}}}", value);
 			}
 
+			Log.Information($"ConnectionString: {connectionString}");
+
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 				options
 					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
@@ -201,7 +203,7 @@ namespace Datalake.Server
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Startup error: " + ex.Message);
+				Log.Warning("Startup error: " + ex.Message);
 			}
 		}
 
