@@ -58,6 +58,7 @@ public static class UsersGroupsQueries
 					ParentGroupGuid = userGroup.ParentGuid,
 					GlobalAccessType = rule.AccessType,
 					Users = state.UserGroupRelations
+						.Where(relation => relation.UserGroupGuid == userGroup.Guid)
 						.Join(
 							state.Users.Where(user => !user.IsDeleted),
 							relation => relation.UserGuid,
