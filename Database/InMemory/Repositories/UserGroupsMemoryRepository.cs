@@ -319,9 +319,6 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			if (accessRights != null && accessRights.AccessType != request.AccessType)
 				updatedAccessRights = accessRights with
 				{
-					Id = accessRights.Id,
-					UserGroupGuid = accessRights.UserGroupGuid,
-					IsGlobal = accessRights.IsGlobal,
 					AccessType = request.AccessType,
 				};
 
@@ -376,7 +373,9 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			dataStore.UpdateStateWithinLock(state => state with
 			{
 				UserGroups = state.UserGroups.Add(updatedUserGroup),
-				AccessRights = updatedAccessRights == null ? state.AccessRights : state.AccessRights.Add(updatedAccessRights),
+				AccessRights = accessRights != null && updatedAccessRights != null 
+					? state.AccessRights.Replace(accessRights, updatedAccessRights)
+					: state.AccessRights,
 				UserGroupRelations = state.UserGroupRelations.Where(x => x.UserGroupGuid != groupGuid).Concat(newUsersRelations).ToImmutableList(),
 			});
 		}
