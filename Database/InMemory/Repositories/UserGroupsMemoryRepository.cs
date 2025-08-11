@@ -261,7 +261,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось создать группу пользователей в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -369,7 +369,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось обновить группу пользователей в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -401,6 +401,12 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			if (!currentState.UserGroupsByGuid.TryGetValue(guid, out var movingUserGroup))
 				throw new NotFoundException(message: "группа " + guid);
 
+			if (parentGuid.HasValue && parentGuid.Value == guid)
+				throw new InvalidValueException("Группа не может быть родителем самой себе");
+
+			if (parentGuid.HasValue && !currentState.UserGroupsByGuid.ContainsKey(parentGuid.Value))
+				throw new NotFoundException($"Родительская группа {parentGuid.Value} не найдена");
+
 			movedUserGroup = movingUserGroup with
 			{
 				ParentGuid = parentGuid,
@@ -425,7 +431,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось переместить группу пользователей в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -474,7 +480,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось удалить группу пользователей из БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД

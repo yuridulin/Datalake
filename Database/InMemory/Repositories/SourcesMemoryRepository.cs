@@ -197,7 +197,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось создать источник в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -246,7 +246,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			currentState = dataStore.State;
 
 			// Проверки на актуальном стейте
-			if (currentState.Sources.Any(x => !x.IsDeleted && x.Name == sourceInfo.Name))
+			if (currentState.Sources.Any(x => !x.IsDeleted && x.Name.Equals(sourceInfo.Name, StringComparison.OrdinalIgnoreCase)))
 				throw new AlreadyExistException("Уже существует источник с таким именем");
 
 			// Обновление в БД
@@ -272,7 +272,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось обновить источник в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -310,7 +310,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			if (!currentState.SourcesById.TryGetValue(id, out var currentSource))
 				throw new NotFoundException($"Источник #{id} не найден");
 
-			if (currentState.Sources.Any(x => !x.IsDeleted && x.Id != id && x.Name == request.Name))
+			if (currentState.Sources.Any(x => !x.IsDeleted && x.Id != id && x.Name.Equals(request.Name, StringComparison.OrdinalIgnoreCase)))
 				throw new AlreadyExistException("Уже существует источник с таким именем");
 
 			updatedSource = currentSource with

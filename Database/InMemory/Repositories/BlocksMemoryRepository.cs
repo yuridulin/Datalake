@@ -241,7 +241,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось создать блок в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -310,7 +310,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось создать блок в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -397,7 +397,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось обновить блок в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -427,6 +427,12 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			if (!currentState.BlocksById.TryGetValue(id, out var oldBlock))
 				throw new NotFoundException(message: "блок " + id);
 
+			if (parentId.HasValue && parentId.Value != 0 && !currentState.BlocksById.ContainsKey(parentId.Value))
+				throw new NotFoundException($"Родительский блок #{parentId.Value} не найден");
+
+			if (parentId.HasValue && parentId.Value == id)
+				throw new InvalidValueException("Блок не может быть родителем самому себе");
+
 			updatedBlock = oldBlock with { ParentId = parentId == 0 ? null : parentId };
 
 			// Обновление в БД
@@ -448,7 +454,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось переместить блок в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -531,7 +537,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	{
 		// Формируем параметризованный SQL запрос
 		var insertSql = $"""
-			INSERT INTO "{BlockTag.TableName}" 
+			INSERT INTO "{BlockTag.TableName}"
 			("BlockId", "TagId", "Name", "Relation")
 			VALUES {string.Join(", ", newTagsRelations.Select((_, i) =>
 				$"(:b{i}, :t{i}, :n{i}, :r{i})"))}

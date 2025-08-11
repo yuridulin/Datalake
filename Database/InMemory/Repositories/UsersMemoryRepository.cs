@@ -259,7 +259,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось создать пользователя в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -374,7 +374,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 				if (updatedGlobalRule != null)
 				{
 					updatedRows += await db.AccessRights
-						.Where(x => x.UserGuid == affectedUserGuid && x.IsGlobal == true)
+						.Where(x => x.Id == updatedGlobalRule.Id)
 						.Set(x => x.AccessType, updatedGlobalRule.AccessType)
 						.UpdateAsync();
 				}
@@ -388,7 +388,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось обновить пользователя в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -440,7 +440,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось удалить пользователя из БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
