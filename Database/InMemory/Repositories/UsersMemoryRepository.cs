@@ -440,13 +440,13 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось удалить пользователя из БД", ex);
+				throw new Exception("Не удалось удалить пользователя", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				Users = state.Users.Remove(oldUser).Add(updatedUser),
+				Users = state.Users.Replace(oldUser, updatedUser),
 			});
 		}
 

@@ -373,7 +373,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			dataStore.UpdateStateWithinLock(state => state with
 			{
 				UserGroups = state.UserGroups.Add(updatedUserGroup),
-				AccessRights = accessRights != null && updatedAccessRights != null 
+				AccessRights = accessRights != null && updatedAccessRights != null
 					? state.AccessRights.Replace(accessRights, updatedAccessRights)
 					: state.AccessRights,
 				UserGroupRelations = state.UserGroupRelations.Where(x => x.UserGroupGuid != groupGuid).Concat(newUsersRelations).ToImmutableList(),
@@ -436,7 +436,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				UserGroups = state.UserGroups.Remove(movingUserGroup).Add(movedUserGroup),
+				UserGroups = state.UserGroups.Replace(movingUserGroup, movedUserGroup),
 			});
 		}
 

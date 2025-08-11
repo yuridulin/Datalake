@@ -526,13 +526,13 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось удалить тег", ex);
+				throw new Exception("Не удалось удалить тег из БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				Tags = state.Tags.Remove(tag).Add(updatedTag),
+				Tags = state.Tags.Replace(tag, updatedTag),
 			});
 		}
 

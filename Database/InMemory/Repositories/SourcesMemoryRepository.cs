@@ -348,7 +348,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось обновить источник в БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
@@ -401,7 +401,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 			catch (Exception ex)
 			{
 				await transaction.RollbackAsync();
-				throw new Exception("Не удалось создать тег в БД", ex);
+				throw new Exception("Не удалось удалить источник из БД", ex);
 			}
 
 			// Обновление стейта в случае успешного обновления БД
