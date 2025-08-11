@@ -4,7 +4,16 @@
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "serviceActions": {
-        "datalakeserver": "StartDebugging"
+        "datalakeserver": "StartDebugging",
+        "postgres": "StartWithoutDebugging"
+      }
+    },
+    "DB": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "datalakeserver": "DoNotStart",
+        "postgres": "StartWithoutDebugging"
       }
     }
   }
