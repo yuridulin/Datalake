@@ -374,7 +374,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 				if (updatedGlobalRule != null)
 				{
 					updatedRows += await db.AccessRights
-						.Where(x => x.UserGuid == affectedUserGuid)
+						.Where(x => x.UserGuid == affectedUserGuid && x.IsGlobal == true)
 						.Set(x => x.AccessType, updatedGlobalRule.AccessType)
 						.UpdateAsync();
 				}
