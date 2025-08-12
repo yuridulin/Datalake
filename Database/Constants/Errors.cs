@@ -4,5 +4,11 @@ namespace Datalake.Database.Constants;
 
 internal static class Errors
 {
-	internal static ForbiddenException NoAccess { get; } = new(message: "нет доступа");
+	internal static ForbiddenException NoAccess => new(message: "нет доступа");
+
+	internal static ForbiddenException NoAccessUser(Guid userGuid)
+		=> new(message: "нет доступа.\nПользователь: [" + userGuid.ToString() + "]");
+
+	internal static ForbiddenException NoAccessUnderlyingUser(Guid userGuid, Guid underlyingUserGuid)
+		=> new(message: "нет доступа.\nПользователь EnergoId: `" + userGuid.ToString() + "` через внешнего пользователя `" + underlyingUserGuid.ToString() + "`");
 }
