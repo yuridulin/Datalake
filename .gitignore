@@ -364,10 +364,9 @@ FodyWeavers.xsd
 
 ## Datalake specific
 
-!DatalakeDatabase/ApiModels/Logs
 dist/
-/Server/wwwroot/startup.js
+/Apps/Server/wwwroot/startup.js
 desktop.ini
 .idea/*
 /Bench
-/Server/storage/database
+/Apps/Server/storage/database
