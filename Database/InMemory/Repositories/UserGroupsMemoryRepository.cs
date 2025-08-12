@@ -322,6 +322,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 					AccessType = request.AccessType,
 				};
 
+			var usersRelations = currentState.UserGroupRelations.Where(x => x.UserGroupGuid == groupGuid).ToArray();
 			var newUsersRelations = request.Users
 				.Select(u => new UserGroupRelation
 				{
@@ -376,7 +377,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 				AccessRights = accessRights != null && updatedAccessRights != null
 					? state.AccessRights.Replace(accessRights, updatedAccessRights)
 					: state.AccessRights,
-				UserGroupRelations = state.UserGroupRelations.RemoveAll(x => x.UserGroupGuid != groupGuid).AddRange(newUsersRelations),
+				UserGroupRelations = state.UserGroupRelations.RemoveRange(usersRelations).AddRange(newUsersRelations),
 			});
 		}
 
