@@ -10,7 +10,7 @@ build-server:
     - push-build
 
   script:
-    - docker build -t datalake:latest-test  -f ./Server/Dockerfile .
+    - docker build -t datalake:latest-test  -f ./Apps/Server/Dockerfile .
     - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:latest-test
 
   only:
@@ -27,7 +27,7 @@ push-server:
 
   script:
     - docker push "$CI_REPOS_URL"/datalake:latest-test
- 
+
   only:
     - /^test\.\d+(\.\d+){0,2}$/
 
