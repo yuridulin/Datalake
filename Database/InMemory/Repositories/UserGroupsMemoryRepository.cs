@@ -372,11 +372,11 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				UserGroups = state.UserGroups.Add(updatedUserGroup),
+				UserGroups = state.UserGroups.Replace(userGroup, updatedUserGroup),
 				AccessRights = accessRights != null && updatedAccessRights != null
 					? state.AccessRights.Replace(accessRights, updatedAccessRights)
 					: state.AccessRights,
-				UserGroupRelations = state.UserGroupRelations.Where(x => x.UserGroupGuid != groupGuid).Concat(newUsersRelations).ToImmutableList(),
+				UserGroupRelations = state.UserGroupRelations.RemoveAll(x => x.UserGroupGuid != groupGuid).AddRange(newUsersRelations),
 			});
 		}
 
@@ -485,7 +485,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				UserGroups = state.UserGroups.Remove(userGroup).Add(updatedUserGroup),
+				UserGroups = state.UserGroups.Replace(userGroup, updatedUserGroup),
 			});
 		}
 

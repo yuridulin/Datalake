@@ -394,9 +394,9 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				Users = state.Users.Remove(oldUser).Add(updatedUser),
+				Users = state.Users.Replace(oldUser, updatedUser),
 				AccessRights = (updatedGlobalRule != null && globalRule != null)
-					? state.AccessRights.Remove(globalRule).Add(updatedGlobalRule)
+					? state.AccessRights.Replace(globalRule, updatedGlobalRule)
 					: state.AccessRights,
 			});
 		}

@@ -403,7 +403,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				Blocks = state.Blocks.Remove(oldBlock).Add(updatedBlock),
+				Blocks = state.Blocks.Replace(oldBlock, updatedBlock),
 				BlockTags = state.BlockTags.Where(x => x.BlockId != id).Concat(newTagsRelations).ToImmutableList(),
 			});
 		}
@@ -460,7 +460,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				Blocks = state.Blocks.Remove(oldBlock).Add(updatedBlock),
+				Blocks = state.Blocks.Replace(oldBlock, updatedBlock),
 			});
 		}
 
@@ -508,7 +508,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				Blocks = state.Blocks.Remove(oldBlock).Add(updatedBlock),
+				Blocks = state.Blocks.Replace(oldBlock, updatedBlock),
 			});
 		}
 
