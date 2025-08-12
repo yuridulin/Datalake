@@ -22,7 +22,7 @@ services:
     container_name: datalakeserver
     build:
       context: ../
-      dockerfile: ./Server/Dockerfile
+      dockerfile: ./Apps/Server/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,4 +34,4 @@ services:
     ports:
       - 8000:8080
     volumes:
-      - "../Server/storage:/app/storage"
+      - "../Apps/Server/storage:/app/storage"
