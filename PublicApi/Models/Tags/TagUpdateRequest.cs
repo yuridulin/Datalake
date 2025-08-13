@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.PublicApi.Abstractions;
+using Datalake.PublicApi.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.PublicApi.Models.Tags;
@@ -6,7 +7,7 @@ namespace Datalake.PublicApi.Models.Tags;
 /// <summary>
 /// Данные запроса для изменение тега
 /// </summary>
-public class TagUpdateRequest
+public class TagUpdateRequest : ICalculatedTag
 {
 	/// <summary>
 	/// Новое имя тега
@@ -73,9 +74,19 @@ public class TagUpdateRequest
 	public TagResolution Resolution { get; set; } = TagResolution.NotSet;
 
 	/// <summary>
-	/// Формула, по которой рассчитывается значение
+	/// Используемый тип вычисления
 	/// </summary>
-	public string? Formula { get; set; } = string.Empty;
+	public TagCalculation? Calculation { get; set; }
+
+	/// <summary>
+	/// Формула, на основе которой вычисляется значение
+	/// </summary>
+	public string? Formula { get; set; }
+
+	/// <summary>
+	/// Пороговые значения, по которым выбирается итоговое значение
+	/// </summary>
+	public List<TagThresholdInfo>? Thresholds { get; set; }
 
 	/// <summary>
 	/// Входные переменные для формулы, по которой рассчитывается значение

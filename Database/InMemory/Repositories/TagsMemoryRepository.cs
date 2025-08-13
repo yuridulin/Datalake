@@ -283,7 +283,9 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			Description = createdTag.Description,
 			Resolution = createdTag.Resolution,
 			Type = createdTag.Type,
-			Formula = createdTag.Formula ?? string.Empty,
+			Calculation = createdTag.Calculation,
+			Formula = createdTag.Formula,
+			Thresholds = createdTag.Thresholds,
 			FormulaInputs = [], // их не может быть при создании
 			IsScaling = createdTag.IsScaling,
 			MaxEu = createdTag.MaxEu,
@@ -341,7 +343,9 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 				MinEu = updateRequest.MinEu,
 				MaxRaw = updateRequest.MaxRaw,
 				MinRaw = updateRequest.MinRaw,
+				Calculation = updateRequest.Calculation,
 				Formula = updateRequest.Formula,
+				Thresholds = updateRequest.Thresholds?.ToList(),
 				SourceTagId = updateRequest.SourceTagId,
 				SourceTagRelationId = updateRequest.SourceTagRelationId,
 				Aggregation = updateRequest.Aggregation,
@@ -446,7 +450,9 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.Set(x => x.MinEu, updateRequest.MinEu)
 					.Set(x => x.MaxRaw, updateRequest.MaxRaw)
 					.Set(x => x.MinRaw, updateRequest.MinRaw)
+					.Set(x => x.Calculation, updateRequest.Calculation)
 					.Set(x => x.Formula, updateRequest.Formula)
+					.Set(x => x.Thresholds, updateRequest.Thresholds)
 					.Set(x => x.SourceTagId, updateRequest.SourceTagId)
 					.Set(x => x.SourceTagRelationId, updateRequest.SourceTagRelationId)
 					.Set(x => x.Aggregation, updateRequest.Aggregation)

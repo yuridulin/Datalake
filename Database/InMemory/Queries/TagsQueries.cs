@@ -32,7 +32,9 @@ public static class TagsQueries
 					Description = tag.Description,
 					Resolution = tag.Resolution,
 					Type = tag.Type,
-					Formula = tag.Formula ?? string.Empty,
+					Calculation = tag.Calculation,
+					Formula = tag.Formula,
+					Thresholds = tag.Thresholds,
 					FormulaInputs = state.TagInputs
 						.Where(relation => relation.TagId == tag.Id)
 						.Join(activeTags, relation => relation.InputTagId, inputTag => inputTag.Id, (relation, inputTag) => new TagInputInfo
@@ -105,7 +107,9 @@ public static class TagsQueries
 					Description = tag.Description,
 					Resolution = tag.Resolution,
 					Type = tag.Type,
-					Formula = tag.Formula ?? string.Empty,
+					Calculation = tag.Calculation,
+					Formula = tag.Formula,
+					Thresholds = tag.Thresholds,
 					FormulaInputs = state.TagInputs
 						.Where(relation => relation.TagId == tag.Id)
 						.Join(activeTags, relation => relation.InputTagId, inputTag => inputTag.Id, (relation, inputTag) => new TagInputInfo

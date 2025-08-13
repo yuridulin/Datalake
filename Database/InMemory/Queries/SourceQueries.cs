@@ -83,7 +83,9 @@ public static class SourceQueries
 						Id = tag.Id,
 						Guid = tag.GlobalGuid,
 						Item = tag.SourceItem ?? string.Empty,
+						Calculation = tag.Calculation,
 						Formula = tag.Formula,
+						Thresholds = tag.Thresholds,
 						FormulaInputs = state.TagInputs
 							.Where(input => input.TagId == tag.Id)
 							.Select(input => !state.TagsById.TryGetValue(input.InputTagId ?? 0, out var inputTag) ? null :

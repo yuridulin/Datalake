@@ -1,4 +1,5 @@
 ﻿using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Tags;
 using LinqToDB.Mapping;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -119,10 +120,22 @@ public record class Tag
 	// специфичные для вычисляемых
 
 	/// <summary>
+	/// Используемый тип вычисления
+	/// </summary>
+	[Column]
+	public TagCalculation? Calculation { get; set; }
+
+	/// <summary>
 	/// Используемая формула
 	/// </summary>
 	[Column]
 	public string? Formula { get; set; }
+
+	/// <summary>
+	/// Пороговые значения, по которым выбирается итоговое значение
+	/// </summary>
+	[Column(DataType = LinqToDB.DataType.BinaryJson), System.ComponentModel.DataAnnotations.Schema.Column(TypeName = "jsonb")]
+	public List<TagThresholdInfo>? Thresholds { get; set; }
 
 	// специфичные для агрегированных
 

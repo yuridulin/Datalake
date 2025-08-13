@@ -1,6 +1,7 @@
 ﻿using Datalake.Database.Tables;
+using Datalake.PublicApi.Models.Tags;
 using Microsoft.EntityFrameworkCore;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using System.Text.Json;
 
 namespace Datalake.Database;
 
@@ -10,6 +11,11 @@ namespace Datalake.Database;
 /// <param name="options"></param>
 public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : DbContext(options)
 {
+	private static JsonSerializerOptions jsonSerializerOptions = new()
+	{
+		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+	};
+
 	/// <summary>
 	/// Конфигурация связей между таблицами БД
 	/// </summary>
@@ -73,6 +79,16 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 					.OnDelete(DeleteBehavior.Cascade),
 				relation => relation
 					.HasKey(rel => new { rel.UserGroupGuid, rel.UserGuid })
+			);
+
+		// настройка тегов
+
+		modelBuilder.Entity<Tag>()
+			.Property(t => t.Thresholds)
+			.HasColumnType("jsonb")
+			.HasConversion(
+				v => JsonSerializer.Serialize(v, jsonSerializerOptions),
+				v => JsonSerializer.Deserialize<List<TagThresholdInfo>>(v, jsonSerializerOptions)
 			);
 
 		// связь источников и тегов

@@ -34,6 +34,7 @@ internal class CalculateCollector(
 		base.PrepareToStop();
 
 		_expressions = [];
+		_thresholds = [];
 	}
 
 	protected override async Task Work()
@@ -125,6 +126,36 @@ internal class CalculateCollector(
 			batch.Add(record);
 		}
 
+		foreach (var (tag, map) in _thresholds)
+		{
+			var record = new ValueWriteRequest
+			{
+				Date = now,
+				Guid = tag.Guid,
+				Id = tag.Id,
+				Name = tag.Name,
+				Value = null,
+				Quality = TagQuality.Bad_NoConnect,
+			};
+
+			var incomingValue = valuesStore.Get(tag.Id);
+
+			if (incomingValue != null)
+			{
+				if (incomingValue.Number != null)
+				{
+					record.Value = LookupValue(map, incomingValue.Number.Value);
+					record.Quality = TagQuality.Good;
+				}
+				else
+				{
+					record.Quality = TagQuality.Bad_NoValues;
+				}
+			}
+
+			batch.Add(record);
+		}
+
 		await WriteAsync(batch);
 
 		foreach (var tagId in usedTags)
@@ -132,7 +163,62 @@ internal class CalculateCollector(
 	}
 
 	const string CollectorRequestKey = "calculate-collector";
+
+	/// <summary>
+	/// Формулы вычисления
+	/// </summary>
 	private (SourceTagInfo tag, Expression expression)[] _expressions = source.Tags
+		.Where(tag =>
+			tag.Calculation == TagCalculation.Formula &&
+			tag.Formula != null)
 		.Select(tag => (tag, new Expression(tag.Formula)))
 		.ToArray();
+
+	/// <summary>
+	/// Таблицы пороговых значений
+	/// </summary>
+	private (SourceTagInfo tag, (float inValue, float outValue)[] thresholds)[] _thresholds = source.Tags
+		.Where(tag => 
+			tag.Type == TagType.Number &&
+			tag.Calculation == TagCalculation.Thresholds &&
+			tag.Thresholds != null &&
+			tag.Thresholds.Count > 0)
+		.Select(tag => (
+			tag,
+			tag.Thresholds!
+				.OrderBy(x => x.Threshold)
+				.Select(x => (x.Threshold, x.Result))
+				.ToArray()))
+		.ToArray();
+
+	/// <summary>
+	/// Поиск значения по таблице порогов:
+	/// наибольший порог ≤ входного, иначе крайний ближний.
+	/// Массив table должен быть отсортирован по inValue по возрастанию.
+	/// </summary>
+	private static float LookupValue((float inValue, float outValue)[] table, float input)
+	{
+		// Ищем по первому элементу кортежа
+		int idx = Array.BinarySearch(
+			table,
+			(input, 0f),
+			ThresholdComparer
+		);
+
+		if (idx >= 0)
+			return table[idx].outValue; // точное совпадение
+
+		idx = ~idx - 1; // индекс "пола"
+
+		if (idx < 0)
+			return table[0].outValue; // всё больше входного — берём первый
+
+		if (idx >= table.Length)
+			return table[^1].outValue; // всё меньше входного — берём последний
+
+		return table[idx].outValue;
+	}
+
+	private static readonly Comparer<(float inValue, float outValue)> ThresholdComparer =
+		Comparer<(float inValue, float outValue)>.Create((a, b) => a.inValue.CompareTo(b.inValue));
 }

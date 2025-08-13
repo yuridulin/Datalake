@@ -8,7 +8,7 @@ namespace Datalake.PublicApi.Models.Tags;
 /// <summary>
 /// Информация о теге
 /// </summary>
-public class TagInfo : TagSimpleInfo, IProtectedEntity
+public class TagInfo : TagSimpleInfo, IProtectedEntity, ICalculatedTag
 {
 	/// <summary>
 	/// Произвольное описание тега
@@ -29,12 +29,22 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// <summary>
 	/// Имя используемого источника данных
 	/// </summary>
-	public string? SourceName { get; set; } = string.Empty;
+	public string? SourceName { get; set; }
+
+	/// <summary>
+	/// Используемый тип вычисления
+	/// </summary>
+	public TagCalculation? Calculation { get; set; }
 
 	/// <summary>
 	/// Формула, на основе которой вычисляется значение
 	/// </summary>
-	public string? Formula { get; set; } = string.Empty;
+	public string? Formula { get; set; }
+
+	/// <summary>
+	/// Пороговые значения, по которым выбирается итоговое значение
+	/// </summary>
+	public List<TagThresholdInfo>? Thresholds { get; set; }
 
 	/// <summary>
 	/// Применяется ли приведение числового значения тега к другой шкале
