@@ -7,8 +7,8 @@ import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
-import { Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
-import { useCallback, useEffect, useState } from 'react'
+import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
 	AggregationPeriod,
@@ -49,16 +49,20 @@ interface UpdateInputRequest extends TagUpdateInputRequest {
 	key: number
 }
 
+const thresholdRowStyle = {
+	marginBottom: '.25em',
+	display: 'grid',
+	gridTemplateColumns: '5fr 5fr 1fr',
+	gap: '8px',
+}
+
 const TagForm = () => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 
-	//#region Значение
-
-	// 1. Состояние
+	// #region Значение
 	const [value, setValue] = useState<ValueRecord | null>(null)
 
-	// 2. Функция получения и сравнения
 	const getValue = useCallback(() => {
 		if (!id) return
 		api
@@ -69,17 +73,18 @@ const TagForm = () => {
 				},
 			])
 			.then((res) => {
-				const next = res.data[0].tags[0].values[0]
-				setValue((prev) => (prev && prev.value == next.value && prev.quality == next.quality ? prev : next))
+				const next = res.data[0]?.tags?.[0]?.values?.[0] ?? null
+				setValue((prev) => (prev && next && prev.value == next.value && prev.quality == next.quality ? prev : next))
 			})
 			.catch(() => setValue(null))
 	}, [id])
 
-	// 3. Запускаем на старте и по таймеру
-	useEffect(() => getValue(), [id, getValue])
-	useInterval(() => getValue(), 1000)
+	useEffect(() => {
+		getValue()
+	}, [id, getValue])
 
-	//#endregion
+	useInterval(() => getValue(), 1000)
+	// #endregion
 
 	// инфо
 	const [tag, setTag] = useState({} as TagInfo)
@@ -151,8 +156,11 @@ const TagForm = () => {
 		]).finally(() => setLoading(false))
 	}
 
-	const getItems = () => {
-		if (!request.sourceId || request.sourceId <= 0) return
+	const getItems = useCallback(() => {
+		if (!request.sourceId || request.sourceId <= 0) {
+			setItems([])
+			return
+		}
 		api.sourcesGetItems(request.sourceId).then((res) => {
 			setItems(
 				res.data.map((x) => ({
@@ -160,17 +168,17 @@ const TagForm = () => {
 				})),
 			)
 		})
-	}
+	}, [request.sourceId])
 
 	useEffect(loadTagData, [id])
-	useEffect(getItems, [request])
+	useEffect(getItems, [getItems])
 
 	useEffect(() => {
-		if (strategy === SourceStrategy.FromSource && request.sourceId < 0) {
-			setRequest({
-				...request,
+		if (strategy === SourceStrategy.FromSource && (request.sourceId ?? 0) < 0) {
+			setRequest((prev) => ({
+				...prev,
 				sourceId: SourceType.NotSet,
-			})
+			}))
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [strategy])
@@ -196,28 +204,116 @@ const TagForm = () => {
 
 	const addParam = () => {
 		if (strategy !== SourceStrategy.Calculated) return
-		const existsId = request.formulaInputs.filter((x) => x.key < 0).map((x) => x.key)
-		const availableFakeId = existsId.length > 0 ? Math.min.apply(0, existsId) - 1 : -1
-		setRequest({
-			...request,
-			formulaInputs: [
-				...request.formulaInputs,
-				{
-					key: availableFakeId,
-					tagId: 0,
-					tagRelationId: -1,
-					variableName: '',
-				} as UpdateInputRequest,
-			],
+		setRequest((prev) => {
+			const existsId = prev.formulaInputs.filter((x) => x.key < 0).map((x) => x.key)
+			const availableFakeId = existsId.length > 0 ? Math.min(...existsId) - 1 : -1
+			return {
+				...prev,
+				formulaInputs: [
+					...prev.formulaInputs,
+					{
+						key: availableFakeId,
+						tagId: 0,
+						tagRelationId: -1,
+						variableName: '',
+					} as UpdateInputRequest,
+				],
+			}
 		})
 	}
 
 	const removeParam = (key: number) => {
-		setRequest({
-			...request,
-			formulaInputs: request.formulaInputs.filter((x) => x.key !== key),
-		})
+		setRequest((prev) => ({
+			...prev,
+			formulaInputs: prev.formulaInputs.filter((x) => x.key !== key),
+		}))
 	}
+
+	// ===== Валидация =====
+	const editingTagId = useMemo(() => {
+		const parsed = Number(id)
+		return tag?.id ?? (Number.isFinite(parsed) ? parsed : 0)
+	}, [tag?.id, id])
+
+	const validation = useMemo(() => {
+		const errors: string[] = []
+		const warnings: string[] = []
+
+		// self-reference checks
+		if (strategy === SourceStrategy.Calculated && request.calculation === TagCalculation.Formula) {
+			const selfRefs = request.formulaInputs
+				.filter((x) => (x.tagId ?? 0) > 0 && x.tagId === editingTagId)
+				.map((x) => x.variableName || `[key ${x.key}]`)
+			if (selfRefs.length > 0) {
+				errors.push(`В формуле выбран текущий тег: ${selfRefs.join(', ')}`)
+			}
+
+			// duplicates (tagId + relationId), only valid selections
+			const seen = new Map<string, number[]>()
+			request.formulaInputs.forEach((x, idx) => {
+				if ((x.tagId ?? 0) > 0) {
+					const key = `${x.tagId}:${x.tagRelationId ?? -1}`
+					const arr = seen.get(key) ?? []
+					arr.push(idx)
+					seen.set(key, arr)
+				}
+			})
+			const dups = [...seen.entries()].filter(([, idxs]) => idxs.length > 1)
+			if (dups.length > 0) {
+				const list = dups.map(([, idxs]) => `позиции ${idxs.map((i) => i + 1).join(', ')}`).join('; ')
+				warnings.push(`В формуле есть повторяющиеся теги (${list})`)
+			}
+		}
+
+		if (strategy === SourceStrategy.Calculated && request.calculation === TagCalculation.Thresholds) {
+			if ((request.thresholdSourceTagId ?? 0) > 0 && request.thresholdSourceTagId === editingTagId) {
+				errors.push('В настройках вычисления выбран текущий тег как источник')
+			}
+
+			// === Новая валидация уникальности thresholds и results ===
+			if (Array.isArray(request.thresholds) && request.thresholds.length > 0) {
+				// threshold values
+				const seenThr = new Map<number, number[]>()
+				request.thresholds.forEach((t, idx) => {
+					const val = Number(t.threshold)
+					if (!Number.isNaN(val)) {
+						const arr = seenThr.get(val) ?? []
+						arr.push(idx)
+						seenThr.set(val, arr)
+					}
+				})
+				const dupThr = [...seenThr.entries()].filter(([, idxs]) => idxs.length > 1)
+				if (dupThr.length > 0) {
+					const list = dupThr.map(([, idxs]) => `позиции ${idxs.map((i) => i + 1).join(', ')}`).join('; ')
+					errors.push(`В настройках вычисления есть одинаковые пороговые значения (${list})`)
+				}
+
+				// result values
+				const seenRes = new Map<number, number[]>()
+				request.thresholds.forEach((t, idx) => {
+					const val = Number(t.result)
+					if (!Number.isNaN(val)) {
+						const arr = seenRes.get(val) ?? []
+						arr.push(idx)
+						seenRes.set(val, arr)
+					}
+				})
+				const dupRes = [...seenRes.entries()].filter(([, idxs]) => idxs.length > 1)
+				if (dupRes.length > 0) {
+					const list = dupRes.map(([, idxs]) => `позиции ${idxs.map((i) => i + 1).join(', ')}`).join('; ')
+					warnings.push(`В настройках вычисления есть одинаковые результирующие значения (${list})`)
+				}
+			}
+		}
+
+		if (strategy === SourceStrategy.Aggregated) {
+			if ((request.sourceTagId ?? 0) > 0 && request.sourceTagId === editingTagId) {
+				errors.push('В агрегировании выбран текущий тег как источник')
+			}
+		}
+
+		return { errors, warnings }
+	}, [editingTagId, request, strategy])
 
 	return isLoading ? (
 		<Spin />
@@ -237,7 +333,7 @@ const TagForm = () => {
 							<Button>Удалить</Button>
 						</Popconfirm>
 						&ensp;
-						<Button type='primary' onClick={tagUpdate}>
+						<Button type='primary' onClick={tagUpdate} disabled={validation.errors.length > 0}>
 							Сохранить
 						</Button>
 					</>
@@ -246,14 +342,50 @@ const TagForm = () => {
 				Тег {tag.name}
 			</PageHeader>
 
+			{/* Валидация: сводка */}
+			<div
+				style={{
+					display: validation.errors.length + validation.warnings.length > 0 ? 'block' : 'none',
+					marginBottom: 12,
+				}}
+			>
+				{validation.errors.length > 0 && (
+					<Alert
+						type='error'
+						description={
+							<ul style={{ margin: 0, paddingInlineStart: 18 }}>
+								{validation.errors.map((e, i) => (
+									<li key={'err' + i}>{e}</li>
+								))}
+							</ul>
+						}
+						showIcon
+						style={{ marginBottom: 8 }}
+					/>
+				)}
+				{validation.warnings.length > 0 && (
+					<Alert
+						type='warning'
+						description={
+							<ul style={{ margin: 0, paddingInlineStart: 18 }}>
+								{validation.warnings.map((w, i) => (
+									<li key={'warn' + i}>{w}</li>
+								))}
+							</ul>
+						}
+						showIcon
+					/>
+				)}
+			</div>
+
 			<FormRow title='Имя'>
 				<Input
 					value={request.name}
 					onChange={(e) =>
-						setRequest({
-							...request,
+						setRequest((prev) => ({
+							...prev,
 							name: e.target.value,
-						})
+						}))
 					}
 				/>
 			</FormRow>
@@ -263,10 +395,10 @@ const TagForm = () => {
 					rows={4}
 					style={{ resize: 'none' }}
 					onChange={(e) =>
-						setRequest({
-							...request,
+						setRequest((prev) => ({
+							...prev,
 							description: e.target.value,
-						})
+						}))
 					}
 				/>
 			</FormRow>
@@ -275,11 +407,12 @@ const TagForm = () => {
 					buttonStyle='solid'
 					value={request.type}
 					onChange={(e) => {
-						setRequest({
-							...request,
-							type: e.target.value,
-						})
-						if (strategy === SourceStrategy.Aggregated && e.target.value !== TagType.Number) {
+						const nextType = e.target.value
+						setRequest((prev) => ({
+							...prev,
+							type: nextType,
+						}))
+						if (strategy === SourceStrategy.Aggregated && nextType !== TagType.Number) {
 							setStrategy(SourceStrategy.Manual)
 						}
 					}}
@@ -289,49 +422,42 @@ const TagForm = () => {
 					<Radio.Button value={TagType.Boolean}>Логическое значение</Radio.Button>
 				</Radio.Group>
 			</FormRow>
+
 			{/* Числовые настройки */}
-			<div
-				style={{
-					display: request.type === TagType.Number ? 'block' : 'none',
-				}}
-			>
+			<div style={{ display: request.type === TagType.Number ? 'block' : 'none' }}>
 				<FormRow>
 					<Checkbox
 						checked={request.isScaling}
 						onChange={(e) =>
-							setRequest({
-								...request,
+							setRequest((prev) => ({
+								...prev,
 								isScaling: e.target.checked,
-							})
+							}))
 						}
 					>
 						Преобразование по шкале
 					</Checkbox>
 				</FormRow>
-				<div
-					style={{
-						display: request.isScaling ? 'block' : 'none',
-					}}
-				>
+				<div style={{ display: request.isScaling ? 'block' : 'none' }}>
 					<FormRow title='Шкала реальных значений' style={{ display: 'flex' }}>
 						<InputNumber
 							addonBefore='Min'
 							value={request.minEu}
 							onChange={(v) =>
-								setRequest({
-									...request,
+								setRequest((prev) => ({
+									...prev,
 									minEu: Number(v),
-								})
+								}))
 							}
 						/>
 						<InputNumber
 							addonBefore='Max'
 							value={request.maxEu}
 							onChange={(v) =>
-								setRequest({
-									...request,
+								setRequest((prev) => ({
+									...prev,
 									maxEu: Number(v),
-								})
+								}))
 							}
 						/>
 					</FormRow>
@@ -340,34 +466,35 @@ const TagForm = () => {
 							addonBefore='Min'
 							value={request.minRaw}
 							onChange={(v) =>
-								setRequest({
-									...request,
+								setRequest((prev) => ({
+									...prev,
 									minRaw: Number(v),
-								})
+								}))
 							}
 						/>
 						<InputNumber
 							addonBefore='Max'
 							value={request.maxRaw}
 							onChange={(v) =>
-								setRequest({
-									...request,
+								setRequest((prev) => ({
+									...prev,
 									maxRaw: Number(v),
-								})
+								}))
 							}
 						/>
 					</FormRow>
 				</div>
 			</div>
+
 			<FormRow title='Промежуток времени между записью значений'>
 				<Select
 					style={{ width: '12em' }}
 					value={request.resolution}
 					onChange={(value) => {
-						setRequest({
-							...request,
+						setRequest((prev) => ({
+							...prev,
 							resolution: value,
-						})
+						}))
 					}}
 					options={Object.entries(TagResolutionNames).map(([value, text]) => ({
 						value: Number(value),
@@ -375,6 +502,7 @@ const TagForm = () => {
 					}))}
 				/>
 			</FormRow>
+
 			<FormRow title='Способ получения'>
 				<Radio.Group buttonStyle='solid' value={strategy} onChange={(e) => setStrategy(e.target.value)}>
 					<Radio.Button value={SourceStrategy.Manual}>Ручной ввод</Radio.Button>
@@ -385,6 +513,7 @@ const TagForm = () => {
 					</Radio.Button>
 				</Radio.Group>
 			</FormRow>
+
 			<FormRow title='Значение'>
 				<Space>
 					{value ? (
@@ -396,21 +525,18 @@ const TagForm = () => {
 			</FormRow>
 
 			{/* Настройки расчета */}
-			<div
-				style={{
-					display: strategy === SourceStrategy.Calculated ? 'block' : 'none',
-				}}
-			>
+			<div style={{ display: strategy === SourceStrategy.Calculated ? 'block' : 'none' }}>
 				<FormRow title={'Тип расчета'}>
 					<Radio.Group
 						buttonStyle='solid'
 						value={request.calculation}
-						onChange={(e) => setRequest({ ...request, calculation: e.target.value })}
+						onChange={(e) => setRequest((prev) => ({ ...prev, calculation: e.target.value }))}
 					>
 						<Radio.Button value={TagCalculation.Formula}>По формуле</Radio.Button>
 						<Radio.Button value={TagCalculation.Thresholds}>По таблице пороговых значений</Radio.Button>
 					</Radio.Group>
 				</FormRow>
+
 				{request.calculation === TagCalculation.Formula && (
 					<>
 						<FormRow
@@ -424,13 +550,14 @@ const TagForm = () => {
 							<Input
 								value={request.formula ?? ''}
 								onChange={(e) =>
-									setRequest({
-										...request,
+									setRequest((prev) => ({
+										...prev,
 										formula: e.target.value,
-									})
+									}))
 								}
 							/>
 						</FormRow>
+
 						<div>
 							<FormRow title='Входные параметры формулы'>
 								{request.formulaInputs.map((input) => (
@@ -440,25 +567,24 @@ const TagForm = () => {
 											marginBottom: '.25em',
 											display: 'grid',
 											gridTemplateColumns: '3fr 10fr 1fr',
+											gap: '8px',
 										}}
 									>
 										<Input
 											value={input.variableName}
 											placeholder='Введите обозначение переменной'
 											onChange={(e) =>
-												setRequest({
-													...request,
-													formulaInputs: [
-														...request.formulaInputs.map((x) =>
-															x.key !== input.key
-																? x
-																: {
-																		...x,
-																		variableName: e.target.value,
-																	},
-														),
-													],
-												})
+												setRequest((prev) => ({
+													...prev,
+													formulaInputs: prev.formulaInputs.map((x) =>
+														x.key !== input.key
+															? x
+															: {
+																	...x,
+																	variableName: e.target.value,
+																},
+													),
+												}))
 											}
 										/>
 										<TagTreeSelect
@@ -466,9 +592,9 @@ const TagForm = () => {
 											tags={tags}
 											value={[input.tagId, input.tagRelationId]}
 											onChange={([inputTagId, inputTagRelationId]) =>
-												setRequest({
-													...request,
-													formulaInputs: request.formulaInputs.map((x) =>
+												setRequest((prev) => ({
+													...prev,
+													formulaInputs: prev.formulaInputs.map((x) =>
 														x.key !== input.key
 															? x
 															: {
@@ -477,17 +603,18 @@ const TagForm = () => {
 																	tagRelationId: inputTagRelationId,
 																},
 													),
-												})
+												}))
 											}
 										/>
-										<Button icon={<DeleteOutlined />} onClick={() => removeParam(input.key)}></Button>
+										<Button icon={<DeleteOutlined />} onClick={() => removeParam(input.key)} />
 									</div>
 								))}
 							</FormRow>
-							<Button icon={<AppstoreAddOutlined />} onClick={addParam}></Button>
+							<Button icon={<AppstoreAddOutlined />} onClick={addParam} />
 						</div>
 					</>
 				)}
+
 				{request.calculation === TagCalculation.Thresholds && (
 					<>
 						<FormRow title='Тег-источник'>
@@ -496,70 +623,73 @@ const TagForm = () => {
 								blocks={blocks}
 								tags={tags}
 								onChange={([thresholdSourceTagId, thresholdSourceTagRelationId]) => {
-									setRequest({ ...request, thresholdSourceTagId, thresholdSourceTagRelationId })
+									setRequest((prev) => ({ ...prev, thresholdSourceTagId, thresholdSourceTagRelationId }))
 								}}
 							/>
 						</FormRow>
+
 						<div>
-							<FormRow title='Входные параметры формулы'>
+							<FormRow>
+								<div style={thresholdRowStyle}>
+									<span>Пороговые значения</span>
+									<span>Результирующие значения</span>
+									<span></span>
+								</div>
 								{request.thresholds?.map((threshold, i) => (
-									<div
-										key={i}
-										style={{
-											marginBottom: '.25em',
-											display: 'grid',
-											gridTemplateColumns: '3fr 10fr 1fr',
-										}}
-									>
+									<div key={i} style={thresholdRowStyle}>
 										<InputNumber
 											value={threshold.threshold}
 											placeholder='Введите пороговое значение'
 											onChange={(e) => {
-												setRequest({
-													...request,
-													thresholds: request.thresholds?.map((x, index) =>
+												setRequest((prev) => ({
+													...prev,
+													thresholds: prev.thresholds?.map((x, index) =>
 														index !== i ? x : { ...x, threshold: e ?? 0 },
 													),
-												})
+												}))
 											}}
 										/>
 										<InputNumber
 											value={threshold.result}
 											placeholder='Введите результирующее значение'
 											onChange={(e) => {
-												setRequest({
-													...request,
-													thresholds: request.thresholds?.map((x, index) =>
-														index !== i ? x : { ...x, result: e ?? 0 },
-													),
-												})
+												setRequest((prev) => ({
+													...prev,
+													thresholds: prev.thresholds?.map((x, index) => (index !== i ? x : { ...x, result: e ?? 0 })),
+												}))
 											}}
 										/>
 										<Button
 											icon={<DeleteOutlined />}
-											onClick={() => {
-												setRequest({ ...request, thresholds: request.thresholds?.filter((_, index) => i !== index) })
-											}}
-										></Button>
+											onClick={() =>
+												setRequest((prev) => ({
+													...prev,
+													thresholds:
+														prev.thresholds && prev.thresholds.length > 0
+															? prev.thresholds.filter((_, idx) => idx !== i)
+															: prev.thresholds,
+												}))
+											}
+										/>
 									</div>
 								))}
 							</FormRow>
 							<Button
 								icon={<AppstoreAddOutlined />}
 								onClick={() =>
-									setRequest({ ...request, thresholds: [...(request.thresholds ?? []), { threshold: 0, result: 0 }] })
+									setRequest((prev) => ({
+										...prev,
+										thresholds: [...(prev.thresholds ?? []), { threshold: 0, result: 0 }],
+									}))
 								}
-							></Button>
+							/>
 						</div>
 					</>
 				)}
 			</div>
+
 			{/* Настройки получения */}
-			<div
-				style={{
-					display: strategy === SourceStrategy.FromSource ? 'block' : 'none',
-				}}
-			>
+			<div style={{ display: strategy === SourceStrategy.FromSource ? 'block' : 'none' }}>
 				<FormRow title='Используемый источник'>
 					<Select
 						showSearch
@@ -572,35 +702,33 @@ const TagForm = () => {
 						]}
 						value={request.sourceId}
 						onChange={(value) =>
-							setRequest({
-								...request,
+							setRequest((prev) => ({
+								...prev,
 								sourceId: value,
-							})
+							}))
 						}
 						style={{ width: '100%' }}
 					/>
 				</FormRow>
-				<div
-					style={{
-						display: request.sourceId === SourceType.NotSet ? 'none' : 'inherit',
-					}}
-				>
+
+				<div style={{ display: request.sourceId === SourceType.NotSet ? 'none' : 'inherit' }}>
 					<FormRow title='Путь к данным в источнике'>
 						<Select
 							showSearch
 							value={request.sourceItem}
 							options={items}
 							onChange={(value) =>
-								setRequest({
-									...request,
+								setRequest((prev) => ({
+									...prev,
 									sourceItem: value,
-								})
+								}))
 							}
 							style={{ width: '100%' }}
 						/>
 					</FormRow>
 				</div>
 			</div>
+
 			{/* Настройки агрегации */}
 			<div
 				style={{
@@ -613,7 +741,7 @@ const TagForm = () => {
 						blocks={blocks}
 						tags={tags}
 						onChange={([sourceTagId, sourceTagRelationId]) => {
-							setRequest({ ...request, sourceTagId, sourceTagRelationId })
+							setRequest((prev) => ({ ...prev, sourceTagId, sourceTagRelationId }))
 						}}
 					/>
 				</FormRow>
@@ -628,7 +756,7 @@ const TagForm = () => {
 					<Radio.Group
 						buttonStyle='solid'
 						value={request.aggregation}
-						onChange={(e) => setRequest({ ...request, aggregation: e.target.value })}
+						onChange={(e) => setRequest((prev) => ({ ...prev, aggregation: e.target.value }))}
 					>
 						<Radio.Button value={TagAggregation.Average}>Взвешенное среднее</Radio.Button>
 						<Radio.Button value={TagAggregation.Sum}>Взвешенная сумма</Radio.Button>
@@ -638,7 +766,7 @@ const TagForm = () => {
 					<Radio.Group
 						buttonStyle='solid'
 						value={request.aggregationPeriod}
-						onChange={(e) => setRequest({ ...request, aggregationPeriod: e.target.value })}
+						onChange={(e) => setRequest((prev) => ({ ...prev, aggregationPeriod: e.target.value }))}
 					>
 						<Radio.Button value={AggregationPeriod.Minute}>Прошедшая минута</Radio.Button>
 						<Radio.Button value={AggregationPeriod.Hour}>Прошедший час</Radio.Button>
