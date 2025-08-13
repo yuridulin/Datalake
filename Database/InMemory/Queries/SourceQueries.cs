@@ -86,6 +86,13 @@ public static class SourceQueries
 						Calculation = tag.Calculation,
 						Formula = tag.Formula,
 						Thresholds = tag.Thresholds,
+						ThresholdSourceTag = !state.TagsById.TryGetValue(tag.ThresholdSourceTagId ?? 0, out var thresholdSourceTag) ? null :
+							new SourceTagInfo.TagInputMinimalInfo
+							{
+								InputTagId = thresholdSourceTag.Id,
+								InputTagType = thresholdSourceTag.Type,
+								VariableName = thresholdSourceTag.Name
+							},
 						FormulaInputs = state.TagInputs
 							.Where(input => input.TagId == tag.Id)
 							.Select(input => !state.TagsById.TryGetValue(input.InputTagId ?? 0, out var inputTag) ? null :

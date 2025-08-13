@@ -115,13 +115,23 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.OnDelete(DeleteBehavior.SetNull);
 
 		// связь тегов с входными тегами для агрегирования
+
 		modelBuilder.Entity<Tag>()
 			.HasOne(tag => tag.SourceTag)
 			.WithMany()
 			.HasForeignKey(tag => tag.SourceTagId)
 			.OnDelete(DeleteBehavior.SetNull);
 
+		// связь тегов с входными тегами для расчета
+
+		modelBuilder.Entity<Tag>()
+			.HasOne(tag => tag.ThresholdSourceTag)
+			.WithMany()
+			.HasForeignKey(tag => tag.ThresholdSourceTagId)
+			.OnDelete(DeleteBehavior.SetNull);
+
 		// уникальность значений тегов
+
 		modelBuilder.Entity<TagHistory>()
 			.HasIndex(record => new { record.TagId, record.Date })
 			.HasDatabaseName("TagsHistory_TagId_Date_idx")

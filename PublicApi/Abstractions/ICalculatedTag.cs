@@ -22,4 +22,9 @@ public interface ICalculatedTag
 	/// Пороговые значения, по которым выбирается итоговое значение
 	/// </summary>
 	public List<TagThresholdInfo>? Thresholds { get; set; }
+
+	/// <summary>
+	/// Идентификатор тега, который будет источником данных для расчета значения по таблице пороговых значений
+	/// </summary>
+	public int? ThresholdSourceTagId { get; set; }
 }

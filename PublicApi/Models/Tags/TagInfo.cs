@@ -8,7 +8,7 @@ namespace Datalake.PublicApi.Models.Tags;
 /// <summary>
 /// Информация о теге
 /// </summary>
-public class TagInfo : TagSimpleInfo, IProtectedEntity, ICalculatedTag
+public class TagInfo : TagSimpleInfo, IProtectedEntity
 {
 	/// <summary>
 	/// Произвольное описание тега
@@ -45,6 +45,11 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity, ICalculatedTag
 	/// Пороговые значения, по которым выбирается итоговое значение
 	/// </summary>
 	public List<TagThresholdInfo>? Thresholds { get; set; }
+
+	/// <summary>
+	/// Входной тег, по значениям которого выбирается значение из пороговой таблицы
+	/// </summary>
+	public TagAsInputInfo? ThresholdSourceTag { get; set; }
 
 	/// <summary>
 	/// Применяется ли приведение числового значения тега к другой шкале

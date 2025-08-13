@@ -15,6 +15,7 @@ import {
 	BlockTreeInfo,
 	SourceType,
 	TagAggregation,
+	TagCalculation,
 	TagInfo,
 	TagQuality,
 	TagSimpleInfo,
@@ -80,7 +81,7 @@ const TagForm = () => {
 
 	//#endregion
 
-	// инфа
+	// инфо
 	const [tag, setTag] = useState({} as TagInfo)
 	const [sources, setSources] = useState([] as SourceOption[])
 	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
@@ -94,7 +95,7 @@ const TagForm = () => {
 	const [items, setItems] = useState([] as { value: string }[])
 	const [strategy, setStrategy] = useState(SourceStrategy.Manual)
 
-	// получение инфы
+	// получение инфо
 	const loadTagData = () => {
 		if (!id) return
 		setLoading(true)
@@ -117,6 +118,8 @@ const TagForm = () => {
 					...info,
 					sourceTagId: info.sourceTag?.id,
 					sourceTagRelationId: info.sourceTag?.relationId,
+					thresholdSourceTagId: info.thresholdSourceTag?.id,
+					thresholdSourceTagRelationId: info.thresholdSourceTag?.relationId,
 					formulaInputs: info.formulaInputs.map(
 						(x, index) =>
 							({
@@ -392,85 +395,164 @@ const TagForm = () => {
 				</Space>
 			</FormRow>
 
-			{/* Настройки вычисления */}
+			{/* Настройки расчета */}
 			<div
 				style={{
 					display: strategy === SourceStrategy.Calculated ? 'block' : 'none',
 				}}
 			>
-				<FormRow
-					title={
-						<>
-							{'Формула для вычисления'}
-							<HelpNCalc />
-						</>
-					}
-				>
-					<Input
-						value={request.formula ?? ''}
-						onChange={(e) =>
-							setRequest({
-								...request,
-								formula: e.target.value,
-							})
-						}
-					/>
+				<FormRow title={'Тип расчета'}>
+					<Radio.Group
+						buttonStyle='solid'
+						value={request.calculation}
+						onChange={(e) => setRequest({ ...request, calculation: e.target.value })}
+					>
+						<Radio.Button value={TagCalculation.Formula}>По формуле</Radio.Button>
+						<Radio.Button value={TagCalculation.Thresholds}>По таблице пороговых значений</Radio.Button>
+					</Radio.Group>
 				</FormRow>
-				<div>
-					<FormRow title='Входные параметры формулы'>
-						{request.formulaInputs.map((input) => (
-							<div
-								key={'input' + input.key}
-								style={{
-									marginBottom: '.25em',
-									display: 'grid',
-									gridTemplateColumns: '3fr 10fr 1fr',
+				{request.calculation === TagCalculation.Formula && (
+					<>
+						<FormRow
+							title={
+								<>
+									{'Формула для вычисления'}
+									<HelpNCalc />
+								</>
+							}
+						>
+							<Input
+								value={request.formula ?? ''}
+								onChange={(e) =>
+									setRequest({
+										...request,
+										formula: e.target.value,
+									})
+								}
+							/>
+						</FormRow>
+						<div>
+							<FormRow title='Входные параметры формулы'>
+								{request.formulaInputs.map((input) => (
+									<div
+										key={'input' + input.key}
+										style={{
+											marginBottom: '.25em',
+											display: 'grid',
+											gridTemplateColumns: '3fr 10fr 1fr',
+										}}
+									>
+										<Input
+											value={input.variableName}
+											placeholder='Введите обозначение переменной'
+											onChange={(e) =>
+												setRequest({
+													...request,
+													formulaInputs: [
+														...request.formulaInputs.map((x) =>
+															x.key !== input.key
+																? x
+																: {
+																		...x,
+																		variableName: e.target.value,
+																	},
+														),
+													],
+												})
+											}
+										/>
+										<TagTreeSelect
+											blocks={blocks}
+											tags={tags}
+											value={[input.tagId, input.tagRelationId]}
+											onChange={([inputTagId, inputTagRelationId]) =>
+												setRequest({
+													...request,
+													formulaInputs: request.formulaInputs.map((x) =>
+														x.key !== input.key
+															? x
+															: {
+																	...x,
+																	tagId: inputTagId,
+																	tagRelationId: inputTagRelationId,
+																},
+													),
+												})
+											}
+										/>
+										<Button icon={<DeleteOutlined />} onClick={() => removeParam(input.key)}></Button>
+									</div>
+								))}
+							</FormRow>
+							<Button icon={<AppstoreAddOutlined />} onClick={addParam}></Button>
+						</div>
+					</>
+				)}
+				{request.calculation === TagCalculation.Thresholds && (
+					<>
+						<FormRow title='Тег-источник'>
+							<TagTreeSelect
+								value={[request.thresholdSourceTagId ?? 0, request.thresholdSourceTagRelationId]}
+								blocks={blocks}
+								tags={tags}
+								onChange={([thresholdSourceTagId, thresholdSourceTagRelationId]) => {
+									setRequest({ ...request, thresholdSourceTagId, thresholdSourceTagRelationId })
 								}}
-							>
-								<Input
-									value={input.variableName}
-									placeholder='Введите обозначение переменной'
-									onChange={(e) =>
-										setRequest({
-											...request,
-											formulaInputs: [
-												...request.formulaInputs.map((x) =>
-													x.key !== input.key
-														? x
-														: {
-																...x,
-																variableName: e.target.value,
-															},
-												),
-											],
-										})
-									}
-								/>
-								<TagTreeSelect
-									blocks={blocks}
-									tags={tags}
-									value={[input.tagId, input.tagRelationId]}
-									onChange={([inputTagId, inputTagRelationId]) =>
-										setRequest({
-											...request,
-											formulaInputs: request.formulaInputs.map((x) =>
-												x.key !== input.key
-													? x
-													: {
-															...x,
-															tagId: inputTagId,
-															tagRelationId: inputTagRelationId,
-														},
-											),
-										})
-									}
-								/>
-								<Button icon={<DeleteOutlined />} onClick={() => removeParam(input.key)}></Button>
-							</div>
-						))}
-					</FormRow>
-					<Button icon={<AppstoreAddOutlined />} onClick={addParam}></Button>
-				</div>
+							/>
+						</FormRow>
+						<div>
+							<FormRow title='Входные параметры формулы'>
+								{request.thresholds?.map((threshold, i) => (
+									<div
+										key={i}
+										style={{
+											marginBottom: '.25em',
+											display: 'grid',
+											gridTemplateColumns: '3fr 10fr 1fr',
+										}}
+									>
+										<InputNumber
+											value={threshold.threshold}
+											placeholder='Введите пороговое значение'
+											onChange={(e) => {
+												setRequest({
+													...request,
+													thresholds: request.thresholds?.map((x, index) =>
+														index !== i ? x : { ...x, threshold: e ?? 0 },
+													),
+												})
+											}}
+										/>
+										<InputNumber
+											value={threshold.result}
+											placeholder='Введите результирующее значение'
+											onChange={(e) => {
+												setRequest({
+													...request,
+													thresholds: request.thresholds?.map((x, index) =>
+														index !== i ? x : { ...x, result: e ?? 0 },
+													),
+												})
+											}}
+										/>
+										<Button
+											icon={<DeleteOutlined />}
+											onClick={() => {
+												setRequest({ ...request, thresholds: request.thresholds?.filter((_, index) => i !== index) })
+											}}
+										></Button>
+									</div>
+								))}
+							</FormRow>
+							<Button
+								icon={<AppstoreAddOutlined />}
+								onClick={() =>
+									setRequest({ ...request, thresholds: [...(request.thresholds ?? []), { threshold: 0, result: 0 }] })
+								}
+							></Button>
+						</div>
+					</>
+				)}
 			</div>
 			{/* Настройки получения */}
 			<div
@@ -558,7 +640,7 @@ const TagForm = () => {
 						value={request.aggregationPeriod}
 						onChange={(e) => setRequest({ ...request, aggregationPeriod: e.target.value })}
 					>
-						<Radio.Button value={AggregationPeriod.Munite}>Прошедшая минута</Radio.Button>
+						<Radio.Button value={AggregationPeriod.Minute}>Прошедшая минута</Radio.Button>
 						<Radio.Button value={AggregationPeriod.Hour}>Прошедший час</Radio.Button>
 						<Radio.Button value={AggregationPeriod.Day}>Прошедшие сутки</Radio.Button>
 					</Radio.Group>

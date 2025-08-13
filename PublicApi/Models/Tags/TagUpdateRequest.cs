@@ -89,6 +89,16 @@ public class TagUpdateRequest : ICalculatedTag
 	public List<TagThresholdInfo>? Thresholds { get; set; }
 
 	/// <summary>
+	/// Идентификатор тега, который будет источником данных для выбора из пороговой таблицы
+	/// </summary>
+	public int? ThresholdSourceTagId { get; set; }
+
+	/// <summary>
+	/// Идентификатор связи, по которой выбран тег-источник данных для выбора из пороговой таблицы
+	/// </summary>
+	public int? ThresholdSourceTagRelationId { get; set; }
+
+	/// <summary>
 	/// Входные переменные для формулы, по которой рассчитывается значение
 	/// </summary>
 	[Required]

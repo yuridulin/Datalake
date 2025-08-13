@@ -474,7 +474,7 @@ public class ValuesRepository(
 		DateTime periodStart, periodEnd;
 		switch (period)
 		{
-			case AggregationPeriod.Munite:
+			case AggregationPeriod.Minute:
 				periodEnd = now.RoundByResolution(TagResolution.Minute);
 				periodStart = periodEnd.AddMinutes(-1);
 				break;

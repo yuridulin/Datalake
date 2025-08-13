@@ -4,16 +4,22 @@ using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services;
 using LinqToDB;
 using LinqToDB.AspNet;
+using LinqToDB.Mapping;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using NJsonSchema.Generation;
+using Npgsql;
 using Serilog;
 using Serilog.Events;
 using System.Reflection;
+using System.Text.Json;
 
 [assembly: AssemblyVersion("2.4.2.*")]
 
@@ -47,13 +53,17 @@ namespace Datalake.Server
 			{
 				options.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
 			});
-			builder.Services.AddOpenApiDocument((options, services) =>
+			builder.Services.AddSwaggerDocument((options, services) =>
 			{
 				options.DocumentName = "Datalake App";
 				options.Title = "Datalake App";
 				options.Version = "v" + Assembly.GetExecutingAssembly().GetName().Version?.ToString();
-				options.SchemaSettings.GenerateEnumMappingDescription = true;
-				options.SchemaSettings.UseXmlDocumentation = true;
+
+				options.SchemaSettings = new SystemTextJsonSchemaGeneratorSettings
+				{
+					GenerateEnumMappingDescription = true,
+					UseXmlDocumentation = true,
+				};
 				options.SchemaSettings.SchemaProcessors.Add(new XEnumVarnamesNswagSchemaProcessor());
 			});
 			builder.Services.AddEndpointsApiExplorer();
@@ -69,6 +79,22 @@ namespace Datalake.Server
 			builder.Host.UseSerilog();
 
 			var app = builder.Build();
+
+			var mvcOptions = app.Services.GetRequiredService<IOptions<MvcOptions>>().Value;
+
+			// Выведем список выходных форматтеров
+			Console.WriteLine("OutputFormatters:");
+			foreach (var fmt in mvcOptions.OutputFormatters)
+			{
+				Console.WriteLine($"• {fmt.GetType().Name}");
+			}
+
+			// Выведем список входных форматтеров
+			Console.WriteLine("InputFormatters:");
+			foreach (var fmt in mvcOptions.InputFormatters)
+			{
+				Console.WriteLine($"• {fmt.GetType().Name}");
+			}
 
 			WebRootPath = app.Environment.WebRootPath;
 			StartWorkWithDatabase(app);
@@ -163,17 +189,24 @@ namespace Datalake.Server
 					connectionString = connectionString.Replace($"${{{variable}}}", value);
 			}
 
-			Log.Information($"ConnectionString: {connectionString}");
+#pragma warning disable CS0618 // Тип или член устарел
+			NpgsqlConnection.GlobalTypeMapper.EnableDynamicJson();
+#pragma warning restore CS0618 // Тип или член устарел
 
 			builder.Services.AddDbContext<DatalakeEfContext>(options =>
 				options
 					.UseNpgsql(connectionString, config => config.CommandTimeout(300))
 			);
 
-			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) =>
-				options
-					.UsePostgreSQL(connectionString ?? throw new Exception("Connection string not provided"))
-			);
+			builder.Services.AddLinqToDBContext<DatalakeContext>((provider, options) => {
+
+				var ms = new MappingSchema();
+				ms.SetConverter<string, List<TagThresholdInfo>>(json => JsonSerializer.Deserialize<List<TagThresholdInfo>>(json)!);
+
+				return options
+					.UseMappingSchema(ms)
+					.UsePostgreSQL(connectionString ?? throw new Exception("Connection string not provided"));
+			});
 		}
 
 		static async void StartWorkWithDatabase(WebApplication app)

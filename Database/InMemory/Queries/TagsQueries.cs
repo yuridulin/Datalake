@@ -1,6 +1,5 @@
 ﻿using Datalake.Database.InMemory.Models;
 using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Models.Blocks;
 using Datalake.PublicApi.Models.Tags;
 using LinqToDB;
 
@@ -35,6 +34,18 @@ public static class TagsQueries
 					Calculation = tag.Calculation,
 					Formula = tag.Formula,
 					Thresholds = tag.Thresholds,
+					ThresholdSourceTag = !state.TagsById.TryGetValue(tag.ThresholdSourceTagId ?? 0, out var thresholdSourceTag) ? null : new TagAsInputInfo
+					{
+						Id = thresholdSourceTag.Id,
+						Resolution = thresholdSourceTag.Resolution,
+						Guid = thresholdSourceTag.GlobalGuid,
+						Name = thresholdSourceTag.Name,
+						Type = thresholdSourceTag.Type,
+						RelationId = tag.SourceTagRelationId,
+						SourceType = !state.SourcesById.TryGetValue(thresholdSourceTag.SourceId, out var thresholdSourceTagSource)
+							? SourceType.NotSet
+							: thresholdSourceTagSource.Type,
+					},
 					FormulaInputs = state.TagInputs
 						.Where(relation => relation.TagId == tag.Id)
 						.Join(activeTags, relation => relation.InputTagId, inputTag => inputTag.Id, (relation, inputTag) => new TagInputInfo
@@ -110,6 +121,18 @@ public static class TagsQueries
 					Calculation = tag.Calculation,
 					Formula = tag.Formula,
 					Thresholds = tag.Thresholds,
+					ThresholdSourceTag = !state.TagsById.TryGetValue(tag.ThresholdSourceTagId ?? 0, out var thresholdSourceTag) ? null : new TagAsInputInfo
+					{
+						Id = thresholdSourceTag.Id,
+						Resolution = thresholdSourceTag.Resolution,
+						Guid = thresholdSourceTag.GlobalGuid,
+						Name = thresholdSourceTag.Name,
+						Type = thresholdSourceTag.Type,
+						RelationId = tag.SourceTagRelationId,
+						SourceType = !state.SourcesById.TryGetValue(thresholdSourceTag.SourceId, out var thresholdSourceTagSource)
+							? SourceType.NotSet
+							: thresholdSourceTagSource.Type,
+					},
 					FormulaInputs = state.TagInputs
 						.Where(relation => relation.TagId == tag.Id)
 						.Join(activeTags, relation => relation.InputTagId, inputTag => inputTag.Id, (relation, inputTag) => new TagInputInfo

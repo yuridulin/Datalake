@@ -8,7 +8,7 @@ public enum AggregationPeriod
 	/// <summary>
 	/// Минута
 	/// </summary>
-	Munite = 1,
+	Minute = 1,
 
 	/// <summary>
 	/// Час

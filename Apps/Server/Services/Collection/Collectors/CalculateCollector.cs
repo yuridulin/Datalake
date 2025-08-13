@@ -18,7 +18,7 @@ internal class CalculateCollector(
 {
 	public override void Start(CancellationToken stoppingToken)
 	{
-		if (_expressions.Length == 0)
+		if (_expressions.Length + _thresholds.Length == 0)
 		{
 			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет правил расчета и не будет запущен", _name);
@@ -126,7 +126,7 @@ internal class CalculateCollector(
 			batch.Add(record);
 		}
 
-		foreach (var (tag, map) in _thresholds)
+		foreach (var (tag, inputId, map) in _thresholds)
 		{
 			var record = new ValueWriteRequest
 			{
@@ -138,7 +138,7 @@ internal class CalculateCollector(
 				Quality = TagQuality.Bad_NoConnect,
 			};
 
-			var incomingValue = valuesStore.Get(tag.Id);
+			var incomingValue = valuesStore.Get(inputId);
 
 			if (incomingValue != null)
 			{
@@ -177,14 +177,16 @@ internal class CalculateCollector(
 	/// <summary>
 	/// Таблицы пороговых значений
 	/// </summary>
-	private (SourceTagInfo tag, (float inValue, float outValue)[] thresholds)[] _thresholds = source.Tags
+	private (SourceTagInfo tag, int inputTagId, (float inValue, float outValue)[] thresholds)[] _thresholds = source.Tags
 		.Where(tag => 
 			tag.Type == TagType.Number &&
 			tag.Calculation == TagCalculation.Thresholds &&
+			tag.ThresholdSourceTag != null &&
 			tag.Thresholds != null &&
 			tag.Thresholds.Count > 0)
 		.Select(tag => (
 			tag,
+			tag.ThresholdSourceTag!.InputTagId,
 			tag.Thresholds!
 				.OrderBy(x => x.Threshold)
 				.Select(x => (x.Threshold, x.Result))

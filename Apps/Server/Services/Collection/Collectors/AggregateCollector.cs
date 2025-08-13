@@ -35,7 +35,7 @@ internal class AggregateCollector : CollectorBase
 			.Where(rule => rule.TagSourceId != 0 && rule.Period != 0 && rule.Type != 0)
 			.ToArray();
 
-		_minuteRules = _allRules.Where(x => x.Period == AggregationPeriod.Munite).ToArray();
+		_minuteRules = _allRules.Where(x => x.Period == AggregationPeriod.Minute).ToArray();
 		_hourRules = _allRules.Where(x => x.Period == AggregationPeriod.Hour).ToArray();
 		_dayRules = _allRules.Where(x => x.Period == AggregationPeriod.Day).ToArray();
 	}
@@ -78,7 +78,7 @@ internal class AggregateCollector : CollectorBase
 		if (_minuteRules.Length > 0 && _lastMinute != minute)
 		{
 			_logger.LogInformation("Расчет минутных значений: {now}", now);
-			var minuteValues = await GetAggregated(_minuteRules, now, AggregationPeriod.Munite);
+			var minuteValues = await GetAggregated(_minuteRules, now, AggregationPeriod.Minute);
 			records.AddRange(minuteValues);
 			_lastMinute = minute;
 		}
@@ -112,7 +112,7 @@ internal class AggregateCollector : CollectorBase
 			{
 				RequestKey = "aggregate-collector-" + period switch
 				{
-					AggregationPeriod.Munite => "min",
+					AggregationPeriod.Minute => "min",
 					AggregationPeriod.Hour => "hour",
 					AggregationPeriod.Day => "day"
 				},

@@ -346,6 +346,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 				Calculation = updateRequest.Calculation,
 				Formula = updateRequest.Formula,
 				Thresholds = updateRequest.Thresholds?.ToList(),
+				ThresholdSourceTagId = updateRequest.ThresholdSourceTagId,
+				ThresholdSourceTagRelationId = updateRequest.ThresholdSourceTagRelationId,
 				SourceTagId = updateRequest.SourceTagId,
 				SourceTagRelationId = updateRequest.SourceTagRelationId,
 				Aggregation = updateRequest.Aggregation,
@@ -453,6 +455,8 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.Set(x => x.Calculation, updateRequest.Calculation)
 					.Set(x => x.Formula, updateRequest.Formula)
 					.Set(x => x.Thresholds, updateRequest.Thresholds)
+					.Set(x => x.ThresholdSourceTagId, updateRequest.ThresholdSourceTagId)
+					.Set(x => x.ThresholdSourceTagRelationId, updateRequest.ThresholdSourceTagRelationId)
 					.Set(x => x.SourceTagId, updateRequest.SourceTagId)
 					.Set(x => x.SourceTagRelationId, updateRequest.SourceTagRelationId)
 					.Set(x => x.Aggregation, updateRequest.Aggregation)
@@ -468,7 +472,6 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 
 				if (inputs.Length > 0)
 					await BulkCopyWithOutputAsync(db, inputs);
-				//await db.TagInputs.BulkCopyAsync(inputs);
 
 				await LogAsync(db, userGuid, tag.Id, $"Изменен тег \"{tag.Name}\"", string.Join(",\n", changes));
 

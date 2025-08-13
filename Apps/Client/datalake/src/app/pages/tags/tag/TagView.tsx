@@ -10,6 +10,7 @@ import TagResolutionEl from '@/app/components/TagResolutionEl'
 import TagTypeEl from '@/app/components/TagTypeEl'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import TagFormulaView from '@/app/pages/tags/tag/views/TagFormulaView'
+import TagThresholdsView from '@/app/pages/tags/tag/views/TagThresholdsView'
 import { user } from '@/state/user'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Button, Spin, Table, Tag } from 'antd'
@@ -22,6 +23,7 @@ import {
 	AggregationPeriod,
 	SourceType,
 	TagAggregation,
+	TagCalculation,
 	TagFullInfo,
 	TagResolution,
 	TagType,
@@ -36,7 +38,7 @@ const TagView = observer(() => {
 	const [isLoading, setLoading] = useState(false)
 	const [metrics, setMetrics] = useState({} as Record<string, string>)
 
-	// получение инфы
+	// получение инфо
 	const loadTagData = useCallback(() => {
 		if (!id) return
 		setLoading(true)
@@ -67,7 +69,7 @@ const TagView = observer(() => {
 		info['Тип агрегирования'] = (
 			<>
 				{tag.aggregation === TagAggregation.Average ? 'Среднее' : 'Сумма'} за{' '}
-				{tag.aggregationPeriod === AggregationPeriod.Munite
+				{tag.aggregationPeriod === AggregationPeriod.Minute
 					? 'прошедшую минуту'
 					: tag.aggregationPeriod === AggregationPeriod.Hour
 						? 'прошедший час'
@@ -195,7 +197,14 @@ const TagView = observer(() => {
 			_tabs.push({
 				key: 'calc',
 				label: 'Расчет',
-				children: <TagFormulaView formula={tag.formula} inputs={tag.formulaInputs} />,
+				children:
+					tag.calculation === TagCalculation.Formula ? (
+						<TagFormulaView formula={tag.formula} inputs={tag.formulaInputs} />
+					) : tag.calculation === TagCalculation.Thresholds ? (
+						<TagThresholdsView tag={tag} />
+					) : (
+						<>Тип расчета не выбран</>
+					),
 			})
 		return _tabs
 	}, [tag, metrics, relations, tagMapping])

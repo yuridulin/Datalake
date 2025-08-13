@@ -9,7 +9,7 @@ namespace Datalake.PublicApi.Models.Sources;
 /// <summary>
 /// Информация о теге, берущем данные из этого источника
 /// </summary>
-public class SourceTagInfo : TagSimpleInfo, IProtectedEntity, ICalculatedTag
+public class SourceTagInfo : TagSimpleInfo, IProtectedEntity
 {
 	/// <summary>
 	/// Путь к данным в источнике
@@ -31,6 +31,11 @@ public class SourceTagInfo : TagSimpleInfo, IProtectedEntity, ICalculatedTag
 	/// Пороговые значения, по которым выбирается итоговое значение
 	/// </summary>
 	public List<TagThresholdInfo>? Thresholds { get; set; }
+
+	/// <summary>
+	/// Входной тег, по значениям которого выбирается значение из пороговой таблицы
+	/// </summary>
+	public TagInputMinimalInfo? ThresholdSourceTag { get; set; }
 
 	/// <summary>
 	/// Входные переменные для формулы, по которой рассчитывается значение

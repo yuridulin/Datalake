@@ -346,6 +346,12 @@ namespace Datalake.Database.Migrations
                     b.Property<int?>("SourceTagRelationId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ThresholdSourceTagId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ThresholdSourceTagRelationId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Thresholds")
                         .HasColumnType("jsonb");
 
@@ -357,6 +363,8 @@ namespace Datalake.Database.Migrations
                     b.HasIndex("SourceId");
 
                     b.HasIndex("SourceTagId");
+
+                    b.HasIndex("ThresholdSourceTagId");
 
                     b.ToTable("Tags", "public");
                 });
@@ -638,9 +646,16 @@ namespace Datalake.Database.Migrations
                         .HasForeignKey("SourceTagId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Datalake.Database.Tables.Tag", "ThresholdSourceTag")
+                        .WithMany()
+                        .HasForeignKey("ThresholdSourceTagId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Source");
 
                     b.Navigation("SourceTag");
+
+                    b.Navigation("ThresholdSourceTag");
                 });
 
             modelBuilder.Entity("Datalake.Database.Tables.TagInput", b =>

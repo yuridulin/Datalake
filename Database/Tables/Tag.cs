@@ -21,7 +21,7 @@ public record class Tag
 	/// </summary>
 	public Tag() { }
 
-	// поля в БД
+	#region поля в БД
 
 	/// <summary>
 	/// Идентификатор
@@ -71,7 +71,9 @@ public record class Tag
 	[Column, Required]
 	public bool IsDeleted { get; set; } = false;
 
-	// специфичные для входящих
+	#endregion
+
+	#region специфичные для входящих
 
 	/// <summary>
 	/// Идентификатор источника
@@ -85,7 +87,9 @@ public record class Tag
 	[Column]
 	public string? SourceItem { get; set; } = string.Empty;
 
-	// специфичные для числовых
+	#endregion
+
+	#region специфичные для числовых
 
 	/// <summary>
 	/// Используется ли преобразование по шкале
@@ -117,7 +121,9 @@ public record class Tag
 	[Column]
 	public float MaxRaw { get; set; } = float.MaxValue;
 
-	// специфичные для вычисляемых
+	#endregion
+
+	#region специфичные для вычисляемых
 
 	/// <summary>
 	/// Используемый тип вычисления
@@ -137,7 +143,21 @@ public record class Tag
 	[Column(DataType = LinqToDB.DataType.BinaryJson), System.ComponentModel.DataAnnotations.Schema.Column(TypeName = "jsonb")]
 	public List<TagThresholdInfo>? Thresholds { get; set; }
 
-	// специфичные для агрегированных
+	/// <summary>
+	/// Идентификатор тега, который будет источником данных для расчета значения по таблице пороговых значений
+	/// </summary>
+	[Column]
+	public int? ThresholdSourceTagId { get; set; }
+
+	/// <summary>
+	/// Идентификатор связи с тегом, который будет источником данных для расчета значения по таблице пороговых значений
+	/// </summary>
+	[Column]
+	public int? ThresholdSourceTagRelationId { get; set; }
+
+	#endregion
+
+	#region специфичные для агрегированных
 
 	/// <summary>
 	/// Тип агрегации
@@ -158,12 +178,14 @@ public record class Tag
 	public int? SourceTagId { get; set; }
 
 	/// <summary>
-	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения
+	/// Идентификатор связи с тегом, который будет источником данных для расчета агрегированного значения
 	/// </summary>
 	[Column]
 	public int? SourceTagRelationId { get; set; }
 
-	// связи
+	#endregion
+
+	#region связи
 
 	/// <summary>
 	/// Источник
@@ -174,6 +196,11 @@ public record class Tag
 	/// Тег-источник данных для агрегирования
 	/// </summary>
 	public Tag? SourceTag { get; set; }
+
+	/// <summary>
+	/// Тег-источник данных для вычисления по таблице пороговых значений
+	/// </summary>
+	public Tag? ThresholdSourceTag { get; set; }
 
 	/// <summary>
 	/// Входные теги
@@ -199,4 +226,6 @@ public record class Tag
 	/// Список сообщений аудита
 	/// </summary>
 	public ICollection<Log> Logs { get; set; } = null!;
+
+	#endregion
 }

@@ -89,12 +89,12 @@ export enum LogCategory {
 /**
  * Период, за который берутся необходимые для расчета агрегированных значений данные
  *
- * 1 = Munite
+ * 1 = Minute
  * 2 = Hour
  * 3 = Day
  */
 export enum AggregationPeriod {
-  Munite = 1,
+  Minute = 1,
   Hour = 2,
   Day = 3,
 }
@@ -654,6 +654,8 @@ export type SourceTagInfo = TagSimpleInfo & {
   formula?: string | null;
   /** Пороговые значения, по которым выбирается итоговое значение */
   thresholds?: TagThresholdInfo[] | null;
+  /** Входной тег, по значениям которого выбирается значение из пороговой таблицы */
+  thresholdSourceTag?: TagInputMinimalInfo | null;
   /** Входные переменные для формулы, по которой рассчитывается значение */
   formulaInputs: TagInputMinimalInfo[];
   /** Входной тег, по значениям которого считается агрегированное значение */
@@ -899,6 +901,8 @@ export type TagInfo = TagSimpleInfo & {
   formula?: string | null;
   /** Пороговые значения, по которым выбирается итоговое значение */
   thresholds?: TagThresholdInfo[] | null;
+  /** Входной тег, по значениям которого выбирается значение из пороговой таблицы */
+  thresholdSourceTag?: TagAsInputInfo | null;
   /** Применяется ли приведение числового значения тега к другой шкале */
   isScaling: boolean;
   /**
@@ -933,6 +937,17 @@ export type TagInfo = TagSimpleInfo & {
   accessRule?: AccessRuleInfo;
 };
 
+/** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
+export type TagAsInputInfo = TagSimpleInfo & {
+  /**
+   * Идентификатор связи, по которой тег был выбран
+   * @format int32
+   */
+  relationId?: number | null;
+  /** Правило доступа */
+  accessRule?: AccessRuleInfo;
+};
+
 /** Тег, используемый как входной параметр в формуле */
 export type TagInputInfo = TagSimpleInfo & {
   /**
@@ -942,17 +957,6 @@ export type TagInputInfo = TagSimpleInfo & {
   variableName: string;
   /**
    * Идентификатор связи
-   * @format int32
-   */
-  relationId?: number | null;
-  /** Правило доступа */
-  accessRule?: AccessRuleInfo;
-};
-
-/** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
-export type TagAsInputInfo = TagSimpleInfo & {
-  /**
-   * Идентификатор связи, по которой тег был выбран
    * @format int32
    */
   relationId?: number | null;
@@ -1047,6 +1051,16 @@ export interface TagUpdateRequest {
   formula?: string | null;
   /** Пороговые значения, по которым выбирается итоговое значение */
   thresholds?: TagThresholdInfo[] | null;
+  /**
+   * Идентификатор тега, который будет источником данных для выбора из пороговой таблицы
+   * @format int32
+   */
+  thresholdSourceTagId?: number | null;
+  /**
+   * Идентификатор связи, по которой выбран тег-источник данных для выбора из пороговой таблицы
+   * @format int32
+   */
+  thresholdSourceTagRelationId?: number | null;
   /** Входные переменные для формулы, по которой рассчитывается значение */
   formulaInputs: TagUpdateInputRequest[];
   /** Тип агрегации */
