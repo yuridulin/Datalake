@@ -111,6 +111,17 @@ export enum TagAggregation {
 }
 
 /**
+ * Способ вычисления значения
+ *
+ * 1 = Formula
+ * 2 = Thresholds
+ */
+export enum TagCalculation {
+  Formula = 1,
+  Thresholds = 2,
+}
+
+/**
  * Достоверность значения
  *
  * 0 = Bad
@@ -163,13 +174,18 @@ export enum BlockTagRelation {
  * -1 = Calculated
  */
 export enum SourceType {
+  /** Системные теги с данными о текущей работе различных частей приложения */
   System = 0,
   Inopc = 1,
   Datalake = 2,
   DatalakeV2 = 3,
+  /** Заглушка для неопределённого источника */
   NotSet = -666,
+  /** Теги, значения которых считаются на стороне БД как агрегированные значения тега-источника за прошедший период */
   Aggregated = -3,
+  /** Пользовательские теги с ручным вводом значений в произвольный момент времени */
   Manual = -2,
+  /** Пользовательские теги, значения которых вычисляются по формулам на основе значений других тегов */
   Calculated = -1,
 }
 
@@ -632,8 +648,12 @@ export type SourceTagInfo = TagSimpleInfo & {
    * @minLength 1
    */
   item: string;
+  /** Используемый тип вычисления */
+  calculation?: TagCalculation | null;
   /** Формула, на основе которой вычисляется значение */
   formula?: string | null;
+  /** Пороговые значения, по которым выбирается итоговое значение */
+  thresholds?: TagThresholdInfo[] | null;
   /** Входные переменные для формулы, по которой рассчитывается значение */
   formulaInputs: TagInputMinimalInfo[];
   /** Входной тег, по значениям которого считается агрегированное значение */
@@ -645,6 +665,20 @@ export type SourceTagInfo = TagSimpleInfo & {
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
+
+/** Соответствие входного и выходного значения по таблице пороговых уставок */
+export interface TagThresholdInfo {
+  /**
+   * Пороговое значение
+   * @format float
+   */
+  threshold: number;
+  /**
+   * Итоговое значение
+   * @format float
+   */
+  result: number;
+}
 
 /** Минимальная информация о переменных для расчета значений по формуле */
 export interface TagInputMinimalInfo {
@@ -859,8 +893,12 @@ export type TagInfo = TagSimpleInfo & {
   sourceItem?: string | null;
   /** Имя используемого источника данных */
   sourceName?: string | null;
+  /** Используемый тип вычисления */
+  calculation?: TagCalculation | null;
   /** Формула, на основе которой вычисляется значение */
   formula?: string | null;
+  /** Пороговые значения, по которым выбирается итоговое значение */
+  thresholds?: TagThresholdInfo[] | null;
   /** Применяется ли приведение числового значения тега к другой шкале */
   isScaling: boolean;
   /**
@@ -1003,8 +1041,12 @@ export interface TagUpdateRequest {
   sourceId: number;
   /** Новый интервал получения значения */
   resolution: TagResolution;
-  /** Формула, по которой рассчитывается значение */
+  /** Используемый тип вычисления */
+  calculation?: TagCalculation | null;
+  /** Формула, на основе которой вычисляется значение */
   formula?: string | null;
+  /** Пороговые значения, по которым выбирается итоговое значение */
+  thresholds?: TagThresholdInfo[] | null;
   /** Входные переменные для формулы, по которой рассчитывается значение */
   formulaInputs: TagUpdateInputRequest[];
   /** Тип агрегации */
