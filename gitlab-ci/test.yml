@@ -10,15 +10,12 @@ build-server-test:
     - push-build
 
   script:
-    # Диагностика окружения
-    - echo "================== ENV DEBUG =================="
-    - echo "CI_COMMIT_TAG:     $CI_COMMIT_TAG"
-    - echo "CI_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME"
-    - echo "CI_COMMIT_SHA:     $CI_COMMIT_SHA"
-    - echo "VERSION:           $VERSION"
-    - echo "==============================================="
-    # Обычные шаги
-    - echo "Building version $VERSION"
+    - echo "============== ENV DEBUG =================="
+    - echo "     CI_COMMIT_TAG = $CI_COMMIT_TAG"
+    - echo "CI_COMMIT_REF_NAME = $CI_COMMIT_REF_NAME"
+    - echo "     CI_COMMIT_SHA = $CI_COMMIT_SHA"
+    - echo "           VERSION = $VERSION"
+    - echo "==========================================="
     - docker build --build-arg APP_VERSION="$VERSION" -t datalake:latest-test  -f ./Apps/Server/Dockerfile .
     - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:latest-test
 
@@ -35,14 +32,6 @@ push-server-test:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
 
   script:
-    # Диагностика окружения
-    - echo "================== ENV DEBUG =================="
-    - echo "CI_COMMIT_TAG:     $CI_COMMIT_TAG"
-    - echo "CI_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME"
-    - echo "CI_COMMIT_SHA:     $CI_COMMIT_SHA"
-    - echo "VERSION:           $VERSION"
-    - echo "==============================================="
-    # Обычные шаги
     - docker push "$CI_REPOS_URL"/datalake:latest-test
 
   only:
@@ -59,14 +48,6 @@ deploy-server-test:
     entrypoint: ["/bin/sh", "-c"]
 
   script:
-    # Диагностика окружения
-    - echo "================== ENV DEBUG =================="
-    - echo "CI_COMMIT_TAG:     $CI_COMMIT_TAG"
-    - echo "CI_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME"
-    - echo "CI_COMMIT_SHA:     $CI_COMMIT_SHA"
-    - echo "VERSION:           $VERSION"
-    - echo "==============================================="
-    # Обычные шаги
     - kubectl delete -n sinus-test pods -l app=datalake-test
 
   only:
