@@ -41,13 +41,13 @@ COPY --from=client-build /src/Apps/Client/datalake/dist/ Apps/Server/wwwroot/
 WORKDIR /src/Apps/Server
 RUN dotnet build "Server.csproj" -c Release -o /app/build
 
-# Аргумент сборки
+# Версия
 ARG APP_VERSION=dev
-# Превратим его в ENV, чтобы был доступен в рантайме
 ENV APP_VERSION=${APP_VERSION}
 
 # --- 4. Публикация (publish без apphost) ---
 FROM build AS publish
+ARG APP_VERSION=dev
 WORKDIR /src/Apps/Server
 RUN dotnet publish "Server.csproj" \
 	-c Release \

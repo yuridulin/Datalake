@@ -4,7 +4,7 @@ include:
 
 variables:
   GIT_SSL_NO_VERIFY: "true"
-  VERSION: "${CI_COMMIT_TAG#prod.}"
+  VERSION: "${CI_COMMIT_TAG#*.}"
 
 stages:
   - build
