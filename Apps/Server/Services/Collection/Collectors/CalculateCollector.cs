@@ -18,7 +18,7 @@ internal class CalculateCollector(
 {
 	public override void Start(CancellationToken stoppingToken)
 	{
-		if (_expressions.Length + _thresholds.Length == 0)
+		if ((_expressions.Length + _thresholds.Length) == 0)
 		{
 			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет правил расчета и не будет запущен", _name);
@@ -128,6 +128,9 @@ internal class CalculateCollector(
 
 		foreach (var (tag, inputId, map) in _thresholds)
 		{
+			if (_tokenSource.IsCancellationRequested)
+				break;
+
 			var record = new ValueWriteRequest
 			{
 				Date = now,
@@ -151,9 +154,14 @@ internal class CalculateCollector(
 				{
 					record.Quality = TagQuality.Bad_NoValues;
 				}
+
+				usedTags.Add(inputId);
 			}
 
-			batch.Add(record);
+			if ((record.Value as float?) != valuesStore.Get(tag.Id)?.Number)
+			{
+				batch.Add(record);
+			}
 		}
 
 		await WriteAsync(batch);

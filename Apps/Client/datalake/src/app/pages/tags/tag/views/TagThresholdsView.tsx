@@ -7,7 +7,7 @@ import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { DollarCircleOutlined } from '@ant-design/icons'
 import { Space, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface TagThresholdsViewProps {
 	tag: TagFullInfo
@@ -18,7 +18,7 @@ type TagThresholdsValues = Record<number, ValueRecord>
 const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
 	const [values, setValues] = useState<TagThresholdsValues>({})
 
-	const getValues = () => {
+	const getValues = useCallback(() => {
 		api
 			.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: [tag.id, tag.thresholdSourceTag?.id ?? 0] }])
 			.then((res) => {
@@ -28,7 +28,7 @@ const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
 				})
 				setValues(newValues)
 			})
-	}
+	}, [tag])
 
 	useEffect(getValues, [getValues])
 	useInterval(getValues, 5000)

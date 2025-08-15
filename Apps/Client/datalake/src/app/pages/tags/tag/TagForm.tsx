@@ -214,7 +214,7 @@ const TagForm = () => {
 					{
 						key: availableFakeId,
 						tagId: 0,
-						tagRelationId: -1,
+						tagRelationId: 0,
 						variableName: '',
 					} as UpdateInputRequest,
 				],
