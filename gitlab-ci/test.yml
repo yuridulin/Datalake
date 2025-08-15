@@ -1,6 +1,3 @@
-variables:
-  VERSION: "${CI_COMMIT_TAG#test.}"
-
 stages:
   - build
   - push
@@ -11,15 +8,14 @@ build-server-test:
 
   tags:
     - push-build
-
+  before_script:
+    - echo "Тег = $CI_COMMIT_TAG"
+    - echo "Версия = ${CI_COMMIT_TAG#test.}"
   script:
-    - echo "============== ENV DEBUG =================="
-    - echo "     CI_COMMIT_TAG = $CI_COMMIT_TAG"
-    - echo "CI_COMMIT_REF_NAME = $CI_COMMIT_REF_NAME"
-    - echo "     CI_COMMIT_SHA = $CI_COMMIT_SHA"
-    - echo "           VERSION = $VERSION"
-    - echo "==========================================="
-    - docker build --build-arg APP_VERSION="$VERSION" -t datalake:latest-test  -f ./Apps/Server/Dockerfile .
+    - docker build \
+        --build-arg APP_VERSION="${CI_COMMIT_TAG#test.}" \
+        -t datalake:latest-test \
+        -f ./Apps/Server/Dockerfile .
     - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:latest-test
 
   only:
