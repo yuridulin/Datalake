@@ -252,7 +252,7 @@ public abstract class DatalakePublicApiClient : ControllerBase
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="userUpdateRequest">Новые данные пользователя</param>
 	[HttpPut("api/users/{userGuid}")]
-	public async Task<ActionResult> UpdateUserAsync(
+	public virtual async Task<ActionResult> UpdateUserAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		[BindRequired, FromBody] UserUpdateRequest userUpdateRequest)
 	{

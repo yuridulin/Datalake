@@ -37,6 +37,6 @@ public class DatalakeApiUsersService
 			}
 			: null;
 
-		return DatalakeApiUpstreamService.PostAsync<UserInfo, UserCreateRequest>(_httpClient, "/api/users", request, extraHeaders);
+		return DatalakeApiUpstreamService.PostAsync<UserCreateRequest, UserInfo>(_httpClient, "/api/users", request, extraHeaders);
 	}
 }

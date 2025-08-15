@@ -5,6 +5,10 @@ using System.Text.Json;
 
 namespace Datalake.PublicApiClient;
 
+/// <summary>
+/// Обертка над ответом
+/// </summary>
+/// <typeparam name="T">Тип ответа</typeparam>
 public sealed class DatalakeApiResponse<T> : IAsyncDisposable
 {
 	private readonly HttpResponseMessage _response;
@@ -19,7 +23,9 @@ public sealed class DatalakeApiResponse<T> : IAsyncDisposable
 
 	internal DatalakeApiResponse(HttpResponseMessage response) => _response = response;
 
-	// 1) Получить непрочитанный поток (одноразовый захват)
+	/// <summary>
+	/// Получить непрочитанный поток (одноразовый захват)
+	/// </summary>
 	public async Task<Stream> AcquireStreamAsync(CancellationToken ct = default)
 	{
 		ThrowIfConsumed();
@@ -27,7 +33,9 @@ public sealed class DatalakeApiResponse<T> : IAsyncDisposable
 		return await _response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 	}
 
-	// 2) Десериализовать по требованию (одноразовое потребление)
+	/// <summary>
+	/// Десериализовать по требованию (одноразовое потребление)
+	/// </summary>
 	public async Task<T?> ReadAsAsync(JsonSerializerOptions? options = null, CancellationToken ct = default)
 	{
 		ThrowIfConsumed();
@@ -36,7 +44,9 @@ public sealed class DatalakeApiResponse<T> : IAsyncDisposable
 		return await JsonSerializer.DeserializeAsync<T>(s, options, ct).ConfigureAwait(false);
 	}
 
-	// 3) Проксирование в ASP.NET Core-респонс (с заголовками и статусом)
+	/// <summary>
+	/// Проксирование в ASP.NET Core-респонс (с заголовками и статусом)
+	/// </summary>
 	public async Task ForwardToAsync(HttpResponse target, bool copyHeaders = true, CancellationToken ct = default)
 	{
 		ThrowIfConsumed();
@@ -45,13 +55,11 @@ public sealed class DatalakeApiResponse<T> : IAsyncDisposable
 		target.StatusCode = (int)_response.StatusCode;
 
 		if (copyHeaders)
-		{
 			CopyResponseHeaders(_response, target);
-		}
 
 		await using var src = await _response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		await src.CopyToAsync(target.Body, 64 * 1024, ct).ConfigureAwait(false);
-		await target.Body.FlushAsync(ct).ConfigureAwait(false);
+		// Доп. Flush обычно не нужен; ASP.NET Core сам буферизует и флашит по мере необходимости.
 	}
 
 	public void EnsureSuccess()
@@ -74,7 +82,6 @@ public sealed class DatalakeApiResponse<T> : IAsyncDisposable
 
 	private static void CopyResponseHeaders(HttpResponseMessage src, HttpResponse dst)
 	{
-		// Hop-by-hop заголовки не копируем
 		static bool IsHopByHop(string h) => h.Equals("Connection", StringComparison.OrdinalIgnoreCase)
 			|| h.Equals("Keep-Alive", StringComparison.OrdinalIgnoreCase)
 			|| h.Equals("Proxy-Authenticate", StringComparison.OrdinalIgnoreCase)
@@ -84,6 +91,7 @@ public sealed class DatalakeApiResponse<T> : IAsyncDisposable
 			|| h.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase)
 			|| h.Equals("Upgrade", StringComparison.OrdinalIgnoreCase);
 
+		// Сначала копируем обычные заголовки ответа
 		foreach (var header in src.Headers)
 		{
 			if (IsHopByHop(header.Key))
@@ -91,12 +99,23 @@ public sealed class DatalakeApiResponse<T> : IAsyncDisposable
 			dst.Headers[header.Key] = header.Value.ToArray();
 		}
 
+		// Контент‑заголовки — аккуратно:
+		// Content-Type и Content-Length лучше через свойства, остальное — в Headers.
+		if (src.Content.Headers.ContentType is { } ct)
+			dst.ContentType = ct.ToString();
+
+		if (src.Content.Headers.ContentLength is long len)
+			dst.ContentLength = len; // ставь только если не меняешь тело
+
 		foreach (var header in src.Content.Headers)
 		{
 			if (IsHopByHop(header.Key))
 				continue;
+			if (string.Equals(header.Key, "Content-Type", StringComparison.OrdinalIgnoreCase))
+				continue;
+			if (string.Equals(header.Key, "Content-Length", StringComparison.OrdinalIgnoreCase))
+				continue;
 
-			// ASP.NET Core валидирует некоторые системные заголовки — ставим осторожно
 			dst.Headers[header.Key] = header.Value.ToArray();
 		}
 	}
