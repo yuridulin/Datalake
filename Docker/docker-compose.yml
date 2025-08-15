@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: datalake-docker
     volumes:
-      - ../Server/storage/database:/var/lib/postgresql/data
+      - ../Apps/Server/storage/database:/var/lib/postgresql/data
     ports:
       - "2345:5432"
     healthcheck:
@@ -31,6 +31,7 @@ services:
       DATALAKE_DB: datalake-docker
       DATALAKE_DB_USER: postgres
       DATALAKE_DB_PASS: postgres
+      APP_VERSION: 1.2.3.4
     ports:
       - 8000:8080
     volumes:

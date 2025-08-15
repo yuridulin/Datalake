@@ -41,10 +41,20 @@ COPY --from=client-build /src/Apps/Client/datalake/dist/ Apps/Server/wwwroot/
 WORKDIR /src/Apps/Server
 RUN dotnet build "Server.csproj" -c Release -o /app/build
 
+# Аргумент сборки
+ARG APP_VERSION=dev
+# Превратим его в ENV, чтобы был доступен в рантайме
+ENV APP_VERSION=${APP_VERSION}
+
 # --- 4. Публикация (publish без apphost) ---
 FROM build AS publish
 WORKDIR /src/Apps/Server
-RUN dotnet publish "Server.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Server.csproj" \
+	-c Release \
+	-p:Version=${APP_VERSION} \
+	-p:SourceRevisionId=${APP_VERSION} \
+	-p:UseAppHost=false \
+	-o /app/publish
 
 # --- 5. Финальный образ ---
 FROM base AS final

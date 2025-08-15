@@ -10,7 +10,8 @@ build-server-prod:
     - push-build
 
   script:
-    - docker build -t datalake:latest  -f ./Apps/Server/Dockerfile .
+    - echo "Building version $VERSION"
+    - docker build --build-arg APP_VERSION="$VERSION" -t datalake:latest  -f ./Apps/Server/Dockerfile .
     - docker tag datalake:latest "$CI_REPOS_URL"/datalake:"$CI_COMMIT_TAG"
     - docker tag datalake:latest "$CI_REPOS_URL"/datalake:latest
 

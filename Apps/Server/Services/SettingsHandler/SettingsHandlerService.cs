@@ -15,8 +15,8 @@ public class SettingsHandlerService(
 	DatalakeDerivedDataStore derivedDataStore,
 	ILogger<SettingsHandlerService> logger) : BackgroundService, IDisposable
 {
-	private readonly object _fileLock = new();
-	private readonly object _usersLock = new();
+	private readonly Lock _fileLock = new();
+	private readonly Lock _usersLock = new();
 
 	// Каналы для обработки событий
 	private readonly Channel<DatalakeDataState> _stateChannel =
@@ -80,15 +80,17 @@ public class SettingsHandlerService(
 			try
 			{
 				var newSettings = state.Settings;
-				var version = Assembly.GetExecutingAssembly().GetName().Version;
+				var version = Program.Version;
+
 				File.WriteAllLines(Path.Combine(Program.WebRootPath, "startup.js"),
 				[
 					"var LOCAL_API = true;",
 					$"var KEYCLOAK_DB = '{newSettings.KeycloakHost}';",
 					$"var KEYCLOAK_CLIENT = '{newSettings.KeycloakClient}';",
 					$"var INSTANCE_NAME = '{newSettings.InstanceName}';",
-					version != null ? $"var VERSION = '{version.Major}.{version.Minor}.{version.Build}';" : string.Empty,
+					$"var VERSION = '{version}';",
 				]);
+
 				logger.LogDebug("Настройки обновлены");
 			}
 			catch (Exception ex)
