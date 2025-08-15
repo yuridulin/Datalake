@@ -177,6 +177,7 @@ namespace Datalake.Server
 				o.Environment = CurrentEnvironment;
 				o.Dsn = sentrySection[nameof(o.Dsn)];
 				o.Debug = bool.TryParse(sentrySection[nameof(o.Debug)], out var dbg) && dbg;
+				o.Release = $"{builder.Environment.ApplicationName}@{Version}";
 				o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
 			});
 
@@ -223,6 +224,7 @@ namespace Datalake.Server
 					}
 				};
 			})
+				.UseSentryTracing()
 				.UseDefaultFiles()
 				.UseStaticFiles()
 				.UseHttpsRedirection()
@@ -249,9 +251,10 @@ namespace Datalake.Server
 				name: "default",
 				pattern: "{controller=Home}/{action=Index}/{id?}");
 
-			// запуск БД > стоит вынести отдельно?
+			// запуск БД
 			StartWorkWithDatabase(app);
 
+			// запуск веб-сервера
 			app.Run();
 		}
 
