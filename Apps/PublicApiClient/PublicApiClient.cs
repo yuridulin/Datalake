@@ -246,6 +246,35 @@ public abstract class DatalakePublicApiClient : ControllerBase
 		return await ReturnStreamResponse(response);
 	}
 
+	/// <summary>
+	/// Изменение пользователя
+	/// </summary>
+	/// <param name="userGuid">Идентификатор пользователя</param>
+	/// <param name="userUpdateRequest">Новые данные пользователя</param>
+	[HttpPut("api/users/{userGuid}")]
+	public async Task<ActionResult> UpdateUserAsync(
+		[BindRequired, FromRoute] Guid userGuid,
+		[BindRequired, FromBody] UserUpdateRequest userUpdateRequest)
+	{
+		var request = new HttpRequestMessage
+		{
+			Method = HttpMethod.Put,
+			RequestUri = new Uri($"api/users/{userGuid}", UriKind.Relative),
+			Content = new StringContent(
+				JsonSerializer.Serialize(userUpdateRequest),
+				encoding: Encoding.UTF8,
+				mediaType: MediaTypeNames.Application.Json),
+		};
+
+		_logger.LogDebug("Datalake > {name}: {method} {uri}", nameof(UpdateUserAsync), request.Method, request.RequestUri);
+
+		ProcessRequest(request);
+
+		var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+		return NoContent();
+	}
+
 	protected abstract void ProcessRequest(HttpRequestMessage request);
 
 	protected virtual void SetUnderlyingUser(HttpRequestMessage request, Guid? userGuid = null)
