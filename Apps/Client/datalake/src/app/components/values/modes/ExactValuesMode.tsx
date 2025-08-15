@@ -1,7 +1,7 @@
 import { SourceType, TagQuality, TagResolution, TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
-import TagCompactValue from '@/app/components/TagCompactValue'
 import { ExcelExportModeHandles, getQualityStyle } from '@/app/components/values/functions/exportExcel'
+import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagViewerModeProps } from '@/app/pages/values/types/TagViewerModeProps'
 import { TagTypeName } from '@/functions/getTagTypeName'
 import { TagValue } from '@/types/tagValue'

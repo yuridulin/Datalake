@@ -1,5 +1,17 @@
 import api from '@/api/swagger-api'
+import {
+	SourceEntryInfo,
+	SourceInfo,
+	SourceTagInfo,
+	SourceUpdateRequest,
+	TagInfo,
+	TagResolution,
+	TagType,
+} from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
+import CreatedTagLinker from '@/app/components/CreatedTagsLinker'
+import TagCompactValue from '@/app/components/values/TagCompactValue'
+import compareValues from '@/functions/compareValues'
 import {
 	CheckCircleOutlined,
 	CloseCircleOutlined,
@@ -10,18 +22,6 @@ import {
 import { Alert, Button, Col, Input, Popconfirm, Radio, Row, Table, TableColumnsType, Tag, theme, Tree } from 'antd'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
-import {
-	SourceEntryInfo,
-	SourceInfo,
-	SourceTagInfo,
-	SourceUpdateRequest,
-	TagInfo,
-	TagResolution,
-	TagType,
-} from '../../../../api/swagger/data-contracts'
-import compareValues from '../../../../functions/compareValues'
-import CreatedTagLinker from '../../../components/CreatedTagsLinker'
-import TagCompactValue from '../../../components/TagCompactValue'
 
 interface GroupedEntry {
 	path: string

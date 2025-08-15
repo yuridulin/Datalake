@@ -1,14 +1,14 @@
 import api from '@/api/swagger-api'
+import { TagInfo, TagQuality, ValueRecord } from '@/api/swagger/data-contracts'
 import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
+import TagCompactValue from '@/app/components/values/TagCompactValue'
+import compareValues from '@/functions/compareValues'
+import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
-import { TagInfo, TagQuality, ValueRecord } from '../../../api/swagger/data-contracts'
-import compareValues from '../../../functions/compareValues'
-import { useInterval } from '../../../hooks/useInterval'
-import TagCompactValue from '../../components/TagCompactValue'
 
 interface TagsTableProps {
 	tags: TagInfo[]

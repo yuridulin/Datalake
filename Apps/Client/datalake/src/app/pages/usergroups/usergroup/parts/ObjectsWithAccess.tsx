@@ -1,4 +1,4 @@
-import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
+import AccessTypeEl from '@/app/components/AccessTypeEl'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'

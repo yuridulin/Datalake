@@ -1,12 +1,12 @@
+import { TagQuality, TagType } from '@/api/swagger/data-contracts'
 import TagQualityEl from '@/app/components/TagQualityEl'
+import { TagValue } from '@/types/tagValue'
 import { theme } from 'antd'
-import { TagQuality, TagType } from '../../api/swagger/data-contracts'
-import { TagValue } from '../../types/tagValue'
 
 type TagCompactOptions = {
 	value: TagValue
 	type: TagType
-	quality: TagQuality
+	quality: TagQuality | null
 }
 
 export default function TagCompactValue({ value, type, quality }: TagCompactOptions) {
@@ -32,9 +32,13 @@ export default function TagCompactValue({ value, type, quality }: TagCompactOpti
 
 	return (
 		<>
-			{<TagQualityEl quality={quality} />}&ensp;
-			<span style={{ color: token.colorBorder }}>|</span>
-			&ensp;
+			{quality !== null && (
+				<>
+					{<TagQualityEl quality={quality} />}&ensp;
+					<span style={{ color: token.colorBorder }}>|</span>
+					&ensp;
+				</>
+			)}
 			<span style={{ color: color }}>{v}</span>
 		</>
 	)

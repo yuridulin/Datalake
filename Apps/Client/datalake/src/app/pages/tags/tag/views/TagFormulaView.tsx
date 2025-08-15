@@ -2,8 +2,7 @@ import api from '@/api/swagger-api'
 import { TagInputInfo, ValueRecord } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
-import TagCompactValue from '@/app/components/TagCompactValue'
-import TagValueText from '@/app/components/TagValue'
+import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Table } from 'antd'
@@ -60,7 +59,7 @@ const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
 					let valueContent = <>?</>
 
 					if (valueInfo) {
-						valueContent = <TagValueText type={input.type} value={valueInfo.value} />
+						valueContent = <TagCompactValue type={input.type} value={valueInfo.value} quality={null} />
 					}
 
 					return valueContent

@@ -1,5 +1,5 @@
 import api from '@/api/swagger-api'
-import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
+import AccessTypeEl from '@/app/components/AccessTypeEl'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import TabsView from '@/app/components/tabsView/TabsView'

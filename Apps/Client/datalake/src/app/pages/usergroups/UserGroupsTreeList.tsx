@@ -1,5 +1,5 @@
 import api from '@/api/swagger-api'
-import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
+import AccessTypeEl from '@/app/components/AccessTypeEl'
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
 import { user } from '@/state/user'
 import { Button, Table } from 'antd'

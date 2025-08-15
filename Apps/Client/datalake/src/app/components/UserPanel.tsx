@@ -1,4 +1,4 @@
-import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
+import AccessTypeEl from '@/app/components/AccessTypeEl'
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'

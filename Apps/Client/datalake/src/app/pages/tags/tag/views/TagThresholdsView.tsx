@@ -1,7 +1,7 @@
 import api from '@/api/swagger-api'
 import { TagFullInfo, TagQuality, TagThresholdInfo, TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
-import TagCompactValue from '@/app/components/TagCompactValue'
+import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { DollarCircleOutlined } from '@ant-design/icons'

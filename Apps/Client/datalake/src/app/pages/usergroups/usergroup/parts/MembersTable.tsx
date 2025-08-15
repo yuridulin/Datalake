@@ -1,4 +1,4 @@
-import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
+import AccessTypeEl from '@/app/components/AccessTypeEl'
 import UserButton from '@/app/components/buttons/UserButton'
 import { Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'

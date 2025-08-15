@@ -6,7 +6,6 @@ import UserView from '@/app/pages/users/user/UserView'
 import TagsWriter from '@/app/pages/values/TagsWriter'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AppLayout from '../AppLayout'
-import ErrorBoundary from '../components/ErrorBoundary'
 import SettingsPage from '../pages/admin/SettingsPage'
 import BlockAccessForm from '../pages/blocks/block/access/BlockAccessForm'
 import BlockForm from '../pages/blocks/block/BlockForm'
@@ -215,7 +214,6 @@ const router = createBrowserRouter([
 				],
 			},
 		],
-		errorElement: <ErrorBoundary />,
 	},
 	{
 		path: '/offline',

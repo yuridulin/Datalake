@@ -1,6 +1,6 @@
 import { TagQuality } from '@/api/swagger/data-contracts'
-import TagCompactValue from '@/app/components/TagCompactValue'
 import { ExcelExportModeHandles, getQualityStyle } from '@/app/components/values/functions/exportExcel'
+import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
 import { TransformedData } from '@/app/pages/values/types/TransformedData'
 import compareValues from '@/functions/compareValues'

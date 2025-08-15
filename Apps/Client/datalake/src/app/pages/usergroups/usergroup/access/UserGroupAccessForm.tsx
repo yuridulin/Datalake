@@ -1,5 +1,5 @@
 import api from '@/api/swagger-api'
-import AccessTypeEl from '@/app/components/atomic/AccessTypeEl'
+import AccessTypeEl from '@/app/components/AccessTypeEl'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Select, Spin, Table } from 'antd'
