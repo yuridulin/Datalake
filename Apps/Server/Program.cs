@@ -68,6 +68,7 @@ namespace Datalake.Server
 
 			// заполняем все указанные в ней переменные окружения реальными значениями
 			connectionString = FillEnvVariables(connectionString);
+			Log.Information("ConnectionString: " + connectionString);
 
 			// логи
 			Directory.CreateDirectory(Path.Combine(storage, "logs"));
