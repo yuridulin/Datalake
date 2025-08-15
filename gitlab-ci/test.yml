@@ -12,10 +12,7 @@ build-server-test:
     - echo "Тег = $CI_COMMIT_TAG"
     - echo "Версия = ${CI_COMMIT_TAG#test.}"
   script:
-    - docker build \
-        --build-arg APP_VERSION="${CI_COMMIT_TAG#test.}" \
-        -t datalake:latest-test \
-        -f ./Apps/Server/Dockerfile .
+    - docker build --build-arg APP_VERSION="${CI_COMMIT_TAG#test.}" -t datalake:latest-test -f ./Apps/Server/Dockerfile .
     - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:latest-test
 
   only:
