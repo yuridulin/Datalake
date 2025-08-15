@@ -63,13 +63,6 @@ namespace Datalake.Server
 					optional: true,
 					reloadOnChange: true);
 
-			// получаем строку подключения
-			var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
-
-			// заполняем все указанные в ней переменные окружения реальными значениями
-			connectionString = FillEnvVariables(connectionString);
-			Log.Information("ConnectionString: " + connectionString);
-
 			// логи
 			Directory.CreateDirectory(Path.Combine(storage, "logs"));
 
@@ -108,7 +101,14 @@ namespace Datalake.Server
 			// костыль, без которого LinqToDB не хочет работать с JSONB. Я не нашел, как передать эту настройку иначе
 			#pragma warning disable CS0618
 			NpgsqlConnection.GlobalTypeMapper.EnableDynamicJson();
-			#pragma warning restore CS0618
+#pragma warning restore CS0618
+
+			// получаем строку подключения
+			var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
+
+			// заполняем все указанные в ней переменные окружения реальными значениями
+			connectionString = FillEnvVariables(connectionString);
+			Log.Information("ConnectionString: " + connectionString);
 
 			// БД
 			builder.Services
