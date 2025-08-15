@@ -35,8 +35,8 @@ namespace Datalake.Server
 		internal static string CurrentEnvironment { get; set; } = string.Empty;
 		internal static string Version { get; set; } =
 			Environment.GetEnvironmentVariable("APP_VERSION") 
-      ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
-			?? "";
+				?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
+				?? "";
 
 		/// <summary>
 		/// Старт Datalake Server

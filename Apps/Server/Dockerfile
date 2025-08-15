@@ -59,6 +59,8 @@ RUN dotnet publish "Server.csproj" \
 # --- 5. Финальный образ ---
 FROM base AS final
 WORKDIR /app
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}
 
 # Копируем всё из publish
 COPY --from=publish /app/publish .
