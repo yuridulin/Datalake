@@ -25,7 +25,7 @@ public class CollectorWriter : BackgroundService
 		_logger = logger;
 
 		// Gauge читает текущее число «висящих» в очереди элементов
-		_queueLengthGauge = s_meter.CreateObservableGauge<long>(
+		_queueLengthGauge = s_meter.CreateObservableGauge(
 			"queue_length",
 			() => new Measurement<long>(Interlocked.Read(ref _queuedItems)));
 	}
@@ -96,7 +96,7 @@ public class CollectorWriter : BackgroundService
 		foreach (var value in values)
 		{
 			var exist = _currentValuesStore.Get(value.Id!.Value);
-			var status = (exist!.Number != value.Value as float?)
+			var status = (exist!.Number != (value.Value as float?))
 				? " (новое!)"
 				: " (старое)";
 

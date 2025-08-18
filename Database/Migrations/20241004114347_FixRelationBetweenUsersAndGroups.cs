@@ -2,107 +2,106 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class FixRelationBetweenUsersAndGroups : Migration
 {
 	/// <inheritdoc />
-	public partial class FixRelationBetweenUsersAndGroups : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.DropForeignKey(
-					name: "FK_UserGroupRelation_UserGroups_UserGuid",
-					schema: "public",
-					table: "UserGroupRelation");
+		migrationBuilder.DropForeignKey(
+				name: "FK_UserGroupRelation_UserGroups_UserGuid",
+				schema: "public",
+				table: "UserGroupRelation");
 
-			migrationBuilder.DropForeignKey(
-					name: "FK_UserGroupRelation_Users_UserGroupGuid",
-					schema: "public",
-					table: "UserGroupRelation");
+		migrationBuilder.DropForeignKey(
+				name: "FK_UserGroupRelation_Users_UserGroupGuid",
+				schema: "public",
+				table: "UserGroupRelation");
 
-			migrationBuilder.RenameColumn(
-				name: "UserGroupGuid",
+		migrationBuilder.RenameColumn(
+			name: "UserGroupGuid",
+			table: "UserGroupRelation",
+			newName: "UserGuidTemp");
+
+		migrationBuilder.RenameColumn(
+			name: "UserGuid",
+			table: "UserGroupRelation",
+			newName: "UserGroupGuid");
+
+		migrationBuilder.RenameColumn(
+			name: "UserGuidTemp",
+			table: "UserGroupRelation",
+			newName: "UserGuid");
+
+		migrationBuilder.AddForeignKey(
+				name: "FK_UserGroupRelation_UserGroups_UserGroupGuid",
+				schema: "public",
 				table: "UserGroupRelation",
-				newName: "UserGuidTemp");
+				column: "UserGroupGuid",
+				principalSchema: "public",
+				principalTable: "UserGroups",
+				principalColumn: "Guid",
+				onDelete: ReferentialAction.Cascade);
 
-			migrationBuilder.RenameColumn(
-				name: "UserGuid",
+		migrationBuilder.AddForeignKey(
+				name: "FK_UserGroupRelation_Users_UserGuid",
+				schema: "public",
 				table: "UserGroupRelation",
-				newName: "UserGroupGuid");
+				column: "UserGuid",
+				principalSchema: "public",
+				principalTable: "Users",
+				principalColumn: "Guid",
+				onDelete: ReferentialAction.Cascade);
+	}
 
-			migrationBuilder.RenameColumn(
-				name: "UserGuidTemp",
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
+		migrationBuilder.DropForeignKey(
+				name: "FK_UserGroupRelation_UserGroups_UserGroupGuid",
+				schema: "public",
+				table: "UserGroupRelation");
+
+		migrationBuilder.DropForeignKey(
+				name: "FK_UserGroupRelation_Users_UserGuid",
+				schema: "public",
+				table: "UserGroupRelation");
+
+		migrationBuilder.RenameColumn(
+			name: "UserGroupGuid",
+			table: "UserGroupRelation",
+			newName: "UserGuidTemp");
+
+		migrationBuilder.RenameColumn(
+			name: "UserGuid",
+			table: "UserGroupRelation",
+			newName: "UserGroupGuid");
+
+		migrationBuilder.RenameColumn(
+			name: "UserGuidTemp",
+			table: "UserGroupRelation",
+			newName: "UserGuid");
+
+		migrationBuilder.AddForeignKey(
+				name: "FK_UserGroupRelation_UserGroups_UserGuid",
+				schema: "public",
 				table: "UserGroupRelation",
-				newName: "UserGuid");
+				column: "UserGuid",
+				principalSchema: "public",
+				principalTable: "UserGroups",
+				principalColumn: "Guid",
+				onDelete: ReferentialAction.Cascade);
 
-			migrationBuilder.AddForeignKey(
-					name: "FK_UserGroupRelation_UserGroups_UserGroupGuid",
-					schema: "public",
-					table: "UserGroupRelation",
-					column: "UserGroupGuid",
-					principalSchema: "public",
-					principalTable: "UserGroups",
-					principalColumn: "Guid",
-					onDelete: ReferentialAction.Cascade);
-
-			migrationBuilder.AddForeignKey(
-					name: "FK_UserGroupRelation_Users_UserGuid",
-					schema: "public",
-					table: "UserGroupRelation",
-					column: "UserGuid",
-					principalSchema: "public",
-					principalTable: "Users",
-					principalColumn: "Guid",
-					onDelete: ReferentialAction.Cascade);
-		}
-
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.DropForeignKey(
-					name: "FK_UserGroupRelation_UserGroups_UserGroupGuid",
-					schema: "public",
-					table: "UserGroupRelation");
-
-			migrationBuilder.DropForeignKey(
-					name: "FK_UserGroupRelation_Users_UserGuid",
-					schema: "public",
-					table: "UserGroupRelation");
-
-			migrationBuilder.RenameColumn(
-				name: "UserGroupGuid",
+		migrationBuilder.AddForeignKey(
+				name: "FK_UserGroupRelation_Users_UserGroupGuid",
+				schema: "public",
 				table: "UserGroupRelation",
-				newName: "UserGuidTemp");
-
-			migrationBuilder.RenameColumn(
-				name: "UserGuid",
-				table: "UserGroupRelation",
-				newName: "UserGroupGuid");
-
-			migrationBuilder.RenameColumn(
-				name: "UserGuidTemp",
-				table: "UserGroupRelation",
-				newName: "UserGuid");
-
-			migrationBuilder.AddForeignKey(
-					name: "FK_UserGroupRelation_UserGroups_UserGuid",
-					schema: "public",
-					table: "UserGroupRelation",
-					column: "UserGuid",
-					principalSchema: "public",
-					principalTable: "UserGroups",
-					principalColumn: "Guid",
-					onDelete: ReferentialAction.Cascade);
-
-			migrationBuilder.AddForeignKey(
-					name: "FK_UserGroupRelation_Users_UserGroupGuid",
-					schema: "public",
-					table: "UserGroupRelation",
-					column: "UserGroupGuid",
-					principalSchema: "public",
-					principalTable: "Users",
-					principalColumn: "Guid",
-					onDelete: ReferentialAction.Cascade);
-		}
+				column: "UserGroupGuid",
+				principalSchema: "public",
+				principalTable: "Users",
+				principalColumn: "Guid",
+				onDelete: ReferentialAction.Cascade);
 	}
 }

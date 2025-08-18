@@ -519,7 +519,7 @@ public class ValuesRepository(
 		var historyBetween =
 			from raw in source
 			where
-				raw.Date >  periodStart &&
+				raw.Date > periodStart &&
 				raw.Date <= periodEnd
 			select new
 			{

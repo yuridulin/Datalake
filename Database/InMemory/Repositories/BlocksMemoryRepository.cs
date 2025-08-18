@@ -11,7 +11,6 @@ using Datalake.PublicApi.Models.Blocks;
 using LinqToDB;
 using LinqToDB.Data;
 using System.Collections.Immutable;
-using System.Text;
 
 namespace Datalake.Database.InMemory.Repositories;
 
@@ -101,12 +100,14 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 
 		BlockTreeInfo[] ReadChildren(int? parentId, string prefix) => blocks
 			.Where(x => x.ParentId == parentId)
-			.Select(x => new {
+			.Select(x => new
+			{
 				Node = x,
 				Children = ReadChildren(x.Id, AppendPrefix(prefix, x.Name))
 			})
 			.Where(p => p.Node.AccessRule.HasAccess(AccessType.Viewer) || p.Children.Length > 0)
-			.Select(p => {
+			.Select(p =>
+			{
 				var hasViewer = p.Node.AccessRule.HasAccess(AccessType.Viewer);
 				return new BlockTreeInfo
 				{

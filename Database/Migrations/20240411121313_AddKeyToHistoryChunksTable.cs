@@ -2,26 +2,25 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class AddKeyToHistoryChunksTable : Migration
 {
 	/// <inheritdoc />
-	public partial class AddKeyToHistoryChunksTable : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.AddPrimaryKey(
-					name: "PK_TagHistoryChunks",
-					table: "TagHistoryChunks",
-					column: "Date");
-		}
+		migrationBuilder.AddPrimaryKey(
+				name: "PK_TagHistoryChunks",
+				table: "TagHistoryChunks",
+				column: "Date");
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.DropPrimaryKey(
-					name: "PK_TagHistoryChunks",
-					table: "TagHistoryChunks");
-		}
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
+		migrationBuilder.DropPrimaryKey(
+				name: "PK_TagHistoryChunks",
+				table: "TagHistoryChunks");
 	}
 }

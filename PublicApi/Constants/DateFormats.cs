@@ -45,10 +45,10 @@ public static class DateFormats
 	{
 		if (timeSpan == TimeSpan.Zero)
 			return "меньше 1 мс";
-		
+
 		if (timeSpan.TotalSeconds < 1)
 			return $"{timeSpan.Milliseconds} мс";
-		
+
 		if (timeSpan.TotalMinutes < 1)
 			return $"{timeSpan.Seconds} с {timeSpan.Milliseconds} мс";
 

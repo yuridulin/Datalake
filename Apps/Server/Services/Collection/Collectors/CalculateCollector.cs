@@ -186,7 +186,7 @@ internal class CalculateCollector(
 	/// Таблицы пороговых значений
 	/// </summary>
 	private (SourceTagInfo tag, int inputTagId, (float inValue, float outValue)[] thresholds)[] _thresholds = source.Tags
-		.Where(tag => 
+		.Where(tag =>
 			tag.Type == TagType.Number &&
 			tag.Calculation == TagCalculation.Thresholds &&
 			tag.ThresholdSourceTag != null &&

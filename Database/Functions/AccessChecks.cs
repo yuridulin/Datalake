@@ -136,7 +136,7 @@ public static class AccessChecks
 	{
 		if (!HasGlobalAccess(user, minimalAccess, false))
 			throw Errors.NoAccessUser(user.Guid);
-		
+
 		if (user.UnderlyingUser != null)
 		{
 			if (!HasGlobalAccess(user.UnderlyingUser, minimalAccess, false))

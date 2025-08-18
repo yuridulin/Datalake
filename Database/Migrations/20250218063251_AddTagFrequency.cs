@@ -2,23 +2,23 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class AddTagFrequency : Migration
 {
 	/// <inheritdoc />
-	public partial class AddTagFrequency : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.AddColumn<int>(
-					name: "Frequency",
-					schema: "public",
-					table: "Tags",
-					type: "integer",
-					nullable: false,
-					defaultValue: 0);
+		migrationBuilder.AddColumn<int>(
+				name: "Frequency",
+				schema: "public",
+				table: "Tags",
+				type: "integer",
+				nullable: false,
+				defaultValue: 0);
 
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 				UPDATE ""public"".""Tags""
 				SET ""Frequency"" = CASE
 					WHEN ""Interval"" =  0    THEN 0 -- NotSet
@@ -27,24 +27,24 @@ namespace Datalake.Database.Migrations
 					ELSE                           3 -- ByDay
 				END");
 
-			migrationBuilder.DropColumn(
-					name: "Interval",
-					schema: "public",
-					table: "Tags");
-		}
+		migrationBuilder.DropColumn(
+				name: "Interval",
+				schema: "public",
+				table: "Tags");
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.AddColumn<short>(
-					name: "Interval",
-					schema: "public",
-					table: "Tags",
-					type: "smallint",
-					nullable: false,
-					defaultValue: (short)0);
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
+		migrationBuilder.AddColumn<short>(
+				name: "Interval",
+				schema: "public",
+				table: "Tags",
+				type: "smallint",
+				nullable: false,
+				defaultValue: (short)0);
 
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 				UPDATE ""public"".""Tags""
 				SET ""Interval"" = CASE ""Frequency""
 					WHEN 0 THEN 0     -- NotSet
@@ -54,10 +54,9 @@ namespace Datalake.Database.Migrations
 					ELSE 0
 				END");
 
-			migrationBuilder.DropColumn(
-					name: "Frequency",
-					schema: "public",
-					table: "Tags");
-		}
+		migrationBuilder.DropColumn(
+				name: "Frequency",
+				schema: "public",
+				table: "Tags");
 	}
 }

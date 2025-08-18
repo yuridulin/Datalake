@@ -2,29 +2,28 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class RenameFrequencyToResolution : Migration
 {
 	/// <inheritdoc />
-	public partial class RenameFrequencyToResolution : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.RenameColumn(
-					name: "Frequency",
-					schema: "public",
-					table: "Tags",
-					newName: "Resolution");
-		}
+		migrationBuilder.RenameColumn(
+				name: "Frequency",
+				schema: "public",
+				table: "Tags",
+				newName: "Resolution");
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.RenameColumn(
-					name: "Resolution",
-					schema: "public",
-					table: "Tags",
-					newName: "Frequency");
-		}
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
+		migrationBuilder.RenameColumn(
+				name: "Resolution",
+				schema: "public",
+				table: "Tags",
+				newName: "Frequency");
 	}
 }

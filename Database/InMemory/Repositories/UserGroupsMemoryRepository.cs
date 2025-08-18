@@ -10,7 +10,6 @@ using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.UserGroups;
 using LinqToDB;
 using LinqToDB.Data;
-using System.Collections.Immutable;
 
 namespace Datalake.Database.InMemory.Repositories;
 

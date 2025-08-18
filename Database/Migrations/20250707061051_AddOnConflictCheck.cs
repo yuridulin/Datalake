@@ -2,15 +2,15 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class AddOnConflictCheck : Migration
 {
 	/// <inheritdoc />
-	public partial class AddOnConflictCheck : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 					DELETE FROM ""TagsHistory"" th
 					USING (
 							SELECT MIN(ctid) AS keep_ctid, ""TagId"", ""Date""
@@ -23,19 +23,19 @@ namespace Datalake.Database.Migrations
 						AND th.ctid <> dup.keep_ctid;
 					");
 
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 					-- Удаляем существующий неуникальный индекс
 					DROP INDEX IF EXISTS ""TagsHistory_TagId_Date_idx"";
 
 					-- Создаём уникальный индекс с нужным порядком сортировки
 					CREATE UNIQUE INDEX ""TagsHistory_TagId_Date_idx""
 					ON ""TagsHistory"" (""TagId"" ASC, ""Date"" DESC);");
-		}
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.Sql(@"
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
+		migrationBuilder.Sql(@"
 					-- Удаляем существующий уникальный индекс
 					DROP INDEX IF EXISTS ""TagsHistory_TagId_Date_idx"";
 
@@ -43,10 +43,9 @@ namespace Datalake.Database.Migrations
 					CREATE INDEX ""TagsHistory_TagId_Date_idx""
 					ON ""TagsHistory"" (""TagId"" ASC, ""Date"" DESC);");
 
-			migrationBuilder.DropIndex(
-					name: "TagsHistory_TagId_Date_idx",
-					schema: "public",
-					table: "TagsHistory");
-		}
+		migrationBuilder.DropIndex(
+				name: "TagsHistory_TagId_Date_idx",
+				schema: "public",
+				table: "TagsHistory");
 	}
 }

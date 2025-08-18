@@ -67,7 +67,7 @@ internal abstract class CollectorBase : ICollector
 				await WriteAsync([], false);
 				break; // Выход при отмене
 			}
-			catch (Exception ex) when(ex is not OperationCanceledException)
+			catch (Exception ex) when (ex is not OperationCanceledException)
 			{
 				_logger.LogDebug("Сборщик {name}: {err}", _name, ex.Message);
 				await WriteAsync([], false);

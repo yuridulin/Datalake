@@ -2,15 +2,15 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class ZipAccessRights : Migration
 {
 	/// <inheritdoc />
-	public partial class ZipAccessRights : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 				UPDATE ""UserGroupRelation"" SET
 					""AccessType"" = CASE ""AccessType""
 						WHEN -100 THEN 0
@@ -22,7 +22,7 @@ namespace Datalake.Database.Migrations
 						ELSE 0 
 					END;");
 
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 				UPDATE ""AccessRights"" SET
 					""AccessType"" = CASE ""AccessType""
 						WHEN -100 THEN 0
@@ -34,48 +34,48 @@ namespace Datalake.Database.Migrations
 						ELSE 0 
 					END;");
 
-			migrationBuilder.AlterColumn<byte>(
-					name: "AccessType",
-					schema: "public",
-					table: "UserGroupRelation",
-					type: "smallint",
-					nullable: false,
-					oldClrType: typeof(int),
-					oldType: "integer");
+		migrationBuilder.AlterColumn<byte>(
+				name: "AccessType",
+				schema: "public",
+				table: "UserGroupRelation",
+				type: "smallint",
+				nullable: false,
+				oldClrType: typeof(int),
+				oldType: "integer");
 
-			migrationBuilder.AlterColumn<byte>(
-					name: "AccessType",
-					schema: "public",
-					table: "AccessRights",
-					type: "smallint",
-					nullable: false,
-					oldClrType: typeof(int),
-					oldType: "integer");
-		}
+		migrationBuilder.AlterColumn<byte>(
+				name: "AccessType",
+				schema: "public",
+				table: "AccessRights",
+				type: "smallint",
+				nullable: false,
+				oldClrType: typeof(int),
+				oldType: "integer");
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.AlterColumn<int>(
-					name: "AccessType",
-					schema: "public",
-					table: "UserGroupRelation",
-					type: "integer",
-					nullable: false,
-					oldClrType: typeof(byte),
-					oldType: "smallint");
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
+		migrationBuilder.AlterColumn<int>(
+				name: "AccessType",
+				schema: "public",
+				table: "UserGroupRelation",
+				type: "integer",
+				nullable: false,
+				oldClrType: typeof(byte),
+				oldType: "smallint");
 
-			migrationBuilder.AlterColumn<int>(
-					name: "AccessType",
-					schema: "public",
-					table: "AccessRights",
-					type: "integer",
-					nullable: false,
-					oldClrType: typeof(byte),
-					oldType: "smallint");
+		migrationBuilder.AlterColumn<int>(
+				name: "AccessType",
+				schema: "public",
+				table: "AccessRights",
+				type: "integer",
+				nullable: false,
+				oldClrType: typeof(byte),
+				oldType: "smallint");
 
 
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 				UPDATE ""UserGroupRelation"" SET
 					""AccessType"" = CASE ""AccessType""
 						WHEN 0 THEN -100
@@ -87,7 +87,7 @@ namespace Datalake.Database.Migrations
 						ELSE 0 
 					END;");
 
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 				UPDATE ""AccessRights"" SET
 					""AccessType"" = CASE ""AccessType""
 						WHEN 0 THEN -100
@@ -98,6 +98,5 @@ namespace Datalake.Database.Migrations
 						WHEN 5 THEN 100
 						ELSE 0 
 					END;");
-		}
 	}
 }

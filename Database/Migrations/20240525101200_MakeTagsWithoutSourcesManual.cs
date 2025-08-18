@@ -3,20 +3,19 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class MakeTagsWithoutSourcesManual : Migration
 {
 	/// <inheritdoc />
-	public partial class MakeTagsWithoutSourcesManual : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.Sql($@"UPDATE ""Tags"" SET ""SourceId"" = {(int)SourceType.Manual} WHERE ""SourceId"" NOT IN (SELECT DISTINCT ""Id"" FROM ""Sources"");");
-		}
+		migrationBuilder.Sql($@"UPDATE ""Tags"" SET ""SourceId"" = {(int)SourceType.Manual} WHERE ""SourceId"" NOT IN (SELECT DISTINCT ""Id"" FROM ""Sources"");");
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-		}
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
 	}
 }

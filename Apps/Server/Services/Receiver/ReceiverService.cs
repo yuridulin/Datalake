@@ -147,7 +147,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 
 			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":83/api/tags/live", request);
 			var content = await answer.Content.ReadAsStringAsync();
-			historyResponses = JsonConvert.DeserializeObject<HistoryResponse[]> (content);
+			historyResponses = JsonConvert.DeserializeObject<HistoryResponse[]>(content);
 		}
 		catch { }
 

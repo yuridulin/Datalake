@@ -198,7 +198,7 @@ public static class AccessFunctions
 						globalRule = groupRule;
 					}
 				}
-				
+
 				// Получаем прямые правила пользователя
 				directUserGroupRules.TryGetValue(userGuid, out var userDirectGroupRules);
 

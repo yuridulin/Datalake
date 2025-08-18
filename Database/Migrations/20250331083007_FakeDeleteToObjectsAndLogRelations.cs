@@ -2,220 +2,220 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class FakeDeleteToObjectsAndLogRelations : Migration
 {
 	/// <inheritdoc />
-	public partial class FakeDeleteToObjectsAndLogRelations : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.DropForeignKey(
-					name: "FK_Logs_Users_UserGuid",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropForeignKey(
+				name: "FK_Logs_Users_UserGuid",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.RenameColumn(
-					name: "UserGuid",
-					schema: "public",
-					table: "Logs",
-					newName: "AuthorGuid");
+		migrationBuilder.RenameColumn(
+				name: "UserGuid",
+				schema: "public",
+				table: "Logs",
+				newName: "AuthorGuid");
 
-			migrationBuilder.RenameIndex(
-					name: "IX_Logs_UserGuid",
-					schema: "public",
-					table: "Logs",
-					newName: "IX_Logs_AuthorGuid");
+		migrationBuilder.RenameIndex(
+				name: "IX_Logs_UserGuid",
+				schema: "public",
+				table: "Logs",
+				newName: "IX_Logs_AuthorGuid");
 
-			migrationBuilder.AddColumn<bool>(
-					name: "IsDeleted",
-					schema: "public",
-					table: "Users",
-					type: "boolean",
-					nullable: false,
-					defaultValue: false);
+		migrationBuilder.AddColumn<bool>(
+				name: "IsDeleted",
+				schema: "public",
+				table: "Users",
+				type: "boolean",
+				nullable: false,
+				defaultValue: false);
 
-			migrationBuilder.AddColumn<bool>(
-					name: "IsDeleted",
-					schema: "public",
-					table: "UserGroups",
-					type: "boolean",
-					nullable: false,
-					defaultValue: false);
+		migrationBuilder.AddColumn<bool>(
+				name: "IsDeleted",
+				schema: "public",
+				table: "UserGroups",
+				type: "boolean",
+				nullable: false,
+				defaultValue: false);
 
-			migrationBuilder.AddColumn<bool>(
-					name: "IsDeleted",
-					schema: "public",
-					table: "Tags",
-					type: "boolean",
-					nullable: false,
-					defaultValue: false);
+		migrationBuilder.AddColumn<bool>(
+				name: "IsDeleted",
+				schema: "public",
+				table: "Tags",
+				type: "boolean",
+				nullable: false,
+				defaultValue: false);
 
-			migrationBuilder.AddColumn<bool>(
-					name: "IsDeleted",
-					schema: "public",
-					table: "Sources",
-					type: "boolean",
-					nullable: false,
-					defaultValue: false);
+		migrationBuilder.AddColumn<bool>(
+				name: "IsDeleted",
+				schema: "public",
+				table: "Sources",
+				type: "boolean",
+				nullable: false,
+				defaultValue: false);
 
-			migrationBuilder.AddColumn<int>(
-					name: "AffectedAccessRightsId",
-					schema: "public",
-					table: "Logs",
-					type: "integer",
-					nullable: true);
+		migrationBuilder.AddColumn<int>(
+				name: "AffectedAccessRightsId",
+				schema: "public",
+				table: "Logs",
+				type: "integer",
+				nullable: true);
 
-			migrationBuilder.AddColumn<int>(
-					name: "AffectedBlockId",
-					schema: "public",
-					table: "Logs",
-					type: "integer",
-					nullable: true);
+		migrationBuilder.AddColumn<int>(
+				name: "AffectedBlockId",
+				schema: "public",
+				table: "Logs",
+				type: "integer",
+				nullable: true);
 
-			migrationBuilder.AddColumn<int>(
-					name: "AffectedSourceId",
-					schema: "public",
-					table: "Logs",
-					type: "integer",
-					nullable: true);
+		migrationBuilder.AddColumn<int>(
+				name: "AffectedSourceId",
+				schema: "public",
+				table: "Logs",
+				type: "integer",
+				nullable: true);
 
-			migrationBuilder.AddColumn<int>(
-					name: "AffectedTagId",
-					schema: "public",
-					table: "Logs",
-					type: "integer",
-					nullable: true);
+		migrationBuilder.AddColumn<int>(
+				name: "AffectedTagId",
+				schema: "public",
+				table: "Logs",
+				type: "integer",
+				nullable: true);
 
-			migrationBuilder.AddColumn<Guid>(
-					name: "AffectedUserGroupGuid",
-					schema: "public",
-					table: "Logs",
-					type: "uuid",
-					nullable: true);
+		migrationBuilder.AddColumn<Guid>(
+				name: "AffectedUserGroupGuid",
+				schema: "public",
+				table: "Logs",
+				type: "uuid",
+				nullable: true);
 
-			migrationBuilder.AddColumn<Guid>(
-					name: "AffectedUserGuid",
-					schema: "public",
-					table: "Logs",
-					type: "uuid",
-					nullable: true);
+		migrationBuilder.AddColumn<Guid>(
+				name: "AffectedUserGuid",
+				schema: "public",
+				table: "Logs",
+				type: "uuid",
+				nullable: true);
 
-			migrationBuilder.AddColumn<bool>(
-					name: "IsDeleted",
-					schema: "public",
-					table: "Blocks",
-					type: "boolean",
-					nullable: false,
-					defaultValue: false);
+		migrationBuilder.AddColumn<bool>(
+				name: "IsDeleted",
+				schema: "public",
+				table: "Blocks",
+				type: "boolean",
+				nullable: false,
+				defaultValue: false);
 
-			migrationBuilder.CreateIndex(
-					name: "IX_Logs_AffectedAccessRightsId",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedAccessRightsId");
+		migrationBuilder.CreateIndex(
+				name: "IX_Logs_AffectedAccessRightsId",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedAccessRightsId");
 
-			migrationBuilder.CreateIndex(
-					name: "IX_Logs_AffectedBlockId",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedBlockId");
+		migrationBuilder.CreateIndex(
+				name: "IX_Logs_AffectedBlockId",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedBlockId");
 
-			migrationBuilder.CreateIndex(
-					name: "IX_Logs_AffectedSourceId",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedSourceId");
+		migrationBuilder.CreateIndex(
+				name: "IX_Logs_AffectedSourceId",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedSourceId");
 
-			migrationBuilder.CreateIndex(
-					name: "IX_Logs_AffectedTagId",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedTagId");
+		migrationBuilder.CreateIndex(
+				name: "IX_Logs_AffectedTagId",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedTagId");
 
-			migrationBuilder.CreateIndex(
-					name: "IX_Logs_AffectedUserGroupGuid",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedUserGroupGuid");
+		migrationBuilder.CreateIndex(
+				name: "IX_Logs_AffectedUserGroupGuid",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedUserGroupGuid");
 
-			migrationBuilder.CreateIndex(
-					name: "IX_Logs_AffectedUserGuid",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedUserGuid");
+		migrationBuilder.CreateIndex(
+				name: "IX_Logs_AffectedUserGuid",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedUserGuid");
 
-			migrationBuilder.AddForeignKey(
-					name: "FK_Logs_AccessRights_AffectedAccessRightsId",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedAccessRightsId",
-					principalSchema: "public",
-					principalTable: "AccessRights",
-					principalColumn: "Id",
-					onDelete: ReferentialAction.SetNull);
+		migrationBuilder.AddForeignKey(
+				name: "FK_Logs_AccessRights_AffectedAccessRightsId",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedAccessRightsId",
+				principalSchema: "public",
+				principalTable: "AccessRights",
+				principalColumn: "Id",
+				onDelete: ReferentialAction.SetNull);
 
-			migrationBuilder.AddForeignKey(
-					name: "FK_Logs_Blocks_AffectedBlockId",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedBlockId",
-					principalSchema: "public",
-					principalTable: "Blocks",
-					principalColumn: "Id",
-					onDelete: ReferentialAction.SetNull);
+		migrationBuilder.AddForeignKey(
+				name: "FK_Logs_Blocks_AffectedBlockId",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedBlockId",
+				principalSchema: "public",
+				principalTable: "Blocks",
+				principalColumn: "Id",
+				onDelete: ReferentialAction.SetNull);
 
-			migrationBuilder.AddForeignKey(
-					name: "FK_Logs_Sources_AffectedSourceId",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedSourceId",
-					principalSchema: "public",
-					principalTable: "Sources",
-					principalColumn: "Id",
-					onDelete: ReferentialAction.SetNull);
+		migrationBuilder.AddForeignKey(
+				name: "FK_Logs_Sources_AffectedSourceId",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedSourceId",
+				principalSchema: "public",
+				principalTable: "Sources",
+				principalColumn: "Id",
+				onDelete: ReferentialAction.SetNull);
 
-			migrationBuilder.AddForeignKey(
-					name: "FK_Logs_Tags_AffectedTagId",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedTagId",
-					principalSchema: "public",
-					principalTable: "Tags",
-					principalColumn: "Id",
-					onDelete: ReferentialAction.SetNull);
+		migrationBuilder.AddForeignKey(
+				name: "FK_Logs_Tags_AffectedTagId",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedTagId",
+				principalSchema: "public",
+				principalTable: "Tags",
+				principalColumn: "Id",
+				onDelete: ReferentialAction.SetNull);
 
-			migrationBuilder.AddForeignKey(
-					name: "FK_Logs_UserGroups_AffectedUserGroupGuid",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedUserGroupGuid",
-					principalSchema: "public",
-					principalTable: "UserGroups",
-					principalColumn: "Guid",
-					onDelete: ReferentialAction.SetNull);
+		migrationBuilder.AddForeignKey(
+				name: "FK_Logs_UserGroups_AffectedUserGroupGuid",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedUserGroupGuid",
+				principalSchema: "public",
+				principalTable: "UserGroups",
+				principalColumn: "Guid",
+				onDelete: ReferentialAction.SetNull);
 
-			migrationBuilder.AddForeignKey(
-					name: "FK_Logs_Users_AffectedUserGuid",
-					schema: "public",
-					table: "Logs",
-					column: "AffectedUserGuid",
-					principalSchema: "public",
-					principalTable: "Users",
-					principalColumn: "Guid",
-					onDelete: ReferentialAction.SetNull);
+		migrationBuilder.AddForeignKey(
+				name: "FK_Logs_Users_AffectedUserGuid",
+				schema: "public",
+				table: "Logs",
+				column: "AffectedUserGuid",
+				principalSchema: "public",
+				principalTable: "Users",
+				principalColumn: "Guid",
+				onDelete: ReferentialAction.SetNull);
 
-			migrationBuilder.AddForeignKey(
-					name: "FK_Logs_Users_AuthorGuid",
-					schema: "public",
-					table: "Logs",
-					column: "AuthorGuid",
-					principalSchema: "public",
-					principalTable: "Users",
-					principalColumn: "Guid",
-					onDelete: ReferentialAction.SetNull);
+		migrationBuilder.AddForeignKey(
+				name: "FK_Logs_Users_AuthorGuid",
+				schema: "public",
+				table: "Logs",
+				column: "AuthorGuid",
+				principalSchema: "public",
+				principalTable: "Users",
+				principalColumn: "Guid",
+				onDelete: ReferentialAction.SetNull);
 
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 					-- Для категории Source (50) -> AffectedSourceId
 					UPDATE ""Logs""
 					SET ""AffectedSourceId"" = NULLIF(""RefId""::INT, NULL)
@@ -265,152 +265,151 @@ namespace Datalake.Database.Migrations
 							AND ""AffectedUserGroupGuid"" IS NULL
 							AND ""RefId"" ~ '^[0-9a-fA-F-]{36}$'
 							AND EXISTS (SELECT 1 FROM ""UserGroups"" WHERE ""Guid"" = ""RefId""::UUID);");
-		}
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.DropForeignKey(
-					name: "FK_Logs_AccessRights_AffectedAccessRightsId",
-					schema: "public",
-					table: "Logs");
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
+		migrationBuilder.DropForeignKey(
+				name: "FK_Logs_AccessRights_AffectedAccessRightsId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropForeignKey(
-					name: "FK_Logs_Blocks_AffectedBlockId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropForeignKey(
+				name: "FK_Logs_Blocks_AffectedBlockId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropForeignKey(
-					name: "FK_Logs_Sources_AffectedSourceId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropForeignKey(
+				name: "FK_Logs_Sources_AffectedSourceId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropForeignKey(
-					name: "FK_Logs_Tags_AffectedTagId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropForeignKey(
+				name: "FK_Logs_Tags_AffectedTagId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropForeignKey(
-					name: "FK_Logs_UserGroups_AffectedUserGroupGuid",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropForeignKey(
+				name: "FK_Logs_UserGroups_AffectedUserGroupGuid",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropForeignKey(
-					name: "FK_Logs_Users_AffectedUserGuid",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropForeignKey(
+				name: "FK_Logs_Users_AffectedUserGuid",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropForeignKey(
-					name: "FK_Logs_Users_AuthorGuid",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropForeignKey(
+				name: "FK_Logs_Users_AuthorGuid",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropIndex(
-					name: "IX_Logs_AffectedAccessRightsId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropIndex(
+				name: "IX_Logs_AffectedAccessRightsId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropIndex(
-					name: "IX_Logs_AffectedBlockId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropIndex(
+				name: "IX_Logs_AffectedBlockId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropIndex(
-					name: "IX_Logs_AffectedSourceId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropIndex(
+				name: "IX_Logs_AffectedSourceId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropIndex(
-					name: "IX_Logs_AffectedTagId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropIndex(
+				name: "IX_Logs_AffectedTagId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropIndex(
-					name: "IX_Logs_AffectedUserGroupGuid",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropIndex(
+				name: "IX_Logs_AffectedUserGroupGuid",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropIndex(
-					name: "IX_Logs_AffectedUserGuid",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropIndex(
+				name: "IX_Logs_AffectedUserGuid",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropColumn(
-					name: "IsDeleted",
-					schema: "public",
-					table: "Users");
+		migrationBuilder.DropColumn(
+				name: "IsDeleted",
+				schema: "public",
+				table: "Users");
 
-			migrationBuilder.DropColumn(
-					name: "IsDeleted",
-					schema: "public",
-					table: "UserGroups");
+		migrationBuilder.DropColumn(
+				name: "IsDeleted",
+				schema: "public",
+				table: "UserGroups");
 
-			migrationBuilder.DropColumn(
-					name: "IsDeleted",
-					schema: "public",
-					table: "Tags");
+		migrationBuilder.DropColumn(
+				name: "IsDeleted",
+				schema: "public",
+				table: "Tags");
 
-			migrationBuilder.DropColumn(
-					name: "IsDeleted",
-					schema: "public",
-					table: "Sources");
+		migrationBuilder.DropColumn(
+				name: "IsDeleted",
+				schema: "public",
+				table: "Sources");
 
-			migrationBuilder.DropColumn(
-					name: "AffectedAccessRightsId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropColumn(
+				name: "AffectedAccessRightsId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropColumn(
-					name: "AffectedBlockId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropColumn(
+				name: "AffectedBlockId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropColumn(
-					name: "AffectedSourceId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropColumn(
+				name: "AffectedSourceId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropColumn(
-					name: "AffectedTagId",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropColumn(
+				name: "AffectedTagId",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropColumn(
-					name: "AffectedUserGroupGuid",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropColumn(
+				name: "AffectedUserGroupGuid",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropColumn(
-					name: "AffectedUserGuid",
-					schema: "public",
-					table: "Logs");
+		migrationBuilder.DropColumn(
+				name: "AffectedUserGuid",
+				schema: "public",
+				table: "Logs");
 
-			migrationBuilder.DropColumn(
-					name: "IsDeleted",
-					schema: "public",
-					table: "Blocks");
+		migrationBuilder.DropColumn(
+				name: "IsDeleted",
+				schema: "public",
+				table: "Blocks");
 
-			migrationBuilder.RenameColumn(
-					name: "AuthorGuid",
-					schema: "public",
-					table: "Logs",
-					newName: "UserGuid");
+		migrationBuilder.RenameColumn(
+				name: "AuthorGuid",
+				schema: "public",
+				table: "Logs",
+				newName: "UserGuid");
 
-			migrationBuilder.RenameIndex(
-					name: "IX_Logs_AuthorGuid",
-					schema: "public",
-					table: "Logs",
-					newName: "IX_Logs_UserGuid");
+		migrationBuilder.RenameIndex(
+				name: "IX_Logs_AuthorGuid",
+				schema: "public",
+				table: "Logs",
+				newName: "IX_Logs_UserGuid");
 
-			migrationBuilder.AddForeignKey(
-					name: "FK_Logs_Users_UserGuid",
-					schema: "public",
-					table: "Logs",
-					column: "UserGuid",
-					principalSchema: "public",
-					principalTable: "Users",
-					principalColumn: "Guid",
-					onDelete: ReferentialAction.SetNull);
-		}
+		migrationBuilder.AddForeignKey(
+				name: "FK_Logs_Users_UserGuid",
+				schema: "public",
+				table: "Logs",
+				column: "UserGuid",
+				principalSchema: "public",
+				principalTable: "Users",
+				principalColumn: "Guid",
+				onDelete: ReferentialAction.SetNull);
 	}
 }

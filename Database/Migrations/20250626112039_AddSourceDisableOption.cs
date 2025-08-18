@@ -2,30 +2,29 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class AddSourceDisableOption : Migration
 {
 	/// <inheritdoc />
-	public partial class AddSourceDisableOption : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.AddColumn<bool>(
-					name: "IsDisabled",
-					schema: "public",
-					table: "Sources",
-					type: "boolean",
-					nullable: false,
-					defaultValue: false);
-		}
+		migrationBuilder.AddColumn<bool>(
+				name: "IsDisabled",
+				schema: "public",
+				table: "Sources",
+				type: "boolean",
+				nullable: false,
+				defaultValue: false);
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.DropColumn(
-					name: "IsDisabled",
-					schema: "public",
-					table: "Sources");
-		}
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
+		migrationBuilder.DropColumn(
+				name: "IsDisabled",
+				schema: "public",
+				table: "Sources");
 	}
 }

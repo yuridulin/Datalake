@@ -2,31 +2,30 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class ChangeSourceType : Migration
 {
 	/// <inheritdoc />
-	public partial class ChangeSourceType : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 				UPDATE public.""Sources""
 				SET ""Type"" = CASE
 						WHEN ""Id"" > 0 THEN ""Type"" + 1
 						ELSE ""Id""
 				END;");
-		}
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.Sql(@"
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
+		migrationBuilder.Sql(@"
 				UPDATE public.""Sources""
 				SET ""Type"" = CASE
 						WHEN ""Id"" >= 0 THEN ""Type"" - 1
 						ELSE -1
 				END;");
-		}
 	}
 }

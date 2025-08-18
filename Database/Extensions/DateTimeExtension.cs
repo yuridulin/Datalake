@@ -41,7 +41,7 @@ public static class DateTimeExtension
 	/// <param name="res">Заданная частота</param>
 	/// <returns></returns>
 	public static DateTime AddByResolution(this DateTime dt, TagResolution res)
-{
+	{
 		return res switch
 		{
 			TagResolution.Second => dt.AddSeconds(1),

@@ -1,5 +1,4 @@
 ﻿using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Models.Auth;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.PublicApi.Models.UserGroups;

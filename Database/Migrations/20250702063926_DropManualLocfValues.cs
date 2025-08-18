@@ -2,29 +2,28 @@
 
 #nullable disable
 
-namespace Datalake.Database.Migrations
+namespace Datalake.Database.Migrations;
+
+/// <inheritdoc />
+public partial class DropManualLocfValues : Migration
 {
 	/// <inheritdoc />
-	public partial class DropManualLocfValues : Migration
+	protected override void Up(MigrationBuilder migrationBuilder)
 	{
-		/// <inheritdoc />
-		protected override void Up(MigrationBuilder migrationBuilder)
-		{
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 				DELETE FROM ""TagsHistory""
 				WHERE ""TagId"" NOT IN (
 					SELECT ""Id"" FROM ""Tags""
 				)", true);
 
-			migrationBuilder.Sql(@"
+		migrationBuilder.Sql(@"
 				DELETE FROM ""TagsHistory""
 				WHERE ""Quality"" = ANY(ARRAY[100,200])", true);
-		}
+	}
 
-		/// <inheritdoc />
-		protected override void Down(MigrationBuilder migrationBuilder)
-		{
+	/// <inheritdoc />
+	protected override void Down(MigrationBuilder migrationBuilder)
+	{
 
-		}
 	}
 }

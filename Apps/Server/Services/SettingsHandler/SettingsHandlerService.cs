@@ -2,7 +2,6 @@
 using Datalake.Database.InMemory.Models;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Auth.Models;
-using System.Reflection;
 using System.Threading.Channels;
 
 namespace Datalake.Server.Services.SettingsHandler;
