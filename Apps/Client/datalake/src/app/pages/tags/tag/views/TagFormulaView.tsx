@@ -73,7 +73,8 @@ const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
 	)
 
 	const info: InfoTableProps['items'] = {
-		Формула: renderFormulaWithValues(values),
+		Формула: formula,
+		Выражение: renderFormulaWithValues(values),
 	}
 
 	const getValues = useCallback(() => {

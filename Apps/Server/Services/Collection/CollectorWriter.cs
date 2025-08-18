@@ -1,6 +1,8 @@
 ﻿using Datalake.Database;
+using Datalake.Database.InMemory;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Values;
+using System.Diagnostics.Metrics;
 using System.Threading.Channels;
 
 namespace Datalake.Server.Services.Collection;
@@ -8,122 +10,132 @@ namespace Datalake.Server.Services.Collection;
 /// <summary>
 /// Служба записи новых значений в БД
 /// </summary>
-/// <param name="serviceScopeFactory">Провайдер получения сервисов</param>
-/// <param name="logger">Логгер</param>
-public class CollectorWriter(
-	IServiceScopeFactory serviceScopeFactory,
-	ILogger<CollectorWriter> logger) : BackgroundService
+public class CollectorWriter : BackgroundService
 {
+	/// <summary>
+	/// Служба записи новых значений в БД
+	/// </summary>
+	public CollectorWriter(
+		DatalakeCurrentValuesStore currentValuesStore,
+		IServiceScopeFactory serviceScopeFactory,
+		ILogger<CollectorWriter> logger)
+	{
+		_currentValuesStore = currentValuesStore;
+		_serviceScopeFactory = serviceScopeFactory;
+		_logger = logger;
+
+		// Gauge читает текущее число «висящих» в очереди элементов
+		_queueLengthGauge = s_meter.CreateObservableGauge<long>(
+			"queue_length",
+			() => new Measurement<long>(Interlocked.Read(ref _queuedItems)));
+	}
+
 	private const int BatchSize = 1000;
 	private const int MaxBatchDelayMs = 250;
-	private const int MinBatchDelayMs = 50;
 	private const int MaxRetryAttempts = 3;
 	private const int RetryBaseDelayMs = 1000;
 
-	private readonly Channel<ValueWriteRequest> _channel = Channel.CreateUnbounded<ValueWriteRequest>(
-		new UnboundedChannelOptions
-		{
-			SingleWriter = false,
-			SingleReader = true,
-			AllowSynchronousContinuations = false
-		});
+	private readonly Channel<ValueWriteRequest> _channel = Channel.CreateUnbounded<ValueWriteRequest>(new UnboundedChannelOptions
+	{
+		SingleWriter = false,
+		SingleReader = true,
+		AllowSynchronousContinuations = false
+	});
+
+	private readonly DatalakeCurrentValuesStore _currentValuesStore;
+	private readonly IServiceScopeFactory _serviceScopeFactory;
+	private readonly ILogger<CollectorWriter> _logger;
+
+	// Метрики
+	private static readonly Meter s_meter = new("Datalake.CollectorWriter", "1.0");
+	private static readonly Counter<long> s_messagesProduced = s_meter.CreateCounter<long>("messages_produced");
+	private static readonly Counter<long> s_messagesConsumed = s_meter.CreateCounter<long>("messages_consumed");
+	private readonly ObservableGauge<long> _queueLengthGauge;
+	private long _queuedItems;
 
 	/// <summary>
-	/// Цикличная запись значений из очереди в БД
+	/// Основной consumer-loop: читает из канала, формирует батчи и записывает в БД
 	/// </summary>
-	/// <param name="stoppingToken">Токен остановки</param>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		while (!stoppingToken.IsCancellationRequested)
+		var batch = new List<ValueWriteRequest>(BatchSize);
+		var lastFlush = DateTime.UtcNow;
+
+		await foreach (var item in _channel.Reader.ReadAllAsync(stoppingToken))
 		{
-			try
-			{
-				// Создаем новый скоуп для каждого цикла обработки
-				using var scope = serviceScopeFactory.CreateScope();
-				using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-				var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
+			batch.Add(item);
 
-				// Ждем первого элемента с таймаутом
-				var batch = new List<ValueWriteRequest>(BatchSize);
-				var firstItem = await ReadWithTimeoutAsync(stoppingToken);
-				if (firstItem != null)
-				{
-					batch.Add(firstItem);
-				}
-				else
-				{
-					// Если данных нет, делаем паузу перед следующей проверкой
-					await Task.Delay(MaxBatchDelayMs, stoppingToken);
-					continue;
-				}
-
-				// Быстро собираем остальные элементы
-				await FillBatchAsync(batch, BatchSize - 1, stoppingToken);
-
-				// Записываем пачку в БД
-				await WriteBatchWithRetryAsync(db, valuesRepository, batch, stoppingToken);
-			}
-			catch (OperationCanceledException)
+			var elapsed = (DateTime.UtcNow - lastFlush).TotalMilliseconds;
+			if (batch.Count >= BatchSize || elapsed >= MaxBatchDelayMs)
 			{
-				// Корректное завершение при отмене
-				break;
-			}
-			catch (Exception ex)
-			{
-				logger.LogError(ex, "Критическая ошибка в обработчике записи");
-				await Task.Delay(5000, stoppingToken); // Задержка перед повторной попыткой
+				await ProcessBatchAsync(batch, stoppingToken);
+				batch.Clear();
+				lastFlush = DateTime.UtcNow;
 			}
 		}
+
+		// После Complete(): финальная запись оставшегося набора
+		if (batch.Count > 0)
+			await ProcessBatchAsync(batch, stoppingToken);
 	}
 
 	/// <summary>
-	/// Добавление новых значений в очередь на запись в БД
+	/// Пометка канала завершённым, чтобы consumer завершился
 	/// </summary>
-	/// <param name="values">Список новых значений</param>
+	public override async Task StopAsync(CancellationToken cancellationToken)
+	{
+		_channel.Writer.Complete();
+		await base.StopAsync(cancellationToken);
+	}
+
+	/// <summary>
+	/// Producer: добавление новых значений в очередь
+	/// </summary>
 	public void AddToQueue(IEnumerable<ValueWriteRequest> values)
 	{
 		foreach (var value in values)
 		{
-			_channel.Writer.TryWrite(value);
-		}
-	}
+			var exist = _currentValuesStore.Get(value.Id!.Value);
+			var status = (exist!.Number != value.Value as float?)
+				? " (новое!)"
+				: " (старое)";
 
-	private async Task<ValueWriteRequest?> ReadWithTimeoutAsync(CancellationToken ct)
-	{
-		try
-		{
-			var readTask = _channel.Reader.ReadAsync(ct).AsTask();
-			var timeoutTask = Task.Delay(MaxBatchDelayMs, ct);
+			_logger.LogWarning(
+					"Запись в очередь для БД:{Id} = {Val}{Status}",
+					value.Id, value.Value, status);
 
-			var completedTask = await Task.WhenAny(readTask, timeoutTask);
-			if (completedTask == readTask)
+			if (_channel.Writer.TryWrite(value))
 			{
-				return await readTask;
-			}
-		}
-		catch (OperationCanceledException) { }
-		return null;
-	}
-
-	private async Task FillBatchAsync(List<ValueWriteRequest> batch, int maxItems, CancellationToken ct)
-	{
-		var delayTask = Task.Delay(MinBatchDelayMs, ct);
-		while (batch.Count < maxItems && !ct.IsCancellationRequested)
-		{
-			if (_channel.Reader.TryRead(out var item))
-			{
-				batch.Add(item);
+				Interlocked.Increment(ref _queuedItems);
+				s_messagesProduced.Add(1);
 			}
 			else
 			{
-				// Если элементов нет, ждем минимальную задержку или завершение задачи задержки
-				if (await Task.WhenAny(_channel.Reader.WaitToReadAsync(ct).AsTask(), delayTask) == delayTask)
-				{
-					break;
-				}
+				_logger.LogCritical("Не удалось записать в канал!");
 			}
 		}
 	}
+
+	/// <summary>
+	/// Обработка одного батча: запись с retry
+	/// </summary>
+	private async Task ProcessBatchAsync(
+		List<ValueWriteRequest> batch,
+		CancellationToken ct)
+	{
+		using var scope = _serviceScopeFactory.CreateScope();
+		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+		var repo = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
+
+		await WriteBatchWithRetryAsync(db, repo, batch, ct);
+
+		s_messagesConsumed.Add(batch.Count);
+		Interlocked.Add(ref _queuedItems, -batch.Count);
+	}
+
+	/// <summary>
+	/// Метод записи в БД с экспоненциальным бэкоффом
+	/// </summary>
 	private async Task WriteBatchWithRetryAsync(
 		DatalakeContext db,
 		ValuesRepository valuesRepository,
@@ -136,17 +148,19 @@ public class CollectorWriter(
 			try
 			{
 				await valuesRepository.WriteCollectedValuesAsync(db, batch);
-				return; // Успешная запись
+				return;
 			}
 			catch (Exception ex)
 			{
 				attempt++;
-				logger.LogWarning(ex, "Ошибка записи (попытка {Attempt}/{Max})", attempt, MaxRetryAttempts);
+				_logger.LogWarning(ex,
+					"Ошибка записи (попытка {Attempt}/{Max})",
+					attempt, MaxRetryAttempts);
 
 				if (attempt < MaxRetryAttempts)
 				{
-					// Экспоненциальная задержка
-					var delay = TimeSpan.FromMilliseconds(RetryBaseDelayMs * Math.Pow(2, attempt - 1));
+					var delay = TimeSpan.FromMilliseconds(
+						RetryBaseDelayMs * Math.Pow(2, attempt - 1));
 					await Task.Delay(delay, ct);
 				}
 			}
@@ -154,7 +168,8 @@ public class CollectorWriter(
 
 		if (attempt >= MaxRetryAttempts)
 		{
-			logger.LogError("Не удалось записать пачку из {Count} значений после {Max} попыток",
+			_logger.LogError(
+				"Не удалось записать пачку из {Count} значений после {Max} попыток",
 				batch.Count, MaxRetryAttempts);
 		}
 	}

@@ -63,9 +63,7 @@ const TagView = observer(() => {
 		),
 	}
 
-	if (tag.sourceId === SourceType.Calculated) {
-		info['Формула'] = tag.formula
-	} else if (tag.sourceId === SourceType.Aggregated) {
+	if (tag.sourceId === SourceType.Aggregated) {
 		info['Тип агрегирования'] = (
 			<>
 				{tag.aggregation === TagAggregation.Average ? 'Среднее' : 'Сумма'} за{' '}
