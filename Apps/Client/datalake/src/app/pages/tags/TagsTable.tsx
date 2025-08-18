@@ -70,7 +70,6 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false }: TagsTablePro
 			<Column<TagInfo>
 				title='Описание'
 				dataIndex='description'
-				defaultSortOrder='ascend'
 				sorter={(a: TagInfo, b: TagInfo) => (a.description ?? '').localeCompare(b.description ?? '')}
 			/>
 			{!hideSource && (
@@ -78,7 +77,6 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false }: TagsTablePro
 					title='Источник'
 					dataIndex='sourceId'
 					width='18em'
-					defaultSortOrder='ascend'
 					sorter={(a: TagInfo, b: TagInfo) =>
 						(a.sourceName ?? String(a.sourceId)).localeCompare(b.sourceName ?? String(b.sourceId))
 					}
@@ -86,22 +84,32 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false }: TagsTablePro
 				/>
 			)}
 			{!hideValue && (
-				<Column<TagInfo>
-					title='Значение'
-					defaultSortOrder='ascend'
-					width='12em'
-					sorter={(a: TagInfo, b: TagInfo) => compareValues(values[a.id]?.value, values[b.id]?.value)}
-					render={(_, record: TagInfo) => {
-						const value = values[record.id]
-						return (
-							<TagCompactValue
-								value={value?.value}
-								type={record.type}
-								quality={value?.quality ?? TagQuality.BadNoConnect}
-							/>
-						)
-					}}
-				/>
+				<>
+					<Column<TagInfo>
+						title='Значение'
+						width='12em'
+						sorter={(a: TagInfo, b: TagInfo) => compareValues(values[a.id]?.value, values[b.id]?.value)}
+						render={(_, record: TagInfo) => {
+							const value = values[record.id]
+							return (
+								<TagCompactValue
+									value={value?.value}
+									type={record.type}
+									quality={value?.quality ?? TagQuality.BadNoConnect}
+								/>
+							)
+						}}
+					/>
+					<Column<TagInfo>
+						title='Дата записи'
+						width='13em'
+						sorter={(a: TagInfo, b: TagInfo) => compareValues(values[a.id]?.date, values[b.id]?.date)}
+						render={(_, record: TagInfo) => {
+							const value = values[record.id]
+							return value?.dateString
+						}}
+					/>
+				</>
 			)}
 		</Table>
 	)
