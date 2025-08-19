@@ -264,6 +264,7 @@ public class Program
 					]);
 			})
 			.UseMiddleware<AuthMiddleware>()
+			.UseMiddleware<SentryRequestBodyMiddleware>()
 			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
 			.EnsureCorsMiddlewareOnError();
 
