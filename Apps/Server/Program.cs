@@ -141,7 +141,7 @@ public class Program
 		builder.Services.AddSingleton<DatalakeDataStore>(); // стейт-менеджер исходных данных
 		builder.Services.AddSingleton<DatalakeDerivedDataStore>(); // стейт-менеджер зависимых данных
 		builder.Services.AddSingleton<DatalakeCurrentValuesStore>(); // кэш последних значений
-		builder.Services.AddSingleton<EnergoIdUserStore>(); // хранилище данных пользователей из EnergoId
+		builder.Services.AddSingleton<DatalakeEnergoIdStore>(); // хранилище данных пользователей из EnergoId
 
 		// репозитории в памяти
 		builder.Services.AddScoped<SettingsMemoryRepository>();
