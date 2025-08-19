@@ -1,4 +1,5 @@
 using Datalake.Database;
+using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
@@ -8,6 +9,7 @@ using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Collection;
+using Datalake.Server.Services.Initialization;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SettingsHandler;
@@ -107,10 +109,12 @@ public class Program
 		var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
 
 		// заполняем все указанные в ней переменные окружения реальными значениями
-		connectionString = FillEnvVariables(connectionString);
+		connectionString = EnvExpander.FillEnvVariables(connectionString);
 		Log.Information("ConnectionString: " + connectionString);
 
 		// БД
+		builder.Services.AddNpgsqlDataSource(connectionString);
+
 		builder.Services
 			.AddDbContext<DatalakeEfContext>(options => options
 				.UseNpgsql(connectionString))
@@ -168,6 +172,9 @@ public class Program
 		builder.Services.AddHostedService<SettingsHandlerService>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<SettingsHandlerService>());
 
+		// подключение внешней БД
+		builder.Services.AddHostedService<DbExternalInitializer>();
+
 		// обработчики
 		builder.Services.AddTransient<AuthMiddleware>();
 
@@ -188,43 +195,44 @@ public class Program
 
 		if (!app.Environment.IsProduction())
 		{
-			app.UseDeveloperExceptionPage();
-			app.UseOpenApi();
-			app.UseSwaggerUi();
+			app
+				.UseDeveloperExceptionPage()
+				.UseOpenApi()
+				.UseSwaggerUi();
 		}
 
 		app
 			.UseSerilogRequestLogging(options =>
-		{
-			// шаблон одного сообщения на запрос
-			options.MessageTemplate = "HTTP: [{Controller}.{Action}] > {StatusCode} in {Elapsed:0.0000} ms";
-
-			// если упало — логируем Error, иначе Information
-			options.GetLevel = (httpContext, elapsed, ex) =>
-			httpContext.Request.Method == "OPTIONS"
-				? LogEventLevel.Verbose
-				: ex != null || httpContext.Response.StatusCode >= 500
-					? LogEventLevel.Error
-					: LogEventLevel.Information;
-
-			options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
 			{
-				var endpoint = httpContext.GetEndpoint();
-				var routePattern = endpoint?.Metadata.GetMetadata<RouteNameMetadata>();
-				var actionDescriptor = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>();
+				// шаблон одного сообщения на запрос
+				options.MessageTemplate = "HTTP: [{Controller}.{Action}] > {StatusCode} in {Elapsed:0.0000} ms";
 
-				if (actionDescriptor != null)
+				// если упало — логируем Error, иначе Information
+				options.GetLevel = (httpContext, elapsed, ex) =>
+				httpContext.Request.Method == "OPTIONS"
+					? LogEventLevel.Verbose
+					: ex != null || httpContext.Response.StatusCode >= 500
+						? LogEventLevel.Error
+						: LogEventLevel.Information;
+
+				options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
 				{
-					diagnosticContext.Set("Controller", actionDescriptor.ControllerName);
-					diagnosticContext.Set("Action", actionDescriptor.ActionName);
-				}
-				else
-				{
-					diagnosticContext.Set("Controller", "unknown");
-					diagnosticContext.Set("Action", "unknown");
-				}
-			};
-		})
+					var endpoint = httpContext.GetEndpoint();
+					var routePattern = endpoint?.Metadata.GetMetadata<RouteNameMetadata>();
+					var actionDescriptor = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>();
+
+					if (actionDescriptor != null)
+					{
+						diagnosticContext.Set("Controller", actionDescriptor.ControllerName);
+						diagnosticContext.Set("Action", actionDescriptor.ActionName);
+					}
+					else
+					{
+						diagnosticContext.Set("Controller", "unknown");
+						diagnosticContext.Set("Action", "unknown");
+					}
+				};
+			})
 			.UseSentryTracing()
 			.UseDefaultFiles()
 			.UseStaticFiles()
@@ -257,26 +265,6 @@ public class Program
 
 		// запуск веб-сервера
 		app.Run();
-	}
-
-	private static string FillEnvVariables(string sourceString)
-	{
-		var env = Environment.GetEnvironmentVariables();
-		foreach (var part in sourceString.Split("${"))
-		{
-			int endSymbol = part.IndexOf('}');
-			if (!part.Contains('}'))
-				continue;
-
-			string variable = part[..endSymbol];
-			var value = env.Contains(variable!) ? env[variable!]?.ToString() : null;
-			if (string.IsNullOrEmpty(value))
-				throw new Exception("Expected ENV variable is not found: " + variable);
-			else
-				sourceString = sourceString.Replace($"${{{variable}}}", value);
-		}
-
-		return sourceString;
 	}
 
 	private static async void StartWorkWithDatabase(WebApplication app)

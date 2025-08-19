@@ -1,5 +1,4 @@
 ﻿using Datalake.Database;
-using Datalake.Database.InMemory;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Values;
 using System.Diagnostics.Metrics;
@@ -16,11 +15,9 @@ public class CollectorWriter : BackgroundService
 	/// Служба записи новых значений в БД
 	/// </summary>
 	public CollectorWriter(
-		DatalakeCurrentValuesStore currentValuesStore,
 		IServiceScopeFactory serviceScopeFactory,
 		ILogger<CollectorWriter> logger)
 	{
-		_currentValuesStore = currentValuesStore;
 		_serviceScopeFactory = serviceScopeFactory;
 		_logger = logger;
 
@@ -42,7 +39,6 @@ public class CollectorWriter : BackgroundService
 		AllowSynchronousContinuations = false
 	});
 
-	private readonly DatalakeCurrentValuesStore _currentValuesStore;
 	private readonly IServiceScopeFactory _serviceScopeFactory;
 	private readonly ILogger<CollectorWriter> _logger;
 
@@ -95,15 +91,6 @@ public class CollectorWriter : BackgroundService
 	{
 		foreach (var value in values)
 		{
-			var exist = _currentValuesStore.Get(value.Id!.Value);
-			var status = (exist!.Number != (value.Value as float?))
-				? " (новое!)"
-				: " (старое)";
-
-			_logger.LogWarning(
-					"Запись в очередь для БД:{Id} = {Val}{Status}",
-					value.Id, value.Value, status);
-
 			if (_channel.Writer.TryWrite(value))
 			{
 				Interlocked.Increment(ref _queuedItems);
