@@ -1,15 +1,14 @@
 using Datalake.Database;
 using Datalake.Database.Functions;
+using Datalake.Database.Initialization;
 using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
-using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Collection;
-using Datalake.Server.Services.Initialization;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SettingsHandler;
@@ -17,14 +16,17 @@ using LinqToDB;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
 using LinqToDB.Mapping;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using NJsonSchema.Generation;
 using Npgsql;
 using Serilog;
 using Serilog.Events;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Datalake.Server;
 
@@ -43,10 +45,10 @@ public class Program
 	/// <summary>
 	/// Старт Datalake Server
 	/// </summary>
-	public static void Main(string[] args)
+	public static async Task Main(string[] args)
 	{
 		// дефолт сообщение, чтобы увидеть факт запуска
-		Console.WriteLine($"Datalake: v{Version}");
+		Console.WriteLine($"Запуск Datalake: v{Version}");
 
 		// настройка
 		var builder = WebApplication.CreateBuilder(args);
@@ -74,29 +76,35 @@ public class Program
 
 		builder.Host.UseSerilog();
 
+		// Json
+		builder.Services.Configure<JsonOptions>(options =>
+		{
+			options.SerializerOptions.NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals;
+			options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+		});
+
 		// MVC
 		builder.Services
 			.AddControllers()
-			.AddControllersAsServices()
-			.AddJsonOptions(options =>
-			{
-				options.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
-			});
+			.AddControllersAsServices();
 
-		// сервисы
+		// Swagger
 		builder.Services
 			.AddSwaggerDocument((options, services) =>
 			{
+				var jsonOpts = services.GetRequiredService<IOptions<JsonOptions>>().Value;
+
 				options.DocumentName = "Datalake App";
 				options.Title = "Datalake App";
 				options.Version = "v" + Version;
 
 				options.SchemaSettings = new SystemTextJsonSchemaGeneratorSettings
 				{
+					SchemaType = NJsonSchema.SchemaType.OpenApi3,
 					GenerateEnumMappingDescription = true,
 					UseXmlDocumentation = true,
+					SerializerOptions = jsonOpts.SerializerOptions,
 				};
-				options.SchemaSettings.SchemaProcessors.Add(new XEnumVarnamesNswagSchemaProcessor());
 			})
 			.AddEndpointsApiExplorer();
 
@@ -113,9 +121,8 @@ public class Program
 		Log.Information("ConnectionString: " + connectionString);
 
 		// БД
-		builder.Services.AddNpgsqlDataSource(connectionString);
-
 		builder.Services
+			.AddNpgsqlDataSource(connectionString)
 			.AddDbContext<DatalakeEfContext>(options => options
 				.UseNpgsql(connectionString))
 			.AddLinqToDBContext<DatalakeContext>((provider, options) =>
@@ -172,8 +179,9 @@ public class Program
 		builder.Services.AddHostedService<SettingsHandlerService>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<SettingsHandlerService>());
 
-		// подключение внешней БД
-		builder.Services.AddHostedService<DbExternalInitializer>();
+		// настройка БД
+		builder.Services.AddSingleton<DbInitializer>();
+		builder.Services.AddSingleton<DbExternalInitializer>();
 
 		// обработчики
 		builder.Services.AddTransient<AuthMiddleware>();
@@ -261,59 +269,14 @@ public class Program
 			pattern: "{controller=Home}/{action=Index}/{id?}");
 
 		// запуск БД
-		StartWorkWithDatabase(app);
+		var thisDb = app.Services.GetRequiredService<DbInitializer>();
+		await thisDb.DoAsync();
+
+		var externalDb = app.Services.GetRequiredService<DbExternalInitializer>();
+		await externalDb.DoAsync();
 
 		// запуск веб-сервера
-		app.Run();
-	}
-
-	private static async void StartWorkWithDatabase(WebApplication app)
-	{
-		using var serviceScope = app.Services.GetService<IServiceScopeFactory>()?.CreateScope()
-			?? throw new Exception("Серьезно?");
-
-		// выполняем миграции через EF, хоть тут сгодится
-		var ef = serviceScope.ServiceProvider.GetRequiredService<DatalakeEfContext>();
-		ef.Database.Migrate();
-
-		// теперь репозитории в отдельной DLL используют настроенный логгер
-		DatalakeContext.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
-		DatalakeContext.SetupLinqToDB();
-
-		var db = serviceScope.ServiceProvider.GetRequiredService<DatalakeContext>();
-		var dataStore = serviceScope.ServiceProvider.GetRequiredService<DatalakeDataStore>();
-		var usersRepository = serviceScope.ServiceProvider.GetRequiredService<UsersMemoryRepository>();
-
-		// начальное наполнение БД
-		await db.EnsureDataCreatedAsync(dataStore, usersRepository);
-
-		// как-то криво, но пишем аудит
-		await AuditRepository.WriteAsync(
-			db,
-			"Сервер запущен",
-			category: LogCategory.Core,
-			type: LogType.Success
-		);
-	}
-
-	internal class XEnumVarnamesNswagSchemaProcessor : ISchemaProcessor
-	{
-		public void Process(SchemaProcessorContext context)
-		{
-			if (context.ContextualType.OriginalType.IsEnum)
-			{
-				if (context.Schema.ExtensionData is not null)
-				{
-					context.Schema.ExtensionData.Add("x-enum-varnames", context.Schema.EnumerationNames.ToArray());
-				}
-				else
-				{
-					context.Schema.ExtensionData = new Dictionary<string, object?>()
-					{
-							{"x-enum-varnames", context.Schema.EnumerationNames.ToArray()}
-					};
-				}
-			}
-		}
+		Log.Information("Приложение запущено");
+		await app.RunAsync();
 	}
 }

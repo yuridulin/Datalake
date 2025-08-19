@@ -2,12 +2,13 @@
 using Datalake.Database.Extensions;
 using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Enums;
 using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
-using Microsoft.Extensions.Logging;
 
 namespace Datalake.Database;
 
@@ -19,15 +20,10 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	/// <summary>
 	/// Специфичные настройки LinqToDB, которые необходимо применять при запуске
 	/// </summary>
-	public static void SetupLinqToDB()
+	static DatalakeContext()
 	{
 		Configuration.Linq.GuardGrouping = false;
 	}
-
-	/// <summary>
-	/// Сохраненная ссылка на настроенную фабрику логгеров
-	/// </summary>
-	public static ILoggerFactory? LoggerFactory { get; set; }
 
 	/// <summary>
 	/// Необходимые для работы записи, которые должны быть в базе данных
@@ -71,6 +67,13 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		{
 			await usersRepository.ProtectedCreateAsync(this, Guid.Empty, Defaults.InitialAdmin);
 		}
+
+		await AuditRepository.WriteAsync(
+			this,
+			"Сервер запущен",
+			category: LogCategory.Core,
+			type: LogType.Success
+		);
 
 		_ = Task.Run(dataStore.ReloadStateAsync);
 	}

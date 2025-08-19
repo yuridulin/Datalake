@@ -1,7 +1,9 @@
 ﻿using Datalake.Database.Functions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 
-namespace Datalake.Server.Services.Initialization;
+namespace Datalake.Database.Initialization;
 
 /// <summary>
 /// Актуализация подключения к внешней БД keycloak - "EnergoID"
@@ -9,27 +11,26 @@ namespace Datalake.Server.Services.Initialization;
 public class DbExternalInitializer(
 	NpgsqlDataSource dataSource,
 	IConfiguration configuration,
-	ILogger<DbExternalInitializer> logger) : IHostedService
+	ILogger<DbExternalInitializer> logger)
 {
-	private CancellationToken _token;
-
-	/// <inheritdoc/>
-	public async Task StartAsync(CancellationToken cancellationToken)
+	/// <summary>
+	/// Актуализация подключения к внешней БД keycloak - "EnergoID"
+	/// </summary>
+	public async Task DoAsync()
 	{
-		_token = cancellationToken;
-		logger.LogDebug("Актуализация подключения к внешней БД EnergoId");
+		logger.LogInformation("Актуализация подключения к внешней БД EnergoId");
 
 		// чтение настроек из конфига
 		var settings = configuration.GetSection("ExternalDb").Get<ExternalDbOptions>();
 		if (settings == null)
 		{
-			logger.LogDebug("Настройки внешней БД EnergoId не получены, актуализация пропускается");
+			logger.LogWarning("Настройки внешней БД EnergoId не получены, актуализация пропускается");
 			return;
 		}
 		EnvExpander.ExpandEnvVariables(settings);
 
-		await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-		await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+		await using var connection = await dataSource.OpenConnectionAsync();
+		await using var transaction = await connection.BeginTransactionAsync();
 
 		try
 		{
@@ -110,51 +111,46 @@ public class DbExternalInitializer(
 				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua7 ON c.id = ua7.user_id AND ua7.""name"" = 'gender'
 				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua8 ON c.id = ua8.user_id AND ua8.""name"" = 'birthday';");
 
-			await transaction.CommitAsync(cancellationToken);
+			await transaction.CommitAsync();
 
-			logger.LogDebug("Подключение к внешней БД EnergoId актуализировано");
+			logger.LogInformation("Подключение к внешней БД EnergoId актуализировано");
 		}
 		catch (Exception ex)
 		{
 			logger.LogError(ex, "Не удалось актуализировать подключение к внешней БД EnergoId");
 
-			await transaction.RollbackAsync(cancellationToken);
+			await transaction.RollbackAsync();
 		}
 	}
 
-	/// <inheritdoc/>
-	public Task StopAsync(CancellationToken cancellationToken)
-	{
-		return Task.CompletedTask;
-	}
 
-
-	const string ExternalDbName = "EnergoId";
-	const string ExternalDbSchema = "energo-id";
+	private const string ExternalDbName = "EnergoId";
+	private const string ExternalDbSchema = "energo-id";
 
 	private async Task Exec(NpgsqlConnection conn, string sql)
 	{
 		await using var cmd = new NpgsqlCommand(sql, conn);
 
 		logger.LogDebug("SQL: {sql}", sql);
-		await cmd.ExecuteNonQueryAsync(_token);
+		await cmd.ExecuteNonQueryAsync();
 	}
 
 	private static string QI(string ident) => "\"" + ident.Replace("\"", "\"\"") + "\"";
+
 	private static string QS(string s) => "'" + s.Replace("'", "''") + "'";
-}
 
-internal class ExternalDbOptions
-{
-	public required string Host { get; set; }
+	internal class ExternalDbOptions
+	{
+		public required string Host { get; set; }
 
-	public required int Port { get; set; }
+		public required int Port { get; set; }
 
-	public required string Database { get; set; }
+		public required string Database { get; set; }
 
-	public required string Schema { get; set; }
+		public required string Schema { get; set; }
 
-	public required string User { get; set; }
+		public required string User { get; set; }
 
-	public required string Password { get; set; }
+		public required string Password { get; set; }
+	}
 }
