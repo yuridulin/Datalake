@@ -1172,14 +1172,6 @@ export type UserGroupUpdateRequest = UserGroupCreateRequest & {
   users: UserGroupUsersInfo[];
 };
 
-/** Данные с сервиса "EnergoID" */
-export interface EnergoIdInfo {
-  /** Список пользователей */
-  energoIdUsers: UserEnergoIdInfo[];
-  /** Есть ли связь с сервисом "EnergoID" */
-  connected: boolean;
-}
-
 /** Информация о пользователе, взятая из Keycloak */
 export interface UserEnergoIdInfo {
   /**
@@ -1189,10 +1181,15 @@ export interface UserEnergoIdInfo {
    */
   energoIdGuid: string;
   /**
+   * Идентификатор сопоставленного пользователя приложения, если есть
+   * @format guid
+   */
+  userGuid?: string | null;
+  /**
    * Имя для входа
    * @minLength 1
    */
-  login: string;
+  email: string;
   /**
    * Полное имя пользователя
    * @minLength 1

@@ -23,7 +23,7 @@ const EnergoId = observer(() => {
 		api
 			.usersAuthenticateEnergoIdUser({
 				energoIdGuid: auth.user?.profile.sub ?? '',
-				login: auth.user?.profile.email ?? '',
+				email: auth.user?.profile.email ?? '',
 				fullName: auth.user?.profile.name ?? '',
 			})
 			.then((res) => {

@@ -16,7 +16,6 @@ public class UserEnergoIdInfo
 	/// <summary>
 	/// Идентификатор сопоставленного пользователя приложения, если есть
 	/// </summary>
-	[Required]
 	public Guid? UserGuid { get; set; }
 
 	/// <summary>

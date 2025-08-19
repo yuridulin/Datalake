@@ -6,7 +6,7 @@ import { Button, Input, Radio, Select } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AccessType, EnergoIdInfo, UserCreateRequest, UserType } from '../../../../api/swagger/data-contracts'
+import { AccessType, UserCreateRequest, UserEnergoIdInfo, UserType } from '../../../../api/swagger/data-contracts'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'
@@ -19,13 +19,12 @@ const UserCreate = observer(() => {
 		staticHost: '',
 		type: UserType.Local,
 	} as UserCreateRequest)
-	const [keycloakInfo, setKeycloakInfo] = useState({
-		connected: false,
-		energoIdUsers: [],
-	} as EnergoIdInfo)
+	const [keycloakInfo, setKeycloakInfo] = useState<UserEnergoIdInfo[]>([])
 
 	function load() {
-		api.usersGetEnergoIdList().then((res) => !!res && setKeycloakInfo(res.data))
+		api
+			.usersReadEnergoId()
+			.then((res) => !!res && setKeycloakInfo(res.data.sort((a, b) => a.fullName.localeCompare(b.fullName))))
 	}
 
 	function create() {
@@ -168,18 +167,19 @@ const UserCreate = observer(() => {
 							filterOption={filterOption}
 							value={request.energoIdGuid || ''}
 							placeholder='Укажите учетную запись EnergoID'
-							options={keycloakInfo.energoIdUsers.map((x) => ({
+							options={keycloakInfo.map((x) => ({
 								value: x.energoIdGuid,
-								label: x.fullName + ' (' + x.login + ')',
+								disabled: !!x.userGuid,
+								label: (x.userGuid ? '(уже добавлен) ' : '') + x.fullName + ' (' + x.email + ')',
 							}))}
 							style={{ width: '100%' }}
 							onChange={(value) => {
-								const user = keycloakInfo.energoIdUsers.filter((x) => x.energoIdGuid === value)[0]
+								const user = keycloakInfo.filter((x) => x.energoIdGuid === value)[0]
 								if (user) {
 									setRequest({
 										...request,
 										energoIdGuid: value,
-										login: user.login,
+										login: user.email,
 										fullName: user.fullName,
 									})
 								}

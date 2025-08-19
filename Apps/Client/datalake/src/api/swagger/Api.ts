@@ -17,7 +17,6 @@ import {
   BlockTreeInfo,
   BlockUpdateRequest,
   BlockWithTagsInfo,
-  EnergoIdInfo,
   KeyValuePairOfValuesRequestKeyAndValuesRequestUsage,
   LogCategory,
   LogInfo,
@@ -916,29 +915,6 @@ export class Api<
    * No description
    *
    * @tags Users
-   * @name UsersGetEnergoIdList
-   * @summary Получение списка пользователей, определенных на сервере EnergoId
-   * @request GET:/api/Users/energo-id
-   * @response `200` `EnergoIdInfo` Список пользователей
-   */
-  usersGetEnergoIdList = (
-    query?: {
-      /** @format guid */
-      currentUserGuid?: string | null;
-    },
-    params: RequestParams = {},
-  ) =>
-    this.request<EnergoIdInfo, any>({
-      path: `/api/Users/energo-id`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Users
    * @name UsersAuthenticateEnergoIdUser
    * @summary Аутентификация пользователя, прошедшего проверку на сервере EnergoId
    * @request POST:/api/Users/energo-id
@@ -954,6 +930,37 @@ export class Api<
       body: data,
       type: ContentType.Json,
       format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Users
+   * @name UsersReadEnergoId
+   * @summary Получение списка пользователей, определенных на сервере EnergoId
+   * @request GET:/api/Users/energo-id
+   * @response `200` `(UserEnergoIdInfo)[]` Список пользователей
+   */
+  usersReadEnergoId = (params: RequestParams = {}) =>
+    this.request<UserEnergoIdInfo[], any>({
+      path: `/api/Users/energo-id`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Users
+   * @name UsersUpdateEnergoId
+   * @summary Обновление данных из EnergoId
+   * @request PUT:/api/Users/energo-id
+   * @response `200` `File`
+   */
+  usersUpdateEnergoId = (params: RequestParams = {}) =>
+    this.request<File, any>({
+      path: `/api/Users/energo-id`,
+      method: "PUT",
       ...params,
     });
   /**

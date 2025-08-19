@@ -2,14 +2,15 @@ import api from '@/api/swagger-api'
 import hasAccess from '@/functions/hasAccess'
 import { user } from '@/state/user'
 import { accessOptions } from '@/types/accessOptions'
-import { Button, Input, Popconfirm, Radio, Select, Spin } from 'antd'
+import { Button, Input, Popconfirm, Radio, Select, Spin, Tag } from 'antd'
+import { DefaultOptionType } from 'antd/es/select'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
 	AccessType,
-	EnergoIdInfo,
 	UserDetailInfo,
+	UserEnergoIdInfo,
 	UserType,
 	UserUpdateRequest,
 } from '../../../../api/swagger/data-contracts'
@@ -22,6 +23,14 @@ type UserInfoProps = UserDetailInfo & {
 	hash: string
 }
 
+interface EnergoIdOption extends DefaultOptionType {
+	value: string // energoIdGuid
+	label: React.ReactNode // то, что видим в списке и в закрытом состоянии
+	search: string // чисто для поиска
+	disabled?: boolean
+	data: UserEnergoIdInfo // твои исходные данные
+}
+
 const UserForm = observer(() => {
 	const navigate = useNavigate()
 	const { id } = useParams()
@@ -32,10 +41,7 @@ const UserForm = observer(() => {
 	} as UserInfoProps)
 	const [request, setRequest] = useState({} as UserUpdateRequest)
 	const [newType, setNewType] = useState(UserType.Local)
-	const [keycloakUsers, setKeycloakUsers] = useState({
-		connected: false,
-		energoIdUsers: [],
-	} as EnergoIdInfo)
+	const [keycloakUsers, setKeycloakUsers] = useState<UserEnergoIdInfo[]>([])
 	const [loading, setLoading] = useState(true)
 
 	const load = () => {
@@ -62,7 +68,7 @@ const UserForm = observer(() => {
 			setLoading(false)
 		})
 
-		api.usersGetEnergoIdList({ currentUserGuid: id }).then((res) => !!res && setKeycloakUsers(res.data))
+		api.usersReadEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
 	}
 
 	useEffect(load, [id])
@@ -87,9 +93,26 @@ const UserForm = observer(() => {
 			.then(() => load())
 	}
 
-	// Filter `option.label` match the user type `input`
-	const filterOption = (input: string, option?: { label: string; value: string }) =>
-		(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+	const options: EnergoIdOption[] = keycloakUsers.map((x) => ({
+		value: x.energoIdGuid,
+		disabled: Boolean(x.userGuid && x.userGuid !== id),
+		data: x,
+		label: (
+			<>
+				<Tag>{x.email}</Tag>
+				{x.fullName}&ensp;
+				{x.userGuid ? (
+					x.userGuid === id ? (
+						<Tag color='green'>текущий</Tag>
+					) : (
+						<Tag color='warning'>уже добавлен</Tag>
+					)
+				) : null}
+			</>
+		),
+		// всё, по чему хочешь искать — в одну строку
+		search: `${x.fullName ?? ''} ${x.email ?? ''} ${x.energoIdGuid ?? ''}`.toLowerCase(),
+	}))
 
 	return loading ? (
 		<Spin />
@@ -251,29 +274,25 @@ const UserForm = observer(() => {
 					}}
 				>
 					<FormRow title='Учетная запись на сервере EnergoID'>
-						<Select
+						<Select<EnergoIdOption>
 							showSearch
-							optionFilterProp='children'
-							filterOption={filterOption}
-							value={request.energoIdGuid || ''}
+							value={options.find((o) => o.value === request.energoIdGuid) ?? null}
 							placeholder='Укажите учетную запись EnergoID'
-							options={keycloakUsers.energoIdUsers.map((x) => ({
-								value: x.energoIdGuid,
-								label: x.fullName + ' (' + x.login + ')',
-							}))}
+							options={options}
+							optionFilterProp='search'
+							filterOption={(input, option) => (option?.search ?? '').includes(input.toLowerCase())}
+							optionRender={(opt) => opt.label}
+							onChange={(_, option) => {
+								const typedOption = option as EnergoIdOption
+								setRequest({
+									...request,
+									energoIdGuid: typedOption.value,
+									login: typedOption.data.email,
+									fullName: typedOption.data.fullName,
+								})
+							}}
 							disabled={!hasAccess(user.globalAccessType, AccessType.Manager)}
 							style={{ width: '100%' }}
-							onChange={(value) => {
-								const user = keycloakUsers.energoIdUsers.filter((x) => x.energoIdGuid === value)[0]
-								if (user) {
-									setRequest({
-										...request,
-										energoIdGuid: value,
-										login: user.login,
-										fullName: user.fullName,
-									})
-								}
-							}}
 						/>
 					</FormRow>
 				</div>
