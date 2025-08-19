@@ -12,24 +12,6 @@ namespace Datalake.Database.InMemory.Queries;
 public static class UsersQueries
 {
 	/// <summary>
-	/// Запрос информации о учетных записях
-	/// </summary>
-	/// <param name="state">Текущее состояние данных</param>
-	public static IEnumerable<UserFlatInfo> UsersFlatInfo(this DatalakeDataState state)
-	{
-		return state.Users
-			.Where(user => !user.IsDeleted)
-			.Select(user => new UserFlatInfo
-			{
-				Guid = user.Guid,
-				Login = user.Login,
-				FullName = user.FullName ?? string.Empty,
-				EnergoIdGuid = user.EnergoIdGuid,
-				Type = user.Type,
-			});
-	}
-
-	/// <summary>
 	/// Запрос полной информации о учетных записях, включая группы и права доступа
 	/// </summary>
 	/// <param name="state">Текущее состояние данных</param>

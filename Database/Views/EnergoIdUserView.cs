@@ -2,6 +2,7 @@
 using Datalake.Database.Tables;
 using LinqToDB.Mapping;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
 using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribute;
 
@@ -118,6 +119,17 @@ public class EnergoIdUserView
 	/// Связь с пользователем приложения
 	/// </summary>
 	public User? User { get; set; }
+
+	#endregion
+
+
+	#region Свойства
+
+	/// <summary>
+	/// ФИО пользователя
+	/// </summary>
+	[NotMapped]
+	public string FullName => $"{LastName} {FirstName} {MiddleName}";
 
 	#endregion
 }

@@ -1,5 +1,4 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Exceptions;
@@ -7,8 +6,6 @@ using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 using Datalake.Server.Controllers.Base;
 using Datalake.Server.Services.Auth;
-using Datalake.Server.Services.Auth.Models;
-using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -22,75 +19,10 @@ namespace Datalake.Server.Controllers;
 public class UsersController(
 	DatalakeContext db,
 	DatalakeDerivedDataStore derivedDataStore,
-	ILogger<UsersController> logger,
 	AuthenticationService authService,
 	UsersMemoryRepository usersRepository,
-	SettingsMemoryRepository settingsRepository,
 	SessionManagerService sessionManager) : ApiControllerBase(derivedDataStore)
 {
-	/// <summary>
-	/// Получение списка пользователей, определенных на сервере EnergoId
-	/// </summary>
-	/// <returns>Список пользователей</returns>
-	[HttpGet("energo-id")]
-	public async Task<ActionResult<EnergoIdInfo>> GetEnergoIdListAsync(
-		[FromQuery] Guid? currentUserGuid = null)
-	{
-		var user = Authenticate();
-
-		AccessChecks.HasGlobalAccess(user, PublicApi.Enums.AccessType.Admin);
-
-		var settings = settingsRepository.GetSettings(null);
-		var address = "https://" + settings.EnergoIdApi;
-
-		EnergoIdUserData[]? energoIdReceivedUsers = null;
-
-		try
-		{
-			var clientHandler = new HttpClientHandler
-			{
-				ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
-			};
-
-			var client = new HttpClient(clientHandler);
-			var users = await client.GetFromJsonAsync<EnergoIdUserData[]>(address);
-
-			if (users != null)
-				energoIdReceivedUsers = users;
-		}
-		catch (Exception ex)
-		{
-			logger.LogCritical(ex, "Ошибка при получении пользователей EnergoId. Адрес: {address}", address);
-		}
-
-		if (energoIdReceivedUsers == null)
-		{
-			return new EnergoIdInfo();
-		}
-
-		var exists = usersRepository.ReadFlatUsers(user)
-			.Where(x => x.EnergoIdGuid != null && (currentUserGuid == null || x.Guid != currentUserGuid))
-			.Select(x => x.EnergoIdGuid.ToString())
-			.ToArray();
-
-		var response = new EnergoIdInfo
-		{
-			Connected = true,
-			EnergoIdUsers = energoIdReceivedUsers
-				.ExceptBy(exists, u => u.Sid)
-				.Select(x => new UserEnergoIdInfo
-				{
-					EnergoIdGuid = Guid.TryParse(x.Sid, out var guid) ? guid : Guid.Empty,
-					Login = x.Email,
-					FullName = x.Name,
-				})
-				.Where(x => x.EnergoIdGuid != Guid.Empty)
-				.ToArray()
-		};
-
-		return response;
-	}
-
 	/// <summary>
 	/// Аутентификация пользователя, прошедшего проверку на сервере EnergoId
 	/// </summary>
@@ -200,6 +132,18 @@ public class UsersController(
 	}
 
 	/// <summary>
+	/// Получение списка пользователей, определенных на сервере EnergoId
+	/// </summary>
+	/// <returns>Список пользователей</returns>
+	[HttpGet("energo-id")]
+	public ActionResult<UserEnergoIdInfo[]> ReadEnergoId()
+	{
+		var user = Authenticate();
+
+		return usersRepository.ReadEnergoId(user);
+	}
+
+	/// <summary>
 	/// Изменение пользователя
 	/// </summary>
 	/// <param name="userGuid">Идентификатор пользователя</param>
@@ -212,6 +156,19 @@ public class UsersController(
 		var user = Authenticate();
 
 		await usersRepository.UpdateAsync(db, user, userGuid, userUpdateRequest);
+
+		return NoContent();
+	}
+
+	/// <summary>
+	/// Обновление данных из EnergoId
+	/// </summary>
+	[HttpPut("energo-id")]
+	public ActionResult UpdateEnergoId()
+	{
+		var user = Authenticate();
+
+		usersRepository.UpdateEnergoId(user);
 
 		return NoContent();
 	}

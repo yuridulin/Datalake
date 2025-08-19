@@ -15,7 +15,9 @@ namespace Datalake.Database.InMemory.Repositories;
 /// <summary>
 /// Репозиторий работы с пользователями в памяти приложения
 /// </summary>
-public class UsersMemoryRepository(DatalakeDataStore dataStore)
+public class UsersMemoryRepository(
+	DatalakeDataStore dataStore,
+	DatalakeEnergoIdStore energoIdStore)
 {
 	#region API
 
@@ -42,6 +44,7 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 	public UserInfo[] ReadAll(UserAuthInfo user)
 	{
 		var users = dataStore.State.UsersInfo();
+		var energoId = energoIdStore.State;
 
 		List<UserInfo> usersWithAccess = [];
 		foreach (var u in users)
@@ -60,23 +63,42 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 				u.Guid = Guid.Empty;
 			}
 
-			if (u.AccessRule.HasAccess(AccessType.Viewer))
-				usersWithAccess.Add(u);
+			if (!u.AccessRule.HasAccess(AccessType.Viewer))
+				continue;
+
+			usersWithAccess.Add(u);
+
+			if (u.Type == UserType.EnergoId && u.EnergoIdGuid.HasValue && energoId.UsersByGuid.TryGetValue(u.EnergoIdGuid.Value, out var energo))
+				u.FullName = energo.FullName;
 		}
 
 		return usersWithAccess.ToArray();
 	}
 
 	/// <summary>
-	/// Получение простой информации о всех пользователях (без прав)
+	/// Получение списка пользователей EnergoId с сопоставлением с существующими пользователями
 	/// </summary>
 	/// <param name="user">Идентификатор читающего пользователя</param>
-	/// <returns>Список пользователей</returns>
-	public UserFlatInfo[] ReadFlatUsers(UserAuthInfo user)
+	/// <returns></returns>
+	public UserEnergoIdInfo[] ReadEnergoId(UserAuthInfo user)
 	{
 		user.ThrowIfNoGlobalAccess(AccessType.Admin);
 
-		return dataStore.State.UsersFlatInfo().ToArray();
+		var currentMapped = dataStore.State.Users
+			.Where(x => !x.IsDeleted && x.EnergoIdGuid != null)
+			.ToDictionary(x => x.EnergoIdGuid!.Value, x => x.Guid);
+
+		var all = energoIdStore.State.Users
+			.Select(x => new UserEnergoIdInfo
+			{
+				EnergoIdGuid = x.Guid,
+				FullName = x.FullName,
+				Email = x.Email ?? "нет адреса",
+				UserGuid = currentMapped.TryGetValue(x.Guid, out var userGuid) ? userGuid : null,
+			})
+			.ToArray();
+
+		return all;
 	}
 
 	/// <summary>
@@ -99,6 +121,13 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		userInfo.AccessRule = (user.Guid == guid && !user.RootRule.Access.HasAccess(AccessType.Manager))
 			? new(0, AccessType.Manager)
 			: new(0, user.RootRule.Access);
+
+		if (userInfo.Type == UserType.EnergoId
+			&& userInfo.EnergoIdGuid.HasValue
+			&& energoIdStore.State.UsersByGuid.TryGetValue(userInfo.EnergoIdGuid.Value, out var energo))
+		{
+			userInfo.FullName = energo.FullName;
+		}
 
 		return userInfo;
 	}
@@ -124,6 +153,13 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 		foreach (var group in userInfo.UserGroups)
 			group.AccessRule = user.GetAccessToUserGroup(group.Guid);
 
+		if (userInfo.Type == UserType.EnergoId
+			&& userInfo.EnergoIdGuid.HasValue
+			&& energoIdStore.State.UsersByGuid.TryGetValue(userInfo.EnergoIdGuid.Value, out var energo))
+		{
+			userInfo.FullName = energo.FullName;
+		}
+
 		return userInfo;
 	}
 
@@ -144,6 +180,17 @@ public class UsersMemoryRepository(DatalakeDataStore dataStore)
 			throw Errors.NoAccess;
 
 		return await ProtectedUpdateAsync(db, user.Guid, userGuid, request);
+	}
+
+	/// <summary>
+	/// Обновление информации из EnergoId
+	/// </summary>
+	/// <param name="user">Идентификатор изменяющего пользователя</param>
+	public void UpdateEnergoId(UserAuthInfo user)
+	{
+		user.ThrowIfNoGlobalAccess(AccessType.Admin);
+
+		energoIdStore.ForceRefreshAsync();
 	}
 
 	/// <summary>

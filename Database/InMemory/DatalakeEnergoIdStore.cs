@@ -1,4 +1,4 @@
-using Datalake.Database.Views;
+using Datalake.Database.InMemory.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,14 +15,9 @@ public sealed class DatalakeEnergoIdStore(
 	ILogger<DatalakeEnergoIdStore> logger) : BackgroundService
 {
 	/// <summary>
-	/// Получение всех пользователей
+	/// Текущее состояние
 	/// </summary>
-	public ImmutableList<EnergoIdUserView> Users => Volatile.Read(ref _state).List;
-
-	/// <summary>
-	/// Получение пользователя по идентификатору
-	/// </summary>
-	public ImmutableDictionary<Guid, EnergoIdUserView> UsersByGuid => Volatile.Read(ref _state).Dict;
+	public DatalakeEnergoIdState State => Volatile.Read(ref _state);
 
 	/// <summary>
 	/// Публичный ручной триггер
@@ -32,7 +27,7 @@ public sealed class DatalakeEnergoIdStore(
 
 	private readonly SemaphoreSlim _refreshGate = new(1, 1);
 	static readonly TimeSpan interval = TimeSpan.FromMinutes(1);
-	private EnergoIdState _state = EnergoIdState.Empty;
+	private DatalakeEnergoIdState _state = new() { Users = [], UsersByGuid = ImmutableDictionary<Guid, Views.EnergoIdUserView>.Empty };
 
 	/// <inheritdoc/>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -68,14 +63,14 @@ public sealed class DatalakeEnergoIdStore(
 			using var scope = scopeFactory.CreateScope();
 			var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-			// Запрос к view
 			var data = await db.UsersEnergoId.ToListAsync(ct);
 
 			var dict = data.ToImmutableDictionary(x => x.Guid);
 			var list = dict.Values.ToImmutableList();
 
-			var newSnapshot = new EnergoIdState(list, dict);
-			Volatile.Write(ref _state, newSnapshot);
+			var newState = new DatalakeEnergoIdState { Users = list, UsersByGuid = dict, };
+
+			Volatile.Write(ref _state, newState);
 
 			logger.LogDebug("Выполнено обновление EnergoId");
 		}
@@ -88,12 +83,5 @@ public sealed class DatalakeEnergoIdStore(
 		{
 			_refreshGate.Release();
 		}
-	}
-
-	private sealed record EnergoIdState(
-		ImmutableList<EnergoIdUserView> List,
-		ImmutableDictionary<Guid, EnergoIdUserView> Dict)
-	{
-		public static readonly EnergoIdState Empty = new([], ImmutableDictionary<Guid, EnergoIdUserView>.Empty);
 	}
 }
