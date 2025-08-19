@@ -180,6 +180,9 @@ public class Program
 		builder.Services.AddHostedService<SettingsHandlerService>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<SettingsHandlerService>());
 
+		// обновление данных из EnergoId
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<DatalakeEnergoIdStore>());
+
 		// настройка БД
 		builder.Services.AddSingleton<DbInitializer>();
 		builder.Services.AddSingleton<DbExternalInitializer>();
