@@ -4,6 +4,7 @@ using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
+using Datalake.Database.Views;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using LinqToDB;
@@ -118,6 +119,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 
 	internal ITable<UserGroupRelation> UserGroupRelations
 		=> this.GetTable<UserGroupRelation>();
+
+	internal ITable<EnergoIdUserView> UsersEnergoId
+		=> this.GetTable<EnergoIdUserView>();
 
 	#endregion
 }

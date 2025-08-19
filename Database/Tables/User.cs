@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.Database.Views;
+using Datalake.PublicApi.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
@@ -100,4 +101,9 @@ public record class User
 	/// Список сообщений аудита
 	/// </summary>
 	public ICollection<Log> Logs { get; set; } = null!;
+
+	/// <summary>
+	/// Информация о пользователе из EnergoId
+	/// </summary>
+	public EnergoIdUserView? EnergoId { get; set; }
 }

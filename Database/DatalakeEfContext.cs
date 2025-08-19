@@ -1,6 +1,9 @@
-﻿using Datalake.Database.Tables;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Tables;
+using Datalake.Database.Views;
 using Datalake.PublicApi.Models.Tags;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Text.Json;
 
 namespace Datalake.Database;
@@ -8,13 +11,19 @@ namespace Datalake.Database;
 /// <summary>
 /// Контекст базы данных EF, используется для миграций
 /// </summary>
-/// <param name="options"></param>
 public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : DbContext(options)
 {
-	private static JsonSerializerOptions jsonSerializerOptions = new()
+	/// <summary>
+	/// Конструктор, получающий настройки json
+	/// </summary>
+	public DatalakeEfContext(
+		JsonSerializerOptions jsonSerializerOptions,
+		DbContextOptions<DatalakeEfContext> options) : this(options)
 	{
-		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-	};
+		this.jsonSerializerOptions = jsonSerializerOptions;
+	}
+
+	private readonly JsonSerializerOptions? jsonSerializerOptions;
 
 	/// <summary>
 	/// Конфигурация связей между таблицами БД
@@ -89,6 +98,13 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.HasConversion(
 				v => JsonSerializer.Serialize(v, jsonSerializerOptions),
 				v => JsonSerializer.Deserialize<List<TagThresholdInfo>>(v, jsonSerializerOptions)
+			)
+			.Metadata.SetValueComparer(
+				new ValueComparer<List<TagThresholdInfo>>(
+					(a, b) => Equals(a, b),
+					v => v == null ? 0 : v.GetHashCode(),
+					v => v == null ? null! : new List<TagThresholdInfo>(v)
+				)
 			);
 
 		// связь источников и тегов
@@ -213,6 +229,18 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.WithMany(x => x.Logs)
 			.HasForeignKey(x => x.AffectedAccessRightsId)
 			.OnDelete(DeleteBehavior.SetNull);
+
+		// представление для пользователей EnergoId
+
+		modelBuilder.Entity<EnergoIdUserView>()
+			.ToTable(name: null)
+			.ToView(Db.EnergoIdView, schema: Db.EnergoIdSchema);
+
+		modelBuilder.Entity<EnergoIdUserView>()
+			.HasOne(x => x.User)
+			.WithOne(x => x.EnergoId)
+			.HasForeignKey<User>(x => x.EnergoIdGuid)
+			.HasPrincipalKey<EnergoIdUserView>(x => x.Guid);
 	}
 
 	#region Таблицы
@@ -281,6 +309,11 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 	/// Таблица связей пользователей и групп пользователей
 	/// </summary>
 	public virtual DbSet<UserGroupRelation> UserGroupRelations { get; set; }
+
+	/// <summary>
+	/// Представление пользователей EnergoId с их данными
+	/// </summary>
+	public virtual DbSet<EnergoIdUserView> UsersEnergoId { get; set; }
 
 	#endregion
 }

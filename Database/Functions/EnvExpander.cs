@@ -3,8 +3,14 @@ using System.Reflection;
 
 namespace Datalake.Database.Functions;
 
+/// <summary>
+/// Распространение переменных ENV по строковым шаблонам
+/// </summary>
 public static class EnvExpander
 {
+	/// <summary>
+	/// Обработка текстовых полей объекта
+	/// </summary>
 	public static void ExpandEnvVariables(object obj)
 	{
 		if (obj == null)
@@ -57,6 +63,9 @@ public static class EnvExpander
 		type.Equals(typeof(TimeSpan)) ||
 		type.Equals(typeof(Guid));
 
+	/// <summary>
+	/// Обработка строки
+	/// </summary>
 	public static string FillEnvVariables(string sourceString)
 	{
 		var env = Environment.GetEnvironmentVariables();

@@ -1,4 +1,6 @@
-﻿using Datalake.Database.Functions;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Functions;
+using Datalake.Database.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -37,13 +39,13 @@ public class DbExternalInitializer(
 			// Создание расширения. Были проблемы, что схемы нет, так что схему создаем перед этим
 			// Предварительно удаляем схему, чтобы не было конфликтов
 			await Exec(connection,
-				$"DROP SCHEMA IF EXISTS {QI(ExternalDbSchema)} CASCADE;");
+				$"DROP SCHEMA IF EXISTS {QI(Db.EnergoIdSchema)} CASCADE;");
 
 			await Exec(connection,
-				$"CREATE SCHEMA {QI(ExternalDbSchema)};");
+				$"CREATE SCHEMA {QI(Db.EnergoIdSchema)};");
 
 			await Exec(connection,
-				$"CREATE EXTENSION IF NOT EXISTS postgres_fdw SCHEMA {QI(ExternalDbSchema)};");
+				$"CREATE EXTENSION IF NOT EXISTS postgres_fdw SCHEMA {QI(Db.EnergoIdSchema)};");
 
 			// Создание сервера
 			await Exec(connection, $@"
@@ -71,45 +73,45 @@ public class DbExternalInitializer(
 			// Пробуем обновить схему
 			// Лучше конечно бы ее удалять и пересоздавать
 			await Exec(connection,
-				$"IMPORT FOREIGN SCHEMA {QI(settings.Schema)} LIMIT TO (realm, user_entity, user_attribute) FROM SERVER {QI(ExternalDbName)} INTO {QI(ExternalDbSchema)}");
+				$"IMPORT FOREIGN SCHEMA {QI(settings.Schema)} LIMIT TO (realm, user_entity, user_attribute) FROM SERVER {QI(ExternalDbName)} INTO {QI(Db.EnergoIdSchema)}");
 
 			await Exec(connection, @$"
-				CREATE VIEW {QI(ExternalDbSchema)}.users AS
+				CREATE VIEW {QI(Db.EnergoIdSchema)}.{QI(Db.EnergoIdView)} AS
 				WITH cte_user AS (
 					SELECT ue.*
-					FROM {QI(ExternalDbSchema)}.realm r
-					INNER JOIN {QI(ExternalDbSchema)}.user_entity ue ON
+					FROM {QI(Db.EnergoIdSchema)}.realm r
+					INNER JOIN {QI(Db.EnergoIdSchema)}.user_entity ue ON
 						r.""name"" = 'energo' AND
 						r.id = ue.realm_id 
 				)
 				SELECT
-					c.id AS sid,
-					c.username AS user_name,
-					c.email,
-					c.first_name,
-					c.last_name,
-					c.enabled AS active,
+					(c.id)::uuid AS {QI(nameof(EnergoIdUserView.Guid))},
+					c.username AS {QI(nameof(EnergoIdUserView.UserName))},
+					c.email AS {QI(nameof(EnergoIdUserView.Email))},
+					c.first_name AS {QI(nameof(EnergoIdUserView.FirstName))},
+					c.last_name AS {QI(nameof(EnergoIdUserView.LastName))},
+					c.enabled AS {QI(nameof(EnergoIdUserView.IsEnabled))},
 					/* из миллисекунд → timestamptz (UTC) */
-					(TIMESTAMP WITH TIME ZONE 'epoch' + (c.created_timestamp / 1000.0) * INTERVAL '1 second') AS create_at,
-					ua.value  AS uploader_enterprise_code,
-					ua1.value AS enterprise_code,
-					ua2.value AS personnel_number,
-					ua3.value AS middle_name,
-					ua4.value AS phone,
-					ua5.value AS work_phone,
-					ua6.value AS mobile_phone,
-					ua7.value AS gender,
-					ua8.value AS birthday
+					(TIMESTAMP WITH TIME ZONE 'epoch' + (c.created_timestamp / 1000.0) * INTERVAL '1 second') AS {QI(nameof(EnergoIdUserView.CreatedAt))},
+					ua.value  AS {QI(nameof(EnergoIdUserView.UploaderEnterpriseCode))},
+					ua1.value AS {QI(nameof(EnergoIdUserView.EnterpriseCode))},
+					ua2.value AS {QI(nameof(EnergoIdUserView.PersonnelNumber))},
+					ua3.value AS {QI(nameof(EnergoIdUserView.MiddleName))},
+					ua4.value AS {QI(nameof(EnergoIdUserView.Phone))},
+					ua5.value AS {QI(nameof(EnergoIdUserView.WorkPhone))},
+					ua6.value AS {QI(nameof(EnergoIdUserView.MobilePhone))},
+					ua7.value AS {QI(nameof(EnergoIdUserView.Gender))},
+					ua8.value AS {QI(nameof(EnergoIdUserView.Birthday))}
 				FROM cte_user c
-				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua  ON c.id = ua.user_id  AND ua.""name""  = 'uploader_enterprise_code'
-				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua1 ON c.id = ua1.user_id AND ua1.""name"" = 'enterprise_code'
-				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua2 ON c.id = ua2.user_id AND ua2.""name"" = 'personnel_number'
-				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua3 ON c.id = ua3.user_id AND ua3.""name"" = 'middle_name'
-				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua4 ON c.id = ua4.user_id AND ua4.""name"" = 'phone'
-				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua5 ON c.id = ua5.user_id AND ua5.""name"" = 'work_phone'
-				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua6 ON c.id = ua6.user_id AND ua6.""name"" = 'mobile_phone'
-				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua7 ON c.id = ua7.user_id AND ua7.""name"" = 'gender'
-				LEFT JOIN {QI(ExternalDbSchema)}.user_attribute ua8 ON c.id = ua8.user_id AND ua8.""name"" = 'birthday';");
+				LEFT JOIN {QI(Db.EnergoIdSchema)}.user_attribute ua  ON c.id = ua.user_id  AND ua.""name""  = 'uploader_enterprise_code'
+				LEFT JOIN {QI(Db.EnergoIdSchema)}.user_attribute ua1 ON c.id = ua1.user_id AND ua1.""name"" = 'enterprise_code'
+				LEFT JOIN {QI(Db.EnergoIdSchema)}.user_attribute ua2 ON c.id = ua2.user_id AND ua2.""name"" = 'personnel_number'
+				LEFT JOIN {QI(Db.EnergoIdSchema)}.user_attribute ua3 ON c.id = ua3.user_id AND ua3.""name"" = 'middle_name'
+				LEFT JOIN {QI(Db.EnergoIdSchema)}.user_attribute ua4 ON c.id = ua4.user_id AND ua4.""name"" = 'phone'
+				LEFT JOIN {QI(Db.EnergoIdSchema)}.user_attribute ua5 ON c.id = ua5.user_id AND ua5.""name"" = 'work_phone'
+				LEFT JOIN {QI(Db.EnergoIdSchema)}.user_attribute ua6 ON c.id = ua6.user_id AND ua6.""name"" = 'mobile_phone'
+				LEFT JOIN {QI(Db.EnergoIdSchema)}.user_attribute ua7 ON c.id = ua7.user_id AND ua7.""name"" = 'gender'
+				LEFT JOIN {QI(Db.EnergoIdSchema)}.user_attribute ua8 ON c.id = ua8.user_id AND ua8.""name"" = 'birthday';");
 
 			await transaction.CommitAsync();
 
@@ -125,7 +127,6 @@ public class DbExternalInitializer(
 
 
 	private const string ExternalDbName = "EnergoId";
-	private const string ExternalDbSchema = "energo-id";
 
 	private async Task Exec(NpgsqlConnection conn, string sql)
 	{
