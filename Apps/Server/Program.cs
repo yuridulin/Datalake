@@ -173,7 +173,7 @@ public class Program
 		builder.Services.AddSingleton<CollectorFactory>();
 
 		// работа с пользователями
-		builder.Services.AddScoped<AuthenticationService>();
+		builder.Services.AddSingleton<AuthenticationService>();
 
 		// обновление настроек
 		builder.Services.AddSingleton<SettingsHandlerService>();
@@ -189,6 +189,7 @@ public class Program
 
 		// обработчики
 		builder.Services.AddTransient<AuthMiddleware>();
+		builder.Services.AddTransient<SentryRequestBodyMiddleware>();
 
 		// оповещения об ошибках
 		var sentrySection = builder.Configuration.GetSection("Sentry");
