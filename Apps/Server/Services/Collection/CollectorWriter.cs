@@ -44,6 +44,7 @@ public class CollectorWriter : BackgroundService
 
 	// Метрики
 	private static readonly Meter s_meter = new("Datalake.CollectorWriter", "1.0");
+
 	private static readonly Counter<long> s_messagesProduced = s_meter.CreateCounter<long>("messages_produced");
 	private static readonly Counter<long> s_messagesConsumed = s_meter.CreateCounter<long>("messages_consumed");
 	private readonly ObservableGauge<long> _queueLengthGauge;

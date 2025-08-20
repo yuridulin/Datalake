@@ -41,11 +41,11 @@ const BlockAccessForm = () => {
 		if (!id) return
 		setLoading(true)
 		const loaders = [
-			api.blocksRead(Number(id)).then((res) => {
+			api.blocksGet(Number(id)).then((res) => {
 				setBlock(res.data)
 			}),
-			api.userGroupsReadAll().then((res) => setUserGroups(res.data.map((x) => ({ label: x.name, value: x.guid })))),
-			api.usersReadAll().then((res) =>
+			api.userGroupsGetAll().then((res) => setUserGroups(res.data.map((x) => ({ label: x.name, value: x.guid })))),
+			api.usersGetAll().then((res) =>
 				setUsers(
 					res.data.map((x) => ({
 						label: x.fullName,
@@ -54,7 +54,7 @@ const BlockAccessForm = () => {
 				),
 			),
 			api
-				.accessRead({ block: Number(id) })
+				.accessGet({ block: Number(id) })
 				.then((res) => {
 					setForm(
 						res.data

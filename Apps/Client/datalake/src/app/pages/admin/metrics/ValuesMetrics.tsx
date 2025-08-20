@@ -1,5 +1,5 @@
 import api from '@/api/swagger-api'
-import { KeyValuePairOfValuesRequestKeyAndValuesRequestUsage as Metric } from '@/api/swagger/data-contracts'
+import { KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo as Metric } from '@/api/swagger/data-contracts'
 import { Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { useCallback, useEffect, useState } from 'react'

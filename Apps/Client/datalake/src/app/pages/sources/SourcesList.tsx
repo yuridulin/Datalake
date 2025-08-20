@@ -1,5 +1,5 @@
 import api from '@/api/swagger-api'
-import { AccessType, SourceInfo, SourceState, SourceType } from '@/api/swagger/data-contracts'
+import { AccessType, SourceInfo, SourceStateInfo, SourceType } from '@/api/swagger/data-contracts'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
@@ -23,12 +23,12 @@ const NotEnteredTypes = [SourceType.Aggregated, SourceType.Calculated, SourceTyp
 
 const SourcesList = observer(() => {
 	const [sources, setSources] = useState([] as DataCell[])
-	const [states, setStates] = useState({} as Record<string, SourceState>)
+	const [states, setStates] = useState({} as Record<string, SourceStateInfo>)
 
 	const load = () => {
 		setSources([])
 		api
-			.sourcesReadAll({ withCustom: true })
+			.sourcesGetAll({ withCustom: true })
 			.then((res) => {
 				const [system, user]: DataCell[] = [
 					{
@@ -85,7 +85,7 @@ const SourcesList = observer(() => {
 
 	const createSource = () => {
 		api
-			.sourcesCreate()
+			.sourcesCreateEmpty()
 			.then((res) => {
 				load()
 				notification.success({ message: 'Создан источник ' + res.data.name })

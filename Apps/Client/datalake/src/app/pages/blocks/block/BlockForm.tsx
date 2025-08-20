@@ -34,7 +34,7 @@ const BlockForm = observer(() => {
 	const [loading, setLoading] = useState(true)
 
 	const getBlock = () => {
-		api.blocksRead(Number(id)).then((res) => {
+		api.blocksGet(Number(id)).then((res) => {
 			const attachedTags = res.data.tags.map(
 				(tag) =>
 					({
@@ -64,7 +64,7 @@ const BlockForm = observer(() => {
 	const getTags = () => {
 		setLoading(true)
 		api
-			.tagsReadAll()
+			.tagsGetAll()
 			.then((res) => {
 				setTags(
 					res.data

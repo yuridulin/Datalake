@@ -48,7 +48,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="guid">Идентификатор группы</param>
 	/// <returns>Информация о группе</returns>
-	public UserGroupInfo Read(UserAuthInfo user, Guid guid)
+	public UserGroupInfo Get(UserAuthInfo user, Guid guid)
 	{
 		var rule = user.GetAccessToUserGroup(guid);
 		if (!rule.HasAccess(AccessType.Viewer))
@@ -68,7 +68,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
 	/// <returns>Список групп</returns>
-	public UserGroupInfo[] ReadAll(UserAuthInfo user)
+	public UserGroupInfo[] GetAll(UserAuthInfo user)
 	{
 		var groups = dataStore.State.UserGroupsInfo();
 
@@ -88,13 +88,13 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
 	/// <returns>Дерево групп</returns>
-	public UserGroupTreeInfo[] ReadAllAsTree(UserAuthInfo user)
+	public UserGroupTreeInfo[] GetAllAsTree(UserAuthInfo user)
 	{
-		var groups = ReadAll(user);
+		var groups = GetAll(user);
 
-		return ReadChildren(null);
+		return GetChildren(null);
 
-		UserGroupTreeInfo[] ReadChildren(Guid? guid)
+		UserGroupTreeInfo[] GetChildren(Guid? guid)
 		{
 			return groups
 				.Where(x => x.ParentGroupGuid == guid)
@@ -109,7 +109,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 						AccessRule = x.AccessRule,
 						GlobalAccessType = x.GlobalAccessType,
 						ParentGroupGuid = x.ParentGroupGuid,
-						Children = ReadChildren(x.Guid),
+						Children = GetChildren(x.Guid),
 					};
 
 					if (!x.AccessRule.HasAccess(AccessType.Viewer))
@@ -131,7 +131,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="guid">Идентификатор группы</param>
 	/// <returns>Детальная информация о группе</returns>
-	public UserGroupDetailedInfo ReadWithDetails(UserAuthInfo user, Guid guid)
+	public UserGroupDetailedInfo GetWithDetails(UserAuthInfo user, Guid guid)
 	{
 		var rule = user.GetAccessToUserGroup(guid);
 		if (!rule.HasAccess(AccessType.Viewer))
@@ -202,7 +202,7 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 		return await ProtectedDeleteAsync(db, user.Guid, groupGuid);
 	}
 
-	#endregion
+	#endregion API
 
 	#region Действия
 
@@ -507,5 +507,5 @@ public class UserGroupsMemoryRepository(DatalakeDataStore dataStore)
 		});
 	}
 
-	#endregion
+	#endregion Действия
 }

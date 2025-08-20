@@ -107,16 +107,16 @@ const TagForm = () => {
 
 		Promise.all([
 			api
-				.blocksReadAsTree()
+				.blocksGetTree()
 				.then((res) => setBlocks(res.data))
 				.catch(() => setBlocks([])),
 			api
-				.tagsReadAll()
+				.tagsGetAll()
 				.then((res) => {
 					setTags(res.data)
 				})
 				.catch(() => setTags([])),
-			api.tagsRead(Number(id)).then((res) => {
+			api.tagsGet(Number(id)).then((res) => {
 				const info = res.data
 				setTag(info)
 				setRequest({
@@ -145,7 +145,7 @@ const TagForm = () => {
 								: SourceStrategy.FromSource,
 				)
 			}),
-			api.sourcesReadAll().then((res) => {
+			api.sourcesGetAll().then((res) => {
 				setSources(
 					res.data.map((source) => ({
 						value: source.id,

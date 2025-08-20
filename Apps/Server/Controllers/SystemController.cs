@@ -3,23 +3,21 @@ using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
+using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Settings;
+using Datalake.PublicApi.Models.Sources;
+using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Maintenance;
-using Datalake.Server.Services.Maintenance.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Server.Controllers;
 
-/// <summary>
-/// Представление системной информации о работе сервера
-/// </summary>
-[Route("api/[controller]")]
-[ApiController]
+/// <inheritdoc />
 public class SystemController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
@@ -30,36 +28,17 @@ public class SystemController(
 	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
 	SettingsMemoryRepository settingsRepository,
-	RequestsStateService requestsStateService) : ControllerBase
+	RequestsStateService requestsStateService) : SystemControllerBase
 {
-	/// <summary>
-	/// Получение даты последнего изменения структуры базы данных
-	/// </summary>
-	/// <returns>Дата в строковом виде</returns>
-	[HttpGet("last")]
-	public ActionResult<string> GetLastUpdate()
+	/// <inheritdoc />
+	public override ActionResult<string> GetLastUpdate()
 	{
 		var lastUpdate = dataStore.State.Version;
 		return lastUpdate.ToString();
 	}
 
-	/// <summary>
-	/// Получение списка сообщений
-	/// </summary>
-	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более поздних</param>
-	/// <param name="firstId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более ранних</param>
-	/// <param name="take">Сколько сообщений получить за этот запрос</param>
-	/// <param name="source">Идентификатор затронутого источника</param>
-	/// <param name="block">Идентификатор затронутого блока</param>
-	/// <param name="tag">Идентификатор затронутого тега</param>
-	/// <param name="user">Идентификатор затронутого пользователя</param>
-	/// <param name="group">Идентификатор затронутой группы пользователей</param>
-	/// <param name="categories">Выбранные категории сообщений</param>
-	/// <param name="types">Выбранные типы сообщений</param>
-	/// <param name="author">Идентификатор пользователя, создавшего сообщение</param>
-	/// <returns>Список сообщений</returns>
-	[HttpGet("logs")]
-	public async Task<ActionResult<LogInfo[]>> GetLogsAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult<LogInfo[]>> GetLogsAsync(
 		[FromQuery] int? lastId = null,
 		[FromQuery] int? firstId = null,
 		[FromQuery] int? take = null,
@@ -74,15 +53,11 @@ public class SystemController(
 	{
 		var userAuth = authenticator.Authenticate(HttpContext);
 
-		return await AuditRepository.ReadAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
+		return await AuditRepository.GetAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
 	}
 
-	/// <summary>
-	/// Информация о визитах пользователей
-	/// </summary>
-	/// <returns>Даты визитов, сопоставленные с идентификаторами пользователей</returns>
-	[HttpGet("visits")]
-	public ActionResult<Dictionary<Guid, DateTime>> GetVisits()
+	/// <inheritdoc />
+	public override ActionResult<Dictionary<Guid, DateTime>> GetVisits()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -91,12 +66,8 @@ public class SystemController(
 		return usersStateService.State();
 	}
 
-	/// <summary>
-	/// Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet("sources")]
-	public ActionResult<Dictionary<int, SourceState>> GetSourcesStates()
+	/// <inheritdoc />
+	public override ActionResult<Dictionary<int, SourceStateInfo>> GetSourcesStates()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -107,12 +78,8 @@ public class SystemController(
 			.ToDictionary();
 	}
 
-	/// <summary>
-	/// Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet("tags")]
-	public ActionResult<Dictionary<int, Dictionary<string, DateTime>>> GetTagsStates()
+	/// <inheritdoc />
+	public override ActionResult<Dictionary<int, Dictionary<string, DateTime>>> GetTagsStates()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -121,12 +88,8 @@ public class SystemController(
 			.ToDictionary();
 	}
 
-	/// <summary>
-	/// Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet("tags/{id}")]
-	public ActionResult<Dictionary<string, DateTime>> GetTagState(int id)
+	/// <inheritdoc />
+	public override ActionResult<Dictionary<string, DateTime>> GetTagState(int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -135,12 +98,8 @@ public class SystemController(
 		return tagsStateService.GetTagsStates().TryGetValue(id, out var state) ? state : [];
 	}
 
-	/// <summary>
-	/// Получение информации о настройках сервера
-	/// </summary>
-	/// <returns>Информация о настройках</returns>
-	[HttpGet("settings")]
-	public ActionResult<SettingsInfo> GetSettings()
+	/// <inheritdoc />
+	public override ActionResult<SettingsInfo> GetSettings()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -151,12 +110,8 @@ public class SystemController(
 		return info;
 	}
 
-	/// <summary>
-	/// Изменение информации о настройках сервера
-	/// </summary>
-	/// <param name="newSettings">Новые настройки сервера</param>
-	[HttpPut("settings")]
-	public async Task<ActionResult> UpdateSettingsAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> UpdateSettingsAsync(
 		[BindRequired][FromBody] SettingsInfo newSettings)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -166,12 +121,8 @@ public class SystemController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Перестроение кэша
-	/// </summary>
-	/// <returns></returns>
-	[HttpPut("restart/state")]
-	public async Task<ActionResult> RestartStateAsync()
+	/// <inheritdoc />
+	public override async Task<ActionResult> RestartStateAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -182,12 +133,8 @@ public class SystemController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Перестроение кэша текущих (последних) значений
-	/// </summary>
-	/// <returns></returns>
-	[HttpPut("restart/values")]
-	public async Task<ActionResult> RestartValuesAsync()
+	/// <inheritdoc />
+	public override async Task<ActionResult> RestartValuesAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -198,11 +145,8 @@ public class SystemController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Получение списка вычисленных прав доступа для каждого пользователя
-	/// </summary>
-	[HttpGet("access")]
-	public ActionResult<Dictionary<Guid, UserAuthInfo>> GetAccess()
+	/// <inheritdoc />
+	public override ActionResult<Dictionary<Guid, UserAuthInfo>> GetAccess()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
@@ -210,11 +154,8 @@ public class SystemController(
 		return derivedDataStore.Access.GetAll();
 	}
 
-	/// <summary>
-	/// Получение метрик запросов на чтение
-	/// </summary>
-	[HttpGet("reads")]
-	public ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsage>[]> GetReadMetricsAsync()
+	/// <inheritdoc />
+	public override ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]> GetReadMetricsAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);

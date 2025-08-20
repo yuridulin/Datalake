@@ -1,32 +1,20 @@
 ﻿using Datalake.Database;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.AccessRights;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Server.Controllers;
 
-/// <summary>
-/// Работа с разрешениями
-/// </summary>
-[Route("api/[controller]")]
-[ApiController]
+/// <inheritdoc />
 public class AccessController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
-	AccessRightsMemoryRepository accessRepository) : ControllerBase
+	AccessRightsMemoryRepository accessRepository) : AccessControllerBase
 {
-	/// <summary>
-	/// Получение списка прямых (не глобальных) разрешений субъекта на объект
-	/// </summary>
-	/// <param name="user">Идентификтатор пользователя</param>
-	/// <param name="userGroup">Идентификатор группы пользователей</param>
-	/// <param name="source">Идентификатор источника</param>
-	/// <param name="block">Идентификатор блока</param>
-	/// <param name="tag">Идентификатор тега</param>
-	/// <returns>Список разрешений</returns>
-	[HttpGet]
-	public ActionResult<AccessRightsInfo[]> Read(
+	/// <inheritdoc />
+	public override ActionResult<AccessRightsInfo[]> Get(
 		[FromQuery] Guid? user = null,
 		[FromQuery] Guid? userGroup = null,
 		[FromQuery] int? source = null,
@@ -35,7 +23,7 @@ public class AccessController(
 	{
 		var userAuth = authenticator.Authenticate(HttpContext);
 
-		return accessRepository.Read(
+		return accessRepository.Get(
 			user: userAuth,
 			userGuid: user,
 			userGroupGuid: userGroup,
@@ -44,12 +32,8 @@ public class AccessController(
 			tagId: tag);
 	}
 
-	/// <summary>
-	/// Изменение разрешений для группы пользователей
-	/// </summary>
-	/// <param name="request">Список изменений</param>
-	[HttpPost]
-	public async Task<ActionResult> ApplyChangesAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> ApplyChangesAsync(
 		[FromBody] AccessRightsApplyRequest request)
 	{
 		var user = authenticator.Authenticate(HttpContext);

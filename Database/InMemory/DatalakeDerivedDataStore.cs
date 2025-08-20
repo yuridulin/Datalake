@@ -98,16 +98,16 @@ public class DatalakeDerivedDataStore
 			})
 			.ToArray();
 
-		return ReadBlockChildren(blocksWithTags, null, string.Empty);
+		return GetBlockChildren(blocksWithTags, null, string.Empty);
 
-		BlockTreeInfo[] ReadBlockChildren(BlockWithTagsInfo[] blocks, int? id, string prefix)
+		BlockTreeInfo[] GetBlockChildren(BlockWithTagsInfo[] blocks, int? id, string prefix)
 		{
 			var prefixString = prefix + (string.IsNullOrEmpty(prefix) ? string.Empty : ".");
 			return blocks
 				.Where(x => x.ParentId == id)
 				.Select(x =>
 				{
-					var blockChildren = ReadBlockChildren(blocks, x.Id, prefixString + x.Name);
+					var blockChildren = GetBlockChildren(blocks, x.Id, prefixString + x.Name);
 					var block = new BlockTreeInfo
 					{
 						Id = x.Id,
@@ -133,7 +133,7 @@ public class DatalakeDerivedDataStore
 	/// <returns>Коллекция корневых элементом дерева</returns>
 	public BlockTreeInfo[] BlocksTree => _cachedBlockTree;
 
-	#endregion
+	#endregion Дерево блоков
 
 	#region Права пользователей
 
@@ -157,5 +157,5 @@ public class DatalakeDerivedDataStore
 	/// </summary>
 	public event EventHandler<DatalakeAccessState>? AccessChanged;
 
-	#endregion
+	#endregion Права пользователей
 }

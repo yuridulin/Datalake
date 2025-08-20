@@ -1,29 +1,15 @@
-﻿using System.Collections.Concurrent;
+﻿using Datalake.PublicApi.Models.Values;
+using System.Collections.Concurrent;
 
 namespace Datalake.Server.Services.Maintenance.Models;
 
 /// <summary>
-/// Метрика запроса на чтение данных
+/// Объект метрики запроса на чтение данных
 /// </summary>
-public class ValuesRequestUsage
+public class ValuesRequestUsage : ValuesRequestUsageInfo
 {
 	// Потокобезопасная очередь меток времени вызовов
 	private readonly ConcurrentQueue<DateTime> _calls = new();
-
-	/// <summary>
-	/// Время последнего выполнения
-	/// </summary>
-	public TimeSpan LastExecutionTime { get; private set; }
-
-	/// <summary>
-	/// Время последнего завершения выполнения
-	/// </summary>
-	public DateTime LastExecutedAt { get; private set; }
-
-	/// <summary>
-	/// Количество значений в последнем запросе
-	/// </summary>
-	public int LastValuesCount { get; private set; }
 
 	/// <summary>
 	/// Добавление нового вызова запроса
@@ -44,7 +30,7 @@ public class ValuesRequestUsage
 	/// <summary>
 	/// Подсчет количества запросов за последние сутки
 	/// </summary>
-	public int RequestsLast24h
+	public override int RequestsLast24h
 	{
 		get
 		{

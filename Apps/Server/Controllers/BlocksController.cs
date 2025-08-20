@@ -1,6 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Database.InMemory.Repositories;
-using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Blocks;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
@@ -8,23 +8,14 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Server.Controllers;
 
-/// <summary>
-/// Взаимодействие с блоками
-/// </summary>
-[Route("api/[controller]")]
-[ApiController]
+/// <inheritdoc />
 public class BlocksController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
-	BlocksMemoryRepository blocksRepository) : ControllerBase
+	BlocksMemoryRepository blocksRepository) : BlocksControllerBase
 {
-	/// <summary>
-	/// Создание нового блока на основании переданной информации
-	/// </summary>
-	/// <param name="blockInfo">Данные о новом блоке</param>
-	/// <returns>Идентификатор блока</returns>
-	[HttpPost]
-	public async Task<ActionResult<BlockWithTagsInfo>> CreateAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult<BlockWithTagsInfo>> CreateAsync(
 		[BindRequired, FromBody] BlockFullInfo blockInfo)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -32,13 +23,8 @@ public class BlocksController(
 		return await blocksRepository.CreateAsync(db, user, blockInfo: blockInfo);
 	}
 
-	/// <summary>
-	/// Создание нового отдельного блока с информацией по умолчанию
-	/// </summary>
-	/// <param name="parentId">Идентификатор родительского блока</param>
-	/// <returns>Идентификатор блока</returns>
-	[HttpPost("empty")]
-	public async Task<ActionResult<BlockWithTagsInfo>> CreateEmptyAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult<BlockWithTagsInfo>> CreateEmptyAsync(
 		[FromQuery] int? parentId)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -46,52 +32,33 @@ public class BlocksController(
 		return await blocksRepository.CreateAsync(db, user, parentId: parentId);
 	}
 
-	/// <summary>
-	/// Получение списка блоков с базовой информацией о них
-	/// </summary>
-	/// <returns>Список блоков</returns>
-	[HttpGet]
-	public ActionResult<BlockWithTagsInfo[]> Read()
+	/// <inheritdoc />
+	public override ActionResult<BlockWithTagsInfo[]> GetAll()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return blocksRepository.ReadAll(user);
+		return blocksRepository.GetAll(user);
 	}
 
-	/// <summary>
-	/// Получение информации о выбранном блоке
-	/// </summary>
-	/// <param name="id">Идентификатор блока</param>
-	/// <returns>Информация о блоке</returns>
-	/// <exception cref="NotFoundException">Блок не найден по идентификатору</exception>
-	[HttpGet("{id:int}")]
-	public ActionResult<BlockFullInfo> Read(
+	/// <inheritdoc />
+	public override ActionResult<BlockFullInfo> Get(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return blocksRepository.Read(user, id);
+		return blocksRepository.Get(user, id);
 	}
 
-	/// <summary>
-	/// Получение иерархической структуры всех блоков
-	/// </summary>
-	/// <returns>Список обособленных блоков с вложенными блоками</returns>
-	[HttpGet("tree")]
-	public ActionResult<BlockTreeInfo[]> ReadAsTree()
+	/// <inheritdoc />
+	public override ActionResult<BlockTreeInfo[]> GetTree()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return blocksRepository.ReadAllAsTree(user);
+		return blocksRepository.GetAllAsTree(user);
 	}
 
-	/// <summary>
-	/// Изменение блока
-	/// </summary>
-	/// <param name="id">Идентификатор блока</param>
-	/// <param name="block">Новые данные блока</param>
-	[HttpPut("{id:int}")]
-	public async Task<ActionResult> UpdateAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] BlockUpdateRequest block)
 	{
@@ -102,13 +69,8 @@ public class BlocksController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Перемещение блока
-	/// </summary>
-	/// <param name="id">Идентификатор блока</param>
-	/// <param name="parentId">Идентификатор нового родительского блока</param>
-	[HttpPost("{id:int}/move")]
-	public async Task<ActionResult> MoveAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> MoveAsync(
 		[BindRequired, FromRoute] int id,
 		[FromQuery] int? parentId)
 	{
@@ -119,12 +81,8 @@ public class BlocksController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Удаление блока
-	/// </summary>
-	/// <param name="id">Идентификатор блока</param>
-	[HttpDelete("{id:int}")]
-	public async Task<ActionResult> DeleteAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);

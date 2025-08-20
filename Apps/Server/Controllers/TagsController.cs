@@ -1,5 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
@@ -7,23 +8,14 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Server.Controllers;
 
-/// <summary>
-/// Взаимодействие с тегами
-/// </summary>
-[ApiController]
-[Route("api/[controller]")]
+/// <inheritdoc />
 public class TagsController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
-	TagsMemoryRepository tagsRepository) : ControllerBase
+	TagsMemoryRepository tagsRepository) : TagsControllerBase
 {
-	/// <summary>
-	/// Создание нового тега
-	/// </summary>
-	/// <param name="tagCreateRequest">Необходимые данные для создания тега</param>
-	/// <returns>Идентификатор нового тега в локальной базе данных</returns>
-	[HttpPost]
-	public async Task<ActionResult<TagInfo>> CreateAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult<TagInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest tagCreateRequest)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -31,29 +23,16 @@ public class TagsController(
 		return await tagsRepository.CreateAsync(db, user, tagCreateRequest);
 	}
 
-	/// <summary>
-	/// Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
-	/// </summary>
-	/// <param name="id">Идентификатор тега</param>
-	/// <returns>Объект информации о теге</returns>
-	[HttpGet("{id}")]
-	public ActionResult<TagFullInfo> Read(int id)
+	/// <inheritdoc />
+	public override ActionResult<TagFullInfo> Get(int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return tagsRepository.Read(user, id);
+		return tagsRepository.Get(user, id);
 	}
 
-	/// <summary>
-	/// Получение списка тегов, включая информацию о источниках и настройках получения данных
-	/// </summary>
-	/// <param name="sourceId">Идентификатор источника. Если указан, будут выбраны теги только этого источника</param>
-	/// <param name="id">Список локальных идентификаторов тегов</param>
-	/// <param name="names">Список текущих наименований тегов</param>
-	/// <param name="guids">Список глобальных идентификаторов тегов</param>
-	/// <returns>Плоский список объектов информации о тегах</returns>
-	[HttpGet]
-	public ActionResult<TagInfo[]> ReadAll(
+	/// <inheritdoc />
+	public override ActionResult<TagInfo[]> GetAll(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? id,
 		[FromQuery] string[]? names,
@@ -61,16 +40,11 @@ public class TagsController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return tagsRepository.ReadAll(user, sourceId, id, names, guids);
+		return tagsRepository.GetAll(user, sourceId, id, names, guids);
 	}
 
-	/// <summary>
-	/// Изменение тега
-	/// </summary>
-	/// <param name="id">Идентификатор тега</param>
-	/// <param name="tag">Новые данные тега</param>
-	[HttpPut("{id}")]
-	public async Task<ActionResult> UpdateAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] TagUpdateRequest tag)
 	{
@@ -81,12 +55,8 @@ public class TagsController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Удаление тега
-	/// </summary>
-	/// <param name="id">Идентификатор тега</param>
-	[HttpDelete("{id}")]
-	public async Task<ActionResult> DeleteAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);

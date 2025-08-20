@@ -45,7 +45,7 @@ public class DatalakeCurrentValuesStore
 
 	private static async Task<Dictionary<int, TagHistory>> LoadValuesFromDatabaseAsync(DatalakeContext db)
 	{
-		var dbValues = await ValuesRepository.ProtectedReadAllLastValuesAsync(db);
+		var dbValues = await ValuesRepository.ProtectedGetAllLastValuesAsync(db);
 		var newValues = dbValues.ToDictionary(x => x.TagId);
 		return newValues;
 	}

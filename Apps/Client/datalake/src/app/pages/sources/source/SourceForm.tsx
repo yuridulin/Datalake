@@ -23,7 +23,7 @@ const SourceForm = () => {
 	const [source, setSource] = useState({} as SourceInfo)
 
 	function load() {
-		api.sourcesRead(Number(id)).then((res) => {
+		api.sourcesGet(Number(id)).then((res) => {
 			const sourceInfo = res.data
 			setSource(sourceInfo)
 			setRequest({

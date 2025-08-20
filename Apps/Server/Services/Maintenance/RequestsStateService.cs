@@ -49,5 +49,6 @@ public class RequestsStateService
 	/// <summary>
 	/// Получение метрик
 	/// </summary>
-	public IReadOnlyDictionary<ValuesRequestKey, ValuesRequestUsage> GetAllStats() => _storage;
+	public IReadOnlyDictionary<ValuesRequestKey, ValuesRequestUsageInfo> GetAllStats() => _storage
+		.ToDictionary(x => x.Key, x => (ValuesRequestUsageInfo)x.Value);
 }

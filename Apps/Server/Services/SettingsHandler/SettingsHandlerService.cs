@@ -20,6 +20,7 @@ public class SettingsHandlerService(
 	// Каналы для обработки событий
 	private readonly Channel<DatalakeDataState> _stateChannel =
 		Channel.CreateUnbounded<DatalakeDataState>();
+
 	private readonly Channel<DatalakeAccessState> _accessChannel =
 		Channel.CreateUnbounded<DatalakeAccessState>();
 

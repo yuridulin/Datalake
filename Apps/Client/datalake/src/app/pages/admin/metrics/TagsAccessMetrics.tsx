@@ -34,7 +34,7 @@ const TagsAccessMetrics = () => {
 
 		Promise.all([
 			api
-				.tagsReadAll()
+				.tagsGetAll()
 				.then((res) => {
 					tags = res.data
 				})

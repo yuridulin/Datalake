@@ -65,7 +65,7 @@ const AccessSettings = () => {
 		let tags: Record<string, TagSimpleInfo>
 		let auth: Record<string, UserAuthInfo>
 		Promise.all([
-			api.userGroupsReadAll().then((res) => {
+			api.userGroupsGetAll().then((res) => {
 				groups = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.guid] = item.name
@@ -74,7 +74,7 @@ const AccessSettings = () => {
 					{} as Record<string, string>,
 				)
 			}),
-			api.sourcesReadAll().then((res) => {
+			api.sourcesGetAll().then((res) => {
 				sources = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.id] = item.name
@@ -83,7 +83,7 @@ const AccessSettings = () => {
 					{} as Record<string, string>,
 				)
 			}),
-			api.blocksReadAll().then((res) => {
+			api.blocksGetAll().then((res) => {
 				blocks = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.id] = item.name
@@ -92,7 +92,7 @@ const AccessSettings = () => {
 					{} as Record<string, string>,
 				)
 			}),
-			api.tagsReadAll().then((res) => {
+			api.tagsGetAll().then((res) => {
 				tags = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.guid] = item

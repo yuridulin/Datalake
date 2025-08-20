@@ -23,7 +23,7 @@ const UserCreate = observer(() => {
 
 	function load() {
 		api
-			.usersReadEnergoId()
+			.usersGetEnergoId()
 			.then((res) => !!res && setKeycloakInfo(res.data.sort((a, b) => a.fullName.localeCompare(b.fullName))))
 	}
 

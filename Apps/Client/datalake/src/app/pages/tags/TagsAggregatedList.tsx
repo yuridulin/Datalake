@@ -13,7 +13,7 @@ const TagsAggregatedList = () => {
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
 			api
-				.tagsReadAll({ sourceId: SourceType.Aggregated })
+				.tagsGetAll({ sourceId: SourceType.Aggregated })
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags

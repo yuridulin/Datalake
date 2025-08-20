@@ -65,7 +65,7 @@ const BlocksTree = observer(() => {
 	// Load blocks data
 	const loadBlocks = () => {
 		api
-			.blocksReadAll()
+			.blocksGetAll()
 			.then((res) => setData(res.data))
 			.catch(() => setData([]))
 	}

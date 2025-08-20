@@ -13,7 +13,7 @@ const TagsCalculatedList = () => {
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
 			api
-				.tagsReadAll({ sourceId: SourceType.Calculated })
+				.tagsGetAll({ sourceId: SourceType.Calculated })
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags

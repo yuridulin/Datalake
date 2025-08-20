@@ -47,7 +47,7 @@ const UserForm = observer(() => {
 	const load = () => {
 		if (!id) return
 		setLoading(true)
-		api.usersReadWithDetails(String(id)).then((res) => {
+		api.usersGetWithDetails(String(id)).then((res) => {
 			setNewType(res.data.type)
 			setUser({
 				...res.data,
@@ -68,7 +68,7 @@ const UserForm = observer(() => {
 			setLoading(false)
 		})
 
-		api.usersReadEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
+		api.usersGetEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
 	}
 
 	useEffect(load, [id])

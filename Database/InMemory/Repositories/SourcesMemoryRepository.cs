@@ -44,7 +44,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="id">Идентификатор источника</param>
 	/// <returns>Информация об источнике</returns>
-	public SourceInfo Read(UserAuthInfo user, int id)
+	public SourceInfo Get(UserAuthInfo user, int id)
 	{
 		var rule = user.GetAccessToSource(id);
 		user.ThrowIfNoAccessToSource(AccessType.Viewer, id);
@@ -63,7 +63,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="id">Идентификатор источника</param>
 	/// <returns>Информация об источнике</returns>
-	public SourceWithTagsInfo ReadWithTags(UserAuthInfo user, int id)
+	public SourceWithTagsInfo GetWithTags(UserAuthInfo user, int id)
 	{
 		user.ThrowIfNoAccessToSource(AccessType.Viewer, id);
 
@@ -93,7 +93,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="withCustom">Включать в список системные источники</param>
 	/// <returns>Список источников</returns>
-	public SourceInfo[] ReadAll(UserAuthInfo user, bool withCustom)
+	public SourceInfo[] GetAll(UserAuthInfo user, bool withCustom)
 	{
 		var sources = dataStore.State.SourcesInfo(withCustom).ToArray();
 
@@ -144,7 +144,7 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		return await ProtectedDeleteAsync(db, user.Guid, id);
 	}
 
-	#endregion
+	#endregion API
 
 	#region Действия
 
@@ -429,5 +429,5 @@ public class SourcesMemoryRepository(DatalakeDataStore dataStore)
 		});
 	}
 
-	#endregion
+	#endregion Действия
 }

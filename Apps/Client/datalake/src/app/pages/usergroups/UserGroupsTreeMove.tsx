@@ -35,7 +35,7 @@ const UserGroupsTreeMove = observer(() => {
 	const { token } = theme.useToken()
 
 	function load() {
-		api.userGroupsReadAsTree().then((res) => setTree(transformToTreeNode(res.data)))
+		api.userGroupsGetTree().then((res) => setTree(transformToTreeNode(res.data)))
 	}
 
 	const findParentKey = (data: TreeDataNode[], key: React.Key): React.Key | null => {

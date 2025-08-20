@@ -32,7 +32,7 @@ const BlockView = observer(() => {
 	const getBlock = () => {
 		setReady(false)
 		api
-			.blocksRead(Number(id))
+			.blocksGet(Number(id))
 			.then((res) => {
 				res.data.adults = res.data.adults.reverse()
 				setBlock(res.data)

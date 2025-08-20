@@ -2,7 +2,7 @@
 using Datalake.Database.Constants;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Repositories;
-using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Maintenance;
@@ -13,24 +13,16 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Server.Controllers;
 
-/// <summary>
-/// Взаимодействие с источниками данных
-/// </summary>
-[Route("api/[controller]")]
-[ApiController]
+/// <inheritdoc />
 public class SourcesController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
 	SourcesMemoryRepository sourcesRepository,
 	ReceiverService receiverService,
-	TagsStateService tagsStateService) : ControllerBase
+	TagsStateService tagsStateService) : SourcesControllerBase
 {
-	/// <summary>
-	/// Создание источника с информацией по умолчанию
-	/// </summary>
-	/// <returns>Идентификатор источника</returns>
-	[HttpPost("empty")]
-	public async Task<ActionResult<SourceInfo>> CreateAsync()
+	/// <inheritdoc />
+	public override async Task<ActionResult<SourceInfo>> CreateEmptyAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -39,13 +31,8 @@ public class SourcesController(
 		return info;
 	}
 
-	/// <summary>
-	/// Создание источника на основе переданных данных
-	/// </summary>
-	/// <param name="source">Данные нового источника</param>
-	/// <returns>Идентификатор источника</returns>
-	[HttpPost]
-	public async Task<ActionResult<SourceInfo>> CreateAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult<SourceInfo>> CreateAsync(
 		[BindRequired, FromBody] SourceInfo source)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -55,41 +42,25 @@ public class SourcesController(
 		return info;
 	}
 
-	/// <summary>
-	/// Получение данных о источнике
-	/// </summary>
-	/// <param name="id">Идентификатор источника</param>
-	/// <returns>Данные о источнике</returns>
-	/// <exception cref="NotFoundException">Источник не найден по идентификатору</exception>
-	[HttpGet("{id:int}")]
-	public ActionResult<SourceInfo> Read(
+	/// <inheritdoc />
+	public override ActionResult<SourceInfo> Get(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return sourcesRepository.Read(user, id);
+		return sourcesRepository.Get(user, id);
 	}
 
-	/// <summary>
-	/// Получение списка источников
-	/// </summary>
-	/// <param name="withCustom">Включить ли в список системные источники</param>
-	/// <returns>Список источников</returns>
-	[HttpGet]
-	public ActionResult<SourceInfo[]> Read(bool withCustom = false)
+	/// <inheritdoc />
+	public override ActionResult<SourceInfo[]> GetAll(bool withCustom = false)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return sourcesRepository.ReadAll(user, withCustom);
+		return sourcesRepository.GetAll(user, withCustom);
 	}
 
-	/// <summary>
-	/// Изменение источника
-	/// </summary>
-	/// <param name="id">Идентификатор источника</param>
-	/// <param name="request">Новые данные источника</param>
-	[HttpPut("{id:int}")]
-	public async Task<ActionResult> UpdateAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] SourceUpdateRequest request)
 	{
@@ -100,12 +71,8 @@ public class SourcesController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Удаление источника
-	/// </summary>
-	/// <param name="id">Идентификатор источника</param>
-	[HttpDelete("{id:int}")]
-	public async Task<ActionResult> DeleteAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -115,21 +82,15 @@ public class SourcesController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Получение доступных значений источника
-	/// </summary>
-	/// <param name="id">Идентификатор источника</param>
-	/// <returns>Список данных источника</returns>
-	/// <exception cref="NotFoundException"></exception>
-	[HttpGet("{id:int}/items")]
-	public async Task<ActionResult<SourceItemInfo[]>> GetItemsAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult<SourceItemInfo[]>> GetItemsAsync(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Viewer, id);
 
-		var source = sourcesRepository.Read(user, id);
+		var source = sourcesRepository.Get(user, id);
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 
 		var items = sourceItemsResponse.Tags
@@ -145,21 +106,15 @@ public class SourcesController(
 		return items;
 	}
 
-	/// <summary>
-	/// Получение доступных значений и связанных тегов источника
-	/// </summary>
-	/// <param name="id">Идентификатор источника</param>
-	/// <returns>Список данных источника</returns>
-	/// <exception cref="NotFoundException"></exception>
-	[HttpGet("{id:int}/items-and-tags")]
-	public async Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Editor, id);
 
-		var source = sourcesRepository.ReadWithTags(user, id);
+		var source = sourcesRepository.GetWithTags(user, id);
 
 		var sourceItemsResponse = await receiverService.GetItemsFromSourceAsync(source.Type, source.Address);
 		var sourceItems = sourceItemsResponse.Tags

@@ -41,7 +41,7 @@ public class AccessRightsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <returns>Список правил доступа</returns>
-	public AccessRightsInfo[] Read(
+	public AccessRightsInfo[] Get(
 		UserAuthInfo user,
 		Guid? userGuid,
 		Guid? userGroupGuid,

@@ -1,6 +1,6 @@
 ﻿using Datalake.PublicApi.Enums;
 
-namespace Datalake.Server.Services.Maintenance.Models;
+namespace Datalake.PublicApi.Models.Values;
 
 /// <summary>
 /// Уникальная подпись для метрики запроса к данным

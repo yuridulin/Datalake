@@ -1,6 +1,6 @@
 ﻿using Datalake.Database.InMemory;
 using Datalake.PublicApi.Constants;
-using Datalake.Server.Services.Maintenance.Models;
+using Datalake.PublicApi.Models.Sources;
 using System.Collections.Concurrent;
 
 namespace Datalake.Server.Services.Maintenance;
@@ -12,12 +12,12 @@ public class SourcesStateService(
 	DatalakeDataStore dataStore,
 	DatalakeCurrentValuesStore valuesStore)
 {
-	private ConcurrentDictionary<int, SourceState> _state = [];
+	private ConcurrentDictionary<int, SourceStateInfo> _state = [];
 
 	/// <summary>
 	/// Получение текущего состояния источников данных
 	/// </summary>
-	public Dictionary<int, SourceState> State() => new(_state);
+	public Dictionary<int, SourceStateInfo> State() => new(_state);
 
 	/// <summary>
 	/// Инициализация списка информации
@@ -25,7 +25,7 @@ public class SourcesStateService(
 	/// <param name="sourcesId">Идентификаторы источников</param>
 	public void Initialize(int[] sourcesId)
 	{
-		var newState = new ConcurrentDictionary<int, SourceState>();
+		var newState = new ConcurrentDictionary<int, SourceStateInfo>();
 
 		foreach (var sourceId in sourcesId)
 			UpdateSource(sourceId, false);
@@ -71,7 +71,7 @@ public class SourcesStateService(
 
 		_state.AddOrUpdate(
 			sourceId,
-			(id) => new SourceState
+			(id) => new SourceStateInfo
 			{
 				SourceId = id,
 				LastTry = now,
@@ -82,7 +82,7 @@ public class SourcesStateService(
 				ValuesLastHalfHour = lastHalfHour,
 				ValuesLastDay = lastDay,
 			},
-			(id, state) => new SourceState
+			(id, state) => new SourceStateInfo
 			{
 				SourceId = id,
 				LastTry = now,

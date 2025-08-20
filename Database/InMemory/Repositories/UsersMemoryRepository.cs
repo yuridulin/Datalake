@@ -41,7 +41,7 @@ public class UsersMemoryRepository(
 	/// </summary>
 	/// <param name="user">Идентификатор читающего пользователя</param>
 	/// <returns>Список пользователей</returns>
-	public UserInfo[] ReadAll(UserAuthInfo user)
+	public UserInfo[] GetAll(UserAuthInfo user)
 	{
 		var users = dataStore.State.UsersInfo();
 		var energoId = energoIdStore.State;
@@ -80,7 +80,7 @@ public class UsersMemoryRepository(
 	/// </summary>
 	/// <param name="user">Идентификатор читающего пользователя</param>
 	/// <returns></returns>
-	public UserEnergoIdInfo[] ReadEnergoId(UserAuthInfo user)
+	public UserEnergoIdInfo[] GetEnergoId(UserAuthInfo user)
 	{
 		user.ThrowIfNoGlobalAccess(AccessType.Admin);
 
@@ -107,7 +107,7 @@ public class UsersMemoryRepository(
 	/// <param name="user">Идентификатор читающего пользователя</param>
 	/// <param name="guid">Идентификатор затронутого пользователя</param>
 	/// <returns>Детальная о пользователе</returns>
-	public UserInfo Read(UserAuthInfo user, Guid guid)
+	public UserInfo Get(UserAuthInfo user, Guid guid)
 	{
 		if (user.Guid != guid)
 			user.ThrowIfNoGlobalAccess(AccessType.Viewer);
@@ -138,7 +138,7 @@ public class UsersMemoryRepository(
 	/// <param name="user">Идентификатор читающего пользователя</param>
 	/// <param name="guid">Идентификатор затронутого пользователя</param>
 	/// <returns>Детальная информация о пользователе</returns>
-	public UserDetailInfo ReadWithDetails(UserAuthInfo user, Guid guid)
+	public UserDetailInfo GetWithDetails(UserAuthInfo user, Guid guid)
 	{
 		if (user.Guid != guid)
 			user.ThrowIfNoGlobalAccess(AccessType.Viewer);
@@ -208,7 +208,7 @@ public class UsersMemoryRepository(
 		return await ProtectedDeleteAsync(db, user.Guid, userGuid);
 	}
 
-	#endregion
+	#endregion API
 
 	#region Действия
 
@@ -528,5 +528,5 @@ public class UsersMemoryRepository(
 		return Passwords.GenerateNewHashForStatic(oldHashes.ToHashSet());
 	}
 
-	#endregion
+	#endregion Действия
 }

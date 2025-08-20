@@ -37,6 +37,7 @@ public class Program
 {
 	internal static string WebRootPath { get; set; } = string.Empty;
 	internal static string CurrentEnvironment { get; set; } = string.Empty;
+
 	internal static string Version { get; set; } =
 		Environment.GetEnvironmentVariable("APP_VERSION")
 			?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()

@@ -51,7 +51,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="id">Идентификатор тега</param>
 	/// <returns></returns>
-	public TagFullInfo Read(UserAuthInfo user, int id)
+	public TagFullInfo Get(UserAuthInfo user, int id)
 	{
 		var rule = user.GetAccessToTag(id);
 		if (!rule.HasAccess(AccessType.Viewer))
@@ -75,7 +75,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="names">Имена тегов</param>
 	/// <param name="guids">Глобальные идентификаторы тегов</param>
 	/// <returns>Список информации о тегах</returns>
-	public TagInfo[] ReadAll(UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
+	public TagInfo[] GetAll(UserAuthInfo user, int? sourceId, int[]? id, string[]? names, Guid[]? guids)
 	{
 		var tagsChain = dataStore.State.TagsInfoWithSources();
 
@@ -143,7 +143,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		await ProtectedDeleteAsync(db, user.Guid, id);
 	}
 
-	#endregion
+	#endregion API
 
 	#region Действия
 
@@ -595,5 +595,5 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		}
 	}
 
-	#endregion
+	#endregion Действия
 }

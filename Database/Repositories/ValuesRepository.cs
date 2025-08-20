@@ -166,7 +166,7 @@ public class ValuesRepository(
 		return responses;
 	}
 
-	#endregion
+	#endregion API
 
 	#region Чтение
 
@@ -196,7 +196,7 @@ public class ValuesRepository(
 
 				if (group.Settings.Exact.HasValue)
 				{
-					databaseValues = await ProtectedReadLastValuesBeforeDateAsync(db, group.TagsId, group.Settings.Exact.Value);
+					databaseValues = await ProtectedGetLastValuesBeforeDateAsync(db, group.TagsId, group.Settings.Exact.Value);
 					databaseValuesById = databaseValues.ToDictionary(x => x.TagId)!;
 
 					date = group.Settings.Exact.Value;
@@ -255,7 +255,7 @@ public class ValuesRepository(
 					young = group.Settings.Young ?? DateFormats.GetCurrentDateTime(),
 					old = group.Settings.Old ?? young.Date;
 
-				databaseValues = await ProtectedReadValuesAsync(db, group.TagsId, old, young);
+				databaseValues = await ProtectedGetValuesAsync(db, group.TagsId, old, young);
 
 				foreach (var request in group.Requests)
 				{
@@ -316,12 +316,15 @@ public class ValuesRepository(
 										case AggregationFunc.Sum:
 											value = numericValues.Sum();
 											break;
+
 										case AggregationFunc.Avg:
 											value = numericValues.Average();
 											break;
+
 										case AggregationFunc.Min:
 											value = numericValues.Min();
 											break;
+
 										case AggregationFunc.Max:
 											value = numericValues.Max();
 											break;
@@ -368,13 +371,13 @@ public class ValuesRepository(
 		return responses;
 	}
 
-	internal static async Task<TagHistory[]> ProtectedReadValuesAsync(
+	internal static async Task<TagHistory[]> ProtectedGetValuesAsync(
 		DatalakeContext db,
 		int[] identifiers,
 		DateTime old,
 		DateTime young)
 	{
-		var values = await db.QueryToArrayAsync<TagHistory>(ReadBetweenDates
+		var values = await db.QueryToArrayAsync<TagHistory>(GetBetweenDates
 			.MapIdentifiers(identifiers)
 			.MapDate("@old", old)
 			.MapDate("@young", young));
@@ -382,31 +385,31 @@ public class ValuesRepository(
 		return values;
 	}
 
-	internal static async Task<TagHistory[]> ProtectedReadAllLastValuesAsync(
+	internal static async Task<TagHistory[]> ProtectedGetAllLastValuesAsync(
 		DatalakeContext db)
 	{
-		return await db.QueryToArrayAsync<TagHistory>(ReadAllLast);
+		return await db.QueryToArrayAsync<TagHistory>(GetAllLast);
 	}
 
-	internal static async Task<TagHistory[]> ProtectedReadLastValuesAsync(
+	internal static async Task<TagHistory[]> ProtectedGetLastValuesAsync(
 		DatalakeContext db,
 		int[] identifiers)
 	{
-		return await db.QueryToArrayAsync<TagHistory>(ReadLast
+		return await db.QueryToArrayAsync<TagHistory>(GetLast
 			.MapIdentifiers(identifiers));
 	}
 
-	internal static async Task<TagHistory[]> ProtectedReadLastValuesBeforeDateAsync(
+	internal static async Task<TagHistory[]> ProtectedGetLastValuesBeforeDateAsync(
 		DatalakeContext db,
 		int[] identifiers,
 		DateTime date)
 	{
-		return await db.QueryToArrayAsync<TagHistory>(ReadLastBeforeDate
+		return await db.QueryToArrayAsync<TagHistory>(GetLastBeforeDate
 			.MapIdentifiers(identifiers)
 			.MapDate("@old", date));
 	}
 
-	const int _stretchLimit = 100000;
+	private const int _stretchLimit = 100000;
 
 	private static List<TagHistory> StretchByResolution(
 		List<TagHistory> valuesByChange,
@@ -478,14 +481,17 @@ public class ValuesRepository(
 				periodEnd = now.RoundByResolution(TagResolution.Minute);
 				periodStart = periodEnd.AddMinutes(-1);
 				break;
+
 			case AggregationPeriod.Hour:
 				periodEnd = now.RoundByResolution(TagResolution.Hour);
 				periodStart = periodEnd.AddHours(-1);
 				break;
+
 			case AggregationPeriod.Day:
 				periodEnd = now.RoundByResolution(TagResolution.Day);
 				periodStart = periodEnd.AddDays(-1);
 				break;
+
 			default:
 				throw new ForbiddenException("задан неподдерживаемый период");
 		}
@@ -574,7 +580,7 @@ public class ValuesRepository(
 		return aggregated;
 	}
 
-	#endregion
+	#endregion Чтение
 
 	#region Запись
 
@@ -615,19 +621,19 @@ public class ValuesRepository(
 		}
 	}
 
-	#endregion
+	#endregion Запись
 
 	#region SQL
 
-	const string StagingTable = "TagsHistoryState";
+	private const string StagingTable = "TagsHistoryState";
 
-	static BulkCopyOptions bulkCopyOptions = new() { TableName = StagingTable, BulkCopyType = BulkCopyType.ProviderSpecific, };
+	private static BulkCopyOptions bulkCopyOptions = new() { TableName = StagingTable, BulkCopyType = BulkCopyType.ProviderSpecific, };
 
-	const string CreateTempForWrite = $@"
+	private const string CreateTempForWrite = $@"
 		CREATE TEMPORARY TABLE ""{StagingTable}"" (LIKE public.""TagsHistory"" EXCLUDING INDEXES)
 		ON COMMIT DROP;";
 
-	const string Write = $@"
+	private const string Write = $@"
 		INSERT INTO public.""TagsHistory""(
 			""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
 		)
@@ -641,7 +647,7 @@ public class ValuesRepository(
 	/// <summary>
 	/// Параметры: нет
 	/// </summary>
-	const string ReadAllLast = @"
+	private const string GetAllLast = @"
 		SELECT
 			t.""Id"" AS ""TagId"",
 			CASE WHEN h.""Date"" IS NULL THEN Now() ELSE h.""Date"" END AS ""Date"",
@@ -657,7 +663,7 @@ public class ValuesRepository(
 	/// <summary>
 	/// Параметры: теги
 	/// </summary>
-	const string ReadLast = @"
+	private const string GetLast = @"
 		SELECT DISTINCT ON (""TagId"") *
 		FROM public.""TagsHistory""
 		WHERE ""TagId"" IN (@tags)
@@ -666,7 +672,7 @@ public class ValuesRepository(
 	/// <summary>
 	/// Параметры: теги, дата начала
 	/// </summary>
-	const string ReadLastBeforeDate = @"
+	private const string GetLastBeforeDate = @"
 		SELECT DISTINCT ON (""TagId"") *
 		FROM public.""TagsHistory""
 		WHERE
@@ -677,9 +683,9 @@ public class ValuesRepository(
 	/// <summary>
 	/// Параметры: теги, дата начала, дата конца
 	/// </summary>
-	const string ReadBetweenDates = $@"
+	private const string GetBetweenDates = $@"
 		SELECT * FROM (
-			{ReadLastBeforeDate}
+			{GetLastBeforeDate}
 		) AS valuesBefore
 		UNION ALL
 		SELECT *
@@ -689,5 +695,5 @@ public class ValuesRepository(
 			AND ""Date"" > '@old'
 			AND ""Date"" <= '@young';";
 
-	#endregion
+	#endregion SQL
 }

@@ -52,7 +52,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
 	/// <returns>Список блоков с уровнями доступа к ним</returns>
-	public BlockWithTagsInfo[] ReadAll(UserAuthInfo user)
+	public BlockWithTagsInfo[] GetAll(UserAuthInfo user)
 	{
 		var blocks = dataStore.State.BlocksInfoWithTags();
 
@@ -74,7 +74,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	/// <param name="id">Идентификатор блока</param>
 	/// <returns>Полная информация о блоке</returns>
 	/// <exception cref="NotFoundException">Блок не найден</exception>
-	public BlockFullInfo Read(UserAuthInfo user, int id)
+	public BlockFullInfo Get(UserAuthInfo user, int id)
 	{
 		var rule = user.GetAccessToBlock(id);
 		if (!rule.HasAccess(AccessType.Viewer))
@@ -92,18 +92,18 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 	/// </summary>
 	/// <param name="user">Информация о пользователе</param>
 	/// <returns>Дерево блоков с уровнями доступа к ним</returns>
-	public BlockTreeInfo[] ReadAllAsTree(UserAuthInfo user)
+	public BlockTreeInfo[] GetAllAsTree(UserAuthInfo user)
 	{
-		var blocks = ReadAll(user);
+		var blocks = GetAll(user);
 
-		return ReadChildren(null, string.Empty);
+		return GetChildren(null, string.Empty);
 
-		BlockTreeInfo[] ReadChildren(int? parentId, string prefix) => blocks
+		BlockTreeInfo[] GetChildren(int? parentId, string prefix) => blocks
 			.Where(x => x.ParentId == parentId)
 			.Select(x => new
 			{
 				Node = x,
-				Children = ReadChildren(x.Id, AppendPrefix(prefix, x.Name))
+				Children = GetChildren(x.Id, AppendPrefix(prefix, x.Name))
 			})
 			.Where(p => p.Node.AccessRule.HasAccess(AccessType.Viewer) || p.Children.Length > 0)
 			.Select(p =>
@@ -190,7 +190,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		return await ProtectedDeleteAsync(db, user.Guid, id);
 	}
 
-	#endregion
+	#endregion API
 
 	#region Действия
 
@@ -567,5 +567,5 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		}
 	}
 
-	#endregion
+	#endregion Действия
 }

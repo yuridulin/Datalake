@@ -46,14 +46,14 @@ const UserGroupAccessForm = () => {
 		if (!id) return
 		setLoading(true)
 		const loaders = [
-			api.userGroupsRead(String(id)).then((res) => {
+			api.userGroupsGet(String(id)).then((res) => {
 				setGroup(res.data)
 			}),
-			api.sourcesReadAll().then((res) => setSources(res.data.map((x) => ({ label: x.name, value: x.id })))),
-			api.blocksReadAll().then((res) => setBlocks(res.data.map((x) => ({ label: x.name, value: x.id })))),
-			api.tagsReadAll().then((res) => setTags(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			api.sourcesGetAll().then((res) => setSources(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			api.blocksGetAll().then((res) => setBlocks(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			api.tagsGetAll().then((res) => setTags(res.data.map((x) => ({ label: x.name, value: x.id })))),
 			api
-				.accessRead({ userGroup: String(id) })
+				.accessGet({ userGroup: String(id) })
 				.then((res) => {
 					setForm(
 						res.data

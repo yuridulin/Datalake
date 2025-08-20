@@ -71,11 +71,11 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 		setLoading(false)
 		Promise.all([
 			api
-				.blocksReadAsTree()
+				.blocksGetTree()
 				.then((res) => res.data)
 				.catch(() => [] as BlockTreeInfo[]),
 			api
-				.tagsReadAll()
+				.tagsGetAll()
 				.then((res) => res.data)
 				.catch(() => [] as TagSimpleInfo[]),
 		]).then((data) => {

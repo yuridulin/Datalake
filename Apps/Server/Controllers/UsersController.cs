@@ -1,6 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Database.InMemory.Repositories;
-using Datalake.PublicApi.Exceptions;
+using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 using Datalake.Server.Services.Auth;
@@ -9,25 +9,16 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Server.Controllers;
 
-/// <summary>
-/// Взаимодействие с пользователями
-/// </summary>
-[Route("api/[controller]")]
-[ApiController]
+/// <inheritdoc />
 public class UsersController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
 	AuthenticationService authService,
 	UsersMemoryRepository usersRepository,
-	SessionManagerService sessionManager) : ControllerBase
+	SessionManagerService sessionManager) : UsersControllerBase
 {
-	/// <summary>
-	/// Аутентификация пользователя, прошедшего проверку на сервере EnergoId
-	/// </summary>
-	/// <param name="energoIdInfo">Данные пользователя Keycloak</param>
-	/// <returns>Данные о учетной записи</returns>
-	[HttpPost("energo-id")]
-	public ActionResult<UserAuthInfo> AuthenticateEnergoIdUser(
+	/// <inheritdoc />
+	public override ActionResult<UserAuthInfo> AuthenticateEnergoIdUser(
 		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
 	{
 		var userAuthInfo = authService.Authenticate(energoIdInfo);
@@ -40,13 +31,8 @@ public class UsersController(
 		return userAuthInfo;
 	}
 
-	/// <summary>
-	/// Аутентификация локального пользователя по связке "имя для входа/пароль"
-	/// </summary>
-	/// <param name="loginPass">Данные для входа</param>
-	/// <returns>Данные о учетной записи</returns>
-	[HttpPost("auth")]
-	public ActionResult<UserAuthInfo> Authenticate(
+	/// <inheritdoc />
+	public override ActionResult<UserAuthInfo> Authenticate(
 		[BindRequired, FromBody] UserLoginPass loginPass)
 	{
 		var userAuthInfo = authService.Authenticate(loginPass);
@@ -59,25 +45,16 @@ public class UsersController(
 		return userAuthInfo;
 	}
 
-	/// <summary>
-	/// Получение информации о учетной записи на основе текущей сессии
-	/// </summary>
-	/// <returns>Данные о учетной записи</returns>
-	[HttpGet("identify")]
-	public ActionResult<UserAuthInfo> Identify()
+	/// <inheritdoc />
+	public override ActionResult<UserAuthInfo> Identify()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
 		return user;
 	}
 
-	/// <summary>
-	/// Создание пользователя на основании переданных данных
-	/// </summary>
-	/// <param name="userAuthRequest">Данные нового пользователя</param>
-	/// <returns>Идентификатор пользователя</returns>
-	[HttpPost]
-	public async Task<ActionResult<UserInfo>> CreateAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult<UserInfo>> CreateAsync(
 		[BindRequired, FromBody] UserCreateRequest userAuthRequest)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -87,67 +64,42 @@ public class UsersController(
 		return info;
 	}
 
-	/// <summary>
-	/// Получение списка пользователей
-	/// </summary>
-	/// <returns>Список пользователей</returns>
-	[HttpGet]
-	public ActionResult<UserInfo[]> Read()
+	/// <inheritdoc />
+	public override ActionResult<UserInfo[]> GetAll()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return usersRepository.ReadAll(user);
+		return usersRepository.GetAll(user);
 	}
 
-	/// <summary>
-	/// Получение данных о пользователе
-	/// </summary>
-	/// <param name="userGuid">Идентификатор пользователя</param>
-	/// <returns>Данные пользователя</returns>
-	/// <exception cref="NotFoundException">Пользователь не найден по ключу</exception>
-	[HttpGet("{userGuid}")]
-	public ActionResult<UserInfo> Read(
+	/// <inheritdoc />
+	public override ActionResult<UserInfo> Get(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return usersRepository.Read(user, userGuid);
+		return usersRepository.Get(user, userGuid);
 	}
 
-	/// <summary>
-	/// Получение детализированной информации о пользователе
-	/// </summary>
-	/// <param name="userGuid">Идентификатор пользователя</param>
-	/// <returns>Данные о пользователе</returns>
-	/// <exception cref="NotFoundException">Пользователь не найден по ключу</exception>
-	[HttpGet("{userGuid}/detailed")]
-	public ActionResult<UserDetailInfo> ReadWithDetails(
+	/// <inheritdoc />
+	public override ActionResult<UserDetailInfo> GetWithDetails(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return usersRepository.ReadWithDetails(user, userGuid);
+		return usersRepository.GetWithDetails(user, userGuid);
 	}
 
-	/// <summary>
-	/// Получение списка пользователей, определенных на сервере EnergoId
-	/// </summary>
-	/// <returns>Список пользователей</returns>
-	[HttpGet("energo-id")]
-	public ActionResult<UserEnergoIdInfo[]> ReadEnergoId()
+	/// <inheritdoc />
+	public override ActionResult<UserEnergoIdInfo[]> GetEnergoId()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return usersRepository.ReadEnergoId(user);
+		return usersRepository.GetEnergoId(user);
 	}
 
-	/// <summary>
-	/// Изменение пользователя
-	/// </summary>
-	/// <param name="userGuid">Идентификатор пользователя</param>
-	/// <param name="userUpdateRequest">Новые данные пользователя</param>
-	[HttpPut("{userGuid}")]
-	public async Task<ActionResult> UpdateAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		[BindRequired, FromBody] UserUpdateRequest userUpdateRequest)
 	{
@@ -158,11 +110,8 @@ public class UsersController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Обновление данных из EnergoId
-	/// </summary>
-	[HttpPut("energo-id")]
-	public ActionResult UpdateEnergoId()
+	/// <inheritdoc />
+	public override ActionResult UpdateEnergoId()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -171,12 +120,8 @@ public class UsersController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Удаление пользователя
-	/// </summary>
-	/// <param name="userGuid">Идентификатор пользователя</param>
-	[HttpDelete("{userGuid}")]
-	public async Task<ActionResult> DeleteAsync(
+	/// <inheritdoc />
+	public override async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
 		var user = authenticator.Authenticate(HttpContext);

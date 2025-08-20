@@ -13,7 +13,7 @@ const TagsManualList = () => {
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
 			api
-				.tagsReadAll({ sourceId: SourceType.Manual })
+				.tagsGetAll({ sourceId: SourceType.Manual })
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags

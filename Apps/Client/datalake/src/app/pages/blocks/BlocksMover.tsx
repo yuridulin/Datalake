@@ -33,7 +33,7 @@ const BlocksMover = observer(() => {
 	const { token } = theme.useToken()
 
 	function load() {
-		api.blocksReadAsTree().then((res) => setBlocks(transformBlockTreeInfo(res.data)))
+		api.blocksGetTree().then((res) => setBlocks(transformBlockTreeInfo(res.data)))
 	}
 
 	const findParentKey = (data: TreeDataNode[], key: React.Key): React.Key | null => {

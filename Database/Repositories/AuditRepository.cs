@@ -37,7 +37,7 @@ public class AuditRepository
 	/// <param name="types">Выбранные типы сообщений</param>
 	/// <param name="authorGuid">Идентификатор пользователя, создавшего сообщение</param>
 	/// <returns>Список сообщений</returns>
-	public static async Task<LogInfo[]> ReadAsync(
+	public static async Task<LogInfo[]> GetAsync(
 		DatalakeContext db,
 		UserAuthInfo user,
 		int? lastId = null,
@@ -118,7 +118,7 @@ public class AuditRepository
 		});
 	}
 
-	#endregion
+	#endregion Действия
 
 	private static IQueryable<LogInfo> QueryLogs(
 		DatalakeContext db,

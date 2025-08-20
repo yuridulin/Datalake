@@ -33,7 +33,7 @@ const UserGroupView = observer(() => {
 		setReady(false)
 		if (!id) return
 		api
-			.userGroupsReadWithDetails(id)
+			.userGroupsGetWithDetails(id)
 			.then((res) => {
 				if (res.data?.guid) {
 					setGroup(res.data)

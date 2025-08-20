@@ -22,7 +22,7 @@ const UserView = observer(() => {
 	const load = () => {
 		if (!id) return
 		setLoading(true)
-		api.usersReadWithDetails(String(id)).then((res) => {
+		api.usersGetWithDetails(String(id)).then((res) => {
 			setInfo(res.data)
 			setLoading(false)
 		})

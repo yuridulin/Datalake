@@ -24,7 +24,7 @@ const UsersList = observer(() => {
 	const [search, setSearch] = useState('')
 
 	const load = () => {
-		api.usersReadAll().then((res) => setUsers(res.data))
+		api.usersGetAll().then((res) => setUsers(res.data))
 		getStates()
 	}
 

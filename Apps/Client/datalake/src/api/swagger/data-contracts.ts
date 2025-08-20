@@ -733,7 +733,7 @@ export interface LogInfo {
 }
 
 /** Объект состояния источника */
-export interface SourceState {
+export interface SourceStateInfo {
   /**
    * Идентификатор источника
    * @format int32
@@ -823,10 +823,10 @@ export type UserAuthInfo = UserSimpleInfo & {
   energoId?: string | null;
 };
 
-export interface KeyValuePairOfValuesRequestKeyAndValuesRequestUsage {
+export interface KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo {
   /** Уникальная подпись для метрики запроса к данным */
   key?: ValuesRequestKey;
-  value?: ValuesRequestUsage | null;
+  value?: ValuesRequestUsageInfo | null;
 }
 
 /** Уникальная подпись для метрики запроса к данным */
@@ -859,7 +859,7 @@ export interface ValuesRequestKey {
 }
 
 /** Метрика запроса на чтение данных */
-export interface ValuesRequestUsage {
+export interface ValuesRequestUsageInfo {
   /**
    * Время последнего выполнения
    * @format duration

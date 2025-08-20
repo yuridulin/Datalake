@@ -44,7 +44,7 @@ const TagView = observer(() => {
 		setLoading(true)
 
 		Promise.all([
-			api.tagsRead(Number(id)).then((res) => setTag(res.data)),
+			api.tagsGet(Number(id)).then((res) => setTag(res.data)),
 			api
 				.systemGetTagState(Number(id))
 				.then((res) => setMetrics(res.data))

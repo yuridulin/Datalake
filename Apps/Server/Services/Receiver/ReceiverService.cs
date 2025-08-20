@@ -21,14 +21,14 @@ namespace Datalake.Server.Services.Receiver;
 /// <param name="logger">Служба сообщений</param>
 public class ReceiverService(ILogger<ReceiverService> logger)
 {
-	CancellationTokenSource cancellationTokenSource = new();
+	private CancellationTokenSource cancellationTokenSource = new();
 
-	static JsonSerializerOptions JsonOptions = new()
+	private static JsonSerializerOptions JsonOptions = new()
 	{
 		Converters = { new JsonObjectConverter(), }
 	};
 
-	static HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(1), };
+	private static HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(1), };
 
 	/// <summary>
 	/// Универсальное получение данных из удаленного источника

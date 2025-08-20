@@ -17,12 +17,12 @@ const UserGroupForm = observer(() => {
 	const { id } = useParams()
 	const [form] = Form.useForm<UserGroupUpdateRequest>()
 
-	const [ready, setReady] = useState(false)
+	const [ready, setGety] = useState(false)
 	const [group, setGroup] = useState({} as UserGroupDetailedInfo)
 	const [users, setUsers] = useState([] as { label: string; value: string }[])
 
 	const getGroup = (guid: string) => {
-		api.userGroupsReadWithDetails(guid).then((res) => {
+		api.userGroupsGetWithDetails(guid).then((res) => {
 			if (res.data.guid) {
 				setGroup(res.data)
 				form.setFieldsValue({
@@ -51,10 +51,10 @@ const UserGroupForm = observer(() => {
 		api.userGroupsDelete(String(id)).then(() => navigate(routes.userGroups.toList()))
 	}
 
-	const getReady = () => setReady(!!group.guid)
+	const getGety = () => setGety(!!group.guid)
 
 	const getUsers = () => {
-		api.usersReadAll().then((res) => {
+		api.usersGetAll().then((res) => {
 			if (res.data)
 				setUsers(
 					res.data.map((x) => ({
@@ -75,7 +75,7 @@ const UserGroupForm = observer(() => {
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(load, [id])
-	useEffect(getReady, [group, users])
+	useEffect(getGety, [group, users])
 
 	return !ready ? (
 		<Spin />
