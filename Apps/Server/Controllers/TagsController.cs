@@ -1,8 +1,7 @@
 ﻿using Datalake.Database;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Models.Tags;
-using Datalake.Server.Controllers.Base;
+using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -15,8 +14,8 @@ namespace Datalake.Server.Controllers;
 [Route("api/[controller]")]
 public class TagsController(
 	DatalakeContext db,
-	DatalakeDerivedDataStore derivedDataStore,
-	TagsMemoryRepository tagsRepository) : ApiControllerBase(derivedDataStore)
+	AuthenticationService authenticator,
+	TagsMemoryRepository tagsRepository) : ControllerBase
 {
 	/// <summary>
 	/// Создание нового тега
@@ -27,7 +26,7 @@ public class TagsController(
 	public async Task<ActionResult<TagInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest tagCreateRequest)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return await tagsRepository.CreateAsync(db, user, tagCreateRequest);
 	}
@@ -40,7 +39,7 @@ public class TagsController(
 	[HttpGet("{id}")]
 	public ActionResult<TagFullInfo> Read(int id)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return tagsRepository.Read(user, id);
 	}
@@ -60,7 +59,7 @@ public class TagsController(
 		[FromQuery] string[]? names,
 		[FromQuery] Guid[]? guids)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return tagsRepository.ReadAll(user, sourceId, id, names, guids);
 	}
@@ -75,7 +74,7 @@ public class TagsController(
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] TagUpdateRequest tag)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await tagsRepository.UpdateAsync(db, user, id, tag);
 
@@ -90,7 +89,7 @@ public class TagsController(
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await tagsRepository.DeleteAsync(db, user, id);
 

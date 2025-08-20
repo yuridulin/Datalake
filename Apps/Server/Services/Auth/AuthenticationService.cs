@@ -1,5 +1,6 @@
 ﻿using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
@@ -16,6 +17,35 @@ public class AuthenticationService(
 	DatalakeDataStore dataStore,
 	DatalakeDerivedDataStore derivedDataStore)
 {
+	/// <summary>
+	/// Аутентификация пользователя по сессионному токену из запроса
+	/// </summary>
+	/// <returns>Данные о пользователе</returns>
+	/// <exception cref="ForbiddenException">Сессия не открыта</exception>
+	/// <exception cref="NotFoundException">Сессия не найдена</exception>
+	public UserAuthInfo Authenticate(HttpContext context)
+	{
+		if (context.Items.TryGetValue(AuthConstants.ContextSessionKey, out var sessionUserAuthInfo))
+		{
+			if (sessionUserAuthInfo == null)
+				throw new ForbiddenException(message: "требуется пройти аутентификацию");
+
+			var user = (UserAuthInfo)sessionUserAuthInfo;
+
+			if (context.Request.Headers.TryGetValue(AuthConstants.UnderlyingUserGuidHeader, out var raw))
+			{
+				if (Guid.TryParse(raw, out var guid))
+				{
+					user.UnderlyingUser = derivedDataStore.Access.Get(guid);
+				}
+			}
+
+			return user;
+		}
+
+		throw new NotFoundException(message: "данные о сессии");
+	}
+
 	/// <summary>
 	/// Получение информации о пользователе по данным из EnergoId
 	/// </summary>

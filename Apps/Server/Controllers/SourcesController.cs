@@ -1,11 +1,10 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Constants;
 using Datalake.Database.Functions;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Sources;
-using Datalake.Server.Controllers.Base;
+using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 using LinqToDB;
@@ -21,10 +20,10 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class SourcesController(
 	DatalakeContext db,
-	DatalakeDerivedDataStore derivedDataStore,
+	AuthenticationService authenticator,
 	SourcesMemoryRepository sourcesRepository,
 	ReceiverService receiverService,
-	TagsStateService tagsStateService) : ApiControllerBase(derivedDataStore)
+	TagsStateService tagsStateService) : ControllerBase
 {
 	/// <summary>
 	/// Создание источника с информацией по умолчанию
@@ -33,7 +32,7 @@ public class SourcesController(
 	[HttpPost("empty")]
 	public async Task<ActionResult<SourceInfo>> CreateAsync()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		var info = await sourcesRepository.CreateAsync(db, user);
 
@@ -49,7 +48,7 @@ public class SourcesController(
 	public async Task<ActionResult<SourceInfo>> CreateAsync(
 		[BindRequired, FromBody] SourceInfo source)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		var info = await sourcesRepository.CreateAsync(db, user, source);
 
@@ -66,7 +65,7 @@ public class SourcesController(
 	public ActionResult<SourceInfo> Read(
 		[BindRequired, FromRoute] int id)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return sourcesRepository.Read(user, id);
 	}
@@ -79,7 +78,7 @@ public class SourcesController(
 	[HttpGet]
 	public ActionResult<SourceInfo[]> Read(bool withCustom = false)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return sourcesRepository.ReadAll(user, withCustom);
 	}
@@ -94,7 +93,7 @@ public class SourcesController(
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] SourceUpdateRequest request)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await sourcesRepository.UpdateAsync(db, user, id, request);
 
@@ -109,7 +108,7 @@ public class SourcesController(
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await sourcesRepository.DeleteAsync(db, user, id);
 
@@ -126,7 +125,7 @@ public class SourcesController(
 	public async Task<ActionResult<SourceItemInfo[]>> GetItemsAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Viewer, id);
 
@@ -156,7 +155,7 @@ public class SourcesController(
 	public async Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoAccessToSource(user, PublicApi.Enums.AccessType.Editor, id);
 

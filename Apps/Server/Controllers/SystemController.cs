@@ -7,7 +7,7 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Settings;
-using Datalake.Server.Controllers.Base;
+using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Maintenance.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +22,7 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class SystemController(
 	DatalakeContext db,
+	AuthenticationService authenticator,
 	DatalakeDataStore dataStore,
 	DatalakeDerivedDataStore derivedDataStore,
 	DatalakeCurrentValuesStore valuesStore,
@@ -29,7 +30,7 @@ public class SystemController(
 	TagsStateService tagsStateService,
 	UsersStateService usersStateService,
 	SettingsMemoryRepository settingsRepository,
-	RequestsStateService requestsStateService) : ApiControllerBase(derivedDataStore)
+	RequestsStateService requestsStateService) : ControllerBase
 {
 	/// <summary>
 	/// Получение даты последнего изменения структуры базы данных
@@ -71,7 +72,7 @@ public class SystemController(
 		[FromQuery(Name = nameof(types) + "[]")] LogType[]? types = null,
 		[FromQuery] Guid? author = null)
 	{
-		var userAuth = Authenticate();
+		var userAuth = authenticator.Authenticate(HttpContext);
 
 		return await AuditRepository.ReadAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
 	}
@@ -83,7 +84,7 @@ public class SystemController(
 	[HttpGet("visits")]
 	public ActionResult<Dictionary<Guid, DateTime>> GetVisits()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
@@ -97,7 +98,7 @@ public class SystemController(
 	[HttpGet("sources")]
 	public ActionResult<Dictionary<int, SourceState>> GetSourcesStates()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
@@ -113,7 +114,7 @@ public class SystemController(
 	[HttpGet("tags")]
 	public ActionResult<Dictionary<int, Dictionary<string, DateTime>>> GetTagsStates()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return tagsStateService.GetTagsStates()
 			.Where(x => AccessChecks.HasAccessToTag(user, AccessType.Viewer, x.Key))
@@ -127,7 +128,7 @@ public class SystemController(
 	[HttpGet("tags/{id}")]
 	public ActionResult<Dictionary<string, DateTime>> GetTagState(int id)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Viewer, id);
 
@@ -141,7 +142,7 @@ public class SystemController(
 	[HttpGet("settings")]
 	public ActionResult<SettingsInfo> GetSettings()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Editor);
 
@@ -158,7 +159,7 @@ public class SystemController(
 	public async Task<ActionResult> UpdateSettingsAsync(
 		[BindRequired][FromBody] SettingsInfo newSettings)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await settingsRepository.UpdateSettingsAsync(db, user, newSettings);
 
@@ -172,7 +173,7 @@ public class SystemController(
 	[HttpPut("restart/state")]
 	public async Task<ActionResult> RestartStateAsync()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
@@ -188,7 +189,7 @@ public class SystemController(
 	[HttpPut("restart/values")]
 	public async Task<ActionResult> RestartValuesAsync()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
@@ -203,10 +204,10 @@ public class SystemController(
 	[HttpGet("access")]
 	public ActionResult<Dictionary<Guid, UserAuthInfo>> GetAccess()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		return DerivedDataStore.Access.GetAll();
+		return derivedDataStore.Access.GetAll();
 	}
 
 	/// <summary>
@@ -215,7 +216,7 @@ public class SystemController(
 	[HttpGet("reads")]
 	public ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsage>[]> GetReadMetricsAsync()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return requestsStateService.GetAllStats().ToArray();

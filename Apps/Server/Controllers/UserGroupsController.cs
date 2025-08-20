@@ -1,9 +1,8 @@
 ﻿using Datalake.Database;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.UserGroups;
-using Datalake.Server.Controllers.Base;
+using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -16,8 +15,8 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class UserGroupsController(
 	DatalakeContext db,
-	DatalakeDerivedDataStore derivedDataStore,
-	UserGroupsMemoryRepository userGroupsRepository) : ApiControllerBase(derivedDataStore)
+	AuthenticationService authenticator,
+	UserGroupsMemoryRepository userGroupsRepository) : ControllerBase
 {
 	/// <summary>
 	/// Создание новой группы пользователей
@@ -28,7 +27,7 @@ public class UserGroupsController(
 	public async Task<ActionResult<UserGroupInfo>> CreateAsync(
 		[BindRequired, FromBody] UserGroupCreateRequest request)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return await userGroupsRepository.CreateAsync(db, user, request);
 	}
@@ -40,7 +39,7 @@ public class UserGroupsController(
 	[HttpGet]
 	public ActionResult<UserGroupInfo[]> ReadAll()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return userGroupsRepository.ReadAll(user);
 	}
@@ -55,7 +54,7 @@ public class UserGroupsController(
 	public ActionResult<UserGroupInfo> Read(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return userGroupsRepository.Read(user, groupGuid);
 	}
@@ -67,7 +66,7 @@ public class UserGroupsController(
 	[HttpGet("tree")]
 	public ActionResult<UserGroupTreeInfo[]> ReadAsTree()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return userGroupsRepository.ReadAllAsTree(user);
 	}
@@ -82,7 +81,7 @@ public class UserGroupsController(
 	public ActionResult<UserGroupDetailedInfo> ReadWithDetails(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return userGroupsRepository.ReadWithDetails(user, groupGuid);
 	}
@@ -97,7 +96,7 @@ public class UserGroupsController(
 		[BindRequired, FromRoute] Guid groupGuid,
 		[BindRequired, FromBody] UserGroupUpdateRequest request)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await userGroupsRepository.UpdateAsync(db, user, groupGuid, request);
 
@@ -114,7 +113,7 @@ public class UserGroupsController(
 		[BindRequired, FromRoute] Guid groupGuid,
 		[FromQuery] Guid? parentGuid)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await userGroupsRepository.MoveAsync(db, user, groupGuid, parentGuid);
 
@@ -129,7 +128,7 @@ public class UserGroupsController(
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await userGroupsRepository.DeleteAsync(db, user, groupGuid);
 

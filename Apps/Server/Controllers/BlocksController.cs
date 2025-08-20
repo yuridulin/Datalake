@@ -1,9 +1,8 @@
 ﻿using Datalake.Database;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Blocks;
-using Datalake.Server.Controllers.Base;
+using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -16,8 +15,8 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class BlocksController(
 	DatalakeContext db,
-	DatalakeDerivedDataStore derivedDataStore,
-	BlocksMemoryRepository blocksRepository) : ApiControllerBase(derivedDataStore)
+	AuthenticationService authenticator,
+	BlocksMemoryRepository blocksRepository) : ControllerBase
 {
 	/// <summary>
 	/// Создание нового блока на основании переданной информации
@@ -28,7 +27,7 @@ public class BlocksController(
 	public async Task<ActionResult<BlockWithTagsInfo>> CreateAsync(
 		[BindRequired, FromBody] BlockFullInfo blockInfo)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return await blocksRepository.CreateAsync(db, user, blockInfo: blockInfo);
 	}
@@ -42,7 +41,7 @@ public class BlocksController(
 	public async Task<ActionResult<BlockWithTagsInfo>> CreateEmptyAsync(
 		[FromQuery] int? parentId)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return await blocksRepository.CreateAsync(db, user, parentId: parentId);
 	}
@@ -54,7 +53,7 @@ public class BlocksController(
 	[HttpGet]
 	public ActionResult<BlockWithTagsInfo[]> Read()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return blocksRepository.ReadAll(user);
 	}
@@ -69,7 +68,7 @@ public class BlocksController(
 	public ActionResult<BlockFullInfo> Read(
 		[BindRequired, FromRoute] int id)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return blocksRepository.Read(user, id);
 	}
@@ -81,7 +80,7 @@ public class BlocksController(
 	[HttpGet("tree")]
 	public ActionResult<BlockTreeInfo[]> ReadAsTree()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return blocksRepository.ReadAllAsTree(user);
 	}
@@ -96,7 +95,7 @@ public class BlocksController(
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] BlockUpdateRequest block)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await blocksRepository.UpdateAsync(db, user, id, block);
 
@@ -113,7 +112,7 @@ public class BlocksController(
 		[BindRequired, FromRoute] int id,
 		[FromQuery] int? parentId)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await blocksRepository.MoveAsync(db, user, id, parentId);
 
@@ -128,7 +127,7 @@ public class BlocksController(
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await blocksRepository.DeleteAsync(db, user, id);
 

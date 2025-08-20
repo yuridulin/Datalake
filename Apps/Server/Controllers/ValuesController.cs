@@ -1,8 +1,7 @@
 ﻿using Datalake.Database;
-using Datalake.Database.InMemory;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Models.Values;
-using Datalake.Server.Controllers.Base;
+using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -17,10 +16,10 @@ namespace Datalake.Server.Controllers;
 [Route("api/Tags/[controller]")]
 public class ValuesController(
 	DatalakeContext db,
-	DatalakeDerivedDataStore derivedDataStore,
+	AuthenticationService authenticator,
 	ValuesRepository valuesRepository,
 	TagsStateService tagsStateService,
-	RequestsStateService requestsStateService) : ApiControllerBase(derivedDataStore)
+	RequestsStateService requestsStateService) : ControllerBase
 {
 	/// <summary>
 	/// Путь для получения текущих данные
@@ -36,7 +35,7 @@ public class ValuesController(
 	public async Task<List<ValuesResponse>> GetAsync(
 		[BindRequired, FromBody] ValuesRequest[] requests)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		var sw = Stopwatch.StartNew();
 		var responses = await valuesRepository.GetValuesAsync(db, user, requests);
@@ -57,7 +56,7 @@ public class ValuesController(
 	public async Task<List<ValuesTagResponse>> WriteAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		var responses = await valuesRepository.WriteManualValuesAsync(db, user, requests);
 

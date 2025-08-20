@@ -1,10 +1,8 @@
 ﻿using Datalake.Database;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
-using Datalake.Server.Controllers.Base;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -18,10 +16,10 @@ namespace Datalake.Server.Controllers;
 [ApiController]
 public class UsersController(
 	DatalakeContext db,
-	DatalakeDerivedDataStore derivedDataStore,
+	AuthenticationService authenticator,
 	AuthenticationService authService,
 	UsersMemoryRepository usersRepository,
-	SessionManagerService sessionManager) : ApiControllerBase(derivedDataStore)
+	SessionManagerService sessionManager) : ControllerBase
 {
 	/// <summary>
 	/// Аутентификация пользователя, прошедшего проверку на сервере EnergoId
@@ -68,7 +66,7 @@ public class UsersController(
 	[HttpGet("identify")]
 	public ActionResult<UserAuthInfo> Identify()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return user;
 	}
@@ -82,7 +80,7 @@ public class UsersController(
 	public async Task<ActionResult<UserInfo>> CreateAsync(
 		[BindRequired, FromBody] UserCreateRequest userAuthRequest)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		var info = await usersRepository.CreateAsync(db, user, userAuthRequest);
 
@@ -96,7 +94,7 @@ public class UsersController(
 	[HttpGet]
 	public ActionResult<UserInfo[]> Read()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return usersRepository.ReadAll(user);
 	}
@@ -111,7 +109,7 @@ public class UsersController(
 	public ActionResult<UserInfo> Read(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return usersRepository.Read(user, userGuid);
 	}
@@ -126,7 +124,7 @@ public class UsersController(
 	public ActionResult<UserDetailInfo> ReadWithDetails(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return usersRepository.ReadWithDetails(user, userGuid);
 	}
@@ -138,7 +136,7 @@ public class UsersController(
 	[HttpGet("energo-id")]
 	public ActionResult<UserEnergoIdInfo[]> ReadEnergoId()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		return usersRepository.ReadEnergoId(user);
 	}
@@ -153,7 +151,7 @@ public class UsersController(
 		[BindRequired, FromRoute] Guid userGuid,
 		[BindRequired, FromBody] UserUpdateRequest userUpdateRequest)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await usersRepository.UpdateAsync(db, user, userGuid, userUpdateRequest);
 
@@ -166,7 +164,7 @@ public class UsersController(
 	[HttpPut("energo-id")]
 	public ActionResult UpdateEnergoId()
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		usersRepository.UpdateEnergoId(user);
 
@@ -181,7 +179,7 @@ public class UsersController(
 	public async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
-		var user = Authenticate();
+		var user = authenticator.Authenticate(HttpContext);
 
 		await usersRepository.DeleteAsync(db, user, userGuid);
 
