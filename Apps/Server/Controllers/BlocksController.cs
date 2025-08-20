@@ -5,6 +5,7 @@ using Datalake.PublicApi.Models.Blocks;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 
@@ -33,28 +34,28 @@ public class BlocksController(
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<BlockWithTagsInfo[]> GetAll()
+	public override async Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return blocksRepository.GetAll(user);
+		return await Task.FromResult(blocksRepository.GetAll(user));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<BlockFullInfo> Get(
+	public override async Task<ActionResult<BlockFullInfo>> GetAsync(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return blocksRepository.Get(user, id);
+		return await Task.FromResult(blocksRepository.Get(user, id));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<BlockTreeInfo[]> GetTree()
+	public override async Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return blocksRepository.GetAllAsTree(user);
+		return await Task.FromResult(blocksRepository.GetAllAsTree(user));
 	}
 
 	/// <inheritdoc />

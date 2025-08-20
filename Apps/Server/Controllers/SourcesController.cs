@@ -10,6 +10,7 @@ using Datalake.Server.Services.Receiver;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 
@@ -43,20 +44,20 @@ public class SourcesController(
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<SourceInfo> Get(
+	public override async Task<ActionResult<SourceInfo>> GetAsync(
 		[BindRequired, FromRoute] int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return sourcesRepository.Get(user, id);
+		return await Task.FromResult(sourcesRepository.Get(user, id));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<SourceInfo[]> GetAll(bool withCustom = false)
+	public override async Task<ActionResult<SourceInfo[]>> GetAllAsync(bool withCustom = false)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return sourcesRepository.GetAll(user, withCustom);
+		return await Task.FromResult(sourcesRepository.GetAll(user, withCustom));
 	}
 
 	/// <inheritdoc />

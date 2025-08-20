@@ -24,7 +24,7 @@ public abstract class UsersControllerBase : ControllerBase
 	/// <param name="energoIdInfo">Данные пользователя Keycloak</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("energo-id")]
-	public abstract ActionResult<UserAuthInfo> AuthenticateEnergoIdUser(
+	public abstract Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
 		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo);
 
 	/// <summary>
@@ -33,7 +33,7 @@ public abstract class UsersControllerBase : ControllerBase
 	/// <param name="loginPass">Данные для входа</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("auth")]
-	public abstract ActionResult<UserAuthInfo> Authenticate(
+	public abstract Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
 		[BindRequired, FromBody] UserLoginPass loginPass);
 
 	/// <summary>
@@ -41,7 +41,7 @@ public abstract class UsersControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpGet("identify")]
-	public abstract ActionResult<UserAuthInfo> Identify();
+	public abstract Task<ActionResult<UserAuthInfo>> IdentifyAsync();
 
 	/// <summary>
 	/// Создание пользователя на основании переданных данных
@@ -57,7 +57,7 @@ public abstract class UsersControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Список пользователей</returns>
 	[HttpGet]
-	public abstract ActionResult<UserInfo[]> GetAll();
+	public abstract Task<ActionResult<UserInfo[]>> GetAllAsync();
 
 	/// <summary>
 	/// Получение данных о пользователе
@@ -66,7 +66,7 @@ public abstract class UsersControllerBase : ControllerBase
 	/// <returns>Данные пользователя</returns>
 	/// <exception cref="NotFoundException">Пользователь не найден по ключу</exception>
 	[HttpGet("{userGuid}")]
-	public abstract ActionResult<UserInfo> Get(
+	public abstract Task<ActionResult<UserInfo>> GetAsync(
 		[BindRequired, FromRoute] Guid userGuid);
 
 	/// <summary>
@@ -76,7 +76,7 @@ public abstract class UsersControllerBase : ControllerBase
 	/// <returns>Данные о пользователе</returns>
 	/// <exception cref="NotFoundException">Пользователь не найден по ключу</exception>
 	[HttpGet("{userGuid}/detailed")]
-	public abstract ActionResult<UserDetailInfo> GetWithDetails(
+	public abstract Task<ActionResult<UserDetailInfo>> GetWithDetailsAsync(
 		[BindRequired, FromRoute] Guid userGuid);
 
 	/// <summary>
@@ -84,7 +84,7 @@ public abstract class UsersControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Список пользователей</returns>
 	[HttpGet("energo-id")]
-	public abstract ActionResult<UserEnergoIdInfo[]> GetEnergoId();
+	public abstract Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdAsync();
 
 	/// <summary>
 	/// Изменение пользователя
@@ -100,7 +100,7 @@ public abstract class UsersControllerBase : ControllerBase
 	/// Обновление данных из EnergoId
 	/// </summary>
 	[HttpPut("energo-id")]
-	public abstract ActionResult UpdateEnergoId();
+	public abstract Task<ActionResult> UpdateEnergoIdAsync();
 
 	/// <summary>
 	/// Удаление пользователя

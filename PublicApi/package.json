@@ -1,0 +1,6 @@
+{
+	"scripts": {
+		"build": "dotnet build PublicApi.csproj -c Release",
+		"publish": "update-nuget.cmd"
+	}
+}

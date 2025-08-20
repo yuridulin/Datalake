@@ -26,7 +26,7 @@ public abstract class SystemControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Дата в строковом виде</returns>
 	[HttpGet("last")]
-	public abstract ActionResult<string> GetLastUpdate();
+	public abstract Task<ActionResult<string>> GetLastUpdateAsync();
 
 	/// <summary>
 	/// Получение списка сообщений
@@ -62,28 +62,28 @@ public abstract class SystemControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Даты визитов, сопоставленные с идентификаторами пользователей</returns>
 	[HttpGet("visits")]
-	public abstract ActionResult<Dictionary<Guid, DateTime>> GetVisits();
+	public abstract Task<ActionResult<Dictionary<Guid, DateTime>>> GetVisitsAsync();
 
 	/// <summary>
 	/// Информация о подключении к источникам данных
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("sources")]
-	public abstract ActionResult<Dictionary<int, SourceStateInfo>> GetSourcesStates();
+	public abstract Task<ActionResult<Dictionary<int, SourceStateInfo>>> GetSourcesStatesAsync();
 
 	/// <summary>
 	/// Информация о подключении к источникам данных
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("tags")]
-	public abstract ActionResult<Dictionary<int, Dictionary<string, DateTime>>> GetTagsStates();
+	public abstract Task<ActionResult<Dictionary<int, Dictionary<string, DateTime>>>> GetTagsStatesAsync();
 
 	/// <summary>
 	/// Информация о подключении к источникам данных
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("tags/{id}")]
-	public abstract ActionResult<Dictionary<string, DateTime>> GetTagState(
+	public abstract Task<ActionResult<Dictionary<string, DateTime>>> GetTagStateAsync(
 			[BindRequired, FromRoute] int id);
 
 	/// <summary>
@@ -91,7 +91,7 @@ public abstract class SystemControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Информация о настройках</returns>
 	[HttpGet("settings")]
-	public abstract ActionResult<SettingsInfo> GetSettings();
+	public abstract Task<ActionResult<SettingsInfo>> GetSettingsAsync();
 
 	/// <summary>
 	/// Изменение информации о настройках сервера
@@ -119,11 +119,11 @@ public abstract class SystemControllerBase : ControllerBase
 	/// Получение списка вычисленных прав доступа для каждого пользователя
 	/// </summary>
 	[HttpGet("access")]
-	public abstract ActionResult<Dictionary<Guid, UserAuthInfo>> GetAccess();
+	public abstract Task<ActionResult<Dictionary<Guid, UserAuthInfo>>> GetAccessAsync();
 
 	/// <summary>
 	/// Получение метрик запросов на чтение
 	/// </summary>
 	[HttpGet("reads")]
-	public abstract ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]> GetReadMetricsAsync();
+	public abstract Task<ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]>> GetReadMetricsAsync();
 }

@@ -14,6 +14,7 @@ using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 
@@ -31,10 +32,10 @@ public class SystemController(
 	RequestsStateService requestsStateService) : SystemControllerBase
 {
 	/// <inheritdoc />
-	public override ActionResult<string> GetLastUpdate()
+	public override async Task<ActionResult<string>> GetLastUpdateAsync()
 	{
 		var lastUpdate = dataStore.State.Version;
-		return lastUpdate.ToString();
+		return await Task.FromResult(lastUpdate.ToString());
 	}
 
 	/// <inheritdoc />
@@ -57,49 +58,49 @@ public class SystemController(
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<Dictionary<Guid, DateTime>> GetVisits()
+	public override async Task<ActionResult<Dictionary<Guid, DateTime>>> GetVisitsAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		return usersStateService.State();
+		return await Task.FromResult(usersStateService.State());
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<Dictionary<int, SourceStateInfo>> GetSourcesStates()
+	public override async Task<ActionResult<Dictionary<int, SourceStateInfo>>> GetSourcesStatesAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
 
-		return sourcesStateService.State()
+		return await Task.FromResult(sourcesStateService.State()
 			.Where(x => AccessChecks.HasAccessToSource(user, AccessType.Viewer, x.Key))
-			.ToDictionary();
+			.ToDictionary());
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<Dictionary<int, Dictionary<string, DateTime>>> GetTagsStates()
+	public override async Task<ActionResult<Dictionary<int, Dictionary<string, DateTime>>>> GetTagsStatesAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return tagsStateService.GetTagsStates()
+		return await Task.FromResult(tagsStateService.GetTagsStates()
 			.Where(x => AccessChecks.HasAccessToTag(user, AccessType.Viewer, x.Key))
-			.ToDictionary();
+			.ToDictionary());
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<Dictionary<string, DateTime>> GetTagState(int id)
+	public override async Task<ActionResult<Dictionary<string, DateTime>>> GetTagStateAsync(int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
 		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Viewer, id);
 
-		return tagsStateService.GetTagsStates().TryGetValue(id, out var state) ? state : [];
+		return await Task.FromResult(tagsStateService.GetTagsStates().TryGetValue(id, out var state) ? state : []);
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<SettingsInfo> GetSettings()
+	public override async Task<ActionResult<SettingsInfo>> GetSettingsAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
@@ -107,7 +108,7 @@ public class SystemController(
 
 		var info = settingsRepository.GetSettings(user);
 
-		return info;
+		return await Task.FromResult(info);
 	}
 
 	/// <inheritdoc />
@@ -146,20 +147,20 @@ public class SystemController(
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<Dictionary<Guid, UserAuthInfo>> GetAccess()
+	public override async Task<ActionResult<Dictionary<Guid, UserAuthInfo>>> GetAccessAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		return derivedDataStore.Access.GetAll();
+		return await Task.FromResult(derivedDataStore.Access.GetAll());
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]> GetReadMetricsAsync()
+	public override async Task<ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]>> GetReadMetricsAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		return requestsStateService.GetAllStats().ToArray();
+		return await Task.FromResult(requestsStateService.GetAllStats().ToArray());
 	}
 }

@@ -31,7 +31,7 @@ public abstract class TagsControllerBase : ControllerBase
 	/// <param name="id">Идентификатор тега</param>
 	/// <returns>Объект информации о теге</returns>
 	[HttpGet("{id}")]
-	public abstract ActionResult<TagFullInfo> Get(
+	public abstract Task<ActionResult<TagFullInfo>> GetAsync(
 			[BindRequired, FromRoute] int id);
 
 	/// <summary>
@@ -43,7 +43,7 @@ public abstract class TagsControllerBase : ControllerBase
 	/// <param name="guids">Список глобальных идентификаторов тегов</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet]
-	public abstract ActionResult<TagInfo[]> GetAll(
+	public abstract Task<ActionResult<TagInfo[]>> GetAllAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? id,
 		[FromQuery] string[]? names,

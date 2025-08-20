@@ -826,7 +826,8 @@ export type UserAuthInfo = UserSimpleInfo & {
 export interface KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo {
   /** Уникальная подпись для метрики запроса к данным */
   key?: ValuesRequestKey;
-  value?: ValuesRequestUsageInfo | null;
+  /** Метрика запроса на чтение данных */
+  value?: ValuesRequestUsageInfo;
 }
 
 /** Уникальная подпись для метрики запроса к данным */

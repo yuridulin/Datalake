@@ -40,7 +40,7 @@ public abstract class SourcesControllerBase : ControllerBase
 	/// <returns>Данные о источнике</returns>
 	/// <exception cref="NotFoundException">Источник не найден по идентификатору</exception>
 	[HttpGet("{id:int}")]
-	public abstract ActionResult<SourceInfo> Get(
+	public abstract Task<ActionResult<SourceInfo>> GetAsync(
 		[BindRequired, FromRoute] int id);
 
 	/// <summary>
@@ -49,7 +49,7 @@ public abstract class SourcesControllerBase : ControllerBase
 	/// <param name="withCustom">Включить ли в список системные источники</param>
 	/// <returns>Список источников</returns>
 	[HttpGet]
-	public abstract ActionResult<SourceInfo[]> GetAll(bool withCustom = false);
+	public abstract Task<ActionResult<SourceInfo[]>> GetAllAsync(bool withCustom = false);
 
 	/// <summary>
 	/// Изменение источника

@@ -25,7 +25,7 @@ public abstract class AccessControllerBase : ControllerBase
 	/// <param name="tag">Идентификатор тега</param>
 	/// <returns>Список разрешений</returns>
 	[HttpGet]
-	public abstract ActionResult<AccessRightsInfo[]> Get(
+	public abstract Task<ActionResult<AccessRightsInfo[]>> GetAsync(
 		[FromQuery] Guid? user = null,
 		[FromQuery] Guid? userGroup = null,
 		[FromQuery] int? source = null,

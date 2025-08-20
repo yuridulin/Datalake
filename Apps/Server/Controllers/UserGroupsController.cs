@@ -5,6 +5,7 @@ using Datalake.PublicApi.Models.UserGroups;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 
@@ -24,37 +25,37 @@ public class UserGroupsController(
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserGroupInfo[]> GetAll()
+	public override async Task<ActionResult<UserGroupInfo[]>> GetAllAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return userGroupsRepository.GetAll(user);
+		return await Task.FromResult(userGroupsRepository.GetAll(user));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserGroupInfo> Get(
+	public override async Task<ActionResult<UserGroupInfo>> GetAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return userGroupsRepository.Get(user, groupGuid);
+		return await Task.FromResult(userGroupsRepository.Get(user, groupGuid));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserGroupTreeInfo[]> GetTree()
+	public override async Task<ActionResult<UserGroupTreeInfo[]>> GetTreeAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return userGroupsRepository.GetAllAsTree(user);
+		return await Task.FromResult(userGroupsRepository.GetAllAsTree(user));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserGroupDetailedInfo> GetWithDetails(
+	public override async Task<ActionResult<UserGroupDetailedInfo>> GetWithDetailsAsync(
 		[BindRequired, FromRoute] Guid groupGuid)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return userGroupsRepository.GetWithDetails(user, groupGuid);
+		return await Task.FromResult(userGroupsRepository.GetWithDetails(user, groupGuid));
 	}
 
 	/// <inheritdoc />
@@ -66,7 +67,7 @@ public class UserGroupsController(
 
 		await userGroupsRepository.UpdateAsync(db, user, groupGuid, request);
 
-		return NoContent();
+		return await Task.FromResult(NoContent());
 	}
 
 	/// <inheritdoc />

@@ -40,7 +40,7 @@ public abstract class BlocksControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public abstract ActionResult<BlockWithTagsInfo[]> GetAll();
+	public abstract Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync();
 
 	/// <summary>
 	/// Получение информации о выбранном блоке
@@ -49,7 +49,7 @@ public abstract class BlocksControllerBase : ControllerBase
 	/// <returns>Информация о блоке</returns>
 	/// <exception cref="NotFoundException">Блок не найден по идентификатору</exception>
 	[HttpGet("{id:int}")]
-	public abstract ActionResult<BlockFullInfo> Get(
+	public abstract Task<ActionResult<BlockFullInfo>> GetAsync(
 		[BindRequired, FromRoute] int id);
 
 	/// <summary>
@@ -57,7 +57,7 @@ public abstract class BlocksControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Список обособленных блоков с вложенными блоками</returns>
 	[HttpGet("tree")]
-	public abstract ActionResult<BlockTreeInfo[]> GetTree();
+	public abstract Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync();
 
 	/// <summary>
 	/// Изменение блока

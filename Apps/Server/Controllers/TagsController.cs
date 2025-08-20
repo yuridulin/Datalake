@@ -5,6 +5,7 @@ using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 
@@ -24,15 +25,15 @@ public class TagsController(
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<TagFullInfo> Get(int id)
+	public override async Task<ActionResult<TagFullInfo>> GetAsync(int id)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return tagsRepository.Get(user, id);
+		return await Task.FromResult(tagsRepository.Get(user, id));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<TagInfo[]> GetAll(
+	public override async Task<ActionResult<TagInfo[]>> GetAllAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? id,
 		[FromQuery] string[]? names,
@@ -40,7 +41,7 @@ public class TagsController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return tagsRepository.GetAll(user, sourceId, id, names, guids);
+		return await Task.FromResult(tagsRepository.GetAll(user, sourceId, id, names, guids));
 	}
 
 	/// <inheritdoc />

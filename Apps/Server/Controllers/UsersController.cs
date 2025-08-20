@@ -6,6 +6,7 @@ using Datalake.PublicApi.Models.Users;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 
@@ -18,7 +19,7 @@ public class UsersController(
 	SessionManagerService sessionManager) : UsersControllerBase
 {
 	/// <inheritdoc />
-	public override ActionResult<UserAuthInfo> AuthenticateEnergoIdUser(
+	public override async Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
 		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
 	{
 		var userAuthInfo = authService.Authenticate(energoIdInfo);
@@ -28,11 +29,11 @@ public class UsersController(
 
 		userAuthInfo.Token = session.Token;
 
-		return userAuthInfo;
+		return await Task.FromResult(userAuthInfo);
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserAuthInfo> Authenticate(
+	public override async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
 		[BindRequired, FromBody] UserLoginPass loginPass)
 	{
 		var userAuthInfo = authService.Authenticate(loginPass);
@@ -42,15 +43,15 @@ public class UsersController(
 
 		userAuthInfo.Token = session.Token;
 
-		return userAuthInfo;
+		return await Task.FromResult(userAuthInfo);
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserAuthInfo> Identify()
+	public override async Task<ActionResult<UserAuthInfo>> IdentifyAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return user;
+		return await Task.FromResult(user);
 	}
 
 	/// <inheritdoc />
@@ -65,37 +66,37 @@ public class UsersController(
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserInfo[]> GetAll()
+	public override async Task<ActionResult<UserInfo[]>> GetAllAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return usersRepository.GetAll(user);
+		return await Task.FromResult(usersRepository.GetAll(user));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserInfo> Get(
+	public override async Task<ActionResult<UserInfo>> GetAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return usersRepository.Get(user, userGuid);
+		return await Task.FromResult(usersRepository.Get(user, userGuid));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserDetailInfo> GetWithDetails(
+	public override async Task<ActionResult<UserDetailInfo>> GetWithDetailsAsync(
 		[BindRequired, FromRoute] Guid userGuid)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return usersRepository.GetWithDetails(user, userGuid);
+		return await Task.FromResult(usersRepository.GetWithDetails(user, userGuid));
 	}
 
 	/// <inheritdoc />
-	public override ActionResult<UserEnergoIdInfo[]> GetEnergoId()
+	public override async Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return usersRepository.GetEnergoId(user);
+		return await Task.FromResult(usersRepository.GetEnergoId(user));
 	}
 
 	/// <inheritdoc />
@@ -111,13 +112,13 @@ public class UsersController(
 	}
 
 	/// <inheritdoc />
-	public override ActionResult UpdateEnergoId()
+	public override async Task<ActionResult> UpdateEnergoIdAsync()
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
 		usersRepository.UpdateEnergoId(user);
 
-		return NoContent();
+		return await Task.FromResult(NoContent());
 	}
 
 	/// <inheritdoc />

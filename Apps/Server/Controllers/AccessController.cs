@@ -14,7 +14,7 @@ public class AccessController(
 	AccessRightsMemoryRepository accessRepository) : AccessControllerBase
 {
 	/// <inheritdoc />
-	public override ActionResult<AccessRightsInfo[]> Get(
+	public override async Task<ActionResult<AccessRightsInfo[]>> GetAsync(
 		[FromQuery] Guid? user = null,
 		[FromQuery] Guid? userGroup = null,
 		[FromQuery] int? source = null,
@@ -23,13 +23,13 @@ public class AccessController(
 	{
 		var userAuth = authenticator.Authenticate(HttpContext);
 
-		return accessRepository.Get(
+		return await Task.FromResult(accessRepository.Get(
 			user: userAuth,
 			userGuid: user,
 			userGroupGuid: userGroup,
 			sourceId: source,
 			blockId: block,
-			tagId: tag);
+			tagId: tag));
 	}
 
 	/// <inheritdoc />

@@ -31,7 +31,7 @@ public abstract class UserGroupsControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Список групп</returns>
 	[HttpGet]
-	public abstract ActionResult<UserGroupInfo[]> GetAll();
+	public abstract Task<ActionResult<UserGroupInfo[]>> GetAllAsync();
 
 	/// <summary>
 	/// Получение информации о выбранной группе пользователей
@@ -40,7 +40,7 @@ public abstract class UserGroupsControllerBase : ControllerBase
 	/// <returns>Информация о группе</returns>
 	/// <exception cref="NotFoundException">Группа не найдена по ключу</exception>
 	[HttpGet("{groupGuid}")]
-	public abstract ActionResult<UserGroupInfo> Get(
+	public abstract Task<ActionResult<UserGroupInfo>> GetAsync(
 		[BindRequired, FromRoute] Guid groupGuid);
 
 	/// <summary>
@@ -48,7 +48,7 @@ public abstract class UserGroupsControllerBase : ControllerBase
 	/// </summary>
 	/// <returns>Список обособленных групп с вложенными подгруппами</returns>
 	[HttpGet("tree")]
-	public abstract ActionResult<UserGroupTreeInfo[]> GetTree();
+	public abstract Task<ActionResult<UserGroupTreeInfo[]>> GetTreeAsync();
 
 	/// <summary>
 	/// Получение детализированной информации о группе пользователей
@@ -57,7 +57,7 @@ public abstract class UserGroupsControllerBase : ControllerBase
 	/// <returns>Информация о группе с подгруппами и списком пользователей</returns>
 	/// <exception cref="NotFoundException">Группа не найдена по ключу</exception>
 	[HttpGet("{groupGuid}/detailed")]
-	public abstract ActionResult<UserGroupDetailedInfo> GetWithDetails(
+	public abstract Task<ActionResult<UserGroupDetailedInfo>> GetWithDetailsAsync(
 		[BindRequired, FromRoute] Guid groupGuid);
 
 	/// <summary>
