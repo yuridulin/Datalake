@@ -24,7 +24,7 @@ public class DatalakeApiUsersService
 	private readonly HttpClient _httpClient;
 	private readonly ILogger _logger;
 
-	public Task<DatalakeApiResponse<UserInfo>> CreateAsync(
+	public Task<ApiUpstreamResponse<UserInfo>> CreateAsync(
 		UserCreateRequest request,
 		Guid? underlying = null)
 	{
@@ -37,6 +37,6 @@ public class DatalakeApiUsersService
 			}
 			: null;
 
-		return DatalakeApiUpstreamService.PostAsync<UserCreateRequest, UserInfo>(_httpClient, "/api/users", request, extraHeaders);
+		return ApiUpstreamService.PostAsync<UserCreateRequest, UserInfo>(_httpClient, "/api/users", request, extraHeaders);
 	}
 }

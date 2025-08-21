@@ -9,7 +9,7 @@ namespace Datalake.PublicApiClient;
 /// Обертка над ответом
 /// </summary>
 /// <typeparam name="T">Тип ответа</typeparam>
-public sealed class DatalakeApiResponse<T> : IAsyncDisposable
+public sealed class ApiUpstreamResponse<T> : IAsyncDisposable
 {
 	private readonly HttpResponseMessage _response;
 	private bool _consumed;
@@ -21,7 +21,7 @@ public sealed class DatalakeApiResponse<T> : IAsyncDisposable
 	public HttpContentHeaders ContentHeaders => _response.Content.Headers;
 	public string? MediaType => _response.Content.Headers.ContentType?.MediaType;
 
-	internal DatalakeApiResponse(HttpResponseMessage response) => _response = response;
+	internal ApiUpstreamResponse(HttpResponseMessage response) => _response = response;
 
 	/// <summary>
 	/// Получить непрочитанный поток (одноразовый захват)

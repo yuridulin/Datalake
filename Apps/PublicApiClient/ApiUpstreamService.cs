@@ -6,7 +6,7 @@ namespace Datalake.PublicApiClient;
 /// <summary>
 /// Сервис перенаправления
 /// </summary>
-public static class DatalakeApiUpstreamService
+public static class ApiUpstreamService
 {
 	/// <summary>
 	/// GET
@@ -21,14 +21,14 @@ public static class DatalakeApiUpstreamService
 	/// <returns>Универсальный типизированный ответ</returns>
 	/// <exception cref="HttpRequestException"></exception>
 	/// <exception cref="InvalidOperationException"></exception>
-	public static Task<DatalakeApiResponse<TResponse>> GetAsync<TResponse>(
-			HttpClient http,
-			string uri,
-			IDictionary<string, string>? extraHeaders = null,
-			bool validateJsonContentType = true,
-			bool ensureSuccess = false,
-			CancellationToken ct = default)
-			=> SendAsync<object?, TResponse>(http, HttpMethod.Get, uri, null, extraHeaders, validateJsonContentType, ensureSuccess, null, ct);
+	public static Task<ApiUpstreamResponse<TResponse>> GetAsync<TResponse>(
+		HttpClient http,
+		string uri,
+		IDictionary<string, string>? extraHeaders = null,
+		bool validateJsonContentType = true,
+		bool ensureSuccess = false,
+		CancellationToken ct = default)
+		=> SendAsync<object?, TResponse>(http, HttpMethod.Get, uri, null, extraHeaders, validateJsonContentType, ensureSuccess, null, ct);
 
 	/// <summary>
 	/// POST
@@ -46,19 +46,19 @@ public static class DatalakeApiUpstreamService
 	/// <returns>Универсальный типизированный ответ</returns>
 	/// <exception cref="HttpRequestException"></exception>
 	/// <exception cref="InvalidOperationException"></exception>
-	public static Task<DatalakeApiResponse<TResponse>> PostAsync<TRequest, TResponse>(
-			HttpClient http,
-			string uri,
-			TRequest payload,
-			IDictionary<string, string>? extraHeaders = null,
-			bool validateJsonContentType = true,
-			bool ensureSuccess = false,
-			JsonSerializerOptions? jsonOptions = null,
-			CancellationToken ct = default)
-			=> SendAsync<TRequest, TResponse>(http, HttpMethod.Post, uri, payload, extraHeaders, validateJsonContentType, ensureSuccess, jsonOptions, ct);
+	public static Task<ApiUpstreamResponse<TResponse>> PostAsync<TRequest, TResponse>(
+		HttpClient http,
+		string uri,
+		TRequest payload,
+		IDictionary<string, string>? extraHeaders = null,
+		bool validateJsonContentType = true,
+		bool ensureSuccess = false,
+		JsonSerializerOptions? jsonOptions = null,
+		CancellationToken ct = default)
+		=> SendAsync<TRequest, TResponse>(http, HttpMethod.Post, uri, payload, extraHeaders, validateJsonContentType, ensureSuccess, jsonOptions, ct);
 
 	/// <summary>
-	/// 
+	///
 	/// </summary>
 	/// <typeparam name="TRequest">Тип запроса</typeparam>
 	/// <typeparam name="TResponse">Тип ответа</typeparam>
@@ -73,16 +73,16 @@ public static class DatalakeApiUpstreamService
 	/// <returns>Универсальный типизированный ответ</returns>
 	/// <exception cref="HttpRequestException"></exception>
 	/// <exception cref="InvalidOperationException"></exception>
-	public static Task<DatalakeApiResponse<TResponse>> PutAsync<TRequest, TResponse>(
-			HttpClient http,
-			string uri,
-			TRequest payload,
-			IDictionary<string, string>? extraHeaders = null,
-			bool validateJsonContentType = true,
-			bool ensureSuccess = false,
-			JsonSerializerOptions? jsonOptions = null,
-			CancellationToken ct = default)
-			=> SendAsync<TRequest, TResponse>(http, HttpMethod.Put, uri, payload, extraHeaders, validateJsonContentType, ensureSuccess, jsonOptions, ct);
+	public static Task<ApiUpstreamResponse<TResponse>> PutAsync<TRequest, TResponse>(
+		HttpClient http,
+		string uri,
+		TRequest payload,
+		IDictionary<string, string>? extraHeaders = null,
+		bool validateJsonContentType = true,
+		bool ensureSuccess = false,
+		JsonSerializerOptions? jsonOptions = null,
+		CancellationToken ct = default)
+		=> SendAsync<TRequest, TResponse>(http, HttpMethod.Put, uri, payload, extraHeaders, validateJsonContentType, ensureSuccess, jsonOptions, ct);
 
 	/// <summary>
 	/// Встречается реже, но DELETE c телом допустим. Сделай перегрузку без payload при необходимости.
@@ -100,16 +100,16 @@ public static class DatalakeApiUpstreamService
 	/// <returns>Универсальный типизированный ответ</returns>
 	/// <exception cref="HttpRequestException"></exception>
 	/// <exception cref="InvalidOperationException"></exception>
-	public static Task<DatalakeApiResponse<TResponse>> DeleteAsync<TRequest, TResponse>(
-			HttpClient http,
-			string uri,
-			TRequest? payload = default,
-			IDictionary<string, string>? extraHeaders = null,
-			bool validateJsonContentType = true,
-			bool ensureSuccess = false,
-			JsonSerializerOptions? jsonOptions = null,
-			CancellationToken ct = default)
-			=> SendAsync<TRequest?, TResponse>(http, HttpMethod.Delete, uri, payload, extraHeaders, validateJsonContentType, ensureSuccess, jsonOptions, ct);
+	public static Task<ApiUpstreamResponse<TResponse>> DeleteAsync<TRequest, TResponse>(
+		HttpClient http,
+		string uri,
+		TRequest? payload = default,
+		IDictionary<string, string>? extraHeaders = null,
+		bool validateJsonContentType = true,
+		bool ensureSuccess = false,
+		JsonSerializerOptions? jsonOptions = null,
+		CancellationToken ct = default)
+		=> SendAsync<TRequest?, TResponse>(http, HttpMethod.Delete, uri, payload, extraHeaders, validateJsonContentType, ensureSuccess, jsonOptions, ct);
 
 	/// <summary>
 	/// Общий ядро-метод
@@ -128,7 +128,7 @@ public static class DatalakeApiUpstreamService
 	/// <returns></returns>
 	/// <exception cref="HttpRequestException"></exception>
 	/// <exception cref="InvalidOperationException"></exception>
-	private static async Task<DatalakeApiResponse<TResponse>> SendAsync<TRequest, TResponse>(
+	private static async Task<ApiUpstreamResponse<TResponse>> SendAsync<TRequest, TResponse>(
 		HttpClient http,
 		HttpMethod method,
 		string uri,
@@ -187,6 +187,6 @@ public static class DatalakeApiUpstreamService
 			}
 		}
 
-		return new DatalakeApiResponse<TResponse>(res);
+		return new ApiUpstreamResponse<TResponse>(res);
 	}
 }
