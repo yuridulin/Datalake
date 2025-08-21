@@ -1,4 +1,5 @@
 using Datalake.Database;
+using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.Initialization;
 using Datalake.Database.InMemory;
@@ -199,7 +200,7 @@ public class Program
 			o.Environment = CurrentEnvironment;
 			o.Dsn = sentrySection[nameof(o.Dsn)];
 			o.Debug = bool.TryParse(sentrySection[nameof(o.Debug)], out var dbg) && dbg;
-			o.Release = $"{builder.Environment.ApplicationName}@{Version}";
+			o.Release = $"{builder.Environment.ApplicationName}@{Version.ShortVersion()}";
 			o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
 		});
 
@@ -282,8 +283,12 @@ public class Program
 		var externalDb = app.Services.GetRequiredService<DbExternalInitializer>();
 		await externalDb.DoAsync();
 
+		// отправка сообщения в Sentry, чтобы сразу засветить новый релиз
+		string greetings = $"🚀 Приложение запущено. Релиз: {builder.Environment.ApplicationName}@{Version.ShortVersion()}";
+		SentrySdk.CaptureMessage(greetings, SentryLevel.Info);
+		Log.Information(greetings);
+
 		// запуск веб-сервера
-		Log.Information("Приложение запущено");
 		await app.RunAsync();
 	}
 }
