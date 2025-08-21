@@ -30,6 +30,8 @@ import {
   TagCreateRequest,
   TagFullInfo,
   TagInfo,
+  TagsGetValuesPayload,
+  TagsWriteValuesPayload,
   TagUpdateRequest,
   UserAuthInfo,
   UserCreateRequest,
@@ -765,6 +767,43 @@ export class Api<
     this.request<File, any>({
       path: `/api/tags/${id}`,
       method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Tags
+   * @name TagsGetValues
+   * @request POST:/api/tags/values
+   * @response `200` `(ValuesResponse)[]`
+   */
+  tagsGetValues = (data: TagsGetValuesPayload, params: RequestParams = {}) =>
+    this.request<ValuesResponse[], any>({
+      path: `/api/tags/values`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Tags
+   * @name TagsWriteValues
+   * @request PUT:/api/tags/values
+   * @response `200` `(ValuesTagResponse)[]`
+   */
+  tagsWriteValues = (
+    data: TagsWriteValuesPayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<ValuesTagResponse[], any>({
+      path: `/api/tags/values`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
