@@ -15,8 +15,8 @@ public class ValuesController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
 	ValuesRepository valuesRepository,
-	TagsStateService tagsStateService,
-	RequestsStateService requestsStateService) : ValuesControllerBase
+	TagsStateService tagsStateService/*,
+	RequestsStateService requestsStateService*/) : ValuesControllerBase
 {
 	/// <inheritdoc />
 	public override async Task<List<ValuesResponse>> GetAsync(
@@ -29,7 +29,7 @@ public class ValuesController(
 		sw.Stop();
 
 		tagsStateService.UpdateTagState(requests);
-		requestsStateService.RecordBatch(requests, sw.Elapsed, responses);
+		//requestsStateService.RecordBatch(requests, sw.Elapsed, responses);
 
 		return responses;
 	}
