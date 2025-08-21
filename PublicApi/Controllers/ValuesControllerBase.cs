@@ -27,7 +27,7 @@ public abstract class ValuesControllerBase : ControllerBase
 	/// <param name="requests">Список запросов с настройками</param>
 	/// <returns>Список ответов на запросы</returns>
 	[HttpPost]
-	public abstract Task<List<ValuesResponse>> GetAsync(
+	public abstract Task<ActionResult<List<ValuesResponse>>> GetAsync(
 		[BindRequired, FromBody] ValuesRequest[] requests);
 
 	/// <summary>
@@ -36,6 +36,6 @@ public abstract class ValuesControllerBase : ControllerBase
 	/// <param name="requests">Список запросов на изменение</param>
 	/// <returns>Список измененных начений</returns>
 	[HttpPut]
-	public abstract Task<List<ValuesTagResponse>> WriteAsync(
+	public abstract Task<ActionResult<List<ValuesTagResponse>>> WriteAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests);
 }
