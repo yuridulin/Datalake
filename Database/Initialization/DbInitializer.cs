@@ -1,7 +1,6 @@
 ﻿using Datalake.Database.Functions;
 using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
-using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -59,7 +58,7 @@ public class DbInitializer(
 			}
 
 			// начальное наполнение БД
-			await db.EnsureDataCreatedAsync(dataStore, usersRepository);
+			await db.EnsureDataCreatedAsync(usersRepository);
 
 			logger.LogInformation("Настройка БД завершена");
 		}

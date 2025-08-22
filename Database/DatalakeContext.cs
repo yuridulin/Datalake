@@ -72,9 +72,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	/// <summary>
 	/// Необходимые для работы записи, которые должны быть в базе данных
 	/// </summary>
-	public async Task EnsureDataCreatedAsync(
-		DatalakeDataStore dataStore,
-		UsersMemoryRepository usersRepository)
+	public async Task EnsureDataCreatedAsync(UsersMemoryRepository usersRepository)
 	{
 		// запись необходимых источников в список
 		var customSources = Lists.CustomSources
@@ -118,8 +116,6 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			category: LogCategory.Core,
 			type: LogType.Success
 		);
-
-		_ = Task.Run(dataStore.ReloadStateAsync);
 	}
 
 	#region Таблицы

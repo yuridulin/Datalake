@@ -10,6 +10,7 @@ using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Collection;
+using Datalake.Server.Services.Initialization;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SettingsHandler;
@@ -179,7 +180,6 @@ public class Program
 
 		// обновление настроек
 		builder.Services.AddSingleton<SettingsHandlerService>();
-		builder.Services.AddHostedService<SettingsHandlerService>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<SettingsHandlerService>());
 
 		// обновление данных из EnergoId
@@ -192,6 +192,10 @@ public class Program
 		// обработчики
 		builder.Services.AddTransient<AuthMiddleware>();
 		builder.Services.AddTransient<SentryRequestBodyMiddleware>();
+
+		// инициализатор работы
+		builder.Services.AddSingleton<LoaderService>();
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<LoaderService>());
 
 		// оповещения об ошибках
 		var sentrySection = builder.Configuration.GetSection("Sentry");
