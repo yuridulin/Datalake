@@ -1,3 +1,4 @@
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Blocks;
 using Microsoft.AspNetCore.Mvc;
@@ -8,8 +9,8 @@ namespace Datalake.PublicApi.Controllers;
 /// <summary>
 /// Взаимодействие с блоками
 /// </summary>
-[Route("api/" + ControllerRoute)]
 [ApiController]
+[Route($"{Defaults.ApiRoot}/{ControllerRoute}")]
 public abstract class BlocksControllerBase : ControllerBase
 {
 	/// <summary>
@@ -18,7 +19,7 @@ public abstract class BlocksControllerBase : ControllerBase
 	public const string ControllerRoute = "blocks";
 
 	/// <summary>
-	/// Создание нового блока на основании переданной информации
+	/// <see cref="HttpMethod.Post" />: Создание нового блока на основании переданной информации
 	/// </summary>
 	/// <param name="blockInfo">Данные о новом блоке</param>
 	/// <returns>Идентификатор блока</returns>
@@ -27,7 +28,7 @@ public abstract class BlocksControllerBase : ControllerBase
 		[BindRequired, FromBody] BlockFullInfo blockInfo);
 
 	/// <summary>
-	/// Создание нового отдельного блока с информацией по умолчанию
+	/// <see cref="HttpMethod.Post" />: Создание нового отдельного блока с информацией по умолчанию
 	/// </summary>
 	/// <param name="parentId">Идентификатор родительского блока</param>
 	/// <returns>Идентификатор блока</returns>
@@ -36,14 +37,14 @@ public abstract class BlocksControllerBase : ControllerBase
 		[FromQuery] int? parentId);
 
 	/// <summary>
-	/// Получение списка блоков с базовой информацией о них
+	/// <see cref="HttpMethod.Get" />: Получение списка блоков с базовой информацией о них
 	/// </summary>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
 	public abstract Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync();
 
 	/// <summary>
-	/// Получение информации о выбранном блоке
+	/// <see cref="HttpMethod.Get" />: Получение информации о выбранном блоке
 	/// </summary>
 	/// <param name="id">Идентификатор блока</param>
 	/// <returns>Информация о блоке</returns>
@@ -53,14 +54,14 @@ public abstract class BlocksControllerBase : ControllerBase
 		[BindRequired, FromRoute] int id);
 
 	/// <summary>
-	/// Получение иерархической структуры всех блоков
+	/// <see cref="HttpMethod.Get" />: Получение иерархической структуры всех блоков
 	/// </summary>
 	/// <returns>Список обособленных блоков с вложенными блоками</returns>
 	[HttpGet("tree")]
 	public abstract Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync();
 
 	/// <summary>
-	/// Изменение блока
+	/// <see cref="HttpMethod.Put" />: Изменение блока
 	/// </summary>
 	/// <param name="id">Идентификатор блока</param>
 	/// <param name="block">Новые данные блока</param>
@@ -70,7 +71,7 @@ public abstract class BlocksControllerBase : ControllerBase
 		[BindRequired, FromBody] BlockUpdateRequest block);
 
 	/// <summary>
-	/// Перемещение блока
+	/// <see cref="HttpMethod.Post" />: Перемещение блока
 	/// </summary>
 	/// <param name="id">Идентификатор блока</param>
 	/// <param name="parentId">Идентификатор нового родительского блока</param>
@@ -80,7 +81,7 @@ public abstract class BlocksControllerBase : ControllerBase
 		[FromQuery] int? parentId);
 
 	/// <summary>
-	/// Удаление блока
+	/// <see cref="HttpMethod.Delete" />: Удаление блока
 	/// </summary>
 	/// <param name="id">Идентификатор блока</param>
 	[HttpDelete("{id:int}")]

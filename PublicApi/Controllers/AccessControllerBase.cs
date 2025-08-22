@@ -1,3 +1,4 @@
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.AccessRights;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,8 +7,8 @@ namespace Datalake.PublicApi.Controllers;
 /// <summary>
 /// Работа с разрешениями
 /// </summary>
-[Route("api/" + ControllerRoute)]
 [ApiController]
+[Route($"{Defaults.ApiRoot}/{ControllerRoute}")]
 public abstract class AccessControllerBase : ControllerBase
 {
 	/// <summary>
@@ -16,7 +17,7 @@ public abstract class AccessControllerBase : ControllerBase
 	public const string ControllerRoute = "access";
 
 	/// <summary>
-	/// Получение списка прямых (не глобальных) разрешений субъекта на объект
+	/// <see cref="HttpMethod.Get" />: Получение списка прямых (не глобальных) разрешений субъекта на объект
 	/// </summary>
 	/// <param name="user">Идентификтатор пользователя</param>
 	/// <param name="userGroup">Идентификатор группы пользователей</param>
@@ -33,7 +34,7 @@ public abstract class AccessControllerBase : ControllerBase
 		[FromQuery] int? tag = null);
 
 	/// <summary>
-	/// Изменение разрешений для группы пользователей
+	/// <see cref="HttpMethod.Post" />: Изменение разрешений для группы пользователей
 	/// </summary>
 	/// <param name="request">Список изменений</param>
 	[HttpPost]

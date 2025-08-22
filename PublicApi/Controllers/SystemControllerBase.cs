@@ -1,3 +1,4 @@
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
@@ -12,8 +13,8 @@ namespace Datalake.PublicApi.Controllers;
 /// <summary>
 /// Представление системной информации о работе сервера
 /// </summary>
-[Route("api/" + ControllerRoute)]
 [ApiController]
+[Route($"{Defaults.ApiRoot}/{ControllerRoute}")]
 public abstract class SystemControllerBase : ControllerBase
 {
 	/// <summary>
@@ -22,14 +23,14 @@ public abstract class SystemControllerBase : ControllerBase
 	public const string ControllerRoute = "system";
 
 	/// <summary>
-	/// Получение даты последнего изменения структуры базы данных
+	/// <see cref="HttpMethod.Post" />: Получение даты последнего изменения структуры базы данных
 	/// </summary>
 	/// <returns>Дата в строковом виде</returns>
 	[HttpGet("last")]
 	public abstract Task<ActionResult<string>> GetLastUpdateAsync();
 
 	/// <summary>
-	/// Получение списка сообщений
+	/// <see cref="HttpMethod.Get" />: Получение списка сообщений
 	/// </summary>
 	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более поздних</param>
 	/// <param name="firstId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более ранних</param>
@@ -58,28 +59,28 @@ public abstract class SystemControllerBase : ControllerBase
 		[FromQuery] Guid? author = null);
 
 	/// <summary>
-	/// Информация о визитах пользователей
+	/// <see cref="HttpMethod.Get" />: Информация о визитах пользователей
 	/// </summary>
 	/// <returns>Даты визитов, сопоставленные с идентификаторами пользователей</returns>
 	[HttpGet("visits")]
 	public abstract Task<ActionResult<Dictionary<Guid, DateTime>>> GetVisitsAsync();
 
 	/// <summary>
-	/// Информация о подключении к источникам данных
+	/// <see cref="HttpMethod.Get" />: Информация о подключении к источникам данных
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("sources")]
 	public abstract Task<ActionResult<Dictionary<int, SourceStateInfo>>> GetSourcesStatesAsync();
 
 	/// <summary>
-	/// Информация о подключении к источникам данных
+	/// <see cref="HttpMethod.Get" />: Информация о подключении к источникам данных
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("tags")]
 	public abstract Task<ActionResult<Dictionary<int, Dictionary<string, DateTime>>>> GetTagsStatesAsync();
 
 	/// <summary>
-	/// Информация о подключении к источникам данных
+	/// <see cref="HttpMethod.Get" />: Информация о подключении к источникам данных
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet("tags/{id}")]
@@ -87,14 +88,14 @@ public abstract class SystemControllerBase : ControllerBase
 			[BindRequired, FromRoute] int id);
 
 	/// <summary>
-	/// Получение информации о настройках сервера
+	/// <see cref="HttpMethod.Get" />: Получение информации о настройках сервера
 	/// </summary>
 	/// <returns>Информация о настройках</returns>
 	[HttpGet("settings")]
 	public abstract Task<ActionResult<SettingsInfo>> GetSettingsAsync();
 
 	/// <summary>
-	/// Изменение информации о настройках сервера
+	/// <see cref="HttpMethod.Put" />: Изменение информации о настройках сервера
 	/// </summary>
 	/// <param name="newSettings">Новые настройки сервера</param>
 	[HttpPut("settings")]
@@ -102,27 +103,27 @@ public abstract class SystemControllerBase : ControllerBase
 		[BindRequired, FromBody] SettingsInfo newSettings);
 
 	/// <summary>
-	/// Перестроение кэша
+	/// <see cref="HttpMethod.Put" />: Перестроение кэша
 	/// </summary>
 	/// <returns></returns>
 	[HttpPut("restart/state")]
 	public abstract Task<ActionResult> RestartStateAsync();
 
 	/// <summary>
-	/// Перестроение кэша текущих (последних) значений
+	/// <see cref="HttpMethod.Put" />: Перестроение кэша текущих (последних) значений
 	/// </summary>
 	/// <returns></returns>
 	[HttpPut("restart/values")]
 	public abstract Task<ActionResult> RestartValuesAsync();
 
 	/// <summary>
-	/// Получение списка вычисленных прав доступа для каждого пользователя
+	/// <see cref="HttpMethod.Get" />: Получение списка вычисленных прав доступа для каждого пользователя
 	/// </summary>
 	[HttpGet("access")]
 	public abstract Task<ActionResult<Dictionary<Guid, UserAuthInfo>>> GetAccessAsync();
 
 	/// <summary>
-	/// Получение метрик запросов на чтение
+	/// <see cref="HttpMethod.Get" />: Получение метрик запросов на чтение
 	/// </summary>
 	[HttpGet("reads")]
 	public abstract Task<ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]>> GetReadMetricsAsync();

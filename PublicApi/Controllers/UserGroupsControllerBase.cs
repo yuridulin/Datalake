@@ -1,3 +1,4 @@
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.UserGroups;
 using Microsoft.AspNetCore.Mvc;
@@ -8,8 +9,8 @@ namespace Datalake.PublicApi.Controllers;
 /// <summary>
 /// Взаимодействие с группами пользователей
 /// </summary>
-[Route("api/" + ControllerRoute)]
 [ApiController]
+[Route($"{Defaults.ApiRoot}/{ControllerRoute}")]
 public abstract class UserGroupsControllerBase : ControllerBase
 {
 	/// <summary>
@@ -18,7 +19,7 @@ public abstract class UserGroupsControllerBase : ControllerBase
 	public const string ControllerRoute = "user-groups";
 
 	/// <summary>
-	/// Создание новой группы пользователей
+	/// <see cref="HttpMethod.Post" />: Создание новой группы пользователей
 	/// </summary>
 	/// <param name="request">Данные запроса</param>
 	/// <returns>Идентификатор новой группы пользователей</returns>
@@ -27,14 +28,14 @@ public abstract class UserGroupsControllerBase : ControllerBase
 		[BindRequired, FromBody] UserGroupCreateRequest request);
 
 	/// <summary>
-	/// Получение плоского списка групп пользователей
+	/// <see cref="HttpMethod.Get" />: Получение плоского списка групп пользователей
 	/// </summary>
 	/// <returns>Список групп</returns>
 	[HttpGet]
 	public abstract Task<ActionResult<UserGroupInfo[]>> GetAllAsync();
 
 	/// <summary>
-	/// Получение информации о выбранной группе пользователей
+	/// <see cref="HttpMethod.Get" />: Получение информации о выбранной группе пользователей
 	/// </summary>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <returns>Информация о группе</returns>
@@ -44,14 +45,14 @@ public abstract class UserGroupsControllerBase : ControllerBase
 		[BindRequired, FromRoute] Guid groupGuid);
 
 	/// <summary>
-	/// Получение иерархической структуры всех групп пользователей
+	/// <see cref="HttpMethod.Get" />: Получение иерархической структуры всех групп пользователей
 	/// </summary>
 	/// <returns>Список обособленных групп с вложенными подгруппами</returns>
 	[HttpGet("tree")]
 	public abstract Task<ActionResult<UserGroupTreeInfo[]>> GetTreeAsync();
 
 	/// <summary>
-	/// Получение детализированной информации о группе пользователей
+	/// <see cref="HttpMethod.Get" />: Получение детализированной информации о группе пользователей
 	/// </summary>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <returns>Информация о группе с подгруппами и списком пользователей</returns>
@@ -61,7 +62,7 @@ public abstract class UserGroupsControllerBase : ControllerBase
 		[BindRequired, FromRoute] Guid groupGuid);
 
 	/// <summary>
-	/// Изменение группы пользователей
+	/// <see cref="HttpMethod.Put" />: Изменение группы пользователей
 	/// </summary>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <param name="request">Новые данные</param>
@@ -71,7 +72,7 @@ public abstract class UserGroupsControllerBase : ControllerBase
 		[BindRequired, FromBody] UserGroupUpdateRequest request);
 
 	/// <summary>
-	/// Перемещение группы пользователей
+	/// <see cref="HttpMethod.Post" />: Перемещение группы пользователей
 	/// </summary>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <param name="parentGuid">Идентификатор новой родительской группы</param>
@@ -81,7 +82,7 @@ public abstract class UserGroupsControllerBase : ControllerBase
 		[FromQuery] Guid? parentGuid);
 
 	/// <summary>
-	/// Удаление группы пользователей
+	/// <see cref="HttpMethod.Delete" />: Удаление группы пользователей
 	/// </summary>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	[HttpDelete("{groupGuid}")]
