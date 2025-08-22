@@ -72,6 +72,7 @@ public class TagsController(
 		return NoContent();
 	}
 
+	/// <inheritdoc />
 	[HttpPost("values")]
 	public async Task<List<ValuesResponse>> GetValuesAsync(
 		[BindRequired, FromBody] ValuesRequest[] requests)
@@ -85,6 +86,7 @@ public class TagsController(
 		return responses;
 	}
 
+	/// <inheritdoc />
 	[HttpPut("values")]
 	public async Task<List<ValuesTagResponse>> WriteValuesAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests)
