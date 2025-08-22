@@ -11,10 +11,22 @@ namespace Datalake.PublicApi.Controllers;
 [Route($"{Defaults.ApiRoot}/{ControllerRoute}")]
 public abstract class AccessControllerBase : ControllerBase
 {
+	#region Константы путей
+
 	/// <summary>
 	/// Основной путь к контроллеру
 	/// </summary>
 	public const string ControllerRoute = "access";
+
+	/// <inheritdoc cref="GetAsync" />
+	public const string Get = "";
+
+	/// <inheritdoc cref="ApplyChangesAsync" />
+	public const string Apply = "";
+
+	#endregion Константы путей
+
+	#region Методы
 
 	/// <summary>
 	/// <see cref="HttpMethod.Get" />: Получение списка прямых (не глобальных) разрешений субъекта на объект
@@ -25,7 +37,7 @@ public abstract class AccessControllerBase : ControllerBase
 	/// <param name="block">Идентификатор блока</param>
 	/// <param name="tag">Идентификатор тега</param>
 	/// <returns>Список разрешений</returns>
-	[HttpGet]
+	[HttpGet(Get)]
 	public abstract Task<ActionResult<AccessRightsInfo[]>> GetAsync(
 		[FromQuery] Guid? user = null,
 		[FromQuery] Guid? userGroup = null,
@@ -37,7 +49,9 @@ public abstract class AccessControllerBase : ControllerBase
 	/// <see cref="HttpMethod.Post" />: Изменение разрешений для группы пользователей
 	/// </summary>
 	/// <param name="request">Список изменений</param>
-	[HttpPost]
+	[HttpPost(Apply)]
 	public abstract Task<ActionResult> ApplyChangesAsync(
 		[FromBody] AccessRightsApplyRequest request);
+
+	#endregion Методы
 }

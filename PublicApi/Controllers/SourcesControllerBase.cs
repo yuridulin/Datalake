@@ -13,16 +13,46 @@ namespace Datalake.PublicApi.Controllers;
 [Route($"{Defaults.ApiRoot}/{ControllerRoute}")]
 public abstract class SourcesControllerBase : ControllerBase
 {
+	#region Константы путей
+
 	/// <summary>
 	/// Основной путь к контроллеру
 	/// </summary>
 	public const string ControllerRoute = "sources";
 
+	/// <inheritdoc cref="CreateEmptyAsync()" />
+	public const string CreateEmpty = "empty";
+
+	/// <inheritdoc cref="CreateAsync(SourceInfo)" />
+	public const string Create = "";
+
+	/// <inheritdoc cref="GetAsync(int)" />
+	public const string Get = "{id}";
+
+	/// <inheritdoc cref="GetAllAsync(bool)" />
+	public const string GetAll = "";
+
+	/// <inheritdoc cref="UpdateAsync(int, SourceUpdateRequest)" />
+	public const string Update = "{id}";
+
+	/// <inheritdoc cref="DeleteAsync(int)" />
+	public const string Delete = "{id}";
+
+	/// <inheritdoc cref="GetItemsAsync(int)" />
+	public const string GetItems = "{id}/items";
+
+	/// <inheritdoc cref="GetItemsWithTagsAsync(int)" />
+	public const string GetItemsWithTags = "{id}/items-and-tags";
+
+	#endregion Константы путей
+
+	#region Методы
+
 	/// <summary>
 	/// <see cref="HttpMethod.Post" />: Создание источника с информацией по умолчанию
 	/// </summary>
 	/// <returns>Идентификатор источника</returns>
-	[HttpPost("empty")]
+	[HttpPost(CreateEmpty)]
 	public abstract Task<ActionResult<SourceInfo>> CreateEmptyAsync();
 
 	/// <summary>
@@ -30,7 +60,7 @@ public abstract class SourcesControllerBase : ControllerBase
 	/// </summary>
 	/// <param name="source">Данные нового источника</param>
 	/// <returns>Идентификатор источника</returns>
-	[HttpPost]
+	[HttpPost(Create)]
 	public abstract Task<ActionResult<SourceInfo>> CreateAsync(
 		[BindRequired, FromBody] SourceInfo source);
 
@@ -40,7 +70,7 @@ public abstract class SourcesControllerBase : ControllerBase
 	/// <param name="id">Идентификатор источника</param>
 	/// <returns>Данные о источнике</returns>
 	/// <exception cref="NotFoundException">Источник не найден по идентификатору</exception>
-	[HttpGet("{id:int}")]
+	[HttpGet(Get)]
 	public abstract Task<ActionResult<SourceInfo>> GetAsync(
 		[BindRequired, FromRoute] int id);
 
@@ -49,7 +79,7 @@ public abstract class SourcesControllerBase : ControllerBase
 	/// </summary>
 	/// <param name="withCustom">Включить ли в список системные источники</param>
 	/// <returns>Список источников</returns>
-	[HttpGet]
+	[HttpGet(GetAll)]
 	public abstract Task<ActionResult<SourceInfo[]>> GetAllAsync(bool withCustom = false);
 
 	/// <summary>
@@ -57,7 +87,7 @@ public abstract class SourcesControllerBase : ControllerBase
 	/// </summary>
 	/// <param name="id">Идентификатор источника</param>
 	/// <param name="request">Новые данные источника</param>
-	[HttpPut("{id:int}")]
+	[HttpPut(Update)]
 	public abstract Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int id,
 		[BindRequired, FromBody] SourceUpdateRequest request);
@@ -66,7 +96,7 @@ public abstract class SourcesControllerBase : ControllerBase
 	/// <see cref="HttpMethod.Delete" />: Удаление источника
 	/// </summary>
 	/// <param name="id">Идентификатор источника</param>
-	[HttpDelete("{id:int}")]
+	[HttpDelete(Delete)]
 	public abstract Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id);
 
@@ -76,7 +106,7 @@ public abstract class SourcesControllerBase : ControllerBase
 	/// <param name="id">Идентификатор источника</param>
 	/// <returns>Список данных источника</returns>
 	/// <exception cref="NotFoundException"></exception>
-	[HttpGet("{id:int}/items")]
+	[HttpGet(GetItems)]
 	public abstract Task<ActionResult<SourceItemInfo[]>> GetItemsAsync(
 		[BindRequired, FromRoute] int id);
 
@@ -86,7 +116,9 @@ public abstract class SourcesControllerBase : ControllerBase
 	/// <param name="id">Идентификатор источника</param>
 	/// <returns>Список данных источника</returns>
 	/// <exception cref="NotFoundException"></exception>
-	[HttpGet("{id:int}/items-and-tags")]
+	[HttpGet(GetItemsWithTags)]
 	public abstract Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
 		[BindRequired, FromRoute] int id);
+
+	#endregion Методы
 }
