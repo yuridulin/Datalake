@@ -9,11 +9,27 @@ namespace Datalake.Server.Services.SettingsHandler;
 /// <summary>
 /// Сервис обновления настроек по изменению данных
 /// </summary>
-public class SettingsHandlerService(
-	DatalakeDataStore dataStore,
-	DatalakeDerivedDataStore derivedDataStore,
-	ILogger<SettingsHandlerService> logger) : BackgroundService, IDisposable
+public class SettingsHandlerService : BackgroundService, IDisposable
 {
+	/// <summary>
+	/// Начальная запись настроек
+	/// </summary>
+	public SettingsHandlerService(
+		DatalakeDataStore dataStore,
+		DatalakeDerivedDataStore derivedDataStore,
+		ILogger<SettingsHandlerService> logger)
+	{
+		this.dataStore = dataStore;
+		this.derivedDataStore = derivedDataStore;
+		this.logger = logger;
+
+		WriteStartupFile(dataStore.State);
+	}
+
+	private readonly DatalakeDataStore dataStore;
+	private readonly DatalakeDerivedDataStore derivedDataStore;
+	private readonly ILogger<SettingsHandlerService> logger;
+
 	private readonly Lock _fileLock = new();
 	private readonly Lock _usersLock = new();
 
