@@ -217,6 +217,10 @@ public class Program
 		}
 
 		app
+			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
+			.UseSentryTracing()
+			.UseDefaultFiles()
+			.UseStaticFiles()
 			.UseSerilogRequestLogging(options =>
 			{
 				// шаблон одного сообщения на запрос
@@ -248,9 +252,6 @@ public class Program
 					}
 				};
 			})
-			.UseSentryTracing()
-			.UseDefaultFiles()
-			.UseStaticFiles()
 			.UseHttpsRedirection()
 			.UseRouting()
 			.UseCors(policy =>
@@ -268,7 +269,6 @@ public class Program
 			})
 			.UseMiddleware<AuthMiddleware>()
 			.UseMiddleware<SentryRequestBodyMiddleware>()
-			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
 			.EnsureCorsMiddlewareOnError();
 
 		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");

@@ -2,13 +2,16 @@
 
 namespace Datalake.Database.Constants;
 
-internal static class Errors
+public static class Errors
 {
-	internal static ForbiddenException NoAccess => new(message: "нет доступа");
+	public static ForbiddenException NoAccess => new(message: "нет доступа");
 
-	internal static ForbiddenException NoAccessUser(Guid userGuid)
+	public static ForbiddenException NoAccessUser(Guid userGuid)
 		=> new(message: "нет доступа.\nПользователь: [" + userGuid.ToString() + "]");
 
-	internal static ForbiddenException NoAccessUnderlyingUser(Guid userGuid, Guid underlyingUserGuid)
+	public static ForbiddenException NoAccessUnderlyingUser(Guid userGuid, Guid underlyingUserGuid)
 		=> new(message: "нет доступа.\nПользователь EnergoId: `" + userGuid.ToString() + "` через внешнего пользователя `" + underlyingUserGuid.ToString() + "`");
+
+	public static ForbiddenException NoAccessToken(string? token)
+		=> new(message: "нет доступа.\nТокен: `" + (token ?? "не существует") + "`");
 }
