@@ -9,9 +9,6 @@ namespace Datalake.Server.Services.SettingsHandler;
 /// <summary>
 /// Сервис обновления настроек по изменению данных
 /// </summary>
-/// <remarks>
-/// Начальная запись настроек
-/// </remarks>
 public class SettingsHandlerService(
 	DatalakeDataStore dataStore,
 	DatalakeDerivedDataStore derivedDataStore,
