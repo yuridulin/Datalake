@@ -8,10 +8,11 @@ build-server-prod:
 
   tags:
     - push-build
-
+  before_script:
+    - echo "Tag = $CI_COMMIT_TAG"
+    - echo "Version = ${CI_COMMIT_TAG#prod.}"
   script:
-    - echo "Building version $VERSION"
-    - docker build --build-arg APP_VERSION="$VERSION" -t datalake:latest  -f ./Apps/Server/Dockerfile .
+    - docker build --build-arg APP_VERSION="${CI_COMMIT_TAG#prod.}" -t datalake:latest  -f ./Apps/Server/Dockerfile .
     - docker tag datalake:latest "$CI_REPOS_URL"/datalake:"$CI_COMMIT_TAG"
     - docker tag datalake:latest "$CI_REPOS_URL"/datalake:latest
 

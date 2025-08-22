@@ -1,4 +1,5 @@
 using Datalake.Database;
+using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.Initialization;
 using Datalake.Database.InMemory;
@@ -9,6 +10,7 @@ using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Collection;
+using Datalake.Server.Services.Initialization;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SettingsHandler;
@@ -178,7 +180,6 @@ public class Program
 
 		// обновление настроек
 		builder.Services.AddSingleton<SettingsHandlerService>();
-		builder.Services.AddHostedService<SettingsHandlerService>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<SettingsHandlerService>());
 
 		// обновление данных из EnergoId
@@ -192,6 +193,10 @@ public class Program
 		builder.Services.AddTransient<AuthMiddleware>();
 		builder.Services.AddTransient<SentryRequestBodyMiddleware>();
 
+		// инициализатор работы
+		builder.Services.AddSingleton<LoaderService>();
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<LoaderService>());
+
 		// оповещения об ошибках
 		var sentrySection = builder.Configuration.GetSection("Sentry");
 		builder.WebHost.UseSentry(o =>
@@ -199,7 +204,7 @@ public class Program
 			o.Environment = CurrentEnvironment;
 			o.Dsn = sentrySection[nameof(o.Dsn)];
 			o.Debug = bool.TryParse(sentrySection[nameof(o.Debug)], out var dbg) && dbg;
-			o.Release = $"{builder.Environment.ApplicationName}@{Version}";
+			o.Release = $"{builder.Environment.ApplicationName}@{Version.ShortVersion()}";
 			o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
 		});
 
@@ -216,6 +221,10 @@ public class Program
 		}
 
 		app
+			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
+			.UseSentryTracing()
+			.UseDefaultFiles()
+			.UseStaticFiles()
 			.UseSerilogRequestLogging(options =>
 			{
 				// шаблон одного сообщения на запрос
@@ -247,9 +256,6 @@ public class Program
 					}
 				};
 			})
-			.UseSentryTracing()
-			.UseDefaultFiles()
-			.UseStaticFiles()
 			.UseHttpsRedirection()
 			.UseRouting()
 			.UseCors(policy =>
@@ -267,7 +273,6 @@ public class Program
 			})
 			.UseMiddleware<AuthMiddleware>()
 			.UseMiddleware<SentryRequestBodyMiddleware>()
-			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
 			.EnsureCorsMiddlewareOnError();
 
 		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
@@ -282,8 +287,12 @@ public class Program
 		var externalDb = app.Services.GetRequiredService<DbExternalInitializer>();
 		await externalDb.DoAsync();
 
+		// отправка сообщения в Sentry, чтобы сразу засветить новый релиз
+		string greetings = $"🚀 Приложение запущено. Релиз: {builder.Environment.ApplicationName}@{Version.ShortVersion()}";
+		SentrySdk.CaptureMessage(greetings, SentryLevel.Info);
+		Log.Information(greetings);
+
 		// запуск веб-сервера
-		Log.Information("Приложение запущено");
 		await app.RunAsync();
 	}
 }

@@ -1,7 +1,7 @@
 ﻿using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Values;
-using Datalake.Server.Controllers;
 using Datalake.Server.Services.Receiver.Models;
 using Datalake.Server.Services.Receiver.Models.Inopc;
 using Datalake.Server.Services.Receiver.Models.Inopc.Enums;
@@ -210,7 +210,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 				}
 			};
 
-			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
+			var answer = await HttpClient.PostAsJsonAsync($"http://{address}:81/{ValuesControllerBase.LiveUrl}", request);
 			var historyResponses = await answer.Content.ReadFromJsonAsync<ValuesResponse[]>(JsonOptions);
 			historyResponse = historyResponses?.FirstOrDefault();
 		}

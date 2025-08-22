@@ -1,6 +1,9 @@
-﻿using Datalake.Database.InMemory;
+﻿using Datalake.Database.Functions;
+using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.PublicApi.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -11,6 +14,7 @@ namespace Datalake.Database.Initialization;
 /// </summary>
 public class DbInitializer(
 	IServiceScopeFactory serviceScopeFactory,
+	IConfiguration configuration,
 	ILogger<DbExternalInitializer> logger)
 {
 	/// <summary>
@@ -33,8 +37,28 @@ public class DbInitializer(
 			var dataStore = serviceScope.ServiceProvider.GetRequiredService<DatalakeDataStore>();
 			var usersRepository = serviceScope.ServiceProvider.GetRequiredService<UsersMemoryRepository>();
 
+			// добавление пользователей по умолчанию
+			var staticUsers = configuration.GetSection("StaticUsers").Get<StaticUsersOptions[]>();
+			if (staticUsers == null)
+			{
+				logger.LogWarning("Список статичных учетных записей не прочитан");
+			}
+			else if (staticUsers.Length == 0)
+			{
+				logger.LogWarning("Список статичных учетных записей пуст");
+			}
+			else
+			{
+				logger.LogWarning("Список статичных учетных записей прочитан");
+
+				EnvExpander.ExpandEnvVariables(staticUsers);
+				await db.EnsureStaticUsersAsync(staticUsers.Select(x => (x.Name, x.Token, x.AccessType, x.Host)).ToArray());
+
+				logger.LogWarning("Статичные учетные записи обновлены");
+			}
+
 			// начальное наполнение БД
-			await db.EnsureDataCreatedAsync(dataStore, usersRepository);
+			await db.EnsureDataCreatedAsync(usersRepository);
 
 			logger.LogInformation("Настройка БД завершена");
 		}
@@ -43,5 +67,16 @@ public class DbInitializer(
 			logger.LogError(ex, "Настройка БД не выполнена!");
 			throw;
 		}
+	}
+
+	internal class StaticUsersOptions
+	{
+		public required string Name { get; set; }
+
+		public required string Token { get; set; }
+
+		public required AccessType AccessType { get; set; }
+
+		public string? Host { get; set; }
 	}
 }

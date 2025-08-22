@@ -19,4 +19,9 @@ public static class Defaults
 		FullName = "Администратор",
 		Type = UserType.Local,
 	};
+
+	/// <summary>
+	/// Основной путь всех API запросов
+	/// </summary>
+	public const string ApiRoot = "api";
 }

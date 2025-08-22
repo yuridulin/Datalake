@@ -19,7 +19,7 @@ public class ValuesController(
 	RequestsStateService requestsStateService*/) : ValuesControllerBase
 {
 	/// <inheritdoc />
-	public override async Task<List<ValuesResponse>> GetAsync(
+	public override async Task<ActionResult<List<ValuesResponse>>> GetAsync(
 		[BindRequired, FromBody] ValuesRequest[] requests)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -35,7 +35,7 @@ public class ValuesController(
 	}
 
 	/// <inheritdoc />
-	public override async Task<List<ValuesTagResponse>> WriteAsync(
+	public override async Task<ActionResult<List<ValuesTagResponse>>> WriteAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests)
 	{
 		var user = authenticator.Authenticate(HttpContext);

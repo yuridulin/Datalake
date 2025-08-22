@@ -2,7 +2,10 @@
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Auth.Models;
 using Datalake.Server.Services.Maintenance;
+using Microsoft.AspNetCore.Http;
 using System.Text;
+using Datalake.PublicApi.Exceptions;
+using Datalake.Database.Constants;
 
 namespace Datalake.Server.Middlewares;
 
@@ -39,8 +42,8 @@ public class AuthMiddleware(
 			if (authSession == null)
 			{
 				context.Response.StatusCode = 401;
-				await context.Response.Body.WriteAsync(ErrorMessage);
-				return;
+				var token = context.Request.Headers[AuthConstants.TokenHeader];
+				throw Errors.NoAccessToken(token);
 			}
 			sessionManager.AddSessionToResponse(authSession, context.Response);
 			stateService.WriteVisit(authSession.UserGuid);

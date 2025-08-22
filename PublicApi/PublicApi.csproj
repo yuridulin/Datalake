@@ -11,12 +11,16 @@
     <RootNamespace>Datalake.PublicApi</RootNamespace>
     <Title>Datalake.PublicApi</Title>
     <PackageId>Viten.Datalake.PublicApi</PackageId>
-    <Version>2.5.1</Version>
+    <Version>2.5.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Extensions\" />
   </ItemGroup>
 
   <Target Name="UpdateCmdFile" AfterTargets="Pack">
