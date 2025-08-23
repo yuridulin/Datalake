@@ -4,7 +4,7 @@ import { Spin, theme } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useInterval } from '../../../hooks/useInterval'
+import { useInterval } from 'react-use'
 
 const Offline = observer(() => {
 	const [online, setOnline] = useState(false)

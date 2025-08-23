@@ -3,7 +3,6 @@ import { AccessType, SourceInfo, SourceStateInfo, SourceType } from '@/api/swagg
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
-import { useInterval } from '@/hooks/useInterval'
 import { timeAgo } from '@/state/timeAgoInstance'
 import { user } from '@/state/user'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
@@ -11,6 +10,7 @@ import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useInterval } from 'react-use'
 
 interface DataCell extends SourceInfo {
 	isGroup: boolean

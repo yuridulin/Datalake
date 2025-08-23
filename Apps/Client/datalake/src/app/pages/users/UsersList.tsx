@@ -7,7 +7,6 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import compareAccess from '@/functions/compareAccess'
 import getUserTypeName from '@/functions/getUserTypeName'
-import { useInterval } from '@/hooks/useInterval'
 import { timeAgo } from '@/state/timeAgoInstance'
 import { user } from '@/state/user'
 import { ClockCircleOutlined } from '@ant-design/icons'
@@ -16,6 +15,7 @@ import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useInterval } from 'react-use'
 
 const UsersList = observer(() => {
 	const navigate = useNavigate()

@@ -10,6 +10,7 @@ import TagIcon from '@/app/components/icons/TagIcon'
 import getTagResolutionName from '@/functions/getTagResolutionName'
 import { GlobalToken } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
+import { DataNode } from 'antd/es/tree'
 
 export const SELECTED_SEPARATOR: string = '~'
 export const RELATION_TAG_SEPARATOR: string = '.'
@@ -26,7 +27,7 @@ export const convertToTreeSelectNodes = (
 	blockTree: BlockTreeInfo[] | null | undefined,
 	parentPath: string[] = [],
 	token: GlobalToken,
-): DefaultOptionType[] => {
+): DataNode[] => {
 	if (!blockTree) return []
 
 	return blockTree
@@ -41,7 +42,8 @@ export const convertToTreeSelectNodes = (
 						<BlockIcon /> {block.name}
 					</>
 				),
-				value: BLOCK_ID_SHIFT - 3 - block.id, // Отрицательные значения для блоков (и поправка на 3 из-за тех, которые мы создаем сами)
+				key: BLOCK_ID_SHIFT - 3 - block.id, // Отрицательные значения для блоков (и поправка на 3 из-за тех, которые мы создаем сами)
+				value: BLOCK_ID_SHIFT - 3 - block.id,
 				fullTitle,
 				selectable: false, // Блоки не выбираются
 				data: block,
@@ -58,6 +60,7 @@ export const convertToTreeSelectNodes = (
 								</pre>
 							</>
 						),
+						key: tag.relationId, // Используем relationId как идентификатор
 						value: tag.relationId, // Используем relationId как идентификатор
 						fullTitle: `${fullTitle}.${tag.localName}`,
 						data: tag,

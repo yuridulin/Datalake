@@ -11,7 +11,7 @@ import {
 import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { theme, TreeSelect } from 'antd'
-import { DefaultOptionType } from 'antd/es/cascader'
+import { DataNode } from 'antd/es/tree'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
@@ -47,7 +47,7 @@ const flattenNestedTags = (
 const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const [checkedRelations, setCheckedRelations] = useState<number[]>([])
-	const [treeData, setTreeData] = useState<DefaultOptionType[]>([])
+	const [treeData, setTreeData] = useState<DataNode[]>([])
 	const [tagMapping, setTagMapping] = useState<FlattenedNestedTagsType>({})
 	const [searchValue, setSearchValue] = useState<string>('')
 	const [loading, setLoading] = useState<boolean>(false)

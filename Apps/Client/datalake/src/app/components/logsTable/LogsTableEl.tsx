@@ -3,10 +3,10 @@ import { LogCategory, LogInfo } from '@/api/swagger/data-contracts'
 import UserButton from '@/app/components/buttons/UserButton'
 import LogCategoryEl from '@/app/components/LogCategoryEl'
 import getLogCategoryName from '@/functions/getLogCategoryName'
-import { useInterval } from '@/hooks/useInterval'
 import { Button, Spin, Table } from 'antd'
 import { ColumnType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
+import { useInterval } from 'react-use'
 
 type LogsTableElProps = {
 	sourceId?: number

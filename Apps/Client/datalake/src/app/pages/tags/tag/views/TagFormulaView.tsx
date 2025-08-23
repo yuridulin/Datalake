@@ -3,10 +3,10 @@ import { TagInputInfo, ValueRecord } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Table } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
+import { useInterval } from 'react-use'
 
 interface TagFormulaViewProps {
 	formula: string | null | undefined

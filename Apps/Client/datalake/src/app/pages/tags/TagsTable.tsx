@@ -4,11 +4,11 @@ import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import compareValues from '@/functions/compareValues'
-import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
+import { useInterval } from 'react-use'
 
 interface TagsTableProps {
 	tags: TagInfo[]

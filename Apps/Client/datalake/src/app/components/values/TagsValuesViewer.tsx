@@ -6,7 +6,6 @@ import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
 import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
 import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space, Typography } from 'antd'
@@ -14,6 +13,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useInterval } from 'react-use'
 
 const TimeModes = {
 	LIVE: 'live',

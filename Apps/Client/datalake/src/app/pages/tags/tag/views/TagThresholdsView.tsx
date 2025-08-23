@@ -2,12 +2,12 @@ import api from '@/api/swagger-api'
 import { TagFullInfo, TagQuality, TagThresholdInfo, TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { useInterval } from '@/hooks/useInterval'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { DollarCircleOutlined } from '@ant-design/icons'
 import { Space, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { useCallback, useEffect, useState } from 'react'
+import { useInterval } from 'react-use'
 
 interface TagThresholdsViewProps {
 	tag: TagFullInfo

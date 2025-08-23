@@ -10,6 +10,7 @@ import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useInterval } from 'react-use'
 import {
 	AggregationPeriod,
 	BlockTreeInfo,
@@ -24,7 +25,6 @@ import {
 	TagUpdateRequest,
 	ValueRecord,
 } from '../../../../api/swagger/data-contracts'
-import { useInterval } from '../../../../hooks/useInterval'
 import FormRow from '../../../components/FormRow'
 import PageHeader from '../../../components/PageHeader'
 import routes from '../../../router/routes'

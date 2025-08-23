@@ -14,15 +14,10 @@ import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
 import UserButton from '@/app/components/buttons/UserButton'
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
-import { user } from '@/state/user'
 import { Divider, Tree } from 'antd'
 import { DataNode } from 'antd/es/tree'
 import { useEffect, useState } from 'react'
 import 'react18-json-view/src/style.css'
-
-if (user.isDark()) {
-	import('react18-json-view/src/dark.css')
-}
 
 type UserAuthWithNames = {
 	guid: string
