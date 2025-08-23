@@ -1,7 +1,7 @@
-import { TagSimpleInfo } from '@/api/swagger/data-contracts'
 import TagIcon from '@/app/components/icons/TagIcon'
 import TagResolutionEl from '@/app/components/TagResolutionEl'
 import routes from '@/app/router/routes'
+import { TagSimpleInfo } from '@/generated/data-contracts'
 import { Button } from 'antd'
 import { NavLink } from 'react-router-dom'
 

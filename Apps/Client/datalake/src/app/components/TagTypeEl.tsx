@@ -1,6 +1,6 @@
 import { TagTypeName } from '@/functions/getTagTypeName'
 import { Tag } from 'antd'
-import { TagType } from '../../api/swagger/data-contracts'
+import { TagType } from '../../generated/data-contracts'
 
 export default function TagTypeEl({ tagType }: { tagType: TagType }) {
 	if (tagType === TagType.String) return <Tag color='green'>{TagTypeName[tagType]}</Tag>

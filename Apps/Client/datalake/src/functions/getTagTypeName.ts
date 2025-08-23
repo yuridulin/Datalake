@@ -1,4 +1,4 @@
-import { TagType } from '@/api/swagger/data-contracts'
+import { TagType } from '@/generated/data-contracts'
 
 export const TagTypeName: Record<TagType, string> = {
 	[TagType.String]: 'строка',

@@ -1,5 +1,4 @@
 import api from '@/api/swagger-api'
-import { BlockSimpleInfo, BlockTreeInfo, TagSimpleInfo } from '@/api/swagger/data-contracts'
 import {
 	BLOCK_ID_SHIFT,
 	convertToTreeSelectNodes,
@@ -10,6 +9,7 @@ import {
 } from '@/app/components/tagTreeSelect/treeSelectShared'
 import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import isArraysDifferent from '@/functions/isArraysDifferent'
+import { BlockSimpleInfo, BlockTreeInfo, TagSimpleInfo } from '@/generated/data-contracts'
 import { theme, TreeSelect } from 'antd'
 import { DataNode } from 'antd/es/tree'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'

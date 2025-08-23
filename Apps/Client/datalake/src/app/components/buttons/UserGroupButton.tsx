@@ -1,7 +1,7 @@
-import { AccessType, UserGroupSimpleInfo } from '@/api/swagger/data-contracts'
 import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
 import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
+import { AccessType, UserGroupSimpleInfo } from '@/generated/data-contracts'
 import { Button } from 'antd'
 import { NavLink } from 'react-router-dom'
 

@@ -9,7 +9,7 @@ import {
 	QuestionOutlined,
 } from '@ant-design/icons'
 import { theme } from 'antd'
-import { TagQuality } from '../../api/swagger/data-contracts'
+import { TagQuality } from '../../generated/data-contracts'
 
 type TagQualityElProps = {
 	quality?: TagQuality

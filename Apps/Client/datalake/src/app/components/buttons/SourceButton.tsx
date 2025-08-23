@@ -1,9 +1,9 @@
-import { SourceSimpleInfo, SourceType } from '@/api/swagger/data-contracts'
 import AggregatedSourceIcon from '@/app/components/icons/AggregatedSourceIcon'
 import CalculatedSourceIcon from '@/app/components/icons/CalculatedSourceIcon'
 import ManualSourceIcon from '@/app/components/icons/ManualSourceIcon'
 import SourceIcon from '@/app/components/icons/SourceIcon'
 import routes from '@/app/router/routes'
+import { SourceSimpleInfo, SourceType } from '@/generated/data-contracts'
 import { Button } from 'antd'
 import { NavLink } from 'react-router-dom'
 

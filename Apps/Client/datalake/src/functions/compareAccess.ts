@@ -1,4 +1,4 @@
-import { AccessType } from '@/api/swagger/data-contracts'
+import { AccessType } from '@/generated/data-contracts'
 
 export default function compareAccess(a: AccessType, b: AccessType): number {
 	const order = (value: AccessType): number => {

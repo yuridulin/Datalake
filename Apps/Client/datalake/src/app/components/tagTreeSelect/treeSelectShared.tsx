@@ -1,13 +1,13 @@
+import BlockIcon from '@/app/components/icons/BlockIcon'
+import TagIcon from '@/app/components/icons/TagIcon'
+import getTagResolutionName from '@/functions/getTagResolutionName'
 import {
 	AccessType,
 	BlockNestedTagInfo,
 	BlockTagRelation,
 	BlockTreeInfo,
 	TagSimpleInfo,
-} from '@/api/swagger/data-contracts'
-import BlockIcon from '@/app/components/icons/BlockIcon'
-import TagIcon from '@/app/components/icons/TagIcon'
-import getTagResolutionName from '@/functions/getTagResolutionName'
+} from '@/generated/data-contracts'
 import { GlobalToken } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
 import { DataNode } from 'antd/es/tree'

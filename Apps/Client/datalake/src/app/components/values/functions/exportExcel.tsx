@@ -1,4 +1,4 @@
-import { TagQuality } from '@/api/swagger/data-contracts'
+import { TagQuality } from '@/generated/data-contracts'
 import ExcelJS from 'exceljs'
 
 export interface ExcelExportModeHandles {

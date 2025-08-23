@@ -1,9 +1,9 @@
-import { BlockTreeInfo, TagSimpleInfo } from '@/api/swagger/data-contracts'
 import {
 	convertToTreeSelectNodes,
 	createFullTree,
 	filterTreeNode,
 } from '@/app/components/tagTreeSelect/treeSelectShared'
+import { BlockTreeInfo, TagSimpleInfo } from '@/generated/data-contracts'
 import { theme, TreeSelect } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
 import React, { useMemo } from 'react'

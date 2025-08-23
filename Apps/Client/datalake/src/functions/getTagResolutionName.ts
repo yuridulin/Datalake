@@ -1,4 +1,4 @@
-import { TagResolution } from '@/api/swagger/data-contracts'
+import { TagResolution } from '@/generated/data-contracts'
 
 const FullDesc: Record<TagResolution, string> = {
 	[TagResolution.NotSet]: 'По изменению',

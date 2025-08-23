@@ -1,6 +1,6 @@
 import getTagResolutionName from '@/functions/getTagResolutionName'
 import { blue } from '@ant-design/colors'
-import { TagResolution } from '../../api/swagger/data-contracts'
+import { TagResolution } from '../../generated/data-contracts'
 
 type TagResolutionElProps = {
 	resolution: TagResolution

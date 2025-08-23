@@ -1,4 +1,4 @@
-import { SourceType } from '../api/swagger/data-contracts'
+import { SourceType } from '../generated/data-contracts'
 
 function getSourceTypeName(sourceType: SourceType) {
 	switch (sourceType) {

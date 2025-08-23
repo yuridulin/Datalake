@@ -1,5 +1,5 @@
-import { TagQuality, TagType } from '@/api/swagger/data-contracts'
 import TagQualityEl from '@/app/components/TagQualityEl'
+import { TagQuality, TagType } from '@/generated/data-contracts'
 import { TagValue } from '@/types/tagValue'
 import { theme } from 'antd'
 

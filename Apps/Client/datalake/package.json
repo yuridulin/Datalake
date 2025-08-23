@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "vite",
 		"lint": "tsc -b",
-		"swagger": "npx swagger-typescript-api generate --path \"http://localhost:8000/swagger/Datalake%20App/swagger.json\" --output \"./src/api/swagger\" --axios --modular --clean-output --extract-request-body --responses",
+		"swagger": "npx swagger-typescript-api generate --path \"http://localhost:8000/swagger/Datalake%20App/swagger.json\" --output \"./src/generated\" --axios --modular --clean-output --extract-request-body --responses",
 		"build": "vite build",
 		"build-local": "tsc -b && vite build && npm run update-datalake-client",
 		"update-datalake-client": "node env/update-datalake-client.js"
@@ -48,7 +48,7 @@
 		"eslint-plugin-react-refresh": "^0.4.20",
 		"globals": "^16.3.0",
 		"prettier": "^3.6.2",
-		"swagger-typescript-api": "^13.2.7",
+		"swagger-typescript-api": "13.2.7",
 		"typescript": "~5.8.3",
 		"typescript-eslint": "^8.35.1",
 		"vite": "^7.0.4",
