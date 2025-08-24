@@ -1,9 +1,9 @@
-import { user } from '@/state/user'
+import routes from '@/app/router/routes'
+import { AccessType, UserGroupInfo, UserGroupSimpleInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { NavLink } from 'react-router-dom'
-import { AccessType, UserGroupInfo, UserGroupSimpleInfo } from '../../../../../generated/data-contracts'
-import routes from '../../../../router/routes'
 import UserGroupsCreateModal from '../modals/UserGroupsCreateModal'
 
 type SubgroupsTableProps = {
@@ -13,9 +13,10 @@ type SubgroupsTableProps = {
 }
 
 const SubgroupsTable = ({ guid, subgroups, onCreateGroup }: SubgroupsTableProps) => {
+	const store = useAppStore()
 	return (
 		<>
-			{user.hasAccessToGroup(AccessType.Manager, guid) && (
+			{store.hasAccessToGroup(AccessType.Manager, guid) && (
 				<div style={{ marginBottom: '1em' }}>
 					<UserGroupsCreateModal isSmall={true} onCreate={onCreateGroup} parentGuid={guid} />
 				</div>

@@ -3,6 +3,8 @@ import { useAppStore } from '@/store/useAppStore'
 import { Button, Form, Input, Space } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { ValidateErrorEntity } from 'node_modules/rc-field-form/lib/interface'
+import { Navigate } from 'react-router-dom'
+import routes from '../routes'
 import { handleKeycloakLogin } from './keycloak/oidcConfig'
 
 const style = {
@@ -21,7 +23,9 @@ const Login = observer(() => {
 		console.warn('Failed:', errorInfo)
 	}
 
-	return (
+	return store.isAuthenticated ? (
+		<Navigate to={routes.globalRoot} replace />
+	) : (
 		<div
 			style={{
 				position: 'fixed',

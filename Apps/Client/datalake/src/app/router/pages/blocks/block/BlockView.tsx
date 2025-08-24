@@ -1,4 +1,3 @@
-import api from '@/api/swagger-api'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
@@ -7,7 +6,7 @@ import TabsView from '@/app/components/tabsView/TabsView'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
 import { AccessType, BlockFullInfo, TagResolution, TagType } from '@/generated/data-contracts'
-import { user } from '@/state/user'
+import { useAppStore } from '@/store/useAppStore'
 import { RightOutlined } from '@ant-design/icons'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -19,6 +18,7 @@ const childrenContainerStyle = {
 }
 
 const BlockView = observer(() => {
+	const store = useAppStore()
 	const { id } = useParams()
 
 	const [ready, setReady] = useState(false)
@@ -31,7 +31,7 @@ const BlockView = observer(() => {
 
 	const getBlock = () => {
 		setReady(false)
-		api
+		store.api
 			.blocksGet(Number(id))
 			.then((res) => {
 				res.data.adults = res.data.adults.reverse()
@@ -42,7 +42,7 @@ const BlockView = observer(() => {
 	}
 
 	const createChild = () => {
-		api.blocksCreateEmpty({ parentId: Number(id) }).then(getBlock)
+		store.api.blocksCreateEmpty({ parentId: Number(id) }).then(getBlock)
 	}
 
 	useEffect(getBlock, [id])
@@ -75,13 +75,13 @@ const BlockView = observer(() => {
 				}
 				right={
 					<>
-						{user.hasAccessToBlock(AccessType.Editor, Number(id)) && (
+						{store.hasAccessToBlock(AccessType.Editor, Number(id)) && (
 							<NavLink to={routes.blocks.toEditBlock(Number(id))}>
 								<Button>Редактирование блока</Button>
 							</NavLink>
 						)}
 						&ensp;
-						{user.hasAccessToBlock(AccessType.Admin, Number(id)) && (
+						{store.hasAccessToBlock(AccessType.Admin, Number(id)) && (
 							<NavLink to={routes.blocks.toBlockAccessForm(Number(id))}>
 								<Button>Редактирование разрешений</Button>
 							</NavLink>
@@ -149,7 +149,7 @@ const BlockView = observer(() => {
 										<i>Нет дочерних блоков</i>
 									</div>
 								)}
-								{user.hasAccessToBlock(AccessType.Manager, Number(id)) && (
+								{store.hasAccessToBlock(AccessType.Manager, Number(id)) && (
 									<div style={childrenContainerStyle}>
 										<Button size='small' onClick={createChild}>
 											Создать

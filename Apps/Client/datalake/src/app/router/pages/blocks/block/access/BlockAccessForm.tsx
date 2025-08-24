@@ -1,8 +1,8 @@
-import api from '@/api/swagger-api'
 import AccessTypeEl from '@/app/components/AccessTypeEl'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { AccessRightsIdInfo, AccessType, BlockSimpleInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Select, Spin, Table } from 'antd'
@@ -28,6 +28,7 @@ const objectOptions: DefaultOptionType[] = [
 ]
 
 const BlockAccessForm = () => {
+	const store = useAppStore()
 	const { id } = useParams()
 
 	const [block, setBlock] = useState({} as BlockSimpleInfo)
@@ -41,11 +42,13 @@ const BlockAccessForm = () => {
 		if (!id) return
 		setLoading(true)
 		const loaders = [
-			api.blocksGet(Number(id)).then((res) => {
+			store.api.blocksGet(Number(id)).then((res) => {
 				setBlock(res.data)
 			}),
-			api.userGroupsGetAll().then((res) => setUserGroups(res.data.map((x) => ({ label: x.name, value: x.guid })))),
-			api.usersGetAll().then((res) =>
+			store.api
+				.userGroupsGetAll()
+				.then((res) => setUserGroups(res.data.map((x) => ({ label: x.name, value: x.guid })))),
+			store.api.usersGetAll().then((res) =>
 				setUsers(
 					res.data.map((x) => ({
 						label: x.fullName,
@@ -53,7 +56,7 @@ const BlockAccessForm = () => {
 					})),
 				),
 			),
-			api
+			store.api
 				.accessGet({ block: Number(id) })
 				.then((res) => {
 					setForm(
@@ -74,7 +77,7 @@ const BlockAccessForm = () => {
 	}
 
 	const updateRights = () => {
-		api.accessApplyChanges({
+		store.api.accessApplyChanges({
 			blockId: Number(id),
 			rights: form.map((x) => {
 				switch (x.choosedObject) {

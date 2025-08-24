@@ -1,5 +1,5 @@
-import { BlockFlattenNestedTagInfo } from '@/app/pages/values/types/flattenedNestedTags'
 import { ValuesTagResponse } from '@/generated/data-contracts'
+import { BlockFlattenNestedTagInfo } from './flattenedNestedTags'
 
 export type TagValueWithInfo = ValuesTagResponse &
 	BlockFlattenNestedTagInfo & {

@@ -1,17 +1,17 @@
-import api from '@/api/swagger-api'
-import NoAccessPage from '@/app/components/NoAccessPage'
-import { user } from '@/state/user'
+import FormRow from '@/app/components/FormRow'
+import NoAccessEl from '@/app/components/NoAccessEl'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
+import { AccessType, UserCreateRequest, UserEnergoIdInfo, UserType } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { Button, Input, Radio, Select } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AccessType, UserCreateRequest, UserEnergoIdInfo, UserType } from '../../../../generated/data-contracts'
-import FormRow from '../../../components/FormRow'
-import PageHeader from '../../../components/PageHeader'
-import routes from '../../../router/routes'
 
 const UserCreate = observer(() => {
+	const store = useAppStore()
 	const navigate = useNavigate()
 	const [request, setRequest] = useState({
 		accessType: AccessType.NotSet,
@@ -22,13 +22,13 @@ const UserCreate = observer(() => {
 	const [keycloakInfo, setKeycloakInfo] = useState<UserEnergoIdInfo[]>([])
 
 	function load() {
-		api
+		store.api
 			.usersGetEnergoId()
 			.then((res) => !!res && setKeycloakInfo(res.data.sort((a, b) => a.fullName.localeCompare(b.fullName))))
 	}
 
 	function create() {
-		api.usersCreate(request).then((res) => {
+		store.api.usersCreate(request).then((res) => {
 			navigate(routes.users.toUserForm(res.data.guid))
 		})
 	}
@@ -39,7 +39,7 @@ const UserCreate = observer(() => {
 
 	useEffect(load, [])
 
-	if (!user.hasGlobalAccess(AccessType.Admin)) return <NoAccessPage />
+	if (!store.hasGlobalAccess(AccessType.Admin)) return <NoAccessEl />
 
 	return (
 		<>

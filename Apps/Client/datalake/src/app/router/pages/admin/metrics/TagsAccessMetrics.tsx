@@ -1,5 +1,5 @@
-import api from '@/api/swagger-api'
 import { TagSimpleInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { notification, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
@@ -26,6 +26,7 @@ const columns: ColumnsType<TagWithMetric> = [
 ]
 
 const TagsAccessMetrics = () => {
+	const store = useAppStore()
 	const [tagsMetrics, setTagsMetrics] = useState([] as TagWithMetric[])
 
 	const initialLoad = () => {
@@ -33,7 +34,7 @@ const TagsAccessMetrics = () => {
 		let metrics: Record<string, Record<string, string>> = {}
 
 		Promise.all([
-			api
+			store.api
 				.tagsGetAll()
 				.then((res) => {
 					tags = res.data
@@ -41,7 +42,7 @@ const TagsAccessMetrics = () => {
 				.catch(() => {
 					notification.error({ message: 'Не удалось прочитать список тегов' })
 				}),
-			api
+			store.api
 				.systemGetTagsStates()
 				.then((res) => {
 					metrics = res.data

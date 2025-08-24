@@ -2,9 +2,9 @@ import AccessTypeEl from '@/app/components/AccessTypeEl'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
+import { AccessRightsForOneInfo, AccessType } from '@/generated/data-contracts'
 import { Table, Tag } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { AccessRightsForOneInfo, AccessType } from '../../../../../generated/data-contracts'
 
 type ObjectsWithAccessProps = {
 	accessRights: AccessRightsForOneInfo[]

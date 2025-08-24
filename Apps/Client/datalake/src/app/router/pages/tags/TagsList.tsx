@@ -1,15 +1,16 @@
-import api from '@/api/swagger-api'
+import PageHeader from '@/app/components/PageHeader'
+import { TagInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { useCallback, useEffect, useState } from 'react'
-import { TagInfo } from '../../../generated/data-contracts'
-import PageHeader from '../../components/PageHeader'
 import TagsTable from './TagsTable'
 
 const Tags = () => {
+	const store = useAppStore()
 	const [tags, setTags] = useState([] as TagInfo[])
 
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
-			api
+			store.api
 				.tagsGetAll()
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))

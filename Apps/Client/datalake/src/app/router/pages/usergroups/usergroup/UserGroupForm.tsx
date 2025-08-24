@@ -1,18 +1,18 @@
-import api from '@/api/swagger-api'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
-import { user } from '@/state/user'
+import { AccessType, UserGroupDetailedInfo, UserGroupUpdateRequest } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusCircleOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons'
-import { Button, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
+import { App, Button, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
-import { AccessType, UserGroupDetailedInfo, UserGroupUpdateRequest } from '../../../../generated/data-contracts'
-import notify from '../../../../state/notifications'
-import PageHeader from '../../../components/PageHeader'
-import routes from '../../../router/routes'
 
 const UserGroupForm = observer(() => {
+	const store = useAppStore()
+	const app = App.useApp()
 	const navigate = useNavigate()
 	const { id } = useParams()
 	const [form] = Form.useForm<UserGroupUpdateRequest>()
@@ -22,7 +22,7 @@ const UserGroupForm = observer(() => {
 	const [users, setUsers] = useState([] as { label: string; value: string }[])
 
 	const getGroup = (guid: string) => {
-		api.userGroupsGetWithDetails(guid).then((res) => {
+		store.api.userGroupsGetWithDetails(guid).then((res) => {
 			if (res.data.guid) {
 				setGroup(res.data)
 				form.setFieldsValue({
@@ -37,24 +37,24 @@ const UserGroupForm = observer(() => {
 	}
 
 	const updateGroup = (newInfo: UserGroupUpdateRequest) => {
-		api
+		store.api
 			.userGroupsUpdate(String(id), {
 				...newInfo,
 				users: newInfo.users || group.users || [],
 			})
 			.catch(() => {
-				notify.err('Ошибка при сохранении')
+				app.notification.error({ message: 'Ошибка при сохранении' })
 			})
 	}
 
 	const deleteGroup = () => {
-		api.userGroupsDelete(String(id)).then(() => navigate(routes.userGroups.toList()))
+		store.api.userGroupsDelete(String(id)).then(() => navigate(routes.userGroups.toList()))
 	}
 
 	const getGety = () => setGety(!!group.guid)
 
 	const getUsers = () => {
-		api.usersGetAll().then((res) => {
+		store.api.usersGetAll().then((res) => {
 			if (res.data)
 				setUsers(
 					res.data.map((x) => ({
@@ -122,10 +122,10 @@ const UserGroupForm = observer(() => {
 				<Form.Item<UserGroupUpdateRequest> label='Базовый уровень доступа группы' name='accessType'>
 					<Select
 						placeholder='Выберите уровень доступа'
-						options={accessOptions.filter((x) => hasAccess(user.globalAccessType, x.value as AccessType))}
+						options={accessOptions.filter((x) => hasAccess(store.globalAccessType, x.value as AccessType))}
 					/>
 				</Form.Item>
-				{user.hasAccessToGroup(AccessType.Manager, String(id)) && (
+				{store.hasAccessToGroup(AccessType.Manager, String(id)) && (
 					<Form.List name='users'>
 						{(fields, { add, remove }) => (
 							<table className='form-subtable'>

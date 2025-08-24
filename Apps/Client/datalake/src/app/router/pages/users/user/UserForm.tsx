@@ -1,22 +1,15 @@
-import api from '@/api/swagger-api'
+import FormRow from '@/app/components/FormRow'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
-import { user } from '@/state/user'
+import { AccessType, UserDetailInfo, UserEnergoIdInfo, UserType, UserUpdateRequest } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { Button, Input, Popconfirm, Radio, Select, Spin, Tag } from 'antd'
 import { DefaultOptionType } from 'antd/es/select'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import {
-	AccessType,
-	UserDetailInfo,
-	UserEnergoIdInfo,
-	UserType,
-	UserUpdateRequest,
-} from '../../../../generated/data-contracts'
-import FormRow from '../../../components/FormRow'
-import PageHeader from '../../../components/PageHeader'
-import routes from '../../../router/routes'
 
 type UserInfoProps = UserDetailInfo & {
 	oldType: UserType
@@ -32,6 +25,7 @@ interface EnergoIdOption extends DefaultOptionType {
 }
 
 const UserForm = observer(() => {
+	const store = useAppStore()
 	const navigate = useNavigate()
 	const { id } = useParams()
 	const [oldName, setOldName] = useState('')
@@ -47,7 +41,7 @@ const UserForm = observer(() => {
 	const load = () => {
 		if (!id) return
 		setLoading(true)
-		api.usersGetWithDetails(String(id)).then((res) => {
+		store.api.usersGetWithDetails(String(id)).then((res) => {
 			setNewType(res.data.type)
 			setUser({
 				...res.data,
@@ -68,24 +62,24 @@ const UserForm = observer(() => {
 			setLoading(false)
 		})
 
-		api.usersGetEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
+		store.api.usersGetEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
 	}
 
 	useEffect(load, [id])
 
 	function update() {
-		api.usersUpdate(String(id), request).then((res) => {
+		store.api.usersUpdate(String(id), request).then((res) => {
 			if (res.status >= 300) return
 			load()
 		})
 	}
 
 	function del() {
-		api.usersDelete(String(id)).then(() => navigate(routes.users.list))
+		store.api.usersDelete(String(id)).then(() => navigate(routes.users.list))
 	}
 
 	function generateNewHash() {
-		api
+		store.api
 			.usersUpdate(String(id), {
 				...request,
 				createNewStaticHash: true,
@@ -145,7 +139,7 @@ const UserForm = observer(() => {
 					<Select
 						value={request.accessType}
 						defaultValue={request.accessType}
-						options={accessOptions.filter((x) => hasAccess(user.globalAccessType, x.value as AccessType))}
+						options={accessOptions.filter((x) => hasAccess(store.globalAccessType, x.value as AccessType))}
 						style={{ width: '12em' }}
 						disabled={!hasAccess(userInfo.accessRule.access, AccessType.Manager)}
 						onChange={(e) =>
@@ -161,7 +155,7 @@ const UserForm = observer(() => {
 					<Radio.Group
 						buttonStyle='solid'
 						value={newType}
-						disabled={!hasAccess(user.globalAccessType, AccessType.Manager)}
+						disabled={!hasAccess(store.globalAccessType, AccessType.Manager)}
 						onChange={(e) => setNewType(e.target.value)}
 					>
 						<Radio.Button value={UserType.Static}>Статичная учетная запись</Radio.Button>
@@ -208,7 +202,7 @@ const UserForm = observer(() => {
 
 				<div
 					style={{
-						display: user.hasGlobalAccess(AccessType.Admin) && newType === UserType.Static ? 'inherit' : 'none',
+						display: store.hasGlobalAccess(AccessType.Admin) && newType === UserType.Static ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Адрес, с которого разрешен доступ'>
@@ -291,7 +285,7 @@ const UserForm = observer(() => {
 									fullName: typedOption.data.fullName,
 								})
 							}}
-							disabled={!hasAccess(user.globalAccessType, AccessType.Manager)}
+							disabled={!hasAccess(store.globalAccessType, AccessType.Manager)}
 							style={{ width: '100%' }}
 						/>
 					</FormRow>

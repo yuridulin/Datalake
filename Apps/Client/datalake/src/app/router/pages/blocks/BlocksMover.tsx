@@ -1,12 +1,12 @@
-import api from '@/api/swagger-api'
+import PageHeader from '@/app/components/PageHeader'
+import compareValues from '@/functions/compareValues'
+import { BlockTreeInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import compareValues from '../../../functions/compareValues'
-import { BlockTreeInfo } from '../../../generated/data-contracts'
-import PageHeader from '../../components/PageHeader'
-import routes from '../../router/routes'
+import routes from '../../routes'
 
 function transformBlockTreeInfo(blocks: BlockTreeInfo[] | null | undefined): TreeDataNode[] {
 	if (!blocks) return []
@@ -28,12 +28,13 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[] | null | undefined): Tre
 }
 
 const BlocksMover = observer(() => {
+	const store = useAppStore()
 	const [blocks, setBlocks] = useState([] as TreeDataNode[])
 	const [loading, setLoading] = useState(false)
 	const { token } = theme.useToken()
 
 	function load() {
-		api.blocksGetTree().then((res) => setBlocks(transformBlockTreeInfo(res.data)))
+		store.api.blocksGetTree().then((res) => setBlocks(transformBlockTreeInfo(res.data)))
 	}
 
 	const findParentKey = (data: TreeDataNode[], key: React.Key): React.Key | null => {
@@ -99,7 +100,7 @@ const BlocksMover = observer(() => {
 		const parentKey = findParentKey(data, dragKey)
 
 		setLoading(true)
-		api
+		store.api
 			.blocksMove(Number(info.dragNode.key), {
 				parentId: Number(parentKey),
 			})

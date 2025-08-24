@@ -1,4 +1,3 @@
-import api from '@/api/swagger-api'
 import AccessTypeEl from '@/app/components/AccessTypeEl'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import SourceButton from '@/app/components/buttons/SourceButton'
@@ -14,6 +13,7 @@ import {
 	TagType,
 	UserAuthInfo,
 } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Divider, Tree } from 'antd'
 import { DataNode } from 'antd/es/tree'
 import { useEffect, useState } from 'react'
@@ -51,6 +51,7 @@ type UserAuthWithNames = {
 }
 
 const AccessSettings = () => {
+	const store = useAppStore()
 	const [rights, setRights] = useState([] as DataNode[])
 
 	const load = () => {
@@ -60,7 +61,7 @@ const AccessSettings = () => {
 		let tags: Record<string, TagSimpleInfo>
 		let auth: Record<string, UserAuthInfo>
 		Promise.all([
-			api.userGroupsGetAll().then((res) => {
+			store.api.userGroupsGetAll().then((res) => {
 				groups = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.guid] = item.name
@@ -69,7 +70,7 @@ const AccessSettings = () => {
 					{} as Record<string, string>,
 				)
 			}),
-			api.sourcesGetAll().then((res) => {
+			store.api.sourcesGetAll().then((res) => {
 				sources = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.id] = item.name
@@ -78,7 +79,7 @@ const AccessSettings = () => {
 					{} as Record<string, string>,
 				)
 			}),
-			api.blocksGetAll().then((res) => {
+			store.api.blocksGetAll().then((res) => {
 				blocks = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.id] = item.name
@@ -87,7 +88,7 @@ const AccessSettings = () => {
 					{} as Record<string, string>,
 				)
 			}),
-			api.tagsGetAll().then((res) => {
+			store.api.tagsGetAll().then((res) => {
 				tags = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.guid] = item
@@ -96,7 +97,7 @@ const AccessSettings = () => {
 					{} as Record<string, TagSimpleInfo>,
 				)
 			}),
-			api.systemGetAccess().then((res) => {
+			store.api.systemGetAccess().then((res) => {
 				auth = res.data
 			}),
 		]).then(() => {

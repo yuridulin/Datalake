@@ -1,7 +1,7 @@
 import TagButton from '@/app/components/buttons/TagButton'
 import { ExcelExportModeHandles, getQualityStyle } from '@/app/components/values/functions/exportExcel'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { TagViewerModeProps } from '@/app/pages/values/types/TagViewerModeProps'
+import { TagViewerModeProps } from '@/app/router/pages/values/types/TagViewerModeProps'
 import { TagTypeName } from '@/functions/getTagTypeName'
 import { SourceType, TagQuality, TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
 import { TagValue } from '@/types/tagValue'

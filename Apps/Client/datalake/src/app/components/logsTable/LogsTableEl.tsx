@@ -1,8 +1,8 @@
-import api from '@/api/swagger-api'
 import UserButton from '@/app/components/buttons/UserButton'
 import LogCategoryEl from '@/app/components/LogCategoryEl'
 import getLogCategoryName from '@/functions/getLogCategoryName'
 import { LogCategory, LogInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin, Table } from 'antd'
 import { ColumnType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
@@ -71,6 +71,8 @@ const step = 10
 const globalStep = 100
 
 const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: LogsTableElProps) => {
+	const store = useAppStore()
+
 	const [init, setInit] = useState(true)
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const [loading, setLoading] = useState(false)
@@ -81,7 +83,7 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 		setInit(true)
 		const global = !sourceId && !blockId && !tagGuid && !userGuid && !userGroupGuid
 		setGlobal(global)
-		api
+		store.api
 			.systemGetLogs({
 				lastId: null,
 				take: global ? globalStep : step,
@@ -101,7 +103,7 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 
 	const loadNewLogs = () => {
 		const lastId = logs.reduce((acc, log) => (log.id > acc ? log.id : acc), 0)
-		api
+		store.api
 			.systemGetLogs({
 				lastId: lastId,
 				source: sourceId,
@@ -119,7 +121,7 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 	const loadOldLogs = () => {
 		const firstId = logs.reduce((acc, log) => (log.id < acc ? log.id : acc), Infinity)
 		setLoading(true)
-		api
+		store.api
 			.systemGetLogs({
 				firstId: firstId,
 				take: isGlobal ? globalStep : step,

@@ -1,25 +1,25 @@
-import api from '@/api/swagger-api'
 import AccessTypeEl from '@/app/components/AccessTypeEl'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
+import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
-import SubgroupsTable from '@/app/pages/usergroups/usergroup/parts/SubgroupsTable'
-import { user } from '@/state/user'
+import routes from '@/app/router/routes'
+import { AccessType, UserGroupDetailedInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import { AccessType, UserGroupDetailedInfo } from '../../../../generated/data-contracts'
-import PageHeader from '../../../components/PageHeader'
-import routes from '../../../router/routes'
 import { default as MembersTable } from './parts/MembersTable'
 import ObjectsWithAccess from './parts/ObjectsWithAccess'
+import SubgroupsTable from './parts/SubgroupsTable'
 
 const defaultGroup = {} as UserGroupDetailedInfo
 
 type UserGroupTabs = 'members' | 'nested' | 'access' | 'logs'
 
 const UserGroupView = observer(() => {
+	const store = useAppStore()
 	const [group, setGroup] = useState(defaultGroup)
 	const [ready, setReady] = useState(false)
 	const { id } = useParams()
@@ -32,7 +32,7 @@ const UserGroupView = observer(() => {
 	const load = () => {
 		setReady(false)
 		if (!id) return
-		api
+		store.api
 			.userGroupsGetWithDetails(id)
 			.then((res) => {
 				if (res.data?.guid) {
@@ -62,13 +62,13 @@ const UserGroupView = observer(() => {
 				}
 				right={
 					<>
-						{user.hasAccessToGroup(AccessType.Editor, String(id)) && (
+						{store.hasAccessToGroup(AccessType.Editor, String(id)) && (
 							<NavLink to={routes.userGroups.toEditUserGroup(String(id))}>
 								<Button>Редактирование группы и участников</Button>
 							</NavLink>
 						)}
 						&ensp;
-						{user.hasGlobalAccess(AccessType.Admin) && (
+						{store.hasGlobalAccess(AccessType.Admin) && (
 							<NavLink to={routes.userGroups.toUserGroupAccessForm(String(id))}>
 								<Button>Редактирование разрешений</Button>
 							</NavLink>

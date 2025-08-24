@@ -1,5 +1,8 @@
-import api from '@/api/swagger-api'
 import AccessTypeEl from '@/app/components/AccessTypeEl'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
+import { AccessRightsIdInfo, AccessType, UserGroupInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Select, Spin, Table } from 'antd'
@@ -7,9 +10,6 @@ import { DefaultOptionType } from 'antd/es/select'
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import { AccessRightsIdInfo, AccessType, UserGroupInfo } from '../../../../../generated/data-contracts'
-import PageHeader from '../../../../components/PageHeader'
-import routes from '../../../../router/routes'
 
 type FormType = AccessRightsIdInfo & {
 	key: string
@@ -32,6 +32,7 @@ const objectOptions: DefaultOptionType[] = [
 ]
 
 const UserGroupAccessForm = () => {
+	const store = useAppStore()
 	const { id } = useParams()
 
 	const [group, setGroup] = useState({} as UserGroupInfo)
@@ -46,13 +47,13 @@ const UserGroupAccessForm = () => {
 		if (!id) return
 		setLoading(true)
 		const loaders = [
-			api.userGroupsGet(String(id)).then((res) => {
+			store.api.userGroupsGet(String(id)).then((res) => {
 				setGroup(res.data)
 			}),
-			api.sourcesGetAll().then((res) => setSources(res.data.map((x) => ({ label: x.name, value: x.id })))),
-			api.blocksGetAll().then((res) => setBlocks(res.data.map((x) => ({ label: x.name, value: x.id })))),
-			api.tagsGetAll().then((res) => setTags(res.data.map((x) => ({ label: x.name, value: x.id })))),
-			api
+			store.api.sourcesGetAll().then((res) => setSources(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			store.api.blocksGetAll().then((res) => setBlocks(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			store.api.tagsGetAll().then((res) => setTags(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			store.api
 				.accessGet({ userGroup: String(id) })
 				.then((res) => {
 					setForm(
@@ -74,7 +75,7 @@ const UserGroupAccessForm = () => {
 	}
 
 	const updateRights = () => {
-		api.accessApplyChanges({
+		store.api.accessApplyChanges({
 			userGroupGuid: String(id),
 			rights: form.map((x) => {
 				switch (x.choosedObject) {

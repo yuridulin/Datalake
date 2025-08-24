@@ -1,8 +1,8 @@
 import AccessTypeEl from '@/app/components/AccessTypeEl'
 import UserButton from '@/app/components/buttons/UserButton'
+import { AccessType, UserGroupUsersInfo } from '@/generated/data-contracts'
 import { Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { AccessType, UserGroupUsersInfo } from '../../../../../generated/data-contracts'
 
 type MembersTableProps = {
 	users: UserGroupUsersInfo[]

@@ -1,5 +1,5 @@
-import api from '@/api/swagger-api'
 import { KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo as Metric } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { useCallback, useEffect, useState } from 'react'
@@ -44,12 +44,13 @@ const columns: ColumnsType<Metric> = [
 ]
 
 const ValuesMetrics = () => {
+	const store = useAppStore()
 	const [loading, setLoading] = useState<boolean>(false)
 	const [metrics, setMetrics] = useState<Metric[]>([])
 
 	const getMetrics = useCallback(() => {
 		setLoading(true)
-		api
+		store.api
 			.systemGetReadMetrics()
 			.then((res) => setMetrics(res.data))
 			.catch(() => setMetrics([]))

@@ -78,6 +78,7 @@ export class AppStore implements UserAuthInfo {
 
 		api.instance.interceptors.request.use(
 			(config) => {
+				console.log('SEND TOKEN ', this.token, 'IsAuthenticated: ', this.isAuthenticated)
 				config.headers[tokenHeader] = this.token
 				return config
 			},
@@ -186,30 +187,29 @@ export class AppStore implements UserAuthInfo {
 
 	//#region Методы аутентификации
 
+	// сохраняемые в LS настройки
+	fullName: string = localStorage.getItem(nameHeader) || ''
+	token: string = localStorage.getItem(tokenHeader) || ''
+	globalAccessType: AccessType = Number(localStorage.getItem(accessHeader) || AccessType.NotSet) as AccessType
+
+	// настройки с бэкенда
+	guid: string = ''
 	rootRule!: AccessRuleInfo
 	underlyingUser?: UserAuthInfo | null | undefined
 	energoId?: string | null | undefined
-
-	guid: string = ''
-	fullName: string = localStorage.getItem(nameHeader) || ''
-	globalAccessType: AccessType = Number(localStorage.getItem(accessHeader) || AccessType.NotSet) as AccessType
 	accessRule: AccessRuleInfo = { ruleId: 0, access: this.globalAccessType }
 	groups: Record<string, AccessRuleInfo> = {}
 	sources: Record<number, AccessRuleInfo> = {}
 	blocks: Record<number, AccessRuleInfo> = {}
 	tags: Record<string, AccessRuleInfo> = {}
-	token: string = localStorage.getItem(tokenHeader) || ''
-
-	authToken: string = localStorage.getItem(tokenHeader) || ''
-	authLogin: string = localStorage.getItem(nameHeader) || ''
 
 	public setAuthData = (authInfo: UserAuthInfo) => {
 		console.log('SET store.authToken =', authInfo.token)
 		console.log('SET store.authLogin =', authInfo.fullName)
 		console.log('SET store.globalAccessType =', authInfo.rootRule.access)
 
-		this.authToken = authInfo.token
-		this.authLogin = authInfo.fullName
+		this.token = authInfo.token
+		this.fullName = authInfo.fullName
 		this.globalAccessType = authInfo.rootRule.access
 		this.sources = authInfo.sources
 		this.blocks = authInfo.blocks
@@ -241,8 +241,8 @@ export class AppStore implements UserAuthInfo {
 		console.log('SET store.authToken =', '')
 		console.log('SET store.authLogin =', '')
 		console.log('SET store.globalAccessType =', AccessType.NotSet)
-		this.authToken = ''
-		this.authLogin = ''
+		this.token = ''
+		this.fullName = ''
 		this.globalAccessType = AccessType.NotSet
 		localStorage.removeItem(tokenHeader)
 		localStorage.removeItem(nameHeader)
@@ -280,7 +280,7 @@ export class AppStore implements UserAuthInfo {
 	}
 
 	public logout = () => {
-		this.api.usersLogout({ token: this.authToken }).then(() => {
+		this.api.usersLogout({ token: this.token }).then(() => {
 			this.clearAuthData()
 		})
 	}

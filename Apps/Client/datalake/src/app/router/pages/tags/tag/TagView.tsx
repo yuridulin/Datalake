@@ -1,23 +1,15 @@
-import api from '@/api/swagger-api'
 import BlockButton from '@/app/components/buttons/BlockButton'
 import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
 import CopyableText from '@/app/components/CopyableText'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
+import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
 import TagResolutionEl from '@/app/components/TagResolutionEl'
 import TagTypeEl from '@/app/components/TagTypeEl'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
-import TagFormulaView from '@/app/pages/tags/tag/views/TagFormulaView'
-import TagThresholdsView from '@/app/pages/tags/tag/views/TagThresholdsView'
-import { user } from '@/state/user'
-import { CLIENT_REQUESTKEY } from '@/types/constants'
-import { Button, Spin, Table, Tag } from 'antd'
-import dayjs from 'dayjs'
-import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { NavLink, useNavigate, useParams } from 'react-router-dom'
+import routes from '@/app/router/routes'
 import {
 	AccessType,
 	AggregationPeriod,
@@ -27,11 +19,19 @@ import {
 	TagFullInfo,
 	TagResolution,
 	TagType,
-} from '../../../../generated/data-contracts'
-import PageHeader from '../../../components/PageHeader'
-import routes from '../../../router/routes'
+} from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
+import { CLIENT_REQUESTKEY } from '@/types/constants'
+import { Button, Spin, Table, Tag } from 'antd'
+import dayjs from 'dayjs'
+import { observer } from 'mobx-react-lite'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { NavLink, useNavigate, useParams } from 'react-router-dom'
+import TagFormulaView from './views/TagFormulaView'
+import TagThresholdsView from './views/TagThresholdsView'
 
 const TagView = observer(() => {
+	const store = useAppStore()
 	const { id } = useParams()
 	const navigate = useNavigate()
 	const [tag, setTag] = useState({} as TagFullInfo)
@@ -44,8 +44,8 @@ const TagView = observer(() => {
 		setLoading(true)
 
 		Promise.all([
-			api.tagsGet(Number(id)).then((res) => setTag(res.data)),
-			api
+			store.api.tagsGet(Number(id)).then((res) => setTag(res.data)),
+			store.api
 				.systemGetTagState(Number(id))
 				.then((res) => setMetrics(res.data))
 				.catch(() => setMetrics({})),
@@ -219,7 +219,7 @@ const TagView = observer(() => {
 				}
 				right={
 					<>
-						{user.hasAccessToTag(AccessType.Editor, tag.id) ? (
+						{store.hasAccessToTag(AccessType.Editor, tag.id) ? (
 							<NavLink to={routes.tags.toEditTag(Number(id))}>
 								<Button>Редактирование тега</Button>
 							</NavLink>

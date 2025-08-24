@@ -1,19 +1,19 @@
-import api from '@/api/swagger-api'
-import PageHeader from '@/app/components/PageHeader'
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
 import InfoTable from '@/app/components/infoTable/InfoTable'
+import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
 import routes from '@/app/router/routes'
 import getUserTypeName from '@/functions/getUserTypeName'
 import hasAccess from '@/functions/hasAccess'
 import { AccessType, UserDetailInfo } from '@/generated/data-contracts'
-import { user } from '@/state/user'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 
 const UserView = observer(() => {
+	const store = useAppStore()
 	const navigate = useNavigate()
 	const { id } = useParams()
 	const [info, setInfo] = useState(null as UserDetailInfo | null)
@@ -22,7 +22,7 @@ const UserView = observer(() => {
 	const load = () => {
 		if (!id) return
 		setLoading(true)
-		api.usersGetWithDetails(String(id)).then((res) => {
+		store.api.usersGetWithDetails(String(id)).then((res) => {
 			setInfo(res.data)
 			setLoading(false)
 		})
@@ -38,7 +38,7 @@ const UserView = observer(() => {
 				left={<Button onClick={() => navigate(-1)}>К предыдущей странице</Button>}
 				right={
 					<>
-						{user.hasGlobalAccess(AccessType.Admin) && <Button disabled>Редактировать разрешения</Button>}
+						{store.hasGlobalAccess(AccessType.Admin) && <Button disabled>Редактировать разрешения</Button>}
 						&ensp;
 						{hasAccess(info.accessRule.access, AccessType.Manager) && (
 							<NavLink to={routes.users.toUserForm(info.guid)}>

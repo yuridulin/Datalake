@@ -1,14 +1,13 @@
-import api from '@/api/swagger-api'
-import NoAccessPage from '@/app/components/NoAccessPage'
-import { user } from '@/state/user'
+import NoAccessEl from '@/app/components/NoAccessEl'
+import PageHeader from '@/app/components/PageHeader'
+import compareValues from '@/functions/compareValues'
+import { AccessType, UserGroupTreeInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import compareValues from '../../../functions/compareValues'
-import { AccessType, UserGroupTreeInfo } from '../../../generated/data-contracts'
-import PageHeader from '../../components/PageHeader'
-import routes from '../../router/routes'
+import routes from '../../routes'
 import UserGroupsCreateModal from './usergroup/modals/UserGroupsCreateModal'
 
 function transformToTreeNode(groups: UserGroupTreeInfo[]): TreeDataNode[] {
@@ -30,12 +29,13 @@ function transformToTreeNode(groups: UserGroupTreeInfo[]): TreeDataNode[] {
 }
 
 const UserGroupsTreeMove = observer(() => {
+	const store = useAppStore()
 	const [tree, setTree] = useState([] as TreeDataNode[])
 	const [loading, setLoading] = useState(false)
 	const { token } = theme.useToken()
 
 	function load() {
-		api.userGroupsGetTree().then((res) => setTree(transformToTreeNode(res.data)))
+		store.api.userGroupsGetTree().then((res) => setTree(transformToTreeNode(res.data)))
 	}
 
 	const findParentKey = (data: TreeDataNode[], key: React.Key): React.Key | null => {
@@ -101,7 +101,7 @@ const UserGroupsTreeMove = observer(() => {
 		const parentKey = findParentKey(data, dragKey)
 
 		setLoading(true)
-		api
+		store.api
 			.userGroupsMove(String(info.dragNode.key), {
 				parentGuid: parentKey == null ? null : String(parentKey),
 			})
@@ -116,7 +116,7 @@ const UserGroupsTreeMove = observer(() => {
 
 	useEffect(load, [])
 
-	if (!user.hasGlobalAccess(AccessType.Admin)) return <NoAccessPage />
+	if (!store.hasGlobalAccess(AccessType.Admin)) return <NoAccessEl />
 
 	return (
 		<>

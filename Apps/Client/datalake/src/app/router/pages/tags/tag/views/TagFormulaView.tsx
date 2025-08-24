@@ -1,8 +1,8 @@
-import api from '@/api/swagger-api'
 import TagButton from '@/app/components/buttons/TagButton'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagInputInfo, ValueRecord } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Table } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
@@ -16,6 +16,7 @@ interface TagFormulaViewProps {
 type TagFormulaValues = Record<number, ValueRecord>
 
 const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
+	const store = useAppStore()
 	const [values, setValues] = useState<TagFormulaValues>({})
 
 	const renderFormulaWithValues = useCallback(
@@ -79,7 +80,7 @@ const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
 
 	const getValues = useCallback(() => {
 		if (!inputs.length) return
-		api.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: inputs.map((x) => x.id) }]).then((res) => {
+		store.api.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: inputs.map((x) => x.id) }]).then((res) => {
 			const newValues = res.data[0].tags.reduce((acc, next) => {
 				acc[next.id] = next.values[0]
 				return acc

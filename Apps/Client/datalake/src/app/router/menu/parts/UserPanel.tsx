@@ -1,20 +1,13 @@
 import AccessTypeEl from '@/app/components/AccessTypeEl'
+import { useAppStore } from '@/store/useAppStore'
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { Navigate, useNavigate } from 'react-router-dom'
-import { user } from '../../state/user'
-import routes from '../router/routes'
 
 const UserPanel = observer(() => {
-	const navigate = useNavigate()
+	const store = useAppStore()
 
-	function logout() {
-		user.logout()
-		navigate(routes.auth.login)
-	}
-
-	return user.isAuth() ? (
+	return (
 		<table style={{ width: '100%', maxWidth: '100%' }}>
 			<tbody>
 				<tr>
@@ -25,7 +18,7 @@ const UserPanel = observer(() => {
 							wordBreak: 'break-word',
 						}}
 					>
-						{user.fullName}
+						{store.fullName}
 					</td>
 				</tr>
 				<tr>
@@ -33,18 +26,16 @@ const UserPanel = observer(() => {
 						<UserOutlined />
 					</td>
 					<td style={{ padding: '.25em 1em' }}>
-						<AccessTypeEl type={user.globalAccessType} />
+						<AccessTypeEl type={store.globalAccessType} />
 					</td>
 					<td style={{ padding: '.25em 1em .25em 0', width: '1em' }}>
-						<Button type='link' onClick={logout} title='Выход из учетной записи'>
+						<Button type='link' onClick={store.logout} title='Выход из учетной записи'>
 							<LogoutOutlined />
 						</Button>
 					</td>
 				</tr>
 			</tbody>
 		</table>
-	) : (
-		<Navigate to={routes.auth.login} />
 	)
 })
 

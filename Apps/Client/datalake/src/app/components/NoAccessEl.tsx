@@ -1,7 +1,7 @@
 import { Result } from 'antd'
 
-const NoAccessPage = () => {
+const NoAccessEl = () => {
 	return <Result status='error' title='Нет доступа'></Result>
 }
 
-export default NoAccessPage
+export default NoAccessEl

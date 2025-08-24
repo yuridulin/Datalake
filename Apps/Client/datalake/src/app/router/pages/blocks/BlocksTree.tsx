@@ -1,14 +1,13 @@
-import api from '@/api/swagger-api'
 import BlockButton from '@/app/components/buttons/BlockButton'
-import { user } from '@/state/user'
+import PageHeader from '@/app/components/PageHeader'
+import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useInterval } from 'react-use'
-import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from '../../../generated/data-contracts'
-import PageHeader from '../../components/PageHeader'
-import routes from '../../router/routes'
+import routes from '../../routes'
 
 const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<number, string>] => {
 	const meta: Record<number, string> = {}
@@ -36,6 +35,7 @@ const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<
 const EXPAND_KEY = 'expandedBlocks'
 
 const BlocksTree = observer(() => {
+	const store = useAppStore()
 	const [data, setData] = useState<BlockWithTagsInfo[]>([])
 	const [search, setSearch] = useState('')
 	const [expandedRowKeys, setExpandedRowKeys] = useState<number[]>(() => {
@@ -64,7 +64,7 @@ const BlocksTree = observer(() => {
 
 	// Load blocks data
 	const loadBlocks = () => {
-		api
+		store.api
 			.blocksGetAll()
 			.then((res) => setData(res.data))
 			.catch(() => setData([]))
@@ -88,7 +88,7 @@ const BlocksTree = observer(() => {
 
 	// Create new block
 	const createBlock = () => {
-		api.blocksCreateEmpty().then(loadBlocks)
+		store.api.blocksCreateEmpty().then(loadBlocks)
 	}
 
 	// Table columns configuration
@@ -130,7 +130,7 @@ const BlocksTree = observer(() => {
 		<>
 			<PageHeader
 				right={
-					user.hasGlobalAccess(AccessType.Admin) && (
+					store.hasGlobalAccess(AccessType.Admin) && (
 						<div className='flex gap-2'>
 							<NavLink to={routes.blocks.toMoveForm()}>
 								<Button>Изменить иерархию</Button>

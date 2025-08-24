@@ -1,17 +1,18 @@
-import api from '@/api/swagger-api'
+import FormRow from '@/app/components/FormRow'
+import PageHeader from '@/app/components/PageHeader'
+import routes from '@/app/router/routes'
+import getSourceTypeName from '@/functions/getSourceTypeName'
+import { SourceInfo, SourceType, SourceUpdateRequest } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, Input, Popconfirm, Radio } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import getSourceTypeName from '../../../../functions/getSourceTypeName'
-import { SourceInfo, SourceType, SourceUpdateRequest } from '../../../../generated/data-contracts'
-import FormRow from '../../../components/FormRow'
-import PageHeader from '../../../components/PageHeader'
-import routes from '../../../router/routes'
 import SourceItems from './SourceItems'
 
 const AvailableSourceTypes = [SourceType.NotSet, SourceType.Inopc, SourceType.Datalake, SourceType.DatalakeV2]
 
 const SourceForm = () => {
+	const store = useAppStore()
 	const { id } = useParams()
 	const navigate = useNavigate()
 
@@ -23,7 +24,7 @@ const SourceForm = () => {
 	const [source, setSource] = useState({} as SourceInfo)
 
 	function load() {
-		api.sourcesGet(Number(id)).then((res) => {
+		store.api.sourcesGet(Number(id)).then((res) => {
 			const sourceInfo = res.data
 			setSource(sourceInfo)
 			setRequest({
@@ -37,11 +38,11 @@ const SourceForm = () => {
 	}
 
 	function sourceUpdate() {
-		api.sourcesUpdate(Number(id), request).then(load)
+		store.api.sourcesUpdate(Number(id), request).then(load)
 	}
 
 	function sourceDelete() {
-		api.sourcesDelete(Number(id)).then(() => navigate(routes.sources.list))
+		store.api.sourcesDelete(Number(id)).then(() => navigate(routes.sources.list))
 	}
 
 	useEffect(() => {

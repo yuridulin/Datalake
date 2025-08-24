@@ -1,20 +1,21 @@
-import api from '@/api/swagger-api'
+import { SettingsInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, Form, Input } from 'antd'
 import { useEffect, useState } from 'react'
-import { SettingsInfo } from '../../../../generated/data-contracts'
 
 const AuthSettings = () => {
+	const store = useAppStore()
 	const [settings, setSettings] = useState({} as SettingsInfo)
 	const [form] = Form.useForm<SettingsInfo>()
 
 	const load = () => {
-		api.systemGetSettings().then((res) => {
+		store.api.systemGetSettings().then((res) => {
 			setSettings(res.data)
 			form.setFieldsValue(res.data)
 		})
 	}
 	const update = (newSettings: SettingsInfo) => {
-		api.systemUpdateSettings({ ...settings, ...newSettings })
+		store.api.systemUpdateSettings({ ...settings, ...newSettings })
 	}
 
 	useEffect(load, [form])

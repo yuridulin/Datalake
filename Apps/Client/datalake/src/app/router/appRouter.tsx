@@ -2,6 +2,7 @@ import { AuthProvider } from 'react-oidc-context'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Offline } from '../pages/Offline'
 import AppLayout from './AppLayout'
+import Login from './auth/Login'
 import KeycloakCallback from './auth/keycloak/KeycloakCallback'
 import { oidcConfig } from './auth/keycloak/oidcConfig'
 import SettingsPage from './pages/admin/SettingsPage'
@@ -37,11 +38,7 @@ import routes from './routes'
 const AppRouter = createBrowserRouter([
 	{
 		path: routes.auth.login,
-		element: (
-			<AuthProvider {...oidcConfig}>
-				<KeycloakCallback />
-			</AuthProvider>
-		),
+		element: <Login />,
 	},
 	{
 		path: routes.auth.keycloak,

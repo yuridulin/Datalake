@@ -1,9 +1,9 @@
-import api from '@/api/swagger-api'
 import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import compareValues from '@/functions/compareValues'
 import { TagInfo, TagQuality, ValueRecord } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
@@ -17,12 +17,13 @@ interface TagsTableProps {
 }
 
 const TagsTable = ({ tags, hideSource = false, hideValue = false }: TagsTableProps) => {
+	const store = useAppStore()
 	const [viewingTags, setViewingTags] = useState(tags)
 	const [search, setSearch] = useState('')
 	const [values, setValues] = useState({} as { [key: number]: ValueRecord | null })
 
 	const loadValues = () => {
-		api
+		store.api
 			.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: viewingTags.map((x) => x.id) }])
 			.then((res) => {
 				setValues(Object.fromEntries(res.data[0].tags.map((x) => [x.id, x.values[0]])))

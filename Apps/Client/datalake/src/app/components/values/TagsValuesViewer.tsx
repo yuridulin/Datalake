@@ -1,11 +1,11 @@
-import api from '@/api/swagger-api'
 import { ExcelExportModeHandles } from '@/app/components/values/functions/exportExcel'
 import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
 import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
-import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
+import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithInfo'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
 import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space, Typography } from 'antd'
@@ -56,6 +56,7 @@ interface ViewerSettings {
 }
 
 const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }: TagValuesViewerProps) => {
+	const store = useAppStore()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const initialMode = (searchParams.get(ModeParam) as TimeMode) || TimeModes.LIVE
 	const [isLoading, setLoading] = useState(false)
@@ -111,7 +112,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 							resolution: settings.resolution,
 						}
 
-		api
+		store.api
 			.valuesGet([
 				{
 					requestKey: CLIENT_REQUESTKEY,

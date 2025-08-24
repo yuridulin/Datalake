@@ -1,4 +1,3 @@
-import api from '@/api/swagger-api'
 import TagButton from '@/app/components/buttons/TagButton'
 import CreatedTagLinker from '@/app/components/CreatedTagsLinker'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
@@ -12,6 +11,7 @@ import {
 	TagResolution,
 	TagType,
 } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import {
 	CheckCircleOutlined,
 	CloseCircleOutlined,
@@ -66,6 +66,7 @@ const formatCount = (count: number) => (count > 0 ? `: ${count}` : ' нет')
 const localStorageKey = 'sourceItemsViewMode'
 
 const SourceItems = ({ source, request }: SourceItemsProps) => {
+	const store = useAppStore()
 	const [items, setItems] = useState([] as SourceEntryInfo[])
 	const [searchedItems, setSearchedItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
@@ -296,7 +297,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 
 	function read() {
 		if (!source.id) return
-		api
+		store.api
 			.sourcesGetItemsWithTags(source.id)
 			.then((res) => {
 				setItems(res.data)
@@ -306,7 +307,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 	}
 
 	const createTag = async (item: string, tagType: TagType) => {
-		api
+		store.api
 			.tagsCreate({
 				name: '',
 				tagType: tagType,
@@ -341,7 +342,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 	}
 
 	const deleteTag = (tagId: number) => {
-		api.tagsDelete(tagId).then(read)
+		store.api.tagsDelete(tagId).then(read)
 	}
 
 	const doSearch = debounce((value: string) => {

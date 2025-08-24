@@ -4,10 +4,10 @@ import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
 import { observer } from 'mobx-react-lite'
 import { Outlet } from 'react-router-dom'
-import LogoPanel from '../components/LogoPanel'
-import UserPanel from '../components/UserPanel'
-import AppMenu from './AppMenu'
+import LogoPanel from './menu/parts/LogoPanel'
+import UserPanel from './menu/parts/UserPanel'
 import RequireAuth from './auth/RequireAuth'
+import AppMenu from './menu/AppMenu'
 
 const AppLayout = observer(() => {
 	const store = useAppStore()

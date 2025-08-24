@@ -1,4 +1,3 @@
-import api from '@/api/swagger-api'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import {
@@ -11,10 +10,9 @@ import {
 	TagSimpleInfo,
 	TagType,
 } from '@/generated/data-contracts'
-import notify from '@/state/notifications'
-import { user } from '@/state/user'
+import { useAppStore } from '@/store/useAppStore'
 import { CreditCardOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Dropdown, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
+import { App, Button, Dropdown, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -25,6 +23,8 @@ interface TagInfo extends TagSimpleInfo {
 }
 
 const BlockForm = observer(() => {
+	const store = useAppStore()
+	const app = App.useApp()
 	const { id } = useParams()
 	const navigate = useNavigate()
 	const [form] = Form.useForm<BlockUpdateRequest>()
@@ -34,7 +34,7 @@ const BlockForm = observer(() => {
 	const [loading, setLoading] = useState(true)
 
 	const getBlock = () => {
-		api.blocksGet(Number(id)).then((res) => {
+		store.api.blocksGet(Number(id)).then((res) => {
 			const attachedTags = res.data.tags.map(
 				(tag) =>
 					({
@@ -52,18 +52,18 @@ const BlockForm = observer(() => {
 	}
 
 	const updateBlock = (newInfo: BlockUpdateRequest) => {
-		api.blocksUpdate(Number(id), newInfo).catch(() => {
-			notify.err('Ошибка при сохранении')
+		store.api.blocksUpdate(Number(id), newInfo).catch(() => {
+			app.notification.error({ message: 'Ошибка при сохранении' })
 		})
 	}
 
 	const deleteBlock = () => {
-		api.blocksDelete(Number(id)).then(() => navigate(routes.blocks.root))
+		store.api.blocksDelete(Number(id)).then(() => navigate(routes.blocks.root))
 	}
 
 	const getTags = () => {
 		setLoading(true)
-		api
+		store.api
 			.tagsGetAll()
 			.then((res) => {
 				setTags(
@@ -93,7 +93,7 @@ const BlockForm = observer(() => {
 				left={<Button onClick={() => navigate(routes.blocks.toViewBlock(Number(id)))}>Вернуться</Button>}
 				right={
 					<>
-						{user.hasAccessToBlock(AccessType.Admin, Number(id)) && (
+						{store.hasAccessToBlock(AccessType.Admin, Number(id)) && (
 							<Popconfirm
 								title='Вы уверены, что хотите удалить этот блок?'
 								placement='bottom'
@@ -149,7 +149,7 @@ const BlockForm = observer(() => {
 															key: '1',
 															label: 'Создать строковый мануальный тег и добавить как поле',
 															onClick: () => {
-																api
+																store.api
 																	.tagsCreate({
 																		blockId: Number(id),
 																		tagType: TagType.String,
@@ -177,7 +177,7 @@ const BlockForm = observer(() => {
 															key: '2',
 															label: 'Создать числовой мануальный тег и добавить как поле',
 															onClick: () => {
-																api
+																store.api
 																	.tagsCreate({
 																		blockId: Number(id),
 																		tagType: TagType.Number,
@@ -205,7 +205,7 @@ const BlockForm = observer(() => {
 															key: '3',
 															label: 'Создать логический мануальный тег и добавить как поле',
 															onClick: () => {
-																api
+																store.api
 																	.tagsCreate({
 																		blockId: Number(id),
 																		tagType: TagType.Boolean,

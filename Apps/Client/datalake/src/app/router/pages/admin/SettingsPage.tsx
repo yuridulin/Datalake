@@ -1,6 +1,6 @@
-import AccessSettings from '@/app/pages/admin/tabs/AccessSettings'
+import PageHeader from '@/app/components/PageHeader'
 import { Tabs } from 'antd'
-import PageHeader from '../../components/PageHeader'
+import AccessSettings from './tabs/AccessSettings'
 import AuthSettings from './tabs/AuthSettings'
 import CollectSettings from './tabs/CollectSettings'
 import LocalSettings from './tabs/LocalSettings'

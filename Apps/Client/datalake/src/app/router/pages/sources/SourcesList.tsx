@@ -1,10 +1,9 @@
-import api from '@/api/swagger-api'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
 import { AccessType, SourceInfo, SourceStateInfo, SourceType } from '@/generated/data-contracts'
-import { timeAgo } from '@/state/timeAgoInstance'
-import { user } from '@/state/user'
+import { timeAgo } from '@/store/appStore'
+import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -22,12 +21,13 @@ const ExcludedTypes = [SourceType.NotSet, SourceType.System]
 const NotEnteredTypes = [SourceType.Aggregated, SourceType.Calculated, SourceType.Manual]
 
 const SourcesList = observer(() => {
+	const store = useAppStore()
 	const [sources, setSources] = useState([] as DataCell[])
 	const [states, setStates] = useState({} as Record<string, SourceStateInfo>)
 
 	const load = () => {
 		setSources([])
-		api
+		store.api
 			.sourcesGetAll({ withCustom: true })
 			.then((res) => {
 				const [system, user]: DataCell[] = [
@@ -78,13 +78,13 @@ const SourcesList = observer(() => {
 	}
 
 	const getStates = () => {
-		api.systemGetSourcesStates().then((res) => {
+		store.api.systemGetSourcesStates().then((res) => {
 			setStates(res.data)
 		})
 	}
 
 	const createSource = () => {
-		api
+		store.api
 			.sourcesCreateEmpty()
 			.then((res) => {
 				load()
@@ -208,7 +208,7 @@ const SourcesList = observer(() => {
 	return (
 		<>
 			<PageHeader
-				right={user.hasGlobalAccess(AccessType.Admin) && <Button onClick={createSource}>Добавить источник</Button>}
+				right={store.hasGlobalAccess(AccessType.Admin) && <Button onClick={createSource}>Добавить источник</Button>}
 			>
 				Зарегистрированные источники данных
 			</PageHeader>

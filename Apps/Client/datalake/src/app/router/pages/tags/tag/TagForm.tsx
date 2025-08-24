@@ -1,16 +1,12 @@
-import api from '@/api/swagger-api'
+import FormRow from '@/app/components/FormRow'
 import HelpAggregationType from '@/app/components/help-tootip/help-pages/HelpAggregationType'
 import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
+import PageHeader from '@/app/components/PageHeader'
 import TagQualityEl from '@/app/components/TagQualityEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
+import routes from '@/app/router/routes'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
-import { CLIENT_REQUESTKEY } from '@/types/constants'
-import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
-import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { useInterval } from 'react-use'
 import {
 	AggregationPeriod,
 	BlockTreeInfo,
@@ -24,10 +20,14 @@ import {
 	TagUpdateInputRequest,
 	TagUpdateRequest,
 	ValueRecord,
-} from '../../../../generated/data-contracts'
-import FormRow from '../../../components/FormRow'
-import PageHeader from '../../../components/PageHeader'
-import routes from '../../../router/routes'
+} from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
+import { CLIENT_REQUESTKEY } from '@/types/constants'
+import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useInterval } from 'react-use'
 
 type SourceOption = {
 	value: number
@@ -57,6 +57,7 @@ const thresholdRowStyle = {
 }
 
 const TagForm = () => {
+	const store = useAppStore()
 	const { id } = useParams()
 	const navigate = useNavigate()
 
@@ -65,7 +66,7 @@ const TagForm = () => {
 
 	const getValue = useCallback(() => {
 		if (!id) return
-		api
+		store.api
 			.valuesGet([
 				{
 					requestKey: CLIENT_REQUESTKEY,
@@ -106,17 +107,17 @@ const TagForm = () => {
 		setLoading(true)
 
 		Promise.all([
-			api
+			store.api
 				.blocksGetTree()
 				.then((res) => setBlocks(res.data))
 				.catch(() => setBlocks([])),
-			api
+			store.api
 				.tagsGetAll()
 				.then((res) => {
 					setTags(res.data)
 				})
 				.catch(() => setTags([])),
-			api.tagsGet(Number(id)).then((res) => {
+			store.api.tagsGet(Number(id)).then((res) => {
 				const info = res.data
 				setTag(info)
 				setRequest({
@@ -145,7 +146,7 @@ const TagForm = () => {
 								: SourceStrategy.FromSource,
 				)
 			}),
-			api.sourcesGetAll().then((res) => {
+			store.api.sourcesGetAll().then((res) => {
 				setSources(
 					res.data.map((source) => ({
 						value: source.id,
@@ -161,7 +162,7 @@ const TagForm = () => {
 			setItems([])
 			return
 		}
-		api.sourcesGetItems(request.sourceId).then((res) => {
+		store.api.sourcesGetItems(request.sourceId).then((res) => {
 			setItems(
 				res.data.map((x) => ({
 					value: x.path ?? '',
@@ -188,7 +189,7 @@ const TagForm = () => {
 	}, [navigate])
 
 	const tagUpdate = () => {
-		api.tagsUpdate(Number(id), {
+		store.api.tagsUpdate(Number(id), {
 			...request,
 			sourceId: strategy === SourceStrategy.FromSource ? request.sourceId : strategy,
 			formulaInputs: strategy === SourceStrategy.Calculated ? request.formulaInputs : [],
@@ -200,7 +201,7 @@ const TagForm = () => {
 		})
 	}
 
-	const tagDelete = () => api.tagsDelete(Number(id)).then(back)
+	const tagDelete = () => store.api.tagsDelete(Number(id)).then(back)
 
 	const addParam = () => {
 		if (strategy !== SourceStrategy.Calculated) return

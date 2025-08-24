@@ -1,15 +1,14 @@
-import api from '@/api/swagger-api'
 import AccessTypeEl from '@/app/components/AccessTypeEl'
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
-import { user } from '@/state/user'
+import PageHeader from '@/app/components/PageHeader'
+import { AccessType, UserGroupTreeInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { AccessType, UserGroupTreeInfo } from '../../../generated/data-contracts'
-import PageHeader from '../../components/PageHeader'
-import routes from '../../router/routes'
+import routes from '../../routes'
 import UserGroupsCreateModal from './usergroup/modals/UserGroupsCreateModal'
 
 const setEmptyAsLeafs = (group: UserGroupTreeInfo): UserGroupTreeInfo => ({
@@ -18,10 +17,11 @@ const setEmptyAsLeafs = (group: UserGroupTreeInfo): UserGroupTreeInfo => ({
 })
 
 const UserGroupsTreeList = observer(() => {
+	const store = useAppStore()
 	const [groups, setGroups] = useState([] as UserGroupTreeInfo[])
 
 	const load = () => {
-		api.userGroupsGetTree().then((res) => {
+		store.api.userGroupsGetTree().then((res) => {
 			setGroups(res.data.map((x) => setEmptyAsLeafs(x)))
 		})
 	}
@@ -71,7 +71,7 @@ const UserGroupsTreeList = observer(() => {
 		<>
 			<PageHeader
 				right={
-					user.hasGlobalAccess(AccessType.Manager) && (
+					store.hasGlobalAccess(AccessType.Manager) && (
 						<>
 							<NavLink to={routes.userGroups.move}>
 								<Button>Изменить иерархию</Button>

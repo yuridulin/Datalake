@@ -1,4 +1,3 @@
-import api from '@/api/swagger-api'
 import {
 	BLOCK_ID_SHIFT,
 	convertToTreeSelectNodes,
@@ -7,9 +6,10 @@ import {
 	RELATION_TAG_SEPARATOR,
 	SELECTED_SEPARATOR,
 } from '@/app/components/tagTreeSelect/treeSelectShared'
-import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
+import { FlattenedNestedTagsType } from '@/app/router/pages/values/types/flattenedNestedTags'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { BlockSimpleInfo, BlockTreeInfo, TagSimpleInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { theme, TreeSelect } from 'antd'
 import { DataNode } from 'antd/es/tree'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -45,6 +45,7 @@ const flattenNestedTags = (
 }
 
 const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
+	const store = useAppStore()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const [checkedRelations, setCheckedRelations] = useState<number[]>([])
 	const [treeData, setTreeData] = useState<DataNode[]>([])
@@ -70,11 +71,11 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange }) => {
 	useEffect(() => {
 		setLoading(false)
 		Promise.all([
-			api
+			store.api
 				.blocksGetTree()
 				.then((res) => res.data)
 				.catch(() => [] as BlockTreeInfo[]),
-			api
+			store.api
 				.tagsGetAll()
 				.then((res) => res.data)
 				.catch(() => [] as TagSimpleInfo[]),

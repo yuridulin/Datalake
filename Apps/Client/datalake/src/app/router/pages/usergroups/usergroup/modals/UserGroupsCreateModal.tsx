@@ -1,7 +1,7 @@
-import api from '@/api/swagger-api'
+import { UserGroupCreateRequest } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { Button, Form, Input, Modal } from 'antd'
 import { useState } from 'react'
-import { UserGroupCreateRequest } from '../../../../../generated/data-contracts'
 
 interface UserGroupsCreateModalProps {
 	onCreate: () => void
@@ -10,6 +10,7 @@ interface UserGroupsCreateModalProps {
 }
 
 const UserGroupsCreateModal = ({ onCreate, parentGuid = undefined, isSmall = false }: UserGroupsCreateModalProps) => {
+	const store = useAppStore()
 	const [open, setOpen] = useState(false)
 	const [confirmLoading, setConfirmLoading] = useState(false)
 	const [form] = Form.useForm()
@@ -23,7 +24,7 @@ const UserGroupsCreateModal = ({ onCreate, parentGuid = undefined, isSmall = fal
 
 	const finishForm = (formData: UserGroupCreateRequest) => {
 		if (parentGuid) formData.parentGuid = parentGuid
-		api
+		store.api
 			.userGroupsCreate(formData)
 			.then(() => {
 				closeModal()

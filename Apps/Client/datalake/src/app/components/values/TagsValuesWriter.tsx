@@ -1,8 +1,8 @@
-import api from '@/api/swagger-api'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
+import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithInfo'
 import { SourceType, TagQuality, TagType, ValueRecord, ValueWriteRequest } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { TagValue } from '@/types/tagValue'
 import { CloseOutlined, PlaySquareOutlined } from '@ant-design/icons'
@@ -28,6 +28,7 @@ interface TagsValuesWriterProps {
 const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 
 const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }: TagsValuesWriterProps) => {
+	const store = useAppStore()
 	const [values, setValues] = useState<ExactValue[]>([])
 	const [loading, setLoading] = useState(false)
 	const [exactDate, setExactDate] = useState<Dayjs | null>(null)
@@ -41,7 +42,7 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 
 		const tagIds = Array.from(new Set(relations.map((relId) => tagMapping[relId]?.id).filter(Boolean)))
 
-		api
+		store.api
 			.valuesGet([
 				{
 					requestKey: CLIENT_REQUESTKEY,
@@ -91,7 +92,7 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 			},
 			{} as Record<number, ValueWriteRequest>,
 		)
-		api.valuesWrite(Object.values(valuesToWrite)).then(getValues)
+		store.api.valuesWrite(Object.values(valuesToWrite)).then(getValues)
 	}
 
 	const setNewValue = (id: number, newValue: TagValue) => {

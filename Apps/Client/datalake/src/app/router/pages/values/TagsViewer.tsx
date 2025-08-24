@@ -1,9 +1,9 @@
 import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
-import { FlattenedNestedTagsType } from '@/app/pages/values/types/flattenedNestedTags'
 import { Row } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useState } from 'react'
+import { FlattenedNestedTagsType } from './types/flattenedNestedTags'
 
 const TagsViewer = observer(() => {
 	const [tagMapping, setTagMapping] = useState({} as FlattenedNestedTagsType)

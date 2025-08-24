@@ -1,4 +1,3 @@
-import api from '@/api/swagger-api'
 import AccessTypeEl from '@/app/components/AccessTypeEl'
 import UserButton from '@/app/components/buttons/UserButton'
 import FormRow from '@/app/components/FormRow'
@@ -7,8 +6,8 @@ import routes from '@/app/router/routes'
 import compareAccess from '@/functions/compareAccess'
 import getUserTypeName from '@/functions/getUserTypeName'
 import { AccessType, UserInfo } from '@/generated/data-contracts'
-import { timeAgo } from '@/state/timeAgoInstance'
-import { user } from '@/state/user'
+import { timeAgo } from '@/store/appStore'
+import { useAppStore } from '@/store/useAppStore'
 import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import dayjs from 'dayjs'
@@ -18,13 +17,14 @@ import { useNavigate } from 'react-router-dom'
 import { useInterval } from 'react-use'
 
 const UsersList = observer(() => {
+	const store = useAppStore()
 	const navigate = useNavigate()
 	const [users, setUsers] = useState([] as UserInfo[])
 	const [states, setStates] = useState({} as { [key: string]: string })
 	const [search, setSearch] = useState('')
 
 	const load = () => {
-		api.usersGetAll().then((res) => setUsers(res.data))
+		store.api.usersGetAll().then((res) => setUsers(res.data))
 		getStates()
 	}
 
@@ -33,8 +33,8 @@ const UsersList = observer(() => {
 	}
 
 	const getStates = () => {
-		if (!user.hasGlobalAccess(AccessType.Manager)) return
-		api.systemGetVisits().then((res) => setStates(res.data))
+		if (!store.hasGlobalAccess(AccessType.Manager)) return
+		store.api.systemGetVisits().then((res) => setStates(res.data))
 	}
 
 	const columns: TableColumnsType<UserInfo> = [
@@ -93,7 +93,7 @@ const UsersList = observer(() => {
 	return (
 		<>
 			<PageHeader
-				right={user.hasGlobalAccess(AccessType.Manager) && <Button onClick={create}>Добавить пользователя</Button>}
+				right={store.hasGlobalAccess(AccessType.Manager) && <Button onClick={create}>Добавить пользователя</Button>}
 			>
 				Список пользователей
 			</PageHeader>

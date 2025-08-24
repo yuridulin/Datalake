@@ -1,7 +1,7 @@
-import api from '@/api/swagger-api'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagFullInfo, TagQuality, TagThresholdInfo, TagType, ValueRecord } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { DollarCircleOutlined } from '@ant-design/icons'
 import { Space, Table } from 'antd'
@@ -16,10 +16,11 @@ interface TagThresholdsViewProps {
 type TagThresholdsValues = Record<number, ValueRecord>
 
 const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
+	const store = useAppStore()
 	const [values, setValues] = useState<TagThresholdsValues>({})
 
 	const getValues = useCallback(() => {
-		api
+		store.api
 			.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: [tag.id, tag.thresholdSourceTag?.id ?? 0] }])
 			.then((res) => {
 				const newValues: TagThresholdsValues = {}

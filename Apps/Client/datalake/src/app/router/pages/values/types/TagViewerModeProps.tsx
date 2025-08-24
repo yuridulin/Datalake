@@ -1,4 +1,4 @@
-import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
+import { TagValueWithInfo } from './TagValueWithInfo'
 
 export type TagViewerModeProps = {
 	relations: {
