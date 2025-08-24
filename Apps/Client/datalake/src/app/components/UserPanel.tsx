@@ -11,7 +11,7 @@ const UserPanel = observer(() => {
 
 	function logout() {
 		user.logout()
-		navigate(routes.auth.loginPage)
+		navigate(routes.auth.login)
 	}
 
 	return user.isAuth() ? (
@@ -44,7 +44,7 @@ const UserPanel = observer(() => {
 			</tbody>
 		</table>
 	) : (
-		<Navigate to={routes.auth.loginPage} />
+		<Navigate to={routes.auth.login} />
 	)
 })
 

@@ -7,6 +7,7 @@ import { Outlet } from 'react-router-dom'
 import LogoPanel from '../components/LogoPanel'
 import UserPanel from '../components/UserPanel'
 import AppMenu from './AppMenu'
+import RequireAuth from './auth/RequireAuth'
 
 const AppLayout = observer(() => {
 	const store = useAppStore()
@@ -27,7 +28,7 @@ const AppLayout = observer(() => {
 		zIndex: 1,
 	}
 	return (
-		<>
+		<RequireAuth>
 			{store.isDark && <style>{':root { color-scheme: dark; }'}</style>}
 			{store.isAuthenticated && (
 				<Layout
@@ -62,7 +63,7 @@ const AppLayout = observer(() => {
 					</Layout>
 				</Layout>
 			)}
-		</>
+		</RequireAuth>
 	)
 })
 

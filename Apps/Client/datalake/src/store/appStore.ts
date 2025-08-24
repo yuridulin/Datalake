@@ -12,31 +12,16 @@ import hasAccess from '../functions/hasAccess'
 
 // передача констант с сервера
 declare const LOCAL_API: boolean
-declare const KEYCLOAK_DB: string
-declare const KEYCLOAK_CLIENT: string
 declare const INSTANCE_NAME: string
 
 // для клиента, собранного и лежащего в wwwroot, путь к серверу будет на тот же порт, что и у клиента
 // для запуска раздельно мы используем порт 8000, который определен в docker compose сервера
-// также мы передаем с сервера определенные в настройках в БД данные о сервере keycloak для внешней авторизации
 let isLocal = false
-let keycloakDb: string | null = null
-let keycloakClient: string | null = null
 let instanceName: string | null = null
 try {
 	isLocal = LOCAL_API
 } catch (e) {
 	console.log('LOCAL_API is not defined - set', false)
-}
-try {
-	keycloakDb = KEYCLOAK_DB
-} catch (e) {
-	console.log('LOCAL_API is not defined - set', null)
-}
-try {
-	keycloakClient = KEYCLOAK_CLIENT
-} catch (e) {
-	console.log('KEYCLOAK_CLIENT is not defined - set', null)
 }
 try {
 	instanceName = INSTANCE_NAME
@@ -56,14 +41,6 @@ dayjs.locale('ru')
 TimeAgo.addLocale(ru)
 const timeAgo = new TimeAgo('ru-RU')
 export { timeAgo }
-
-// настройки keycloak
-const oidcConfig = {
-	authority: window.location.protocol + '//' + keycloakDb + '/realms/energo',
-	redirect_uri: window.location.origin + routes.auth.energoId,
-	client_id: keycloakClient,
-}
-export { oidcConfig }
 
 export class AppStore implements UserAuthInfo {
 	//#region Инициализация
@@ -86,7 +63,7 @@ export class AppStore implements UserAuthInfo {
 		this.initTheme()
 		this.api = this.createApiClient()
 		this.instanceName = 'Datalake' + (instanceName ? ' | ' + instanceName : '')
-		if (window.location.pathname !== routes.auth.energoId) {
+		if (window.location.pathname !== routes.auth.keycloak) {
 			this.refreshAuthData()
 		}
 	}
@@ -226,19 +203,6 @@ export class AppStore implements UserAuthInfo {
 	authToken: string = localStorage.getItem(tokenHeader) || ''
 	authLogin: string = localStorage.getItem(nameHeader) || ''
 
-	public refreshAuthData = () => {
-		// identify
-		/* this.api
-			.usersRefresh({ token: this.authToken })
-			.then((res) => {
-				if (res.data.done) {
-					this.setAuthData(res.data.data)
-				}
-			})
-			.catch(() => this.setAuthenticated(false))
-			.finally(() => this.doneLoading()) */
-	}
-
 	public setAuthData = (authInfo: UserAuthInfo) => {
 		console.log('SET store.authToken =', authInfo.token)
 		console.log('SET store.authLogin =', authInfo.fullName)
@@ -261,29 +225,19 @@ export class AppStore implements UserAuthInfo {
 		this.setAuthenticated(true)
 	}
 
-	public login = (login: string, password: string) => {
-		// login as local user
-		/* this.api
-			.usersAuthenticate({
-				login: login,
-				password: password,
-				accessType: AccessType.GUEST,
-			})
+	public refreshAuthData = () => {
+		this.api
+			.usersIdentify()
 			.then((res) => {
-				if (res.data.done) {
-					this.setAuthData(res.data.data)
+				if (res.status === 200) {
+					this.setAuthData(res.data)
 				}
-			}) */
+			})
+			.catch(() => this.setAuthenticated(false))
+			.finally(() => this.doneLoading())
 	}
 
-	public logout = () => {
-		// logout as local user
-		/* this.api.usersLogout({ token: this.authToken }).then(() => {
-			this.clearAuthData()
-		}) */
-	}
-
-	clearAuthData = () => {
+	public clearAuthData = () => {
 		console.log('SET store.authToken =', '')
 		console.log('SET store.authLogin =', '')
 		console.log('SET store.globalAccessType =', AccessType.NotSet)
@@ -294,6 +248,41 @@ export class AppStore implements UserAuthInfo {
 		localStorage.removeItem(nameHeader)
 		localStorage.removeItem(accessHeader)
 		this.setAuthenticated(false)
+	}
+
+	public loginLocal = (login: string, password: string) => {
+		this.api
+			.usersAuthenticate({
+				login: login,
+				password: password,
+			})
+			.then((res) => {
+				if (res.status === 200) {
+					this.setAuthData(res.data)
+				}
+			})
+			.catch(() => this.setAuthenticated(false))
+	}
+
+	public loginKeycloak = (guid: string, email: string, name: string) => {
+		this.api
+			.usersAuthenticateEnergoIdUser({
+				energoIdGuid: guid,
+				email: email,
+				fullName: name,
+			})
+			.then((res) => {
+				if (res.status === 200) {
+					this.setAuthData(res.data)
+				}
+			})
+			.catch(() => this.setAuthenticated(false))
+	}
+
+	public logout = () => {
+		this.api.usersLogout({ token: this.authToken }).then(() => {
+			this.clearAuthData()
+		})
 	}
 
 	//#endregion

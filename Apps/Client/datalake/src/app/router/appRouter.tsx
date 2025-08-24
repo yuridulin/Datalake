@@ -1,6 +1,9 @@
+import { AuthProvider } from 'react-oidc-context'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Offline } from '../pages/Offline'
 import AppLayout from './AppLayout'
+import KeycloakCallback from './auth/keycloak/KeycloakCallback'
+import { oidcConfig } from './auth/keycloak/oidcConfig'
 import SettingsPage from './pages/admin/SettingsPage'
 import TagsAccessMetrics from './pages/admin/metrics/TagsAccessMetrics'
 import ValuesMetrics from './pages/admin/metrics/ValuesMetrics'
@@ -10,8 +13,6 @@ import BlockForm from './pages/blocks/block/BlockForm'
 import BlockView from './pages/blocks/block/BlockView'
 import BlockAccessForm from './pages/blocks/block/access/BlockAccessForm'
 import LogsTable from './pages/dashboard/LogsTable'
-import EnergoId from './pages/login/EnergoId'
-import LoginPanel from './pages/login/LoginPanel'
 import SourcesList from './pages/sources/SourcesList'
 import SourceForm from './pages/sources/source/SourceForm'
 import TagsAggregatedList from './pages/tags/TagsAggregatedList'
@@ -35,12 +36,20 @@ import routes from './routes'
 
 const AppRouter = createBrowserRouter([
 	{
-		path: routes.auth.loginPage,
-		element: <LoginPanel />,
+		path: routes.auth.login,
+		element: (
+			<AuthProvider {...oidcConfig}>
+				<KeycloakCallback />
+			</AuthProvider>
+		),
 	},
 	{
-		path: routes.auth.energoId,
-		element: <EnergoId />,
+		path: routes.auth.keycloak,
+		element: (
+			<AuthProvider {...oidcConfig}>
+				<KeycloakCallback />
+			</AuthProvider>
+		),
 	},
 	{
 		path: '/',

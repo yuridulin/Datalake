@@ -1043,6 +1043,28 @@ export class Api<
    * No description
    *
    * @tags Users
+   * @name UsersLogout
+   * @summary Delete: Закрытие уканной сессии пользователя
+   * @request DELETE:/api/users/logout
+   * @response `200` `File`
+   */
+  usersLogout = (
+    query: {
+      /** Сессионный токен доступа */
+      token: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<File, any>({
+      path: `/api/users/logout`,
+      method: "DELETE",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Users
    * @name UsersCreate
    * @summary Post: Создание пользователя на основании переданных данных
    * @request POST:/api/users
