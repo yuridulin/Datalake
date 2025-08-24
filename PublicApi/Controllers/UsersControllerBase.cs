@@ -30,6 +30,9 @@ public abstract class UsersControllerBase : ControllerBase
 	/// <inheritdoc cref="IdentifyAsync" />
 	public const string Identify = "identify";
 
+	/// <inheritdoc cref="LogoutAsync" />
+	public const string Logout = "logout";
+
 	/// <inheritdoc cref="CreateAsync(UserCreateRequest)" />
 	public const string Create = "";
 
@@ -82,6 +85,14 @@ public abstract class UsersControllerBase : ControllerBase
 	/// <returns>Данные о учетной записи</returns>
 	[HttpGet(Identify)]
 	public abstract Task<ActionResult<UserAuthInfo>> IdentifyAsync();
+
+	/// <summary>
+	/// <see cref="HttpMethod.Delete"/>: Закрытие уканной сессии пользователя
+	/// </summary>
+	/// <param name="token">Сессионный токен доступа</param>
+	[HttpDelete(Logout)]
+	public abstract Task<ActionResult> LogoutAsync(
+		[BindRequired, FromQuery] string token);
 
 	/// <summary>
 	/// <see cref="HttpMethod.Post" />: Создание пользователя на основании переданных данных

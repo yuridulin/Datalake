@@ -14,7 +14,6 @@ using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 

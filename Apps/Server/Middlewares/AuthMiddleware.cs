@@ -1,11 +1,9 @@
-﻿using Datalake.PublicApi.Constants;
+﻿using Datalake.Database.Constants;
+using Datalake.PublicApi.Constants;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Auth.Models;
 using Datalake.Server.Services.Maintenance;
-using Microsoft.AspNetCore.Http;
 using System.Text;
-using Datalake.PublicApi.Exceptions;
-using Datalake.Database.Constants;
 
 namespace Datalake.Server.Middlewares;
 

@@ -28,9 +28,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Abstractions\**" />
 	  <Compile Remove="Services\Collection\Models\**" />
+	  <Content Remove="Abstractions\**" />
 	  <Content Remove="Services\Collection\Models\**" />
+	  <EmbeddedResource Remove="Abstractions\**" />
 	  <EmbeddedResource Remove="Services\Collection\Models\**" />
+	  <None Remove="Abstractions\**" />
 	  <None Remove="Services\Collection\Models\**" />
 	</ItemGroup>
 
@@ -50,7 +54,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Abstractions\" />
 	  <Folder Include="storage\logs\" />
 	</ItemGroup>
 

@@ -10,7 +10,6 @@ using Datalake.Server.Services.Receiver;
 using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 

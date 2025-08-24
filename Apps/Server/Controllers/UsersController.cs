@@ -6,7 +6,6 @@ using Datalake.PublicApi.Models.Users;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 
@@ -14,7 +13,6 @@ namespace Datalake.Server.Controllers;
 public class UsersController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
-	AuthenticationService authService,
 	UsersMemoryRepository usersRepository,
 	SessionManagerService sessionManager) : UsersControllerBase
 {
@@ -22,7 +20,7 @@ public class UsersController(
 	public override async Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
 		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
 	{
-		var userAuthInfo = authService.Authenticate(energoIdInfo);
+		var userAuthInfo = authenticator.Authenticate(energoIdInfo);
 
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
@@ -36,7 +34,7 @@ public class UsersController(
 	public override async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
 		[BindRequired, FromBody] UserLoginPass loginPass)
 	{
-		var userAuthInfo = authService.Authenticate(loginPass);
+		var userAuthInfo = authenticator.Authenticate(loginPass);
 
 		var session = sessionManager.OpenSession(userAuthInfo);
 		sessionManager.AddSessionToResponse(session, Response);
@@ -52,6 +50,17 @@ public class UsersController(
 		var user = authenticator.Authenticate(HttpContext);
 
 		return await Task.FromResult(user);
+	}
+
+	/// <inheritdoc />
+	public override async Task<ActionResult> LogoutAsync(
+		[BindRequired, FromQuery] string token)
+	{
+		authenticator.Authenticate(HttpContext);
+
+		sessionManager.CloseSession(token);
+
+		return await Task.FromResult(NoContent());
 	}
 
 	/// <inheritdoc />

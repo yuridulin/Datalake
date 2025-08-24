@@ -5,7 +5,6 @@ using Datalake.PublicApi.Models.UserGroups;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 
