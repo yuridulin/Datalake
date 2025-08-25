@@ -7,6 +7,8 @@ const KeycloakCallback = observer(() => {
 	const auth = useAuth()
 	const store = useAppStore()
 
+	console.log('keycloak callback', auth)
+
 	if (auth.isLoading) {
 		return <div>загрузка...</div>
 	}

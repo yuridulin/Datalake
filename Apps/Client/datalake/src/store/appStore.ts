@@ -20,12 +20,12 @@ let isLocal = false
 let instanceName: string | null = null
 try {
 	isLocal = LOCAL_API
-} catch (e) {
+} catch {
 	console.log('LOCAL_API is not defined - set', false)
 }
 try {
 	instanceName = INSTANCE_NAME
-} catch (e) {
+} catch {
 	console.log('INSTANCE_NAME is not defined - set', null)
 }
 
@@ -123,7 +123,7 @@ export class AppStore implements UserAuthInfo {
 
 				// сообщения после выполнения действий
 				if (error.request?.status === 500) {
-					let message = (error.response?.data as any)?.error ?? (error.request?.responseText as string)
+					let message = (error.response?.data as { error: string })?.error ?? (error.request?.responseText as string)
 					if (message.indexOf('\n\n') > -1) message = message.substring(0, message.indexOf('\n\n'))
 					return this.notify?.error({ placement: 'bottomLeft', message: message })
 				}

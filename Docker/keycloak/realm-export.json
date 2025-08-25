@@ -13,19 +13,19 @@
 			"clientId": "datalake",
 			"name": "datalake",
 			"description": "Локальный Datalake",
-			"rootUrl": "http://localhost:8010",
-			"baseUrl": "http://localhost:8010",
+			"rootUrl": "http://localhost:7640",
+			"baseUrl": "http://localhost:7640",
 			"enabled": true,
 			"publicClient": true,
 			"protocol": "openid-connect",
-			"redirectUris": ["http://localhost:8010/*"],
+			"redirectUris": ["http://localhost:7640/*"],
 			"webOrigins": ["*"],
 			"standardFlowEnabled": true,
 			"directAccessGrantsEnabled": true,
 			"serviceAccountsEnabled": false,
 			"frontchannelLogout": true,
 			"attributes": {
-				"post.logout.redirect.uris": "http://localhost:8010/*"
+				"post.logout.redirect.uris": "http://localhost:7640/*"
 			},
 			"defaultClientScopes": ["web-origins", "acr", "profile", "roles", "email"],
 			"optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
@@ -47,7 +47,7 @@
 			"emailVerified": true,
 			"firstName": "Test",
 			"lastName": "User",
-			"email": "test@example.com",
+			"email": "test@x.com",
 			"credentials": [
 				{
 					"type": "password",
