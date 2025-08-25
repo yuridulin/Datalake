@@ -19,6 +19,6 @@
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
     <None Include="keycloak\realm-export.json" />
-    <None Include="postgres\postgres-init\10-keycloak.sql" />
+    <None Include="postgres\.gitkeep" />
   </ItemGroup>
 </Project>

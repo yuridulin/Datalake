@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "vite",
 		"lint": "tsc -b",
-		"swagger": "npx swagger-typescript-api generate --path \"http://localhost:8000/swagger/Datalake%20App/swagger.json\" --output \"./src/generated\" --axios --modular --clean-output --extract-request-body --responses",
+		"swagger": "npx swagger-typescript-api generate --path \"http://localhost:7630/swagger/Datalake%20App/swagger.json\" --output \"./src/generated\" --axios --modular --clean-output --extract-request-body --responses",
 		"build": "vite build",
 		"build-local": "tsc -b && vite build && npm run update-datalake-client",
 		"update-datalake-client": "node env/update-datalake-client.js"

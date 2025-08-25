@@ -70,7 +70,7 @@ export class AppStore implements UserAuthInfo {
 
 	private createApiClient() {
 		const api = new Api({
-			baseURL: isLocal ? window.location.origin + '/' : 'http://localhost:8000/',
+			baseURL: isLocal ? window.location.origin + '/' : 'http://localhost:7630/',
 			validateStatus(status) {
 				return status >= 200 && status < 300
 			},
