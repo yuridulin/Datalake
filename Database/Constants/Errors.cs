@@ -10,5 +10,5 @@ internal static class Errors
 		=> new(message: "нет доступа.\nПользователь: [" + userGuid.ToString() + "]");
 
 	internal static ForbiddenException NoAccessUnderlyingUser(Guid userGuid, Guid underlyingUserGuid)
-		=> new(message: "нет доступа.\nПользователь EnergoId: `" + userGuid.ToString() + "` через внешнего пользователя `" + underlyingUserGuid.ToString() + "`");
+		=> new(message: "нет доступа.\nПользователь EnergoId: `" + underlyingUserGuid.ToString() + "` через внешнего пользователя `" + userGuid.ToString() + "`");
 }
