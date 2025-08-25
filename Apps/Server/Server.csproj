@@ -29,12 +29,16 @@
 
 	<ItemGroup>
 	  <Compile Remove="Abstractions\**" />
+	  <Compile Remove="Sentry\**" />
 	  <Compile Remove="Services\Collection\Models\**" />
 	  <Content Remove="Abstractions\**" />
+	  <Content Remove="Sentry\**" />
 	  <Content Remove="Services\Collection\Models\**" />
 	  <EmbeddedResource Remove="Abstractions\**" />
+	  <EmbeddedResource Remove="Sentry\**" />
 	  <EmbeddedResource Remove="Services\Collection\Models\**" />
 	  <None Remove="Abstractions\**" />
+	  <None Remove="Sentry\**" />
 	  <None Remove="Services\Collection\Models\**" />
 	</ItemGroup>
 

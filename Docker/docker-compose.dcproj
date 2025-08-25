@@ -10,10 +10,15 @@
     <DockerServiceName>datalakeserver</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="postgres\database\**" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="keycloak\realm-export.json" />
+    <None Include="postgres\postgres-init\10-keycloak.sql" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,2 @@
+CREATE DATABASE keycloak OWNER postgres;
+GRANT ALL PRIVILEGES ON DATABASE keycloak TO postgres;
