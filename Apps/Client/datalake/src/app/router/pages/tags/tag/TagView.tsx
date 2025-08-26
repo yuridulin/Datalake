@@ -2,6 +2,7 @@ import BlockButton from '@/app/components/buttons/BlockButton'
 import SourceButton from '@/app/components/buttons/SourceButton'
 import TagButton from '@/app/components/buttons/TagButton'
 import CopyableText from '@/app/components/CopyableText'
+import TagIcon from '@/app/components/icons/TagIcon'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
@@ -50,7 +51,7 @@ const TagView = observer(() => {
 				.then((res) => setMetrics(res.data))
 				.catch(() => setMetrics({})),
 		]).finally(() => setLoading(false))
-	}, [id])
+	}, [store, id])
 
 	useEffect(loadTagData, [loadTagData])
 
@@ -212,24 +213,19 @@ const TagView = observer(() => {
 	) : (
 		<>
 			<PageHeader
-				left={
-					<>
-						<Button onClick={() => navigate(routes.tags.list)}>К списку тегов</Button>
-					</>
-				}
-				right={
-					<>
-						{store.hasAccessToTag(AccessType.Editor, tag.id) ? (
-							<NavLink to={routes.tags.toEditTag(Number(id))}>
-								<Button>Редактирование тега</Button>
-							</NavLink>
-						) : (
-							<Button disabled>Редактирование тега</Button>
-						)}
-					</>
-				}
+				left={[<Button onClick={() => navigate(routes.tags.list)}>К списку тегов</Button>]}
+				right={[
+					store.hasAccessToTag(AccessType.Editor, tag.id) ? (
+						<NavLink to={routes.tags.toEditTag(Number(id))}>
+							<Button>Редактирование тега</Button>
+						</NavLink>
+					) : (
+						<Button disabled>Редактирование тега</Button>
+					),
+				]}
+				icon={<TagIcon type={tag.sourceType} />}
 			>
-				Тег {tag.name}
+				{tag.name}
 			</PageHeader>
 
 			<InfoTable items={info} />

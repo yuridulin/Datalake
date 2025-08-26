@@ -1,34 +1,45 @@
-﻿using Datalake.PublicApi.Models.Auth;
+﻿using Datalake.PublicApi.Enums;
+using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Server.Services.Auth.Models;
+namespace Datalake.PublicApi.Models.Auth;
 
 /// <summary>
 /// Данные сессии пользователя
 /// </summary>
-public class AuthSession
+public class UserSessionInfo
 {
 	/// <summary>
 	/// Информация о пользователе
 	/// </summary>
+	[Required]
 	public required Guid UserGuid { get; set; }
 
 	/// <summary>
 	/// Информация о правах пользователя
 	/// </summary>
+	[Required]
 	public required UserAuthInfo AuthInfo { get; set; }
 
 	/// <summary>
 	/// Токен сессии
 	/// </summary>
+	[Required]
 	public required string Token { get; set; }
 
 	/// <summary>
 	/// Время истечения сессии
 	/// </summary>
+	[Required]
 	public required DateTime ExpirationTime { get; set; }
 
 	/// <summary>
 	/// Адрес, с которого разрешен доступ
 	/// </summary>
 	public string? StaticHost { get; set; }
+
+	/// <summary>
+	/// Тип входа в сессию. Нужен, чтобы правильно выйти
+	/// </summary>
+	[Required]
+	public required UserType Type { get; set; }
 }

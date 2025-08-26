@@ -19,7 +19,7 @@ const TagsCalculatedList = () => {
 				.catch(() => setTags([]))
 			return prevTags
 		})
-	}, [])
+	}, [store])
 
 	function createTag() {
 		store.api
@@ -39,7 +39,7 @@ const TagsCalculatedList = () => {
 
 	return (
 		<>
-			<PageHeader right={<Button onClick={createTag}>Создать вычисляемый тег</Button>}>
+			<PageHeader right={[<Button onClick={createTag}>Создать вычисляемый тег</Button>]}>
 				Список вычисляемых тегов
 			</PageHeader>
 			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}

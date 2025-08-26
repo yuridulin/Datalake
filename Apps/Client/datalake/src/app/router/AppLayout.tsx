@@ -4,10 +4,9 @@ import Sider from 'antd/es/layout/Sider'
 import { Content } from 'antd/es/layout/layout'
 import { observer } from 'mobx-react-lite'
 import { Outlet } from 'react-router-dom'
-import LogoPanel from './menu/parts/LogoPanel'
-import UserPanel from './menu/parts/UserPanel'
 import RequireAuth from './auth/RequireAuth'
 import AppMenu from './menu/AppMenu'
+import AppMenuTopPanel from './menu/AppMenuTopPanel'
 
 const AppLayout = observer(() => {
 	const store = useAppStore()
@@ -39,8 +38,7 @@ const AppLayout = observer(() => {
 					}}
 				>
 					<Sider width='20em' style={siderStyle}>
-						<LogoPanel />
-						<UserPanel />
+						<AppMenuTopPanel />
 						<Divider variant='dotted' style={{ margin: '.5em 0' }} />
 						<AppMenu />
 					</Sider>

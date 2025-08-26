@@ -18,7 +18,7 @@ const AuthSettings = () => {
 		store.api.systemUpdateSettings({ ...settings, ...newSettings })
 	}
 
-	useEffect(load, [form])
+	useEffect(load, [store, form])
 
 	return (
 		<Form form={form} layout='vertical' onFinish={update}>

@@ -115,16 +115,16 @@ const BlocksMover = observer(() => {
 		setBlocks(data)
 	}
 
-	useEffect(load, [])
+	useEffect(load, [store])
 
 	return (
 		<>
 			<PageHeader
-				left={
+				left={[
 					<NavLink to={routes.blocks.root}>
 						<Button>Вернуться</Button>
-					</NavLink>
-				}
+					</NavLink>,
+				]}
 			>
 				Иерархия блоков
 			</PageHeader>

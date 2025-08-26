@@ -1,7 +1,8 @@
 ﻿using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Models;
+using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Auth;
 using Datalake.Server.Services.Auth;
-using Datalake.Server.Services.Auth.Models;
 using System.Threading.Channels;
 
 namespace Datalake.Server.Services.SettingsHandler;
@@ -113,17 +114,18 @@ public class SettingsHandlerService(
 			try
 			{
 				var staticUsers = state.Users
-					.Where(x => x.Type == PublicApi.Enums.UserType.Static)
+					.Where(x => x.Type == UserType.Static)
 					.ToList();
 
 				var sessions = staticUsers
-					.Select(user => !access.TryGet(user.Guid, out var rights) ? null : new AuthSession
+					.Select(user => !access.TryGet(user.Guid, out var rights) ? null : new UserSessionInfo
 					{
 						ExpirationTime = DateTime.MaxValue,
 						UserGuid = user.Guid,
 						Token = user.PasswordHash ?? string.Empty,
 						AuthInfo = rights,
-						StaticHost = user.StaticHost
+						StaticHost = user.StaticHost,
+						Type = user.Type,
 					})
 					.Where(session => session != null)
 					.ToList();

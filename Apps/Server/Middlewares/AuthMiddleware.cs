@@ -1,9 +1,9 @@
 ﻿using Datalake.Database.Constants;
 using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Controllers;
+using Datalake.PublicApi.Models.Auth;
 using Datalake.Server.Services.Auth;
-using Datalake.Server.Services.Auth.Models;
 using Datalake.Server.Services.Maintenance;
-using System.Text;
 
 namespace Datalake.Server.Middlewares;
 
@@ -14,8 +14,6 @@ public class AuthMiddleware(
 	SessionManagerService sessionManager,
 	UsersStateService stateService) : IMiddleware
 {
-	static readonly byte[] ErrorMessage = Encoding.UTF8.GetBytes("Access Denied - No Auth");
-
 	/// <summary>
 	/// Выполнение проверки аутентификации
 	/// </summary>
@@ -23,17 +21,16 @@ public class AuthMiddleware(
 	/// <param name="next">Следующий обработчик</param>
 	public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 	{
+		// определяем, нужно ли нам проверять
 		bool needToAuth =
-			// только api
-			context.Request.Path.StartsWithSegments("/api")
-			// только REST
+			// если api
+			context.Request.Path.StartsWithSegments($"/{Defaults.ApiRoot}")
+			// если REST
 			&& (context.Request.Method != "OPTIONS")
-			// не логин-пасс
-			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/auth"))
-			// не energoId
-			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/energo-id"));
+			// и если не контроллер аутентификации
+			&& !(context.Request.Method == HttpMethod.Post.Method && context.Request.Path.StartsWithSegments($"/{Defaults.ApiRoot}/{AuthControllerBase.ControllerRoute}"));
 
-		AuthSession? authSession = null;
+		UserSessionInfo? authSession = null;
 		if (needToAuth)
 		{
 			authSession = sessionManager.GetExistSession(context);

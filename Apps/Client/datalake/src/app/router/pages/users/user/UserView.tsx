@@ -1,4 +1,5 @@
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
+import UserIcon from '@/app/components/icons/UserIcon'
 import InfoTable from '@/app/components/infoTable/InfoTable'
 import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
@@ -28,25 +29,23 @@ const UserView = observer(() => {
 		})
 	}
 
-	useEffect(load, [id])
+	useEffect(load, [store, id])
 
 	return loading ? (
 		<Spin />
 	) : info ? (
 		<>
 			<PageHeader
-				left={<Button onClick={() => navigate(-1)}>К предыдущей странице</Button>}
-				right={
-					<>
-						{store.hasGlobalAccess(AccessType.Admin) && <Button disabled>Редактировать разрешения</Button>}
-						&ensp;
-						{hasAccess(info.accessRule.access, AccessType.Manager) && (
-							<NavLink to={routes.users.toUserForm(info.guid)}>
-								<Button>Редактировать учетную запись</Button>
-							</NavLink>
-						)}
-					</>
-				}
+				left={[<Button onClick={() => navigate(-1)}>К предыдущей странице</Button>]}
+				right={[
+					store.hasGlobalAccess(AccessType.Admin) && <Button disabled>Редактировать разрешения</Button>,
+					hasAccess(info.accessRule.access, AccessType.Manager) && (
+						<NavLink to={routes.users.toUserForm(info.guid)}>
+							<Button>Редактировать учетную запись</Button>
+						</NavLink>
+					),
+				]}
+				icon={<UserIcon />}
 			>
 				Учётная запись: {info.fullName}
 			</PageHeader>

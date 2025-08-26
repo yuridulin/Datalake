@@ -1,4 +1,5 @@
 import FormRow from '@/app/components/FormRow'
+import UserIcon from '@/app/components/icons/UserIcon'
 import NoAccessEl from '@/app/components/NoAccessEl'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
@@ -37,19 +38,20 @@ const UserCreate = observer(() => {
 	const filterOption = (input: string, option?: { label: string; value: string }) =>
 		(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
 
-	useEffect(load, [])
+	useEffect(load, [store])
 
 	if (!store.hasGlobalAccess(AccessType.Admin)) return <NoAccessEl />
 
 	return (
 		<>
 			<PageHeader
-				left={<Button onClick={() => navigate(routes.users.list)}>Вернуться</Button>}
-				right={
+				left={[<Button onClick={() => navigate(routes.users.list)}>Вернуться</Button>]}
+				right={[
 					<Button type='primary' onClick={create}>
 						Создать
-					</Button>
-				}
+					</Button>,
+				]}
+				icon={<UserIcon />}
 			>
 				Новая учётная запись
 			</PageHeader>

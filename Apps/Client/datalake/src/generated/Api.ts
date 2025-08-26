@@ -44,6 +44,7 @@ import {
   UserGroupUpdateRequest,
   UserInfo,
   UserLoginPass,
+  UserSessionInfo,
   UserUpdateRequest,
   ValuesGetPayload,
   ValuesResponse,
@@ -119,6 +120,83 @@ export class Api<
       method: "POST",
       body: data,
       type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthAuthenticateLocal
+   * @summary Post: Аутентификация локального пользователя по связке "имя для входа/пароль"
+   * @request POST:/api/auth/local
+   * @response `200` `UserSessionInfo` Данные о учетной записи
+   */
+  authAuthenticateLocal = (data: UserLoginPass, params: RequestParams = {}) =>
+    this.request<UserSessionInfo, any>({
+      path: `/api/auth/local`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthAuthenticateEnergoIdUser
+   * @summary Post: Аутентификация пользователя, прошедшего проверку на сервере EnergoId
+   * @request POST:/api/auth/energo-id
+   * @response `200` `UserSessionInfo` Данные о учетной записи
+   */
+  authAuthenticateEnergoIdUser = (
+    data: UserEnergoIdInfo,
+    params: RequestParams = {},
+  ) =>
+    this.request<UserSessionInfo, any>({
+      path: `/api/auth/energo-id`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthIdentify
+   * @summary Get: Получение информации о учетной записи на основе текущей сессии
+   * @request GET:/api/auth/identify
+   * @response `200` `UserSessionInfo` Данные о учетной записи
+   */
+  authIdentify = (params: RequestParams = {}) =>
+    this.request<UserSessionInfo, any>({
+      path: `/api/auth/identify`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthLogout
+   * @summary Delete: Закрытие уканной сессии пользователя
+   * @request DELETE:/api/auth/logout
+   * @response `200` `File`
+   */
+  authLogout = (
+    query: {
+      /** Сессионный токен доступа */
+      token: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<File, any>({
+      path: `/api/auth/logout`,
+      method: "DELETE",
+      query: query,
       ...params,
     });
   /**
@@ -957,114 +1035,6 @@ export class Api<
    * No description
    *
    * @tags Users
-   * @name UsersAuthenticateEnergoIdUser
-   * @summary Post: Аутентификация пользователя, прошедшего проверку на сервере EnergoId
-   * @request POST:/api/users/energo-id
-   * @response `200` `UserAuthInfo` Данные о учетной записи
-   */
-  usersAuthenticateEnergoIdUser = (
-    data: UserEnergoIdInfo,
-    params: RequestParams = {},
-  ) =>
-    this.request<UserAuthInfo, any>({
-      path: `/api/users/energo-id`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Users
-   * @name UsersGetEnergoId
-   * @summary Get: Получение списка пользователей, определенных на сервере EnergoId
-   * @request GET:/api/users/energo-id
-   * @response `200` `(UserEnergoIdInfo)[]` Список пользователей
-   */
-  usersGetEnergoId = (params: RequestParams = {}) =>
-    this.request<UserEnergoIdInfo[], any>({
-      path: `/api/users/energo-id`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Users
-   * @name UsersUpdateEnergoId
-   * @summary Put: Обновление данных из EnergoId
-   * @request PUT:/api/users/energo-id
-   * @response `200` `File`
-   */
-  usersUpdateEnergoId = (params: RequestParams = {}) =>
-    this.request<File, any>({
-      path: `/api/users/energo-id`,
-      method: "PUT",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Users
-   * @name UsersAuthenticate
-   * @summary Post: Аутентификация локального пользователя по связке "имя для входа/пароль"
-   * @request POST:/api/users/auth
-   * @response `200` `UserAuthInfo` Данные о учетной записи
-   */
-  usersAuthenticate = (data: UserLoginPass, params: RequestParams = {}) =>
-    this.request<UserAuthInfo, any>({
-      path: `/api/users/auth`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Users
-   * @name UsersIdentify
-   * @summary Get: Получение информации о учетной записи на основе текущей сессии
-   * @request GET:/api/users/identify
-   * @response `200` `UserAuthInfo` Данные о учетной записи
-   */
-  usersIdentify = (params: RequestParams = {}) =>
-    this.request<UserAuthInfo, any>({
-      path: `/api/users/identify`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Users
-   * @name UsersLogout
-   * @summary Delete: Закрытие уканной сессии пользователя
-   * @request DELETE:/api/users/logout
-   * @response `200` `File`
-   */
-  usersLogout = (
-    query: {
-      /** Сессионный токен доступа */
-      token: string;
-    },
-    params: RequestParams = {},
-  ) =>
-    this.request<File, any>({
-      path: `/api/users/logout`,
-      method: "DELETE",
-      query: query,
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Users
    * @name UsersCreate
    * @summary Post: Создание пользователя на основании переданных данных
    * @request POST:/api/users
@@ -1161,6 +1131,37 @@ export class Api<
       path: `/api/users/${userGuid}/detailed`,
       method: "GET",
       format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Users
+   * @name UsersGetEnergoId
+   * @summary Get: Получение списка пользователей, определенных на сервере EnergoId
+   * @request GET:/api/users/energo-id
+   * @response `200` `(UserEnergoIdInfo)[]` Список пользователей
+   */
+  usersGetEnergoId = (params: RequestParams = {}) =>
+    this.request<UserEnergoIdInfo[], any>({
+      path: `/api/users/energo-id`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Users
+   * @name UsersUpdateEnergoId
+   * @summary Put: Обновление данных из EnergoId
+   * @request PUT:/api/users/energo-id
+   * @response `200` `File`
+   */
+  usersUpdateEnergoId = (params: RequestParams = {}) =>
+    this.request<File, any>({
+      path: `/api/users/energo-id`,
+      method: "PUT",
       ...params,
     });
   /**

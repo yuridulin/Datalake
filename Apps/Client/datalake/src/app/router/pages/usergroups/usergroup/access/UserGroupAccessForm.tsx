@@ -1,4 +1,5 @@
 import AccessTypeEl from '@/app/components/AccessTypeEl'
+import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { AccessRightsIdInfo, AccessType, UserGroupInfo } from '@/generated/data-contracts'
@@ -92,7 +93,7 @@ const UserGroupAccessForm = () => {
 		})
 	}
 
-	useEffect(getRights, [id])
+	useEffect(getRights, [store, id])
 
 	const columns: ColumnsType<FormType> = [
 		{
@@ -247,16 +248,17 @@ const UserGroupAccessForm = () => {
 	) : (
 		<>
 			<PageHeader
-				left={
+				left={[
 					<NavLink to={routes.userGroups.toViewUserGroup(String(id))}>
 						<Button>К просмотру группы</Button>
-					</NavLink>
-				}
-				right={
+					</NavLink>,
+				]}
+				right={[
 					<Button type='primary' onClick={updateRights}>
 						Сохранить
-					</Button>
-				}
+					</Button>,
+				]}
+				icon={<UserGroupIcon />}
 			>
 				Разрешения, выдаваемые группе "{group.name}"
 			</PageHeader>

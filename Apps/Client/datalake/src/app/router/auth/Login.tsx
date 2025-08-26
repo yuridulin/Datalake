@@ -1,3 +1,4 @@
+import { loginWithKeycloak } from '@/app/router/auth/keycloak/keycloakService'
 import { UserLoginPass } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Form, Input, Space } from 'antd'
@@ -5,7 +6,6 @@ import { observer } from 'mobx-react-lite'
 import { ValidateErrorEntity } from 'node_modules/rc-field-form/lib/interface'
 import { Navigate } from 'react-router-dom'
 import routes from '../routes'
-import { handleKeycloakLogin } from './keycloak/oidcConfig'
 
 const style = {
 	width: '40em',
@@ -67,7 +67,7 @@ const Login = observer(() => {
 							<Button type='primary' htmlType='submit'>
 								Вход
 							</Button>
-							<Button onClick={handleKeycloakLogin}>Вход через EnergoID</Button>
+							<Button onClick={loginWithKeycloak}>Вход через EnergoID</Button>
 						</Space>
 					</Form.Item>
 				</Form>

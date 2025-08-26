@@ -1,6 +1,7 @@
+import { logout } from '@/app/router/auth/keycloak/keycloakService'
 import routes from '@/app/router/routes'
 import { Api } from '@/generated/Api'
-import { AccessRuleInfo, AccessType, UserAuthInfo } from '@/generated/data-contracts'
+import { AccessRuleInfo, AccessType, UserAuthInfo, UserSessionInfo, UserType } from '@/generated/data-contracts'
 import { NotificationInstance } from 'antd/es/notification/interface'
 import { AxiosError, AxiosResponse } from 'axios'
 import dayjs from 'dayjs'
@@ -13,11 +14,13 @@ import hasAccess from '../functions/hasAccess'
 // передача констант с сервера
 declare const LOCAL_API: boolean
 declare const INSTANCE_NAME: string
+declare const VERSION: string
 
 // для клиента, собранного и лежащего в wwwroot, путь к серверу будет на тот же порт, что и у клиента
 // для запуска раздельно мы используем порт 8000, который определен в docker compose сервера
 let isLocal = false
 let instanceName: string | null = null
+let version: string = 'DEV'
 try {
 	isLocal = LOCAL_API
 } catch {
@@ -27,6 +30,11 @@ try {
 	instanceName = INSTANCE_NAME
 } catch {
 	console.log('INSTANCE_NAME is not defined - set', null)
+}
+try {
+	version = VERSION
+} catch {
+	console.log('VERSION is not defined - set', 'DEV')
 }
 
 // константы заголовков и ключей localStorage
@@ -56,6 +64,7 @@ export class AppStore implements UserAuthInfo {
 	// Текущие поля
 	isDark: boolean = false
 	instanceName: string
+	version: string
 
 	constructor() {
 		makeAutoObservable(this)
@@ -63,6 +72,7 @@ export class AppStore implements UserAuthInfo {
 		this.initTheme()
 		this.api = this.createApiClient()
 		this.instanceName = 'Datalake' + (instanceName ? ' | ' + instanceName : '')
+		this.version = version
 		if (window.location.pathname !== routes.auth.keycloak) {
 			this.refreshAuthData()
 		}
@@ -194,6 +204,7 @@ export class AppStore implements UserAuthInfo {
 
 	// настройки с бэкенда
 	guid: string = ''
+	type: UserType | null = null
 	rootRule!: AccessRuleInfo
 	underlyingUser?: UserAuthInfo | null | undefined
 	energoId?: string | null | undefined
@@ -203,31 +214,34 @@ export class AppStore implements UserAuthInfo {
 	blocks: Record<number, AccessRuleInfo> = {}
 	tags: Record<string, AccessRuleInfo> = {}
 
-	public setAuthData = (authInfo: UserAuthInfo) => {
-		console.log('SET store.authToken =', authInfo.token)
-		console.log('SET store.authLogin =', authInfo.fullName)
-		console.log('SET store.globalAccessType =', authInfo.rootRule.access)
+	public setAuthData = (session: UserSessionInfo) => {
+		const data = session.authInfo
 
-		this.token = authInfo.token
-		this.fullName = authInfo.fullName
-		this.globalAccessType = authInfo.rootRule.access
-		this.sources = authInfo.sources
-		this.blocks = authInfo.blocks
-		this.tags = authInfo.tags
-		this.groups = authInfo.groups
-		this.rootRule = authInfo.rootRule
+		console.log('SET store.authToken =', session.token)
+		console.log('SET store.authLogin =', data.fullName)
+		console.log('SET store.globalAccessType =', data.rootRule.access)
 
-		localStorage.setItem(tokenHeader, authInfo.token)
-		localStorage.setItem(nameHeader, authInfo.fullName)
-		localStorage.setItem(accessHeader, String(authInfo.rootRule.access))
-		localStorage.setItem(identityHeader, JSON.stringify(authInfo))
+		this.type = session.type
+		this.token = session.token
+		this.fullName = data.fullName
+		this.globalAccessType = data.rootRule.access
+		this.sources = data.sources
+		this.blocks = data.blocks
+		this.tags = data.tags
+		this.groups = data.groups
+		this.rootRule = data.rootRule
+
+		localStorage.setItem(tokenHeader, session.token)
+		localStorage.setItem(nameHeader, data.fullName)
+		localStorage.setItem(accessHeader, String(data.rootRule.access))
+		localStorage.setItem(identityHeader, JSON.stringify(data))
 
 		this.setAuthenticated(true)
 	}
 
 	public refreshAuthData = () => {
 		this.api
-			.usersIdentify()
+			.authIdentify()
 			.then((res) => {
 				if (res.status === 200) {
 					this.setAuthData(res.data)
@@ -252,7 +266,7 @@ export class AppStore implements UserAuthInfo {
 
 	public loginLocal = (login: string, password: string) => {
 		this.api
-			.usersAuthenticate({
+			.authAuthenticateLocal({
 				login: login,
 				password: password,
 			})
@@ -266,7 +280,7 @@ export class AppStore implements UserAuthInfo {
 
 	public loginKeycloak = (guid: string, email: string, name: string) => {
 		this.api
-			.usersAuthenticateEnergoIdUser({
+			.authAuthenticateEnergoIdUser({
 				energoIdGuid: guid,
 				email: email,
 				fullName: name,
@@ -280,7 +294,8 @@ export class AppStore implements UserAuthInfo {
 	}
 
 	public logout = () => {
-		this.api.usersLogout({ token: this.token }).then(() => {
+		this.api.authLogout({ token: this.token }).then(() => {
+			if (this.type === UserType.EnergoId) logout()
 			this.clearAuthData()
 		})
 	}

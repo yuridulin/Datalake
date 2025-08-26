@@ -1,4 +1,5 @@
 import AccessTypeEl from '@/app/components/AccessTypeEl'
+import BlockIcon from '@/app/components/icons/BlockIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { AccessRightsIdInfo, AccessType, BlockSimpleInfo } from '@/generated/data-contracts'
@@ -91,7 +92,7 @@ const BlockAccessForm = () => {
 		})
 	}
 
-	useEffect(getRights, [id])
+	useEffect(getRights, [store, id])
 
 	const columns: ColumnsType<FormType> = [
 		{
@@ -226,16 +227,17 @@ const BlockAccessForm = () => {
 	) : (
 		<>
 			<PageHeader
-				left={
+				left={[
 					<NavLink to={routes.blocks.toViewBlock(Number(id))}>
 						<Button>К просмотру блока</Button>
-					</NavLink>
-				}
-				right={
+					</NavLink>,
+				]}
+				right={[
 					<Button type='primary' onClick={updateRights}>
 						Сохранить
-					</Button>
-				}
+					</Button>,
+				]}
+				icon={<BlockIcon />}
 			>
 				Разрешения на доступ к блоку "{block.name}"
 			</PageHeader>

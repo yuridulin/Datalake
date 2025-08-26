@@ -3,14 +3,12 @@
     "Main": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
-      "composeLaunchAction": "None",
-      "composeLaunchServiceName": "server",
       "serviceActions": {
         "postgres": "StartWithoutDebugging",
         "create-keycloak-db": "StartWithoutDebugging",
         "keycloak": "StartWithoutDebugging",
         "server": "StartDebugging",
-        "client": "StartWithoutDebugging"
+        "client": "DoNotStart"
       }
     }
   }

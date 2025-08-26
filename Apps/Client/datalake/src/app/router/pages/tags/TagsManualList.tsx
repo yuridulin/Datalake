@@ -19,7 +19,7 @@ const TagsManualList = () => {
 				.catch(() => setTags([]))
 			return prevTags
 		})
-	}, [])
+	}, [store])
 
 	function createTag() {
 		store.api
@@ -39,7 +39,7 @@ const TagsManualList = () => {
 
 	return (
 		<>
-			<PageHeader right={<Button onClick={createTag}>Создать мануальный тег</Button>}>
+			<PageHeader right={[<Button onClick={createTag}>Создать мануальный тег</Button>]}>
 				Список мануальных тегов
 			</PageHeader>
 			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}

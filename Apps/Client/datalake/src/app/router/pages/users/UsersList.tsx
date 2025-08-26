@@ -12,7 +12,7 @@ import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useInterval } from 'react-use'
 
@@ -32,10 +32,10 @@ const UsersList = observer(() => {
 		navigate(routes.users.create)
 	}
 
-	const getStates = () => {
+	const getStates = useCallback(() => {
 		if (!store.hasGlobalAccess(AccessType.Manager)) return
 		store.api.systemGetVisits().then((res) => setStates(res.data))
-	}
+	}, [store])
 
 	const columns: TableColumnsType<UserInfo> = [
 		{
@@ -87,13 +87,13 @@ const UsersList = observer(() => {
 		},
 	]
 
-	useEffect(load, [])
+	useEffect(load, [store, getStates])
 	useInterval(getStates, 5000)
 
 	return (
 		<>
 			<PageHeader
-				right={store.hasGlobalAccess(AccessType.Manager) && <Button onClick={create}>Добавить пользователя</Button>}
+				right={[store.hasGlobalAccess(AccessType.Manager) && <Button onClick={create}>Добавить пользователя</Button>]}
 			>
 				Список пользователей
 			</PageHeader>

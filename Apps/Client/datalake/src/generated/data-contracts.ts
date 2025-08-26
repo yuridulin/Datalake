@@ -11,19 +11,6 @@
  */
 
 /**
- * Тип учётной записи
- *
- * 1 = Local
- * 2 = Static
- * 3 = EnergoId
- */
-export enum UserType {
-  Local = 1,
-  Static = 2,
-  EnergoId = 3,
-}
-
-/**
  * Тип агрегирования данных
  *
  * 0 = List
@@ -159,6 +146,19 @@ export enum BlockTagRelation {
   Static = 0,
   Input = 1,
   Output = 2,
+}
+
+/**
+ * Тип учётной записи
+ *
+ * 1 = Local
+ * 2 = Static
+ * 3 = EnergoId
+ */
+export enum UserType {
+  Local = 1,
+  Static = 2,
+  EnergoId = 3,
 }
 
 /**
@@ -455,6 +455,93 @@ export interface AccessRightsIdInfo {
    * @format int32
    */
   tagId?: number | null;
+}
+
+/** Данные сессии пользователя */
+export interface UserSessionInfo {
+  /**
+   * Информация о пользователе
+   * @format guid
+   * @minLength 1
+   */
+  userGuid: string;
+  /** Информация о правах пользователя */
+  authInfo: UserAuthInfo;
+  /**
+   * Токен сессии
+   * @minLength 1
+   */
+  token: string;
+  /**
+   * Время истечения сессии
+   * @format date-time
+   * @minLength 1
+   */
+  expirationTime: string;
+  /** Адрес, с которого разрешен доступ */
+  staticHost?: string | null;
+  /** Тип входа в сессию. Нужен, чтобы правильно выйти */
+  type: UserType;
+}
+
+/** Информация о аутентифицированном пользователе */
+export type UserAuthInfo = UserSimpleInfo & {
+  /** Глобальный уровень доступа */
+  rootRule: AccessRuleInfo;
+  /** Список всех блоков с указанием доступа к ним */
+  groups: Record<string, AccessRuleInfo>;
+  /** Список всех блоков с указанием доступа к ним */
+  sources: Record<string, AccessRuleInfo>;
+  /** Список всех блоков с указанием доступа к ним */
+  blocks: Record<string, AccessRuleInfo>;
+  /** Список всех тегов с указанием доступа к ним */
+  tags: Record<string, AccessRuleInfo>;
+  /** Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись */
+  underlyingUser?: UserAuthInfo | null;
+  /**
+   * Идентификатор пользователя в системе EnergoId
+   * @format guid
+   */
+  energoId?: string | null;
+};
+
+/** Информация при аутентификации локальной учетной записи */
+export interface UserLoginPass {
+  /**
+   * Имя для входа
+   * @minLength 1
+   */
+  login: string;
+  /**
+   * Пароль
+   * @minLength 1
+   */
+  password: string;
+}
+
+/** Информация о пользователе, взятая из Keycloak */
+export interface UserEnergoIdInfo {
+  /**
+   * Идентификатор пользователя в сервере Keycloak
+   * @format guid
+   * @minLength 1
+   */
+  energoIdGuid: string;
+  /**
+   * Идентификатор сопоставленного пользователя приложения, если есть
+   * @format guid
+   */
+  userGuid?: string | null;
+  /**
+   * Имя для входа
+   * @minLength 1
+   */
+  email: string;
+  /**
+   * Полное имя пользователя
+   * @minLength 1
+   */
+  fullName: string;
 }
 
 /** Информация о блоке */
@@ -796,32 +883,6 @@ export interface SettingsInfo {
    */
   instanceName: string;
 }
-
-/** Информация о аутентифицированном пользователе */
-export type UserAuthInfo = UserSimpleInfo & {
-  /**
-   * Идентификатор сессии
-   * @minLength 1
-   */
-  token: string;
-  /** Глобальный уровень доступа */
-  rootRule: AccessRuleInfo;
-  /** Список всех блоков с указанием доступа к ним */
-  groups: Record<string, AccessRuleInfo>;
-  /** Список всех блоков с указанием доступа к ним */
-  sources: Record<string, AccessRuleInfo>;
-  /** Список всех блоков с указанием доступа к ним */
-  blocks: Record<string, AccessRuleInfo>;
-  /** Список всех тегов с указанием доступа к ним */
-  tags: Record<string, AccessRuleInfo>;
-  /** Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись */
-  underlyingUser?: UserAuthInfo | null;
-  /**
-   * Идентификатор пользователя в системе EnergoId
-   * @format guid
-   */
-  energoId?: string | null;
-};
 
 export interface KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo {
   /** Уникальная подпись для метрики запроса к данным */
@@ -1267,45 +1328,6 @@ export type UserGroupUpdateRequest = UserGroupCreateRequest & {
   /** Список пользователей, которые включены в эту группу */
   users: UserGroupUsersInfo[];
 };
-
-/** Информация о пользователе, взятая из Keycloak */
-export interface UserEnergoIdInfo {
-  /**
-   * Идентификатор пользователя в сервере Keycloak
-   * @format guid
-   * @minLength 1
-   */
-  energoIdGuid: string;
-  /**
-   * Идентификатор сопоставленного пользователя приложения, если есть
-   * @format guid
-   */
-  userGuid?: string | null;
-  /**
-   * Имя для входа
-   * @minLength 1
-   */
-  email: string;
-  /**
-   * Полное имя пользователя
-   * @minLength 1
-   */
-  fullName: string;
-}
-
-/** Информация при аутентификации локальной учетной записи */
-export interface UserLoginPass {
-  /**
-   * Имя для входа
-   * @minLength 1
-   */
-  login: string;
-  /**
-   * Пароль
-   * @minLength 1
-   */
-  password: string;
-}
 
 /** Информация о пользователе */
 export type UserInfo = UserSimpleInfo & {

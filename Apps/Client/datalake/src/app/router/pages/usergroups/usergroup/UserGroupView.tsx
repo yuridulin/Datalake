@@ -1,4 +1,5 @@
 import AccessTypeEl from '@/app/components/AccessTypeEl'
+import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
@@ -47,7 +48,7 @@ const UserGroupView = observer(() => {
 		setReady(!!group.guid)
 	}
 
-	useEffect(load, [id])
+	useEffect(load, [store, id])
 	useEffect(checkReady, [group])
 
 	return !ready ? (
@@ -55,26 +56,24 @@ const UserGroupView = observer(() => {
 	) : (
 		<>
 			<PageHeader
-				left={
+				left={[
 					<NavLink to={routes.userGroups.root}>
 						<Button>К списку групп</Button>
-					</NavLink>
-				}
-				right={
-					<>
-						{store.hasAccessToGroup(AccessType.Editor, String(id)) && (
-							<NavLink to={routes.userGroups.toEditUserGroup(String(id))}>
-								<Button>Редактирование группы и участников</Button>
-							</NavLink>
-						)}
-						&ensp;
-						{store.hasGlobalAccess(AccessType.Admin) && (
-							<NavLink to={routes.userGroups.toUserGroupAccessForm(String(id))}>
-								<Button>Редактирование разрешений</Button>
-							</NavLink>
-						)}
-					</>
-				}
+					</NavLink>,
+				]}
+				right={[
+					store.hasAccessToGroup(AccessType.Editor, String(id)) && (
+						<NavLink to={routes.userGroups.toEditUserGroup(String(id))}>
+							<Button>Редактирование группы и участников</Button>
+						</NavLink>
+					),
+					store.hasGlobalAccess(AccessType.Admin) && (
+						<NavLink to={routes.userGroups.toUserGroupAccessForm(String(id))}>
+							<Button>Редактирование разрешений</Button>
+						</NavLink>
+					),
+				]}
+				icon={<UserGroupIcon />}
 			>
 				{group.name}
 			</PageHeader>

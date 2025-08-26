@@ -1,4 +1,5 @@
 import FormRow from '@/app/components/FormRow'
+import UserIcon from '@/app/components/icons/UserIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
@@ -65,7 +66,7 @@ const UserForm = observer(() => {
 		store.api.usersGetEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
 	}
 
-	useEffect(load, [id])
+	useEffect(load, [store, id])
 
 	function update() {
 		store.api.usersUpdate(String(id), request).then((res) => {
@@ -113,24 +114,22 @@ const UserForm = observer(() => {
 	) : (
 		<>
 			<PageHeader
-				left={<Button onClick={() => navigate(routes.users.list)}>Вернуться</Button>}
-				right={
-					<>
-						<Popconfirm
-							title='Вы уверены, что хотите удалить эту учётную запись?'
-							placement='bottom'
-							onConfirm={del}
-							okText='Да'
-							cancelText='Нет'
-						>
-							<Button>Удалить</Button>
-						</Popconfirm>
-						&ensp;
-						<Button type='primary' onClick={update}>
-							Сохранить
-						</Button>
-					</>
-				}
+				left={[<Button onClick={() => navigate(routes.users.list)}>Вернуться</Button>]}
+				right={[
+					<Popconfirm
+						title='Вы уверены, что хотите удалить эту учётную запись?'
+						placement='bottom'
+						onConfirm={del}
+						okText='Да'
+						cancelText='Нет'
+					>
+						<Button>Удалить</Button>
+					</Popconfirm>,
+					<Button type='primary' onClick={update}>
+						Сохранить
+					</Button>,
+				]}
+				icon={<UserIcon />}
 			>
 				Учётная запись: {oldName}
 			</PageHeader>

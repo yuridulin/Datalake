@@ -7,7 +7,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useInterval } from 'react-use'
 
@@ -77,11 +77,11 @@ const SourcesList = observer(() => {
 			})
 	}
 
-	const getStates = () => {
+	const getStates = useCallback(() => {
 		store.api.systemGetSourcesStates().then((res) => {
 			setStates(res.data)
 		})
-	}
+	}, [store])
 
 	const createSource = () => {
 		store.api
@@ -202,13 +202,13 @@ const SourcesList = observer(() => {
 		},
 	]
 
-	useEffect(load, [])
+	useEffect(load, [getStates, store])
 	useInterval(getStates, 5000)
 
 	return (
 		<>
 			<PageHeader
-				right={store.hasGlobalAccess(AccessType.Admin) && <Button onClick={createSource}>Добавить источник</Button>}
+				right={[store.hasGlobalAccess(AccessType.Admin) && <Button onClick={createSource}>Добавить источник</Button>]}
 			>
 				Зарегистрированные источники данных
 			</PageHeader>

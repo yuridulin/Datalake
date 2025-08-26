@@ -1,11 +1,12 @@
+import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
 import { AccessType, UserGroupDetailedInfo, UserGroupUpdateRequest } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
-import { MinusCircleOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons'
-import { App, Button, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import { App, Button, Form, Input, Popconfirm, Select, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
@@ -82,34 +83,30 @@ const UserGroupForm = observer(() => {
 	) : (
 		<>
 			<PageHeader
-				left={
+				left={[
 					<NavLink to={routes.userGroups.toViewUserGroup(String(id))}>
 						<Button>Вернуться</Button>
-					</NavLink>
-				}
-				right={
-					<>
-						{hasAccess(group.accessRule.access, AccessType.Editor) && (
-							<Popconfirm
-								title='Вы уверены, что хотите удалить эту группу?'
-								placement='bottom'
-								onConfirm={deleteGroup}
-								okText='Да'
-								cancelText='Нет'
-							>
-								<Button>Удалить</Button>
-							</Popconfirm>
-						)}
-						&ensp;
-						<Button type='primary' onClick={() => form.submit()}>
-							Сохранить
-						</Button>
-					</>
-				}
+					</NavLink>,
+				]}
+				right={[
+					hasAccess(group.accessRule.access, AccessType.Editor) && (
+						<Popconfirm
+							title='Вы уверены, что хотите удалить эту группу?'
+							placement='bottom'
+							onConfirm={deleteGroup}
+							okText='Да'
+							cancelText='Нет'
+						>
+							<Button>Удалить</Button>
+						</Popconfirm>
+					),
+					<Button type='primary' onClick={() => form.submit()}>
+						Сохранить
+					</Button>,
+				]}
+				icon={<UserGroupIcon />}
 			>
-				<Space>
-					<TeamOutlined style={{ fontSize: '20px' }} /> {group.name}
-				</Space>
+				{group.name}
 			</PageHeader>
 
 			<Form form={form} onFinish={updateGroup} labelCol={{ span: 8 }}>

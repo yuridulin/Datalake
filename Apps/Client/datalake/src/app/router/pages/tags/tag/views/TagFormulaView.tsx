@@ -87,7 +87,7 @@ const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
 			}, {} as TagFormulaValues)
 			setValues(newValues)
 		})
-	}, [inputs])
+	}, [store, inputs])
 
 	useEffect(getValues, [getValues])
 	useInterval(getValues, 5000)

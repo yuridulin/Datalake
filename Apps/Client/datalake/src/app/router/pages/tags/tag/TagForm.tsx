@@ -1,6 +1,7 @@
 import FormRow from '@/app/components/FormRow'
 import HelpAggregationType from '@/app/components/help-tootip/help-pages/HelpAggregationType'
 import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
+import TagIcon from '@/app/components/icons/TagIcon'
 import PageHeader from '@/app/components/PageHeader'
 import TagQualityEl from '@/app/components/TagQualityEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
@@ -78,7 +79,7 @@ const TagForm = () => {
 				setValue((prev) => (prev && next && prev.value == next.value && prev.quality == next.quality ? prev : next))
 			})
 			.catch(() => setValue(null))
-	}, [id])
+	}, [store, id])
 
 	useEffect(() => {
 		getValue()
@@ -169,9 +170,9 @@ const TagForm = () => {
 				})),
 			)
 		})
-	}, [request.sourceId])
+	}, [store, request.sourceId])
 
-	useEffect(loadTagData, [id])
+	useEffect(loadTagData, [store, id])
 	useEffect(getItems, [getItems])
 
 	useEffect(() => {
@@ -321,24 +322,22 @@ const TagForm = () => {
 	) : (
 		<>
 			<PageHeader
-				left={<Button onClick={() => navigate(routes.tags.list)}>Вернуться</Button>}
-				right={
-					<>
-						<Popconfirm
-							title='Вы уверены, что хотите удалить этот тег?'
-							placement='bottom'
-							onConfirm={tagDelete}
-							okText='Да'
-							cancelText='Нет'
-						>
-							<Button>Удалить</Button>
-						</Popconfirm>
-						&ensp;
-						<Button type='primary' onClick={tagUpdate} disabled={validation.errors.length > 0}>
-							Сохранить
-						</Button>
-					</>
-				}
+				left={[<Button onClick={() => navigate(routes.tags.list)}>Вернуться</Button>]}
+				right={[
+					<Popconfirm
+						title='Вы уверены, что хотите удалить этот тег?'
+						placement='bottom'
+						onConfirm={tagDelete}
+						okText='Да'
+						cancelText='Нет'
+					>
+						<Button>Удалить</Button>
+					</Popconfirm>,
+					<Button type='primary' onClick={tagUpdate} disabled={validation.errors.length > 0}>
+						Сохранить
+					</Button>,
+				]}
+				icon={<TagIcon type={tag.sourceType} />}
 			>
 				Тег {tag.name}
 			</PageHeader>

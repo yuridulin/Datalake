@@ -1,3 +1,4 @@
+import routes from '@/app/router/routes'
 import { useAppStore } from '@/store/useAppStore'
 import { App, ConfigProvider, notification, theme } from 'antd'
 import locale from 'antd/locale/ru_RU'
@@ -13,7 +14,13 @@ export const Datalake = observer(() => {
 	const { defaultAlgorithm, darkAlgorithm } = theme
 	const [api, contextHolder] = notification.useNotification()
 
-	useEffect(() => store.setNotify(api), [api])
+	useEffect(() => store.setNotify(api), [api, store])
+
+	const isKeycloakCallback = window.location.href.includes(routes.auth.keycloak)
+	if (isKeycloakCallback) {
+		store.setConnectionStatus(true)
+		store.doneLoading()
+	}
 
 	return (
 		<ConfigProvider

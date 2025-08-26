@@ -9,12 +9,6 @@ namespace Datalake.PublicApi.Models.Auth;
 public class UserAuthInfo : UserSimpleInfo
 {
 	/// <summary>
-	/// Идентификатор сессии
-	/// </summary>
-	[Required]
-	public required string Token { get; set; }
-
-	/// <summary>
 	/// Глобальный уровень доступа
 	/// </summary>
 	[Required]

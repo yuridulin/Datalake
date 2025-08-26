@@ -71,7 +71,7 @@ const BlocksTree = observer(() => {
 	}
 
 	// Initialize and refresh data periodically
-	useEffect(loadBlocks, [])
+	useEffect(loadBlocks, [store])
 	useInterval(loadBlocks, 60000)
 
 	// Handle expand/collapse of tree nodes
@@ -129,17 +129,25 @@ const BlocksTree = observer(() => {
 	return (
 		<>
 			<PageHeader
+				left={[
+					<NavLink to={routes.blocks.toMoveForm()}>
+						<Button>Изменить иерархию</Button>
+					</NavLink>,
+					<Button type='primary' onClick={createBlock}>
+						Добавить блок
+					</Button>,
+				]}
 				right={
-					store.hasGlobalAccess(AccessType.Admin) && (
-						<div className='flex gap-2'>
-							<NavLink to={routes.blocks.toMoveForm()}>
-								<Button>Изменить иерархию</Button>
-							</NavLink>
-							<Button type='primary' onClick={createBlock}>
-								Добавить блок
-							</Button>
-						</div>
-					)
+					store.hasGlobalAccess(AccessType.Admin)
+						? [
+								<NavLink to={routes.blocks.toMoveForm()}>
+									<Button>Изменить иерархию</Button>
+								</NavLink>,
+								<Button type='primary' onClick={createBlock}>
+									Добавить блок
+								</Button>,
+							]
+						: []
 				}
 			>
 				Блоки верхнего уровня

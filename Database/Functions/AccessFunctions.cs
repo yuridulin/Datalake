@@ -171,7 +171,6 @@ public static class AccessFunctions
 				EnergoId = user.EnergoIdGuid,
 				FullName = user.FullName ?? user.Login ?? string.Empty,
 				RootRule = AccessRuleInfo.Default,
-				Token = string.Empty,
 			};
 
 			AccessRuleInfo globalRule = AccessRuleInfo.Default;

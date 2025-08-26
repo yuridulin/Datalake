@@ -19,7 +19,7 @@ const TagsAggregatedList = () => {
 				.catch(() => setTags([]))
 			return prevTags
 		})
-	}, [])
+	}, [store])
 
 	const createTag = () => {
 		store.api
@@ -39,7 +39,7 @@ const TagsAggregatedList = () => {
 
 	return (
 		<>
-			<PageHeader right={<Button onClick={createTag}>Создать вычисляемый тег</Button>}>
+			<PageHeader right={[<Button onClick={createTag}>Создать вычисляемый тег</Button>]}>
 				Список агрегированных тегов
 			</PageHeader>
 			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}

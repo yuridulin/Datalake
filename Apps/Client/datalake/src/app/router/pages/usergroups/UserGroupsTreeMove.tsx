@@ -114,22 +114,19 @@ const UserGroupsTreeMove = observer(() => {
 			})
 	}
 
-	useEffect(load, [])
+	useEffect(load, [store])
 
 	if (!store.hasGlobalAccess(AccessType.Admin)) return <NoAccessEl />
 
 	return (
 		<>
 			<PageHeader
-				right={
-					<>
-						<NavLink to={routes.userGroups.list}>
-							<Button>Вернуться к списку</Button>
-						</NavLink>
-						&ensp;
-						<UserGroupsCreateModal onCreate={load} />
-					</>
-				}
+				right={[
+					<NavLink to={routes.userGroups.list}>
+						<Button>Вернуться к списку</Button>
+					</NavLink>,
+					<UserGroupsCreateModal onCreate={load} />,
+				]}
 			>
 				Группы пользователей
 			</PageHeader>

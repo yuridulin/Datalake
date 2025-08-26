@@ -1,10 +1,9 @@
-import { AuthProvider } from 'react-oidc-context'
+import AppError from '@/app/components/AppError'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Offline } from '../pages/Offline'
 import AppLayout from './AppLayout'
 import Login from './auth/Login'
 import KeycloakCallback from './auth/keycloak/KeycloakCallback'
-import { oidcConfig } from './auth/keycloak/oidcConfig'
 import SettingsPage from './pages/admin/SettingsPage'
 import TagsAccessMetrics from './pages/admin/metrics/TagsAccessMetrics'
 import ValuesMetrics from './pages/admin/metrics/ValuesMetrics'
@@ -42,11 +41,7 @@ const AppRouter = createBrowserRouter([
 	},
 	{
 		path: routes.auth.keycloak,
-		element: (
-			<AuthProvider {...oidcConfig}>
-				<KeycloakCallback />
-			</AuthProvider>
-		),
+		element: <KeycloakCallback />,
 	},
 	{
 		path: '/',
@@ -218,6 +213,7 @@ const AppRouter = createBrowserRouter([
 				],
 			},
 		],
+		errorElement: <AppError />,
 	},
 	{
 		path: '/offline',

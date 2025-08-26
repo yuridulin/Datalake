@@ -1,3 +1,4 @@
+import BlockIcon from '@/app/components/icons/BlockIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import {
@@ -11,8 +12,8 @@ import {
 	TagType,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
-import { CreditCardOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import { App, Button, Dropdown, Form, Input, Popconfirm, Select, Space, Spin } from 'antd'
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import { App, Button, Dropdown, Form, Input, Popconfirm, Select, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -79,8 +80,8 @@ const BlockForm = observer(() => {
 			.finally(() => setLoading(false))
 	}
 
-	useEffect(getBlock, [id, form])
-	useEffect(getTags, [])
+	useEffect(getBlock, [store, id, form])
+	useEffect(getTags, [store])
 
 	// Получаем текущие значения формы для проверки дубликатов
 	const attachedTagsList = Form.useWatch('tags', form) || []
@@ -90,30 +91,26 @@ const BlockForm = observer(() => {
 	) : (
 		<>
 			<PageHeader
-				left={<Button onClick={() => navigate(routes.blocks.toViewBlock(Number(id)))}>Вернуться</Button>}
-				right={
-					<>
-						{store.hasAccessToBlock(AccessType.Admin, Number(id)) && (
-							<Popconfirm
-								title='Вы уверены, что хотите удалить этот блок?'
-								placement='bottom'
-								onConfirm={deleteBlock}
-								okText='Да'
-								cancelText='Нет'
-							>
-								<Button>Удалить</Button>
-							</Popconfirm>
-						)}
-						&ensp;
-						<Button type='primary' onClick={() => form.submit()}>
-							Сохранить
-						</Button>
-					</>
-				}
+				left={[<Button onClick={() => navigate(routes.blocks.toViewBlock(Number(id)))}>Вернуться</Button>]}
+				right={[
+					store.hasAccessToBlock(AccessType.Admin, Number(id)) && (
+						<Popconfirm
+							title='Вы уверены, что хотите удалить этот блок?'
+							placement='bottom'
+							onConfirm={deleteBlock}
+							okText='Да'
+							cancelText='Нет'
+						>
+							<Button>Удалить</Button>
+						</Popconfirm>
+					),
+					<Button type='primary' onClick={() => form.submit()}>
+						Сохранить
+					</Button>,
+				]}
+				icon={<BlockIcon />}
 			>
-				<Space>
-					<CreditCardOutlined style={{ fontSize: '20px' }} /> {block.name}
-				</Space>
+				{block.name}
 			</PageHeader>
 
 			<Form form={form} onFinish={updateBlock}>

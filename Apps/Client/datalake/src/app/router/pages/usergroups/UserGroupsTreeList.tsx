@@ -26,7 +26,7 @@ const UserGroupsTreeList = observer(() => {
 		})
 	}
 
-	useEffect(load, [])
+	useEffect(load, [store])
 
 	const expandKey = 'expandedUserGroups'
 	const [expandedRowKeys, setExpandedRowKeys] = useState(() => {
@@ -71,15 +71,14 @@ const UserGroupsTreeList = observer(() => {
 		<>
 			<PageHeader
 				right={
-					store.hasGlobalAccess(AccessType.Manager) && (
-						<>
-							<NavLink to={routes.userGroups.move}>
-								<Button>Изменить иерархию</Button>
-							</NavLink>
-							&ensp;
-							<UserGroupsCreateModal onCreate={load} />
-						</>
-					)
+					store.hasGlobalAccess(AccessType.Manager)
+						? [
+								<NavLink to={routes.userGroups.move}>
+									<Button>Изменить иерархию</Button>
+								</NavLink>,
+								<UserGroupsCreateModal onCreate={load} />,
+							]
+						: []
 				}
 			>
 				Группы пользователей

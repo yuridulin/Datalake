@@ -1,4 +1,5 @@
 import FormRow from '@/app/components/FormRow'
+import SourceIcon from '@/app/components/icons/SourceIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
@@ -54,26 +55,24 @@ const SourceForm = () => {
 	return (
 		<>
 			<PageHeader
-				left={<Button onClick={() => navigate(routes.sources.list)}>Вернуться</Button>}
-				right={
-					<>
-						<Popconfirm
-							title='Удалить источник?'
-							description='Теги, связанные с источником, будут сохранены, но не смогут получать обновления'
-							onConfirm={sourceDelete}
-							okText='Удалить'
-							cancelText='Отмена'
-						>
-							<Button>Удалить</Button>
-						</Popconfirm>
-						&ensp;
-						<Button onClick={sourceUpdate} type='primary'>
-							Сохранить
-						</Button>
-					</>
-				}
+				left={[<Button onClick={() => navigate(routes.sources.list)}>Вернуться</Button>]}
+				right={[
+					<Popconfirm
+						title='Удалить источник?'
+						description='Теги, связанные с источником, будут сохранены, но не смогут получать обновления'
+						onConfirm={sourceDelete}
+						okText='Удалить'
+						cancelText='Отмена'
+					>
+						<Button>Удалить</Button>
+					</Popconfirm>,
+					<Button onClick={sourceUpdate} type='primary'>
+						Сохранить
+					</Button>,
+				]}
+				icon={<SourceIcon />}
 			>
-				Источник: {source.name}
+				{source.name}
 			</PageHeader>
 			<FormRow title='Имя'>
 				<Input value={request.name} onChange={(e) => setRequest({ ...request, name: e.target.value })} />

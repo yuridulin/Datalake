@@ -1,34 +1,52 @@
+import { handleCallback } from '@/app/router/auth/keycloak/keycloakService'
+import routes from '@/app/router/routes'
 import { useAppStore } from '@/store/useAppStore'
-import { Button, Space } from 'antd'
+import { Alert, Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useAuth } from 'react-oidc-context'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const KeycloakCallback = observer(() => {
-	const auth = useAuth()
+	const navigate = useNavigate()
 	const store = useAppStore()
+	const [error, setError] = useState<string | undefined>(undefined)
+	const processedRef = useRef(false)
 
-	console.log('keycloak callback', auth)
+	useEffect(() => {
+		if (processedRef.current) return
+		processedRef.current = true
 
-	if (auth.isLoading) {
-		return <div>загрузка...</div>
-	}
+		const processAuth = async () => {
+			const result = await handleCallback()
+			console.log(result)
 
-	if (auth.error) {
-		return <div>Ошибка при аутентификации через EnergoId: {auth.error.message}</div>
-	}
+			if (result.success) {
+				store.loginKeycloak(result.user!.sub, result.user!.email ?? '', result.user!.name ?? '')
+				navigate(routes.globalRoot, {})
+			} else {
+				setError(result.error)
+			}
+		}
 
-	if (auth.isAuthenticated) {
-		store.loginKeycloak(auth.user?.profile.sub ?? '', auth.user?.profile.email ?? '', auth.user?.profile.name ?? '')
+		processAuth()
+	}, [store, navigate])
 
+	if (error) {
 		return (
-			<Space>
-				Вы аутентифицированы как {auth.user?.profile.name}
-				<Button onClick={() => void auth.removeUser()}>Выйти</Button>
-			</Space>
+			<Alert
+				message='Ошибка аутентификации'
+				description={error}
+				type='error'
+				action={
+					<Button size='small' onClick={() => navigate(routes.auth.login)}>
+						Вернуться к логину
+					</Button>
+				}
+			/>
 		)
 	}
 
-	return <i>Что-то пошло не так</i>
+	return <Spin size='large'>Keycloak Callback</Spin>
 })
 
 export default KeycloakCallback

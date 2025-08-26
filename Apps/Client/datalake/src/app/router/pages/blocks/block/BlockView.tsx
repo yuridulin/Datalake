@@ -1,4 +1,5 @@
 import BlockButton from '@/app/components/buttons/BlockButton'
+import BlockIcon from '@/app/components/icons/BlockIcon'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
@@ -45,7 +46,7 @@ const BlockView = observer(() => {
 		store.api.blocksCreateEmpty({ parentId: Number(id) }).then(getBlock)
 	}
 
-	useEffect(getBlock, [id])
+	useEffect(getBlock, [store, id])
 
 	// Создаем маппинг тегов для TagValuesViewer
 	const tagMapping = useMemo(() => {
@@ -68,26 +69,24 @@ const BlockView = observer(() => {
 	) : (
 		<>
 			<PageHeader
-				left={
+				left={[
 					<NavLink to={routes.blocks.list}>
 						<Button>К дереву блоков</Button>
-					</NavLink>
-				}
-				right={
-					<>
-						{store.hasAccessToBlock(AccessType.Editor, Number(id)) && (
-							<NavLink to={routes.blocks.toEditBlock(Number(id))}>
-								<Button>Редактирование блока</Button>
-							</NavLink>
-						)}
-						&ensp;
-						{store.hasAccessToBlock(AccessType.Admin, Number(id)) && (
-							<NavLink to={routes.blocks.toBlockAccessForm(Number(id))}>
-								<Button>Редактирование разрешений</Button>
-							</NavLink>
-						)}
-					</>
-				}
+					</NavLink>,
+				]}
+				right={[
+					store.hasAccessToBlock(AccessType.Editor, Number(id)) && (
+						<NavLink to={routes.blocks.toEditBlock(Number(id))}>
+							<Button>Редактирование блока</Button>
+						</NavLink>
+					),
+					store.hasAccessToBlock(AccessType.Admin, Number(id)) && (
+						<NavLink to={routes.blocks.toBlockAccessForm(Number(id))}>
+							<Button>Редактирование разрешений</Button>
+						</NavLink>
+					),
+				]}
+				icon={<BlockIcon />}
 			>
 				{block.name}
 			</PageHeader>

@@ -17,14 +17,6 @@ code {
 	font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-.title {
-	margin-bottom: 1em;
-	font-weight: 500;
-	font-size: large;
-	color: #4096ff;
-	text-decoration: none;
-}
-
 .offline {
 	padding: 1em;
 }
@@ -86,14 +78,6 @@ code {
 
 .form-subtable td div {
 	margin-bottom: 0;
-}
-
-.app-two-items {
-	width: 100%;
-}
-
-.app-two-items > * {
-	padding: .25em 1em;
 }
 
 .notify-dark {

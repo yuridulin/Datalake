@@ -1,6 +1,5 @@
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Exceptions;
-using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -20,18 +19,6 @@ public abstract class UsersControllerBase : ControllerBase
 	/// Основной путь к контроллеру
 	/// </summary>
 	public const string ControllerRoute = "users";
-
-	/// <inheritdoc cref="AuthenticateEnergoIdUser" />
-	public const string AuthenticateEnergoIdUser = "energo-id";
-
-	/// <inheritdoc cref="AuthenticateAsync(UserLoginPass)" />
-	public const string Authenticate = "auth";
-
-	/// <inheritdoc cref="IdentifyAsync" />
-	public const string Identify = "identify";
-
-	/// <inheritdoc cref="LogoutAsync" />
-	public const string Logout = "logout";
 
 	/// <inheritdoc cref="CreateAsync(UserCreateRequest)" />
 	public const string Create = "";
@@ -60,39 +47,6 @@ public abstract class UsersControllerBase : ControllerBase
 	#endregion Константы путей
 
 	#region Методы
-
-	/// <summary>
-	/// <see cref="HttpMethod.Post" />: Аутентификация пользователя, прошедшего проверку на сервере EnergoId
-	/// </summary>
-	/// <param name="energoIdInfo">Данные пользователя Keycloak</param>
-	/// <returns>Данные о учетной записи</returns>
-	[HttpPost(AuthenticateEnergoIdUser)]
-	public abstract Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
-		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo);
-
-	/// <summary>
-	/// <see cref="HttpMethod.Post" />: Аутентификация локального пользователя по связке "имя для входа/пароль"
-	/// </summary>
-	/// <param name="loginPass">Данные для входа</param>
-	/// <returns>Данные о учетной записи</returns>
-	[HttpPost(Authenticate)]
-	public abstract Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
-		[BindRequired, FromBody] UserLoginPass loginPass);
-
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение информации о учетной записи на основе текущей сессии
-	/// </summary>
-	/// <returns>Данные о учетной записи</returns>
-	[HttpGet(Identify)]
-	public abstract Task<ActionResult<UserAuthInfo>> IdentifyAsync();
-
-	/// <summary>
-	/// <see cref="HttpMethod.Delete"/>: Закрытие уканной сессии пользователя
-	/// </summary>
-	/// <param name="token">Сессионный токен доступа</param>
-	[HttpDelete(Logout)]
-	public abstract Task<ActionResult> LogoutAsync(
-		[BindRequired, FromQuery] string token);
 
 	/// <summary>
 	/// <see cref="HttpMethod.Post" />: Создание пользователя на основании переданных данных

@@ -1,7 +1,7 @@
 ﻿using Datalake.Database.InMemory;
 using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
-using Datalake.Server.Services.Auth.Models;
 
 namespace Datalake.Server.Services.Auth;
 
@@ -14,12 +14,12 @@ public class SessionManagerService(
 	/// <summary>
 	/// Список текущих сессий
 	/// </summary>
-	List<AuthSession> Sessions { get; set; } = [];
+	List<UserSessionInfo> Sessions { get; set; } = [];
 
 	/// <summary>
 	/// Список статичных учетных записей
 	/// </summary>
-	public static List<AuthSession> StaticAuthRecords { get; set; } = [];
+	public static List<UserSessionInfo> StaticAuthRecords { get; set; } = [];
 
 	/// <summary>
 	/// Получить текущую сессию по токену
@@ -27,7 +27,7 @@ public class SessionManagerService(
 	/// <param name="token">Токен сессии</param>
 	/// <param name="address">Адрес, с которого разрешен доступ по статичной учетной записи</param>
 	/// <returns>Информация о сессии</returns>
-	public AuthSession? GetExistSession(string token, string address)
+	public UserSessionInfo? GetExistSession(string token, string address)
 	{
 		var session = Sessions.FirstOrDefault(x => x.Token == token)
 			?? StaticAuthRecords
@@ -55,7 +55,7 @@ public class SessionManagerService(
 	/// </summary>
 	/// <param name="context">Контекст запроса</param>
 	/// <returns>Информация о сессии, если она есть</returns>
-	public AuthSession? GetExistSession(HttpContext context)
+	public UserSessionInfo? GetExistSession(HttpContext context)
 	{
 		var token = context.Request.Headers[AuthConstants.TokenHeader];
 		var address = context.Connection.RemoteIpAddress;
@@ -79,7 +79,7 @@ public class SessionManagerService(
 	/// </summary>
 	/// <param name="session">Сессия</param>
 	/// <param name="response">Запрос</param>
-	public void AddSessionToResponse(AuthSession session, HttpResponse response)
+	public void AddSessionToResponse(UserSessionInfo session, HttpResponse response)
 	{
 		response.Headers[AuthConstants.TokenHeader] = session.Token;
 		response.Headers[AuthConstants.NameHeader] = Uri.EscapeDataString(session.AuthInfo.FullName);
@@ -90,19 +90,20 @@ public class SessionManagerService(
 	/// Создание новой сессии для пользователя
 	/// </summary>
 	/// <param name="userAuthInfo">Информация о пользователе</param>
-	/// <param name="isStatic">Является ли пользователь статичным</param>
+	/// <param name="type">Тип входа</param>
 	/// <returns>Информация о сессии</returns>
-	public AuthSession OpenSession(UserAuthInfo userAuthInfo, bool isStatic = false)
+	public UserSessionInfo OpenSession(UserAuthInfo userAuthInfo, UserType type)
 	{
 		Sessions.RemoveAll(x => x.UserGuid == userAuthInfo.Guid);
 
-		var session = new AuthSession
+		var session = new UserSessionInfo
 		{
 			UserGuid = userAuthInfo.Guid,
 			AuthInfo = userAuthInfo,
 			Token = new Random().Next().ToString(),
-			ExpirationTime = isStatic ? DateTime.MaxValue : DateTime.UtcNow.AddDays(7), // срок жизни сессии
+			ExpirationTime = type == UserType.Static ? DateTime.MaxValue : DateTime.UtcNow.AddDays(7), // срок жизни сессии
 			StaticHost = string.Empty,
+			Type = type,
 		};
 
 		Sessions.Add(session);
@@ -127,7 +128,7 @@ public class SessionManagerService(
 	/// Удаление сессии из списка
 	/// </summary>
 	/// <param name="session">Выбранная сессия</param>
-	void RemoveSession(AuthSession session)
+	void RemoveSession(UserSessionInfo session)
 	{
 		Sessions.Remove(session);
 	}

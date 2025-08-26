@@ -1,7 +1,6 @@
 ﻿using Datalake.Database;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Controllers;
-using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
@@ -13,56 +12,8 @@ namespace Datalake.Server.Controllers;
 public class UsersController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
-	UsersMemoryRepository usersRepository,
-	SessionManagerService sessionManager) : UsersControllerBase
+	UsersMemoryRepository usersRepository) : UsersControllerBase
 {
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
-		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
-	{
-		var userAuthInfo = authenticator.Authenticate(energoIdInfo);
-
-		var session = sessionManager.OpenSession(userAuthInfo);
-		sessionManager.AddSessionToResponse(session, Response);
-
-		userAuthInfo.Token = session.Token;
-
-		return await Task.FromResult(userAuthInfo);
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
-		[BindRequired, FromBody] UserLoginPass loginPass)
-	{
-		var userAuthInfo = authenticator.Authenticate(loginPass);
-
-		var session = sessionManager.OpenSession(userAuthInfo);
-		sessionManager.AddSessionToResponse(session, Response);
-
-		userAuthInfo.Token = session.Token;
-
-		return await Task.FromResult(userAuthInfo);
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserAuthInfo>> IdentifyAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		return await Task.FromResult(user);
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult> LogoutAsync(
-		[BindRequired, FromQuery] string token)
-	{
-		authenticator.Authenticate(HttpContext);
-
-		sessionManager.CloseSession(token);
-
-		return await Task.FromResult(NoContent());
-	}
-
 	/// <inheritdoc />
 	public override async Task<ActionResult<UserInfo>> CreateAsync(
 		[BindRequired, FromBody] UserCreateRequest userAuthRequest)
