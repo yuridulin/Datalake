@@ -15,6 +15,7 @@ const row: React.CSSProperties = {
 	display: 'flex',
 	justifyContent: 'space-between',
 	alignItems: 'center',
+	paddingBottom: '0.25em',
 }
 
 const left: React.CSSProperties = {
