@@ -1,8 +1,9 @@
 import BlockButton from '@/app/components/buttons/BlockButton'
 import PageHeader from '@/app/components/PageHeader'
+import ProtectedButton from '@/app/components/ProtectedButton'
 import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
-import { Button, Input, Table, TableColumnsType } from 'antd'
+import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
@@ -129,26 +130,19 @@ const BlocksTree = observer(() => {
 	return (
 		<>
 			<PageHeader
-				left={[
-					<NavLink to={routes.blocks.toMoveForm()}>
-						<Button>Изменить иерархию</Button>
-					</NavLink>,
-					<Button type='primary' onClick={createBlock}>
+				right={[
+					<ProtectedButton access={store.globalAccessType} required={AccessType.Admin}>
+						<NavLink to={routes.blocks.toMoveForm()}>Изменить иерархию</NavLink>
+					</ProtectedButton>,
+					<ProtectedButton
+						access={store.globalAccessType}
+						required={AccessType.Admin}
+						type='primary'
+						onClick={createBlock}
+					>
 						Добавить блок
-					</Button>,
+					</ProtectedButton>,
 				]}
-				right={
-					store.hasGlobalAccess(AccessType.Admin)
-						? [
-								<NavLink to={routes.blocks.toMoveForm()}>
-									<Button>Изменить иерархию</Button>
-								</NavLink>,
-								<Button type='primary' onClick={createBlock}>
-									Добавить блок
-								</Button>,
-							]
-						: []
-				}
 			>
 				Блоки верхнего уровня
 			</PageHeader>
