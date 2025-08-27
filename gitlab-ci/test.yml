@@ -2,49 +2,50 @@ stages:
   - build
   - push
   - deploy
+  - clear
 
 build-server-test:
   stage: build
-
   tags:
     - push-build
-  before_script:
-    - echo "Tag = $CI_COMMIT_TAG"
-    - echo "Version = ${CI_COMMIT_TAG#test.}"
   script:
-    - docker build --build-arg APP_VERSION="${CI_COMMIT_TAG#test.}" -t datalake:latest-test -f ./Apps/Server/Dockerfile .
+    - docker build  --label ci.project_id=$CI_PROJECT_ID --label ci.pipeline_id=$CI_PIPELINE_ID --build-arg APP_VERSION="${CI_COMMIT_TAG#test.}" -t datalake:latest-test -f ./Apps/Server/Dockerfile .
     - docker tag datalake:latest-test "$CI_REPOS_URL"/datalake:latest-test
-
   only:
     - /^test\.\d+(\.\d+){0,2}$/
 
 push-server-test:
   stage: push
-
   tags:
     - push-build
-
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-
   script:
     - docker push "$CI_REPOS_URL"/datalake:latest-test
-
   only:
     - /^test\.\d+(\.\d+){0,2}$/
 
 deploy-server-test:
   stage: deploy
-
   tags:
     - local-ve
-
   image:
     name: lachlanevenson/k8s-kubectl:latest
     entrypoint: ["/bin/sh", "-c"]
-
   script:
     - kubectl delete -n sinus-test pods -l app=datalake-test
+  only:
+    - /^test\.\d+(\.\d+){0,2}$/
 
+clear-test:
+  stage: clear
+  tags:
+    - push-build
+  when: always
+  allow_failure: true
+  script:
+    - echo "Clear for project $CI_PROJECT_ID with pipe $CI_PIPELINE_ID"
+    - docker image prune -f --filter "label=ci.project_id=$CI_PROJECT_ID" --filter "label=ci.pipeline_id=$CI_PIPELINE_ID"
+    - docker rmi "$CI_REPOS_URL"/datalake:latest-test || true
   only:
     - /^test\.\d+(\.\d+){0,2}$/

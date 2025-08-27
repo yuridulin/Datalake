@@ -9,3 +9,4 @@ stages:
   - build
   - push
   - deploy
+  - clear
