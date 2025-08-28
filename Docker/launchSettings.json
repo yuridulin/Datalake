@@ -7,7 +7,6 @@
       "composeLaunchServiceName": "datalake-server",
       "serviceActions": {
         "datalake-postgres": "StartWithoutDebugging",
-        "datalake-create-keycloak-db": "StartWithoutDebugging",
         "datalake-keycloak": "StartWithoutDebugging",
         "datalake-server": "StartDebugging",
         "datalake-client": "DoNotStart"
