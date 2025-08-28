@@ -86,3 +86,21 @@ services:
     environment:
       - NODE_ENV=development
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 7640"
+
+  datalake-prometheus:
+    image: prom/prometheus:latest
+    container_name: datalake-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "7650:9090"
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:

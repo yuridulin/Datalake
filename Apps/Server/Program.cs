@@ -24,6 +24,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NJsonSchema.Generation;
 using Npgsql;
+using OpenTelemetry.Metrics;
 using Serilog;
 using Serilog.Events;
 using System.Reflection;
@@ -208,6 +209,18 @@ public class Program
 			o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
 		});
 
+		// метрики
+		builder.Services
+			.AddOpenTelemetry()
+			.WithMetrics(metrics =>
+			{
+				metrics
+					.AddAspNetCoreInstrumentation()
+					.AddHttpClientInstrumentation()
+					.AddMeter("Datalake.Server.Metrics") // кастомные метрики
+					.AddPrometheusExporter();
+			});
+
 		// сборка
 		var app = builder.Build();
 		WebRootPath = app.Environment.WebRootPath;
@@ -279,6 +292,7 @@ public class Program
 		app.MapControllerRoute(
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");
+		app.MapPrometheusScrapingEndpoint();
 
 		// запуск БД
 		var thisDb = app.Services.GetRequiredService<DbInitializer>();
