@@ -3,12 +3,14 @@
     "Main": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
+      "composeLaunchAction": "None",
+      "composeLaunchServiceName": "datalake-server",
       "serviceActions": {
-        "postgres": "StartWithoutDebugging",
-        "create-keycloak-db": "StartWithoutDebugging",
-        "keycloak": "StartWithoutDebugging",
-        "server": "StartDebugging",
-        "client": "DoNotStart"
+        "datalake-postgres": "StartWithoutDebugging",
+        "datalake-create-keycloak-db": "StartWithoutDebugging",
+        "datalake-keycloak": "StartWithoutDebugging",
+        "datalake-server": "StartDebugging",
+        "datalake-client": "DoNotStart"
       }
     }
   }

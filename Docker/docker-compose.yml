@@ -1,12 +1,12 @@
-version: '3.9'
-
+name: datalake
 services:
-  postgres:
+  datalake-postgres:
     image: timescale/timescaledb:2.21.0-pg17
+    container_name: datalake-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: datalake-docker
+      POSTGRES_DB: datalake
     volumes:
       - ./postgres/database:/var/lib/postgresql/data
     ports:
@@ -17,25 +17,26 @@ services:
       timeout: 5s
       retries: 5
 
-  create-keycloak-db:
+  datalake-create-keycloak-db:
     image: postgres:17
+    container_name: datalake-create-keycloak-db
     depends_on:
-      postgres:
+      datalake-postgres:
         condition: service_healthy
     command: >
       bash -c "
-      psql -h postgres -U postgres -tc \"SELECT 1 FROM pg_database WHERE datname = 'keycloak'\" |
+      psql -h datalake-postgres -U postgres -tc \"SELECT 1 FROM pg_database WHERE datname = 'keycloak'\" |
       grep -q 1 ||
-      psql -h postgres -U postgres -c 'CREATE DATABASE keycloak;'"
+      psql -h datalake-postgres -U postgres -c 'CREATE DATABASE keycloak;'"
     environment:
       PGPASSWORD: postgres
 
-  keycloak:
+  datalake-keycloak:
     image: quay.io/keycloak/keycloak:25.0.0
-    container_name: keycloak
+    container_name: datalake-keycloak
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_URL: jdbc:postgresql://datalake-postgres:5432/keycloak
       KC_DB_USERNAME: postgres
       KC_DB_PASSWORD: postgres
       KEYCLOAK_ADMIN: admin
@@ -48,21 +49,21 @@ services:
     ports:
       - "7620:8080"
     depends_on:
-      create-keycloak-db:
+      datalake-create-keycloak-db:
         condition: service_completed_successfully
 
-  server:
-    image: ${DOCKER_REGISTRY-}server
-    container_name: server
+  datalake-server:
+    image: ${DOCKER_REGISTRY-}datalake-server
+    container_name: datalake-server
     build:
       context: ../
       dockerfile: ./Apps/Server/Dockerfile
     depends_on:
-      postgres:
+      datalake-postgres:
         condition: service_healthy
     environment:
-      DATALAKE_HOST: host.docker.internal
-      DATALAKE_PORT: 7610
+      DATALAKE_HOST: datalake-postgres
+      DATALAKE_PORT: 5432
       DATALAKE_DB: datalake
       DATALAKE_DB_USER: postgres
       DATALAKE_DB_PASS: postgres
@@ -72,7 +73,8 @@ services:
     volumes:
       - "../Apps/Server/storage:/app/storage"
 
-  client:
+  datalake-client:
+    container_name: datalake-client
     build:
       context: ../Apps/Client/datalake
       dockerfile: Dockerfile
