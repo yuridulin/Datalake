@@ -14,16 +14,9 @@ namespace Datalake.Database;
 public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : DbContext(options)
 {
 	/// <summary>
-	/// Конструктор, получающий настройки json
+	/// Настройки JSON
 	/// </summary>
-	public DatalakeEfContext(
-		JsonSerializerOptions jsonSerializerOptions,
-		DbContextOptions<DatalakeEfContext> options) : this(options)
-	{
-		this.jsonSerializerOptions = jsonSerializerOptions;
-	}
-
-	private readonly JsonSerializerOptions? jsonSerializerOptions;
+	public static JsonSerializerOptions? JsonSerializerOptions { get; set; }
 
 	/// <summary>
 	/// Конфигурация связей между таблицами БД
@@ -96,8 +89,8 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.Property(t => t.Thresholds)
 			.HasColumnType("jsonb")
 			.HasConversion(
-				v => JsonSerializer.Serialize(v, jsonSerializerOptions),
-				v => JsonSerializer.Deserialize<List<TagThresholdInfo>>(v, jsonSerializerOptions)
+				v => JsonSerializer.Serialize(v, JsonSerializerOptions),
+				v => JsonSerializer.Deserialize<List<TagThresholdInfo>>(v, JsonSerializerOptions)
 			)
 			.Metadata.SetValueComparer(
 				new ValueComparer<List<TagThresholdInfo>>(

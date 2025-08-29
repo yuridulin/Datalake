@@ -151,7 +151,7 @@ public class SystemController(
 		var user = authenticator.Authenticate(HttpContext);
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		return await Task.FromResult(accessStore.Access.GetAll());
+		return await Task.FromResult(accessStore.State.GetAll());
 	}
 
 	/// <inheritdoc />

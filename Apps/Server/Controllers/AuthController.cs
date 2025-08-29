@@ -1,4 +1,6 @@
-﻿using Datalake.PublicApi.Controllers;
+﻿using Datalake.Database.InMemory.Stores;
+using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
@@ -11,7 +13,7 @@ namespace Datalake.Server.Controllers;
 /// <inheritdoc />
 public class AuthController(
 	AuthenticationService authenticator,
-	SessionManagerService sessionManager) : AuthControllerBase
+	DatalakeSessionsStore sessionsStore) : AuthControllerBase
 {
 	/// <inheritdoc />
 	public override async Task<ActionResult<UserSessionInfo>> AuthenticateLocalAsync(
@@ -19,8 +21,8 @@ public class AuthController(
 	{
 		var userAuthInfo = authenticator.Authenticate(loginPass);
 
-		var session = sessionManager.OpenSession(userAuthInfo, UserType.Local);
-		sessionManager.AddSessionToResponse(session, Response);
+		var session = await sessionsStore.OpenSessionAsync(userAuthInfo, UserType.Local);
+		AddSessionToResponse(session, Response);
 
 		return await Task.FromResult(session);
 	}
@@ -31,8 +33,8 @@ public class AuthController(
 	{
 		var userAuthInfo = authenticator.Authenticate(energoIdInfo);
 
-		var session = sessionManager.OpenSession(userAuthInfo, UserType.EnergoId);
-		sessionManager.AddSessionToResponse(session, Response);
+		var session = await sessionsStore.OpenSessionAsync(userAuthInfo, UserType.EnergoId);
+		AddSessionToResponse(session, Response);
 
 		return await Task.FromResult(session);
 	}
@@ -41,8 +43,12 @@ public class AuthController(
 	public override async Task<ActionResult<UserSessionInfo?>> IdentifyAsync()
 	{
 		authenticator.Authenticate(HttpContext);
-		var session = sessionManager.GetExistSession(HttpContext);
-		return await Task.FromResult(session);
+		var session = await sessionsStore.GetExistSession(HttpContext);
+		if (session != null)
+		{
+			AddSessionToResponse(session, Response);
+		}
+		return session;
 	}
 
 	/// <inheritdoc />
@@ -51,8 +57,21 @@ public class AuthController(
 	{
 		authenticator.Authenticate(HttpContext);
 
-		sessionManager.CloseSession(token);
+		await sessionsStore.CloseSession(token);
 
-		return await Task.FromResult(NoContent());
+		return NoContent();
+	}
+
+
+	/// <summary>
+	/// Добавление данных о сессии к запросу
+	/// </summary>
+	/// <param name="session">Сессия</param>
+	/// <param name="response">Запрос</param>
+	private static void AddSessionToResponse(UserSessionInfo session, HttpResponse response)
+	{
+		response.Headers[AuthConstants.TokenHeader] = session.Token;
+		response.Headers[AuthConstants.NameHeader] = Uri.EscapeDataString(session.AuthInfo.FullName);
+		response.Headers[AuthConstants.GlobalAccessHeader] = session.AuthInfo.RootRule.Access.ToString();
 	}
 }

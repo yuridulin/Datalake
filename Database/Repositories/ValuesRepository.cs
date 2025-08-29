@@ -1,4 +1,5 @@
 ﻿using Datalake.Database.Attributes;
+using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Stores;
@@ -13,6 +14,7 @@ using Datalake.PublicApi.Models.Values;
 using LinqToDB;
 using LinqToDB.Data;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace Datalake.Database.Repositories;
 
@@ -95,7 +97,7 @@ public class ValuesRepository(
 			if (tag == null)
 				continue;
 
-			var record = TagHistoryExtension.CreateFrom(tag, request);
+			var record = CreateFrom(tag, request);
 
 			// проверка на уникальность (новизну)
 			if (!valuesStore.IsNew(record.TagId, record))
@@ -136,7 +138,7 @@ public class ValuesRepository(
 			if (tag == null || tag.SourceType != SourceType.Manual || !AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Id))
 				continue;
 
-			var record = TagHistoryExtension.CreateFrom(tag, request);
+			var record = CreateFrom(tag, request);
 			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
 
 			recordsToWrite.Add(record);
@@ -619,6 +621,85 @@ public class ValuesRepository(
 			logger.LogError(e, "Не удалось записать данные");
 			await transaction.RollbackAsync();
 		}
+	}
+
+
+
+	internal static TagHistory CreateFrom(TagCacheInfo tag, ValueWriteRequest request)
+	{
+		return CreateTagHistory(
+			tag.Type,
+			tag.Id,
+			tag.Resolution,
+			tag.ScalingCoefficient,
+			request.Date,
+			request.Value,
+			request.Quality);
+	}
+
+	internal static TagHistory CreateFrom(ValueTrustedWriteRequest request)
+	{
+		return CreateTagHistory(
+			request.Tag.Type,
+			request.Tag.Id,
+			request.Tag.Resolution,
+			request.Tag.ScalingCoefficient,
+			request.Date,
+			request.Value,
+			request.Quality);
+	}
+
+	private static TagHistory CreateTagHistory(
+			TagType tagType,
+			int tagId,
+			TagResolution frequency,
+			float scalingCoefficient,
+			DateTime? date,
+			object? value,
+			TagQuality? quality)
+	{
+		var history = new TagHistory
+		{
+			Date = (date ?? DateFormats.GetCurrentDateTime()).RoundByResolution(frequency),
+			Text = null,
+			Number = null,
+			Quality = quality ?? TagQuality.Unknown,
+			TagId = tagId,
+		};
+
+		if (value == null)
+			return history;
+
+		string text = value.ToString()!;
+
+		switch (tagType)
+		{
+			case TagType.String:
+				history.Text = text;
+				break;
+
+			case TagType.Number:
+				if (double.TryParse(text ?? "x", NumberStyles.Float, CultureInfo.InvariantCulture, out double dValue))
+				{
+					float number = (float)dValue;
+
+					if (scalingCoefficient != 1)
+					{
+						history.Number = number * scalingCoefficient;
+					}
+					else
+					{
+						history.Number = number;
+					}
+				}
+				break;
+
+			case TagType.Boolean:
+				history.Number = text == Values.One || text == Values.True ? 1 : 0;
+				break;
+		}
+
+		return history;
 	}
 
 	#endregion Запись

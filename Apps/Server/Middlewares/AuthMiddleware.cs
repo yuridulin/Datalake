@@ -1,8 +1,9 @@
 ﻿using Datalake.Database.Constants;
+using Datalake.Database.Extensions;
+using Datalake.Database.InMemory.Stores;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Auth;
-using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Maintenance;
 
 namespace Datalake.Server.Middlewares;
@@ -11,7 +12,7 @@ namespace Datalake.Server.Middlewares;
 /// Обработчик, проверяющий аутентификацию
 /// </summary>
 public class AuthMiddleware(
-	SessionManagerService sessionManager,
+	DatalakeSessionsStore sessionsStore,
 	UsersStateService stateService) : IMiddleware
 {
 	/// <summary>
@@ -33,14 +34,15 @@ public class AuthMiddleware(
 		UserSessionInfo? authSession = null;
 		if (needToAuth)
 		{
-			authSession = sessionManager.GetExistSession(context);
+			authSession = await sessionsStore.GetExistSession(context);
 			if (authSession == null)
 			{
 				context.Response.StatusCode = 401;
 				var token = context.Request.Headers[AuthConstants.TokenHeader];
 				throw Errors.NoAccessToken(token);
 			}
-			sessionManager.AddSessionToResponse(authSession, context.Response);
+
+			context.Response.AddSessionToResponse(authSession);
 			stateService.WriteVisit(authSession.UserGuid);
 		}
 

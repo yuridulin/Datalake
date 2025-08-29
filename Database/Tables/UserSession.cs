@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Views;
-using Datalake.PublicApi.Enums;
+﻿using Datalake.PublicApi.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using ColumnAttribute = LinqToDB.Mapping.ColumnAttribute;
@@ -33,16 +32,22 @@ public record class UserSession
 	public DateTime Created { get; set; }
 
 	/// <summary>
-	/// Время истечения сессии. Если не указана - сессия бессрочная (например, статичная учетная запись)
+	/// Время истечения сессии
 	/// </summary>
 	[Column]
-	public DateTime? ExpirationTime { get; set; }
+	public DateTime ExpirationTime { get; set; }
 
 	/// <summary>
 	/// Токен доступа
 	/// </summary>
 	[Column]
 	public string Token { get; set; } = null!;
+
+	/// <summary>
+	/// Тип входа в сессию. Нужен, чтобы правильно выйти
+	/// </summary>
+	[Column]
+	public UserType Type { get; set; }
 
 	// связи
 

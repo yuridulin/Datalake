@@ -18,7 +18,7 @@ public class UserSessionInfo
 	/// Информация о правах пользователя
 	/// </summary>
 	[Required]
-	public required UserAuthInfo AuthInfo { get; set; }
+	public UserAuthInfo AuthInfo { get; set; } = null!;
 
 	/// <summary>
 	/// Токен сессии

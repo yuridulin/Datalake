@@ -136,7 +136,7 @@ public class Program
 				return options
 					.UseMappingSchema(ms)
 					.UseDefaultLogging(provider)
-					.UseTraceLevel(System.Diagnostics.TraceLevel.Info)
+					.UseTraceLevel(System.Diagnostics.TraceLevel.Verbose)
 					.UsePostgreSQL(connectionString);
 			});
 
@@ -145,6 +145,8 @@ public class Program
 		builder.Services.AddSingleton<DatalakeAccessStore>(); // стейт-менеджер зависимых данных
 		builder.Services.AddSingleton<DatalakeCurrentValuesStore>(); // кэш последних значений
 		builder.Services.AddSingleton<DatalakeEnergoIdStore>(); // хранилище данных пользователей из EnergoId
+		builder.Services.AddSingleton<DatalakeCachedTagsStore>(); // хранилище кэша тегов
+		builder.Services.AddSingleton<DatalakeSessionsStore>(); // хранилище сессий пользователей
 
 		// репозитории в памяти
 		builder.Services.AddScoped<SettingsMemoryRepository>();
@@ -163,7 +165,6 @@ public class Program
 		builder.Services.AddSingleton<ReceiverService>();
 
 		// мониторинг активности
-		builder.Services.AddSingleton<SessionManagerService>();
 		builder.Services.AddSingleton<SourcesStateService>();
 		builder.Services.AddSingleton<UsersStateService>();
 		builder.Services.AddSingleton<TagsStateService>();

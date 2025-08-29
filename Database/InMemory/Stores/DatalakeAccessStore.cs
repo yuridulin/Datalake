@@ -34,7 +34,7 @@ public class DatalakeAccessStore
 	/// Разрешения пользователей, рассчитанные на каждый объект системы
 	/// </summary>
 	/// <returns>Разрешения, сгруппированные по идентификатору пользователя</returns>
-	public DatalakeAccessState Access => _accessState;
+	public DatalakeAccessState State => _accessState;
 
 	/// <summary>
 	/// Событие при изменении разрешений пользователей
