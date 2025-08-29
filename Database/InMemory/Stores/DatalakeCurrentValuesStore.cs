@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
-namespace Datalake.Database.InMemory;
+namespace Datalake.Database.InMemory.Stores;
 
 #pragma warning disable CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
 
@@ -42,17 +42,6 @@ public class DatalakeCurrentValuesStore
 
 		_logger.LogInformation("Завершено обновление текущих значений");
 	}
-
-	private static async Task<Dictionary<int, TagHistory>> LoadValuesFromDatabaseAsync(DatalakeContext db)
-	{
-		var dbValues = await ValuesRepository.ProtectedGetAllLastValuesAsync(db);
-		var newValues = dbValues.ToDictionary(x => x.TagId);
-		return newValues;
-	}
-
-	private readonly IServiceScopeFactory _serviceScopeFactory;
-	private readonly ILogger<DatalakeDataStore> _logger;
-	private ConcurrentDictionary<int, TagHistory> _currentValues = [];
 
 	public TagHistory? Get(int id) => _currentValues.TryGetValue(id, out var value) ? value : null;
 
@@ -99,6 +88,17 @@ public class DatalakeCurrentValuesStore
 			return true;
 
 		return IsNew(existing, incoming);
+	}
+
+	private readonly IServiceScopeFactory _serviceScopeFactory;
+	private readonly ILogger<DatalakeDataStore> _logger;
+	private ConcurrentDictionary<int, TagHistory> _currentValues = [];
+
+	private static async Task<Dictionary<int, TagHistory>> LoadValuesFromDatabaseAsync(DatalakeContext db)
+	{
+		var dbValues = await ValuesRepository.ProtectedGetAllLastValuesAsync(db);
+		var newValues = dbValues.ToDictionary(x => x.TagId);
+		return newValues;
 	}
 
 	private static bool IsNew(TagHistory existing, TagHistory incoming)

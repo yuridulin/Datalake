@@ -1,5 +1,5 @@
 ﻿using Datalake.Database.Functions;
-using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Stores;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
@@ -12,10 +12,10 @@ namespace Datalake.Server.Services.Auth;
 /// Сервис аутентификации пользователей по входным данным
 /// </summary>
 /// <param name="dataStore"></param>
-/// <param name="derivedDataStore"></param>
+/// <param name="accessStore"></param>
 public class AuthenticationService(
 	DatalakeDataStore dataStore,
-	DatalakeDerivedDataStore derivedDataStore)
+	DatalakeAccessStore accessStore)
 {
 	/// <summary>
 	/// Аутентификация пользователя по сессионному токену из запроса
@@ -36,7 +36,7 @@ public class AuthenticationService(
 			{
 				if (Guid.TryParse(raw, out var guid))
 				{
-					user.UnderlyingUser = derivedDataStore.Access.Get(guid);
+					user.UnderlyingUser = accessStore.Access.Get(guid);
 				}
 			}
 
@@ -57,7 +57,7 @@ public class AuthenticationService(
 			.FirstOrDefault(x => x.EnergoIdGuid == info.EnergoIdGuid)
 			?? throw new NotFoundException(message: $"указанная учётная запись по идентификатору EnergoId [{info.EnergoIdGuid}]");
 
-		return derivedDataStore.Access.Get(user.Guid);
+		return accessStore.Access.Get(user.Guid);
 	}
 
 	/// <summary>
@@ -83,6 +83,6 @@ public class AuthenticationService(
 			throw new ForbiddenException(message: "пароль не подходит");
 		}
 
-		return derivedDataStore.Access.Get(user.Guid);
+		return accessStore.Access.Get(user.Guid);
 	}
 }

@@ -1,6 +1,6 @@
 ﻿using Datalake.Database.Functions;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.Database.InMemory.Stores;
 using Datalake.PublicApi.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

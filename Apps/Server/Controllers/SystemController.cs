@@ -1,7 +1,7 @@
 ﻿using Datalake.Database;
 using Datalake.Database.Functions;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.Database.InMemory.Stores;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
@@ -22,7 +22,7 @@ public class SystemController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
 	DatalakeDataStore dataStore,
-	DatalakeDerivedDataStore derivedDataStore,
+	DatalakeAccessStore accessStore,
 	DatalakeCurrentValuesStore valuesStore,
 	SourcesStateService sourcesStateService,
 	TagsStateService tagsStateService,
@@ -151,7 +151,7 @@ public class SystemController(
 		var user = authenticator.Authenticate(HttpContext);
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
-		return await Task.FromResult(derivedDataStore.Access.GetAll());
+		return await Task.FromResult(accessStore.Access.GetAll());
 	}
 
 	/// <inheritdoc />

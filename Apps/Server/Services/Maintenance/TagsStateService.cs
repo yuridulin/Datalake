@@ -1,4 +1,4 @@
-﻿using Datalake.Database.InMemory;
+﻿using Datalake.Database.InMemory.Stores;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Values;
 using System.Collections.Concurrent;

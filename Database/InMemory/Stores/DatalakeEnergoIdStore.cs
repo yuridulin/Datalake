@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
 
-namespace Datalake.Database.InMemory;
+namespace Datalake.Database.InMemory.Stores;
 
 ///<summary>
 /// Хранилище данные о пользователях EnergoId, регулярно обновляемое

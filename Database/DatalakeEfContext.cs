@@ -241,6 +241,15 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.WithOne(x => x.EnergoId)
 			.HasForeignKey<User>(x => x.EnergoIdGuid)
 			.HasPrincipalKey<EnergoIdUserView>(x => x.Guid);
+
+		// сессии
+
+		modelBuilder.Entity<UserSession>()
+			.HasOne(x => x.User)
+			.WithMany(x => x.Sessions)
+			.HasForeignKey(x => x.UserGuid)
+			.HasPrincipalKey(x => x.Guid)
+			.OnDelete(DeleteBehavior.Cascade);
 	}
 
 	#region Таблицы
@@ -314,6 +323,11 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 	/// Представление пользователей EnergoId с их данными
 	/// </summary>
 	public virtual DbSet<EnergoIdUserView> UsersEnergoId { get; set; }
+
+	/// <summary>
+	/// Таблица текущих сессий пользователей
+	/// </summary>
+	public virtual DbSet<UserSession> UserSessions { get; set; }
 
 	#endregion
 }

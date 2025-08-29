@@ -2,8 +2,8 @@ using Datalake.Database;
 using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.Initialization;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.Database.InMemory.Stores;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Tags;
@@ -142,7 +142,7 @@ public class Program
 
 		// хранилища данный
 		builder.Services.AddSingleton<DatalakeDataStore>(); // стейт-менеджер исходных данных
-		builder.Services.AddSingleton<DatalakeDerivedDataStore>(); // стейт-менеджер зависимых данных
+		builder.Services.AddSingleton<DatalakeAccessStore>(); // стейт-менеджер зависимых данных
 		builder.Services.AddSingleton<DatalakeCurrentValuesStore>(); // кэш последних значений
 		builder.Services.AddSingleton<DatalakeEnergoIdStore>(); // хранилище данных пользователей из EnergoId
 

@@ -1,4 +1,4 @@
-﻿using Datalake.Database.InMemory;
+﻿using Datalake.Database.InMemory.Stores;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
@@ -9,7 +9,7 @@ namespace Datalake.Server.Services.Auth;
 /// Менеджер сессий пользователей
 /// </summary>
 public class SessionManagerService(
-	DatalakeDerivedDataStore derivedDataStore)
+	DatalakeAccessStore accessStore)
 {
 	/// <summary>
 	/// Список текущих сессий
@@ -38,7 +38,7 @@ public class SessionManagerService(
 		if (session == null)
 			return null;
 
-		if (derivedDataStore.Access.TryGet(session.UserGuid, out var userRights))
+		if (accessStore.Access.TryGet(session.UserGuid, out var userRights))
 			session.AuthInfo = userRights;
 
 		if (session.ExpirationTime < DateTime.UtcNow)

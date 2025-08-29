@@ -161,5 +161,8 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	internal ITable<EnergoIdUserView> UsersEnergoId
 		=> this.GetTable<EnergoIdUserView>();
 
+	internal ITable<UserSession> UserSessions
+		=> this.GetTable<UserSession>();
+
 	#endregion
 }

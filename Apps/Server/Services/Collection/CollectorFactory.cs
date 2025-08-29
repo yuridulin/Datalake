@@ -1,5 +1,5 @@
 ﻿using Datalake.Database;
-using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Stores;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.Services.Collection.Abstractions;

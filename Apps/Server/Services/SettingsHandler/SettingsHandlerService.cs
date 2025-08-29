@@ -1,5 +1,5 @@
-﻿using Datalake.Database.InMemory;
-using Datalake.Database.InMemory.Models;
+﻿using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Stores;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.Server.Services.Auth;
@@ -12,7 +12,7 @@ namespace Datalake.Server.Services.SettingsHandler;
 /// </summary>
 public class SettingsHandlerService(
 	DatalakeDataStore dataStore,
-	DatalakeDerivedDataStore derivedDataStore,
+	DatalakeAccessStore accessStore,
 	ILogger<SettingsHandlerService> logger) : BackgroundService, IDisposable
 {
 	private readonly Lock _fileLock = new();
@@ -30,7 +30,7 @@ public class SettingsHandlerService(
 	{
 		// Подписываемся на события
 		dataStore.StateChanged += OnStateChanged;
-		derivedDataStore.AccessChanged += OnAccessChanged;
+		accessStore.AccessChanged += OnAccessChanged;
 
 		// Обработчики событий
 		var stateHandler = ProcessStateChangesAsync(stoppingToken);
@@ -43,7 +43,7 @@ public class SettingsHandlerService(
 	public override void Dispose()
 	{
 		dataStore.StateChanged -= OnStateChanged;
-		derivedDataStore.AccessChanged -= OnAccessChanged;
+		accessStore.AccessChanged -= OnAccessChanged;
 
 		GC.SuppressFinalize(this);
 	}

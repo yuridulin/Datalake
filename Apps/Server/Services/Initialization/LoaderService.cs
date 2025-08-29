@@ -1,5 +1,4 @@
-﻿
-using Datalake.Database.InMemory;
+﻿using Datalake.Database.InMemory.Stores;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.SettingsHandler;
 
@@ -11,7 +10,7 @@ namespace Datalake.Server.Services.Initialization;
 public class LoaderService(
 	ILogger<LoaderService> logger,
 	DatalakeDataStore dataStore,
-	DatalakeDerivedDataStore derivedDataStore,
+	DatalakeAccessStore accessStore,
 	AuthenticationService authenticationService,
 	SettingsHandlerService settingsHandlerService) : IHostedService
 {
@@ -23,7 +22,7 @@ public class LoaderService(
 		logger.LogInformation("Созданы экземпляры:\r\n{names}", string.Join(",\r\n", new[]
 		{
 			dataStore.ToString(),
-			derivedDataStore.ToString(),
+			accessStore.ToString(),
 			authenticationService.ToString(),
 			settingsHandlerService.ToString(),
 		}));

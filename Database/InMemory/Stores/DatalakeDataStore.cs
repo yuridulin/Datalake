@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
 
-namespace Datalake.Database.InMemory;
+namespace Datalake.Database.InMemory.Stores;
 
 #pragma warning disable CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
 
@@ -30,6 +30,7 @@ public class DatalakeDataStore
 			UserGroupRelations = [],
 			UserGroups = [],
 			Users = [],
+			UserSessions = [],
 		};
 		initialState.InitDictionaries();
 		_currentState = initialState;
@@ -78,6 +79,7 @@ public class DatalakeDataStore
 			var users = await db.Users.ToArrayAsync();
 			var userGroups = await db.UserGroups.ToArrayAsync();
 			var userGroupRelations = await db.UserGroupRelations.ToArrayAsync();
+			var userSessions = await db.UserSessions.ToArrayAsync();
 
 			var newState = new DatalakeDataState
 			{
@@ -92,6 +94,7 @@ public class DatalakeDataStore
 				Users = users.ToImmutableList(),
 				UserGroups = userGroups.ToImmutableList(),
 				UserGroupRelations = userGroupRelations.ToImmutableList(),
+				UserSessions = userSessions.ToImmutableList(),
 			};
 			return newState;
 		}, _logger, nameof(LoadStateFromDatabaseAsync));

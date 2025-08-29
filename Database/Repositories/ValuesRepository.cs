@@ -1,7 +1,7 @@
 ﻿using Datalake.Database.Attributes;
 using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
-using Datalake.Database.InMemory;
+using Datalake.Database.InMemory.Stores;
 using Datalake.Database.Models;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;
@@ -20,7 +20,7 @@ namespace Datalake.Database.Repositories;
 /// Репозиторий для работы со значениями тегов
 /// </summary>
 public class ValuesRepository(
-	DatalakeDataStore dataStore,
+	DatalakeCachedTagsStore cachedTagsStore,
 	DatalakeCurrentValuesStore valuesStore,
 	ILogger<ValuesRepository> logger)
 {
@@ -38,7 +38,7 @@ public class ValuesRepository(
 		UserAuthInfo user,
 		ValuesRequest[] requests)
 	{
-		var currentState = dataStore.State;
+		var currentState = cachedTagsStore.State;
 
 		var trustedRequests = requests
 			.Select(request =>
@@ -46,7 +46,7 @@ public class ValuesRepository(
 				var identifiers = request.TagsId?.ToHashSet() ?? [];
 				var guids = request.Tags?.ToHashSet() ?? [];
 
-				var cachedTags = currentState.CachesTags
+				var tags = currentState.CachedTags
 					.Where(tag => !tag.IsDeleted)
 					.Where(tag => identifiers.Contains(tag.Id) || guids.Contains(tag.Guid))
 					.Where(tag => AccessChecks.HasAccessToTag(user, AccessType.Viewer, tag.Id))
@@ -63,7 +63,7 @@ public class ValuesRepository(
 					},
 					Resolution = request.Resolution,
 					Func = request.Func,
-					Tags = cachedTags,
+					Tags = tags,
 				};
 			})
 			.ToArray();
@@ -79,7 +79,7 @@ public class ValuesRepository(
 	/// <returns></returns>
 	public async Task WriteCollectedValuesAsync(DatalakeContext db, IEnumerable<ValueWriteRequest> requests)
 	{
-		var currentState = dataStore.State;
+		var currentState = cachedTagsStore.State;
 
 		List<TagHistory> records = [];
 
@@ -119,7 +119,7 @@ public class ValuesRepository(
 		UserAuthInfo user,
 		ValueWriteRequest[] requests)
 	{
-		var currentState = dataStore.State;
+		var currentState = cachedTagsStore.State;
 
 		List<ValuesTagResponse> responses = [];
 		List<TagHistory> recordsToWrite = [];
