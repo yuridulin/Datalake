@@ -21,6 +21,5 @@
     <None Include=".dockerignore" />
     <None Include="keycloak\realm-export.json" />
     <None Include="postgres\.gitkeep" />
-    <None Include="prometheus\prometheus.yml" />
   </ItemGroup>
 </Project>

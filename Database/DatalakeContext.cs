@@ -1,6 +1,5 @@
 ﻿using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
@@ -37,7 +36,7 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 
 		foreach (var user in users)
 		{
-			var existUser = await Users.FirstOrDefaultAsync(x => x.Login == user.Login && x.Type == UserType.Static) 
+			var existUser = await Users.FirstOrDefaultAsync(x => x.Login == user.Login && x.Type == UserType.Static)
 				?? await Users
 					.Value(x => x.Guid, Guid.NewGuid())
 					.Value(x => x.Type, UserType.Static)
