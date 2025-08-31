@@ -3,6 +3,7 @@ using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Stores;
+using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Models;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Constants;

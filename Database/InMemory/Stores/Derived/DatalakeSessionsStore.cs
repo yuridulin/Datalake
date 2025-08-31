@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
-namespace Datalake.Database.InMemory.Stores;
+namespace Datalake.Database.InMemory.Stores.Derived;
 
 /// <summary>
 /// Репозиторий для работы с сессиями пользователей
@@ -33,6 +33,7 @@ public class DatalakeSessionsStore
 		IServiceScopeFactory serviceScopeFactory,
 		ILogger<DatalakeSessionsStore> logger)
 	{
+		this.dataStore = dataStore;
 		this.accessStore = accessStore;
 		this.serviceScopeFactory = serviceScopeFactory;
 		this.logger = logger;
@@ -42,11 +43,7 @@ public class DatalakeSessionsStore
 			Task.Run(() => ReloadStaticSessions(state));
 		};
 
-		_ = Task.Run(() =>
-		{
-			LoadStoredSessions().Wait();
-			ReloadStaticSessions(dataStore.State);
-		});
+		// Так как загрузка сохраненных сессий должна быть еще до запуска, это сделает инициализатор БД
 	}
 
 	/// <summary>
@@ -55,7 +52,7 @@ public class DatalakeSessionsStore
 	/// <param name="token">Токен сессии</param>
 	/// <param name="address">Адрес, с которого разрешен доступ по статичной учетной записи</param>
 	/// <returns>Информация о сессии</returns>
-	public async Task<UserSessionInfo?> GetExistSession(string token, string address)
+	public async Task<UserSessionInfo?> GetExistSessionAsync(string token, string address)
 	{
 		if (!Sessions.TryGetValue(token, out var session))
 			if (!StaticSessions.TryGetValue(token, out session))
@@ -81,7 +78,7 @@ public class DatalakeSessionsStore
 	/// </summary>
 	/// <param name="context">Контекст запроса</param>
 	/// <returns>Информация о сессии, если она есть</returns>
-	public async Task<UserSessionInfo?> GetExistSession(HttpContext context)
+	public async Task<UserSessionInfo?> GetExistSessionAsync(HttpContext context)
 	{
 		var token = context.Request.Headers[AuthConstants.TokenHeader].ToString();
 
@@ -90,7 +87,7 @@ public class DatalakeSessionsStore
 
 		var address = context.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
 		
-		var session = await GetExistSession(token, address);
+		var session = await GetExistSessionAsync(token, address);
 		if (session == null)
 			return null;
 
@@ -99,7 +96,7 @@ public class DatalakeSessionsStore
 	}
 
 	/// <summary>
-	/// Создание новой сессии для пользователя
+	/// Создание новой сессии для пользователя (не статичного, у них свои сессии)
 	/// </summary>
 	/// <param name="userAuthInfo">Информация о пользователе</param>
 	/// <param name="type">Тип входа</param>
@@ -111,7 +108,7 @@ public class DatalakeSessionsStore
 			UserGuid = userAuthInfo.Guid,
 			AuthInfo = userAuthInfo,
 			Token = new Random().Next().ToString(),
-			ExpirationTime = type == UserType.Static ? DateTime.MaxValue : DateTime.UtcNow.AddDays(7), // срок жизни сессии
+			ExpirationTime = DateTime.UtcNow.AddDays(7), // срок жизни сессии
 			StaticHost = string.Empty,
 			Type = type,
 		};
@@ -122,7 +119,13 @@ public class DatalakeSessionsStore
 		using var scope = serviceScopeFactory.CreateScope();
 		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-		await db.InsertAsync(session);
+		await db.UserSessions
+			.Value(x => x.UserGuid, session.UserGuid)
+			.Value(x => x.Token, session.Token)
+			.Value(x => x.Type, session.Type)
+			.Value(x => x.ExpirationTime, session.ExpirationTime)
+			.Value(x => x.Created, DateFormats.GetCurrentDateTime())
+			.InsertAsync();
 
 		return session;
 	}
@@ -131,16 +134,25 @@ public class DatalakeSessionsStore
 	/// Закрытие сессии
 	/// </summary>
 	/// <param name="token">Токен сессии</param>
-	public async Task CloseSession(string token)
+	public async Task CloseSessionAsync(string token)
 	{
-		var session = await GetExistSession(token, string.Empty);
+		var session = await GetExistSessionAsync(token, string.Empty);
 		if (session != null)
 		{
 			await RemoveSession(session);
 		}
 	}
 
+	/// <summary>
+	/// Инициализация сессий при запуске
+	/// </summary>
+	internal async Task InitializeAsync()
+	{
+		await LoadStoredSessionsAsync();
+		ReloadStaticSessions(dataStore.State);
+	}
 
+	private readonly DatalakeDataStore dataStore;
 	private readonly DatalakeAccessStore accessStore;
 	private readonly IServiceScopeFactory serviceScopeFactory;
 	private readonly ILogger<DatalakeSessionsStore> logger;
@@ -150,7 +162,7 @@ public class DatalakeSessionsStore
 	/// Чтение сохраненных сессий из БД
 	/// </summary>
 	/// <returns></returns>
-	private async Task LoadStoredSessions()
+	private async Task LoadStoredSessionsAsync()
 	{
 		// получаем список актуальных сессий из БД
 		// при этом мы удаляем неактуальные (просроченные) сессии
@@ -228,5 +240,4 @@ public class DatalakeSessionsStore
 				.DeleteAsync();
 		}
 	}
-
 }

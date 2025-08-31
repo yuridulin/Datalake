@@ -1,6 +1,6 @@
 ﻿using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
-using Datalake.Database.InMemory.Stores;
+using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Auth;
@@ -34,7 +34,7 @@ public class AuthMiddleware(
 		UserSessionInfo? authSession = null;
 		if (needToAuth)
 		{
-			authSession = await sessionsStore.GetExistSession(context);
+			authSession = await sessionsStore.GetExistSessionAsync(context);
 			if (authSession == null)
 			{
 				context.Response.StatusCode = 401;

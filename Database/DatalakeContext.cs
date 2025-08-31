@@ -1,6 +1,7 @@
 ﻿using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.Database.Views;
@@ -71,7 +72,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 	/// <summary>
 	/// Необходимые для работы записи, которые должны быть в базе данных
 	/// </summary>
-	public async Task EnsureDataCreatedAsync(UsersMemoryRepository usersRepository)
+	public async Task EnsureDataCreatedAsync(
+		UsersMemoryRepository usersRepository,
+		DatalakeSessionsStore sessionsStore)
 	{
 		// запись необходимых источников в список
 		var customSources = Lists.CustomSources
@@ -108,6 +111,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		{
 			await usersRepository.ProtectedCreateAsync(this, Guid.Empty, Defaults.InitialAdmin);
 		}
+
+		// Загрузка сессий пользователей
+		await sessionsStore.InitializeAsync();
 
 		await AuditRepository.WriteAsync(
 			this,

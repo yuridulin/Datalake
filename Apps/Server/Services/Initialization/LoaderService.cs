@@ -1,4 +1,5 @@
 ﻿using Datalake.Database.InMemory.Stores;
+using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.SettingsHandler;
 

@@ -2,7 +2,7 @@
 using Datalake.Database.InMemory.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Datalake.Database.InMemory.Stores;
+namespace Datalake.Database.InMemory.Stores.Derived;
 
 /// <summary>
 /// Хранилище производных данных

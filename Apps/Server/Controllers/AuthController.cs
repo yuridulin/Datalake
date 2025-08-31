@@ -1,4 +1,4 @@
-﻿using Datalake.Database.InMemory.Stores;
+﻿using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
@@ -43,7 +43,7 @@ public class AuthController(
 	public override async Task<ActionResult<UserSessionInfo?>> IdentifyAsync()
 	{
 		authenticator.Authenticate(HttpContext);
-		var session = await sessionsStore.GetExistSession(HttpContext);
+		var session = await sessionsStore.GetExistSessionAsync(HttpContext);
 		if (session != null)
 		{
 			AddSessionToResponse(session, Response);
@@ -57,7 +57,7 @@ public class AuthController(
 	{
 		authenticator.Authenticate(HttpContext);
 
-		await sessionsStore.CloseSession(token);
+		await sessionsStore.CloseSessionAsync(token);
 
 		return NoContent();
 	}

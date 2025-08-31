@@ -4,6 +4,7 @@ using Datalake.Database.Functions;
 using Datalake.Database.Initialization;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.InMemory.Stores;
+using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Tags;

@@ -1,6 +1,7 @@
 ﻿using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.InMemory.Stores;
+using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.PublicApi.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +37,7 @@ public class DbInitializer(
 			var db = serviceScope.ServiceProvider.GetRequiredService<DatalakeContext>();
 			var dataStore = serviceScope.ServiceProvider.GetRequiredService<DatalakeDataStore>();
 			var usersRepository = serviceScope.ServiceProvider.GetRequiredService<UsersMemoryRepository>();
+			var sessionsStore = serviceScope.ServiceProvider.GetRequiredService<DatalakeSessionsStore>();
 
 			// добавление пользователей по умолчанию
 			var staticUsers = configuration.GetSection("StaticUsers").Get<StaticUsersOptions[]>();
@@ -58,7 +60,7 @@ public class DbInitializer(
 			}
 
 			// начальное наполнение БД
-			await db.EnsureDataCreatedAsync(usersRepository);
+			await db.EnsureDataCreatedAsync(usersRepository, sessionsStore);
 
 			logger.LogInformation("Настройка БД завершена");
 		}

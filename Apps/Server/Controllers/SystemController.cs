@@ -2,6 +2,7 @@
 using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.InMemory.Stores;
+using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
