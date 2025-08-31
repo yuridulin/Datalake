@@ -128,6 +128,8 @@ export class AppStore implements UserAuthInfo {
 
 				if (error.response?.status === 403 || error.response?.status === 400) {
 					this.setAuthenticated(false)
+					if (!error.config?.url?.endsWith('identify') && this.notify)
+						this.notify.error({ placement: 'bottomLeft', message: String(error.response?.data) })
 					return
 				}
 
