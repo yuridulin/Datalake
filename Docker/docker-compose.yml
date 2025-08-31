@@ -11,22 +11,27 @@ services:
       - ./postgres/database:/var/lib/postgresql/data
     command: >
       bash -c "
+        # Ждем полного запуска PostgreSQL
         docker-entrypoint.sh postgres &
-        until pg_isready -h localhost -U \"$POSTGRES_USER\"; do
+        until pg_isready -h localhost -U postgres; do
           sleep 1
         done
-        if psql -U \"$POSTGRES_USER\" -tc \"SELECT 1 FROM pg_database WHERE datname = 'keycloak'\" | grep -q 1; then
-          echo '✅ Database keycloak already exists'
-        else
-          psql -U \"$POSTGRES_USER\" -c 'CREATE DATABASE keycloak'
+        
+        # Проверяем и создаем БД keycloak если нужно
+        if ! psql -U postgres -tc \"SELECT 1 FROM pg_database WHERE datname = 'keycloak'\" | grep -q 1; then
+          psql -U postgres -c 'CREATE DATABASE keycloak'
           echo '🎯 Database keycloak created'
+        else
+          echo '✅ Database keycloak already exists'
         fi
+        
+        # Ожидаем основной процесс
         wait
       "
     ports:
       - "7610:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -U $${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
