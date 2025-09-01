@@ -4,8 +4,9 @@ using System.Collections.Immutable;
 
 namespace Datalake.Database.InMemory.Models;
 
-#pragma warning disable CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
-
+/// <summary>
+/// Снимок списка тегов, подготовленных к использованию при чтении/записи значений
+/// </summary>
 public record class DatalakeCachedTagsState
 {
 	/// <summary>
@@ -61,5 +62,3 @@ public record class DatalakeCachedTagsState
 		CachedTagsByGuid = ImmutableDictionary<Guid, TagCacheInfo>.Empty;
 	}
 }
-
-#pragma warning restore CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена

@@ -50,9 +50,23 @@ public class ValuesRepository(
 				var guids = request.Tags?.ToHashSet() ?? [];
 
 				var tags = currentState.CachedTags
-					.Where(tag => !tag.IsDeleted)
 					.Where(tag => identifiers.Contains(tag.Id) || guids.Contains(tag.Guid))
-					.Where(tag => AccessChecks.HasAccessToTag(user, AccessType.Viewer, tag.Id))
+					.Select(x => new ValuesTrustedRequest.TagSettings
+					{
+						Guid = x.Guid,
+						Id = x.Id,
+						Name = x.Name,
+						Resolution = x.Resolution,
+						ScalingCoefficient = x.ScalingCoefficient,
+						SourceId = x.SourceId,
+						SourceType = x.SourceType,
+						Type = x.Type,
+						IsDeleted = x.IsDeleted,
+						Result = 
+							!AccessChecks.HasAccessToTag(user, AccessType.Viewer, x.Id) ? ValueResult.NoAccess
+							: x.IsDeleted ? ValueResult.IsDeleted
+							: ValueResult.Ok,
+					})
 					.ToArray();
 
 				return new ValuesTrustedRequest
@@ -130,22 +144,49 @@ public class ValuesRepository(
 		foreach (var request in requests)
 		{
 			TagCacheInfo? tag = null;
+			var date = request.Date ?? DateFormats.GetCurrentDateTime();
 
 			if (request.Id.HasValue)
 				currentState.CachedTagsById.TryGetValue(request.Id.Value, out tag);
 			else if (request.Guid.HasValue)
 				currentState.CachedTagsByGuid.TryGetValue(request.Guid.Value, out tag);
 
-			if (tag == null || tag.SourceType != SourceType.Manual || !AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Id))
+			if (tag == null)
+			{
+				responses.Add(new ValuesTagResponse
+				{
+					Result = ValueResult.NotFound,
+					Id = request.Id ?? 0,
+					Guid = request.Guid ?? Guid.Empty,
+					Name = string.Empty,
+					Type = TagType.String,
+					Resolution = TagResolution.NotSet,
+					SourceType = SourceType.NotSet,
+					Values = [
+						new ValueRecord
+						{
+							Date = date,
+							DateString = date.ToString(DateFormats.HierarchicalWithMilliseconds),
+							Quality = TagQuality.Unknown,
+							Value = null,
+						}
+					]
+				});
 				continue;
+			}
 
 			var record = CreateFrom(tag, request);
-			record.Date = request.Date ?? DateFormats.GetCurrentDateTime();
+			record.Date = date;
 
-			recordsToWrite.Add(record);
+			var result =
+				tag.IsDeleted ? ValueResult.IsDeleted
+				: tag.SourceType != SourceType.Manual ? ValueResult.NotManual
+				: !AccessChecks.HasAccessToTag(user, AccessType.Editor, tag.Id) ? ValueResult.NoAccess
+				: ValueResult.Ok;
 
 			responses.Add(new ValuesTagResponse
 			{
+				Result = result,
 				Id = tag.Id,
 				Guid = tag.Guid,
 				Name = tag.Name,
@@ -162,9 +203,20 @@ public class ValuesRepository(
 					}
 				]
 			});
+
+			if (result == ValueResult.Ok)
+				recordsToWrite.Add(record);
 		}
 
-		await ProtectedWriteValuesAsync(db, recordsToWrite);
+		var writeResult = await ProtectedWriteValuesAsync(db, recordsToWrite);
+		if (!writeResult)
+		{
+			foreach (var response in responses)
+			{
+				if (response.Result == ValueResult.Ok)
+					response.Result = ValueResult.UnknownError;
+			}
+		}
 
 		return responses;
 	}
@@ -184,7 +236,7 @@ public class ValuesRepository(
 			{
 				Settings = g.Key,
 				Requests = g.ToArray(),
-				TagsId = g.SelectMany(r => r.Tags).Select(r => r.Id).ToArray(),
+				TagsId = g.SelectMany(r => r.Tags).Where(r => r.Result == ValueResult.Ok).Select(r => r.Id).ToArray(),
 			})
 			.ToArray();
 
@@ -192,6 +244,7 @@ public class ValuesRepository(
 		{
 			TagHistory[] databaseValues;
 
+			// получение среза
 			if (!group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
 			{
 				Dictionary<int, TagHistory?> databaseValuesById;
@@ -216,29 +269,36 @@ public class ValuesRepository(
 					List<ValuesTagResponse> tags = [];
 					foreach (var tag in request.Tags)
 					{
-						if (!databaseValuesById.TryGetValue(tag.Id, out var value) || value == null)
+						ValuesTagResponse tagResponse = new()
 						{
-							value = new TagHistory { TagId = tag.Id, Date = date, Quality = TagQuality.Bad_NoValues };
-						}
-
-						var tagValue = new ValueRecord
-						{
-							Date = value.Date,
-							DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
-							Quality = value.Quality,
-							Value = value.GetTypedValue(tag.Type),
-						};
-
-						var tagResponse = new ValuesTagResponse
-						{
+							Result = tag.Result,
 							Id = tag.Id,
 							Guid = tag.Guid,
 							Name = tag.Name,
 							Type = tag.Type,
 							Resolution = tag.Resolution,
 							SourceType = tag.SourceType,
-							Values = [tagValue],
+							Values = [],
 						};
+
+						if (tag.Result == ValueResult.Ok)
+						{
+							if (!databaseValuesById.TryGetValue(tag.Id, out var value) || value == null)
+							{
+								tag.Result = ValueResult.ValueNotFound;
+								value = new TagHistory { TagId = tag.Id, Date = date, Quality = TagQuality.Bad_NoValues };
+							}
+
+							var tagValue = new ValueRecord
+							{
+								Date = value.Date,
+								DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
+								Quality = value.Quality,
+								Value = value.GetTypedValue(tag.Type),
+							};
+
+							tagResponse.Values = [tagValue];
+						}
 
 						tags.Add(tagResponse);
 					}
@@ -252,6 +312,8 @@ public class ValuesRepository(
 					responses.Add(response);
 				}
 			}
+			
+			// получение истории
 			else
 			{
 				DateTime
@@ -276,6 +338,7 @@ public class ValuesRepository(
 					{
 						var tagResponse = new ValuesTagResponse
 						{
+							Result = tag.Result,
 							Guid = tag.Guid,
 							Id = tag.Id,
 							Name = tag.Name,
@@ -286,8 +349,11 @@ public class ValuesRepository(
 						};
 						var tagValues = requestValues.Where(x => x.TagId == tag.Id).ToList();
 
+						// так как при получении истории мы делаем locf значений до начала диапазона, у нас должно быть минимум одно значение
+						// если ноль - условие не корректно или тега вообще не существовало
 						if (tagValues.Count == 0)
 						{
+							tagResponse.Result = ValueResult.ValueNotFound;
 							tagResponse.Values = [
 								new()
 								{
@@ -298,7 +364,9 @@ public class ValuesRepository(
 								}
 							];
 						}
-						else
+						// если у нас не Ok, то тега нет, или нет доступа к нему
+						// так или иначе, значения нас уже не интересуют
+						else if (tagResponse.Result == ValueResult.Ok)
 						{
 							if (request.Resolution != null && request.Resolution > 0)
 							{
@@ -380,6 +448,9 @@ public class ValuesRepository(
 		DateTime old,
 		DateTime young)
 	{
+		if (identifiers.Length == 0)
+			return [];
+
 		var values = await db.QueryToArrayAsync<TagHistory>(GetBetweenDates
 			.MapIdentifiers(identifiers)
 			.MapDate("@old", old)
@@ -398,6 +469,9 @@ public class ValuesRepository(
 		DatalakeContext db,
 		int[] identifiers)
 	{
+		if (identifiers.Length == 0)
+			return [];
+
 		return await db.QueryToArrayAsync<TagHistory>(GetLast
 			.MapIdentifiers(identifiers));
 	}
@@ -407,6 +481,9 @@ public class ValuesRepository(
 		int[] identifiers,
 		DateTime date)
 	{
+		if (identifiers.Length == 0)
+			return [];
+
 		return await db.QueryToArrayAsync<TagHistory>(GetLastBeforeDate
 			.MapIdentifiers(identifiers)
 			.MapDate("@old", date));
@@ -474,6 +551,9 @@ public class ValuesRepository(
 		DateTime? moment = null,
 		AggregationPeriod period = AggregationPeriod.Hour)
 	{
+		if (identifiers.Length == 0)
+			return [];
+
 		// Задаем входные параметры
 		var now = moment ?? DateFormats.GetCurrentDateTime();
 
@@ -592,12 +672,12 @@ public class ValuesRepository(
 	/// </summary>
 	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="records">Список записей для ввода</param>
-	internal async Task ProtectedWriteValuesAsync(
+	internal async Task<bool> ProtectedWriteValuesAsync(
 		DatalakeContext db,
 		List<TagHistory> records)
 	{
 		if (records.Count == 0)
-			return;
+			return true;
 
 		var uniqueRecords = records.GroupBy(x => new { x.TagId, x.Date })
 			.Select(g => g.First())
@@ -616,11 +696,14 @@ public class ValuesRepository(
 			// обновление в кэше текущих данных
 			foreach (var record in uniqueRecords)
 				valuesStore.TryUpdate(record.TagId, record);
+
+			return true;
 		}
 		catch (Exception e)
 		{
 			logger.LogError(e, "Не удалось записать данные");
 			await transaction.RollbackAsync();
+			return false;
 		}
 	}
 

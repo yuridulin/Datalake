@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Models.Tags;
+﻿using Datalake.PublicApi.Enums;
+using Datalake.PublicApi.Models.Tags;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.PublicApi.Models.Values;
@@ -15,7 +16,8 @@ public class ValuesTagResponse : TagSimpleInfo
 	public required ValueRecord[] Values { get; set; } = [];
 
 	/// <summary>
-	/// Флаг, говорящий о недостаточности доступа для записи у пользователя
+	/// Как прошла операция
 	/// </summary>
-	public bool? NoAccess { get; set; } = null;
+	[Required]
+	public ValueResult Result { get; set; }
 }
