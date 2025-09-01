@@ -122,7 +122,7 @@ public class Program
 
 		// заполняем все указанные в ней переменные окружения реальными значениями
 		connectionString = EnvExpander.FillEnvVariables(connectionString);
-		Log.Information("ConnectionString: " + connectionString);
+		Log.Debug("Итоговая строка подключения к БД: " + connectionString);
 
 		// БД
 		builder.Services
@@ -230,15 +230,15 @@ public class Program
 			.UseSerilogRequestLogging(options =>
 			{
 				// шаблон одного сообщения на запрос
-				options.MessageTemplate = "HTTP: [{Controller}.{Action}] > {StatusCode} in {Elapsed:0.0000} ms";
+				options.MessageTemplate = "Запрос API {Controller}.{Action}: статус {StatusCode} за {Elapsed:0} мс";
 
 				// если упало — логируем Error, иначе Information
 				options.GetLevel = (httpContext, elapsed, ex) =>
 				httpContext.Request.Method == "OPTIONS"
 					? LogEventLevel.Verbose
 					: ex != null || httpContext.Response.StatusCode >= 500
-						? LogEventLevel.Error
-						: LogEventLevel.Information;
+						? LogEventLevel.Warning
+						: LogEventLevel.Debug;
 
 				options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
 				{
@@ -253,8 +253,8 @@ public class Program
 					}
 					else
 					{
-						diagnosticContext.Set("Controller", "unknown");
-						diagnosticContext.Set("Action", "unknown");
+						diagnosticContext.Set("Controller", "?");
+						diagnosticContext.Set("Action", "?");
 					}
 				};
 			})

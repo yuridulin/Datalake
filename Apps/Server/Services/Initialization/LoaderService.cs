@@ -20,7 +20,7 @@ public class LoaderService(
 	{
 		logger.LogInformation("Общий запуск");
 
-		logger.LogInformation("Созданы экземпляры:\r\n{names}", string.Join(",\r\n", new[]
+		logger.LogInformation("Созданы экземпляры:\n\t{names}", string.Join(",\n\t", new[]
 		{
 			dataStore.ToString(),
 			accessStore.ToString(),

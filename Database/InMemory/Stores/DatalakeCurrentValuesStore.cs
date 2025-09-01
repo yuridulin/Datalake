@@ -1,4 +1,4 @@
-﻿using Datalake.Database.Attributes;
+﻿using Datalake.Database.Functions;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;

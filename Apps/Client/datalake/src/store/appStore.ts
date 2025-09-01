@@ -109,8 +109,11 @@ export class AppStore implements UserAuthInfo {
 				}
 				// нормальное развитие событий
 				else {
+					if (response.status === 204 && this.notify) {
+						this.notify.success({ placement: 'bottomLeft', message: `Успешно` })
+					}
 					// сообщения после выполнения действий
-					if (response.data) {
+					else if (response.data) {
 						if (response.data.done && this.notify) {
 							console.log(this.notify)
 							this.notify.info({ placement: 'bottomLeft', message: response.data.done })
