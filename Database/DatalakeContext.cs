@@ -26,6 +26,8 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		Configuration.Linq.GuardGrouping = false;
 	}
 
+	#region Загрузка данных
+
 	/// <summary>
 	/// Создание или изменение заранее определенных статичных учетных записей.
 	/// Выполняется до начала работы стора.
@@ -122,6 +124,8 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			type: LogType.Success
 		);
 	}
+
+	#endregion
 
 	#region Таблицы
 

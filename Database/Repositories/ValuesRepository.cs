@@ -22,6 +22,7 @@ namespace Datalake.Database.Repositories;
 /// Репозиторий для работы со значениями тегов
 /// </summary>
 public class ValuesRepository(
+	DatalakeContext db,
 	DatalakeCachedTagsStore cachedTagsStore,
 	DatalakeCurrentValuesStore valuesStore,
 	ILogger<ValuesRepository> logger)
@@ -31,12 +32,10 @@ public class ValuesRepository(
 	/// <summary>
 	/// Получение значений по списку запрошенных тегов
 	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="requests">Список запрошенных тегов с настройками получения</param>
 	/// <returns>Список ответов со значениями тегов</returns>
 	public async Task<List<ValuesResponse>> GetValuesAsync(
-		DatalakeContext db,
 		UserAuthInfo user,
 		ValuesRequest[] requests)
 	{
@@ -120,16 +119,15 @@ public class ValuesRepository(
 			})
 			.ToArray();
 
-		return await Measures.Measure(() => ProtectedGetValuesAsync(db, trustedRequests), logger, nameof(ProtectedGetValuesAsync));
+		return await Measures.MeasureAsync(() => ProtectedGetValuesAsync(db, trustedRequests), logger, nameof(ProtectedGetValuesAsync));
 	}
 
 	/// <summary>
-	/// Запись очередных новых значений, собранных из
+	/// Запись очередных новых значений, собранных из источников
 	/// </summary>
-	/// <param name="db"></param>
-	/// <param name="requests"></param>
+	/// <param name="requests">Список данных к записи, непроверенный</param>
 	/// <returns></returns>
-	public async Task WriteCollectedValuesAsync(DatalakeContext db, IEnumerable<ValueWriteRequest> requests)
+	public async Task WriteCollectedValuesAsync(IEnumerable<ValueWriteRequest> requests)
 	{
 		var currentState = cachedTagsStore.State;
 
@@ -156,18 +154,26 @@ public class ValuesRepository(
 			records.Add(record);
 		}
 
-		await ProtectedWriteValuesAsync(db, records);
+		var uniqueRecords = records.GroupBy(x => new { x.TagId, x.Date })
+			.Select(g => g.First())
+			.ToList();
+
+		var writeResult = await DatabaseValues.WriteAsync(db, logger, uniqueRecords);
+		if (writeResult)
+		{
+			// обновление в кэше текущих данных
+			foreach (var record in uniqueRecords)
+				valuesStore.TryUpdate(record.TagId, record);
+		}
 	}
 
 	/// <summary>
 	/// Запись новых значений для указанных тегов
 	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="requests">Список тегов с новыми значениями</param>
 	/// <returns>Список записанных значений</returns>
 	public async Task<List<ValuesTagResponse>> WriteManualValuesAsync(
-		DatalakeContext db,
 		UserAuthInfo user,
 		ValueWriteRequest[] requests)
 	{
@@ -243,8 +249,18 @@ public class ValuesRepository(
 				recordsToWrite.Add(record);
 		}
 
-		var writeResult = await ProtectedWriteValuesAsync(db, recordsToWrite);
-		if (!writeResult)
+		var uniqueRecords = recordsToWrite.GroupBy(x => new { x.TagId, x.Date })
+			.Select(g => g.First())
+			.ToList();
+
+		var writeResult = await DatabaseValues.WriteAsync(db, logger, uniqueRecords);
+		if (writeResult)
+		{
+			// обновление в кэше текущих данных
+			foreach (var record in uniqueRecords)
+				valuesStore.TryUpdate(record.TagId, record);
+		}
+		else
 		{
 			foreach (var response in responses)
 			{
@@ -265,41 +281,39 @@ public class ValuesRepository(
 	{
 		List<ValuesResponse> responses = [];
 
-		var groups = trustedRequests
+		var sqlScopes = trustedRequests
 			.GroupBy(x => x.Time)
-			.Select(g => new
+			.Select(g => new ValuesSqlScope
 			{
 				Settings = g.Key,
 				Requests = g.ToArray(),
+				Keys = g.Select(x => x.RequestKey).ToArray(),
 				TagsId = g.SelectMany(r => r.Tags).Where(r => r.Result == ValueResult.Ok).Select(r => r.Id).ToArray(),
 			})
 			.ToArray();
 
-		foreach (var group in groups)
+		foreach (var scope in sqlScopes)
 		{
 			TagHistory[] databaseValues;
 
 			// получение среза
-			if (!group.Settings.Old.HasValue && !group.Settings.Young.HasValue)
+			if (!scope.Settings.Old.HasValue && !scope.Settings.Young.HasValue)
 			{
 				Dictionary<int, TagHistory?> databaseValuesById;
-				DateTime date;
 
-				if (group.Settings.Exact.HasValue)
+				if (scope.Settings.Exact.HasValue)
 				{
-					databaseValues = await ProtectedGetLastValuesBeforeDateAsync(db, group.TagsId, group.Settings.Exact.Value);
+					databaseValues = await DatabaseValues.ReadExactAsync(db, logger, scope, scope.Settings.Exact.Value);
 					databaseValuesById = databaseValues.ToDictionary(x => x.TagId)!;
-
-					date = group.Settings.Exact.Value;
 				}
 				else
 				{
 					// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
-					databaseValuesById = valuesStore.GetByIdentifiers(group.TagsId);
-					date = DateFormats.GetCurrentDateTime();
+					databaseValuesById = valuesStore.GetByIdentifiers(scope.TagsId);
+					scope.Settings.Exact = DateFormats.GetCurrentDateTime();
 				}
 
-				foreach (var request in group.Requests)
+				foreach (var request in scope.Requests)
 				{
 					List<ValuesTagResponse> tags = [];
 					foreach (var tag in request.Tags)
@@ -321,7 +335,7 @@ public class ValuesRepository(
 							if (!databaseValuesById.TryGetValue(tag.Id, out var value) || value == null)
 							{
 								tag.Result = ValueResult.ValueNotFound;
-								value = new TagHistory { TagId = tag.Id, Date = date, Quality = TagQuality.Bad_NoValues };
+								value = new TagHistory { TagId = tag.Id, Date = scope.Settings.Exact.Value, Quality = TagQuality.Bad_NoValues };
 							}
 
 							var tagValue = new ValueRecord
@@ -347,17 +361,16 @@ public class ValuesRepository(
 					responses.Add(response);
 				}
 			}
-			
+
 			// получение истории
 			else
 			{
-				DateTime
-					young = group.Settings.Young ?? DateFormats.GetCurrentDateTime(),
-					old = group.Settings.Old ?? young.Date;
+				scope.Settings.Young ??= DateFormats.GetCurrentDateTime();
+				scope.Settings.Old ??= scope.Settings.Young;
 
-				databaseValues = await ProtectedGetValuesAsync(db, group.TagsId, old, young);
+				databaseValues = await DatabaseValues.ReadRangeAsync(db, logger, scope, scope.Settings.Old.Value, scope.Settings.Young.Value);
 
-				foreach (var request in group.Requests)
+				foreach (var request in scope.Requests)
 				{
 					var response = new ValuesResponse
 					{
@@ -396,8 +409,8 @@ public class ValuesRepository(
 								tagResponse.Values = [
 									new()
 									{
-										Date = old,
-										DateString = old.ToString(DateFormats.HierarchicalWithMilliseconds),
+										Date = scope.Settings.Old.Value,
+										DateString = scope.Settings.Old.Value.ToString(DateFormats.HierarchicalWithMilliseconds),
 										Quality = TagQuality.Bad_NoValues,
 										Value = 0,
 									}
@@ -405,7 +418,7 @@ public class ValuesRepository(
 							}
 							if (request.Resolution != null && request.Resolution > 0)
 							{
-								tagValues = StretchByResolution(tagValues, old, young, request.Resolution.Value);
+								tagValues = StretchByResolution(tagValues, scope.Settings.Old.Value, scope.Settings.Young.Value, request.Resolution.Value);
 							}
 
 							if (tag.Type == TagType.Number && request.Func != AggregationFunc.List)
@@ -438,8 +451,8 @@ public class ValuesRepository(
 
 									tagResponse.Values = [
 										new() {
-											Date = old,
-											DateString = old.ToString(DateFormats.HierarchicalWithMilliseconds),
+											Date = scope.Settings.Old.Value,
+											DateString = scope.Settings.Old.Value.ToString(DateFormats.HierarchicalWithMilliseconds),
 											Quality = TagQuality.Good,
 											Value = value,
 										}
@@ -475,53 +488,6 @@ public class ValuesRepository(
 		}
 
 		return responses;
-	}
-
-	internal static async Task<TagHistory[]> ProtectedGetValuesAsync(
-		DatalakeContext db,
-		int[] identifiers,
-		DateTime old,
-		DateTime young)
-	{
-		if (identifiers.Length == 0)
-			return [];
-
-		var values = await db.QueryToArrayAsync<TagHistory>(GetBetweenDates
-			.MapIdentifiers(identifiers)
-			.MapDate("@old", old)
-			.MapDate("@young", young));
-
-		return values;
-	}
-
-	internal static async Task<TagHistory[]> ProtectedGetAllLastValuesAsync(
-		DatalakeContext db)
-	{
-		return await db.QueryToArrayAsync<TagHistory>(GetAllLast);
-	}
-
-	internal static async Task<TagHistory[]> ProtectedGetLastValuesAsync(
-		DatalakeContext db,
-		int[] identifiers)
-	{
-		if (identifiers.Length == 0)
-			return [];
-
-		return await db.QueryToArrayAsync<TagHistory>(GetLast
-			.MapIdentifiers(identifiers));
-	}
-
-	internal static async Task<TagHistory[]> ProtectedGetLastValuesBeforeDateAsync(
-		DatalakeContext db,
-		int[] identifiers,
-		DateTime date)
-	{
-		if (identifiers.Length == 0)
-			return [];
-
-		return await db.QueryToArrayAsync<TagHistory>(GetLastBeforeDate
-			.MapIdentifiers(identifiers)
-			.MapDate("@old", date));
 	}
 
 	private const int _stretchLimit = 100000;
@@ -571,178 +537,9 @@ public class ValuesRepository(
 		return continuous;
 	}
 
-	/// <summary>
-	/// Расчет средневзвешенных и взвешенных сумм по тегам. Взвешивание по секундам
-	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
-	/// <param name="identifiers">Идентификаторы тегов</param>
-	/// <param name="moment">Момент времени, относительно которого определяется прошедший период</param>
-	/// <param name="period">Размер прошедшего периода</param>
-	/// <returns>По одному значению на каждый тег</returns>
-	/// <exception cref="ForbiddenException"></exception>
-	public static async Task<TagAggregationWeightedValue[]> GetWeightedAggregatedValuesAsync(
-		DatalakeContext db,
-		int[] identifiers,
-		DateTime? moment = null,
-		AggregationPeriod period = AggregationPeriod.Hour)
-	{
-		if (identifiers.Length == 0)
-			return [];
-
-		// Задаем входные параметры
-		var now = moment ?? DateFormats.GetCurrentDateTime();
-
-		DateTime periodStart, periodEnd;
-		switch (period)
-		{
-			case AggregationPeriod.Minute:
-				periodEnd = now.RoundByResolution(TagResolution.Minute);
-				periodStart = periodEnd.AddMinutes(-1);
-				break;
-
-			case AggregationPeriod.Hour:
-				periodEnd = now.RoundByResolution(TagResolution.Hour);
-				periodStart = periodEnd.AddHours(-1);
-				break;
-
-			case AggregationPeriod.Day:
-				periodEnd = now.RoundByResolution(TagResolution.Day);
-				periodStart = periodEnd.AddDays(-1);
-				break;
-
-			default:
-				throw new ForbiddenException("задан неподдерживаемый период");
-		}
-
-		var source = db.TagsHistory.Where(tag => identifiers.Contains(tag.TagId));
-
-		// CTE: Последнее значение перед началом периода
-		var historyBefore =
-			from raw in source
-			where raw.Date <= periodStart
-			select new
-			{
-				raw.TagId,
-				Date = periodStart, // Принудительная установка даты
-				raw.Number,
-				Order = Sql.Ext.RowNumber()
-					.Over()
-					.PartitionBy(raw.TagId)
-					.OrderByDesc(raw.Date)
-					.ToValue()
-			} into historyBeforeTemp
-			where historyBeforeTemp.Order == 1
-			select new
-			{
-				historyBeforeTemp.TagId,
-				historyBeforeTemp.Date,
-				historyBeforeTemp.Number
-			};
-
-		// CTE: Значения в пределах периода
-		var historyBetween =
-			from raw in source
-			where
-				raw.Date > periodStart &&
-				raw.Date <= periodEnd
-			select new
-			{
-				raw.TagId,
-				raw.Date,
-				raw.Number
-			};
-
-		// CTE: Объединение двух выборок (UNION ALL)
-		var history = historyBefore.Concat(historyBetween);
-
-		// CTE: Добавление следующей даты, чтобы относительно ее посчитать длительность актуальности значения
-		var historyWithNext =
-			from h in history
-			select new
-			{
-				h.TagId,
-				h.Date,
-				h.Number,
-				NextDate = Sql.Ext.Lead(h.Date, 1, periodEnd)
-					.Over()
-					.PartitionBy(h.TagId)
-					.OrderBy(h.Date)
-					.ToValue()
-			};
-
-		// CTE: Вычисление длительности действия каждого значения
-		var weighted =
-			from h in historyWithNext
-			select new
-			{
-				h.TagId,
-				h.Number,
-				Weight = Sql.DateDiff(Sql.DateParts.Second, h.Date, h.NextDate),
-			};
-
-		// Финальный запрос - применяем веса
-		var result =
-			from w in weighted
-			group w by w.TagId into g
-			select new TagAggregationWeightedValue
-			{
-				TagId = g.Key,
-				Date = periodEnd,
-				SumOfWeights = g.Sum(x => x.Weight) ?? 0,
-				SumValuesWithWeights = g.Sum(x => x.Number * x.Weight) ?? 0,
-			};
-
-		// Выполнение запроса
-		var aggregated = await result.ToArrayAsync();
-
-		return aggregated;
-	}
-
 	#endregion Чтение
 
 	#region Запись
-
-	/// <summary>
-	/// Запись значений в партицию через временную таблицу
-	/// </summary>
-	/// <param name="db">Текущий контекст базы данных</param>
-	/// <param name="records">Список записей для ввода</param>
-	internal async Task<bool> ProtectedWriteValuesAsync(
-		DatalakeContext db,
-		List<TagHistory> records)
-	{
-		if (records.Count == 0)
-			return true;
-
-		var uniqueRecords = records.GroupBy(x => new { x.TagId, x.Date })
-			.Select(g => g.First())
-			.ToArray();
-
-		using var transaction = await db.BeginTransactionAsync();
-
-		try
-		{
-			await db.ExecuteAsync(CreateTempForWrite);
-			await db.BulkCopyAsync(bulkCopyOptions, uniqueRecords);
-			await db.ExecuteAsync(Write);
-
-			await transaction.CommitAsync();
-
-			// обновление в кэше текущих данных
-			foreach (var record in uniqueRecords)
-				valuesStore.TryUpdate(record.TagId, record);
-
-			return true;
-		}
-		catch (Exception e)
-		{
-			logger.LogError(e, "Не удалось записать данные");
-			await transaction.RollbackAsync();
-			return false;
-		}
-	}
-
-
 
 	internal static TagHistory CreateFrom(TagCacheInfo tag, ValueWriteRequest request)
 	{
@@ -822,32 +619,93 @@ public class ValuesRepository(
 	}
 
 	#endregion Запись
+}
 
-	#region SQL
+internal class ValuesSqlScope
+{
+	internal required ValuesTrustedRequest.TimeSettings Settings { get; set; }
+	internal required ValuesTrustedRequest[] Requests { get; set; }
+	internal required string[] Keys { get; set; }
+	internal required int[] TagsId { get; set; }
+}
 
-	private const string StagingTable = "TagsHistoryState";
+internal static class DatabaseValues
+{
+	#region Чтение
 
-	private static BulkCopyOptions bulkCopyOptions = new() { TableName = StagingTable, BulkCopyType = BulkCopyType.ProviderSpecific, };
+	internal static async Task<TagHistory[]> ReadRangeAsync(
+		DatalakeContext db,
+		ILogger logger,
+		ValuesSqlScope scope,
+		DateTime old,
+		DateTime young)
+	{
+		if (scope.TagsId.Length == 0)
+			return [];
 
-	private const string CreateTempForWrite = $@"
-		CREATE TEMPORARY TABLE ""{StagingTable}"" (LIKE public.""TagsHistory"" EXCLUDING INDEXES)
-		ON COMMIT DROP;";
+		return await Measures.MeasureAsync(async () =>
+		{
+			var values = await db.QueryToArrayAsync<TagHistory>(ReadRangeSql
+				.MapIdentifiers(scope.TagsId)
+				.MapDate("@old", old)
+				.MapDate("@young", young));
 
-	private const string Write = $@"
-		INSERT INTO public.""TagsHistory""(
-			""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
-		)
-		SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
-			FROM ""{StagingTable}""
-		ON CONFLICT (""TagId"", ""Date"") DO UPDATE
-			SET ""Text""   = EXCLUDED.""Text"",
-					""Number"" = EXCLUDED.""Number"",
-					""Quality""= EXCLUDED.""Quality"";";
+			return values;
+		},
+		logger, nameof(ReadRangeAsync), ReadQueryOperationName, scope);
+	}
+
+	internal static async Task<TagHistory[]> ReadAllCurrentAsync(
+		DatalakeContext db,
+		ILogger logger)
+	{
+		return await Measures.MeasureAsync(async () =>
+		{
+			return await db.QueryToArrayAsync<TagHistory>(ReadAllCurrentSql);
+		},
+		logger, nameof(ReadAllCurrentAsync), ReadQueryOperationName);
+	}
+
+	internal static async Task<TagHistory[]> ReadCurrentAsync(
+		DatalakeContext db,
+		ILogger logger,
+		ValuesSqlScope scope)
+	{
+		if (scope.TagsId.Length == 0)
+			return [];
+
+		return await Measures.MeasureAsync(async () =>
+		{
+			return await db.QueryToArrayAsync<TagHistory>(ReadCurrentSql
+				.MapIdentifiers(scope.TagsId));
+		},
+		logger, nameof(ReadCurrentAsync), ReadQueryOperationName, scope);
+	}
+
+	internal static async Task<TagHistory[]> ReadExactAsync(
+		DatalakeContext db,
+		ILogger logger,
+		ValuesSqlScope scope,
+		DateTime exactDate)
+	{
+		if (scope.TagsId.Length == 0)
+			return [];
+
+		return await Measures.MeasureAsync(async () =>
+		{
+			return await db.QueryToArrayAsync<TagHistory>(ReadExactSql
+				.MapIdentifiers(scope.TagsId)
+				.MapDate("@old", exactDate));
+		},
+		logger, nameof(ReadExactAsync), ReadQueryOperationName, scope);
+	}
+
+	private const string ReadQueryOperationName = "query.read";
 
 	/// <summary>
 	/// Параметры: нет
 	/// </summary>
-	private const string GetAllLast = @"
+	private const string ReadAllCurrentSql = @"
 		SELECT
 			t.""Id"" AS ""TagId"",
 			CASE WHEN h.""Date"" IS NULL THEN Now() ELSE h.""Date"" END AS ""Date"",
@@ -863,7 +721,7 @@ public class ValuesRepository(
 	/// <summary>
 	/// Параметры: теги
 	/// </summary>
-	private const string GetLast = @"
+	private const string ReadCurrentSql = @"
 		SELECT DISTINCT ON (""TagId"") *
 		FROM public.""TagsHistory""
 		WHERE ""TagId"" IN (@tags)
@@ -872,7 +730,7 @@ public class ValuesRepository(
 	/// <summary>
 	/// Параметры: теги, дата начала
 	/// </summary>
-	private const string GetLastBeforeDate = @"
+	private const string ReadExactSql = @"
 		SELECT DISTINCT ON (""TagId"") *
 		FROM public.""TagsHistory""
 		WHERE
@@ -883,9 +741,9 @@ public class ValuesRepository(
 	/// <summary>
 	/// Параметры: теги, дата начала, дата конца
 	/// </summary>
-	private const string GetBetweenDates = $@"
+	private const string ReadRangeSql = $@"
 		SELECT * FROM (
-			{GetLastBeforeDate}
+			{ReadExactSql}
 		) AS valuesBefore
 		UNION ALL
 		SELECT *
@@ -895,5 +753,207 @@ public class ValuesRepository(
 			AND ""Date"" > '@old'
 			AND ""Date"" <= '@young';";
 
-	#endregion SQL
+	#endregion Чтение
+
+	#region Запись
+
+	/// <summary>
+	/// Запись значений в партицию через временную таблицу
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="logger">Логгер</param>
+	/// <param name="records">Список записей для ввода</param>
+	internal static async Task<bool> WriteAsync(
+		DatalakeContext db,
+		ILogger logger,
+		List<TagHistory> records)
+	{
+		if (records.Count == 0)
+			return true;
+
+		return await Measures.MeasureAsync(async () =>
+		{
+			using var transaction = await db.BeginTransactionAsync();
+
+			try
+			{
+				await db.ExecuteAsync(CreateTempTableForWrite);
+				await db.BulkCopyAsync(BulkCopyOptions, records);
+				await db.ExecuteAsync(WriteSql);
+
+				await transaction.CommitAsync();
+				return true;
+			}
+			catch (Exception e)
+			{
+				logger.LogError(e, "Не удалось записать данные");
+				await transaction.RollbackAsync();
+				return false;
+			}
+		}, logger, nameof(WriteAsync), WriteQueryOperationName);
+	}
+
+	private const string WriteQueryOperationName = "query.write";
+
+	private const string TempTableForWrite = "TagsHistoryState";
+
+	private static readonly BulkCopyOptions BulkCopyOptions = new() { TableName = TempTableForWrite, BulkCopyType = BulkCopyType.ProviderSpecific, };
+
+	private const string CreateTempTableForWrite = $@"
+		CREATE TEMPORARY TABLE ""{TempTableForWrite}"" (LIKE public.""TagsHistory"" EXCLUDING INDEXES)
+		ON COMMIT DROP;";
+
+	private const string WriteSql = $@"
+		INSERT INTO public.""TagsHistory""(
+			""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
+		)
+		SELECT ""TagId"", ""Date"", ""Text"", ""Number"", ""Quality""
+			FROM ""{TempTableForWrite}""
+		ON CONFLICT (""TagId"", ""Date"") DO UPDATE
+			SET ""Text""   = EXCLUDED.""Text"",
+				""Number"" = EXCLUDED.""Number"",
+				""Quality""= EXCLUDED.""Quality"";";
+
+	#endregion
+}
+
+/// <summary>
+/// Работа с преобразованными значениями
+/// </summary>
+public static class DatabaseAggregation
+{
+	/// <summary>
+	/// Расчет средневзвешенных и взвешенных сумм по тегам. Взвешивание по секундам
+	/// </summary>
+	/// <param name="db">Текущий контекст базы данных</param>
+	/// <param name="logger">Логгер</param>
+	/// <param name="identifiers">Идентификаторы тегов</param>
+	/// <param name="moment">Момент времени, относительно которого определяется прошедший период</param>
+	/// <param name="period">Размер прошедшего периода</param>
+	/// <returns>По одному значению на каждый тег</returns>
+	/// <exception cref="ForbiddenException">Неподдерживаемый период</exception>
+	public static async Task<TagAggregationWeightedValue[]> GetWeightedAggregatedValuesAsync(
+		DatalakeContext db,
+		ILogger logger,
+		int[] identifiers,
+		DateTime? moment = null,
+		AggregationPeriod period = AggregationPeriod.Hour)
+	{
+		if (identifiers.Length == 0)
+			return [];
+
+		return await Measures.MeasureAsync(async () =>
+		{
+			// Задаем входные параметры
+			var now = moment ?? DateFormats.GetCurrentDateTime();
+
+			DateTime periodStart, periodEnd;
+			switch (period)
+			{
+				case AggregationPeriod.Minute:
+					periodEnd = now.RoundByResolution(TagResolution.Minute);
+					periodStart = periodEnd.AddMinutes(-1);
+					break;
+
+				case AggregationPeriod.Hour:
+					periodEnd = now.RoundByResolution(TagResolution.Hour);
+					periodStart = periodEnd.AddHours(-1);
+					break;
+
+				case AggregationPeriod.Day:
+					periodEnd = now.RoundByResolution(TagResolution.Day);
+					periodStart = periodEnd.AddDays(-1);
+					break;
+
+				default:
+					throw new ForbiddenException("задан неподдерживаемый период");
+			}
+
+			var source = db.TagsHistory.Where(tag => identifiers.Contains(tag.TagId));
+
+			// CTE: Последнее значение перед началом периода
+			var historyBefore =
+				from raw in source
+				where raw.Date <= periodStart
+				select new
+				{
+					raw.TagId,
+					Date = periodStart, // Принудительная установка даты
+					raw.Number,
+					Order = Sql.Ext.RowNumber()
+						.Over()
+						.PartitionBy(raw.TagId)
+						.OrderByDesc(raw.Date)
+						.ToValue()
+				} into historyBeforeTemp
+				where historyBeforeTemp.Order == 1
+				select new
+				{
+					historyBeforeTemp.TagId,
+					historyBeforeTemp.Date,
+					historyBeforeTemp.Number
+				};
+
+			// CTE: Значения в пределах периода
+			var historyBetween =
+				from raw in source
+				where
+					raw.Date > periodStart &&
+					raw.Date <= periodEnd
+				select new
+				{
+					raw.TagId,
+					raw.Date,
+					raw.Number
+				};
+
+			// CTE: Объединение двух выборок (UNION ALL)
+			var history = historyBefore.Concat(historyBetween);
+
+			// CTE: Добавление следующей даты, чтобы относительно ее посчитать длительность актуальности значения
+			var historyWithNext =
+				from h in history
+				select new
+				{
+					h.TagId,
+					h.Date,
+					h.Number,
+					NextDate = Sql.Ext.Lead(h.Date, 1, periodEnd)
+						.Over()
+						.PartitionBy(h.TagId)
+						.OrderBy(h.Date)
+						.ToValue()
+				};
+
+			// CTE: Вычисление длительности действия каждого значения
+			var weighted =
+				from h in historyWithNext
+				select new
+				{
+					h.TagId,
+					h.Number,
+					Weight = Sql.DateDiff(Sql.DateParts.Second, h.Date, h.NextDate),
+				};
+
+			// Финальный запрос - применяем веса
+			var result =
+				from w in weighted
+				group w by w.TagId into g
+				select new TagAggregationWeightedValue
+				{
+					TagId = g.Key,
+					Date = periodEnd,
+					SumOfWeights = g.Sum(x => x.Weight) ?? 0,
+					SumValuesWithWeights = g.Sum(x => x.Number * x.Weight) ?? 0,
+				};
+
+			// Выполнение запроса
+			var aggregated = await result.ToArrayAsync();
+
+			return aggregated;
+		},
+		logger, nameof(GetWeightedAggregatedValuesAsync), AggregatedQueryOperationName, new { identifiers, moment, period });
+	}
+
+	private const string AggregatedQueryOperationName = "query.agg";
 }

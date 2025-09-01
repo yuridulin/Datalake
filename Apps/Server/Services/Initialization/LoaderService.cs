@@ -19,7 +19,6 @@ public class LoaderService(
 	public async Task StartAsync(CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Общий запуск");
-
 		logger.LogInformation("Созданы экземпляры:\n\t{names}", string.Join(",\n\t", new[]
 		{
 			dataStore.ToString(),

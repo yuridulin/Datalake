@@ -1,5 +1,4 @@
-﻿using Datalake.Database.Functions;
-using Datalake.Database.Repositories;
+﻿using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.PublicApi.Enums;
 using LinqToDB;
@@ -9,27 +8,34 @@ using System.Collections.Concurrent;
 
 namespace Datalake.Database.InMemory.Stores;
 
-#pragma warning disable CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
-
+/// <summary>
+/// Хранилище текущих значений тегов
+/// </summary>
 public class DatalakeCurrentValuesStore
 {
+	/// <summary>Конструктор</summary>
 	public DatalakeCurrentValuesStore(
 		IServiceScopeFactory serviceScopeFactory,
 		ILogger<DatalakeDataStore> logger)
 	{
-		_serviceScopeFactory = serviceScopeFactory;
-		_logger = logger;
+		this.serviceScopeFactory = serviceScopeFactory;
+		this.logger = logger;
 
-		_ = Measures.Measure(ReloadValuesAsync, _logger, nameof(ReloadValuesAsync));
+		// Загрузка текущих данных
+		ReloadValuesAsync().Wait();
 	}
 
+	/// <summary>
+	/// Обновление текущих значений из БД
+	/// </summary>
 	public async Task ReloadValuesAsync()
 	{
-		using var scope = _serviceScopeFactory.CreateScope();
-		var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+		using var scope = serviceScopeFactory.CreateScope();
+		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
 
-		var values = await Measures.Measure(() => LoadValuesFromDatabaseAsync(db), _logger, nameof(LoadValuesFromDatabaseAsync));
-		var newValues = new ConcurrentDictionary<int, TagHistory>(values);
+		var values = await DatabaseValues.ReadAllCurrentAsync(db, logger);
+		var valuesDict = values.ToDictionary(x => x.TagId);
+		var newValues = new ConcurrentDictionary<int, TagHistory>(valuesDict);
 
 		Interlocked.Exchange(ref _currentValues, newValues);
 
@@ -40,11 +46,21 @@ public class DatalakeCurrentValuesStore
 			Text = "Состояние текущих значений перезагружено",
 		});
 
-		_logger.LogInformation("Завершено обновление текущих значений");
+		logger.LogInformation("Завершено обновление текущих значений");
 	}
 
+	/// <summary>
+	/// Получение значения по идентификатору
+	/// </summary>
+	/// <param name="id">Локальный идентификатор тега</param>
+	/// <returns>Значение, если существует</returns>
 	public TagHistory? Get(int id) => _currentValues.TryGetValue(id, out var value) ? value : null;
 
+	/// <summary>
+	/// Получение значений по идентификаторам в виде словаря
+	/// </summary>
+	/// <param name="identifiers">Локальные идентификаторы тегов</param>
+	/// <returns>Значения, если есть, сопоставленные с идентификаторами</returns>
 	public Dictionary<int, TagHistory?> GetByIdentifiers(int[] identifiers)
 	{
 		var state = _currentValues;
@@ -62,6 +78,12 @@ public class DatalakeCurrentValuesStore
 		return result;
 	}
 
+	/// <summary>
+	/// Попытка записи нового значения. В процессе проходит проверка на новизну. Если значение не новее, то записи не будет.
+	/// </summary>
+	/// <param name="id">Локальный идентификатор тега</param>
+	/// <param name="incomingValue">Значение для записи</param>
+	/// <returns>Флаг, является ли значение новым</returns>
 	public bool TryUpdate(int id, TagHistory incomingValue)
 	{
 		bool updated = true;
@@ -81,33 +103,32 @@ public class DatalakeCurrentValuesStore
 		return updated;
 	}
 
-	public bool IsNew(int id, TagHistory incoming)
+	/// <summary>
+	/// Проверка, является ли значение новым
+	/// </summary>
+	/// <param name="id">Локальный идентификатор тега</param>
+	/// <param name="incomingValue">Значение для проверки</param>
+	/// <returns></returns>
+	public bool IsNew(int id, TagHistory incomingValue)
 	{
-		var existing = Get(id);
-		if (existing == null)
+		var existingValue = Get(id);
+		if (existingValue == null)
 			return true;
 
-		return IsNew(existing, incoming);
+		return IsNew(existingValue, incomingValue);
 	}
 
-	private readonly IServiceScopeFactory _serviceScopeFactory;
-	private readonly ILogger<DatalakeDataStore> _logger;
+	private readonly IServiceScopeFactory serviceScopeFactory;
+	private readonly ILogger<DatalakeDataStore> logger;
 	private ConcurrentDictionary<int, TagHistory> _currentValues = [];
 
-	private static async Task<Dictionary<int, TagHistory>> LoadValuesFromDatabaseAsync(DatalakeContext db)
+	private static bool IsNew(TagHistory existingValue, TagHistory incomingValue)
 	{
-		var dbValues = await ValuesRepository.ProtectedGetAllLastValuesAsync(db);
-		var newValues = dbValues.ToDictionary(x => x.TagId);
-		return newValues;
-	}
-
-	private static bool IsNew(TagHistory existing, TagHistory incoming)
-	{
-		if (incoming.Date < existing.Date)
+		if (incomingValue.Date < existingValue.Date)
 			return false; // запись в прошлое
 		else
 		{
-			if (!AreAlmostEqual(incoming.Number, existing.Number) || incoming.Text != existing.Text || incoming.Quality != existing.Quality)
+			if (!AreAlmostEqual(incomingValue.Number, existingValue.Number) || incomingValue.Text != existingValue.Text || incomingValue.Quality != existingValue.Quality)
 				return true; // значения не совпадают
 
 			return false; // значения совпали, значит повтор
@@ -120,5 +141,3 @@ public class DatalakeCurrentValuesStore
 		return rounded < epsilon;
 	}
 }
-
-#pragma warning restore CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена

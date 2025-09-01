@@ -8,15 +8,20 @@ namespace Datalake.Database.Functions;
 /// </summary>
 public static class Measures
 {
+	const string OperationName = "function";
+
 	/// <summary>
 	/// Замер времени, которое тратится на вызов методов, с возвратом ответа
 	/// </summary>
-	public static T Measure<T>(Func<T> action, ILogger logger, string methodName, string operationName = "function")
+	public static T Measure<T>(Func<T> action, ILogger logger, string methodName, string operation = OperationName, object? parameters = null)
 	{
 		var parent = SentrySdk.GetSpan();
 		var span = parent is not null
-			? parent.StartChild(operationName, methodName)           // дочерний спан
-			: SentrySdk.StartTransaction(methodName, operationName); // корневая транзакция
+			? parent.StartChild(operation, methodName)           // дочерний спан
+			: SentrySdk.StartTransaction(methodName, operation); // корневая транзакция
+
+		if (parameters != null)
+			span.SetData($"parameters", parameters);
 
 		try
 		{
@@ -39,26 +44,29 @@ public static class Measures
 	/// <summary>
 	/// Замер времени, которое тратится на вызов методов
 	/// </summary>
-	public static void Measure(Action action, ILogger logger, string methodName, string operationName = "function") => 
+	public static void Measure(Action action, ILogger logger, string methodName, string operation = OperationName, object? parameters = null) => 
 		Measure<object?>(() =>
 		{
 			action();
 			return null;
-		}, logger, methodName, operationName);
+		}, logger, methodName, operation, parameters);
 
 	/// <summary>
 	/// Замер времени, которое тратится на вызов методов, с возвратом ответа, асинхронный
 	/// </summary>
-	public static async Task<T> MeasureAsync<T>(Func<Task<T>> action, ILogger logger, string methodName, string operationName = "function")
+	public static async Task<T> MeasureAsync<T>(Func<Task<T>> action, ILogger logger, string methodName, string operation = OperationName, object? parameters = null)
 	{
 		var parent = SentrySdk.GetSpan();
 		var span = parent is not null
-			? parent.StartChild(operationName, methodName)
-			: SentrySdk.StartTransaction(methodName, operationName);
+			? parent.StartChild(operation, methodName)
+			: SentrySdk.StartTransaction(methodName, operation);
+
+		if (parameters != null)
+			span.SetData($"parameters", parameters);
 
 		try
 		{
-			var result = await action().ConfigureAwait(false);
+			var result = await action()/*.ConfigureAwait(false)*/;
 
 			span.Finish(SpanStatus.Ok);
 			logger.LogDebug("Выполнение метода {Method}: {Elapsed} мс", methodName, span.Duration());
@@ -77,10 +85,10 @@ public static class Measures
 	/// <summary>
 	/// Замер времени, которое тратится на вызов методов, с возвратом ответа, асинхронный
 	/// </summary>
-	public static Task MeasureAsync(Func<Task> action, ILogger logger, string methodName, string operationName = "function")
+	public static Task MeasureAsync(Func<Task> action, ILogger logger, string methodName, string operation = OperationName, object? parameters = null)
 		=> MeasureAsync<object?>(async () =>
 		{
 			await action().ConfigureAwait(false);
 			return null;
-		}, logger, methodName, operationName);
+		}, logger, methodName, operation, parameters);
 }

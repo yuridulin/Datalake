@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using Datalake.Database;
+using Datalake.Database.Constants;
+using System.Text;
 using System.Text.Json;
 
 namespace Datalake.Server.Middlewares;
@@ -30,7 +32,7 @@ public class SentryRequestBodyMiddleware : IMiddleware
 		// Пытаемся распарсить JSON и скрыть чувствительные поля
 		try
 		{
-			var json = JsonSerializer.Deserialize<Dictionary<string, object>>(bodyAsText);
+			var json = JsonSerializer.Deserialize<Dictionary<string, object>>(bodyAsText, Json.JsonSerializerOptions);
 			if (json != null)
 			{
 				var sensitiveKeys = new[] { "password", "token", "secret", "authorization" };
@@ -39,7 +41,7 @@ public class SentryRequestBodyMiddleware : IMiddleware
 					if (json.ContainsKey(key))
 						json[key] = "***MASKED***";
 				}
-				bodyAsText = JsonSerializer.Serialize(json);
+				bodyAsText = JsonSerializer.Serialize(json, Json.JsonSerializerOptions);
 			}
 		}
 		catch

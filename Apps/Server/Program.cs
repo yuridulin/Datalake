@@ -1,4 +1,5 @@
 using Datalake.Database;
+using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.Initialization;
@@ -29,7 +30,6 @@ using Serilog;
 using Serilog.Events;
 using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Datalake.Server;
 
@@ -83,8 +83,8 @@ public class Program
 		// Json
 		builder.Services.Configure<JsonOptions>(options =>
 		{
-			options.SerializerOptions.NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals;
-			options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+			options.SerializerOptions.NumberHandling = Json.JsonSerializerOptions.NumberHandling;
+			options.SerializerOptions.PropertyNamingPolicy = Json.JsonSerializerOptions.PropertyNamingPolicy;
 		});
 
 		// MVC
@@ -230,7 +230,7 @@ public class Program
 			.UseSerilogRequestLogging(options =>
 			{
 				// шаблон одного сообщения на запрос
-				options.MessageTemplate = "Запрос API {Controller}.{Action}: статус {StatusCode} за {Elapsed:0} мс";
+				options.MessageTemplate = "Запрос API {Method} {Controller}.{Action}: статус {StatusCode} за {Elapsed:0} мс";
 
 				// если упало — логируем Error, иначе Information
 				options.GetLevel = (httpContext, elapsed, ex) =>
@@ -246,6 +246,8 @@ public class Program
 					var routePattern = endpoint?.Metadata.GetMetadata<RouteNameMetadata>();
 					var actionDescriptor = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>();
 
+					diagnosticContext.Set("Method", httpContext.Request.Method);
+
 					if (actionDescriptor != null)
 					{
 						diagnosticContext.Set("Controller", actionDescriptor.ControllerName);
@@ -254,7 +256,7 @@ public class Program
 					else
 					{
 						diagnosticContext.Set("Controller", "?");
-						diagnosticContext.Set("Action", "?");
+						diagnosticContext.Set("Action", httpContext.Request.Path);
 					}
 				};
 			})

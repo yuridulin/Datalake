@@ -1,5 +1,4 @@
-﻿using Datalake.Database;
-using Datalake.Database.Repositories;
+﻿using Datalake.Database.Repositories;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Auth;
@@ -12,7 +11,6 @@ namespace Datalake.Server.Controllers;
 
 /// <inheritdoc />
 public class ValuesController(
-	DatalakeContext db,
 	AuthenticationService authenticator,
 	ValuesRepository valuesRepository,
 	TagsStateService tagsStateService/*,
@@ -25,7 +23,7 @@ public class ValuesController(
 		var user = authenticator.Authenticate(HttpContext);
 
 		var sw = Stopwatch.StartNew();
-		var responses = await valuesRepository.GetValuesAsync(db, user, requests);
+		var responses = await valuesRepository.GetValuesAsync(user, requests);
 		sw.Stop();
 
 		tagsStateService.UpdateTagState(requests);
@@ -40,7 +38,7 @@ public class ValuesController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		var responses = await valuesRepository.WriteManualValuesAsync(db, user, requests);
+		var responses = await valuesRepository.WriteManualValuesAsync(user, requests);
 
 		return responses;
 	}

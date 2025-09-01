@@ -105,7 +105,7 @@ internal class AggregateCollector : CollectorBase
 
 	private async Task<List<ValueWriteRequest>> GetAggregated(TagAggregationRule[] rules, DateTime date, AggregationPeriod period)
 	{
-		var aggregated = await Measures.Measure(() => ValuesRepository.GetWeightedAggregatedValuesAsync(_db, rules.Select(x => x.TagSourceId).ToArray(), date, period), _logger, nameof(ValuesRepository.GetWeightedAggregatedValuesAsync));
+		var aggregated = await DatabaseAggregation.GetWeightedAggregatedValuesAsync(_db, _logger, rules.Select(x => x.TagSourceId).ToArray(), date, period);
 
 		_tagsStateService.UpdateTagState([
 			new()
