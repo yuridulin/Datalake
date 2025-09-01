@@ -49,7 +49,7 @@ public class ValuesRepository(
 				var identifiers = request.TagsId?.ToHashSet() ?? [];
 				var guids = request.Tags?.ToHashSet() ?? [];
 
-				var tags = currentState.CachedTags
+				var foundTags = currentState.CachedTags
 					.Where(tag => identifiers.Contains(tag.Id) || guids.Contains(tag.Guid))
 					.Select(x => new ValuesTrustedRequest.TagSettings
 					{
@@ -69,6 +69,39 @@ public class ValuesRepository(
 					})
 					.ToArray();
 
+				// заглушки для тегов, которые мы не нашли в системе
+				var notFoundById = identifiers
+					.Except(foundTags.Select(t => t.Id))
+					.Select(id => new ValuesTrustedRequest.TagSettings
+					{
+						Id = id,
+						Guid = Guid.Empty,
+						Name = string.Empty,
+						Resolution = TagResolution.NotSet,
+						ScalingCoefficient = 1,
+						SourceId = 0,
+						SourceType = SourceType.NotSet,
+						Type = TagType.String,
+						IsDeleted = false,
+						Result = ValueResult.NotFound
+					});
+
+				var notFoundByGuid = guids
+					.Except(foundTags.Select(t => t.Guid))
+					.Select(guid => new ValuesTrustedRequest.TagSettings
+					{
+						Id = 0,
+						Guid = guid,
+						Name = string.Empty,
+						Resolution = TagResolution.NotSet,
+						ScalingCoefficient = 1,
+						SourceId = 0,
+						SourceType = SourceType.NotSet,
+						Type = TagType.String,
+						IsDeleted = false,
+						Result = ValueResult.NotFound
+					});
+
 				return new ValuesTrustedRequest
 				{
 					RequestKey = request.RequestKey,
@@ -80,7 +113,10 @@ public class ValuesRepository(
 					},
 					Resolution = request.Resolution,
 					Func = request.Func,
-					Tags = tags,
+					Tags = foundTags
+						.Concat(notFoundById)
+						.Concat(notFoundByGuid)
+						.ToArray(),
 				};
 			})
 			.ToArray();
@@ -349,25 +385,25 @@ public class ValuesRepository(
 						};
 						var tagValues = requestValues.Where(x => x.TagId == tag.Id).ToList();
 
-						// так как при получении истории мы делаем locf значений до начала диапазона, у нас должно быть минимум одно значение
-						// если ноль - условие не корректно или тега вообще не существовало
-						if (tagValues.Count == 0)
-						{
-							tagResponse.Result = ValueResult.ValueNotFound;
-							tagResponse.Values = [
-								new()
-								{
-									Date = old,
-									DateString = old.ToString(DateFormats.HierarchicalWithMilliseconds),
-									Quality = TagQuality.Bad_NoValues,
-									Value = 0,
-								}
-							];
-						}
 						// если у нас не Ok, то тега нет, или нет доступа к нему
 						// так или иначе, значения нас уже не интересуют
-						else if (tagResponse.Result == ValueResult.Ok)
+						if (tagResponse.Result == ValueResult.Ok)
 						{
+							// так как при получении истории мы делаем locf значений до начала диапазона, у нас должно быть минимум одно значение
+							// если ноль - условие не корректно или тега вообще не существовало
+							if (tagValues.Count == 0)
+							{
+								tagResponse.Result = ValueResult.ValueNotFound;
+								tagResponse.Values = [
+									new()
+									{
+										Date = old,
+										DateString = old.ToString(DateFormats.HierarchicalWithMilliseconds),
+										Quality = TagQuality.Bad_NoValues,
+										Value = 0,
+									}
+								];
+							}
 							if (request.Resolution != null && request.Resolution > 0)
 							{
 								tagValues = StretchByResolution(tagValues, old, young, request.Resolution.Value);
