@@ -374,3 +374,4 @@ desktop.ini
 /Apps/Server/Sentry
 /Docker/postgres/database
 /Apps/Client/datalake/tsconfig.app.tsbuildinfo
+/Apps/Client/datalake/tsconfig.node.tsbuildinfo
