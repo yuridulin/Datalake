@@ -11,6 +11,29 @@
  */
 
 /**
+ * Характеристика ответа на запрос на чтение/запись значений по тегу
+ *
+ * 0 = UnknownError
+ * 1 = Ok
+ * 2 = NotFound
+ * 3 = IsDeleted
+ * 4 = NoAccess
+ * 5 = NotManual
+ * 6 = ValueNotFound
+ * 7 = InternalError
+ */
+export enum ValueResult {
+  UnknownError = 0,
+  Ok = 1,
+  NotFound = 2,
+  IsDeleted = 3,
+  NoAccess = 4,
+  NotManual = 5,
+  ValueNotFound = 6,
+  InternalError = 7,
+}
+
+/**
  * Тип агрегирования данных
  *
  * 0 = List
@@ -1175,8 +1198,8 @@ export interface ValuesResponse {
 export type ValuesTagResponse = TagSimpleInfo & {
   /** Список значений */
   values: ValueRecord[];
-  /** Флаг, говорящий о недостаточности доступа для записи у пользователя */
-  noAccess?: boolean | null;
+  /** Как прошла операция */
+  result: ValueResult;
 };
 
 /** Запись о значении */

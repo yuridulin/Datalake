@@ -373,3 +373,4 @@ desktop.ini
 /Server/storage/database
 /Apps/Server/Sentry
 /Docker/postgres/database
+/Apps/Client/datalake/tsconfig.app.tsbuildinfo
