@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"lint": "tsc -b",
+		"lint": "tsc -b && npx eslint src --ext .ts --fix",
 		"swagger": "npx swagger-typescript-api generate --path \"http://localhost:7630/swagger/Datalake%20App/swagger.json\" --output \"./src/generated\" --axios --modular --clean-output --extract-request-body --responses",
 		"build": "vite build",
 		"build-local": "tsc -b && vite build && npm run update-datalake-client",
