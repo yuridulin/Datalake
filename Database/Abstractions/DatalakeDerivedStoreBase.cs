@@ -35,9 +35,9 @@ public abstract class DatalakeDerivedStoreBase<TState>
 			{
 				// Пытаемся установить новую версию
 				long originalVersion = Interlocked.CompareExchange(
-						ref _lastProcessingDataVersion,
-						newState.Version,
-						currentVersion);
+					ref _lastProcessingDataVersion,
+					newState.Version,
+					currentVersion);
 
 				// Если удалось установить - запускаем обработку
 				if (originalVersion == currentVersion)

@@ -11,7 +11,7 @@ public record class DatalakeDataState
 	/// <summary>
 	/// Версия снимка
 	/// </summary>
-	public long Version { get; init; } = DateTime.UtcNow.Ticks;
+	public long Version { get; private set; } = DateTime.UtcNow.Ticks;
 
 	#region Таблицы
 
@@ -81,6 +81,7 @@ public record class DatalakeDataState
 
 	internal void InitDictionaries()
 	{
+		Version = DateTime.UtcNow.Ticks;
 		BlocksById = Blocks.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
 		SourcesById = Sources.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
 		TagsByGuid = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.GlobalGuid);
