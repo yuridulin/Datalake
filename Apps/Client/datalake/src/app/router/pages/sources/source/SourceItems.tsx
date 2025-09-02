@@ -20,6 +20,7 @@ import {
 	PlusCircleOutlined,
 } from '@ant-design/icons'
 import { Alert, Button, Col, Input, Popconfirm, Radio, Row, Table, TableColumnsType, Tag, theme, Tree } from 'antd'
+import dayjs from 'dayjs'
 import debounce from 'debounce'
 import { useEffect, useState } from 'react'
 
@@ -283,7 +284,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 			),
 			render: (_, record) =>
 				record.tagInfo ? (
-					record.isTagInUse ? (
+					record.isTagInUse && dayjs(record.isTagInUse).add(30, 'minute') > dayjs() ? (
 						<CheckCircleOutlined style={{ color: token.colorSuccess }} title='Тег используется' />
 					) : (
 						<CloseCircleOutlined title='Тег не используется' />
@@ -373,7 +374,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[items],
 	)
-	useEffect(read, [source])
+	useEffect(read, [store.api, source])
 
 	useEffect(() => {
 		localStorage.setItem(localStorageKey, viewMode)

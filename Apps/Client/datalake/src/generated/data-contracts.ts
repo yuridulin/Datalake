@@ -747,8 +747,11 @@ export interface SourceEntryInfo {
   itemInfo?: SourceItemInfo | null;
   /** Сопоставленный тег в базе */
   tagInfo?: SourceTagInfo | null;
-  /** Используется ли тег в запросах */
-  isTagInUse?: boolean;
+  /**
+   * Используется ли тег в запросах
+   * @format date-time
+   */
+  isTagInUse?: string | null;
 }
 
 /** Информация о теге, берущем данные из этого источника */
@@ -1183,101 +1186,6 @@ export interface TagUpdateInputRequest {
   tagRelationId: number;
 }
 
-/** Ответ на запрос для получения значений, включающий обработанные теги и идентификатор запроса */
-export interface ValuesResponse {
-  /**
-   * Идентификатор запроса, который будет передан в соответствующий объект ответа
-   * @minLength 1
-   */
-  requestKey: string;
-  /** Список глобальных идентификаторов тегов */
-  tags: ValuesTagResponse[];
-}
-
-/** Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения */
-export type ValuesTagResponse = TagSimpleInfo & {
-  /** Список значений */
-  values: ValueRecord[];
-  /** Как прошла операция */
-  result: ValueResult;
-};
-
-/** Запись о значении */
-export interface ValueRecord {
-  /**
-   * Дата, на которую значение актуально
-   * @format date-time
-   * @minLength 1
-   */
-  date: string;
-  /**
-   * Строковое представление даты
-   * @minLength 1
-   */
-  dateString: string;
-  /** Значение */
-  value?: any;
-  /** Достоверность значения */
-  quality: TagQuality;
-}
-
-/** Данные запроса для получения значений */
-export interface ValuesRequest {
-  /**
-   * Идентификатор запроса, который будет передан в соответствующий объект ответа
-   * @minLength 1
-   */
-  requestKey: string;
-  /** Список глобальных идентификаторов тегов */
-  tags?: string[] | null;
-  /** Список локальных идентификаторов тегов */
-  tagsId?: number[] | null;
-  /**
-   * Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
-   * @format date-time
-   */
-  old?: string | null;
-  /**
-   * Дата, по которую (включительно) нужно получить значения. По умолчанию - текущая дата
-   * @format date-time
-   */
-  young?: string | null;
-  /**
-   * Дата, на которую (по точному соответствию) нужно получить значения. По умолчанию - не используется
-   * @format date-time
-   */
-  exact?: string | null;
-  /** Шаг времени, по которому нужно разбить значения. Если не задан, будут оставлены записи о изменениях значений */
-  resolution?: TagResolution | null;
-  /** Тип агрегирования значений, который нужно применить к этому запросу. По умолчанию - список */
-  func?: AggregationFunc | null;
-}
-
-/** Данные запроса на ввод значения */
-export interface ValueWriteRequest {
-  /**
-   * Глобальный идентификатор тега
-   * @format guid
-   */
-  guid?: string | null;
-  /**
-   * Идентификатор тега в локальной базе
-   * @format int32
-   */
-  id?: number | null;
-  /** Наименование тега */
-  name?: string | null;
-  /** Новое значение */
-  value?: any;
-  /**
-   * Дата, на которую будет записано значение
-   * @format date-time
-   */
-  date?: string | null;
-  /** Флаг достоверности нового значения */
-  quality?: TagQuality | null;
-}
-
 /** Информация о группе пользователей */
 export type UserGroupInfo = UserGroupSimpleInfo & {
   /** Произвольное описание группы */
@@ -1421,9 +1329,100 @@ export interface UserUpdateRequest {
   type: UserType;
 }
 
-export type TagsGetValuesPayload = ValuesRequest[];
+/** Ответ на запрос для получения значений, включающий обработанные теги и идентификатор запроса */
+export interface ValuesResponse {
+  /**
+   * Идентификатор запроса, который будет передан в соответствующий объект ответа
+   * @minLength 1
+   */
+  requestKey: string;
+  /** Список глобальных идентификаторов тегов */
+  tags: ValuesTagResponse[];
+}
 
-export type TagsWriteValuesPayload = ValueWriteRequest[];
+/** Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения */
+export type ValuesTagResponse = TagSimpleInfo & {
+  /** Список значений */
+  values: ValueRecord[];
+  /** Как прошла операция */
+  result: ValueResult;
+};
+
+/** Запись о значении */
+export interface ValueRecord {
+  /**
+   * Дата, на которую значение актуально
+   * @format date-time
+   * @minLength 1
+   */
+  date: string;
+  /**
+   * Строковое представление даты
+   * @minLength 1
+   */
+  dateString: string;
+  /** Значение */
+  value?: any;
+  /** Достоверность значения */
+  quality: TagQuality;
+}
+
+/** Данные запроса для получения значений */
+export interface ValuesRequest {
+  /**
+   * Идентификатор запроса, который будет передан в соответствующий объект ответа
+   * @minLength 1
+   */
+  requestKey: string;
+  /** Список глобальных идентификаторов тегов */
+  tags?: string[] | null;
+  /** Список локальных идентификаторов тегов */
+  tagsId?: number[] | null;
+  /**
+   * Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
+   * @format date-time
+   */
+  old?: string | null;
+  /**
+   * Дата, по которую (включительно) нужно получить значения. По умолчанию - текущая дата
+   * @format date-time
+   */
+  young?: string | null;
+  /**
+   * Дата, на которую (по точному соответствию) нужно получить значения. По умолчанию - не используется
+   * @format date-time
+   */
+  exact?: string | null;
+  /** Шаг времени, по которому нужно разбить значения. Если не задан, будут оставлены записи о изменениях значений */
+  resolution?: TagResolution | null;
+  /** Тип агрегирования значений, который нужно применить к этому запросу. По умолчанию - список */
+  func?: AggregationFunc | null;
+}
+
+/** Данные запроса на ввод значения */
+export interface ValueWriteRequest {
+  /**
+   * Глобальный идентификатор тега
+   * @format guid
+   */
+  guid?: string | null;
+  /**
+   * Идентификатор тега в локальной базе
+   * @format int32
+   */
+  id?: number | null;
+  /** Наименование тега */
+  name?: string | null;
+  /** Новое значение */
+  value?: any;
+  /**
+   * Дата, на которую будет записано значение
+   * @format date-time
+   */
+  date?: string | null;
+  /** Флаг достоверности нового значения */
+  quality?: TagQuality | null;
+}
 
 /** Список запросов с настройками */
 export type ValuesGetPayload = ValuesRequest[];

@@ -18,5 +18,5 @@ public class SourceEntryInfo
 	/// <summary>
 	/// Используется ли тег в запросах
 	/// </summary>
-	public bool IsTagInUse { get; set; }
+	public DateTime? IsTagInUse { get; set; }
 }

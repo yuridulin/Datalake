@@ -129,7 +129,7 @@ public class SourcesController(
 			{
 				TagInfo = tag,
 				ItemInfo = sourceItems.TryGetValue(tag.Item, out var itemInfo) ? itemInfo : null,
-				IsTagInUse = tagsStates.TryGetValue(tag.Id, out var metrics) && metrics.Any(x => !Lists.InnerRequests.Contains(x.Key))
+				IsTagInUse = tagsStates.TryGetValue(tag.Id, out var metrics) ? metrics.Where(x => !Lists.InnerRequests.Contains(x.Key)).Max(x => x.Value) : null,
 			})
 			.Union(sourceItems
 				.Where(itemKeyValue => !sourceTags.Select(tag => tag.Item).Contains(itemKeyValue.Key))
@@ -137,7 +137,7 @@ public class SourcesController(
 				{
 					TagInfo = null,
 					ItemInfo = itemKeyValue.Value,
-					IsTagInUse = false,
+					IsTagInUse = null,
 				}));
 
 		return all
