@@ -47,11 +47,11 @@ const TagView = observer(() => {
 		Promise.all([
 			store.api.tagsGet(Number(id)).then((res) => setTag(res.data)),
 			store.api
-				.systemGetTagState(Number(id))
+				.statesGetTag(Number(id))
 				.then((res) => setMetrics(res.data))
 				.catch(() => setMetrics({})),
 		]).finally(() => setLoading(false))
-	}, [store, id])
+	}, [store.api, id])
 
 	useEffect(loadTagData, [loadTagData])
 
@@ -198,7 +198,7 @@ const TagView = observer(() => {
 				label: 'Расчет',
 				children:
 					tag.calculation === TagCalculation.Formula ? (
-						<TagFormulaView formula={tag.formula} inputs={tag.formulaInputs} />
+						<TagFormulaView id={Number(id)} formula={tag.formula} inputs={tag.formulaInputs} />
 					) : tag.calculation === TagCalculation.Thresholds ? (
 						<TagThresholdsView tag={tag} />
 					) : (
@@ -206,7 +206,7 @@ const TagView = observer(() => {
 					),
 			})
 		return _tabs
-	}, [tag, metrics, relations, tagMapping])
+	}, [tag, metrics, id, relations, tagMapping])
 
 	return isLoading ? (
 		<Spin />

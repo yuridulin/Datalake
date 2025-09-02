@@ -19,9 +19,9 @@ const TagsAggregatedList = () => {
 				.catch(() => setTags([]))
 			return prevTags
 		})
-	}, [store])
+	}, [store.api])
 
-	const createTag = () => {
+	const createTag = useCallback(() => {
 		store.api
 			.tagsCreate({
 				sourceId: SourceType.Aggregated,
@@ -33,7 +33,7 @@ const TagsAggregatedList = () => {
 				setCreated(res.data)
 			})
 			.catch()
-	}
+	}, [store.api, getTags])
 
 	useEffect(getTags, [getTags])
 
@@ -43,7 +43,7 @@ const TagsAggregatedList = () => {
 				Список агрегированных тегов
 			</PageHeader>
 			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
-			<TagsTable tags={tags} hideSource={true} />
+			<TagsTable tags={tags} hideSource={true} showState={true} />
 		</>
 	)
 }

@@ -27,9 +27,11 @@ import {
   SourceItemInfo,
   SourceStateInfo,
   SourceUpdateRequest,
+  StatesGetTagsReceivePayload,
   TagCreateRequest,
   TagFullInfo,
   TagInfo,
+  TagReceiveState,
   TagUpdateRequest,
   UserAuthInfo,
   UserCreateRequest,
@@ -498,6 +500,110 @@ export class Api<
   /**
    * No description
    *
+   * @tags States
+   * @name StatesGetUsers
+   * @summary Get: Информация о визитах пользователей
+   * @request GET:/api/states/users
+   * @response `200` `Record<string,string>` Даты визитов, сопоставленные с идентификаторами пользователей
+   */
+  statesGetUsers = (params: RequestParams = {}) =>
+    this.request<Record<string, string>, any>({
+      path: `/api/states/users`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags States
+   * @name StatesGetSources
+   * @summary Get: Информация о подключении к источникам данных
+   * @request GET:/api/states/sources
+   * @response `200` `Record<string,SourceStateInfo>`
+   */
+  statesGetSources = (params: RequestParams = {}) =>
+    this.request<Record<string, SourceStateInfo>, any>({
+      path: `/api/states/sources`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags States
+   * @name StatesGetTags
+   * @summary Get: Информация о подключении к источникам данных
+   * @request GET:/api/states/tags
+   * @response `200` `Record<string,Record<string,string>>`
+   */
+  statesGetTags = (params: RequestParams = {}) =>
+    this.request<Record<string, Record<string, string>>, any>({
+      path: `/api/states/tags`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags States
+   * @name StatesGetTag
+   * @summary Get: Информация о подключении к источникам данных
+   * @request GET:/api/states/tags/{id}
+   * @response `200` `Record<string,string>`
+   */
+  statesGetTag = (id: number, params: RequestParams = {}) =>
+    this.request<Record<string, string>, any>({
+      path: `/api/states/tags/${id}`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags States
+   * @name StatesGetValues
+   * @summary Get: Получение метрик запросов на чтение
+   * @request GET:/api/states/values
+   * @response `200` `(KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo)[]`
+   */
+  statesGetValues = (params: RequestParams = {}) =>
+    this.request<
+      KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo[],
+      any
+    >({
+      path: `/api/states/values`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags States
+   * @name StatesGetTagsReceive
+   * @summary Post: Получение ошибок получения значений тегов
+   * @request POST:/api/states/calculation
+   * @response `200` `Record<string,TagReceiveState>`
+   */
+  statesGetTagsReceive = (
+    data: StatesGetTagsReceivePayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<Record<string, TagReceiveState>, any>({
+      path: `/api/states/calculation`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
    * @tags System
    * @name SystemGetLastUpdate
    * @summary Get: Получение даты последнего изменения структуры базы данных
@@ -585,70 +691,6 @@ export class Api<
    * No description
    *
    * @tags System
-   * @name SystemGetVisits
-   * @summary Get: Информация о визитах пользователей
-   * @request GET:/api/system/visits
-   * @response `200` `Record<string,string>` Даты визитов, сопоставленные с идентификаторами пользователей
-   */
-  systemGetVisits = (params: RequestParams = {}) =>
-    this.request<Record<string, string>, any>({
-      path: `/api/system/visits`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemGetSourcesStates
-   * @summary Get: Информация о подключении к источникам данных
-   * @request GET:/api/system/sources
-   * @response `200` `Record<string,SourceStateInfo>`
-   */
-  systemGetSourcesStates = (params: RequestParams = {}) =>
-    this.request<Record<string, SourceStateInfo>, any>({
-      path: `/api/system/sources`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemGetTagsStates
-   * @summary Get: Информация о подключении к источникам данных
-   * @request GET:/api/system/tags
-   * @response `200` `Record<string,Record<string,string>>`
-   */
-  systemGetTagsStates = (params: RequestParams = {}) =>
-    this.request<Record<string, Record<string, string>>, any>({
-      path: `/api/system/tags`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemGetTagState
-   * @summary Get: Информация о подключении к источникам данных
-   * @request GET:/api/system/tags/{id}
-   * @response `200` `Record<string,string>`
-   */
-  systemGetTagState = (id: number, params: RequestParams = {}) =>
-    this.request<Record<string, string>, any>({
-      path: `/api/system/tags/${id}`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
    * @name SystemGetSettings
    * @summary Get: Получение информации о настройках сервера
    * @request GET:/api/system/settings
@@ -720,25 +762,6 @@ export class Api<
   systemGetAccess = (params: RequestParams = {}) =>
     this.request<Record<string, UserAuthInfo>, any>({
       path: `/api/system/access`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemGetReadMetrics
-   * @summary Get: Получение метрик запросов на чтение
-   * @request GET:/api/system/reads
-   * @response `200` `(KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo)[]`
-   */
-  systemGetReadMetrics = (params: RequestParams = {}) =>
-    this.request<
-      KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo[],
-      any
-    >({
-      path: `/api/system/reads`,
       method: "GET",
       format: "json",
       ...params,

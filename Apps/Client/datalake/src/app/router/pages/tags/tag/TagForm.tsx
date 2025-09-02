@@ -79,7 +79,7 @@ const TagForm = () => {
 				setValue((prev) => (prev && next && prev.value == next.value && prev.quality == next.quality ? prev : next))
 			})
 			.catch(() => setValue(null))
-	}, [store, id])
+	}, [store.api, id])
 
 	useEffect(() => {
 		getValue()
@@ -170,9 +170,9 @@ const TagForm = () => {
 				})),
 			)
 		})
-	}, [store, request.sourceId])
+	}, [store.api, request.sourceId])
 
-	useEffect(loadTagData, [store, id])
+	useEffect(loadTagData, [store.api, id])
 	useEffect(getItems, [getItems])
 
 	useEffect(() => {

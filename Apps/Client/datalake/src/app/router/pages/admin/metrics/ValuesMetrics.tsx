@@ -51,11 +51,11 @@ const ValuesMetrics = () => {
 	const getMetrics = useCallback(() => {
 		setLoading(true)
 		store.api
-			.systemGetReadMetrics()
+			.statesGetValues()
 			.then((res) => setMetrics(res.data))
 			.catch(() => setMetrics([]))
 			.finally(() => setLoading(false))
-	}, [])
+	}, [store.api])
 
 	useEffect(getMetrics, [getMetrics])
 

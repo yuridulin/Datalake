@@ -19,9 +19,9 @@ const TagsCalculatedList = () => {
 				.catch(() => setTags([]))
 			return prevTags
 		})
-	}, [store])
+	}, [store.api])
 
-	function createTag() {
+	const createTag = useCallback(() => {
 		store.api
 			.tagsCreate({
 				sourceId: SourceType.Calculated,
@@ -33,7 +33,7 @@ const TagsCalculatedList = () => {
 				setCreated(res.data)
 			})
 			.catch()
-	}
+	}, [store.api, getTags])
 
 	useEffect(getTags, [getTags])
 
@@ -43,7 +43,7 @@ const TagsCalculatedList = () => {
 				Список вычисляемых тегов
 			</PageHeader>
 			{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
-			<TagsTable tags={tags} hideSource={true} />
+			<TagsTable tags={tags} hideSource={true} showState={true} />
 		</>
 	)
 }

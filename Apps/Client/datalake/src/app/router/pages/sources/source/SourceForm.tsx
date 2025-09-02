@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import SourceItems from './SourceItems'
 
-const AvailableSourceTypes = [SourceType.NotSet, SourceType.Inopc, SourceType.Datalake, SourceType.DatalakeV2]
+const AvailableSourceTypes = [SourceType.NotSet, SourceType.Inopc, SourceType.Datalake]
 
 const SourceForm = () => {
 	const store = useAppStore()

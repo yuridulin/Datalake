@@ -34,23 +34,6 @@ export enum ValueResult {
 }
 
 /**
- * Тип агрегирования данных
- *
- * 0 = List
- * 1 = Sum
- * 2 = Avg
- * 3 = Min
- * 4 = Max
- */
-export enum AggregationFunc {
-  List = 0,
-  Sum = 1,
-  Avg = 2,
-  Min = 3,
-  Max = 4,
-}
-
-/**
  * Степень важности сообщения
  *
  * 0 = Trace
@@ -94,6 +77,23 @@ export enum LogCategory {
   Users = 80,
   UserGroups = 90,
   Blocks = 100,
+}
+
+/**
+ * Тип агрегирования данных
+ *
+ * 0 = List
+ * 1 = Sum
+ * 2 = Avg
+ * 3 = Min
+ * 4 = Max
+ */
+export enum AggregationFunc {
+  List = 0,
+  Sum = 1,
+  Avg = 2,
+  Min = 3,
+  Max = 4,
 }
 
 /**
@@ -189,8 +189,7 @@ export enum UserType {
  *
  * 0 = System
  * 1 = Inopc
- * 2 = Datalake
- * 3 = Datalake_v2
+ * 3 = Datalake
  * -666 = NotSet
  * -3 = Aggregated
  * -2 = Manual
@@ -200,8 +199,7 @@ export enum SourceType {
   /** Системные теги с данными о текущей работе различных частей приложения */
   System = 0,
   Inopc = 1,
-  Datalake = 2,
-  DatalakeV2 = 3,
+  Datalake = 3,
   /** Заглушка для неопределённого источника */
   NotSet = -666,
   /** Теги, значения которых считаются на стороне БД как агрегированные значения тега-источника за прошедший период */
@@ -808,43 +806,6 @@ export interface TagInputMinimalInfo {
   variableName?: string;
 }
 
-/** Запись собщения */
-export interface LogInfo {
-  /**
-   * Идентификатор записи
-   * @format int64
-   */
-  id: number;
-  /**
-   * Дата формата DateFormats.Long
-   * @minLength 1
-   */
-  dateString: string;
-  /** Категория сообщения (к какому объекту относится) */
-  category: LogCategory;
-  /** Степень важности сообщения */
-  type: LogType;
-  /**
-   * Текст сообщеня
-   * @minLength 1
-   */
-  text: string;
-  /** Информация об авторе сообщения */
-  author?: UserSimpleInfo | null;
-  /** Информация о затронутом тэге */
-  affectedTag?: TagSimpleInfo | null;
-  /** Информация о затронутом источнике */
-  affectedSource?: SourceSimpleInfo | null;
-  /** Информация о затронутом блоке */
-  affectedBlock?: BlockSimpleInfo | null;
-  /** Информация о затронутой учетной записи */
-  affectedUser?: UserSimpleInfo | null;
-  /** Информация о затронутом группе учетных записей */
-  affectedUserGroup?: UserGroupSimpleInfo | null;
-  /** Пояснения и дополнительная информация */
-  details?: string | null;
-}
-
 /** Объект состояния источника */
 export interface SourceStateInfo {
   /**
@@ -882,32 +843,6 @@ export interface SourceStateInfo {
    * @format int32
    */
   valuesLastDay: number;
-}
-
-/** Информация о настройках приложения, задаваемых через UI */
-export interface SettingsInfo {
-  /**
-   * Адрес сервера EnergoId, к которому выполняются подключения, включая порт при необходимости
-   *
-   * Протокол будет выбран на основе того, какой используется в клиенте в данный момент
-   * @minLength 1
-   */
-  energoIdHost: string;
-  /**
-   * Название клиента EnergoId, через который идет аутентификация
-   * @minLength 1
-   */
-  energoIdClient: string;
-  /**
-   * Конечная точка сервиса, который отдает информацию о пользователях EnergoId
-   * @minLength 1
-   */
-  energoIdApi: string;
-  /**
-   * Пользовательское название базы данных
-   * @minLength 1
-   */
-  instanceName: string;
 }
 
 export interface KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo {
@@ -968,6 +903,80 @@ export interface ValuesRequestUsageInfo {
    * @format int32
    */
   requestsLast24h?: number;
+}
+
+/** Состояние работы */
+export interface TagReceiveState {
+  /**
+   * Дата последней записи
+   * @format date-time
+   */
+  date?: string;
+  /** Сообщение о последней ошибке, если есть */
+  message?: string | null;
+}
+
+/** Запись собщения */
+export interface LogInfo {
+  /**
+   * Идентификатор записи
+   * @format int64
+   */
+  id: number;
+  /**
+   * Дата формата DateFormats.Long
+   * @minLength 1
+   */
+  dateString: string;
+  /** Категория сообщения (к какому объекту относится) */
+  category: LogCategory;
+  /** Степень важности сообщения */
+  type: LogType;
+  /**
+   * Текст сообщеня
+   * @minLength 1
+   */
+  text: string;
+  /** Информация об авторе сообщения */
+  author?: UserSimpleInfo | null;
+  /** Информация о затронутом тэге */
+  affectedTag?: TagSimpleInfo | null;
+  /** Информация о затронутом источнике */
+  affectedSource?: SourceSimpleInfo | null;
+  /** Информация о затронутом блоке */
+  affectedBlock?: BlockSimpleInfo | null;
+  /** Информация о затронутой учетной записи */
+  affectedUser?: UserSimpleInfo | null;
+  /** Информация о затронутом группе учетных записей */
+  affectedUserGroup?: UserGroupSimpleInfo | null;
+  /** Пояснения и дополнительная информация */
+  details?: string | null;
+}
+
+/** Информация о настройках приложения, задаваемых через UI */
+export interface SettingsInfo {
+  /**
+   * Адрес сервера EnergoId, к которому выполняются подключения, включая порт при необходимости
+   *
+   * Протокол будет выбран на основе того, какой используется в клиенте в данный момент
+   * @minLength 1
+   */
+  energoIdHost: string;
+  /**
+   * Название клиента EnergoId, через который идет аутентификация
+   * @minLength 1
+   */
+  energoIdClient: string;
+  /**
+   * Конечная точка сервиса, который отдает информацию о пользователях EnergoId
+   * @minLength 1
+   */
+  energoIdApi: string;
+  /**
+   * Пользовательское название базы данных
+   * @minLength 1
+   */
+  instanceName: string;
 }
 
 /** Информация о теге */
@@ -1423,6 +1432,9 @@ export interface ValueWriteRequest {
   /** Флаг достоверности нового значения */
   quality?: TagQuality | null;
 }
+
+/** Идентификаторы тегов */
+export type StatesGetTagsReceivePayload = number[];
 
 /** Список запросов с настройками */
 export type ValuesGetPayload = ValuesRequest[];

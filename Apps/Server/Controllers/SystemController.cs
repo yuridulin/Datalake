@@ -9,10 +9,7 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Settings;
-using Datalake.PublicApi.Models.Sources;
-using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Auth;
-using Datalake.Server.Services.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -25,11 +22,7 @@ public class SystemController(
 	DatalakeDataStore dataStore,
 	DatalakeAccessStore accessStore,
 	DatalakeCurrentValuesStore valuesStore,
-	SourcesStateService sourcesStateService,
-	TagsStateService tagsStateService,
-	UsersStateService usersStateService,
-	SettingsMemoryRepository settingsRepository,
-	RequestsStateService requestsStateService) : SystemControllerBase
+	SettingsMemoryRepository settingsRepository) : SystemControllerBase
 {
 	/// <inheritdoc />
 	public override async Task<ActionResult<string>> GetLastUpdateAsync()
@@ -57,47 +50,6 @@ public class SystemController(
 		return await AuditRepository.GetAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult<Dictionary<Guid, DateTime>>> GetVisitsAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
-
-		return await Task.FromResult(usersStateService.State());
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<Dictionary<int, SourceStateInfo>>> GetSourcesStatesAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Viewer);
-
-		return await Task.FromResult(sourcesStateService.State()
-			.Where(x => AccessChecks.HasAccessToSource(user, AccessType.Viewer, x.Key))
-			.ToDictionary());
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<Dictionary<int, Dictionary<string, DateTime>>>> GetTagsStatesAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		return await Task.FromResult(tagsStateService.GetTagsStates()
-			.Where(x => AccessChecks.HasAccessToTag(user, AccessType.Viewer, x.Key))
-			.ToDictionary());
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<Dictionary<string, DateTime>>> GetTagStateAsync(int id)
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		AccessChecks.ThrowIfNoAccessToTag(user, AccessType.Viewer, id);
-
-		return await Task.FromResult(tagsStateService.GetTagsStates().TryGetValue(id, out var state) ? state : []);
-	}
 
 	/// <inheritdoc />
 	public override async Task<ActionResult<SettingsInfo>> GetSettingsAsync()
@@ -153,14 +105,5 @@ public class SystemController(
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		return await Task.FromResult(accessStore.State.GetAll());
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]>> GetReadMetricsAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-
-		return await Task.FromResult(requestsStateService.GetAllStats().ToArray());
 	}
 }

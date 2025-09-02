@@ -34,7 +34,7 @@ const UsersList = observer(() => {
 
 	const getStates = useCallback(() => {
 		if (!store.hasGlobalAccess(AccessType.Manager)) return
-		store.api.systemGetVisits().then((res) => setStates(res.data))
+		store.api.statesGetUsers().then((res) => setStates(res.data))
 	}, [store])
 
 	const columns: TableColumnsType<UserInfo> = [
@@ -87,7 +87,7 @@ const UsersList = observer(() => {
 		},
 	]
 
-	useEffect(load, [store, getStates])
+	useEffect(load, [store.api, getStates])
 	useInterval(getStates, 5000)
 
 	return (

@@ -2,10 +2,8 @@ import { SourceType } from '../generated/data-contracts'
 
 function getSourceTypeName(sourceType: SourceType) {
 	switch (sourceType) {
-		case SourceType.DatalakeV2:
-			return 'Datalake v2'
 		case SourceType.Datalake:
-			return 'Datalake v1'
+			return 'Datalake'
 		case SourceType.Inopc:
 			return 'Inopc'
 		case SourceType.System:

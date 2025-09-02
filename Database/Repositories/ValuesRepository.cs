@@ -60,7 +60,7 @@ public class ValuesRepository(
 						SourceType = x.SourceType,
 						Type = x.Type,
 						IsDeleted = x.IsDeleted,
-						Result = 
+						Result =
 							!AccessChecks.HasAccessToTag(user, AccessType.Viewer, x.Id) ? ValueResult.NoAccess
 							: x.IsDeleted ? ValueResult.IsDeleted
 							: ValueResult.Ok,

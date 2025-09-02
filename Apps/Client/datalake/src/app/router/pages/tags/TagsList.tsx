@@ -16,7 +16,7 @@ const Tags = () => {
 				.catch(() => setTags([]))
 			return prevTags
 		})
-	}, [])
+	}, [store.api])
 
 	useEffect(getTags, [getTags])
 

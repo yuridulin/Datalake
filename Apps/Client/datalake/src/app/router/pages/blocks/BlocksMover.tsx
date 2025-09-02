@@ -115,7 +115,7 @@ const BlocksMover = observer(() => {
 		setBlocks(data)
 	}
 
-	useEffect(load, [store])
+	useEffect(load, [store.api])
 
 	return (
 		<>

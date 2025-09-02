@@ -38,7 +38,7 @@ const UserCreate = observer(() => {
 	const filterOption = (input: string, option?: { label: string; value: string }) =>
 		(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
 
-	useEffect(load, [store])
+	useEffect(load, [store.api])
 
 	if (!store.hasGlobalAccess(AccessType.Admin)) return <NoAccessEl />
 

@@ -19,9 +19,9 @@ const TagsManualList = () => {
 				.catch(() => setTags([]))
 			return prevTags
 		})
-	}, [store])
+	}, [store.api])
 
-	function createTag() {
+	const createTag = useCallback(() => {
 		store.api
 			.tagsCreate({
 				sourceId: SourceType.Manual,
@@ -33,7 +33,7 @@ const TagsManualList = () => {
 				setCreated(res.data)
 			})
 			.catch()
-	}
+	}, [store.api, getTags])
 
 	useEffect(getTags, [getTags])
 

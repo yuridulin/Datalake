@@ -46,7 +46,7 @@ const BlockView = observer(() => {
 		store.api.blocksCreateEmpty({ parentId: Number(id) }).then(getBlock)
 	}
 
-	useEffect(getBlock, [store, id])
+	useEffect(getBlock, [store.api, id])
 
 	// Создаем маппинг тегов для TagValuesViewer
 	const tagMapping = useMemo(() => {

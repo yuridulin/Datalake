@@ -3,8 +3,6 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Settings;
-using Datalake.PublicApi.Models.Sources;
-using Datalake.PublicApi.Models.Values;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -30,18 +28,6 @@ public abstract class SystemControllerBase : ControllerBase
 	/// <inheritdoc cref="GetLogsAsync" />
 	public const string Logs = "logs";
 
-	/// <inheritdoc cref="GetVisitsAsync" />
-	public const string Visits = "visits";
-
-	/// <inheritdoc cref="GetSourcesStatesAsync" />
-	public const string Sources = "sources";
-
-	/// <inheritdoc cref="GetTagsStatesAsync" />
-	public const string Tags = "tags";
-
-	/// <inheritdoc cref="GetTagStateAsync" />
-	public const string TagState = "tags/{id}";
-
 	/// <inheritdoc cref="GetSettingsAsync" />
 	public const string Settings = "settings";
 
@@ -56,9 +42,6 @@ public abstract class SystemControllerBase : ControllerBase
 
 	/// <inheritdoc cref="GetAccessAsync" />
 	public const string Access = "access";
-
-	/// <inheritdoc cref="GetReadMetricsAsync" />
-	public const string ReadMetrics = "reads";
 
 	#endregion Константы путей
 
@@ -101,35 +84,6 @@ public abstract class SystemControllerBase : ControllerBase
 		[FromQuery] Guid? author = null);
 
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Информация о визитах пользователей
-	/// </summary>
-	/// <returns>Даты визитов, сопоставленные с идентификаторами пользователей</returns>
-	[HttpGet(Visits)]
-	public abstract Task<ActionResult<Dictionary<Guid, DateTime>>> GetVisitsAsync();
-
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet(Sources)]
-	public abstract Task<ActionResult<Dictionary<int, SourceStateInfo>>> GetSourcesStatesAsync();
-
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet(Tags)]
-	public abstract Task<ActionResult<Dictionary<int, Dictionary<string, DateTime>>>> GetTagsStatesAsync();
-
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet(TagState)]
-	public abstract Task<ActionResult<Dictionary<string, DateTime>>> GetTagStateAsync(
-			[BindRequired, FromRoute] int id);
-
-	/// <summary>
 	/// <see cref="HttpMethod.Get" />: Получение информации о настройках сервера
 	/// </summary>
 	/// <returns>Информация о настройках</returns>
@@ -163,12 +117,6 @@ public abstract class SystemControllerBase : ControllerBase
 	/// </summary>
 	[HttpGet(Access)]
 	public abstract Task<ActionResult<Dictionary<Guid, UserAuthInfo>>> GetAccessAsync();
-
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение метрик запросов на чтение
-	/// </summary>
-	[HttpGet(ReadMetrics)]
-	public abstract Task<ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]>> GetReadMetricsAsync();
 
 	#endregion Методы
 }

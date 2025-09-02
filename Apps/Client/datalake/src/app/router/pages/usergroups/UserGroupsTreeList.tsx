@@ -26,7 +26,7 @@ const UserGroupsTreeList = observer(() => {
 		})
 	}
 
-	useEffect(load, [store])
+	useEffect(load, [store.api])
 
 	const expandKey = 'expandedUserGroups'
 	const [expandedRowKeys, setExpandedRowKeys] = useState(() => {

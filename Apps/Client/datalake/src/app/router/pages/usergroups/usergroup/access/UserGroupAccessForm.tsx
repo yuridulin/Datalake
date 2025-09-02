@@ -93,7 +93,7 @@ const UserGroupAccessForm = () => {
 		})
 	}
 
-	useEffect(getRights, [store, id])
+	useEffect(getRights, [store.api, id])
 
 	const columns: ColumnsType<FormType> = [
 		{

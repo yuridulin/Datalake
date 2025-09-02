@@ -5,6 +5,7 @@ import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithIn
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
+import { timeMask } from '@/store/appStore'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
@@ -28,8 +29,6 @@ const timeModeOptions: { label: string; value: TimeMode }[] = [
 	{ label: 'Срез', value: TimeModes.EXACT },
 	{ label: 'Диапазон', value: TimeModes.OLD_YOUNG },
 ]
-
-const timeMask = 'YYYY-MM-DDTHH:mm:ss'
 
 const ModeParam = 'V-M'
 const ResolutionParam = 'V-R'
@@ -146,7 +145,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 			})
 			.catch(console.error)
 			.finally(() => setLoading(false))
-	}, [tagMapping, settings])
+	}, [store.api, tagMapping, settings])
 
 	useEffect(() => {
 		if (!integrated) return

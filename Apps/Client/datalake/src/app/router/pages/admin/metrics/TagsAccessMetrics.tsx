@@ -43,7 +43,7 @@ const TagsAccessMetrics = () => {
 					notification.error({ message: 'Не удалось прочитать список тегов' })
 				}),
 			store.api
-				.systemGetTagsStates()
+				.statesGetTags()
 				.then((res) => {
 					metrics = res.data
 				})
@@ -69,7 +69,7 @@ const TagsAccessMetrics = () => {
 			})
 	}
 
-	useEffect(initialLoad, [])
+	useEffect(initialLoad, [store.api])
 
 	return (
 		<Table

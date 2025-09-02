@@ -25,7 +25,13 @@ const SourcesList = observer(() => {
 	const [sources, setSources] = useState([] as DataCell[])
 	const [states, setStates] = useState({} as Record<string, SourceStateInfo>)
 
-	const load = () => {
+	const getStates = useCallback(() => {
+		store.api.statesGetSources().then((res) => {
+			setStates(res.data)
+		})
+	}, [store.api])
+
+	const load = useCallback(() => {
 		setSources([])
 		store.api
 			.sourcesGetAll({ withCustom: true })
@@ -75,15 +81,9 @@ const SourcesList = observer(() => {
 			.catch(() => {
 				notification.error({ message: 'Не удалось получить список источников' })
 			})
-	}
+	}, [store.api, getStates])
 
-	const getStates = useCallback(() => {
-		store.api.systemGetSourcesStates().then((res) => {
-			setStates(res.data)
-		})
-	}, [store])
-
-	const createSource = () => {
+	const createSource = useCallback(() => {
 		store.api
 			.sourcesCreateEmpty()
 			.then((res) => {
@@ -91,7 +91,7 @@ const SourcesList = observer(() => {
 				notification.success({ message: 'Создан источник ' + res.data.name })
 			})
 			.catch(() => notification.error({ message: 'Не удалось создать источник' }))
-	}
+	}, [store.api, load])
 
 	const columns: TableColumnsType<DataCell> = [
 		{
@@ -202,7 +202,7 @@ const SourcesList = observer(() => {
 		},
 	]
 
-	useEffect(load, [getStates, store])
+	useEffect(load, [getStates, load, store.api])
 	useInterval(getStates, 5000)
 
 	return (

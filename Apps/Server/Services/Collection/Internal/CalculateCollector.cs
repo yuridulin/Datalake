@@ -7,18 +7,20 @@ using Datalake.Server.Services.Collection.Abstractions;
 using Datalake.Server.Services.Maintenance;
 using NCalc;
 
-namespace Datalake.Server.Services.Collection.Collectors;
+namespace Datalake.Server.Services.Collection.Internal;
 
 internal class CalculateCollector(
 	DatalakeCurrentValuesStore valuesStore,
 	TagsStateService tagsStateService,
 	SourceWithTagsInfo source,
 	SourcesStateService sourcesStateService,
+	TagsReceiveStateService receiveStateService,
 	ILogger<CalculateCollector> logger) : CollectorBase("Расчетные значения", source, sourcesStateService, logger)
 {
 	public override void Start(CancellationToken stoppingToken)
 	{
-		if ((_expressions.Length + _thresholds.Length) == 0)
+		// если тегов нет, то и работать незачем
+		if (_expressions.Length + _thresholds.Length == 0)
 		{
 			Task.Run(() => WriteAsync([], false), stoppingToken);
 			_logger.LogWarning("Сборщик \"{name}\" не имеет правил расчета и не будет запущен", _name);
@@ -83,7 +85,7 @@ internal class CalculateCollector(
 
 				if (inputValue == null)
 				{
-					error = $"У входного тега #{input.InputTagId} нет значения";
+					error = $"У входного тега #{input.InputTagId} для параметра [{input.VariableName}] нет значения";
 					break;
 				}
 
@@ -113,7 +115,9 @@ internal class CalculateCollector(
 				}
 				catch (Exception ex)
 				{
-					error = ex.Message;
+					error = ex.Message
+						.Replace("Parameter ", "Параметр [")
+						.Replace(" not defined.", "] не найден");
 				}
 			}
 
@@ -122,6 +126,8 @@ internal class CalculateCollector(
 				record.Value = null;
 				record.Quality = TagQuality.Bad_CalcError;
 			}
+
+			receiveStateService.Set(tag.Id, error);
 
 			batch.Add(record);
 		}
@@ -141,6 +147,8 @@ internal class CalculateCollector(
 				Quality = TagQuality.Bad_NoConnect,
 			};
 
+			string? error = null;
+
 			var incomingValue = valuesStore.Get(inputId);
 
 			if (incomingValue != null)
@@ -153,15 +161,18 @@ internal class CalculateCollector(
 				else
 				{
 					record.Quality = TagQuality.Bad_NoValues;
+					error = "Значение входного тега - не число";
 				}
 
 				usedTags.Add(inputId);
 			}
 
-			if ((record.Value as float?) != valuesStore.Get(tag.Id)?.Number)
+			if (record.Value as float? != valuesStore.Get(tag.Id)?.Number)
 			{
 				batch.Add(record);
 			}
+
+			receiveStateService.Set(tag.Id, error);
 		}
 
 		await WriteAsync(batch);

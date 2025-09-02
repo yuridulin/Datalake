@@ -21,7 +21,7 @@ const LocalSettings = () => {
 		})
 	}
 
-	useEffect(load, [store, form])
+	useEffect(load, [store.api, form])
 
 	return (
 		<Form form={form} layout='vertical' onFinish={update}>

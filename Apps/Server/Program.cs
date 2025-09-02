@@ -170,6 +170,7 @@ public class Program
 		builder.Services.AddSingleton<UsersStateService>();
 		builder.Services.AddSingleton<TagsStateService>();
 		builder.Services.AddSingleton<RequestsStateService>();
+		builder.Services.AddSingleton<TagsReceiveStateService>();
 
 		// система сбора данных
 		builder.Services.AddSingleton<CollectorWriter>();

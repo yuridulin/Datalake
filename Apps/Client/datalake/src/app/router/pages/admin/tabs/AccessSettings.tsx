@@ -245,7 +245,7 @@ const AccessSettings = () => {
 		})
 	}
 
-	useEffect(load, [store])
+	useEffect(load, [store.api])
 
 	return (
 		<>

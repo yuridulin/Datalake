@@ -29,7 +29,7 @@ const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
 				})
 				setValues(newValues)
 			})
-	}, [store, tag])
+	}, [store.api, tag])
 
 	useEffect(getValues, [getValues])
 	useInterval(getValues, 5000)

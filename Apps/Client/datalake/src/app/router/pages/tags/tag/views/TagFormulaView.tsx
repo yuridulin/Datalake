@@ -1,7 +1,8 @@
 import TagButton from '@/app/components/buttons/TagButton'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
+import TagReceiveStateEl from '@/app/components/TagReceiveStateEl'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { TagInputInfo, ValueRecord } from '@/generated/data-contracts'
+import { TagInputInfo, TagReceiveState, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Table } from 'antd'
@@ -9,15 +10,17 @@ import { useCallback, useEffect, useState } from 'react'
 import { useInterval } from 'react-use'
 
 interface TagFormulaViewProps {
+	id: number
 	formula: string | null | undefined
 	inputs: TagInputInfo[]
 }
 
 type TagFormulaValues = Record<number, ValueRecord>
 
-const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
+const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 	const store = useAppStore()
 	const [values, setValues] = useState<TagFormulaValues>({})
+	const [state, setState] = useState<TagReceiveState | undefined>()
 
 	const renderFormulaWithValues = useCallback(
 		(values: TagFormulaValues) => {
@@ -76,6 +79,7 @@ const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
 	const info: InfoTableProps['items'] = {
 		Формула: formula,
 		Выражение: renderFormulaWithValues(values),
+		'Последний расчет': <TagReceiveStateEl receiveState={state} />,
 	}
 
 	const getValues = useCallback(() => {
@@ -87,7 +91,11 @@ const TagFormulaView = ({ formula, inputs }: TagFormulaViewProps) => {
 			}, {} as TagFormulaValues)
 			setValues(newValues)
 		})
-	}, [store, inputs])
+		store.api
+			.statesGetTagsReceive([id])
+			.then((res) => setState(res.data[id]))
+			.catch(() => setState(undefined))
+	}, [store.api, id, inputs])
 
 	useEffect(getValues, [getValues])
 	useInterval(getValues, 5000)

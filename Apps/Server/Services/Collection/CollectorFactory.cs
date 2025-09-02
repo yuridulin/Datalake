@@ -4,6 +4,8 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.Server.Services.Collection.Abstractions;
 using Datalake.Server.Services.Collection.Collectors;
+using Datalake.Server.Services.Collection.External;
+using Datalake.Server.Services.Collection.Internal;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 
@@ -14,8 +16,10 @@ namespace Datalake.Server.Services.Collection;
 /// </summary>
 public class CollectorFactory(
 	ReceiverService receiverService,
+	DatalakeCurrentValuesStore currentValuesStore,
 	SourcesStateService sourcesStateService,
 	TagsStateService tagsStateService,
+	TagsReceiveStateService receiveStateService,
 	IServiceProvider serviceProvider,
 	ILoggerFactory loggerFactory)
 {
@@ -36,13 +40,6 @@ public class CollectorFactory(
 					loggerFactory.CreateLogger<InopcCollector>()),
 
 			SourceType.Datalake
-				=> new OldDatalakeCollector(
-					receiverService,
-					source,
-					sourcesStateService,
-					loggerFactory.CreateLogger<OldDatalakeCollector>()),
-
-			SourceType.Datalake_v2
 				=> new DatalakeCollector(
 					source,
 					sourcesStateService,
@@ -50,10 +47,11 @@ public class CollectorFactory(
 
 			SourceType.Calculated
 				=> new CalculateCollector(
-					serviceProvider.GetRequiredService<DatalakeCurrentValuesStore>(),
+					currentValuesStore,
 					tagsStateService,
 					source,
 					sourcesStateService,
+					receiveStateService,
 					loggerFactory.CreateLogger<CalculateCollector>()),
 
 			SourceType.System
@@ -68,6 +66,7 @@ public class CollectorFactory(
 					tagsStateService,
 					source,
 					sourcesStateService,
+					receiveStateService,
 					loggerFactory.CreateLogger<AggregateCollector>()),
 
 			SourceType.Manual

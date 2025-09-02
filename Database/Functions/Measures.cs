@@ -44,7 +44,7 @@ public static class Measures
 	/// <summary>
 	/// Замер времени, которое тратится на вызов методов
 	/// </summary>
-	public static void Measure(Action action, ILogger logger, string methodName, string operation = OperationName, object? parameters = null) => 
+	public static void Measure(Action action, ILogger logger, string methodName, string operation = OperationName, object? parameters = null) =>
 		Measure<object?>(() =>
 		{
 			action();

@@ -46,9 +46,12 @@ const themeKey = 'd-theme'
 
 // настройка времени
 dayjs.locale('ru')
+const timeMask = 'YYYY-MM-DDTHH:mm:ss'
+
 TimeAgo.addLocale(ru)
 const timeAgo = new TimeAgo('ru-RU')
-export { timeAgo }
+
+export { timeAgo, timeMask }
 
 export class AppStore implements UserAuthInfo {
 	//#region Инициализация

@@ -29,7 +29,7 @@ const UserView = observer(() => {
 		})
 	}
 
-	useEffect(load, [store, id])
+	useEffect(load, [store.api, id])
 
 	return loading ? (
 		<Spin />

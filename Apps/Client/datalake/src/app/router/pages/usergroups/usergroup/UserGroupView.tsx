@@ -48,7 +48,7 @@ const UserGroupView = observer(() => {
 		setReady(!!group.guid)
 	}
 
-	useEffect(load, [store, id])
+	useEffect(load, [store.api, id])
 	useEffect(checkReady, [group])
 
 	return !ready ? (

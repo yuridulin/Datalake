@@ -66,7 +66,7 @@ const UserForm = observer(() => {
 		store.api.usersGetEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
 	}
 
-	useEffect(load, [store, id])
+	useEffect(load, [store.api, id])
 
 	function update() {
 		store.api.usersUpdate(String(id), request).then((res) => {

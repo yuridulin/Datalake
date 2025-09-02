@@ -7,7 +7,7 @@ using Datalake.Server.Services.Collection.Abstractions;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 
-namespace Datalake.Server.Services.Collection.Collectors;
+namespace Datalake.Server.Services.Collection.External;
 
 internal class InopcCollector : CollectorBase
 {

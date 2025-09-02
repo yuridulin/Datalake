@@ -1,5 +1,4 @@
 ﻿using Datalake.Database;
-using Datalake.Database.Functions;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
@@ -8,7 +7,7 @@ using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Collection.Abstractions;
 using Datalake.Server.Services.Maintenance;
 
-namespace Datalake.Server.Services.Collection.Collectors;
+namespace Datalake.Server.Services.Collection.Internal;
 
 internal class AggregateCollector : CollectorBase
 {
@@ -17,10 +16,12 @@ internal class AggregateCollector : CollectorBase
 		TagsStateService tagsStateService,
 		SourceWithTagsInfo source,
 		SourcesStateService sourcesStateService,
+		TagsReceiveStateService receiveStateService,
 		ILogger<AggregateCollector> logger) : base("Агрегатные значения", source, sourcesStateService, logger, 100)
 	{
 		_db = db;
 		_tagsStateService = tagsStateService;
+		_receiveStateService = receiveStateService;
 
 		_allRules = source.Tags
 			.Select(tag => new TagAggregationRule
@@ -61,6 +62,7 @@ internal class AggregateCollector : CollectorBase
 	private readonly TagAggregationRule[] _hourRules;
 	private readonly TagAggregationRule[] _dayRules;
 	private readonly TagsStateService _tagsStateService;
+	private readonly TagsReceiveStateService _receiveStateService;
 	private int _lastMinute = -1;
 	private int _lastHour = -1;
 	private int _lastDay = -1;
@@ -120,7 +122,8 @@ internal class AggregateCollector : CollectorBase
 			}
 		]);
 
-		return aggregated
+
+		var result = aggregated
 			.Select(value => new
 			{
 				Value = value,
@@ -142,6 +145,14 @@ internal class AggregateCollector : CollectorBase
 				},
 			})
 			.ToList();
+
+		foreach (var x in result)
+		{
+			if (x.Id.HasValue)
+				_receiveStateService.Set(x.Id.Value, x.Value == null ? "Значение не получено" : null);
+		}
+
+		return result;
 	}
 
 	class TagAggregationRule

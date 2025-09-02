@@ -114,7 +114,7 @@ const UserGroupsTreeMove = observer(() => {
 			})
 	}
 
-	useEffect(load, [store])
+	useEffect(load, [store.api])
 
 	if (!store.hasGlobalAccess(AccessType.Admin)) return <NoAccessEl />
 

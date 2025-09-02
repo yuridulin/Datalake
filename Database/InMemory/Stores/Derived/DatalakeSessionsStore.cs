@@ -86,7 +86,7 @@ public class DatalakeSessionsStore
 			return null;
 
 		var address = context.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-		
+
 		var session = await GetExistSessionAsync(token, address);
 		if (session == null)
 			return null;

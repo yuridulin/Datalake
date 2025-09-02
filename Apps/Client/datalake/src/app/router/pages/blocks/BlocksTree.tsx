@@ -72,7 +72,7 @@ const BlocksTree = observer(() => {
 	}
 
 	// Initialize and refresh data periodically
-	useEffect(loadBlocks, [store])
+	useEffect(loadBlocks, [store.api])
 	useInterval(loadBlocks, 60000)
 
 	// Handle expand/collapse of tree nodes

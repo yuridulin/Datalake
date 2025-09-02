@@ -80,8 +80,8 @@ const BlockForm = observer(() => {
 			.finally(() => setLoading(false))
 	}
 
-	useEffect(getBlock, [store, id, form])
-	useEffect(getTags, [store])
+	useEffect(getBlock, [store.api, id, form])
+	useEffect(getTags, [store.api])
 
 	// Получаем текущие значения формы для проверки дубликатов
 	const attachedTagsList = Form.useWatch('tags', form) || []
