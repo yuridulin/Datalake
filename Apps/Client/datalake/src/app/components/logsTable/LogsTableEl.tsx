@@ -139,7 +139,7 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 			.finally(() => setLoading(false))
 	}
 
-	useEffect(initialLoad, [sourceId, blockId, tagGuid, userGuid, userGroupGuid])
+	useEffect(initialLoad, [store.api, sourceId, blockId, tagGuid, userGuid, userGroupGuid])
 	useInterval(loadNewLogs, 10000)
 
 	return init ? (

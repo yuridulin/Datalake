@@ -2,9 +2,11 @@ import { ExcelExportModeHandles } from '@/app/components/values/functions/export
 import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
 import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
 import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithInfo'
+import routes from '@/app/router/routes'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
+import { serializeDate, serializeTags, setViewerParams, URL_PARAMS } from '@/functions/urlParams'
+import { SourceType, TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
 import { timeMask } from '@/store/appStore'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
@@ -13,7 +15,7 @@ import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space, Typography
 import dayjs, { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useInterval } from 'react-use'
 
 const TimeModes = {
@@ -29,12 +31,6 @@ const timeModeOptions: { label: string; value: TimeMode }[] = [
 	{ label: 'Срез', value: TimeModes.EXACT },
 	{ label: 'Диапазон', value: TimeModes.OLD_YOUNG },
 ]
-
-const ModeParam = 'V-M'
-const ResolutionParam = 'V-R'
-const ExactParam = 'V-E'
-const OldParam = 'V-O'
-const YoungParam = 'V-P'
 
 const parseDate = (param: string | null, fallback: dayjs.Dayjs) => (param ? dayjs(param, timeMask) : fallback)
 
@@ -56,19 +52,21 @@ interface ViewerSettings {
 
 const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }: TagValuesViewerProps) => {
 	const store = useAppStore()
+	const navigate = useNavigate()
 	const [searchParams, setSearchParams] = useSearchParams()
-	const initialMode = (searchParams.get(ModeParam) as TimeMode) || TimeModes.LIVE
+	const initialMode = (searchParams.get(URL_PARAMS.VIEWER_MODE) as TimeMode) || TimeModes.LIVE
 	const [isLoading, setLoading] = useState(false)
 	const [values, setValues] = useState<{ relationId: number; value: TagValueWithInfo }[]>([])
+	const [showWrite, setWrite] = useState<boolean>(false)
 
 	const tableRef = useRef<ExcelExportModeHandles>(null)
 
 	const [settings, setSettings] = useState<ViewerSettings>({
 		activeRelations: relations,
-		old: parseDate(searchParams.get(OldParam), dayjs().startOf('hour')),
-		young: parseDate(searchParams.get(YoungParam), dayjs().startOf('hour').add(1, 'hour')),
+		old: parseDate(searchParams.get(URL_PARAMS.VIEWER_OLD), dayjs().startOf('hour')),
+		young: parseDate(searchParams.get(URL_PARAMS.VIEWER_YOUNG), dayjs().startOf('hour').add(1, 'hour')),
 		exact: parseDate(searchParams.get(TimeModes.EXACT), dayjs()),
-		resolution: Number(searchParams.get(ResolutionParam)) || 0,
+		resolution: Number(searchParams.get(URL_PARAMS.VIEWER_RESOLUTION)) || 0,
 		mode: initialMode,
 		update: integrated,
 	})
@@ -76,7 +74,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 	// последние настройки на момент успешного запроса
 	const [lastFetchSettings, setLastFetchSettings] = useState<ViewerSettings>(settings)
 
-	// Проверка «грязности» настроек
+	// Проверка, что настройки изменились
 	const isDirty =
 		settings.mode !== lastFetchSettings.mode ||
 		settings.resolution !== lastFetchSettings.resolution ||
@@ -142,6 +140,11 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 				setValues(newValues)
 				setLastFetchSettings(settings)
+				console.log(
+					res.data[0].tags,
+					res.data[0].tags.some((x) => x.sourceType === SourceType.Manual),
+				)
+				setWrite(res.data[0].tags.some((x) => x.sourceType === SourceType.Manual))
 			})
 			.catch(console.error)
 			.finally(() => setLoading(false))
@@ -153,19 +156,13 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 	}, [settings, integrated, getValues])
 
 	useEffect(() => {
-		searchParams.set(ModeParam, settings.mode)
-		searchParams.set(ResolutionParam, String(settings.resolution))
-		searchParams.delete(OldParam)
-		searchParams.delete(YoungParam)
-		searchParams.delete(ExactParam)
-
-		if (settings.mode === TimeModes.EXACT) {
-			searchParams.set(ExactParam, settings.exact.format(timeMask))
-		} else if (settings.mode === TimeModes.OLD_YOUNG) {
-			searchParams.set(OldParam, settings.old.format(timeMask))
-			searchParams.set(YoungParam, settings.young.format(timeMask))
-		}
-
+		setViewerParams(searchParams, {
+			mode: settings.mode,
+			resolution: settings.resolution,
+			exact: settings.exact,
+			old: settings.old,
+			young: settings.young,
+		})
 		setSearchParams(searchParams, { replace: true })
 	}, [settings, searchParams, setSearchParams])
 
@@ -260,7 +257,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 						allowClear={false}
 						needConfirm={false}
 						renderExtraFooter={renderFooterOld}
-						popupClassName='no-default-footer'
+						classNames={{ popup: { root: 'no-default-footer' } }}
 					/>
 					<span style={{ padding: '0 .5em' }}>по</span>
 					<DatePicker
@@ -273,7 +270,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 						allowClear={false}
 						needConfirm={false}
 						renderExtraFooter={renderFooterYoung}
-						popupClassName='no-default-footer'
+						classNames={{ popup: { root: 'no-default-footer' } }}
 					/>
 					<span style={{ padding: '0 .5em' }}>шаг</span>
 					<Select
@@ -296,6 +293,30 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 		</>
 	)
 
+	const handleWriteClick = () => {
+		let writeDate: Dayjs
+		switch (settings.mode) {
+			case TimeModes.LIVE:
+				writeDate = dayjs()
+				break
+			case TimeModes.EXACT:
+				writeDate = settings.exact
+				break
+			case TimeModes.OLD_YOUNG:
+				writeDate = settings.young
+				break
+			default:
+				writeDate = dayjs()
+		}
+
+		const params = new URLSearchParams({
+			[URL_PARAMS.TAGS]: serializeTags(settings.activeRelations, tagMapping),
+			[URL_PARAMS.WRITER_DATE]: serializeDate(writeDate)!,
+		})
+
+		navigate(routes.values.tagsWriter + `?${params.toString()}`)
+	}
+
 	return (
 		<>
 			{/* Панель управления: кнопка «Запрос», Radio, DatePicker, Select */}
@@ -317,6 +338,11 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 							</Button>
 						</Col>
 						<DateRange />
+						{showWrite && (
+							<Col>
+								<Button onClick={handleWriteClick}>Перейти к записи</Button>
+							</Col>
+						)}
 					</Row>
 					<Divider orientation='left'>Значения</Divider>
 				</div>
@@ -324,6 +350,11 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 				<>
 					<Row style={{ marginBottom: '1em' }}>
 						<DateRange />
+						{showWrite && (
+							<Col>
+								<Button onClick={handleWriteClick}>Перейти к записи</Button>
+							</Col>
+						)}
 					</Row>
 				</>
 			)}

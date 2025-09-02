@@ -17,7 +17,7 @@ const TagsWriter = observer(() => {
 	return (
 		<>
 			<Row style={{ marginBottom: '.5em' }}>
-				<QueryTreeSelect onChange={handleTagChange} />
+				<QueryTreeSelect onChange={handleTagChange} manualOnly />
 			</Row>
 			<TagsValuesWriter relations={relations} tagMapping={tagMapping} />
 		</>

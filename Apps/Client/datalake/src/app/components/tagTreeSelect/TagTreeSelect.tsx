@@ -97,7 +97,7 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], v
 			placeholder='Выберите тег'
 			treeDefaultExpandAll
 			style={{ width: '100%' }}
-			dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
+			styles={{ popup: { root: { maxHeight: 400, overflow: 'auto' } } }}
 		/>
 	)
 }

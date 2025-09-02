@@ -6,6 +6,7 @@ import {
 	BlockNestedTagInfo,
 	BlockTagRelation,
 	BlockTreeInfo,
+	SourceType,
 	TagSimpleInfo,
 } from '@/generated/data-contracts'
 import { GlobalToken } from 'antd'
@@ -27,6 +28,7 @@ export const convertToTreeSelectNodes = (
 	blockTree: BlockTreeInfo[] | null | undefined,
 	parentPath: string[] = [],
 	token: GlobalToken,
+	manual: boolean = false,
 ): DataNode[] => {
 	if (!blockTree) return []
 
@@ -50,22 +52,23 @@ export const convertToTreeSelectNodes = (
 				children: [
 					...block.tags.map((tag) => ({
 						title: (
-							<>
+							<div style={{ display: 'flex' }}>
 								<TagIcon type={tag.sourceType} />
 								&ensp;{tag.localName}
 								&emsp;
-								<pre style={{ display: 'inline-block', color: token.colorTextDisabled }}>
+								<pre style={{ display: 'inline-block', color: token.colorTextDisabled, margin: 0 }}>
 									{tag.relationId > 0 && tag.relationId < VIRTUAL_RELATION_SHIFT && <>{tag.name}&emsp;</>}#{tag.id}
 									{tag.resolution > 0 && <>&emsp;{getTagResolutionName(tag.resolution)}</>}
 								</pre>
-							</>
+							</div>
 						),
 						key: tag.relationId, // Используем relationId как идентификатор
 						value: tag.relationId, // Используем relationId как идентификатор
 						fullTitle: `${fullTitle}.${tag.localName}`,
 						data: tag,
+						disabled: manual && tag.sourceType !== SourceType.Manual,
 					})),
-					...convertToTreeSelectNodes(block.children, currentPath, token),
+					...convertToTreeSelectNodes(block.children, currentPath, token, manual),
 				],
 			}
 		})
