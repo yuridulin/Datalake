@@ -2,6 +2,7 @@ import AccessTypeEl from '@/app/components/AccessTypeEl'
 import UserButton from '@/app/components/buttons/UserButton'
 import FormRow from '@/app/components/FormRow'
 import PageHeader from '@/app/components/PageHeader'
+import PollingLoader from '@/app/components/PollingLoader'
 import routes from '@/app/router/routes'
 import compareAccess from '@/functions/compareAccess'
 import getUserTypeName from '@/functions/getUserTypeName'
@@ -14,7 +15,6 @@ import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useInterval } from 'react-use'
 
 const UsersList = observer(() => {
 	const store = useAppStore()
@@ -25,7 +25,7 @@ const UsersList = observer(() => {
 
 	const load = () => {
 		store.api.usersGetAll().then((res) => setUsers(res.data))
-		getStates()
+		//getStates()
 	}
 
 	const create = () => {
@@ -34,7 +34,7 @@ const UsersList = observer(() => {
 
 	const getStates = useCallback(() => {
 		if (!store.hasGlobalAccess(AccessType.Manager)) return
-		store.api.statesGetUsers().then((res) => setStates(res.data))
+		return store.api.statesGetUsers().then((res) => setStates(res.data))
 	}, [store])
 
 	const columns: TableColumnsType<UserInfo> = [
@@ -88,7 +88,6 @@ const UsersList = observer(() => {
 	]
 
 	useEffect(load, [store.api, getStates])
-	useInterval(getStates, 5000)
 
 	return (
 		<>
@@ -106,6 +105,7 @@ const UsersList = observer(() => {
 							placeholder='введите поисковый запрос...'
 						/>
 					</FormRow>
+					<PollingLoader pollingFunction={getStates} interval={5000} statusDuration={400} />
 					<Table
 						size='small'
 						showSorterTooltip={false}
