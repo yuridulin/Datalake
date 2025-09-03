@@ -1,5 +1,7 @@
 import TagButton from '@/app/components/buttons/TagButton'
 import CreatedTagLinker from '@/app/components/CreatedTagsLinker'
+import { LoadStatus } from '@/app/components/loaders/loaderTypes'
+import StatusLoader from '@/app/components/loaders/StatusLoader'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import compareValues from '@/functions/compareValues'
 import {
@@ -78,6 +80,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		return saved || 'table'
 	})
 	const { token } = theme.useToken()
+	const [status, setStatus] = useState<LoadStatus>('default')
 
 	// Функция для построения дерева
 	const buildTree = (groups: GroupedEntry[]): TreeNodeData[] => {
@@ -296,15 +299,20 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		},
 	]
 
-	function read() {
+	const reload = () => {
 		if (!source.id) return
+		setStatus('loading')
 		store.api
 			.sourcesGetItemsWithTags(source.id)
 			.then((res) => {
+				setStatus('success')
 				setItems(res.data)
 				setErr(false)
 			})
-			.catch(() => setErr(true))
+			.catch(() => {
+				setStatus('error')
+				setErr(true)
+			})
 	}
 
 	const createTag = async (item: string, tagType: TagType) => {
@@ -343,7 +351,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 	}
 
 	const deleteTag = (tagId: number) => {
-		store.api.tagsDelete(tagId).then(read)
+		store.api.tagsDelete(tagId).then(reload)
 	}
 
 	const doSearch = debounce((value: string) => {
@@ -374,7 +382,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[items],
 	)
-	useEffect(read, [store.api, source])
+	useEffect(reload, [store.api, source])
 
 	useEffect(() => {
 		localStorage.setItem(localStorageKey, viewMode)
@@ -383,63 +391,72 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 	if (source.address !== request.address || source.type !== request.type)
 		return <Alert message='Тип источника изменен. Сохраните, чтобы продолжить' />
 
-	return err ? (
-		<Alert message='Ошибка при получении данных' />
-	) : (
+	return (
 		<>
-			{items.length === 0 ? (
-				<div>
-					<i>Источник данных не предоставил информацию о доступных значениях</i>
-				</div>
+			<StatusLoader status={status} duration={300} />
+			{err ? (
+				<Alert message='Ошибка при получении данных' />
 			) : (
 				<>
-					{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
-					<Row>
-						<Col flex='auto'>
-							<Input.Search
-								style={{ marginBottom: '1em', alignItems: 'center', justifyContent: 'space-between' }}
-								placeholder='Введите запрос для поиска по значениям и тегам. Можно написать несколько запросов, разделив пробелами'
-								value={search}
-								onChange={(e) => {
-									setSearch(e.target.value)
-									doSearch(e.target.value.toLowerCase())
-								}}
-							/>
-						</Col>
-						<Col flex='14em'>
-							&emsp;
-							{/* Переключатель режимов просмотра */}
-							<Radio.Group value={viewMode} onChange={(e) => setViewMode(e.target.value)} style={{ marginRight: 16 }}>
-								<Radio.Button value='table'>Таблица</Radio.Button>
-								<Radio.Button value='tree'>Дерево</Radio.Button>
-							</Radio.Group>
-						</Col>
-						<Col flex='6em'>
-							<Button onClick={read}>Обновить</Button>
-						</Col>
-					</Row>
-
-					{viewMode === 'table' ? (
-						<Table
-							dataSource={searchedItems}
-							columns={columns}
-							showSorterTooltip={false}
-							size='small'
-							pagination={{ position: ['bottomCenter'] }}
-							rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')}
-						/>
+					{items.length === 0 ? (
+						<div>
+							<i>Источник данных не предоставил информацию о доступных значениях</i>
+						</div>
 					) : (
-						<Tree
-							showLine
-							switcherIcon={<DownOutlined />}
-							treeData={buildTree(groupEntries(searchedItems))}
-							titleRender={(node) => (
-								<div>
-									{node.title}
-									{node.isLeaf && renderLeafContent(node.group)} {/* Передаем group */}
-								</div>
+						<>
+							{!!created && <CreatedTagLinker tag={created} onClose={() => setCreated(null)} />}
+							<Row>
+								<Col flex='auto'>
+									<Input.Search
+										style={{ marginBottom: '1em', alignItems: 'center', justifyContent: 'space-between' }}
+										placeholder='Введите запрос для поиска по значениям и тегам. Можно написать несколько запросов, разделив пробелами'
+										value={search}
+										onChange={(e) => {
+											setSearch(e.target.value)
+											doSearch(e.target.value.toLowerCase())
+										}}
+									/>
+								</Col>
+								<Col flex='14em'>
+									&emsp;
+									{/* Переключатель режимов просмотра */}
+									<Radio.Group
+										value={viewMode}
+										onChange={(e) => setViewMode(e.target.value)}
+										style={{ marginRight: 16 }}
+									>
+										<Radio.Button value='table'>Таблица</Radio.Button>
+										<Radio.Button value='tree'>Дерево</Radio.Button>
+									</Radio.Group>
+								</Col>
+								<Col flex='6em'>
+									<Button onClick={reload}>Обновить</Button>
+								</Col>
+							</Row>
+
+							{viewMode === 'table' ? (
+								<Table
+									dataSource={searchedItems}
+									columns={columns}
+									showSorterTooltip={false}
+									size='small'
+									pagination={{ position: ['bottomCenter'] }}
+									rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')}
+								/>
+							) : (
+								<Tree
+									showLine
+									switcherIcon={<DownOutlined />}
+									treeData={buildTree(groupEntries(searchedItems))}
+									titleRender={(node) => (
+										<div>
+											{node.title}
+											{node.isLeaf && renderLeafContent(node.group)} {/* Передаем group */}
+										</div>
+									)}
+								/>
 							)}
-						/>
+						</>
 					)}
 				</>
 			)}
