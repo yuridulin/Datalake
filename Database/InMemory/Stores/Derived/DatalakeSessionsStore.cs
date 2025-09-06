@@ -116,8 +116,13 @@ public class DatalakeSessionsStore
 		Sessions.AddOrUpdate(session.Token, (token) => session, (token, exist) => session);
 
 		// сохранение в БД
+		// делаем удаление перед этим, чтобы убрать другие сессии этого же пользователя
+		// несколько сессий для одного не возможно из-за ключа
 		using var scope = serviceScopeFactory.CreateScope();
 		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
+
+		await db.UserSessions
+			.DeleteAsync(x => x.UserGuid == session.UserGuid);
 
 		await db.UserSessions
 			.Value(x => x.UserGuid, session.UserGuid)
