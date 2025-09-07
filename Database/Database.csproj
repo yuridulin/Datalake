@@ -62,6 +62,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Api\PrivateApi\PrivateApi.csproj" />
     <ProjectReference Include="..\PublicApi\PublicApi.csproj" />
   </ItemGroup>
 

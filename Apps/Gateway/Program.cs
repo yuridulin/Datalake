@@ -1,3 +1,4 @@
+using MassTransit;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 
@@ -22,6 +23,7 @@ public class Program
 			.AddJsonFile(Path.Combine(configs, $"appsettings.{CurrentEnvironment}.json"), optional: true, reloadOnChange: true)
 			.AddJsonFile(Path.Combine(configs, $"ocelot.json"), optional: false, reloadOnChange: true);
 
+		// прокси через ocelot и общий swagger
 		builder.Services.AddControllers();
 		builder.Services.AddEndpointsApiExplorer();
 		builder.Services.AddSwaggerGen(c =>
@@ -35,6 +37,22 @@ public class Program
 
 		builder.Services.AddOcelot(builder.Configuration);
 		builder.Services.AddSwaggerForOcelot(builder.Configuration);
+
+		// общение между сервисами
+		var rabbitMqConfig = builder.Configuration.GetSection("RabbitMq");
+
+		builder.Services.AddMassTransit(config =>
+		{
+			config.UsingRabbitMq((context, cfg) =>
+			{
+				cfg.Host(rabbitMqConfig["Host"], "/", h =>
+				{
+					h.Username(rabbitMqConfig["User"] ?? string.Empty);
+					h.Password(rabbitMqConfig["Pass"] ?? string.Empty);
+				});
+			});
+		});
+
 
 		var app = builder.Build();
 

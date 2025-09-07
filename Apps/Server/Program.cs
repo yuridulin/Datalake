@@ -7,6 +7,7 @@ using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.InMemory.Stores;
 using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Repositories;
+using Datalake.PrivateApi;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Middlewares;
@@ -16,10 +17,12 @@ using Datalake.Server.Services.Initialization;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SettingsHandler;
+using Datalake.Server.Services.Test;
 using LinqToDB;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
 using LinqToDB.Mapping;
+using MassTransit;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
@@ -210,6 +213,27 @@ public class Program
 			o.Release = $"{builder.Environment.ApplicationName}@{Version.ShortVersion()}";
 			o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
 		});
+
+		// общение между сервисами
+		var rabbitMqConfig = builder.Configuration.GetSection("RabbitMq");
+
+		builder.Services.AddMassTransit(config =>
+		{
+			config.UsingRabbitMq((context, cfg) =>
+			{
+				cfg.Host(rabbitMqConfig["Host"], "/", h =>
+				{
+					h.Username(rabbitMqConfig["User"] ?? string.Empty);
+					h.Password(rabbitMqConfig["Pass"] ?? string.Empty);
+				});
+
+				// Настройка отправки сообщения
+				cfg.Message<SomethingHappenedEvent>(m => m.SetEntityName("something-happened"));
+			});
+		});
+
+		builder.Services.AddSingleton<TestBackgroundService>();
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<TestBackgroundService>());
 
 		// сборка
 		var app = builder.Build();

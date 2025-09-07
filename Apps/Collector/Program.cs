@@ -1,5 +1,7 @@
 
+using Datalake.Collector.Consumers;
 using Datalake.Database.Constants;
+using MassTransit;
 using NJsonSchema.Generation;
 
 namespace Datalake.Collector;
@@ -48,7 +50,35 @@ public class Program
 			})
 			.AddEndpointsApiExplorer();
 
+		// статус
 		builder.Services.AddHealthChecks();
+
+		// общение между сервисами
+		var rabbitMqConfig = builder.Configuration.GetSection("RabbitMq");
+
+		builder.Services.AddMassTransit(config =>
+		{
+			config.AddConsumer<SomethingHappenedConsumer>();
+
+			config.UsingRabbitMq((context, cfg) =>
+			{
+				cfg.Host(rabbitMqConfig["Host"], "/", h =>
+				{
+					h.Username(rabbitMqConfig["User"] ?? string.Empty);
+					h.Password(rabbitMqConfig["Pass"] ?? string.Empty);
+				});
+
+				// Настройка получения сообщений
+				cfg.ReceiveEndpoint("something-happened", e =>
+				{
+					e.ConfigureConsumer<SomethingHappenedConsumer>(context);
+
+					// Опционально: привязка к определенному exchange
+					e.Bind("something-happened");
+				});
+			});
+		});
+
 
 		var app = builder.Build();
 

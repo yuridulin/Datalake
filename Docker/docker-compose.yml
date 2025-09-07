@@ -1,5 +1,9 @@
 ﻿name: datalake
 services:
+
+# Инфраструктура
+
+  ## [7610] БД с поддержкой time-series
   datalake-postgres:
     image: timescale/timescaledb:2.21.0-pg17
     container_name: datalake-postgres
@@ -36,6 +40,7 @@ services:
       timeout: 5s
       retries: 5
 
+  ## [7620] Keycloak для внешней аутентификации, например EnergoId
   datalake-keycloak:
     image: quay.io/keycloak/keycloak:25.0.0
     container_name: datalake-keycloak
@@ -57,6 +62,47 @@ services:
       datalake-postgres:
         condition: service_healthy
 
+  ## [7660] RabbitMQ для обмена событиями между сервисами
+  datalake-rabbitmq:
+    image: rabbitmq:4.1.4-management-alpine
+    container_name: datalake-rabbitmq
+    #hostname: datalake-rabbitmq # зачем?
+    ports:
+      - 7660:5672 # AMQP protocol
+      - 7661:15772 # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+
+# Наши сервисы
+
+  ## [7600] Шлюз, перенаправляющий запросы на сервисы
+  datalake-gateway:
+    image: ${DOCKER_REGISTRY-}datalake-gateway
+    container_name: datalake-gateway
+    build:
+      context: ../
+      dockerfile: ./Apps/Gateway/Dockerfile
+    depends_on:
+      datalake-postgres:
+        condition: service_healthy
+    environment:
+      DATALAKE_HOST: datalake-postgres
+      DATALAKE_PORT: 5432
+      DATALAKE_DB: datalake
+      DATALAKE_DB_USER: postgres
+      DATALAKE_DB_PASS: postgres
+      APP_VERSION: DEV
+    restart: always
+    ports:
+      - 7600:8080
+    volumes:
+      - "../Apps/Gateway/storage:/app/storage"
+
+  ## [7630] Управление схемой данных - теги, блоки, источники, пользователи и группы, права
   datalake-server:
     image: ${DOCKER_REGISTRY-}datalake-server
     container_name: datalake-server
@@ -66,6 +112,8 @@ services:
     depends_on:
       datalake-postgres:
         condition: service_healthy
+      datalake-rabbitmq:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 5s
@@ -78,25 +126,13 @@ services:
       DATALAKE_DB_USER: postgres
       DATALAKE_DB_PASS: postgres
       APP_VERSION: DEV
+    restart: always
     ports:
       - 7630:8080
     volumes:
       - "../Apps/Server/storage:/app/storage"
 
-  datalake-client:
-    container_name: datalake-client
-    build:
-      context: ../Apps/Client/datalake
-      dockerfile: Dockerfile
-    ports:
-      - "7640:7640"
-    volumes:
-      - ../Apps/Client/datalake:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 7640"
-
+  ## [7650] Сбор и запись данных
   datalake-collector:
     image: ${DOCKER_REGISTRY-}datalake-collector
     container_name: datalake-collector
@@ -118,28 +154,33 @@ services:
       DATALAKE_DB_USER: postgres
       DATALAKE_DB_PASS: postgres
       APP_VERSION: DEV
+    restart: always
     ports:
       - 7650:8080
     volumes:
       - "../Apps/Collector/storage:/app/storage"
 
-  datalake-gateway:
-    image: ${DOCKER_REGISTRY-}datalake-gateway
-    container_name: datalake-gateway
+  ## [7670] Получение данных (не готов)
+
+
+# Необязательные дополнения
+
+  ## [7640] Клиент в dev режиме
+  datalake-client:
+    container_name: datalake-client
     build:
-      context: ../
-      dockerfile: ./Apps/Gateway/Dockerfile
-    depends_on:
-      datalake-postgres:
-        condition: service_healthy
-    environment:
-      DATALAKE_HOST: datalake-postgres
-      DATALAKE_PORT: 5432
-      DATALAKE_DB: datalake
-      DATALAKE_DB_USER: postgres
-      DATALAKE_DB_PASS: postgres
-      APP_VERSION: DEV
+      context: ../Apps/Client/datalake
+      dockerfile: Dockerfile
+    restart: always
     ports:
-      - 7600:8080
+      - "7640:7640"
     volumes:
-      - "../Apps/Gateway/storage:/app/storage"
+      - ../Apps/Client/datalake:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 7640"
+
+# Временные данные
+volumes:
+  rabbitmq_data:
