@@ -10,7 +10,8 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Apps/Gateway/Gateway.csproj", "Apps/Gateway/"]
 COPY ["Database/Database.csproj",  "Database/"]
-COPY ["PublicApi/PublicApi.csproj", "PublicApi/"]
+COPY ["Api/PublicApi/PublicApi.csproj", "Api/PublicApi/"]
+COPY ["Api/PrivateApi/PrivateApi.csproj", "Api/PrivateApi/"]
 RUN dotnet restore "./Apps/Gateway/Gateway.csproj"
 COPY . .
 WORKDIR "/src/Apps/Gateway"

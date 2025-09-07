@@ -9,7 +9,8 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY ["Apps/Collector/Collector.csproj", "Apps/Collector/"]
 COPY ["Database/Database.csproj",  "Database/"]
-COPY ["PublicApi/PublicApi.csproj", "PublicApi/"]
+COPY ["Api/PublicApi/PublicApi.csproj", "Api/PublicApi/"]
+COPY ["Api/PrivateApi/PrivateApi.csproj", "Api/PrivateApi/"]
 RUN dotnet restore "Apps/Collector/Collector.csproj"
 COPY . .
 WORKDIR "/src/Apps/Collector"

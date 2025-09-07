@@ -12,7 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		README.md = README.md
-		timescale.md = timescale.md
 	EndProjectSection
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Client", "Apps\Client\datalake\Client.esproj", "{4043FA0A-765B-4DE6-A68A-FEDFA29064AA}"
@@ -28,7 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ci", "ci", "{DD75365A-EF28-
 		gitlab-ci\test.yml = gitlab-ci\test.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PublicApi", "PublicApi\PublicApi.csproj", "{CA9E1BC7-38D9-48BF-A7D0-4B6A176CBD8B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PublicApi", "Api\PublicApi\PublicApi.csproj", "{CA9E1BC7-38D9-48BF-A7D0-4B6A176CBD8B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Collector", "Apps\Collector\Collector.csproj", "{DBA9600F-A1AB-45EB-AF3C-18EBFEF55782}"
 EndProject

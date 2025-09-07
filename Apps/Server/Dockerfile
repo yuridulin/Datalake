@@ -27,15 +27,17 @@ WORKDIR /src
 # 3.1. Кэшируем restore: копируем все csproj, привязанные к Server
 COPY ["Apps/Server/Server.csproj", "Apps/Server/"]
 COPY ["Database/Database.csproj",  "Database/"]
-COPY ["PublicApi/PublicApi.csproj", "PublicApi/"]
+COPY ["Api/PublicApi/PublicApi.csproj", "Api/PublicApi/"]
+COPY ["Api/PrivateApi/PrivateApi.csproj", "Api/PrivateApi/"]
 
 # 3.2. Делаем restore — в это время подтягиваются пакеты и ссылки на Database/PublicApi
 RUN dotnet restore "Apps/Server/Server.csproj"
 
 # 3.3. Копируем остальные исходники
-COPY ["Apps/Server/",  "Apps/Server/"]
-COPY ["Database/",    "Database/"]
-COPY ["PublicApi/",   "PublicApi/"]
+COPY ["Apps/Server/", "Apps/Server/"]
+COPY ["Database/", "Database/"]
+COPY ["PublicApi/", "PublicApi/"]
+COPY ["PrivateApi/", "PrivateApi/"]
 
 # 3.4. Интегрируем готовый фронтенд в wwwroot
 COPY --from=client-build /src/Apps/Client/datalake/dist/ Apps/Server/wwwroot/
