@@ -1,5 +1,8 @@
 # --- 1. Рантайм (финальный базовый образ) ---
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+# Устанавливаем curl для healthcheck
+USER root
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 USER app
 EXPOSE 8080 8081

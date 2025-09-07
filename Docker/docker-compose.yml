@@ -66,6 +66,11 @@ services:
     depends_on:
       datalake-postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
     environment:
       DATALAKE_HOST: datalake-postgres
       DATALAKE_PORT: 5432
@@ -91,3 +96,50 @@ services:
     environment:
       - NODE_ENV=development
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 7640"
+
+  datalake-collector:
+    image: ${DOCKER_REGISTRY-}datalake-collector
+    container_name: datalake-collector
+    build:
+      context: ../
+      dockerfile: ./Apps/Collector/Dockerfile
+    depends_on:
+      datalake-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    environment:
+      DATALAKE_HOST: datalake-postgres
+      DATALAKE_PORT: 5432
+      DATALAKE_DB: datalake
+      DATALAKE_DB_USER: postgres
+      DATALAKE_DB_PASS: postgres
+      APP_VERSION: DEV
+    ports:
+      - 7650:8080
+    volumes:
+      - "../Apps/Collector/storage:/app/storage"
+
+  datalake-gateway:
+    image: ${DOCKER_REGISTRY-}datalake-gateway
+    container_name: datalake-gateway
+    build:
+      context: ../
+      dockerfile: ./Apps/Gateway/Dockerfile
+    depends_on:
+      datalake-postgres:
+        condition: service_healthy
+    environment:
+      DATALAKE_HOST: datalake-postgres
+      DATALAKE_PORT: 5432
+      DATALAKE_DB: datalake
+      DATALAKE_DB_USER: postgres
+      DATALAKE_DB_PASS: postgres
+      APP_VERSION: DEV
+    ports:
+      - 7600:8080
+    volumes:
+      - "../Apps/Gateway/storage:/app/storage"

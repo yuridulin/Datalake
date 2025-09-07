@@ -98,8 +98,7 @@ public class Program
 			{
 				var jsonOpts = services.GetRequiredService<IOptions<JsonOptions>>().Value;
 
-				options.DocumentName = "Datalake App";
-				options.Title = "Datalake App";
+				options.Title = "Datalake " + nameof(Server);
 				options.Version = "v" + Version;
 
 				options.SchemaSettings = new SystemTextJsonSchemaGeneratorSettings
@@ -199,6 +198,7 @@ public class Program
 		// инициализатор работы
 		builder.Services.AddSingleton<LoaderService>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<LoaderService>());
+		builder.Services.AddHealthChecks();
 
 		// оповещения об ошибках
 		var sentrySection = builder.Configuration.GetSection("Sentry");
@@ -284,6 +284,7 @@ public class Program
 		app.MapControllerRoute(
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");
+		app.MapHealthChecks("/health");
 
 		// запуск БД
 		var thisDb = app.Services.GetRequiredService<DbInitializer>();
