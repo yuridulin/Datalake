@@ -24,7 +24,8 @@ import {
 import { Alert, Button, Col, Input, Popconfirm, Radio, Row, Table, TableColumnsType, Tag, theme, Tree } from 'antd'
 import dayjs from 'dayjs'
 import debounce from 'debounce'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useLocalStorage } from 'react-use'
 
 interface GroupedEntry {
 	path: string
@@ -63,6 +64,8 @@ type SourceItemsProps = {
 	request: SourceUpdateRequest
 }
 
+type ViewModeState = 'table' | 'tree'
+
 // Функция для форматирования чисел
 const formatCount = (count: number) => (count > 0 ? `: ${count}` : ' нет')
 
@@ -70,15 +73,16 @@ const localStorageKey = 'sourceItemsViewMode'
 
 const SourceItems = ({ source, request }: SourceItemsProps) => {
 	const store = useAppStore()
+	const [paginationConfig, setPaginationConfig] = useLocalStorage('sourceItems-' + source.id, {
+		pageSize: 10,
+		current: 1,
+	})
 	const [items, setItems] = useState([] as SourceEntryInfo[])
 	const [searchedItems, setSearchedItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
 	const [created, setCreated] = useState(null as TagInfo | null)
 	const [search, setSearch] = useState('')
-	const [viewMode, setViewMode] = useState<'table' | 'tree'>(() => {
-		const saved = localStorage.getItem(localStorageKey) as 'table' | 'tree' | null
-		return saved || 'table'
-	})
+	const [viewMode, setViewMode] = useLocalStorage(localStorageKey, 'table' as ViewModeState)
 	const { token } = theme.useToken()
 	const [status, setStatus] = useState<LoadStatus>('default')
 
@@ -315,6 +319,8 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 			})
 	}
 
+	const reloadDone = useCallback(() => setStatus('default'), [])
+
 	const createTag = async (item: string, tagType: TagType) => {
 		store.api
 			.tagsCreate({
@@ -384,16 +390,12 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 	)
 	useEffect(reload, [store.api, source])
 
-	useEffect(() => {
-		localStorage.setItem(localStorageKey, viewMode)
-	}, [viewMode])
-
 	if (source.address !== request.address || source.type !== request.type)
 		return <Alert message='Тип источника изменен. Сохраните, чтобы продолжить' />
 
 	return (
 		<>
-			<StatusLoader status={status} duration={300} />
+			<StatusLoader status={status} after={reloadDone} />
 			{err ? (
 				<Alert message='Ошибка при получении данных' />
 			) : (
@@ -440,7 +442,14 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 									columns={columns}
 									showSorterTooltip={false}
 									size='small'
-									pagination={{ position: ['bottomCenter'] }}
+									pagination={{
+										...paginationConfig,
+										position: ['bottomCenter'],
+										showSizeChanger: true,
+										onChange: (page, pageSize) => {
+											setPaginationConfig({ current: page, pageSize: pageSize || 10 })
+										},
+									}}
 									rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')}
 								/>
 							) : (

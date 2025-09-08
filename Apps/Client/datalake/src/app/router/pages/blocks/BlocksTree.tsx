@@ -6,8 +6,9 @@ import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
 
 const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<number, string>] => {
@@ -39,10 +40,7 @@ const BlocksTree = observer(() => {
 	const store = useAppStore()
 	const [data, setData] = useState<BlockWithTagsInfo[]>([])
 	const [search, setSearch] = useState('')
-	const [expandedRowKeys, setExpandedRowKeys] = useState<number[]>(() => {
-		const saved = localStorage.getItem(EXPAND_KEY)
-		return saved ? JSON.parse(saved) : []
-	})
+	const [expandedRowKeys, setExpandedRowKeys] = useLocalStorage(EXPAND_KEY, [] as number[])
 
 	// Create tree structure and metadata
 	const [tree, meta] = useMemo(() => makeTree(data), [data])
@@ -75,15 +73,11 @@ const BlocksTree = observer(() => {
 
 	// Handle expand/collapse of tree nodes
 	const handleExpand = (expanded: boolean, record: BlockTreeInfo) => {
-		const newKeys = expanded ? [...expandedRowKeys, record.id] : expandedRowKeys.filter((id) => id !== record.id)
+		const exists = expandedRowKeys ?? []
+		const newKeys = expanded ? [...exists, record.id] : exists.filter((id) => id !== record.id)
 
 		setExpandedRowKeys(newKeys)
 	}
-
-	// Persist expanded keys in localStorage
-	useEffect(() => {
-		localStorage.setItem(EXPAND_KEY, JSON.stringify(expandedRowKeys))
-	}, [expandedRowKeys])
 
 	// Create new block
 	const createBlock = () => {

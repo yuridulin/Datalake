@@ -5,18 +5,18 @@ import React, { useEffect, useRef } from 'react'
 interface StatusLoaderProps {
 	status: LoadStatus
 	duration?: number
+	after?: () => void
 }
 
-const StatusLoader: React.FC<StatusLoaderProps> = ({ status, duration = 2000 }) => {
+const StatusLoader: React.FC<StatusLoaderProps> = ({ status, duration = 400, after }) => {
 	const { token } = theme.useToken()
 	const timerRef = useRef<number>(0)
 
 	// Автоматический сброс статусов success/error через указанное время
 	useEffect(() => {
-		console.log(status)
 		if (status === 'success' || status === 'error') {
 			timerRef.current = window.setTimeout(() => {
-				// Здесь можно добавить callback, если понадобится в будущем
+				if (after) after()
 			}, duration)
 		}
 
@@ -25,7 +25,7 @@ const StatusLoader: React.FC<StatusLoaderProps> = ({ status, duration = 2000 }) 
 				clearTimeout(timerRef.current)
 			}
 		}
-	}, [status, duration])
+	}, [status, duration, after])
 
 	// Эффект для добавления стилей бегунка
 	useEffect(() => {

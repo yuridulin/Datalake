@@ -8,6 +8,7 @@ import { ColumnsType } from 'antd/es/table'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
 import UserGroupsCreateModal from './usergroup/modals/UserGroupsCreateModal'
 
@@ -29,19 +30,13 @@ const UserGroupsTreeList = observer(() => {
 	useEffect(load, [store.api])
 
 	const expandKey = 'expandedUserGroups'
-	const [expandedRowKeys, setExpandedRowKeys] = useState(() => {
-		const savedKeys = localStorage.getItem(expandKey)
-		return savedKeys ? (JSON.parse(savedKeys) as string[]) : ([] as string[])
-	})
+	const [expandedRowKeys, setExpandedRowKeys] = useLocalStorage(expandKey, [] as string[])
 
 	const onExpand = (expanded: boolean, record: UserGroupTreeInfo) => {
-		const keys = expanded ? [...expandedRowKeys, record.guid] : expandedRowKeys.filter((key) => key !== record.guid)
+		const exists = expandedRowKeys ?? []
+		const keys = expanded ? [...exists, record.guid] : exists.filter((key) => key !== record.guid)
 		setExpandedRowKeys(keys)
 	}
-
-	useEffect(() => {
-		localStorage.setItem(expandKey, JSON.stringify(expandedRowKeys))
-	}, [expandedRowKeys])
 
 	const columns: ColumnsType<UserGroupTreeInfo> = [
 		{
