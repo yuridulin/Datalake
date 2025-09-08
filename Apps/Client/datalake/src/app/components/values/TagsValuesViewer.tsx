@@ -152,8 +152,6 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 		if (!isTimeDirty) return
 		setSearchParams(
 			(prev) => {
-				console.log('OLD:', prev)
-				console.log('TAGS:', settings.activeRelations)
 				setViewerParams(prev, {
 					mode: settings.mode,
 					resolution: settings.resolution,
@@ -161,7 +159,6 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 					old: settings.old,
 					young: settings.young,
 				})
-				console.log('NEW:', prev)
 				return prev
 			},
 			{ replace: true },
