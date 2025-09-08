@@ -11,6 +11,12 @@ import ru from 'javascript-time-ago/locale/ru'
 import { makeAutoObservable } from 'mobx'
 import hasAccess from '../functions/hasAccess'
 
+const debug = false
+const log = (...text: unknown[]) => {
+	if (!debug) return
+	console.log(text)
+}
+
 // передача констант с сервера
 declare const LOCAL_API: boolean
 declare const INSTANCE_NAME: string
@@ -24,17 +30,17 @@ let version: string = 'DEV'
 try {
 	isLocal = LOCAL_API
 } catch {
-	console.log('LOCAL_API is not defined - set', false)
+	log('LOCAL_API is not defined - set', false)
 }
 try {
 	instanceName = INSTANCE_NAME
 } catch {
-	console.log('INSTANCE_NAME is not defined - set', null)
+	log('INSTANCE_NAME is not defined - set', null)
 }
 try {
 	version = VERSION
 } catch {
-	console.log('VERSION is not defined - set', 'DEV')
+	log('VERSION is not defined - set', 'DEV')
 }
 
 // константы заголовков и ключей localStorage
@@ -71,7 +77,7 @@ export class AppStore implements UserAuthInfo {
 
 	constructor() {
 		makeAutoObservable(this)
-		console.log('loading...')
+		log('loading...')
 		this.initTheme()
 		this.api = this.createApiClient()
 		this.instanceName = 'Datalake' + (instanceName ? ' | ' + instanceName : '')
@@ -91,7 +97,7 @@ export class AppStore implements UserAuthInfo {
 
 		api.instance.interceptors.request.use(
 			(config) => {
-				console.log('SEND TOKEN ', this.token, 'IsAuthenticated: ', this.isAuthenticated)
+				log('SEND TOKEN ', this.token, 'IsAuthenticated: ', this.isAuthenticated)
 				config.headers[tokenHeader] = this.token
 				return config
 			},
@@ -118,7 +124,7 @@ export class AppStore implements UserAuthInfo {
 					// сообщения после выполнения действий
 					else if (response.data) {
 						if (response.data.done && this.notify) {
-							console.log(this.notify)
+							log(this.notify)
 							this.notify.info({ placement: 'bottomLeft', message: response.data.done })
 						}
 						if (response.data.error && this.notify) {
@@ -180,24 +186,24 @@ export class AppStore implements UserAuthInfo {
 	//#region Изменения состояния
 
 	switchTheme = () => {
-		console.log('SET store.isDark =', !this.isDark)
+		log('SET store.isDark =', !this.isDark)
 		this.isDark = !this.isDark
 		localStorage.setItem(themeKey, this.isDark ? 'dark' : 'light')
 	}
 
 	// Методы для соединения
 	setConnectionStatus = (status: boolean) => {
-		console.log('SET store.isConnected =', status)
+		log('SET store.isConnected =', status)
 		this.isConnected = status
 	}
 
 	setAuthenticated = (flag: boolean) => {
-		console.log('SET store.isAuthenticated =', flag)
+		log('SET store.isAuthenticated =', flag)
 		this.isAuthenticated = flag
 	}
 
 	doneLoading = () => {
-		if (this.isLoading) console.log('loading is complete')
+		if (this.isLoading) log('loading is complete')
 		this.isLoading = false
 	}
 
@@ -225,9 +231,9 @@ export class AppStore implements UserAuthInfo {
 	public setAuthData = (session: UserSessionInfo) => {
 		const data = session.authInfo
 
-		console.log('SET store.authToken =', session.token)
-		console.log('SET store.authLogin =', data.fullName)
-		console.log('SET store.globalAccessType =', data.rootRule.access)
+		log('SET store.authToken =', session.token)
+		log('SET store.authLogin =', data.fullName)
+		log('SET store.globalAccessType =', data.rootRule.access)
 
 		this.type = session.type
 		this.token = session.token
@@ -260,9 +266,9 @@ export class AppStore implements UserAuthInfo {
 	}
 
 	public clearAuthData = () => {
-		console.log('SET store.authToken =', '')
-		console.log('SET store.authLogin =', '')
-		console.log('SET store.globalAccessType =', AccessType.NotSet)
+		log('SET store.authToken =', '')
+		log('SET store.authLogin =', '')
+		log('SET store.globalAccessType =', AccessType.NotSet)
 		this.token = ''
 		this.fullName = ''
 		this.globalAccessType = AccessType.NotSet
