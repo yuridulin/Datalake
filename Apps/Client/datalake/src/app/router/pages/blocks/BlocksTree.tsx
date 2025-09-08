@@ -1,13 +1,13 @@
 import BlockButton from '@/app/components/buttons/BlockButton'
+import PollingLoader from '@/app/components/loaders/PollingLoader'
 import PageHeader from '@/app/components/PageHeader'
 import ProtectedButton from '@/app/components/ProtectedButton'
 import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { useInterval } from 'react-use'
 import routes from '../../routes'
 
 const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<number, string>] => {
@@ -64,16 +64,14 @@ const BlocksTree = observer(() => {
 	}, [search, data, tree, meta])
 
 	// Load blocks data
-	const loadBlocks = () => {
-		store.api
-			.blocksGetAll()
-			.then((res) => setData(res.data))
-			.catch(() => setData([]))
-	}
-
-	// Initialize and refresh data periodically
-	useEffect(loadBlocks, [store.api])
-	useInterval(loadBlocks, 60000)
+	const loadBlocks = useCallback(async () => {
+		try {
+			const res = await store.api.blocksGetAll()
+			return setData(res.data)
+		} catch {
+			return setData([])
+		}
+	}, [store.api])
 
 	// Handle expand/collapse of tree nodes
 	const handleExpand = (expanded: boolean, record: BlockTreeInfo) => {
@@ -147,6 +145,7 @@ const BlocksTree = observer(() => {
 				Блоки верхнего уровня
 			</PageHeader>
 
+			<PollingLoader pollingFunction={loadBlocks} interval={60000} />
 			<Table
 				showSorterTooltip={false}
 				size='small'

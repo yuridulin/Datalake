@@ -1,4 +1,5 @@
 import TagButton from '@/app/components/buttons/TagButton'
+import PollingLoader from '@/app/components/loaders/PollingLoader'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagFullInfo, TagQuality, TagThresholdInfo, TagType, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
@@ -6,8 +7,7 @@ import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { DollarCircleOutlined } from '@ant-design/icons'
 import { Space, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { useCallback, useEffect, useState } from 'react'
-import { useInterval } from 'react-use'
+import { useCallback, useState } from 'react'
 
 interface TagThresholdsViewProps {
 	tag: TagFullInfo
@@ -19,20 +19,16 @@ const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
 	const store = useAppStore()
 	const [values, setValues] = useState<TagThresholdsValues>({})
 
-	const getValues = useCallback(() => {
-		store.api
-			.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: [tag.id, tag.thresholdSourceTag?.id ?? 0] }])
-			.then((res) => {
-				const newValues: TagThresholdsValues = {}
-				res.data[0].tags.forEach((x) => {
-					newValues[x.id] = x.values[0]
-				})
-				setValues(newValues)
-			})
+	const getValues = useCallback(async () => {
+		const res = await store.api.valuesGet([
+			{ requestKey: CLIENT_REQUESTKEY, tagsId: [tag.id, tag.thresholdSourceTag?.id ?? 0] },
+		])
+		const newValues: TagThresholdsValues = {}
+		res.data[0].tags.forEach((x) => {
+			newValues[x.id] = x.values[0]
+		})
+		setValues(newValues)
 	}, [store.api, tag])
-
-	useEffect(getValues, [getValues])
-	useInterval(getValues, 5000)
 
 	const columns: ColumnsType<TagThresholdInfo> = [
 		{
@@ -80,6 +76,7 @@ const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
 			</Space>
 			<br />
 			<br />
+			<PollingLoader pollingFunction={getValues} interval={5000} />
 			<Table size='small' dataSource={tag.thresholds ?? []} columns={columns} />
 		</>
 	)

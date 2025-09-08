@@ -241,7 +241,7 @@ export class AppStore implements UserAuthInfo {
 	}
 
 	public refreshAuthData = () => {
-		this.api
+		return this.api
 			.authIdentify()
 			.then((res) => {
 				if (res.status === 200) {

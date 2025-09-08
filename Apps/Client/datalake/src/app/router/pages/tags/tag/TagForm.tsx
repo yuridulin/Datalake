@@ -3,9 +3,7 @@ import HelpAggregationType from '@/app/components/help-tootip/help-pages/HelpAgg
 import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
 import TagIcon from '@/app/components/icons/TagIcon'
 import PageHeader from '@/app/components/PageHeader'
-import TagQualityEl from '@/app/components/TagQualityEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
-import TagCompactValue from '@/app/components/values/TagCompactValue'
 import routes from '@/app/router/routes'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import {
@@ -15,20 +13,16 @@ import {
 	TagAggregation,
 	TagCalculation,
 	TagInfo,
-	TagQuality,
 	TagSimpleInfo,
 	TagType,
 	TagUpdateInputRequest,
 	TagUpdateRequest,
-	ValueRecord,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
-import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
-import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
+import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useInterval } from 'react-use'
 
 type SourceOption = {
 	value: number
@@ -61,32 +55,6 @@ const TagForm = () => {
 	const store = useAppStore()
 	const { id } = useParams()
 	const navigate = useNavigate()
-
-	// #region Значение
-	const [value, setValue] = useState<ValueRecord | null>(null)
-
-	const getValue = useCallback(() => {
-		if (!id) return
-		store.api
-			.valuesGet([
-				{
-					requestKey: CLIENT_REQUESTKEY,
-					tagsId: [Number(id)],
-				},
-			])
-			.then((res) => {
-				const next = res.data[0]?.tags?.[0]?.values?.[0] ?? null
-				setValue((prev) => (prev && next && prev.value == next.value && prev.quality == next.quality ? prev : next))
-			})
-			.catch(() => setValue(null))
-	}, [store.api, id])
-
-	useEffect(() => {
-		getValue()
-	}, [id, getValue])
-
-	useInterval(() => getValue(), 1000)
-	// #endregion
 
 	// инфо
 	const [tag, setTag] = useState({} as TagInfo)
@@ -512,16 +480,6 @@ const TagForm = () => {
 						Агрегирование
 					</Radio.Button>
 				</Radio.Group>
-			</FormRow>
-
-			<FormRow title='Значение'>
-				<Space>
-					{value ? (
-						<TagCompactValue value={value.value} type={tag.type} quality={value.quality} />
-					) : (
-						<TagQualityEl quality={TagQuality.BadNoConnect} />
-					)}
-				</Space>
 			</FormRow>
 
 			{/* Настройки расчета */}

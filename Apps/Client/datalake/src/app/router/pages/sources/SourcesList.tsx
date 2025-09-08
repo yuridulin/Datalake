@@ -1,3 +1,4 @@
+import PollingLoader from '@/app/components/loaders/PollingLoader'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { timeAgo } from '@/functions/dateHandle'
@@ -7,9 +8,8 @@ import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { useInterval } from 'react-use'
 
 interface DataCell extends SourceInfo {
 	isGroup: boolean
@@ -25,10 +25,9 @@ const SourcesList = observer(() => {
 	const [sources, setSources] = useState([] as DataCell[])
 	const [states, setStates] = useState({} as Record<string, SourceStateInfo>)
 
-	const getStates = useCallback(() => {
-		store.api.statesGetSources().then((res) => {
-			setStates(res.data)
-		})
+	const getStates = useCallback(async () => {
+		const res = await store.api.statesGetSources()
+		setStates(res.data)
 	}, [store.api])
 
 	const load = useCallback(() => {
@@ -202,9 +201,6 @@ const SourcesList = observer(() => {
 		},
 	]
 
-	useEffect(load, [getStates, load, store.api])
-	useInterval(getStates, 5000)
-
 	return (
 		<>
 			<PageHeader
@@ -212,6 +208,7 @@ const SourcesList = observer(() => {
 			>
 				Зарегистрированные источники данных
 			</PageHeader>
+			<PollingLoader pollingFunction={getStates} interval={5000} />
 			<Table
 				dataSource={sources}
 				columns={columns}
