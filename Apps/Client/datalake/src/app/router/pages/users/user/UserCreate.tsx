@@ -4,6 +4,7 @@ import NoAccessEl from '@/app/components/NoAccessEl'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { AccessType, UserCreateRequest, UserEnergoIdInfo, UserType } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { Button, Input, Radio, Select } from 'antd'
@@ -12,6 +13,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const UserCreate = observer(() => {
+	useDatalakeTitle('Пользователи', 'Добавление')
 	const store = useAppStore()
 	const navigate = useNavigate()
 	const [request, setRequest] = useState({

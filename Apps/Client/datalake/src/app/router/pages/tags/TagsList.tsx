@@ -1,10 +1,12 @@
 import PageHeader from '@/app/components/PageHeader'
 import { TagInfo } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { useCallback, useEffect, useState } from 'react'
 import TagsTable from './TagsTable'
 
 const Tags = () => {
+	useDatalakeTitle('Теги')
 	const store = useAppStore()
 	const [tags, setTags] = useState([] as TagInfo[])
 

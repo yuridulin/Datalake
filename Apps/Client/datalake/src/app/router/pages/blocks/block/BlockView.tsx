@@ -7,6 +7,7 @@ import TabsView from '@/app/components/tabsView/TabsView'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
 import { AccessType, BlockFullInfo, TagResolution, TagType } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { RightOutlined } from '@ant-design/icons'
 import { Button, Spin } from 'antd'
@@ -21,6 +22,7 @@ const childrenContainerStyle = {
 const BlockView = observer(() => {
 	const store = useAppStore()
 	const { id } = useParams()
+	useDatalakeTitle('Блоки', '#' + id)
 
 	const [ready, setReady] = useState(false)
 	const [block, setBlock] = useState({} as BlockFullInfo)

@@ -3,6 +3,7 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
 import { AccessType, UserGroupDetailedInfo, UserGroupUpdateRequest } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
@@ -16,6 +17,7 @@ const UserGroupForm = observer(() => {
 	const app = App.useApp()
 	const navigate = useNavigate()
 	const { id } = useParams()
+	useDatalakeTitle('Группы', id, 'Изменение')
 	const [form] = Form.useForm<UserGroupUpdateRequest>()
 
 	const [ready, setGety] = useState(false)

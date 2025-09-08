@@ -1,12 +1,14 @@
 import CreatedTagLinker from '@/app/components/CreatedTagsLinker'
 import PageHeader from '@/app/components/PageHeader'
 import { SourceType, TagInfo, TagResolution, TagType } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import TagsTable from './TagsTable'
 
 const TagsAggregatedList = () => {
+	useDatalakeTitle('Теги', 'Агрегированные')
 	const store = useAppStore()
 	const [tags, setTags] = useState([] as TagInfo[])
 	const [created, setCreated] = useState(null as TagInfo | null)

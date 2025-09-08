@@ -8,6 +8,7 @@ import compareAccess from '@/functions/compareAccess'
 import { timeAgo } from '@/functions/dateHandle'
 import getUserTypeName from '@/functions/getUserTypeName'
 import { AccessType, UserInfo } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
@@ -17,6 +18,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const UsersList = observer(() => {
+	useDatalakeTitle('Пользователи')
 	const store = useAppStore()
 	const navigate = useNavigate()
 	const [users, setUsers] = useState([] as UserInfo[])

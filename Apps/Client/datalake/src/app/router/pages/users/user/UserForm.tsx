@@ -4,6 +4,7 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
 import { AccessType, UserDetailInfo, UserEnergoIdInfo, UserType, UserUpdateRequest } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { Button, Input, Popconfirm, Radio, Select, Spin, Tag } from 'antd'
@@ -29,6 +30,7 @@ const UserForm = observer(() => {
 	const store = useAppStore()
 	const navigate = useNavigate()
 	const { id } = useParams()
+	useDatalakeTitle('Пользователи', id, 'Изменение')
 	const [oldName, setOldName] = useState('')
 	const [userInfo, setUser] = useState({
 		oldType: UserType.Local,

@@ -2,6 +2,7 @@ import AccessTypeEl from '@/app/components/AccessTypeEl'
 import UserGroupButton from '@/app/components/buttons/UserGroupButton'
 import PageHeader from '@/app/components/PageHeader'
 import { AccessType, UserGroupTreeInfo } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
@@ -18,6 +19,7 @@ const setEmptyAsLeafs = (group: UserGroupTreeInfo): UserGroupTreeInfo => ({
 })
 
 const UserGroupsTreeList = observer(() => {
+	useDatalakeTitle('Группы')
 	const store = useAppStore()
 	const [groups, setGroups] = useState([] as UserGroupTreeInfo[])
 

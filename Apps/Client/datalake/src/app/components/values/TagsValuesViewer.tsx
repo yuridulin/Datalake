@@ -28,19 +28,20 @@ interface TagValuesViewerProps {
 	relations: number[] // Массив ID связей
 	tagMapping: Record<number, { id: number; localName: string; type: TagType }> // Маппинг отношений
 	integrated?: boolean // Скрываем часть контролов и инициируем запросы сразу после изменения настроек
+	onChange?: (settings: ViewerSettings) => void
 }
 
-interface ViewerSettings {
+export interface ViewerSettings {
 	activeRelations: number[]
 	old: Dayjs
 	young: Dayjs
 	exact: Dayjs
-	resolution: number
+	resolution: TagResolution
 	mode: TimeMode
 	update: boolean
 }
 
-const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }: TagValuesViewerProps) => {
+const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, onChange }: TagValuesViewerProps) => {
 	const store = useAppStore()
 	const navigate = useNavigate()
 	const [searchParams, setSearchParams] = useSearchParams()
@@ -60,6 +61,9 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 		mode: initialMode,
 		update: integrated,
 	})
+
+	// когда мы получили настройки по умолчанию, мы отдаем им наружу
+	if (onChange) onChange(settings)
 
 	// последние настройки на момент успешного запроса
 	const [lastFetchSettings, setLastFetchSettings] = useState<ViewerSettings>(settings)
@@ -163,7 +167,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 			},
 			{ replace: true },
 		)
-	}, [settings, setSearchParams, isTimeDirty])
+		if (onChange) onChange(settings)
+	}, [settings, setSearchParams, isTimeDirty, onChange])
 
 	const renderFooterOld = () => (
 		<Space style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px' }}>

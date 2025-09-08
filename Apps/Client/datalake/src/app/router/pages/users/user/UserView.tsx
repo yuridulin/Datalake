@@ -7,6 +7,7 @@ import routes from '@/app/router/routes'
 import getUserTypeName from '@/functions/getUserTypeName'
 import hasAccess from '@/functions/hasAccess'
 import { AccessType, UserDetailInfo } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -17,6 +18,7 @@ const UserView = observer(() => {
 	const store = useAppStore()
 	const navigate = useNavigate()
 	const { id } = useParams()
+	useDatalakeTitle('Пользователи', id)
 	const [info, setInfo] = useState(null as UserDetailInfo | null)
 	const [loading, setLoading] = useState(true)
 

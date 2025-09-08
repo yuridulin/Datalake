@@ -4,6 +4,7 @@ import routes from '@/app/router/routes'
 import { timeAgo } from '@/functions/dateHandle'
 import getSourceTypeName from '@/functions/getSourceTypeName'
 import { AccessType, SourceInfo, SourceStateInfo, SourceType } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
@@ -21,6 +22,7 @@ const ExcludedTypes = [SourceType.NotSet, SourceType.System]
 const NotEnteredTypes = [SourceType.Aggregated, SourceType.Calculated, SourceType.Manual]
 
 const SourcesList = observer(() => {
+	useDatalakeTitle('Источники')
 	const store = useAppStore()
 	const [sources, setSources] = useState([] as DataCell[])
 	const [states, setStates] = useState({} as Record<string, SourceStateInfo>)

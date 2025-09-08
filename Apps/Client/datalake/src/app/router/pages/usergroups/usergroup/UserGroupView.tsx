@@ -6,6 +6,7 @@ import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
 import routes from '@/app/router/routes'
 import { AccessType, UserGroupDetailedInfo } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -24,6 +25,7 @@ const UserGroupView = observer(() => {
 	const [group, setGroup] = useState(defaultGroup)
 	const [ready, setReady] = useState(false)
 	const { id } = useParams()
+	useDatalakeTitle('Группы', id)
 
 	const items: InfoTableProps['items'] = {
 		Описание: group.description ?? <i>нет</i>,

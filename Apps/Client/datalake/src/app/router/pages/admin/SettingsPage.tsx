@@ -1,4 +1,5 @@
 import PageHeader from '@/app/components/PageHeader'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { Tabs } from 'antd'
 import AccessSettings from './tabs/AccessSettings'
 import AuthSettings from './tabs/AuthSettings'
@@ -6,6 +7,8 @@ import CollectSettings from './tabs/CollectSettings'
 import LocalSettings from './tabs/LocalSettings'
 
 const SettingsPage = () => {
+	useDatalakeTitle('Настройки')
+
 	return (
 		<>
 			<PageHeader>Настройки</PageHeader>

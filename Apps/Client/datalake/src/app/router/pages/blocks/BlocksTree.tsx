@@ -3,6 +3,7 @@ import PollingLoader from '@/app/components/loaders/PollingLoader'
 import PageHeader from '@/app/components/PageHeader'
 import ProtectedButton from '@/app/components/ProtectedButton'
 import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -37,6 +38,8 @@ const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<
 const EXPAND_KEY = 'expandedBlocks'
 
 const BlocksTree = observer(() => {
+	useDatalakeTitle('Блоки')
+
 	const store = useAppStore()
 	const [data, setData] = useState<BlockWithTagsInfo[]>([])
 	const [search, setSearch] = useState('')
