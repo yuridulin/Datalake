@@ -22,7 +22,7 @@ public static class Errors
 	/// Нет доступа для пользователя EnergoId через внешнего статичного пользователя
 	/// </summary>
 	public static ForbiddenException NoAccessUnderlyingUser(Guid userGuid, Guid underlyingUserGuid)
-		=> new(message: "нет доступа.\nПользователь EnergoId: `" + userGuid.ToString() + "` через внешнего пользователя `" + underlyingUserGuid.ToString() + "`");
+		=> new(message: "нет доступа.\nПользователь EnergoId: `" + underlyingUserGuid.ToString() + "` через внешнего пользователя `" + userGuid.ToString() + "`");
 
 	/// <summary>
 	/// Нет доступа, так как нет сессии с таким токеном
