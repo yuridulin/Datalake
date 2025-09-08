@@ -125,18 +125,18 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 			onChange(tagValues, tagMapping)
 
 			// Обновляем query-параметры
-			searchParams.set(URL_PARAMS.TAGS, selections.join(SELECTED_SEPARATOR))
 			setSearchParams(
 				(prev) => {
-					console.log('QueryTreeSelect set search!')
-					console.log('prev:', prev)
-					console.log('next:', searchParams)
-					return searchParams
+					console.log('OLD:', prev)
+					const newParams = new URLSearchParams(prev)
+					newParams.set(URL_PARAMS.TAGS, selections.join(SELECTED_SEPARATOR))
+					console.log('NEW:', newParams)
+					return newParams
 				},
 				{ replace: true },
 			)
 		},
-		[onChange, searchParams, setSearchParams, tagMapping, checkedRelations],
+		[onChange, setSearchParams, tagMapping, checkedRelations],
 	)
 
 	// Подсчет уникальных выбранных тегов

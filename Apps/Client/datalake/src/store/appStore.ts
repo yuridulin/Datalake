@@ -4,10 +4,6 @@ import { Api } from '@/generated/Api'
 import { AccessRuleInfo, AccessType, UserAuthInfo, UserSessionInfo, UserType } from '@/generated/data-contracts'
 import { NotificationInstance } from 'antd/es/notification/interface'
 import { AxiosError, AxiosResponse } from 'axios'
-import dayjs from 'dayjs'
-import 'dayjs/locale/ru'
-import TimeAgo from 'javascript-time-ago'
-import ru from 'javascript-time-ago/locale/ru'
 import { makeAutoObservable } from 'mobx'
 import hasAccess from '../functions/hasAccess'
 
@@ -49,15 +45,6 @@ const tokenHeader = 'd-access-token'
 const accessHeader = 'd-access-type'
 const identityHeader = 'd-identity'
 const themeKey = 'd-theme'
-
-// настройка времени
-dayjs.locale('ru')
-const timeMask = 'YYYY-MM-DDTHH:mm:ss'
-
-TimeAgo.addLocale(ru)
-const timeAgo = new TimeAgo('ru-RU')
-
-export { timeAgo, timeMask }
 
 export class AppStore implements UserAuthInfo {
 	//#region Инициализация

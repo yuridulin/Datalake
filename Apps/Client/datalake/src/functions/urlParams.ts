@@ -1,5 +1,5 @@
-import { timeMask } from '@/store/appStore'
-import dayjs, { Dayjs } from 'dayjs'
+import { deserializeDate, serializeDate } from '@/functions/dateHandle'
+import { Dayjs } from 'dayjs'
 
 export const TimeModes = {
 	LIVE: 'live',
@@ -42,16 +42,6 @@ export const deserializeTags = (param: string | null): Array<{ tagId: number; re
 			return { tagId, relationId }
 		})
 		.filter(({ tagId, relationId }) => !isNaN(tagId) && !isNaN(relationId))
-}
-
-// Сериализация даты в строку
-export const serializeDate = (date: Dayjs | null): string | null => {
-	return date ? date.format(timeMask) : null
-}
-
-// Извлечение даты из строки
-export const deserializeDate = (dateString: string | null): Dayjs | null => {
-	return dateString ? dayjs(dateString, timeMask) : null
 }
 
 // Интерфейс для параметров просмотра значений

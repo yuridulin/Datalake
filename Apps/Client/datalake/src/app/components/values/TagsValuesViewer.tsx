@@ -4,11 +4,11 @@ import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
 import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
 import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithInfo'
 import routes from '@/app/router/routes'
+import { deserializeDate, serializeDate } from '@/functions/dateHandle'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { serializeDate, serializeTags, setViewerParams, TimeMode, TimeModes, URL_PARAMS } from '@/functions/urlParams'
+import { serializeTags, setViewerParams, TimeMode, TimeModes, URL_PARAMS } from '@/functions/urlParams'
 import { SourceType, TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
-import { timeMask } from '@/store/appStore'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
@@ -23,8 +23,6 @@ const timeModeOptions: { label: string; value: TimeMode }[] = [
 	{ label: 'Срез', value: TimeModes.EXACT },
 	{ label: 'Диапазон', value: TimeModes.OLD_YOUNG },
 ]
-
-const parseDate = (param: string | null, fallback: dayjs.Dayjs) => (param ? dayjs(param, timeMask) : fallback)
 
 interface TagValuesViewerProps {
 	relations: number[] // Массив ID связей
@@ -55,9 +53,9 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 	const [settings, setSettings] = useState<ViewerSettings>({
 		activeRelations: relations,
-		old: parseDate(searchParams.get(URL_PARAMS.VIEWER_OLD), dayjs().startOf('hour')),
-		young: parseDate(searchParams.get(URL_PARAMS.VIEWER_YOUNG), dayjs().startOf('hour').add(1, 'hour')),
-		exact: parseDate(searchParams.get(TimeModes.EXACT), dayjs()),
+		old: deserializeDate(searchParams.get(URL_PARAMS.VIEWER_OLD), dayjs().startOf('hour')),
+		young: deserializeDate(searchParams.get(URL_PARAMS.VIEWER_YOUNG), dayjs().startOf('hour').add(1, 'hour')),
+		exact: deserializeDate(searchParams.get(TimeModes.EXACT), dayjs()),
 		resolution: Number(searchParams.get(URL_PARAMS.VIEWER_RESOLUTION)) || 0,
 		mode: initialMode,
 		update: integrated,
@@ -94,10 +92,10 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 			settings.mode === TimeModes.LIVE
 				? {}
 				: settings.mode === TimeModes.EXACT
-					? { exact: settings.exact.format(timeMask) }
+					? { exact: serializeDate(settings.exact) }
 					: {
-							old: settings.old.format(timeMask),
-							young: settings.young.format(timeMask),
+							old: serializeDate(settings.old),
+							young: serializeDate(settings.young),
 							resolution: settings.resolution,
 						}
 
@@ -144,23 +142,24 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 	}, [settings, integrated, getValues])
 
 	useEffect(() => {
-		setViewerParams(searchParams, {
-			mode: settings.mode,
-			resolution: settings.resolution,
-			exact: settings.exact,
-			old: settings.old,
-			young: settings.young,
-		})
 		setSearchParams(
 			(prev) => {
-				console.log('TagsValuesViewer set search!')
-				console.log('prev:', prev)
-				console.log('next:', searchParams)
-				return searchParams
+				console.log('OLD:', prev)
+				console.log('TAGS:', settings.activeRelations)
+				const newParams = new URLSearchParams(prev)
+				setViewerParams(newParams, {
+					mode: settings.mode,
+					resolution: settings.resolution,
+					exact: settings.exact,
+					old: settings.old,
+					young: settings.young,
+				})
+				console.log('NEW:', newParams)
+				return newParams
 			},
 			{ replace: true },
 		)
-	}, [settings, searchParams, setSearchParams])
+	}, [settings, setSearchParams])
 
 	const renderFooterOld = () => (
 		<Space style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px' }}>
