@@ -1,6 +1,14 @@
 import { timeMask } from '@/store/appStore'
 import dayjs, { Dayjs } from 'dayjs'
 
+export const TimeModes = {
+	LIVE: 'live',
+	EXACT: 'exact',
+	OLD_YOUNG: 'old-young',
+} as const
+
+export type TimeMode = (typeof TimeModes)[keyof typeof TimeModes]
+
 // Константы для имен параметров URL
 export const URL_PARAMS = {
 	TAGS: 'T',
@@ -48,7 +56,7 @@ export const deserializeDate = (dateString: string | null): Dayjs | null => {
 
 // Интерфейс для параметров просмотра значений
 export interface ViewerParams {
-	mode?: string
+	mode: TimeMode
 	resolution?: number
 	exact?: Dayjs | null
 	old?: Dayjs | null
@@ -58,7 +66,7 @@ export interface ViewerParams {
 // Получение параметров просмотра значений из URLSearchParams
 export const getViewerParams = (searchParams: URLSearchParams): ViewerParams => {
 	return {
-		mode: searchParams.get(URL_PARAMS.VIEWER_MODE) || undefined,
+		mode: (searchParams.get(URL_PARAMS.VIEWER_MODE) as TimeMode) || 'live',
 		resolution: Number(searchParams.get(URL_PARAMS.VIEWER_RESOLUTION)) || undefined,
 		exact: deserializeDate(searchParams.get(URL_PARAMS.VIEWER_EXACT)),
 		old: deserializeDate(searchParams.get(URL_PARAMS.VIEWER_OLD)),
@@ -68,36 +76,35 @@ export const getViewerParams = (searchParams: URLSearchParams): ViewerParams => 
 
 // Установка параметров просмотра значений в URLSearchParams
 export const setViewerParams = (searchParams: URLSearchParams, params: ViewerParams): void => {
-	if (params.mode !== undefined) {
-		searchParams.set(URL_PARAMS.VIEWER_MODE, params.mode)
+	if (!params.mode) {
+		console.warn('Режим чтения данных не получен!')
+		return
 	}
 
-	if (params.resolution !== undefined) {
-		searchParams.set(URL_PARAMS.VIEWER_RESOLUTION, params.resolution.toString())
-	}
+	searchParams.set(URL_PARAMS.VIEWER_MODE, params.mode)
 
-	if (params.exact !== undefined) {
-		if (params.exact) {
-			searchParams.set(URL_PARAMS.VIEWER_EXACT, serializeDate(params.exact)!)
-		} else {
-			searchParams.delete(URL_PARAMS.VIEWER_EXACT)
+	if (params.mode === 'old-young') {
+		if (params.resolution) {
+			searchParams.set(URL_PARAMS.VIEWER_RESOLUTION, params.resolution.toString())
 		}
-	}
-
-	if (params.old !== undefined) {
 		if (params.old) {
 			searchParams.set(URL_PARAMS.VIEWER_OLD, serializeDate(params.old)!)
-		} else {
-			searchParams.delete(URL_PARAMS.VIEWER_OLD)
 		}
-	}
-
-	if (params.young !== undefined) {
 		if (params.young) {
 			searchParams.set(URL_PARAMS.VIEWER_YOUNG, serializeDate(params.young)!)
-		} else {
-			searchParams.delete(URL_PARAMS.VIEWER_YOUNG)
 		}
+	} else {
+		searchParams.delete(URL_PARAMS.VIEWER_YOUNG)
+		searchParams.delete(URL_PARAMS.VIEWER_OLD)
+		searchParams.delete(URL_PARAMS.VIEWER_RESOLUTION)
+	}
+
+	if (params.mode === 'exact') {
+		if (params.exact) {
+			searchParams.set(URL_PARAMS.VIEWER_EXACT, serializeDate(params.exact)!)
+		}
+	} else {
+		searchParams.delete(URL_PARAMS.VIEWER_EXACT)
 	}
 }
 

@@ -1,3 +1,4 @@
+import PollingLoader from '@/app/components/loaders/PollingLoader'
 import { ExcelExportModeHandles } from '@/app/components/values/functions/exportExcel'
 import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
 import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
@@ -5,7 +6,7 @@ import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithIn
 import routes from '@/app/router/routes'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { serializeDate, serializeTags, setViewerParams, URL_PARAMS } from '@/functions/urlParams'
+import { serializeDate, serializeTags, setViewerParams, TimeMode, TimeModes, URL_PARAMS } from '@/functions/urlParams'
 import { SourceType, TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
 import { timeMask } from '@/store/appStore'
 import { useAppStore } from '@/store/useAppStore'
@@ -16,15 +17,6 @@ import dayjs, { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useInterval } from 'react-use'
-
-const TimeModes = {
-	LIVE: 'live',
-	EXACT: 'exact',
-	OLD_YOUNG: 'old-young',
-} as const
-
-type TimeMode = (typeof TimeModes)[keyof typeof TimeModes]
 
 const timeModeOptions: { label: string; value: TimeMode }[] = [
 	{ label: 'Текущие', value: TimeModes.LIVE },
@@ -109,7 +101,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 							resolution: settings.resolution,
 						}
 
-		store.api
+		return store.api
 			.valuesGet([
 				{
 					requestKey: CLIENT_REQUESTKEY,
@@ -140,10 +132,6 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 				setValues(newValues)
 				setLastFetchSettings(settings)
-				console.log(
-					res.data[0].tags,
-					res.data[0].tags.some((x) => x.sourceType === SourceType.Manual),
-				)
 				setWrite(res.data[0].tags.some((x) => x.sourceType === SourceType.Manual))
 			})
 			.catch(console.error)
@@ -163,15 +151,16 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 			old: settings.old,
 			young: settings.young,
 		})
-		setSearchParams(searchParams, { replace: true })
+		setSearchParams(
+			(prev) => {
+				console.log('TagsValuesViewer set search!')
+				console.log('prev:', prev)
+				console.log('next:', searchParams)
+				return searchParams
+			},
+			{ replace: true },
+		)
 	}, [settings, searchParams, setSearchParams])
-
-	// Для автоматического обновления
-	useInterval(() => {
-		if (settings.mode === TimeModes.LIVE) {
-			getValues()
-		}
-	}, 5000)
 
 	const renderFooterOld = () => (
 		<Space style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px' }}>
@@ -359,6 +348,9 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 				</>
 			)}
 
+			{settings.mode === TimeModes.LIVE && settings.activeRelations.length > 0 && (
+				<PollingLoader pollingFunction={getValues} interval={5000} statusDuration={400} />
+			)}
 			{values.length ? (
 				settings.mode === TimeModes.OLD_YOUNG ? (
 					<TimedValuesMode ref={tableRef} relations={values} locf={settings.resolution === TagResolution.NotSet} />

@@ -119,7 +119,6 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 			tagValues.forEach((relationId) => {
 				const mapping = tagMapping[relationId]
 				if (mapping) selections.push(`${mapping.id}${RELATION_TAG_SEPARATOR}${relationId}`)
-				return
 			})
 
 			// Вызываем внешний обработчик с relationId
@@ -127,15 +126,21 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 
 			// Обновляем query-параметры
 			searchParams.set(URL_PARAMS.TAGS, selections.join(SELECTED_SEPARATOR))
-			setSearchParams(searchParams, { replace: true })
+			setSearchParams(
+				(prev) => {
+					console.log('QueryTreeSelect set search!')
+					console.log('prev:', prev)
+					console.log('next:', searchParams)
+					return searchParams
+				},
+				{ replace: true },
+			)
 		},
 		[onChange, searchParams, setSearchParams, tagMapping, checkedRelations],
 	)
 
 	// Подсчет уникальных выбранных тегов
-	const countSelectedTags = useCallback(() => {
-		return checkedRelations.length
-	}, [checkedRelations])
+	const countSelectedTags = useMemo(() => checkedRelations.length, [checkedRelations])
 
 	return (
 		<TreeSelect
@@ -151,7 +156,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 			listHeight={1000}
 			virtual={true}
 			maxTagCount={0}
-			maxTagPlaceholder={() => `Выбрано тегов: ${countSelectedTags()}`}
+			maxTagPlaceholder={() => `Выбрано тегов: ${countSelectedTags}`}
 			filterTreeNode={filterTreeNode}
 			searchValue={searchValue}
 			onSearch={setSearchValue}
