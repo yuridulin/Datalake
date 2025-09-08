@@ -291,7 +291,16 @@ public class Program
 			.UseMiddleware<SentryRequestBodyMiddleware>()
 			.EnsureCorsMiddlewareOnError();
 
-		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
+		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html").Add(builder =>
+		{
+			builder.RequestDelegate = (httpContext) =>
+			{
+				httpContext.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+				httpContext.Response.Headers.Append("Pragma", "no-cache");
+				httpContext.Response.Headers.Append("Expires", "0");
+				return Task.CompletedTask;
+			};
+		});
 		app.MapControllerRoute(
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");
