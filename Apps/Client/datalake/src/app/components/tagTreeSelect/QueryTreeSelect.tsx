@@ -128,10 +128,9 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 			setSearchParams(
 				(prev) => {
 					console.log('OLD:', prev)
-					const newParams = new URLSearchParams(prev)
-					newParams.set(URL_PARAMS.TAGS, selections.join(SELECTED_SEPARATOR))
-					console.log('NEW:', newParams)
-					return newParams
+					prev.set(URL_PARAMS.TAGS, selections.join(SELECTED_SEPARATOR))
+					console.log('NEW:', prev)
+					return prev
 				},
 				{ replace: true },
 			)

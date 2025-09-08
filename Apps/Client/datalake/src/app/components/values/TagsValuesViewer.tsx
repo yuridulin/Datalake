@@ -15,7 +15,7 @@ import { PlaySquareOutlined } from '@ant-design/icons'
 import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const timeModeOptions: { label: string; value: TimeMode }[] = [
@@ -64,14 +64,21 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 	// последние настройки на момент успешного запроса
 	const [lastFetchSettings, setLastFetchSettings] = useState<ViewerSettings>(settings)
 
+	const isTimeDirty = useMemo(
+		() =>
+			settings.mode !== lastFetchSettings.mode ||
+			settings.resolution !== lastFetchSettings.resolution ||
+			!settings.exact.isSame(lastFetchSettings.exact) ||
+			!settings.old.isSame(lastFetchSettings.old) ||
+			!settings.young.isSame(lastFetchSettings.young),
+		[settings, lastFetchSettings],
+	)
+
 	// Проверка, что настройки изменились
-	const isDirty =
-		settings.mode !== lastFetchSettings.mode ||
-		settings.resolution !== lastFetchSettings.resolution ||
-		!settings.exact.isSame(lastFetchSettings.exact) ||
-		!settings.old.isSame(lastFetchSettings.old) ||
-		!settings.young.isSame(lastFetchSettings.young) ||
-		isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations)
+	const isDirty = useMemo(
+		() => isTimeDirty || isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations),
+		[settings, lastFetchSettings, isTimeDirty],
+	)
 
 	useEffect(() => {
 		if (isArraysDifferent(settings.activeRelations, relations)) {
@@ -142,24 +149,24 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 	}, [settings, integrated, getValues])
 
 	useEffect(() => {
+		if (!isTimeDirty) return
 		setSearchParams(
 			(prev) => {
 				console.log('OLD:', prev)
 				console.log('TAGS:', settings.activeRelations)
-				const newParams = new URLSearchParams(prev)
-				setViewerParams(newParams, {
+				setViewerParams(prev, {
 					mode: settings.mode,
 					resolution: settings.resolution,
 					exact: settings.exact,
 					old: settings.old,
 					young: settings.young,
 				})
-				console.log('NEW:', newParams)
-				return newParams
+				console.log('NEW:', prev)
+				return prev
 			},
 			{ replace: true },
 		)
-	}, [settings, setSearchParams])
+	}, [settings, setSearchParams, isTimeDirty])
 
 	const renderFooterOld = () => (
 		<Space style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px' }}>
