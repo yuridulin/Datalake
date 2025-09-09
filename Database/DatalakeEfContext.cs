@@ -14,18 +14,6 @@ namespace Datalake.Database;
 public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : DbContext(options)
 {
 	/// <summary>
-	/// Конструктор, получающий настройки json
-	/// </summary>
-	public DatalakeEfContext(
-		JsonSerializerOptions jsonSerializerOptions,
-		DbContextOptions<DatalakeEfContext> options) : this(options)
-	{
-		this.jsonSerializerOptions = jsonSerializerOptions;
-	}
-
-	private readonly JsonSerializerOptions? jsonSerializerOptions;
-
-	/// <summary>
 	/// Конфигурация связей между таблицами БД
 	/// </summary>
 	/// <param name="modelBuilder"></param>
@@ -96,8 +84,8 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.Property(t => t.Thresholds)
 			.HasColumnType("jsonb")
 			.HasConversion(
-				v => JsonSerializer.Serialize(v, jsonSerializerOptions),
-				v => JsonSerializer.Deserialize<List<TagThresholdInfo>>(v, jsonSerializerOptions)
+				v => JsonSerializer.Serialize(v, Json.JsonSerializerOptions),
+				v => JsonSerializer.Deserialize<List<TagThresholdInfo>>(v, Json.JsonSerializerOptions)
 			)
 			.Metadata.SetValueComparer(
 				new ValueComparer<List<TagThresholdInfo>>(
@@ -241,6 +229,15 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.WithOne(x => x.EnergoId)
 			.HasForeignKey<User>(x => x.EnergoIdGuid)
 			.HasPrincipalKey<EnergoIdUserView>(x => x.Guid);
+
+		// сессии
+
+		modelBuilder.Entity<UserSession>()
+			.HasOne(x => x.User)
+			.WithMany(x => x.Sessions)
+			.HasForeignKey(x => x.UserGuid)
+			.HasPrincipalKey(x => x.Guid)
+			.OnDelete(DeleteBehavior.Cascade);
 	}
 
 	#region Таблицы
@@ -314,6 +311,11 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 	/// Представление пользователей EnergoId с их данными
 	/// </summary>
 	public virtual DbSet<EnergoIdUserView> UsersEnergoId { get; set; }
+
+	/// <summary>
+	/// Таблица текущих сессий пользователей
+	/// </summary>
+	public virtual DbSet<UserSession> UserSessions { get; set; }
 
 	#endregion
 }

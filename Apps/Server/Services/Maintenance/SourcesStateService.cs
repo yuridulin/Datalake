@@ -1,4 +1,4 @@
-﻿using Datalake.Database.InMemory;
+﻿using Datalake.Database.InMemory.Stores;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Sources;
 using System.Collections.Concurrent;
@@ -40,7 +40,7 @@ public class SourcesStateService(
 	{
 		var now = DateFormats.GetCurrentDateTime();
 
-		var tags = dataStore.State.CachesTags;
+		var tags = dataStore.State.Tags;
 		int allCount = 0;
 		int lastHalfHour = 0;
 		int lastDay = 0;

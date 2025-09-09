@@ -1,8 +1,10 @@
-﻿using Datalake.PublicApi.Constants;
-using Datalake.Server.Services.Auth;
-using Datalake.Server.Services.Auth.Models;
+﻿using Datalake.Database.Constants;
+using Datalake.Database.Extensions;
+using Datalake.Database.InMemory.Stores.Derived;
+using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Controllers;
+using Datalake.PublicApi.Models.Auth;
 using Datalake.Server.Services.Maintenance;
-using System.Text;
 
 namespace Datalake.Server.Middlewares;
 
@@ -10,11 +12,9 @@ namespace Datalake.Server.Middlewares;
 /// Обработчик, проверяющий аутентификацию
 /// </summary>
 public class AuthMiddleware(
-	SessionManagerService sessionManager,
+	DatalakeSessionsStore sessionsStore,
 	UsersStateService stateService) : IMiddleware
 {
-	static readonly byte[] ErrorMessage = Encoding.UTF8.GetBytes("Access Denied - No Auth");
-
 	/// <summary>
 	/// Выполнение проверки аутентификации
 	/// </summary>
@@ -22,27 +22,27 @@ public class AuthMiddleware(
 	/// <param name="next">Следующий обработчик</param>
 	public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 	{
+		// определяем, нужно ли нам проверять
 		bool needToAuth =
-			// только api
-			context.Request.Path.StartsWithSegments("/api")
-			// только REST
+			// если api
+			context.Request.Path.StartsWithSegments($"/{Defaults.ApiRoot}")
+			// если REST
 			&& (context.Request.Method != "OPTIONS")
-			// не логин-пасс
-			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/auth"))
-			// не energoId
-			&& !(context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/api/users/energo-id"));
+			// и если не контроллер аутентификации
+			&& !(context.Request.Method == HttpMethod.Post.Method && context.Request.Path.StartsWithSegments($"/{Defaults.ApiRoot}/{AuthControllerBase.ControllerRoute}"));
 
-		AuthSession? authSession = null;
+		UserSessionInfo? authSession = null;
 		if (needToAuth)
 		{
-			authSession = sessionManager.GetExistSession(context);
+			authSession = await sessionsStore.GetExistSessionAsync(context);
 			if (authSession == null)
 			{
 				context.Response.StatusCode = 401;
-				await context.Response.Body.WriteAsync(ErrorMessage);
-				return;
+				var token = context.Request.Headers[AuthConstants.TokenHeader];
+				throw Errors.NoAccessToken(token);
 			}
-			sessionManager.AddSessionToResponse(authSession, context.Response);
+
+			context.Response.AddSessionToResponse(authSession);
 			stateService.WriteVisit(authSession.UserGuid);
 		}
 

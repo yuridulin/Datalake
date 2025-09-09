@@ -1,9 +1,8 @@
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Settings;
-using Datalake.PublicApi.Models.Sources;
-using Datalake.PublicApi.Models.Values;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -12,24 +11,51 @@ namespace Datalake.PublicApi.Controllers;
 /// <summary>
 /// Представление системной информации о работе сервера
 /// </summary>
-[Route("api/" + ControllerRoute)]
 [ApiController]
+[Route($"{Defaults.ApiRoot}/{ControllerRoute}")]
 public abstract class SystemControllerBase : ControllerBase
 {
+	#region Константы путей
+
 	/// <summary>
 	/// Основной путь к контроллеру
 	/// </summary>
 	public const string ControllerRoute = "system";
 
+	/// <inheritdoc cref="GetLastUpdateAsync" />
+	public const string Last = "last";
+
+	/// <inheritdoc cref="GetLogsAsync" />
+	public const string Logs = "logs";
+
+	/// <inheritdoc cref="GetSettingsAsync" />
+	public const string Settings = "settings";
+
+	/// <inheritdoc cref="UpdateSettingsAsync" />
+	public const string UpdateSettings = "settings";
+
+	/// <inheritdoc cref="RestartStateAsync" />
+	public const string RestartState = "restart/state";
+
+	/// <inheritdoc cref="RestartValuesAsync" />
+	public const string RestartValues = "restart/values";
+
+	/// <inheritdoc cref="GetAccessAsync" />
+	public const string Access = "access";
+
+	#endregion Константы путей
+
+	#region Методы
+
 	/// <summary>
-	/// Получение даты последнего изменения структуры базы данных
+	/// <see cref="HttpMethod.Get" />: Получение даты последнего изменения структуры базы данных
 	/// </summary>
 	/// <returns>Дата в строковом виде</returns>
-	[HttpGet("last")]
+	[HttpGet(Last)]
 	public abstract Task<ActionResult<string>> GetLastUpdateAsync();
 
 	/// <summary>
-	/// Получение списка сообщений
+	/// <see cref="HttpMethod.Get" />: Получение списка сообщений
 	/// </summary>
 	/// <param name="lastId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более поздних</param>
 	/// <param name="firstId">Идентификатор сообщения, с которого начать отсчёт количества в сторону более ранних</param>
@@ -43,7 +69,7 @@ public abstract class SystemControllerBase : ControllerBase
 	/// <param name="types">Выбранные типы сообщений</param>
 	/// <param name="author">Идентификатор пользователя, создавшего сообщение</param>
 	/// <returns>Список сообщений</returns>
-	[HttpGet("logs")]
+	[HttpGet(Logs)]
 	public abstract Task<ActionResult<LogInfo[]>> GetLogsAsync(
 		[FromQuery] int? lastId = null,
 		[FromQuery] int? firstId = null,
@@ -58,72 +84,39 @@ public abstract class SystemControllerBase : ControllerBase
 		[FromQuery] Guid? author = null);
 
 	/// <summary>
-	/// Информация о визитах пользователей
-	/// </summary>
-	/// <returns>Даты визитов, сопоставленные с идентификаторами пользователей</returns>
-	[HttpGet("visits")]
-	public abstract Task<ActionResult<Dictionary<Guid, DateTime>>> GetVisitsAsync();
-
-	/// <summary>
-	/// Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet("sources")]
-	public abstract Task<ActionResult<Dictionary<int, SourceStateInfo>>> GetSourcesStatesAsync();
-
-	/// <summary>
-	/// Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet("tags")]
-	public abstract Task<ActionResult<Dictionary<int, Dictionary<string, DateTime>>>> GetTagsStatesAsync();
-
-	/// <summary>
-	/// Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet("tags/{id}")]
-	public abstract Task<ActionResult<Dictionary<string, DateTime>>> GetTagStateAsync(
-			[BindRequired, FromRoute] int id);
-
-	/// <summary>
-	/// Получение информации о настройках сервера
+	/// <see cref="HttpMethod.Get" />: Получение информации о настройках сервера
 	/// </summary>
 	/// <returns>Информация о настройках</returns>
-	[HttpGet("settings")]
+	[HttpGet(Settings)]
 	public abstract Task<ActionResult<SettingsInfo>> GetSettingsAsync();
 
 	/// <summary>
-	/// Изменение информации о настройках сервера
+	/// <see cref="HttpMethod.Put" />: Изменение информации о настройках сервера
 	/// </summary>
 	/// <param name="newSettings">Новые настройки сервера</param>
-	[HttpPut("settings")]
+	[HttpPut(UpdateSettings)]
 	public abstract Task<ActionResult> UpdateSettingsAsync(
 		[BindRequired, FromBody] SettingsInfo newSettings);
 
 	/// <summary>
-	/// Перестроение кэша
+	/// <see cref="HttpMethod.Put" />: Перестроение кэша
 	/// </summary>
 	/// <returns></returns>
-	[HttpPut("restart/state")]
+	[HttpPut(RestartState)]
 	public abstract Task<ActionResult> RestartStateAsync();
 
 	/// <summary>
-	/// Перестроение кэша текущих (последних) значений
+	/// <see cref="HttpMethod.Put" />: Перестроение кэша текущих (последних) значений
 	/// </summary>
 	/// <returns></returns>
-	[HttpPut("restart/values")]
+	[HttpPut(RestartValues)]
 	public abstract Task<ActionResult> RestartValuesAsync();
 
 	/// <summary>
-	/// Получение списка вычисленных прав доступа для каждого пользователя
+	/// <see cref="HttpMethod.Get" />: Получение списка вычисленных прав доступа для каждого пользователя
 	/// </summary>
-	[HttpGet("access")]
+	[HttpGet(Access)]
 	public abstract Task<ActionResult<Dictionary<Guid, UserAuthInfo>>> GetAccessAsync();
 
-	/// <summary>
-	/// Получение метрик запросов на чтение
-	/// </summary>
-	[HttpGet("reads")]
-	public abstract Task<ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]>> GetReadMetricsAsync();
+	#endregion Методы
 }

@@ -1,0 +1,174 @@
+import BlockButton from '@/app/components/buttons/BlockButton'
+import BlockIcon from '@/app/components/icons/BlockIcon'
+import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
+import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
+import PageHeader from '@/app/components/PageHeader'
+import TabsView from '@/app/components/tabsView/TabsView'
+import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
+import routes from '@/app/router/routes'
+import { AccessType, BlockFullInfo, TagResolution, TagType } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { useAppStore } from '@/store/useAppStore'
+import { RightOutlined } from '@ant-design/icons'
+import { Button, Spin } from 'antd'
+import { observer } from 'mobx-react-lite'
+import { useEffect, useMemo, useState } from 'react'
+import { NavLink, useParams } from 'react-router-dom'
+
+const childrenContainerStyle = {
+	marginBottom: '1em',
+}
+
+const BlockView = observer(() => {
+	const store = useAppStore()
+	const { id } = useParams()
+	useDatalakeTitle('Блоки', '#' + id)
+
+	const [ready, setReady] = useState(false)
+	const [block, setBlock] = useState({} as BlockFullInfo)
+
+	const items: InfoTableProps['items'] = {
+		Имя: block.name,
+		Описание: block.description || <i>нет</i>,
+	}
+
+	const getBlock = () => {
+		setReady(false)
+		store.api
+			.blocksGet(Number(id))
+			.then((res) => {
+				res.data.adults = res.data.adults.reverse()
+				setBlock(res.data)
+				setReady(true)
+			})
+			.catch(() => setBlock({} as BlockFullInfo))
+	}
+
+	const createChild = () => {
+		store.api.blocksCreateEmpty({ parentId: Number(id) }).then(getBlock)
+	}
+
+	useEffect(getBlock, [store.api, id])
+
+	// Создаем маппинг тегов для TagValuesViewer
+	const tagMapping = useMemo(() => {
+		const mapping: Record<number, { id: number; localName: string; type: TagType; resolution: TagResolution }> = {}
+		block.tags?.forEach((tag) => {
+			mapping[tag.relationId] = {
+				id: tag.id,
+				localName: tag.localName,
+				type: tag.type,
+				resolution: tag.resolution,
+			}
+		})
+		return mapping
+	}, [block.tags])
+
+	const relations = useMemo(() => block.tags?.map((tag) => tag.relationId) || [], [block.tags])
+
+	return !ready ? (
+		<Spin />
+	) : (
+		<>
+			<PageHeader
+				left={[
+					<NavLink to={routes.blocks.list}>
+						<Button>К дереву блоков</Button>
+					</NavLink>,
+				]}
+				right={[
+					store.hasAccessToBlock(AccessType.Editor, Number(id)) && (
+						<NavLink to={routes.blocks.toEditBlock(Number(id))}>
+							<Button>Редактирование блока</Button>
+						</NavLink>
+					),
+					store.hasAccessToBlock(AccessType.Admin, Number(id)) && (
+						<NavLink to={routes.blocks.toBlockAccessForm(Number(id))}>
+							<Button>Редактирование разрешений</Button>
+						</NavLink>
+					),
+				]}
+				icon={<BlockIcon />}
+			>
+				{block.name}
+			</PageHeader>
+
+			<InfoTable items={items} />
+			<br />
+
+			<TabsView
+				items={[
+					{
+						key: 'history',
+						label: 'История значений',
+						children: <TagsValuesViewer relations={relations} tagMapping={tagMapping} integrated={true} />,
+					},
+					{
+						key: 'parents',
+						label: 'Родительские блоки',
+						children:
+							block.adults.length > 0 ? (
+								<div style={{ display: 'flex' }}>
+									<BlockButton block={block.adults[0]} />
+									{block.adults.slice(1).map((x) => (
+										<div key={x.id}>
+											<RightOutlined style={{ margin: '0 1em', fontSize: '7px' }} />
+											<BlockButton block={x} />
+										</div>
+									))}
+									<RightOutlined style={{ margin: '0 1em', fontSize: '7px' }} />
+									<Button size='small' disabled>
+										{block.name}
+									</Button>
+								</div>
+							) : (
+								<div style={childrenContainerStyle}>
+									<i>Это блок верхнего уровня</i>
+								</div>
+							),
+					},
+					{
+						key: 'nested',
+						label: 'Дочерние блоки',
+						children: (
+							<>
+								{block.children?.length > 0 ? (
+									block.children.map((record, i) => (
+										<div key={i} style={childrenContainerStyle}>
+											<BlockButton
+												key={record.id}
+												block={{
+													id: record.id ?? 0,
+													name: record.name ?? '',
+													guid: '',
+												}}
+											/>
+										</div>
+									))
+								) : (
+									<div style={childrenContainerStyle}>
+										<i>Нет дочерних блоков</i>
+									</div>
+								)}
+								{store.hasAccessToBlock(AccessType.Manager, Number(id)) && (
+									<div style={childrenContainerStyle}>
+										<Button size='small' onClick={createChild}>
+											Создать
+										</Button>
+									</div>
+								)}
+							</>
+						),
+					},
+					{
+						key: 'logs',
+						label: 'События',
+						children: <LogsTableEl blockId={block.id} />,
+					},
+				]}
+			/>
+		</>
+	)
+})
+
+export default BlockView

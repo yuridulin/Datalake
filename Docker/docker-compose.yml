@@ -1,37 +1,93 @@
-version: '3.9'
-
+﻿name: datalake
 services:
-  postgres:
+  datalake-postgres:
     image: timescale/timescaledb:2.21.0-pg17
+    container_name: datalake-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: datalake-docker
+      POSTGRES_DB: datalake
     volumes:
-      - ../Apps/Server/storage/database:/var/lib/postgresql/data
+      - ./postgres/database:/var/lib/postgresql/data
+    command: >
+      bash -c "
+        # Ждем полного запуска PostgreSQL
+        docker-entrypoint.sh postgres &
+        until pg_isready -h localhost -U postgres; do
+          sleep 1
+        done
+        
+        # Проверяем и создаем БД keycloak если нужно
+        if ! psql -U postgres -tc \"SELECT 1 FROM pg_database WHERE datname = 'keycloak'\" | grep -q 1; then
+          psql -U postgres -c 'CREATE DATABASE keycloak'
+          echo '🎯 Database keycloak created'
+        else
+          echo '✅ Database keycloak already exists'
+        fi
+        
+        # Ожидаем основной процесс
+        wait
+      "
     ports:
-      - "2345:5432"
+      - "7610:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  datalakeserver:
-    image: ${DOCKER_REGISTRY-}datalakeserver
-    container_name: datalakeserver
+  datalake-keycloak:
+    image: quay.io/keycloak/keycloak:25.0.0
+    container_name: datalake-keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://datalake-postgres:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command:
+      - start-dev
+      - --import-realm
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    ports:
+      - "7620:8080"
+    depends_on:
+      datalake-postgres:
+        condition: service_healthy
+
+  datalake-server:
+    image: ${DOCKER_REGISTRY-}datalake-server
+    container_name: datalake-server
     build:
       context: ../
       dockerfile: ./Apps/Server/Dockerfile
     depends_on:
-      postgres:
+      datalake-postgres:
         condition: service_healthy
     environment:
-      DATALAKE_HOST: host.docker.internal
-      DATALAKE_DB: datalake-docker
+      DATALAKE_HOST: datalake-postgres
+      DATALAKE_PORT: 5432
+      DATALAKE_DB: datalake
       DATALAKE_DB_USER: postgres
       DATALAKE_DB_PASS: postgres
+      APP_VERSION: DEV
     ports:
-      - 8000:8080
+      - 7630:8080
     volumes:
       - "../Apps/Server/storage:/app/storage"
+
+  datalake-client:
+    container_name: datalake-client
+    build:
+      context: ../Apps/Client/datalake
+      dockerfile: Dockerfile
+    ports:
+      - "7640:7640"
+    volumes:
+      - ../Apps/Client/datalake:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 7640"

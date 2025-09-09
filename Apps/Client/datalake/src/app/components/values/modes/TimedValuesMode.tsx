@@ -1,16 +1,17 @@
-import { TagQuality } from '@/api/swagger/data-contracts'
 import { ExcelExportModeHandles, getQualityStyle } from '@/app/components/values/functions/exportExcel'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
-import { TransformedData } from '@/app/pages/values/types/TransformedData'
+import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithInfo'
+import { TransformedData } from '@/app/router/pages/values/types/TransformedData'
 import compareValues from '@/functions/compareValues'
 import { TagTypeName } from '@/functions/getTagTypeName'
+import { TagQuality } from '@/generated/data-contracts'
 import { TagValue } from '@/types/tagValue'
 import { Table } from 'antd'
 import { ColumnType } from 'antd/es/table'
 import ExcelJS from 'exceljs'
 import saveAs from 'file-saver'
 import { forwardRef, useImperativeHandle } from 'react'
+import { useLocalStorage } from 'react-use'
 
 type TimedValuesModeProps = {
 	relations: {
@@ -21,6 +22,11 @@ type TimedValuesModeProps = {
 }
 
 const TimedValuesMode = forwardRef<ExcelExportModeHandles, TimedValuesModeProps>(({ relations, locf }, ref) => {
+	const [paginationConfig, setPaginationConfig] = useLocalStorage('timedValuesPagination', {
+		pageSize: 10,
+		current: 1,
+	})
+
 	// 1. Собираем и объединяем все точки по уникальному ключу date
 	const dateMap = new Map<string, TransformedData>()
 
@@ -158,7 +164,21 @@ const TimedValuesMode = forwardRef<ExcelExportModeHandles, TimedValuesModeProps>
 
 	return (
 		<>
-			<Table columns={columns} dataSource={rows} size='small' rowKey='time' showSorterTooltip={false} />
+			<Table
+				columns={columns}
+				dataSource={rows}
+				size='small'
+				rowKey='time'
+				showSorterTooltip={false}
+				pagination={{
+					pageSize: paginationConfig?.pageSize,
+					current: paginationConfig?.current,
+					showSizeChanger: true,
+					onChange: (page, pageSize) => {
+						setPaginationConfig({ current: page, pageSize: pageSize || 10 })
+					},
+				}}
+			/>
 		</>
 	)
 })

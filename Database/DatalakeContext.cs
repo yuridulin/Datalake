@@ -1,7 +1,7 @@
 ﻿using Datalake.Database.Constants;
 using Datalake.Database.Extensions;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Repositories;
 using Datalake.Database.Tables;
 using Datalake.Database.Views;
@@ -26,12 +26,57 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 		Configuration.Linq.GuardGrouping = false;
 	}
 
+	#region Загрузка данных
+
+	/// <summary>
+	/// Создание или изменение заранее определенных статичных учетных записей.
+	/// Выполняется до начала работы стора.
+	/// </summary>
+	/// <param name="users">Список необходимых данных о учетных записях</param>
+	public async Task EnsureStaticUsersAsync((string Login, string Token, AccessType AccessType, string? Host)[] users)
+	{
+		using var transaction = await BeginTransactionAsync();
+
+		foreach (var user in users)
+		{
+			var existUser = await Users.FirstOrDefaultAsync(x => x.Login == user.Login && x.Type == UserType.Static)
+				?? await Users
+					.Value(x => x.Guid, Guid.NewGuid())
+					.Value(x => x.Type, UserType.Static)
+					.Value(x => x.Login, user.Login)
+					.Value(x => x.FullName, user.Login)
+					.Value(x => x.PasswordHash, user.Token)
+					.Value(x => x.StaticHost, user.Host)
+					.InsertWithOutputAsync();
+
+			var existRule = await AccessRights.FirstOrDefaultAsync(x => x.UserGuid == existUser.Guid && x.IsGlobal)
+				?? await AccessRights
+					.Value(x => x.UserGuid, existUser.Guid)
+					.Value(x => x.IsGlobal, true)
+					.Value(x => x.AccessType, user.AccessType)
+					.InsertWithOutputAsync();
+
+			await Users
+				.Where(x => x.Guid == existUser.Guid)
+				.Set(x => x.PasswordHash, user.Token)
+				.Set(x => x.StaticHost, user.Host)
+				.UpdateAsync();
+
+			await AccessRights
+				.Where(x => x.Id == existRule.Id)
+				.Set(x => x.AccessType, user.AccessType)
+				.UpdateAsync();
+		}
+
+		await transaction.CommitAsync();
+	}
+
 	/// <summary>
 	/// Необходимые для работы записи, которые должны быть в базе данных
 	/// </summary>
 	public async Task EnsureDataCreatedAsync(
-		DatalakeDataStore dataStore,
-		UsersMemoryRepository usersRepository)
+		UsersMemoryRepository usersRepository,
+		DatalakeSessionsStore sessionsStore)
 	{
 		// запись необходимых источников в список
 		var customSources = Lists.CustomSources
@@ -69,15 +114,18 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 			await usersRepository.ProtectedCreateAsync(this, Guid.Empty, Defaults.InitialAdmin);
 		}
 
+		// Загрузка сессий пользователей
+		await sessionsStore.InitializeAsync();
+
 		await AuditRepository.WriteAsync(
 			this,
 			"Сервер запущен",
 			category: LogCategory.Core,
 			type: LogType.Success
 		);
-
-		_ = Task.Run(dataStore.ReloadStateAsync);
 	}
+
+	#endregion
 
 	#region Таблицы
 
@@ -122,6 +170,9 @@ public class DatalakeContext(DataOptions<DatalakeContext> options) : DataConnect
 
 	internal ITable<EnergoIdUserView> UsersEnergoId
 		=> this.GetTable<EnergoIdUserView>();
+
+	internal ITable<UserSession> UserSessions
+		=> this.GetTable<UserSession>();
 
 	#endregion
 }

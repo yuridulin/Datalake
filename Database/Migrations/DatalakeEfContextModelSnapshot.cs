@@ -503,6 +503,29 @@ namespace Datalake.Database.Migrations
                     b.ToTable("UserGroupRelation", "public");
                 });
 
+            modelBuilder.Entity("Datalake.Database.Tables.UserSession", b =>
+                {
+                    b.Property<Guid>("UserGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpirationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserGuid");
+
+                    b.ToTable("UserSessions", "public");
+                });
+
             modelBuilder.Entity("Datalake.Database.Views.EnergoIdUserView", b =>
                 {
                     b.Property<Guid>("Guid")
@@ -771,6 +794,17 @@ namespace Datalake.Database.Migrations
                     b.Navigation("UserGroup");
                 });
 
+            modelBuilder.Entity("Datalake.Database.Tables.UserSession", b =>
+                {
+                    b.HasOne("Datalake.Database.Tables.User", "User")
+                        .WithMany("Sessions")
+                        .HasForeignKey("UserGuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Datalake.Database.Tables.AccessRights", b =>
                 {
                     b.Navigation("Logs");
@@ -818,6 +852,8 @@ namespace Datalake.Database.Migrations
                     b.Navigation("GroupsRelations");
 
                     b.Navigation("Logs");
+
+                    b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("Datalake.Database.Tables.UserGroup", b =>

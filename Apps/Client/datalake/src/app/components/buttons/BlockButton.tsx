@@ -1,6 +1,6 @@
-import { BlockSimpleInfo } from '@/api/swagger/data-contracts'
 import BlockIcon from '@/app/components/icons/BlockIcon'
 import routes from '@/app/router/routes'
+import { BlockSimpleInfo } from '@/generated/data-contracts'
 import { Button } from 'antd'
 import { NavLink } from 'react-router-dom'
 

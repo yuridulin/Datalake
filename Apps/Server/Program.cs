@@ -1,14 +1,18 @@
 using Datalake.Database;
+using Datalake.Database.Constants;
+using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.Initialization;
-using Datalake.Database.InMemory;
 using Datalake.Database.InMemory.Repositories;
+using Datalake.Database.InMemory.Stores;
+using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Repositories;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Auth;
 using Datalake.Server.Services.Collection;
+using Datalake.Server.Services.Initialization;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SettingsHandler;
@@ -26,7 +30,6 @@ using Serilog;
 using Serilog.Events;
 using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Datalake.Server;
 
@@ -80,8 +83,8 @@ public class Program
 		// Json
 		builder.Services.Configure<JsonOptions>(options =>
 		{
-			options.SerializerOptions.NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals;
-			options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+			options.SerializerOptions.NumberHandling = Json.JsonSerializerOptions.NumberHandling;
+			options.SerializerOptions.PropertyNamingPolicy = Json.JsonSerializerOptions.PropertyNamingPolicy;
 		});
 
 		// MVC
@@ -119,7 +122,7 @@ public class Program
 
 		// заполняем все указанные в ней переменные окружения реальными значениями
 		connectionString = EnvExpander.FillEnvVariables(connectionString);
-		Log.Information("ConnectionString: " + connectionString);
+		Log.Debug("Итоговая строка подключения к БД: " + connectionString);
 
 		// БД
 		builder.Services
@@ -134,15 +137,17 @@ public class Program
 				return options
 					.UseMappingSchema(ms)
 					.UseDefaultLogging(provider)
-					.UseTraceLevel(System.Diagnostics.TraceLevel.Info)
+					.UseTraceLevel(System.Diagnostics.TraceLevel.Verbose)
 					.UsePostgreSQL(connectionString);
 			});
 
 		// хранилища данный
 		builder.Services.AddSingleton<DatalakeDataStore>(); // стейт-менеджер исходных данных
-		builder.Services.AddSingleton<DatalakeDerivedDataStore>(); // стейт-менеджер зависимых данных
+		builder.Services.AddSingleton<DatalakeAccessStore>(); // стейт-менеджер зависимых данных
 		builder.Services.AddSingleton<DatalakeCurrentValuesStore>(); // кэш последних значений
 		builder.Services.AddSingleton<DatalakeEnergoIdStore>(); // хранилище данных пользователей из EnergoId
+		builder.Services.AddSingleton<DatalakeCachedTagsStore>(); // хранилище кэша тегов
+		builder.Services.AddSingleton<DatalakeSessionsStore>(); // хранилище сессий пользователей
 
 		// репозитории в памяти
 		builder.Services.AddScoped<SettingsMemoryRepository>();
@@ -161,11 +166,11 @@ public class Program
 		builder.Services.AddSingleton<ReceiverService>();
 
 		// мониторинг активности
-		builder.Services.AddSingleton<SessionManagerService>();
 		builder.Services.AddSingleton<SourcesStateService>();
 		builder.Services.AddSingleton<UsersStateService>();
 		builder.Services.AddSingleton<TagsStateService>();
 		builder.Services.AddSingleton<RequestsStateService>();
+		builder.Services.AddSingleton<TagsReceiveStateService>();
 
 		// система сбора данных
 		builder.Services.AddSingleton<CollectorWriter>();
@@ -178,7 +183,6 @@ public class Program
 
 		// обновление настроек
 		builder.Services.AddSingleton<SettingsHandlerService>();
-		builder.Services.AddHostedService<SettingsHandlerService>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<SettingsHandlerService>());
 
 		// обновление данных из EnergoId
@@ -192,6 +196,10 @@ public class Program
 		builder.Services.AddTransient<AuthMiddleware>();
 		builder.Services.AddTransient<SentryRequestBodyMiddleware>();
 
+		// инициализатор работы
+		builder.Services.AddSingleton<LoaderService>();
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<LoaderService>());
+
 		// оповещения об ошибках
 		var sentrySection = builder.Configuration.GetSection("Sentry");
 		builder.WebHost.UseSentry(o =>
@@ -199,7 +207,7 @@ public class Program
 			o.Environment = CurrentEnvironment;
 			o.Dsn = sentrySection[nameof(o.Dsn)];
 			o.Debug = bool.TryParse(sentrySection[nameof(o.Debug)], out var dbg) && dbg;
-			o.Release = $"{builder.Environment.ApplicationName}@{Version}";
+			o.Release = $"{builder.Environment.ApplicationName}@{Version.ShortVersion()}";
 			o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
 		});
 
@@ -216,24 +224,41 @@ public class Program
 		}
 
 		app
+			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
+			.UseSentryTracing()
+			.UseDefaultFiles()
+			.UseStaticFiles(new StaticFileOptions
+			{
+				OnPrepareResponse = (ctx) =>
+				{
+					if (ctx.File.Name == "index.html")
+					{
+						ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+						ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+						ctx.Context.Response.Headers.Append("Expires", "0");
+					}
+				}
+			})
 			.UseSerilogRequestLogging(options =>
 			{
 				// шаблон одного сообщения на запрос
-				options.MessageTemplate = "HTTP: [{Controller}.{Action}] > {StatusCode} in {Elapsed:0.0000} ms";
+				options.MessageTemplate = "Запрос API {Method} {Controller}.{Action}: статус {StatusCode} за {Elapsed:0} мс";
 
 				// если упало — логируем Error, иначе Information
 				options.GetLevel = (httpContext, elapsed, ex) =>
 				httpContext.Request.Method == "OPTIONS"
 					? LogEventLevel.Verbose
 					: ex != null || httpContext.Response.StatusCode >= 500
-						? LogEventLevel.Error
-						: LogEventLevel.Information;
+						? LogEventLevel.Warning
+						: LogEventLevel.Debug;
 
 				options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
 				{
 					var endpoint = httpContext.GetEndpoint();
 					var routePattern = endpoint?.Metadata.GetMetadata<RouteNameMetadata>();
 					var actionDescriptor = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>();
+
+					diagnosticContext.Set("Method", httpContext.Request.Method);
 
 					if (actionDescriptor != null)
 					{
@@ -242,14 +267,11 @@ public class Program
 					}
 					else
 					{
-						diagnosticContext.Set("Controller", "unknown");
-						diagnosticContext.Set("Action", "unknown");
+						diagnosticContext.Set("Controller", "?");
+						diagnosticContext.Set("Action", httpContext.Request.Path);
 					}
 				};
 			})
-			.UseSentryTracing()
-			.UseDefaultFiles()
-			.UseStaticFiles()
 			.UseHttpsRedirection()
 			.UseRouting()
 			.UseCors(policy =>
@@ -267,10 +289,18 @@ public class Program
 			})
 			.UseMiddleware<AuthMiddleware>()
 			.UseMiddleware<SentryRequestBodyMiddleware>()
-			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
 			.EnsureCorsMiddlewareOnError();
 
-		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
+		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html").Add(builder =>
+		{
+			builder.RequestDelegate = (httpContext) =>
+			{
+				httpContext.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+				httpContext.Response.Headers.Append("Pragma", "no-cache");
+				httpContext.Response.Headers.Append("Expires", "0");
+				return Task.CompletedTask;
+			};
+		});
 		app.MapControllerRoute(
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -282,8 +312,12 @@ public class Program
 		var externalDb = app.Services.GetRequiredService<DbExternalInitializer>();
 		await externalDb.DoAsync();
 
+		// отправка сообщения в Sentry, чтобы сразу засветить новый релиз
+		string greetings = $"🚀 Приложение запущено. Релиз: {builder.Environment.ApplicationName}@{Version.ShortVersion()}";
+		SentrySdk.CaptureMessage(greetings, SentryLevel.Info);
+		Log.Information(greetings);
+
 		// запуск веб-сервера
-		Log.Information("Приложение запущено");
 		await app.RunAsync();
 	}
 }

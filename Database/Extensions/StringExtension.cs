@@ -21,4 +21,20 @@ public static partial class StringExtensions
 	internal static string MapDate(this string source, string token, DateTime date) => source.Replace(token, date.ToString("yyyy-MM-dd HH:mm:ss.fff"));
 
 	internal static string MapIdentifiers(this string source, int[] identifiers) => source.Replace("@tags", string.Join(',', identifiers));
+
+	/// <summary>
+	/// Обрезка версии до первых двух цифр (major.minor)
+	/// </summary>
+	/// <param name="version">Текущая версия</param>
+	/// <returns>Усеченная версия</returns>
+	public static string ShortVersion(this string version)
+	{
+		if (string.IsNullOrWhiteSpace(version))
+			return version ?? string.Empty;
+
+		var parts = version.Split('.');
+		return parts.Length >= 2
+			? $"{parts[0]}.{parts[1]}"
+			: version;
+	}
 }

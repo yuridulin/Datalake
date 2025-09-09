@@ -1,12 +1,10 @@
 ﻿using Datalake.Database;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.PublicApi.Controllers;
-using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Threading.Tasks;
 
 namespace Datalake.Server.Controllers;
 
@@ -14,46 +12,8 @@ namespace Datalake.Server.Controllers;
 public class UsersController(
 	DatalakeContext db,
 	AuthenticationService authenticator,
-	AuthenticationService authService,
-	UsersMemoryRepository usersRepository,
-	SessionManagerService sessionManager) : UsersControllerBase
+	UsersMemoryRepository usersRepository) : UsersControllerBase
 {
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserAuthInfo>> AuthenticateEnergoIdUserAsync(
-		[BindRequired, FromBody] UserEnergoIdInfo energoIdInfo)
-	{
-		var userAuthInfo = authService.Authenticate(energoIdInfo);
-
-		var session = sessionManager.OpenSession(userAuthInfo);
-		sessionManager.AddSessionToResponse(session, Response);
-
-		userAuthInfo.Token = session.Token;
-
-		return await Task.FromResult(userAuthInfo);
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserAuthInfo>> AuthenticateAsync(
-		[BindRequired, FromBody] UserLoginPass loginPass)
-	{
-		var userAuthInfo = authService.Authenticate(loginPass);
-
-		var session = sessionManager.OpenSession(userAuthInfo);
-		sessionManager.AddSessionToResponse(session, Response);
-
-		userAuthInfo.Token = session.Token;
-
-		return await Task.FromResult(userAuthInfo);
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserAuthInfo>> IdentifyAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		return await Task.FromResult(user);
-	}
-
 	/// <inheritdoc />
 	public override async Task<ActionResult<UserInfo>> CreateAsync(
 		[BindRequired, FromBody] UserCreateRequest userAuthRequest)

@@ -18,7 +18,7 @@ public class ValuesTrustedRequest
 	/// <summary>
 	/// Список кэшированной информации о выбранных тегах
 	/// </summary>
-	public required TagCacheInfo[] Tags { get; set; } = [];
+	public required TagSettings[] Tags { get; set; } = [];
 
 	/// <summary>
 	/// Настройки времени
@@ -56,5 +56,16 @@ public class ValuesTrustedRequest
 		/// Дата, на которую (по точному соответствию) нужно получить значения. По умолчанию - не используется
 		/// </summary>
 		public DateTime? Exact { get; set; }
+	}
+
+	/// <summary>
+	/// Промежуточные данные о тегах
+	/// </summary>
+	public class TagSettings : TagCacheInfo
+	{
+		/// <summary>
+		/// Результат чтения (без учета ошибок)
+		/// </summary>
+		public ValueResult Result { get; set; }
 	}
 }

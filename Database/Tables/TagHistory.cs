@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Constants;
+﻿using Datalake.PublicApi.Abstractions;
+using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using LinqToDB.Mapping;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,7 @@ namespace Datalake.Database.Tables;
 /// Запись в таблице истории значений тегов
 /// </summary>
 [Table(TableName), LinqToDB.Mapping.Table(TableName), Keyless]
-public record class TagHistory
+public record class TagHistory : IHistory
 {
 	const string TableName = "TagsHistory";
 

@@ -43,12 +43,7 @@ public enum SourceType
 	Inopc = 1,
 
 	/// <summary>
-	/// Другая нода базы данных Datalake
-	/// </summary>
-	Datalake = 2,
-
-	/// <summary>
 	/// Обновленный на .NET Core Datalake
 	/// </summary>
-	Datalake_v2 = 3,
+	Datalake = 3,
 }

@@ -1,8 +1,10 @@
-import api from '@/api/swagger-api'
-import { SourceType, TagQuality, TagType, ValueRecord, ValueWriteRequest } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { TagValueWithInfo } from '@/app/pages/values/types/TagValueWithInfo'
+import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithInfo'
+import { serializeDate } from '@/functions/dateHandle'
+import { getWriterParams, URL_PARAMS } from '@/functions/urlParams'
+import { SourceType, TagQuality, TagType, ValueRecord, ValueWriteRequest } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { TagValue } from '@/types/tagValue'
 import { CloseOutlined, PlaySquareOutlined } from '@ant-design/icons'
@@ -11,6 +13,7 @@ import Column from 'antd/es/table/Column'
 import { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 type ExactValue = TagValueWithInfo & {
 	value: ValueRecord
@@ -25,12 +28,28 @@ interface TagsValuesWriterProps {
 	integrated?: boolean // Скрываем часть контролов и инициируем запросы сразу после изменения настроек
 }
 
-const timeMask = 'YYYY-MM-DDTHH:mm:ss'
-
 const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }: TagsValuesWriterProps) => {
+	const store = useAppStore()
+	const [searchParams, setSearchParams] = useSearchParams()
 	const [values, setValues] = useState<ExactValue[]>([])
 	const [loading, setLoading] = useState(false)
-	const [exactDate, setExactDate] = useState<Dayjs | null>(null)
+	const [initialLoadDone, setInitialLoadDone] = useState(false)
+
+	// Чтение даты из URL параметров
+	const [exactDate, setExactDate] = useState<Dayjs | null | undefined>(getWriterParams(searchParams).date)
+
+	// Обновление URL при изменении даты
+	useEffect(() => {
+		if (!integrated) {
+			const newSearchParams = new URLSearchParams(searchParams)
+			if (exactDate) {
+				newSearchParams.set(URL_PARAMS.WRITER_DATE, serializeDate(exactDate)!)
+			} else {
+				newSearchParams.delete(URL_PARAMS.WRITER_DATE)
+			}
+			setSearchParams(newSearchParams, { replace: true })
+		}
+	}, [exactDate, integrated, searchParams, setSearchParams])
 
 	const getValues = useCallback(() => {
 		setLoading(true)
@@ -41,12 +60,12 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 
 		const tagIds = Array.from(new Set(relations.map((relId) => tagMapping[relId]?.id).filter(Boolean)))
 
-		api
+		store.api
 			.valuesGet([
 				{
 					requestKey: CLIENT_REQUESTKEY,
 					tagsId: tagIds,
-					exact: exactDate?.format(timeMask),
+					exact: exactDate ? serializeDate(exactDate) : null,
 				},
 			])
 			.then((res) => {
@@ -75,14 +94,22 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 			})
 			.catch(console.error)
 			.finally(() => setLoading(false))
-	}, [exactDate, relations, tagMapping])
+	}, [exactDate, relations, tagMapping, store.api])
+
+	// Автоматический запрос при инициализации, если есть настройки из URL
+	useEffect(() => {
+		if (!initialLoadDone && relations.length > 0 && exactDate) {
+			getValues()
+			setInitialLoadDone(true)
+		}
+	}, [relations, exactDate, initialLoadDone, getValues])
 
 	const writeValues = () => {
 		const valuesToWrite = values.reduce(
 			(acc, next) => {
 				if (acc[next.id]) return acc
 				acc[next.id] = {
-					date: exactDate?.format(timeMask),
+					date: exactDate ? serializeDate(exactDate) : null,
 					id: next.id,
 					value: next.newValue,
 					quality: TagQuality.GoodManualWrite,
@@ -91,7 +118,7 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 			},
 			{} as Record<number, ValueWriteRequest>,
 		)
-		api.valuesWrite(Object.values(valuesToWrite)).then(getValues)
+		store.api.valuesWrite(Object.values(valuesToWrite)).then(getValues)
 	}
 
 	const setNewValue = (id: number, newValue: TagValue) => {

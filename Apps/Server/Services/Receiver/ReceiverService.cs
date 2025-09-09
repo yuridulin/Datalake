@@ -1,15 +1,11 @@
 ﻿using Datalake.PublicApi.Constants;
+using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Values;
-using Datalake.Server.Controllers;
 using Datalake.Server.Services.Receiver.Models;
 using Datalake.Server.Services.Receiver.Models.Inopc;
 using Datalake.Server.Services.Receiver.Models.Inopc.Enums;
-using Datalake.Server.Services.Receiver.Models.OldDatalake;
-using Newtonsoft.Json;
 using System.Text.Json;
-using OldDatalakeTagQuality = Datalake.Server.Services.Receiver.Models.OldDatalake.TagQuality;
-using OldDatalakeTagType = Datalake.Server.Services.Receiver.Models.OldDatalake.TagType;
 using TagQuality = Datalake.PublicApi.Enums.TagQuality;
 using TagType = Datalake.PublicApi.Enums.TagType;
 
@@ -30,6 +26,13 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 
 	private static HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(1), };
 
+	private static ReceiveResponse DefaultResponse() => new()
+	{
+		IsConnected = false,
+		Tags = [],
+		Timestamp = DateFormats.GetCurrentDateTime(),
+	};
+
 	/// <summary>
 	/// Универсальное получение данных из удаленного источника
 	/// </summary>
@@ -39,20 +42,13 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 	public async Task<ReceiveResponse> GetItemsFromSourceAsync(SourceType type, string? address)
 	{
 		if (string.IsNullOrEmpty(address))
-		{
-			return new ReceiveResponse
-			{
-				IsConnected = false,
-				Tags = [],
-				Timestamp = DateFormats.GetCurrentDateTime(),
-			};
-		}
+			return DefaultResponse();
 
 		return type switch
 		{
 			SourceType.Inopc => await AskInopc([], address),
-			SourceType.Datalake => await AskOldDatalake([], address),
-			_ => await AskDatalake([], address),
+			SourceType.Datalake => await AskDatalake([], address),
+			_ => DefaultResponse(),
 		};
 	}
 
@@ -120,70 +116,6 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 	}
 
 	/// <summary>
-	/// Запрос данных из ноды Datalake, версия .NET Framework
-	/// </summary>
-	/// <param name="tags">Список названий запрашиваемых тегов</param>
-	/// <param name="address">Адрес ноды</param>
-	/// <returns>Ответ с данными</returns>
-	public async Task<ReceiveResponse> AskOldDatalake(string[] tags, string address)
-	{
-		ReceiveResponse response = new()
-		{
-			IsConnected = false,
-			Tags = [],
-		};
-
-		HistoryResponse[]? historyResponses = null;
-
-		try
-		{
-			var request = new
-			{
-				Request = new LiveRequest
-				{
-					TagNames = [.. tags],
-				}
-			};
-
-			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":83/api/tags/live", request);
-			var content = await answer.Content.ReadAsStringAsync();
-			historyResponses = JsonConvert.DeserializeObject<HistoryResponse[]>(content);
-		}
-		catch { }
-
-		response.Timestamp = DateFormats.GetCurrentDateTime();
-		if (historyResponses != null)
-		{
-			response.IsConnected = true;
-			response.Tags = historyResponses
-				.SelectMany(t => t.Values.Select(v => new ReceiveRecord
-				{
-					Name = t.TagName,
-					Type = t.Type switch
-					{
-						OldDatalakeTagType.Number => TagType.Number,
-						OldDatalakeTagType.Boolean => TagType.Boolean,
-						_ => TagType.String,
-					},
-					Quality = v.Quality switch
-					{
-						OldDatalakeTagQuality.Bad => TagQuality.Bad,
-						OldDatalakeTagQuality.Bad_NoConnect => TagQuality.Bad_NoConnect,
-						OldDatalakeTagQuality.Bad_NoValues => TagQuality.Bad_NoValues,
-						OldDatalakeTagQuality.Bad_ManualWrite => TagQuality.Bad_ManualWrite,
-						OldDatalakeTagQuality.Good => TagQuality.Good,
-						OldDatalakeTagQuality.Good_ManualWrite => TagQuality.Good_ManualWrite,
-						_ => TagQuality.Unknown,
-					},
-					Value = v.Value,
-				}))
-				.ToArray();
-		}
-
-		return response;
-	}
-
-	/// <summary>
 	/// Запрос данных из ноды Datalake
 	/// </summary>
 	/// <param name="tags">Список названий запрашиваемых тегов</param>
@@ -210,7 +142,7 @@ public class ReceiverService(ILogger<ReceiverService> logger)
 				}
 			};
 
-			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":81/" + ValuesController.LiveUrl, request);
+			var answer = await HttpClient.PostAsJsonAsync($"http://{address}:81/{ValuesControllerBase.LiveUrl}", request);
 			var historyResponses = await answer.Content.ReadFromJsonAsync<ValuesResponse[]>(JsonOptions);
 			historyResponse = historyResponses?.FirstOrDefault();
 		}

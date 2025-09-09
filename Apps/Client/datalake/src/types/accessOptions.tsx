@@ -1,5 +1,5 @@
-import { AccessType } from '@/api/swagger/data-contracts'
 import AccessTypeEl from '@/app/components/AccessTypeEl'
+import { AccessType } from '@/generated/data-contracts'
 import { DefaultOptionType } from 'antd/es/select'
 
 export const accessOptions: DefaultOptionType[] = [

@@ -128,11 +128,11 @@ public class DbExternalInitializer(
 
 	private const string ExternalDbName = "EnergoId";
 
-	private async Task Exec(NpgsqlConnection conn, string sql)
+	private static async Task Exec(NpgsqlConnection conn, string sql)
 	{
 		await using var cmd = new NpgsqlCommand(sql, conn);
 
-		logger.LogDebug("SQL: {sql}", sql);
+		//logger.LogDebug("SQL: {sql}", sql);
 		await cmd.ExecuteNonQueryAsync();
 	}
 

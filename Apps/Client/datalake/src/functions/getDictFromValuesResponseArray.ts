@@ -1,4 +1,4 @@
-import { ValueRecord, ValuesResponse } from '../api/swagger/data-contracts'
+import { ValueRecord, ValuesResponse } from '../generated/data-contracts'
 
 function getDictFromValuesResponseArray(valuesResponseArray: ValuesResponse[]): { [key: number]: ValueRecord | null } {
 	return valuesResponseArray

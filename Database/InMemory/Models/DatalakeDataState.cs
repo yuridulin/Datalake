@@ -1,93 +1,124 @@
 ﻿using Datalake.Database.Tables;
-using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Models.Tags;
 using System.Collections.Immutable;
 
 namespace Datalake.Database.InMemory.Models;
 
-#pragma warning disable CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
-
+/// <summary>
+/// Снимок данных БД
+/// </summary>
 public record class DatalakeDataState
 {
-	public long Version { get; private set; }
+	/// <summary>
+	/// Версия снимка
+	/// </summary>
+	public long Version { get; private set; } = DateTime.UtcNow.Ticks;
 
-	// Таблицы
+	#region Таблицы
 
+	/// <summary>
+	/// Снимок коллекции прав доступа
+	/// </summary>
 	public required ImmutableList<AccessRights> AccessRights { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции блоков
+	/// </summary>
 	public required ImmutableList<Block> Blocks { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции свойств блоков
+	/// </summary>
 	public required ImmutableList<BlockProperty> BlockProperties { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции связей блоков с тегами
+	/// </summary>
 	public required ImmutableList<BlockTag> BlockTags { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции источников
+	/// </summary>
 	public required ImmutableList<Source> Sources { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции настроек
+	/// </summary>
 	public required Settings Settings { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции тегов
+	/// </summary>
 	public required ImmutableList<Tag> Tags { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции входных тегов формул
+	/// </summary>
 	public required ImmutableList<TagInput> TagInputs { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции учетных записей
+	/// </summary>
 	public required ImmutableList<User> Users { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции групп учетных записей
+	/// </summary>
 	public required ImmutableList<UserGroup> UserGroups { get; init; }
 
+	/// <summary>
+	/// Снимок коллекции связей групп с учетными записями
+	/// </summary>
 	public required ImmutableList<UserGroupRelation> UserGroupRelations { get; init; }
 
-	// Словари
+	/// <summary>
+	/// Снимок коллекции сессий доступа
+	/// </summary>
+	public required ImmutableList<UserSession> UserSessions { get; init; }
 
-	public void InitDictionaries()
+	#endregion Таблицы
+
+	#region Словари
+
+	internal void InitDictionaries()
 	{
+		Version = DateTime.UtcNow.Ticks;
 		BlocksById = Blocks.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
 		SourcesById = Sources.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
 		TagsByGuid = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.GlobalGuid);
 		TagsById = Tags.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
 		UsersByGuid = Users.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
 		UserGroupsByGuid = UserGroups.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
-
-		var self = this;
-
-		CachesTags = Tags
-			.Select(tag => new TagCacheInfo
-			{
-				Id = tag.Id,
-				Guid = tag.GlobalGuid,
-				Name = tag.Name,
-				Type = tag.Type,
-				SourceId = tag.SourceId,
-				SourceType = self.SourcesById.TryGetValue(tag.SourceId, out var source) ? source.Type : SourceType.NotSet,
-				Resolution = tag.Resolution,
-				ScalingCoefficient = tag.IsScaling
-					? ((tag.MaxEu - tag.MinEu) / (tag.MaxRaw - tag.MinRaw))
-					: 1,
-				IsDeleted = tag.IsDeleted,
-			})
-			.ToImmutableList();
-
-		CachedTagsById = CachesTags.ToImmutableDictionary(x => x.Id);
-		CachedTagsByGuid = CachesTags.ToImmutableDictionary(x => x.Guid);
-
-		Version = DateTime.UtcNow.Ticks;
 	}
 
+	/// <summary>
+	/// Блоки по локальному идентификатору, без удаленных
+	/// </summary>
 	public ImmutableDictionary<int, Block> BlocksById { get; private set; } = ImmutableDictionary<int, Block>.Empty;
 
+	/// <summary>
+	/// Источники по идентификатору, без удаленных
+	/// </summary>
 	public ImmutableDictionary<int, Source> SourcesById { get; private set; } = ImmutableDictionary<int, Source>.Empty;
 
+	/// <summary>
+	/// Теги по глобальному идентификатору, без удаленных
+	/// </summary>
 	public ImmutableDictionary<Guid, Tag> TagsByGuid { get; private set; } = ImmutableDictionary<Guid, Tag>.Empty;
 
+	/// <summary>
+	/// Теги по локальному идентификатору, без удаленных
+	/// </summary>
 	public ImmutableDictionary<int, Tag> TagsById { get; private set; } = ImmutableDictionary<int, Tag>.Empty;
 
+	/// <summary>
+	/// Учетные записи по идентификатору, без удаленных
+	/// </summary>
 	public ImmutableDictionary<Guid, User> UsersByGuid { get; private set; } = ImmutableDictionary<Guid, User>.Empty;
 
+	/// <summary>
+	/// Группы учетных записей по идентификатору, без удаленных
+	/// </summary>
 	public ImmutableDictionary<Guid, UserGroup> UserGroupsByGuid { get; private set; } = ImmutableDictionary<Guid, UserGroup>.Empty;
 
-	public ImmutableList<TagCacheInfo> CachesTags { get; private set; } = ImmutableList<TagCacheInfo>.Empty;
-
-	public ImmutableDictionary<int, TagCacheInfo> CachedTagsById { get; private set; } = ImmutableDictionary<int, TagCacheInfo>.Empty;
-
-	public ImmutableDictionary<Guid, TagCacheInfo> CachedTagsByGuid { get; private set; } = ImmutableDictionary<Guid, TagCacheInfo>.Empty;
+	#endregion Словари
 }
-
-#pragma warning restore CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена

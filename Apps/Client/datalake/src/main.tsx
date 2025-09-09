@@ -1,6 +1,15 @@
+import '@ant-design/v5-patch-for-react-19'
+import 'antd/dist/reset.css'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import AppSetup from './app/AppSetup'
+import { Datalake } from './app/Datalake.tsx'
+import { appStore } from './store/appStore.ts'
+import { AppStoreContext } from './store/appStoreContext.ts'
 
-const container = document.getElementById('root')
-const root = createRoot(container!)
-root.render(<AppSetup />)
+createRoot(document.getElementById('root')!).render(
+	<StrictMode>
+		<AppStoreContext.Provider value={appStore}>
+			<Datalake />
+		</AppStoreContext.Provider>
+	</StrictMode>,
+)

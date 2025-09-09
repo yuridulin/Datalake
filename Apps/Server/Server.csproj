@@ -28,15 +28,22 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Abstractions\**" />
+	  <Compile Remove="Sentry\**" />
 	  <Compile Remove="Services\Collection\Models\**" />
+	  <Content Remove="Abstractions\**" />
+	  <Content Remove="Sentry\**" />
 	  <Content Remove="Services\Collection\Models\**" />
+	  <EmbeddedResource Remove="Abstractions\**" />
+	  <EmbeddedResource Remove="Sentry\**" />
 	  <EmbeddedResource Remove="Services\Collection\Models\**" />
+	  <None Remove="Abstractions\**" />
+	  <None Remove="Sentry\**" />
 	  <None Remove="Services\Collection\Models\**" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="linq2db.AspNet" Version="5.4.1" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="9.0.8" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.8" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.8">
 			<PrivateAssets>all</PrivateAssets>
@@ -50,7 +57,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Abstractions\" />
 	  <Folder Include="storage\logs\" />
 	</ItemGroup>
 

@@ -1,5 +1,4 @@
-﻿using Datalake.Database;
-using Datalake.Database.Repositories;
+﻿using Datalake.Database.Repositories;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Values;
 using Datalake.Server.Services.Auth;
@@ -12,20 +11,19 @@ namespace Datalake.Server.Controllers;
 
 /// <inheritdoc />
 public class ValuesController(
-	DatalakeContext db,
 	AuthenticationService authenticator,
 	ValuesRepository valuesRepository,
 	TagsStateService tagsStateService/*,
 	RequestsStateService requestsStateService*/) : ValuesControllerBase
 {
 	/// <inheritdoc />
-	public override async Task<List<ValuesResponse>> GetAsync(
+	public override async Task<ActionResult<List<ValuesResponse>>> GetAsync(
 		[BindRequired, FromBody] ValuesRequest[] requests)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
 		var sw = Stopwatch.StartNew();
-		var responses = await valuesRepository.GetValuesAsync(db, user, requests);
+		var responses = await valuesRepository.GetValuesAsync(user, requests);
 		sw.Stop();
 
 		tagsStateService.UpdateTagState(requests);
@@ -35,12 +33,12 @@ public class ValuesController(
 	}
 
 	/// <inheritdoc />
-	public override async Task<List<ValuesTagResponse>> WriteAsync(
+	public override async Task<ActionResult<List<ValuesTagResponse>>> WriteAsync(
 		[BindRequired, FromBody] ValueWriteRequest[] requests)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		var responses = await valuesRepository.WriteManualValuesAsync(db, user, requests);
+		var responses = await valuesRepository.WriteManualValuesAsync(user, requests);
 
 		return responses;
 	}

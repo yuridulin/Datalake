@@ -106,4 +106,9 @@ public record class User
 	/// Информация о пользователе из EnergoId
 	/// </summary>
 	public EnergoIdUserView? EnergoId { get; set; }
+
+	/// <summary>
+	/// Список открытых сессий
+	/// </summary>
+	public ICollection<UserSession> Sessions { get; set; } = null!;
 }

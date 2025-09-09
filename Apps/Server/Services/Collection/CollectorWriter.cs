@@ -112,10 +112,9 @@ public class CollectorWriter : BackgroundService
 		CancellationToken ct)
 	{
 		using var scope = _serviceScopeFactory.CreateScope();
-		using var db = scope.ServiceProvider.GetRequiredService<DatalakeContext>();
-		var repo = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
+		var valuesRepository = scope.ServiceProvider.GetRequiredService<ValuesRepository>();
 
-		await WriteBatchWithRetryAsync(db, repo, batch, ct);
+		await WriteBatchWithRetryAsync(valuesRepository, batch, ct);
 
 		s_messagesConsumed.Add(batch.Count);
 		Interlocked.Add(ref _queuedItems, -batch.Count);
@@ -125,7 +124,6 @@ public class CollectorWriter : BackgroundService
 	/// Метод записи в БД с экспоненциальным бэкоффом
 	/// </summary>
 	private async Task WriteBatchWithRetryAsync(
-		DatalakeContext db,
 		ValuesRepository valuesRepository,
 		List<ValueWriteRequest> batch,
 		CancellationToken ct)
@@ -135,7 +133,7 @@ public class CollectorWriter : BackgroundService
 		{
 			try
 			{
-				await valuesRepository.WriteCollectedValuesAsync(db, batch);
+				await valuesRepository.WriteCollectedValuesAsync(batch);
 				return;
 			}
 			catch (Exception ex)

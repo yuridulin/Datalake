@@ -1,15 +1,16 @@
-import { SourceType, TagQuality, TagResolution, TagType, ValueRecord } from '@/api/swagger/data-contracts'
 import TagButton from '@/app/components/buttons/TagButton'
 import { ExcelExportModeHandles, getQualityStyle } from '@/app/components/values/functions/exportExcel'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { TagViewerModeProps } from '@/app/pages/values/types/TagViewerModeProps'
+import { TagViewerModeProps } from '@/app/router/pages/values/types/TagViewerModeProps'
 import { TagTypeName } from '@/functions/getTagTypeName'
+import { SourceType, TagQuality, TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
 import { TagValue } from '@/types/tagValue'
 import { Table } from 'antd'
 import Column from 'antd/lib/table/Column'
 import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import { forwardRef, useImperativeHandle } from 'react'
+import { useLocalStorage } from 'react-use'
 
 type ExactValuesRowType = {
 	relationId: number
@@ -25,6 +26,11 @@ type ExactValuesRowType = {
 }
 
 const ExactValuesMode = forwardRef<ExcelExportModeHandles, TagViewerModeProps>(({ relations }, ref) => {
+	const [paginationConfig, setPaginationConfig] = useLocalStorage('exactValuesPagination', {
+		pageSize: 10,
+		current: 1,
+	})
+
 	const exactValues: ExactValuesRowType[] = relations.map(({ relationId, value: x }) => {
 		const valueObject: ValueRecord = x.values.length
 			? x.values[0]
@@ -86,7 +92,19 @@ const ExactValuesMode = forwardRef<ExcelExportModeHandles, TagViewerModeProps>((
 
 	return (
 		<>
-			<Table dataSource={exactValues} size='small' rowKey='relationId'>
+			<Table
+				dataSource={exactValues}
+				size='small'
+				rowKey='relationId'
+				pagination={{
+					pageSize: paginationConfig?.pageSize,
+					current: paginationConfig?.current,
+					showSizeChanger: true,
+					onChange: (page, pageSize) => {
+						setPaginationConfig({ current: page, pageSize: pageSize || 10 })
+					},
+				}}
+			>
 				<Column
 					title='Тег'
 					dataIndex='guid'

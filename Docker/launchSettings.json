@@ -1,19 +1,15 @@
 {
   "profiles": {
-    "Docker Compose": {
+    "Main": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
+      "composeLaunchAction": "None",
+      "composeLaunchServiceName": "datalake-server",
       "serviceActions": {
-        "datalakeserver": "StartDebugging",
-        "postgres": "StartWithoutDebugging"
-      }
-    },
-    "DB": {
-      "commandName": "DockerCompose",
-      "commandVersion": "1.0",
-      "serviceActions": {
-        "datalakeserver": "DoNotStart",
-        "postgres": "StartWithoutDebugging"
+        "datalake-postgres": "StartWithoutDebugging",
+        "datalake-keycloak": "StartWithoutDebugging",
+        "datalake-server": "StartDebugging",
+        "datalake-client": "DoNotStart"
       }
     }
   }

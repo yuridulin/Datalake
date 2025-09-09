@@ -1,15 +1,17 @@
+import BlockIcon from '@/app/components/icons/BlockIcon'
+import TagIcon from '@/app/components/icons/TagIcon'
+import getTagResolutionName from '@/functions/getTagResolutionName'
 import {
 	AccessType,
 	BlockNestedTagInfo,
 	BlockTagRelation,
 	BlockTreeInfo,
+	SourceType,
 	TagSimpleInfo,
-} from '@/api/swagger/data-contracts'
-import BlockIcon from '@/app/components/icons/BlockIcon'
-import TagIcon from '@/app/components/icons/TagIcon'
-import getTagResolutionName from '@/functions/getTagResolutionName'
+} from '@/generated/data-contracts'
 import { GlobalToken } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
+import { DataNode } from 'antd/es/tree'
 
 export const SELECTED_SEPARATOR: string = '~'
 export const RELATION_TAG_SEPARATOR: string = '.'
@@ -26,7 +28,8 @@ export const convertToTreeSelectNodes = (
 	blockTree: BlockTreeInfo[] | null | undefined,
 	parentPath: string[] = [],
 	token: GlobalToken,
-): DefaultOptionType[] => {
+	manual: boolean = false,
+): DataNode[] => {
 	if (!blockTree) return []
 
 	return blockTree
@@ -41,28 +44,31 @@ export const convertToTreeSelectNodes = (
 						<BlockIcon /> {block.name}
 					</>
 				),
-				value: BLOCK_ID_SHIFT - 3 - block.id, // Отрицательные значения для блоков (и поправка на 3 из-за тех, которые мы создаем сами)
+				key: BLOCK_ID_SHIFT - 3 - block.id, // Отрицательные значения для блоков (и поправка на 3 из-за тех, которые мы создаем сами)
+				value: BLOCK_ID_SHIFT - 3 - block.id,
 				fullTitle,
 				selectable: false, // Блоки не выбираются
 				data: block,
 				children: [
 					...block.tags.map((tag) => ({
 						title: (
-							<>
+							<div style={{ display: 'flex' }}>
 								<TagIcon type={tag.sourceType} />
 								&ensp;{tag.localName}
 								&emsp;
-								<pre style={{ display: 'inline-block', color: token.colorTextDisabled }}>
+								<pre style={{ display: 'inline-block', color: token.colorTextDisabled, margin: 0 }}>
 									{tag.relationId > 0 && tag.relationId < VIRTUAL_RELATION_SHIFT && <>{tag.name}&emsp;</>}#{tag.id}
 									{tag.resolution > 0 && <>&emsp;{getTagResolutionName(tag.resolution)}</>}
 								</pre>
-							</>
+							</div>
 						),
+						key: tag.relationId, // Используем relationId как идентификатор
 						value: tag.relationId, // Используем relationId как идентификатор
 						fullTitle: `${fullTitle}.${tag.localName}`,
 						data: tag,
+						disabled: manual && tag.sourceType !== SourceType.Manual,
 					})),
-					...convertToTreeSelectNodes(block.children, currentPath, token),
+					...convertToTreeSelectNodes(block.children, currentPath, token, manual),
 				],
 			}
 		})

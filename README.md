@@ -1,11 +1,51 @@
+## О проекте
+
+**Datalake** — это серверное веб-приложение на базе ASP.NET Core, предназначенное для управления временными рядами данных в промышленной или IoT-среде (аналог системы SCADA или data lake для мониторинга и сбора данных с датчиков/устройств). 
+Оно собирает, хранит, обрабатывает и предоставляет доступ к данным через API, с поддержкой аутентификации, авторизации, кэширования и агрегации.
+Приложение использует PostgreSQL с расширением TimescaleDB для time-series данных, LinqToDB для работы с SQL и EF Core для миграций.
+Развертывание контейнеризировано (Docker с Keycloak для auth и Postgres), с логированием через Serilog/Sentry и Swagger для документации API.
+
+__Что делает приложение:__
+
+- Управляет "тегами" (tags) — основными сущностями данных, получаемыми из внешних источников.
+- Организует теги в иерархические блоки для группировки (напр. по процессам или оборудованию).
+- Собирает данные в реальном времени, кэширует последние значения, агрегирует/вычисляет производные значения (формулы, пороги, scaling).
+- Обеспечивает доступ пользователей (users) с ролевой моделью (группы, права доступа), аудит действий и сессии.
+- Предоставляет REST API для CRUD-операций над сущностями.
+
+__Как организовано:__
+
+- __Структура проекта:__
+
+  - Apps/Server/: Основной сервер (Program.cs, Services/ для бизнес-логики, Controllers/ для API, Middlewares/ для обработки запросов, storage/ для файлов).
+  - Database/: Модели (Tables/ для entities, Views/), репозитории (Repositories/), инициализация (Initialization/), extensions/functions для утилит.
+  - PublicApi/: Абстрактные контроллеры (Controllers/ для CRUD-баз), модели (Models/), enums/constants.
+  - Docker/: Контейнеризация с Keycloak/Postgres.
+
+### Основные логические системы
+
+На основе services, stores, controllers и models выделены 5 ключевых систем. Они охватывают ~80% логики (остальное — утилиты вроде logging/Swagger).
+
+1. __Система управления данными (Data Management) — Tags/Sources/Blocks__
+
+   - CRUD тегов, источников, блоков
+
+2. __Система сбора и хранения данных (Data Collection & Storage)__
+
+   - Получение значений из sources, запись в history. TimescaleDB для TagHistory. Audit: Log таблица для действий..
+
+3. __Система аутентификации и авторизации (Authentication & Authorization)__
+
+   - Users, groups, sessions.
+
+4. __Система обработки и агрегации (Processing & Aggregation)__
+
+   - Calculations, Aggregation.
+
+5. __Система мониторинга и состояния (Monitoring & State)__
+
+   - State services для tracking активности. Logs/Audit для traceability.
+
 #### Миграции:
 
 Поставить проекты: на запуск Server, в консоли Database
-
-```
-Add-Migration NAME -Context Datalake.Database.DatalakeEfContext
-```
-
-```
-Remove-Migration
-```

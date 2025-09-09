@@ -48,8 +48,8 @@ const routes = {
 		},
 	},
 	auth: {
-		loginPage: '/login',
-		energoId: '/energo-id',
+		login: '/login',
+		keycloak: '/keycloak',
 	},
 	values: {
 		root: '/values',

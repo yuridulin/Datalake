@@ -1,4 +1,4 @@
-import { LogCategory } from '../api/swagger/data-contracts'
+import { LogCategory } from '../generated/data-contracts'
 
 export default function getLogCategodyName(category: LogCategory) {
 	switch (category) {

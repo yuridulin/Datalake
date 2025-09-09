@@ -1,12 +1,12 @@
-import api from '@/api/swagger-api'
-import { LogCategory, LogInfo } from '@/api/swagger/data-contracts'
 import UserButton from '@/app/components/buttons/UserButton'
+import PollingLoader from '@/app/components/loaders/PollingLoader'
 import LogCategoryEl from '@/app/components/LogCategoryEl'
 import getLogCategoryName from '@/functions/getLogCategoryName'
-import { useInterval } from '@/hooks/useInterval'
-import { Button, Spin, Table } from 'antd'
+import { LogCategory, LogInfo } from '@/generated/data-contracts'
+import { useAppStore } from '@/store/useAppStore'
+import { Button, Table } from 'antd'
 import { ColumnType } from 'antd/es/table'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 type LogsTableElProps = {
 	sourceId?: number
@@ -17,6 +17,12 @@ type LogsTableElProps = {
 }
 
 const columns: ColumnType<LogInfo>[] = [
+	{
+		key: 'id',
+		dataIndex: 'id',
+		title: 'Id',
+		width: '3em',
+	},
 	{
 		key: 'dateString',
 		dataIndex: 'dateString',
@@ -67,43 +73,34 @@ const columns: ColumnType<LogInfo>[] = [
 	},
 ]
 
-const step = 10
-const globalStep = 100
-
 const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: LogsTableElProps) => {
-	const [init, setInit] = useState(true)
-	const [logs, setLogs] = useState([] as LogInfo[])
-	const [loading, setLoading] = useState(false)
-	const [reachEnd, setReachEnd] = useState(false)
-	const [isGlobal, setGlobal] = useState(false)
+	const store = useAppStore()
 
-	const initialLoad = () => {
-		setInit(true)
-		const global = !sourceId && !blockId && !tagGuid && !userGuid && !userGroupGuid
-		setGlobal(global)
-		api
-			.systemGetLogs({
-				lastId: null,
-				take: global ? globalStep : step,
-				source: sourceId,
-				block: blockId,
-				tag: tagGuid,
-				user: userGuid,
-				group: userGroupGuid,
+	const [logs, setLogs] = useState([] as LogInfo[])
+	const [reachEnd, setReachEnd] = useState(false)
+	const isGlobal = useMemo(
+		() => !sourceId && !blockId && !tagGuid && !userGuid && !userGroupGuid,
+		[sourceId, blockId, tagGuid, userGuid, userGroupGuid],
+	)
+	const step = useMemo(() => (isGlobal ? 100 : 10), [isGlobal])
+
+	const addLogs = (newLogs: LogInfo[]) => {
+		if (!newLogs.length) return
+		console.log('addLogs from', Math.min(...newLogs.map((x) => x.id)), 'to', Math.max(...newLogs.map((x) => x.id)))
+		setLogs(() => {
+			const uniqueLogs: Record<number, LogInfo> = {}
+			logs.concat(newLogs).forEach((log) => {
+				uniqueLogs[log.id] = log
 			})
-			.then((res) => {
-				setLogs(res.data)
-				if (res.data.length < (global ? globalStep : step)) setReachEnd(true)
-			})
-			.catch(() => setLogs([]))
-			.finally(() => setInit(false))
+			return Object.values(uniqueLogs).reverse()
+		})
 	}
 
 	const loadNewLogs = () => {
-		const lastId = logs.reduce((acc, log) => (log.id > acc ? log.id : acc), 0)
-		api
+		store.api
 			.systemGetLogs({
-				lastId: lastId,
+				lastId: logs.reduce((acc, log) => (log.id > acc ? log.id : acc), 0),
+				take: step,
 				source: sourceId,
 				block: blockId,
 				tag: tagGuid,
@@ -111,18 +108,16 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 				group: userGroupGuid,
 			})
 			.then((res) => {
-				setLogs([...res.data, ...logs])
+				addLogs(res.data)
 			})
 			.catch(() => {})
 	}
 
 	const loadOldLogs = () => {
-		const firstId = logs.reduce((acc, log) => (log.id < acc ? log.id : acc), Infinity)
-		setLoading(true)
-		api
+		store.api
 			.systemGetLogs({
-				firstId: firstId,
-				take: isGlobal ? globalStep : step,
+				firstId: logs.reduce((acc, log) => (log.id < acc ? log.id : acc), Infinity),
+				take: step,
 				source: sourceId,
 				block: blockId,
 				tag: tagGuid,
@@ -130,20 +125,16 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 				group: userGroupGuid,
 			})
 			.then((res) => {
-				setLogs([...logs, ...res.data])
-				if (res.data.length < (isGlobal ? globalStep : step)) setReachEnd(true)
+				addLogs(res.data)
+				// если пришло меньше, чем запросили - логов для загрузки не осталось, скрываем кнопку
+				if (res.data.length < step) setReachEnd(true)
 			})
-			.catch(() => setLogs([...logs]))
-			.finally(() => setLoading(false))
+			.catch(() => {})
 	}
 
-	useEffect(initialLoad, [sourceId, blockId, tagGuid, userGuid, userGroupGuid])
-	useInterval(loadNewLogs, 10000)
-
-	return init ? (
-		<></>
-	) : (
+	return (
 		<>
+			<PollingLoader pollingFunction={loadNewLogs} interval={10000} />
 			<Table
 				rowKey='id'
 				size='small'
@@ -154,12 +145,10 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 			/>
 			<div style={{ margin: '.5em' }}>
 				{reachEnd || (
-					<Button size='small' disabled={loading} onClick={loadOldLogs}>
+					<Button size='small' onClick={loadOldLogs}>
 						Загрузить предыдущие
 					</Button>
 				)}
-				&ensp;
-				{loading && <Spin size='small' />}
 			</div>
 		</>
 	)

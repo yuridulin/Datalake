@@ -1,4 +1,4 @@
-import { UserType } from '@/api/swagger/data-contracts'
+import { UserType } from '@/generated/data-contracts'
 
 export default function getUserTypeName(type: UserType) {
 	switch (type) {

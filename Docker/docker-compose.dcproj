@@ -7,13 +7,19 @@
     <ProjectGuid>0dabe406-fb4f-4501-805d-2f8ac54b2865</ProjectGuid>
     <DockerLaunchAction>None</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}</DockerServiceUrl>
-    <DockerServiceName>datalakeserver</DockerServiceName>
+    <DockerServiceName>datalake-server</DockerServiceName>
+    <DockerComposeProjectName>datalake</DockerComposeProjectName>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="postgres\database\**" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="keycloak\realm-export.json" />
+    <None Include="postgres\.gitkeep" />
   </ItemGroup>
 </Project>

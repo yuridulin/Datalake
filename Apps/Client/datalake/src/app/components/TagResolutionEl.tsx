@@ -1,6 +1,6 @@
-import getTagResolutionName from '@/functions/getTagResolutionName'
+import getTagResolutionName, { TagResolutionMode } from '@/functions/getTagResolutionName'
 import { blue } from '@ant-design/colors'
-import { TagResolution } from '../../api/swagger/data-contracts'
+import { TagResolution } from '../../generated/data-contracts'
 
 type TagResolutionElProps = {
 	resolution: TagResolution
@@ -14,7 +14,7 @@ const style = {
 
 const TagResolutionEl = ({ resolution, full = false }: TagResolutionElProps) => {
 	const name = getTagResolutionName(resolution)
-	const text = getTagResolutionName(resolution, full)
+	const text = getTagResolutionName(resolution, full ? TagResolutionMode.Full : TagResolutionMode.Small)
 
 	return (
 		<b title={name} style={style}>

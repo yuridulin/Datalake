@@ -1,5 +1,5 @@
-import { AccessType } from '@/api/swagger/data-contracts'
 import getAccessTypeName from '@/functions/getAccessTypeName'
+import { AccessType } from '@/generated/data-contracts'
 import { Tag } from 'antd'
 
 export default function AccessTypeEl({ type, bordered = true }: { type: AccessType; bordered?: boolean }) {

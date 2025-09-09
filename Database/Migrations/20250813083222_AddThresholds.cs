@@ -53,6 +53,8 @@ public partial class AddThresholds : Migration
 				principalTable: "Tags",
 				principalColumn: "Id",
 				onDelete: ReferentialAction.SetNull);
+
+		migrationBuilder.Sql(@"UPDATE public.""Tags"" SET ""Calculation"" = 1 WHERE ""Calculation"" IS NULL AND ""SourceId"" = -1;");
 	}
 
 	/// <inheritdoc />

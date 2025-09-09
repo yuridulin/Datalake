@@ -121,6 +121,14 @@ public record class Tag
 	[Column]
 	public float MaxRaw { get; set; } = float.MaxValue;
 
+	/// <summary>
+	/// Коэффициент преобразования по шкалам, вычисляется при получении
+	/// </summary>
+	[NotMapped, NotColumn]
+	public float ScalingCoefficient => IsScaling
+		? ((MaxEu - MinEu) / (MaxRaw - MinRaw))
+		: 1;
+
 	#endregion
 
 	#region специфичные для вычисляемых
