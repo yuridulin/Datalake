@@ -291,7 +291,7 @@ public class Program
 			.UseMiddleware<SentryRequestBodyMiddleware>()
 			.EnsureCorsMiddlewareOnError();
 
-		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html").Add(builder =>
+		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html")/*.Add(builder =>
 		{
 			builder.RequestDelegate = (httpContext) =>
 			{
@@ -300,7 +300,7 @@ public class Program
 				httpContext.Response.Headers.Append("Expires", "0");
 				return Task.CompletedTask;
 			};
-		});
+		})*/;
 		app.MapControllerRoute(
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");
