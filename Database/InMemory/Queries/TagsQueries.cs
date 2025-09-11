@@ -41,7 +41,7 @@ public static class TagsQueries
 						Guid = thresholdSourceTag.GlobalGuid,
 						Name = thresholdSourceTag.Name,
 						Type = thresholdSourceTag.Type,
-						RelationId = tag.SourceTagRelationId,
+						BlockId = tag.SourceTagBlockId,
 						SourceType = !state.SourcesById.TryGetValue(thresholdSourceTag.SourceId, out var thresholdSourceTagSource)
 							? SourceType.NotSet
 							: thresholdSourceTagSource.Type,
@@ -54,7 +54,7 @@ public static class TagsQueries
 							Guid = inputTag.GlobalGuid,
 							Name = inputTag.Name,
 							VariableName = relation.VariableName,
-							RelationId = relation.Id,
+							BlockId = relation.InputBlockId,
 							Type = inputTag.Type,
 							Resolution = inputTag.Resolution,
 							SourceType = !state.SourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.NotSet : inputTagSource.Type,
@@ -76,7 +76,7 @@ public static class TagsQueries
 						Guid = sourceTag.GlobalGuid,
 						Name = sourceTag.Name,
 						Type = sourceTag.Type,
-						RelationId = tag.SourceTagRelationId,
+						BlockId = tag.SourceTagBlockId,
 						SourceType = !state.SourcesById.TryGetValue(sourceTag.SourceId, out var sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
 					},
 					Aggregation = tag.Aggregation,
@@ -128,7 +128,7 @@ public static class TagsQueries
 						Guid = thresholdSourceTag.GlobalGuid,
 						Name = thresholdSourceTag.Name,
 						Type = thresholdSourceTag.Type,
-						RelationId = tag.SourceTagRelationId,
+						BlockId = tag.SourceTagBlockId,
 						SourceType = !state.SourcesById.TryGetValue(thresholdSourceTag.SourceId, out var thresholdSourceTagSource)
 							? SourceType.NotSet
 							: thresholdSourceTagSource.Type,
@@ -143,7 +143,7 @@ public static class TagsQueries
 							VariableName = relation.VariableName,
 							Type = inputTag.Type,
 							Resolution = inputTag.Resolution,
-							RelationId = relation.Id,
+							BlockId = relation.InputBlockId,
 							SourceType = !state.SourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.NotSet : inputTagSource.Type,
 						})
 						.ToArray(),
@@ -163,7 +163,7 @@ public static class TagsQueries
 						Guid = sourceTag.GlobalGuid,
 						Name = sourceTag.Name,
 						Type = sourceTag.Type,
-						RelationId = tag.SourceTagRelationId,
+						BlockId = tag.SourceTagBlockId,
 						SourceType = !state.SourcesById.TryGetValue(sourceTag.SourceId, out var sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
 					},
 					Aggregation = tag.Aggregation,

@@ -23,5 +23,5 @@ public class TagUpdateInputRequest
 	/// Идентификатор связи, по которой выбран закрепленный тег
 	/// </summary>
 	[Required]
-	public required int TagRelationId { get; set; }
+	public required int BlockId { get; set; }
 }

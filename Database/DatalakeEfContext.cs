@@ -118,12 +118,26 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.HasForeignKey(input => input.InputTagId)
 			.OnDelete(DeleteBehavior.SetNull);
 
+		modelBuilder.Entity<TagInput>()
+			.HasOne(input => input.InputBlock)
+			.WithMany()
+			.HasForeignKey(input => input.InputBlockId)
+			.IsRequired(false)
+			.OnDelete(DeleteBehavior.SetNull);
+
 		// связь тегов с входными тегами для агрегирования
 
 		modelBuilder.Entity<Tag>()
 			.HasOne(tag => tag.SourceTag)
 			.WithMany()
 			.HasForeignKey(tag => tag.SourceTagId)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<Tag>()
+			.HasOne(input => input.SourceBlock)
+			.WithMany()
+			.HasForeignKey(input => input.SourceBlockId)
+			.IsRequired(false)
 			.OnDelete(DeleteBehavior.SetNull);
 
 		// связь тегов с входными тегами для расчета

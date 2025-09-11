@@ -158,10 +158,10 @@ public record class Tag
 	public int? ThresholdSourceTagId { get; set; }
 
 	/// <summary>
-	/// Идентификатор связи с тегом, который будет источником данных для расчета значения по таблице пороговых значений
+	/// Идентификатор блока с тегом, который будет источником данных для расчета значения по таблице пороговых значений
 	/// </summary>
 	[Column]
-	public int? ThresholdSourceTagRelationId { get; set; }
+	public int? ThresholdSourceTaBlockId { get; set; }
 
 	#endregion
 
@@ -186,10 +186,10 @@ public record class Tag
 	public int? SourceTagId { get; set; }
 
 	/// <summary>
-	/// Идентификатор связи с тегом, который будет источником данных для расчета агрегированного значения
+	/// Идентификатор блока с тегом, который будет источником данных для расчета агрегированного значения
 	/// </summary>
 	[Column]
-	public int? SourceTagRelationId { get; set; }
+	public int? SourceTagBlockId { get; set; }
 
 	#endregion
 
@@ -204,6 +204,11 @@ public record class Tag
 	/// Тег-источник данных для агрегирования
 	/// </summary>
 	public Tag? SourceTag { get; set; }
+
+	/// <summary>
+	/// Блок, содержащий тег-источник данных для агрегирования
+	/// </summary>
+	public Block? SourceTagBlock { get; set; }
 
 	/// <summary>
 	/// Тег-источник данных для вычисления по таблице пороговых значений

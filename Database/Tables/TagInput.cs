@@ -40,10 +40,10 @@ public record class TagInput
 	public int? InputTagId { get; set; }
 
 	/// <summary>
-	/// Идентификатор связи, по которой получен входной тег
+	/// Идентификатор блока с входным тегом
 	/// </summary>
 	[Column]
-	public int? InputTagRelationId { get; set; }
+	public int? InputBlockId { get; set; }
 
 	/// <summary>
 	/// Имя переменной в формуле
@@ -62,4 +62,9 @@ public record class TagInput
 	/// Входной тег
 	/// </summary>
 	public Tag? InputTag { get; set; }
+
+	/// <summary>
+	/// Входной блок
+	/// </summary>
+	public Tag? InputBlock { get; set; }
 }
