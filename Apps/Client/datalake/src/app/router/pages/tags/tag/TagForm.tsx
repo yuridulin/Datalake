@@ -69,6 +69,7 @@ const TagForm = () => {
 	} as UpdateRequest)
 	const [items, setItems] = useState([] as { value: string }[])
 	const [strategy, setStrategy] = useState(SourceStrategy.Manual)
+	useEffect(() => console.log(request), [request])
 
 	// получение инфо
 	const loadTagData = () => {

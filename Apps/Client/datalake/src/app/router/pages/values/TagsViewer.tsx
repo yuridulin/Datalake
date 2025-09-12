@@ -1,4 +1,5 @@
 import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
+import { FlattenedNestedTagsType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import TagsValuesViewer, { ViewerSettings } from '@/app/components/values/TagsValuesViewer'
 import { printDate } from '@/functions/dateHandle'
 import getTagResolutionName, { TagResolutionMode } from '@/functions/getTagResolutionName'
@@ -6,7 +7,6 @@ import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { Row } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useMemo, useState } from 'react'
-import { FlattenedNestedTagsType } from './types/flattenedNestedTags'
 
 const baseTitle = 'Просмотр'
 

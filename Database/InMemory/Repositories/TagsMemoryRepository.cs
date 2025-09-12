@@ -568,10 +568,10 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		// Формируем параметризованный SQL запрос
 		var insertSql = $"""
 			INSERT INTO "{TagInput.TableName}"
-			("TagId", "InputTagId", "InputTagRelationId", "VariableName")
+			("{nameof(TagInput.TagId)}", "{nameof(TagInput.InputTagId)}", "{nameof(TagInput.InputBlockId)}", "{nameof(TagInput.VariableName)}")
 			VALUES {string.Join(", ", newInputs.Select((_, i) =>
 				$"(:t{i}, :it{i}, :ir{i}, :v{i})"))}
-			RETURNING "Id";
+			RETURNING "{nameof(TagInput.Id)}";
 		""";
 
 		// Создаем параметры

@@ -540,7 +540,7 @@ public class BlocksMemoryRepository(DatalakeDataStore dataStore)
 		// Формируем параметризованный SQL запрос
 		var insertSql = $"""
 			INSERT INTO "{BlockTag.TableName}"
-			("BlockId", "TagId", "Name", "Relation")
+			("{nameof(BlockTag.BlockId)}", "{nameof(BlockTag.TagId)}", "{nameof(BlockTag.Name)}", "{nameof(BlockTag.Relation)}")
 			VALUES {string.Join(", ", newTagsRelations.Select((_, i) =>
 				$"(:b{i}, :t{i}, :n{i}, :r{i})"))}
 			RETURNING "Id";

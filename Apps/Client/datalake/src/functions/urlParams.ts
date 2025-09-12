@@ -1,3 +1,4 @@
+import { decodeBlockTagPair } from '@/app/components/tagTreeSelect/treeSelectShared'
 import { deserializeDate, serializeDate } from '@/functions/dateHandle'
 import { Dayjs } from 'dayjs'
 
@@ -21,27 +22,26 @@ export const URL_PARAMS = {
 } as const
 
 // Сериализация выбранных тегов
-export const serializeTags = (relations: number[], tagMapping: Record<number, { id: number }>): string => {
+export const serializeTags = (relations: number[]): string => {
 	return relations
-		.map((relationId) => {
-			const tagInfo = tagMapping[relationId]
-			return tagInfo ? `${tagInfo.id}.${relationId}` : ''
+		.map((encodedValue) => {
+			const { blockId, tagId } = decodeBlockTagPair(encodedValue)
+			return `${tagId}|${blockId}`
 		})
-		.filter(Boolean)
 		.join('~')
 }
 
 // Извлечение пар "тег-связь" из строки
-export const deserializeTags = (param: string | null): Array<{ tagId: number; relationId: number }> => {
+export const deserializeTags = (param: string | null): Array<{ tagId: number; blockId: number }> => {
 	if (!param) return []
 
 	return param
 		.split('~')
 		.map((pair) => {
-			const [tagId, relationId] = pair.split('.').map(Number)
-			return { tagId, relationId }
+			const [tagIdStr, blockIdStr] = pair.split('|').map(Number)
+			return { tagId: tagIdStr, blockId: blockIdStr }
 		})
-		.filter(({ tagId, relationId }) => !isNaN(tagId) && !isNaN(relationId))
+		.filter(({ tagId, blockId }) => !isNaN(tagId) && !isNaN(blockId))
 }
 
 // Интерфейс для параметров просмотра значений
@@ -101,7 +101,7 @@ export const setViewerParams = (searchParams: URLSearchParams, params: ViewerPar
 // Получение параметров записи значений из URLSearchParams
 export interface WriterParams {
 	date?: Dayjs | null
-	tags?: Array<{ tagId: number; relationId: number }>
+	tags?: Array<{ tagId: number; blockId: number }>
 }
 
 export const getWriterParams = (searchParams: URLSearchParams): WriterParams => {
@@ -123,7 +123,7 @@ export const setWriterParams = (searchParams: URLSearchParams, params: WriterPar
 
 	if (params.tags !== undefined) {
 		if (params.tags && params.tags.length > 0) {
-			const serializedTags = params.tags.map((tag) => `${tag.tagId}.${tag.relationId}`).join('~')
+			const serializedTags = params.tags.map((tag) => `${tag.tagId}|${tag.blockId}`).join('~')
 			searchParams.set(URL_PARAMS.TAGS, serializedTags)
 		} else {
 			searchParams.delete(URL_PARAMS.TAGS)

@@ -1,6 +1,8 @@
 import {
 	convertToTreeSelectNodes,
 	createFullTree,
+	decodeBlockTagPair,
+	encodeBlockTagPair,
 	filterTreeNode,
 } from '@/app/components/tagTreeSelect/treeSelectShared'
 import { BlockTreeInfo, TagSimpleInfo } from '@/generated/data-contracts'
@@ -12,10 +14,9 @@ interface TagTreeSelectProps {
 	blocks?: BlockTreeInfo[]
 	tags?: TagSimpleInfo[]
 	value?: [number, number | null | undefined]
-	onChange?: (value: [tagId: number, relationId: number]) => void
+	onChange?: (value: [tagId: number, blockId: number]) => void
 }
 
-// Поиск узла по relationId
 function findNodeByValue(nodes: DefaultOptionType[], value: number): DefaultOptionType | null {
 	for (const node of nodes) {
 		if (node.value === value) return node
@@ -27,14 +28,13 @@ function findNodeByValue(nodes: DefaultOptionType[], value: number): DefaultOpti
 	return null
 }
 
-// Поиск тега по tagId
 function findFirstNodeByTagId(nodes: DefaultOptionType[], tagId: number): DefaultOptionType | null {
 	for (const node of nodes) {
 		if (node.children) {
 			const foundInChild = findFirstNodeByTagId(node.children, tagId)
 			if (foundInChild) return foundInChild
 		}
-		if (node.data?.relationId !== undefined && node.data.id === tagId) {
+		if (node.data?.id === tagId) {
 			return node
 		}
 	}
@@ -44,25 +44,21 @@ function findFirstNodeByTagId(nodes: DefaultOptionType[], tagId: number): Defaul
 const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], value, onChange = () => {} }) => {
 	const { token } = theme.useToken()
 
-	// Формируем дерево с виртуальным блоком для нераспределенных тегов
 	const treeData = useMemo(() => {
 		const fullTree = createFullTree([blocks, tags])
 		return convertToTreeSelectNodes(fullTree, undefined, token)
 	}, [blocks, tags, token])
 
-	// Вычисляем выбранное значение
 	const selected = useMemo(() => {
 		if (!value) return undefined
+		const [tagId, blockId] = value
 
-		const [tagId, relationId] = value
-
-		// Поиск по точному relationId
-		if (relationId) {
-			const node = findNodeByValue(treeData, relationId)
+		if (blockId) {
+			const value = encodeBlockTagPair(blockId, tagId)
+			const node = findNodeByValue(treeData, value)
 			if (node) return { value: node.value as number, label: node.fullTitle }
 		}
 
-		// Поиск первого подходящего tagId
 		if (tagId) {
 			const node = findFirstNodeByTagId(treeData, tagId)
 			if (node) return { value: node.value as number, label: node.fullTitle }
@@ -71,17 +67,17 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], v
 		return undefined
 	}, [value, treeData])
 
-	// Обработчик изменения значения
 	const handleChange = (sel: { value: number; label: React.ReactNode } | undefined) => {
 		if (!sel) {
 			onChange([0, 0])
 			return
 		}
-		const node = findNodeByValue(treeData, sel.value)
-		if (node?.data) {
-			onChange([node.data.id, sel.value])
+
+		if (sel.value < 0) {
+			onChange([-sel.value, 0])
 		} else {
-			onChange([0, 0])
+			const { blockId, tagId } = decodeBlockTagPair(sel.value)
+			onChange([tagId, blockId])
 		}
 	}
 
