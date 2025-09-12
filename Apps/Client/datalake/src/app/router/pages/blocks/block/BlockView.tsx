@@ -54,7 +54,7 @@ const BlockView = observer(() => {
 	const tagMapping = useMemo(() => {
 		const mapping: Record<number, { id: number; localName: string; type: TagType; resolution: TagResolution }> = {}
 		block.tags?.forEach((tag) => {
-			mapping[tag.relationId] = {
+			mapping[tag.id] = {
 				id: tag.id,
 				localName: tag.localName,
 				type: tag.type,
@@ -64,7 +64,7 @@ const BlockView = observer(() => {
 		return mapping
 	}, [block.tags])
 
-	const relations = useMemo(() => block.tags?.map((tag) => tag.relationId) || [], [block.tags])
+	const relations = useMemo(() => block.tags?.map((tag) => tag.id) || [], [block.tags])
 
 	return !ready ? (
 		<Spin />

@@ -92,17 +92,17 @@ const TagForm = () => {
 				setRequest({
 					...info,
 					sourceTagId: info.sourceTag?.id,
-					sourceTagRelationId: info.sourceTag?.relationId,
+					sourceTagBlockId: info.sourceTag?.blockId,
 					thresholdSourceTagId: info.thresholdSourceTag?.id,
-					thresholdSourceTagRelationId: info.thresholdSourceTag?.relationId,
+					thresholdSourceTagBlockId: info.thresholdSourceTag?.blockId,
 					formulaInputs: info.formulaInputs.map(
 						(x, index) =>
 							({
 								key: index,
 								tagId: x.id,
-								tagRelationId: x.relationId,
+								blockId: x.blockId,
 								variableName: x.variableName,
-							}) as UpdateInputRequest,
+							}) as unknown as UpdateInputRequest,
 					),
 				})
 				setStrategy(
@@ -184,9 +184,9 @@ const TagForm = () => {
 					{
 						key: availableFakeId,
 						tagId: 0,
-						tagRelationId: 0,
+						blockId: null,
 						variableName: '',
-					} as UpdateInputRequest,
+					} as unknown as UpdateInputRequest,
 				],
 			}
 		})
@@ -222,7 +222,7 @@ const TagForm = () => {
 			const seen = new Map<string, number[]>()
 			request.formulaInputs.forEach((x, idx) => {
 				if ((x.tagId ?? 0) > 0) {
-					const key = `${x.tagId}:${x.tagRelationId ?? -1}`
+					const key = `${x.tagId}:${x.blockId ?? -1}`
 					const arr = seen.get(key) ?? []
 					arr.push(idx)
 					seen.set(key, arr)
@@ -548,8 +548,8 @@ const TagForm = () => {
 										<TagTreeSelect
 											blocks={blocks}
 											tags={tags}
-											value={[input.tagId, input.tagRelationId]}
-											onChange={([inputTagId, inputTagRelationId]) =>
+											value={[input.tagId, input.blockId]}
+											onChange={([inputTagId, inputBlockId]) =>
 												setRequest((prev) => ({
 													...prev,
 													formulaInputs: prev.formulaInputs.map((x) =>
@@ -558,7 +558,7 @@ const TagForm = () => {
 															: {
 																	...x,
 																	tagId: inputTagId,
-																	tagRelationId: inputTagRelationId,
+																	blockId: inputBlockId,
 																},
 													),
 												}))
@@ -577,11 +577,11 @@ const TagForm = () => {
 					<>
 						<FormRow title='Тег-источник'>
 							<TagTreeSelect
-								value={[request.thresholdSourceTagId ?? 0, request.thresholdSourceTagRelationId]}
+								value={[request.thresholdSourceTagId ?? 0, request.thresholdSourceTagBlockId]}
 								blocks={blocks}
 								tags={tags}
-								onChange={([thresholdSourceTagId, thresholdSourceTagRelationId]) => {
-									setRequest((prev) => ({ ...prev, thresholdSourceTagId, thresholdSourceTagRelationId }))
+								onChange={([thresholdSourceTagId, thresholdSourceTagBlockId]) => {
+									setRequest((prev) => ({ ...prev, thresholdSourceTagId, thresholdSourceTagBlockId }))
 								}}
 							/>
 						</FormRow>
@@ -695,11 +695,11 @@ const TagForm = () => {
 			>
 				<FormRow title='Тег-источник'>
 					<TagTreeSelect
-						value={[request.sourceTagId ?? 0, request.sourceTagRelationId]}
+						value={[request.sourceTagId ?? 0, request.sourceTagBlockId]}
 						blocks={blocks}
 						tags={tags}
-						onChange={([sourceTagId, sourceTagRelationId]) => {
-							setRequest((prev) => ({ ...prev, sourceTagId, sourceTagRelationId }))
+						onChange={([sourceTagId, sourceTagBlockId]) => {
+							setRequest((prev) => ({ ...prev, sourceTagId, sourceTagBlockId }))
 						}}
 					/>
 				</FormRow>
