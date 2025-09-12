@@ -348,7 +348,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 				Formula = updateRequest.Formula,
 				Thresholds = updateRequest.Thresholds?.ToList(),
 				ThresholdSourceTagId = updateRequest.ThresholdSourceTagId,
-				ThresholdSourceTaBlockId = updateRequest.ThresholdSourceTagBlockId,
+				ThresholdSourceTagBlockId = updateRequest.ThresholdSourceTagBlockId,
 				SourceTagId = updateRequest.SourceTagId,
 				SourceTagBlockId = updateRequest.SourceTagBlockId,
 				Aggregation = updateRequest.Aggregation,
@@ -457,7 +457,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.Set(x => x.Formula, updateRequest.Formula)
 					.Set(x => x.Thresholds, updateRequest.Thresholds)
 					.Set(x => x.ThresholdSourceTagId, updateRequest.ThresholdSourceTagId)
-					.Set(x => x.ThresholdSourceTaBlockId, updateRequest.ThresholdSourceTagBlockId)
+					.Set(x => x.ThresholdSourceTagBlockId, updateRequest.ThresholdSourceTagBlockId)
 					.Set(x => x.SourceTagId, updateRequest.SourceTagId)
 					.Set(x => x.SourceTagBlockId, updateRequest.SourceTagBlockId)
 					.Set(x => x.Aggregation, updateRequest.Aggregation)

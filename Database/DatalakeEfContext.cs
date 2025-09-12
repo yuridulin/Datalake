@@ -134,9 +134,9 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.OnDelete(DeleteBehavior.SetNull);
 
 		modelBuilder.Entity<Tag>()
-			.HasOne(input => input.SourceBlock)
+			.HasOne(input => input.SourceTagBlock)
 			.WithMany()
-			.HasForeignKey(input => input.SourceBlockId)
+			.HasForeignKey(input => input.SourceTagBlockId)
 			.IsRequired(false)
 			.OnDelete(DeleteBehavior.SetNull);
 
@@ -146,6 +146,13 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.HasOne(tag => tag.ThresholdSourceTag)
 			.WithMany()
 			.HasForeignKey(tag => tag.ThresholdSourceTagId)
+			.OnDelete(DeleteBehavior.SetNull);
+
+		modelBuilder.Entity<Tag>()
+			.HasOne(input => input.ThresholdSourceTagBlock)
+			.WithMany()
+			.HasForeignKey(input => input.ThresholdSourceTagBlockId)
+			.IsRequired(false)
 			.OnDelete(DeleteBehavior.SetNull);
 
 		// уникальность значений тегов

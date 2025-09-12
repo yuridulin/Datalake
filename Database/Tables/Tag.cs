@@ -161,7 +161,7 @@ public record class Tag
 	/// Идентификатор блока с тегом, который будет источником данных для расчета значения по таблице пороговых значений
 	/// </summary>
 	[Column]
-	public int? ThresholdSourceTaBlockId { get; set; }
+	public int? ThresholdSourceTagBlockId { get; set; }
 
 	#endregion
 
@@ -214,6 +214,11 @@ public record class Tag
 	/// Тег-источник данных для вычисления по таблице пороговых значений
 	/// </summary>
 	public Tag? ThresholdSourceTag { get; set; }
+
+	/// <summary>
+	/// Блок, содержащий тег-источник данных для вычисления по таблице пороговых значений
+	/// </summary>
+	public Block? ThresholdSourceTagBlock { get; set; }
 
 	/// <summary>
 	/// Входные теги
