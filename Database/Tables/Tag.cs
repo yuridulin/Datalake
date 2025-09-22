@@ -206,19 +206,9 @@ public record class Tag
 	public Tag? SourceTag { get; set; }
 
 	/// <summary>
-	/// Блок, содержащий тег-источник данных для агрегирования
-	/// </summary>
-	public Block? SourceTagBlock { get; set; }
-
-	/// <summary>
 	/// Тег-источник данных для вычисления по таблице пороговых значений
 	/// </summary>
 	public Tag? ThresholdSourceTag { get; set; }
-
-	/// <summary>
-	/// Блок, содержащий тег-источник данных для вычисления по таблице пороговых значений
-	/// </summary>
-	public Block? ThresholdSourceTagBlock { get; set; }
 
 	/// <summary>
 	/// Входные теги

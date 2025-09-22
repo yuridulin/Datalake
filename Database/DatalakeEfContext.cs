@@ -118,13 +118,6 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.HasForeignKey(input => input.InputTagId)
 			.OnDelete(DeleteBehavior.SetNull);
 
-		modelBuilder.Entity<TagInput>()
-			.HasOne(input => input.InputBlock)
-			.WithMany()
-			.HasForeignKey(input => input.InputBlockId)
-			.IsRequired(false)
-			.OnDelete(DeleteBehavior.SetNull);
-
 		// связь тегов с входными тегами для агрегирования
 
 		modelBuilder.Entity<Tag>()
@@ -133,26 +126,12 @@ public class DatalakeEfContext(DbContextOptions<DatalakeEfContext> options) : Db
 			.HasForeignKey(tag => tag.SourceTagId)
 			.OnDelete(DeleteBehavior.SetNull);
 
-		modelBuilder.Entity<Tag>()
-			.HasOne(input => input.SourceTagBlock)
-			.WithMany()
-			.HasForeignKey(input => input.SourceTagBlockId)
-			.IsRequired(false)
-			.OnDelete(DeleteBehavior.SetNull);
-
 		// связь тегов с входными тегами для расчета
 
 		modelBuilder.Entity<Tag>()
 			.HasOne(tag => tag.ThresholdSourceTag)
 			.WithMany()
 			.HasForeignKey(tag => tag.ThresholdSourceTagId)
-			.OnDelete(DeleteBehavior.SetNull);
-
-		modelBuilder.Entity<Tag>()
-			.HasOne(input => input.ThresholdSourceTagBlock)
-			.WithMany()
-			.HasForeignKey(input => input.ThresholdSourceTagBlockId)
-			.IsRequired(false)
 			.OnDelete(DeleteBehavior.SetNull);
 
 		// уникальность значений тегов

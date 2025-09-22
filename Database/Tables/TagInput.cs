@@ -62,9 +62,4 @@ public record class TagInput
 	/// Входной тег
 	/// </summary>
 	public Tag? InputTag { get; set; }
-
-	/// <summary>
-	/// Входной блок
-	/// </summary>
-	public Tag? InputBlock { get; set; }
 }
