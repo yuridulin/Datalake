@@ -1,5 +1,6 @@
 using Datalake.Database;
 using Datalake.Database.Constants;
+using Datalake.Database.Converters;
 using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.Initialization;
@@ -85,12 +86,19 @@ public class Program
 		{
 			options.SerializerOptions.NumberHandling = Json.JsonSerializerOptions.NumberHandling;
 			options.SerializerOptions.PropertyNamingPolicy = Json.JsonSerializerOptions.PropertyNamingPolicy;
+			options.SerializerOptions.Converters.Add(new NanToNullFloatConverter());
 		});
 
 		// MVC
 		builder.Services
 			.AddControllers()
-			.AddControllersAsServices();
+			.AddControllersAsServices()
+			.AddJsonOptions(options =>
+			{
+				options.JsonSerializerOptions.NumberHandling = Json.JsonSerializerOptions.NumberHandling;
+				options.JsonSerializerOptions.PropertyNamingPolicy = Json.JsonSerializerOptions.PropertyNamingPolicy;
+				options.JsonSerializerOptions.Converters.Add(new NanToNullFloatConverter());
+			});
 
 		// Swagger
 		builder.Services
