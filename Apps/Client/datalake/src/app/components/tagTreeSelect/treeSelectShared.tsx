@@ -1,10 +1,10 @@
 import BlockIcon from '@/app/components/icons/BlockIcon'
 import TagIcon from '@/app/components/icons/TagIcon'
 import getTagResolutionName from '@/functions/getTagResolutionName'
+import { RELATION_TAG_SEPARATOR } from '@/functions/urlParams'
 import {
 	AccessType,
 	BlockNestedTagInfo,
-	BlockSimpleInfo,
 	BlockTagRelation,
 	BlockTreeInfo,
 	SourceType,
@@ -17,45 +17,26 @@ import { DataNode } from 'antd/es/tree'
 export type BlockFlattenNestedTagInfo = BlockNestedTagInfo & {
 	localName: string
 	blockId: number
-	parents: BlockSimpleInfo[]
+	//parents: BlockSimpleInfo[]
 }
 
-export type FlattenedNestedTagsType = Record<number, BlockFlattenNestedTagInfo>
+export type FlattenedNestedTagsType = Record<string, BlockFlattenNestedTagInfo>
 
-export const SELECTED_SEPARATOR: string = '~'
-export const RELATION_TAG_SEPARATOR: string = '|'
-export const BLOCK_ID_SHIFT: number = -1000000
-export const VIRTUAL_RELATION_SHIFT: number = 1000000
+export type TagMappingType = Record<string, BlockFlattenNestedTagInfo>
 
 const ALL_BLOCKS_ID = -1
 const ORPHANS_ID = -2
 const ALL_TAGS_ID = -3
 
-const ALL_BLOCKS_NAME: string = '1. Дерево блоков'
-const ORPHANS_NAME: string = '2. Нераспределенные теги'
-const ALL_TAGS_NAME: string = '3. Все теги'
-const FAKE_BLOCKS = [ALL_BLOCKS_NAME, ORPHANS_NAME, ALL_TAGS_NAME]
+const ALL_BLOCKS_NAME: string = '1.Дерево блоков'
+const ORPHANS_NAME: string = '2.Нераспределенные теги'
+const ALL_TAGS_NAME: string = '3.Все теги'
 
-// Кодирует пару (blockId, tagId) в уникальное число
-export const encodeBlockTagPair = (blockId: number, tagId: number): number => {
-	// Для виртуальных блоков используем отрицательные значения
-	if (blockId < 0) {
-		return blockId * VIRTUAL_RELATION_SHIFT - tagId
-	}
-	return blockId * VIRTUAL_RELATION_SHIFT + tagId
-}
+export const encodeBlockTagPair = (blockId: number, tagId: number) => `${blockId}${RELATION_TAG_SEPARATOR}${tagId}`
 
-// Декодирует число обратно в пару (blockId, tagId)
-export const decodeBlockTagPair = (value: number): { blockId: number; tagId: number } => {
-	if (value < 0) {
-		const blockId = Math.ceil(value / VIRTUAL_RELATION_SHIFT)
-		const tagId = -(value % VIRTUAL_RELATION_SHIFT)
-		return { blockId, tagId }
-	}
-	return {
-		blockId: Math.floor(value / VIRTUAL_RELATION_SHIFT),
-		tagId: value % VIRTUAL_RELATION_SHIFT,
-	}
+export const decodeBlockTagPair = (raw: string) => {
+	const parts = raw.split(RELATION_TAG_SEPARATOR).map(Number)
+	return { blockId: parts[0], tagId: parts[1] }
 }
 
 export const convertToTreeSelectNodes = (
@@ -69,8 +50,9 @@ export const convertToTreeSelectNodes = (
 	return blockTree
 		.map((block) => {
 			const currentPath = [...parentPath]
-			if (!FAKE_BLOCKS.includes(block.name)) currentPath.push(block.name)
+			currentPath.push(block.name)
 			const fullTitle = currentPath.join('.')
+			const blockValue = encodeBlockTagPair(block.id, 0)
 
 			return {
 				title: (
@@ -78,14 +60,14 @@ export const convertToTreeSelectNodes = (
 						<BlockIcon /> {block.name}
 					</>
 				),
-				key: BLOCK_ID_SHIFT - block.id,
-				value: BLOCK_ID_SHIFT - block.id,
+				key: blockValue,
+				value: blockValue,
 				fullTitle,
 				selectable: false,
 				data: block,
 				children: [
 					...block.tags.map((tag) => {
-						const value = encodeBlockTagPair(block.id, tag.id)
+						const tagValue = encodeBlockTagPair(block.id, tag.id)
 						return {
 							title: (
 								<div style={{ display: 'flex' }}>
@@ -93,13 +75,13 @@ export const convertToTreeSelectNodes = (
 									&ensp;{tag.localName}
 									&emsp;
 									<pre style={{ display: 'inline-block', color: token.colorTextDisabled, margin: 0 }}>
-										{block.id > 0 && block.id < VIRTUAL_RELATION_SHIFT && <>{tag.name}&emsp;</>}#{tag.id}
+										{block.id > 0 && <>{tag.name}&emsp;</>}#{tag.id}
 										{tag.resolution > 0 && <>&emsp;{getTagResolutionName(tag.resolution)}</>}
 									</pre>
 								</div>
 							),
-							key: value,
-							value: value,
+							key: tagValue,
+							value: tagValue,
 							fullTitle: `${fullTitle}.${tag.localName}`,
 							data: { ...tag, blockId: block.id },
 							disabled: manual && tag.sourceType !== SourceType.Manual,
@@ -126,7 +108,7 @@ export const filterTreeNode = (inputValue: string, treeNode: DefaultOptionType):
 			if (block.name?.toLowerCase().includes(searchText) || block.fullName?.toLowerCase().includes(searchText)) {
 				return true
 			}
-		} else if ('relationId' in data) {
+		} else if ('relationType' in data) {
 			const tag = data as BlockNestedTagInfo
 			if (
 				tag.name?.toLowerCase().includes(searchText) ||
@@ -152,11 +134,10 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 	}
 	collectTagIds(blocksTree)
 
-	const orphanTags = allTags
+	const orphanTags: BlockNestedTagInfo[] = allTags
 		.filter((tag) => !allTagIds.has(tag.id))
 		.map((tag) => ({
 			...tag,
-			relationId: -tag.id,
 			relationType: BlockTagRelation.Static,
 			localName: tag.name,
 			sourceId: 0,
@@ -195,7 +176,6 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 		fullName: ALL_TAGS_NAME,
 		tags: allTags.map((tag) => ({
 			...tag,
-			relationId: VIRTUAL_RELATION_SHIFT + tag.id,
 			relationType: BlockTagRelation.Static,
 			localName: tag.name,
 			sourceId: 0,

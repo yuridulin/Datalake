@@ -549,8 +549,8 @@ const TagForm = () => {
 										<TagTreeSelect
 											blocks={blocks}
 											tags={tags}
-											value={[input.tagId, input.blockId]}
-											onChange={([inputTagId, inputBlockId]) =>
+											value={[input.blockId, input.tagId]}
+											onChange={([inputBlockId, inputTagId]) =>
 												setRequest((prev) => ({
 													...prev,
 													formulaInputs: prev.formulaInputs.map((x) =>
@@ -578,10 +578,10 @@ const TagForm = () => {
 					<>
 						<FormRow title='Тег-источник'>
 							<TagTreeSelect
-								value={[request.thresholdSourceTagId ?? 0, request.thresholdSourceTagBlockId]}
+								value={[request.thresholdSourceTagBlockId, request.thresholdSourceTagId ?? 0]}
 								blocks={blocks}
 								tags={tags}
-								onChange={([thresholdSourceTagId, thresholdSourceTagBlockId]) => {
+								onChange={([thresholdSourceTagBlockId, thresholdSourceTagId]) => {
 									setRequest((prev) => ({ ...prev, thresholdSourceTagId, thresholdSourceTagBlockId }))
 								}}
 							/>
@@ -696,10 +696,10 @@ const TagForm = () => {
 			>
 				<FormRow title='Тег-источник'>
 					<TagTreeSelect
-						value={[request.sourceTagId ?? 0, request.sourceTagBlockId]}
+						value={[request.sourceTagBlockId, request.sourceTagId ?? 0]}
 						blocks={blocks}
 						tags={tags}
-						onChange={([sourceTagId, sourceTagBlockId]) => {
+						onChange={([sourceTagBlockId, sourceTagId]) => {
 							setRequest((prev) => ({ ...prev, sourceTagId, sourceTagBlockId }))
 						}}
 					/>

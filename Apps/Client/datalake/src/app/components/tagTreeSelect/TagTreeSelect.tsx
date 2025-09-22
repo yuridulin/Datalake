@@ -13,11 +13,11 @@ import React, { useMemo } from 'react'
 interface TagTreeSelectProps {
 	blocks?: BlockTreeInfo[]
 	tags?: TagSimpleInfo[]
-	value?: [number, number | null | undefined]
-	onChange?: (value: [tagId: number, blockId: number]) => void
+	value?: [number | null | undefined, number]
+	onChange?: (value: [blockId: number, tagId: number]) => void
 }
 
-function findNodeByValue(nodes: DefaultOptionType[], value: number): DefaultOptionType | null {
+function findNodeByValue(nodes: DefaultOptionType[], value: string): DefaultOptionType | null {
 	for (const node of nodes) {
 		if (node.value === value) return node
 		if (node.children) {
@@ -51,34 +51,25 @@ const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], v
 
 	const selected = useMemo(() => {
 		if (!value) return undefined
-		const [tagId, blockId] = value
+		const [blockId, tagId] = value
+		console.log('SELECTED:', value)
 
-		if (blockId) {
-			const value = encodeBlockTagPair(blockId, tagId)
-			const node = findNodeByValue(treeData, value)
-			if (node) return { value: node.value as number, label: node.fullTitle }
-		}
-
-		if (tagId) {
-			const node = findFirstNodeByTagId(treeData, tagId)
-			if (node) return { value: node.value as number, label: node.fullTitle }
-		}
+		const node =
+			findNodeByValue(treeData, encodeBlockTagPair(blockId ?? 0, tagId)) ?? findFirstNodeByTagId(treeData, tagId)
+		if (node) return { value: node.value as string, label: node.fullTitle }
 
 		return undefined
 	}, [value, treeData])
 
-	const handleChange = (sel: { value: number; label: React.ReactNode } | undefined) => {
+	const handleChange = (sel: { value: string; label: React.ReactNode } | undefined) => {
+		console.log('CHANGE:', sel?.value)
 		if (!sel) {
 			onChange([0, 0])
 			return
 		}
 
-		if (sel.value < 0) {
-			onChange([-sel.value, 0])
-		} else {
-			const { blockId, tagId } = decodeBlockTagPair(sel.value)
-			onChange([tagId, blockId])
-		}
+		const { blockId, tagId } = decodeBlockTagPair(sel.value)
+		onChange([blockId, tagId])
 	}
 
 	return (

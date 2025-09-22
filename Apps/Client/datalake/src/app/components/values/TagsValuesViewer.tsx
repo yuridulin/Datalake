@@ -1,4 +1,5 @@
 import PollingLoader from '@/app/components/loaders/PollingLoader'
+import { TagMappingType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import { ExcelExportModeHandles } from '@/app/components/values/functions/exportExcel'
 import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
 import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
@@ -7,8 +8,8 @@ import routes from '@/app/router/routes'
 import { deserializeDate, serializeDate } from '@/functions/dateHandle'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { serializeTags, setViewerParams, TimeMode, TimeModes, URL_PARAMS } from '@/functions/urlParams'
-import { SourceType, TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
+import { SELECTED_SEPARATOR, setViewerParams, TimeMode, TimeModes, URL_PARAMS } from '@/functions/urlParams'
+import { SourceType, TagResolution, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
@@ -25,14 +26,14 @@ const timeModeOptions: { label: string; value: TimeMode }[] = [
 ]
 
 interface TagValuesViewerProps {
-	relations: number[] // Массив ID связей
-	tagMapping: Record<number, { id: number; localName: string; type: TagType }> // Маппинг отношений
+	relations: string[] // Массив ID связей
+	tagMapping: TagMappingType // Маппинг отношений
 	integrated?: boolean // Скрываем часть контролов и инициируем запросы сразу после изменения настроек
 	onChange?: (settings: ViewerSettings) => void
 }
 
 export interface ViewerSettings {
-	activeRelations: number[]
+	activeRelations: string[]
 	old: Dayjs
 	young: Dayjs
 	exact: Dayjs
@@ -47,7 +48,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	const [searchParams, setSearchParams] = useSearchParams()
 	const initialMode = (searchParams.get(URL_PARAMS.VIEWER_MODE) as TimeMode) || TimeModes.LIVE
 	const [isLoading, setLoading] = useState(false)
-	const [values, setValues] = useState<{ relationId: number; value: TagValueWithInfo }[]>([])
+	const [values, setValues] = useState<{ relationId: string; value: TagValueWithInfo }[]>([])
 	const [showWrite, setWrite] = useState<boolean>(false)
 
 	const tableRef = useRef<ExcelExportModeHandles>(null)
@@ -307,7 +308,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 		}
 
 		const params = new URLSearchParams({
-			[URL_PARAMS.TAGS]: serializeTags(settings.activeRelations, tagMapping),
+			[URL_PARAMS.TAGS]: settings.activeRelations.join(SELECTED_SEPARATOR),
 			[URL_PARAMS.WRITER_DATE]: serializeDate(writeDate)!,
 		})
 

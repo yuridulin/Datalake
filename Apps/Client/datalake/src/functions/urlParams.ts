@@ -1,5 +1,4 @@
-import { decodeBlockTagPair } from '@/app/components/tagTreeSelect/treeSelectShared'
-import { deserializeDate, serializeDate } from '@/functions/dateHandle'
+import { serializeDate } from '@/functions/dateHandle'
 import { Dayjs } from 'dayjs'
 
 export const TimeModes = {
@@ -9,6 +8,9 @@ export const TimeModes = {
 } as const
 
 export type TimeMode = (typeof TimeModes)[keyof typeof TimeModes]
+
+export const SELECTED_SEPARATOR: string = '~'
+export const RELATION_TAG_SEPARATOR: string = '|'
 
 // Константы для имен параметров URL
 export const URL_PARAMS = {
@@ -21,29 +23,6 @@ export const URL_PARAMS = {
 	WRITER_DATE: 'W-D',
 } as const
 
-// Сериализация выбранных тегов
-export const serializeTags = (relations: number[]): string => {
-	return relations
-		.map((encodedValue) => {
-			const { blockId, tagId } = decodeBlockTagPair(encodedValue)
-			return `${tagId}|${blockId}`
-		})
-		.join('~')
-}
-
-// Извлечение пар "тег-связь" из строки
-export const deserializeTags = (param: string | null): Array<{ tagId: number; blockId: number }> => {
-	if (!param) return []
-
-	return param
-		.split('~')
-		.map((pair) => {
-			const [tagIdStr, blockIdStr] = pair.split('|').map(Number)
-			return { tagId: tagIdStr, blockId: blockIdStr }
-		})
-		.filter(({ tagId, blockId }) => !isNaN(tagId) && !isNaN(blockId))
-}
-
 // Интерфейс для параметров просмотра значений
 export interface ViewerParams {
 	mode: TimeMode
@@ -51,17 +30,6 @@ export interface ViewerParams {
 	exact?: Dayjs | null
 	old?: Dayjs | null
 	young?: Dayjs | null
-}
-
-// Получение параметров просмотра значений из URLSearchParams
-export const getViewerParams = (searchParams: URLSearchParams): ViewerParams => {
-	return {
-		mode: (searchParams.get(URL_PARAMS.VIEWER_MODE) as TimeMode) || 'live',
-		resolution: Number(searchParams.get(URL_PARAMS.VIEWER_RESOLUTION)) || undefined,
-		exact: deserializeDate(searchParams.get(URL_PARAMS.VIEWER_EXACT)),
-		old: deserializeDate(searchParams.get(URL_PARAMS.VIEWER_OLD)),
-		young: deserializeDate(searchParams.get(URL_PARAMS.VIEWER_YOUNG)),
-	}
 }
 
 // Установка параметров просмотра значений в URLSearchParams
@@ -95,38 +63,5 @@ export const setViewerParams = (searchParams: URLSearchParams, params: ViewerPar
 		}
 	} else {
 		searchParams.delete(URL_PARAMS.VIEWER_EXACT)
-	}
-}
-
-// Получение параметров записи значений из URLSearchParams
-export interface WriterParams {
-	date?: Dayjs | null
-	tags?: Array<{ tagId: number; blockId: number }>
-}
-
-export const getWriterParams = (searchParams: URLSearchParams): WriterParams => {
-	return {
-		date: deserializeDate(searchParams.get(URL_PARAMS.WRITER_DATE)),
-		tags: deserializeTags(searchParams.get(URL_PARAMS.TAGS)),
-	}
-}
-
-// Установка параметров записи значений в URLSearchParams
-export const setWriterParams = (searchParams: URLSearchParams, params: WriterParams): void => {
-	if (params.date !== undefined) {
-		if (params.date) {
-			searchParams.set(URL_PARAMS.WRITER_DATE, serializeDate(params.date)!)
-		} else {
-			searchParams.delete(URL_PARAMS.WRITER_DATE)
-		}
-	}
-
-	if (params.tags !== undefined) {
-		if (params.tags && params.tags.length > 0) {
-			const serializedTags = params.tags.map((tag) => `${tag.tagId}|${tag.blockId}`).join('~')
-			searchParams.set(URL_PARAMS.TAGS, serializedTags)
-		} else {
-			searchParams.delete(URL_PARAMS.TAGS)
-		}
 	}
 }

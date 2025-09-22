@@ -4,9 +4,10 @@ import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
+import { encodeBlockTagPair, FlattenedNestedTagsType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
-import { AccessType, BlockFullInfo, TagResolution, TagType } from '@/generated/data-contracts'
+import { AccessType, BlockFullInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { RightOutlined } from '@ant-design/icons'
@@ -52,19 +53,29 @@ const BlockView = observer(() => {
 
 	// Создаем маппинг тегов для TagValuesViewer
 	const tagMapping = useMemo(() => {
-		const mapping: Record<number, { id: number; localName: string; type: TagType; resolution: TagResolution }> = {}
+		const mapping: FlattenedNestedTagsType = {}
 		block.tags?.forEach((tag) => {
-			mapping[tag.id] = {
+			const value = encodeBlockTagPair(block.id, tag.id)
+			mapping[value] = {
 				id: tag.id,
-				localName: tag.localName,
+				guid: tag.guid,
+				name: tag.name,
 				type: tag.type,
 				resolution: tag.resolution,
+				sourceId: tag.sourceId,
+				sourceType: tag.sourceType,
+				blockId: block.id,
+				localName: tag.localName,
+				relationType: tag.relationType,
 			}
 		})
 		return mapping
-	}, [block.tags])
+	}, [block.tags, block.id])
 
-	const relations = useMemo(() => block.tags?.map((tag) => tag.id) || [], [block.tags])
+	const relations = useMemo(
+		() => block.tags?.map((tag) => encodeBlockTagPair(block.id, tag.id)) || [],
+		[block.tags, block.id],
+	)
 
 	return !ready ? (
 		<Spin />

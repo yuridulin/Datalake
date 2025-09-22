@@ -1,5 +1,5 @@
 import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
-import { FlattenedNestedTagsType } from '@/app/components/tagTreeSelect/treeSelectShared'
+import { TagMappingType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import TagsValuesWriter from '@/app/components/values/TagsValuesWriter'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { Row } from 'antd'
@@ -10,10 +10,10 @@ const TagsWriter = observer(() => {
 	// хочу отобразить настройки из QueryTreeSelect (кол-во выбранных тегов) и TagsValuesWriter (время) и менять по необходимости
 	useDatalakeTitle('Запись', 'Теги {count} текущие/на {exact}')
 
-	const [tagMapping, setTagMapping] = useState({} as FlattenedNestedTagsType)
-	const [relations, setRelations] = useState<number[]>([])
+	const [tagMapping, setTagMapping] = useState({} as TagMappingType)
+	const [relations, setRelations] = useState<string[]>([])
 
-	const handleTagChange = useCallback((value: number[], currentTagMapping: FlattenedNestedTagsType) => {
+	const handleTagChange = useCallback((value: string[], currentTagMapping: TagMappingType) => {
 		setTagMapping(currentTagMapping)
 		setRelations(value)
 	}, [])

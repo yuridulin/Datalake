@@ -1,9 +1,17 @@
 import TagButton from '@/app/components/buttons/TagButton'
+import { TagMappingType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithInfo'
-import { serializeDate } from '@/functions/dateHandle'
-import { getWriterParams, URL_PARAMS } from '@/functions/urlParams'
-import { SourceType, TagQuality, TagType, ValueRecord, ValueWriteRequest } from '@/generated/data-contracts'
+import { deserializeDate, serializeDate } from '@/functions/dateHandle'
+import { URL_PARAMS } from '@/functions/urlParams'
+import {
+	SourceType,
+	TagQuality,
+	TagType,
+	ValueRecord,
+	ValueResult,
+	ValueWriteRequest,
+} from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { TagValue } from '@/types/tagValue'
@@ -17,14 +25,14 @@ import { useSearchParams } from 'react-router-dom'
 
 type ExactValue = TagValueWithInfo & {
 	value: ValueRecord
-	relationId: number
+	relationId: string
 	newValue?: TagValue
 	hasNewValue: boolean
 }
 
 interface TagsValuesWriterProps {
-	relations: number[] // Массив ID связей
-	tagMapping: Record<number, { id: number; localName: string; type: TagType }> // Маппинг отношений
+	relations: string[] // Массив ID связей
+	tagMapping: TagMappingType // Маппинг отношений
 	integrated?: boolean // Скрываем часть контролов и инициируем запросы сразу после изменения настроек
 }
 
@@ -36,7 +44,9 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 	const [initialLoadDone, setInitialLoadDone] = useState(false)
 
 	// Чтение даты из URL параметров
-	const [exactDate, setExactDate] = useState<Dayjs | null | undefined>(getWriterParams(searchParams).date)
+	const [exactDate, setExactDate] = useState<Dayjs | null | undefined>(
+		deserializeDate(searchParams.get(URL_PARAMS.WRITER_DATE)),
+	)
 
 	// Обновление URL при изменении даты
 	useEffect(() => {
@@ -82,8 +92,10 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 						const tagValue = tagValues?.[0]
 
 						return {
-							relationId: relId,
 							...tagInfo,
+							relationId: relId,
+							values: [],
+							result: ValueResult.Ok,
 							value: tagValue,
 							newValue: tagValue?.value,
 							hasNewValue: false,

@@ -12,10 +12,10 @@ const baseTitle = 'Просмотр'
 
 const TagsViewer = observer(() => {
 	const [tagMapping, setTagMapping] = useState({} as FlattenedNestedTagsType)
-	const [relations, setRelations] = useState<number[]>([])
+	const [relations, setRelations] = useState<string[]>([])
 	const [settings, setSettings] = useState<ViewerSettings | null>()
 
-	const handleTagChange = useCallback((value: number[], currentTagMapping: FlattenedNestedTagsType) => {
+	const handleTagChange = useCallback((value: string[], currentTagMapping: FlattenedNestedTagsType) => {
 		setTagMapping(currentTagMapping)
 		setRelations(value)
 	}, [])
@@ -32,7 +32,7 @@ const TagsViewer = observer(() => {
 		else if (settings.mode === 'old-young')
 			return `${baseTitle}: теги [${relations.length}] c ${printDate(settings.old)} по ${printDate(settings.old)} ${getTagResolutionName(settings.resolution, TagResolutionMode.Integrated)}`
 		else return baseTitle
-	}, [relations, settings])
+	}, [relations.length, settings])
 
 	useDatalakeTitle(title)
 

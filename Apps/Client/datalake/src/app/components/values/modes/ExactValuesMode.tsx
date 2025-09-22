@@ -13,7 +13,7 @@ import { forwardRef, useImperativeHandle } from 'react'
 import { useLocalStorage } from 'react-use'
 
 type ExactValuesRowType = {
-	relationId: number
+	relationId: string
 	id: number
 	guid: string
 	localName: string

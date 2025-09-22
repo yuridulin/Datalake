@@ -1,15 +1,13 @@
 import {
-	BLOCK_ID_SHIFT,
 	convertToTreeSelectNodes,
 	createFullTree,
-	decodeBlockTagPair,
 	encodeBlockTagPair,
 	filterTreeNode,
 	FlattenedNestedTagsType,
-	SELECTED_SEPARATOR,
+	TagMappingType,
 } from '@/app/components/tagTreeSelect/treeSelectShared'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { deserializeTags, URL_PARAMS } from '@/functions/urlParams'
+import { RELATION_TAG_SEPARATOR, SELECTED_SEPARATOR, URL_PARAMS } from '@/functions/urlParams'
 import { BlockSimpleInfo, BlockTreeInfo, TagSimpleInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { theme, TreeSelect } from 'antd'
@@ -18,7 +16,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 interface QueryTreeSelectProps {
-	onChange: (value: number[], tagMapping: FlattenedNestedTagsType) => void
+	onChange: (value: string[], tagMapping: TagMappingType) => void
 	manualOnly?: true
 }
 
@@ -35,7 +33,6 @@ const flattenNestedTags = (
 			const value = encodeBlockTagPair(block.id, tag.id)
 			mapping[value] = {
 				...tag,
-				parents: currentParents,
 				blockId: block.id,
 			}
 		})
@@ -49,7 +46,7 @@ const flattenNestedTags = (
 const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly = false }) => {
 	const store = useAppStore()
 	const [searchParams, setSearchParams] = useSearchParams()
-	const [checkedValues, setCheckedValues] = useState<number[]>([])
+	const [checkedValues, setCheckedValues] = useState<string[]>([])
 	const [treeData, setTreeData] = useState<DataNode[]>([])
 	const [tagMapping, setTagMapping] = useState<FlattenedNestedTagsType>({})
 	const [searchValue, setSearchValue] = useState<string>('')
@@ -58,7 +55,8 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 
 	const initialSelections = useMemo(() => {
 		const param = searchParams.get(URL_PARAMS.TAGS)
-		return deserializeTags(param)
+		if (!param) return []
+		return param.split('~')
 	}, [searchParams])
 
 	useEffect(() => {
@@ -81,51 +79,32 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 	}, [token, store.api, manualOnly])
 
 	useEffect(() => {
-		if (loading && treeData.length > 0) {
-			const valuesToSelect = initialSelections.map((sel) => {
-				if (sel.blockId < 0) {
-					return sel.blockId
-				}
-				return encodeBlockTagPair(sel.blockId, sel.tagId)
-			})
-			setCheckedValues(valuesToSelect)
+		if (!loading) return
+		if (!treeData.length) return
+		if (!initialSelections.length) return
 
-			if (valuesToSelect.length > 0) {
-				const initialMapping: FlattenedNestedTagsType = {}
-				valuesToSelect.forEach((value) => {
-					if (tagMapping[value]) {
-						initialMapping[value] = tagMapping[value]
-					}
-				})
-				onChange(valuesToSelect, initialMapping)
+		setCheckedValues(initialSelections)
+		const initialMapping: FlattenedNestedTagsType = {}
+		initialSelections.forEach((value) => {
+			if (tagMapping[value]) {
+				initialMapping[value] = tagMapping[value]
 			}
-		}
+		})
+		onChange(initialSelections, initialMapping)
 	}, [loading, treeData, initialSelections, onChange, tagMapping])
 
 	const handleTagChange = useCallback(
-		(values: number[]) => {
-			const tagValues = values.filter((val) => val > BLOCK_ID_SHIFT)
-			if (!isArraysDifferent(checkedValues, tagValues)) return
+		(values: string[]) => {
+			if (!isArraysDifferent(checkedValues, values)) return
 
-			setCheckedValues(tagValues)
+			const realValues = values.filter((x) => !x.includes(`${RELATION_TAG_SEPARATOR}0`))
 
-			const selections: string[] = []
-			tagValues.forEach((value) => {
-				if (value < 0) {
-					// Для виртуальных тегов
-					const { tagId } = decodeBlockTagPair(value)
-					selections.push(`${tagId}|${value}`)
-				} else {
-					// Для обычных тегов
-					const { blockId, tagId } = decodeBlockTagPair(value)
-					selections.push(`${tagId}|${blockId}`)
-				}
-			})
+			setCheckedValues(realValues)
+			onChange(realValues, tagMapping)
 
-			onChange(tagValues, tagMapping)
 			setSearchParams(
 				(prev) => {
-					prev.set(URL_PARAMS.TAGS, selections.join(SELECTED_SEPARATOR))
+					prev.set(URL_PARAMS.TAGS, realValues.join(SELECTED_SEPARATOR))
 					return prev
 				},
 				{ replace: true },

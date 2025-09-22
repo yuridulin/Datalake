@@ -15,7 +15,7 @@ import { useLocalStorage } from 'react-use'
 
 type TimedValuesModeProps = {
 	relations: {
-		relationId: number
+		relationId: string
 		value: TagValueWithInfo
 	}[]
 	locf: boolean // признак, что нужно выполнять протягивание
