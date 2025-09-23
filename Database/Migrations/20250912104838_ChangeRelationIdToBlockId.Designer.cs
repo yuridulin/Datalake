@@ -3,6 +3,7 @@ using System;
 using Datalake.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Datalake.Database.Migrations
 {
     [DbContext(typeof(DatalakeEfContext))]
-    partial class DatalakeEfContextModelSnapshot : ModelSnapshot
+    [Migration("20250912104838_ChangeRelationIdToBlockId")]
+    partial class ChangeRelationIdToBlockId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -359,7 +362,11 @@ namespace Datalake.Database.Migrations
 
                     b.HasIndex("SourceId");
 
+                    b.HasIndex("SourceTagBlockId");
+
                     b.HasIndex("SourceTagId");
+
+                    b.HasIndex("ThresholdSourceTagBlockId");
 
                     b.HasIndex("ThresholdSourceTagId");
 
@@ -413,6 +420,8 @@ namespace Datalake.Database.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("InputBlockId");
 
                     b.HasIndex("InputTagId");
 
@@ -721,9 +730,19 @@ namespace Datalake.Database.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired();
 
+                    b.HasOne("Datalake.Database.Tables.Block", "SourceTagBlock")
+                        .WithMany()
+                        .HasForeignKey("SourceTagBlockId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Datalake.Database.Tables.Tag", "SourceTag")
                         .WithMany()
                         .HasForeignKey("SourceTagId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Datalake.Database.Tables.Block", "ThresholdSourceTagBlock")
+                        .WithMany()
+                        .HasForeignKey("ThresholdSourceTagBlockId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Datalake.Database.Tables.Tag", "ThresholdSourceTag")
@@ -735,11 +754,20 @@ namespace Datalake.Database.Migrations
 
                     b.Navigation("SourceTag");
 
+                    b.Navigation("SourceTagBlock");
+
                     b.Navigation("ThresholdSourceTag");
+
+                    b.Navigation("ThresholdSourceTagBlock");
                 });
 
             modelBuilder.Entity("Datalake.Database.Tables.TagInput", b =>
                 {
+                    b.HasOne("Datalake.Database.Tables.Tag", "InputBlock")
+                        .WithMany()
+                        .HasForeignKey("InputBlockId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Datalake.Database.Tables.Tag", "InputTag")
                         .WithMany()
                         .HasForeignKey("InputTagId")
@@ -750,6 +778,8 @@ namespace Datalake.Database.Migrations
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("InputBlock");
 
                     b.Navigation("InputTag");
 

@@ -1,6 +1,7 @@
 import PageHeader from '@/app/components/PageHeader'
 import compareValues from '@/functions/compareValues'
 import { BlockTreeInfo } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -28,6 +29,8 @@ function transformBlockTreeInfo(blocks: BlockTreeInfo[] | null | undefined): Tre
 }
 
 const BlocksMover = observer(() => {
+	useDatalakeTitle('Блоки', 'Перемещение')
+
 	const store = useAppStore()
 	const [blocks, setBlocks] = useState([] as TreeDataNode[])
 	const [loading, setLoading] = useState(false)

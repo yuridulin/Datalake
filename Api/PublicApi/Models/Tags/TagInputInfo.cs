@@ -18,7 +18,7 @@ public class TagInputInfo : TagSimpleInfo, IProtectedEntity
 	/// <summary>
 	/// Идентификатор связи
 	/// </summary>
-	public int? RelationId { get; set; }
+	public int? BlockId { get; set; }
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;

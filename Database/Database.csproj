@@ -58,7 +58,7 @@
     <PackageReference Include="linq2db.PostgreSQL" Version="5.4.1" />
     <PackageReference Include="NCalcSync" Version="5.6.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-    <PackageReference Include="Sentry" Version="5.14.1" />
+    <PackageReference Include="Sentry" Version="5.15.1" />
   </ItemGroup>
 
   <ItemGroup>

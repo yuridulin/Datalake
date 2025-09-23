@@ -3,9 +3,7 @@ import HelpAggregationType from '@/app/components/help-tootip/help-pages/HelpAgg
 import HelpNCalc from '@/app/components/help-tootip/help-pages/HelpNCalc'
 import TagIcon from '@/app/components/icons/TagIcon'
 import PageHeader from '@/app/components/PageHeader'
-import TagQualityEl from '@/app/components/TagQualityEl'
 import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
-import TagCompactValue from '@/app/components/values/TagCompactValue'
 import routes from '@/app/router/routes'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import {
@@ -15,20 +13,16 @@ import {
 	TagAggregation,
 	TagCalculation,
 	TagInfo,
-	TagQuality,
 	TagSimpleInfo,
 	TagType,
 	TagUpdateInputRequest,
 	TagUpdateRequest,
-	ValueRecord,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
-import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
-import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Space, Spin } from 'antd'
+import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useInterval } from 'react-use'
 
 type SourceOption = {
 	value: number
@@ -62,32 +56,6 @@ const TagForm = () => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 
-	// #region Значение
-	const [value, setValue] = useState<ValueRecord | null>(null)
-
-	const getValue = useCallback(() => {
-		if (!id) return
-		store.api
-			.valuesGet([
-				{
-					requestKey: CLIENT_REQUESTKEY,
-					tagsId: [Number(id)],
-				},
-			])
-			.then((res) => {
-				const next = res.data[0]?.tags?.[0]?.values?.[0] ?? null
-				setValue((prev) => (prev && next && prev.value == next.value && prev.quality == next.quality ? prev : next))
-			})
-			.catch(() => setValue(null))
-	}, [store.api, id])
-
-	useEffect(() => {
-		getValue()
-	}, [id, getValue])
-
-	useInterval(() => getValue(), 1000)
-	// #endregion
-
 	// инфо
 	const [tag, setTag] = useState({} as TagInfo)
 	const [sources, setSources] = useState([] as SourceOption[])
@@ -101,6 +69,7 @@ const TagForm = () => {
 	} as UpdateRequest)
 	const [items, setItems] = useState([] as { value: string }[])
 	const [strategy, setStrategy] = useState(SourceStrategy.Manual)
+	useEffect(() => console.log(request), [request])
 
 	// получение инфо
 	const loadTagData = () => {
@@ -124,17 +93,17 @@ const TagForm = () => {
 				setRequest({
 					...info,
 					sourceTagId: info.sourceTag?.id,
-					sourceTagRelationId: info.sourceTag?.relationId,
+					sourceTagBlockId: info.sourceTag?.blockId,
 					thresholdSourceTagId: info.thresholdSourceTag?.id,
-					thresholdSourceTagRelationId: info.thresholdSourceTag?.relationId,
+					thresholdSourceTagBlockId: info.thresholdSourceTag?.blockId,
 					formulaInputs: info.formulaInputs.map(
 						(x, index) =>
 							({
 								key: index,
 								tagId: x.id,
-								tagRelationId: x.relationId,
+								blockId: x.blockId,
 								variableName: x.variableName,
-							}) as UpdateInputRequest,
+							}) as unknown as UpdateInputRequest,
 					),
 				})
 				setStrategy(
@@ -216,9 +185,9 @@ const TagForm = () => {
 					{
 						key: availableFakeId,
 						tagId: 0,
-						tagRelationId: 0,
+						blockId: null,
 						variableName: '',
-					} as UpdateInputRequest,
+					} as unknown as UpdateInputRequest,
 				],
 			}
 		})
@@ -254,7 +223,7 @@ const TagForm = () => {
 			const seen = new Map<string, number[]>()
 			request.formulaInputs.forEach((x, idx) => {
 				if ((x.tagId ?? 0) > 0) {
-					const key = `${x.tagId}:${x.tagRelationId ?? -1}`
+					const key = `${x.tagId}:${x.blockId ?? -1}`
 					const arr = seen.get(key) ?? []
 					arr.push(idx)
 					seen.set(key, arr)
@@ -514,16 +483,6 @@ const TagForm = () => {
 				</Radio.Group>
 			</FormRow>
 
-			<FormRow title='Значение'>
-				<Space>
-					{value ? (
-						<TagCompactValue value={value.value} type={tag.type} quality={value.quality} />
-					) : (
-						<TagQualityEl quality={TagQuality.BadNoConnect} />
-					)}
-				</Space>
-			</FormRow>
-
 			{/* Настройки расчета */}
 			<div style={{ display: strategy === SourceStrategy.Calculated ? 'block' : 'none' }}>
 				<FormRow title={'Тип расчета'}>
@@ -590,8 +549,8 @@ const TagForm = () => {
 										<TagTreeSelect
 											blocks={blocks}
 											tags={tags}
-											value={[input.tagId, input.tagRelationId]}
-											onChange={([inputTagId, inputTagRelationId]) =>
+											value={[input.blockId, input.tagId]}
+											onChange={([inputBlockId, inputTagId]) =>
 												setRequest((prev) => ({
 													...prev,
 													formulaInputs: prev.formulaInputs.map((x) =>
@@ -600,7 +559,7 @@ const TagForm = () => {
 															: {
 																	...x,
 																	tagId: inputTagId,
-																	tagRelationId: inputTagRelationId,
+																	blockId: inputBlockId,
 																},
 													),
 												}))
@@ -619,11 +578,11 @@ const TagForm = () => {
 					<>
 						<FormRow title='Тег-источник'>
 							<TagTreeSelect
-								value={[request.thresholdSourceTagId ?? 0, request.thresholdSourceTagRelationId]}
+								value={[request.thresholdSourceTagBlockId, request.thresholdSourceTagId ?? 0]}
 								blocks={blocks}
 								tags={tags}
-								onChange={([thresholdSourceTagId, thresholdSourceTagRelationId]) => {
-									setRequest((prev) => ({ ...prev, thresholdSourceTagId, thresholdSourceTagRelationId }))
+								onChange={([thresholdSourceTagBlockId, thresholdSourceTagId]) => {
+									setRequest((prev) => ({ ...prev, thresholdSourceTagId, thresholdSourceTagBlockId }))
 								}}
 							/>
 						</FormRow>
@@ -737,11 +696,11 @@ const TagForm = () => {
 			>
 				<FormRow title='Тег-источник'>
 					<TagTreeSelect
-						value={[request.sourceTagId ?? 0, request.sourceTagRelationId]}
+						value={[request.sourceTagBlockId, request.sourceTagId ?? 0]}
 						blocks={blocks}
 						tags={tags}
-						onChange={([sourceTagId, sourceTagRelationId]) => {
-							setRequest((prev) => ({ ...prev, sourceTagId, sourceTagRelationId }))
+						onChange={([sourceTagBlockId, sourceTagId]) => {
+							setRequest((prev) => ({ ...prev, sourceTagId, sourceTagBlockId }))
 						}}
 					/>
 				</FormRow>

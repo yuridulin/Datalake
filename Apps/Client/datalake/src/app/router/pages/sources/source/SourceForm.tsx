@@ -4,6 +4,7 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
 import { SourceInfo, SourceType, SourceUpdateRequest } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Input, Popconfirm, Radio } from 'antd'
 import { useEffect, useState } from 'react'
@@ -15,6 +16,7 @@ const AvailableSourceTypes = [SourceType.NotSet, SourceType.Inopc, SourceType.Da
 const SourceForm = () => {
 	const store = useAppStore()
 	const { id } = useParams()
+	useDatalakeTitle('Источники', '#' + id)
 	const navigate = useNavigate()
 
 	const [request, setRequest] = useState<SourceUpdateRequest>({

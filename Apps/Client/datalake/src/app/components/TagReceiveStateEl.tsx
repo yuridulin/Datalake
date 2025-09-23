@@ -1,7 +1,6 @@
+import { serializeDate } from '@/functions/dateHandle'
 import { TagReceiveState } from '@/generated/data-contracts'
-import { timeMask } from '@/store/appStore'
 import { theme } from 'antd'
-import dayjs from 'dayjs'
 
 interface TagReceiveStateProps {
 	receiveState?: TagReceiveState
@@ -12,10 +11,7 @@ const TagReceiveStateEl = ({ receiveState }: TagReceiveStateProps) => {
 
 	if (receiveState?.message)
 		return (
-			<span
-				style={{ color: token.colorError }}
-				title={`Последнее вычисление: ${dayjs(receiveState.date).format(timeMask)}`}
-			>
+			<span style={{ color: token.colorError }} title={`Последнее вычисление: ${serializeDate(receiveState.date)}`}>
 				{receiveState.message}
 			</span>
 		)

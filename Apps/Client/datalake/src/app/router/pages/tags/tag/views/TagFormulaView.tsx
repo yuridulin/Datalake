@@ -1,13 +1,13 @@
 import TagButton from '@/app/components/buttons/TagButton'
 import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
+import PollingLoader from '@/app/components/loaders/PollingLoader'
 import TagReceiveStateEl from '@/app/components/TagReceiveStateEl'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagInputInfo, TagReceiveState, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Table } from 'antd'
-import { useCallback, useEffect, useState } from 'react'
-import { useInterval } from 'react-use'
+import { useCallback, useState } from 'react'
 
 interface TagFormulaViewProps {
 	id: number
@@ -84,57 +84,59 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 
 	const getValues = useCallback(() => {
 		if (!inputs.length) return
-		store.api.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: inputs.map((x) => x.id) }]).then((res) => {
-			const newValues = res.data[0].tags.reduce((acc, next) => {
-				acc[next.id] = next.values[0]
-				return acc
-			}, {} as TagFormulaValues)
-			setValues(newValues)
-		})
-		store.api
-			.statesGetTagsReceive([id])
-			.then((res) => setState(res.data[id]))
-			.catch(() => setState(undefined))
+		return Promise.all([
+			store.api.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: inputs.map((x) => x.id) }]).then((res) => {
+				const newValues = res.data[0].tags.reduce((acc, next) => {
+					acc[next.id] = next.values[0]
+					return acc
+				}, {} as TagFormulaValues)
+				setValues(newValues)
+			}),
+			store.api
+				.statesGetTagsReceive([id])
+				.then((res) => setState(res.data[id]))
+				.catch(() => setState(undefined)),
+		])
 	}, [store.api, id, inputs])
-
-	useEffect(getValues, [getValues])
-	useInterval(getValues, 5000)
 
 	return formula ? (
 		<>
 			<InfoTable items={info} />
 			<br />
 			{inputs.length ? (
-				<Table
-					size='small'
-					bordered
-					indentSize={1}
-					pagination={false}
-					dataSource={inputs}
-					rowKey={'relationId'}
-					columns={[
-						{
-							key: 'name',
-							dataIndex: 'variableName',
-							title: 'Обозначение',
-							width: '10em',
-						},
-						{
-							key: 'value',
-							title: 'Значение',
-							width: '10em',
-							render: (_, x) => {
-								const value = values[x.id]
-								return value ? <TagCompactValue type={x.type} quality={value.quality} value={value.value} /> : <>?</>
+				<>
+					<PollingLoader pollingFunction={getValues} interval={5000} />
+					<Table
+						size='small'
+						bordered
+						indentSize={1}
+						pagination={false}
+						dataSource={inputs}
+						rowKey={'relationId'}
+						columns={[
+							{
+								key: 'name',
+								dataIndex: 'variableName',
+								title: 'Обозначение',
+								width: '10em',
 							},
-						},
-						{
-							key: 'link',
-							title: 'Используемый тег',
-							render: (_, x) => <TagButton tag={x} />,
-						},
-					]}
-				/>
+							{
+								key: 'value',
+								title: 'Значение',
+								width: '10em',
+								render: (_, x) => {
+									const value = values[x.id]
+									return value ? <TagCompactValue type={x.type} quality={value.quality} value={value.value} /> : <>?</>
+								},
+							},
+							{
+								key: 'link',
+								title: 'Используемый тег',
+								render: (_, x) => <TagButton tag={x} />,
+							},
+						]}
+					/>
+				</>
 			) : (
 				<>Входные параметры не заданы</>
 			)}

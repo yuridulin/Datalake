@@ -11,12 +11,6 @@ namespace Datalake.PublicApi.Models.Blocks;
 public class BlockNestedTagInfo : TagSimpleInfo, INestedItem
 {
 	/// <summary>
-	/// Идентификатор связи
-	/// </summary>
-	[Required]
-	public required int RelationId { get; set; }
-
-	/// <summary>
 	/// Тип поля блока для этого тега
 	/// </summary>
 	[Required]

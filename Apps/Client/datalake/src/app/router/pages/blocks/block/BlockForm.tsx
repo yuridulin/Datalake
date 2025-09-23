@@ -11,6 +11,7 @@ import {
 	TagSimpleInfo,
 	TagType,
 } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { App, Button, Dropdown, Form, Input, Popconfirm, Select, Spin } from 'antd'
@@ -27,6 +28,8 @@ const BlockForm = observer(() => {
 	const store = useAppStore()
 	const app = App.useApp()
 	const { id } = useParams()
+	useDatalakeTitle('Блоки', '#' + id, 'Изменение')
+
 	const navigate = useNavigate()
 	const [form] = Form.useForm<BlockUpdateRequest>()
 

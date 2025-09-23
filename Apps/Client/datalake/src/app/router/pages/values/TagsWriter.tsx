@@ -1,15 +1,19 @@
 import QueryTreeSelect from '@/app/components/tagTreeSelect/QueryTreeSelect'
+import { TagMappingType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import TagsValuesWriter from '@/app/components/values/TagsValuesWriter'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { Row } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useState } from 'react'
-import { FlattenedNestedTagsType } from './types/flattenedNestedTags'
 
 const TagsWriter = observer(() => {
-	const [tagMapping, setTagMapping] = useState({} as FlattenedNestedTagsType)
-	const [relations, setRelations] = useState<number[]>([])
+	// хочу отобразить настройки из QueryTreeSelect (кол-во выбранных тегов) и TagsValuesWriter (время) и менять по необходимости
+	useDatalakeTitle('Запись', 'Теги {count} текущие/на {exact}')
 
-	const handleTagChange = useCallback((value: number[], currentTagMapping: FlattenedNestedTagsType) => {
+	const [tagMapping, setTagMapping] = useState({} as TagMappingType)
+	const [relations, setRelations] = useState<string[]>([])
+
+	const handleTagChange = useCallback((value: string[], currentTagMapping: TagMappingType) => {
 		setTagMapping(currentTagMapping)
 		setRelations(value)
 	}, [])

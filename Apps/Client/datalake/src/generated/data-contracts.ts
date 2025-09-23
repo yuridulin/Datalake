@@ -582,11 +582,6 @@ export type BlockWithTagsInfo = BlockSimpleInfo & {
 
 /** Информация о закреплённом теге */
 export type BlockNestedTagInfo = TagSimpleInfo & {
-  /**
-   * Идентификатор связи
-   * @format int32
-   */
-  relationId: number;
   /** Тип поля блока для этого тега */
   relationType: BlockTagRelation;
   /**
@@ -1037,10 +1032,10 @@ export type TagInfo = TagSimpleInfo & {
 /** Информации о теге, выступающем в качестве входящей переменной при составлении формулы */
 export type TagAsInputInfo = TagSimpleInfo & {
   /**
-   * Идентификатор связи, по которой тег был выбран
+   * Идентификатор блока, в котором тег был выбран. Если не укзан, то тег выбран из не распределенных
    * @format int32
    */
-  relationId?: number | null;
+  blockId?: number | null;
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
@@ -1056,7 +1051,7 @@ export type TagInputInfo = TagSimpleInfo & {
    * Идентификатор связи
    * @format int32
    */
-  relationId?: number | null;
+  blockId?: number | null;
   /** Правило доступа */
   accessRule?: AccessRuleInfo;
 };
@@ -1157,7 +1152,7 @@ export interface TagUpdateRequest {
    * Идентификатор связи, по которой выбран тег-источник данных для выбора из пороговой таблицы
    * @format int32
    */
-  thresholdSourceTagRelationId?: number | null;
+  thresholdSourceTagBlockId?: number | null;
   /** Входные переменные для формулы, по которой рассчитывается значение */
   formulaInputs: TagUpdateInputRequest[];
   /** Тип агрегации */
@@ -1173,7 +1168,7 @@ export interface TagUpdateRequest {
    * Идентификатор связи, по которой выбран тег-источник данных для расчета агрегированного значения
    * @format int32
    */
-  sourceTagRelationId?: number | null;
+  sourceTagBlockId?: number | null;
 }
 
 /** Необходимая информация для привязки тега в качестве входного для  */
@@ -1192,7 +1187,7 @@ export interface TagUpdateInputRequest {
    * Идентификатор связи, по которой выбран закрепленный тег
    * @format int32
    */
-  tagRelationId: number;
+  blockId: number;
 }
 
 /** Информация о группе пользователей */

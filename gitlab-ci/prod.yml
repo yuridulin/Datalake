@@ -37,7 +37,7 @@ deploy-server-prod:
   only:
     - /^prod\.\d+(\.\d+){0,2}$/
 
-clear-test:
+clear-prod:
   stage: clear
   tags:
     - push-build

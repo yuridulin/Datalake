@@ -8,18 +8,18 @@ import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
 import TagResolutionEl from '@/app/components/TagResolutionEl'
+import { encodeBlockTagPair, TagMappingType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import TagTypeEl from '@/app/components/TagTypeEl'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
 import {
 	AccessType,
 	AggregationPeriod,
+	BlockTagRelation,
 	SourceType,
 	TagAggregation,
 	TagCalculation,
 	TagFullInfo,
-	TagResolution,
-	TagType,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
@@ -85,18 +85,18 @@ const TagView = observer(() => {
 	info['Тип данных'] = <TagTypeEl tagType={tag.type} />
 
 	const { tagMapping, relations } = useMemo(() => {
-		const mapping: Record<number, { id: number; localName: string; type: TagType; resolution: TagResolution }> = {}
-		const rels: number[] = []
+		const mapping: TagMappingType = {}
+		const rels: string[] = []
 
 		// Основной тег
-		const mainRelId = tag.id * -1 // Виртуальный ID для связи
-		mapping[mainRelId] = {
-			id: tag.id,
+		const value = encodeBlockTagPair(0, tag.id) // Виртуальный ID для связи
+		mapping[value] = {
+			...tag,
+			blockId: 0,
 			localName: tag.name,
-			type: tag.type,
-			resolution: tag.resolution,
+			relationType: BlockTagRelation.Static,
 		}
-		rels.push(mainRelId)
+		rels.push(value)
 
 		return { tagMapping: mapping, relations: rels }
 	}, [tag])

@@ -8,7 +8,7 @@ interface PollingLoaderProps {
 	statusDuration?: number
 }
 
-const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval, statusDuration = 2000 }) => {
+const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval, statusDuration = 400 }) => {
 	const { token } = theme.useToken()
 	const [status, setStatus] = useState<'waiting' | 'loading' | 'success' | 'error' | 'default'>('default')
 	const [progress, setProgress] = useState(0)
@@ -17,6 +17,7 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 	const startTimeRef = useRef<dayjs.Dayjs>(dayjs())
 	const lastUpdateRef = useRef<dayjs.Dayjs>(dayjs())
 	const isInitialMount = useRef(true)
+	const isMountedRef = useRef(true) // Добавляем флаг монтирования
 
 	// Добавляем стили для анимации бегунка
 	useEffect(() => {
@@ -47,21 +48,25 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 	}, [token.colorWarning])
 
 	const executePoll = useCallback(async () => {
+		if (!isMountedRef.current) return // Прерываем если компонент размонтирован
+
 		setStatus('loading')
 
 		try {
 			await pollingFunction()
+			if (!isMountedRef.current) return // Проверяем после асинхронной операции
+
 			setStatus('success')
 
-			// Планируем возврат к ожиданию после успеха
 			pollingRef.current = window.setTimeout(() => {
+				if (!isMountedRef.current) return
 				setStatus('waiting')
 				setProgress(0)
 				startTimeRef.current = dayjs()
 				lastUpdateRef.current = dayjs()
 
-				// Запускаем анимацию ожидания
 				const animateWaiting = () => {
+					if (!isMountedRef.current) return
 					const now = dayjs()
 					const elapsed = now.diff(startTimeRef.current)
 					const newProgress = Math.min((elapsed / interval) * 100, 100)
@@ -79,17 +84,18 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 				animationRef.current = requestAnimationFrame(animateWaiting)
 			}, statusDuration)
 		} catch {
+			if (!isMountedRef.current) return
 			setStatus('error')
 
-			// Планируем возврат к ожиданию после ошибки
 			pollingRef.current = window.setTimeout(() => {
+				if (!isMountedRef.current) return
 				setStatus('waiting')
 				setProgress(0)
 				startTimeRef.current = dayjs()
 				lastUpdateRef.current = dayjs()
 
-				// Запускаем анимацию ожидания
 				const animateWaiting = () => {
+					if (!isMountedRef.current) return
 					const now = dayjs()
 					const elapsed = now.diff(startTimeRef.current)
 					const newProgress = Math.min((elapsed / interval) * 100, 100)
@@ -110,20 +116,21 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 	}, [pollingFunction, interval, statusDuration])
 
 	useEffect(() => {
-		// Первый вызов pollingFunction сразу после монтирования
+		isMountedRef.current = true // Устанавливаем флаг при монтировании
+
 		if (isInitialMount.current) {
 			isInitialMount.current = false
 			executePoll()
 			return
 		}
 
-		// Запускаем цикл опроса
 		setStatus('waiting')
 		setProgress(0)
 		startTimeRef.current = dayjs()
 		lastUpdateRef.current = dayjs()
 
 		const animateWaiting = () => {
+			if (!isMountedRef.current) return // Прерываем если компонент размонтирован
 			const now = dayjs()
 			const elapsed = now.diff(startTimeRef.current)
 			const newProgress = Math.min((elapsed / interval) * 100, 100)
@@ -140,8 +147,8 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 
 		animationRef.current = requestAnimationFrame(animateWaiting)
 
-		// Очистка при размонтировании компонента
 		return () => {
+			isMountedRef.current = false // Сбрасываем флаг при размонтировании
 			if (pollingRef.current) {
 				clearTimeout(pollingRef.current)
 			}
@@ -161,7 +168,7 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 				overflow: 'hidden',
 			}}
 		>
-			{/* Базовая полоса ожидания (синяя) */}
+			{/* Остальная разметка без изменений */}
 			<div
 				style={{
 					position: 'absolute',
@@ -176,7 +183,6 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 				}}
 			/>
 
-			{/* Полоса загрузки (желтая) */}
 			{status === 'loading' && (
 				<div
 					style={{
@@ -192,7 +198,6 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 				/>
 			)}
 
-			{/* Полоса успеха (зеленая) */}
 			{status === 'success' && (
 				<div
 					style={{
@@ -209,7 +214,6 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 				/>
 			)}
 
-			{/* Полоса ошибки (красная) */}
 			{status === 'error' && (
 				<div
 					style={{
@@ -226,7 +230,6 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 				/>
 			)}
 
-			{/* Бегунок для состояния загрузки */}
 			{status === 'loading' && <div className='loading-runner' />}
 		</div>
 	)

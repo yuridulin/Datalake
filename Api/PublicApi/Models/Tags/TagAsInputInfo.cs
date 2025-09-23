@@ -9,9 +9,9 @@ namespace Datalake.PublicApi.Models.Tags;
 public class TagAsInputInfo : TagSimpleInfo, IProtectedEntity
 {
 	/// <summary>
-	/// Идентификатор связи, по которой тег был выбран
+	/// Идентификатор блока, в котором тег был выбран. Если не укзан, то тег выбран из не распределенных
 	/// </summary>
-	public int? RelationId { get; set; }
+	public int? BlockId { get; set; }
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;

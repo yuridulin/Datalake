@@ -348,9 +348,9 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 				Formula = updateRequest.Formula,
 				Thresholds = updateRequest.Thresholds?.ToList(),
 				ThresholdSourceTagId = updateRequest.ThresholdSourceTagId,
-				ThresholdSourceTagRelationId = updateRequest.ThresholdSourceTagRelationId,
+				ThresholdSourceTagBlockId = updateRequest.ThresholdSourceTagBlockId,
 				SourceTagId = updateRequest.SourceTagId,
-				SourceTagRelationId = updateRequest.SourceTagRelationId,
+				SourceTagBlockId = updateRequest.SourceTagBlockId,
 				Aggregation = updateRequest.Aggregation,
 				AggregationPeriod = updateRequest.AggregationPeriod,
 			};
@@ -397,9 +397,9 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 				.Select(x => new TagInput
 				{
 					TagId = tag.Id,
-					InputTagId = x.TagId,
 					VariableName = x.VariableName,
-					InputTagRelationId = x.TagRelationId,
+					InputTagId = x.TagId,
+					InputBlockId = x.BlockId,
 				})
 				.ToArray();
 
@@ -457,9 +457,9 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 					.Set(x => x.Formula, updateRequest.Formula)
 					.Set(x => x.Thresholds, updateRequest.Thresholds)
 					.Set(x => x.ThresholdSourceTagId, updateRequest.ThresholdSourceTagId)
-					.Set(x => x.ThresholdSourceTagRelationId, updateRequest.ThresholdSourceTagRelationId)
+					.Set(x => x.ThresholdSourceTagBlockId, updateRequest.ThresholdSourceTagBlockId)
 					.Set(x => x.SourceTagId, updateRequest.SourceTagId)
-					.Set(x => x.SourceTagRelationId, updateRequest.SourceTagRelationId)
+					.Set(x => x.SourceTagBlockId, updateRequest.SourceTagBlockId)
 					.Set(x => x.Aggregation, updateRequest.Aggregation)
 					.Set(x => x.AggregationPeriod, updateRequest.AggregationPeriod)
 					.UpdateAsync();
@@ -568,10 +568,10 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 		// Формируем параметризованный SQL запрос
 		var insertSql = $"""
 			INSERT INTO "{TagInput.TableName}"
-			("TagId", "InputTagId", "InputTagRelationId", "VariableName")
+			("{nameof(TagInput.TagId)}", "{nameof(TagInput.InputTagId)}", "{nameof(TagInput.InputBlockId)}", "{nameof(TagInput.VariableName)}")
 			VALUES {string.Join(", ", newInputs.Select((_, i) =>
 				$"(:t{i}, :it{i}, :ir{i}, :v{i})"))}
-			RETURNING "Id";
+			RETURNING "{nameof(TagInput.Id)}";
 		""";
 
 		// Создаем параметры
@@ -581,7 +581,7 @@ public class TagsMemoryRepository(DatalakeDataStore dataStore)
 			var item = newInputs[i];
 			parameters.Add(new DataParameter($"t{i}", item.TagId));
 			parameters.Add(new DataParameter($"it{i}", item.InputTagId));
-			parameters.Add(new DataParameter($"ir{i}", item.InputTagRelationId));
+			parameters.Add(new DataParameter($"ir{i}", item.InputBlockId));
 			parameters.Add(new DataParameter($"v{i}", item.VariableName));
 		}
 

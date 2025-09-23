@@ -96,7 +96,7 @@ public class TagUpdateRequest : ICalculatedTag
 	/// <summary>
 	/// Идентификатор связи, по которой выбран тег-источник данных для выбора из пороговой таблицы
 	/// </summary>
-	public int? ThresholdSourceTagRelationId { get; set; }
+	public int? ThresholdSourceTagBlockId { get; set; }
 
 	/// <summary>
 	/// Входные переменные для формулы, по которой рассчитывается значение
@@ -122,5 +122,5 @@ public class TagUpdateRequest : ICalculatedTag
 	/// <summary>
 	/// Идентификатор связи, по которой выбран тег-источник данных для расчета агрегированного значения
 	/// </summary>
-	public int? SourceTagRelationId { get; set; }
+	public int? SourceTagBlockId { get; set; }
 }

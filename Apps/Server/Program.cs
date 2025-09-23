@@ -1,5 +1,6 @@
 using Datalake.Database;
 using Datalake.Database.Constants;
+using Datalake.Database.Converters;
 using Datalake.Database.Extensions;
 using Datalake.Database.Functions;
 using Datalake.Database.Initialization;
@@ -88,12 +89,19 @@ public class Program
 		{
 			options.SerializerOptions.NumberHandling = Json.JsonSerializerOptions.NumberHandling;
 			options.SerializerOptions.PropertyNamingPolicy = Json.JsonSerializerOptions.PropertyNamingPolicy;
+			options.SerializerOptions.Converters.Add(new NanToNullFloatConverter());
 		});
 
 		// MVC
 		builder.Services
 			.AddControllers()
-			.AddControllersAsServices();
+			.AddControllersAsServices()
+			.AddJsonOptions(options =>
+			{
+				options.JsonSerializerOptions.NumberHandling = Json.JsonSerializerOptions.NumberHandling;
+				options.JsonSerializerOptions.PropertyNamingPolicy = Json.JsonSerializerOptions.PropertyNamingPolicy;
+				options.JsonSerializerOptions.Converters.Add(new NanToNullFloatConverter());
+			});
 
 		// Swagger
 		builder.Services
@@ -251,7 +259,18 @@ public class Program
 			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
 			.UseSentryTracing()
 			.UseDefaultFiles()
-			.UseStaticFiles()
+			.UseStaticFiles(new StaticFileOptions
+			{
+				OnPrepareResponse = (ctx) =>
+				{
+					if (ctx.File.Name == "index.html")
+					{
+						ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+						ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+						ctx.Context.Response.Headers.Append("Expires", "0");
+					}
+				}
+			})
 			.UseSerilogRequestLogging(options =>
 			{
 				// шаблон одного сообщения на запрос
@@ -304,7 +323,16 @@ public class Program
 			.UseMiddleware<SentryRequestBodyMiddleware>()
 			.EnsureCorsMiddlewareOnError();
 
-		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
+		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html")/*.Add(builder =>
+		{
+			builder.RequestDelegate = (httpContext) =>
+			{
+				httpContext.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+				httpContext.Response.Headers.Append("Pragma", "no-cache");
+				httpContext.Response.Headers.Append("Expires", "0");
+				return Task.CompletedTask;
+			};
+		})*/;
 		app.MapControllerRoute(
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");

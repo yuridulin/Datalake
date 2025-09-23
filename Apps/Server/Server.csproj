@@ -45,15 +45,15 @@
 	<ItemGroup>
 		<PackageReference Include="linq2db.AspNet" Version="5.4.1" />
 		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.2" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.8" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.8">
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.9" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
 		<PackageReference Include="Npgsql.DependencyInjection" Version="9.0.3" />
-		<PackageReference Include="NSwag.AspNetCore" Version="14.5.0" />
-		<PackageReference Include="Sentry.AspNetCore" Version="5.14.1" />
+		<PackageReference Include="NSwag.AspNetCore" Version="14.6.0" />
+		<PackageReference Include="Sentry.AspNetCore" Version="5.15.1" />
 		<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
 	</ItemGroup>
 

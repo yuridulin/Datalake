@@ -1,6 +1,8 @@
 import {
 	convertToTreeSelectNodes,
 	createFullTree,
+	decodeBlockTagPair,
+	encodeBlockTagPair,
 	filterTreeNode,
 } from '@/app/components/tagTreeSelect/treeSelectShared'
 import { BlockTreeInfo, TagSimpleInfo } from '@/generated/data-contracts'
@@ -11,12 +13,11 @@ import React, { useMemo } from 'react'
 interface TagTreeSelectProps {
 	blocks?: BlockTreeInfo[]
 	tags?: TagSimpleInfo[]
-	value?: [number, number | null | undefined]
-	onChange?: (value: [tagId: number, relationId: number]) => void
+	value?: [number | null | undefined, number]
+	onChange?: (value: [blockId: number, tagId: number]) => void
 }
 
-// Поиск узла по relationId
-function findNodeByValue(nodes: DefaultOptionType[], value: number): DefaultOptionType | null {
+function findNodeByValue(nodes: DefaultOptionType[], value: string): DefaultOptionType | null {
 	for (const node of nodes) {
 		if (node.value === value) return node
 		if (node.children) {
@@ -27,14 +28,13 @@ function findNodeByValue(nodes: DefaultOptionType[], value: number): DefaultOpti
 	return null
 }
 
-// Поиск тега по tagId
 function findFirstNodeByTagId(nodes: DefaultOptionType[], tagId: number): DefaultOptionType | null {
 	for (const node of nodes) {
 		if (node.children) {
 			const foundInChild = findFirstNodeByTagId(node.children, tagId)
 			if (foundInChild) return foundInChild
 		}
-		if (node.data?.relationId !== undefined && node.data.id === tagId) {
+		if (node.data?.id === tagId) {
 			return node
 		}
 	}
@@ -44,45 +44,32 @@ function findFirstNodeByTagId(nodes: DefaultOptionType[], tagId: number): Defaul
 const TagTreeSelect: React.FC<TagTreeSelectProps> = ({ blocks = [], tags = [], value, onChange = () => {} }) => {
 	const { token } = theme.useToken()
 
-	// Формируем дерево с виртуальным блоком для нераспределенных тегов
 	const treeData = useMemo(() => {
 		const fullTree = createFullTree([blocks, tags])
 		return convertToTreeSelectNodes(fullTree, undefined, token)
 	}, [blocks, tags, token])
 
-	// Вычисляем выбранное значение
 	const selected = useMemo(() => {
 		if (!value) return undefined
+		const [blockId, tagId] = value
+		console.log('SELECTED:', value)
 
-		const [tagId, relationId] = value
-
-		// Поиск по точному relationId
-		if (relationId) {
-			const node = findNodeByValue(treeData, relationId)
-			if (node) return { value: node.value as number, label: node.fullTitle }
-		}
-
-		// Поиск первого подходящего tagId
-		if (tagId) {
-			const node = findFirstNodeByTagId(treeData, tagId)
-			if (node) return { value: node.value as number, label: node.fullTitle }
-		}
+		const node =
+			findNodeByValue(treeData, encodeBlockTagPair(blockId ?? 0, tagId)) ?? findFirstNodeByTagId(treeData, tagId)
+		if (node) return { value: node.value as string, label: node.fullTitle }
 
 		return undefined
 	}, [value, treeData])
 
-	// Обработчик изменения значения
-	const handleChange = (sel: { value: number; label: React.ReactNode } | undefined) => {
+	const handleChange = (sel: { value: string; label: React.ReactNode } | undefined) => {
+		console.log('CHANGE:', sel?.value)
 		if (!sel) {
 			onChange([0, 0])
 			return
 		}
-		const node = findNodeByValue(treeData, sel.value)
-		if (node?.data) {
-			onChange([node.data.id, sel.value])
-		} else {
-			onChange([0, 0])
-		}
+
+		const { blockId, tagId } = decodeBlockTagPair(sel.value)
+		onChange([blockId, tagId])
 	}
 
 	return (

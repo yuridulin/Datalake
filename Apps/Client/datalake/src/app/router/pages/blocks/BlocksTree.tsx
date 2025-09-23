@@ -1,13 +1,15 @@
 import BlockButton from '@/app/components/buttons/BlockButton'
+import PollingLoader from '@/app/components/loaders/PollingLoader'
 import PageHeader from '@/app/components/PageHeader'
 import ProtectedButton from '@/app/components/ProtectedButton'
 import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { useInterval } from 'react-use'
+import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
 
 const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<number, string>] => {
@@ -36,13 +38,12 @@ const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<
 const EXPAND_KEY = 'expandedBlocks'
 
 const BlocksTree = observer(() => {
+	useDatalakeTitle('Блоки')
+
 	const store = useAppStore()
 	const [data, setData] = useState<BlockWithTagsInfo[]>([])
 	const [search, setSearch] = useState('')
-	const [expandedRowKeys, setExpandedRowKeys] = useState<number[]>(() => {
-		const saved = localStorage.getItem(EXPAND_KEY)
-		return saved ? JSON.parse(saved) : []
-	})
+	const [expandedRowKeys, setExpandedRowKeys] = useLocalStorage(EXPAND_KEY, [] as number[])
 
 	// Create tree structure and metadata
 	const [tree, meta] = useMemo(() => makeTree(data), [data])
@@ -64,28 +65,22 @@ const BlocksTree = observer(() => {
 	}, [search, data, tree, meta])
 
 	// Load blocks data
-	const loadBlocks = () => {
-		store.api
-			.blocksGetAll()
-			.then((res) => setData(res.data))
-			.catch(() => setData([]))
-	}
-
-	// Initialize and refresh data periodically
-	useEffect(loadBlocks, [store.api])
-	useInterval(loadBlocks, 60000)
+	const loadBlocks = useCallback(async () => {
+		try {
+			const res = await store.api.blocksGetAll()
+			return setData(res.data)
+		} catch {
+			return setData([])
+		}
+	}, [store.api])
 
 	// Handle expand/collapse of tree nodes
 	const handleExpand = (expanded: boolean, record: BlockTreeInfo) => {
-		const newKeys = expanded ? [...expandedRowKeys, record.id] : expandedRowKeys.filter((id) => id !== record.id)
+		const exists = expandedRowKeys ?? []
+		const newKeys = expanded ? [...exists, record.id] : exists.filter((id) => id !== record.id)
 
 		setExpandedRowKeys(newKeys)
 	}
-
-	// Persist expanded keys in localStorage
-	useEffect(() => {
-		localStorage.setItem(EXPAND_KEY, JSON.stringify(expandedRowKeys))
-	}, [expandedRowKeys])
 
 	// Create new block
 	const createBlock = () => {
@@ -147,6 +142,7 @@ const BlocksTree = observer(() => {
 				Блоки верхнего уровня
 			</PageHeader>
 
+			<PollingLoader pollingFunction={loadBlocks} interval={60000} />
 			<Table
 				showSorterTooltip={false}
 				size='small'

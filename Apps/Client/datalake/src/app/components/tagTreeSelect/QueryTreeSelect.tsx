@@ -1,14 +1,13 @@
 import {
-	BLOCK_ID_SHIFT,
 	convertToTreeSelectNodes,
 	createFullTree,
+	encodeBlockTagPair,
 	filterTreeNode,
-	RELATION_TAG_SEPARATOR,
-	SELECTED_SEPARATOR,
+	FlattenedNestedTagsType,
+	TagMappingType,
 } from '@/app/components/tagTreeSelect/treeSelectShared'
-import { FlattenedNestedTagsType } from '@/app/router/pages/values/types/flattenedNestedTags'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { deserializeTags, URL_PARAMS } from '@/functions/urlParams'
+import { RELATION_TAG_SEPARATOR, SELECTED_SEPARATOR, URL_PARAMS } from '@/functions/urlParams'
 import { BlockSimpleInfo, BlockTreeInfo, TagSimpleInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { theme, TreeSelect } from 'antd'
@@ -17,11 +16,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 interface QueryTreeSelectProps {
-	onChange: (value: number[], tagMapping: FlattenedNestedTagsType) => void
+	onChange: (value: string[], tagMapping: TagMappingType) => void
 	manualOnly?: true
 }
 
-// Функция для создания карты сопоставлений тегов и связей
 const flattenNestedTags = (
 	blockTree: BlockTreeInfo[] | null | undefined,
 	parentNames: BlockSimpleInfo[] = [],
@@ -32,9 +30,10 @@ const flattenNestedTags = (
 	blockTree.forEach((block) => {
 		const currentParents = [...parentNames, { ...block }]
 		block.tags.forEach((tag) => {
-			mapping[tag.relationId] = {
+			const value = encodeBlockTagPair(block.id, tag.id)
+			mapping[value] = {
 				...tag,
-				parents: currentParents,
+				blockId: block.id,
 			}
 		})
 		const childrenMapping = flattenNestedTags(block.children, currentParents)
@@ -47,20 +46,19 @@ const flattenNestedTags = (
 const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly = false }) => {
 	const store = useAppStore()
 	const [searchParams, setSearchParams] = useSearchParams()
-	const [checkedRelations, setCheckedRelations] = useState<number[]>([])
+	const [checkedValues, setCheckedValues] = useState<string[]>([])
 	const [treeData, setTreeData] = useState<DataNode[]>([])
 	const [tagMapping, setTagMapping] = useState<FlattenedNestedTagsType>({})
 	const [searchValue, setSearchValue] = useState<string>('')
 	const [loading, setLoading] = useState<boolean>(false)
 	const { token } = theme.useToken()
 
-	// Инициализация выбранных значений из query-параметров
 	const initialSelections = useMemo(() => {
 		const param = searchParams.get(URL_PARAMS.TAGS)
-		return deserializeTags(param)
+		if (!param) return []
+		return param.split('~')
 	}, [searchParams])
 
-	// Загрузка данных и формирование дерева
 	useEffect(() => {
 		setLoading(false)
 		Promise.all([
@@ -73,69 +71,49 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 				.then((res) => res.data)
 				.catch(() => [] as TagSimpleInfo[]),
 		]).then((data) => {
-			// Создаем полное дерево
 			const fullTree = createFullTree(data)
-
 			setTagMapping(flattenNestedTags(fullTree))
 			setTreeData(convertToTreeSelectNodes(fullTree, undefined, token, manualOnly))
 			setLoading(true)
 		})
 	}, [token, store.api, manualOnly])
 
-	// Восстановление выбранных значений при загрузке
 	useEffect(() => {
-		if (loading && treeData.length > 0) {
-			// Восстанавливаем relationId из начальных значений
-			const relationsToSelect = initialSelections.map((sel) => sel.relationId)
-			setCheckedRelations(relationsToSelect)
+		if (!loading) return
+		if (!treeData.length) return
+		if (!initialSelections.length) return
 
-			// ВЫЗОВ ONCHANGE ПРИ ИНИЦИАЛИЗАЦИИ
-			if (relationsToSelect.length > 0) {
-				// Создаем маппинг для передачи
-				const initialMapping: FlattenedNestedTagsType = {}
-				relationsToSelect.forEach((relId) => {
-					if (tagMapping[relId]) {
-						initialMapping[relId] = tagMapping[relId]
-					}
-				})
-
-				onChange(relationsToSelect, initialMapping)
+		setCheckedValues(initialSelections)
+		const initialMapping: FlattenedNestedTagsType = {}
+		initialSelections.forEach((value) => {
+			if (tagMapping[value]) {
+				initialMapping[value] = tagMapping[value]
 			}
-		}
+		})
+		onChange(initialSelections, initialMapping)
 	}, [loading, treeData, initialSelections, onChange, tagMapping])
 
-	// Обработчик изменения выбранных значений
 	const handleTagChange = useCallback(
-		(values: number[]) => {
-			// Фильтруем только теги (исключаем блоки)
-			const tagValues = values.filter((val) => val > BLOCK_ID_SHIFT) // Исключаем блоки, оставляем фейковые связи (отрицательные)
+		(values: string[]) => {
+			if (!isArraysDifferent(checkedValues, values)) return
 
-			if (!isArraysDifferent(checkedRelations, tagValues)) return
+			const realValues = values.filter((x) => !x.includes(`${RELATION_TAG_SEPARATOR}0`))
 
-			setCheckedRelations(tagValues)
+			setCheckedValues(realValues)
+			onChange(realValues, tagMapping)
 
-			// Создаем пары [tagId, relationId] для сохранения в URL
-			const selections: string[] = []
-			tagValues.forEach((relationId) => {
-				const mapping = tagMapping[relationId]
-				if (mapping) selections.push(`${mapping.id}${RELATION_TAG_SEPARATOR}${relationId}`)
-				return
-			})
-
-			// Вызываем внешний обработчик с relationId
-			onChange(tagValues, tagMapping)
-
-			// Обновляем query-параметры
-			searchParams.set(URL_PARAMS.TAGS, selections.join(SELECTED_SEPARATOR))
-			setSearchParams(searchParams, { replace: true })
+			setSearchParams(
+				(prev) => {
+					prev.set(URL_PARAMS.TAGS, realValues.join(SELECTED_SEPARATOR))
+					return prev
+				},
+				{ replace: true },
+			)
 		},
-		[onChange, searchParams, setSearchParams, tagMapping, checkedRelations],
+		[onChange, setSearchParams, tagMapping, checkedValues],
 	)
 
-	// Подсчет уникальных выбранных тегов
-	const countSelectedTags = useCallback(() => {
-		return checkedRelations.length
-	}, [checkedRelations])
+	const countSelectedTags = useMemo(() => checkedValues.length, [checkedValues])
 
 	return (
 		<TreeSelect
@@ -143,7 +121,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 			treeCheckable
 			allowClear
 			showCheckedStrategy={TreeSelect.SHOW_ALL}
-			value={checkedRelations}
+			value={checkedValues}
 			onChange={handleTagChange}
 			placeholder='Выберите теги'
 			style={{ width: '100%' }}
@@ -151,7 +129,7 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 			listHeight={1000}
 			virtual={true}
 			maxTagCount={0}
-			maxTagPlaceholder={() => `Выбрано тегов: ${countSelectedTags()}`}
+			maxTagPlaceholder={() => `Выбрано тегов: ${countSelectedTags}`}
 			filterTreeNode={filterTreeNode}
 			searchValue={searchValue}
 			onSearch={setSearchValue}

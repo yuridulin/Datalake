@@ -1,6 +1,7 @@
 import BlockIcon from '@/app/components/icons/BlockIcon'
 import TagIcon from '@/app/components/icons/TagIcon'
 import getTagResolutionName from '@/functions/getTagResolutionName'
+import { RELATION_TAG_SEPARATOR } from '@/functions/urlParams'
 import {
 	AccessType,
 	BlockNestedTagInfo,
@@ -13,17 +14,31 @@ import { GlobalToken } from 'antd'
 import { DefaultOptionType } from 'antd/es/cascader'
 import { DataNode } from 'antd/es/tree'
 
-export const SELECTED_SEPARATOR: string = '~'
-export const RELATION_TAG_SEPARATOR: string = '.'
-export const BLOCK_ID_SHIFT: number = -1000000
-export const VIRTUAL_RELATION_SHIFT: number = 1000000
+export type BlockFlattenNestedTagInfo = BlockNestedTagInfo & {
+	localName: string
+	blockId: number
+	//parents: BlockSimpleInfo[]
+}
 
-const ALL_BLOCKS_NAME: string = '1. Дерево блоков'
-const ORPHANS_NAME: string = '2. Нераспределенные теги'
-const ALL_TAGS_NAME: string = '3. Все теги'
-const FAKE_BLOCKS = [ALL_BLOCKS_NAME, ORPHANS_NAME, ALL_TAGS_NAME]
+export type FlattenedNestedTagsType = Record<string, BlockFlattenNestedTagInfo>
 
-// Функция для преобразования BlockTreeInfo[] в древовидную структуру
+export type TagMappingType = Record<string, BlockFlattenNestedTagInfo>
+
+const ALL_BLOCKS_ID = -1
+const ORPHANS_ID = -2
+const ALL_TAGS_ID = -3
+
+const ALL_BLOCKS_NAME: string = '1.Дерево блоков'
+const ORPHANS_NAME: string = '2.Нераспределенные теги'
+const ALL_TAGS_NAME: string = '3.Все теги'
+
+export const encodeBlockTagPair = (blockId: number, tagId: number) => `${blockId}${RELATION_TAG_SEPARATOR}${tagId}`
+
+export const decodeBlockTagPair = (raw: string) => {
+	const parts = raw.split(RELATION_TAG_SEPARATOR).map(Number)
+	return { blockId: parts[0], tagId: parts[1] }
+}
+
 export const convertToTreeSelectNodes = (
 	blockTree: BlockTreeInfo[] | null | undefined,
 	parentPath: string[] = [],
@@ -35,8 +50,9 @@ export const convertToTreeSelectNodes = (
 	return blockTree
 		.map((block) => {
 			const currentPath = [...parentPath]
-			if (!FAKE_BLOCKS.includes(block.name)) currentPath.push(block.name)
+			currentPath.push(block.name)
 			const fullTitle = currentPath.join('.')
+			const blockValue = encodeBlockTagPair(block.id, 0)
 
 			return {
 				title: (
@@ -44,30 +60,33 @@ export const convertToTreeSelectNodes = (
 						<BlockIcon /> {block.name}
 					</>
 				),
-				key: BLOCK_ID_SHIFT - 3 - block.id, // Отрицательные значения для блоков (и поправка на 3 из-за тех, которые мы создаем сами)
-				value: BLOCK_ID_SHIFT - 3 - block.id,
+				key: blockValue,
+				value: blockValue,
 				fullTitle,
-				selectable: false, // Блоки не выбираются
+				selectable: false,
 				data: block,
 				children: [
-					...block.tags.map((tag) => ({
-						title: (
-							<div style={{ display: 'flex' }}>
-								<TagIcon type={tag.sourceType} />
-								&ensp;{tag.localName}
-								&emsp;
-								<pre style={{ display: 'inline-block', color: token.colorTextDisabled, margin: 0 }}>
-									{tag.relationId > 0 && tag.relationId < VIRTUAL_RELATION_SHIFT && <>{tag.name}&emsp;</>}#{tag.id}
-									{tag.resolution > 0 && <>&emsp;{getTagResolutionName(tag.resolution)}</>}
-								</pre>
-							</div>
-						),
-						key: tag.relationId, // Используем relationId как идентификатор
-						value: tag.relationId, // Используем relationId как идентификатор
-						fullTitle: `${fullTitle}.${tag.localName}`,
-						data: tag,
-						disabled: manual && tag.sourceType !== SourceType.Manual,
-					})),
+					...block.tags.map((tag) => {
+						const tagValue = encodeBlockTagPair(block.id, tag.id)
+						return {
+							title: (
+								<div style={{ display: 'flex' }}>
+									<TagIcon type={tag.sourceType} />
+									&ensp;{tag.localName}
+									&emsp;
+									<pre style={{ display: 'inline-block', color: token.colorTextDisabled, margin: 0 }}>
+										{block.id > 0 && <>{tag.name}&emsp;</>}#{tag.id}
+										{tag.resolution > 0 && <>&emsp;{getTagResolutionName(tag.resolution)}</>}
+									</pre>
+								</div>
+							),
+							key: tagValue,
+							value: tagValue,
+							fullTitle: `${fullTitle}.${tag.localName}`,
+							data: { ...tag, blockId: block.id },
+							disabled: manual && tag.sourceType !== SourceType.Manual,
+						}
+					}),
 					...convertToTreeSelectNodes(block.children, currentPath, token, manual),
 				],
 			}
@@ -75,27 +94,21 @@ export const convertToTreeSelectNodes = (
 		.sort((a, b) => a.fullTitle!.localeCompare(b.fullTitle!))
 }
 
-// Функция фильтрации узлов
 export const filterTreeNode = (inputValue: string, treeNode: DefaultOptionType): boolean => {
 	const searchText = inputValue.toLowerCase()
 	const node = treeNode
 
-	// Поиск по полному пути
 	if (node.fullTitle?.toLowerCase().includes(searchText)) return true
 
-	// Поиск по данным узла
 	if (node.data) {
 		const data = node.data
 
-		// Для блоков
 		if ('fullName' in data) {
 			const block = data as BlockTreeInfo
 			if (block.name?.toLowerCase().includes(searchText) || block.fullName?.toLowerCase().includes(searchText)) {
 				return true
 			}
-		}
-		// Для тегов
-		else if ('relationId' in data) {
+		} else if ('relationType' in data) {
 			const tag = data as BlockNestedTagInfo
 			if (
 				tag.name?.toLowerCase().includes(searchText) ||
@@ -112,7 +125,6 @@ export const filterTreeNode = (inputValue: string, treeNode: DefaultOptionType):
 }
 
 export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo[], allTags: TagSimpleInfo[]]) => {
-	// Собираем ID всех тегов в дереве
 	const allTagIds = new Set<number>()
 	const collectTagIds = (blocks: BlockTreeInfo[]) => {
 		blocks.forEach((block) => {
@@ -122,20 +134,17 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 	}
 	collectTagIds(blocksTree)
 
-	// Фильтруем нераспределенные теги
-	const orphanTags = allTags
+	const orphanTags: BlockNestedTagInfo[] = allTags
 		.filter((tag) => !allTagIds.has(tag.id))
-		.map((tag, index) => ({
+		.map((tag) => ({
 			...tag,
-			relationId: -(index + 1), // Уникальные отрицательные ID для связей
 			relationType: BlockTagRelation.Static,
 			localName: tag.name,
 			sourceId: 0,
 		}))
 
-	// Создаем общий контейнер для дерева блоков
 	const allBlocksBlock: BlockTreeInfo = {
-		id: -1,
+		id: ALL_BLOCKS_ID,
 		guid: 'virtual',
 		name: ALL_BLOCKS_NAME,
 		fullName: ALL_BLOCKS_NAME,
@@ -147,9 +156,8 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 		},
 	}
 
-	// Создаем виртуальный блок для нераспределенных тегов
 	const orphanTagsBlock: BlockTreeInfo = {
-		id: -2,
+		id: ORPHANS_ID,
 		guid: 'virtual',
 		name: ORPHANS_NAME,
 		fullName: ORPHANS_NAME,
@@ -161,15 +169,13 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 		},
 	}
 
-	// Создаем виртуальный блок для всех тегов
 	const allTagsBlock: BlockTreeInfo = {
-		id: -3, // Уникальный ID
+		id: ALL_TAGS_ID,
 		guid: 'all-tags',
 		name: ALL_TAGS_NAME,
 		fullName: ALL_TAGS_NAME,
 		tags: allTags.map((tag) => ({
 			...tag,
-			relationId: VIRTUAL_RELATION_SHIFT + tag.id, // Виртуальные связи
 			relationType: BlockTagRelation.Static,
 			localName: tag.name,
 			sourceId: 0,
@@ -181,7 +187,5 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 		},
 	}
 
-	// Создаем полное дерево
-	const fullTree = [allBlocksBlock, orphanTagsBlock, allTagsBlock]
-	return fullTree
+	return [allBlocksBlock, orphanTagsBlock, allTagsBlock]
 }

@@ -2,6 +2,7 @@ import NoAccessEl from '@/app/components/NoAccessEl'
 import PageHeader from '@/app/components/PageHeader'
 import compareValues from '@/functions/compareValues'
 import { AccessType, UserGroupTreeInfo } from '@/generated/data-contracts'
+import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, theme, Tree, TreeDataNode, TreeProps } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -29,6 +30,7 @@ function transformToTreeNode(groups: UserGroupTreeInfo[]): TreeDataNode[] {
 }
 
 const UserGroupsTreeMove = observer(() => {
+	useDatalakeTitle('Группы', 'Перемещение')
 	const store = useAppStore()
 	const [tree, setTree] = useState([] as TreeDataNode[])
 	const [loading, setLoading] = useState(false)

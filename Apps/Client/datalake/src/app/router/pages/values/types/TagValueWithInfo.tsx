@@ -1,5 +1,5 @@
+import { BlockFlattenNestedTagInfo } from '@/app/components/tagTreeSelect/treeSelectShared'
 import { ValuesTagResponse } from '@/generated/data-contracts'
-import { BlockFlattenNestedTagInfo } from './flattenedNestedTags'
 
 export type TagValueWithInfo = ValuesTagResponse &
 	BlockFlattenNestedTagInfo & {

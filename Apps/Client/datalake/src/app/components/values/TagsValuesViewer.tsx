@@ -1,30 +1,23 @@
+import PollingLoader from '@/app/components/loaders/PollingLoader'
+import { TagMappingType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import { ExcelExportModeHandles } from '@/app/components/values/functions/exportExcel'
 import ExactValuesMode from '@/app/components/values/modes/ExactValuesMode'
 import TimedValuesMode from '@/app/components/values/modes/TimedValuesMode'
 import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithInfo'
 import routes from '@/app/router/routes'
+import { deserializeDate, serializeDate } from '@/functions/dateHandle'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
-import { serializeDate, serializeTags, setViewerParams, URL_PARAMS } from '@/functions/urlParams'
-import { SourceType, TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
-import { timeMask } from '@/store/appStore'
+import { SELECTED_SEPARATOR, setViewerParams, TimeMode, TimeModes, URL_PARAMS } from '@/functions/urlParams'
+import { SourceType, TagResolution, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
 import { Button, Col, DatePicker, Divider, Radio, Row, Select, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useInterval } from 'react-use'
-
-const TimeModes = {
-	LIVE: 'live',
-	EXACT: 'exact',
-	OLD_YOUNG: 'old-young',
-} as const
-
-type TimeMode = (typeof TimeModes)[keyof typeof TimeModes]
 
 const timeModeOptions: { label: string; value: TimeMode }[] = [
 	{ label: 'Текущие', value: TimeModes.LIVE },
@@ -32,56 +25,65 @@ const timeModeOptions: { label: string; value: TimeMode }[] = [
 	{ label: 'Диапазон', value: TimeModes.OLD_YOUNG },
 ]
 
-const parseDate = (param: string | null, fallback: dayjs.Dayjs) => (param ? dayjs(param, timeMask) : fallback)
-
 interface TagValuesViewerProps {
-	relations: number[] // Массив ID связей
-	tagMapping: Record<number, { id: number; localName: string; type: TagType }> // Маппинг отношений
+	relations: string[] // Массив ID связей
+	tagMapping: TagMappingType // Маппинг отношений
 	integrated?: boolean // Скрываем часть контролов и инициируем запросы сразу после изменения настроек
+	onChange?: (settings: ViewerSettings) => void
 }
 
-interface ViewerSettings {
-	activeRelations: number[]
+export interface ViewerSettings {
+	activeRelations: string[]
 	old: Dayjs
 	young: Dayjs
 	exact: Dayjs
-	resolution: number
+	resolution: TagResolution
 	mode: TimeMode
 	update: boolean
 }
 
-const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }: TagValuesViewerProps) => {
+const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, onChange }: TagValuesViewerProps) => {
 	const store = useAppStore()
 	const navigate = useNavigate()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const initialMode = (searchParams.get(URL_PARAMS.VIEWER_MODE) as TimeMode) || TimeModes.LIVE
 	const [isLoading, setLoading] = useState(false)
-	const [values, setValues] = useState<{ relationId: number; value: TagValueWithInfo }[]>([])
+	const [values, setValues] = useState<{ relationId: string; value: TagValueWithInfo }[]>([])
 	const [showWrite, setWrite] = useState<boolean>(false)
 
 	const tableRef = useRef<ExcelExportModeHandles>(null)
 
 	const [settings, setSettings] = useState<ViewerSettings>({
 		activeRelations: relations,
-		old: parseDate(searchParams.get(URL_PARAMS.VIEWER_OLD), dayjs().startOf('hour')),
-		young: parseDate(searchParams.get(URL_PARAMS.VIEWER_YOUNG), dayjs().startOf('hour').add(1, 'hour')),
-		exact: parseDate(searchParams.get(TimeModes.EXACT), dayjs()),
+		old: deserializeDate(searchParams.get(URL_PARAMS.VIEWER_OLD), dayjs().startOf('hour')),
+		young: deserializeDate(searchParams.get(URL_PARAMS.VIEWER_YOUNG), dayjs().startOf('hour').add(1, 'hour')),
+		exact: deserializeDate(searchParams.get(TimeModes.EXACT), dayjs()),
 		resolution: Number(searchParams.get(URL_PARAMS.VIEWER_RESOLUTION)) || 0,
 		mode: initialMode,
 		update: integrated,
 	})
 
+	// когда мы получили настройки по умолчанию, мы отдаем им наружу
+	if (onChange) onChange(settings)
+
 	// последние настройки на момент успешного запроса
 	const [lastFetchSettings, setLastFetchSettings] = useState<ViewerSettings>(settings)
 
+	const isTimeDirty = useMemo(
+		() =>
+			settings.mode !== lastFetchSettings.mode ||
+			settings.resolution !== lastFetchSettings.resolution ||
+			!settings.exact.isSame(lastFetchSettings.exact) ||
+			!settings.old.isSame(lastFetchSettings.old) ||
+			!settings.young.isSame(lastFetchSettings.young),
+		[settings, lastFetchSettings],
+	)
+
 	// Проверка, что настройки изменились
-	const isDirty =
-		settings.mode !== lastFetchSettings.mode ||
-		settings.resolution !== lastFetchSettings.resolution ||
-		!settings.exact.isSame(lastFetchSettings.exact) ||
-		!settings.old.isSame(lastFetchSettings.old) ||
-		!settings.young.isSame(lastFetchSettings.young) ||
-		isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations)
+	const isDirty = useMemo(
+		() => isTimeDirty || isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations),
+		[settings, lastFetchSettings, isTimeDirty],
+	)
 
 	useEffect(() => {
 		if (isArraysDifferent(settings.activeRelations, relations)) {
@@ -102,14 +104,14 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 			settings.mode === TimeModes.LIVE
 				? {}
 				: settings.mode === TimeModes.EXACT
-					? { exact: settings.exact.format(timeMask) }
+					? { exact: serializeDate(settings.exact) }
 					: {
-							old: settings.old.format(timeMask),
-							young: settings.young.format(timeMask),
+							old: serializeDate(settings.old),
+							young: serializeDate(settings.young),
 							resolution: settings.resolution,
 						}
 
-		store.api
+		return store.api
 			.valuesGet([
 				{
 					requestKey: CLIENT_REQUESTKEY,
@@ -140,10 +142,6 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 
 				setValues(newValues)
 				setLastFetchSettings(settings)
-				console.log(
-					res.data[0].tags,
-					res.data[0].tags.some((x) => x.sourceType === SourceType.Manual),
-				)
 				setWrite(res.data[0].tags.some((x) => x.sourceType === SourceType.Manual))
 			})
 			.catch(console.error)
@@ -156,22 +154,22 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 	}, [settings, integrated, getValues])
 
 	useEffect(() => {
-		setViewerParams(searchParams, {
-			mode: settings.mode,
-			resolution: settings.resolution,
-			exact: settings.exact,
-			old: settings.old,
-			young: settings.young,
-		})
-		setSearchParams(searchParams, { replace: true })
-	}, [settings, searchParams, setSearchParams])
-
-	// Для автоматического обновления
-	useInterval(() => {
-		if (settings.mode === TimeModes.LIVE) {
-			getValues()
-		}
-	}, 5000)
+		if (!isTimeDirty) return
+		setSearchParams(
+			(prev) => {
+				setViewerParams(prev, {
+					mode: settings.mode,
+					resolution: settings.resolution,
+					exact: settings.exact,
+					old: settings.old,
+					young: settings.young,
+				})
+				return prev
+			},
+			{ replace: true },
+		)
+		if (onChange) onChange(settings)
+	}, [settings, setSearchParams, isTimeDirty, onChange])
 
 	const renderFooterOld = () => (
 		<Space style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px' }}>
@@ -310,7 +308,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 		}
 
 		const params = new URLSearchParams({
-			[URL_PARAMS.TAGS]: serializeTags(settings.activeRelations, tagMapping),
+			[URL_PARAMS.TAGS]: settings.activeRelations.join(SELECTED_SEPARATOR),
 			[URL_PARAMS.WRITER_DATE]: serializeDate(writeDate)!,
 		})
 
@@ -359,6 +357,9 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false }
 				</>
 			)}
 
+			{settings.mode === TimeModes.LIVE && settings.activeRelations.length > 0 && (
+				<PollingLoader pollingFunction={getValues} interval={5000} statusDuration={400} />
+			)}
 			{values.length ? (
 				settings.mode === TimeModes.OLD_YOUNG ? (
 					<TimedValuesMode ref={tableRef} relations={values} locf={settings.resolution === TagResolution.NotSet} />
