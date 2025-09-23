@@ -1,0 +1,49 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "datalake-collector", "Port": 8080 }
+      ],
+      "UpstreamPathTemplate": "/collector/api/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "SwaggerKey": "collector"
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "datalake-server", "Port": 8080 }
+      ],
+      "UpstreamPathTemplate": "/server/api/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "SwaggerKey": "server"
+    }
+  ],
+  "SwaggerEndPoints": [
+    {
+      "Key": "server",
+      "Config": [
+        {
+          "Name": "Server API",
+          "Version": "v1",
+          "Url": "http://datalake-server:8080/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "collector",
+      "Config": [
+        {
+          "Name": "Collector API",
+          "Version": "v1",
+          "Url": "http://datalake-collector:8080/swagger/v1/swagger.json"
+        }
+      ]
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:7600"
+  }
+}

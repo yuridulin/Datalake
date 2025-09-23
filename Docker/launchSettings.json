@@ -9,7 +9,9 @@
         "datalake-postgres": "StartWithoutDebugging",
         "datalake-keycloak": "StartWithoutDebugging",
         "datalake-server": "StartDebugging",
-        "datalake-client": "DoNotStart"
+        "datalake-client": "DoNotStart",
+        "datalake-collector": "StartDebugging",
+        "datalake-gateway": "StartDebugging"
       }
     }
   }

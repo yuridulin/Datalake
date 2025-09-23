@@ -8,6 +8,7 @@ using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.InMemory.Stores;
 using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Repositories;
+using Datalake.PrivateApi;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Middlewares;
@@ -17,10 +18,12 @@ using Datalake.Server.Services.Initialization;
 using Datalake.Server.Services.Maintenance;
 using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SettingsHandler;
+using Datalake.Server.Services.Test;
 using LinqToDB;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
 using LinqToDB.Mapping;
+using MassTransit;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
@@ -106,8 +109,7 @@ public class Program
 			{
 				var jsonOpts = services.GetRequiredService<IOptions<JsonOptions>>().Value;
 
-				options.DocumentName = "Datalake App";
-				options.Title = "Datalake App";
+				options.Title = "Datalake " + nameof(Server);
 				options.Version = "v" + Version;
 
 				options.SchemaSettings = new SystemTextJsonSchemaGeneratorSettings
@@ -207,6 +209,7 @@ public class Program
 		// инициализатор работы
 		builder.Services.AddSingleton<LoaderService>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<LoaderService>());
+		builder.Services.AddHealthChecks();
 
 		// оповещения об ошибках
 		var sentrySection = builder.Configuration.GetSection("Sentry");
@@ -218,6 +221,27 @@ public class Program
 			o.Release = $"{builder.Environment.ApplicationName}@{Version.ShortVersion()}";
 			o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
 		});
+
+		// общение между сервисами
+		var rabbitMqConfig = builder.Configuration.GetSection("RabbitMq");
+
+		builder.Services.AddMassTransit(config =>
+		{
+			config.UsingRabbitMq((context, cfg) =>
+			{
+				cfg.Host(rabbitMqConfig["Host"], "/", h =>
+				{
+					h.Username(rabbitMqConfig["User"] ?? string.Empty);
+					h.Password(rabbitMqConfig["Pass"] ?? string.Empty);
+				});
+
+				// Настройка отправки сообщения
+				cfg.Message<SomethingHappenedEvent>(m => m.SetEntityName("something-happened"));
+			});
+		});
+
+		builder.Services.AddSingleton<TestBackgroundService>();
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<TestBackgroundService>());
 
 		// сборка
 		var app = builder.Build();
@@ -312,6 +336,7 @@ public class Program
 		app.MapControllerRoute(
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");
+		app.MapHealthChecks("/health");
 
 		// запуск БД
 		var thisDb = app.Services.GetRequiredService<DbInitializer>();
