@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>e8e47f82-b72d-4b5a-8497-ec368aca8169</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+		<DockerfileTag>datalake-inventory</DockerfileTag>
+		<Product>$(AssemblyName)</Product>
+		<RootNamespace>Datalake.InventoryService</RootNamespace>
+		<AssemblyName>Datalake.InventoryService</AssemblyName>
+		<AssemblyTitle>Datalake.InventoryService</AssemblyTitle>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<Deterministic>false</Deterministic>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<NoWarn>1701;1702;CS8524</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<NoWarn>1701;1702;CS8524</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Abstractions\**" />
+	  <Compile Remove="Sentry\**" />
+	  <Compile Remove="Services\Collection\Models\**" />
+	  <Content Remove="Abstractions\**" />
+	  <Content Remove="Sentry\**" />
+	  <Content Remove="Services\Collection\Models\**" />
+	  <EmbeddedResource Remove="Abstractions\**" />
+	  <EmbeddedResource Remove="Sentry\**" />
+	  <EmbeddedResource Remove="Services\Collection\Models\**" />
+	  <None Remove="Abstractions\**" />
+	  <None Remove="Sentry\**" />
+	  <None Remove="Services\Collection\Models\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="linq2db.AspNet" Version="5.4.1" />
+		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.2" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.9" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+		<PackageReference Include="Npgsql.DependencyInjection" Version="9.0.3" />
+		<PackageReference Include="NSwag.AspNetCore" Version="14.6.0" />
+		<PackageReference Include="Sentry.AspNetCore" Version="5.15.1" />
+		<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="storage\logs\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Domains\InventoryDomain\InventoryDomain.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -40,7 +40,7 @@ services:
       timeout: 5s
       retries: 5
 
-  ## [7620] Keycloak для внешней аутентификации, например EnergoId
+  ## [7611] Keycloak для внешней аутентификации, например EnergoId
   datalake-keycloak:
     image: quay.io/keycloak/keycloak:25.0.0
     container_name: datalake-keycloak
@@ -57,19 +57,19 @@ services:
     volumes:
       - ./keycloak:/opt/keycloak/data/import
     ports:
-      - "7620:8080"
+      - "7611:8080"
     depends_on:
       datalake-postgres:
         condition: service_healthy
 
-  ## [7660] RabbitMQ для обмена событиями между сервисами
+  ## [7612] RabbitMQ для обмена событиями между сервисами [7613] UI
   datalake-rabbitmq:
     image: rabbitmq:4.1.4-management-alpine
     container_name: datalake-rabbitmq
     #hostname: datalake-rabbitmq # зачем?
     ports:
-      - 7660:5672 # AMQP protocol
-      - 7661:15772 # Management UI
+      - 7612:5672 # AMQP protocol
+      - 7613:15772 # Management UI
     environment:
       - RABBITMQ_DEFAULT_USER=admin
       - RABBITMQ_DEFAULT_PASS=admin
@@ -85,7 +85,7 @@ services:
     container_name: datalake-gateway
     build:
       context: ../
-      dockerfile: ./Apps/Gateway/Dockerfile
+      dockerfile: ./Gateway/Dockerfile
     depends_on:
       datalake-postgres:
         condition: service_healthy
@@ -100,15 +100,15 @@ services:
     ports:
       - 7600:8080
     volumes:
-      - "../Apps/Gateway/storage:/app/storage"
+      - "../Gateway/storage:/app/storage"
 
-  ## [7630] Управление схемой данных - теги, блоки, источники, пользователи и группы, права
-  datalake-server:
-    image: ${DOCKER_REGISTRY-}datalake-server
-    container_name: datalake-server
+  ## [7601] Управление схемой данных - теги, блоки, источники, пользователи и группы, права
+  datalake-inventory:
+    image: ${DOCKER_REGISTRY-}datalake-inventory
+    container_name: datalake-inventory
     build:
       context: ../
-      dockerfile: ./Apps/Server/Dockerfile
+      dockerfile: ./Services/InventoryService/Dockerfile
     depends_on:
       datalake-postgres:
         condition: service_healthy
@@ -128,17 +128,17 @@ services:
       APP_VERSION: DEV
     restart: always
     ports:
-      - 7630:8080
+      - 7601:8080
     volumes:
-      - "../Apps/Server/storage:/app/storage"
+      - "../Services/InventoryService/storage:/app/storage"
 
-  ## [7650] Сбор и запись данных
-  datalake-collector:
-    image: ${DOCKER_REGISTRY-}datalake-collector
-    container_name: datalake-collector
+  ## [7602] Сбор, запись, чтение и расчет данных
+  datalake-data:
+    image: ${DOCKER_REGISTRY-}datalake-data
+    container_name: datalake-data
     build:
       context: ../
-      dockerfile: ./Apps/Collector/Dockerfile
+      dockerfile: ./Services/DataService/Dockerfile
     depends_on:
       datalake-postgres:
         condition: service_healthy
@@ -156,30 +156,56 @@ services:
       APP_VERSION: DEV
     restart: always
     ports:
-      - 7650:8080
+      - 7602:8080
     volumes:
-      - "../Apps/Collector/storage:/app/storage"
+      - "../Services/DataService/storage:/app/storage"
 
-  ## [7670] Получение данных (не готов)
+  ## [7603] События
+  datalake-events:
+    image: ${DOCKER_REGISTRY-}datalake-events
+    container_name: datalake-events
+    build:
+      context: ../
+      dockerfile: ./Services/EventsService/Dockerfile
+    depends_on:
+      datalake-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    environment:
+      DATALAKE_HOST: datalake-postgres
+      DATALAKE_PORT: 5432
+      DATALAKE_DB: datalake
+      DATALAKE_DB_USER: postgres
+      DATALAKE_DB_PASS: postgres
+      APP_VERSION: DEV
+    restart: always
+    ports:
+      - 7603:8080
+    volumes:
+      - "../Services/EventsService/storage:/app/storage"
 
 
 # Необязательные дополнения
 
-  ## [7640] Клиент в dev режиме
+  ## [7604] Клиент в dev режиме
   datalake-client:
     container_name: datalake-client
     build:
-      context: ../Apps/Client/datalake
+      context: ../Client/datalake
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "7640:7640"
+      - "7604:7604"
     volumes:
-      - ../Apps/Client/datalake:/app
+      - ../Client/datalake:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 7640"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 7604"
 
 # Временные данные
 volumes:

@@ -1,0 +1,71 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Datalake.Inventory</RootNamespace>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <Version>2.4.2</Version>
+    <AssemblyTitle>Datalake.Inventory</AssemblyTitle>
+    <AssemblyName>Datalake.Inventory</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;CA1862;IDE0305;IDE0306</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;CA1862;IDE0305;IDE0306</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\CopyMe.PostgreSQL.tt.txt" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\DataAnnotations.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\DataModel.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\EditableObject.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\Equatable.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\Humanizer.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.PostgreSQL.Tools.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.PostgreSQL.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.Tools.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\MultipleFiles.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\NotifyDataErrorInfo.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\NotifyPropertyChanged.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\ObsoleteAttributes.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\PluralizationService.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\T4Model.ttinclude" />
+    <None Remove="C:\Users\u.dulin\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\Validation.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\CopyMe.PostgreSQL.tt.txt" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\DataAnnotations.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\DataModel.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\EditableObject.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\Equatable.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\Humanizer.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.PostgreSQL.Tools.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.PostgreSQL.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.Tools.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\LinqToDB.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\MultipleFiles.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\NotifyDataErrorInfo.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\NotifyPropertyChanged.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\ObsoleteAttributes.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\PluralizationService.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\T4Model.ttinclude" />
+    <None Remove="C:\Users\void\.nuget\packages\linq2db.postgresql\5.4.1\contentFiles\any\any\LinqToDB.Templates\Validation.ttinclude" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="linq2db.PostgreSQL" Version="5.4.1" />
+    <PackageReference Include="NCalcSync" Version="5.6.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Sentry" Version="5.15.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Api\PrivateApi\PrivateApi.csproj" />
+    <ProjectReference Include="..\..\Api\PublicApi\PublicApi.csproj" />
+  </ItemGroup>
+
+</Project>

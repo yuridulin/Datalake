@@ -7,7 +7,7 @@
     <ProjectGuid>0dabe406-fb4f-4501-805d-2f8ac54b2865</ProjectGuid>
     <DockerLaunchAction>None</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}</DockerServiceUrl>
-    <DockerServiceName>datalake-server</DockerServiceName>
+    <DockerServiceName>datalake-gateway</DockerServiceName>
     <DockerComposeProjectName>datalake</DockerComposeProjectName>
   </PropertyGroup>
   <ItemGroup>

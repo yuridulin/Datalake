@@ -365,13 +365,10 @@ FodyWeavers.xsd
 ## Datalake specific
 
 dist/
-/Apps/Server/wwwroot/startup.js
+/Gateway/wwwroot/startup.js
 desktop.ini
 .idea/*
-/Bench
-/Apps/Server/storage/database
-/Server/storage/database
-/Apps/Server/Sentry
+/Services/InventoryService/Sentry
 /Docker/postgres/database
 /Apps/Client/datalake/tsconfig.app.tsbuildinfo
 /Apps/Client/datalake/tsconfig.node.tsbuildinfo

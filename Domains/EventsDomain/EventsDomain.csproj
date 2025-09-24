@@ -4,9 +4,9 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>Datalake.PrivateApi</RootNamespace>
-    <AssemblyName>Datalake.PrivateApi</AssemblyName>
-    <AssemblyTitle>Datalake.PrivateApi</AssemblyTitle>
+    <RootNamespace>Datalake.Events</RootNamespace>
+    <AssemblyTitle>Datalake.Events</AssemblyTitle>
+    <AssemblyName>Datalake.Events</AssemblyName>
   </PropertyGroup>
 
 </Project>
