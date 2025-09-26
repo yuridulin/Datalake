@@ -8,11 +8,11 @@ public class UserAccessEntity(
 	Guid guid,
 	Guid? energoId,
 	AccessRule rootRule,
-	Dictionary<Guid, AccessRule> groupsRules,
-	Dictionary<int, AccessRule> sourcesRules,
-	Dictionary<int, AccessRule> blocksRules,
-	Dictionary<int, AccessRule> tagsRules,
-	UserAccessEntity? underlyingUser)
+	Dictionary<Guid, AccessRule>? groupsRules = null,
+	Dictionary<int, AccessRule>? sourcesRules = null,
+	Dictionary<int, AccessRule>? blocksRules = null,
+	Dictionary<int, AccessRule>? tagsRules = null,
+	UserAccessEntity? underlyingUser = null)
 {
 	public Guid Guid { get; private set; } = guid;
 
@@ -20,19 +20,39 @@ public class UserAccessEntity(
 
 	public AccessRule RootRule { get; private set; } = rootRule;
 
-	public Dictionary<Guid, AccessRule> GroupsRules { get; private set; } = groupsRules;
+	public Dictionary<Guid, AccessRule> GroupsRules { get; private set; } = groupsRules ?? [];
 
-	public Dictionary<int, AccessRule> SourcesRules { get; private set; } = sourcesRules;
+	public Dictionary<int, AccessRule> SourcesRules { get; private set; } = sourcesRules ?? [];
 
-	public Dictionary<int, AccessRule> BlocksRules { get; private set; } = blocksRules;
+	public Dictionary<int, AccessRule> BlocksRules { get; private set; } = blocksRules ?? [];
 
-	public Dictionary<int, AccessRule> TagsRules { get; private set; } = tagsRules;
+	public Dictionary<int, AccessRule> TagsRules { get; private set; } = tagsRules ?? [];
 
 	public UserAccessEntity? UnderlyingUser { get; private set; } = underlyingUser;
 
 	public void AddUnderlyingUser(UserAccessEntity underlyingUser)
 	{
 		UnderlyingUser = underlyingUser;
+	}
+
+	public void AddGroupRule(Guid groupGuid, AccessRule rule)
+	{
+		GroupsRules[groupGuid] = rule;
+	}
+
+	public void AddSourceRule(int sourceId, AccessRule rule)
+	{
+		SourcesRules[sourceId] = rule;
+	}
+
+	public void AddBlockRule(int blockId, AccessRule rule)
+	{
+		BlocksRules[blockId] = rule;
+	}
+
+	public void AddTagRule(int tagId, AccessRule rule)
+	{
+		TagsRules[tagId] = rule;
 	}
 
 	#region Проверки

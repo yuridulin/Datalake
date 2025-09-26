@@ -1,14 +1,14 @@
-﻿using Datalake.Database.InMemory.Stores.Derived;
+﻿using Datalake.Inventory.InMemory.Stores.Derived;
+using Datalake.InventoryService.Services.Auth;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
-using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Server.Controllers;
+namespace Datalake.InventoryService.Controllers;
 
 /// <inheritdoc />
 public class AuthController(

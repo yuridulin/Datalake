@@ -1,16 +1,16 @@
-﻿using Datalake.Database.InMemory.Repositories;
-using Datalake.Inventory;
+﻿using Datalake.Inventory;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Sources;
-using Datalake.Server.Services.Auth;
+using Datalake.InventoryService.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Datalake.InventoryService.InMemory.Repositories;
 
 namespace Datalake.InventoryService.Controllers;
 
 /// <inheritdoc />
 public class SourcesController(
-	DatalakeContext db,
+	InventoryEfContext db,
 	AuthenticationService authenticator,
 	SourcesMemoryRepository sourcesRepository) : SourcesControllerBase
 {

@@ -1,34 +1,23 @@
-using Datalake.Database;
-using Datalake.Database.Initialization;
-using Datalake.Database.InMemory.Repositories;
-using Datalake.Database.InMemory.Stores;
-using Datalake.Database.InMemory.Stores.Derived;
-using Datalake.Database.Repositories;
-using Datalake.Inventory;
-using Datalake.Inventory.InMemory.Stores.Derived;
-using Datalake.PrivateApi;
+using Datalake.Inventory.InMemory.Repositories;
+using Datalake.InventoryService.Database;
+using Datalake.InventoryService.Database.Repositories;
+using Datalake.InventoryService.Initialization;
+using Datalake.InventoryService.InMemory.Repositories;
+using Datalake.InventoryService.InMemory.Stores;
+using Datalake.InventoryService.Middlewares;
+using Datalake.InventoryService.Services.Auth;
+using Datalake.InventoryService.Services.Initialization;
+using Datalake.InventoryService.Services.Maintenance;
+using Datalake.InventoryService.Services.SettingsHandler;
 using Datalake.PrivateApi.Middlewares;
 using Datalake.PrivateApi.Settings;
 using Datalake.PrivateApi.Utils;
 using Datalake.PrivateApi.ValueObjects;
 using Datalake.PublicApi.Constants;
-using Datalake.PublicApi.Models.Tags;
-using Datalake.Server.Middlewares;
-using Datalake.Server.Services.Auth;
-using Datalake.Server.Services.Initialization;
-using Datalake.Server.Services.Maintenance;
-using Datalake.Server.Services.SettingsHandler;
-using Datalake.Server.Services.Test;
-using LinqToDB;
-using LinqToDB.AspNet;
-using LinqToDB.AspNet.Logging;
-using LinqToDB.Mapping;
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using Npgsql;
 using Serilog;
-using System.Text.Json;
 
 namespace Datalake.InventoryService;
 
@@ -90,7 +79,7 @@ public class Program
 		builder.Services
 			.AddSwaggerDocument((options, services) =>
 			{
-				options.Title = "Datalake " + nameof(Server);
+				options.Title = "Datalake " + nameof(InventoryService);
 				options.Version = "v" + Version;
 
 				options.SchemaSettings = new SystemTextJsonSchemaGeneratorSettings
@@ -114,25 +103,13 @@ public class Program
 
 		builder.Services
 			.AddNpgsqlDataSource(connectionString)
-			.AddDbContext<DatalakeEfContext>(options => options
-				.UseNpgsql(connectionString))
-			.AddLinqToDBContext<DatalakeContext>((provider, options) =>
-			{
-				var ms = new MappingSchema();
-				ms.SetConverter<string, List<TagThresholdInfo>>(json => JsonSerializer.Deserialize<List<TagThresholdInfo>>(json)!);
-
-				return options
-					.UseMappingSchema(ms)
-					.UseDefaultLogging(provider)
-					.UseTraceLevel(System.Diagnostics.TraceLevel.Verbose)
-					.UsePostgreSQL(connectionString);
-			});
+			.AddDbContext<InventoryEfContext>(options => options
+				.UseNpgsql(connectionString));
 
 		// хранилища данный
 		builder.Services.AddSingleton<DatalakeDataStore>(); // стейт-менеджер исходных данных
 		builder.Services.AddSingleton<DatalakeAccessStore>(); // стейт-менеджер зависимых данных
 		builder.Services.AddSingleton<DatalakeEnergoIdStore>(); // хранилище данных пользователей из EnergoId
-		builder.Services.AddSingleton<DatalakeSessionsStore>(); // хранилище сессий пользователей
 
 		// репозитории в памяти
 		builder.Services.AddScoped<SettingsMemoryRepository>();
@@ -144,7 +121,7 @@ public class Program
 		builder.Services.AddScoped<UsersMemoryRepository>();
 
 		// репозитории только БД
-		builder.Services.AddScoped<AuditRepository>();
+		builder.Services.AddScoped<LogsRepository>();
 
 
 		// мониторинг активности
@@ -185,25 +162,7 @@ public class Program
 		});
 
 		// общение между сервисами
-		var rabbitMqConfig = builder.Configuration.GetSection("RabbitMq");
-
-		builder.Services.AddMassTransit(config =>
-		{
-			config.UsingRabbitMq((context, cfg) =>
-			{
-				cfg.Host(rabbitMqConfig["Host"], "/", h =>
-				{
-					h.Username(rabbitMqConfig["User"] ?? string.Empty);
-					h.Password(rabbitMqConfig["Pass"] ?? string.Empty);
-				});
-
-				// Настройка отправки сообщения
-				cfg.Message<SomethingHappenedEvent>(m => m.SetEntityName("something-happened"));
-			});
-		});
-
-		builder.Services.AddSingleton<TestBackgroundService>();
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<TestBackgroundService>());
+		builder.Services.AddCustomMassTransit(builder.Configuration, typeof(Program).Assembly);
 
 		// сборка
 		var app = builder.Build();
@@ -253,16 +212,7 @@ public class Program
 			.UseMiddleware<SentryRequestBodyMiddleware>()
 			.EnsureCorsMiddlewareOnError();
 
-		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html")/*.Add(builder =>
-		{
-			builder.RequestDelegate = (httpContext) =>
-			{
-				httpContext.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
-				httpContext.Response.Headers.Append("Pragma", "no-cache");
-				httpContext.Response.Headers.Append("Expires", "0");
-				return Task.CompletedTask;
-			};
-		})*/;
+		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
 		app.MapControllerRoute(
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");

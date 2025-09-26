@@ -18,10 +18,10 @@ public class Program
 		var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage");
 		var configs = Path.Combine(storage, "config");
 		builder.Configuration
-			.SetBasePath(storage)
-			.AddJsonFile(Path.Combine(configs, $"appsettings.json"), optional: false, reloadOnChange: true)
-			.AddJsonFile(Path.Combine(configs, $"appsettings.{CurrentEnvironment}.json"), optional: true, reloadOnChange: true)
-			.AddJsonFile(Path.Combine(configs, $"ocelot.json"), optional: false, reloadOnChange: true);
+			.SetBasePath(configs)
+			.AddJsonFile($"appsettings.json", optional: false, reloadOnChange: true)
+			.AddJsonFile($"appsettings.{CurrentEnvironment}.json", optional: true, reloadOnChange: true)
+			.AddJsonFile($"ocelot.json", optional: false, reloadOnChange: true);
 
 		// прокси через ocelot и общий swagger
 		builder.Services.AddControllers();
@@ -52,7 +52,6 @@ public class Program
 				});
 			});
 		});
-
 
 		var app = builder.Build();
 

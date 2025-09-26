@@ -1,16 +1,16 @@
-﻿using Datalake.Database.InMemory.Repositories;
+﻿using Datalake.Inventory.InMemory.Repositories;
 using Datalake.Inventory;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.UserGroups;
-using Datalake.Server.Services.Auth;
+using Datalake.InventoryService.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Server.Controllers;
+namespace Datalake.InventoryService.Controllers;
 
 /// <inheritdoc />
 public class UserGroupsController(
-	DatalakeContext db,
+	InventoryEfContext db,
 	AuthenticationService authenticator,
 	UserGroupsMemoryRepository userGroupsRepository) : UserGroupsControllerBase
 {

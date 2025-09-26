@@ -1,5 +1,4 @@
 ﻿using Datalake.DataService.Abstractions;
-using Datalake.DataService.Consumers;
 using Datalake.DataService.Database;
 using Datalake.DataService.Database.Interfaces;
 using Datalake.DataService.Database.Repositories;
@@ -17,7 +16,6 @@ using Datalake.PrivateApi.ValueObjects;
 using LinqToDB;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using Serilog;
@@ -85,30 +83,7 @@ public class Program
 		builder.Services.AddHealthChecks();
 
 		// общение между сервисами
-		var rabbitMqConfig = builder.Configuration.GetSection("RabbitMq");
-
-		builder.Services.AddMassTransit(config =>
-		{
-			config.AddConsumer<SomethingHappenedConsumer>();
-
-			config.UsingRabbitMq((context, cfg) =>
-			{
-				cfg.Host(rabbitMqConfig["Host"], "/", h =>
-				{
-					h.Username(rabbitMqConfig["User"] ?? string.Empty);
-					h.Password(rabbitMqConfig["Pass"] ?? string.Empty);
-				});
-
-				// Настройка получения сообщений
-				cfg.ReceiveEndpoint("something-happened", e =>
-				{
-					e.ConfigureConsumer<SomethingHappenedConsumer>(context);
-
-					// Опционально: привязка к определенному exchange
-					e.Bind("something-happened");
-				});
-			});
-		});
+		builder.Services.AddCustomMassTransit(builder.Configuration, typeof(Program).Assembly);
 
 		// БД
 		var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";

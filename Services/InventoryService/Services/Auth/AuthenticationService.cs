@@ -1,13 +1,13 @@
-﻿using Datalake.Database.Functions;
-using Datalake.Database.InMemory.Stores;
-using Datalake.Inventory.InMemory.Stores.Derived;
+﻿using Datalake.Inventory.Functions;
+using Datalake.InventoryService.InMemory.Stores;
+using Datalake.PrivateApi.Entities;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 
-namespace Datalake.Server.Services.Auth;
+namespace Datalake.InventoryService.Services.Auth;
 
 /// TODO: Хоть и маловероятно, но есть рассинхрон между актуализацией разрешений. Нужно явно сохранять ссылку на исходный стейт
 
@@ -26,7 +26,7 @@ public class AuthenticationService(
 	/// <returns>Данные о пользователе</returns>
 	/// <exception cref="ForbiddenException">Сессия не открыта</exception>
 	/// <exception cref="NotFoundException">Сессия не найдена</exception>
-	public UserAuthInfo Authenticate(HttpContext context)
+	public UserAccessEntity Authenticate(HttpContext context)
 	{
 		if (context.Items.TryGetValue(AuthConstants.ContextSessionKey, out var sessionUserAuthInfo))
 		{
@@ -54,7 +54,7 @@ public class AuthenticationService(
 	/// </summary>
 	/// <param name="info">Данные о учетной записи</param>
 	/// <returns>Информация о пользователе, включая доступ</returns>
-	public UserAuthInfo Authenticate(UserEnergoIdInfo info)
+	public UserAccessEntity Authenticate(UserEnergoIdInfo info)
 	{
 		var user = dataStore.State.Users
 			.FirstOrDefault(x => x.EnergoIdGuid == info.EnergoIdGuid)
@@ -68,7 +68,7 @@ public class AuthenticationService(
 	/// </summary>
 	/// <param name="loginPass">Логин и пароль</param>
 	/// <returns>Информация о пользователе, включая доступ</returns>
-	public UserAuthInfo Authenticate(UserLoginPass loginPass)
+	public UserAccessEntity Authenticate(UserLoginPass loginPass)
 	{
 		var user = dataStore.State.Users
 			.Where(x => x.Type == UserType.Local)

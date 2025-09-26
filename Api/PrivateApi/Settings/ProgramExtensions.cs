@@ -1,12 +1,15 @@
 ﻿using Datalake.PrivateApi.Converters;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
+using System.Reflection;
 
 namespace Datalake.PrivateApi.Settings;
 
@@ -74,5 +77,39 @@ public static class ProgramExtensions
 				}
 			};
 		});
+	}
+
+	/// <summary>
+	/// Регистрирует MassTransit с RabbitMQ и автоматически подключает все Consumers из указанной сборки.
+	/// </summary>
+	public static IServiceCollection AddCustomMassTransit(
+			this IServiceCollection services,
+			IConfiguration configuration,
+			Assembly? consumersAssembly = null)
+	{
+		var rabbitMqConfig = configuration.GetSection("RabbitMq");
+
+		services.AddMassTransit(x =>
+		{
+			// Если сборка не указана — берём вызывающую
+			consumersAssembly ??= Assembly.GetCallingAssembly();
+
+			// Регистрируем всех consumers из сборки
+			x.AddConsumers(consumersAssembly);
+
+			x.UsingRabbitMq((context, cfg) =>
+			{
+				cfg.Host(rabbitMqConfig["Host"], "/", h =>
+				{
+					h.Username(rabbitMqConfig["User"] ?? string.Empty);
+					h.Password(rabbitMqConfig["Pass"] ?? string.Empty);
+				});
+
+				// Автоматически создаст endpoints для всех consumers
+				cfg.ConfigureEndpoints(context);
+			});
+		});
+
+		return services;
 	}
 }

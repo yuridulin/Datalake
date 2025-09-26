@@ -1,12 +1,12 @@
-﻿using Datalake.Database.Constants;
-using Datalake.Database.Extensions;
-using Datalake.Database.InMemory.Stores.Derived;
+﻿using Datalake.Inventory.Constants;
+using Datalake.Inventory.Extensions;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Auth;
-using Datalake.Server.Services.Maintenance;
+using Datalake.InventoryService.Services.Maintenance;
+using Datalake.Inventory.InMemory.Stores.Derived;
 
-namespace Datalake.Server.Middlewares;
+namespace Datalake.InventoryService.Middlewares;
 
 /// <summary>
 /// Обработчик, проверяющий аутентификацию

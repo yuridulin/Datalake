@@ -1,8 +1,8 @@
-﻿using Datalake.Database.Functions;
+﻿using Datalake.Inventory.Functions;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
-using Datalake.Server.Services.Auth;
-using Datalake.Server.Services.Maintenance;
+using Datalake.InventoryService.Services.Auth;
+using Datalake.InventoryService.Services.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.InventoryService.Controllers;

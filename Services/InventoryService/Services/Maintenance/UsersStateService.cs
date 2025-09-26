@@ -1,7 +1,7 @@
 ﻿using Datalake.PublicApi.Constants;
 using System.Collections.Concurrent;
 
-namespace Datalake.Server.Services.Maintenance;
+namespace Datalake.InventoryService.Services.Maintenance;
 
 /// <summary>
 /// Кэш последних появлений пользователей

@@ -21,11 +21,11 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<NoWarn>1701;1702;CS8524</NoWarn>
+		<NoWarn>1701;1702;CS8524;CS1591</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<NoWarn>1701;1702;CS8524</NoWarn>
+		<NoWarn>1701;1702;CS8524;CS1591</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -40,15 +40,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="linq2db.AspNet" Version="5.4.1" />
-		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.3" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.9" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
 		<PackageReference Include="Npgsql.DependencyInjection" Version="9.0.3" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
 		<PackageReference Include="NSwag.AspNetCore" Version="14.6.0" />
 		<PackageReference Include="Sentry.AspNetCore" Version="5.15.1" />
 	</ItemGroup>
@@ -58,7 +56,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Domains\InventoryDomain\InventoryDomain.csproj" />
+	  <ProjectReference Include="..\..\Api\PrivateApi\PrivateApi.csproj" />
+	  <ProjectReference Include="..\..\Api\PublicApi\PublicApi.csproj" />
 	</ItemGroup>
 
 </Project>

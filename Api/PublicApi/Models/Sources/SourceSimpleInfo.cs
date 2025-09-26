@@ -17,5 +17,5 @@ public class SourceSimpleInfo
 	/// Название источника
 	/// </summary>
 	[Required]
-	public required string Name { get; set; }
+	public string Name { get; set; } = string.Empty;
 }

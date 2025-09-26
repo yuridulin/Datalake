@@ -1,9 +1,8 @@
-﻿using Datalake.Database.InMemory.Stores;
-using Datalake.Inventory.InMemory.Stores.Derived;
-using Datalake.Server.Services.Auth;
-using Datalake.Server.Services.SettingsHandler;
+﻿using Datalake.InventoryService.InMemory.Stores;
+using Datalake.InventoryService.Services.Auth;
+using Datalake.InventoryService.Services.SettingsHandler;
 
-namespace Datalake.Server.Services.Initialization;
+namespace Datalake.InventoryService.Services.Initialization;
 
 /// <summary>
 /// Загрузка данных после запуска приложения

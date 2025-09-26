@@ -1,8 +1,7 @@
-﻿using Datalake.Database.InMemory.Models;
-using Datalake.Database.InMemory.Stores;
-using Datalake.InventoryService;
+﻿using Datalake.InventoryService.InMemory.Models;
+using Datalake.InventoryService.InMemory.Stores;
 
-namespace Datalake.Server.Services.SettingsHandler;
+namespace Datalake.InventoryService.Services.SettingsHandler;
 
 /// <summary>
 /// Сервис обновления настроек, отправляемых клиентам, по изменению данных

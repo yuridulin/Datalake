@@ -1,15 +1,15 @@
-﻿using Datalake.Database.InMemory.Repositories;
-using Datalake.Inventory;
+﻿using Datalake.Inventory;
+using Datalake.InventoryService.Services.Auth;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.AccessRights;
-using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Datalake.InventoryService.InMemory.Repositories;
 
-namespace Datalake.Server.Controllers;
+namespace Datalake.InventoryService.Controllers;
 
 /// <inheritdoc />
 public class AccessController(
-	DatalakeContext db,
+	InventoryEfContext db,
 	AuthenticationService authenticator,
 	AccessRightsMemoryRepository accessRepository) : AccessControllerBase
 {

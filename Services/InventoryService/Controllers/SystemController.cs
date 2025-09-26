@@ -1,23 +1,22 @@
-﻿using Datalake.Database.Functions;
-using Datalake.Database.InMemory.Repositories;
-using Datalake.Database.InMemory.Stores;
-using Datalake.Database.Repositories;
+﻿using Datalake.Inventory.Functions;
 using Datalake.Inventory;
-using Datalake.Inventory.InMemory.Stores.Derived;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.LogModels;
 using Datalake.PublicApi.Models.Settings;
-using Datalake.Server.Services.Auth;
+using Datalake.InventoryService.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Datalake.InventoryService.Database.Repositories;
+using Datalake.InventoryService.InMemory.Stores;
+using Datalake.InventoryService.InMemory.Repositories;
 
 namespace Datalake.InventoryService.Controllers;
 
 /// <inheritdoc />
 public class SystemController(
-	DatalakeContext db,
+	InventoryEfContext db,
 	AuthenticationService authenticator,
 	DatalakeDataStore dataStore,
 	DatalakeAccessStore accessStore,
@@ -46,7 +45,7 @@ public class SystemController(
 	{
 		var userAuth = authenticator.Authenticate(HttpContext);
 
-		return await AuditRepository.GetAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
+		return await LogsRepository.GetAsync(db, userAuth, lastId, firstId, take, source, block, tag, user, group, categories, types, author);
 	}
 
 

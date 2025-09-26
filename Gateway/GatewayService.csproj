@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.9" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="MMLib.SwaggerForOcelot" Version="9.0.0" />
     <PackageReference Include="Ocelot" Version="24.0.1" />
@@ -30,6 +30,11 @@
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="storage\logs\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api\PrivateApi\PrivateApi.csproj" />
+    <ProjectReference Include="..\Api\PublicApi\PublicApi.csproj" />
   </ItemGroup>
 
 </Project>
