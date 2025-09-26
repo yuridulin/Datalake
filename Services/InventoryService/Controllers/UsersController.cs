@@ -1,5 +1,5 @@
-﻿using Datalake.Database;
-using Datalake.Database.InMemory.Repositories;
+﻿using Datalake.Database.InMemory.Repositories;
+using Datalake.Inventory;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Users;
 using Datalake.Server.Services.Auth;

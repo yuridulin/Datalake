@@ -2,7 +2,7 @@
 using Datalake.PublicApi.Models.Auth;
 using System.Collections.Immutable;
 
-namespace Datalake.Database.InMemory.Models;
+namespace Datalake.Inventory.InMemory.Models;
 
 #pragma warning disable CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
 

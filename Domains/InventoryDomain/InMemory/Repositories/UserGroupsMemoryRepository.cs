@@ -5,6 +5,7 @@ using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Queries;
 using Datalake.Database.InMemory.Stores;
 using Datalake.Database.Tables;
+using Datalake.Inventory;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;

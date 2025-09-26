@@ -1,6 +1,6 @@
 ﻿using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Stores;
-using Datalake.Database.InMemory.Stores.Derived;
+using Datalake.Inventory.InMemory.Stores.Derived;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;

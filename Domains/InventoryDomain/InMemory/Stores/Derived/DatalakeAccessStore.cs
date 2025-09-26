@@ -1,9 +1,11 @@
 ﻿using Datalake.Database.Abstractions;
-using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Models;
+using Datalake.Database.InMemory.Stores;
+using Datalake.Inventory.Functions;
+using Datalake.Inventory.InMemory.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Datalake.Database.InMemory.Stores.Derived;
+namespace Datalake.Inventory.InMemory.Stores.Derived;
 
 /// <summary>
 /// Хранилище рассчитанных прав доступа данных

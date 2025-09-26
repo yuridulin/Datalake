@@ -1,5 +1,6 @@
 ﻿using Datalake.Database.Functions;
 using Datalake.Database.Tables;
+using Datalake.Inventory;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;

@@ -1,5 +1,6 @@
 ﻿using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Stores;
+using Datalake.InventoryService;
 
 namespace Datalake.Server.Services.SettingsHandler;
 

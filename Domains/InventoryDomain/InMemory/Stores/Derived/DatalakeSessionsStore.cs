@@ -1,5 +1,7 @@
 ﻿using Datalake.Database.Extensions;
 using Datalake.Database.InMemory.Models;
+using Datalake.Inventory;
+using Datalake.Inventory.InMemory.Stores.Derived;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;

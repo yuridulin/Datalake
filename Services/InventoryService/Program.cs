@@ -1,22 +1,22 @@
 using Datalake.Database;
-using Datalake.Database.Constants;
-using Datalake.Database.Converters;
-using Datalake.Database.Extensions;
-using Datalake.Database.Functions;
 using Datalake.Database.Initialization;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.InMemory.Stores;
 using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Repositories;
+using Datalake.Inventory;
+using Datalake.Inventory.InMemory.Stores.Derived;
 using Datalake.PrivateApi;
+using Datalake.PrivateApi.Middlewares;
+using Datalake.PrivateApi.Settings;
+using Datalake.PrivateApi.Utils;
+using Datalake.PrivateApi.ValueObjects;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.Server.Middlewares;
 using Datalake.Server.Services.Auth;
-using Datalake.Server.Services.Collection;
 using Datalake.Server.Services.Initialization;
 using Datalake.Server.Services.Maintenance;
-using Datalake.Server.Services.Receiver;
 using Datalake.Server.Services.SettingsHandler;
 using Datalake.Server.Services.Test;
 using LinqToDB;
@@ -24,18 +24,13 @@ using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
 using LinqToDB.Mapping;
 using MassTransit;
-using Microsoft.AspNetCore.Http.Json;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using NJsonSchema.Generation;
 using Npgsql;
 using Serilog;
-using Serilog.Events;
-using System.Reflection;
 using System.Text.Json;
 
-namespace Datalake.Server;
+namespace Datalake.InventoryService;
 
 /// <summary>
 /// Datalake Server
@@ -43,12 +38,10 @@ namespace Datalake.Server;
 public class Program
 {
 	internal static string WebRootPath { get; set; } = string.Empty;
+
 	internal static string CurrentEnvironment { get; set; } = string.Empty;
 
-	internal static string Version { get; set; } =
-		Environment.GetEnvironmentVariable("APP_VERSION")
-			?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
-			?? "";
+	internal static VersionValue Version { get; set; } = new();
 
 	/// <summary>
 	/// Старт Datalake Server
@@ -56,7 +49,7 @@ public class Program
 	public static async Task Main(string[] args)
 	{
 		// дефолт сообщение, чтобы увидеть факт запуска
-		Console.WriteLine($"Запуск Datalake: v{Version}");
+		Console.WriteLine($"{nameof(InventoryService)}: v{Version.Full()}");
 
 		// настройка
 		var builder = WebApplication.CreateBuilder(args);
@@ -85,30 +78,18 @@ public class Program
 		builder.Host.UseSerilog();
 
 		// Json
-		builder.Services.Configure<JsonOptions>(options =>
-		{
-			options.SerializerOptions.NumberHandling = Json.JsonSerializerOptions.NumberHandling;
-			options.SerializerOptions.PropertyNamingPolicy = Json.JsonSerializerOptions.PropertyNamingPolicy;
-			options.SerializerOptions.Converters.Add(new NanToNullFloatConverter());
-		});
+		builder.Services.ConfigureCustomJsonOptions();
 
 		// MVC
 		builder.Services
 			.AddControllers()
 			.AddControllersAsServices()
-			.AddJsonOptions(options =>
-			{
-				options.JsonSerializerOptions.NumberHandling = Json.JsonSerializerOptions.NumberHandling;
-				options.JsonSerializerOptions.PropertyNamingPolicy = Json.JsonSerializerOptions.PropertyNamingPolicy;
-				options.JsonSerializerOptions.Converters.Add(new NanToNullFloatConverter());
-			});
+			.AddCustomJsonOptions();
 
 		// Swagger
 		builder.Services
 			.AddSwaggerDocument((options, services) =>
 			{
-				var jsonOpts = services.GetRequiredService<IOptions<JsonOptions>>().Value;
-
 				options.Title = "Datalake " + nameof(Server);
 				options.Version = "v" + Version;
 
@@ -117,7 +98,7 @@ public class Program
 					SchemaType = NJsonSchema.SchemaType.OpenApi3,
 					GenerateEnumMappingDescription = true,
 					UseXmlDocumentation = true,
-					SerializerOptions = jsonOpts.SerializerOptions,
+					SerializerOptions = JsonSettings.JsonSerializerOptions,
 				};
 			})
 			.AddEndpointsApiExplorer();
@@ -127,14 +108,10 @@ public class Program
 		NpgsqlConnection.GlobalTypeMapper.EnableDynamicJson();
 #pragma warning restore CS0618
 
-		// получаем строку подключения
-		var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
-
-		// заполняем все указанные в ней переменные окружения реальными значениями
-		connectionString = EnvExpander.FillEnvVariables(connectionString);
-		Log.Debug("Итоговая строка подключения к БД: " + connectionString);
-
 		// БД
+		var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
+		connectionString = EnvExpander.FillEnvVariables(connectionString);
+
 		builder.Services
 			.AddNpgsqlDataSource(connectionString)
 			.AddDbContext<DatalakeEfContext>(options => options
@@ -154,9 +131,7 @@ public class Program
 		// хранилища данный
 		builder.Services.AddSingleton<DatalakeDataStore>(); // стейт-менеджер исходных данных
 		builder.Services.AddSingleton<DatalakeAccessStore>(); // стейт-менеджер зависимых данных
-		builder.Services.AddSingleton<DatalakeCurrentValuesStore>(); // кэш последних значений
 		builder.Services.AddSingleton<DatalakeEnergoIdStore>(); // хранилище данных пользователей из EnergoId
-		builder.Services.AddSingleton<DatalakeCachedTagsStore>(); // хранилище кэша тегов
 		builder.Services.AddSingleton<DatalakeSessionsStore>(); // хранилище сессий пользователей
 
 		// репозитории в памяти
@@ -170,23 +145,10 @@ public class Program
 
 		// репозитории только БД
 		builder.Services.AddScoped<AuditRepository>();
-		builder.Services.AddScoped<ValuesRepository>();
 
-		// сервис получения данных
-		builder.Services.AddSingleton<ReceiverService>();
 
 		// мониторинг активности
-		builder.Services.AddSingleton<SourcesStateService>();
 		builder.Services.AddSingleton<UsersStateService>();
-		builder.Services.AddSingleton<TagsStateService>();
-		builder.Services.AddSingleton<RequestsStateService>();
-		builder.Services.AddSingleton<TagsReceiveStateService>();
-
-		// система сбора данных
-		builder.Services.AddSingleton<CollectorWriter>();
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<CollectorWriter>());
-		builder.Services.AddHostedService<CollectorProcessor>();
-		builder.Services.AddSingleton<CollectorFactory>();
 
 		// работа с пользователями
 		builder.Services.AddSingleton<AuthenticationService>();
@@ -218,7 +180,7 @@ public class Program
 			o.Environment = CurrentEnvironment;
 			o.Dsn = sentrySection[nameof(o.Dsn)];
 			o.Debug = bool.TryParse(sentrySection[nameof(o.Debug)], out var dbg) && dbg;
-			o.Release = $"{builder.Environment.ApplicationName}@{Version.ShortVersion()}";
+			o.Release = $"{builder.Environment.ApplicationName}@{Version.Short()}";
 			o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
 		});
 
@@ -271,39 +233,7 @@ public class Program
 					}
 				}
 			})
-			.UseSerilogRequestLogging(options =>
-			{
-				// шаблон одного сообщения на запрос
-				options.MessageTemplate = "Запрос API {Method} {Controller}.{Action}: статус {StatusCode} за {Elapsed:0} мс";
-
-				// если упало — логируем Error, иначе Information
-				options.GetLevel = (httpContext, elapsed, ex) =>
-				httpContext.Request.Method == "OPTIONS"
-					? LogEventLevel.Verbose
-					: ex != null || httpContext.Response.StatusCode >= 500
-						? LogEventLevel.Warning
-						: LogEventLevel.Debug;
-
-				options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
-				{
-					var endpoint = httpContext.GetEndpoint();
-					var routePattern = endpoint?.Metadata.GetMetadata<RouteNameMetadata>();
-					var actionDescriptor = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>();
-
-					diagnosticContext.Set("Method", httpContext.Request.Method);
-
-					if (actionDescriptor != null)
-					{
-						diagnosticContext.Set("Controller", actionDescriptor.ControllerName);
-						diagnosticContext.Set("Action", actionDescriptor.ActionName);
-					}
-					else
-					{
-						diagnosticContext.Set("Controller", "?");
-						diagnosticContext.Set("Action", httpContext.Request.Path);
-					}
-				};
-			})
+			.UseCustomSerilog()
 			.UseHttpsRedirection()
 			.UseRouting()
 			.UseCors(policy =>
@@ -346,7 +276,7 @@ public class Program
 		await externalDb.DoAsync();
 
 		// отправка сообщения в Sentry, чтобы сразу засветить новый релиз
-		string greetings = $"🚀 Приложение запущено. Релиз: {builder.Environment.ApplicationName}@{Version.ShortVersion()}";
+		string greetings = $"🚀 Приложение {nameof(InventoryService)} запущено. Релиз: {builder.Environment.ApplicationName}@{Version.Short()}";
 		SentrySdk.CaptureMessage(greetings, SentryLevel.Info);
 		Log.Information(greetings);
 

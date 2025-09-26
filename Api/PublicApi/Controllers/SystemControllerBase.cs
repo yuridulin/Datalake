@@ -106,13 +106,6 @@ public abstract class SystemControllerBase : ControllerBase
 	public abstract Task<ActionResult> RestartStateAsync();
 
 	/// <summary>
-	/// <see cref="HttpMethod.Put" />: Перестроение кэша текущих (последних) значений
-	/// </summary>
-	/// <returns></returns>
-	[HttpPut(RestartValues)]
-	public abstract Task<ActionResult> RestartValuesAsync();
-
-	/// <summary>
 	/// <see cref="HttpMethod.Get" />: Получение списка вычисленных прав доступа для каждого пользователя
 	/// </summary>
 	[HttpGet(Access)]

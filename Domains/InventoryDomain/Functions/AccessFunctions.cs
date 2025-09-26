@@ -1,8 +1,9 @@
 ﻿using Datalake.Database.InMemory.Models;
+using Datalake.Inventory.InMemory.Models;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 
-namespace Datalake.Database.Functions;
+namespace Datalake.Inventory.Functions;
 
 /// <summary>
 /// Функции предварительного расчета прав доступа для пользователей

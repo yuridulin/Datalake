@@ -15,6 +15,23 @@
         "datalake-events": "StartDebugging",
         "datalake-client": "DoNotStart"
       }
+    },
+    "Data": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "datalake-data",
+      "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}/swagger",
+      "serviceActions": {
+        "datalake-client": "DoNotStart",
+        "datalake-data": "StartDebugging",
+        "datalake-events": "DoNotStart",
+        "datalake-gateway": "DoNotStart",
+        "datalake-inventory": "DoNotStart",
+        "datalake-keycloak": "DoNotStart",
+        "datalake-postgres": "StartWithoutDebugging",
+        "datalake-rabbitmq": "StartWithoutDebugging"
+      }
     }
   }
 }

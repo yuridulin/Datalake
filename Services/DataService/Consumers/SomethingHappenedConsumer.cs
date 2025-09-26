@@ -1,7 +1,7 @@
-﻿using MassTransit;
-using Datalake.PrivateApi;
+﻿using Datalake.PrivateApi;
+using MassTransit;
 
-namespace Datalake.Collector.Consumers;
+namespace Datalake.DataService.Consumers;
 
 public class SomethingHappenedConsumer(
 	ILogger<SomethingHappenedConsumer> logger) : IConsumer<SomethingHappenedEvent>

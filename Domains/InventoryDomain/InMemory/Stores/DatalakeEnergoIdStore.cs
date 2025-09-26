@@ -1,4 +1,5 @@
 using Datalake.Database.InMemory.Models;
+using Datalake.Inventory;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

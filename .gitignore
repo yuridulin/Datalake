@@ -368,7 +368,7 @@ dist/
 /Gateway/wwwroot/startup.js
 desktop.ini
 .idea/*
-/Services/InventoryService/Sentry
+Sentry/
 /Docker/postgres/database
 /Apps/Client/datalake/tsconfig.app.tsbuildinfo
 /Apps/Client/datalake/tsconfig.node.tsbuildinfo

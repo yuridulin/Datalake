@@ -1,6 +1,6 @@
-﻿using Datalake.Database.Functions;
-using Datalake.Database.InMemory.Models;
+﻿using Datalake.Database.InMemory.Models;
 using Datalake.Database.InMemory.Stores;
+using Datalake.PrivateApi.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace Datalake.Database.Abstractions;

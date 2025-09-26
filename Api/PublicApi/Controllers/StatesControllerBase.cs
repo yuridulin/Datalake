@@ -50,41 +50,5 @@ public abstract class StatesControllerBase : ControllerBase
 	[HttpGet(Users)]
 	public abstract Task<ActionResult<Dictionary<Guid, DateTime>>> GetUsersAsync();
 
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet(Sources)]
-	public abstract Task<ActionResult<Dictionary<int, SourceStateInfo>>> GetSourcesAsync();
-
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet(Tags)]
-	public abstract Task<ActionResult<Dictionary<int, Dictionary<string, DateTime>>>> GetTagsAsync();
-
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Информация о подключении к источникам данных
-	/// </summary>
-	/// <returns></returns>
-	[HttpGet(Tag)]
-	public abstract Task<ActionResult<Dictionary<string, DateTime>>> GetTagAsync(
-		[BindRequired, FromRoute] int id);
-
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение метрик запросов на чтение
-	/// </summary>
-	[HttpGet(Values)]
-	public abstract Task<ActionResult<KeyValuePair<ValuesRequestKey, ValuesRequestUsageInfo>[]>> GetValuesAsync();
-
-	/// <summary>
-	/// <see cref="HttpMethod.Post"/>: Получение ошибок получения значений тегов
-	/// </summary>
-	/// <param name="identifiers">Идентификаторы тегов</param>
-	[HttpPost(TagsReceive)]
-	public abstract Task<ActionResult<Dictionary<int, TagReceiveState?>>> GetTagsReceiveAsync(
-		[FromBody] int[]? identifiers);
-
 	#endregion Методы
 }

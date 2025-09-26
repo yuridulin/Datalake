@@ -11,7 +11,7 @@ using LinqToDB;
 using LinqToDB.Common;
 using LinqToDB.Data;
 
-namespace Datalake.Database;
+namespace Datalake.Inventory;
 
 /// <summary>
 /// Контекст для работы с базой данных

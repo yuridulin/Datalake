@@ -1,9 +1,9 @@
-﻿using Datalake.Database;
-using Datalake.Database.Functions;
+﻿using Datalake.Database.Functions;
 using Datalake.Database.InMemory.Repositories;
 using Datalake.Database.InMemory.Stores;
-using Datalake.Database.InMemory.Stores.Derived;
 using Datalake.Database.Repositories;
+using Datalake.Inventory;
+using Datalake.Inventory.InMemory.Stores.Derived;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
@@ -13,7 +13,7 @@ using Datalake.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Server.Controllers;
+namespace Datalake.InventoryService.Controllers;
 
 /// <inheritdoc />
 public class SystemController(
@@ -21,7 +21,6 @@ public class SystemController(
 	AuthenticationService authenticator,
 	DatalakeDataStore dataStore,
 	DatalakeAccessStore accessStore,
-	DatalakeCurrentValuesStore valuesStore,
 	SettingsMemoryRepository settingsRepository) : SystemControllerBase
 {
 	/// <inheritdoc />
@@ -82,18 +81,6 @@ public class SystemController(
 		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
 
 		await dataStore.ReloadStateAsync();
-
-		return NoContent();
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult> RestartValuesAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-
-		await valuesStore.ReloadValuesAsync();
 
 		return NoContent();
 	}

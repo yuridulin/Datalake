@@ -100,25 +100,5 @@ public abstract class SourcesControllerBase : ControllerBase
 	public abstract Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int id);
 
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение доступных значений источника
-	/// </summary>
-	/// <param name="id">Идентификатор источника</param>
-	/// <returns>Список данных источника</returns>
-	/// <exception cref="NotFoundException"></exception>
-	[HttpGet(GetItems)]
-	public abstract Task<ActionResult<SourceItemInfo[]>> GetItemsAsync(
-		[BindRequired, FromRoute] int id);
-
-	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение доступных значений и связанных тегов источника
-	/// </summary>
-	/// <param name="id">Идентификатор источника</param>
-	/// <returns>Список данных источника</returns>
-	/// <exception cref="NotFoundException"></exception>
-	[HttpGet(GetItemsWithTags)]
-	public abstract Task<ActionResult<SourceEntryInfo[]>> GetItemsWithTagsAsync(
-		[BindRequired, FromRoute] int id);
-
 	#endregion Методы
 }

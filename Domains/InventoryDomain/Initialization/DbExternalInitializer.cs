@@ -1,6 +1,6 @@
 ﻿using Datalake.Database.Constants;
-using Datalake.Database.Functions;
 using Datalake.Database.Views;
+using Datalake.PrivateApi.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Npgsql;

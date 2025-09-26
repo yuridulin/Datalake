@@ -31,21 +31,17 @@
 	<ItemGroup>
 	  <Compile Remove="Abstractions\**" />
 	  <Compile Remove="Sentry\**" />
-	  <Compile Remove="Services\Collection\Models\**" />
 	  <Content Remove="Abstractions\**" />
 	  <Content Remove="Sentry\**" />
-	  <Content Remove="Services\Collection\Models\**" />
 	  <EmbeddedResource Remove="Abstractions\**" />
 	  <EmbeddedResource Remove="Sentry\**" />
-	  <EmbeddedResource Remove="Services\Collection\Models\**" />
 	  <None Remove="Abstractions\**" />
 	  <None Remove="Sentry\**" />
-	  <None Remove="Services\Collection\Models\**" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="linq2db.AspNet" Version="5.4.1" />
-		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.2" />
+		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.3" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.9" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
 			<PrivateAssets>all</PrivateAssets>
@@ -55,7 +51,6 @@
 		<PackageReference Include="Npgsql.DependencyInjection" Version="9.0.3" />
 		<PackageReference Include="NSwag.AspNetCore" Version="14.6.0" />
 		<PackageReference Include="Sentry.AspNetCore" Version="5.15.1" />
-		<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
