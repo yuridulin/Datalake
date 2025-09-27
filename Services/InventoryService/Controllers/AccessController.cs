@@ -1,20 +1,16 @@
-﻿using Datalake.Inventory;
+﻿using Datalake.InventoryService.Services;
 using Datalake.InventoryService.Services.Auth;
-using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.AccessRights;
 using Microsoft.AspNetCore.Mvc;
-using Datalake.InventoryService.InMemory.Repositories;
 
 namespace Datalake.InventoryService.Controllers;
 
 /// <inheritdoc />
 public class AccessController(
-	InventoryEfContext db,
 	AuthenticationService authenticator,
-	AccessRightsMemoryRepository accessRepository) : AccessControllerBase
+	AccessRightsService accessRightsService) : ControllerBase
 {
-	/// <inheritdoc />
-	public override async Task<ActionResult<AccessRightsInfo[]>> GetAsync(
+	/*public async Task<ActionResult<AccessRightsInfo[]>> GetAsync(
 		[FromQuery] Guid? user = null,
 		[FromQuery] Guid? userGroup = null,
 		[FromQuery] int? source = null,
@@ -30,16 +26,13 @@ public class AccessController(
 			sourceId: source,
 			blockId: block,
 			tagId: tag));
-	}
+	}*/
 
-	/// <inheritdoc />
-	public override async Task<ActionResult> ApplyChangesAsync(
+	public async Task<ActionResult<bool>> ApplyChangesAsync(
 		[FromBody] AccessRightsApplyRequest request)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		await accessRepository.ApplyChangesAsync(db, user, request);
-
-		return NoContent();
+		return Ok(await accessRightsService.ApplyChangesAsync(user, request));
 	}
 }

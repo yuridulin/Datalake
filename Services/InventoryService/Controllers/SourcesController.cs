@@ -5,6 +5,7 @@ using Datalake.InventoryService.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Datalake.InventoryService.InMemory.Repositories;
+using Datalake.InventoryService.Database.Repositories;
 
 namespace Datalake.InventoryService.Controllers;
 

@@ -1,5 +1,6 @@
-﻿using Datalake.InventoryService.Database;
-using Datalake.InventoryService.Database.Interfaces;
+﻿using Datalake.InventoryService.Database.Interfaces;
+using Datalake.InventoryService.Database.Tables;
+using Datalake.PrivateApi.Attributes;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Blocks;
@@ -12,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.InventoryService.Database.Repositories;
 
+[Scoped]
 public class LogsRepository(InventoryEfContext db) : ILogsRepository
 {
 	public async Task<IEnumerable<LogInfo>> GetAsync(
@@ -88,49 +90,64 @@ public class LogsRepository(InventoryEfContext db) : ILogsRepository
 			query = query.Take(take.Value);
 
 		// Проекция в LogInfo
-		return await query.Select(log => new LogInfo
-		{
-			Id = log.Id,
-			Category = log.Category,
-			DateString = log.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
-			Text = log.Text,
-			Type = log.Type,
-			Details = log.Details,
-			Author = log.Author == null ? null : new UserSimpleInfo
+		return await query
+			.Select(log => new LogInfo
 			{
-				Guid = log.Author.Guid,
-				FullName = log.Author.FullName ?? log.Author.Login ?? string.Empty,
-			},
-			AffectedSource = log.AffectedSource == null ? null : new SourceSimpleInfo
-			{
-				Id = log.AffectedSource.Id,
-				Name = log.AffectedSource.Name,
-			},
-			AffectedBlock = log.AffectedBlock == null ? null : new BlockSimpleInfo
-			{
-				Id = log.AffectedBlock.Id,
-				Guid = log.AffectedBlock.GlobalId,
-				Name = log.AffectedBlock.Name,
-			},
-			AffectedTag = log.AffectedTag == null ? null : new TagSimpleInfo
-			{
-				Id = log.AffectedTag.Id,
-				Guid = log.AffectedTag.GlobalGuid,
-				Name = log.AffectedTag.Name,
-				Type = log.AffectedTag.Type,
-				Resolution = log.AffectedTag.Resolution,
-				SourceType = log.AffectedTag.Source == null ? SourceType.NotSet : log.AffectedTag.Source.Type,
-			},
-			AffectedUser = log.AffectedUser == null ? null : new UserSimpleInfo
-			{
-				Guid = log.AffectedUser.Guid,
-				FullName = log.AffectedUser.FullName ?? log.AffectedUser.Login ?? string.Empty,
-			},
-			AffectedUserGroup = log.AffectedUserGroup == null ? null : new UserGroupSimpleInfo
-			{
-				Guid = log.AffectedUserGroup.Guid,
-				Name = log.AffectedUserGroup.Name,
-			},
-		}).ToArrayAsync();
+				Id = log.Id,
+				Category = log.Category,
+				DateString = log.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
+				Text = log.Text,
+				Type = log.Type,
+				Details = log.Details,
+				Author = log.Author == null ? null : new UserSimpleInfo
+				{
+					Guid = log.Author.Guid,
+					FullName = log.Author.FullName ?? log.Author.Login ?? string.Empty,
+				},
+				AffectedSource = log.AffectedSource == null ? null : new SourceSimpleInfo
+				{
+					Id = log.AffectedSource.Id,
+					Name = log.AffectedSource.Name,
+				},
+				AffectedBlock = log.AffectedBlock == null ? null : new BlockSimpleInfo
+				{
+					Id = log.AffectedBlock.Id,
+					Guid = log.AffectedBlock.GlobalId,
+					Name = log.AffectedBlock.Name,
+				},
+				AffectedTag = log.AffectedTag == null ? null : new TagSimpleInfo
+				{
+					Id = log.AffectedTag.Id,
+					Guid = log.AffectedTag.GlobalGuid,
+					Name = log.AffectedTag.Name,
+					Type = log.AffectedTag.Type,
+					Resolution = log.AffectedTag.Resolution,
+					SourceType = log.AffectedTag.Source == null ? SourceType.NotSet : log.AffectedTag.Source.Type,
+				},
+				AffectedUser = log.AffectedUser == null ? null : new UserSimpleInfo
+				{
+					Guid = log.AffectedUser.Guid,
+					FullName = log.AffectedUser.FullName ?? log.AffectedUser.Login ?? string.Empty,
+				},
+				AffectedUserGroup = log.AffectedUserGroup == null ? null : new UserGroupSimpleInfo
+				{
+					Guid = log.AffectedUserGroup.Guid,
+					Name = log.AffectedUserGroup.Name,
+				},
+			})
+			.ToArrayAsync();
+	}
+
+	public async Task AddSourceLogAsync(Guid userGuid, int sourceId, string message, string? details = null)
+	{
+		await db.Logs.AddAsync(new Log(
+			LogCategory.Source,
+			LogType.Success,
+			userGuid,
+			message,
+			details,
+			sourceId: sourceId));
+
+		await db.SaveChangesAsync();
 	}
 }
