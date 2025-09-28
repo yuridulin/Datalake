@@ -1,14 +1,11 @@
-using Datalake.Inventory.InMemory.Repositories;
-using Datalake.InventoryService.Database;
-using Datalake.InventoryService.Database.Repositories;
-using Datalake.InventoryService.Initialization;
-using Datalake.InventoryService.InMemory.Repositories;
-using Datalake.InventoryService.InMemory.Stores;
-using Datalake.InventoryService.Middlewares;
-using Datalake.InventoryService.Services.Auth;
-using Datalake.InventoryService.Services.Initialization;
-using Datalake.InventoryService.Services.Maintenance;
-using Datalake.InventoryService.Services.SettingsHandler;
+using Datalake.InventoryService.Api.Services;
+using Datalake.InventoryService.Application.Features.Audit.Queries.Audit;
+using Datalake.InventoryService.Application.Interfaces;
+using Datalake.InventoryService.Infrastructure.Cache.EnergoId;
+using Datalake.InventoryService.Infrastructure.Cache.Inventory;
+using Datalake.InventoryService.Infrastructure.Cache.UserAccess;
+using Datalake.InventoryService.Infrastructure.Database;
+using Datalake.InventoryService.Infrastructure.Database.Initialization;
 using Datalake.PrivateApi.Middlewares;
 using Datalake.PrivateApi.Settings;
 using Datalake.PrivateApi.Utils;
@@ -16,8 +13,8 @@ using Datalake.PrivateApi.ValueObjects;
 using Datalake.PublicApi.Constants;
 using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
-using Npgsql;
 using Serilog;
+using System.Reflection;
 
 namespace Datalake.InventoryService;
 
@@ -92,11 +89,6 @@ public class Program
 			})
 			.AddEndpointsApiExplorer();
 
-		// костыль, без которого LinqToDB не хочет работать с JSONB. Я не нашел, как передать эту настройку иначе
-#pragma warning disable CS0618
-		NpgsqlConnection.GlobalTypeMapper.EnableDynamicJson();
-#pragma warning restore CS0618
-
 		// БД
 		var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
 		connectionString = EnvExpander.FillEnvVariables(connectionString);
@@ -107,22 +99,20 @@ public class Program
 				.UseNpgsql(connectionString));
 
 		// хранилища данный
-		builder.Services.AddSingleton<DatalakeDataStore>(); // стейт-менеджер исходных данных
-		builder.Services.AddSingleton<DatalakeAccessStore>(); // стейт-менеджер зависимых данных
-		builder.Services.AddSingleton<DatalakeEnergoIdStore>(); // хранилище данных пользователей из EnergoId
+		builder.Services.AddSingleton<InventoryCacheStore>(); // кэш состояния схемы данных
+		builder.Services.AddSingleton<UserAccessCacheStore>(); // кэш вычисляемых прав доступа
+		builder.Services.AddSingleton<EnergoIdCacheStore>(); // кэш данных пользователей EnergoId, обновляет вьюшку
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<EnergoIdCacheStore>());
 
-		// репозитории в памяти
-		builder.Services.AddScoped<SettingsMemoryRepository>();
-		builder.Services.AddScoped<AccessRightsMemoryRepository>();
-		builder.Services.AddScoped<BlocksMemoryRepository>();
-		builder.Services.AddScoped<SourcesMemoryRepository>();
-		builder.Services.AddScoped<TagsMemoryRepository>();
-		builder.Services.AddScoped<UserGroupsMemoryRepository>();
-		builder.Services.AddScoped<UsersMemoryRepository>();
+		// черная магия для регистрации обработчиков
+		builder.Services.Scan(scan => scan
+			.FromAssemblies(Assembly.GetExecutingAssembly())
+			.AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
+				.AsImplementedInterfaces()
+				.WithScopedLifetime());
 
 		// репозитории только БД
-		builder.Services.AddScoped<LogsRepository>();
-
+		builder.Services.AddScoped<GetAuditQueryHandler>();
 
 		// мониторинг активности
 		builder.Services.AddSingleton<UsersStateService>();
@@ -134,15 +124,11 @@ public class Program
 		builder.Services.AddSingleton<SettingsHandlerService>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<SettingsHandlerService>());
 
-		// обновление данных из EnergoId
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<DatalakeEnergoIdStore>());
-
 		// настройка БД
 		builder.Services.AddSingleton<DbInitializer>();
 		builder.Services.AddSingleton<DbExternalInitializer>();
 
 		// обработчики
-		builder.Services.AddTransient<AuthMiddleware>();
 		builder.Services.AddTransient<SentryRequestBodyMiddleware>();
 
 		// инициализатор работы
@@ -208,7 +194,6 @@ public class Program
 						AuthConstants.UnderlyingUserGuidHeader,
 					]);
 			})
-			.UseMiddleware<AuthMiddleware>()
 			.UseMiddleware<SentryRequestBodyMiddleware>()
 			.EnsureCorsMiddlewareOnError();
 

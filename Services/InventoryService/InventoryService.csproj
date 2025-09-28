@@ -29,17 +29,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Abstractions\**" />
 	  <Compile Remove="Sentry\**" />
-	  <Content Remove="Abstractions\**" />
 	  <Content Remove="Sentry\**" />
-	  <EmbeddedResource Remove="Abstractions\**" />
 	  <EmbeddedResource Remove="Sentry\**" />
-	  <None Remove="Abstractions\**" />
 	  <None Remove="Sentry\**" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="FluentValidation" Version="12.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -48,10 +45,34 @@
 		<PackageReference Include="Npgsql.DependencyInjection" Version="9.0.3" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
 		<PackageReference Include="NSwag.AspNetCore" Version="14.6.0" />
+		<PackageReference Include="Scrutor" Version="6.1.0" />
 		<PackageReference Include="Sentry.AspNetCore" Version="5.15.1" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Application\Features\AccessRules\Commands\ChangeUserRules\" />
+	  <Folder Include="Application\Features\AccessRules\Commands\ChangeSourceRules\" />
+	  <Folder Include="Application\Features\AccessRules\Commands\ChangeTagRules\" />
+	  <Folder Include="Application\Features\AccessRules\Commands\ChangeUserGroupRules\" />
+	  <Folder Include="Application\Features\Settings\Commands\" />
+	  <Folder Include="Application\Features\Settings\Queries\" />
+	  <Folder Include="Application\Features\Sources\Commands\CreateSource\" />
+	  <Folder Include="Application\Features\Sources\Commands\UpdateSource\" />
+	  <Folder Include="Application\Features\Sources\Commands\DeleteSource\" />
+	  <Folder Include="Application\Features\Sources\Queries\" />
+	  <Folder Include="Application\Features\Tags\Commands\CreateTag\" />
+	  <Folder Include="Application\Features\Tags\Commands\UpdateTag\" />
+	  <Folder Include="Application\Features\Tags\Commands\DeleteTag\" />
+	  <Folder Include="Application\Features\Tags\Queries\" />
+	  <Folder Include="Application\Features\UserGroups\Commands\CreateUserGroup\" />
+	  <Folder Include="Application\Features\UserGroups\Commands\UpdateUserGroup\" />
+	  <Folder Include="Application\Features\UserGroups\Commands\DeleteUserGroup\" />
+	  <Folder Include="Application\Features\UserGroups\Queries\" />
+	  <Folder Include="Application\Features\Users\Commands\CreateUser\" />
+	  <Folder Include="Application\Features\Users\Commands\UpdateUser\" />
+	  <Folder Include="Application\Features\Users\Commands\DeleteUser\" />
+	  <Folder Include="Application\Features\Users\Queries\" />
+	  <Folder Include="storage\logs\" />
 	  <Folder Include="storage\logs\" />
 	</ItemGroup>
 

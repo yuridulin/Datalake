@@ -1,0 +1,56 @@
+﻿using Datalake.InventoryService.Domain.Entities;
+using Datalake.InventoryService.Domain.Repositories;
+using Datalake.InventoryService.Infrastructure.Cache.Inventory;
+using Datalake.InventoryService.Infrastructure.Database.Abstractions;
+using Datalake.PublicApi.Enums;
+
+namespace Datalake.InventoryService.Application.Features.Blocks.Commands.CreateBlock;
+
+public class CreateBlockHandler(
+	IUnitOfWork unitOfWork,
+	IBlocksRepository blocksRepository,
+	IAuditRepository auditRepository,
+	IInventoryCache inventoryCache) : ICreateBlockHandler
+{
+	public async Task<int> HandleAsync(CreateBlockCommand command, CancellationToken ct = default)
+	{
+		command.User.ThrowIfNoGlobalAccess(AccessType.Manager);
+
+		BlockEntity block = string.IsNullOrEmpty(command.Name)
+			? new(command.ParentId)
+			: new(command.ParentId, command.Name, command.Description);
+
+		await unitOfWork.BeginTransactionAsync(ct);
+
+		try
+		{
+			await blocksRepository.AddAsync(block, ct);
+			await unitOfWork.SaveChangesAsync(ct);
+
+			if (string.IsNullOrWhiteSpace(block.Name))
+			{
+				block.UpdateName($"Блок {block.Id}");
+				await blocksRepository.UpdateAsync(block, ct);
+				await unitOfWork.SaveChangesAsync(ct);
+			}
+
+			var audit = new AuditEntity(command.User.Guid, $"Создан новый блок: {block.Name}", blockId: block.Id);
+			await auditRepository.AddAsync(audit, ct);
+			await unitOfWork.SaveChangesAsync(ct);
+
+			await unitOfWork.CommitAsync(ct);
+		}
+		catch
+		{
+			await unitOfWork.RollbackAsync(ct);
+			throw;
+		}
+
+		await inventoryCache.UpdateAsync(state => state with
+		{
+			Blocks = state.Blocks.Add(block)
+		});
+
+		return block.Id;
+	}
+}

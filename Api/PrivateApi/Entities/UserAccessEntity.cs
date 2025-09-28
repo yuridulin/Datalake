@@ -7,26 +7,26 @@ namespace Datalake.PrivateApi.Entities;
 public class UserAccessEntity(
 	Guid guid,
 	Guid? energoId,
-	AccessRule rootRule,
-	Dictionary<Guid, AccessRule>? groupsRules = null,
-	Dictionary<int, AccessRule>? sourcesRules = null,
-	Dictionary<int, AccessRule>? blocksRules = null,
-	Dictionary<int, AccessRule>? tagsRules = null,
+	AccessRuleValue rootRule,
+	Dictionary<Guid, AccessRuleValue>? groupsRules = null,
+	Dictionary<int, AccessRuleValue>? sourcesRules = null,
+	Dictionary<int, AccessRuleValue>? blocksRules = null,
+	Dictionary<int, AccessRuleValue>? tagsRules = null,
 	UserAccessEntity? underlyingUser = null)
 {
 	public Guid Guid { get; private set; } = guid;
 
 	public Guid? EnergoId { get; private set; } = energoId;
 
-	public AccessRule RootRule { get; private set; } = rootRule;
+	public AccessRuleValue RootRule { get; private set; } = rootRule;
 
-	public Dictionary<Guid, AccessRule> GroupsRules { get; private set; } = groupsRules ?? [];
+	public Dictionary<Guid, AccessRuleValue> GroupsRules { get; private set; } = groupsRules ?? [];
 
-	public Dictionary<int, AccessRule> SourcesRules { get; private set; } = sourcesRules ?? [];
+	public Dictionary<int, AccessRuleValue> SourcesRules { get; private set; } = sourcesRules ?? [];
 
-	public Dictionary<int, AccessRule> BlocksRules { get; private set; } = blocksRules ?? [];
+	public Dictionary<int, AccessRuleValue> BlocksRules { get; private set; } = blocksRules ?? [];
 
-	public Dictionary<int, AccessRule> TagsRules { get; private set; } = tagsRules ?? [];
+	public Dictionary<int, AccessRuleValue> TagsRules { get; private set; } = tagsRules ?? [];
 
 	public UserAccessEntity? UnderlyingUser { get; private set; } = underlyingUser;
 
@@ -35,22 +35,22 @@ public class UserAccessEntity(
 		UnderlyingUser = underlyingUser;
 	}
 
-	public void AddGroupRule(Guid groupGuid, AccessRule rule)
+	public void AddGroupRule(Guid groupGuid, AccessRuleValue rule)
 	{
 		GroupsRules[groupGuid] = rule;
 	}
 
-	public void AddSourceRule(int sourceId, AccessRule rule)
+	public void AddSourceRule(int sourceId, AccessRuleValue rule)
 	{
 		SourcesRules[sourceId] = rule;
 	}
 
-	public void AddBlockRule(int blockId, AccessRule rule)
+	public void AddBlockRule(int blockId, AccessRuleValue rule)
 	{
 		BlocksRules[blockId] = rule;
 	}
 
-	public void AddTagRule(int tagId, AccessRule rule)
+	public void AddTagRule(int tagId, AccessRuleValue rule)
 	{
 		TagsRules[tagId] = rule;
 	}
@@ -273,7 +273,7 @@ public class UserAccessEntity(
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <returns>Правило доступа</returns>
-	public AccessRule GetAccessToSource(int sourceId)
+	public AccessRuleValue GetAccessToSource(int sourceId)
 	{
 		if (UnderlyingUser == null)
 		{
@@ -291,7 +291,7 @@ public class UserAccessEntity(
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <returns>Правило доступа</returns>
-	public AccessRule GetAccessToBlock(int blockId)
+	public AccessRuleValue GetAccessToBlock(int blockId)
 	{
 		if (UnderlyingUser == null)
 		{
@@ -309,7 +309,7 @@ public class UserAccessEntity(
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <returns>Правило доступа</returns>
-	public AccessRule GetAccessToTag(int tagId)
+	public AccessRuleValue GetAccessToTag(int tagId)
 	{
 		if (UnderlyingUser == null)
 		{
@@ -327,7 +327,7 @@ public class UserAccessEntity(
 	/// <param name="user">Информация о пользователе</param>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <returns>Правило доступа</returns>
-	public AccessRule GetAccessToUserGroup(Guid groupGuid)
+	public AccessRuleValue GetAccessToUserGroup(Guid groupGuid)
 	{
 		if (UnderlyingUser == null)
 		{
