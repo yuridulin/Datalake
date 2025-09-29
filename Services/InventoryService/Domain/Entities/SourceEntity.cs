@@ -29,8 +29,11 @@ public record class SourceEntity
 	/// <param name="address">Адрес конечной точки</param>
 	/// <param name="name">Название</param>
 	/// <param name="description">Описание</param>
-	public SourceEntity(SourceType type, string? address, string name, string? description) : this(type)
+	public SourceEntity(SourceType type, string? name, string? address, string? description) : this(type)
 	{
+		if (string.IsNullOrEmpty(name))
+			return;
+
 		if (address == null)
 			throw new ArgumentNullException(nameof(address), "Адрес источника данных является обязательным");
 
