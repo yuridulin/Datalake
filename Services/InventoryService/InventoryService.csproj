@@ -48,23 +48,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Application\Features\Settings\Commands\" />
 	  <Folder Include="Application\Features\Settings\Queries\" />
-	  <Folder Include="Application\Features\Sources\Commands\CreateSource\" />
-	  <Folder Include="Application\Features\Sources\Commands\UpdateSource\" />
-	  <Folder Include="Application\Features\Sources\Commands\DeleteSource\" />
 	  <Folder Include="Application\Features\Sources\Queries\" />
 	  <Folder Include="Application\Features\Tags\Commands\CreateTag\" />
 	  <Folder Include="Application\Features\Tags\Commands\UpdateTag\" />
 	  <Folder Include="Application\Features\Tags\Commands\DeleteTag\" />
 	  <Folder Include="Application\Features\Tags\Queries\" />
-	  <Folder Include="Application\Features\UserGroups\Commands\CreateUserGroup\" />
-	  <Folder Include="Application\Features\UserGroups\Commands\UpdateUserGroup\" />
-	  <Folder Include="Application\Features\UserGroups\Commands\DeleteUserGroup\" />
 	  <Folder Include="Application\Features\UserGroups\Queries\" />
-	  <Folder Include="Application\Features\Users\Commands\CreateUser\" />
-	  <Folder Include="Application\Features\Users\Commands\UpdateUser\" />
-	  <Folder Include="Application\Features\Users\Commands\DeleteUser\" />
 	  <Folder Include="Application\Features\Users\Queries\" />
 	  <Folder Include="storage\logs\" />
 	  <Folder Include="storage\logs\" />

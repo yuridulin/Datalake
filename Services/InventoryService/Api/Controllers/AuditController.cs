@@ -1,14 +1,36 @@
-﻿using Datalake.InventoryService.Application.Features.Audit.Queries.Audit;
+﻿using Datalake.InventoryService.Application.Features.Audit.Queries.GetAudit;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.LogModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
+/// <summary>
+/// Аудит изменений
+/// </summary>
+[ApiController]
+[Route("api/v1/blocks")]
 public class AuditController : ControllerBase
 {
+	/// <summary>
+	/// Получение списка сообщений аудита
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="lastId">Идентификатор последнего сообщения. Будут присланы только более поздние</param>
+	/// <param name="firstId">Идентификатор первого сообщения. Будут присланы только более ранние</param>
+	/// <param name="take"></param>
+	/// <param name="source"></param>
+	/// <param name="block"></param>
+	/// <param name="tag"></param>
+	/// <param name="user"></param>
+	/// <param name="group"></param>
+	/// <param name="categories"></param>
+	/// <param name="types"></param>
+	/// <param name="author"></param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Список сообщений аудита</returns>
 	public async Task<ActionResult<IEnumerable<LogInfo>>> GetAsync(
-		[FromServices] IGetAuditQueryHandler getAuditQueryHandler,
+		[FromServices] IGetAuditHandler handler,
 		[FromQuery] int? lastId = null,
 		[FromQuery] int? firstId = null,
 		[FromQuery] int? take = null,
@@ -22,7 +44,7 @@ public class AuditController : ControllerBase
 		[FromQuery] Guid? author = null,
 		CancellationToken ct = default)
 	{
-		var data = await getAuditQueryHandler.HandleAsync(new(lastId, firstId, take, source, block, tag, user, group, categories, types, author), ct);
+		var data = await handler.HandleAsync(new(lastId, firstId, take, source, block, tag, user, group, categories, types, author), ct);
 
 		return Ok(data);
 	}

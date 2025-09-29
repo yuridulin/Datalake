@@ -7,4 +7,4 @@ public record CreateBlockCommand(
 	UserAccessEntity User,
 	int? ParentId,
 	string? Name,
-	string? Description) : ICommand;
+	string? Description) : ICommandRequest;

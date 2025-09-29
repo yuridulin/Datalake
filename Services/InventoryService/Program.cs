@@ -1,5 +1,5 @@
 using Datalake.InventoryService.Api.Services;
-using Datalake.InventoryService.Application.Features.Audit.Queries.Audit;
+using Datalake.InventoryService.Application.Features.Audit.Queries.GetAudit;
 using Datalake.InventoryService.Application.Interfaces;
 using Datalake.InventoryService.Infrastructure.Cache.EnergoId;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
@@ -110,9 +110,14 @@ public class Program
 			.AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
 				.AsImplementedInterfaces()
 				.WithScopedLifetime());
+		builder.Services.Scan(scan => scan
+			.FromAssemblies(Assembly.GetExecutingAssembly())
+			.AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
+				.AsImplementedInterfaces()
+				.WithScopedLifetime());
 
 		// репозитории только БД
-		builder.Services.AddScoped<GetAuditQueryHandler>();
+		builder.Services.AddScoped<GetAuditHandler>();
 
 		// мониторинг активности
 		builder.Services.AddSingleton<UsersStateService>();

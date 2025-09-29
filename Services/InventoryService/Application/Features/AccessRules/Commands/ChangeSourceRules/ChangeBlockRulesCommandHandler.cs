@@ -1,4 +1,5 @@
 ﻿using Datalake.InventoryService.Application.Constants;
+using Datalake.InventoryService.Application.Interfaces;
 using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Domain.Repositories;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
@@ -7,12 +8,14 @@ using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Application.Features.AccessRules.Commands.ChangeSourceRules;
 
-public class ChangeSourceRulesCommandHandler(
+public interface IChangeSourceRulesHandler : ICommandHandler<ChangeSourceRulesCommand, bool> { }
+
+public class ChangeSourceRulesHandler(
 	ISourcesRepository sourcesRepository,
 	IAccessRulesRepository accessRulesRepository,
 	IAuditRepository auditRepository,
 	IUnitOfWork unitOfWork,
-	IInventoryCache inventoryCache) : IChangeSourceRulesCommandHandler
+	IInventoryCache inventoryCache) : IChangeSourceRulesHandler
 {
 	public async Task<bool> HandleAsync(ChangeSourceRulesCommand command, CancellationToken ct = default)
 	{

@@ -1,4 +1,4 @@
-﻿using Datalake.PublicApi.Exceptions;
+﻿using Datalake.PrivateApi.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
@@ -22,10 +22,13 @@ public class ErrorsMiddleware
 
 			var problem = error switch
 			{
-				ValidationException validationException => CreateValidationProblem(validationException),
-				UnauthenticatedException unauthenticatedException => CreateUnauthenticatedProblem(unauthenticatedException),
-				ForbiddenException forbiddenException => CreateForbiddenProblem(forbiddenException),
-				DatabaseException databaseException => CreateDatabaseProblem(databaseException),
+				ValidationException ex => CreateValidationProblem(ex),
+				UnauthenticatedException ex => CreateUnauthenticatedProblem(ex),
+				UnauthorizedException ex => CreateUnauthorizedProblem(ex),
+				NotFoundException ex => CreateNotFoundProblem(ex),
+				ConfictException ex => CreateConfictProblem(ex),
+				DomainException ex => CreateDomainProblem(ex),
+				InfrastructureException ex => CreateInfrastructureProblem(ex),
 				_ => CreateDefaultProblem(error, env)
 			};
 
@@ -43,7 +46,8 @@ public class ErrorsMiddleware
 			Title = "Ошибка валидации",
 			Status = StatusCodes.Status400BadRequest,
 			Detail = "Некорректные данные в запросе",
-			Extensions = {
+			Extensions =
+			{
 				["errors"] = exception.Errors
 					.GroupBy(e => e.PropertyName)
 					.ToDictionary(
@@ -59,28 +63,82 @@ public class ErrorsMiddleware
 		return new ProblemDetails
 		{
 			Title = "Ошибка аутентификации",
+			Status = StatusCodes.Status400BadRequest,
+			Detail = exception.Message,
+			Extensions =
+			{
+				[nameof(exception.Code)] = exception.Code,
+			}
+		};
+	}
+	
+	private static ProblemDetails CreateUnauthorizedProblem(UnauthorizedException exception)
+	{
+		return new ProblemDetails
+		{
+			Title = "Ошибка доступа",
 			Status = StatusCodes.Status401Unauthorized,
 			Detail = exception.Message,
+			Extensions =
+			{
+				[nameof(exception.Code)] = exception.Code,
+			}
 		};
 	}
 
-	private static ProblemDetails CreateForbiddenProblem(ForbiddenException exception)
+	private static ProblemDetails CreateConfictProblem(ConfictException exception)
 	{
 		return new ProblemDetails
 		{
-			Title = "Доступ запрещен",
-			Status = StatusCodes.Status403Forbidden,
+			Title = "Выполнение прекращено",
+			Status = StatusCodes.Status400BadRequest,
 			Detail = exception.Message,
+			Extensions =
+			{
+				[nameof(exception.Code)] = exception.Code,
+			}
 		};
 	}
-
-	private static ProblemDetails CreateDatabaseProblem(DatabaseException exception)
+	
+	private static ProblemDetails CreateNotFoundProblem(NotFoundException exception)
 	{
 		return new ProblemDetails
 		{
-			Title = "Ошибка базы данных",
+			Title = "Объект не найден",
+			Status = StatusCodes.Status400BadRequest,
+			Detail = exception.Message,
+			Extensions =
+			{
+				[nameof(exception.Code)] = exception.Code,
+			}
+		};
+	}
+
+	private static ProblemDetails CreateDomainProblem(DomainException exception)
+	{
+		return new ProblemDetails
+		{
+			Title = "Выполнение прекращено",
+			Status = StatusCodes.Status400BadRequest,
+			Detail = exception.Message,
+			Extensions =
+			{
+				[nameof(exception.Code)] = exception.Code,
+			}
+		};
+	}
+
+	private static ProblemDetails CreateInfrastructureProblem(InfrastructureException exception)
+	{
+		return new ProblemDetails
+		{
+			Title = "Ошибка инфраструктуры",
 			Status = StatusCodes.Status500InternalServerError,
 			Detail = exception.Message,
+			Extensions =
+			{
+				[nameof(exception.Code)] = exception.Code,
+			}
 		};
 	}
 
@@ -91,15 +149,17 @@ public class ErrorsMiddleware
 			Title = "Внутренняя ошибка сервера",
 			Status = StatusCodes.Status500InternalServerError,
 			Detail = "Произошла непредвиденная ошибка",
-			Extensions = {
-				["debug"] = new
-				{
-					message = exception?.Message,
-					type = exception?.GetType().Name,
-					stackTrace = exception?.StackTrace
-				}
-			}
 		};
+
+		if (env.IsDevelopment())
+		{
+			problem.Extensions["debug"] = new
+			{
+				message = exception?.Message,
+				type = exception?.GetType().Name,
+				stackTrace = exception?.StackTrace
+			};
+		}
 
 		return problem;
 	}

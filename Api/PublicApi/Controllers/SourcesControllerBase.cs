@@ -1,5 +1,4 @@
 using Datalake.PublicApi.Constants;
-using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Sources;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

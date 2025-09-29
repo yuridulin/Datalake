@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Datalake.InventoryService.Api.Controllers;
 
 /// <summary>
-/// Работа с разрешениями
+/// Правила доступа
 /// </summary>
 [ApiController]
 [Route("api/v1/access")]
@@ -31,7 +31,7 @@ public class AccessController(IAuthenticator authenticator) : ControllerBase
 	/// <returns>Список разрешений</returns>
 	[HttpGet]
 	public async Task<ActionResult<AccessRightsInfo[]>> GetAsync(
-		[FromServices] IGetAccessRulesQueryHandler handler,
+		[FromServices] IGetAccessRulesHandler handler,
 		[FromQuery(Name = "user")] Guid? userGuid = null,
 		[FromQuery(Name = "userGroup")] Guid? userGroupGuid = null,
 		[FromQuery(Name = "source")] int? sourceId = null,
@@ -53,7 +53,7 @@ public class AccessController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	[HttpPut("user/{userGuid}")]
 	public async Task<ActionResult> SetUserRulesAsync(
-		[FromServices] IChangeUserRulesCommandHandler handler,
+		[FromServices] IChangeUserRulesHandler handler,
 		[FromRoute] Guid userGuid,
 		[FromBody] AccessRuleForActorRequest[] requests)
 	{
@@ -79,7 +79,7 @@ public class AccessController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	[HttpPut("user-group/{userGroupGuid}")]
 	public async Task<ActionResult> SetUserGroupRulesAsync(
-		[FromServices] IChangeUserGroupRulesCommandHandler handler,
+		[FromServices] IChangeUserGroupRulesHandler handler,
 		[FromRoute] Guid userGroupGuid,
 		[FromBody] AccessRuleForActorRequest[] requests)
 	{
@@ -105,7 +105,7 @@ public class AccessController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	[HttpPut("source/{sourceId}")]
 	public async Task<ActionResult> SetSourceRulesAsync(
-		[FromServices] IChangeSourceRulesCommandHandler handler,
+		[FromServices] IChangeSourceRulesHandler handler,
 		[FromRoute] int sourceId,
 		[FromBody] AccessRuleForObjectRequest[] requests)
 	{
@@ -130,7 +130,7 @@ public class AccessController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	[HttpPut("block/{blockId}")]
 	public async Task<ActionResult> SetBlockRulesAsync(
-		[FromServices] IChangeBlockRulesCommandHandler handler,
+		[FromServices] IChangeBlockRulesHandler handler,
 		[FromRoute] int blockId,
 		[FromBody] AccessRuleForObjectRequest[] requests)
 	{
@@ -155,7 +155,7 @@ public class AccessController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	[HttpPut("tag/{tagId}")]
 	public async Task<ActionResult> SetTagRulesAsync(
-		[FromServices] IChangeTagRulesCommandHandler handler,
+		[FromServices] IChangeTagRulesHandler handler,
 		[FromRoute] int tagId,
 		[FromBody] AccessRuleForObjectRequest[] requests)
 	{

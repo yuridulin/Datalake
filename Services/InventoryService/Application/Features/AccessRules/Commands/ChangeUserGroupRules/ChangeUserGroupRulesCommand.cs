@@ -7,4 +7,4 @@ namespace Datalake.InventoryService.Application.Features.AccessRules.Commands.Ch
 public record ChangeUserGroupRulesCommand(
 	UserAccessEntity User,
 	Guid UserGroupGuid,
-	IEnumerable<ActorRuleDto> Rules) : ICommand;
+	IEnumerable<ActorRuleDto> Rules) : ICommandRequest;

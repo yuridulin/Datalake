@@ -2,7 +2,7 @@
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.LogModels;
 
-namespace Datalake.InventoryService.Application.Features.Audit.Queries.Audit;
+namespace Datalake.InventoryService.Application.Features.Audit.Queries.GetAudit;
 
 public record GetAuditQuery(
 	int? LastId = null,

@@ -5,4 +5,4 @@ namespace Datalake.InventoryService.Application.Features.Blocks.Commands.DeleteB
 
 public record DeleteBlockCommand(
 	UserAccessEntity User,
-	int BlockId) : ICommand;
+	int BlockId) : ICommandRequest;

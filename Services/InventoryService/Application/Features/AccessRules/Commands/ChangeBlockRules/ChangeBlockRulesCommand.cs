@@ -7,4 +7,4 @@ namespace Datalake.InventoryService.Application.Features.AccessRules.Commands.Ch
 public record ChangeBlockRulesCommand(
 	UserAccessEntity User,
 	int BlockId,
-	IEnumerable<ObjectRuleDto> Rules) : ICommand;
+	IEnumerable<ObjectRuleDto> Rules) : ICommandRequest;

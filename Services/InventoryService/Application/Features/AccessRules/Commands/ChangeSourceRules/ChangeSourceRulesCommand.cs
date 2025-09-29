@@ -7,4 +7,4 @@ namespace Datalake.InventoryService.Application.Features.AccessRules.Commands.Ch
 public record ChangeSourceRulesCommand(
 	UserAccessEntity User,
 	int SourceId,
-	IEnumerable<ObjectRuleDto> Rules) : ICommand;
+	IEnumerable<ObjectRuleDto> Rules) : ICommandRequest;

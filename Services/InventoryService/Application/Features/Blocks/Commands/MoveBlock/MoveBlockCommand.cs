@@ -6,4 +6,4 @@ namespace Datalake.InventoryService.Application.Features.Blocks.Commands.MoveBlo
 public record MoveBlockCommand(
 	UserAccessEntity User,
 	int BlockId,
-	int? ParentId) : ICommand;
+	int? ParentId) : ICommandRequest;

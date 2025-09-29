@@ -1,4 +1,4 @@
-﻿using Datalake.InventoryService.Application.Features.Audit.Queries.Audit;
+﻿using Datalake.InventoryService.Application.Features.Audit.Queries.GetAudit;
 using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
 using Datalake.InventoryService.Infrastructure.Database;
@@ -13,7 +13,7 @@ namespace Datalake.InventoryService.Application.Features.Sources;
 public class SourcesService(
 	InventoryEfContext db,
 	SourcesRepository sourcesRepository,
-	GetAuditQueryHandler logsRepository,
+	GetAuditHandler logsRepository,
 	InventoryCacheStore dataStore)
 {
 	/// <summary>

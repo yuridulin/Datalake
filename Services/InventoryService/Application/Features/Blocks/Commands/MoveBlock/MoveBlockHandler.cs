@@ -1,4 +1,5 @@
 ﻿using Datalake.InventoryService.Application.Constants;
+using Datalake.InventoryService.Application.Interfaces;
 using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Domain.Repositories;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
@@ -7,6 +8,8 @@ using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 
 namespace Datalake.InventoryService.Application.Features.Blocks.Commands.MoveBlock;
+
+public interface IMoveBlockHandler : ICommandHandler<MoveBlockCommand, int> { }
 
 public class MoveBlockHandler(
 	IUnitOfWork unitOfWork,
