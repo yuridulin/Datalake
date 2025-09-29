@@ -8,8 +8,8 @@ namespace Datalake.InventoryService.Application.Abstractions;
 
 public abstract class TransactionalCommandHandler<TCommand, TResult>(
 	IUnitOfWork unitOfWork,
-	IInventoryCache inventoryCache,
-	ILogger logger) : ICommandHandler<TCommand, TResult>
+	ILogger logger,
+	IInventoryCache? inventoryCache = null) : ICommandHandler<TCommand, TResult>
 		where TCommand : ICommandRequest
 		where TResult : notnull
 {
@@ -59,7 +59,7 @@ public abstract class TransactionalCommandHandler<TCommand, TResult>(
 			throw;
 		}
 
-		if (UpdateCache != null)
+		if (inventoryCache != null && UpdateCache != null)
 			await inventoryCache.UpdateAsync(UpdateCache);
 
 		logger.LogDebug("Выполнение команды {name} завершено", _commandName);

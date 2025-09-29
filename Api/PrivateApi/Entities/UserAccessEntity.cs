@@ -1,6 +1,6 @@
-﻿using Datalake.PrivateApi.ValueObjects;
+﻿using Datalake.PrivateApi.Exceptions;
+using Datalake.PrivateApi.ValueObjects;
 using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Exceptions;
 
 namespace Datalake.PrivateApi.Entities;
 
@@ -161,14 +161,14 @@ public class UserAccessEntity(
 	/// <summary>
 	/// Нет доступа для локального пользователя
 	/// </summary>
-	public static ForbiddenException NoAccessUser(Guid userGuid)
-		=> new(message: "нет доступа.\nПользователь: [" + userGuid.ToString() + "]");
+	public static UnauthorizedException NoAccessUser(Guid userGuid)
+		=> new("USER_UNAUTHORIZED", message: "нет доступа.\nПользователь: [" + userGuid.ToString() + "]");
 
 	/// <summary>
 	/// Нет доступа для пользователя EnergoId через внешнего статичного пользователя
 	/// </summary>
-	public static ForbiddenException NoAccessUnderlyingUser(Guid userGuid, Guid underlyingUserGuid)
-		=> new(message: "нет доступа.\nПользователь EnergoId: `" + underlyingUserGuid.ToString() + "` через внешнего пользователя `" + userGuid.ToString() + "`");
+	public static UnauthorizedException NoAccessUnderlyingUser(Guid userGuid, Guid underlyingUserGuid)
+		=> new("USER_UNAUTHORIZED", message: "нет доступа.\nПользователь EnergoId: `" + underlyingUserGuid.ToString() + "` через внешнего пользователя `" + userGuid.ToString() + "`");
 
 
 	/// <summary>

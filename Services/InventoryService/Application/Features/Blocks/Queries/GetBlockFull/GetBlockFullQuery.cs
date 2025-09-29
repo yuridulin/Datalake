@@ -6,4 +6,4 @@ namespace Datalake.InventoryService.Application.Features.Blocks.Queries.GetBlock
 
 public record GetBlockFullQuery(
 	UserAccessEntity User,
-	int BlockId) : IQuery<BlockFullInfo>;
+	int BlockId) : IQueryRequest<BlockFullInfo>;

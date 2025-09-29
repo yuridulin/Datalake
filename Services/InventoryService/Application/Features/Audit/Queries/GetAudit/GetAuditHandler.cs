@@ -23,6 +23,7 @@ public class GetAuditHandler(IAuditQueriesService auditQueriesService) : IGetAud
 			query.GroupGuid,
 			query.Categories,
 			query.Types,
-			query.AuthorGuid);
+			query.AuthorGuid,
+			ct);
 	}
 }

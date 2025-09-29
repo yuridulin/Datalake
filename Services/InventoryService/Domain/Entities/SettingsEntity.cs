@@ -7,10 +7,20 @@ public record class SettingsEntity
 {
 	private SettingsEntity() { }
 
-	public SettingsEntity(DateTime lastUpdate)
+	public SettingsEntity(string keycloakHost, string keycloakClient, string energoIdApi, string instanceName)
 	{
-		LastUpdate = lastUpdate;
+		Update(keycloakHost, keycloakClient, energoIdApi, instanceName);
 	}
+
+	public void Update(string keycloakHost, string keycloakClient, string energoIdApi, string instanceName)
+	{
+		LastUpdate = DateTime.Now;
+		KeycloakHost = keycloakHost;
+		KeycloakClient = keycloakClient;
+		EnergoIdApi = energoIdApi;
+		InstanceName = instanceName;
+	}
+
 
 	// поля в БД
 

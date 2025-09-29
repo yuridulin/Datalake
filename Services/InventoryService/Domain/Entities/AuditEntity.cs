@@ -25,6 +25,15 @@ public record class AuditEntity
 		Details = details;
 	}
 
+	public AuditEntity(Guid? authorGuid, string message, string? details, LogType type = LogType.Success)
+	{
+		Category = LogCategory.Database;
+		AuthorGuid = authorGuid;
+		Type = type;
+		Text = message;
+		Details = details;
+	}
+
 	/// <summary>
 	/// Сообщение о операции с объектом, созданное в результате действий пользователя
 	/// </summary>

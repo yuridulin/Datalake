@@ -9,4 +9,8 @@ namespace Datalake.InventoryService.Infrastructure.Database.Repositories;
 [Scoped]
 public class BlockTagsRepository(InventoryEfContext context) : EfRepository<BlockTagEntity, int>(context), IBlockTagsRepository
 {
+	public async Task<IEnumerable<BlockTagEntity>> GetByBlockIdAsync(int blockId)
+	{
+		return await _set.Where(x => x.BlockId == blockId).ToArrayAsync();
+	}
 }

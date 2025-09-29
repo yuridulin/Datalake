@@ -16,5 +16,6 @@ public interface IAuditQueriesService
 		Guid? groupGuid = null,
 		LogCategory[]? categories = null,
 		LogType[]? types = null,
-		Guid? authorGuid = null);
+		Guid? authorGuid = null,
+		CancellationToken ct = default);
 }

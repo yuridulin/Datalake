@@ -1,3 +1,3 @@
 ﻿namespace Datalake.InventoryService.Application.Interfaces;
 
-public interface IQuery<TResult> { }
+public interface IQueryRequest<TResult> { }

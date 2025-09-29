@@ -1,5 +1,6 @@
-﻿using Datalake.PrivateApi.Interfaces;
-using Datalake.PublicApi.Controllers;
+﻿using Datalake.InventoryService.Application.Features.Settings.Commands.UpdateSettings;
+using Datalake.InventoryService.Application.Features.Settings.Queries.GetSettings;
+using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Settings;
@@ -8,9 +9,53 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
-/// <inheritdoc />
-public class SystemController(IAuthenticator authenticator) : SystemControllerBase
+/// <summary>
+/// Настройки и состояние системы
+/// </summary>
+[ApiController]
+[Route("api/v1/system")]
+public class SystemController(IAuthenticator authenticator) : ControllerBase
 {
+	/// <summary>
+	/// <see cref="HttpMethod.Get" />: Получение информации о настройках сервера
+	/// </summary>
+	/// <returns>Информация о настройках</returns>
+	[HttpGet("settings")]
+	public async Task<ActionResult<SettingsInfo>> GetSettingsAsync(
+		[FromServices] IGetSettingsHandler handler,
+		CancellationToken ct = default)
+	{
+		var user = authenticator.Authenticate(HttpContext);
+
+		var data = await handler.HandleAsync(new(user), ct);
+
+		return data;
+	}
+
+	/// <summary>
+	/// <see cref="HttpMethod.Put" />: Изменение информации о настройках сервера
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="newSettings">Новые настройки сервера</param>
+	/// <param name="ct">Токен отмены</param>
+	[HttpPut("settings")]
+	public async Task<ActionResult> UpdateSettingsAsync(
+		[FromServices] IUpdateSettingsHandler handler,
+		[BindRequired][FromBody] SettingsInfo newSettings,
+		CancellationToken ct = default)
+	{
+		var user = authenticator.Authenticate(HttpContext);
+
+		await handler.HandleAsync(new(
+			user,
+			KeycloakClient: newSettings.EnergoIdClient,
+			KeycloakHost: newSettings.EnergoIdHost,
+			EnergoIdApi: newSettings.EnergoIdApi,
+			InstanceName: newSettings.InstanceName), ct);
+
+		return NoContent();
+	}
+
 	/// <inheritdoc />
 	public override async Task<ActionResult<string>> GetLastUpdateAsync()
 	{
@@ -21,28 +66,7 @@ public class SystemController(IAuthenticator authenticator) : SystemControllerBa
 	/// <inheritdoc />
 
 
-	/// <inheritdoc />
-	public override async Task<ActionResult<SettingsInfo>> GetSettingsAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Editor);
-
-		var info = settingsRepository.GetSettings(user);
-
-		return await Task.FromResult(info);
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult> UpdateSettingsAsync(
-		[BindRequired][FromBody] SettingsInfo newSettings)
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		await settingsRepository.UpdateSettingsAsync(db, user, newSettings);
-
-		return NoContent();
-	}
+	
 
 	/// <inheritdoc />
 	public override async Task<ActionResult> RestartStateAsync()

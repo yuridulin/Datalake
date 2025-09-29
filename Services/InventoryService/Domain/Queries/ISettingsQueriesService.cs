@@ -4,5 +4,5 @@ namespace Datalake.InventoryService.Domain.Queries;
 
 public interface ISettingsQueriesService
 {
-	Task<SettingsInfo> GetAsync(string key);
+	Task<SettingsInfo?> GetAsync(CancellationToken ct = default);
 }

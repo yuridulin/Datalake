@@ -8,4 +8,4 @@ public record GetAccessRulesQuery(
 	Guid? UserGroupGuid = null,
 	int? SourceId = null,
 	int? BlockId = null,
-	int? TagId = null) : IQuery<IEnumerable<AccessRightsInfo>>;
+	int? TagId = null) : IQueryRequest<IEnumerable<AccessRightsInfo>>;

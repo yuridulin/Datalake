@@ -24,7 +24,8 @@ public class AuditQueriesService(InventoryEfContext context) : IAuditQueriesServ
 		Guid? groupGuid = null,
 		LogCategory[]? categories = null,
 		LogType[]? types = null,
-		Guid? authorGuid = null)
+		Guid? authorGuid = null,
+		CancellationToken ct = default)
 	{
 		var query = context.Audit
 			.Include(x => x.Author)
@@ -132,6 +133,6 @@ public class AuditQueriesService(InventoryEfContext context) : IAuditQueriesServ
 					Name = log.AffectedUserGroup.Name,
 				},
 			})
-			.ToArrayAsync();
+			.ToArrayAsync(cancellationToken: ct);
 	}
 }
