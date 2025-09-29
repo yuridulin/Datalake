@@ -11,7 +11,7 @@ public class UsersQueriesService(IInventoryCache inventoryCache) : IUsersQueries
 	public Task<IEnumerable<UserInfo>> GetAsync()
 	{
 		var state = inventoryCache.State;
-		var globalAccessRules = state.AccessRights.Where(rule => rule.IsGlobal);
+		var globalAccessRules = state.AccessRules.Where(rule => rule.IsGlobal);
 
 		var userGroupsWithRules = state.UserGroups
 			.Where(userGroup => !userGroup.IsDeleted)
@@ -42,7 +42,7 @@ public class UsersQueriesService(IInventoryCache inventoryCache) : IUsersQueries
 
 	private static IEnumerable<UserDetailInfo> UsersDetailInfoFromState(InventoryState state)
 	{
-		var globalAccessRules = state.AccessRights.Where(rule => rule.IsGlobal);
+		var globalAccessRules = state.AccessRules.Where(rule => rule.IsGlobal);
 
 		var userGroupsWithRules = state.UserGroups
 			.Where(userGroup => !userGroup.IsDeleted)

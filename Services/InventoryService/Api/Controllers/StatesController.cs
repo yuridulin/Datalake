@@ -1,15 +1,12 @@
-﻿using Datalake.Inventory.Functions;
+﻿using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
 using Microsoft.AspNetCore.Mvc;
-using Datalake.InventoryService.Api.Services;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
 /// <inheritdoc />
-public class StatesController(
-	AuthenticationService authenticator,
-	UsersStateService usersStateService) : StatesControllerBase
+public class StatesController(IAuthenticator authenticator) : StatesControllerBase
 {
 	/// <inheritdoc />
 	public override async Task<ActionResult<Dictionary<Guid, DateTime>>> GetUsersAsync()

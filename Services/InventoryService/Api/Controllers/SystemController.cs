@@ -1,7 +1,4 @@
-﻿using Datalake.InventoryService.Api.Services;
-using Datalake.InventoryService.Application.Features.Settings;
-using Datalake.InventoryService.Infrastructure.Cache.Inventory;
-using Datalake.InventoryService.Infrastructure.Cache.UserAccess;
+﻿using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
@@ -12,11 +9,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 namespace Datalake.InventoryService.Api.Controllers;
 
 /// <inheritdoc />
-public class SystemController(
-	AuthenticationService authenticator,
-	InventoryCacheStore dataStore,
-	UserAccessCacheStore accessStore,
-	SettingsMemoryRepository settingsRepository) : SystemControllerBase
+public class SystemController(IAuthenticator authenticator) : SystemControllerBase
 {
 	/// <inheritdoc />
 	public override async Task<ActionResult<string>> GetLastUpdateAsync()

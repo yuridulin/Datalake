@@ -1,11 +1,11 @@
-﻿using Datalake.InventoryService.Api.Services;
-using Datalake.InventoryService.Application.Features.Blocks.Commands.CreateBlock;
+﻿using Datalake.InventoryService.Application.Features.Blocks.Commands.CreateBlock;
 using Datalake.InventoryService.Application.Features.Blocks.Commands.DeleteBlock;
 using Datalake.InventoryService.Application.Features.Blocks.Commands.MoveBlock;
 using Datalake.InventoryService.Application.Features.Blocks.Commands.UpdateBlock;
 using Datalake.InventoryService.Application.Features.Blocks.Queries.BlockFull;
 using Datalake.InventoryService.Application.Features.Blocks.Queries.BlocksTree;
 using Datalake.InventoryService.Application.Features.Blocks.Queries.BlocksWithTags;
+using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Models.Blocks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 namespace Datalake.InventoryService.Api.Controllers;
 
 /// <inheritdoc />
-public class BlocksController(AuthenticationService authenticator) : ControllerBase
+public class BlocksController(IAuthenticator authenticator) : ControllerBase
 {
 	public async Task<ActionResult<int>> CreateAsync(
 		[FromServices] ICreateBlockHandler createBlockHandler,

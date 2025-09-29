@@ -1,19 +1,13 @@
-﻿using Datalake.Inventory;
+﻿using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Sources;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Datalake.InventoryService.InMemory.Repositories;
-using Datalake.InventoryService.Database.Repositories;
-using Datalake.InventoryService.Api.Services;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
 /// <inheritdoc />
-public class SourcesController(
-	InventoryEfContext db,
-	AuthenticationService authenticator,
-	SourcesMemoryRepository sourcesRepository) : SourcesControllerBase
+public class SourcesController(IAuthenticator authenticator) : SourcesControllerBase
 {
 	/// <inheritdoc />
 	public override async Task<ActionResult<SourceInfo>> CreateEmptyAsync()

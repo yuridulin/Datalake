@@ -36,9 +36,9 @@ public record class AuditEntity
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <param name="userGuid">Идентификатор учетной записи</param>
-	/// <param name="groupGuid">Идентификатор группы учетных записей</param>
+	/// <param name="userGroupGuid">Идентификатор группы учетных записей</param>
 	/// <exception cref="InvalidDataException"></exception>
-	public AuditEntity(Guid? authorGuid, string message, string? details = null, LogType type = LogType.Success, int? blockId = null, int? tagId = null, int? sourceId = null, Guid? userGuid = null, Guid? groupGuid = null)
+	public AuditEntity(Guid? authorGuid, string message, string? details = null, LogType type = LogType.Success, int? blockId = null, int? tagId = null, int? sourceId = null, Guid? userGuid = null, Guid? userGroupGuid = null)
 	{
 		Type = type;
 		AuthorGuid = authorGuid;
@@ -69,11 +69,11 @@ public record class AuditEntity
 			AffectedUserGuid = userGuid;
 			RefId = userGuid.ToString();
 		}
-		else if (groupGuid != null)
+		else if (userGroupGuid != null)
 		{
 			Category = LogCategory.UserGroups;
-			AffectedUserGroupGuid = groupGuid;
-			RefId = groupGuid.ToString();
+			AffectedUserGroupGuid = userGroupGuid;
+			RefId = userGroupGuid.ToString();
 		}
 		else
 			throw new InvalidDataException("Ни один из идентификаторов не указан");

@@ -18,7 +18,7 @@ public class UsersGroupsQueriesService(IInventoryCache inventoryCache) : IUsersG
 		var data = state.UserGroups
 			.Where(userGroup => !userGroup.IsDeleted)
 			.Join(
-				state.AccessRights.Where(rule => rule.IsGlobal && rule.UserGroupGuid.HasValue),
+				state.AccessRules.Where(rule => rule.IsGlobal && rule.UserGroupGuid.HasValue),
 				userGroup => userGroup.Guid,
 				rule => rule.UserGroupGuid,
 				(userGroup, rule) => new UserGroupInfo
@@ -40,7 +40,7 @@ public class UsersGroupsQueriesService(IInventoryCache inventoryCache) : IUsersG
 
 		var data = activeUserGroups
 			.Join(
-				state.AccessRights.Where(rule => rule.IsGlobal && rule.UserGroupGuid.HasValue),
+				state.AccessRules.Where(rule => rule.IsGlobal && rule.UserGroupGuid.HasValue),
 				userGroup => userGroup.Guid,
 				rule => rule.UserGroupGuid,
 				(userGroup, rule) => new UserGroupDetailedInfo
@@ -63,7 +63,7 @@ public class UsersGroupsQueriesService(IInventoryCache inventoryCache) : IUsersG
 								AccessType = relation.AccessType,
 							})
 						.ToArray(),
-					AccessRights = state.AccessRights
+					AccessRights = state.AccessRules
 						.Where(rule => !rule.IsGlobal && rule.UserGroupGuid == userGroup.Guid)
 						.Select(rule => new AccessRightsForOneInfo
 						{

@@ -314,7 +314,7 @@ public class UsersMemoryRepository(
 			dataStore.UpdateStateWithinLock(state => state with
 			{
 				Users = state.Users.Add(createdUser),
-				AccessRights = state.AccessRights.Add(createdGlobalRule),
+				AccessRules = state.AccessRules.Add(createdGlobalRule),
 			});
 		}
 
@@ -370,7 +370,7 @@ public class UsersMemoryRepository(
 			if (!currentState.UsersByGuid.TryGetValue(affectedUserGuid, out var oldUser))
 				throw new NotFoundException(message: "пользователь по указанному ключу");
 
-			var globalRule = currentState.AccessRights.FirstOrDefault(x => x.UserGuid == affectedUserGuid && x.IsGlobal);
+			var globalRule = currentState.AccessRules.FirstOrDefault(x => x.UserGuid == affectedUserGuid && x.IsGlobal);
 			if (globalRule != null && globalRule.AccessType != request.AccessType)
 				updatedGlobalRule = globalRule with { AccessType = request.AccessType };
 
@@ -443,9 +443,9 @@ public class UsersMemoryRepository(
 			dataStore.UpdateStateWithinLock(state => state with
 			{
 				Users = state.Users.Replace(oldUser, updatedUser),
-				AccessRights = (updatedGlobalRule != null && globalRule != null)
-					? state.AccessRights.Replace(globalRule, updatedGlobalRule)
-					: state.AccessRights,
+				AccessRules = (updatedGlobalRule != null && globalRule != null)
+					? state.AccessRules.Replace(globalRule, updatedGlobalRule)
+					: state.AccessRules,
 			});
 		}
 

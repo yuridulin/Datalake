@@ -18,7 +18,7 @@ public record class InventoryState
 	/// <summary>
 	/// Снимок коллекции прав доступа
 	/// </summary>
-	public required ImmutableList<AccessRuleEntity> AccessRights { get; init; }
+	public required ImmutableList<AccessRuleEntity> AccessRules { get; init; }
 
 	/// <summary>
 	/// Снимок коллекции блоков

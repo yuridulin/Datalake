@@ -58,7 +58,7 @@ public class AccessRightsService(
 		{
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				AccessRights = state.AccessRights
+				AccessRules = state.AccessRules
 					.RemoveAll(x => result.DeletedIdentifiers.Contains(x.Id))
 					.AddRange(result.AddedEntities)
 			});

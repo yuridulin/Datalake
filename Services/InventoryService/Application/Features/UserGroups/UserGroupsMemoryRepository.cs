@@ -264,7 +264,7 @@ public class UserGroupsMemoryRepository(InventoryCacheStore dataStore)
 			// Обновление стейта в случае успешного обновления БД
 			dataStore.UpdateStateWithinLock(state => state with
 			{
-				AccessRights = state.AccessRights.Add(directRuleForUserGroup),
+				AccessRules = state.AccessRules.Add(directRuleForUserGroup),
 				UserGroups = state.UserGroups.Add(newUserGroup),
 			});
 		}
@@ -312,7 +312,7 @@ public class UserGroupsMemoryRepository(InventoryCacheStore dataStore)
 				Description = request.Description,
 			};
 
-			var accessRights = currentState.AccessRights.FirstOrDefault(x => x.UserGroupGuid == groupGuid && x.IsGlobal);
+			var accessRights = currentState.AccessRules.FirstOrDefault(x => x.UserGroupGuid == groupGuid && x.IsGlobal);
 			if (accessRights != null && accessRights.AccessType != request.AccessType)
 				updatedAccessRights = accessRights with
 				{
@@ -371,9 +371,9 @@ public class UserGroupsMemoryRepository(InventoryCacheStore dataStore)
 			dataStore.UpdateStateWithinLock(state => state with
 			{
 				UserGroups = state.UserGroups.Replace(userGroup, updatedUserGroup),
-				AccessRights = accessRights != null && updatedAccessRights != null
-					? state.AccessRights.Replace(accessRights, updatedAccessRights)
-					: state.AccessRights,
+				AccessRules = accessRights != null && updatedAccessRights != null
+					? state.AccessRules.Replace(accessRights, updatedAccessRights)
+					: state.AccessRules,
 				UserGroupRelations = state.UserGroupRelations.RemoveRange(usersRelations).AddRange(newUsersRelations),
 			});
 		}

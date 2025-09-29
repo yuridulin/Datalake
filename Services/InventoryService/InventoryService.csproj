@@ -36,7 +36,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FluentValidation" Version="12.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -46,14 +45,9 @@
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
 		<PackageReference Include="NSwag.AspNetCore" Version="14.6.0" />
 		<PackageReference Include="Scrutor" Version="6.1.0" />
-		<PackageReference Include="Sentry.AspNetCore" Version="5.15.1" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Application\Features\AccessRules\Commands\ChangeUserRules\" />
-	  <Folder Include="Application\Features\AccessRules\Commands\ChangeSourceRules\" />
-	  <Folder Include="Application\Features\AccessRules\Commands\ChangeTagRules\" />
-	  <Folder Include="Application\Features\AccessRules\Commands\ChangeUserGroupRules\" />
 	  <Folder Include="Application\Features\Settings\Commands\" />
 	  <Folder Include="Application\Features\Settings\Queries\" />
 	  <Folder Include="Application\Features\Sources\Commands\CreateSource\" />

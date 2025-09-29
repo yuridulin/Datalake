@@ -1,18 +1,13 @@
-﻿using Datalake.Inventory;
+﻿using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.UserGroups;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Datalake.InventoryService.Api.Services;
-using Datalake.InventoryService.Application.Features.UserGroups;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
 /// <inheritdoc />
-public class UserGroupsController(
-	InventoryEfContext db,
-	AuthenticationService authenticator,
-	UserGroupsMemoryRepository userGroupsRepository) : UserGroupsControllerBase
+public class UserGroupsController(IAuthenticator authenticator) : UserGroupsControllerBase
 {
 	/// <inheritdoc />
 	public override async Task<ActionResult<UserGroupInfo>> CreateAsync(

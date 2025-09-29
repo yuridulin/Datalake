@@ -12,7 +12,7 @@ public class InventoryCacheStore : IInventoryCache
 	private readonly SemaphoreSlim _semaphore = new(1, 1);
 	private InventoryState _currentState = new()
 	{
-		AccessRights = [],
+		AccessRules = [],
 		BlockProperties = [],
 		Blocks = [],
 		BlockTags = [],
@@ -91,7 +91,7 @@ public class InventoryCacheStore : IInventoryCache
 
 			var newState = new InventoryState
 			{
-				AccessRights = accessRights.ToImmutableList(),
+				AccessRules = accessRights.ToImmutableList(),
 				Blocks = blocks.ToImmutableList(),
 				BlockProperties = blockProperties.ToImmutableList(),
 				BlockTags = blockTags.ToImmutableList(),

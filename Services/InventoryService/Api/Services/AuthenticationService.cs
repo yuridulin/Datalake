@@ -2,11 +2,12 @@
 using Datalake.PrivateApi.Attributes;
 using Datalake.PrivateApi.Constants;
 using Datalake.PrivateApi.Entities;
+using Datalake.PrivateApi.Interfaces;
 
 namespace Datalake.InventoryService.Api.Services;
 
 [Singleton]
-public class AuthenticationService(IUserAccessCache cache)
+public class AuthenticationService(IUserAccessCache cache) : IAuthenticator
 {
 	public UserAccessEntity Authenticate(HttpContext httpContext)
 	{

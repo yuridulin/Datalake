@@ -137,16 +137,8 @@ public class Program
 		builder.Services.AddHealthChecks();
 
 		// оповещения об ошибках
-		var sentrySection = builder.Configuration.GetSection("Sentry");
-		builder.WebHost.UseSentry(o =>
-		{
-			o.Environment = CurrentEnvironment;
-			o.Dsn = sentrySection[nameof(o.Dsn)];
-			o.Debug = bool.TryParse(sentrySection[nameof(o.Debug)], out var dbg) && dbg;
-			o.Release = $"{builder.Environment.ApplicationName}@{Version.Short()}";
-			o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
-		});
-
+		builder.UseCustomSentry(CurrentEnvironment, Version);
+		
 		// общение между сервисами
 		builder.Services.AddCustomMassTransit(builder.Configuration, typeof(Program).Assembly);
 

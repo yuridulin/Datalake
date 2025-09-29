@@ -1,6 +1,10 @@
 ﻿using Datalake.PrivateApi.Converters;
+using Datalake.PrivateApi.ValueObjects;
+using Datalake.PublicApi.Exceptions;
+using FluentValidation;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -111,5 +115,27 @@ public static class ProgramExtensions
 		});
 
 		return services;
+	}
+
+	public static void UseCustomSentry(
+		this WebApplicationBuilder builder,
+		string environment,
+		VersionValue version)
+	{
+		var sentrySection = builder.Configuration.GetSection("Sentry");
+
+		builder.WebHost.UseSentry(o =>
+		{
+			o.Environment = environment;
+			o.Dsn = sentrySection[nameof(o.Dsn)];
+			o.Debug = bool.TryParse(sentrySection[nameof(o.Debug)], out var dbg) && dbg;
+			o.Release = $"{builder.Environment.ApplicationName}@{version.Short()}";
+			o.TracesSampleRate = double.TryParse(sentrySection[nameof(o.TracesSampleRate)], out var rate) ? rate : 0.0;
+
+			// доменные и бизнес-ошибки, которые не нужны в Sentry
+			o.AddExceptionFilterForType<ValidationException>();
+			o.AddExceptionFilterForType<UnauthenticatedException>();
+			o.AddExceptionFilterForType<ForbiddenException>();
+		});
 	}
 }

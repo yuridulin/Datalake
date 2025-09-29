@@ -117,7 +117,7 @@ public class BlocksQueriesService(IInventoryCache inventoryCache) : IBlocksQueri
 				})
 				.Where(x => x != null)
 				.ToArray()!,
-			AccessRights = state.AccessRights
+			AccessRights = state.AccessRules
 				.Where(rule => rule.BlockId == block.Id)
 				.Select(rule => new AccessRightsForObjectInfo
 				{

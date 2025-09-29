@@ -1,3 +1,5 @@
+using Datalake.PublicApi;
+using FluentValidation;
 using MassTransit;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
@@ -37,6 +39,9 @@ public class Program
 
 		builder.Services.AddOcelot(builder.Configuration);
 		builder.Services.AddSwaggerForOcelot(builder.Configuration);
+
+		// валидация
+		builder.Services.AddValidatorsFromAssembly(typeof(PublicApiMarker).Assembly);
 
 		// общение между сервисами
 		var rabbitMqConfig = builder.Configuration.GetSection("RabbitMq");

@@ -29,7 +29,7 @@ public class UserAccessStateFactory
 		var groupRulesToBlocks = new Dictionary<Guid, Dictionary<int, AccessRuleValue>>();
 		var groupRulesToTags = new Dictionary<Guid, Dictionary<int, AccessRuleValue>>();
 
-		foreach (var r in state.AccessRights)
+		foreach (var r in state.AccessRules)
 		{
 			var rule = new AccessRuleValue(r.Id, r.AccessType);
 

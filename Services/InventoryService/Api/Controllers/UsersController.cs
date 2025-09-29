@@ -1,18 +1,13 @@
-﻿using Datalake.Inventory;
+﻿using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Datalake.InventoryService.Api.Services;
-using Datalake.InventoryService.Application.Features.Users;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
 /// <inheritdoc />
-public class UsersController(
-	InventoryEfContext db,
-	AuthenticationService authenticator,
-	UsersMemoryRepository usersRepository) : UsersControllerBase
+public class UsersController(IAuthenticator authenticator) : UsersControllerBase
 {
 	/// <inheritdoc />
 	public override async Task<ActionResult<UserInfo>> CreateAsync(

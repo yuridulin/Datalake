@@ -9,15 +9,59 @@ public record class AccessRuleEntity
 {
 	private AccessRuleEntity() { }
 
-	public AccessRuleEntity(Guid? userGuid, Guid? userGroupGuid, bool isGlobal, int? tagId, int? sourceId, int? blockId, AccessType accessType)
+	public AccessRuleEntity(
+		AccessType accessType,
+		Guid? userGuid = null,
+		Guid? userGroupGuid = null,
+		int? tagId = null,
+		int? sourceId = null,
+		int? blockId = null)
 	{
-		UserGuid = userGuid;
-		UserGroupGuid = userGroupGuid;
-		IsGlobal = isGlobal;
-		TagId = tagId;
-		SourceId = sourceId;
-		BlockId = blockId;
 		AccessType = accessType;
+
+		if (userGuid.HasValue)
+		{
+			UserGuid = userGuid.Value;
+			UserGroupGuid = null;
+		}
+		else if (userGroupGuid.HasValue)
+		{
+			UserGuid = null;
+			UserGroupGuid = userGroupGuid.Value;
+		}
+		else
+		{
+			throw new ArgumentException("Нужно указать или учетную запись, или группу учетных записей");
+		}
+
+		if (tagId.HasValue)
+		{
+			TagId = tagId.Value;
+			BlockId = null;
+			SourceId = null;
+			IsGlobal = false;
+		}
+		else if (sourceId.HasValue)
+		{
+			TagId = null;
+			BlockId = null;
+			SourceId = sourceId.Value;
+			IsGlobal = false;
+		}
+		else if (blockId.HasValue)
+		{
+			TagId = null;
+			BlockId = blockId.Value;
+			SourceId = null;
+			IsGlobal = false;
+		}
+		else
+		{
+			TagId = null;
+			BlockId = null;
+			SourceId = null;
+			IsGlobal = true;
+		}
 	}
 
 	// поля в БД

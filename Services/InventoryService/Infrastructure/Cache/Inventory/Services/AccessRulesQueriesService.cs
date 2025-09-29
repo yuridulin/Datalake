@@ -21,7 +21,7 @@ public class AccessRulesQueriesService(IInventoryCache inventoryCache) : IAccess
 	{
 		var state = inventoryCache.State;
 
-		var data = state.AccessRights
+		var data = state.AccessRules
 			.Where(rule => !rule.IsGlobal)
 			.Where(rule => !userGuid.HasValue || rule.UserGuid == userGuid)
 			.Where(rule => !userGroupGuid.HasValue || rule.UserGroupGuid == userGroupGuid)

@@ -1,18 +1,13 @@
-﻿using Datalake.Inventory;
+﻿using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Tags;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Datalake.InventoryService.Api.Services;
-using Datalake.InventoryService.Application.Features.Tags;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
 /// <inheritdoc />
-public class TagsController(
-	InventoryEfContext db,
-	AuthenticationService authenticator,
-	TagsMemoryRepository tagsRepository) : TagsControllerBase
+public class TagsController(IAuthenticator authenticator) : TagsControllerBase
 {
 	/// <inheritdoc />
 	public override async Task<ActionResult<TagInfo>> CreateAsync(

@@ -31,4 +31,8 @@ public static class Errors
 		=> new(message: "нет доступа.\nТокен: `" + (token ?? "не существует") + "`");
 
 	public static NotFoundException NotFoundBlock(int blockId) => new($"Блок с идентификатором {blockId} не найден");
+	public static NotFoundException NotFoundSource(int sourceId) => new($"Источник с идентификатором {sourceId} не найден");
+	public static NotFoundException NotFoundTag(int tagId) => new($"Тег с идентификатором {tagId} не найден");
+	public static NotFoundException NotFoundUser(Guid userGuid) => new($"Учетная запись с идентификатором {userGuid} не найдена");
+	public static NotFoundException NotFoundUserGroup(Guid userGroupGuid) => new($"Группа учетных записей с идентификатором {userGroupGuid} не найдена");
 }
