@@ -1,5 +1,6 @@
 ﻿using Datalake.InventoryService.Domain.Constants;
 using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PrivateApi.Exceptions;
 using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
@@ -15,12 +16,10 @@ public record class SourceEntity : IWithIdentityKey, ISoftDeletable
 	/// Новый источник без настроек
 	/// </summary>
 	/// <param name="type">Тип источника</param>
-	public SourceEntity(SourceType type)
+	public SourceEntity(SourceType? type)
 	{
-		if (Lists.CustomSources.Contains(Type))
-			throw new ArgumentException("Запрещено создавать встроенные источники данных");
-
-		Type = type;
+		type ??= SourceType.Inopc;
+		UpdateType(type.Value);
 	}
 
 	/// <summary>
@@ -30,22 +29,38 @@ public record class SourceEntity : IWithIdentityKey, ISoftDeletable
 	/// <param name="address">Адрес конечной точки</param>
 	/// <param name="name">Название</param>
 	/// <param name="description">Описание</param>
-	public SourceEntity(SourceType type, string? name, string? address, string? description) : this(type)
+	public SourceEntity(SourceType? type, string? name, string? description, string? address) : this(type)
 	{
 		if (string.IsNullOrEmpty(name))
 			return;
 
-		if (address == null)
-			throw new ArgumentNullException(nameof(address), "Адрес источника данных является обязательным");
-
-		Address = address;
-		Name = name;
-		Description = description;
+		UpdateProperties(name, description, address);
 	}
 
 	public void MarkAsDeleted()
 	{
 		IsDeleted = true;
+	}
+
+	public void UpdateType(SourceType type)
+	{
+		if (Lists.CustomSources.Contains(Type))
+			throw new ArgumentException("Создавать или изменять встроенные источники данных запрещено");
+
+		Type = type;
+	}
+
+	public void UpdateProperties(string name, string? description, string? address)
+	{
+		if (Lists.CustomSources.Contains(Type))
+			throw new DomainException(nameof(address), "Изменение встроенных источников данных запрещено");
+
+		if (address == null)
+			throw new DomainException(nameof(address), "Для не-встроенного источника данных адрес является обязательным");
+
+		Address = address;
+		Name = name;
+		Description = description;
 	}
 
 	// поля в БД

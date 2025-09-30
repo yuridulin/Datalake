@@ -4,9 +4,11 @@ using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Application.Features.Sources.Commands.CreateSource;
 
-public record CreateSourceCommand(
-	UserAccessEntity User,
-	string? Name,
-	string? Description,
-	string? Address,
-	SourceType Type = SourceType.Inopc) : ICommandRequest;
+public record CreateSourceCommand : ICommandRequest
+{
+	public required UserAccessEntity User { get; init; }
+	public string? Name { get; init; }
+	public string? Description { get; init; }
+	public string? Address { get; init; }
+	public SourceType? Type  { get; init; }
+}

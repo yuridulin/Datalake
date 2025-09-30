@@ -15,5 +15,6 @@ public interface IAccessRulesQueriesService
 		Guid? userGroupGuid = null,
 		int? sourceId = null,
 		int? blockId = null,
-		int? tagId = null);
+		int? tagId = null,
+		CancellationToken ct = default);
 }

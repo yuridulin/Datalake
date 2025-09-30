@@ -14,6 +14,11 @@ public record class InventoryState
 	/// </summary>
 	public long Version { get; private set; } = DateTime.UtcNow.Ticks;
 
+	private void UpdateVersion()
+	{
+		Version = DateTime.UtcNow.Ticks;
+	}
+
 	#region Фабричные методы создания
 
 	/// <summary>
@@ -139,19 +144,14 @@ public record class InventoryState
 
 	#region Словари активных объектов (только не удаленные)
 
-	public void UpdateVersion()
-	{
-		Version = DateTime.UtcNow.Ticks;
-	}
-
 	public void SetActiveDictionaries()
 	{
 		// Активные объекты фильтруются из основных словарей
-		ActiveBlocks = Blocks.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		ActiveSources = Sources.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
+		ActiveBlocksById = Blocks.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
+		ActiveSourcesById = Sources.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
 		ActiveTagsByGuid = Tags.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
-		ActiveUsers = Users.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
-		ActiveUserGroups = UserGroups.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
+		ActiveUsersByGuid = Users.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
+		ActiveUserGroupsByGuid = UserGroups.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
 
 		// Дополнительные индексы для тегов
 		ActiveTagsById = ActiveTagsByGuid.Values.ToImmutableDictionary(x => x.Id);
@@ -160,12 +160,12 @@ public record class InventoryState
 	/// <summary>
 	/// Активные блоки по идентификатору
 	/// </summary>
-	public ImmutableDictionary<int, BlockEntity> ActiveBlocks { get; private set; } = ImmutableDictionary<int, BlockEntity>.Empty;
+	public ImmutableDictionary<int, BlockEntity> ActiveBlocksById { get; private set; } = ImmutableDictionary<int, BlockEntity>.Empty;
 
 	/// <summary>
 	/// Активные источники по идентификатору
 	/// </summary>
-	public ImmutableDictionary<int, SourceEntity> ActiveSources { get; private set; } = ImmutableDictionary<int, SourceEntity>.Empty;
+	public ImmutableDictionary<int, SourceEntity> ActiveSourcesById { get; private set; } = ImmutableDictionary<int, SourceEntity>.Empty;
 
 	/// <summary>
 	/// Активные теги по глобальному идентификатору
@@ -180,14 +180,43 @@ public record class InventoryState
 	/// <summary>
 	/// Активные пользователи по идентификатору
 	/// </summary>
-	public ImmutableDictionary<Guid, UserEntity> ActiveUsers { get; private set; } = ImmutableDictionary<Guid, UserEntity>.Empty;
+	public ImmutableDictionary<Guid, UserEntity> ActiveUsersByGuid { get; private set; } = ImmutableDictionary<Guid, UserEntity>.Empty;
 
 	/// <summary>
 	/// Активные группы пользователей по идентификатору
 	/// </summary>
-	public ImmutableDictionary<Guid, UserGroupEntity> ActiveUserGroups { get; private set; } = ImmutableDictionary<Guid, UserGroupEntity>.Empty;
+	public ImmutableDictionary<Guid, UserGroupEntity> ActiveUserGroupsByGuid { get; private set; } = ImmutableDictionary<Guid, UserGroupEntity>.Empty;
 
-	#endregion
+	#endregion Словари активных объектов (только не удаленные)
+
+	#region Коллекции активных объектов (только не удаленные)
+
+	/// <summary>
+	/// Активные блоки
+	/// </summary>
+	public IEnumerable<BlockEntity> ActiveBlocks => ActiveBlocksById.Values;
+
+	/// <summary>
+	/// Активные источники
+	/// </summary>
+	public IEnumerable<SourceEntity> ActiveSources => ActiveSourcesById.Values;
+
+	/// <summary>
+	/// Активные теги
+	/// </summary>
+	public IEnumerable<TagEntity> ActiveTags => ActiveTagsById.Values;
+
+	/// <summary>
+	/// Активные группы пользователей
+	/// </summary>
+	public IEnumerable<UserEntity> ActiveUsers => ActiveUsersByGuid.Values;
+
+	/// <summary>
+	/// Активные группы пользователей
+	/// </summary>
+	public IEnumerable<UserGroupEntity> ActiveUserGroups => ActiveUserGroupsByGuid.Values;
+
+	#endregion Коллекции активных объектов (только не удаленные)
 
 	#region Вспомогательные методы для модификации
 
@@ -199,7 +228,7 @@ public record class InventoryState
 		return Update(state => state with
 		{
 			Blocks = Apply(Blocks, block),
-			ActiveBlocks = ApplyAsActive(ActiveBlocks, block),
+			ActiveBlocksById = ApplyAsActive(ActiveBlocksById, block),
 		});
 	}
 
@@ -211,7 +240,7 @@ public record class InventoryState
 		return Update(state => state with
 		{
 			Sources = Apply(Sources, source),
-			ActiveSources = ApplyAsActive(ActiveSources, source),
+			ActiveSourcesById = ApplyAsActive(ActiveSourcesById, source),
 		});
 	}
 
@@ -236,7 +265,7 @@ public record class InventoryState
 		return Update(state => state with
 		{
 			Users = Apply(Users, user),
-			ActiveUsers = ApplyAsActive(ActiveUsers, user),
+			ActiveUsersByGuid = ApplyAsActive(ActiveUsersByGuid, user),
 		});
 	}
 
@@ -248,7 +277,7 @@ public record class InventoryState
 		return Update(state => state with
 		{
 			UserGroups = Apply(UserGroups, userGroup),
-			ActiveUserGroups = ApplyAsActive(ActiveUserGroups, userGroup),
+			ActiveUserGroupsByGuid = ApplyAsActive(ActiveUserGroupsByGuid, userGroup),
 		});
 	}
 

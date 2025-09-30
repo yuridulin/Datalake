@@ -44,10 +44,7 @@ public class DeleteBlockHandler(
 			throw;
 		}
 
-		await inventoryCache.UpdateAsync(state => state with
-		{
-			Blocks = state.Blocks.RemoveAll(x => x.Id == block.Id).Add(block)
-		});
+		await inventoryCache.UpdateAsync(state => state.WithBlock(block));
 
 		return true;
 	}

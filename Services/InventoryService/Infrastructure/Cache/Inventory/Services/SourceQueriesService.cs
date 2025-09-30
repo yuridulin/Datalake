@@ -1,4 +1,5 @@
 ﻿using Datalake.InventoryService.Domain.Constants;
+using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Domain.Queries;
 using Datalake.PublicApi.Models.Sources;
 
@@ -10,8 +11,8 @@ public class SourceQueriesService(IInventoryCache inventoryCache) : ISourceQueri
 	{
 		var state = inventoryCache.State;
 
-		var data = state.Sources
-			.Where(source => !source.IsDeleted && (withCustom || !Lists.CustomSources.Contains(source.Type)))
+		var data = state.ActiveSources
+			.Where(source => withCustom || !Lists.CustomSources.Contains(source.Type))
 			.Select(source => new SourceInfo
 			{
 				Id = source.Id,
@@ -25,36 +26,24 @@ public class SourceQueriesService(IInventoryCache inventoryCache) : ISourceQueri
 		return Task.FromResult(data);
 	}
 
+	public Task<SourceWithTagsInfo?> GetWithTagsAsync(int sourceId)
+	{
+		var state = inventoryCache.State;
+
+		var data = state.ActiveSources
+			.Where(source => source.Id == sourceId)
+			.Select(source => MapSourceToSourceWithTagsInfo(state, source))
+			.FirstOrDefault();
+
+		return Task.FromResult(data);
+	}
+
 	public Task<IEnumerable<SourceWithTagsInfo>> GetWithTagsAsync()
 	{
 		var state = inventoryCache.State;
 
-		var data = state.Sources
-			.Where(source => !source.IsDeleted)
-			.Select(source => new SourceWithTagsInfo
-			{
-				Id = source.Id,
-				Address = source.Address,
-				Name = source.Name,
-				Type = source.Type,
-				IsDisabled = source.IsDisabled,
-				Tags = state.Tags
-					.Where(tag => !tag.IsDeleted && tag.SourceId == source.Id)
-					.Select(tag => new SourceTagInfo
-					{
-						Id = tag.Id,
-						Guid = tag.GlobalGuid,
-						Item = tag.SourceItem ?? string.Empty,
-						FormulaInputs = Array.Empty<SourceTagInfo.TagInputMinimalInfo>(),
-						Name = tag.Name,
-						Type = tag.Type,
-						Resolution = tag.Resolution,
-						SourceType = source.Type,
-						Aggregation = tag.Aggregation,
-						AggregationPeriod = tag.AggregationPeriod,
-					})
-					.ToArray(),
-			});
+		var data = state.ActiveSources
+			.Select(source => MapSourceToSourceWithTagsInfo(state, source));
 
 		return Task.FromResult(data);
 	}
@@ -63,8 +52,7 @@ public class SourceQueriesService(IInventoryCache inventoryCache) : ISourceQueri
 	{
 		var state = inventoryCache.State;
 
-		var data = state.Sources
-			.Where(source => !source.IsDeleted)
+		var data = state.ActiveSources
 			.Select(source => new SourceWithTagsInfo
 			{
 				Id = source.Id,
@@ -72,17 +60,17 @@ public class SourceQueriesService(IInventoryCache inventoryCache) : ISourceQueri
 				Name = source.Name,
 				Type = source.Type,
 				IsDisabled = source.IsDisabled,
-				Tags = state.Tags
-					.Where(tag => !tag.IsDeleted && tag.SourceId == source.Id)
+				Tags = state.ActiveTags
+					.Where(tag => tag.SourceId == source.Id)
 					.Select(tag => new SourceTagInfo
 					{
 						Id = tag.Id,
-						Guid = tag.GlobalGuid,
+						Guid = tag.Guid,
 						Item = tag.SourceItem ?? string.Empty,
 						Calculation = tag.Calculation,
 						Formula = tag.Formula,
 						Thresholds = tag.Thresholds,
-						ThresholdSourceTag = !state.TagsById.TryGetValue(tag.ThresholdSourceTagId ?? 0, out var thresholdSourceTag) ? null :
+						ThresholdSourceTag = !state.ActiveTagsById.TryGetValue(tag.ThresholdSourceTagId ?? 0, out var thresholdSourceTag) ? null :
 							new SourceTagInfo.TagInputMinimalInfo
 							{
 								InputTagId = thresholdSourceTag.Id,
@@ -91,7 +79,7 @@ public class SourceQueriesService(IInventoryCache inventoryCache) : ISourceQueri
 							},
 						FormulaInputs = state.TagInputs
 							.Where(input => input.TagId == tag.Id)
-							.Select(input => !state.TagsById.TryGetValue(input.InputTagId ?? 0, out var inputTag) ? null :
+							.Select(input => !state.ActiveTagsById.TryGetValue(input.InputTagId ?? 0, out var inputTag) ? null :
 								new SourceTagInfo.TagInputMinimalInfo
 								{
 									InputTagId = inputTag.Id,
@@ -106,7 +94,7 @@ public class SourceQueriesService(IInventoryCache inventoryCache) : ISourceQueri
 						SourceType = source.Type,
 						Aggregation = tag.Aggregation,
 						AggregationPeriod = tag.AggregationPeriod,
-						SourceTag = !state.TagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null :
+						SourceTag = !state.ActiveTagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null :
 							new SourceTagInfo.TagInputMinimalInfo
 							{
 								InputTagId = sourceTag.Id,
@@ -118,5 +106,33 @@ public class SourceQueriesService(IInventoryCache inventoryCache) : ISourceQueri
 			});
 
 		return Task.FromResult(data);
+	}
+
+	private static SourceWithTagsInfo MapSourceToSourceWithTagsInfo(InventoryState currentState, SourceEntity source)
+	{
+		return new SourceWithTagsInfo
+		{
+			Id = source.Id,
+			Address = source.Address,
+			Name = source.Name,
+			Type = source.Type,
+			IsDisabled = source.IsDisabled,
+			Tags = currentState.ActiveTags
+				.Where(tag => !tag.IsDeleted && tag.SourceId == source.Id)
+				.Select(tag => new SourceTagInfo
+				{
+					Id = tag.Id,
+					Guid = tag.Guid,
+					Item = tag.SourceItem ?? string.Empty,
+					FormulaInputs = Array.Empty<SourceTagInfo.TagInputMinimalInfo>(),
+					Name = tag.Name,
+					Type = tag.Type,
+					Resolution = tag.Resolution,
+					SourceType = source.Type,
+					Aggregation = tag.Aggregation,
+					AggregationPeriod = tag.AggregationPeriod,
+				})
+				.ToArray(),
+		};
 	}
 }

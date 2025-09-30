@@ -48,7 +48,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Application\Features\Sources\Queries\" />
 	  <Folder Include="Application\Features\Tags\Commands\CreateTag\" />
 	  <Folder Include="Application\Features\Tags\Commands\UpdateTag\" />
 	  <Folder Include="Application\Features\Tags\Commands\DeleteTag\" />

@@ -10,10 +10,13 @@ public interface IUsersGroupsQueriesService
 	/// <summary>
 	/// Запрос краткой информации о группах пользователей
 	/// </summary>
-	Task<IEnumerable<UserGroupInfo>> GetAsync();
+	Task<IEnumerable<UserGroupInfo>> GetAsync(
+		CancellationToken ct = default);
 
 	/// <summary>
 	/// Запрос информации о группах пользователей с правами, подгруппами и участниками
 	/// </summary>
-	Task<IEnumerable<UserGroupDetailedInfo>> GetWithDetailsAsync();
+	Task<UserGroupDetailedInfo?> GetWithDetailsAsync(
+		Guid userGroupGuid,
+		CancellationToken ct = default);
 }

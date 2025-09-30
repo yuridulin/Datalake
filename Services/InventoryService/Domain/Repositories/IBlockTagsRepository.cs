@@ -5,9 +5,5 @@ namespace Datalake.InventoryService.Domain.Repositories;
 
 public interface IBlockTagsRepository : IRepository<BlockTagEntity, int>
 {
-	Task<IEnumerable<BlockTagEntity>> GetByBlockIdAsync(int blockId);
-
-	Task RemoveRangeAsync(IEnumerable<BlockTagEntity> blockTags);
-
-	Task AddRangeAsync(IEnumerable<BlockTagEntity> blockTags);
+	Task<IEnumerable<BlockTagEntity>> GetByBlockIdAsync(int blockId, CancellationToken ct = default);
 }

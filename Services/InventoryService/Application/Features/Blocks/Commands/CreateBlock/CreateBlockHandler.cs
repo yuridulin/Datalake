@@ -49,10 +49,7 @@ public class CreateBlockHandler(
 			throw;
 		}
 
-		await inventoryCache.UpdateAsync(state => state with
-		{
-			Blocks = state.Blocks.Add(block)
-		});
+		await inventoryCache.UpdateAsync(state => state.WithBlock(block));
 
 		return block.Id;
 	}

@@ -1,72 +1,137 @@
-﻿using Datalake.PrivateApi.Interfaces;
-using Datalake.PublicApi.Controllers;
+﻿using Datalake.InventoryService.Application.Features.Sources.Commands.CreateSource;
+using Datalake.InventoryService.Application.Features.Sources.Commands.DeleteSource;
+using Datalake.InventoryService.Application.Features.Sources.Commands.UpdateSource;
+using Datalake.InventoryService.Application.Features.Sources.Queries.GetSource;
+using Datalake.InventoryService.Application.Features.Sources.Queries.GetSources;
+using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Models.Sources;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
-/// <inheritdoc />
-public class SourcesController(IAuthenticator authenticator) : SourcesControllerBase
+/// <summary>
+/// Источники данных
+/// </summary>
+[ApiController]
+[Route("api/v1/sources")]
+public class SourcesController(IAuthenticator authenticator) : ControllerBase
 {
-	/// <inheritdoc />
-	public override async Task<ActionResult<SourceInfo>> CreateEmptyAsync()
+	/// <summary>
+	/// <see cref="HttpMethod.Post" />: Создание источника на основе переданных данных
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="request">Данные нового источника</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Идентификатор источника</returns>
+	[HttpPost]
+	public async Task<ActionResult<int>> CreateAsync(
+		[FromServices] ICreateSourceHandler handler,
+		[FromBody] SourceInfo? request,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		var info = await sourcesRepository.CreateAsync(db, user);
+		var result = await handler.HandleAsync(new()
+		{
+			User = user,
+			Address = request?.Address,
+			Description = request?.Description,
+			Name = request?.Name,
+			Type = request?.Type,
+		}, ct);
 
-		return info;
+		return Ok(result);
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult<SourceInfo>> CreateAsync(
-		[BindRequired, FromBody] SourceInfo source)
+	/// <summary>
+	/// <see cref="HttpMethod.Get" />: Получение данных о источнике
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Данные о источнике</returns>
+	public async Task<ActionResult<SourceInfo>> GetOneAsync(
+		[FromServices] IGetSourceHandler handler,
+		[BindRequired, FromRoute] int sourceId,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		var info = await sourcesRepository.CreateAsync(db, user, source);
+		var data = await handler.HandleAsync(new() { User = user, SourceId = sourceId }, ct);
 
-		return info;
+		return Ok(data);
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult<SourceInfo>> GetAsync(
-		[BindRequired, FromRoute] int id)
+	/// <summary>
+	/// <see cref="HttpMethod.Get" />: Получение списка источников
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="withCustom">Включить ли в список системные источники</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Список источников</returns>
+	public async Task<ActionResult<IEnumerable<SourceInfo>>> GetAllAsync(
+		[FromServices] IGetSourcesHandler handler,
+		[FromQuery] bool withCustom = false,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await Task.FromResult(sourcesRepository.Get(user, id));
+		var data = await handler.HandleAsync(new() { User = user, WithCustom = withCustom }, ct);
+
+		return Ok(data);
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult<SourceInfo[]>> GetAllAsync(bool withCustom = false)
+	/// <summary>
+	/// <see cref="HttpMethod.Put" />: Изменение источника
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <param name="request">Новые данные источника</param>
+	/// <param name="ct">Токен отмены</param>
+	[HttpPut("{sourceId}")]
+	public async Task<ActionResult> UpdateAsync(
+		[FromServices] IUpdateSourceHandler handler,
+		[BindRequired, FromRoute] int sourceId,
+		[BindRequired, FromBody] SourceUpdateRequest request,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await Task.FromResult(sourcesRepository.GetAll(user, withCustom));
+		await handler.HandleAsync(new()
+		{
+			User = user,
+			SourceId = sourceId,
+			Name = request.Name,
+			Description = request.Description,
+			Address = request.Address,
+			Type = request.Type,
+			IsDisabled = request.IsDisabled,
+		}, ct);
+
+		return Ok();
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult> UpdateAsync(
-		[BindRequired, FromRoute] int id,
-		[BindRequired, FromBody] SourceUpdateRequest request)
+	/// <summary>
+	/// <see cref="HttpMethod.Delete" />: Удаление источника
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="sourceId">Идентификатор источника</param>
+	/// <param name="ct">Токен отмены</param>
+	[HttpDelete("{sourceId}")]
+	public async Task<ActionResult> DeleteAsync(
+		[FromServices] IDeleteSourceHandler handler,
+		[BindRequired, FromRoute] int sourceId,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		await sourcesRepository.UpdateAsync(db, user, id, request);
+		await handler.HandleAsync(new()
+		{
+			User = user,
+			SourceId = sourceId
+		}, ct);
 
-		return NoContent();
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult> DeleteAsync(
-		[BindRequired, FromRoute] int id)
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		await sourcesRepository.DeleteAsync(db, user, id);
-
-		return NoContent();
+		return Ok();
 	}
 }
