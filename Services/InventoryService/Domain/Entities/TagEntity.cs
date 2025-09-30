@@ -1,4 +1,5 @@
 ﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PrivateApi.Exceptions;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;
 
@@ -13,6 +14,9 @@ public record class TagEntity : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 
 	public void MarkAsDeleted()
 	{
+		if (IsDeleted)
+			throw new DomainException("Тег уже удален");
+
 		IsDeleted = true;
 	}
 
@@ -26,7 +30,12 @@ public record class TagEntity : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Глобальный идентификатор
 	/// </summary>
-	public Guid Guid { get; private set; }
+	public Guid GlobalGuid { get; private set; }
+
+	/// <summary>
+	/// Глобальный идентификатор
+	/// </summary>
+	public Guid Guid => GlobalGuid;
 
 	/// <summary>
 	/// Название

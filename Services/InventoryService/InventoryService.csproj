@@ -52,7 +52,9 @@
 	  <Folder Include="Application\Features\Tags\Commands\UpdateTag\" />
 	  <Folder Include="Application\Features\Tags\Commands\DeleteTag\" />
 	  <Folder Include="Application\Features\Tags\Queries\" />
-	  <Folder Include="Application\Features\UserGroups\Queries\" />
+	  <Folder Include="Application\Features\UserGroups\Queries\GetUserGroups\" />
+	  <Folder Include="Application\Features\UserGroups\Queries\GetUserGroupsTree\" />
+	  <Folder Include="Application\Features\UserGroups\Queries\GetUserGroupWithDetails\" />
 	  <Folder Include="Application\Features\Users\Queries\" />
 	  <Folder Include="storage\logs\" />
 	  <Folder Include="storage\logs\" />

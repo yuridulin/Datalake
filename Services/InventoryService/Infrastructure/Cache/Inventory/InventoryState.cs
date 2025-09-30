@@ -25,25 +25,28 @@ public record class InventoryState
 	/// Фабричный метод пустого нового состояния
 	/// </summary>
 	/// <returns></returns>
-	public static InventoryState CreateEmpty()
+	public static InventoryState Empty
 	{
-		var state = new InventoryState
+		get
 		{
-			AccessRules = [],
-			Blocks = ImmutableDictionary<int, BlockEntity>.Empty,
-			BlockProperties = [],
-			BlockTags = [],
-			Sources = ImmutableDictionary<int, SourceEntity>.Empty,
-			Tags = ImmutableDictionary<int, TagEntity>.Empty,
-			TagInputs = [],
-			Users = ImmutableDictionary<Guid, UserEntity>.Empty,
-			UserGroups = ImmutableDictionary<Guid, UserGroupEntity>.Empty,
-			UserGroupRelations = [],
-		};
+			var state = new InventoryState
+			{
+				AccessRules = [],
+				Blocks = ImmutableDictionary<int, BlockEntity>.Empty,
+				BlockProperties = [],
+				BlockTags = [],
+				Sources = ImmutableDictionary<int, SourceEntity>.Empty,
+				Tags = ImmutableDictionary<int, TagEntity>.Empty,
+				TagInputs = [],
+				Users = ImmutableDictionary<Guid, UserEntity>.Empty,
+				UserGroups = ImmutableDictionary<Guid, UserGroupEntity>.Empty,
+				UserGroupRelations = [],
+			};
 
-		state.UpdateVersion();
+			state.UpdateVersion();
 
-		return state;
+			return state;
+		}
 	}
 
 	/// <summary>
@@ -293,7 +296,19 @@ public record class InventoryState
 			BlockTags = BlockTags.RemoveAll(x => x.Id == blockId).AddRange(blockTags),
 		};
 	}
-	// другие по необходимости с точечными, экономными изменениями
+
+	/// <summary>
+	/// Обновляет связи группы учетных записей с учетными записями
+	/// </summary>
+	/// <param name="userGroupGuid">Идентификатор группы учетных записей</param>
+	/// <param name="userGroupRelations">Новые связи с учетными записями</param>
+	public InventoryState WithUserGroupRelations(Guid userGroupGuid, IEnumerable<UserGroupRelationEntity> userGroupRelations)
+	{
+		return this with
+		{
+			UserGroupRelations = UserGroupRelations.RemoveAll(x => x.UserGroupGuid == userGroupGuid).AddRange(userGroupRelations),
+		};
+	}
 
 	#endregion
 

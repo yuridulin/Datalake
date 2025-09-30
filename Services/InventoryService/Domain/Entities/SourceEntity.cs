@@ -39,6 +39,9 @@ public record class SourceEntity : IWithIdentityKey, ISoftDeletable
 
 	public void MarkAsDeleted()
 	{
+		if (IsDeleted)
+			throw new DomainException("Источник данных уже удален");
+
 		IsDeleted = true;
 	}
 

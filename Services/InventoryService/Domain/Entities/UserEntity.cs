@@ -1,5 +1,6 @@
 ﻿using Datalake.InventoryService.Domain.Interfaces;
 using Datalake.InventoryService.Infrastructure.Database.Views;
+using Datalake.PrivateApi.Exceptions;
 using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
@@ -13,6 +14,9 @@ public record class UserEntity : IWithGuidKey, ISoftDeletable
 
 	public void MarkAsDeleted()
 	{
+		if (IsDeleted)
+			throw new DomainException("Учетная запись уже удалена");
+
 		IsDeleted = true;
 	}
 

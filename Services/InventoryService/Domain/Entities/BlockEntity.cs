@@ -1,4 +1,5 @@
 ﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PrivateApi.Exceptions;
 
 namespace Datalake.InventoryService.Domain.Entities;
 
@@ -48,6 +49,9 @@ public record class BlockEntity : IWithIdentityKey, ISoftDeletable
 
 	public void MarkAsDeleted()
 	{
+		if (IsDeleted)
+			throw new DomainException("Блок уже удален");
+
 		IsDeleted = true;
 	}
 

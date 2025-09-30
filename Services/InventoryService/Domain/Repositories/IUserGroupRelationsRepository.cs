@@ -5,4 +5,5 @@ namespace Datalake.InventoryService.Domain.Repositories;
 
 public interface IUserGroupRelationsRepository : IRepository<UserGroupRelationEntity, int>
 {
+	Task<UserGroupRelationEntity[]> GetByUserGroupGuidAsync(Guid userGroupGuid, CancellationToken ct = default);
 }

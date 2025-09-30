@@ -9,6 +9,13 @@ public record class UserGroupRelationEntity
 {
 	private UserGroupRelationEntity() { }
 
+	public UserGroupRelationEntity(Guid userGroupGuid, Guid userGuid, AccessType accessType)
+	{
+		UserGroupGuid = userGroupGuid;
+		UserGuid = userGuid;
+		AccessType = accessType;
+	}
+
 	// поля в БД
 
 	/// <summary>

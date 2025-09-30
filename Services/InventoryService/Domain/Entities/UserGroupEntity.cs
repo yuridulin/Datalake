@@ -1,4 +1,5 @@
 ﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PrivateApi.Exceptions;
 
 namespace Datalake.InventoryService.Domain.Entities;
 
@@ -9,8 +10,34 @@ public record class UserGroupEntity : IWithGuidKey, ISoftDeletable
 {
 	private UserGroupEntity() { }
 
+	public UserGroupEntity(Guid? parentGuid, string? name, string? description)
+	{
+		UpdateParent(parentGuid);
+		Update(name, description);
+	}
+
+	public void UpdateParent(Guid? parentGuid)
+	{
+		if (parentGuid.HasValue && parentGuid.Value == Guid)
+			throw new DomainException("Группа учетных записей не может быть вложена в саму себя");
+
+		ParentGuid = parentGuid;
+	}
+
+	public void Update(string? name, string? description)
+	{
+		if (string.IsNullOrEmpty(name))
+			throw new DomainException("Имя группы учетных записей является обязательным");
+
+		Name = name;
+		Description = description;
+	}
+
 	public void MarkAsDeleted()
 	{
+		if (IsDeleted)
+			throw new DomainException("Группа учетных записей уже удалена");
+
 		IsDeleted = true;
 	}
 

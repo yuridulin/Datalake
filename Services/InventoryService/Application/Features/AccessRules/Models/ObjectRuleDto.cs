@@ -1,6 +1,6 @@
 ﻿using Datalake.PublicApi.Enums;
 
-namespace Datalake.InventoryService.Application.Features.AccessRules.DTOs;
+namespace Datalake.InventoryService.Application.Features.AccessRules.Models;
 
 public record ObjectRuleDto(
 	AccessType Type,

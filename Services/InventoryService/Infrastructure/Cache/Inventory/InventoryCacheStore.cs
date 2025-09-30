@@ -9,7 +9,7 @@ public class InventoryCacheStore : IInventoryCache
 	private readonly IServiceScopeFactory _serviceScopeFactory;
 	private readonly ILogger<InventoryCacheStore> _logger;
 	private readonly SemaphoreSlim _semaphore = new(1, 1);
-	private InventoryState _currentState = InventoryState.CreateEmpty();
+	private InventoryState _currentState = InventoryState.Empty;
 
 	public InventoryCacheStore(
 		IServiceScopeFactory serviceScopeFactory,

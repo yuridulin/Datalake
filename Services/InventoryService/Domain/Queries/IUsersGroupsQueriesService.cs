@@ -8,6 +8,13 @@ namespace Datalake.InventoryService.Domain.Queries;
 public interface IUsersGroupsQueriesService
 {
 	/// <summary>
+	/// Запрос краткой информации о группе пользователей
+	/// </summary>
+	Task<UserGroupInfo> GetAsync(
+		Guid userGroupGuid,
+		CancellationToken ct = default);
+
+	/// <summary>
 	/// Запрос краткой информации о группах пользователей
 	/// </summary>
 	Task<IEnumerable<UserGroupInfo>> GetAsync(

@@ -1,4 +1,4 @@
-﻿using Datalake.InventoryService.Application.Features.Blocks.DTOs;
+﻿using Datalake.InventoryService.Application.Features.Blocks.Models;
 using Datalake.InventoryService.Application.Interfaces;
 using Datalake.PrivateApi.Entities;
 
