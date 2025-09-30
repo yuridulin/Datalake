@@ -22,7 +22,7 @@ public abstract class TransactionalCommandHandler<TCommand, TResult>(
 
 	public abstract Task<TResult> ExecuteInTransactionAsync(TCommand command, CancellationToken ct = default);
 
-	public virtual Func<InventoryState, InventoryState>? UpdateCache { get; } = null;
+	public virtual InventoryState UpdateCache(InventoryState state) => state;
 
 	public virtual async Task<TResult> HandleAsync(TCommand command, CancellationToken ct = default)
 	{
@@ -62,8 +62,10 @@ public abstract class TransactionalCommandHandler<TCommand, TResult>(
 			throw;
 		}
 
-		if (inventoryCache != null && UpdateCache != null)
+		if (inventoryCache != null)
+		{
 			await inventoryCache.UpdateAsync(UpdateCache);
+		}
 
 		_logger.LogDebug("Выполнение команды {name} завершено", _commandName);
 		return result;

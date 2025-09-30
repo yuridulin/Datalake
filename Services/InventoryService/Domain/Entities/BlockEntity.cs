@@ -1,9 +1,11 @@
-﻿namespace Datalake.InventoryService.Domain.Entities;
+﻿using Datalake.InventoryService.Domain.Interfaces;
+
+namespace Datalake.InventoryService.Domain.Entities;
 
 /// <summary>
 /// Запись в таблице блоков
 /// </summary>
-public record class BlockEntity
+public record class BlockEntity : IWithIdentityKey, ISoftDeletable
 {
 	private BlockEntity() { }
 

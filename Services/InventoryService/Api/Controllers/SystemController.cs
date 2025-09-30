@@ -57,7 +57,7 @@ public class SystemController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <inheritdoc />
-	public override async Task<ActionResult<string>> GetLastUpdateAsync()
+	public async Task<ActionResult<string>> GetLastUpdateAsync()
 	{
 		var lastUpdate = dataStore.State.Version;
 		return await Task.FromResult(lastUpdate.ToString());

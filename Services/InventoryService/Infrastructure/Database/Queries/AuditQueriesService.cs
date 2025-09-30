@@ -59,7 +59,7 @@ public class AuditQueriesService(InventoryEfContext context) : IAuditQueriesServ
 			query = query.Where(x => x.AffectedBlock != null && x.AffectedBlock.Id == blockId.Value);
 
 		if (tagGuid != null)
-			query = query.Where(x => x.AffectedTag != null && x.AffectedTag.GlobalGuid == tagGuid.Value);
+			query = query.Where(x => x.AffectedTag != null && x.AffectedTag.Guid == tagGuid.Value);
 
 		if (userGuid != null)
 			query = query.Where(x => x.AffectedUser != null && x.AffectedUser.Guid == userGuid.Value);
@@ -116,7 +116,7 @@ public class AuditQueriesService(InventoryEfContext context) : IAuditQueriesServ
 				AffectedTag = log.AffectedTag == null ? null : new TagSimpleInfo
 				{
 					Id = log.AffectedTag.Id,
-					Guid = log.AffectedTag.GlobalGuid,
+					Guid = log.AffectedTag.Guid,
 					Name = log.AffectedTag.Name,
 					Type = log.AffectedTag.Type,
 					Resolution = log.AffectedTag.Resolution,

@@ -18,7 +18,7 @@ public class UpdateBlockHandler(
 	IUnitOfWork unitOfWork,
 	IInventoryCache inventoryCache,
 	ILogger<UpdateBlockHandler> logger) :
-		TransactionalCommandHandler<UpdateBlockCommand, int>(unitOfWork, inventoryCache, logger),
+		TransactionalCommandHandler<UpdateBlockCommand, int>(unitOfWork, logger, inventoryCache),
 		IUpdateBlockHandler
 {
 	private BlockEntity block = null!;
@@ -49,9 +49,5 @@ public class UpdateBlockHandler(
 		return block.Id;
 	}
 
-	public override Func<InventoryState, InventoryState>? UpdateCache => state => state with
-	{
-		Blocks = state.Blocks.RemoveAll(x => x.Id == block.Id).Add(block),
-		BlockTags = state.BlockTags.RemoveAll(x => x.BlockId == block.Id).AddRange(blockTags)
-	};
+	public override InventoryState UpdateCache(InventoryState state) => state.WithBlock(block).WithBlockTags(block.Id, blockTags);
 }

@@ -1,4 +1,5 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;
 
 namespace Datalake.InventoryService.Domain.Entities;
@@ -6,9 +7,14 @@ namespace Datalake.InventoryService.Domain.Entities;
 /// <summary>
 /// Запись в таблице тегов
 /// </summary>
-public record class TagEntity
+public record class TagEntity : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 {
 	private TagEntity() { }
+
+	public void MarkAsDeleted()
+	{
+		IsDeleted = true;
+	}
 
 	#region поля в БД
 
@@ -20,12 +26,12 @@ public record class TagEntity
 	/// <summary>
 	/// Глобальный идентификатор
 	/// </summary>
-	public Guid GlobalGuid { get; private set; }
+	public Guid Guid { get; private set; }
 
 	/// <summary>
 	/// Название
 	/// </summary>
-	public string Name { get; private set; }
+	public string Name { get; private set; } = string.Empty;
 
 	/// <summary>
 	/// Описание

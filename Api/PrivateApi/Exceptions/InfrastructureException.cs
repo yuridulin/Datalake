@@ -8,4 +8,5 @@ namespace Datalake.PrivateApi.Exceptions;
 public class InfrastructureException(string code, string message)
 	: AppException(code, message, LogLevel.Error)
 {
+	public InfrastructureException(string message) : this("INFRASTRUCTURE", message) { }
 }

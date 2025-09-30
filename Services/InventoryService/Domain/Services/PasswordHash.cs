@@ -1,4 +1,4 @@
-﻿using Datalake.PublicApi.Exceptions;
+﻿using Datalake.PrivateApi.Exceptions;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -22,7 +22,7 @@ public static class PasswordHash
 	public static string FromPlainText(string? rawPassword)
 	{
 		if (string.IsNullOrEmpty(rawPassword))
-			throw new InvalidValueException(message: "пароль не может быть пустым");
+			throw new DomainException("пароль не может быть пустым");
 
 		var hash = SHA1.HashData(Encoding.UTF8.GetBytes(rawPassword));
 		return Encode(hash);

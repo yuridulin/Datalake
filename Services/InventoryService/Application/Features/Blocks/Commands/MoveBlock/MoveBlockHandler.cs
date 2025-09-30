@@ -4,8 +4,8 @@ using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Domain.Repositories;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
 using Datalake.InventoryService.Infrastructure.Database.Abstractions;
+using Datalake.PrivateApi.Exceptions;
 using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Exceptions;
 
 namespace Datalake.InventoryService.Application.Features.Blocks.Commands.MoveBlock;
 
@@ -31,10 +31,10 @@ public class MoveBlockHandler(
 				?? throw Errors.NotFoundBlock(command.BlockId);
 
 			if (command.ParentId == command.BlockId)
-				throw new InvalidValueException("Блок не может быть родителем самому себе");
+				throw new ConflictException("Блок не может быть родителем самому себе");
 
 			if (command.ParentId.HasValue && !await blocksRepository.ExistsAsync(command.ParentId.Value, ct))
-				throw new NotFoundException($"Родительский блок не найден по идентификатору: {command.ParentId}");
+				throw Errors.NotFoundBlock($"Родительский блок не найден по идентификатору: {command.ParentId}");
 
 			block.UpdateParent(command.ParentId);
 
@@ -50,10 +50,7 @@ public class MoveBlockHandler(
 			throw;
 		}
 
-		await inventoryCache.UpdateAsync(state => state with
-		{
-			Blocks = state.Blocks.RemoveAll(x => x.Id == block.Id).Add(block)
-		});
+		await inventoryCache.UpdateAsync(state => state.WithBlock(block));
 
 		return block.Id;
 	}

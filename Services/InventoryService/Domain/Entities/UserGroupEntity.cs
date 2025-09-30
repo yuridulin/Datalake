@@ -1,11 +1,18 @@
-﻿namespace Datalake.InventoryService.Domain.Entities;
+﻿using Datalake.InventoryService.Domain.Interfaces;
+
+namespace Datalake.InventoryService.Domain.Entities;
 
 /// <summary>
 /// Запись в таблице групп пользователей
 /// </summary>
-public record class UserGroupEntity
+public record class UserGroupEntity : IWithGuidKey, ISoftDeletable
 {
 	private UserGroupEntity() { }
+
+	public void MarkAsDeleted()
+	{
+		IsDeleted = true;
+	}
 
 	// поля в БД
 
@@ -22,7 +29,7 @@ public record class UserGroupEntity
 	/// <summary>
 	/// Название
 	/// </summary>
-	public string Name { get; private set; }
+	public string Name { get; private set; } = string.Empty;
 
 	/// <summary>
 	/// Описание

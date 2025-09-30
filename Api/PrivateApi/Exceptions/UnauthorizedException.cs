@@ -8,4 +8,5 @@ namespace Datalake.PrivateApi.Exceptions;
 public class UnauthorizedException(string code, string message)
 	: AppException(code, message, LogLevel.Warning)
 {
+	public UnauthorizedException(string message) : this("NOT_AUTHORIZED", message) { }
 }

@@ -26,7 +26,7 @@ public class ErrorsMiddleware
 				UnauthenticatedException ex => CreateUnauthenticatedProblem(ex),
 				UnauthorizedException ex => CreateUnauthorizedProblem(ex),
 				NotFoundException ex => CreateNotFoundProblem(ex),
-				ConfictException ex => CreateConfictProblem(ex),
+				ConflictException ex => CreateConfictProblem(ex),
 				DomainException ex => CreateDomainProblem(ex),
 				InfrastructureException ex => CreateInfrastructureProblem(ex),
 				_ => CreateDefaultProblem(error, env)
@@ -86,7 +86,7 @@ public class ErrorsMiddleware
 		};
 	}
 
-	private static ProblemDetails CreateConfictProblem(ConfictException exception)
+	private static ProblemDetails CreateConfictProblem(ConflictException exception)
 	{
 		return new ProblemDetails
 		{

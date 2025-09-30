@@ -1,7 +1,6 @@
 ﻿using Datalake.InventoryService.Infrastructure.Database;
 using Datalake.PrivateApi.Utils;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Immutable;
 
 namespace Datalake.InventoryService.Infrastructure.Cache.Inventory;
 
@@ -10,19 +9,7 @@ public class InventoryCacheStore : IInventoryCache
 	private readonly IServiceScopeFactory _serviceScopeFactory;
 	private readonly ILogger<InventoryCacheStore> _logger;
 	private readonly SemaphoreSlim _semaphore = new(1, 1);
-	private InventoryState _currentState = new()
-	{
-		AccessRules = [],
-		BlockProperties = [],
-		Blocks = [],
-		BlockTags = [],
-		Sources = [],
-		TagInputs = [],
-		Tags = [],
-		UserGroupRelations = [],
-		UserGroups = [],
-		Users = [],
-	};
+	private InventoryState _currentState = InventoryState.CreateEmpty();
 
 	public InventoryCacheStore(
 		IServiceScopeFactory serviceScopeFactory,
@@ -78,7 +65,7 @@ public class InventoryCacheStore : IInventoryCache
 	{
 		return await Measures.Measure(async () =>
 		{
-			var accessRights = await context.AccessRights.AsNoTracking().ToArrayAsync();
+			var accessRules = await context.AccessRights.AsNoTracking().ToArrayAsync();
 			var blocks = await context.Blocks.AsNoTracking().ToArrayAsync();
 			var blockProperties = await context.BlockProperties.AsNoTracking().ToArrayAsync();
 			var blockTags = await context.BlockTags.AsNoTracking().ToArrayAsync();
@@ -89,20 +76,18 @@ public class InventoryCacheStore : IInventoryCache
 			var userGroups = await context.UserGroups.AsNoTracking().ToArrayAsync();
 			var userGroupRelations = await context.UserGroupRelations.AsNoTracking().ToArrayAsync();
 
-			var newState = new InventoryState
-			{
-				AccessRules = accessRights.ToImmutableList(),
-				Blocks = blocks.ToImmutableList(),
-				BlockProperties = blockProperties.ToImmutableList(),
-				BlockTags = blockTags.ToImmutableList(),
-				Sources = sources.ToImmutableList(),
-				Tags = tags.ToImmutableList(),
-				TagInputs = tagInputs.ToImmutableList(),
-				Users = users.ToImmutableList(),
-				UserGroups = userGroups.ToImmutableList(),
-				UserGroupRelations = userGroupRelations.ToImmutableList(),
-			};
-			return newState;
+			return InventoryState.Create(
+				accessRules: accessRules,
+				blocks: blocks,
+				blockProperties: blockProperties,
+				blockTags: blockTags,
+				sources: sources,
+				tags: tags,
+				tagInputs: tagInputs,
+				users: users,
+				userGroups: userGroups,
+				userGroupRelations: userGroupRelations);
+
 		}, _logger, nameof(LoadStateFromDatabaseAsync));
 	}
 
@@ -111,19 +96,18 @@ public class InventoryCacheStore : IInventoryCache
 		try
 		{
 			var newState = update(_currentState);
-			newState.InitDictionaries();
-
-			_currentState = newState;
-			StateChanged?.Invoke(this, _currentState);
-
-			return newState;
+			if (newState.Version != _currentState.Version)
+			{
+				_currentState = newState;
+				StateChanged?.Invoke(this, _currentState);
+			}
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Ошибка при изменении стейта");
 			StateCorrupted?.Invoke(this, 0);
-
-			return _currentState;
 		}
+
+		return _currentState;
 	}
 }

@@ -1,6 +1,6 @@
 ﻿using Datalake.PrivateApi.Converters;
+using Datalake.PrivateApi.Exceptions;
 using Datalake.PrivateApi.ValueObjects;
-using Datalake.PublicApi.Exceptions;
 using FluentValidation;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
@@ -135,7 +135,10 @@ public static class ProgramExtensions
 			// доменные и бизнес-ошибки, которые не нужны в Sentry
 			o.AddExceptionFilterForType<ValidationException>();
 			o.AddExceptionFilterForType<UnauthenticatedException>();
-			o.AddExceptionFilterForType<ForbiddenException>();
+			o.AddExceptionFilterForType<UnauthorizedException>();
+			o.AddExceptionFilterForType<ConflictException>();
+			o.AddExceptionFilterForType<DomainException>();
+			o.AddExceptionFilterForType<NotFoundException>();
 		});
 	}
 }

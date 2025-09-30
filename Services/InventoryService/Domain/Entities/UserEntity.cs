@@ -1,4 +1,5 @@
-﻿using Datalake.InventoryService.Infrastructure.Database.Views;
+﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.InventoryService.Infrastructure.Database.Views;
 using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
@@ -6,9 +7,14 @@ namespace Datalake.InventoryService.Domain.Entities;
 /// <summary>
 /// Запись в таблице учетных записей
 /// </summary>
-public record class UserEntity
+public record class UserEntity : IWithGuidKey, ISoftDeletable
 {
 	private UserEntity() { }
+
+	public void MarkAsDeleted()
+	{
+		IsDeleted = true;
+	}
 
 	// поля в БД
 

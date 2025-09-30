@@ -37,8 +37,5 @@ public class CreateSourceHandler(
 		return source.Id;
 	}
 
-	public override Func<InventoryState, InventoryState>? UpdateCache => state => state with
-	{
-		Sources = state.Sources.Add(source)
-	};
+	public override InventoryState UpdateCache(InventoryState state) => state.WithSource(source);
 }

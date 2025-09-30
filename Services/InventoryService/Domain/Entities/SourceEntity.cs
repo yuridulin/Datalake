@@ -1,4 +1,5 @@
 ﻿using Datalake.InventoryService.Domain.Constants;
+using Datalake.InventoryService.Domain.Interfaces;
 using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
@@ -6,7 +7,7 @@ namespace Datalake.InventoryService.Domain.Entities;
 /// <summary>
 /// Запись в таблице источников
 /// </summary>
-public record class SourceEntity
+public record class SourceEntity : IWithIdentityKey, ISoftDeletable
 {
 	private SourceEntity() { }
 
@@ -40,6 +41,11 @@ public record class SourceEntity
 		Address = address;
 		Name = name;
 		Description = description;
+	}
+
+	public void MarkAsDeleted()
+	{
+		IsDeleted = true;
 	}
 
 	// поля в БД

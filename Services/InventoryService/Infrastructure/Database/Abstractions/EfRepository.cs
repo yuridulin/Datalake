@@ -36,12 +36,12 @@ public abstract class EfRepository<TEntity, TKey>(InventoryEfContext context) : 
 		return await _set.FindAsync(new object[] { id }, ct) != null;
 	}
 
-	public virtual async Task AddRangeAsync(IEnumerable<TEntity> entities)
+	public virtual async Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default)
 	{
-		await _set.AddRangeAsync(entities);
+		await _set.AddRangeAsync(entities, ct);
 	}
 
-	public virtual Task RemoveRangeAsync(IEnumerable<TEntity> entities)
+	public virtual Task RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default)
 	{
 		_set.RemoveRange(entities);
 		return Task.CompletedTask;

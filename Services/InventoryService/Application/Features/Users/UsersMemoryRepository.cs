@@ -4,10 +4,8 @@ using Datalake.InventoryService.Domain.Extensions;
 using Datalake.InventoryService.Domain.Services;
 using Datalake.InventoryService.Infrastructure.Cache.EnergoId;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
-using Datalake.InventoryService.Infrastructure.Cache.Inventory.Services;
 using Datalake.InventoryService.Infrastructure.Database;
 using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Exceptions;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 
