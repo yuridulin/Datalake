@@ -75,7 +75,7 @@ public class UserGroupsController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Информация о группе</returns>
 	[HttpGet("{userGroupGuid}")]
-	public async Task<ActionResult<UserGroupInfo>> GetOneAsync(
+	public async Task<ActionResult<UserGroupInfo>> GetAsync(
 		[FromServices] IGetUserGroupHandler handler,
 		[BindRequired, FromRoute] Guid userGroupGuid,
 		CancellationToken ct = default)

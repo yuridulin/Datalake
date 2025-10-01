@@ -13,7 +13,7 @@ namespace Datalake.InventoryService.Infrastructure.Database.Initialization;
 public class DbInitializer(
 	IServiceScopeFactory serviceScopeFactory,
 	IConfiguration configuration,
-	ILogger<DbExternalInitializer> logger)
+	ILogger<EnergoIdViewCreator> logger)
 {
 	/// <summary>
 	/// Настройка БД

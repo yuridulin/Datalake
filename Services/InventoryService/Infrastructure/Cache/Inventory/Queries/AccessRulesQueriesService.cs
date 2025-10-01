@@ -1,14 +1,15 @@
-﻿using Datalake.InventoryService.Application.Queries;
+﻿using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Queries;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory.Constants;
 using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Models.AccessRights;
+using Datalake.PublicApi.Models.AccessRules;
 using Datalake.PublicApi.Models.Blocks;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.UserGroups;
 using Datalake.PublicApi.Models.Users;
 
-namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Services;
+namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Queries;
 
 public class AccessRulesQueriesService(IInventoryCache inventoryCache) : IAccessRulesQueriesService
 {

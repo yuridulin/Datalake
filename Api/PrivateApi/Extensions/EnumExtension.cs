@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Datalake.InventoryService.Domain.Extensions;
+namespace Datalake.PrivateApi.Extensions;
 
 /// <summary>
 /// Расширения для работы с enum

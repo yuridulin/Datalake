@@ -1,62 +1,181 @@
-﻿using Datalake.PrivateApi.Interfaces;
-using Datalake.PublicApi.Controllers;
+﻿using Datalake.InventoryService.Application.Features.Tags.Commands.CreateTag;
+using Datalake.InventoryService.Application.Features.Tags.Commands.DeleteTag;
+using Datalake.InventoryService.Application.Features.Tags.Commands.UpdateTag;
+using Datalake.InventoryService.Application.Features.Tags.Queries.GetTags;
+using Datalake.InventoryService.Application.Features.Tags.Queries.GetTagWithDetails;
+using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Models.Tags;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
-/// <inheritdoc />
-public class TagsController(IAuthenticator authenticator) : TagsControllerBase
+/// <summary>
+/// Теги
+/// </summary>
+[ApiController]
+[Route("api/v1/tags")]
+public class TagsController(IAuthenticator authenticator) : ControllerBase
 {
-	/// <inheritdoc />
-	public override async Task<ActionResult<TagInfo>> CreateAsync(
-		[BindRequired, FromBody] TagCreateRequest tagCreateRequest)
+	/// <summary>
+	/// <see cref="HttpMethod.Post" />: Создание нового тега
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="request">Необходимые данные для создания тега</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Идентификатор нового тега в локальной базе данных</returns>
+	[HttpPost]
+	public async Task<ActionResult<TagInfo>> CreateAsync(
+		[FromServices] ICreateTagHandler handler,
+		[BindRequired, FromBody] TagCreateRequest request,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await tagsRepository.CreateAsync(db, user, tagCreateRequest);
+		var result = await handler.HandleAsync(new()
+		{
+			User = user,
+			Type = request.TagType,
+			BlockId = request.BlockId,
+			SourceId = request.SourceId,
+			SourceItem = request.SourceItem,
+		}, ct);
+
+		return Ok(result);
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult<TagFullInfo>> GetAsync(int id)
+	/// <summary>
+	/// <see cref="HttpMethod.Get" />: Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Объект информации о теге</returns>
+	[HttpGet("{tagId}")]
+	public async Task<ActionResult<TagFullInfo>> GetAsync(
+		[FromServices] IGetTagWithDetailsHandler handler,
+		[FromRoute] int tagId,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await Task.FromResult(tagsRepository.Get(user, id));
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+			Id = tagId,
+		}, ct);
+
+		return Ok(data);
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult<TagInfo[]>> GetAllAsync(
+	/// <summary>
+	/// <see cref="HttpMethod.Get" />: Получение списка тегов, включая информацию о источниках и настройках получения данных
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="sourceId">Идентификатор источника. Если указан, будут выбраны теги только этого источника</param>
+	/// <param name="tagsId">Список локальных идентификаторов тегов</param>
+	/// <param name="tagsGuid">Список глобальных идентификаторов тегов</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Плоский список объектов информации о тегах</returns>
+	[HttpGet]
+	public async Task<ActionResult<TagInfo[]>> GetAllAsync(
+		[FromServices] IGetTagsHandler handler,
 		[FromQuery] int? sourceId,
-		[FromQuery] int[]? id,
-		[FromQuery] string[]? names,
-		[FromQuery] Guid[]? guids)
+		[FromQuery] int[]? tagsId,
+		[FromQuery] Guid[]? tagsGuid,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await Task.FromResult(tagsRepository.GetAll(user, sourceId, id, names, guids));
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+			SpecificIdentifiers = tagsId,
+			SpecificGuids = tagsGuid,
+			SpecificSourceId = sourceId,
+		}, ct);
+
+		return Ok(data);
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult> UpdateAsync(
-		[BindRequired, FromRoute] int id,
-		[BindRequired, FromBody] TagUpdateRequest tag)
+	/// <summary>
+	/// <see cref="HttpMethod.Put" />: Изменение тега
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <param name="request">Новые данные тега</param>
+	/// <param name="ct">Токен отмены</param>
+	[HttpPut("{tagId}")]
+	public async Task<ActionResult> UpdateAsync(
+		[FromServices] IUpdateTagHandler handler,
+		[BindRequired, FromRoute] int tagId,
+		[BindRequired, FromBody] TagUpdateRequest request,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		await tagsRepository.UpdateAsync(db, user, id, tag);
+		await handler.HandleAsync(new()
+		{
+			User = user,
+			Id = tagId,
+			Name = request.Name,
+			Type = request.Type,
+			Description = request.Description,
+			SourceId = request.SourceId,
+			Resolution = request.Resolution,
+			Inopc = new()
+			{
+				SourceItem = request.SourceItem
+			},
+			Numeric = new()
+			{
+				IsScaling = request.IsScaling,
+				MaxEu = request.MaxEu,
+				MaxRaw = request.MaxRaw,
+				MinEu = request.MinEu,
+				MinRaw = request.MinRaw
+			},
+			Aggregation = new()
+			{
+				Aggregation = request.Aggregation,
+				AggregationPeriod = request.AggregationPeriod,
+				SourceTagBlockId = request.SourceTagBlockId,
+				SourceTagId = request.SourceTagId
+			},
+			Calculation = new()
+			{
+				Formula = request.Formula,
+				FormulaInputs = request.FormulaInputs.Select(x => new Application.Features.Tags.Models.TagInputDto
+				{
+					TagId = x.TagId,
+					BlockId = x.BlockId,
+					VariableName = x.VariableName,
+				})
+			},
+		}, ct);
 
 		return NoContent();
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult> DeleteAsync(
-		[BindRequired, FromRoute] int id)
+	/// <summary>
+	/// <see cref="HttpMethod.Delete" />: Удаление тега
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <param name="ct">Токен отмены</param>
+	[HttpDelete("{tagId}")]
+	public async Task<ActionResult> DeleteAsync(
+		[FromServices] IDeleteTagHandler handler,
+		[BindRequired, FromRoute] int tagId,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		await tagsRepository.DeleteAsync(db, user, id);
+		await handler.HandleAsync(new()
+		{
+			User = user,
+			Id = tagId,
+		}, ct);
 
 		return NoContent();
 	}

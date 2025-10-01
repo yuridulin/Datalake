@@ -10,7 +10,7 @@ public interface IUsersQueriesService
 	/// <summary>
 	/// Получение полной информации о учетных записях, включая группы, права доступа и данные для входа
 	/// </summary>
-	Task<UserDetailInfo> GetWithDetailsAsync(
+	Task<UserDetailInfo?> GetWithDetailsAsync(
 		Guid userGuid,
 		CancellationToken ct = default);
 

@@ -12,12 +12,31 @@ public record class TagEntity : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 {
 	private TagEntity() { }
 
+	public TagEntity(TagType type, int? sourceId, string? sourceItem)
+	{
+		Type = type;
+
+		if (sourceId == (int)SourceType.System)
+			throw new DomainException("Создавать системные теги запрещено");
+
+		if (!sourceId.HasValue || sourceId == (int)SourceType.NotSet)
+			throw new DomainException("Тип источника является обязательным для тега");
+
+		SourceId = sourceId.Value;
+		SourceItem = sourceItem;
+	}
+
 	public void MarkAsDeleted()
 	{
 		if (IsDeleted)
 			throw new DomainException("Тег уже удален");
 
 		IsDeleted = true;
+	}
+
+	public void SetGenericName()
+	{
+		Name = $"Тег: {Id}";
 	}
 
 	#region поля в БД

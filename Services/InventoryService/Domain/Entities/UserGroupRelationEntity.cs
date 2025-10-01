@@ -1,11 +1,12 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
 
 /// <summary>
 /// Запись в таблице связей учетных записей и групп пользователей
 /// </summary>
-public record class UserGroupRelationEntity
+public record class UserGroupRelationEntity : IWithIdentityKey
 {
 	private UserGroupRelationEntity() { }
 

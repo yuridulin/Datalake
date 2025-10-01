@@ -1,5 +1,9 @@
-﻿namespace Datalake.InventoryService.Application.Features.EnergoId.Commands.ReloadEnergoIdView;
+﻿using Datalake.InventoryService.Application.Interfaces;
+using Datalake.PrivateApi.Entities;
 
-public class ReloadEnergoIdCommand
+namespace Datalake.InventoryService.Application.Features.EnergoId.Commands.ReloadEnergoId;
+
+public record ReloadEnergoIdCommand : ICommandRequest, IWithUserAccess
 {
+	public required UserAccessEntity User { get; init; }
 }

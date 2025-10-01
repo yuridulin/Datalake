@@ -1,4 +1,5 @@
-﻿using Datalake.InventoryService.Application.Queries;
+﻿using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Queries;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.AccessRights;
 using Datalake.PublicApi.Models.Blocks;
@@ -6,7 +7,7 @@ using Datalake.PublicApi.Models.UserGroups;
 using Datalake.PublicApi.Models.Users;
 using static Datalake.PublicApi.Models.Blocks.BlockFullInfo;
 
-namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Services;
+namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Queries;
 
 public class BlocksQueriesService(IInventoryCache inventoryCache) : IBlocksQueriesService
 {

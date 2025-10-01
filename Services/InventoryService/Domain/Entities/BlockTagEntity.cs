@@ -1,11 +1,12 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
 
 /// <summary>
 /// Запись в таблице связей блоков и тегов
 /// </summary>
-public record class BlockTagEntity
+public record class BlockTagEntity : IWithIdentityKey
 {
 	private BlockTagEntity() { }
 

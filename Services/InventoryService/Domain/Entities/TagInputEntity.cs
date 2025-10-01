@@ -1,9 +1,11 @@
-﻿namespace Datalake.InventoryService.Domain.Entities;
+﻿using Datalake.InventoryService.Domain.Interfaces;
+
+namespace Datalake.InventoryService.Domain.Entities;
 
 /// <summary>
 /// Запись в таблице связей тега с другими тегами для вычисления значений
 /// </summary>
-public record class TagInputEntity
+public record class TagInputEntity : IWithIdentityKey
 {
 	private TagInputEntity() { }
 

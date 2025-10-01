@@ -1,12 +1,14 @@
-using Datalake.InventoryService.Infrastructure.Database;
-using Datalake.InventoryService.Infrastructure.Database.Views;
-using Microsoft.EntityFrameworkCore;
+using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Repositories;
+using Datalake.InventoryService.Domain.Entities;
+using Datalake.InventoryService.Infrastructure.Interfaces;
 using System.Collections.Immutable;
 
 namespace Datalake.InventoryService.Infrastructure.Cache.EnergoId;
 
 ///<summary>
-/// Хранилище данные о пользователях EnergoId, регулярно обновляемое
+/// Хранилище данные о пользователях EnergoId, регулярно обновляемое.
+/// Это inMemory, потому что представление большое и долго грузится
 ///</summary>
 public sealed class EnergoIdCacheStore(
 	IServiceScopeFactory scopeFactory,
@@ -17,6 +19,21 @@ public sealed class EnergoIdCacheStore(
 	/// </summary>
 	public EnergoIdState State => Volatile.Read(ref _state);
 
+	public override async Task StartAsync(CancellationToken cancellationToken)
+	{
+		using var scope = scopeFactory.CreateScope();
+		var energoIdViewCreator = scope.ServiceProvider.GetRequiredService<IEnergoIdViewCreator>();
+		var energoIdRepository = scope.ServiceProvider.GetRequiredService<IEnergoIdRepository>();
+
+		await energoIdViewCreator.RecreateAsync(cancellationToken);
+
+		var data = await energoIdRepository.GetAsync(cancellationToken);
+
+		SetState(data);
+
+		await base.StartAsync(cancellationToken);
+	}
+
 	/// <summary>
 	/// Публичный ручной триггер
 	/// </summary>
@@ -25,7 +42,7 @@ public sealed class EnergoIdCacheStore(
 
 	private readonly SemaphoreSlim _refreshGate = new(1, 1);
 	static readonly TimeSpan interval = TimeSpan.FromMinutes(1);
-	private EnergoIdState _state = new() { Users = [], UsersByGuid = ImmutableDictionary<Guid, EnergoIdUserView>.Empty };
+	private EnergoIdState _state = new() { Users = [], UsersByGuid = ImmutableDictionary<Guid, EnergoIdEntity>.Empty };
 
 	/// <inheritdoc/>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -59,16 +76,11 @@ public sealed class EnergoIdCacheStore(
 			logger.LogDebug("Начато обновление EnergoId");
 
 			using var scope = scopeFactory.CreateScope();
-			var db = scope.ServiceProvider.GetRequiredService<InventoryEfContext>();
+			var energoIdRepository = scope.ServiceProvider.GetRequiredService<IEnergoIdRepository>();
 
-			var data = await db.UsersEnergoId.AsNoTracking().ToListAsync(ct);
+			var data = await energoIdRepository.GetAsync(ct);
 
-			var dict = data.ToImmutableDictionary(x => x.Guid);
-			var list = dict.Values.ToImmutableList();
-
-			var newState = new EnergoIdState { Users = list, UsersByGuid = dict, };
-
-			Volatile.Write(ref _state, newState);
+			SetState(data);
 
 			logger.LogDebug("Выполнено обновление EnergoId");
 		}
@@ -81,5 +93,15 @@ public sealed class EnergoIdCacheStore(
 		{
 			_refreshGate.Release();
 		}
+	}
+
+	private void SetState(IEnumerable<EnergoIdEntity> data)
+	{
+		var list = data.ToImmutableList();
+		var dict = list.ToImmutableDictionary(x => x.Guid);
+
+		var newState = new EnergoIdState { Users = list, UsersByGuid = dict, };
+
+		Volatile.Write(ref _state, newState);
 	}
 }

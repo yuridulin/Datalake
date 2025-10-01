@@ -1,8 +1,7 @@
-﻿using Datalake.InventoryService.Application.Features.Settings.Commands.UpdateSettings;
+﻿using Datalake.InventoryService.Application.Features.Cache.Commands.ReloadCache;
+using Datalake.InventoryService.Application.Features.Settings.Commands.UpdateSettings;
 using Datalake.InventoryService.Application.Features.Settings.Queries.GetSettings;
 using Datalake.PrivateApi.Interfaces;
-using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -56,36 +55,20 @@ public class SystemController(IAuthenticator authenticator) : ControllerBase
 		return NoContent();
 	}
 
-	/// <inheritdoc />
-	public async Task<ActionResult<string>> GetLastUpdateAsync()
-	{
-		var lastUpdate = dataStore.State.Version;
-		return await Task.FromResult(lastUpdate.ToString());
-	}
-
-	/// <inheritdoc />
-
-
-	
-
-	/// <inheritdoc />
-	public override async Task<ActionResult> RestartStateAsync()
+	/// <summary>
+	/// <see cref="HttpMethod.Post" /> Принудительная перезагрузка состояния БД в кэш
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="ct">Токен отмены</param>
+	[HttpPost("cache")]
+	public async Task<ActionResult> RestartStateAsync(
+		[FromServices] IReloadCacheHandler handler,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-
-		await dataStore.RestoreAsync();
+		await handler.HandleAsync(new() { User  = user }, ct);
 
 		return NoContent();
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<Dictionary<Guid, UserAuthInfo>>> GetAccessAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-		AccessChecks.ThrowIfNoGlobalAccess(user, AccessType.Admin);
-
-		return await Task.FromResult(accessStore.State.GetAll());
 	}
 }

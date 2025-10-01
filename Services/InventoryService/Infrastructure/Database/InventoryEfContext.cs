@@ -1,10 +1,10 @@
 ﻿using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Infrastructure.Database.Schema;
-using Datalake.InventoryService.Infrastructure.Database.Views;
 using Datalake.PrivateApi.Settings;
 using Datalake.PublicApi.Models.Tags;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Reflection;
 using System.Text.Json;
 
 namespace Datalake.InventoryService.Infrastructure.Database;
@@ -21,6 +21,10 @@ public class InventoryEfContext(DbContextOptions<InventoryEfContext> options) : 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		modelBuilder.HasDefaultSchema("public");
+
+		// Автоматически применяет все классы конфигурации
+		// из текущей сборки, реализующие IEntityTypeConfiguration<>
+		modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
 		// связь блоков по иерархии
 
@@ -213,15 +217,15 @@ public class InventoryEfContext(DbContextOptions<InventoryEfContext> options) : 
 
 		// представление для пользователей EnergoId
 
-		modelBuilder.Entity<EnergoIdUserView>()
+		modelBuilder.Entity<EnergoIdEntity>()
 			.ToTable(name: null)
 			.ToView(EnergoIdDefinitions.UsersView.ViewName, schema: EnergoIdDefinitions.Schema);
 
-		modelBuilder.Entity<EnergoIdUserView>()
+		modelBuilder.Entity<EnergoIdEntity>()
 			.HasOne(x => x.User)
 			.WithOne(x => x.EnergoId)
 			.HasForeignKey<UserEntity>(x => x.EnergoIdGuid)
-			.HasPrincipalKey<EnergoIdUserView>(x => x.Guid);
+			.HasPrincipalKey<EnergoIdEntity>(x => x.Guid);
 	}
 
 	#region Таблицы
@@ -289,7 +293,7 @@ public class InventoryEfContext(DbContextOptions<InventoryEfContext> options) : 
 	/// <summary>
 	/// Представление пользователей EnergoId с их данными
 	/// </summary>
-	public virtual DbSet<EnergoIdUserView> UsersEnergoId { get; set; }
+	public virtual DbSet<EnergoIdEntity> EnergoIdView { get; set; }
 
 	#endregion
 }

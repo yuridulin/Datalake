@@ -1,4 +1,5 @@
-﻿using Datalake.InventoryService.Application.Queries;
+﻿using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Queries;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory.Constants;
 using Datalake.PrivateApi.Exceptions;
 using Datalake.PublicApi.Enums;
@@ -8,7 +9,7 @@ using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.UserGroups;
 
-namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Services;
+namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Queries;
 
 public class UsersGroupsQueriesService(IInventoryCache inventoryCache) : IUsersGroupsQueriesService
 {

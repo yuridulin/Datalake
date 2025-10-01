@@ -1,4 +1,4 @@
-﻿using Datalake.InventoryService.Infrastructure.Cache.UserAccess;
+﻿using Datalake.InventoryService.Application.Interfaces.InMemory;
 using Datalake.PrivateApi.Attributes;
 using Datalake.PrivateApi.Constants;
 using Datalake.PrivateApi.Entities;

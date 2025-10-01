@@ -51,7 +51,7 @@ public class SourcesController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о источнике</returns>
-	public async Task<ActionResult<SourceInfo>> GetOneAsync(
+	public async Task<ActionResult<SourceInfo>> GetAsync(
 		[FromServices] IGetSourceHandler handler,
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default)

@@ -4,7 +4,11 @@ using Datalake.PrivateApi.Entities;
 
 namespace Datalake.InventoryService.Application.Features.AccessRules.Commands.ChangeUserGroupRules;
 
-public record ChangeUserGroupRulesCommand(
-	UserAccessEntity User,
-	Guid UserGroupGuid,
-	IEnumerable<ActorRuleDto> Rules) : ICommandRequest;
+public record ChangeUserGroupRulesCommand : ICommandRequest, IWithUserAccess
+{
+	public required UserAccessEntity User { get; init; }
+
+	public required Guid UserGroupGuid { get; init; }
+
+	public required IEnumerable<ActorRuleDto> Rules { get; init; }
+}

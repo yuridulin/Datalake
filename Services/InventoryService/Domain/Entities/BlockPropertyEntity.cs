@@ -1,11 +1,12 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
 
 /// <summary>
 /// Запись в таблице свойств блоков
 /// </summary>
-public record class BlockPropertyEntity
+public record class BlockPropertyEntity : IWithIdentityKey
 {
 	private BlockPropertyEntity() { }
 

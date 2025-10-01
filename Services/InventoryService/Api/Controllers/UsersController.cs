@@ -1,88 +1,145 @@
-﻿using Datalake.PrivateApi.Interfaces;
-using Datalake.PublicApi.Controllers;
+﻿using Datalake.InventoryService.Application.Features.Users.Commands.CreateUser;
+using Datalake.InventoryService.Application.Features.Users.Commands.DeleteUser;
+using Datalake.InventoryService.Application.Features.Users.Commands.UpdateUser;
+using Datalake.InventoryService.Application.Features.Users.Queries.GetUsers;
+using Datalake.InventoryService.Application.Features.Users.Queries.GetUserWithDetails;
+using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Models.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.InventoryService.Api.Controllers;
 
-/// <inheritdoc />
-public class UsersController(IAuthenticator authenticator) : UsersControllerBase
+/// <summary>
+/// Учетные записи
+/// </summary>
+[ApiController]
+[Route("api/v1/users")]
+public class UsersController(IAuthenticator authenticator) : ControllerBase
 {
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserInfo>> CreateAsync(
-		[BindRequired, FromBody] UserCreateRequest userAuthRequest)
+	/// <summary>
+	/// <see cref="HttpMethod.Post" />: Создание пользователя на основании переданных данных
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="request">Данные нового пользователя</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Идентификатор пользователя</returns>
+	[HttpPost]
+	public async Task<ActionResult<Guid>> CreateAsync(
+		[FromServices] ICreateUserHandler handler,
+		[BindRequired, FromBody] UserCreateRequest request,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		var info = await usersRepository.CreateAsync(db, user, userAuthRequest);
+		var result = await handler.HandleAsync(new()
+		{
+			User = user,
+			AccessType = request.AccessType,
+			Type = request.Type,
+			EnergoIdGuid = request.EnergoIdGuid,
+			FullName = request.FullName,
+			Login = request.Login,
+			Password = request.Password,
+			StaticHost = request.StaticHost,
+		}, ct);
 
-		return info;
+		return Ok(result);
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserInfo[]>> GetAllAsync()
+	/// <summary>
+	/// <see cref="HttpMethod.Get" />: Получение списка пользователей
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Список пользователей</returns>
+	public async Task<ActionResult<IEnumerable<UserInfo>>> GetAllAsync(
+		[FromServices] IGetUsersHandler handler,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await Task.FromResult(usersRepository.GetAll(user));
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+		}, ct);
+
+		return Ok(data);
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserInfo>> GetAsync(
-		[BindRequired, FromRoute] Guid userGuid)
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		return await Task.FromResult(usersRepository.Get(user, userGuid));
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserDetailInfo>> GetWithDetailsAsync(
-		[BindRequired, FromRoute] Guid userGuid)
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		return await Task.FromResult(usersRepository.GetWithDetails(user, userGuid));
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdAsync()
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		return await Task.FromResult(usersRepository.GetEnergoId(user));
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult> UpdateAsync(
+	/// <summary>
+	/// <see cref="HttpMethod.Get" />: Получение детализированной информации о пользователе
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="userGuid">Идентификатор пользователя</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Данные о пользователе</returns>
+	public async Task<ActionResult<UserDetailInfo>> GetWithDetailsAsync(
+		[FromServices] IGetUserWithDetailsHandler handler,
 		[BindRequired, FromRoute] Guid userGuid,
-		[BindRequired, FromBody] UserUpdateRequest userUpdateRequest)
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		await usersRepository.UpdateAsync(db, user, userGuid, userUpdateRequest);
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+			Guid = userGuid,
+		}, ct);
+
+		return Ok(data);
+	}
+
+	/// <summary>
+	/// <see cref="HttpMethod.Put" />: Изменение пользователя
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="userGuid">Идентификатор пользователя</param>
+	/// <param name="request">Новые данные пользователя</param>
+	/// <param name="ct">Токен отмены</param>
+	public async Task<ActionResult> UpdateAsync(
+		[FromServices] IUpdateUserHandler handler,
+		[BindRequired, FromRoute] Guid userGuid,
+		[BindRequired, FromBody] UserUpdateRequest request,
+		CancellationToken ct = default)
+	{
+		var user = authenticator.Authenticate(HttpContext);
+
+		await handler.HandleAsync(new()
+		{
+			User = user,
+			Guid = userGuid,
+			AccessType = request.AccessType,
+			Type = request.Type,
+			EnergoIdGuid = request.EnergoIdGuid,
+			FullName = request.FullName,
+			Login = request.Login,
+			Password = request.Password,
+			StaticHost = request.StaticHost,
+			GenerateNewHash = request.CreateNewStaticHash
+		}, ct);
 
 		return NoContent();
 	}
 
-	/// <inheritdoc />
-	public override async Task<ActionResult> UpdateEnergoIdAsync()
+	/// <summary>
+	/// <see cref="HttpMethod.Delete" />: Удаление пользователя
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="userGuid">Идентификатор пользователя</param>
+	/// <param name="ct">Токен отмены</param>
+	public async Task<ActionResult> DeleteAsync(
+		[FromServices] IDeleteUserHandler handler,
+		[BindRequired, FromRoute] Guid userGuid,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		usersRepository.UpdateEnergoId(user);
-
-		return await Task.FromResult(NoContent());
-	}
-
-	/// <inheritdoc />
-	public override async Task<ActionResult> DeleteAsync(
-		[BindRequired, FromRoute] Guid userGuid)
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		await usersRepository.DeleteAsync(db, user, userGuid);
+		await handler.HandleAsync(new()
+		{
+			User = user,
+			Guid = userGuid,
+		}, ct);
 
 		return NoContent();
 	}

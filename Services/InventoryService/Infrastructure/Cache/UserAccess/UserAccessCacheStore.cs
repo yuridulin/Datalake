@@ -1,4 +1,5 @@
-﻿using Datalake.InventoryService.Infrastructure.Cache.Inventory;
+﻿using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Infrastructure.Cache.Inventory;
 using Datalake.PrivateApi.Utils;
 
 namespace Datalake.InventoryService.Infrastructure.Cache.UserAccess;

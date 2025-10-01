@@ -38,6 +38,7 @@ public record class InventoryState
 				Sources = ImmutableDictionary<int, SourceEntity>.Empty,
 				Tags = ImmutableDictionary<int, TagEntity>.Empty,
 				TagInputs = [],
+				TagThresholds = [],
 				Users = ImmutableDictionary<Guid, UserEntity>.Empty,
 				UserGroups = ImmutableDictionary<Guid, UserGroupEntity>.Empty,
 				UserGroupRelations = [],
@@ -61,6 +62,7 @@ public record class InventoryState
 		IEnumerable<SourceEntity> sources,
 		IEnumerable<TagEntity> tags,
 		IEnumerable<TagInputEntity> tagInputs,
+		IEnumerable<TagThresholdEntity> tagThresholds,
 		IEnumerable<UserEntity> users,
 		IEnumerable<UserGroupEntity> userGroups,
 		IEnumerable<UserGroupRelationEntity> userGroupRelations)
@@ -74,6 +76,7 @@ public record class InventoryState
 			Sources = sources.ToImmutableDictionary(x => x.Id),
 			Tags = tags.ToImmutableDictionary(x => x.Id),
 			TagInputs = tagInputs.ToImmutableList(),
+			TagThresholds = tagThresholds.ToImmutableList(),
 			Users = users.ToImmutableDictionary(x => x.Guid),
 			UserGroups = userGroups.ToImmutableDictionary(x => x.Guid),
 			UserGroupRelations = userGroupRelations.ToImmutableList(),
@@ -137,6 +140,11 @@ public record class InventoryState
 	/// Связи тегов с входными тегами
 	/// </summary>
 	public required ImmutableList<TagInputEntity> TagInputs { get; init; }
+
+	/// <summary>
+	/// Связи тегов с пороговыми уставками
+	/// </summary>
+	public required ImmutableList<TagThresholdEntity> TagThresholds { get; init; }
 
 	/// <summary>
 	/// Связи групп с учетными записями
@@ -293,7 +301,46 @@ public record class InventoryState
 	{
 		return this with
 		{
-			BlockTags = BlockTags.RemoveAll(x => x.Id == blockId).AddRange(blockTags),
+			BlockTags = BlockTags.RemoveAll(x => x.BlockId == blockId).AddRange(blockTags),
+		};
+	}
+
+	/// <summary>
+	/// Обновляет связи тега с блоками
+	/// </summary>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <param name="blockTags">Новые связи с блоками</param>
+	public InventoryState WithTagBlocks(int tagId, IEnumerable<BlockTagEntity> blockTags)
+	{
+		return this with
+		{
+			BlockTags = BlockTags.RemoveAll(x => x.TagId == tagId).AddRange(blockTags),
+		};
+	}
+
+	/// <summary>
+	/// Обновляет связи тега с блоками
+	/// </summary>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <param name="tagInputs">Новые связи с входными тегами</param>
+	public InventoryState WithTagInputs(int tagId, IEnumerable<TagInputEntity> tagInputs)
+	{
+		return this with
+		{
+			TagInputs = TagInputs.RemoveAll(x => x.TagId == tagId).AddRange(tagInputs),
+		};
+	}
+
+	/// <summary>
+	/// Обновляет связи тега с блоками
+	/// </summary>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <param name="tagThresholds">Новые связи с пороговыми уставками</param>
+	public InventoryState WithTagThresholds(int tagId, IEnumerable<TagThresholdEntity> tagThresholds)
+	{
+		return this with
+		{
+			TagThresholds = TagThresholds.RemoveAll(x => x.TagId == tagId).AddRange(tagThresholds),
 		};
 	}
 

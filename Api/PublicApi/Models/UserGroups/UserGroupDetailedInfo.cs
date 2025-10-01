@@ -1,4 +1,4 @@
-﻿using Datalake.PublicApi.Models.AccessRights;
+﻿using Datalake.PublicApi.Models.AccessRules;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.PublicApi.Models.UserGroups;

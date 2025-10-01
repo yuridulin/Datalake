@@ -1,8 +1,9 @@
-﻿using Datalake.InventoryService.Application.Queries;
+﻿using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Queries;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;
 
-namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Services;
+namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Queries;
 
 public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesService
 {

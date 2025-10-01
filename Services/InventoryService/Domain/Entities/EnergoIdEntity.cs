@@ -1,13 +1,14 @@
-﻿using Datalake.InventoryService.Domain.Entities;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.InventoryService.Infrastructure.Database.Views;
+namespace Datalake.InventoryService.Domain.Entities;
 
 /// <summary>
 /// Информация о пользователе на основе EnergoId
 /// </summary>
-public class EnergoIdUserView
+public class EnergoIdEntity
 {
+	private EnergoIdEntity() { }
+
 	/// <summary>
 	/// Идентификатор пользователя
 	/// </summary>

@@ -1,92 +1,87 @@
-﻿using Datalake.InventoryService.Application.Queries;
-using Datalake.PublicApi.Enums;
+﻿using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Queries;
+using Datalake.PrivateApi.Exceptions;
 using Datalake.PublicApi.Models.UserGroups;
 using Datalake.PublicApi.Models.Users;
 using System.Data;
 
-namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Services;
+namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Queries;
 
 public class UsersQueriesService(IInventoryCache inventoryCache) : IUsersQueriesService
 {
-	public Task<IEnumerable<UserInfo>> GetAsync()
+	public Task<IEnumerable<UserInfo>> GetAsync(CancellationToken ct = default)
 	{
 		var state = inventoryCache.State;
 		var globalAccessRules = state.AccessRules.Where(rule => rule.IsGlobal);
 
-		var userGroupsWithRules = state.UserGroups
-			.Where(userGroup => !userGroup.IsDeleted)
-			.Join(globalAccessRules, userGroup => userGroup.Guid, rule => rule.UserGroupGuid, (userGroup, groupRule) => new { userGroup, groupRule });
-
-		var data = UsersDetailInfoFromState(state)
-			.Select(user => new UserInfo
+		var groups = state.ActiveUserGroups
+			.Join(globalAccessRules, userGroup => userGroup.Guid, rule => rule.UserGroupGuid, (userGroup, groupRule) => new { userGroup, groupRule })
+			.Select(x => new UserGroupSimpleInfo
 			{
-				Login = user.Login,
-				Guid = user.Guid,
-				Type = user.Type,
-				FullName = user.FullName,
-				EnergoIdGuid = user.EnergoIdGuid,
-				UserGroups = user.UserGroups,
-				AccessType = user.AccessType,
-			});
+				Guid = x.userGroup.Guid,
+				Name = x.userGroup.Name,
+				AccessRule = new(x.groupRule.Id, x.groupRule.AccessType),
+			})
+			.ToDictionary(x => x.Guid);
+
+		var data = state.ActiveUsers
+			.Join(
+				state.AccessRules.Where(x => x.IsGlobal && x.UserGuid.HasValue),
+				x => x.Guid,
+				x => x.UserGuid!.Value,
+				(u, r) => new UserInfo
+				{
+					Login = u.Login,
+					Guid = u.Guid,
+					Type = u.Type,
+					FullName = u.FullName,
+					EnergoIdGuid = u.EnergoIdGuid,
+					AccessType = r.AccessType,
+					AccessRule = new(r.Id, r.AccessType),
+					UserGroups = state.UserGroupRelations
+						.Where(x => x.UserGuid == u.Guid)
+						.Select(x => groups.TryGetValue(x.UserGroupGuid, out var group) ? group : null)
+						.Where(x => x != null)
+						.ToArray()!,
+				});
 
 		return Task.FromResult(data);
 	}
 
-	public Task<IEnumerable<UserDetailInfo>> GetWithDetailsAsync()
+	public Task<UserDetailInfo?> GetWithDetailsAsync(Guid userGuid, CancellationToken ct = default)
 	{
 		var state = inventoryCache.State;
-		var data = UsersDetailInfoFromState(state);
 
-		return Task.FromResult(data);
-	}
+		if (!state.ActiveUsersByGuid.TryGetValue(userGuid, out var user))
+			return Task.FromResult<UserDetailInfo?>(null);
 
-	private static IEnumerable<UserDetailInfo> UsersDetailInfoFromState(InventoryState state)
-	{
-		var globalAccessRules = state.AccessRules.Where(rule => rule.IsGlobal);
+		var globalAccessRule = state.AccessRules.FirstOrDefault(x => x.IsGlobal && x.UserGuid == user.Guid)
+			?? throw new InfrastructureException($"У пользователя {user.Guid} не найдено глобальное правило доступа");
 
-		var userGroupsWithRules = state.UserGroups
-			.Where(userGroup => !userGroup.IsDeleted)
-			.Join(globalAccessRules, userGroup => userGroup.Guid, rule => rule.UserGroupGuid, (userGroup, groupRule) => new { userGroup, groupRule });
-
-		return state.Users
-			.Where(user => !user.IsDeleted)
-			.Join(
-				globalAccessRules,
-				user => user.Guid,
-				rule => rule.UserGuid,
-				(user, globalRule) =>
+		var data = new UserDetailInfo
+		{
+			Login = user.Login,
+			Guid = user.Guid,
+			Type = user.Type,
+			FullName = user.FullName ?? string.Empty,
+			EnergoIdGuid = user.EnergoIdGuid,
+			UserGroups = state.UserGroupRelations
+				.Where(x => x.UserGuid == user.Guid)
+				.Select(x => state.ActiveUserGroupsByGuid.TryGetValue(x.UserGroupGuid, out var ug)
+				? new UserGroupSimpleInfo
 				{
-					var userGroups = state.UserGroupRelations
-						.Where(relation => relation.UserGuid == user.Guid)
-						.Join(
-							userGroupsWithRules,
-							relation => relation.UserGroupGuid,
-							userGroupBadge => userGroupBadge.userGroup.Guid,
-							(_, userGroupBadge) => userGroupBadge)
-						.ToArray();
+					Guid = ug.Guid,
+					Name = ug.Name,
+				}
+				: null)
+				.Where(x => x != null)
+				.ToArray()!,
+			Hash = user.PasswordHash?.Value,
+			StaticHost = user.StaticHost,
+			AccessType = globalAccessRule.AccessType,
+			AccessRule = new(globalAccessRule.Id, globalAccessRule.AccessType),
+		};
 
-					return new UserDetailInfo
-					{
-						Login = user.Login,
-						Guid = user.Guid,
-						Type = user.Type,
-						FullName = user.FullName ?? string.Empty,
-						EnergoIdGuid = user.EnergoIdGuid,
-						UserGroups = userGroups
-							.Select(badge => new UserGroupSimpleInfo
-							{
-								Guid = badge.userGroup.Guid,
-								Name = badge.userGroup.Name,
-							})
-							.ToArray(),
-						AccessType = userGroups
-							.Select(badge => badge.groupRule.AccessType)
-							.Append(globalRule.AccessType)
-							.DefaultIfEmpty(AccessType.NoAccess)
-							.Max(),
-						Hash = user.PasswordHash,
-						StaticHost = user.StaticHost,
-					};
-				});
+		return Task.FromResult<UserDetailInfo?>(data);
 	}
 }

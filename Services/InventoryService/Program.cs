@@ -6,6 +6,7 @@ using Datalake.InventoryService.Infrastructure.Cache.Inventory;
 using Datalake.InventoryService.Infrastructure.Cache.UserAccess;
 using Datalake.InventoryService.Infrastructure.Database;
 using Datalake.InventoryService.Infrastructure.Database.Initialization;
+using Datalake.InventoryService.Infrastructure.Services;
 using Datalake.PrivateApi.Middlewares;
 using Datalake.PrivateApi.Settings;
 using Datalake.PrivateApi.Utils;
@@ -131,7 +132,7 @@ public class Program
 
 		// настройка БД
 		builder.Services.AddSingleton<DbInitializer>();
-		builder.Services.AddSingleton<DbExternalInitializer>();
+		builder.Services.AddSingleton<EnergoIdViewCreator>();
 
 		// обработчики
 		builder.Services.AddTransient<SentryRequestBodyMiddleware>();
@@ -204,8 +205,8 @@ public class Program
 		var thisDb = app.Services.GetRequiredService<DbInitializer>();
 		await thisDb.DoAsync();
 
-		var externalDb = app.Services.GetRequiredService<DbExternalInitializer>();
-		await externalDb.DoAsync();
+		var externalDb = app.Services.GetRequiredService<EnergoIdViewCreator>();
+		await externalDb.RecreateAsync();
 
 		// отправка сообщения в Sentry, чтобы сразу засветить новый релиз
 		string greetings = $"🚀 Приложение {nameof(InventoryService)} запущено. Релиз: {builder.Environment.ApplicationName}@{Version.Short()}";

@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace Datalake.InventoryService.Domain.Extensions;
+namespace Datalake.PrivateApi.Extensions;
 
 /// <summary>
 /// Расширение для работы с объектами

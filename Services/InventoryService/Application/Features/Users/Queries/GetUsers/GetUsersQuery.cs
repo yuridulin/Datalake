@@ -1,5 +1,10 @@
-﻿namespace Datalake.InventoryService.Application.Features.Users.Queries.GetUsers;
+﻿using Datalake.InventoryService.Application.Interfaces;
+using Datalake.PrivateApi.Entities;
+using Datalake.PublicApi.Models.Users;
 
-public class GetUsersQuery
+namespace Datalake.InventoryService.Application.Features.Users.Queries.GetUsers;
+
+public record GetUsersQuery : IQueryRequest<IEnumerable<UserInfo>>, IWithUserAccess
 {
+	public required UserAccessEntity User { get; init; }
 }

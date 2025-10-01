@@ -2,7 +2,7 @@
 using Datalake.InventoryService.Application.Features.Blocks.Commands.DeleteBlock;
 using Datalake.InventoryService.Application.Features.Blocks.Commands.MoveBlock;
 using Datalake.InventoryService.Application.Features.Blocks.Commands.UpdateBlock;
-using Datalake.InventoryService.Application.Features.Blocks.DTOs;
+using Datalake.InventoryService.Application.Features.Blocks.Models;
 using Datalake.InventoryService.Application.Features.Blocks.Queries.GetBlockFull;
 using Datalake.InventoryService.Application.Features.Blocks.Queries.GetBlocksTree;
 using Datalake.InventoryService.Application.Features.Blocks.Queries.GetBlocksWithTags;

@@ -1,7 +1,7 @@
 ﻿using Datalake.PublicApi.Models.UserGroups;
 using Datalake.PublicApi.Models.Users;
 
-namespace Datalake.PublicApi.Models.AccessRights;
+namespace Datalake.PublicApi.Models.AccessRules;
 
 /// <summary>
 /// Информация о разрешении пользователя или группы на доступ к какому-либо объекту

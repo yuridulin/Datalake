@@ -1,11 +1,12 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
 
 /// <summary>
 /// Запись в таблице правил доступа
 /// </summary>
-public record class AccessRuleEntity
+public record class AccessRuleEntity : IWithIdentityKey
 {
 	private AccessRuleEntity() { }
 

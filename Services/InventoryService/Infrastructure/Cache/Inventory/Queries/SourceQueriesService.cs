@@ -1,9 +1,10 @@
-﻿using Datalake.InventoryService.Application.Queries;
+﻿using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Queries;
 using Datalake.InventoryService.Domain.Constants;
 using Datalake.InventoryService.Domain.Entities;
 using Datalake.PublicApi.Models.Sources;
 
-namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Services;
+namespace Datalake.InventoryService.Infrastructure.Cache.Inventory.Queries;
 
 public class SourceQueriesService(IInventoryCache inventoryCache) : ISourceQueriesService
 {

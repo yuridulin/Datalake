@@ -1,6 +1,6 @@
 ﻿using Datalake.PublicApi.Abstractions;
 using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Models.AccessRights;
+using Datalake.PublicApi.Models.AccessRules;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.PublicApi.Models.Blocks;

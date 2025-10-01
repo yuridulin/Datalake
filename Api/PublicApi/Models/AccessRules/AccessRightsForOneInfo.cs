@@ -2,7 +2,7 @@
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Tags;
 
-namespace Datalake.PublicApi.Models.AccessRights;
+namespace Datalake.PublicApi.Models.AccessRules;
 
 /// <summary>
 /// Информация о разрешении субьекта на доступ к объекту

@@ -1,4 +1,5 @@
-﻿using Datalake.InventoryService.Infrastructure.Database;
+﻿using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Infrastructure.Database;
 using Datalake.PrivateApi.Utils;
 using Microsoft.EntityFrameworkCore;
 

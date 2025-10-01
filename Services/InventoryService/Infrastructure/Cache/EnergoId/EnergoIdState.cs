@@ -1,4 +1,4 @@
-﻿using Datalake.InventoryService.Infrastructure.Database.Views;
+﻿using Datalake.InventoryService.Domain.Entities;
 using System.Collections.Immutable;
 
 namespace Datalake.InventoryService.Infrastructure.Cache.EnergoId;
@@ -11,10 +11,10 @@ public record class EnergoIdState
 	/// <summary>
 	/// Список пользователей
 	/// </summary>
-	public required ImmutableList<EnergoIdUserView> Users { get; set; }
+	public required ImmutableList<EnergoIdEntity> Users { get; set; }
 
 	/// <summary>
 	/// Список пользователей, сопоставленный с идентификаторами
 	/// </summary>
-	public required ImmutableDictionary<Guid, EnergoIdUserView> UsersByGuid { get; set; }
+	public required ImmutableDictionary<Guid, EnergoIdEntity> UsersByGuid { get; set; }
 }

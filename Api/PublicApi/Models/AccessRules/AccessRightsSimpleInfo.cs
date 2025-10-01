@@ -1,7 +1,7 @@
 ﻿using Datalake.PublicApi.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.PublicApi.Models.AccessRights;
+namespace Datalake.PublicApi.Models.AccessRules;
 
 /// <summary>
 /// Общая информация о разрешении

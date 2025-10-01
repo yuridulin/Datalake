@@ -1,12 +1,12 @@
 ﻿using Datalake.InventoryService.Domain.Interfaces;
-using Datalake.InventoryService.Infrastructure.Database.Views;
+using Datalake.InventoryService.Domain.ValueObjects;
 using Datalake.PrivateApi.Exceptions;
 using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
 
 /// <summary>
-/// Запись в таблице учетных записей
+/// Учетная запись
 /// </summary>
 public record class UserEntity : IWithGuidKey, ISoftDeletable
 {
@@ -18,6 +18,96 @@ public record class UserEntity : IWithGuidKey, ISoftDeletable
 			throw new DomainException("Учетная запись уже удалена");
 
 		IsDeleted = true;
+	}
+
+	public UserEntity(UserType type, string? fullName, string? login, string? passwordString, Guid? energoIdGuid, string? host, bool generateNewHash = false)
+	{
+		Guid = Guid.NewGuid();
+
+		Update(type, fullName, login, passwordString, energoIdGuid, host, generateNewHash);
+	}
+
+	public void Update(UserType type, string? fullName, string? login, string? passwordString, Guid? energoIdGuid, string? host, bool generateNewHash = false)
+	{
+		if (type == UserType.Local)
+			UpdateAsLocal(
+				login: login,
+				fullName: fullName,
+				passwordString: passwordString);
+
+		else if (type == UserType.Static)
+			UpdateAsStatic(
+				fullName: fullName,
+				host: host,
+				generateNewHash: generateNewHash);
+
+		else if (type == UserType.EnergoId)
+			UpdateAsEnergoId(
+				fullName: fullName,
+				energoIdGuid: energoIdGuid);
+
+		else
+			throw new DomainException("Указанный тип учетной записи не поддерживается: " + type);
+	}
+
+	private void UpdateAsLocal(string? login, string? fullName, string? passwordString)
+	{
+		if (string.IsNullOrEmpty(login))
+			throw new DomainException("Логин не может быть пустым");
+
+		Type = UserType.Local;
+		Login = login;
+		PasswordHash = PasswordHash.FromPlainText(passwordString);
+		SetFullName(fullName);
+
+		EnergoIdGuid = null;
+		StaticHost = null;
+	}
+
+	private void UpdateAsEnergoId(Guid? energoIdGuid, string? fullName)
+	{
+		if (!energoIdGuid.HasValue)
+			throw new DomainException("Идентификатор EnergoId не может быть пустым");
+
+		Type = UserType.EnergoId;
+		EnergoIdGuid = energoIdGuid.Value;
+		SetFullName(fullName);
+
+		Login = null;
+		PasswordHash = null;
+		StaticHost = null;
+	}
+
+	private void UpdateAsStatic(string? fullName, string? host, bool generateNewHash)
+	{
+		Type = UserType.Static;
+		StaticHost = host;
+		SetFullName(fullName);
+
+		if (string.IsNullOrEmpty(PasswordHash?.Value) || generateNewHash)
+			PasswordHash = PasswordHash.FromEmpty();
+
+		Login = null;
+		EnergoIdGuid = null;
+	}
+
+	private void SetFullName(string? fullName)
+	{
+		if (string.IsNullOrEmpty(fullName))
+			throw new DomainException("Имя статичной учетной записи является обязательным");
+
+		FullName = fullName;
+	}
+
+	/// <summary>
+	/// Проверка пароля (опционально, можно делать через сервис)
+	/// </summary>
+	public bool VerifyPassword(string? plainText)
+	{
+		if (PasswordHash is null)
+			return false;
+
+		return PasswordHash.Verify(plainText);
 	}
 
 	// поля в БД
@@ -33,16 +123,9 @@ public record class UserEntity : IWithGuidKey, ISoftDeletable
 	public UserType Type { get; private set; }
 
 	/// <summary>
-	/// Полное имя
-	/// </summary>
-	public string? FullName { get; private set; } = string.Empty;
-
-	/// <summary>
 	/// Учетная запись отмечена как удаленная
 	/// </summary>
 	public bool IsDeleted { get; private set; } = false;
-
-	// для локальных
 
 	/// <summary>
 	/// Имя для входа
@@ -50,18 +133,19 @@ public record class UserEntity : IWithGuidKey, ISoftDeletable
 	public string? Login { get; private set; }
 
 	/// <summary>
+	/// Полное имя
+	/// </summary>
+	public string FullName { get; private set; } = string.Empty;
+
+	/// <summary>
 	/// Хэш пароля
 	/// </summary>
-	public string? PasswordHash { get; private set; }
-
-	// для статичных
+	public PasswordHash? PasswordHash { get; private set; }
 
 	/// <summary>
 	/// Адрес, с которого разрешен доступ
 	/// </summary>
 	public string? StaticHost { get; private set; }
-
-	// для EnergoId
 
 	/// <summary>
 	/// Идентификатор в EnergoId
@@ -99,5 +183,5 @@ public record class UserEntity : IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Информация о пользователе из EnergoId
 	/// </summary>
-	public EnergoIdUserView? EnergoId { get; set; }
+	public EnergoIdEntity? EnergoId { get; set; }
 }

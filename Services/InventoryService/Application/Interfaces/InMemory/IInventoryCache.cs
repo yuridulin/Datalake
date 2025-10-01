@@ -1,4 +1,6 @@
-﻿namespace Datalake.InventoryService.Infrastructure.Cache.Inventory;
+﻿using Datalake.InventoryService.Infrastructure.Cache.Inventory;
+
+namespace Datalake.InventoryService.Application.Interfaces.InMemory;
 
 public interface IInventoryCache
 {

@@ -1,4 +1,5 @@
 ﻿using Datalake.InventoryService.Application.Interfaces;
+using Datalake.InventoryService.Application.Interfaces.InMemory;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
 using Datalake.InventoryService.Infrastructure.Database.Abstractions;
 using Datalake.PrivateApi.Exceptions;
