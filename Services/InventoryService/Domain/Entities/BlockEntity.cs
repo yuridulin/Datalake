@@ -44,6 +44,9 @@ public record class BlockEntity : IWithIdentityKey, ISoftDeletable
 
 	public void UpdateParent(int? newParentId)
 	{
+		if (newParentId.HasValue && newParentId.Value == Id)
+			throw new DomainException("Нельзя переместить блок сам в себя");
+
 		ParentId = newParentId;
 	}
 

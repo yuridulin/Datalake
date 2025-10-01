@@ -1,7 +1,11 @@
 ﻿using Datalake.InventoryService.Application.Features.UserGroups.Commands.CreateUserGroup;
 using Datalake.InventoryService.Application.Features.UserGroups.Commands.DeleteUserGroup;
+using Datalake.InventoryService.Application.Features.UserGroups.Commands.MoveUserGroup;
 using Datalake.InventoryService.Application.Features.UserGroups.Commands.UpdateUserGroup;
 using Datalake.InventoryService.Application.Features.UserGroups.Models;
+using Datalake.InventoryService.Application.Features.UserGroups.Queries.GetUserGroup;
+using Datalake.InventoryService.Application.Features.UserGroups.Queries.GetUserGroups;
+using Datalake.InventoryService.Application.Features.UserGroups.Queries.GetUserGroupWithDetails;
 using Datalake.PrivateApi.Interfaces;
 using Datalake.PublicApi.Models.UserGroups;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +23,9 @@ public class UserGroupsController(IAuthenticator authenticator) : ControllerBase
 	/// <summary>
 	/// <see cref="HttpMethod.Post" />: Создание новой группы пользователей
 	/// </summary>
-	/// <param name="handler"></param>
+	/// <param name="handler">Обработчик</param>
 	/// <param name="request">Данные запроса</param>
-	/// <param name="ct"></param>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Идентификатор новой группы пользователей</returns>
 	[HttpPost]
 	public async Task<ActionResult<Guid>> CreateAsync(
@@ -45,78 +49,104 @@ public class UserGroupsController(IAuthenticator authenticator) : ControllerBase
 	/// <summary>
 	/// <see cref="HttpMethod.Get" />: Получение плоского списка групп пользователей
 	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список групп</returns>
 	[HttpGet]
-	public async Task<ActionResult<UserGroupInfo[]>> GetAllAsync(
-		[FromServices] ICreateUserGroupHandler handler,
+	public async Task<ActionResult<IEnumerable<UserGroupInfo>>> GetAllAsync(
+		[FromServices] IGetUserGroupsHandler handler,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await Task.FromResult(userGroupsRepository.GetAll(user));
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+		}, ct);
+
+		return Ok(data);
 	}
 
 	/// <summary>
 	/// <see cref="HttpMethod.Get" />: Получение информации о выбранной группе пользователей
 	/// </summary>
-	/// <param name="handler"></param>
-	/// <param name="groupGuid">Идентификатор группы</param>
-	/// <param name="ct"></param>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="userGroupGuid">Идентификатор группы</param>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Информация о группе</returns>
-	[HttpGet("{groupGuid}")]
+	[HttpGet("{userGroupGuid}")]
 	public async Task<ActionResult<UserGroupInfo>> GetOneAsync(
-		[FromServices] ICreateUserGroupHandler handler,
-		[BindRequired, FromRoute] Guid groupGuid,
+		[FromServices] IGetUserGroupHandler handler,
+		[BindRequired, FromRoute] Guid userGroupGuid,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await Task.FromResult(userGroupsRepository.Get(user, groupGuid));
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+			Guid = userGroupGuid,
+		}, ct);
+
+		return Ok(data);
 	}
 
 	/// <summary>
 	/// <see cref="HttpMethod.Get" />: Получение иерархической структуры всех групп пользователей
 	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список обособленных групп с вложенными подгруппами</returns>
 	[HttpGet("tree")]
 	public async Task<ActionResult<UserGroupTreeInfo[]>> GetTreeAsync(
-		[FromServices] ICreateUserGroupHandler handler,
+		[FromServices] IGetUserGroupsHandler handler,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await Task.FromResult(userGroupsRepository.GetAllAsTree(user));
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+		}, ct);
+
+		return Ok(data);
 	}
 
 	/// <summary>
 	/// <see cref="HttpMethod.Get" />: Получение детализированной информации о группе пользователей
 	/// </summary>
-	/// <param name="handler"></param>
-	/// <param name="groupGuid">Идентификатор группы</param>
-	/// <param name="ct"></param>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="userGroupGuid">Идентификатор группы</param>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Информация о группе с подгруппами и списком пользователей</returns>
-	[HttpGet("{groupGuid}/details")]
+	[HttpGet("{userGroupGuid}/details")]
 	public async Task<ActionResult<UserGroupDetailedInfo>> GetWithDetailsAsync(
-		[FromServices] ICreateUserGroupHandler handler,
-		[BindRequired, FromRoute] Guid groupGuid,
+		[FromServices] IGetUserGroupWithDetailsHandler handler,
+		[BindRequired, FromRoute] Guid userGroupGuid,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		return await Task.FromResult(userGroupsRepository.GetWithDetails(user, groupGuid));
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+			Guid = userGroupGuid,
+		}, ct);
+
+		return Ok(data);
 	}
 
 	/// <summary>
 	/// <see cref="HttpMethod.Put" />: Изменение группы пользователей
 	/// </summary>
-	/// <param name="handler"></param>
-	/// <param name="groupGuid">Идентификатор группы</param>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="userGroupGuid">Идентификатор группы</param>
 	/// <param name="request">Новые данные</param>
-	/// <param name="ct"></param>
-	[HttpPut("{groupGuid}")]
+	/// <param name="ct">Токен отмены</param>
+	[HttpPut("{userGroupGuid}")]
 	public async Task<ActionResult> UpdateAsync(
 		[FromServices] IUpdateUserGroupHandler handler,
-		[BindRequired, FromRoute] Guid groupGuid,
+		[BindRequired, FromRoute] Guid userGroupGuid,
 		[BindRequired, FromBody] UserGroupUpdateRequest request,
 		CancellationToken ct = default)
 	{
@@ -125,7 +155,7 @@ public class UserGroupsController(IAuthenticator authenticator) : ControllerBase
 		await handler.HandleAsync(new()
 		{
 			User = user,
-			Guid = groupGuid,
+			Guid = userGroupGuid,
 			Name = request.Name,
 			Description = request.Description,
 			Users = request.Users.Select(x => new UserRelationDto { Guid = x.Guid, AccessType = x.AccessType })
@@ -137,34 +167,15 @@ public class UserGroupsController(IAuthenticator authenticator) : ControllerBase
 	/// <summary>
 	/// <see cref="HttpMethod.Post" />: Перемещение группы пользователей
 	/// </summary>
-	/// <param name="handler"></param>
+	/// <param name="handler">Обработчик</param>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <param name="parentGuid">Идентификатор новой родительской группы</param>
-	/// <param name="ct"></param>
+	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{groupGuid}/move")]
 	public async Task<ActionResult> MoveAsync(
-		[FromServices] ICreateUserGroupHandler handler,
+		[FromServices] IMoveUserGroupHandler handler,
 		[BindRequired, FromRoute] Guid groupGuid,
 		[FromQuery] Guid? parentGuid,
-		CancellationToken ct = default)
-	{
-		var user = authenticator.Authenticate(HttpContext);
-
-		await userGroupsRepository.MoveAsync(db, user, groupGuid, parentGuid);
-
-		return NoContent();
-	}
-
-	/// <summary>
-	/// <see cref="HttpMethod.Delete" />: Удаление группы пользователей
-	/// </summary>
-	/// <param name="handler"></param>
-	/// <param name="groupGuid">Идентификатор группы</param>
-	/// <param name="ct"></param>
-	[HttpDelete("{groupGuid}")]
-	public async Task<ActionResult> DeleteAsync(
-		[FromServices] IDeleteUserGroupHandler handler,
-		[BindRequired, FromRoute] Guid groupGuid,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -173,6 +184,30 @@ public class UserGroupsController(IAuthenticator authenticator) : ControllerBase
 		{
 			User = user,
 			Guid = groupGuid,
+			ParentGuid = parentGuid,
+		}, ct);
+
+		return NoContent();
+	}
+
+	/// <summary>
+	/// <see cref="HttpMethod.Delete" />: Удаление группы пользователей
+	/// </summary>
+	/// <param name="handler">Обработчик</param>
+	/// <param name="userGroupGuid">Идентификатор группы</param>
+	/// <param name="ct">Токен отмены</param>
+	[HttpDelete("{userGroupGuid}")]
+	public async Task<ActionResult> DeleteAsync(
+		[FromServices] IDeleteUserGroupHandler handler,
+		[BindRequired, FromRoute] Guid userGroupGuid,
+		CancellationToken ct = default)
+	{
+		var user = authenticator.Authenticate(HttpContext);
+
+		await handler.HandleAsync(new()
+		{
+			User = user,
+			Guid = userGroupGuid,
 		}, ct);
 
 		return NoContent();

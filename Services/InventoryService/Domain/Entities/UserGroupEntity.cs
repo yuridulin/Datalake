@@ -1,5 +1,6 @@
 ﻿using Datalake.InventoryService.Domain.Interfaces;
 using Datalake.PrivateApi.Exceptions;
+using System.Xml.Linq;
 
 namespace Datalake.InventoryService.Domain.Entities;
 

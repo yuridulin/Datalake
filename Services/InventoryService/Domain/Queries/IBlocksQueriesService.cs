@@ -15,12 +15,6 @@ public interface IBlocksQueriesService
 		CancellationToken ct = default);
 
 	/// <summary>
-	/// Запрос информации о блоках со списками тегов в виде иерархии
-	/// </summary>
-	Task<IEnumerable<BlockTreeInfo>> GetTreeAsync(
-		CancellationToken ct = default);
-
-	/// <summary>
 	/// Запрос информации о блоках со списками тегов
 	/// </summary>
 	Task<IEnumerable<BlockWithTagsInfo>> GetWithTagsAsync(

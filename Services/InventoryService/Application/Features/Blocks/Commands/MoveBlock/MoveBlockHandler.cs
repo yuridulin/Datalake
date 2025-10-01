@@ -30,9 +30,6 @@ public class MoveBlockHandler(
 			block = await blocksRepository.GetByIdAsync(command.BlockId, ct)
 				?? throw Errors.NotFoundBlock(command.BlockId);
 
-			if (command.ParentId == command.BlockId)
-				throw new ConflictException("Блок не может быть родителем самому себе");
-
 			if (command.ParentId.HasValue && !await blocksRepository.ExistsAsync(command.ParentId.Value, ct))
 				throw Errors.NotFoundBlock($"Родительский блок не найден по идентификатору: {command.ParentId}");
 

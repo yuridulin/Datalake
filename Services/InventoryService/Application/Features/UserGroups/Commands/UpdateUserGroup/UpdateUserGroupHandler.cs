@@ -22,7 +22,7 @@ public class UpdateUserGroupHandler(
 {
 	public override void CheckPermissions(UpdateUserGroupCommand command)
 	{
-		command.User.ThrowIfNoGlobalAccess(PublicApi.Enums.AccessType.Manager);
+		command.User.ThrowIfNoAccessToUserGroup(PublicApi.Enums.AccessType.Manager, command.Guid);
 	}
 
 	UserGroupEntity userGroup = null!;

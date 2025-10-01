@@ -90,35 +90,7 @@ public class UserGroupsMemoryRepository(InventoryCacheStore dataStore)
 
 		return GetChildren(null);
 
-		UserGroupTreeInfo[] GetChildren(Guid? guid)
-		{
-			return groups
-				.Where(x => x.ParentGroupGuid == guid)
-				.Select(x =>
-				{
-					var group = new UserGroupTreeInfo
-					{
-						Guid = x.Guid,
-						Name = x.Name,
-						ParentGuid = x.ParentGroupGuid,
-						Description = x.Description,
-						AccessRule = x.AccessRule,
-						GlobalAccessType = x.GlobalAccessType,
-						ParentGroupGuid = x.ParentGroupGuid,
-						Children = GetChildren(x.Guid),
-					};
-
-					if (!x.AccessRule.HasAccess(AccessType.Viewer))
-					{
-						group.Name = string.Empty;
-						group.Description = string.Empty;
-					}
-
-					return group;
-				})
-				.Where(x => x.Children.Length > 0 || x.AccessRule.HasAccess(AccessType.Viewer))
-				.ToArray();
-		}
+		
 	}
 
 	/// <summary>
