@@ -1,5 +1,4 @@
-﻿using Datalake.InventoryService.Domain.Constants;
-using Datalake.InventoryService.Domain.Interfaces;
+﻿using Datalake.InventoryService.Domain.Interfaces;
 using Datalake.PrivateApi.Exceptions;
 using Datalake.PublicApi.Enums;
 
@@ -47,7 +46,7 @@ public record class SourceEntity : IWithIdentityKey, ISoftDeletable
 
 	public void UpdateType(SourceType type)
 	{
-		if (Lists.CustomSources.Contains(Type))
+		if (CustomSources.Contains(Type))
 			throw new ArgumentException("Создавать или изменять встроенные источники данных запрещено");
 
 		Type = type;
@@ -55,7 +54,7 @@ public record class SourceEntity : IWithIdentityKey, ISoftDeletable
 
 	public void UpdateProperties(string name, string? description, string? address)
 	{
-		if (Lists.CustomSources.Contains(Type))
+		if (CustomSources.Contains(Type))
 			throw new DomainException(nameof(address), "Изменение встроенных источников данных запрещено");
 
 		if (address == null)
@@ -65,6 +64,18 @@ public record class SourceEntity : IWithIdentityKey, ISoftDeletable
 		Name = name;
 		Description = description;
 	}
+
+	/// <summary>
+	/// Встроенные не настраиваемые источники данных
+	/// </summary>
+	public static IReadOnlyCollection<SourceType> CustomSources { get; } = new SourceType[]
+	{
+		SourceType.System,
+		SourceType.Calculated,
+		SourceType.Manual,
+		SourceType.Aggregated,
+		SourceType.NotSet
+	};
 
 	// поля в БД
 

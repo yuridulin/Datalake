@@ -1,4 +1,4 @@
-﻿using Datalake.InventoryService.Domain.Queries;
+﻿using Datalake.InventoryService.Application.Queries;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Blocks;

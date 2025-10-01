@@ -16,7 +16,7 @@ namespace Datalake.InventoryService.Application.Features.Users;
 /// </summary>
 public class UsersMemoryRepository(
 	InventoryCacheStore dataStore,
-	EnergoIdCacheStore energoIdStore)
+	EnergoIdCacheStore energoIdStore) : IUsersMemoryRepository
 {
 	#region API
 

@@ -1,4 +1,4 @@
-﻿using Datalake.InventoryService.Domain.Constants;
+﻿using Datalake.InventoryService.Infrastructure.Database.Schema;
 using Datalake.InventoryService.Infrastructure.Database.Views;
 using Datalake.PrivateApi.Utils;
 using Npgsql;

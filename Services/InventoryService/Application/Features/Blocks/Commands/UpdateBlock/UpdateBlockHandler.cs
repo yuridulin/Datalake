@@ -1,8 +1,8 @@
 ﻿using Datalake.InventoryService.Application.Abstractions;
 using Datalake.InventoryService.Application.Constants;
 using Datalake.InventoryService.Application.Interfaces;
+using Datalake.InventoryService.Application.Repositories;
 using Datalake.InventoryService.Domain.Entities;
-using Datalake.InventoryService.Domain.Repositories;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
 using Datalake.InventoryService.Infrastructure.Database.Abstractions;
 using Datalake.PublicApi.Enums;

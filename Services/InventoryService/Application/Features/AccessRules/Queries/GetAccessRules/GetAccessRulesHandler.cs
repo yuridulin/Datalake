@@ -1,5 +1,5 @@
 ﻿using Datalake.InventoryService.Application.Interfaces;
-using Datalake.InventoryService.Domain.Queries;
+using Datalake.InventoryService.Application.Queries;
 using Datalake.PublicApi.Models.AccessRights;
 
 namespace Datalake.InventoryService.Application.Features.AccessRules.Queries.GetAccessRules;

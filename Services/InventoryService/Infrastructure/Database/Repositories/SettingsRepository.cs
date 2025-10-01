@@ -1,5 +1,5 @@
-﻿using Datalake.InventoryService.Domain.Entities;
-using Datalake.InventoryService.Domain.Repositories;
+﻿using Datalake.InventoryService.Application.Repositories;
+using Datalake.InventoryService.Domain.Entities;
 using Datalake.PrivateApi.Attributes;
 using Microsoft.EntityFrameworkCore;
 

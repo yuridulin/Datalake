@@ -1,6 +1,6 @@
 ﻿using Datalake.InventoryService.Application.Constants;
 using Datalake.InventoryService.Application.Interfaces;
-using Datalake.InventoryService.Domain.Queries;
+using Datalake.InventoryService.Application.Queries;
 using Datalake.PublicApi.Models.Sources;
 
 namespace Datalake.InventoryService.Application.Features.Sources.Queries.GetSource;

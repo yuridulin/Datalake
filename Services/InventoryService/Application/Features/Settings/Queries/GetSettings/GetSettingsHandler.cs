@@ -1,5 +1,5 @@
 ﻿using Datalake.InventoryService.Application.Interfaces;
-using Datalake.InventoryService.Domain.Queries;
+using Datalake.InventoryService.Application.Queries;
 using Datalake.PrivateApi.Exceptions;
 using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Settings;

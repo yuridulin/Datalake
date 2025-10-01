@@ -48,11 +48,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Application\Features\Tags\Commands\CreateTag\" />
-	  <Folder Include="Application\Features\Tags\Commands\UpdateTag\" />
-	  <Folder Include="Application\Features\Tags\Commands\DeleteTag\" />
-	  <Folder Include="Application\Features\Tags\Queries\" />
-	  <Folder Include="Application\Features\Users\Queries\" />
+	  <Folder Include="Application\Features\Cache\Commands\ReloadCache\" />
+	  <Folder Include="Application\Features\Cache\Queries\GetCacheVersion\" />
+	  <Folder Include="Application\Features\Users\Queries\GetUsersActivity\" />
 	  <Folder Include="storage\logs\" />
 	  <Folder Include="storage\logs\" />
 	</ItemGroup>

@@ -12,7 +12,7 @@ namespace Datalake.InventoryService.Application.Features.Tags;
 /// <summary>
 /// Репозиторий тегов
 /// </summary>
-public class TagsMemoryRepository(InventoryCacheStore dataStore)
+public class TagsMemoryRepository(InventoryCacheStore dataStore) : ITagsMemoryRepository
 {
 	#region API
 

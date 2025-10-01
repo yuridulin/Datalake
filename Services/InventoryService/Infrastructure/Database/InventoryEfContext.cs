@@ -1,5 +1,5 @@
-﻿using Datalake.InventoryService.Domain.Constants;
-using Datalake.InventoryService.Domain.Entities;
+﻿using Datalake.InventoryService.Domain.Entities;
+using Datalake.InventoryService.Infrastructure.Database.Schema;
 using Datalake.InventoryService.Infrastructure.Database.Views;
 using Datalake.PrivateApi.Settings;
 using Datalake.PublicApi.Models.Tags;
