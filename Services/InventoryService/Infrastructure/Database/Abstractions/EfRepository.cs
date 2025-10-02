@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Datalake.InventoryService.Application.Interfaces.Persistent;
+using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.InventoryService.Infrastructure.Database.Abstractions;
 

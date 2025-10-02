@@ -1,8 +1,8 @@
 ﻿using Datalake.InventoryService.Application.Abstractions;
 using Datalake.InventoryService.Application.Interfaces;
+using Datalake.InventoryService.Application.Interfaces.Persistent;
 using Datalake.InventoryService.Application.Repositories;
 using Datalake.InventoryService.Domain.Entities;
-using Datalake.InventoryService.Infrastructure.Database.Abstractions;
 using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Application.Features.Settings.Commands.UpdateSettings;

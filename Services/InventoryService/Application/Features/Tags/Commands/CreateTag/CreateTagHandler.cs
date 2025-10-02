@@ -1,10 +1,10 @@
 ﻿using Datalake.InventoryService.Application.Abstractions;
 using Datalake.InventoryService.Application.Interfaces;
 using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Interfaces.Persistent;
 using Datalake.InventoryService.Application.Repositories;
 using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
-using Datalake.InventoryService.Infrastructure.Database.Abstractions;
 
 namespace Datalake.InventoryService.Application.Features.Tags.Commands.CreateTag;
 
@@ -22,7 +22,18 @@ public class CreateTagHandler(
 {
 	public override void CheckPermissions(CreateTagCommand command)
 	{
-		command.User.ThrowIfNoGlobalAccess(PublicApi.Enums.AccessType.Manager);
+		if (command.BlockId.HasValue)
+		{
+			command.User.ThrowIfNoAccessToBlock(PublicApi.Enums.AccessType.Manager, command.BlockId.Value);
+		}
+		else if (command.SourceId.HasValue)
+		{
+			command.User.ThrowIfNoAccessToSource(PublicApi.Enums.AccessType.Viewer, command.SourceId.Value);
+		}
+		else
+		{
+			command.User.ThrowIfNoGlobalAccess(PublicApi.Enums.AccessType.Manager);
+		}
 	}
 
 	TagEntity tag = null!;

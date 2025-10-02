@@ -1,4 +1,5 @@
-﻿using Datalake.PrivateApi.Attributes;
+﻿using Datalake.InventoryService.Application.Interfaces.Persistent;
+using Datalake.PrivateApi.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 

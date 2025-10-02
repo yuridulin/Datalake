@@ -1,6 +1,7 @@
 ﻿using Datalake.InventoryService.Application.Features.Tags.Commands.CreateTag;
 using Datalake.InventoryService.Application.Features.Tags.Commands.DeleteTag;
 using Datalake.InventoryService.Application.Features.Tags.Commands.UpdateTag;
+using Datalake.InventoryService.Application.Features.Tags.Models;
 using Datalake.InventoryService.Application.Features.Tags.Queries.GetTags;
 using Datalake.InventoryService.Application.Features.Tags.Queries.GetTagWithDetails;
 using Datalake.PrivateApi.Interfaces;
@@ -123,35 +124,30 @@ public class TagsController(IAuthenticator authenticator) : ControllerBase
 			Description = request.Description,
 			SourceId = request.SourceId,
 			Resolution = request.Resolution,
-			Inopc = new()
+			SourceItem = request.SourceItem,
+			IsScaling = request.IsScaling,
+			MaxEu = request.MaxEu,
+			MaxRaw = request.MaxRaw,
+			MinEu = request.MinEu,
+			MinRaw = request.MinRaw,
+			Aggregation = request.Aggregation,
+			AggregationPeriod = request.AggregationPeriod,
+			SourceTagBlockId = request.SourceTagBlockId,
+			SourceTagId = request.SourceTagId,
+			Formula = request.Formula,
+			FormulaInputs = request.FormulaInputs.Select(x => new TagInputDto()
 			{
-				SourceItem = request.SourceItem
-			},
-			Numeric = new()
+				TagId = x.TagId,
+				BlockId = x.BlockId,
+				VariableName = x.VariableName,
+			}),
+			ThresholdSourceTagId = request.ThresholdSourceTagId,
+			ThresholdSourceTagBlockId = request.ThresholdSourceTagBlockId,
+			Thresholds = request.Thresholds.Select(x => new TagThresholdDto()
 			{
-				IsScaling = request.IsScaling,
-				MaxEu = request.MaxEu,
-				MaxRaw = request.MaxRaw,
-				MinEu = request.MinEu,
-				MinRaw = request.MinRaw
-			},
-			Aggregation = new()
-			{
-				Aggregation = request.Aggregation,
-				AggregationPeriod = request.AggregationPeriod,
-				SourceTagBlockId = request.SourceTagBlockId,
-				SourceTagId = request.SourceTagId
-			},
-			Calculation = new()
-			{
-				Formula = request.Formula,
-				FormulaInputs = request.FormulaInputs.Select(x => new Application.Features.Tags.Models.TagInputDto
-				{
-					TagId = x.TagId,
-					BlockId = x.BlockId,
-					VariableName = x.VariableName,
-				})
-			},
+				InputValue = x.Threshold,
+				OutputValue = x.Result,
+			})
 		}, ct);
 
 		return NoContent();

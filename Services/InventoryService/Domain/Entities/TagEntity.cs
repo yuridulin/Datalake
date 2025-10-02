@@ -12,17 +12,11 @@ public record class TagEntity : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 {
 	private TagEntity() { }
 
-	public TagEntity(TagType type, int? sourceId, string? sourceItem)
+	public TagEntity(TagType type, SourceType sourceType, int? sourceId, string? sourceItem)
 	{
 		Type = type;
 
-		if (sourceId == (int)SourceType.System)
-			throw new DomainException("Создавать системные теги запрещено");
-
-		if (!sourceId.HasValue || sourceId == (int)SourceType.NotSet)
-			throw new DomainException("Тип источника является обязательным для тега");
-
-		SourceId = sourceId.Value;
+		UpdateSource(sourceType, sourceId);
 		SourceItem = sourceItem;
 	}
 
@@ -34,9 +28,142 @@ public record class TagEntity : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 		IsDeleted = true;
 	}
 
-	public void SetGenericName()
+	public void SetGenericName(SourceType sourceType, string? sourceName)
 	{
-		Name = $"Тег: {Id}";
+		Name = sourceType switch
+		{
+			SourceType.Manual => $"Мануальный тег #{Id}",
+			SourceType.Calculated => $"Вычисляемый тег #{Id}",
+			SourceType.Aggregated => $"Агрегатный тег #{Id}",
+			SourceType.Thresholds => $"Пороговый тег #{Id}",
+			SourceType.Inopc => string.IsNullOrWhiteSpace(sourceName) ? $"{SourceItem}" : $"{sourceName}.{SourceItem}",
+			_ => $"Тег #{Id}"
+		};
+	}
+
+	public void Update(
+		string? name, string? description, TagType type, TagResolution resolution, int? sourceId, SourceType sourceType,
+		string? sourceItem,
+		bool? isScaling, float? minEu, float? maxEu, float? minRaw, float? maxRaw,
+		string? formula,
+		TagAggregation? aggregation, AggregationPeriod? aggregationPeriod, int? aggTagId, int? aggBlockId,
+		int? thresholdTagId, int? thresholdBlockId)
+	{
+		if (string.IsNullOrWhiteSpace(name))
+			throw new DomainException("Название тега является обязательным");
+
+		Name = name;
+		Description = description;
+
+		Type = type;
+		Resolution = resolution;
+		UpdateSource(sourceType, sourceId);
+
+		// мы не очищаем старые настройки
+		// они не будут мешать, но будут полезны при возможном обратном изменении
+
+		if (Type == TagType.Number)
+		{
+			UpdateNumericConfig(isScaling, minEu, maxEu, minRaw, maxRaw);
+		}
+
+		if (sourceType == SourceType.Inopc)
+		{
+			UpdateInopcConfig(sourceItem);
+		}
+		else if (sourceType == SourceType.Calculated)
+		{
+			UpdateCalculationConfig(formula);
+		}
+		else if (sourceType == SourceType.Aggregated)
+		{
+			UpdateAggregationConfig(aggregation, aggregationPeriod, aggTagId, aggBlockId);
+		}
+		else if (sourceType == SourceType.Thresholds)
+		{
+			UpdateThresholdsConfig(thresholdTagId, thresholdBlockId);
+		}
+	}
+
+	private void UpdateSource(SourceType sourceType, int? sourceId)
+	{
+		SourceId = sourceType switch
+		{
+			SourceType.NotSet => throw new DomainException("Тип источника является обязательным для тега"),
+			SourceType.System => throw new DomainException("Создавать системные теги запрещено"),
+			SourceType.Aggregated => (int)SourceType.Aggregated,
+			SourceType.Calculated => (int)SourceType.Calculated,
+			SourceType.Manual => (int)SourceType.Manual,
+			SourceType.Thresholds => (int)SourceType.Thresholds,
+			SourceType.Inopc => sourceId.HasValue && sourceId.Value > 0 ? sourceId.Value : throw new DomainException("Идентификатор источника Inopc не передан"),
+			SourceType.Datalake => sourceId.HasValue && sourceId.Value > 0 ? sourceId.Value : throw new DomainException("Идентификатор источника Datalake не передан"),
+		};
+	}
+
+	private void UpdateThresholdsConfig(int? thresholdTagId, int? thresholdBlockId)
+	{
+		if (!thresholdTagId.HasValue)
+			throw new DomainException("Для порогового тега обязан быть указан тег-источник");
+
+		ThresholdSourceTagId = thresholdTagId;
+		ThresholdSourceTagBlockId = thresholdBlockId;
+	}
+
+	private void UpdateAggregationConfig(TagAggregation? aggregation, AggregationPeriod? aggregationPeriod, int? aggTagId, int? aggBlockId)
+	{
+		if (!aggregation.HasValue)
+			throw new DomainException("Тип агрегирования является обязательным для агрегатного тега");
+
+		if (!aggregationPeriod.HasValue)
+			throw new DomainException("Период агрегирования является обязательным для агрегатного тега");
+
+		if (!aggTagId.HasValue)
+			throw new DomainException("Для агрегатного тега обязан быть указан тег-источник");
+
+		Aggregation = aggregation.Value;
+		AggregationPeriod = aggregationPeriod.Value;
+		SourceTagId = aggTagId;
+		SourceTagBlockId = aggBlockId;
+	}
+
+	private void UpdateCalculationConfig(string? formula)
+	{
+		if (string.IsNullOrWhiteSpace(formula))
+			throw new DomainException("Для вычисляемого тега формула является обязательной");
+
+		Formula = formula;
+	}
+
+	private void UpdateInopcConfig(string? sourceItem)
+	{
+		if (string.IsNullOrWhiteSpace(sourceItem))
+			throw new DomainException("Для тегов Inopc путь к значению является обязательным");
+
+		SourceItem = sourceItem;
+	}
+
+	private void UpdateNumericConfig(bool? isScaling, float? minEu, float? maxEu, float? minRaw, float? maxRaw)
+	{
+		if (isScaling == null)
+			throw new DomainException("В числовых настройках не передана настройка использования шкалы");
+
+		IsScaling = isScaling.Value;
+
+		minEu ??= float.MinValue;
+		maxEu ??= float.MaxValue;
+		minRaw ??= float.MinValue;
+		maxRaw ??= float.MaxValue;
+
+		if (minEu.Value >= maxEu.Value)
+			throw new DomainException("В шкале инженерных значений начальное значение должно быть меньше конечного");
+
+		if (minRaw.Value >= maxRaw.Value)
+			throw new DomainException("В шкале исходных значений начальное значение должно быть меньше конечного");
+
+		MinEu = minEu.Value;
+		MaxEu = maxEu.Value;
+		MinRaw = minRaw.Value;
+		MaxRaw = maxRaw.Value;
 	}
 
 	#region поля в БД

@@ -2,10 +2,10 @@
 using Datalake.InventoryService.Application.Constants;
 using Datalake.InventoryService.Application.Interfaces;
 using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Interfaces.Persistent;
 using Datalake.InventoryService.Application.Repositories;
 using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
-using Datalake.InventoryService.Infrastructure.Database.Abstractions;
 using Datalake.PublicApi.Enums;
 
 namespace Datalake.InventoryService.Application.Features.Blocks.Commands.UpdateBlock;
@@ -38,11 +38,14 @@ public class UpdateBlockHandler(
 		block.UpdateName(command.Name);
 		block.UpdateDescription(command.Description);
 
-		var existBlockTags = await blockTagsRepository.GetByBlockIdAsync(block.Id);
-		await blockTagsRepository.RemoveRangeAsync(existBlockTags);
+		var existBlockTags = await blockTagsRepository.GetByBlockIdAsync(block.Id, ct);
+		await blockTagsRepository.RemoveRangeAsync(existBlockTags, ct);
 
-		blockTags = command.Tags.Select(x => new BlockTagEntity(block.Id, x.TagId, x.LocalName, x.Relation)).ToArray();
-		await blockTagsRepository.AddRangeAsync(blockTags);
+		if (command.Tags.Any())
+		{
+			blockTags = command.Tags.Select(x => new BlockTagEntity(block.Id, x.TagId, x.LocalName, x.Relation)).ToArray();
+			await blockTagsRepository.AddRangeAsync(blockTags, ct);
+		}
 
 		var audit = new AuditEntity(command.User.Guid, $"Изменения: diff", blockId: block.Id);
 		await auditRepository.AddAsync(audit, ct);

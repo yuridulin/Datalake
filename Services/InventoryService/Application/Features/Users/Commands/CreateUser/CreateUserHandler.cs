@@ -1,10 +1,10 @@
 ﻿using Datalake.InventoryService.Application.Abstractions;
 using Datalake.InventoryService.Application.Interfaces;
 using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Interfaces.Persistent;
 using Datalake.InventoryService.Application.Repositories;
 using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
-using Datalake.InventoryService.Infrastructure.Database.Abstractions;
 
 namespace Datalake.InventoryService.Application.Features.Users.Commands.CreateUser;
 

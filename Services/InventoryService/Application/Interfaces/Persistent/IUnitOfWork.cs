@@ -1,4 +1,4 @@
-﻿namespace Datalake.InventoryService.Infrastructure.Database.Abstractions;
+﻿namespace Datalake.InventoryService.Application.Interfaces.Persistent;
 
 public interface IUnitOfWork : IAsyncDisposable
 {

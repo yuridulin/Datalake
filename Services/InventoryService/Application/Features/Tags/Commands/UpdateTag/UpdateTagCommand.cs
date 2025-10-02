@@ -21,13 +21,33 @@ public record UpdateTagCommand : ICommandRequest, IWithUserAccess
 
 	public int SourceId { get; init; } = (int)SourceType.Manual;
 
-	public TagNumericDto? Numeric { get; init; }
+	public bool? IsScaling { get; init; }
 
-	public TagInopcDto? Inopc { get; init; }
+	public float? MinEu { get; init; }
 
-	public TagCalculationDto? Calculation { get; init; }
+	public float? MaxEu { get; init; }
 
-	public TagAggregationDto? Aggregation { get; init; }
+	public float? MinRaw { get; init; }
 
-	public TagThresholderDto? Thresholder { get; init; }
+	public float? MaxRaw { get; init; }
+
+	public string? SourceItem { get; init; }
+
+	public string? Formula { get; init; }
+
+	public IEnumerable<TagInputDto> FormulaInputs { get; init; } = [];
+
+	public TagAggregation? Aggregation { get; init; }
+
+	public AggregationPeriod? AggregationPeriod { get; init; }
+
+	public int? SourceTagId { get; init; }
+
+	public int? SourceTagBlockId { get; init; }
+
+	public int? ThresholdSourceTagId { get; init; }
+
+	public int? ThresholdSourceTagBlockId { get; init; }
+
+	public IEnumerable<TagThresholdDto> Thresholds { get; init; } = [];
 }

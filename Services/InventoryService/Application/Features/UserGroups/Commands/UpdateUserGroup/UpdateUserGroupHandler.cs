@@ -2,10 +2,10 @@
 using Datalake.InventoryService.Application.Constants;
 using Datalake.InventoryService.Application.Interfaces;
 using Datalake.InventoryService.Application.Interfaces.InMemory;
+using Datalake.InventoryService.Application.Interfaces.Persistent;
 using Datalake.InventoryService.Application.Repositories;
 using Datalake.InventoryService.Domain.Entities;
 using Datalake.InventoryService.Infrastructure.Cache.Inventory;
-using Datalake.InventoryService.Infrastructure.Database.Abstractions;
 
 namespace Datalake.InventoryService.Application.Features.UserGroups.Commands.UpdateUserGroup;
 
@@ -37,16 +37,19 @@ public class UpdateUserGroupHandler(
 		userGroup.Update(command.Name, command.Description);
 		await userGroupsRepository.UpdateAsync(userGroup, ct);
 
-		userGroupRelations = command.Users
-			.Select(x => new UserGroupRelationEntity(
-				userGroupGuid: userGroup.Guid,
-				userGuid: x.Guid,
-				accessType: x.AccessType))
-			.ToArray();
-
 		var oldUserGroupRelations = await userGroupRelationsRepository.GetByUserGroupGuidAsync(userGroup.Guid, ct);
 		await userGroupRelationsRepository.RemoveRangeAsync(oldUserGroupRelations, ct);
-		await userGroupRelationsRepository.AddRangeAsync(userGroupRelations, ct);
+
+		if (command.Users.Any())
+		{
+			userGroupRelations = command.Users
+				.Select(x => new UserGroupRelationEntity(
+					userGroupGuid: userGroup.Guid,
+					userGuid: x.Guid,
+					accessType: x.AccessType))
+				.ToArray();
+			await userGroupRelationsRepository.AddRangeAsync(userGroupRelations, ct);
+		}
 
 		await auditRepository.AddAsync(new(command.User.Guid, "Группа учетных записей изменена: diff", userGroupGuid: userGroup.Guid), ct);
 

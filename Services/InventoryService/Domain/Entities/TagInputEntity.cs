@@ -1,4 +1,5 @@
 ﻿using Datalake.InventoryService.Domain.Interfaces;
+using Datalake.PrivateApi.Exceptions;
 
 namespace Datalake.InventoryService.Domain.Entities;
 
@@ -8,6 +9,17 @@ namespace Datalake.InventoryService.Domain.Entities;
 public record class TagInputEntity : IWithIdentityKey
 {
 	private TagInputEntity() { }
+
+	public TagInputEntity(int tagId, int inputTagId, int? inputBlockId, string variable)
+	{
+		if (string.IsNullOrWhiteSpace(variable))
+			throw new DomainException($"Входной тег {inputTagId} для {tagId}: имя переменной не указано");
+
+		TagId = tagId;
+		InputTagId = inputTagId;
+		InputBlockId = inputBlockId;
+		VariableName = variable;
+	}
 
 	// поля в БД
 
