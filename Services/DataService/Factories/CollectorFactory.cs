@@ -2,8 +2,7 @@
 using Datalake.DataService.Abstractions;
 using Datalake.DataService.Services.Collection.External;
 using Datalake.DataService.Services.Collection.Internal;
-using Datalake.PrivateApi.Attributes;
-using Datalake.PublicApi.Models.Sources;
+using Datalake.Shared.Application.Attributes;
 
 namespace Datalake.DataService.Factories;
 

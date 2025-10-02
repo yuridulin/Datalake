@@ -3,12 +3,12 @@
 /// <summary>
 /// Достоверность значения
 /// </summary>
-public enum TagQuality
+public enum TagQuality : byte
 {
 	/// <summary>
-	/// Недостоверно
+	/// Неизвестная достоверность
 	/// </summary>
-	Bad = 0,
+	Unknown = 0,
 
 	/// <summary>
 	/// Недостоверно из-за потери связи
@@ -49,9 +49,4 @@ public enum TagQuality
 	/// Достоверно после ручного ввода
 	/// </summary>
 	Good_ManualWrite = 216,
-
-	/// <summary>
-	/// Неизвестная достоверность
-	/// </summary>
-	Unknown = -1,
 }

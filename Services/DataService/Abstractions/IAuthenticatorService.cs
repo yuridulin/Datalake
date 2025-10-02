@@ -1,4 +1,4 @@
-﻿using Datalake.PrivateApi.Entities;
+﻿using Datalake.Shared.Domain.Entities;
 
 namespace Datalake.DataService.Abstractions;
 

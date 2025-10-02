@@ -1,5 +1,5 @@
-﻿using Datalake.PrivateApi.Entities;
-using Datalake.PublicApi.Models.Values;
+﻿using Datalake.PublicApi.Models.Values;
+using Datalake.Shared.Domain.Entities;
 
 namespace Datalake.DataService.Abstractions;
 

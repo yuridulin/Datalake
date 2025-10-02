@@ -66,4 +66,10 @@
     <Folder Include="storage\logs\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Api\Contracts\Contracts.Public.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.Application\Shared.Application.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.Domain\Shared.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

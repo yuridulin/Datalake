@@ -1,5 +1,4 @@
-﻿using Datalake.PrivateApi.Entities;
-using Datalake.PublicApi.Models.Auth;
+﻿using Datalake.Shared.Domain.Entities;
 
 namespace Datalake.DataService.Abstractions;
 
