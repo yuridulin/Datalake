@@ -1,6 +1,6 @@
-﻿using Datalake.DataService.Services.Metrics.Models;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.DataService.Services.Metrics.Models;
 using Datalake.PrivateApi.Attributes;
-using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Values;
 using System.Collections.Concurrent;
 

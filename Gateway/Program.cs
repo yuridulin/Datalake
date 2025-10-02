@@ -1,6 +1,6 @@
 using Datalake.PublicApi;
+using Datalake.PublicApi.Constants;
 using FluentValidation;
-using MassTransit;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 
@@ -65,6 +65,43 @@ public class Program
 		{
 			opt.PathToSwaggerGenerator = "/swagger/docs";
 		});
+
+		app
+			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
+			.UseSentryTracing()
+			.UseDefaultFiles()
+			.UseStaticFiles(new StaticFileOptions
+			{
+				OnPrepareResponse = (ctx) =>
+				{
+					if (ctx.File.Name == "index.html")
+					{
+						ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+						ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+						ctx.Context.Response.Headers.Append("Expires", "0");
+					}
+				}
+			})
+			.UseCustomSerilog()
+			.UseHttpsRedirection()
+			.UseRouting()
+			.UseCors(policy =>
+			{
+				policy
+					.AllowAnyMethod()
+					.AllowAnyOrigin()
+					.AllowAnyHeader()
+					.WithExposedHeaders([
+						AuthConstants.TokenHeader,
+						AuthConstants.GlobalAccessHeader,
+						AuthConstants.NameHeader,
+						AuthConstants.UnderlyingUserGuidHeader,
+					]);
+			})
+			.UseMiddleware<SentryRequestBodyMiddleware>()
+			.EnsureCorsMiddlewareOnError();
+
+		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
 
 		await app.UseOcelot();
 		await app.RunAsync();

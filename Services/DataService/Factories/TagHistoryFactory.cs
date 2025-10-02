@@ -1,9 +1,9 @@
-﻿using Datalake.DataService.Abstractions;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.DataService.Abstractions;
 using Datalake.DataService.Database.Entities;
 using Datalake.DataService.Extensions;
 using Datalake.PrivateApi.Attributes;
 using Datalake.PublicApi.Constants;
-using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Tags;
 using Datalake.PublicApi.Models.Values;
 using System.Globalization;

@@ -1,5 +1,5 @@
-﻿using Datalake.Inventory.Models;
-using Datalake.PublicApi.Enums;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Inventory.Models;
 
 namespace Datalake.DataService.Database.Interfaces;
 

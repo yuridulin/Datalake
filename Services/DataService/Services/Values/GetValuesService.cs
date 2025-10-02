@@ -1,4 +1,5 @@
-﻿using Datalake.DataService.Abstractions;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.DataService.Abstractions;
 using Datalake.DataService.Database.Entities;
 using Datalake.DataService.Database.Interfaces;
 using Datalake.DataService.Extensions;

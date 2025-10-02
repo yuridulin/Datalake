@@ -1,10 +1,10 @@
-﻿using Datalake.DataService.Database.Interfaces;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.DataService.Database.Interfaces;
 using Datalake.DataService.Services.Collection.Abstractions;
 using Datalake.DataService.Services.Metrics;
 using Datalake.Inventory.Models;
 using Datalake.PrivateApi.Attributes;
 using Datalake.PublicApi.Constants;
-using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
 

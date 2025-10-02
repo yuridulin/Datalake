@@ -1,9 +1,9 @@
-﻿using Datalake.Inventory.Extensions;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Inventory.Extensions;
 using Datalake.Inventory.InMemory.Models;
 using Datalake.InventoryService.InMemory.Stores;
 using Datalake.PrivateApi.Entities;
 using Datalake.PublicApi.Constants;
-using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using System.Collections.Concurrent;
 

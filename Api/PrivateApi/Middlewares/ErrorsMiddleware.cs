@@ -1,4 +1,4 @@
-﻿using Datalake.PrivateApi.Exceptions;
+﻿using Datalake.PublicApi.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;

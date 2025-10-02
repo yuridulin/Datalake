@@ -8,8 +8,8 @@ using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Controllers;
 using Datalake.PublicApi.Models.Values;
 using System.Text.Json;
-using TagQuality = Datalake.PublicApi.Enums.TagQuality;
-using TagType = Datalake.PublicApi.Enums.TagType;
+using TagQuality = Datalake.Contracts.Public.Enums.TagQuality;
+using TagType = Datalake.Contracts.Public.Enums.TagType;
 
 namespace Datalake.DataService.Services.Receiver;
 

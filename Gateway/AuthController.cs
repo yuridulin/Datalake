@@ -1,8 +1,8 @@
-﻿using Datalake.Inventory.InMemory.Stores.Derived;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Inventory.InMemory.Stores.Derived;
 using Datalake.InventoryService.Api.Services;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Controllers;
-using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Auth;
 using Datalake.PublicApi.Models.Users;
 using Microsoft.AspNetCore.Mvc;

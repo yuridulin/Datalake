@@ -1,9 +1,9 @@
-﻿using Datalake.DataService.Database.Interfaces;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.DataService.Database.Interfaces;
 using Datalake.DataService.Extensions;
 using Datalake.Inventory.Models;
 using Datalake.PrivateApi.Attributes;
 using Datalake.PublicApi.Constants;
-using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Exceptions;
 using LinqToDB;
 

@@ -1,4 +1,4 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.Contracts.Public.Enums;
 
 namespace Datalake.InventoryService.Domain.Entities;
 

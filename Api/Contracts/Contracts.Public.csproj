@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyTitle>Datalake.Contracts.Public</AssemblyTitle>
+    <AssemblyName>Datalake.Contracts.Public</AssemblyName>
+    <RootNamespace>Datalake.Contracts.Public</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.9" />
+  </ItemGroup>
+
+</Project>

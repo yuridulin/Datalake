@@ -21,6 +21,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Contracts\Contracts.Public.csproj" />
+  </ItemGroup>
+
   <Target Name="UpdateCmdFile" AfterTargets="Pack">
     <PropertyGroup>
       <!-- Путь до файла cmd -->

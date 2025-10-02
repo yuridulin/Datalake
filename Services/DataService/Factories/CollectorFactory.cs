@@ -1,8 +1,8 @@
-﻿using Datalake.DataService.Abstractions;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.DataService.Abstractions;
 using Datalake.DataService.Services.Collection.External;
 using Datalake.DataService.Services.Collection.Internal;
 using Datalake.PrivateApi.Attributes;
-using Datalake.PublicApi.Enums;
 using Datalake.PublicApi.Models.Sources;
 
 namespace Datalake.DataService.Factories;
