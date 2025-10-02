@@ -1,14 +1,14 @@
-﻿using Datalake.InventoryService.Application.Features.Sources.Commands.CreateSource;
-using Datalake.InventoryService.Application.Features.Sources.Commands.DeleteSource;
-using Datalake.InventoryService.Application.Features.Sources.Commands.UpdateSource;
-using Datalake.InventoryService.Application.Features.Sources.Queries.GetSource;
-using Datalake.InventoryService.Application.Features.Sources.Queries.GetSources;
-using Datalake.PublicApi.Models.Sources;
-using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Inventory.Api.Models.Sources;
+using Datalake.Inventory.Application.Features.Sources.Commands.CreateSource;
+using Datalake.Inventory.Application.Features.Sources.Commands.DeleteSource;
+using Datalake.Inventory.Application.Features.Sources.Commands.UpdateSource;
+using Datalake.Inventory.Application.Features.Sources.Queries.GetSource;
+using Datalake.Inventory.Application.Features.Sources.Queries.GetSources;
+using Datalake.Shared.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Inventory.Api.Controllers;
+namespace Datalake.Inventory.App.Controllers;
 
 /// <summary>
 /// Источники данных

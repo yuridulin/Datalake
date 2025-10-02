@@ -1,6 +1,4 @@
-﻿using Datalake.Contracts.Public.Enums;
-
-namespace Datalake.DataService.Extensions;
+﻿namespace Datalake.DataService.Extensions;
 
 /// <summary>
 /// Расширение для объектов даты/времени

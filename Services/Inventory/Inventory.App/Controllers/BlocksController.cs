@@ -1,17 +1,17 @@
-﻿using Datalake.InventoryService.Application.Features.Blocks.Commands.CreateBlock;
-using Datalake.InventoryService.Application.Features.Blocks.Commands.DeleteBlock;
-using Datalake.InventoryService.Application.Features.Blocks.Commands.MoveBlock;
-using Datalake.InventoryService.Application.Features.Blocks.Commands.UpdateBlock;
-using Datalake.InventoryService.Application.Features.Blocks.Models;
-using Datalake.InventoryService.Application.Features.Blocks.Queries.GetBlockFull;
-using Datalake.InventoryService.Application.Features.Blocks.Queries.GetBlocksTree;
-using Datalake.InventoryService.Application.Features.Blocks.Queries.GetBlocksWithTags;
-using Datalake.PublicApi.Models.Blocks;
-using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Inventory.Api.Models.Blocks;
+using Datalake.Inventory.Application.Features.Blocks.Commands.CreateBlock;
+using Datalake.Inventory.Application.Features.Blocks.Commands.DeleteBlock;
+using Datalake.Inventory.Application.Features.Blocks.Commands.MoveBlock;
+using Datalake.Inventory.Application.Features.Blocks.Commands.UpdateBlock;
+using Datalake.Inventory.Application.Features.Blocks.Models;
+using Datalake.Inventory.Application.Features.Blocks.Queries.GetBlockFull;
+using Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksTree;
+using Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksWithTags;
+using Datalake.Shared.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Inventory.Api.Controllers;
+namespace Datalake.Inventory.App.Controllers;
 
 /// <summary>
 /// Взаимодействие с блоками

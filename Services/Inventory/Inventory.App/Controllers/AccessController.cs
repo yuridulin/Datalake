@@ -1,4 +1,8 @@
 ﻿using Datalake.Inventory.Api.Models.AccessRules;
+using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeBlockRules;
+using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeSourceRules;
+using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeTagRules;
+using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeUserGroupRules;
 using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeUserRules;
 using Datalake.Inventory.Application.Features.AccessRules.Models;
 using Datalake.Inventory.Application.Features.AccessRules.Queries.GetAccessRules;
@@ -7,7 +11,7 @@ using Datalake.Shared.Api.Interfaces;
 using Datalake.Shared.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Datalake.Inventory.Api.Controllers;
+namespace Datalake.Inventory.App.Controllers;
 
 /// <summary>
 /// Правила доступа

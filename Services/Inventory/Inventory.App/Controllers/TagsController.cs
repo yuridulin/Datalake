@@ -1,15 +1,15 @@
-﻿using Datalake.InventoryService.Application.Features.Tags.Commands.CreateTag;
-using Datalake.InventoryService.Application.Features.Tags.Commands.DeleteTag;
-using Datalake.InventoryService.Application.Features.Tags.Commands.UpdateTag;
-using Datalake.InventoryService.Application.Features.Tags.Models;
-using Datalake.InventoryService.Application.Features.Tags.Queries.GetTags;
-using Datalake.InventoryService.Application.Features.Tags.Queries.GetTagWithDetails;
-using Datalake.PublicApi.Models.Tags;
-using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Inventory.Api.Models.Tags;
+using Datalake.Inventory.Application.Features.Tags.Commands.CreateTag;
+using Datalake.Inventory.Application.Features.Tags.Commands.DeleteTag;
+using Datalake.Inventory.Application.Features.Tags.Commands.UpdateTag;
+using Datalake.Inventory.Application.Features.Tags.Models;
+using Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
+using Datalake.Inventory.Application.Features.Tags.Queries.GetTagWithDetails;
+using Datalake.Shared.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Inventory.Api.Controllers;
+namespace Datalake.Inventory.App.Controllers;
 
 /// <summary>
 /// Теги

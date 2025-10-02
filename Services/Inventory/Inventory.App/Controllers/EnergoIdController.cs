@@ -1,10 +1,10 @@
-﻿using Datalake.InventoryService.Application.Features.EnergoId.Commands.ReloadEnergoId;
-using Datalake.InventoryService.Application.Features.EnergoId.Queries.GetEnergoIdUsers;
-using Datalake.PublicApi.Models.Users;
-using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Inventory.Api.Models.Users;
+using Datalake.Inventory.Application.Features.EnergoId.Commands.ReloadEnergoId;
+using Datalake.Inventory.Application.Features.EnergoId.Queries.GetEnergoId;
+using Datalake.Shared.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Datalake.Inventory.Api.Controllers;
+namespace Datalake.Inventory.App.Controllers;
 
 /// <summary>
 /// Учетные записи

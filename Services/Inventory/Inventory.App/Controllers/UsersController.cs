@@ -1,14 +1,14 @@
-﻿using Datalake.InventoryService.Application.Features.Users.Commands.CreateUser;
-using Datalake.InventoryService.Application.Features.Users.Commands.DeleteUser;
-using Datalake.InventoryService.Application.Features.Users.Commands.UpdateUser;
-using Datalake.InventoryService.Application.Features.Users.Queries.GetUsers;
-using Datalake.InventoryService.Application.Features.Users.Queries.GetUserWithDetails;
-using Datalake.PublicApi.Models.Users;
-using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Inventory.Api.Models.Users;
+using Datalake.Inventory.Application.Features.Users.Commands.CreateUser;
+using Datalake.Inventory.Application.Features.Users.Commands.DeleteUser;
+using Datalake.Inventory.Application.Features.Users.Commands.UpdateUser;
+using Datalake.Inventory.Application.Features.Users.Queries.GetUsers;
+using Datalake.Inventory.Application.Features.Users.Queries.GetUserWithDetails;
+using Datalake.Shared.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Inventory.Api.Controllers;
+namespace Datalake.Inventory.App.Controllers;
 
 /// <summary>
 /// Учетные записи

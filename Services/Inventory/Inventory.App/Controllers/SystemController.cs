@@ -1,12 +1,12 @@
-﻿using Datalake.InventoryService.Application.Features.Cache.Commands.ReloadCache;
-using Datalake.InventoryService.Application.Features.Settings.Commands.UpdateSettings;
-using Datalake.InventoryService.Application.Features.Settings.Queries.GetSettings;
-using Datalake.PublicApi.Models.Settings;
-using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Inventory.Api.Models.Settings;
+using Datalake.Inventory.Application.Features.Cache.Commands.ReloadCache;
+using Datalake.Inventory.Application.Features.Settings.Commands.UpdateSettings;
+using Datalake.Inventory.Application.Features.Settings.Queries.GetSettings;
+using Datalake.Shared.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Inventory.Api.Controllers;
+namespace Datalake.Inventory.App.Controllers;
 
 /// <summary>
 /// Настройки и состояние системы

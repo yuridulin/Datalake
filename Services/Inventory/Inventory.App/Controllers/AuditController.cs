@@ -1,9 +1,9 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.InventoryService.Application.Features.Audit.Queries.GetAudit;
-using Datalake.PublicApi.Models.LogModels;
+using Datalake.Inventory.Application.Features.Audit.Queries.GetAudit;
+using Datalake.Inventory.Api.Models.LogModels;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Datalake.Inventory.Api.Controllers;
+namespace Datalake.Inventory.App.Controllers;
 
 /// <summary>
 /// Аудит изменений

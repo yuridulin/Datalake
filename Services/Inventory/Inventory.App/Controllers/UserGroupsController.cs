@@ -1,17 +1,17 @@
-﻿using Datalake.InventoryService.Application.Features.UserGroups.Commands.CreateUserGroup;
-using Datalake.InventoryService.Application.Features.UserGroups.Commands.DeleteUserGroup;
-using Datalake.InventoryService.Application.Features.UserGroups.Commands.MoveUserGroup;
-using Datalake.InventoryService.Application.Features.UserGroups.Commands.UpdateUserGroup;
-using Datalake.InventoryService.Application.Features.UserGroups.Models;
-using Datalake.InventoryService.Application.Features.UserGroups.Queries.GetUserGroup;
-using Datalake.InventoryService.Application.Features.UserGroups.Queries.GetUserGroups;
-using Datalake.InventoryService.Application.Features.UserGroups.Queries.GetUserGroupWithDetails;
-using Datalake.PublicApi.Models.UserGroups;
-using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Inventory.Api.Models.UserGroups;
+using Datalake.Inventory.Application.Features.UserGroups.Commands.CreateUserGroup;
+using Datalake.Inventory.Application.Features.UserGroups.Commands.DeleteUserGroup;
+using Datalake.Inventory.Application.Features.UserGroups.Commands.MoveUserGroup;
+using Datalake.Inventory.Application.Features.UserGroups.Commands.UpdateUserGroup;
+using Datalake.Inventory.Application.Features.UserGroups.Models;
+using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroup;
+using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroups;
+using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroupWithDetails;
+using Datalake.Shared.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Inventory.Api.Controllers;
+namespace Datalake.Inventory.App.Controllers;
 
 /// <summary>
 /// Группы учетных записей

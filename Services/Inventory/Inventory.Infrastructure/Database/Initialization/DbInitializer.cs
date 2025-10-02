@@ -1,9 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Inventory.Domain.Entities;
 using Datalake.Inventory.Infrastructure.Cache.Inventory;
-using Datalake.Shared.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
@@ -15,7 +13,6 @@ namespace Datalake.Inventory.Infrastructure.Database.Initialization;
 /// </summary>
 public class DbInitializer(
 	IServiceScopeFactory serviceScopeFactory,
-	IConfiguration configuration,
 	ILogger<EnergoIdViewCreator> logger)
 {
 	/// <summary>

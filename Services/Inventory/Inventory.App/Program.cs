@@ -1,13 +1,13 @@
-using Datalake.Inventory.Api.Bootstrap;
+using Datalake.Inventory.App.Bootstrap;
 using Datalake.Inventory.Application.Bootstrap;
 using Datalake.Inventory.Infrastructure.Bootstrap;
-using Datalake.PublicApi.Constants;
+using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Middlewares;
 using System.Reflection;
 
-namespace Datalake.Inventory.Api;
+namespace Datalake.Inventory.App;
 
 public class Program
 {
@@ -54,10 +54,8 @@ public class Program
 					.AllowAnyOrigin()
 					.AllowAnyHeader()
 					.WithExposedHeaders([
-						AuthConstants.TokenHeader,
-						AuthConstants.GlobalAccessHeader,
-						AuthConstants.NameHeader,
-						AuthConstants.UnderlyingUserGuidHeader,
+						Headers.UserHeader,
+						Headers.UnderlyingUserHeader,
 					]);
 			})
 			.UseSharedSentryBodyWriter()
