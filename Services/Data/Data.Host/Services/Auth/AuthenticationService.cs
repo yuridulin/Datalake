@@ -1,9 +1,9 @@
-﻿using Datalake.DataService.Abstractions;
-using Datalake.Shared.Application;
+﻿using Datalake.Shared.Application;
 using Datalake.PrivateApi.Constants;
 using Datalake.PrivateApi.Entities;
+using Datalake.Data.Host.Abstractions;
 
-namespace Datalake.DataService.Services.Auth;
+namespace Datalake.Data.Host.Services.Auth;
 
 [Singleton]
 public class AuthenticationService(IAccessStore store) : IAuthenticatorService

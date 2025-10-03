@@ -1,7 +1,7 @@
 ﻿using Datalake.PrivateApi.Messages;
 using MassTransit;
 
-namespace Datalake.DataService.Consumers;
+namespace Datalake.Data.Host.Consumers;
 
 public class AccessUpdateConsumer(
 	ILogger<AccessUpdateConsumer> logger) : IConsumer<AccessUpdateMessage>

@@ -1,9 +1,9 @@
-﻿using Datalake.DataService.Abstractions;
+﻿using Datalake.Data.Host.Abstractions;
 using Datalake.Shared.Application.Attributes;
 using LinqToDB;
 using System.Collections.Concurrent;
 
-namespace Datalake.DataService.Services.Collection;
+namespace Datalake.Data.Host.Services.Collection;
 
 /// <summary>
 /// Менеджер сборщиков данных

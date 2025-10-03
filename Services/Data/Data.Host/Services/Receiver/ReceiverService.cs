@@ -1,17 +1,19 @@
-﻿using Datalake.DataService.Abstractions;
-using Datalake.DataService.Services.Receiver.Models;
+﻿using Datalake.DataService.Services.Receiver.Models;
 using Datalake.DataService.Services.Receiver.Models.Inopc;
-using Datalake.DataService.Services.Receiver.Models.Inopc.Enums;
 using Datalake.Shared.Application;
 using Datalake.PrivateApi.Converters;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Controllers;
-using Datalake.PublicApi.Models.Values;
 using System.Text.Json;
 using TagQuality = Datalake.Contracts.Public.Enums.TagQuality;
 using TagType = Datalake.Contracts.Public.Enums.TagType;
+using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Services.Receiver.Models;
+using Datalake.Data.Host.Services.Receiver.Models.Inopc;
+using Datalake.Data.Host.Services.Receiver.Models.Inopc.Enums;
+using Datalake.Data.Host.Models.Values;
 
-namespace Datalake.DataService.Services.Receiver;
+namespace Datalake.Data.Host.Services.Receiver;
 
 [Singleton]
 public class ReceiverService(ILogger<ReceiverService> logger) : IReceiverService

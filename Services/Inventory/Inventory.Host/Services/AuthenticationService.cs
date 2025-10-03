@@ -4,7 +4,7 @@ using Datalake.Shared.Api.Interfaces;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Entities;
 
-namespace Datalake.Inventory.App.Services;
+namespace Datalake.Inventory.Host.Services;
 
 [Singleton]
 public class AuthenticationService(IUserAccessCache cache) : IAuthenticator

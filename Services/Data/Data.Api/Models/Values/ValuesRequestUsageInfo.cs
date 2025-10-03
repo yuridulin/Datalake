@@ -1,4 +1,4 @@
-﻿namespace Data.Api.Models.Values;
+﻿namespace Datalake.Data.Api.Models.Values;
 
 /// <summary>
 /// Метрика запроса на чтение данных

@@ -1,10 +1,10 @@
-﻿using Datalake.DataService.Abstractions;
-using Datalake.DataService.Database.Entities;
-using Datalake.DataService.Database.Interfaces;
+﻿using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Database.Entities;
+using Datalake.Data.Host.Database.Interfaces;
 using Datalake.Shared.Application;
 using System.Collections.Concurrent;
 
-namespace Datalake.DataService.Stores;
+namespace Datalake.Data.Host.Stores;
 
 [Singleton]
 public class CurrentValuesStore : ICurrentValuesStore

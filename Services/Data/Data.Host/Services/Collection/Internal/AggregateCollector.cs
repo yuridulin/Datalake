@@ -1,14 +1,14 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.DataService.Database.Interfaces;
-using Datalake.DataService.Services.Collection.Abstractions;
-using Datalake.DataService.Services.Metrics;
-using Datalake.Inventory.Models;
 using Datalake.Shared.Application;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Sources;
-using Datalake.PublicApi.Models.Values;
+using Datalake.Data.Host.Models;
+using Datalake.Data.Host.Services.Metrics;
+using Datalake.Data.Host.Services.Collection.Abstractions;
+using Datalake.Data.Host.Models.Values;
+using Datalake.Data.Host.Database.Interfaces;
 
-namespace Datalake.DataService.Services.Collection.Internal;
+namespace Datalake.Data.Host.Services.Collection.Internal;
 
 [Transient]
 public class AggregateCollector : CollectorBase

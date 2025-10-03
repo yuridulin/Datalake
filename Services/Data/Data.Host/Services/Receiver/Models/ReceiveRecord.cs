@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
 
-namespace Datalake.DataService.Services.Receiver.Models;
+namespace Datalake.Data.Host.Services.Receiver.Models;
 
 /// <summary>
 /// Запись о полученном из источника значении

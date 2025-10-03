@@ -1,9 +1,9 @@
-﻿using Datalake.Inventory.App.Services;
+﻿using Datalake.Inventory.Host.Services;
 using Datalake.Shared.Api.Interfaces;
 using Datalake.Shared.Hosting.Bootstrap;
 using NJsonSchema.Generation;
 
-namespace Datalake.Inventory.App.Bootstrap;
+namespace Datalake.Inventory.Host.Bootstrap;
 
 public static class ApiBootstrapExtensions
 {

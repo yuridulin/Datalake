@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Data.Api.Models.Values;
+namespace Datalake.Data.Api.Models.Values;
 
 /// <summary>
 /// Краткая информация о запрашиваемом теге

@@ -2,7 +2,7 @@
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Tags;
 
-namespace Datalake.PublicApi.Models.Values;
+namespace Datalake.Data.Host.Models.Values;
 
 /// <summary>
 /// Данные запроса на ввод значения

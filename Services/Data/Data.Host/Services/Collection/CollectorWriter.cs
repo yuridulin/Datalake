@@ -1,10 +1,10 @@
-﻿using Datalake.DataService.Abstractions;
-using Datalake.PublicApi.Models.Values;
+﻿using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Models.Values;
 using Datalake.Shared.Application.Attributes;
 using System.Diagnostics.Metrics;
 using System.Threading.Channels;
 
-namespace Datalake.DataService.Services.Collection;
+namespace Datalake.Data.Host.Services.Collection;
 
 /// <summary>
 /// Служба записи новых значений в БД

@@ -3,7 +3,7 @@ using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.States;
 using System.Collections.Concurrent;
 
-namespace Datalake.DataService.Services.Metrics;
+namespace Datalake.Data.Host.Services.Metrics;
 
 /// <summary>
 /// Хранение последних ошибок по получению значений

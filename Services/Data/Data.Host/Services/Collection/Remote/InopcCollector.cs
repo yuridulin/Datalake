@@ -1,14 +1,14 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.DataService.Abstractions;
-using Datalake.DataService.Extensions;
-using Datalake.DataService.Services.Collection.Abstractions;
-using Datalake.DataService.Services.Metrics;
 using Datalake.Shared.Application;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Sources;
 using Datalake.PublicApi.Models.Values;
+using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Services.Metrics;
+using Datalake.Data.Host.Services.Collection.Abstractions;
+using Datalake.Data.Host.Extensions;
 
-namespace Datalake.DataService.Services.Collection.External;
+namespace Datalake.Data.Host.Services.Collection.Remote;
 
 [Transient]
 public class InopcCollector : CollectorBase

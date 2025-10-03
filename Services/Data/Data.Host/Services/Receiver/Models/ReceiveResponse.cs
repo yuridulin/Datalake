@@ -1,4 +1,4 @@
-﻿namespace Datalake.DataService.Services.Receiver.Models;
+﻿namespace Datalake.Data.Host.Services.Receiver.Models;
 
 /// <summary>
 /// Ответ после получения данных с источника

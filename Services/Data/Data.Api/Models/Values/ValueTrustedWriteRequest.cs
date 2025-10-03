@@ -2,7 +2,7 @@
 using Datalake.Contracts.Public.Extensions;
 using System.ComponentModel.DataAnnotations;
 
-namespace Data.Api.Models.Values;
+namespace Datalake.Data.Api.Models.Values;
 
 /// <summary>
 /// Данные запроса на ввод значения

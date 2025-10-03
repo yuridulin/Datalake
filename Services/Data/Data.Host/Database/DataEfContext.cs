@@ -1,9 +1,9 @@
-﻿using Datalake.DataService.Database.Constants;
-using Datalake.DataService.Database.Entities;
+﻿using Datalake.Data.Host.Database.Constants;
+using Datalake.Data.Host.Database.Entities;
 using Datalake.Shared.Application;
 using Microsoft.EntityFrameworkCore;
 
-namespace Datalake.DataService.Database;
+namespace Datalake.Data.Host.Database;
 
 [Scoped]
 public class DataEfContext(DbContextOptions<DataEfContext> options) : DbContext(options)

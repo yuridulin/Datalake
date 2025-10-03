@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.PublicApi.Models.Values;
+namespace Datalake.Data.Host.Models.Values;
 
 /// <summary>
 /// Ответ на запрос для получения значений, включающий обработанные теги и идентификатор запроса

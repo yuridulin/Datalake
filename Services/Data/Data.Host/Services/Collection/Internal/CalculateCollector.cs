@@ -1,14 +1,14 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.DataService.Abstractions;
-using Datalake.DataService.Services.Collection.Abstractions;
-using Datalake.DataService.Services.Metrics;
 using Datalake.Shared.Application;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Sources;
-using Datalake.PublicApi.Models.Values;
 using NCalc;
+using Datalake.Data.Host.Services.Metrics;
+using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Services.Collection.Abstractions;
+using Datalake.Data.Host.Models.Values;
 
-namespace Datalake.DataService.Services.Collection.Internal;
+namespace Datalake.Data.Host.Services.Collection.Internal;
 
 [Transient]
 public class CalculateCollector(

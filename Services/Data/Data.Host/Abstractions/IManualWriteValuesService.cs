@@ -1,7 +1,7 @@
-﻿using Datalake.PublicApi.Models.Values;
+﻿using Datalake.Data.Host.Models.Values;
 using Datalake.Shared.Domain.Entities;
 
-namespace Datalake.DataService.Abstractions;
+namespace Datalake.Data.Host.Abstractions;
 
 /// <summary>
 /// Запись значений ручного ввода по запросу

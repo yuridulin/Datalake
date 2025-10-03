@@ -1,8 +1,8 @@
-﻿using Data.Api.Enums;
-using Datalake.Contracts.Public.Enums;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Data.Api.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Data.Api.Models.Values;
+namespace Datalake.Data.Api.Models.Values;
 
 /// <summary>
 /// Данные запроса для получения значений

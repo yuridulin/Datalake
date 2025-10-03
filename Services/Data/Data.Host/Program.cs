@@ -1,14 +1,14 @@
-﻿using Datalake.DataService.Abstractions;
-using Datalake.DataService.Database;
-using Datalake.DataService.Database.Interfaces;
-using Datalake.DataService.Database.Repositories;
-using Datalake.DataService.Factories;
-using Datalake.DataService.Services.Auth;
-using Datalake.DataService.Services.Collection;
-using Datalake.DataService.Services.Metrics;
-using Datalake.DataService.Services.Receiver;
-using Datalake.DataService.Services.Values;
-using Datalake.DataService.Stores;
+﻿using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Database;
+using Datalake.Data.Host.Database.Interfaces;
+using Datalake.Data.Host.Database.Repositories;
+using Datalake.Data.Host.Factories;
+using Datalake.Data.Host.Services.Auth;
+using Datalake.Data.Host.Services.Collection;
+using Datalake.Data.Host.Services.Metrics;
+using Datalake.Data.Host.Services.Receiver;
+using Datalake.Data.Host.Services.Values;
+using Datalake.Data.Host.Stores;
 using Datalake.Shared.Hosting;
 using LinqToDB;
 using LinqToDB.AspNet;
@@ -17,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using NJsonSchema.Generation;
 using Serilog;
 
-namespace Datalake.DataService;
+namespace Datalake.Data.Host;
 
 public class Program
 {

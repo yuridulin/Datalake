@@ -1,4 +1,4 @@
-﻿namespace Datalake.DataService.Database.Constants;
+﻿namespace Datalake.Data.Host.Database.Constants;
 
 public static class DataDefinition
 {

@@ -1,6 +1,6 @@
-﻿using Datalake.DataService.Services.Receiver.Models;
+﻿using Datalake.Data.Host.Services.Receiver.Models;
 
-namespace Datalake.DataService.Abstractions;
+namespace Datalake.Data.Host.Abstractions;
 
 /// <summary>
 /// Служба получения данных из источников по сети

@@ -1,6 +1,6 @@
-﻿using Datalake.PublicApi.Models.Values;
+﻿using Datalake.Data.Host.Models.Values;
 
-namespace Datalake.DataService.Abstractions;
+namespace Datalake.Data.Host.Abstractions;
 
 /// <summary>
 /// Служба для записи собранных значений

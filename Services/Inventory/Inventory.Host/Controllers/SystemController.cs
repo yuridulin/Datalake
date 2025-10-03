@@ -6,7 +6,7 @@ using Datalake.Shared.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.Inventory.App.Controllers;
+namespace Datalake.Inventory.Host.Controllers;
 
 /// <summary>
 /// Настройки и состояние системы

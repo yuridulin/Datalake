@@ -11,7 +11,7 @@ using Datalake.Shared.Api.Interfaces;
 using Datalake.Shared.Application.Entities;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Datalake.Inventory.App.Controllers;
+namespace Datalake.Inventory.Host.Controllers;
 
 /// <summary>
 /// Правила доступа

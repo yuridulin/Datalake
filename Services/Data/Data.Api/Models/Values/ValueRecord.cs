@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Data.Api.Models.Values;
+namespace Datalake.Data.Api.Models.Values;
 
 /// <summary>
 /// Запись о значении

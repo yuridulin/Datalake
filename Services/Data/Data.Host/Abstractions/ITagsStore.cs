@@ -1,6 +1,6 @@
 ﻿using Datalake.PublicApi.Models.Tags;
 
-namespace Datalake.DataService.Abstractions;
+namespace Datalake.Data.Host.Abstractions;
 
 /// <summary>
 /// Хранилище данных о тегах

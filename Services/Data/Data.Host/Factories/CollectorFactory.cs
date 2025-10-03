@@ -1,10 +1,10 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.DataService.Abstractions;
-using Datalake.DataService.Services.Collection.External;
-using Datalake.DataService.Services.Collection.Internal;
+using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Services.Collection.Internal;
+using Datalake.Data.Host.Services.Collection.Remote;
 using Datalake.Shared.Application.Attributes;
 
-namespace Datalake.DataService.Factories;
+namespace Datalake.Data.Host.Factories;
 
 [Singleton]
 public class CollectorFactory(

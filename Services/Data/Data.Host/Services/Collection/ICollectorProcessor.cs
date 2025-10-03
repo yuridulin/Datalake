@@ -1,6 +1,6 @@
 ﻿using Datalake.PublicApi.Models.Sources;
 
-namespace Datalake.DataService.Services.Collection;
+namespace Datalake.Data.Host.Services.Collection;
 
 /// <summary>
 /// Служба управления сборщиками данных для имеющихся источников данных

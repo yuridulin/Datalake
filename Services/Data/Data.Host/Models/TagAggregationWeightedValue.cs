@@ -1,4 +1,4 @@
-﻿namespace Datalake.Inventory.Models;
+﻿namespace Datalake.Data.Host.Models;
 
 /// <summary>
 /// Результат вычисления взвешенного агрегатного значения

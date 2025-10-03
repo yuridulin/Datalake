@@ -1,13 +1,14 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.DataService.Database.Interfaces;
 using Datalake.DataService.Extensions;
-using Datalake.Inventory.Models;
 using Datalake.Shared.Application;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Exceptions;
 using LinqToDB;
+using Datalake.Data.Host.Models;
+using Datalake.Data.Host.Database;
+using Datalake.Data.Host.Database.Interfaces;
 
-namespace Datalake.DataService.Database.Repositories;
+namespace Datalake.Data.Host.Database.Repositories;
 
 [Scoped]
 public class GetAggregatedHistoryRepository(DataLinqToDbContext db) : IGetAggregatedHistoryRepository

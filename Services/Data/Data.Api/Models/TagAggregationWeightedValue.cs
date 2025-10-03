@@ -1,4 +1,4 @@
-﻿namespace Data.Api.Models;
+﻿namespace Datalake.Data.Api.Models;
 
 /// <summary>
 /// Результат вычисления взвешенного агрегатного значения

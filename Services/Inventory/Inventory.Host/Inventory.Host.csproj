@@ -10,9 +10,9 @@
 		<DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
 		<DockerfileTag>datalake-inventory</DockerfileTag>
 		<Product>$(AssemblyName)</Product>
-		<RootNamespace>Datalake.Inventory.App</RootNamespace>
-		<AssemblyName>Datalake.Inventory.App</AssemblyName>
-		<AssemblyTitle>Datalake.Inventory.App</AssemblyTitle>
+		<RootNamespace>Datalake.Inventory.Host</RootNamespace>
+		<AssemblyName>Datalake.Inventory.Host</AssemblyName>
+		<AssemblyTitle>Datalake.Inventory.Host</AssemblyTitle>
 	</PropertyGroup>
 
 	<PropertyGroup>

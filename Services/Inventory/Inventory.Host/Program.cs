@@ -1,5 +1,5 @@
-using Datalake.Inventory.App.Bootstrap;
 using Datalake.Inventory.Application.Bootstrap;
+using Datalake.Inventory.Host.Bootstrap;
 using Datalake.Inventory.Infrastructure.Bootstrap;
 using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Hosting;
@@ -7,7 +7,7 @@ using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Middlewares;
 using System.Reflection;
 
-namespace Datalake.Inventory.App;
+namespace Datalake.Inventory.Host;
 
 public class Program
 {

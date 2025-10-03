@@ -1,9 +1,9 @@
-﻿using Datalake.DataService.Abstractions;
-using Datalake.PublicApi.Models.Values;
+﻿using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Models.Values;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.DataService.Controllers;
+namespace Datalake.Data.Host.Controllers;
 
 /// <summary>
 /// Взаимодействие с данными тегов

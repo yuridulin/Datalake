@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
 
-namespace Datalake.DataService.Database.Entities;
+namespace Datalake.Data.Host.Database.Entities;
 
 /// <summary>
 /// Запись в таблице истории значений тегов

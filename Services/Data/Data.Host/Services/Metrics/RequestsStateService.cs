@@ -1,10 +1,10 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.DataService.Services.Metrics.Models;
 using Datalake.Shared.Application;
-using Datalake.PublicApi.Models.Values;
 using System.Collections.Concurrent;
+using Datalake.Data.Host.Services.Metrics.Models;
+using Datalake.Data.Host.Models.Values;
 
-namespace Datalake.DataService.Services.Metrics;
+namespace Datalake.Data.Host.Services.Metrics;
 
 /// <summary>
 /// Метрики запросов к данным

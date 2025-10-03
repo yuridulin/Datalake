@@ -1,4 +1,4 @@
-﻿namespace Datalake.DataService.Extensions;
+﻿namespace Datalake.Data.Host.Extensions;
 
 /// <summary>
 /// Расширение для объектов даты/времени

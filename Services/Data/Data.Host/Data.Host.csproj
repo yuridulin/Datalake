@@ -7,9 +7,9 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
 	  <DockerfileTag>datalake-data</DockerfileTag>
-    <RootNamespace>Datalake.DataService</RootNamespace>
-    <AssemblyName>Datalake.DataService</AssemblyName>
-    <AssemblyTitle>Datalake.DataService</AssemblyTitle>
+    <RootNamespace>Datalake.Data.Host</RootNamespace>
+    <AssemblyName>Datalake.Data.Host</AssemblyName>
+    <AssemblyTitle>Datalake.Data.Host</AssemblyTitle>
   </PropertyGroup>
 
   <ItemGroup>

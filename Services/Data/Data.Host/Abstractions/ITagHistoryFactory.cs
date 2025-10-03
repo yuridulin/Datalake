@@ -1,8 +1,8 @@
-﻿using Datalake.DataService.Database.Entities;
+﻿using Datalake.Data.Host.Database.Entities;
+using Datalake.Data.Host.Models.Values;
 using Datalake.PublicApi.Models.Tags;
-using Datalake.PublicApi.Models.Values;
 
-namespace Datalake.DataService.Abstractions;
+namespace Datalake.Data.Host.Abstractions;
 
 /// <summary>
 /// Фабрика архивных значений

@@ -3,7 +3,7 @@ using Datalake.Inventory.Application.Features.Audit.Queries.GetAudit;
 using Datalake.Inventory.Api.Models.LogModels;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Datalake.Inventory.App.Controllers;
+namespace Datalake.Inventory.Host.Controllers;
 
 /// <summary>
 /// Аудит изменений

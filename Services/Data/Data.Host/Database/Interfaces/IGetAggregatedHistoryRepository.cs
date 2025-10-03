@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Models;
+using Datalake.Data.Host.Models;
 
-namespace Datalake.DataService.Database.Interfaces;
+namespace Datalake.Data.Host.Database.Interfaces;
 
 /// <summary>
 /// Работа с преобразованными значениями

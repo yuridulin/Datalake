@@ -1,16 +1,16 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.DataService.Abstractions;
-using Datalake.DataService.Database.Entities;
-using Datalake.DataService.Database.Interfaces;
-using Datalake.DataService.Extensions;
 using Datalake.DataService.Models;
 using Datalake.Shared.Application;
 using Datalake.PrivateApi.Entities;
 using Datalake.PublicApi.Constants;
-using Datalake.PublicApi.Enums;
-using Datalake.PublicApi.Models.Values;
+using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Enums;
+using Datalake.Data.Host.Models.Values;
+using Datalake.Data.Host.Database.Interfaces;
+using Datalake.Data.Host.Extensions;
+using Datalake.Data.Host.Database.Entities;
 
-namespace Datalake.DataService.Services.Values;
+namespace Datalake.Data.Host.Services.Values;
 
 [Singleton]
 public class GetValuesService(

@@ -1,10 +1,10 @@
-﻿using Datalake.DataService.Abstractions;
-using Datalake.DataService.Services.Metrics;
+﻿using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Models.Values;
+using Datalake.Data.Host.Services.Metrics;
 using Datalake.PublicApi.Models.Sources;
-using Datalake.PublicApi.Models.Values;
 using System.Threading.Channels;
 
-namespace Datalake.DataService.Services.Collection.Abstractions;
+namespace Datalake.Data.Host.Services.Collection.Abstractions;
 
 /// <summary>
 /// Базовый класс сборщика с реализацией основных механизмов

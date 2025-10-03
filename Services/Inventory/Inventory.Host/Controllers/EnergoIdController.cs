@@ -4,7 +4,7 @@ using Datalake.Inventory.Application.Features.EnergoId.Queries.GetEnergoId;
 using Datalake.Shared.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Datalake.Inventory.App.Controllers;
+namespace Datalake.Inventory.Host.Controllers;
 
 /// <summary>
 /// Учетные записи

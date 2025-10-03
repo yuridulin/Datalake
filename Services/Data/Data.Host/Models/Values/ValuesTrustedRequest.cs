@@ -1,9 +1,9 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.PublicApi.Enums;
+using Datalake.Data.Host.Enums;
 using Datalake.PublicApi.Models.Tags;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.PublicApi.Models.Values;
+namespace Datalake.Data.Host.Models.Values;
 
 /// <summary>
 /// Данные запроса для получения значений

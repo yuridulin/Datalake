@@ -1,7 +1,7 @@
-﻿using Datalake.PublicApi.Models.Values;
+﻿using Datalake.Data.Host.Models.Values;
 using System.Collections.Concurrent;
 
-namespace Datalake.DataService.Services.Metrics.Models;
+namespace Datalake.Data.Host.Services.Metrics.Models;
 
 /// <summary>
 /// Объект метрики запроса на чтение данных

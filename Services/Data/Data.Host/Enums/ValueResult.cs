@@ -1,4 +1,4 @@
-﻿namespace Datalake.PublicApi.Enums;
+﻿namespace Datalake.Data.Host.Enums;
 
 /// <summary>
 /// Характеристика ответа на запрос на чтение/запись значений по тегу

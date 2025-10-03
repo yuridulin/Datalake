@@ -1,9 +1,9 @@
-﻿using Datalake.DataService.Abstractions;
-using Datalake.Shared.Application;
+﻿using Datalake.Shared.Application;
 using Datalake.PublicApi.Models.Tags;
 using System.Collections.Concurrent;
+using Datalake.Data.Host.Abstractions;
 
-namespace Datalake.DataService.Stores;
+namespace Datalake.Data.Host.Stores;
 
 [Singleton]
 public class TagsStore(ILogger<TagsStore> logger) : ITagsStore

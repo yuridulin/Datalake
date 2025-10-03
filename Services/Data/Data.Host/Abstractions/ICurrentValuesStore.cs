@@ -1,6 +1,6 @@
-﻿using Datalake.DataService.Database.Entities;
+﻿using Datalake.Data.Host.Database.Entities;
 
-namespace Datalake.DataService.Abstractions;
+namespace Datalake.Data.Host.Abstractions;
 
 /// <summary>
 /// Хранилище текущих значений тегов

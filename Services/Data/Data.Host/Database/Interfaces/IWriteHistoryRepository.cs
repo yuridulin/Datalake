@@ -1,6 +1,6 @@
-﻿using Datalake.DataService.Database.Entities;
+﻿using Datalake.Data.Host.Database.Entities;
 
-namespace Datalake.DataService.Database.Interfaces;
+namespace Datalake.Data.Host.Database.Interfaces;
 
 public interface IWriteHistoryRepository
 {

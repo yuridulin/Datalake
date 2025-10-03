@@ -1,6 +1,6 @@
 ﻿using Datalake.PublicApi.Models.Sources;
 
-namespace Datalake.DataService.Abstractions;
+namespace Datalake.Data.Host.Abstractions;
 
 /// <summary>
 /// Хранилище информации о существующих внешних источниках данных

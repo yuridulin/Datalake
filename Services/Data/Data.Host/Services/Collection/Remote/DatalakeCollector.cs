@@ -1,9 +1,9 @@
-﻿using Datalake.DataService.Services.Collection.Abstractions;
-using Datalake.DataService.Services.Metrics;
-using Datalake.Shared.Application;
+﻿using Datalake.Shared.Application;
 using Datalake.PublicApi.Models.Sources;
+using Datalake.Data.Host.Services.Metrics;
+using Datalake.Data.Host.Services.Collection.Abstractions;
 
-namespace Datalake.DataService.Services.Collection.External;
+namespace Datalake.Data.Host.Services.Collection.Remote;
 
 [Transient]
 public class DatalakeCollector(

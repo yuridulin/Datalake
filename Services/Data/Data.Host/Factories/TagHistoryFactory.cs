@@ -1,14 +1,14 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.DataService.Abstractions;
-using Datalake.DataService.Database.Entities;
 using Datalake.DataService.Extensions;
 using Datalake.Shared.Application;
 using Datalake.PublicApi.Constants;
 using Datalake.PublicApi.Models.Tags;
-using Datalake.PublicApi.Models.Values;
 using System.Globalization;
+using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Models.Values;
+using Datalake.Data.Host.Database.Entities;
 
-namespace Datalake.DataService.Factories;
+namespace Datalake.Data.Host.Factories;
 
 [Singleton]
 public class TagHistoryFactory : ITagHistoryFactory

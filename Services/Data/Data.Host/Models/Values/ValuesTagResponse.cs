@@ -1,8 +1,8 @@
-﻿using Datalake.PublicApi.Enums;
+﻿using Datalake.Data.Host.Enums;
 using Datalake.PublicApi.Models.Tags;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.PublicApi.Models.Values;
+namespace Datalake.Data.Host.Models.Values;
 
 /// <summary>
 /// Ответ на запрос для получения значений, характеризующий запрошенный тег и его значения

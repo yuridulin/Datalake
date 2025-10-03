@@ -1,10 +1,10 @@
-﻿using Datalake.DataService.Abstractions;
-using Datalake.Shared.Application;
+﻿using Datalake.Shared.Application;
 using Datalake.PublicApi.Constants;
-using Datalake.PublicApi.Models.Values;
 using System.Collections.Concurrent;
+using Datalake.Data.Host.Abstractions;
+using Datalake.Data.Host.Models.Values;
 
-namespace Datalake.DataService.Services.Metrics;
+namespace Datalake.Data.Host.Services.Metrics;
 
 /// <summary>
 /// Кэш обращений к тегам

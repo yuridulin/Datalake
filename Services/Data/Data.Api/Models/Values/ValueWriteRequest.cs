@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Contracts.Public.Extensions;
 
-namespace Data.Api.Models.Values;
+namespace Datalake.Data.Api.Models.Values;
 
 /// <summary>
 /// Данные запроса на ввод значения

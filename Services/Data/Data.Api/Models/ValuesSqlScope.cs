@@ -1,6 +1,6 @@
-﻿using Data.Api.Models.Values;
+﻿using Datalake.Data.Api.Models.Values;
 
-namespace Data.Api.Models;
+namespace Datalake.Data.Api.Models;
 
 internal class ValuesSqlScope
 {

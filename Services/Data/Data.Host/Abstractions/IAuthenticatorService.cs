@@ -1,6 +1,6 @@
 ﻿using Datalake.Shared.Application.Entities;
 
-namespace Datalake.DataService.Abstractions;
+namespace Datalake.Data.Host.Abstractions;
 
 /// <summary>
 /// Сервис аутентификации пользователей по входным данным
