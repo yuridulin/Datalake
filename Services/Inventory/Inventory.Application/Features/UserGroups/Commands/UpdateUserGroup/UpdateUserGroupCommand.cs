@@ -1,6 +1,6 @@
 ﻿using Datalake.Inventory.Application.Features.UserGroups.Models;
-using Datalake.Inventory.Application.Interfaces;
 using Datalake.Shared.Application.Entities;
+using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.UserGroups.Commands.UpdateUserGroup;
 

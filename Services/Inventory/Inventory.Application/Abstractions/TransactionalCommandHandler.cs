@@ -1,8 +1,8 @@
 ﻿using Datalake.Contracts.Public.Exceptions;
-using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Shared.Application.Exceptions;
+using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 

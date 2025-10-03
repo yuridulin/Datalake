@@ -1,4 +1,4 @@
-﻿namespace Datalake.Inventory.Application.Interfaces;
+﻿namespace Datalake.Shared.Application.Interfaces;
 
 public interface ICommandHandler<TCommand, TResult>
 	where TCommand : ICommandRequest

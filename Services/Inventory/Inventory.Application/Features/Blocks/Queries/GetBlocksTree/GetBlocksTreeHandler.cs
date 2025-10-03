@@ -1,8 +1,8 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Inventory.Api.Models.Blocks;
-using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Entities;
+using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksTree;
 

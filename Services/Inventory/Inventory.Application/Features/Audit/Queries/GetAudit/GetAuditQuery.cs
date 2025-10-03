@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Api.Models.LogModels;
+using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Audit.Queries.GetAudit;
 

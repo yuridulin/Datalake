@@ -1,6 +1,6 @@
-﻿using Datalake.Inventory.Application.Interfaces;
-using Datalake.Inventory.Api.Models.Sources;
+﻿using Datalake.Inventory.Api.Models.Sources;
 using Datalake.Shared.Application.Entities;
+using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Sources.Queries.GetSources;
 

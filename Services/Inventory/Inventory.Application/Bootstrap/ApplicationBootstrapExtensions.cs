@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Application.Interfaces;
+﻿using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;

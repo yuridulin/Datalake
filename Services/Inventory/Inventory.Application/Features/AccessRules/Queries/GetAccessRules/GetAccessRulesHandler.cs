@@ -1,6 +1,6 @@
-﻿using Datalake.Inventory.Application.Interfaces;
-using Datalake.Inventory.Application.Queries;
+﻿using Datalake.Inventory.Application.Queries;
 using Datalake.Inventory.Api.Models.AccessRules;
+using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.AccessRules.Queries.GetAccessRules;
 

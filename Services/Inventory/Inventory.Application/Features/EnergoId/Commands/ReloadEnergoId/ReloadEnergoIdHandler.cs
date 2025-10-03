@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.EnergoId.Commands.ReloadEnergoId;
 

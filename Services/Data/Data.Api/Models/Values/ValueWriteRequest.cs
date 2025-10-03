@@ -1,40 +1,29 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Extensions;
 
 namespace Datalake.Data.Api.Models.Values;
 
 /// <summary>
 /// Данные запроса на ввод значения
 /// </summary>
-public class ValueWriteRequest
+public record ValueWriteRequest
 {
 	/// <summary>
-	/// Глобальный идентификатор тега
+	/// Идентификатор тега
 	/// </summary>
-	public Guid? Guid { get; set; }
+	public required int Id { get; init; }
 
 	/// <summary>
-	/// Идентификатор тега в локальной базе
+	/// Новое значение, не типизированое
 	/// </summary>
-	public int? Id { get; set; }
-
-	/// <summary>
-	/// Наименование тега
-	/// </summary>
-	public string? Name { get; set; }
-
-	/// <summary>
-	/// Новое значение
-	/// </summary>
-	public object? Value { get; set; }
+	public object? Value { get; init; }
 
 	/// <summary>
 	/// Дата, на которую будет записано значение
 	/// </summary>
-	public DateTime? Date { get; set; } = DateTimeExtension.GetCurrentDateTime();
+	public DateTime? Date { get; init; }
 
 	/// <summary>
 	/// Флаг достоверности нового значения
 	/// </summary>
-	public TagQuality? Quality { get; set; }
+	public TagQuality? Quality { get; init; }
 }

@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Application.Interfaces;
 using Datalake.Shared.Application.Entities;
+using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Sources.Commands.UpdateSource;
 

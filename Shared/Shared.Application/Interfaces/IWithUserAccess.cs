@@ -1,6 +1,6 @@
 ﻿using Datalake.Shared.Application.Entities;
 
-namespace Datalake.Inventory.Application.Interfaces;
+namespace Datalake.Shared.Application.Interfaces;
 
 public interface IWithUserAccess
 {

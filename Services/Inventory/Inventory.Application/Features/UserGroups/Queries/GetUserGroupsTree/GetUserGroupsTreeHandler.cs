@@ -1,7 +1,7 @@
-﻿using Datalake.Inventory.Application.Interfaces;
-using Datalake.Inventory.Application.Queries;
+﻿using Datalake.Inventory.Application.Queries;
 using Datalake.Inventory.Api.Models.UserGroups;
 using Datalake.Contracts.Public.Enums;
+using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroupsTree;
 

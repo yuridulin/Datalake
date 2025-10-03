@@ -1,4 +1,4 @@
-﻿namespace Datalake.Inventory.Application.Interfaces;
+﻿namespace Datalake.Shared.Application.Interfaces;
 
 public interface IQueryHandler<TQuery, TResult>
 	where TQuery : IQueryRequest<TResult>

@@ -68,6 +68,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\Shared.Hosting\Shared.Hosting.csproj" />
+    <ProjectReference Include="..\Data.Api\Data.Api.csproj" />
+    <ProjectReference Include="..\Data.Application\Data.Application.csproj" />
+    <ProjectReference Include="..\Data.Infrastructure\Data.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
