@@ -4,7 +4,7 @@ using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Inventory.Domain.Entities;
+using Datalake.Domain.Entities;
 
 namespace Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeUserGroupRules;
 

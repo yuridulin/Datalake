@@ -1,4 +1,4 @@
-﻿using Datalake.Shared.Domain.Entities;
+﻿using Datalake.Shared.Application.Entities;
 
 namespace Datalake.Shared.Api.Interfaces;
 

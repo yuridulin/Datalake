@@ -1,6 +1,6 @@
-﻿using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Domain.Entities;
-using Datalake.Inventory.Domain.Interfaces;
+﻿using Datalake.Domain.Entities;
+using Datalake.Domain.Interfaces;
+using Datalake.Inventory.Application.Interfaces.InMemory;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.Cache.Inventory;

@@ -1,5 +1,5 @@
-﻿using Datalake.Shared.Application.Exceptions;
-using Datalake.Shared.Domain.Exceptions;
+﻿using Datalake.Domain.Exceptions;
+using Datalake.Shared.Application.Exceptions;
 using Datalake.Shared.Hosting.Converters;
 using Datalake.Shared.Hosting.Middlewares;
 using FluentValidation;

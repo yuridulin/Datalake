@@ -1,5 +1,5 @@
 ﻿using Datalake.Inventory.Application.Interfaces.Persistent;
-using Datalake.Inventory.Domain.Entities;
+using Datalake.Domain.Entities;
 
 namespace Datalake.Inventory.Application.Repositories;
 

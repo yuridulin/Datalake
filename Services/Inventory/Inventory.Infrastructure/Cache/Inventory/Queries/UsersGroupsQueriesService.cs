@@ -114,7 +114,7 @@ public class UsersGroupsQueriesService(IInventoryCache inventoryCache) : IUsersG
 					Name = tag.Name,
 					Type = tag.Type,
 					Resolution = tag.Resolution,
-					SourceType = !state.ActiveSourcesById.TryGetValue(tag.SourceId, out var tagSource) ? SourceType.NotSet : tagSource.Type,
+					SourceType = !state.ActiveSourcesById.TryGetValue(tag.SourceId, out var tagSource) ? SourceType.Unset : tagSource.Type,
 				},
 			})
 			.Where(x => x.Tag != null || x.Block != null || x.Source != null)

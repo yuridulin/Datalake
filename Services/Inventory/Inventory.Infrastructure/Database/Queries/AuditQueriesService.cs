@@ -120,7 +120,7 @@ public class AuditQueriesService(InventoryEfContext context) : IAuditQueriesServ
 					Name = log.AffectedTag.Name,
 					Type = log.AffectedTag.Type,
 					Resolution = log.AffectedTag.Resolution,
-					SourceType = log.AffectedTag.Source == null ? SourceType.NotSet : log.AffectedTag.Source.Type,
+					SourceType = log.AffectedTag.Source == null ? SourceType.Unset : log.AffectedTag.Source.Type,
 				},
 				AffectedUser = log.AffectedUser == null ? null : new UserSimpleInfo
 				{

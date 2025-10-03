@@ -1,6 +1,6 @@
 ﻿using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Queries;
-using Datalake.Inventory.Domain.Entities;
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Api.Models.Sources;
 using Datalake.Inventory.Api.Models.Tags;
 

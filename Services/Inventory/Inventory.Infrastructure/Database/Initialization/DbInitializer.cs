@@ -1,5 +1,5 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Domain.Entities;
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Infrastructure.Cache.Inventory;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

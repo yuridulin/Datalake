@@ -90,7 +90,7 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// <summary>
 	/// Временное окно для расчета агрегированного значения
 	/// </summary>
-	public AggregationPeriod? AggregationPeriod { get; set; }
+	public TagResolution? AggregationPeriod { get; set; }
 
 	/// <summary>
 	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения

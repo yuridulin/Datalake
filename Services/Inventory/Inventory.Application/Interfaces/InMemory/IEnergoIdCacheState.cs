@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Domain.Entities;
+﻿using Datalake.Domain.Entities;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Application.Interfaces.InMemory;

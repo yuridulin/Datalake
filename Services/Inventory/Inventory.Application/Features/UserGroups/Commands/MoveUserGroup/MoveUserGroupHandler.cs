@@ -5,7 +5,7 @@ using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Inventory.Domain.Entities;
+using Datalake.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Application.Features.UserGroups.Commands.MoveUserGroup;

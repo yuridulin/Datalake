@@ -51,7 +51,7 @@ public class SourceTagInfo : TagSimpleInfo, IProtectedEntity
 	/// <summary>
 	/// Временное окно для расчета агрегированного значения
 	/// </summary>
-	public AggregationPeriod? AggregationPeriod { get; set; }
+	public TagResolution? AggregationPeriod { get; set; }
 
 	/// <inheritdoc />
 	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;

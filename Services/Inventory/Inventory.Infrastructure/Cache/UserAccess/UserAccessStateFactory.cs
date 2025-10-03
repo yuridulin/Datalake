@@ -1,7 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Shared.Domain.Entities;
-using Datalake.Shared.Domain.ValueObjects;
+using Datalake.Shared.Application.Entities;
 
 namespace Datalake.Inventory.Infrastructure.Cache.UserAccess;
 
@@ -250,7 +249,7 @@ public class UserAccessStateFactory
 			}
 
 			// Пропускаем расчет объектов для администраторов и заблокированных
-			if (globalRule.Access is AccessType.Admin or AccessType.NoAccess)
+			if (globalRule.Access is AccessType.Admin or AccessType.None)
 			{
 				usersAccess[userGuid] = new UserAccessEntity(userGuid, user.EnergoIdGuid, globalRule, groupRules);
 				continue;

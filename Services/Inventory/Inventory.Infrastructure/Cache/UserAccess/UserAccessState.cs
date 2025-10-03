@@ -1,5 +1,5 @@
 ﻿using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Shared.Domain.Entities;
+using Datalake.Shared.Application.Entities;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.Cache.UserAccess;

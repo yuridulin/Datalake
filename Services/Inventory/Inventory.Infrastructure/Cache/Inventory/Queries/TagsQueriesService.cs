@@ -42,7 +42,7 @@ public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesSe
 						Type = thresholdSourceTag.Type,
 						BlockId = tag.SourceTagBlockId,
 						SourceType = !state.ActiveSourcesById.TryGetValue(thresholdSourceTag.SourceId, out var thresholdSourceTagSource)
-							? SourceType.NotSet
+							? SourceType.Unset
 							: thresholdSourceTagSource.Type,
 					},
 					FormulaInputs = state.TagInputs
@@ -56,7 +56,7 @@ public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesSe
 							BlockId = relation.InputBlockId,
 							Type = inputTag.Type,
 							Resolution = inputTag.Resolution,
-							SourceType = !state.ActiveSourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.NotSet : inputTagSource.Type,
+							SourceType = !state.ActiveSourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.Unset : inputTagSource.Type,
 						})
 						.ToArray(),
 					IsScaling = tag.IsScaling,
@@ -66,7 +66,7 @@ public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesSe
 					MinRaw = tag.MinRaw,
 					SourceId = tag.SourceId,
 					SourceItem = tag.SourceItem,
-					SourceType = source != null ? source.Type : SourceType.NotSet,
+					SourceType = source != null ? source.Type : SourceType.Unset,
 					SourceName = source != null ? source.Name : "Unknown",
 					SourceTag = !state.ActiveTagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : new TagAsInputInfo
 					{
@@ -76,7 +76,7 @@ public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesSe
 						Name = sourceTag.Name,
 						Type = sourceTag.Type,
 						BlockId = tag.SourceTagBlockId,
-						SourceType = !state.ActiveSourcesById.TryGetValue(sourceTag.SourceId, out var sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
+						SourceType = !state.ActiveSourcesById.TryGetValue(sourceTag.SourceId, out var sourceTagSource) ? SourceType.Unset : sourceTagSource.Type,
 					},
 					Aggregation = tag.Aggregation,
 					AggregationPeriod = tag.AggregationPeriod,
@@ -140,7 +140,7 @@ public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesSe
 						Type = thresholdSourceTag.Type,
 						BlockId = tag.SourceTagBlockId,
 						SourceType = !state.ActiveSourcesById.TryGetValue(thresholdSourceTag.SourceId, out var thresholdSourceTagSource)
-							? SourceType.NotSet
+							? SourceType.Unset
 							: thresholdSourceTagSource.Type,
 					},
 					FormulaInputs = state.TagInputs
@@ -154,7 +154,7 @@ public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesSe
 							Type = inputTag.Type,
 							Resolution = inputTag.Resolution,
 							BlockId = relation.InputBlockId,
-							SourceType = !state.ActiveSourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.NotSet : inputTagSource.Type,
+							SourceType = !state.ActiveSourcesById.TryGetValue(inputTag.SourceId, out var inputTagSource) ? SourceType.Unset : inputTagSource.Type,
 						})
 						.ToArray(),
 					IsScaling = tag.IsScaling,
@@ -164,7 +164,7 @@ public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesSe
 					MinRaw = tag.MinRaw,
 					SourceId = tag.SourceId,
 					SourceItem = tag.SourceItem,
-					SourceType = source != null ? source.Type : SourceType.NotSet,
+					SourceType = source != null ? source.Type : SourceType.Unset,
 					SourceName = source != null ? source.Name : "Unknown",
 					SourceTag = !state.ActiveTagsById.TryGetValue(tag.SourceTagId ?? 0, out var sourceTag) ? null : new TagAsInputInfo
 					{
@@ -174,7 +174,7 @@ public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesSe
 						Name = sourceTag.Name,
 						Type = sourceTag.Type,
 						BlockId = tag.SourceTagBlockId,
-						SourceType = !state.ActiveSourcesById.TryGetValue(sourceTag.SourceId, out var sourceTagSource) ? SourceType.NotSet : sourceTagSource.Type,
+						SourceType = !state.ActiveSourcesById.TryGetValue(sourceTag.SourceId, out var sourceTagSource) ? SourceType.Unset : sourceTagSource.Type,
 					},
 					Aggregation = tag.Aggregation,
 					AggregationPeriod = tag.AggregationPeriod,

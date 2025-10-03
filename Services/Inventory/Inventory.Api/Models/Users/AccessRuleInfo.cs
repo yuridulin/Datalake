@@ -25,5 +25,5 @@ public record AccessRuleInfo(int RuleId, AccessType Access)
 	/// <summary>
 	/// Заглушка для неопределенного уровня доступа
 	/// </summary>
-	public static readonly AccessRuleInfo Default = new(0, AccessType.NotSet);
+	public static readonly AccessRuleInfo Default = new(0, AccessType.None);
 }

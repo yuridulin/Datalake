@@ -63,7 +63,7 @@ public class AccessRulesQueriesService(IInventoryCache inventoryCache) : IAccess
 					Name = tag.Name,
 					Type = tag.Type,
 					Resolution = tag.Resolution,
-					SourceType = state.ActiveSourcesById.TryGetValue(rule.SourceId ?? Identifiers.UnsetSource, out var tagSource) ? tagSource.Type : SourceType.NotSet,
+					SourceType = state.ActiveSourcesById.TryGetValue(rule.SourceId ?? Identifiers.UnsetSource, out var tagSource) ? tagSource.Type : SourceType.Unset,
 				},
 			});
 

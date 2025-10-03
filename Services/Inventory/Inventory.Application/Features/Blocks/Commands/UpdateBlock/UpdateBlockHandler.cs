@@ -1,11 +1,11 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Abstractions;
 using Datalake.Inventory.Application.Exceptions;
 using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Inventory.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Application.Features.Blocks.Commands.UpdateBlock;
@@ -27,7 +27,7 @@ public class UpdateBlockHandler(
 
 	public override void CheckPermissions(UpdateBlockCommand command)
 	{
-		command.User.ThrowIfNoGlobalAccess(AccessType.NoAccess);
+		command.User.ThrowIfNoAccessToBlock(AccessType.Manager, command.BlockId);
 	}
 
 	public override async Task<int> ExecuteInTransactionAsync(UpdateBlockCommand command, CancellationToken ct = default)

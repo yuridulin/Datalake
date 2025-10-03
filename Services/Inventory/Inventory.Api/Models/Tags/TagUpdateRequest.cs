@@ -70,7 +70,7 @@ public record TagUpdateRequest
 	/// Новый интервал получения значения
 	/// </summary>
 	[Required]
-	public TagResolution Resolution { get; init; } = TagResolution.NotSet;
+	public TagResolution Resolution { get; init; } = TagResolution.None;
 
 	/// <summary>
 	/// Формула, на основе которой вычисляется значение
@@ -106,7 +106,7 @@ public record TagUpdateRequest
 	/// <summary>
 	/// Временное окно для расчета агрегированного значения
 	/// </summary>
-	public AggregationPeriod? AggregationPeriod { get; init; }
+	public TagResolution? AggregationPeriod { get; init; }
 
 	/// <summary>
 	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения

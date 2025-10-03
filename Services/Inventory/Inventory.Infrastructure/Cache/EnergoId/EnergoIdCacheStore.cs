@@ -1,6 +1,6 @@
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Inventory.Domain.Entities;
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Infrastructure.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Domain.Entities;
+﻿using Datalake.Domain.Entities;
 using Datalake.Inventory.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;

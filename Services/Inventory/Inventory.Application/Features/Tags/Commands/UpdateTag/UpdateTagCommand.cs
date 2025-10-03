@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Inventory.Application.Features.Tags.Models;
 using Datalake.Inventory.Application.Interfaces;
-using Datalake.Shared.Domain.Entities;
+using Datalake.Shared.Application.Entities;
 
 namespace Datalake.Inventory.Application.Features.Tags.Commands.UpdateTag;
 
@@ -17,7 +17,7 @@ public record UpdateTagCommand : ICommandRequest, IWithUserAccess
 
 	public required TagType Type { get; init; }
 
-	public TagResolution Resolution { get; init; } = TagResolution.NotSet;
+	public TagResolution Resolution { get; init; } = TagResolution.None;
 
 	public int SourceId { get; init; } = (int)SourceType.Manual;
 
@@ -39,7 +39,7 @@ public record UpdateTagCommand : ICommandRequest, IWithUserAccess
 
 	public TagAggregation? Aggregation { get; init; }
 
-	public AggregationPeriod? AggregationPeriod { get; init; }
+	public TagResolution? AggregationPeriod { get; init; }
 
 	public int? SourceTagId { get; init; }
 

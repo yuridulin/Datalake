@@ -1,5 +1,5 @@
-﻿using Datalake.Inventory.Domain.Entities;
-using Datalake.Inventory.Domain.ValueObjects;
+﻿using Datalake.Domain.Entities;
+using Datalake.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -39,7 +39,7 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
 			.Property(x => x.PasswordHash)
 			.HasConversion(
 				password => password != null ? password.ToString() : null,
-				hash => hash != null ? PasswordHash.FromExistingHash(hash) : null)
+				hash => hash != null ? PasswordHashValue.FromExistingHash(hash) : null)
 			.HasColumnName("PasswordHash");
 
 		// Настройка отношений "многие-ко-многим" с группами

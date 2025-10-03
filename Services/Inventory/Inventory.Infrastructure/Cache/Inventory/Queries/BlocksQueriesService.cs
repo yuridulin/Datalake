@@ -35,7 +35,7 @@ public class BlocksQueriesService(IInventoryCache inventoryCache) : IBlocksQueri
 						Type = tag.Type,
 						Resolution = tag.Resolution,
 						SourceId = tag.SourceId,
-						SourceType = state.ActiveSourcesById.TryGetValue(tag.SourceId, out var source) ? source.Type : SourceType.NotSet,
+						SourceType = state.ActiveSourcesById.TryGetValue(tag.SourceId, out var source) ? source.Type : SourceType.Unset,
 					})
 					.ToArray(),
 			});
@@ -112,7 +112,7 @@ public class BlocksQueriesService(IInventoryCache inventoryCache) : IBlocksQueri
 					Type = tag.Type,
 					Resolution = tag.Resolution,
 					SourceId = tag.SourceId,
-					SourceType = state.ActiveSourcesById.TryGetValue(tag.SourceId, out var source) ? source.Type : SourceType.NotSet,
+					SourceType = state.ActiveSourcesById.TryGetValue(tag.SourceId, out var source) ? source.Type : SourceType.Unset,
 				})
 				.Where(x => x != null)
 				.ToArray()!,

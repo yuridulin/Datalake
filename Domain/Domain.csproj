@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Datalake.Domain</AssemblyName>
+    <AssemblyTitle>Datalake.Domain</AssemblyTitle>
+    <RootNamespace>Datalake.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Contracts\Contracts.Public\Contracts.Public.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -33,5 +33,5 @@ public class UserAccessRightsInfo
 	/// Уровень доступа на основе этого правила
 	/// </summary>
 	[Required]
-	public required AccessType AccessType { get; set; } = AccessType.NoAccess;
+	public required AccessType AccessType { get; set; } = AccessType.None;
 }
