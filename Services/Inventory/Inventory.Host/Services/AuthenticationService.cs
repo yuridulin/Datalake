@@ -1,8 +1,8 @@
 ﻿using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Shared.Api.Constants;
-using Datalake.Shared.Api.Interfaces;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Entities;
+using Datalake.Shared.Hosting.Interfaces;
 
 namespace Datalake.Inventory.Host.Services;
 

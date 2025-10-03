@@ -1,19 +1,18 @@
-﻿using Datalake.Data.Host.Abstractions;
-using Datalake.Data.Host.Models.Values;
+﻿using Datalake.Data.Api.Models.Values;
+using Datalake.Data.Application.Features.Values.Commands.WriteManualValues;
+using Datalake.Data.Application.Features.Values.Queries.GetValues;
+using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Data.Host.Controllers;
 
 /// <summary>
-/// Взаимодействие с данными тегов
+/// Данные тегов
 /// </summary>
 [ApiController]
 [Route("api/v1/values")]
-public class ValuesController(
-	IAuthenticatorService authenticator,
-	IGetValuesService getValuesService,
-	IManualWriteValuesService manualWriteValuesService) : ControllerBase
+public class ValuesController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>
 	/// <see cref="HttpMethod.Post" />: Получение значений на основании списка запросов
@@ -21,14 +20,20 @@ public class ValuesController(
 	/// <param name="requests">Список запросов с настройками</param>
 	/// <returns>Список ответов на запросы</returns>
 	[HttpPost]
-	public async Task<ActionResult<List<ValuesResponse>>> GetAsync(
-		[BindRequired, FromBody] ValuesRequest[] requests)
+	public async Task<ActionResult<IEnumerable<ValuesResponse>>> GetAsync(
+		[FromServices] IGetValuesHandler handler,
+		[BindRequired, FromBody] IEnumerable<ValuesRequest> requests,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		var responses = await getValuesService.GetAsync(user, requests);
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+			Requests = requests,
+		}, ct);
 
-		return responses;
+		return Ok(data);
 	}
 
 	/// <summary>
@@ -37,13 +42,19 @@ public class ValuesController(
 	/// <param name="requests">Список запросов на изменение</param>
 	/// <returns>Список измененных начений</returns>
 	[HttpPut]
-	public async Task<ActionResult<List<ValuesTagResponse>>> WriteAsync(
-		[BindRequired, FromBody] ValueWriteRequest[] requests)
+	public async Task<ActionResult<WriteManualValuesResult>> WriteAsync(
+		[FromServices] IWriteManualValuesHandler handler,
+		[BindRequired, FromBody] IEnumerable<ValueWriteRequest> requests,
+		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		var responses = await manualWriteValuesService.WriteAsync(user, requests);
+		var result = await handler.HandleAsync(new()
+		{
+			User = user,
+			Requests = requests,
+		}, ct);
 
-		return responses;
+		return Ok(result);
 	}
 }

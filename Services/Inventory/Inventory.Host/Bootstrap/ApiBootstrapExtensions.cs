@@ -1,6 +1,6 @@
 ﻿using Datalake.Inventory.Host.Services;
-using Datalake.Shared.Api.Interfaces;
 using Datalake.Shared.Hosting.Bootstrap;
+using Datalake.Shared.Hosting.Interfaces;
 using NJsonSchema.Generation;
 
 namespace Datalake.Inventory.Host.Bootstrap;

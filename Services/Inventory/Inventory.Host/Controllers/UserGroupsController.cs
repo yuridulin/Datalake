@@ -7,7 +7,7 @@ using Datalake.Inventory.Application.Features.UserGroups.Models;
 using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroup;
 using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroups;
 using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroupWithDetails;
-using Datalake.Shared.Api.Interfaces;
+using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 

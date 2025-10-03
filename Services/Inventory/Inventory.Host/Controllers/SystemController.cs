@@ -2,7 +2,7 @@
 using Datalake.Inventory.Application.Features.Cache.Commands.ReloadCache;
 using Datalake.Inventory.Application.Features.Settings.Commands.UpdateSettings;
 using Datalake.Inventory.Application.Features.Settings.Queries.GetSettings;
-using Datalake.Shared.Api.Interfaces;
+using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 

@@ -1,6 +1,6 @@
 ﻿using Datalake.Shared.Application.Entities;
 
-namespace Datalake.Shared.Api.Interfaces;
+namespace Datalake.Shared.Hosting.Interfaces;
 
 public interface IAuthenticator
 {
