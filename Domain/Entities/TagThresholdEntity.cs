@@ -20,4 +20,9 @@ public record class TagThresholdEntity : IWithIdentityKey
 	public float InputValue { get; private set; }
 
 	public float OutputValue { get; private set; }
+
+	/// <summary>
+	/// Тег, использующий эту уставку
+	/// </summary>
+	public TagEntity Tag { get; set; } = null!;
 }

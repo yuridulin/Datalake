@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class EnergoIdRepository(InventoryEfContext context) : IEnergoIdRepository
+public class EnergoIdRepository(InventoryDbContext context) : IEnergoIdRepository
 {
 	public async Task<IEnumerable<EnergoIdEntity>> GetAsync(CancellationToken ct = default)
 	{

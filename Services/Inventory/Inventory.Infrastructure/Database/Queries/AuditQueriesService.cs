@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
-public class AuditQueriesService(InventoryEfContext context) : IAuditQueriesService
+public class AuditQueriesService(InventoryDbContext context) : IAuditQueriesService
 {
 	public async Task<IEnumerable<LogInfo>> GetAsync(
 		int? lastId = null,

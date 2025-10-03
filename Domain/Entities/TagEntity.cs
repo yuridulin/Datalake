@@ -326,9 +326,14 @@ public record class TagEntity : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	public TagEntity? ThresholdSourceTag { get; set; }
 
 	/// <summary>
-	/// Входные теги
+	/// Входные теги для формул
 	/// </summary>
 	public ICollection<TagInputEntity> Inputs { get; set; } = [];
+
+	/// <summary>
+	/// Пороговые значения
+	/// </summary>
+	//public ICollection<TagThresholdEntity> Thresholds { get; set; } = [];
 
 	/// <summary>
 	/// Список связей с блоками
@@ -343,7 +348,7 @@ public record class TagEntity : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список правил доступа, действующих на тег
 	/// </summary>
-	public ICollection<AccessRuleEntity> AccessRightsList { get; set; } = [];
+	public ICollection<AccessRuleEntity> AccessRules { get; set; } = [];
 
 	/// <summary>
 	/// Список сообщений аудита

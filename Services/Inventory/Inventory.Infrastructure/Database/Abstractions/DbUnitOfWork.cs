@@ -1,12 +1,11 @@
 ﻿using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Shared.Application.Attributes;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Datalake.Inventory.Infrastructure.Database.Abstractions;
 
 [Scoped]
-public class EfUnitOfWork(DbContext db) : IUnitOfWork
+public class DbUnitOfWork(InventoryDbContext db) : IUnitOfWork
 {
 	private IDbContextTransaction? _transaction;
 

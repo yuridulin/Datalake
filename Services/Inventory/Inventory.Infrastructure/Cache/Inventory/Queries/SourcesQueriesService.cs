@@ -6,7 +6,7 @@ using Datalake.Inventory.Api.Models.Tags;
 
 namespace Datalake.Inventory.Infrastructure.Cache.Inventory.Queries;
 
-public class SourceQueriesService(IInventoryCache inventoryCache) : ISourceQueriesService
+public class SourcesQueriesService(IInventoryCache inventoryCache) : ISourcesQueriesService
 {
 	public Task<IEnumerable<SourceInfo>> GetAsync(bool withCustom = false, CancellationToken ct = default)
 	{

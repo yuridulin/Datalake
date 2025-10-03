@@ -120,7 +120,7 @@ public record class BlockEntity : IWithIdentityKey, ISoftDeletable
 	/// <summary>
 	/// Список правил доступа, выданных на этот блок
 	/// </summary>
-	public ICollection<AccessRuleEntity> AccessRightsList { get; set; } = [];
+	public ICollection<AccessRuleEntity> AccessRules { get; set; } = [];
 
 	/// <summary>
 	/// Список сообщений аудита

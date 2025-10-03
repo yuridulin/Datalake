@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class UsersRepository(InventoryEfContext context) : EfRepository<UserEntity, Guid>(context), IUsersRepository
+public class UsersRepository(InventoryDbContext context) : DbRepository<UserEntity, Guid>(context), IUsersRepository
 {
 	public override Task<UserEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
 	{

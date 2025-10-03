@@ -6,6 +6,6 @@ using Datalake.Shared.Application.Attributes;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class BlockPropertiesRepository(InventoryEfContext context) : EfRepository<BlockPropertyEntity, int>(context), IBlockPropertiesRepository
+public class BlockPropertiesRepository(InventoryDbContext context) : DbRepository<BlockPropertyEntity, int>(context), IBlockPropertiesRepository
 {
 }

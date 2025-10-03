@@ -5,7 +5,7 @@ namespace Datalake.Inventory.Application.Queries;
 /// <summary>
 /// Запросы, связанные с источниками данных
 /// </summary>
-public interface ISourceQueriesService
+public interface ISourcesQueriesService
 {
 	/// <summary>
 	/// Запрос информации о источниках без связей

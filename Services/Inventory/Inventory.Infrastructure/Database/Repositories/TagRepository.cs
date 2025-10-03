@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class TagRepository(InventoryEfContext context) : EfRepository<TagEntity, int>(context), ITagsRepository
+public class TagRepository(InventoryDbContext context) : DbRepository<TagEntity, int>(context), ITagsRepository
 {
 	public override Task<TagEntity?> GetByIdAsync(int id, CancellationToken ct = default)
 	{

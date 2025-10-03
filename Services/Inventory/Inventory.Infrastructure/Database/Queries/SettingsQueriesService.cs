@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
-public class SettingsQueriesService(InventoryEfContext context) : ISettingsQueriesService
+public class SettingsQueriesService(InventoryDbContext context) : ISettingsQueriesService
 {
 	public async Task<SettingsInfo?> GetAsync(CancellationToken ct = default)
 	{

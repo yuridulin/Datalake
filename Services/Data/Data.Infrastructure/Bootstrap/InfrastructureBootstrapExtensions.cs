@@ -1,8 +1,5 @@
 ﻿using Datalake.Data.Infrastructure.Database;
 using Datalake.Shared.Infrastructure;
-using LinqToDB;
-using LinqToDB.AspNet;
-using LinqToDB.AspNet.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,16 +15,7 @@ public static class InfrastructureBootstrapExtensions
 		connectionString = EnvExpander.FillEnvVariables(connectionString);
 
 		builder.Services
-			.AddDbContext<DataEfContext>(options => options.UseNpgsql(connectionString));
-
-		builder.Services
-			.AddLinqToDBContext<DataLinqToDbContext>((provider, options) =>
-			{
-				return options
-					.UseDefaultLogging(provider)
-					.UseTraceLevel(System.Diagnostics.TraceLevel.Verbose)
-					.UsePostgreSQL(connectionString);
-			});
+			.AddDbContext<DataDbContext>(options => options.UseNpgsql(connectionString));
 
 		return builder;
 	}

@@ -8,7 +8,7 @@ namespace Datalake.Inventory.Application.Features.Sources.Queries.GetSource;
 
 public interface IGetSourceHandler : IQueryHandler<GetSourceQuery, SourceWithTagsInfo> { }
 
-public class GetSourceHandler(ISourceQueriesService sourceQueriesService) : IGetSourceHandler
+public class GetSourceHandler(ISourcesQueriesService sourceQueriesService) : IGetSourceHandler
 {
 	public async Task<SourceWithTagsInfo> HandleAsync(GetSourceQuery query, CancellationToken ct = default)
 	{

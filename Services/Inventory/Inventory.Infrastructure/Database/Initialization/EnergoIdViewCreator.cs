@@ -42,13 +42,13 @@ public class EnergoIdViewCreator(
 			// Создание расширения. Были проблемы, что схемы нет, так что схему создаем перед этим
 			// Предварительно удаляем схему, чтобы не было конфликтов
 			await Exec(connection,
-				$"DROP SCHEMA IF EXISTS {QI(EnergoIdDefinitions.Schema)} CASCADE;", ct);
+				$"DROP SCHEMA IF EXISTS {QI(EnergoIdSchema.Name)} CASCADE;", ct);
 
 			await Exec(connection,
-				$"CREATE SCHEMA {QI(EnergoIdDefinitions.Schema)};", ct);
+				$"CREATE SCHEMA {QI(EnergoIdSchema.Name)};", ct);
 
 			await Exec(connection,
-				$"CREATE EXTENSION IF NOT EXISTS postgres_fdw SCHEMA {QI(EnergoIdDefinitions.Schema)};", ct);
+				$"CREATE EXTENSION IF NOT EXISTS postgres_fdw SCHEMA {QI(EnergoIdSchema.Name)};", ct);
 
 			// Создание сервера
 			await Exec(connection, $@"
@@ -76,14 +76,14 @@ public class EnergoIdViewCreator(
 			// Пробуем обновить схему
 			// Лучше конечно бы ее удалять и пересоздавать
 			await Exec(connection,
-				$"IMPORT FOREIGN SCHEMA {QI(settings.Schema)} LIMIT TO (realm, user_entity, user_attribute) FROM SERVER {QI(ExternalDbName)} INTO {QI(EnergoIdDefinitions.Schema)}", ct);
+				$"IMPORT FOREIGN SCHEMA {QI(settings.Schema)} LIMIT TO (realm, user_entity, user_attribute) FROM SERVER {QI(ExternalDbName)} INTO {QI(EnergoIdSchema.Name)}", ct);
 
 			await Exec(connection, @$"
-				CREATE VIEW {QI(EnergoIdDefinitions.Schema)}.{QI(EnergoIdDefinitions.UsersView.ViewName)} AS
+				CREATE VIEW {QI(EnergoIdSchema.Name)}.{QI(EnergoIdSchema.EnergoId.Name)} AS
 				WITH cte_user AS (
 					SELECT ue.*
-					FROM {QI(EnergoIdDefinitions.Schema)}.realm r
-					INNER JOIN {QI(EnergoIdDefinitions.Schema)}.user_entity ue ON
+					FROM {QI(EnergoIdSchema.Name)}.realm r
+					INNER JOIN {QI(EnergoIdSchema.Name)}.user_entity ue ON
 						r.""name"" = 'energo' AND
 						r.id = ue.realm_id 
 				)
@@ -106,15 +106,15 @@ public class EnergoIdViewCreator(
 					ua7.value AS {QI(nameof(EnergoIdEntity.Gender))},
 					ua8.value AS {QI(nameof(EnergoIdEntity.Birthday))}
 				FROM cte_user c
-				LEFT JOIN {QI(EnergoIdDefinitions.Schema)}.user_attribute ua  ON c.id = ua.user_id  AND ua.""name""  = 'uploader_enterprise_code'
-				LEFT JOIN {QI(EnergoIdDefinitions.Schema)}.user_attribute ua1 ON c.id = ua1.user_id AND ua1.""name"" = 'enterprise_code'
-				LEFT JOIN {QI(EnergoIdDefinitions.Schema)}.user_attribute ua2 ON c.id = ua2.user_id AND ua2.""name"" = 'personnel_number'
-				LEFT JOIN {QI(EnergoIdDefinitions.Schema)}.user_attribute ua3 ON c.id = ua3.user_id AND ua3.""name"" = 'middle_name'
-				LEFT JOIN {QI(EnergoIdDefinitions.Schema)}.user_attribute ua4 ON c.id = ua4.user_id AND ua4.""name"" = 'phone'
-				LEFT JOIN {QI(EnergoIdDefinitions.Schema)}.user_attribute ua5 ON c.id = ua5.user_id AND ua5.""name"" = 'work_phone'
-				LEFT JOIN {QI(EnergoIdDefinitions.Schema)}.user_attribute ua6 ON c.id = ua6.user_id AND ua6.""name"" = 'mobile_phone'
-				LEFT JOIN {QI(EnergoIdDefinitions.Schema)}.user_attribute ua7 ON c.id = ua7.user_id AND ua7.""name"" = 'gender'
-				LEFT JOIN {QI(EnergoIdDefinitions.Schema)}.user_attribute ua8 ON c.id = ua8.user_id AND ua8.""name"" = 'birthday';", ct);
+				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua  ON c.id = ua.user_id  AND ua.""name""  = 'uploader_enterprise_code'
+				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua1 ON c.id = ua1.user_id AND ua1.""name"" = 'enterprise_code'
+				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua2 ON c.id = ua2.user_id AND ua2.""name"" = 'personnel_number'
+				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua3 ON c.id = ua3.user_id AND ua3.""name"" = 'middle_name'
+				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua4 ON c.id = ua4.user_id AND ua4.""name"" = 'phone'
+				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua5 ON c.id = ua5.user_id AND ua5.""name"" = 'work_phone'
+				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua6 ON c.id = ua6.user_id AND ua6.""name"" = 'mobile_phone'
+				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua7 ON c.id = ua7.user_id AND ua7.""name"" = 'gender'
+				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua8 ON c.id = ua8.user_id AND ua8.""name"" = 'birthday';", ct);
 
 			await transaction.CommitAsync(ct);
 

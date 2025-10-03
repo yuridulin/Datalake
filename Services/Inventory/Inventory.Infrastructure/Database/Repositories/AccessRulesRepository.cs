@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class AccessRulesRepository(InventoryEfContext context) : EfRepository<AccessRuleEntity, int>(context), IAccessRulesRepository
+public class AccessRulesRepository(InventoryDbContext context) : DbRepository<AccessRuleEntity, int>(context), IAccessRulesRepository
 {
 	public async Task<IEnumerable<AccessRuleEntity>> GetBlockRulesAsync(int blockId, CancellationToken ct = default)
 	{

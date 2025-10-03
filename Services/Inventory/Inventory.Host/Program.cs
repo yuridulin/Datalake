@@ -25,9 +25,9 @@ public class Program
 		CurrentEnvironment = builder.Environment.EnvironmentName;
 
 		builder.AddShared(CurrentEnvironment, Version, Assembly.GetCallingAssembly());
-		builder.AddApi();
 		builder.AddInfrastructure();
 		builder.AddApplication();
+		builder.AddApi();
 
 		// сборка
 		var app = builder.Build();

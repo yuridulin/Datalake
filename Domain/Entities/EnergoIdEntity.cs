@@ -12,7 +12,6 @@ public class EnergoIdEntity
 	/// <summary>
 	/// Идентификатор пользователя
 	/// </summary>
-	[Required]
 	public Guid Guid { get; set; }
 
 	/// <summary>
@@ -49,7 +48,7 @@ public class EnergoIdEntity
 	/// <summary>
 	/// Дата создания
 	/// </summary>
-	public DateTime CreatedAt { get; set; }
+	public DateTime? CreatedAt { get; set; }
 
 	/// <summary>
 	/// Код организации?

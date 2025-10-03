@@ -1,36 +1,34 @@
 ﻿using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Infrastructure.Cache.Inventory;
+using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Infrastructure;
 using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Infrastructure.Cache.UserAccess;
 
-public class UserAccessCacheStore : IUserAccessCache
+[Singleton]
+public class UserAccessCache : IUserAccessCache
 {
-	private readonly ILogger<UserAccessCacheStore> _logger;
-	private readonly UserAccessStateFactory _accessResolverService;
+	private readonly ILogger<UserAccessCache> _logger;
 	private readonly Lock _lock = new();
 	private UserAccessState _state;
 	private long _lastProcessingDataVersion;
 
-	public UserAccessCacheStore(
-		InventoryCacheStore dataStore,
-		UserAccessStateFactory accessResolverService,
-		ILogger<UserAccessCacheStore> logger)
+	public UserAccessCache(
+		IInventoryCache inventoryCache,
+		ILogger<UserAccessCache> logger)
 	{
 		_logger = logger;
-		_accessResolverService = accessResolverService;
 
 		// Вычисляем изначальное состояние сразу же
 		lock (_lock)
 		{
-			_lastProcessingDataVersion = dataStore.State.Version;
-			_state = Measures.Measure(() => CreateDerivedState(dataStore.State), _logger, $"{nameof(UserAccessCacheStore)}");
-			_logger.LogInformation("Инициализация зависимых данных для версии {Version}", _lastProcessingDataVersion);
+			_lastProcessingDataVersion = inventoryCache.State.Version;
+			_state = Measures.Measure(() => CreateDerivedState(inventoryCache.State), _logger, $"{nameof(UserAccessCache)}");
+			_logger.LogInformation("Инициализация кэша прав доступа для версии {Version}", _lastProcessingDataVersion);
 		}
 
 		// Подписываемся на будущие изменения
-		dataStore.StateChanged += (_, newState) =>
+		inventoryCache.StateChanged += (_, newState) =>
 		{
 			// Атомарно проверяем и обновляем версию
 			long currentVersion = Interlocked.Read(ref _lastProcessingDataVersion);
@@ -60,7 +58,7 @@ public class UserAccessCacheStore : IUserAccessCache
 		try
 		{
 			// Вычисляем новые права доступа
-			var newState = Measures.Measure(() => CreateDerivedState(newDataState), _logger, $"{nameof(UserAccessCacheStore)}");
+			var newState = Measures.Measure(() => CreateDerivedState(newDataState), _logger, $"{nameof(UserAccessCache)}");
 
 			// Атомарно обновляем состояние
 			Interlocked.Exchange(ref _state, newState);
@@ -73,11 +71,11 @@ public class UserAccessCacheStore : IUserAccessCache
 				Task.Run(() => StateChanged?.Invoke(this, newState));
 			}
 
-			_logger.LogInformation("Завершено обновление зависимых данных для версии {Version}", newDataState.Version);
+			_logger.LogInformation("Завершено обновление кэша прав доступа для версии {Version}", newDataState.Version);
 		}
 		catch (Exception e)
 		{
-			_logger.LogError(e, "Не удалось обновить зависимые данные для версии {Version}", newDataState.Version);
+			_logger.LogError(e, "Не удалось обновить кэш прав доступа для версии {Version}", newDataState.Version);
 		}
 	}
 

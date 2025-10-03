@@ -1,12 +1,11 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Queries;
-using Datalake.Inventory.Infrastructure.Cache.Inventory.Constants;
 using Datalake.Inventory.Api.Models.AccessRules;
 using Datalake.Inventory.Api.Models.Blocks;
 using Datalake.Inventory.Api.Models.Sources;
 using Datalake.Inventory.Api.Models.Tags;
 using Datalake.Inventory.Api.Models.UserGroups;
+using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Exceptions;
 
 namespace Datalake.Inventory.Infrastructure.Cache.Inventory.Queries;
@@ -96,18 +95,18 @@ public class UsersGroupsQueriesService(IInventoryCache inventoryCache) : IUsersG
 				Id = rule.Id,
 				IsGlobal = rule.IsGlobal,
 				AccessType = rule.AccessType,
-				Source = !state.ActiveSourcesById.TryGetValue(rule.SourceId ?? Identifiers.UnsetSource, out var source) ? null : new SourceSimpleInfo
+				Source = !state.ActiveSourcesById.TryGetValue(rule.SourceId ?? int.MinValue, out var source) ? null : new SourceSimpleInfo
 				{
 					Id = source.Id,
 					Name = source.Name,
 				},
-				Block = !state.ActiveBlocksById.TryGetValue(rule.BlockId ?? 0, out var block) ? null : new BlockSimpleInfo
+				Block = !state.ActiveBlocksById.TryGetValue(rule.BlockId ?? int.MinValue, out var block) ? null : new BlockSimpleInfo
 				{
 					Id = block.Id,
 					Guid = block.GlobalId,
 					Name = block.Name,
 				},
-				Tag = !state.ActiveTagsById.TryGetValue(rule.TagId ?? 0, out var tag) ? null : new TagSimpleInfo
+				Tag = !state.ActiveTagsById.TryGetValue(rule.TagId ?? int.MinValue, out var tag) ? null : new TagSimpleInfo
 				{
 					Id = tag.Id,
 					Guid = tag.GlobalGuid,

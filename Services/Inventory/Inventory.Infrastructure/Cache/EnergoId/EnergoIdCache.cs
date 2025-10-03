@@ -1,7 +1,8 @@
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Domain.Entities;
 using Datalake.Inventory.Infrastructure.Interfaces;
+using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,9 +14,10 @@ namespace Datalake.Inventory.Infrastructure.Cache.EnergoId;
 /// Хранилище данные о пользователях EnergoId, регулярно обновляемое.
 /// Это inMemory, потому что представление большое и долго грузится
 ///</summary>
-public sealed class EnergoIdCacheStore(
+[Singleton]
+public sealed class EnergoIdCache(
 	IServiceScopeFactory scopeFactory,
-	ILogger<EnergoIdCacheStore> logger) : BackgroundService, IEnergoIdCache
+	ILogger<EnergoIdCache> logger) : BackgroundService, IEnergoIdCache
 {
 	/// <summary>
 	/// Текущее состояние

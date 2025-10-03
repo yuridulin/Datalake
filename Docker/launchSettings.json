@@ -3,16 +3,14 @@
     "All": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
-      "composeLaunchAction": "None",
-      "composeLaunchServiceName": "datalake-gateway",
       "serviceActions": {
         "datalake-postgres": "StartWithoutDebugging",
         "datalake-keycloak": "StartWithoutDebugging",
         "datalake-rabbitmq": "StartWithoutDebugging",
-        "datalake-gateway": "StartDebugging",
-        "datalake-inventory": "StartDebugging",
-        "datalake-data": "StartDebugging",
-        "datalake-events": "StartDebugging",
+        "datalake-gateway": "StartWithoutDebugging",
+        "datalake-inventory": "StartWithoutDebugging",
+        "datalake-data": "StartWithoutDebugging",
+        "datalake-events": "StartWithoutDebugging",
         "datalake-client": "DoNotStart"
       }
     },
@@ -20,15 +18,28 @@
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "composeLaunchAction": "LaunchBrowser",
-      "composeLaunchServiceName": "datalake-data",
       "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}/swagger",
       "serviceActions": {
         "datalake-client": "DoNotStart",
-        "datalake-data": "StartDebugging",
+        "datalake-data": "StartWithoutDebugging",
         "datalake-events": "DoNotStart",
         "datalake-gateway": "DoNotStart",
         "datalake-inventory": "DoNotStart",
         "datalake-keycloak": "DoNotStart",
+        "datalake-postgres": "StartWithoutDebugging",
+        "datalake-rabbitmq": "StartWithoutDebugging"
+      }
+    },
+    "Inventory": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "datalake-client": "DoNotStart",
+        "datalake-data": "DoNotStart",
+        "datalake-events": "DoNotStart",
+        "datalake-gateway": "DoNotStart",
+        "datalake-inventory": "StartDebugging",
+        "datalake-keycloak": "StartWithoutDebugging",
         "datalake-postgres": "StartWithoutDebugging",
         "datalake-rabbitmq": "StartWithoutDebugging"
       }

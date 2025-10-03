@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Inventory.Infrastructure.Database.Abstractions;
 
-public abstract class EfRepository<TEntity, TKey>(InventoryEfContext context) : IRepository<TEntity, TKey>
+public abstract class DbRepository<TEntity, TKey>(InventoryDbContext context) : IRepository<TEntity, TKey>
 	where TEntity : class
 	where TKey : notnull
 {

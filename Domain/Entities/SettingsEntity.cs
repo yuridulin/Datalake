@@ -1,4 +1,6 @@
-﻿namespace Datalake.Domain.Entities;
+﻿using Datalake.Contracts.Public.Extensions;
+
+namespace Datalake.Domain.Entities;
 
 /// <summary>
 /// Запись в таблице настроек приложения
@@ -14,7 +16,7 @@ public record class SettingsEntity
 
 	public void Update(string keycloakHost, string keycloakClient, string energoIdApi, string instanceName)
 	{
-		LastUpdate = DateTime.Now;
+		LastUpdate = DateTimeExtension.GetCurrentDateTime();
 		KeycloakHost = keycloakHost;
 		KeycloakClient = keycloakClient;
 		EnergoIdApi = energoIdApi;

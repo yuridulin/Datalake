@@ -1,6 +1,8 @@
-﻿namespace Datalake.Inventory.Application.Interfaces.InMemory;
+﻿using Microsoft.Extensions.Hosting;
 
-public interface IEnergoIdCache
+namespace Datalake.Inventory.Application.Interfaces.InMemory;
+
+public interface IEnergoIdCache : IHostedService
 {
 	IEnergoIdCacheState State { get; }
 

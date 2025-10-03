@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Datalake.Data.Infrastructure.Database;
 
-public class DataEfContext(DbContextOptions<DataEfContext> options) : DbContext(options)
+public class DataDbContext(DbContextOptions<DataDbContext> options) : DbContext(options)
 {
 	/// <summary>
 	/// Конфигурация связей между таблицами БД

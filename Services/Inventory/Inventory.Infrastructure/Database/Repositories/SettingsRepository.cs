@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class SettingsRepository(InventoryEfContext context) : ISettingsRepository
+public class SettingsRepository(InventoryDbContext context) : ISettingsRepository
 {
 	public async Task AddAsync(SettingsEntity settings, CancellationToken ct = default)
 	{

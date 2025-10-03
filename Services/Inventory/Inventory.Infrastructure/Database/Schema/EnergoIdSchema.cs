@@ -3,18 +3,18 @@
 /// <summary>
 /// Константы базы данных с внешними данными (пользователи EnergoId)
 /// </summary>
-public static class EnergoIdDefinitions
+public static class EnergoIdSchema
 {
 	/// <summary>
 	/// Название схемы 
 	/// </summary>
-	public static string Schema { get; } = "energo-id";
+	public static string Name { get; } = "energo-id";
 
 	/// <summary>
 	/// Представление пользователей
 	/// </summary>
-	public static class UsersView
+	public static class EnergoId
 	{
-		public static string ViewName { get; } = "users";
+		public static string Name { get; } = "Users";
 	}
 }

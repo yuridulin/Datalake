@@ -6,6 +6,6 @@ using Datalake.Shared.Application.Attributes;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class AuditRepository(InventoryEfContext context) : EfRepository<AuditEntity, int>(context), IAuditRepository
+public class AuditRepository(InventoryDbContext context) : DbRepository<AuditEntity, int>(context), IAuditRepository
 {
 }

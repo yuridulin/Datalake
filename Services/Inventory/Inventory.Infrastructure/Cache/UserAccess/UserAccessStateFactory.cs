@@ -7,7 +7,7 @@ namespace Datalake.Inventory.Infrastructure.Cache.UserAccess;
 /// <summary>
 /// Функции предварительного расчета прав доступа для пользователей
 /// </summary>
-public class UserAccessStateFactory
+public static class UserAccessStateFactory
 {
 	/// <summary>
 	/// Расчет прав доступа по пользователям на основании текущих данных

@@ -93,7 +93,7 @@ public record class UserGroupEntity : IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список правил доступа, выданных этой группе
 	/// </summary>
-	public ICollection<AccessRuleEntity> AccessRightsList { get; set; } = [];
+	public ICollection<AccessRuleEntity> AccessRules { get; set; } = [];
 
 	/// <summary>
 	/// Список сообщений аудита

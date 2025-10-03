@@ -107,7 +107,7 @@ services:
     container_name: datalake-inventory
     build:
       context: ../
-      dockerfile: ./Services/InventoryService/Inventory.Api/Dockerfile
+      dockerfile: ./Services/Inventory/Inventory.Host/Dockerfile
     depends_on:
       datalake-postgres:
         condition: service_healthy
@@ -129,7 +129,7 @@ services:
     ports:
       - 7601:8080
     volumes:
-      - "../Services/InventoryService/Inventory.Api/storage:/app/storage"
+      - "../Services/Inventory/Inventory.Host/storage:/app/storage"
 
   ## [7602] Сбор, запись, чтение и расчет данных
   datalake-data:

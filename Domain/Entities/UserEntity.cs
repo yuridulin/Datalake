@@ -191,7 +191,7 @@ public record class UserEntity : IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список правил доступа, выданных этой учетной записи
 	/// </summary>
-	public ICollection<AccessRuleEntity> AccessRightsList { get; set; } = [];
+	public ICollection<AccessRuleEntity> AccessRules { get; set; } = [];
 
 	/// <summary>
 	/// Список действий пользователя, записанных в аудит

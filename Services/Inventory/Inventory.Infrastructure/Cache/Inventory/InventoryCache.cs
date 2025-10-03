@@ -1,5 +1,6 @@
 ﻿using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Infrastructure.Database;
+using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,16 +8,17 @@ using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Infrastructure.Cache.Inventory;
 
-public class InventoryCacheStore : IInventoryCache
+[Singleton]
+public class InventoryCache : IInventoryCache
 {
 	private readonly IServiceScopeFactory _serviceScopeFactory;
-	private readonly ILogger<InventoryCacheStore> _logger;
+	private readonly ILogger<InventoryCache> _logger;
 	private readonly SemaphoreSlim _semaphore = new(1, 1);
 	private InventoryState _currentState = InventoryState.Empty;
 
-	public InventoryCacheStore(
+	public InventoryCache(
 		IServiceScopeFactory serviceScopeFactory,
-		ILogger<InventoryCacheStore> logger)
+		ILogger<InventoryCache> logger)
 	{
 		_serviceScopeFactory = serviceScopeFactory;
 		_logger = logger;
@@ -30,7 +32,7 @@ public class InventoryCacheStore : IInventoryCache
 	public async Task RestoreAsync()
 	{
 		using var scope = _serviceScopeFactory.CreateScope();
-		var db = scope.ServiceProvider.GetRequiredService<InventoryEfContext>();
+		var db = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
 
 		var newState = await LoadStateFromDatabaseAsync(db);
 
@@ -64,7 +66,7 @@ public class InventoryCacheStore : IInventoryCache
 	public event EventHandler<int>? StateCorrupted;
 
 
-	private async Task<IInventoryCacheState> LoadStateFromDatabaseAsync(InventoryEfContext context)
+	private async Task<IInventoryCacheState> LoadStateFromDatabaseAsync(InventoryDbContext context)
 	{
 		return await Measures.Measure(async () =>
 		{

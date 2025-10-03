@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class BlockTagsRepository(InventoryEfContext context) : EfRepository<BlockTagEntity, int>(context), IBlockTagsRepository
+public class BlockTagsRepository(InventoryDbContext context) : DbRepository<BlockTagEntity, int>(context), IBlockTagsRepository
 {
 	public async Task<IEnumerable<BlockTagEntity>> GetByBlockIdAsync(int blockId, CancellationToken ct = default)
 	{

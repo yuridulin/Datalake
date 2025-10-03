@@ -1,8 +1,10 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Domain.Entities;
-using Datalake.Inventory.Infrastructure.Cache.Inventory;
+using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Shared.Application.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 
@@ -11,14 +13,12 @@ namespace Datalake.Inventory.Infrastructure.Database.Initialization;
 /// <summary>
 /// Настройка БД
 /// </summary>
+[Singleton]
 public class DbInitializer(
 	IServiceScopeFactory serviceScopeFactory,
-	ILogger<EnergoIdViewCreator> logger)
+	ILogger<DbInitializer> logger) : BackgroundService
 {
-	/// <summary>
-	/// Настройка БД
-	/// </summary>
-	public async Task DoAsync()
+	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		logger.LogInformation("Настройка БД");
 
@@ -26,12 +26,9 @@ public class DbInitializer(
 		{
 			using var serviceScope = serviceScopeFactory.CreateScope();
 
-			// выполняем миграции через EF, хоть тут сгодится
-			var context = serviceScope.ServiceProvider.GetRequiredService<InventoryEfContext>();
-			context.Database.Migrate();
-
-			// инициализируем подключение и стор
-			var dataStore = serviceScope.ServiceProvider.GetRequiredService<InventoryCacheStore>();
+			// выполняем миграции через EF
+			var context = serviceScope.ServiceProvider.GetRequiredService<InventoryDbContext>();
+			await context.Database.MigrateAsync(stoppingToken);
 
 			// добавление пользователей по умолчанию
 			/*var staticUsersOptions = configuration.GetSection("StaticUsers").Get<StaticUsersOptionsDto[]>();
@@ -76,34 +73,42 @@ public class DbInitializer(
 			var existsCustomSources = await context.Sources
 				.Where(x => customSources.Select(c => c.Id).Contains(x.Id))
 				.Select(x => x.Id)
-				.ToArrayAsync();
+				.ToArrayAsync(stoppingToken);
 
-			await context.Sources.AddRangeAsync(customSources.ExceptBy(existsCustomSources, x => x.Id));
-			await context.SaveChangesAsync();
+			await context.Sources.AddRangeAsync(customSources.ExceptBy(existsCustomSources, x => x.Id), stoppingToken);
+			await context.SaveChangesAsync(stoppingToken);
 
 			// создание таблицы настроек
-			if (!await context.Settings.AnyAsync())
+			if (!await context.Settings.AnyAsync(stoppingToken))
 			{
 				var setting = new SettingsEntity(string.Empty, string.Empty, string.Empty, string.Empty);
 
-				await context.Settings.AddAsync(setting);
-				await context.SaveChangesAsync();
+				await context.Settings.AddAsync(setting, stoppingToken);
+				await context.SaveChangesAsync(stoppingToken);
 			}
 
 			// создание администратора по умолчанию, если его учетки нет
-			if (await context.Users.AnyAsync(x => x.Login == "admin"))
+			if (await context.Users.AnyAsync(x => x.Login == "admin", stoppingToken))
 			{
 				var admin = UserEntity.CreateFromLoginPassword("admin", "admin");
 
-				await context.Users.AddAsync(admin);
-				await context.SaveChangesAsync();
+				await context.Users.AddAsync(admin, stoppingToken);
+				await context.SaveChangesAsync(stoppingToken);
 			}
 
 			// Загрузка сессий пользователей
 			var auditLog = new AuditEntity(LogCategory.Core, "Сервер запущен", null);
-			await context.SaveChangesAsync();
+			await context.SaveChangesAsync(stoppingToken);
 
 			logger.LogInformation("Настройка БД завершена");
+
+			// после настройки БД инициализируем кэши
+			var inventoryCache = serviceScope.ServiceProvider.GetRequiredService<IInventoryCache>();
+			var energoIdCache = serviceScope.ServiceProvider.GetRequiredService<IEnergoIdCache>();
+			var userAccessCache = serviceScope.ServiceProvider.GetRequiredService<IUserAccessCache>();
+
+			// когда все кэши в работе, подгружаем БД в основной кэш
+			await inventoryCache.RestoreAsync();
 		}
 		catch (Exception ex)
 		{
@@ -111,7 +116,6 @@ public class DbInitializer(
 			throw;
 		}
 	}
-
 
 	/// <summary>
 	/// Получение описания значения enum

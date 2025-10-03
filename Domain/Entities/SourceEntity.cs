@@ -124,7 +124,7 @@ public record class SourceEntity : IWithIdentityKey, ISoftDeletable
 	/// <summary>
 	/// Список правил доступа, действующих на источник
 	/// </summary>
-	public ICollection<AccessRuleEntity> AccessRightsList { get; set; } = [];
+	public ICollection<AccessRuleEntity> AccessRules { get; set; } = [];
 
 	/// <summary>
 	/// Список сообщений аудита
