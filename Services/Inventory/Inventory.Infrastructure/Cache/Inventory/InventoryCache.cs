@@ -77,7 +77,7 @@ public class InventoryCache : IInventoryCache
 			var sources = await context.Sources.AsNoTracking().ToArrayAsync();
 			var tags = await context.Tags.AsNoTracking().ToArrayAsync();
 			var tagInputs = await context.TagInputs.AsNoTracking().ToArrayAsync();
-			var tagThresholds = await context.TagThresholds.AsNoTracking().ToArrayAsync();
+			//var tagThresholds = await context.TagThresholds.AsNoTracking().ToArrayAsync();
 			var users = await context.Users.AsNoTracking().ToArrayAsync();
 			var userGroups = await context.UserGroups.AsNoTracking().ToArrayAsync();
 			var userGroupRelations = await context.UserGroupRelations.AsNoTracking().ToArrayAsync();
@@ -90,7 +90,7 @@ public class InventoryCache : IInventoryCache
 				sources: sources,
 				tags: tags,
 				tagInputs: tagInputs,
-				tagThresholds: tagThresholds,
+				//tagThresholds: tagThresholds,
 				users: users,
 				userGroups: userGroups,
 				userGroupRelations: userGroupRelations);

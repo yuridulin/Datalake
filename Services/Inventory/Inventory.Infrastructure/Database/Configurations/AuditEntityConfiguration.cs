@@ -10,6 +10,8 @@ public class AuditEntityConfiguration : IEntityTypeConfiguration<AuditEntity>
 	{
 		builder.HasKey(x => x.Id);
 
+		builder.ToTable("Logs");
+
 		builder.HasOne(x => x.Author)
 			.WithMany(x => x.Actions)
 			.HasForeignKey(x => x.AuthorGuid)

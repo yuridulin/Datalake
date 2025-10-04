@@ -55,7 +55,7 @@ public record class InventoryState : IInventoryCacheState
 		IEnumerable<SourceEntity> sources,
 		IEnumerable<TagEntity> tags,
 		IEnumerable<TagInputEntity> tagInputs,
-		IEnumerable<TagThresholdEntity> tagThresholds,
+		//IEnumerable<TagThresholdEntity> tagThresholds,
 		IEnumerable<UserEntity> users,
 		IEnumerable<UserGroupEntity> userGroups,
 		IEnumerable<UserGroupRelationEntity> userGroupRelations)
@@ -69,7 +69,7 @@ public record class InventoryState : IInventoryCacheState
 			Sources = sources.ToImmutableDictionary(x => x.Id),
 			Tags = tags.ToImmutableDictionary(x => x.Id),
 			TagInputs = tagInputs.ToImmutableList(),
-			TagThresholds = tagThresholds.ToImmutableList(),
+			TagThresholds = [] /*tagThresholds.ToImmutableList()*/,
 			Users = users.ToImmutableDictionary(x => x.Guid),
 			UserGroups = userGroups.ToImmutableDictionary(x => x.Guid),
 			UserGroupRelations = userGroupRelations.ToImmutableList(),
@@ -230,10 +230,10 @@ public record class InventoryState : IInventoryCacheState
 
 	public IInventoryCacheState WithTagThresholds(int tagId, IEnumerable<TagThresholdEntity> tagThresholds)
 	{
-		return this with
+		return this/* with
 		{
 			TagThresholds = TagThresholds.RemoveAll(x => x.TagId == tagId).AddRange(tagThresholds),
-		};
+		}*/;
 	}
 
 	public IInventoryCacheState WithUserGroupRelations(Guid userGroupGuid, IEnumerable<UserGroupRelationEntity> userGroupRelations)

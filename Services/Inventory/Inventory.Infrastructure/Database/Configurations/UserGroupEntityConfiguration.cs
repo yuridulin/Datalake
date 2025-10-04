@@ -35,3 +35,11 @@ public class UserGroupEntityConfiguration : IEntityTypeConfiguration<UserGroupEn
 			);
 	}
 }
+
+public class UserGroupRelationEntityConfiguration : IEntityTypeConfiguration<UserGroupRelationEntity>
+{
+	public void Configure(EntityTypeBuilder<UserGroupRelationEntity> builder)
+	{
+		builder.HasKey(x => x.Id);
+	}
+}
