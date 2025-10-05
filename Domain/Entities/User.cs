@@ -189,21 +189,6 @@ public record class User : IWithGuidKey, ISoftDeletable
 	public ICollection<UserGroup> Groups { get; set; } = [];
 
 	/// <summary>
-	/// Список правил доступа, выданных этой учетной записи
-	/// </summary>
-	public ICollection<AccessRights> AccessRules { get; set; } = [];
-
-	/// <summary>
-	/// Список действий пользователя, записанных в аудит
-	/// </summary>
-	public ICollection<Log> Actions { get; set; } = [];
-
-	/// <summary>
-	/// Список сообщений аудита
-	/// </summary>
-	public ICollection<Log> Logs { get; set; } = null!;
-
-	/// <summary>
 	/// Информация о пользователе из EnergoId
 	/// </summary>
 	public EnergoId? EnergoId { get; set; }

@@ -133,9 +133,4 @@ public record class AccessRights : IWithIdentityKey
 	/// Блок, на который действует правило
 	/// </summary>
 	public Block? Block { get; set; }
-
-	/// <summary>
-	/// Список сообщений аудита
-	/// </summary>
-	public ICollection<Log> Logs { get; set; } = null!;
 }

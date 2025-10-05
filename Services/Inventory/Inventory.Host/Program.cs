@@ -1,6 +1,5 @@
-using Datalake.Inventory.Application.Bootstrap;
-using Datalake.Inventory.Host.Bootstrap;
-using Datalake.Inventory.Infrastructure.Bootstrap;
+using Datalake.Inventory.Application;
+using Datalake.Inventory.Infrastructure;
 using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
@@ -27,7 +26,7 @@ public class Program
 		builder.AddShared(CurrentEnvironment, Version, Assembly.GetCallingAssembly());
 		builder.AddInfrastructure();
 		builder.AddApplication();
-		builder.AddApi();
+		builder.AddHosting();
 
 		// сборка
 		var app = builder.Build();

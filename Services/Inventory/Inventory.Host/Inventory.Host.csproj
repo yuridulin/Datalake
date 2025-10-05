@@ -52,7 +52,6 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\..\..\Shared\Shared.Api\Shared.Api.csproj" />
 	  <ProjectReference Include="..\..\..\Shared\Shared.Hosting\Shared.Hosting.csproj" />
-	  <ProjectReference Include="..\Inventory.Api\Inventory.Api.csproj" />
 	  <ProjectReference Include="..\Inventory.Application\Inventory.Application.csproj" />
 	  <ProjectReference Include="..\Inventory.Infrastructure\Inventory.Infrastructure.csproj" />
 	</ItemGroup>

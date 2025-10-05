@@ -335,25 +335,5 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// </summary>
 	public ICollection<TagThreshold> Thresholds { get; set; } = [];
 
-	/// <summary>
-	/// Список связей с блоками
-	/// </summary>
-	public ICollection<BlockTag> RelationsToBlocks { get; set; } = [];
-
-	/// <summary>
-	/// Список блоков
-	/// </summary>
-	public ICollection<Block> Blocks { get; set; } = [];
-
-	/// <summary>
-	/// Список правил доступа, действующих на тег
-	/// </summary>
-	public ICollection<AccessRights> AccessRules { get; set; } = [];
-
-	/// <summary>
-	/// Список сообщений аудита
-	/// </summary>
-	public ICollection<Log> Logs { get; set; } = null!;
-
 	#endregion
 }

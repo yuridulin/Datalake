@@ -1,5 +1,5 @@
-﻿using Datalake.Data.Infrastructure.Database.Schema;
-using Datalake.Domain.ValueObjects;
+﻿using Datalake.Domain.ValueObjects;
+using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

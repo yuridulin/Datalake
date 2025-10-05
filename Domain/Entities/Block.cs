@@ -116,14 +116,4 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 	/// Список связанных тегов
 	/// </summary>
 	public ICollection<Tag> Tags { get; set; } = [];
-
-	/// <summary>
-	/// Список правил доступа, выданных на этот блок
-	/// </summary>
-	public ICollection<AccessRights> AccessRules { get; set; } = [];
-
-	/// <summary>
-	/// Список сообщений аудита
-	/// </summary>
-	public ICollection<Log> Logs { get; set; } = null!;
 }

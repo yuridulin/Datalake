@@ -1,6 +1,6 @@
 ﻿using Datalake.Domain.Entities;
+using Datalake.Inventory.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection;
 
 namespace Datalake.Inventory.Infrastructure.Database;
 
@@ -17,9 +17,20 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 	{
 		modelBuilder.HasDefaultSchema("public");
 
-		// Автоматически применяет все классы конфигурации
-		// из текущей сборки, реализующие IEntityTypeConfiguration<>
-		modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+		modelBuilder.ApplyConfiguration(new AccessRuleConfiguration());
+		modelBuilder.ApplyConfiguration(new AuditConfiguration());
+		modelBuilder.ApplyConfiguration(new BlockConfiguration());
+		modelBuilder.ApplyConfiguration(new BlockPropertyConfiguration());
+		modelBuilder.ApplyConfiguration(new BlockTagConfiguration());
+		modelBuilder.ApplyConfiguration(new EnergoIdConfiguration());
+		modelBuilder.ApplyConfiguration(new SettingsConfiguration());
+		modelBuilder.ApplyConfiguration(new SourceConfiguration());
+		modelBuilder.ApplyConfiguration(new TagConfiguration());
+		modelBuilder.ApplyConfiguration(new TagInputConfiguration());
+		modelBuilder.ApplyConfiguration(new TagThresholdConfiguration());
+		modelBuilder.ApplyConfiguration(new UserConfiguration());
+		modelBuilder.ApplyConfiguration(new UserGroupConfiguration());
+		modelBuilder.ApplyConfiguration(new UserGroupRelationConfiguration());
 	}
 
 	#region Таблицы

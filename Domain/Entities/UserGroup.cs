@@ -89,14 +89,4 @@ public record class UserGroup : IWithGuidKey, ISoftDeletable
 	/// Список пользователей
 	/// </summary>
 	public ICollection<User> Users { get; set; } = [];
-
-	/// <summary>
-	/// Список правил доступа, выданных этой группе
-	/// </summary>
-	public ICollection<AccessRights> AccessRules { get; set; } = [];
-
-	/// <summary>
-	/// Список сообщений аудита
-	/// </summary>
-	public ICollection<Log> Logs { get; set; } = null!;
 }

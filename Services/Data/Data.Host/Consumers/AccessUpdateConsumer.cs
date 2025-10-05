@@ -1,4 +1,4 @@
-﻿using Datalake.PrivateApi.Messages;
+﻿using Datalake.Contracts.Internal.Messages;
 using MassTransit;
 
 namespace Datalake.Data.Host.Consumers;
