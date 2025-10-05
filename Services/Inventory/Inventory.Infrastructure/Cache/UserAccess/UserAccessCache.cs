@@ -1,7 +1,9 @@
 ﻿using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Infrastructure;
 using Microsoft.Extensions.Logging;
+using System.Threading.Channels;
 
 namespace Datalake.Inventory.Infrastructure.Cache.UserAccess;
 
@@ -9,42 +11,35 @@ namespace Datalake.Inventory.Infrastructure.Cache.UserAccess;
 public class UserAccessCache : IUserAccessCache
 {
 	private readonly ILogger<UserAccessCache> _logger;
-	private readonly Lock _lock = new();
-	private UserAccessState _state;
+	private readonly IUserAccessStateFactory _accessStateFactory;
+	private readonly Channel<IInventoryCacheState> _rebuildChannel;
+	private UserAccessState _state = UserAccessState.Empty;
+	private CancellationTokenSource _processingCts = new();
 	private long _lastProcessingDataVersion;
 
 	public UserAccessCache(
 		IInventoryCache inventoryCache,
+		IUserAccessStateFactory accessStateFactory,
 		ILogger<UserAccessCache> logger)
 	{
 		_logger = logger;
+		_accessStateFactory = accessStateFactory;
 
-		// Вычисляем изначальное состояние сразу же
-		lock (_lock)
-		{
-			_lastProcessingDataVersion = inventoryCache.State.Version;
-			_state = Measures.Measure(() => CreateDerivedState(inventoryCache.State), _logger, $"{nameof(UserAccessCache)}");
-			_logger.LogInformation("Инициализация кэша прав доступа для версии {Version}", _lastProcessingDataVersion);
-		}
-
-		// Подписываемся на будущие изменения
-		inventoryCache.StateChanged += (_, newState) =>
-		{
-			// Атомарно проверяем и обновляем версию
-			long currentVersion = Interlocked.Read(ref _lastProcessingDataVersion);
-			if (newState.Version > currentVersion)
+		_rebuildChannel = Channel.CreateBounded<IInventoryCacheState>(
+			new BoundedChannelOptions(1) // Только последнее состояние
 			{
-				// Пытаемся установить новую версию
-				long originalVersion = Interlocked.CompareExchange(
-					ref _lastProcessingDataVersion,
-					newState.Version,
-					currentVersion);
+				SingleReader = true,
+				SingleWriter = false,
+				FullMode = BoundedChannelFullMode.DropOldest
+			});
 
-				// Если удалось установить - запускаем обработку
-				if (originalVersion == currentVersion)
-				{
-					Task.Run(() => Rebuild(newState));
-				}
+		_ = ProcessRebuildsAsync(_processingCts.Token);
+
+		inventoryCache.StateChanged += async (_, newState) =>
+		{
+			if (newState.Version > Interlocked.Read(ref _lastProcessingDataVersion))
+			{
+				await _rebuildChannel.Writer.WriteAsync(newState);
 			}
 		};
 	}
@@ -53,34 +48,32 @@ public class UserAccessCache : IUserAccessCache
 
 	public event EventHandler<IUserAccessCacheState>? StateChanged;
 
-	private void Rebuild(IInventoryCacheState newDataState)
+	private async Task ProcessRebuildsAsync(CancellationToken ct)
 	{
-		try
+		await foreach (var newState in _rebuildChannel.Reader.ReadAllAsync(ct))
 		{
-			// Вычисляем новые права доступа
-			var newState = Measures.Measure(() => CreateDerivedState(newDataState), _logger, $"{nameof(UserAccessCache)}");
-
-			// Атомарно обновляем состояние
-			Interlocked.Exchange(ref _state, newState);
-
-			// Убеждаемся, что мы обработали самую свежую версию
-			long currentVersion = Interlocked.Read(ref _lastProcessingDataVersion);
-			if (newDataState.Version >= currentVersion)
-			{
-				// Вызываем событие только для самой актуальной версии
-				Task.Run(() => StateChanged?.Invoke(this, newState));
-			}
-
-			_logger.LogInformation("Завершено обновление кэша прав доступа для версии {Version}", newDataState.Version);
-		}
-		catch (Exception e)
-		{
-			_logger.LogError(e, "Не удалось обновить кэш прав доступа для версии {Version}", newDataState.Version);
+			await RebuildAsync(newState);
 		}
 	}
 
-	private static UserAccessState CreateDerivedState(IInventoryCacheState newDataState)
+	private async Task RebuildAsync(IInventoryCacheState newDataState)
 	{
-		return UserAccessStateFactory.Create(newDataState);
+		try
+		{
+			// Гарантируем, что только одна задача выполняется одновременно
+			var newState = await Task.Run(() =>
+					Measures.Measure(() => _accessStateFactory.Create(newDataState), _logger, $"{nameof(UserAccessCache)}"));
+
+			Interlocked.Exchange(ref _state, newState);
+			Interlocked.Exchange(ref _lastProcessingDataVersion, newDataState.Version);
+
+			_logger.LogInformation("Обновление кэша прав доступа завершено для версии {Version}", newDataState.Version);
+
+			_ = Task.Run(() => StateChanged?.Invoke(this, newState));
+		}
+		catch (Exception e)
+		{
+			_logger.LogError(e, "Ошибка обновления кэша прав доступа для версии {Version}", newDataState.Version);
+		}
 	}
 }

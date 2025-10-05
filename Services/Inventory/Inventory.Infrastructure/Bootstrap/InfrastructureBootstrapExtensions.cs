@@ -66,6 +66,7 @@ public static class InfrastructureBootstrapExtensions
 		builder.Services.AddSingleton<IInventoryCache, InventoryCache>();
 		builder.Services.AddSingleton<IUserAccessCache, UserAccessCache>();
 		builder.Services.AddSingleton<IEnergoIdCache, EnergoIdCache>();
+		builder.Services.AddSingleton<IUserAccessStateFactory, UserAccessStateFactory>();
 
 		// службы
 		builder.Services.AddSingleton<DbInitializer>();

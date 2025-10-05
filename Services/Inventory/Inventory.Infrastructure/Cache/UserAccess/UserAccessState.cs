@@ -6,14 +6,12 @@ namespace Datalake.Inventory.Infrastructure.Cache.UserAccess;
 
 public record class UserAccessState : IUserAccessCacheState
 {
-	private ImmutableDictionary<Guid, UserAccessEntity> _accessByUserGuid;
-	private ImmutableDictionary<Guid, UserAccessEntity> _accessByEnergoId;
+	private ImmutableDictionary<Guid, UserAccessEntity> _accessByUserGuid = ImmutableDictionary<Guid, UserAccessEntity>.Empty;
+	private ImmutableDictionary<Guid, UserAccessEntity> _accessByEnergoId = ImmutableDictionary<Guid, UserAccessEntity>.Empty;
 
-	public UserAccessState()
-	{
-		_accessByUserGuid = ImmutableDictionary<Guid, UserAccessEntity>.Empty;
-		_accessByEnergoId = ImmutableDictionary<Guid, UserAccessEntity>.Empty;
-	}
+	private UserAccessState() { }
+
+	public static UserAccessState Empty => new();
 
 	public UserAccessState(Dictionary<Guid, UserAccessEntity> userRights)
 	{

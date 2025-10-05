@@ -1,22 +1,44 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Application.Entities;
+using System.Collections.Concurrent;
 
 namespace Datalake.Inventory.Infrastructure.Cache.UserAccess;
 
 /// <summary>
 /// Функции предварительного расчета прав доступа для пользователей
 /// </summary>
-public static class UserAccessStateFactory
+public class UserAccessStateFactory : IUserAccessStateFactory
 {
 	/// <summary>
 	/// Расчет прав доступа по пользователям на основании текущих данных
 	/// </summary>
 	/// <param name="state">Состояние с текущими данными</param>
 	/// <returns>Состояние актуальных прав доступа</returns>
-	public static UserAccessState Create(IInventoryCacheState state)
+	public UserAccessState Create(IInventoryCacheState state)
 	{
+		// Предварительные вычисления
+		var precomputed = PrecomputeStructures(state);
+
 		// Оптимизация: ленивая инициализация словарей правил
+		var hashSets = PrepareHashSets(state);
+
+		// Параллельная обработка пользователей для больших наборов
+		var activeUsers = state.ActiveUsers.ToArray();
+		var usersAccess = new ConcurrentDictionary<Guid, UserAccessEntity>();
+
+		Parallel.ForEach(activeUsers, ParallelOptions, user =>
+		{
+			usersAccess[user.Guid] = CalculateUserAccess(user, state, precomputed, hashSets);
+		});
+
+		return new(usersAccess.ToDictionary());
+	}
+
+	private static HashSets PrepareHashSets(IInventoryCacheState state)
+	{
 		var userGlobalRules = new Dictionary<Guid, AccessRuleValue>();
 		var groupGlobalRules = new Dictionary<Guid, AccessRuleValue>();
 
@@ -74,6 +96,19 @@ public static class UserAccessStateFactory
 			}
 		}
 
+		return new HashSets(
+			userGlobalRules,
+			groupGlobalRules,
+			userRulesToSources,
+			userRulesToBlocks,
+			userRulesToTags,
+			groupRulesToSources,
+			groupRulesToBlocks,
+			groupRulesToTags);
+	}
+
+	private static Precomputed PrecomputeStructures(IInventoryCacheState state)
+	{
 		// Оптимизация: предварительный расчет иерархии блоков
 		var blockParentMap = state.ActiveBlocks.ToDictionary(b => b.Id, b => b.ParentId);
 		var blockAncestors = new Dictionary<int, HashSet<int>>();
@@ -160,233 +195,228 @@ public static class UserAccessStateFactory
 			blockIds.Add(bt.BlockId);
 		}
 
-		// Расчет прав для пользователей
-		var usersAccess = new Dictionary<Guid, UserAccessEntity>();
-		foreach (var user in state.ActiveUsers)
+		return new Precomputed(blockAncestors, blocksByTag, userGroups, directUserGroupRules);
+	}
+
+	private static UserAccessEntity CalculateUserAccess(User user, IInventoryCacheState state, Precomputed precomputed, HashSets hashSets)
+	{
+		Guid userGuid = user.Guid;
+
+		// Глобальные правила пользователя
+		var globalRule = hashSets.UserGlobalRules.TryGetValue(userGuid, out var userGlobalRule) ? userGlobalRule : AccessRuleValue.GetDefault();
+
+		// Оптимизация: объединение групповых правил
+		Dictionary<int, AccessRuleValue> groupSourceRules = null!;
+		Dictionary<int, AccessRuleValue> groupBlockRules = null!;
+		Dictionary<int, AccessRuleValue> groupTagRules = null!;
+		Dictionary<Guid, AccessRuleValue> groupRules = [];
+
+		if (precomputed.GroupsByUser.TryGetValue(userGuid, out var userGroupSet))
 		{
-			Guid userGuid = user.Guid;
-
-			// Глобальные правила пользователя
-			var globalRule = userGlobalRules.TryGetValue(userGuid, out var userGlobalRule) ? userGlobalRule : AccessRuleValue.GetDefault();
-
-			// Оптимизация: объединение групповых правил
-			Dictionary<int, AccessRuleValue> groupSourceRules = null!;
-			Dictionary<int, AccessRuleValue> groupBlockRules = null!;
-			Dictionary<int, AccessRuleValue> groupTagRules = null!;
-			Dictionary<Guid, AccessRuleValue> groupRules = [];
-
-			if (userGroups.TryGetValue(userGuid, out var userGroupSet))
+			// Глобальные правила групп
+			foreach (var groupGuid in userGroupSet)
 			{
-				// Глобальные правила групп
-				foreach (var groupGuid in userGroupSet)
+				if (hashSets.GroupGlobalRules.TryGetValue(groupGuid, out var groupRule) &&
+						groupRule.Access > globalRule.Access)
 				{
-					if (groupGlobalRules.TryGetValue(groupGuid, out var groupRule) &&
-							groupRule.Access > globalRule.Access)
+					globalRule = groupRule;
+				}
+			}
+
+			// Получаем прямые правила пользователя
+			precomputed.DirectUserGroupRules.TryGetValue(userGuid, out var userDirectGroupRules);
+
+			foreach (var groupGuid in userGroupSet)
+			{
+				// Проверяем наличие прямого правила
+				if (userDirectGroupRules != null &&
+						userDirectGroupRules.TryGetValue(groupGuid, out var rule))
+				{
+					groupRules[groupGuid] = rule;
+				}
+			}
+
+			// Предварительное объединение групповых правил
+			groupSourceRules = new Dictionary<int, AccessRuleValue>();
+			groupBlockRules = new Dictionary<int, AccessRuleValue>();
+			groupTagRules = new Dictionary<int, AccessRuleValue>();
+
+			foreach (var groupGuid in userGroupSet)
+			{
+				// Для источников
+				if (hashSets.GroupRulesToSources.TryGetValue(groupGuid, out var rules))
+				{
+					foreach (var kv in rules)
 					{
-						globalRule = groupRule;
+						if (!groupSourceRules.TryGetValue(kv.Key, out var current) ||
+								kv.Value.Access > current.Access)
+						{
+							groupSourceRules[kv.Key] = kv.Value;
+						}
 					}
 				}
 
-				// Получаем прямые правила пользователя
-				directUserGroupRules.TryGetValue(userGuid, out var userDirectGroupRules);
-
-				foreach (var groupGuid in userGroupSet)
+				// Для блоков
+				if (hashSets.GroupRulesToBlocks.TryGetValue(groupGuid, out rules))
 				{
-					// Проверяем наличие прямого правила
-					if (userDirectGroupRules != null &&
-							userDirectGroupRules.TryGetValue(groupGuid, out var rule))
+					foreach (var kv in rules)
 					{
-						groupRules[groupGuid] = rule;
+						if (!groupBlockRules.TryGetValue(kv.Key, out var current) ||
+								kv.Value.Access > current.Access)
+						{
+							groupBlockRules[kv.Key] = kv.Value;
+						}
 					}
 				}
 
-				// Предварительное объединение групповых правил
-				groupSourceRules = new Dictionary<int, AccessRuleValue>();
-				groupBlockRules = new Dictionary<int, AccessRuleValue>();
-				groupTagRules = new Dictionary<int, AccessRuleValue>();
-
-				foreach (var groupGuid in userGroupSet)
+				// Для тегов
+				if (hashSets.GroupRulesToTags.TryGetValue(groupGuid, out rules))
 				{
-					// Для источников
-					if (groupRulesToSources.TryGetValue(groupGuid, out var rules))
+					foreach (var kv in rules)
 					{
-						foreach (var kv in rules)
+						if (!groupTagRules.TryGetValue(kv.Key, out var current) ||
+								kv.Value.Access > current.Access)
 						{
-							if (!groupSourceRules.TryGetValue(kv.Key, out var current) ||
-									kv.Value.Access > current.Access)
-							{
-								groupSourceRules[kv.Key] = kv.Value;
-							}
-						}
-					}
-
-					// Для блоков
-					if (groupRulesToBlocks.TryGetValue(groupGuid, out rules))
-					{
-						foreach (var kv in rules)
-						{
-							if (!groupBlockRules.TryGetValue(kv.Key, out var current) ||
-									kv.Value.Access > current.Access)
-							{
-								groupBlockRules[kv.Key] = kv.Value;
-							}
-						}
-					}
-
-					// Для тегов
-					if (groupRulesToTags.TryGetValue(groupGuid, out rules))
-					{
-						foreach (var kv in rules)
-						{
-							if (!groupTagRules.TryGetValue(kv.Key, out var current) ||
-									kv.Value.Access > current.Access)
-							{
-								groupTagRules[kv.Key] = kv.Value;
-							}
+							groupTagRules[kv.Key] = kv.Value;
 						}
 					}
 				}
 			}
-
-			// Пропускаем расчет объектов для администраторов и заблокированных
-			if (globalRule.Access is AccessType.Admin or AccessType.None)
-			{
-				usersAccess[userGuid] = new UserAccessEntity(userGuid, user.EnergoIdGuid, globalRule, groupRules);
-				continue;
-			}
-
-			// Получаем пользовательские правила
-			Dictionary<int, AccessRuleValue> userSourceRules = [];
-			Dictionary<int, AccessRuleValue> userBlockRules = [];
-			Dictionary<int, AccessRuleValue> userTagRules = [];
-			userRulesToSources.TryGetValue(userGuid, out var userDirectSourceRules);
-			userRulesToBlocks.TryGetValue(userGuid, out var userDirectBlockRules);
-			userRulesToTags.TryGetValue(userGuid, out var userDirectTagRules);
-
-			// 1. Расчет прав для источников
-			foreach (var source in state.ActiveSources)
-			{
-				int sourceId = source.Id;
-				var rule = globalRule;
-
-				// Пользовательские правила
-				if (userDirectSourceRules != null &&
-						userDirectSourceRules.TryGetValue(sourceId, out var userRule))
-				{
-					rule = userRule;
-				}
-
-				// Групповые правила
-				if (groupSourceRules != null &&
-						groupSourceRules.TryGetValue(sourceId, out var groupRule) &&
-						groupRule.Access > rule.Access)
-				{
-					rule = groupRule;
-				}
-
-				if (rule.Access > globalRule.Access)
-				{
-					userSourceRules[sourceId] = rule;
-				}
-			}
-
-			// 2. Расчет прав для блоков
-			foreach (var block in state.ActiveBlocks)
-			{
-				int blockId = block.Id;
-				var rule = globalRule;
-
-				// Пользовательские правила для блока
-				if (userDirectBlockRules != null &&
-						userDirectBlockRules.TryGetValue(blockId, out var userRule))
-				{
-					rule = userRule;
-				}
-
-				// Групповые правила для блока
-				if (groupBlockRules != null &&
-						groupBlockRules.TryGetValue(blockId, out var groupRule) &&
-						groupRule.Access > rule.Access)
-				{
-					rule = groupRule;
-				}
-
-				// Наследование от предков
-				if (blockAncestors.TryGetValue(blockId, out var ancestors))
-				{
-					foreach (var ancestorId in ancestors)
-					{
-						// Пользовательские правила предка
-						if (userDirectBlockRules != null &&
-								userDirectBlockRules.TryGetValue(ancestorId, out userRule) &&
-								userRule.Access > rule.Access)
-						{
-							rule = userRule;
-						}
-
-						// Групповые правила предка
-						if (groupBlockRules != null &&
-								groupBlockRules.TryGetValue(ancestorId, out groupRule) &&
-								groupRule.Access > rule.Access)
-						{
-							rule = groupRule;
-						}
-					}
-				}
-
-				if (rule.Access > globalRule.Access)
-				{
-					userBlockRules[blockId] = rule;
-				}
-			}
-
-			// 3. Расчет прав для тегов
-			foreach (var tag in state.ActiveTags)
-			{
-				int tagId = tag.Id;
-				var rule = globalRule;
-
-				// Прямые пользовательские правила
-				if (userDirectTagRules != null &&
-						userDirectTagRules.TryGetValue(tagId, out var userRule))
-				{
-					rule = userRule;
-				}
-
-				// Прямые групповые правила
-				if (groupTagRules != null &&
-						groupTagRules.TryGetValue(tagId, out var groupRule) &&
-						groupRule.Access > rule.Access)
-				{
-					rule = groupRule;
-				}
-
-				// Правила через связанные блоки
-				if (blocksByTag.TryGetValue(tagId, out var blockIds))
-				{
-					foreach (var blockId in blockIds)
-					{
-						if (userBlockRules.TryGetValue(blockId, out var blockRule) &&
-								blockRule.Access > rule.Access)
-						{
-							rule = blockRule;
-						}
-					}
-				}
-
-				if (rule.Access > globalRule.Access)
-				{
-					userTagRules[tagId] = rule;
-				}
-			}
-
-			// объект прав пользователя
-			var access = new UserAccessEntity(userGuid, user.EnergoIdGuid, globalRule, groupRules, userSourceRules, userBlockRules, userTagRules);
-
-			usersAccess[userGuid] = access;
 		}
 
-		return new(usersAccess);
+		// Пропускаем расчет объектов для администраторов и заблокированных
+		if (globalRule.Access is AccessType.Admin or AccessType.None)
+		{
+			return new UserAccessEntity(userGuid, user.EnergoIdGuid, globalRule, groupRules);
+		}
+
+		// Получаем пользовательские правила
+		Dictionary<int, AccessRuleValue> userSourceRules = [];
+		Dictionary<int, AccessRuleValue> userBlockRules = [];
+		Dictionary<int, AccessRuleValue> userTagRules = [];
+		hashSets.UserRulesToSources.TryGetValue(userGuid, out var userDirectSourceRules);
+		hashSets.UserRulesToBlocks.TryGetValue(userGuid, out var userDirectBlockRules);
+		hashSets.UserRulesToTags.TryGetValue(userGuid, out var userDirectTagRules);
+
+		// 1. Расчет прав для источников
+		foreach (var source in state.ActiveSources)
+		{
+			int sourceId = source.Id;
+			var rule = globalRule;
+
+			// Пользовательские правила
+			if (userDirectSourceRules != null &&
+					userDirectSourceRules.TryGetValue(sourceId, out var userRule))
+			{
+				rule = userRule;
+			}
+
+			// Групповые правила
+			if (groupSourceRules != null &&
+					groupSourceRules.TryGetValue(sourceId, out var groupRule) &&
+					groupRule.Access > rule.Access)
+			{
+				rule = groupRule;
+			}
+
+			if (rule.Access > globalRule.Access)
+			{
+				userSourceRules[sourceId] = rule;
+			}
+		}
+
+		// 2. Расчет прав для блоков
+		foreach (var block in state.ActiveBlocks)
+		{
+			int blockId = block.Id;
+			var rule = globalRule;
+
+			// Пользовательские правила для блока
+			if (userDirectBlockRules != null &&
+					userDirectBlockRules.TryGetValue(blockId, out var userRule))
+			{
+				rule = userRule;
+			}
+
+			// Групповые правила для блока
+			if (groupBlockRules != null &&
+					groupBlockRules.TryGetValue(blockId, out var groupRule) &&
+					groupRule.Access > rule.Access)
+			{
+				rule = groupRule;
+			}
+
+			// Наследование от предков
+			if (precomputed.BlockAncestors.TryGetValue(blockId, out var ancestors))
+			{
+				foreach (var ancestorId in ancestors)
+				{
+					// Пользовательские правила предка
+					if (userDirectBlockRules != null &&
+							userDirectBlockRules.TryGetValue(ancestorId, out userRule) &&
+							userRule.Access > rule.Access)
+					{
+						rule = userRule;
+					}
+
+					// Групповые правила предка
+					if (groupBlockRules != null &&
+							groupBlockRules.TryGetValue(ancestorId, out groupRule) &&
+							groupRule.Access > rule.Access)
+					{
+						rule = groupRule;
+					}
+				}
+			}
+
+			if (rule.Access > globalRule.Access)
+			{
+				userBlockRules[blockId] = rule;
+			}
+		}
+
+		// 3. Расчет прав для тегов
+		foreach (var tag in state.ActiveTags)
+		{
+			int tagId = tag.Id;
+			var rule = globalRule;
+
+			// Прямые пользовательские правила
+			if (userDirectTagRules != null &&
+					userDirectTagRules.TryGetValue(tagId, out var userRule))
+			{
+				rule = userRule;
+			}
+
+			// Прямые групповые правила
+			if (groupTagRules != null &&
+					groupTagRules.TryGetValue(tagId, out var groupRule) &&
+					groupRule.Access > rule.Access)
+			{
+				rule = groupRule;
+			}
+
+			// Правила через связанные блоки
+			if (precomputed.BlocksByTag.TryGetValue(tagId, out var blockIds))
+			{
+				foreach (var blockId in blockIds)
+				{
+					if (userBlockRules.TryGetValue(blockId, out var blockRule) &&
+							blockRule.Access > rule.Access)
+					{
+						rule = blockRule;
+					}
+				}
+			}
+
+			if (rule.Access > globalRule.Access)
+			{
+				userTagRules[tagId] = rule;
+			}
+		}
+
+		// объект прав пользователя
+		return new UserAccessEntity(userGuid, user.EnergoIdGuid, globalRule, groupRules, userSourceRules, userBlockRules, userTagRules);
 	}
 
 	// Вспомогательный метод для добавления правил
@@ -405,4 +435,25 @@ public static class UserAccessStateFactory
 		}
 		innerMap[objId] = rule;
 	}
+
+	private static ParallelOptions ParallelOptions { get; } = new ParallelOptions
+	{
+		MaxDegreeOfParallelism = Environment.ProcessorCount / 2
+	};
+
+	private record struct Precomputed(
+		Dictionary<int, HashSet<int>> BlockAncestors,
+		Dictionary<int, HashSet<int>> BlocksByTag,
+		Dictionary<Guid, HashSet<Guid>> GroupsByUser,
+		Dictionary<Guid, Dictionary<Guid, AccessRuleValue>> DirectUserGroupRules);
+
+	private record struct HashSets(
+		Dictionary<Guid, AccessRuleValue> UserGlobalRules,
+		Dictionary<Guid, AccessRuleValue> GroupGlobalRules,
+		Dictionary<Guid, Dictionary<int, AccessRuleValue>> UserRulesToSources,
+		Dictionary<Guid, Dictionary<int, AccessRuleValue>> UserRulesToBlocks,
+		Dictionary<Guid, Dictionary<int, AccessRuleValue>> UserRulesToTags,
+		Dictionary<Guid, Dictionary<int, AccessRuleValue>> GroupRulesToSources,
+		Dictionary<Guid, Dictionary<int, AccessRuleValue>> GroupRulesToBlocks,
+		Dictionary<Guid, Dictionary<int, AccessRuleValue>> GroupRulesToTags);
 }

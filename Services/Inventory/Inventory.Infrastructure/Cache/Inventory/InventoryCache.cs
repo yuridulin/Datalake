@@ -5,6 +5,7 @@ using Datalake.Shared.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Threading.Channels;
 
 namespace Datalake.Inventory.Infrastructure.Cache.Inventory;
 
@@ -14,6 +15,7 @@ public class InventoryCache : IInventoryCache
 	private readonly IServiceScopeFactory _serviceScopeFactory;
 	private readonly ILogger<InventoryCache> _logger;
 	private readonly SemaphoreSlim _semaphore = new(1, 1);
+	private readonly Channel<InventoryState> _updateChannel;
 	private InventoryState _currentState = InventoryState.Empty;
 
 	public InventoryCache(
@@ -25,6 +27,16 @@ public class InventoryCache : IInventoryCache
 
 		StateChanged += (_, _) => _logger.LogInformation("Состояние данных изменено");
 		StateCorrupted += (_, _) => Task.Run(RestoreAsync);
+
+		_updateChannel = Channel.CreateBounded<InventoryState>(
+			new BoundedChannelOptions(100)
+			{
+				SingleReader = true,
+				SingleWriter = false,
+				FullMode = BoundedChannelFullMode.DropOldest,
+			});
+
+		_ = ProcessUpdatesAsync();
 
 		// начальное заполнение кэша будет запущено, когда все будет готов, извне
 	}
@@ -43,19 +55,11 @@ public class InventoryCache : IInventoryCache
 
 	public async Task<IInventoryCacheState> UpdateAsync(Func<IInventoryCacheState, IInventoryCacheState> update)
 	{
-		IInventoryCacheState newState;
-
-		await _semaphore.WaitAsync();
-
-		try
+		var newState = update(_currentState);
+		if (newState.Version != _currentState.Version)
 		{
-			newState = UpdateStateWithinLock(update);
+			await _updateChannel.Writer.WriteAsync((InventoryState)newState);
 		}
-		finally
-		{
-			_semaphore.Release();
-		}
-
 		return newState;
 	}
 
@@ -98,23 +102,28 @@ public class InventoryCache : IInventoryCache
 		}, _logger, nameof(LoadStateFromDatabaseAsync));
 	}
 
-	private InventoryState UpdateStateWithinLock(Func<IInventoryCacheState, IInventoryCacheState> update)
+	private async Task ProcessUpdatesAsync()
 	{
-		try
+		await foreach (var newState in _updateChannel.Reader.ReadAllAsync())
 		{
-			var newState = update(_currentState);
-			if (newState.Version != _currentState.Version)
+			await _semaphore.WaitAsync();
+
+			try
 			{
-				_currentState = (InventoryState)newState;
-				StateChanged?.Invoke(this, _currentState);
+				_currentState = newState;
+
+				_ = Task.Run(() => StateChanged?.Invoke(this, _currentState));
+			}
+			catch (Exception e)
+			{
+				_logger.LogWarning("Ошибка при обновлении состояния основного кэша: {message}", e.Message);
+
+				_ = Task.Run(() => StateCorrupted?.Invoke(this, 0));
+			}
+			finally
+			{
+				_semaphore.Release();
 			}
 		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Ошибка при изменении стейта");
-			StateCorrupted?.Invoke(this, 0);
-		}
-
-		return _currentState;
 	}
 }
