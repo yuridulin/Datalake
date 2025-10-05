@@ -26,7 +26,7 @@ public class DeleteTagHandler(
 		command.User.ThrowIfNoAccessToTag(AccessType.Manager, command.Id);
 	}
 
-	TagEntity tag = null!;
+	Tag tag = null!;
 
 	public override async Task<bool> ExecuteInTransactionAsync(DeleteTagCommand command, CancellationToken ct = default)
 	{

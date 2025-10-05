@@ -3,6 +3,6 @@ using Datalake.Domain.Entities;
 
 namespace Datalake.Inventory.Application.Repositories;
 
-public interface IBlockPropertiesRepository : IRepository<BlockPropertyEntity, int>
+public interface IBlockPropertiesRepository : IRepository<BlockProperty, int>
 {
 }

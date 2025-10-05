@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class BlockEntityConfiguration : IEntityTypeConfiguration<BlockEntity>
+public class BlockEntityConfiguration : IEntityTypeConfiguration<Block>
 {
-	public void Configure(EntityTypeBuilder<BlockEntity> builder)
+	public void Configure(EntityTypeBuilder<Block> builder)
 	{
 		builder.HasKey(x => x.Id);
 
@@ -19,7 +19,7 @@ public class BlockEntityConfiguration : IEntityTypeConfiguration<BlockEntity>
 		// связь блоков и тегов
 		builder.HasMany(block => block.Tags)
 			.WithMany(tag => tag.Blocks)
-			.UsingEntity<BlockTagEntity>(
+			.UsingEntity<BlockTag>(
 				relation => relation
 					.HasOne(rel => rel.Tag)
 					.WithMany(tag => tag.RelationsToBlocks)

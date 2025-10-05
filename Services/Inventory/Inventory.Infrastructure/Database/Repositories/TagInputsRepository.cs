@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class TagInputsRepository(InventoryDbContext context) : DbRepository<TagInputEntity, int>(context), ITagInputsRepository
+public class TagInputsRepository(InventoryDbContext context) : DbRepository<TagInput, int>(context), ITagInputsRepository
 {
-	public async Task<IEnumerable<TagInputEntity>> GetByTagIdAsync(int tagId, CancellationToken ct = default)
+	public async Task<IEnumerable<TagInput>> GetByTagIdAsync(int tagId, CancellationToken ct = default)
 	{
 		return await _set.Where(x => x.TagId == tagId).ToArrayAsync(ct);
 	}

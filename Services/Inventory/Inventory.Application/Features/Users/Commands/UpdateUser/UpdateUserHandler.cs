@@ -26,7 +26,7 @@ public class UpdateUserHandler(
 		command.User.ThrowIfNoGlobalAccess(AccessType.Admin);
 	}
 
-	UserEntity user = null!;
+	User user = null!;
 
 	public override async Task<bool> ExecuteInTransactionAsync(UpdateUserCommand command, CancellationToken ct = default)
 	{

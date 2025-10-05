@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class SettingsEntityConfiguration : IEntityTypeConfiguration<SettingsEntity>
+public class SettingsEntityConfiguration : IEntityTypeConfiguration<Settings>
 {
-	public void Configure(EntityTypeBuilder<SettingsEntity> builder)
+	public void Configure(EntityTypeBuilder<Settings> builder)
 	{
-		builder.HasNoKey();
+		builder.HasKey(x => x.Id);
 	}
 }

@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Data.Infrastructure.Database.Configurations;
 
-internal class TagHistoryConfiguration : IEntityTypeConfiguration<TagHistoryValue>
+internal class TagHistoryConfiguration : IEntityTypeConfiguration<TagHistory>
 {
-	public void Configure(EntityTypeBuilder<TagHistoryValue> builder)
+	public void Configure(EntityTypeBuilder<TagHistory> builder)
 	{
 		builder.ToTable(DataSchema.TagsHistory.Name, DataSchema.Name);
 		builder.HasNoKey();

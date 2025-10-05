@@ -26,15 +26,15 @@ public record class InventoryState : IInventoryCacheState
 			var state = new InventoryState
 			{
 				AccessRules = [],
-				Blocks = ImmutableDictionary<int, BlockEntity>.Empty,
+				Blocks = ImmutableDictionary<int, Block>.Empty,
 				BlockProperties = [],
 				BlockTags = [],
-				Sources = ImmutableDictionary<int, SourceEntity>.Empty,
-				Tags = ImmutableDictionary<int, TagEntity>.Empty,
+				Sources = ImmutableDictionary<int, Source>.Empty,
+				Tags = ImmutableDictionary<int, Tag>.Empty,
 				TagInputs = [],
 				TagThresholds = [],
-				Users = ImmutableDictionary<Guid, UserEntity>.Empty,
-				UserGroups = ImmutableDictionary<Guid, UserGroupEntity>.Empty,
+				Users = ImmutableDictionary<Guid, User>.Empty,
+				UserGroups = ImmutableDictionary<Guid, UserGroup>.Empty,
 				UserGroupRelations = [],
 			};
 
@@ -48,17 +48,17 @@ public record class InventoryState : IInventoryCacheState
 	/// Фабричный метод создания нового состояния с нуля
 	/// </summary>
 	public static InventoryState Create(
-		IEnumerable<AccessRuleEntity> accessRules,
-		IEnumerable<BlockEntity> blocks,
-		IEnumerable<BlockPropertyEntity> blockProperties,
-		IEnumerable<BlockTagEntity> blockTags,
-		IEnumerable<SourceEntity> sources,
-		IEnumerable<TagEntity> tags,
-		IEnumerable<TagInputEntity> tagInputs,
+		IEnumerable<AccessRights> accessRules,
+		IEnumerable<Block> blocks,
+		IEnumerable<BlockProperty> blockProperties,
+		IEnumerable<BlockTag> blockTags,
+		IEnumerable<Source> sources,
+		IEnumerable<Tag> tags,
+		IEnumerable<TagInput> tagInputs,
 		//IEnumerable<TagThresholdEntity> tagThresholds,
-		IEnumerable<UserEntity> users,
-		IEnumerable<UserGroupEntity> userGroups,
-		IEnumerable<UserGroupRelationEntity> userGroupRelations)
+		IEnumerable<User> users,
+		IEnumerable<UserGroup> userGroups,
+		IEnumerable<UserGroupRelation> userGroupRelations)
 	{
 		var state = new InventoryState
 		{
@@ -85,31 +85,31 @@ public record class InventoryState : IInventoryCacheState
 
 	#region Коллекции с первичными ключами
 
-	public ImmutableDictionary<int, BlockEntity> Blocks { get; private set; } = ImmutableDictionary<int, BlockEntity>.Empty;
+	public ImmutableDictionary<int, Block> Blocks { get; private set; } = ImmutableDictionary<int, Block>.Empty;
 
-	public ImmutableDictionary<int, SourceEntity> Sources { get; private set; } = ImmutableDictionary<int, SourceEntity>.Empty;
+	public ImmutableDictionary<int, Source> Sources { get; private set; } = ImmutableDictionary<int, Source>.Empty;
 
-	public ImmutableDictionary<int, TagEntity> Tags { get; private set; } = ImmutableDictionary<int, TagEntity>.Empty;
+	public ImmutableDictionary<int, Tag> Tags { get; private set; } = ImmutableDictionary<int, Tag>.Empty;
 
-	public ImmutableDictionary<Guid, UserEntity> Users { get; private set; } = ImmutableDictionary<Guid, UserEntity>.Empty;
+	public ImmutableDictionary<Guid, User> Users { get; private set; } = ImmutableDictionary<Guid, User>.Empty;
 
-	public ImmutableDictionary<Guid, UserGroupEntity> UserGroups { get; private set; } = ImmutableDictionary<Guid, UserGroupEntity>.Empty;
+	public ImmutableDictionary<Guid, UserGroup> UserGroups { get; private set; } = ImmutableDictionary<Guid, UserGroup>.Empty;
 
 	#endregion Коллекции с первичными ключами
 
 	#region Коллекции без ключей
 
-	public required ImmutableList<AccessRuleEntity> AccessRules { get; init; }
+	public required ImmutableList<AccessRights> AccessRules { get; init; }
 
-	public required ImmutableList<BlockPropertyEntity> BlockProperties { get; init; }
+	public required ImmutableList<BlockProperty> BlockProperties { get; init; }
 
-	public required ImmutableList<BlockTagEntity> BlockTags { get; init; }
+	public required ImmutableList<BlockTag> BlockTags { get; init; }
 
-	public required ImmutableList<TagInputEntity> TagInputs { get; init; }
+	public required ImmutableList<TagInput> TagInputs { get; init; }
 
-	public required ImmutableList<TagThresholdEntity> TagThresholds { get; init; }
+	public required ImmutableList<TagThreshold> TagThresholds { get; init; }
 
-	public required ImmutableList<UserGroupRelationEntity> UserGroupRelations { get; init; }
+	public required ImmutableList<UserGroupRelation> UserGroupRelations { get; init; }
 
 	#endregion Коллекции без ключей
 
@@ -128,37 +128,37 @@ public record class InventoryState : IInventoryCacheState
 		ActiveTagsById = ActiveTagsByGuid.Values.ToImmutableDictionary(x => x.Id);
 	}
 
-	public ImmutableDictionary<int, BlockEntity> ActiveBlocksById { get; private set; } = ImmutableDictionary<int, BlockEntity>.Empty;
+	public ImmutableDictionary<int, Block> ActiveBlocksById { get; private set; } = ImmutableDictionary<int, Block>.Empty;
 
-	public ImmutableDictionary<int, SourceEntity> ActiveSourcesById { get; private set; } = ImmutableDictionary<int, SourceEntity>.Empty;
+	public ImmutableDictionary<int, Source> ActiveSourcesById { get; private set; } = ImmutableDictionary<int, Source>.Empty;
 
-	public ImmutableDictionary<Guid, TagEntity> ActiveTagsByGuid { get; private set; } = ImmutableDictionary<Guid, TagEntity>.Empty;
+	public ImmutableDictionary<Guid, Tag> ActiveTagsByGuid { get; private set; } = ImmutableDictionary<Guid, Tag>.Empty;
 
-	public ImmutableDictionary<int, TagEntity> ActiveTagsById { get; private set; } = ImmutableDictionary<int, TagEntity>.Empty;
+	public ImmutableDictionary<int, Tag> ActiveTagsById { get; private set; } = ImmutableDictionary<int, Tag>.Empty;
 
-	public ImmutableDictionary<Guid, UserEntity> ActiveUsersByGuid { get; private set; } = ImmutableDictionary<Guid, UserEntity>.Empty;
+	public ImmutableDictionary<Guid, User> ActiveUsersByGuid { get; private set; } = ImmutableDictionary<Guid, User>.Empty;
 
-	public ImmutableDictionary<Guid, UserGroupEntity> ActiveUserGroupsByGuid { get; private set; } = ImmutableDictionary<Guid, UserGroupEntity>.Empty;
+	public ImmutableDictionary<Guid, UserGroup> ActiveUserGroupsByGuid { get; private set; } = ImmutableDictionary<Guid, UserGroup>.Empty;
 
 	#endregion Словари активных объектов (только не удаленные)
 
 	#region Коллекции активных объектов (только не удаленные)
 
-	public IEnumerable<BlockEntity> ActiveBlocks => ActiveBlocksById.Values;
+	public IEnumerable<Block> ActiveBlocks => ActiveBlocksById.Values;
 
-	public IEnumerable<SourceEntity> ActiveSources => ActiveSourcesById.Values;
+	public IEnumerable<Source> ActiveSources => ActiveSourcesById.Values;
 
-	public IEnumerable<TagEntity> ActiveTags => ActiveTagsById.Values;
+	public IEnumerable<Tag> ActiveTags => ActiveTagsById.Values;
 
-	public IEnumerable<UserEntity> ActiveUsers => ActiveUsersByGuid.Values;
+	public IEnumerable<User> ActiveUsers => ActiveUsersByGuid.Values;
 
-	public IEnumerable<UserGroupEntity> ActiveUserGroups => ActiveUserGroupsByGuid.Values;
+	public IEnumerable<UserGroup> ActiveUserGroups => ActiveUserGroupsByGuid.Values;
 
 	#endregion Коллекции активных объектов (только не удаленные)
 
 	#region Вспомогательные методы для модификации
 
-	public IInventoryCacheState WithBlock(BlockEntity block)
+	public IInventoryCacheState WithBlock(Block block)
 	{
 		return Update(state => state with
 		{
@@ -167,7 +167,7 @@ public record class InventoryState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithSource(SourceEntity source)
+	public IInventoryCacheState WithSource(Source source)
 	{
 		return Update(state => state with
 		{
@@ -176,7 +176,7 @@ public record class InventoryState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithTag(TagEntity tag)
+	public IInventoryCacheState WithTag(Tag tag)
 	{
 		return Update(state => state with
 		{
@@ -186,7 +186,7 @@ public record class InventoryState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithUser(UserEntity user)
+	public IInventoryCacheState WithUser(User user)
 	{
 		return Update(state => state with
 		{
@@ -195,7 +195,7 @@ public record class InventoryState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithUserGroup(UserGroupEntity userGroup)
+	public IInventoryCacheState WithUserGroup(UserGroup userGroup)
 	{
 		return Update(state => state with
 		{
@@ -204,7 +204,7 @@ public record class InventoryState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithBlockTags(int blockId, IEnumerable<BlockTagEntity> blockTags)
+	public IInventoryCacheState WithBlockTags(int blockId, IEnumerable<BlockTag> blockTags)
 	{
 		return this with
 		{
@@ -212,7 +212,7 @@ public record class InventoryState : IInventoryCacheState
 		};
 	}
 
-	public IInventoryCacheState WithTagBlocks(int tagId, IEnumerable<BlockTagEntity> blockTags)
+	public IInventoryCacheState WithTagBlocks(int tagId, IEnumerable<BlockTag> blockTags)
 	{
 		return this with
 		{
@@ -220,7 +220,7 @@ public record class InventoryState : IInventoryCacheState
 		};
 	}
 
-	public IInventoryCacheState WithTagInputs(int tagId, IEnumerable<TagInputEntity> tagInputs)
+	public IInventoryCacheState WithTagInputs(int tagId, IEnumerable<TagInput> tagInputs)
 	{
 		return this with
 		{
@@ -228,7 +228,7 @@ public record class InventoryState : IInventoryCacheState
 		};
 	}
 
-	public IInventoryCacheState WithTagThresholds(int tagId, IEnumerable<TagThresholdEntity> tagThresholds)
+	public IInventoryCacheState WithTagThresholds(int tagId, IEnumerable<TagThreshold> tagThresholds)
 	{
 		return this/* with
 		{
@@ -236,7 +236,7 @@ public record class InventoryState : IInventoryCacheState
 		}*/;
 	}
 
-	public IInventoryCacheState WithUserGroupRelations(Guid userGroupGuid, IEnumerable<UserGroupRelationEntity> userGroupRelations)
+	public IInventoryCacheState WithUserGroupRelations(Guid userGroupGuid, IEnumerable<UserGroupRelation> userGroupRelations)
 	{
 		return this with
 		{
@@ -244,7 +244,7 @@ public record class InventoryState : IInventoryCacheState
 		};
 	}
 
-	public IInventoryCacheState WithAccessRules(int[] oldRulesId, AccessRuleEntity[] newRules)
+	public IInventoryCacheState WithAccessRules(int[] oldRulesId, AccessRights[] newRules)
 	{
 		return this with
 		{

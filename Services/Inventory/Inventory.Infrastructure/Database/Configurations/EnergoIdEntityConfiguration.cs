@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class EnergoIdEntityConfiguration : IEntityTypeConfiguration<EnergoIdEntity>
+public class EnergoIdEntityConfiguration : IEntityTypeConfiguration<EnergoId>
 {
-	public void Configure(EntityTypeBuilder<EnergoIdEntity> builder)
+	public void Configure(EntityTypeBuilder<EnergoId> builder)
 	{
 		// представление для пользователей EnergoId
 		builder.ToTable(name: null)
@@ -17,7 +17,7 @@ public class EnergoIdEntityConfiguration : IEntityTypeConfiguration<EnergoIdEnti
 
 		builder.HasOne(x => x.User)
 			.WithOne(x => x.EnergoId)
-			.HasForeignKey<UserEntity>(x => x.EnergoIdGuid)
-			.HasPrincipalKey<EnergoIdEntity>(x => x.Guid);
+			.HasForeignKey<User>(x => x.EnergoIdGuid)
+			.HasPrincipalKey<EnergoId>(x => x.Guid);
 	}
 }

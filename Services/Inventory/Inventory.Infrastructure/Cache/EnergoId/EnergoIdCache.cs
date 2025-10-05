@@ -1,7 +1,6 @@
 using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,15 +25,7 @@ public sealed class EnergoIdCache(
 
 	public override async Task StartAsync(CancellationToken cancellationToken)
 	{
-		using var scope = scopeFactory.CreateScope();
-		var energoIdViewCreator = scope.ServiceProvider.GetRequiredService<IEnergoIdViewCreator>();
-		var energoIdRepository = scope.ServiceProvider.GetRequiredService<IEnergoIdRepository>();
-
-		await energoIdViewCreator.RecreateAsync(cancellationToken);
-
-		var data = await energoIdRepository.GetAsync(cancellationToken);
-
-		SetState(data);
+		//await SafeRefreshAsync(cancellationToken);
 
 		await base.StartAsync(cancellationToken);
 	}
@@ -47,7 +38,7 @@ public sealed class EnergoIdCache(
 
 	private readonly SemaphoreSlim _refreshGate = new(1, 1);
 	static readonly TimeSpan interval = TimeSpan.FromMinutes(1);
-	private EnergoIdState _state = new() { Users = [], UsersByGuid = ImmutableDictionary<Guid, EnergoIdEntity>.Empty };
+	private EnergoIdState _state = new() { Users = [], UsersByGuid = ImmutableDictionary<Guid, Domain.Entities.EnergoId>.Empty };
 
 	/// <inheritdoc/>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -57,12 +48,12 @@ public sealed class EnergoIdCache(
 		try
 		{
 			// Первичная загрузка сразу
-			await SafeRefreshAsync(stoppingToken);
+			//await SafeRefreshAsync(stoppingToken);
 
 			// Периодические обновления
 			while (await timer.WaitForNextTickAsync(stoppingToken))
 			{
-				await SafeRefreshAsync(stoppingToken);
+				//await SafeRefreshAsync(stoppingToken);
 			}
 		}
 		catch (OperationCanceledException) { /* нормальное завершение */ }
@@ -89,7 +80,7 @@ public sealed class EnergoIdCache(
 
 			logger.LogDebug("Выполнено обновление EnergoId");
 		}
-		catch (OperationCanceledException) { throw; }
+		catch (OperationCanceledException) { }
 		catch (Exception ex)
 		{
 			logger.LogError(ex, "Сбой обновления EnergoId");
@@ -100,7 +91,7 @@ public sealed class EnergoIdCache(
 		}
 	}
 
-	private void SetState(IEnumerable<EnergoIdEntity> data)
+	private void SetState(IEnumerable<Domain.Entities.EnergoId> data)
 	{
 		var list = data.ToImmutableList();
 		var dict = list.ToImmutableDictionary(x => x.Guid);

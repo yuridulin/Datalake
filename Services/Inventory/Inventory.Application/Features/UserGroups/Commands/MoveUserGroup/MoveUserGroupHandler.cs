@@ -26,7 +26,7 @@ public class MoveUserGroupHandler(
 		command.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 	}
 
-	UserGroupEntity userGroup = null!;
+	UserGroup userGroup = null!;
 
 	public override async Task<bool> ExecuteInTransactionAsync(MoveUserGroupCommand command, CancellationToken ct = default)
 	{

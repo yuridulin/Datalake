@@ -4,17 +4,17 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class TagEntityConfiguration : IEntityTypeConfiguration<TagEntity>
+public class TagEntityConfiguration : IEntityTypeConfiguration<Tag>
 {
-	public void Configure(EntityTypeBuilder<TagEntity> builder)
+	public void Configure(EntityTypeBuilder<Tag> builder)
 	{
 		builder.HasKey(x => x.Id);
 
 		// связь тегов с входными тегами (переменными)
-		/*builder.HasMany(tag => tag.Thresholds)
+		builder.HasMany(tag => tag.Thresholds)
 			.WithOne(threshold => threshold.Tag)
 			.HasForeignKey(threshold => threshold.TagId)
-			.OnDelete(DeleteBehavior.Cascade);*/
+			.OnDelete(DeleteBehavior.Cascade);
 
 		// связь источников и тегов
 		builder.HasOne(tag => tag.Source)

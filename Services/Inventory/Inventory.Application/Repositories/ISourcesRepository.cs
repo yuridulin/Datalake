@@ -3,6 +3,6 @@ using Datalake.Domain.Entities;
 
 namespace Datalake.Inventory.Application.Repositories;
 
-public interface ISourcesRepository : IRepository<SourceEntity, int>
+public interface ISourcesRepository : IRepository<Source, int>
 {
 }

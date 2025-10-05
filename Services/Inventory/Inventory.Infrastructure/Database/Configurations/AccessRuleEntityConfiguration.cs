@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class AccessRuleEntityConfiguration : IEntityTypeConfiguration<AccessRuleEntity>
+public class AccessRuleEntityConfiguration : IEntityTypeConfiguration<AccessRights>
 {
-	public void Configure(EntityTypeBuilder<AccessRuleEntity> builder)
+	public void Configure(EntityTypeBuilder<AccessRights> builder)
 	{
 		builder.HasKey(x => x.Id);
 

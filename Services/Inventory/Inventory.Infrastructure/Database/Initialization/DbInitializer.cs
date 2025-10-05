@@ -1,6 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,8 +67,8 @@ public class DbInitializer(
 			}*/
 
 			// запись необходимых источников в список
-			var customSources = SourceEntity.CustomSources
-				.Select(x => new SourceEntity(type: x, name: x.ToString(), description: GetDescription(x), address: null))
+			var customSources = Source.CustomSources
+				.Select(x => Source.CreateAsInternal(type: x, name: x.ToString(), description: GetDescription(x)))
 				.ToArray();
 
 			var existsCustomSources = await context.Sources
@@ -81,23 +82,23 @@ public class DbInitializer(
 			// создание таблицы настроек
 			if (!await context.Settings.AnyAsync(stoppingToken))
 			{
-				var setting = new SettingsEntity(string.Empty, string.Empty, string.Empty, string.Empty);
+				var setting = new Settings(string.Empty, string.Empty, string.Empty, string.Empty);
 
 				await context.Settings.AddAsync(setting, stoppingToken);
 				await context.SaveChangesAsync(stoppingToken);
 			}
 
 			// создание администратора по умолчанию, если его учетки нет
-			if (await context.Users.AnyAsync(x => x.Login == "admin", stoppingToken))
+			if (!await context.Users.AnyAsync(x => x.Login == "admin", stoppingToken))
 			{
-				var admin = UserEntity.CreateFromLoginPassword("admin", "admin");
+				var admin = User.CreateFromLoginPassword("admin", "admin");
 
 				await context.Users.AddAsync(admin, stoppingToken);
 				await context.SaveChangesAsync(stoppingToken);
 			}
 
 			// Загрузка сессий пользователей
-			var auditLog = new AuditEntity(LogCategory.Core, "Сервер запущен", null);
+			var auditLog = new Log(LogCategory.Core, "Сервер запущен", null);
 			await context.SaveChangesAsync(stoppingToken);
 
 			logger.LogInformation("Настройка БД завершена");
@@ -109,6 +110,9 @@ public class DbInitializer(
 
 			// когда все кэши в работе, подгружаем БД в основной кэш
 			await inventoryCache.RestoreAsync();
+
+			var energoIdViewCreator = serviceScope.ServiceProvider.GetRequiredService<IEnergoIdViewCreator>();
+			await energoIdViewCreator.RecreateAsync(stoppingToken);
 		}
 		catch (Exception ex)
 		{

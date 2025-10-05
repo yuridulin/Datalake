@@ -26,7 +26,7 @@ public class UpdateSourceHandler(
 		command.User.ThrowIfNoGlobalAccess(AccessType.Admin);
 	}
 
-	SourceEntity source = null!;
+	Source source = null!;
 
 	public override async Task<int> ExecuteInTransactionAsync(UpdateSourceCommand command, CancellationToken ct = default)
 	{

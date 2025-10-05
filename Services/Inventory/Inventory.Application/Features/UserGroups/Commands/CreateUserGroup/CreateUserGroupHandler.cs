@@ -25,7 +25,7 @@ public class CreateUserGroupHandler(
 		command.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 	}
 
-	UserGroupEntity userGroup = null!;
+	UserGroup userGroup = null!;
 
 	public override async Task<Guid> ExecuteInTransactionAsync(CreateUserGroupCommand command, CancellationToken ct = default)
 	{

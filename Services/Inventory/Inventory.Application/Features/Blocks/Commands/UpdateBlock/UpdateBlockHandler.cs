@@ -22,8 +22,8 @@ public class UpdateBlockHandler(
 		TransactionalCommandHandler<UpdateBlockCommand, int>(unitOfWork, logger, inventoryCache),
 		IUpdateBlockHandler
 {
-	private BlockEntity block = null!;
-	private BlockTagEntity[] blockTags = null!;
+	private Block block = null!;
+	private BlockTag[] blockTags = null!;
 
 	public override void CheckPermissions(UpdateBlockCommand command)
 	{
@@ -43,11 +43,11 @@ public class UpdateBlockHandler(
 
 		if (command.Tags.Any())
 		{
-			blockTags = command.Tags.Select(x => new BlockTagEntity(block.Id, x.TagId, x.LocalName, x.Relation)).ToArray();
+			blockTags = command.Tags.Select(x => new BlockTag(block.Id, x.TagId, x.LocalName, x.Relation)).ToArray();
 			await blockTagsRepository.AddRangeAsync(blockTags, ct);
 		}
 
-		var audit = new AuditEntity(command.User.Guid, $"Изменения: diff", blockId: block.Id);
+		var audit = new Log(command.User.Guid, $"Изменения: diff", blockId: block.Id);
 		await auditRepository.AddAsync(audit, ct);
 
 		return block.Id;

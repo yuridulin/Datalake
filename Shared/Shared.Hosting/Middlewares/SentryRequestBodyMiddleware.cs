@@ -13,47 +13,53 @@ public class SentryRequestBodyMiddleware : IMiddleware
 	/// <inheritdoc/>
 	public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 	{
-		// Включаем буферизацию
-		context.Request.EnableBuffering();
-
-		string bodyAsText;
-
-		using (var reader = new StreamReader(
-			context.Request.Body,
-			encoding: Encoding.UTF8,
-			detectEncodingFromByteOrderMarks: false,
-			bufferSize: 1024,
-			leaveOpen: true))
+		if (context.Request.Method == HttpMethod.Post.Method && context.Request.Method == HttpMethod.Put.Method)
 		{
-			bodyAsText = await reader.ReadToEndAsync();
-			context.Request.Body.Position = 0;
-		}
+			// Включаем буферизацию
+			context.Request.EnableBuffering();
 
-		// Пытаемся распарсить JSON и скрыть чувствительные поля
-		try
-		{
-			var json = JsonSerializer.Deserialize<Dictionary<string, object>>(bodyAsText, JsonSettings.JsonSerializerOptions);
-			if (json != null)
+			string bodyAsText;
+
+			using (var reader = new StreamReader(
+				context.Request.Body,
+				encoding: Encoding.UTF8,
+				detectEncodingFromByteOrderMarks: false,
+				bufferSize: 1024,
+				leaveOpen: true))
 			{
-				var sensitiveKeys = new[] { "password", "token", "secret", "authorization" };
-				foreach (var key in sensitiveKeys)
-				{
-					if (json.ContainsKey(key))
-						json[key] = "***MASKED***";
-				}
-				bodyAsText = JsonSerializer.Serialize(json, JsonSettings.JsonSerializerOptions);
+				bodyAsText = await reader.ReadToEndAsync();
+				context.Request.Body.Position = 0;
 			}
-		}
-		catch
-		{
-			// Не JSON — оставляем как есть
-		}
 
-		// Добавляем в Sentry scope
-		SentrySdk.ConfigureScope(scope =>
-		{
-			scope.SetExtra("request_body", bodyAsText);
-		});
+			// Пытаемся распарсить JSON и скрыть чувствительные поля
+			if (!string.IsNullOrEmpty(bodyAsText))
+			{
+				try
+				{
+					var json = JsonSerializer.Deserialize<Dictionary<string, object>>(bodyAsText, JsonSettings.JsonSerializerOptions);
+					if (json != null)
+					{
+						var sensitiveKeys = new[] { "password", "token", "secret", "authorization" };
+						foreach (var key in sensitiveKeys)
+						{
+							if (json.ContainsKey(key))
+								json[key] = "***MASKED***";
+						}
+						bodyAsText = JsonSerializer.Serialize(json, JsonSettings.JsonSerializerOptions);
+					}
+				}
+				catch
+				{
+					// Не JSON — оставляем как есть
+				}
+			}
+
+			// Добавляем в Sentry scope
+			SentrySdk.ConfigureScope(scope =>
+			{
+				scope.SetExtra("request_body", bodyAsText);
+			});
+		}
 
 		await next(context);
 	}

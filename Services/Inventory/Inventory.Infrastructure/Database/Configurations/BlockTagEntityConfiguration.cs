@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class BlockTagEntityConfiguration : IEntityTypeConfiguration<BlockTagEntity>
+public class BlockTagEntityConfiguration : IEntityTypeConfiguration<BlockTag>
 {
-	public void Configure(EntityTypeBuilder<BlockTagEntity> builder)
+	public void Configure(EntityTypeBuilder<BlockTag> builder)
 	{
 		builder.HasKey(x => x.Id);
 	}

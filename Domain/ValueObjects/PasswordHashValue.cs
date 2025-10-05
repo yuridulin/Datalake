@@ -43,7 +43,7 @@ public sealed record PasswordHashValue
 	/// <summary>
 	/// Восстановить из существующего хэша
 	/// </summary>
-	public static PasswordHashValue FromExistingHash(string hash)
+	public static PasswordHashValue FromExistingHash(string? hash)
 	{
 		if (string.IsNullOrEmpty(hash))
 			throw new DomainException("Хэш не может быть пустым");

@@ -26,7 +26,7 @@ public class DeleteUserGroupHandler(
 		command.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 	}
 
-	UserGroupEntity userGroup = null!;
+	UserGroup userGroup = null!;
 
 	public override async Task<bool> ExecuteInTransactionAsync(DeleteUserGroupCommand command, CancellationToken ct = default)
 	{

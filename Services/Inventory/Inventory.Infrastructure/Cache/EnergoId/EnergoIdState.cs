@@ -12,10 +12,10 @@ public record class EnergoIdState : IEnergoIdCacheState
 	/// <summary>
 	/// Список пользователей
 	/// </summary>
-	public required ImmutableList<EnergoIdEntity> Users { get; set; }
+	public required ImmutableList<Domain.Entities.EnergoId> Users { get; set; }
 
 	/// <summary>
 	/// Список пользователей, сопоставленный с идентификаторами
 	/// </summary>
-	public required ImmutableDictionary<Guid, EnergoIdEntity> UsersByGuid { get; set; }
+	public required ImmutableDictionary<Guid, Domain.Entities.EnergoId> UsersByGuid { get; set; }
 }

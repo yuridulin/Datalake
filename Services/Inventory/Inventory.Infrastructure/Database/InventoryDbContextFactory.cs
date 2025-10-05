@@ -1,21 +1,28 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 
 namespace Datalake.Inventory.Infrastructure.Database;
 
+/// <summary>
+/// Создание подключения для миграций. Строка подключения указана в отдельном конфиге
+/// </summary>
 public class InventoryDbContextFactory : IDesignTimeDbContextFactory<InventoryDbContext>
 {
 	public InventoryDbContext CreateDbContext(string[] args)
 	{
+		var environment = "Migrations";
+
+		var storage = Path.Combine(Directory.GetCurrentDirectory(), "storage", "config");
+		var config = new ConfigurationBuilder()
+			.SetBasePath(storage)
+			.AddJsonFile("appsettings.json")
+			.AddJsonFile($"appsettings.{environment}.json", optional: true)
+			.Build();
+
 		var optionsBuilder = new DbContextOptionsBuilder<InventoryDbContext>();
+		optionsBuilder.UseNpgsql(config.GetConnectionString("Default"));
 
-		// Можно взять строку подключения из env или захардкодить для миграций
-		var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
-				?? "Host=localhost;Database=inventory;Username=postgres;Password=postgres";
-
-		optionsBuilder.UseNpgsql(connectionString);
-
-		return new InventoryDbContext(optionsBuilder.Options);
+		return new(optionsBuilder.Options);
 	}
 }
-

@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class AuditEntityConfiguration : IEntityTypeConfiguration<AuditEntity>
+public class AuditEntityConfiguration : IEntityTypeConfiguration<Log>
 {
-	public void Configure(EntityTypeBuilder<AuditEntity> builder)
+	public void Configure(EntityTypeBuilder<Log> builder)
 	{
 		builder.HasKey(x => x.Id);
 

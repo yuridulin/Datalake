@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class TagInputEntityConfiguration : IEntityTypeConfiguration<TagInputEntity>
+public class TagInputEntityConfiguration : IEntityTypeConfiguration<TagInput>
 {
-	public void Configure(EntityTypeBuilder<TagInputEntity> builder)
+	public void Configure(EntityTypeBuilder<TagInput> builder)
 	{
 		builder.HasKey(x => x.Id);
 

@@ -8,7 +8,7 @@ namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 [Scoped]
 public class EnergoIdRepository(InventoryDbContext context) : IEnergoIdRepository
 {
-	public async Task<IEnumerable<EnergoIdEntity>> GetAsync(CancellationToken ct = default)
+	public async Task<IEnumerable<EnergoId>> GetAsync(CancellationToken ct = default)
 	{
 		return await context.EnergoIdView.ToArrayAsync(ct);
 	}

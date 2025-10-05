@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class SourcesRepository(InventoryDbContext context) : DbRepository<SourceEntity, int>(context), ISourcesRepository
+public class SourcesRepository(InventoryDbContext context) : DbRepository<Source, int>(context), ISourcesRepository
 {
-	public override Task<SourceEntity?> GetByIdAsync(int id, CancellationToken ct = default)
+	public override Task<Source?> GetByIdAsync(int id, CancellationToken ct = default)
 	{
 		return _set.FirstOrDefaultAsync(x => x.Id == id, cancellationToken: ct);
 	}

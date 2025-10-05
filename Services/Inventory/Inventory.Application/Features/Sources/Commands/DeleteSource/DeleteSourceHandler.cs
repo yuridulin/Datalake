@@ -26,7 +26,7 @@ public class DeleteSourceHandler(
 		command.User.ThrowIfNoGlobalAccess(AccessType.Admin);
 	}
 
-	SourceEntity source = null!;
+	Source source = null!;
 
 	public override async Task<int> ExecuteInTransactionAsync(DeleteSourceCommand command, CancellationToken ct = default)
 	{

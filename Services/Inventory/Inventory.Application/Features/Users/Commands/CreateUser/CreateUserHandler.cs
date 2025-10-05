@@ -25,7 +25,7 @@ public class CreateUserHandler(
 		command.User.ThrowIfNoGlobalAccess(AccessType.Admin);
 	}
 
-	UserEntity user = null!;
+	User user = null!;
 
 	public override async Task<Guid> ExecuteInTransactionAsync(CreateUserCommand command, CancellationToken ct = default)
 	{

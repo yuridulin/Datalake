@@ -3,7 +3,7 @@ using Datalake.Domain.Entities;
 
 namespace Datalake.Inventory.Application.Repositories;
 
-public interface ITagThresholdsRepository : IRepository<TagThresholdEntity, int>
+public interface ITagThresholdsRepository : IRepository<TagThreshold, int>
 {
-	Task<IEnumerable<TagThresholdEntity>> GetByTagIdAsync(int tagId, CancellationToken ct = default);
+	Task<IEnumerable<TagThreshold>> GetByTagIdAsync(int tagId, CancellationToken ct = default);
 }

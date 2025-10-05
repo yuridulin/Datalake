@@ -27,7 +27,7 @@ public class UpdateSettingsHandler(
 
 		if (settings == null)
 		{
-			settings = new SettingsEntity(
+			settings = new Domain.Entities.Settings(
 				keycloakHost: command.KeycloakHost,
 				keycloakClient: command.KeycloakClient,
 				energoIdApi: command.EnergoIdApi,
@@ -44,7 +44,7 @@ public class UpdateSettingsHandler(
 			await settingsRepository.UpdateAsync(settings, ct);
 		}
 
-		var audit = new AuditEntity(command.User.Guid, $"Настройки изменены");
+		var audit = new Log(command.User.Guid, $"Настройки изменены");
 		await auditRepository.AddAsync(audit, ct);
 
 		return true;

@@ -27,8 +27,8 @@ public class UpdateUserGroupHandler(
 		command.User.ThrowIfNoAccessToUserGroup(AccessType.Manager, command.Guid);
 	}
 
-	UserGroupEntity userGroup = null!;
-	UserGroupRelationEntity[] userGroupRelations = null!;
+	UserGroup userGroup = null!;
+	UserGroupRelation[] userGroupRelations = null!;
 
 	public override async Task<bool> ExecuteInTransactionAsync(UpdateUserGroupCommand command, CancellationToken ct = default)
 	{
@@ -44,7 +44,7 @@ public class UpdateUserGroupHandler(
 		if (command.Users.Any())
 		{
 			userGroupRelations = command.Users
-				.Select(x => new UserGroupRelationEntity(
+				.Select(x => new UserGroupRelation(
 					userGroupGuid: userGroup.Guid,
 					userGuid: x.Guid,
 					accessType: x.AccessType))

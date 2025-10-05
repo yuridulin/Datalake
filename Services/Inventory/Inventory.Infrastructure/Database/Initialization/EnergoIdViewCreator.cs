@@ -88,23 +88,23 @@ public class EnergoIdViewCreator(
 						r.id = ue.realm_id 
 				)
 				SELECT
-					(c.id)::uuid AS {QI(nameof(EnergoIdEntity.Guid))},
-					c.username AS {QI(nameof(EnergoIdEntity.UserName))},
-					c.email AS {QI(nameof(EnergoIdEntity.Email))},
-					c.first_name AS {QI(nameof(EnergoIdEntity.FirstName))},
-					c.last_name AS {QI(nameof(EnergoIdEntity.LastName))},
-					c.enabled AS {QI(nameof(EnergoIdEntity.IsEnabled))},
+					(c.id)::uuid AS {QI(nameof(EnergoId.Guid))},
+					c.username AS {QI(nameof(EnergoId.UserName))},
+					c.email AS {QI(nameof(EnergoId.Email))},
+					c.first_name AS {QI(nameof(EnergoId.FirstName))},
+					c.last_name AS {QI(nameof(EnergoId.LastName))},
+					c.enabled AS {QI(nameof(EnergoId.IsEnabled))},
 					/* из миллисекунд → timestamptz (UTC) */
-					(TIMESTAMP WITH TIME ZONE 'epoch' + (c.created_timestamp / 1000.0) * INTERVAL '1 second') AS {QI(nameof(EnergoIdEntity.CreatedAt))},
-					ua.value  AS {QI(nameof(EnergoIdEntity.UploaderEnterpriseCode))},
-					ua1.value AS {QI(nameof(EnergoIdEntity.EnterpriseCode))},
-					ua2.value AS {QI(nameof(EnergoIdEntity.PersonnelNumber))},
-					ua3.value AS {QI(nameof(EnergoIdEntity.MiddleName))},
-					ua4.value AS {QI(nameof(EnergoIdEntity.Phone))},
-					ua5.value AS {QI(nameof(EnergoIdEntity.WorkPhone))},
-					ua6.value AS {QI(nameof(EnergoIdEntity.MobilePhone))},
-					ua7.value AS {QI(nameof(EnergoIdEntity.Gender))},
-					ua8.value AS {QI(nameof(EnergoIdEntity.Birthday))}
+					(TIMESTAMP WITH TIME ZONE 'epoch' + (c.created_timestamp / 1000.0) * INTERVAL '1 second') AS {QI(nameof(EnergoId.CreatedAt))},
+					ua.value  AS {QI(nameof(EnergoId.UploaderEnterpriseCode))},
+					ua1.value AS {QI(nameof(EnergoId.EnterpriseCode))},
+					ua2.value AS {QI(nameof(EnergoId.PersonnelNumber))},
+					ua3.value AS {QI(nameof(EnergoId.MiddleName))},
+					ua4.value AS {QI(nameof(EnergoId.Phone))},
+					ua5.value AS {QI(nameof(EnergoId.WorkPhone))},
+					ua6.value AS {QI(nameof(EnergoId.MobilePhone))},
+					ua7.value AS {QI(nameof(EnergoId.Gender))},
+					ua8.value AS {QI(nameof(EnergoId.Birthday))}
 				FROM cte_user c
 				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua  ON c.id = ua.user_id  AND ua.""name""  = 'uploader_enterprise_code'
 				LEFT JOIN {QI(EnergoIdSchema.Name)}.user_attribute ua1 ON c.id = ua1.user_id AND ua1.""name"" = 'enterprise_code'

@@ -21,9 +21,9 @@ public class ChangeUserGroupRulesHandler(
 	{
 		command.User.ThrowIfNoGlobalAccess(AccessType.Admin);
 
-		UserGroupEntity userGroup;
+		UserGroup userGroup;
 		int[] oldRulesId;
-		AccessRuleEntity[] newRules;
+		AccessRights[] newRules;
 
 		await unitOfWork.BeginTransactionAsync(ct);
 
@@ -36,10 +36,10 @@ public class ChangeUserGroupRulesHandler(
 			oldRulesId = oldRules.Select(x => x.Id).ToArray();
 			await accessRulesRepository.RemoveRangeAsync(oldRules, ct);
 
-			newRules = command.Rules.Select(x => new AccessRuleEntity(x.Type, userGroupGuid: userGroup.Guid, tagId: x.TagId, sourceId: x.SourceId, blockId: x.BlockId)).ToArray();
+			newRules = command.Rules.Select(x => new AccessRights(x.Type, userGroupGuid: userGroup.Guid, tagId: x.TagId, sourceId: x.SourceId, blockId: x.BlockId)).ToArray();
 			await accessRulesRepository.AddRangeAsync(newRules, ct);
 
-			var audit = new AuditEntity(command.User.Guid, "Изменены права доступа", userGroupGuid: userGroup.Guid);
+			var audit = new Log(command.User.Guid, "Изменены права доступа", userGroupGuid: userGroup.Guid);
 			await auditRepository.AddAsync(audit, ct);
 			await unitOfWork.SaveChangesAsync(ct);
 		}

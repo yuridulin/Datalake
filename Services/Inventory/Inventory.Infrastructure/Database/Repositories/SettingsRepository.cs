@@ -8,17 +8,17 @@ namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 [Scoped]
 public class SettingsRepository(InventoryDbContext context) : ISettingsRepository
 {
-	public async Task AddAsync(SettingsEntity settings, CancellationToken ct = default)
+	public async Task AddAsync(Settings settings, CancellationToken ct = default)
 	{
 		await context.Settings.AddAsync(settings, ct);
 	}
 
-	public async Task<SettingsEntity?> GetAsync(CancellationToken ct = default)
+	public async Task<Settings?> GetAsync(CancellationToken ct = default)
 	{
 		return await context.Settings.FirstOrDefaultAsync(ct);
 	}
 
-	public Task UpdateAsync(SettingsEntity entity, CancellationToken ct = default)
+	public Task UpdateAsync(Settings entity, CancellationToken ct = default)
 	{
 		context.Settings.Update(entity);
 		return Task.CompletedTask;

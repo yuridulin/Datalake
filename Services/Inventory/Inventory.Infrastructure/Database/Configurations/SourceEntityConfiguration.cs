@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class SourceEntityConfiguration : IEntityTypeConfiguration<SourceEntity>
+public class SourceEntityConfiguration : IEntityTypeConfiguration<Source>
 {
-	public void Configure(EntityTypeBuilder<SourceEntity> builder)
+	public void Configure(EntityTypeBuilder<Source> builder)
 	{
 		builder.HasKey(x => x.Id);
 	}

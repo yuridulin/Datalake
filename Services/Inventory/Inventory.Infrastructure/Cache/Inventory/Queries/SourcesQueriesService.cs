@@ -13,7 +13,7 @@ public class SourcesQueriesService(IInventoryCache inventoryCache) : ISourcesQue
 		var state = inventoryCache.State;
 
 		var data = state.ActiveSources
-			.Where(source => withCustom || !SourceEntity.CustomSources.Contains(source.Type))
+			.Where(source => withCustom || !Source.CustomSources.Contains(source.Type))
 			.Select(source => new SourceInfo
 			{
 				Id = source.Id,
@@ -115,7 +115,7 @@ public class SourcesQueriesService(IInventoryCache inventoryCache) : ISourcesQue
 		return Task.FromResult(data);
 	}
 
-	private static SourceWithTagsInfo MapSourceToSourceWithTagsInfo(IInventoryCacheState currentState, SourceEntity source)
+	private static SourceWithTagsInfo MapSourceToSourceWithTagsInfo(IInventoryCacheState currentState, Source source)
 	{
 		return new SourceWithTagsInfo
 		{

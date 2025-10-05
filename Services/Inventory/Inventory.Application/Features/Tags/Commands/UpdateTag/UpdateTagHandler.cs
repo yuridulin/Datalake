@@ -30,9 +30,9 @@ public class UpdateTagHandler(
 		command.User.ThrowIfNoAccessToTag(AccessType.Manager, command.Id);
 	}
 
-	TagEntity tag = null!;
-	TagInputEntity[]? tagInputs;
-	TagThresholdEntity[]? tagThresholds;
+	Tag tag = null!;
+	TagInput[]? tagInputs;
+	TagThreshold[]? tagThresholds;
 
 	public override async Task<bool> ExecuteInTransactionAsync(UpdateTagCommand command, CancellationToken ct = default)
 	{
@@ -56,7 +56,7 @@ public class UpdateTagHandler(
 			if (await tagsRepository.ExistsRangeAsync(command.FormulaInputs.Select(x => x.TagId), ct))
 				throw new NotFoundException("Не все теги, указанные как входные для формулы, были найдены");
 
-			tagInputs = command.FormulaInputs.Select(x => new TagInputEntity(tag.Id, x.TagId, x.BlockId, x.VariableName)).ToArray();
+			tagInputs = command.FormulaInputs.Select(x => new TagInput(tag.Id, x.TagId, x.BlockId, x.VariableName)).ToArray();
 			await tagInputsRepository.AddRangeAsync(tagInputs, ct);
 		}
 
@@ -65,7 +65,7 @@ public class UpdateTagHandler(
 
 		if (command.Thresholds.Any())
 		{
-			tagThresholds = command.Thresholds.Select(x => new TagThresholdEntity(tag.Id, x.InputValue, x.OutputValue)).ToArray();
+			tagThresholds = command.Thresholds.Select(x => new TagThreshold(tag.Id, x.InputValue, x.OutputValue)).ToArray();
 			await tagThresholdsRepository.AddRangeAsync(tagThresholds, ct);
 		}
 

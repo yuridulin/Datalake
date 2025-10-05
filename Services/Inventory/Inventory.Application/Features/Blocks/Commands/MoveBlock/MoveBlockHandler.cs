@@ -20,7 +20,7 @@ public class MoveBlockHandler(
 	{
 		command.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 
-		BlockEntity block;
+		Block block;
 
 		await unitOfWork.BeginTransactionAsync(ct);
 
@@ -34,7 +34,7 @@ public class MoveBlockHandler(
 
 			block.UpdateParent(command.ParentId);
 
-			var audit = new AuditEntity(command.User.Guid, $"Изменения: diff", blockId: block.Id);
+			var audit = new Log(command.User.Guid, $"Изменения: diff", blockId: block.Id);
 			await auditRepository.AddAsync(audit, ct);
 			await unitOfWork.SaveChangesAsync(ct);
 

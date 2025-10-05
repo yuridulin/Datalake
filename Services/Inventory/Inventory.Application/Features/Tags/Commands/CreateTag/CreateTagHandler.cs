@@ -40,12 +40,12 @@ public class CreateTagHandler(
 		}
 	}
 
-	TagEntity tag = null!;
-	BlockTagEntity? blockTag = null;
+	Tag tag = null!;
+	BlockTag? blockTag = null;
 
 	public override async Task<int> ExecuteInTransactionAsync(CreateTagCommand command, CancellationToken ct = default)
 	{
-		SourceEntity? source = null;
+		Source? source = null;
 		SourceType sourceType = SourceType.Manual;
 
 		if (command.SourceId.HasValue)

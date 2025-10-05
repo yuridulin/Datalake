@@ -26,7 +26,7 @@ public class DeleteUserHandler(
 		command.User.ThrowIfNoGlobalAccess(AccessType.Admin);
 	}
 
-	UserEntity user = null!;
+	User user = null!;
 
 	public override async Task<bool> ExecuteInTransactionAsync(DeleteUserCommand command, CancellationToken ct = default)
 	{

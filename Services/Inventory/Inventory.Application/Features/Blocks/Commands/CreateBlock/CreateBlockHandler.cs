@@ -19,7 +19,7 @@ public class CreateBlockHandler(
 	{
 		command.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 
-		BlockEntity block = string.IsNullOrEmpty(command.Name)
+		Block block = string.IsNullOrEmpty(command.Name)
 			? new(command.ParentId)
 			: new(command.ParentId, command.Name, command.Description);
 
@@ -37,7 +37,7 @@ public class CreateBlockHandler(
 				await unitOfWork.SaveChangesAsync(ct);
 			}
 
-			var audit = new AuditEntity(command.User.Guid, $"Создан новый блок: {block.Name}", blockId: block.Id);
+			var audit = new Log(command.User.Guid, $"Создан новый блок: {block.Name}", blockId: block.Id);
 			await auditRepository.AddAsync(audit, ct);
 			await unitOfWork.SaveChangesAsync(ct);
 

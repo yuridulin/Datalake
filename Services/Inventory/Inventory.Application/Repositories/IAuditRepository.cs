@@ -3,6 +3,6 @@ using Datalake.Domain.Entities;
 
 namespace Datalake.Inventory.Application.Repositories;
 
-public interface IAuditRepository : IRepository<AuditEntity, int>
+public interface IAuditRepository : IRepository<Log, int>
 {
 }

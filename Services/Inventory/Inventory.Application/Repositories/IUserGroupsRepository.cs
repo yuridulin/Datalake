@@ -3,6 +3,6 @@ using Datalake.Domain.Entities;
 
 namespace Datalake.Inventory.Application.Repositories;
 
-public interface IUserGroupsRepository : IRepository<UserGroupEntity, Guid>
+public interface IUserGroupsRepository : IRepository<UserGroup, Guid>
 {
 }

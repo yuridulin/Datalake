@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Datalake.Inventory.Infrastructure.Database.Repositories;
 
 [Scoped]
-public class UserGroupsRepository(InventoryDbContext context) : DbRepository<UserGroupEntity, Guid>(context), IUserGroupsRepository
+public class UserGroupsRepository(InventoryDbContext context) : DbRepository<UserGroup, Guid>(context), IUserGroupsRepository
 {
-	public override Task<UserGroupEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
+	public override Task<UserGroup?> GetByIdAsync(Guid id, CancellationToken ct = default)
 	{
 		return _set.FirstOrDefaultAsync(x => x.Guid == id, cancellationToken: ct);
 	}

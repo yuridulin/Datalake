@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
+public class UserEntityConfiguration : IEntityTypeConfiguration<User>
 {
-	public void Configure(EntityTypeBuilder<UserEntity> builder)
+	public void Configure(EntityTypeBuilder<User> builder)
 	{
 		// Настройка таблицы
 		builder.ToTable("Users");
@@ -16,8 +16,7 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
 		builder.HasKey(u => u.Guid);
 
 		// Настройка индексов
-		builder.HasIndex(u => u.Login).IsUnique();
-		builder.HasIndex(u => u.EnergoIdGuid).IsUnique();
+		builder.HasIndex(u => new { u.Login, u.EnergoIdGuid }).IsUnique();
 		builder.HasIndex(u => u.Type); 
 
 		// Настройка свойств
@@ -39,14 +38,14 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
 			.Property(x => x.PasswordHash)
 			.HasConversion(
 				password => password != null ? password.ToString() : null,
-				hash => hash != null ? PasswordHashValue.FromExistingHash(hash) : null)
+				hash => string.IsNullOrEmpty(hash) ? null : PasswordHashValue.FromExistingHash(hash))
 			.HasColumnName("PasswordHash");
 
 		// Настройка отношений "многие-ко-многим" с группами
 		builder
 			.HasMany(u => u.Groups)
 			.WithMany(g => g.Users)
-			.UsingEntity<UserGroupRelationEntity>(
+			.UsingEntity<UserGroupRelation>(
 				j => j.HasOne(ug => ug.UserGroup).WithMany().HasForeignKey(ug => ug.UserGroupGuid),
 				j => j.HasOne(ug => ug.User).WithMany().HasForeignKey(ug => ug.UserGuid)
 			);

@@ -20,7 +20,7 @@ public class DeleteBlockHandler(
 	{
 		command.User.ThrowIfNoAccessToBlock(AccessType.Manager, command.BlockId);
 
-		BlockEntity block;
+		Block block;
 
 		await unitOfWork.BeginTransactionAsync(ct);
 
@@ -32,7 +32,7 @@ public class DeleteBlockHandler(
 			block.MarkAsDeleted();
 			await blocksRepository.UpdateAsync(block, ct);
 
-			var audit = new AuditEntity(command.User.Guid, $"Блок удален", blockId: block.Id);
+			var audit = new Log(command.User.Guid, $"Блок удален", blockId: block.Id);
 			await auditRepository.AddAsync(audit, ct);
 
 			await unitOfWork.SaveChangesAsync(ct);

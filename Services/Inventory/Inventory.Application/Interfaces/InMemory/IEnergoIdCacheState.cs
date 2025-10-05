@@ -5,7 +5,7 @@ namespace Datalake.Inventory.Application.Interfaces.InMemory;
 
 public interface IEnergoIdCacheState
 {
-	ImmutableList<EnergoIdEntity> Users { get; }
+	ImmutableList<EnergoId> Users { get; }
 
-	ImmutableDictionary<Guid, EnergoIdEntity> UsersByGuid { get; }
+	ImmutableDictionary<Guid, EnergoId> UsersByGuid { get; }
 }

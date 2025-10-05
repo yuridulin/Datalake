@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Datalake.Inventory.Infrastructure.Database.Configurations;
 
-public class UserGroupEntityConfiguration : IEntityTypeConfiguration<UserGroupEntity>
+public class UserGroupEntityConfiguration : IEntityTypeConfiguration<UserGroup>
 {
-	public void Configure(EntityTypeBuilder<UserGroupEntity> builder)
+	public void Configure(EntityTypeBuilder<UserGroup> builder)
 	{
 		builder.HasKey(x => x.Guid);
 
@@ -19,7 +19,7 @@ public class UserGroupEntityConfiguration : IEntityTypeConfiguration<UserGroupEn
 		// связь пользователей и групп пользователей
 		builder.HasMany(group => group.Users)
 			.WithMany(user => user.Groups)
-			.UsingEntity<UserGroupRelationEntity>(
+			.UsingEntity<UserGroupRelation>(
 				relation => relation
 					.HasOne(rel => rel.User)
 					.WithMany(user => user.GroupsRelations)
@@ -33,13 +33,5 @@ public class UserGroupEntityConfiguration : IEntityTypeConfiguration<UserGroupEn
 				relation => relation
 					.HasKey(rel => new { rel.UserGroupGuid, rel.UserGuid })
 			);
-	}
-}
-
-public class UserGroupRelationEntityConfiguration : IEntityTypeConfiguration<UserGroupRelationEntity>
-{
-	public void Configure(EntityTypeBuilder<UserGroupRelationEntity> builder)
-	{
-		builder.HasKey(x => x.Id);
 	}
 }
