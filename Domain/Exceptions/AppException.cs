@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace Datalake.Contracts.Public.Exceptions;
+namespace Datalake.Domain.Exceptions;
 
 /// <summary>
 /// Базовая ошибка приложения

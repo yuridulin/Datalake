@@ -1,6 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Domain.Exceptions;
 using Datalake.Domain.Extensions;
+using System.Globalization;
 
 namespace Datalake.Domain.ValueObjects;
 
@@ -18,14 +19,58 @@ public sealed record class TagHistory
 		Quality = quality ?? TagQuality.Bad_NoValues;
 	}
 
+	public TagHistory(int tagId, TagType type, DateTime? date, TagQuality? quality, object? value, float? scale) : this(tagId, date, quality)
+	{
+		if (value == null)
+			return;
+
+		var text = value.ToString();
+
+		if (type == TagType.String)
+		{
+			Text = text;
+		}
+		else if (type == TagType.Number)
+		{
+			if (double.TryParse(text ?? "x", NumberStyles.Float, CultureInfo.InvariantCulture, out double dValue))
+			{
+				float number = (float)dValue;
+
+				if (scale.HasValue)
+				{
+					Number = number * scale;
+				}
+				else
+				{
+					Number = number;
+				}
+			}
+		}
+		else if (type == TagType.Boolean)
+		{
+			Boolean = text == One || text == True;
+		}
+		else
+		{
+			throw new DomainException("Неизвестный тип при создании значения: " + type.ToString());
+		}
+	}
+
 	public TagHistory(int tagId, DateTime? date, TagQuality? quality, string? text) : this(tagId, date, quality)
 	{
 		Text = text;
 	}
 
-	public TagHistory(int tagId, DateTime? date, TagQuality? quality, float? number) : this(tagId, date, quality)
+	public TagHistory(int tagId, DateTime? date, TagQuality? quality, float? number, float? scale) : this(tagId, date, quality)
 	{
-		Number = number;
+		if (scale.HasValue)
+		{
+			Number = number * scale;
+		}
+		else
+		{
+			Number = number;
+		}
 	}
 
 	public TagHistory(int tagId, DateTime? date, TagQuality? quality, bool? boolean) : this(tagId, date, quality)
@@ -114,4 +159,15 @@ public sealed record class TagHistory
 		var rounded = Math.Abs((value1 ?? 0) - (value2 ?? 0));
 		return rounded < epsilon;
 	}
+
+	/// <summary>
+	/// Значение истины
+	/// </summary>
+	private static string True { get; } = true.ToString();
+
+	/// <summary>
+	/// Значение единицы
+	/// </summary>
+	private static string One { get; } = 1.ToString();
+
 }

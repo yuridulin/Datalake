@@ -1,5 +1,4 @@
-﻿using Datalake.Contracts.Public.Exceptions;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace Datalake.Domain.Exceptions;
 

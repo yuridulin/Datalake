@@ -318,12 +318,12 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Тег-источник данных для агрегирования
 	/// </summary>
-	public Tag? SourceTag { get; set; }
+	public Tag? AggregationSourceTag { get; set; }
 
 	/// <summary>
 	/// Тег-источник данных для вычисления по таблице пороговых значений
 	/// </summary>
-	public Tag? ThresholdSourceTag { get; set; }
+	public Tag? ThresholdsSourceTag { get; set; }
 
 	/// <summary>
 	/// Входные теги для формул
@@ -345,11 +345,6 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// </summary>
 	public ICollection<Log> AuditLogs { get; set; } = [];
 
-	/*/// <summary>
-	/// Список блоков, в которых состоит тег
-	/// </summary>
-	public ICollection<Block> Blocks { get; set; } = [];*/
-
 	/// <summary>
 	/// Список связей с блоками, в которых состоит тег
 	/// </summary>
@@ -358,12 +353,12 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список тегов, подписанных на этот тег для агрегации
 	/// </summary>
-	public ICollection<Tag>? NestedAggregatesTags { get; set; }
+	public ICollection<Tag>? AggregateTagsUsingThisTag { get; set; }
 
 	/// <summary>
 	/// Список тегов, подписанных на этот тег для расчета по порогам
 	/// </summary>
-	public ICollection<Tag>? NestedThresholdsTags { get; set; }
+	public ICollection<Tag>? ThresholdsTagsUsingThisTag { get; set; }
 
 	/// <summary>
 	/// Связи, в которых этот тег выступает входным

@@ -35,13 +35,13 @@ public class TagConfiguration(bool isReadOnly = false) : IEntityTypeConfiguratio
 			.HasForeignKey(input => input.TagId);
 
 		// связь тегов с входными тегами для агрегирования
-		var relationToAggregateSourceTag = builder.HasOne(tag => tag.SourceTag)
-			.WithMany(tag => tag.NestedAggregatesTags)
+		var relationToAggregateSourceTag = builder.HasOne(tag => tag.AggregationSourceTag)
+			.WithMany(tag => tag.AggregateTagsUsingThisTag)
 			.HasForeignKey(tag => tag.SourceTagId);
 
 		// связь тегов с входными тегами для расчета
-		var relationToThresholdSourceTag = builder.HasOne(tag => tag.ThresholdSourceTag)
-			.WithMany(tag => tag.NestedThresholdsTags)
+		var relationToThresholdSourceTag = builder.HasOne(tag => tag.ThresholdsSourceTag)
+			.WithMany(tag => tag.ThresholdsTagsUsingThisTag)
 			.HasForeignKey(tag => tag.ThresholdSourceTagId);
 
 		// связь блоков и тегов

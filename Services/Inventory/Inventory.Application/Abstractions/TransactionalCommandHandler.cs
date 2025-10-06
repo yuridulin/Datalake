@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Exceptions;
+﻿using Datalake.Domain.Exceptions;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Shared.Application.Exceptions;
