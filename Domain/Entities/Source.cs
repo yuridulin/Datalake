@@ -130,4 +130,14 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 	/// Список тегов, получающих значения
 	/// </summary>
 	public ICollection<Tag> Tags { get; set; } = [];
+
+	/// <summary>
+	/// Список прямых правил доступа на этот источник данных
+	/// </summary>
+	public ICollection<AccessRights> AccessRules { get; set; } = [];
+
+	/// <summary>
+	/// Список сообщений аудита по этому источнику
+	/// </summary>
+	public ICollection<Log> AuditLogs { get; set; }
 }

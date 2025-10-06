@@ -335,5 +335,40 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// </summary>
 	public ICollection<TagThreshold> Thresholds { get; set; } = [];
 
+	/// <summary>
+	/// Список прямых правил доступа на этот тег
+	/// </summary>
+	public ICollection<AccessRights> AccessRules { get; set; } = [];
+
+	/// <summary>
+	/// Список сообщений аудита по этому тегу
+	/// </summary>
+	public ICollection<Log> AuditLogs { get; set; } = [];
+
+	/*/// <summary>
+	/// Список блоков, в которых состоит тег
+	/// </summary>
+	public ICollection<Block> Blocks { get; set; } = [];*/
+
+	/// <summary>
+	/// Список связей с блоками, в которых состоит тег
+	/// </summary>
+	public ICollection<BlockTag> RelationsToBlocks { get; set; } = [];
+
+	/// <summary>
+	/// Список тегов, подписанных на этот тег для агрегации
+	/// </summary>
+	public ICollection<Tag>? NestedAggregatesTags { get; set; }
+
+	/// <summary>
+	/// Список тегов, подписанных на этот тег для расчета по порогам
+	/// </summary>
+	public ICollection<Tag>? NestedThresholdsTags { get; set; }
+
+	/// <summary>
+	/// Связи, в которых этот тег выступает входным
+	/// </summary>
+	public ICollection<TagInput> InputsUsingThisTag { get; set; } = [];
+
 	#endregion
 }

@@ -3,7 +3,7 @@ using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Inventory.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Configurations;
 
 public class AuditConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<Log>
 {
@@ -16,40 +16,36 @@ public class AuditConfiguration(bool isReadOnly = false) : IEntityTypeConfigurat
 
 		builder.HasKey(x => x.Id);
 
+		if (!isReadOnly)
+			builder.Property(x => x.Id).ValueGeneratedOnAdd();
+
 		var relationToAuthors = builder.HasOne(x => x.Author)
-			.WithMany()
-			.HasForeignKey(x => x.AuthorGuid)
-			.OnDelete(DeleteBehavior.SetNull);
+			.WithMany(x => x.AuditActions)
+			.HasForeignKey(x => x.AuthorGuid);
 
 		var relationToSources = builder.HasOne(x => x.AffectedSource)
-			.WithMany()
-			.HasForeignKey(x => x.AffectedSourceId)
-			.OnDelete(DeleteBehavior.SetNull);
+			.WithMany(x => x.AuditLogs)
+			.HasForeignKey(x => x.AffectedSourceId);
 
 		var relationToBlocks = builder.HasOne(x => x.AffectedBlock)
-			.WithMany()
-			.HasForeignKey(x => x.AffectedBlockId)
-			.OnDelete(DeleteBehavior.SetNull);
+			.WithMany(x => x.AuditLogs)
+			.HasForeignKey(x => x.AffectedBlockId);
 
 		var relationToTags = builder.HasOne(x => x.AffectedTag)
-			.WithMany()
-			.HasForeignKey(x => x.AffectedTagId)
-			.OnDelete(DeleteBehavior.SetNull);
+			.WithMany(x => x.AuditLogs)
+			.HasForeignKey(x => x.AffectedTagId);
 
 		var relationToUsers = builder.HasOne(x => x.AffectedUser)
-			.WithMany()
-			.HasForeignKey(x => x.AffectedUserGuid)
-			.OnDelete(DeleteBehavior.SetNull);
+			.WithMany(x => x.AuditLogs)
+			.HasForeignKey(x => x.AffectedUserGuid);
 
 		var relationToUserGroups = builder.HasOne(x => x.AffectedUserGroup)
-			.WithMany()
-			.HasForeignKey(x => x.AffectedUserGroupGuid)
-			.OnDelete(DeleteBehavior.SetNull);
+			.WithMany(x => x.AuditLogs)
+			.HasForeignKey(x => x.AffectedUserGroupGuid);
 
 		var relationToRules = builder.HasOne(x => x.AffectedAccessRights)
 			.WithMany()
-			.HasForeignKey(x => x.AffectedAccessRightsId)
-			.OnDelete(DeleteBehavior.SetNull);
+			.HasForeignKey(x => x.AffectedAccessRightsId);
 
 		if (!isReadOnly)
 		{

@@ -3,9 +3,9 @@ using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Inventory.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class EnergoIdConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<EnergoId>
+public class EnergoIdConfiguration : IEntityTypeConfiguration<EnergoId>
 {
 	public void Configure(EntityTypeBuilder<EnergoId> builder)
 	{

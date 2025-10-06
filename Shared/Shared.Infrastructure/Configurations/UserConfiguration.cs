@@ -1,16 +1,19 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.ValueObjects;
+using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Inventory.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Configurations;
 
 public class UserConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<User>
 {
 	public void Configure(EntityTypeBuilder<User> builder)
 	{
-		// Настройка таблицы
-		builder.ToTable("Users");
+		if (isReadOnly)
+			builder.ToView(InventorySchema.Users.Name, InventorySchema.Name);
+		else
+			builder.ToTable(InventorySchema.Users.Name, InventorySchema.Name);
 
 		// Настройка ключа
 		builder.HasKey(u => u.Guid);
@@ -40,14 +43,5 @@ public class UserConfiguration(bool isReadOnly = false) : IEntityTypeConfigurati
 				password => password != null ? password.ToString() : null,
 				hash => string.IsNullOrEmpty(hash) ? null : PasswordHashValue.FromExistingHash(hash))
 			.HasColumnName("PasswordHash");
-
-		// Настройка отношений "многие-ко-многим" с группами
-		builder
-			.HasMany(u => u.Groups)
-			.WithMany(g => g.Users)
-			.UsingEntity<UserGroupRelation>(
-				j => j.HasOne(ug => ug.UserGroup).WithMany().HasForeignKey(ug => ug.UserGroupGuid),
-				j => j.HasOne(ug => ug.User).WithMany().HasForeignKey(ug => ug.UserGuid)
-			);
 	}
 }

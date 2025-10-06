@@ -3,7 +3,7 @@ using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Inventory.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Configurations;
 
 public class BlockConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<Block>
 {
@@ -25,8 +25,11 @@ public class BlockConfiguration(bool isReadOnly = false) : IEntityTypeConfigurat
 			hierarchyRelations.OnDelete(DeleteBehavior.SetNull);
 
 		// связь блоков и тегов
-		builder.HasMany(block => block.Tags)
-			.WithMany()
-			.UsingEntity<BlockTag>();
+		var relationToTag = builder.HasMany(block => block.RelationsToTags)
+			.WithOne(r => r.Block)
+			.HasForeignKey(r => r.BlockId);
+
+		if (!isReadOnly)
+			relationToTag.OnDelete(DeleteBehavior.Cascade);
 	}
 }

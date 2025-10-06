@@ -3,14 +3,20 @@ using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Inventory.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Configurations;
 
 public class TagThresholdConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<TagThreshold>
 {
 	public void Configure(EntityTypeBuilder<TagThreshold> builder)
 	{
-		builder.ToTable(InventorySchema.TagThresholds.Name, InventorySchema.Name);
+		if (isReadOnly)
+			builder.ToView(InventorySchema.TagThresholds.Name, InventorySchema.Name);
+		else
+			builder.ToTable(InventorySchema.TagThresholds.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
+
+		if (!isReadOnly)
+			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 	}
 }

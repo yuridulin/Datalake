@@ -3,13 +3,17 @@ using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Data.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Configurations;
 
-internal class TagHistoryConfiguration : IEntityTypeConfiguration<TagHistory>
+public class TagHistoryConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<TagHistory>
 {
 	public void Configure(EntityTypeBuilder<TagHistory> builder)
 	{
-		builder.ToTable(DataSchema.TagsHistory.Name, DataSchema.Name);
+		if (isReadOnly)
+			builder.ToView(DataSchema.TagsHistory.Name, DataSchema.Name);
+		else
+			builder.ToTable(DataSchema.TagsHistory.Name, DataSchema.Name);
+
 		builder.HasNoKey();
 
 		builder.Property(x => x.TagId).HasColumnName(DataSchema.TagsHistory.Columns.TagId);

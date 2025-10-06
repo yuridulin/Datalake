@@ -192,4 +192,19 @@ public record class User : IWithGuidKey, ISoftDeletable
 	/// Информация о пользователе из EnergoId
 	/// </summary>
 	public EnergoId? EnergoId { get; set; }
+
+	/// <summary>
+	/// Список прямых правил доступа, выданных этой учетной записи
+	/// </summary>
+	public ICollection<AccessRights> AccessRules { get; set; } = [];
+
+	/// <summary>
+	/// Список сообщений аудита, сделанных этим пользователем
+	/// </summary>
+	public ICollection<Log> AuditActions { get; set; }
+
+	/// <summary>
+	/// Список сообщений аудита по этой учетной записи
+	/// </summary>
+	public ICollection<Log> AuditLogs { get; set; }
 }

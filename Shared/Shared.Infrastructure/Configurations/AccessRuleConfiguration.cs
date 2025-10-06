@@ -3,7 +3,7 @@ using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Inventory.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Configurations;
 
 public class AccessRuleConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<AccessRights>
 {
@@ -18,23 +18,23 @@ public class AccessRuleConfiguration(bool isReadOnly = false) : IEntityTypeConfi
 
 		// связи модели прав с объектами
 		var relationToBlocks = builder.HasOne(x => x.Block)
-			.WithMany()
+			.WithMany(x => x.AccessRules)
 			.HasForeignKey(x => x.BlockId);
 
 		var relationToSources = builder.HasOne(x => x.Source)
-			.WithMany()
+			.WithMany(x => x.AccessRules)
 			.HasForeignKey(x => x.SourceId);
 
 		var relationToTags = builder.HasOne(x => x.Tag)
-			.WithMany()
+			.WithMany(x => x.AccessRules)
 			.HasForeignKey(x => x.TagId);
 
 		var relationToUsers = builder.HasOne(x => x.User)
-			.WithMany()
+			.WithMany(x => x.AccessRules)
 			.HasForeignKey(x => x.UserGuid);
 
 		var relationToUserGroups = builder.HasOne(x => x.UserGroup)
-			.WithMany()
+			.WithMany(x => x.AccessRules)
 			.HasForeignKey(x => x.UserGroupGuid);
 
 		if (!isReadOnly)

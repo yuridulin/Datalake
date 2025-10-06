@@ -3,7 +3,7 @@ using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Inventory.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Configurations;
 
 public class SourceConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<Source>
 {
@@ -15,6 +15,9 @@ public class SourceConfiguration(bool isReadOnly = false) : IEntityTypeConfigura
 			builder.ToTable(InventorySchema.Sources.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
+
+		if (!isReadOnly)
+			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		// связь источников и тегов
 		var relationToTags = builder.HasMany(source => source.Tags)

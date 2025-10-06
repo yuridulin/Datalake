@@ -1,13 +1,15 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Inventory.Infrastructure.Database.Configurations;
+using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Configurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Inventory.Infrastructure.Database;
 
 /// <summary>
-/// Контекст базы данных EF
+/// Контекст для управления схемой объектов и настроек
 /// </summary>
-/// Add-Migration SeparateContexts -Context Datalake.Inventory.Infrastructure.Database.InventoryDbContext -OutputDir Database\Migrations
+/// Add-Migration NAME -Context Datalake.Inventory.Infrastructure.Database.InventoryDbContext -OutputDir Database\Migrations
+/// Remove-Migration -Context Datalake.Data.Infrastructure.Database.DataDbContext
 public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : DbContext(options)
 {
 	/// <summary>
@@ -17,20 +19,23 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 	{
 		modelBuilder.HasDefaultSchema("public");
 
-		modelBuilder.ApplyConfiguration(new AccessRuleConfiguration());
-		modelBuilder.ApplyConfiguration(new AuditConfiguration());
-		modelBuilder.ApplyConfiguration(new BlockConfiguration());
-		modelBuilder.ApplyConfiguration(new BlockPropertyConfiguration());
-		modelBuilder.ApplyConfiguration(new BlockTagConfiguration());
-		modelBuilder.ApplyConfiguration(new EnergoIdConfiguration());
-		modelBuilder.ApplyConfiguration(new SettingsConfiguration());
-		modelBuilder.ApplyConfiguration(new SourceConfiguration());
-		modelBuilder.ApplyConfiguration(new TagConfiguration());
-		modelBuilder.ApplyConfiguration(new TagInputConfiguration());
-		modelBuilder.ApplyConfiguration(new TagThresholdConfiguration());
-		modelBuilder.ApplyConfiguration(new UserConfiguration());
-		modelBuilder.ApplyConfiguration(new UserGroupConfiguration());
-		modelBuilder.ApplyConfiguration(new UserGroupRelationConfiguration());
+		modelBuilder.ApplyConfigurations(new()
+		{
+			AccessRules = false,
+			Audit = false,
+			Blocks = false,
+			BlocksProperties = false,
+			BlocksTags = false,
+			Settings = false,
+			Sources = false,
+			Tags = false,
+			TagsHistory = true,
+			TagsInputs = false,
+			TagsThresholds = false,
+			UserGroups = false,
+			UserGroupsRelations = false,
+			Users = false,
+		});
 	}
 
 	#region Таблицы
