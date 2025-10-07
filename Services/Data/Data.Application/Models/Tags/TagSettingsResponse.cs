@@ -1,8 +1,9 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Data.Api.Enums;
 
 namespace Datalake.Data.Application.Models.Tags;
 
-public record TagSettingsDto
+public record TagSettingsResponse
 {
 	public required int TagId { get; init; }
 
@@ -16,17 +17,7 @@ public record TagSettingsDto
 
 	public required int SourceId { get; init; }
 
-	public required bool IsDeleted { get; init; }
-
 	public required SourceType SourceType { get; init; }
 
-	public TagScaleSettings? ScaleSettings { get; init; } = null;
-
-	public TagInopcSettingsDto? InopcSettings { get; init; } = null;
-
-	public TagAggregationSettingsDto? AggregationSettings { get; init; } = null;
-
-	public TagCalculationSettingsDto? CalculationSettings { get; init; } = null;
-
-	public TagThresholdsSettingsDto? ThresholdsSettings { get; init; } = null;
+	public required ValueResult Result { get; set; }
 }

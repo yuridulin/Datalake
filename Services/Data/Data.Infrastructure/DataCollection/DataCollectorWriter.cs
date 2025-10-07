@@ -1,5 +1,5 @@
-﻿using Datalake.Data.Application.Interfaces.DataCollection;
-using Datalake.Data.Application.Interfaces.Repositories;
+﻿using Datalake.Data.Application.Features.Values.Commands.SystemWriteValues;
+using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
@@ -86,16 +86,16 @@ public class DataCollectorWriter(
 		CancellationToken ct)
 	{
 		using var scope = serviceScopeFactory.CreateScope();
-		var repository = scope.ServiceProvider.GetRequiredService<ITagsHistoryRepository>();
+		var systemWriteValuesHandler = scope.ServiceProvider.GetRequiredService<ISystemWriteValuesHandler>();
 
-		await WriteBatchWithRetryAsync(repository, batch, ct);
+		await WriteBatchWithRetryAsync(systemWriteValuesHandler, batch, ct);
 	}
 
 	/// <summary>
 	/// Метод записи в БД с экспоненциальным бэкоффом
 	/// </summary>
 	private async Task WriteBatchWithRetryAsync(
-		ITagsHistoryRepository repository,
+		ISystemWriteValuesHandler systemWriteValuesHandler,
 		List<TagHistory> batch,
 		CancellationToken ct)
 	{
@@ -104,7 +104,7 @@ public class DataCollectorWriter(
 		{
 			try
 			{
-				await repository.WriteAsync(batch);
+				await systemWriteValuesHandler.HandleAsync(new() { Values = batch }, ct);
 				return;
 			}
 			catch (Exception ex)

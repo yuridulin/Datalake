@@ -22,7 +22,7 @@ public class AggregateCollector : DataCollectorBase
 	{
 		_serviceScopeFactory = serviceScopeFactory;
 
-		_allRules = source.Tags
+		_allRules = source.NotDeletedTags
 			.Where(x => x.AggregationSettings != null)
 			.Select(tag => new TagAggregationRule
 			{

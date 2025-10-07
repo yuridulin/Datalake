@@ -16,4 +16,6 @@ public record SourceSettingsDto
 	public SourceRemoteSettingsDto? RemoteSettings { get; init; } = null;
 
 	public required IEnumerable<TagSettingsDto> Tags { get; init; }
+
+	public IEnumerable<TagSettingsDto> NotDeletedTags => Tags.Where(t => !t.IsDeleted);
 }

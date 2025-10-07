@@ -22,331 +22,96 @@ public class GetValuesHandler(
 {
 	public async Task<IEnumerable<ValuesResponse>> HandleAsync(GetValuesQuery query, CancellationToken ct = default)
 	{
-		// 1. Собираем все уникальные ID тегов из всех запросов
-		var allTagIds = query.Requests
-				.SelectMany(r => r.TagsId)
-				.Distinct()
-				.ToArray();
-
-		// 2. Проверяем существование и доступ для всех тегов
-		var tagAccessInfo = CheckTagAccess(query.User, allTagIds);
-
-		// 3. Группируем запросы по временным параметрам
-		var timeGroups = GroupRequestsByTime(query.Requests, tagAccessInfo);
-
-		// 4. Выполняем запросы к БД для каждой группы
-		var timeGroupResults = await ExecuteTimeGroupQueriesAsync(timeGroups, ct);
-
-		// 5. Собираем финальные ответы
-		return BuildResponses(query.Requests, tagAccessInfo, timeGroupResults);
-	}
-
-	private Dictionary<int, TagAccessInfo> CheckTagAccess(UserAccessEntity user, int[] tagIds)
-	{
-		var result = new Dictionary<int, TagAccessInfo>();
-
-		foreach (var tagId in tagIds)
-		{
-			var tag = tagsStore.TryGet(tagId);
-			var accessInfo = new TagAccessInfo();
-
-			if (tag == null)
-			{
-				accessInfo.Result = ValueResult.NotFound;
-			}
-			else if (!user.HasAccessToTag(AccessType.Viewer, tagId))
-			{
-				accessInfo.Result = ValueResult.NoAccess;
-				accessInfo.Tag = tag; // Сохраняем информацию о теге для ответа
-			}
-			else
-			{
-				accessInfo.Result = ValueResult.Ok;
-				accessInfo.Tag = tag;
-			}
-
-			result[tagId] = accessInfo;
-		}
-
-		return result;
-	}
-
-	private List<TimeGroup> GroupRequestsByTime(IEnumerable<ValuesRequest> requests, Dictionary<int, TagAccessInfo> tagAccessInfo)
-	{
-		var groups = new Dictionary<TimeGroupKey, TimeGroup>();
-
-		foreach (var request in requests)
-		{
-			var key = new TimeGroupKey
-			{
-				Old = request.Old,
-				Young = request.Young,
-				Exact = request.Exact
-			};
-
-			if (!groups.TryGetValue(key, out var group))
-			{
-				group = new TimeGroup { Key = key };
-				groups[key] = group;
-			}
-
-			// Добавляем только теги с доступом для этого запроса
-			var accessibleTagIds = request.TagsId
-					.Where(tagId => tagAccessInfo[tagId].Result == ValueResult.Ok)
-					.ToArray();
-
-			group.Requests.Add(new TimeGroupRequest
-			{
-				OriginalRequest = request,
-				AccessibleTagIds = accessibleTagIds
-			});
-
-			// Собираем все уникальные ID тегов для этой группы
-			group.AllTagIds = group.AllTagIds.Union(accessibleTagIds).ToArray();
-		}
-
-		return groups.Values.ToList();
-	}
-
-	private async Task<Dictionary<TimeGroupKey, TimeGroupResult>> ExecuteTimeGroupQueriesAsync(
-			List<TimeGroup> timeGroups, CancellationToken ct)
-	{
-		var results = new Dictionary<TimeGroupKey, TimeGroupResult>();
-
-		using var scope = serviceScopeFactory.CreateScope();
-		var tagsHistoryRepository = scope.ServiceProvider.GetRequiredService<ITagsHistoryRepository>();
-
-		foreach (var group in timeGroups)
-		{
-			var groupResult = new TimeGroupResult();
-			var tagIds = group.AllTagIds;
-
-			if (tagIds.Length == 0)
-			{
-				results[group.Key] = groupResult;
-				continue;
-			}
-
-			// Определяем тип запроса по времени
-			if (group.Key.Exact.HasValue)
-			{
-				// Точечный запрос
-				var values = await tagsHistoryRepository.GetExactAsync(tagIds, group.Key.Exact.Value);
-				groupResult.ValuesByTagId = values.ToDictionary(x => x.TagId, x => new[] { x });
-			}
-			else if (!group.Key.Old.HasValue && !group.Key.Young.HasValue)
-			{
-				// Текущие значения
-				var currentValues = currentValuesStore.GetByIdentifiers(tagIds);
-				groupResult.ValuesByTagId = currentValues
-						.Where(kv => kv.Value != null)
-						.ToDictionary(kv => kv.Key, kv => new[] { kv.Value });
-			}
-			else
-			{
-				// Диапазон
-				var from = group.Key.Old ?? DateTime.MinValue;
-				var to = group.Key.Young ?? DateTime.MaxValue;
-				var values = await tagsHistoryRepository.GetRangeAsync(tagIds, from, to);
-				groupResult.ValuesByTagId = values.GroupBy(x => x.TagId).ToDictionary(g => g.Key, g => g.ToArray());
-			}
-
-			results[group.Key] = groupResult;
-		}
-
-		return results;
-	}
-
-	private List<ValuesResponse> BuildResponses(
-			IEnumerable<ValuesRequest> requests,
-			Dictionary<int, TagAccessInfo> tagAccessInfo,
-			Dictionary<TimeGroupKey, TimeGroupResult> timeGroupResults)
-	{
-		var responses = new List<ValuesResponse>();
-
-		foreach (var request in requests)
-		{
-			var response = new ValuesResponse
-			{
-				RequestKey = request.RequestKey,
-				Tags = new List<ValuesTagResponse>()
-			};
-
-			var timeKey = new TimeGroupKey
-			{
-				Old = request.Old,
-				Young = request.Young,
-				Exact = request.Exact
-			};
-
-			var timeGroupResult = timeGroupResults[timeKey];
-
-			foreach (var tagId in request.TagsId)
-			{
-				var accessInfo = tagAccessInfo[tagId];
-				var tagResponse = CreateTagResponse(accessInfo, request, timeGroupResult);
-				response.Tags.Add(tagResponse);
-			}
-
-			responses.Add(response);
-		}
+		var trustedRequests = CheckRequests(query.User, query.Requests.ToArray());
+		var responses = await GetResponsesAsync(trustedRequests);
 
 		return responses;
 	}
 
-	private ValuesTagResponse CreateTagResponse(
-			TagAccessInfo accessInfo,
-			ValuesRequest request,
-			TimeGroupResult timeGroupResult)
+	private List<ValuesTrustedRequest> CheckRequests(UserAccessEntity user, ValuesRequest[] requests)
 	{
-		var tagResponse = new ValuesTagResponse
-		{
-			Result = accessInfo.Result
-		};
-
-		if (accessInfo.Tag != null)
-		{
-			tagResponse.Id = accessInfo.Tag.Id;
-			tagResponse.Guid = accessInfo.Tag.Guid;
-			tagResponse.Name = accessInfo.Tag.Name;
-			tagResponse.Type = accessInfo.Tag.Type;
-			tagResponse.Resolution = accessInfo.Tag.Resolution;
-			tagResponse.SourceType = accessInfo.Tag.SourceType;
-		}
-
-		if (accessInfo.Result != ValueResult.Ok)
-		{
-			// Заглушка для тегов с ошибками
-			tagResponse.Values = new[]
-			{
-								CreateStubValue(DateTime.UtcNow, TagQuality.Bad_NoValues)
-						};
-		}
-		else
-		{
-			// Получаем значения из результатов группы
-			var values = timeGroupResult.ValuesByTagId.GetValueOrDefault(accessInfo.Tag.Id) ?? Array.Empty<TagHistory>();
-			tagResponse.Values = ProcessTagValues(values, accessInfo.Tag, request);
-		}
-
-		return tagResponse;
-	}
-
-	private ValueRecord[] ProcessTagValues(
-			TagHistory[] values,
-			TagSettingsDto tag,
-			ValuesRequest request)
-	{
-		if (values.Length == 0)
-		{
-			return new[] { CreateStubValue(DateTime.UtcNow, TagQuality.Bad_NoValues) };
-		}
-
-		// Здесь добавляем логику для Resolution и AggregationFunc
-		// (аналогично вашему исходному коду, но упрощенно)
-
-		if (request.Resolution.HasValue && request.Resolution.Value > 0)
-		{
-			values = StretchByResolution(values, request.Old, request.Young, request.Resolution.Value);
-		}
-
-		if (tag.Type == TagType.Number && request.Func != AggregationFunc.List)
-		{
-			// Применяем агрегацию
-			var aggregatedValue = ApplyAggregation(values, request.Func);
-			return new[] { aggregatedValue };
-		}
-
-		return values.Select(v => new ValueRecord
-		{
-			Date = v.Date,
-			Text = v.Text,
-			Number = v.Number,
-			Boolean = v.Boolean,
-			Quality = v.Quality
-		}).ToArray();
-	}
-
-	private ValueRecord CreateStubValue(DateTime date, TagQuality quality)
-	{
-		return new ValueRecord
-		{
-			Date = date,
-			Text = null,
-			Number = null,
-			Boolean = null,
-			Quality = quality
-		};
-	}
-
-	// Дополнительные вспомогательные классы
-	private class TagAccessInfo
-	{
-		public ValueResult Result { get; set; }
-		public TagSettingsDto Tag { get; set; }
-	}
-
-	private class TimeGroupKey
-	{
-		public DateTime? Old { get; set; }
-		public DateTime? Young { get; set; }
-		public DateTime? Exact { get; set; }
-
-		public override bool Equals(object obj) => obj is TimeGroupKey other &&
-				Old == other.Old && Young == other.Young && Exact == other.Exact;
-
-		public override int GetHashCode() => HashCode.Combine(Old, Young, Exact);
-	}
-
-	private class TimeGroup
-	{
-		public TimeGroupKey Key { get; set; }
-		public List<TimeGroupRequest> Requests { get; set; } = new();
-		public int[] AllTagIds { get; set; } = Array.Empty<int>();
-	}
-
-	private class TimeGroupRequest
-	{
-		public ValuesRequest OriginalRequest { get; set; }
-		public int[] AccessibleTagIds { get; set; }
-	}
-
-	private class TimeGroupResult
-	{
-		public Dictionary<int, TagHistory[]> ValuesByTagId { get; set; } = new();
-	}
-
-	// Остаются методы StretchByResolution, ApplyAggregation и другие вспомогательные
-	// из вашего исходного кода
-}
-
-public class GetValuesHandler(
-	ITagsStore tagsStore,
-	ICurrentValuesStore currentValuesStore,
-	IServiceScopeFactory serviceScopeFactory) : IGetValuesHandler
-{
-	public async Task<IEnumerable<ValuesResponse>> HandleAsync(GetValuesQuery query, CancellationToken ct = default)
-	{
-		List<ValuesTrustedRequest> trustedRequests = [];
-
-		foreach (var request in query.Requests)
-		{
-			
-		}
-	}
-
-	private List<ValuesTrustedRequest> CheckRequests(UserAccessEntity user, IEnumerable<ValuesRequest> requests)
-	{
-		List<ValuesTrustedRequest> trustedRequests = new(requests.Count());
+		List<ValuesTrustedRequest> trustedRequests = new(requests.Length);
 
 		foreach (var request in requests)
 		{
-			List<TagSettingsDto> tags = new(request.TagsId.Length);
+			List<TagSettingsResponse> tags = new(request.TagsId?.Length ?? 0 + request.Tags?.Length ?? 0);
 
-			foreach (var id in request.TagsId)
+			if (request.TagsId?.Length > 0)
 			{
-				var tag = tagsStore.TryGet(id);
-				tags.Add(tag);
+				foreach (var id in request.TagsId)
+				{
+					var tag = tagsStore.TryGet(id);
+
+					if (tag != null)
+					{
+						tags.Add(new()
+						{
+							TagId = tag.TagId,
+							TagGuid = tag.TagGuid,
+							TagName = tag.TagName,
+							TagResolution = tag.TagResolution,
+							TagType = tag.TagType,
+							SourceId = tag.SourceId,
+							SourceType = tag.SourceType,
+							Result = !user.HasAccessToTag(AccessType.Viewer, tag.TagId)
+								? ValueResult.NoAccess
+								: tag.IsDeleted ? ValueResult.IsDeleted : ValueResult.Ok,
+						});
+					}
+					else
+					{
+						tags.Add(new()
+						{
+							TagId = id,
+							TagGuid = Guid.Empty,
+							TagName = string.Empty,
+							TagType = TagType.String,
+							TagResolution = TagResolution.None,
+							SourceId = 0,
+							SourceType = SourceType.Unset,
+							Result = ValueResult.NotFound,
+						});
+					}
+				}
+			}
+
+			if (request.Tags?.Length > 0)
+			{
+				foreach (var guid in request.Tags)
+				{
+					var tag = tagsStore.TryGet(guid);
+
+					if (tag != null)
+					{
+						tags.Add(new()
+						{
+							TagId = tag.TagId,
+							TagGuid = tag.TagGuid,
+							TagName = tag.TagName,
+							TagResolution = tag.TagResolution,
+							TagType = tag.TagType,
+							SourceId = tag.SourceId,
+							SourceType = tag.SourceType,
+							Result = !user.HasAccessToTag(AccessType.Viewer, tag.TagId)
+								? ValueResult.NoAccess
+								: tag.IsDeleted ? ValueResult.IsDeleted : ValueResult.Ok,
+						});
+					}
+					else
+					{
+						tags.Add(new()
+						{
+							TagId = 0,
+							TagGuid = guid,
+							TagName = string.Empty,
+							TagType = TagType.String,
+							TagResolution = TagResolution.None,
+							SourceId = 0,
+							SourceType = SourceType.Unset,
+							Result = ValueResult.NotFound,
+						});
+					}
+				}
 			}
 
 			trustedRequests.Add(new()
@@ -378,7 +143,7 @@ public class GetValuesHandler(
 				Settings = g.Key,
 				Requests = g.ToArray(),
 				Keys = g.Select(x => x.RequestKey).ToArray(),
-				TagsId = g.SelectMany(r => r.Tags).Where(r => r.Result == ValueResult.Ok).Select(r => r.Id).ToArray(),
+				TagsId = g.SelectMany(r => r.Tags).Where(r => r.Result == ValueResult.Ok).Select(r => r.TagId).ToArray(),
 			})
 			.ToArray();
 
@@ -414,29 +179,30 @@ public class GetValuesHandler(
 						ValuesTagResponse tagResponse = new()
 						{
 							Result = tag.Result,
-							Id = tag.Id,
-							Guid = tag.Guid,
-							Name = tag.Name,
-							Type = tag.Type,
-							Resolution = tag.Resolution,
+							Id = tag.TagId,
+							Guid = tag.TagGuid,
+							Name = tag.TagName,
+							Type = tag.TagType,
+							Resolution = tag.TagResolution,
 							SourceType = tag.SourceType,
 							Values = [],
 						};
 
 						if (tag.Result == ValueResult.Ok)
 						{
-							if (!databaseValuesById.TryGetValue(tag.Id, out var value) || value == null)
+							if (!databaseValuesById.TryGetValue(tag.TagId, out var value) || value == null)
 							{
 								tag.Result = ValueResult.ValueNotFound;
-								value = new TagHistory(tag.Id, sqlScope.Settings.Exact.Value);
+								value = new TagHistory(tag.TagId, sqlScope.Settings.Exact.Value, TagQuality.Bad_NoValues);
 							}
 
 							var tagValue = new ValueRecord
 							{
 								Date = value.Date,
-								DateString = value.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 								Quality = value.Quality,
-								Value = value.GetTypedValue(tag.Type),
+								Text = value.Text,
+								Number = value.Number,
+								Boolean = value.Boolean,
 							};
 
 							tagResponse.Values = [tagValue];
@@ -458,10 +224,10 @@ public class GetValuesHandler(
 			// получение истории
 			else
 			{
-				sqlScope.Settings.Young ??= DateFormats.GetCurrentDateTime();
+				sqlScope.Settings.Young ??= DateTimeExtension.GetCurrentDateTime();
 				sqlScope.Settings.Old ??= sqlScope.Settings.Young;
 
-				databaseValues = await tagsHistoryRepository.GetRangeValuesAsync(sqlScope.Settings.Old.Value, sqlScope.Settings.Young.Value, sqlScope.TagsId);
+				databaseValues = await tagsHistoryRepository.GetRangeAsync(sqlScope.TagsId, sqlScope.Settings.Old.Value, sqlScope.Settings.Young.Value);
 
 				foreach (var request in sqlScope.Requests)
 				{
@@ -472,7 +238,7 @@ public class GetValuesHandler(
 					};
 
 					var tagsResponses = new List<ValuesTagResponse>();
-					var requestIdentifiers = request.Tags.Select(t => t.Id).ToArray();
+					var requestIdentifiers = request.Tags.Select(t => t.TagId).ToArray();
 					var requestValues = databaseValues.Where(x => requestIdentifiers.Contains(x.TagId));
 
 					foreach (var tag in request.Tags)
@@ -480,15 +246,15 @@ public class GetValuesHandler(
 						var tagResponse = new ValuesTagResponse
 						{
 							Result = tag.Result,
-							Guid = tag.Guid,
-							Id = tag.Id,
-							Name = tag.Name,
-							Type = tag.Type,
-							Resolution = tag.Resolution,
+							Guid = tag.TagGuid,
+							Id = tag.TagId,
+							Name = tag.TagName,
+							Type = tag.TagType,
+							Resolution = tag.TagResolution,
 							SourceType = tag.SourceType,
 							Values = [],
 						};
-						var tagValues = requestValues.Where(x => x.TagId == tag.Id).ToList();
+						var tagValues = requestValues.Where(x => x.TagId == tag.TagId).ToList();
 
 						// если у нас не Ok, то тега нет, или нет доступа к нему
 						// так или иначе, значения нас уже не интересуют
@@ -503,9 +269,10 @@ public class GetValuesHandler(
 									new()
 									{
 										Date = sqlScope.Settings.Old.Value,
-										DateString = sqlScope.Settings.Old.Value.ToString(DateFormats.HierarchicalWithMilliseconds),
 										Quality = TagQuality.Bad_NoValues,
-										Value = 0,
+										Text = null,
+										Number = null,
+										Boolean = null,
 									}
 								];
 							}
@@ -514,30 +281,30 @@ public class GetValuesHandler(
 								tagValues = StretchByResolution(tagValues, sqlScope.Settings.Old.Value, sqlScope.Settings.Young.Value, request.Resolution.Value);
 							}
 
-							if (tag.Type == TagType.Number && request.Func != AggregationFunc.List)
+							if (tag.TagType == TagType.Number && request.Func != TagAggregation.None)
 							{
 								var numericValues = tagValues
 									.Where(x => x.Quality == TagQuality.Good || x.Quality == TagQuality.Good_ManualWrite)
-									.Select(x => x.GetTypedValue(TagType.Number) as float?);
+									.Select(x => x.Number);
 
 								float? value = 0;
 								try
 								{
 									switch (request.Func)
 									{
-										case AggregationFunc.Sum:
+										case TagAggregation.Sum:
 											value = numericValues.Sum();
 											break;
 
-										case AggregationFunc.Avg:
+										case TagAggregation.Average:
 											value = numericValues.Average();
 											break;
 
-										case AggregationFunc.Min:
+										case TagAggregation.Min:
 											value = numericValues.Min();
 											break;
 
-										case AggregationFunc.Max:
+										case TagAggregation.Max:
 											value = numericValues.Max();
 											break;
 									}
@@ -545,9 +312,10 @@ public class GetValuesHandler(
 									tagResponse.Values = [
 										new() {
 											Date = sqlScope.Settings.Old.Value,
-											DateString = sqlScope.Settings.Old.Value.ToString(DateFormats.HierarchicalWithMilliseconds),
 											Quality = TagQuality.Good,
-											Value = value,
+											Text = null,
+											Number = value,
+											Boolean = null,
 										}
 									];
 								}
@@ -562,9 +330,10 @@ public class GetValuesHandler(
 									.Select(x => new ValueRecord
 									{
 										Date = x.Date,
-										DateString = x.Date.ToString(DateFormats.HierarchicalWithMilliseconds),
 										Quality = x.Quality,
-										Value = x.GetTypedValue(tag.Type),
+										Text = x.Text,
+										Number = x.Number,
+										Boolean = x.Boolean,
 									})
 									.OrderBy(x => x.Date)
 								];
@@ -582,7 +351,6 @@ public class GetValuesHandler(
 
 		return responses;
 	}
-
 
 	private const int _stretchLimit = 100000;
 
@@ -614,10 +382,4 @@ public class GetValuesHandler(
 
 		return continuous;
 	}
-}
-
-
-public record Scope
-{
-	public List<int> TagsId { get; set; } = [];
 }

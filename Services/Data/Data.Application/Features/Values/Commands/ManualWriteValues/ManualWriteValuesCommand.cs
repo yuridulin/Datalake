@@ -2,9 +2,9 @@
 using Datalake.Shared.Application.Entities;
 using Datalake.Shared.Application.Interfaces;
 
-namespace Datalake.Data.Application.Features.Values.Commands.WriteManualValues;
+namespace Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;
 
-public record WriteManualValuesCommand : ICommandRequest, IWithUserAccess
+public record ManualWriteValuesCommand : ICommandRequest, IWithUserAccess
 {
 	public required UserAccessEntity User { get; init; }
 

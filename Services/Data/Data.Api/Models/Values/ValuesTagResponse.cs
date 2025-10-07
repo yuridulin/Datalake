@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Data.Api.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Data.Api.Models.Values;
@@ -43,6 +44,12 @@ public class ValuesTagResponse
 	/// </summary>
 	[Required]
 	public required SourceType SourceType { get; set; } = SourceType.Datalake;
+
+	/// <summary>
+	/// Результат чтения значений
+	/// </summary>
+	[Required]
+	public required ValueResult Result { get; set; }
 
 	/// <summary>
 	/// Список значений

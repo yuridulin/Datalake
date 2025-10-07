@@ -73,7 +73,7 @@ public class ThresholdsCollector(
 	/// <summary>
 	/// Таблицы пороговых значений
 	/// </summary>
-	private (TagSettingsDto tag, int inputTagId, (float inValue, float outValue)[] thresholds)[] _thresholds = source.Tags
+	private (TagSettingsDto tag, int inputTagId, (float inValue, float outValue)[] thresholds)[] _thresholds = source.NotDeletedTags
 		.Where(tag =>
 			tag.TagType == TagType.Number &&
 			tag.ThresholdsSettings != null)

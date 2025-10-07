@@ -12,7 +12,7 @@ public class TagsHistoryRepository(
 	DataLinqToDbContext db,
 	ILogger<TagsHistoryRepository> logger) : ITagsHistoryRepository
 {
-	public async Task WriteAsync(IEnumerable<TagHistory> batch)
+	public async Task<bool> WriteAsync(IEnumerable<TagHistory> batch)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -23,12 +23,13 @@ public class TagsHistoryRepository(
 			await db.ExecuteAsync(WriteSql);
 
 			await transaction.CommitAsync();
+			return true;
 		}
 		catch (Exception e)
 		{
 			logger.LogError(e, "Не удалось записать данные");
 			await transaction.RollbackAsync();
-			throw;
+			return false;
 		}
 	}
 

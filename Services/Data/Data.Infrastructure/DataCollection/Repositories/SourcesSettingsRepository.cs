@@ -39,6 +39,7 @@ public class SourcesSettingsRepository(DataDbContext context) : ISourcesSettings
 					TagType = tag.Type,
 					TagResolution = tag.Resolution,
 					TagName = tag.Name,
+					IsDeleted = tag.IsDeleted,
 					SourceId = source.Id,
 					SourceType = source.Type,
 					ScaleSettings = !tag.IsScaling ? null : new TagScaleSettings

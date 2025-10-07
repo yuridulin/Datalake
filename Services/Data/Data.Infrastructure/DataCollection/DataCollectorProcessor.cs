@@ -1,5 +1,5 @@
 ﻿using Datalake.Data.Application.Interfaces.DataCollection;
-using Datalake.Data.Application.Interfaces.Repositories;
+using Datalake.Data.Application.Models.Sources;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -8,7 +8,6 @@ namespace Datalake.Data.Infrastructure.DataCollection;
 
 [Singleton]
 public class DataCollectorProcessor(
-	ISourcesSettingsRepository sourcesSettingsRepository,
 	IDataCollectorFactory dataCollectorFactory,
 	IDataCollectorWriter dataWriter,
 	ILogger<DataCollectorProcessor> logger) : IDataCollectorProcessor
@@ -17,16 +16,13 @@ public class DataCollectorProcessor(
 	private readonly ConcurrentDictionary<IDataCollector, Task> _activeCollectorsTasks = new();
 	private readonly SemaphoreSlim _restartLock = new(1, 1);
 
-	public async Task StartAsync(CancellationToken cancellationToken) => await UpdateAsync(cancellationToken);
-
-	public async Task UpdateAsync(CancellationToken cancellationToken)
+	public async Task RestartAsync(IEnumerable<SourceSettingsDto> sourcesSettings)
 	{
-		if (!await _restartLock.WaitAsync(0, cancellationToken))
-			return;
+		await _restartLock.WaitAsync();
 
 		try
 		{
-			await RestartCollectors(cancellationToken);
+			await RestartCollectors(sourcesSettings);
 		}
 		finally
 		{
@@ -34,11 +30,9 @@ public class DataCollectorProcessor(
 		}
 	}
 
-	private async Task RestartCollectors(CancellationToken cancellationToken)
+	private async Task RestartCollectors(IEnumerable<SourceSettingsDto> sourcesSettings)
 	{
 		logger.LogInformation("Выполняется обновление сборщиков");
-
-		var sourcesSettings = await sourcesSettingsRepository.GetAllAsync(cancellationToken);
 
 		// Останавливаем текущие сборщики
 		await StopCollecting();
@@ -52,8 +46,8 @@ public class DataCollectorProcessor(
 		// Запускаем новые сборщики и обработчики их каналов
 		foreach (var collector in _collectors)
 		{
-			collector.Start(cancellationToken);
-			var processingTask = ProcessCollectorOutput(collector, cancellationToken);
+			collector.Start();
+			var processingTask = ProcessCollectorOutput(collector);
 			_activeCollectorsTasks[collector] = processingTask;
 
 		}
@@ -83,11 +77,11 @@ public class DataCollectorProcessor(
 		_activeCollectorsTasks.Clear();
 	}
 
-	private async Task ProcessCollectorOutput(IDataCollector collector, CancellationToken stoppingToken)
+	private async Task ProcessCollectorOutput(IDataCollector collector)
 	{
 		try
 		{
-			await foreach (var batch in collector.OutputChannel.Reader.ReadAllAsync(stoppingToken))
+			await foreach (var batch in collector.OutputChannel.Reader.ReadAllAsync())
 			{
 				if (batch?.Any() ?? false)
 				{

@@ -1,4 +1,5 @@
-﻿using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Data.Application.Services;
+using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
@@ -20,6 +21,9 @@ public static class Bootstrap
 			.AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
 				.AsImplementedInterfaces()
 				.WithScopedLifetime());
+
+		builder.Services.AddSingleton<DataCollectionStartService>();
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<DataCollectionStartService>());
 
 		return builder;
 	}

@@ -7,7 +7,7 @@ internal class ValuesTrustedRequest
 {
 	internal required string RequestKey { get; set; }
 
-	internal required TagSettingsDto[] Tags { get; set; } = [];
+	internal required TagSettingsResponse[] Tags { get; set; } = [];
 
 	internal required TimeSettings Time { get; set; }
 

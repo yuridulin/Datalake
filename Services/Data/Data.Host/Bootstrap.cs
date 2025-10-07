@@ -1,40 +1,38 @@
-﻿namespace Datalake.Data.Host;
+﻿using Datalake.Data.Host.Services;
+using Datalake.Shared.Hosting.Bootstrap;
+using Datalake.Shared.Hosting.Interfaces;
+using NJsonSchema.Generation;
+
+namespace Datalake.Data.Host;
 
 public static class BootstrapExtensions
 {
 	public static IHostApplicationBuilder AddHosting(this IHostApplicationBuilder builder)
 	{
-		/*// сторы
-		builder.Services.AddSingleton<IAccessStore, AccessStore>();
-		builder.Services.AddSingleton<ITagsStore, TagsStore>();
-		builder.Services.AddSingleton<ISourcesStore, SourcesStore>();
-		builder.Services.AddSingleton<ICurrentValuesStore, CurrentValuesStore>();
+		// MVC
+		builder.Services
+			.AddControllers()
+			.AddControllersAsServices()
+			.AddSharedJsonOptions();
 
-		// сервисы
-		builder.Services.AddSingleton<IAuthenticatorService, AuthenticationService>();
-		builder.Services.AddSingleton<IReceiverService, ReceiverService>();
-		builder.Services.AddSingleton<IGetValuesService, GetValuesService>();
-		builder.Services.AddSingleton<IManualWriteValuesService, ManualWriteValuesService>();
-		builder.Services.AddSingleton<ISystemWriteValuesService, SystemWriteValuesService>();
+		// Swagger
+		builder.Services
+			.AddSwaggerDocument((options, services) =>
+			{
+				options.Title = "Datalake." + nameof(Data);
+				options.Version = "v1";
 
-		builder.Services.AddSingleton<ITagHistoryFactory, TagHistoryFactory>();
-		builder.Services.AddSingleton<ICollectorFactory, CollectorFactory>();
+				options.SchemaSettings = new SystemTextJsonSchemaGeneratorSettings
+				{
+					SchemaType = NJsonSchema.SchemaType.OpenApi3,
+					GenerateEnumMappingDescription = true,
+					UseXmlDocumentation = true,
+					SerializerOptions = JsonSettings.JsonSerializerOptions,
+				};
+			})
+			.AddEndpointsApiExplorer();
 
-		builder.Services.AddSingleton<RequestsStateService>();
-		builder.Services.AddSingleton<SourcesStateService>();
-		builder.Services.AddSingleton<TagsReceiveStateService>();
-		builder.Services.AddSingleton<TagsStateService>();
-
-		builder.Services.AddScoped<IWriteHistoryRepository, WriteHistoryRepository>();
-		builder.Services.AddScoped<IGetHistoryRepository, GetHistoryRepository>();
-		builder.Services.AddScoped<IGetAggregatedHistoryRepository, GetAggregatedHistoryRepository>();
-
-		// службы
-		builder.Services.AddSingleton<ICollectorProcessor, CollectorProcessor>();
-		builder.Services.AddSingleton<ICollectorWriter, CollectorWriter>();
-
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<ICollectorProcessor>());
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<ICollectorWriter>());*/
+		builder.Services.AddSingleton<IAuthenticator, AuthenticationService>();
 
 		return builder;
 	}

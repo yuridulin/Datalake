@@ -4,7 +4,7 @@ namespace Datalake.Data.Application.Interfaces.Repositories;
 
 public interface ITagsHistoryRepository
 {
-	Task WriteAsync(IEnumerable<TagHistory> batch);
+	Task<bool> WriteAsync(IEnumerable<TagHistory> batch);
 
 	Task<IEnumerable<TagHistory>> GetRangeAsync(IEnumerable<int> tagsIdentifiers, DateTime from, DateTime to);
 

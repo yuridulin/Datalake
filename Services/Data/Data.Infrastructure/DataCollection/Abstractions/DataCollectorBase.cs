@@ -30,7 +30,7 @@ public abstract class DataCollectorBase(
 
 	public string Name => _name;
 
-	public virtual void Start(CancellationToken stoppingToken)
+	public virtual void Start(CancellationToken stoppingToken = default)
 	{
 		_stopped = false;
 		_stoppingToken = stoppingToken;

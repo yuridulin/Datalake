@@ -123,7 +123,7 @@ public class CalculateCollector(
 	/// <summary>
 	/// Формулы вычисления
 	/// </summary>
-	private IEnumerable<CalculationScope> calculationScopes = source.Tags
+	private IEnumerable<CalculationScope> calculationScopes = source.NotDeletedTags
 		.Where(tag => tag.CalculationSettings != null)
 		.Select(tag => new CalculationScope
 		{

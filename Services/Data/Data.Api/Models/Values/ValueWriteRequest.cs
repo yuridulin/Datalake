@@ -8,9 +8,14 @@ namespace Datalake.Data.Api.Models.Values;
 public record ValueWriteRequest
 {
 	/// <summary>
-	/// Идентификатор тега
+	/// Локальный идентификатор тега
 	/// </summary>
-	public required int Id { get; init; }
+	public int? Id { get; init; }
+
+	/// <summary>
+	/// Глобальный идентификатор тега
+	/// </summary>
+	public Guid? Guid { get; init; }
 
 	/// <summary>
 	/// Новое значение, не типизированое

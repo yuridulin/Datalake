@@ -1,5 +1,5 @@
 ﻿using Datalake.Data.Api.Models.Values;
-using Datalake.Data.Application.Features.Values.Commands.WriteManualValues;
+using Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;
 using Datalake.Data.Application.Features.Values.Queries.GetValues;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -42,8 +42,8 @@ public class ValuesController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="requests">Список запросов на изменение</param>
 	/// <returns>Список измененных начений</returns>
 	[HttpPut]
-	public async Task<ActionResult<WriteManualValuesResult>> WriteAsync(
-		[FromServices] IWriteManualValuesHandler handler,
+	public async Task<ActionResult<IEnumerable<ValuesTagResponse>>> WriteAsync(
+		[FromServices] IManualWriteValuesHandler handler,
 		[BindRequired, FromBody] IEnumerable<ValueWriteRequest> requests,
 		CancellationToken ct = default)
 	{

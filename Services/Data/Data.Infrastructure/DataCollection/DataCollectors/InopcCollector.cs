@@ -24,7 +24,7 @@ public class InopcCollector : DataCollectorBase
 		_itemsTags = [];
 
 		Dictionary<string, TagResolution> uniqueItems = [];
-		foreach (var tag in source.Tags)
+		foreach (var tag in source.NotDeletedTags)
 		{
 			if (tag.InopcSettings == null) continue;
 

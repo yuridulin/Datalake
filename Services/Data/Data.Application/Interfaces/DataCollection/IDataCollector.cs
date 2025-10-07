@@ -5,7 +5,7 @@ namespace Datalake.Data.Application.Interfaces.DataCollection;
 
 public interface IDataCollector
 {
-	void Start(CancellationToken cancellationToken);
+	void Start(CancellationToken stoppingToken = default);
 
 	void PrepareToStop();
 
