@@ -98,5 +98,5 @@ public record class UserGroup : IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список сообщений аудита по этой группе учетных записей
 	/// </summary>
-	public ICollection<Log> AuditLogs { get; set; }
+	public ICollection<Log> AuditLogs { get; set; } = [];
 }

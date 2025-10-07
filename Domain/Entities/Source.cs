@@ -139,5 +139,5 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 	/// <summary>
 	/// Список сообщений аудита по этому источнику
 	/// </summary>
-	public ICollection<Log> AuditLogs { get; set; }
+	public ICollection<Log> AuditLogs { get; set; } = [];
 }

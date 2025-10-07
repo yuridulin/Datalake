@@ -1,11 +1,14 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Data.Application.DataCollection.Models;
-using Datalake.Data.Application.DataCollection.Repositories;
+using Datalake.Data.Application.Interfaces.Repositories;
+using Datalake.Data.Application.Models.Sources;
+using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Infrastructure.Database;
+using Datalake.Shared.Application.Attributes;
 using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Data.Infrastructure.DataCollection.Repositories;
 
+[Scoped]
 public class SourcesSettingsRepository(DataDbContext context) : ISourcesSettingsRepository
 {
 	public async Task<IEnumerable<SourceSettingsDto>> GetAllAsync(CancellationToken cancellationToken)
@@ -32,8 +35,12 @@ public class SourcesSettingsRepository(DataDbContext context) : ISourcesSettings
 				Tags = source.Tags.Select(tag => new TagSettingsDto
 				{
 					TagId = tag.Id,
-					TagResolution = tag.Resolution,
+					TagGuid = tag.Guid,
 					TagType = tag.Type,
+					TagResolution = tag.Resolution,
+					TagName = tag.Name,
+					SourceId = source.Id,
+					SourceType = source.Type,
 					ScaleSettings = !tag.IsScaling ? null : new TagScaleSettings
 					{
 						MinEu = tag.MinEu,

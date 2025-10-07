@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Contracts.Public.Extensions;
 using Datalake.Domain.Exceptions;
-using Datalake.Domain.Extensions;
 using System.Globalization;
 
 namespace Datalake.Domain.ValueObjects;
@@ -110,20 +110,23 @@ public sealed record class TagHistory
 
 	/// <summary>
 	/// Проверка, является ли входящее значение новым относительно текущего.
-	/// Новым будет считаться, если не старее по времени и содержит новые данные - в зависимости от желаемого типа
+	/// Новым будет считаться, если не старее по времени и содержит новые данные
 	/// </summary>
-	public bool IsNew(DateTime date, TagType type, string? text = null, float? number = null, bool? boolean = null)
+	public bool IsNew(DateTime date, string? text = null, float? number = null, bool? boolean = null)
 	{
 		if (date < Date)
 			return false; // запись в прошлое
 
-		return type switch
-		{
-			TagType.String => text != Text,
-			TagType.Number => !AreAlmostEqual(number, Number),
-			TagType.Boolean => boolean != Boolean,
-			_ => throw new DomainException("Неизвестный тип значения тега"),
-		};
+		return text != Text || boolean != Boolean || !AreAlmostEqual(number, Number);
+	}
+
+	/// <summary>
+	/// Проверка, является ли входящее значение новым относительно текущего.
+	/// Новым будет считаться, если не старее по времени и содержит новые данные
+	/// </summary>
+	public bool IsNew(TagHistory newValue)
+	{
+		return IsNew(newValue.Date, newValue.Text, newValue.Number, newValue.Boolean);
 	}
 
 	/// <summary>
