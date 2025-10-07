@@ -1,5 +1,4 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Data.Api.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Data.Api.Models.Values;
@@ -50,10 +49,4 @@ public class ValuesTagResponse
 	/// </summary>
 	[Required]
 	public required ValueRecord[] Values { get; set; } = [];
-
-	/// <summary>
-	/// Как прошла операция
-	/// </summary>
-	[Required]
-	public ValueResult Result { get; set; }
 }

@@ -16,16 +16,22 @@ public class ValueRecord
 	public required DateTimeOffset Date { get; set; }
 
 	/// <summary>
-	/// Строковое представление даты
-	/// </summary>
-	[Required]
-	public required string DateString { get; set; }
-
-	/// <summary>
-	/// Значение
+	/// Текстовое значение
 	/// </summary>
 	[AllowNull]
-	public required object? Value { get; set; } = null;
+	public required string? Text { get; set; } = null;
+
+	/// <summary>
+	/// Числовое значение
+	/// </summary>
+	[AllowNull]
+	public required float? Number { get; set; } = null;
+
+	/// <summary>
+	/// Логическое значение
+	/// </summary>
+	[AllowNull]
+	public required bool? Boolean { get; set; } = null;
 
 	/// <summary>
 	/// Достоверность значения

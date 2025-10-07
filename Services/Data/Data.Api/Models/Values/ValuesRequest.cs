@@ -17,7 +17,12 @@ public record ValuesRequest
 	/// <summary>
 	/// Список локальных идентификаторов тегов
 	/// </summary>
-	public required int[] TagsId { get; init; }
+	public int[]? TagsId { get; init; }
+
+	/// <summary>
+	/// Список глобальных идентификаторов тегов
+	/// </summary>
+	public Guid[]? Tags { get; init; }
 
 	/// <summary>
 	/// Дата, с которой (включительно) нужно получить значения. По умолчанию - начало текущих суток
