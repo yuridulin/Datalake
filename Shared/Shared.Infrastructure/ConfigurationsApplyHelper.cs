@@ -22,6 +22,7 @@ public static class ConfigurationsApplyHelper
 		modelBuilder.ApplyConfiguration(new UserConfiguration(readOnlySettings.Users));
 		modelBuilder.ApplyConfiguration(new UserGroupConfiguration(readOnlySettings.UserGroups));
 		modelBuilder.ApplyConfiguration(new UserGroupRelationConfiguration(readOnlySettings.UserGroupsRelations));
+		modelBuilder.ApplyConfiguration(new UserSessionConfiguration(readOnlySettings.UserSessions));
 	}
 
 	public record ReadOnlySettings
@@ -40,5 +41,6 @@ public static class ConfigurationsApplyHelper
 		public required bool Users { get; init; }
 		public required bool UserGroups { get; init; }
 		public required bool UserGroupsRelations { get; init; }
+		public required bool UserSessions { get; init; }
 	}
 }
