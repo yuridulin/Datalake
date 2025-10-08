@@ -72,7 +72,7 @@ public class SharedExceptionsMiddleware
 			}
 		};
 	}
-	
+
 	private static ProblemDetails CreateUnauthorizedProblem(UnauthorizedException exception)
 	{
 		return new ProblemDetails
@@ -100,7 +100,7 @@ public class SharedExceptionsMiddleware
 			}
 		};
 	}
-	
+
 	private static ProblemDetails CreateNotFoundProblem(NotFoundException exception)
 	{
 		return new ProblemDetails

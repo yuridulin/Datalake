@@ -7,6 +7,6 @@ public interface IInventoryCache
 	Task<IInventoryCacheState> UpdateAsync(Func<IInventoryCacheState, IInventoryCacheState> update);
 
 	Task RestoreAsync();
-	
+
 	event EventHandler<IInventoryCacheState>? StateChanged;
 }

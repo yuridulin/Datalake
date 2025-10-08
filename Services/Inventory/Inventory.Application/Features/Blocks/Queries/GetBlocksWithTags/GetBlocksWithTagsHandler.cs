@@ -1,5 +1,5 @@
-﻿using Datalake.Inventory.Application.Queries;
-using Datalake.Inventory.Api.Models.Blocks;
+﻿using Datalake.Inventory.Api.Models.Blocks;
+using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksWithTags;

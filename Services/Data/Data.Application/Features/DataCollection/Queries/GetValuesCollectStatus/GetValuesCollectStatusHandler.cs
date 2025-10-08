@@ -18,7 +18,7 @@ public class GetValuesCollectStatusHandler(
 		foreach (var id in query.TagsId)
 		{
 			if (query.User.HasAccessToTag(requiredAccess, id))
-				 allowedTagsId.Add(id);
+				allowedTagsId.Add(id);
 		}
 
 		var data = errorsStore.Get(allowedTagsId);

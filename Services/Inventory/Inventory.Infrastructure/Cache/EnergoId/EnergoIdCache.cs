@@ -1,4 +1,3 @@
-using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Attributes;

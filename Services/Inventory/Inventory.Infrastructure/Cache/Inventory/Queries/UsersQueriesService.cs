@@ -1,7 +1,7 @@
-﻿using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Queries;
-using Datalake.Inventory.Api.Models.UserGroups;
+﻿using Datalake.Inventory.Api.Models.UserGroups;
 using Datalake.Inventory.Api.Models.Users;
+using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Exceptions;
 using System.Data;
 

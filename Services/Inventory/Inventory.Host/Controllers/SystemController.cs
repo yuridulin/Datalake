@@ -67,7 +67,7 @@ public class SystemController(IAuthenticator authenticator) : ControllerBase
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		await handler.HandleAsync(new() { User  = user }, ct);
+		await handler.HandleAsync(new() { User = user }, ct);
 
 		return NoContent();
 	}

@@ -20,7 +20,7 @@ public class UserConfiguration(bool isReadOnly = false) : IEntityTypeConfigurati
 
 		// Настройка индексов
 		builder.HasIndex(u => new { u.Login, u.EnergoIdGuid }).IsUnique();
-		builder.HasIndex(u => u.Type); 
+		builder.HasIndex(u => u.Type);
 
 		// Настройка свойств
 		builder

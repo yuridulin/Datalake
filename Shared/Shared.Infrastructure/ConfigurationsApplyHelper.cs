@@ -1,10 +1,5 @@
 ﻿using Datalake.Shared.Infrastructure.Configurations;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Datalake.Shared.Infrastructure;
 

@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Application.Queries;
 using Datalake.Inventory.Api.Models.Users;
+using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Users.Queries.GetUsers;

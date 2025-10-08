@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Inventory.Api.Models.Tags;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Queries;
-using Datalake.Inventory.Api.Models.Tags;
 
 namespace Datalake.Inventory.Infrastructure.Cache.Inventory.Queries;
 
@@ -104,7 +104,7 @@ public class TagsQueriesService(IInventoryCache inventoryCache) : ITagsQueriesSe
 		IEnumerable<Guid>? guids,
 		int? sourceId,
 		CancellationToken ct = default)
-{
+	{
 		var state = inventoryCache.State;
 
 		var data = state.ActiveTags

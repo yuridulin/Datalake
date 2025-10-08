@@ -26,10 +26,12 @@ public class InopcCollector : DataCollectorBase
 		Dictionary<string, TagResolution> uniqueItems = [];
 		foreach (var tag in source.NotDeletedTags)
 		{
-			if (tag.InopcSettings == null) continue;
+			if (tag.InopcSettings == null)
+				continue;
 
 			string? item = tag.InopcSettings.RemoteItem;
-			if (string.IsNullOrWhiteSpace(item)) continue;
+			if (string.IsNullOrWhiteSpace(item))
+				continue;
 
 			if (!uniqueItems.TryGetValue(item, out var resolution))
 			{

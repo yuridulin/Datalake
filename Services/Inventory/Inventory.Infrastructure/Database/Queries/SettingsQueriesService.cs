@@ -1,5 +1,5 @@
-﻿using Datalake.Inventory.Application.Queries;
-using Datalake.Inventory.Api.Models.Settings;
+﻿using Datalake.Inventory.Api.Models.Settings;
+using Datalake.Inventory.Application.Queries;
 using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;

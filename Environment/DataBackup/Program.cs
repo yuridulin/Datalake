@@ -59,13 +59,13 @@ internal class Program
 			.Build();
 
 		var connectionString = new NpgsqlConnectionStringBuilder
-			{
-				Host = configuration["Database:Host"],
-				Database = configuration["Database:Name"],
-				Username = configuration["Database:User"],
-				Password = configuration["Database:Password"],
-				Port = int.Parse(configuration["Database:Port"]!)
-			}
+		{
+			Host = configuration["Database:Host"],
+			Database = configuration["Database:Name"],
+			Username = configuration["Database:User"],
+			Password = configuration["Database:Password"],
+			Port = int.Parse(configuration["Database:Port"]!)
+		}
 			.ToString();
 
 		var outputDir = Path.Combine(Environment.CurrentDirectory, "data");

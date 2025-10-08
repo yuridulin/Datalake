@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Application.Queries;
-using Datalake.Inventory.Api.Models.Settings;
 using Datalake.Domain.Exceptions;
+using Datalake.Inventory.Api.Models.Settings;
+using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Settings.Queries.GetSettings;

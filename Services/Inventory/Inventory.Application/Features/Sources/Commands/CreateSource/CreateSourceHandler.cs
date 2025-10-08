@@ -1,11 +1,11 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Abstractions;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Domain.Entities;
-using Microsoft.Extensions.Logging;
 using Datalake.Shared.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Application.Features.Sources.Commands.CreateSource;
 
@@ -29,7 +29,7 @@ public class CreateSourceHandler(
 
 	public override async Task<int> ExecuteInTransactionAsync(CreateSourceCommand command, CancellationToken ct = default)
 	{
-		source =  new(command.Type, address: command.Address, name: command.Name, description: command.Description);
+		source = new(command.Type, address: command.Address, name: command.Name, description: command.Description);
 
 		await sourcesRepository.AddAsync(source, ct);
 		await _unitOfWork.SaveChangesAsync(ct);

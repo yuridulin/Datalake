@@ -1,5 +1,5 @@
-﻿using Datalake.Inventory.Application.Repositories;
-using Datalake.Domain.Entities;
+﻿using Datalake.Domain.Entities;
+using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.EntityFrameworkCore;
 

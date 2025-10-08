@@ -1,6 +1,6 @@
-﻿using Datalake.Inventory.Application.Exceptions;
+﻿using Datalake.Inventory.Api.Models.Blocks;
+using Datalake.Inventory.Application.Exceptions;
 using Datalake.Inventory.Application.Queries;
-using Datalake.Inventory.Api.Models.Blocks;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Blocks.Queries.GetBlockFull;

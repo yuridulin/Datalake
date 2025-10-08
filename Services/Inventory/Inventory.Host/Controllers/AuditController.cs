@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Application.Features.Audit.Queries.GetAudit;
 using Datalake.Inventory.Api.Models.LogModels;
+using Datalake.Inventory.Application.Features.Audit.Queries.GetAudit;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Inventory.Host.Controllers;

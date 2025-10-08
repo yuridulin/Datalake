@@ -1,9 +1,9 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Exceptions;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeTagRules;

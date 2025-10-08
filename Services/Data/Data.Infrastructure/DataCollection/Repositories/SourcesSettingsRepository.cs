@@ -53,7 +53,7 @@ public class SourcesSettingsRepository(DataDbContext context) : ISourcesSettings
 					{
 						RemoteItem = tag.SourceItem ?? string.Empty,
 					},
-					AggregationSettings = 
+					AggregationSettings =
 						source.Type != SourceType.Aggregated ? null :
 						tag.AggregationSourceTag == null ? null :
 						tag.Aggregation == null ? null :

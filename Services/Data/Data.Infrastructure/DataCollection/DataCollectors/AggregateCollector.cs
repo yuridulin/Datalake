@@ -30,7 +30,7 @@ public class AggregateCollector : DataCollectorBase
 				AggregateFunction = tag.AggregationSettings!.AggregateFunction,
 				AggregatePeriod = tag.AggregationSettings.AggregatePeriod,
 				SourceTagId = tag.AggregationSettings.SourceTagId,
-				SourceTagType	= tag.AggregationSettings.SourceTagType,
+				SourceTagType = tag.AggregationSettings.SourceTagType,
 			})
 			.ToArray();
 

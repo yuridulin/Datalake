@@ -1,5 +1,4 @@
 ﻿using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Domain.Entities;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.Cache.EnergoId;

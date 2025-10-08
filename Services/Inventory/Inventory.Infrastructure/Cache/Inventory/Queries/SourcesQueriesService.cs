@@ -1,8 +1,8 @@
-﻿using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Queries;
-using Datalake.Domain.Entities;
+﻿using Datalake.Domain.Entities;
 using Datalake.Inventory.Api.Models.Sources;
 using Datalake.Inventory.Api.Models.Tags;
+using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Queries;
 
 namespace Datalake.Inventory.Infrastructure.Cache.Inventory.Queries;
 
@@ -69,7 +69,7 @@ public class SourcesQueriesService(IInventoryCache inventoryCache) : ISourcesQue
 						Guid = tag.Guid,
 						Item = tag.SourceItem ?? string.Empty,
 						Formula = tag.Formula,
-						Thresholds =  state.TagThresholds
+						Thresholds = state.TagThresholds
 							.Where(x => x.TagId == tag.Id)
 							.Select(x => new TagThresholdInfo
 							{

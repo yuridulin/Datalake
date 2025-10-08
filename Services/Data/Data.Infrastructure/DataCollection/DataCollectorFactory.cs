@@ -34,7 +34,7 @@ public class DataCollectorFactory(
 
 			SourceType.Manual
 				=> ActivatorUtilities.CreateInstance<ManualCollector>(provider, source),
-			
+
 			_ => null,
 		};
 

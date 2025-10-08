@@ -1,10 +1,10 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Queries;
 using Datalake.Inventory.Api.Models.AccessRules;
 using Datalake.Inventory.Api.Models.Blocks;
 using Datalake.Inventory.Api.Models.UserGroups;
 using Datalake.Inventory.Api.Models.Users;
+using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Queries;
 using static Datalake.Inventory.Api.Models.Blocks.BlockFullInfo;
 
 namespace Datalake.Inventory.Infrastructure.Cache.Inventory.Queries;

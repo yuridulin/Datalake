@@ -161,7 +161,7 @@ namespace Datalake.Inventory.Infrastructure.Database.Migrations
 					INSERT INTO public.""Sources"" (""Id"", ""Name"", ""Type"", ""Address"", ""Description"", ""IsDeleted"", ""IsDisabled"")
 					VALUES ({(int)SourceType.Thresholds}, 'Thresholds', {(int)SourceType.Thresholds}, '',
 						'Теги, значения которых считаются на стороне БД как самое близкое по модулю среди пороговых значений', false, false);");
-			
+
 			migrationBuilder.Sql(@"SELECT setval(pg_get_serial_sequence('""Sources""', 'Id'), (SELECT MAX(""Id"") FROM public.""Sources""));");
 
 			migrationBuilder.Sql(@"
