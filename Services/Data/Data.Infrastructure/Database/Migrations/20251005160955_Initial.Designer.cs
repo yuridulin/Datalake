@@ -193,10 +193,6 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Datalake.Domain.ValueObjects.TagHistory", b =>
                 {
-                    b.Property<bool?>("Boolean")
-                        .HasColumnType("boolean")
-                        .HasColumnName("Boolean");
-
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("Date");

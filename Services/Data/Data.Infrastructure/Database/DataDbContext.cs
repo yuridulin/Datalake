@@ -1,7 +1,6 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Infrastructure;
-using Datalake.Shared.Infrastructure.Configurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Data.Infrastructure.Database;
