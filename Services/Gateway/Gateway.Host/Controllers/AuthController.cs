@@ -1,30 +1,38 @@
 ﻿using Datalake.Gateway.Api.Models.Auth;
-using Datalake.Gateway.Api.Models.Sessions;
-using Datalake.PublicApi.Constants;
+using Datalake.Gateway.Application.Features.Commands.CloseSession;
+using Datalake.Gateway.Application.Features.Commands.OpenEnergoIdSession;
+using Datalake.Gateway.Application.Features.Commands.OpenLocalSession;
+using Datalake.Gateway.Application.Features.Queries.GetCurrentSessionWithAccess;
+using Datalake.Gateway.Application.Models;
+using Datalake.Gateway.Host.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Datalake.GatewayService.Controllers;
+namespace Datalake.Gateway.Host.Controllers;
 
 /// <summary>
 /// Управление сессиями, логин/логаут
 /// </summary>
-public class AuthController : ControllerBase
+[ApiController]
+[Route("api/v1/sessions")]
+public class AuthController(ISessionTokenExtractor tokenExtractor) : ControllerBase
 {
 	/// <summary>
 	/// <see cref="HttpMethod.Post" />: Аутентификация локального пользователя по связке "имя для входа/пароль"
 	/// </summary>
 	/// <param name="request">Данные для входа</param>
 	/// <returns>Данные о учетной записи</returns>
-	public async Task<ActionResult<UserSessionInfo>> AuthenticateLocalAsync(
-		[BindRequired, FromBody] AuthLoginPassRequest request)
+	[HttpPost("local")]
+	public async Task<ActionResult<SessionInfo>> AuthenticateLocalAsync(
+		[FromServices] IOpenLocalSessionHandler openHandler,
+		[FromServices] IGetCurrentSessionWithAccessHandler getHandler,
+		[BindRequired, FromBody] AuthLoginPassRequest request,
+		CancellationToken ct = default)
 	{
-		var userAuthInfo = authenticator.Authenticate(loginPass);
+		var sessionToken = await openHandler.HandleAsync(new() { Login = request.Login, PasswordString = request.Password }, ct);
+		var sessionInfo = await getHandler.HandleAsync(new() { Token = sessionToken }, ct);
 
-		var session = await sessionsStore.OpenSessionAsync(userAuthInfo, UserType.Local);
-		AddSessionToResponse(session, Response);
-
-		return await Task.FromResult(session);
+		return Ok(sessionInfo);
 	}
 
 	/// <summary>
@@ -32,56 +40,47 @@ public class AuthController : ControllerBase
 	/// </summary>
 	/// <param name="request">Данные пользователя Keycloak</param>
 	/// <returns>Данные о учетной записи</returns>
-	public async Task<ActionResult<UserSessionInfo>> AuthenticateEnergoIdUserAsync(
-		[BindRequired, FromBody] AuthEnergoIdRequest request)
+	[HttpPost("energo-id")]
+	public async Task<ActionResult<SessionInfo>> AuthenticateEnergoIdUserAsync(
+		[FromServices] IOpenEnergoIdSessionHandler openHandler,
+		[FromServices] IGetCurrentSessionWithAccessHandler getHandler,
+		[BindRequired, FromBody] AuthEnergoIdRequest request,
+		CancellationToken ct = default)
 	{
-		var userAuthInfo = authenticator.Authenticate(energoIdInfo);
+		var sessionToken = await openHandler.HandleAsync(new() { Guid = request.EnergoIdGuid }, ct);
+		var sessionInfo = await getHandler.HandleAsync(new() { Token = sessionToken }, ct);
 
-		var session = await sessionsStore.OpenSessionAsync(userAuthInfo, UserType.EnergoId);
-		AddSessionToResponse(session, Response);
-
-		return await Task.FromResult(session);
+		return Ok(sessionInfo);
 	}
 
 	/// <summary>
 	/// <see cref="HttpMethod.Get" />: Получение информации о учетной записи на основе текущей сессии
 	/// </summary>
 	/// <returns>Данные о учетной записи</returns>
-	public async Task<ActionResult<UserSessionInfo?>> IdentifyAsync()
+	[HttpGet("identify")]
+	public async Task<ActionResult<SessionInfo?>> IdentifyAsync(
+		[FromServices] IGetCurrentSessionWithAccessHandler handler,
+		CancellationToken ct = default)
 	{
-		authenticator.Authenticate(HttpContext);
-		var session = await sessionsStore.GetExistSessionAsync(HttpContext);
-		if (session != null)
-		{
-			AddSessionToResponse(session, Response);
-		}
-		return session;
+		var token = tokenExtractor.ExtractToken(HttpContext);
+
+		var sessionInfo = await handler.HandleAsync(new() { Token = token }, ct);
+
+		return Ok(sessionInfo);
 	}
 
 	/// <summary>
 	/// <see cref="HttpMethod.Delete"/>: Закрытие уканной сессии пользователя
 	/// </summary>
-	/// <param name="token">Сессионный токен доступа</param>
+	[HttpDelete]
 	public async Task<ActionResult> LogoutAsync(
-		[BindRequired, FromQuery] string token)
+		[FromServices] ICloseSessionHandler handler,
+		CancellationToken ct = default)
 	{
-		authenticator.Authenticate(HttpContext);
+		var token = tokenExtractor.ExtractToken(HttpContext);
 
-		await sessionsStore.CloseSessionAsync(token);
+		await handler.HandleAsync(new() { Token = token }, ct);
 
 		return NoContent();
-	}
-
-
-	/// <summary>
-	/// Добавление данных о сессии к запросу
-	/// </summary>
-	/// <param name="session">Сессия</param>
-	/// <param name="response">Запрос</param>
-	private static void AddSessionToResponse(UserSessionInfo session, HttpResponse response)
-	{
-		response.Headers[AuthConstants.TokenHeader] = session.Token;
-		response.Headers[AuthConstants.NameHeader] = Uri.EscapeDataString(session.AuthInfo.FullName);
-		response.Headers[AuthConstants.GlobalAccessHeader] = session.AuthInfo.RootRule.Access.ToString();
 	}
 }

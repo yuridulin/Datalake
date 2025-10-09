@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Contracts.Public.Interfaces;
+using Datalake.Contracts.Public.Models;
 using Datalake.Inventory.Api.Models.Tags;
-using Datalake.Inventory.Api.Models.Users;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Inventory.Api.Models.Sources;

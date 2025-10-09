@@ -12,29 +12,14 @@ public class AuthenticationService(IUserAccessStore cache) : IAuthenticator
 	public UserAccessEntity Authenticate(HttpContext httpContext)
 	{
 		// проверка внешнего (основного) пользователя
-		if (!httpContext.Request.Headers.TryGetValue(Headers.UserHeader, out var userGuidString))
+		if (!httpContext.Request.Headers.TryGetValue(Headers.UserGuidHeader, out var userGuidString))
 			throw new ArgumentException("Идентификатор пользователя не прочитан из заголовка");
 
 		if (!Guid.TryParse(userGuidString, out var userGuid))
 			throw new InvalidCastException("Идентификатор пользователя не прочитан как GUID");
 
 		var user = cache.TryGet(userGuid)
-			?? throw new KeyNotFoundException($"Внешний пользователь не найден по идентификатору: {userGuid}");
-
-		// проверка внутреннего пользователя, если его хотели передать
-		if (httpContext.Request.Headers.ContainsKey(Headers.UnderlyingUserHeader))
-		{
-			if (!httpContext.Request.Headers.TryGetValue(Headers.UnderlyingUserHeader, out var underlyingUserGuidString))
-				throw new ArgumentException("Идентификатор внутреннего пользователя не прочитан из заголовка");
-
-			if (!Guid.TryParse(underlyingUserGuidString, out var underlyingUserGuid))
-				throw new InvalidCastException("Идентификатор внутреннего пользователя не прочитан как GUID");
-
-			var underlyingUser = cache.TryGet(underlyingUserGuid)
-				?? throw new KeyNotFoundException($"Внутренний пользователь не найден по идентификатору: {userGuid}");
-
-			user.AddUnderlyingUser(underlyingUser);
-		}
+			?? throw new KeyNotFoundException($"Пользователь не найден по идентификатору: {userGuid}");
 
 		return user;
 	}

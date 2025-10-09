@@ -1,5 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Contracts.Public.Extensions;
+using Datalake.Domain.Exceptions;
 using Datalake.Domain.ValueObjects;
 
 namespace Datalake.Domain.Entities;
@@ -19,7 +20,11 @@ public record class UserSession
 	/// <param name="expirationTime"></param>
 	public static UserSession Create(Guid userGuid, UserType type, DateTime? expirationTime = null)
 	{
+		if (expirationTime != null && IsExpire(expirationTime.Value))
+			throw new DomainException("Дата истекания сессии не может быть в прошлом");
+
 		var now = DateTimeExtension.GetCurrentDateTime();
+
 		return new()
 		{
 			UserGuid = userGuid,
@@ -28,6 +33,27 @@ public record class UserSession
 			Created = now,
 			ExpirationTime = expirationTime ?? now.AddDays(7),
 		};
+	}
+
+	private static bool IsExpire(DateTime date)
+	{
+		return DateTimeExtension.GetCurrentDateTime() <= date;
+	}
+
+	public void Validate()
+	{
+		if (IsExpire())
+			throw new DomainException("Сессия истекла");
+	}
+
+	public void Refresh(TimeSpan timeSpan)
+	{
+		ExpirationTime.Add(timeSpan);
+	}
+
+	public bool IsExpire()
+	{
+		return IsExpire(ExpirationTime);
 	}
 
 	public int Id { get; private set; }

@@ -7,20 +7,12 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
 	  <DockerfileTag>datalake-gateway</DockerfileTag>
-    <RootNamespace>Datalake.GatewayService</RootNamespace>
-    <AssemblyName>Datalake.GatewayService</AssemblyName>
-    <AssemblyTitle>Datalake.GatewayService</AssemblyTitle>
+    <RootNamespace>Datalake.Gateway.Host</RootNamespace>
+    <AssemblyName>Datalake.Gateway.Host</AssemblyName>
+    <AssemblyTitle>Datalake.Gateway.Host</AssemblyTitle>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Services\**" />
-    <Content Remove="Services\**" />
-    <EmbeddedResource Remove="Services\**" />
-    <None Remove="Services\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.9" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="MMLib.SwaggerForOcelot" Version="9.0.0" />
@@ -33,7 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Gateway.Api\Gateway.Api.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Shared.Hosting\Shared.Hosting.csproj" />
+    <ProjectReference Include="..\Gateway.Application\Gateway.Application.csproj" />
   </ItemGroup>
 
 </Project>

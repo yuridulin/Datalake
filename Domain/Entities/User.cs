@@ -211,5 +211,5 @@ public record class User : IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список актуальных сессий
 	/// </summary>
-	public ICollection<UserSession> Sessions { get; set; }
+	public ICollection<UserSession> Sessions { get; set; } = [];
 }

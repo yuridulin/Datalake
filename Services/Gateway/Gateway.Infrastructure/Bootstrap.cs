@@ -1,4 +1,6 @@
-﻿using Datalake.Gateway.Infrastructure.Database;
+﻿using Datalake.Gateway.Application.Interfaces;
+using Datalake.Gateway.Infrastructure.Database;
+using Datalake.Gateway.Infrastructure.InMemory;
 using Datalake.Shared.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +20,9 @@ public static class Bootstrap
 			.AddNpgsqlDataSource(connectionString)
 			.AddDbContext<GatewayDbContext>(options => options
 				.UseNpgsql(connectionString));
+
+		builder.Services.AddSingleton<ISessionsCache, MemorySessionsCache>();
+		builder.Services.AddSingleton<IUsersActivityService, UsersActivityService>();
 
 		return builder;
 	}

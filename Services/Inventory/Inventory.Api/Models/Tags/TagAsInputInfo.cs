@@ -1,5 +1,5 @@
 ﻿using Datalake.Contracts.Public.Interfaces;
-using Datalake.Inventory.Api.Models.Users;
+using Datalake.Contracts.Public.Models;
 
 namespace Datalake.Inventory.Api.Models.Tags;
 

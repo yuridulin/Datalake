@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Contracts.Public.Interfaces;
-using Datalake.Inventory.Api.Models.Users;
+using Datalake.Contracts.Public.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Inventory.Api.Models.Sources;

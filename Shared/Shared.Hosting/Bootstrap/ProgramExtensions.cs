@@ -22,17 +22,13 @@ public static class ProgramExtensions
 {
 	public static WebApplicationBuilder AddShared(this WebApplicationBuilder builder, string envName, VersionValue version, Assembly assembly)
 	{
-		var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage");
+		// конфиг
+		var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage", "config");
+		var configs = Path.Combine(storage, "config");
 		builder.Configuration
-			.SetBasePath(storage)
-			.AddJsonFile(
-				path: Path.Combine(Path.Combine(storage, "config"), "appsettings.json"),
-				optional: false,
-				reloadOnChange: true)
-			.AddJsonFile(
-				path: Path.Combine(Path.Combine(storage, "config"), $"appsettings.{envName}.json"),
-				optional: true,
-				reloadOnChange: true);
+			.SetBasePath(configs)
+			.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+			.AddJsonFile($"appsettings.{envName}.json", optional: true, reloadOnChange: true);
 
 		// логи
 		Directory.CreateDirectory(Path.Combine(storage, "logs"));

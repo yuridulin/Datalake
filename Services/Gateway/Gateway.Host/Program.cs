@@ -1,28 +1,31 @@
-using Datalake.PublicApi;
-using Datalake.PublicApi.Constants;
-using FluentValidation;
+using Datalake.Shared.Api.Constants;
+using Datalake.Shared.Hosting;
+using Datalake.Shared.Hosting.Bootstrap;
+using Datalake.Shared.Hosting.Middlewares;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
+using System.Reflection;
 
-namespace Datalake.GatewayService;
+namespace Datalake.Gateway.Host;
 
 public class Program
 {
 	internal static string CurrentEnvironment { get; set; } = string.Empty;
 
+	internal static VersionValue Version { get; set; } = new();
+
 	public static async Task Main(string[] args)
 	{
+		// дефолт сообщение, чтобы увидеть факт запуска
+		Console.WriteLine($"{nameof(Gateway)}: v{Version.Full()}");
+
 		// настройка
 		var builder = WebApplication.CreateBuilder(args);
 		CurrentEnvironment = builder.Environment.EnvironmentName;
 
 		// конфигурация
-		var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage");
-		var configs = Path.Combine(storage, "config");
+		builder.AddShared(CurrentEnvironment, Version, Assembly.GetCallingAssembly());
 		builder.Configuration
-			.SetBasePath(configs)
-			.AddJsonFile($"appsettings.json", optional: false, reloadOnChange: true)
-			.AddJsonFile($"appsettings.{CurrentEnvironment}.json", optional: true, reloadOnChange: true)
 			.AddJsonFile($"ocelot.json", optional: false, reloadOnChange: true);
 
 		// прокси через ocelot и общий swagger
@@ -32,7 +35,7 @@ public class Program
 		{
 			c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
 			{
-				Title = "Datalake " + nameof(GatewayService),
+				Title = "Datalake " + nameof(Gateway),
 				Version = "v1"
 			});
 		});
@@ -40,25 +43,12 @@ public class Program
 		builder.Services.AddOcelot(builder.Configuration);
 		builder.Services.AddSwaggerForOcelot(builder.Configuration);
 
-		// валидация
-		builder.Services.AddValidatorsFromAssembly(typeof(PublicApiMarker).Assembly);
-
-		// общение между сервисами
-		var rabbitMqConfig = builder.Configuration.GetSection("RabbitMq");
-
-		builder.Services.AddMassTransit(config =>
-		{
-			config.UsingRabbitMq((context, cfg) =>
-			{
-				cfg.Host(rabbitMqConfig["Host"], "/", h =>
-				{
-					h.Username(rabbitMqConfig["User"] ?? string.Empty);
-					h.Password(rabbitMqConfig["Pass"] ?? string.Empty);
-				});
-			});
-		});
-
 		var app = builder.Build();
+
+		if (!app.Environment.IsProduction())
+		{
+			app.UseDeveloperExceptionPage();
+		}
 
 		app.UseSwagger();
 		app.UseSwaggerForOcelotUI(opt =>
@@ -67,8 +57,11 @@ public class Program
 		});
 
 		app
-			.UseExceptionHandler(ErrorsMiddleware.ErrorHandler)
+			.UseSharedExceptionsHandler()
 			.UseSentryTracing()
+			.UseSharedSerilogRequestLogging()
+			.UseHttpsRedirection()
+			.UseRouting()
 			.UseDefaultFiles()
 			.UseStaticFiles(new StaticFileOptions
 			{
@@ -82,9 +75,6 @@ public class Program
 					}
 				}
 			})
-			.UseCustomSerilog()
-			.UseHttpsRedirection()
-			.UseRouting()
 			.UseCors(policy =>
 			{
 				policy
@@ -92,16 +82,19 @@ public class Program
 					.AllowAnyOrigin()
 					.AllowAnyHeader()
 					.WithExposedHeaders([
-						AuthConstants.TokenHeader,
-						AuthConstants.GlobalAccessHeader,
-						AuthConstants.NameHeader,
-						AuthConstants.UnderlyingUserGuidHeader,
+						Headers.UserGuidHeader,
+						Headers.SessionTokenHeander,
 					]);
 			})
-			.UseMiddleware<SentryRequestBodyMiddleware>()
-			.EnsureCorsMiddlewareOnError();
+			.UseSharedSentryBodyWriter()
+			.UseSharedCorsOnError();
 
+		app.MapControllerRoute(
+			name: "default",
+			pattern: "{controller=Home}/{action=Index}/{id?}");
 		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
+
+		app.NotifyStart(nameof(Gateway), CurrentEnvironment, Version);
 
 		await app.UseOcelot();
 		await app.RunAsync();

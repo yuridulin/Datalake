@@ -53,8 +53,8 @@ public class Program
 					.AllowAnyOrigin()
 					.AllowAnyHeader()
 					.WithExposedHeaders([
-						Headers.UserHeader,
-						Headers.UnderlyingUserHeader,
+						Headers.UserGuidHeader,
+						Headers.SessionTokenHeander,
 					]);
 			})
 			.UseSharedSentryBodyWriter()

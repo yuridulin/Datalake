@@ -1,5 +1,5 @@
 ﻿using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Infrastructure.Cache.UserAccess;
+using Datalake.Inventory.Infrastructure.InMemory.UserAccess;
 
 namespace Datalake.Inventory.Infrastructure.Interfaces;
 
