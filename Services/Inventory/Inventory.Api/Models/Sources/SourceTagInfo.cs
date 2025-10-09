@@ -1,5 +1,5 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Api.Models.Abstractions;
+using Datalake.Contracts.Public.Interfaces;
 using Datalake.Inventory.Api.Models.Tags;
 using Datalake.Inventory.Api.Models.Users;
 using System.ComponentModel.DataAnnotations;

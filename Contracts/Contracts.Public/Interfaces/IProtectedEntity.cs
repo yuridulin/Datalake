@@ -1,7 +1,7 @@
-﻿using Datalake.Inventory.Api.Models.Users;
+﻿using Datalake.Contracts.Public.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Inventory.Api.Models.Abstractions;
+namespace Datalake.Contracts.Public.Interfaces;
 
 /// <summary>
 /// Объект, доступ к которому проверяется по системе правил

@@ -11,9 +11,9 @@ public class UserSessionConfiguration(bool isReadOnly = false) : IEntityTypeConf
 	public void Configure(EntityTypeBuilder<UserSession> builder)
 	{
 		if (isReadOnly)
-			builder.ToView(InventorySchema.UserSessions.Name, InventorySchema.Name);
+			builder.ToView(GatewaySchema.UserSessions.Name, GatewaySchema.Name);
 		else
-			builder.ToTable(InventorySchema.UserSessions.Name, InventorySchema.Name);
+			builder.ToTable(GatewaySchema.UserSessions.Name, GatewaySchema.Name);
 
 		// Настройка ключа
 		builder.HasKey(u => u.Id);
@@ -22,8 +22,9 @@ public class UserSessionConfiguration(bool isReadOnly = false) : IEntityTypeConf
 			builder.Property(u => u.Id).ValueGeneratedOnAdd();
 
 		var relationToUser = builder.HasOne(u => u.User)
-			.WithMany()
-			.HasForeignKey(u => u.UserGuid);
+			.WithMany(x => x.Sessions)
+			.HasForeignKey(u => u.UserGuid)
+			.HasPrincipalKey(x => x.Guid);
 
 		if (!isReadOnly)
 			relationToUser.OnDelete(DeleteBehavior.Cascade);
@@ -39,6 +40,6 @@ public class UserSessionConfiguration(bool isReadOnly = false) : IEntityTypeConf
 			.HasConversion(
 				token => token.ToString(),
 				rawHash => PasswordHashValue.FromExistingHash(rawHash))
-			.HasColumnName("Token");
+			.HasColumnName(GatewaySchema.UserSessions.Columns.Token);
 	}
 }

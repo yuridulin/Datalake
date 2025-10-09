@@ -1,5 +1,6 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Inventory.Infrastructure.Database;
@@ -16,7 +17,7 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 	/// </summary>
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
-		modelBuilder.HasDefaultSchema("public");
+		modelBuilder.HasDefaultSchema(InventorySchema.Name);
 
 		modelBuilder.ApplyConfigurations(new()
 		{
@@ -34,6 +35,7 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 			UserGroups = false,
 			UserGroupsRelations = false,
 			Users = false,
+			UserSessions = true,
 		});
 	}
 

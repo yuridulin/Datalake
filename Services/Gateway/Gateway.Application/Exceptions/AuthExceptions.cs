@@ -1,8 +1,9 @@
-﻿using Datalake.PublicApi.Exceptions;
+﻿using Datalake.Domain.Exceptions;
+using Datalake.Shared.Application.Exceptions;
 
-namespace Datalake.GatewayService;
+namespace Datalake.Gateway.Application.Exceptions;
 
-public class Exceptions
+public class AuthExceptions
 {
 	/// <summary>
 	/// Нет доступа, так как нет сессии с таким токеном

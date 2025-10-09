@@ -64,11 +64,6 @@ public static class InventorySchema
 		public static string Name { get; } = nameof(UserGroups);
 	}
 
-	public static class UserSessions
-	{
-		public static string Name { get; } = nameof(UserSessions);
-	}
-
 	public static class Users
 	{
 		public static string Name { get; } = nameof(Users);

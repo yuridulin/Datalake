@@ -1,12 +1,30 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Datalake.Contracts.Public.Models;
+using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Inventory.Api.Models.Users;
+namespace Datalake.Gateway.Api.Models.Sessions;
 
 /// <summary>
 /// Информация о аутентифицированном пользователе
 /// </summary>
-public class UserAuthInfo : UserSimpleInfo
+public class UserAuthInfo
 {
+	/// <summary>
+	/// Идентификатор пользователя
+	/// </summary>
+	[Required]
+	public required Guid Guid { get; set; }
+
+	/// <summary>
+	/// Идентификатор пользователя в системе EnergoId
+	/// </summary>
+	public Guid? EnergoId { get; set; }
+
+	/// <summary>
+	/// Имя пользователя
+	/// </summary>
+	[Required]
+	public required string FullName { get; set; }
+
 	/// <summary>
 	/// Глобальный уровень доступа
 	/// </summary>
@@ -36,14 +54,4 @@ public class UserAuthInfo : UserSimpleInfo
 	/// </summary>
 	[Required]
 	public Dictionary<int, AccessRuleInfo> Tags { get; set; } = [];
-
-	/// <summary>
-	/// Идентификатор пользователя внешнего приложения, который передается через промежуточную учетную запись
-	/// </summary>
-	public UserAuthInfo? UnderlyingUser { get; set; } = null;
-
-	/// <summary>
-	/// Идентификатор пользователя в системе EnergoId
-	/// </summary>
-	public Guid? EnergoId { get; set; }
 }

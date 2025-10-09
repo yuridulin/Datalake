@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Api.Models.Abstractions;
+﻿using Datalake.Contracts.Public.Interfaces;
 using Datalake.Inventory.Api.Models.Users;
 using System.ComponentModel.DataAnnotations;
 

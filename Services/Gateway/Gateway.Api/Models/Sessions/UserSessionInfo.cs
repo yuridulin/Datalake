@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.PublicApi.Models.Auth;
+namespace Datalake.Gateway.Api.Models.Sessions;
 
 /// <summary>
 /// Данные сессии пользователя

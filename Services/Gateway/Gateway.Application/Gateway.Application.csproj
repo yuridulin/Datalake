@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Datalake.Gateway.Application</AssemblyName>
+    <AssemblyTitle>Datalake.Gateway.Application</AssemblyTitle>
+    <RootNamespace>Datalake.Gateway.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Interfaces\" />
+  </ItemGroup>
+
+</Project>

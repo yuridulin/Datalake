@@ -207,4 +207,9 @@ public record class User : IWithGuidKey, ISoftDeletable
 	/// Список сообщений аудита по этой учетной записи
 	/// </summary>
 	public ICollection<Log> AuditLogs { get; set; } = [];
+
+	/// <summary>
+	/// Список актуальных сессий
+	/// </summary>
+	public ICollection<UserSession> Sessions { get; set; }
 }

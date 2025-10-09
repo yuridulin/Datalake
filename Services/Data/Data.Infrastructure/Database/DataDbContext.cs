@@ -1,6 +1,7 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Data.Infrastructure.Database;
@@ -23,7 +24,7 @@ public class DataDbContext : DbContext
 	/// </summary>
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
-		modelBuilder.HasDefaultSchema("data");
+		modelBuilder.HasDefaultSchema(DataSchema.Name);
 
 		modelBuilder.ApplyConfigurations(new()
 		{
@@ -41,6 +42,7 @@ public class DataDbContext : DbContext
 			UserGroups = true,
 			UserGroupsRelations = true,
 			Users = true,
+			UserSessions = true,
 		});
 	}
 
