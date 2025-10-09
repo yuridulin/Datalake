@@ -3,9 +3,11 @@ using Datalake.Domain.Exceptions;
 using Datalake.Gateway.Application.Interfaces;
 using Datalake.Gateway.Application.Interfaces.Repositories;
 using Datalake.Gateway.Application.Models;
+using Datalake.Shared.Application.Attributes;
 
 namespace Datalake.Gateway.Application.Services;
 
+[Scoped]
 public class SessionsService(
 	IUsersActivityService usersStateService,
 	ISessionsCache cache,

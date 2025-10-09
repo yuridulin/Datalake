@@ -23,7 +23,7 @@ public static class Bootstrap
 				.AsImplementedInterfaces()
 				.WithScopedLifetime());
 
-		builder.Services.AddSingleton<ISessionsService, SessionsService>();
+		builder.Services.AddScoped<ISessionsService, SessionsService>();
 
 		return builder;
 	}

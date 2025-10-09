@@ -57,6 +57,20 @@
         "datalake-postgres": "StartWithoutDebugging",
         "datalake-rabbitmq": "DoNotStart"
       }
+    },
+    "Gateway": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "datalake-client": "DoNotStart",
+        "datalake-data": "DoNotStart",
+        "datalake-events": "DoNotStart",
+        "datalake-gateway": "StartDebugging",
+        "datalake-inventory": "DoNotStart",
+        "datalake-keycloak": "StartWithoutDebugging",
+        "datalake-postgres": "StartWithoutDebugging",
+        "datalake-rabbitmq": "StartWithoutDebugging"
+      }
     }
   }
 }

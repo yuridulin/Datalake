@@ -84,7 +84,7 @@ services:
     container_name: datalake-gateway
     build:
       context: ../
-      dockerfile: ./Gateway/Dockerfile
+      dockerfile: ./Services/Gateway/Gateway.Host/Dockerfile
     depends_on:
       datalake-postgres:
         condition: service_healthy
@@ -99,7 +99,7 @@ services:
     ports:
       - 7600:8080
     volumes:
-      - "../Gateway/storage:/app/storage"
+      - "../Services/Gateway/Gateway.Host/storage:/app/storage"
 
   ## [7601] Управление схемой данных - теги, блоки, источники, пользователи и группы, права
   datalake-inventory:
@@ -137,7 +137,7 @@ services:
     container_name: datalake-data
     build:
       context: ../
-      dockerfile: ./Services/DataService/Dockerfile
+      dockerfile: ./Services/Data/Data.Host/Dockerfile
     depends_on:
       datalake-postgres:
         condition: service_healthy
@@ -157,7 +157,7 @@ services:
     ports:
       - 7602:8080
     volumes:
-      - "../Services/DataService/storage:/app/storage"
+      - "../Services/Data/Data.Host/storage:/app/storage"
 
   ## [7603] События
   datalake-events:

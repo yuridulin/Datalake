@@ -5,6 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Datalake.Gateway.Infrastructure.Database;
 
+/// <summary>
+/// Контекст для работы с сессиями
+/// </summary>
+/// Add-Migration NAME -Context Datalake.Gateway.Infrastructure.Database.GatewayDbContext -OutputDir Database\Migrations
+/// Remove-Migration -Context Datalake.Gateway.Infrastructure.Database.GatewayDbContext
 public class GatewayDbContext(DbContextOptions<GatewayDbContext> options) : DbContext(options)
 {
 	/// <summary>

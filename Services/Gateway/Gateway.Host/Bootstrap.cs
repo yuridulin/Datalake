@@ -1,4 +1,6 @@
-﻿using Ocelot.DependencyInjection;
+﻿using Datalake.Gateway.Host.Interfaces;
+using Datalake.Gateway.Host.Services;
+using Ocelot.DependencyInjection;
 
 namespace Datalake.Gateway.Host;
 
@@ -24,6 +26,8 @@ public static class Bootstrap
 
 		builder.Services.AddOcelot(builder.Configuration);
 		builder.Services.AddSwaggerForOcelot(builder.Configuration);
+
+		builder.Services.AddScoped<ISessionTokenExtractor, SessionTokenExtractor>();
 
 		return builder;
 	}

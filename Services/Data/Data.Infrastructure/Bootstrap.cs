@@ -4,6 +4,7 @@ using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Interfaces.Repositories;
 using Datalake.Data.Infrastructure.Database;
 using Datalake.Data.Infrastructure.Database.Repositories;
+using Datalake.Data.Infrastructure.Database.Services;
 using Datalake.Data.Infrastructure.DataCollection;
 using Datalake.Data.Infrastructure.DataCollection.Interfaces;
 using Datalake.Data.Infrastructure.DataCollection.Repositories;
@@ -52,6 +53,9 @@ public static class Bootstrap
 		builder.Services.AddSingleton<IDataCollectionErrorsStore, DataCollectionErrorsStore>();
 
 		builder.Services.AddSingleton<IReceiverService, ReceiverService>();
+
+		builder.Services.AddSingleton<DbInitializer>();
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<DbInitializer>());
 
 		return builder;
 	}

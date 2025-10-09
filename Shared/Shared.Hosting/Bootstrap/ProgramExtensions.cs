@@ -23,7 +23,7 @@ public static class ProgramExtensions
 	public static WebApplicationBuilder AddShared(this WebApplicationBuilder builder, string envName, VersionValue version, Assembly assembly)
 	{
 		// конфиг
-		var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage", "config");
+		var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage");
 		var configs = Path.Combine(storage, "config");
 		builder.Configuration
 			.SetBasePath(configs)
