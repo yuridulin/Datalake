@@ -1,6 +1,7 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Gateway.Application.Interfaces;
 using Datalake.Gateway.Application.Interfaces.Repositories;
+using Datalake.Shared.Application.Exceptions;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Gateway.Application.Features.Commands.OpenEnergoIdSession;
@@ -14,7 +15,8 @@ public class OpenEnergoIdSessionHandler(
 {
 	public override async Task<string> HandleInTransactionAsync(OpenEnergoIdSessionCommand command, CancellationToken ct = default)
 	{
-		User user = await usersRepository.GetByEnergoIdAsync(command.Guid, ct);
+		User? user = await usersRepository.GetByEnergoIdAsync(command.Guid, ct)
+			?? throw new NotFoundException("Пользователь не найден по идентификатору EnergoId");
 
 		var token = await sessionsService.OpenAsync(user, ct);
 		return token;

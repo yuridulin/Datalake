@@ -36,4 +36,20 @@ public static class BootstrapExtensions
 
 		return builder;
 	}
+
+	public static WebApplication UseApi(this WebApplication app)
+	{
+		app.MapHealthChecks("/health");
+
+		return app;
+	}
+
+	public static WebApplication MapApi(this WebApplication app)
+	{
+		app.MapControllerRoute(
+			name: "default",
+			pattern: "{controller=Home}/{action=Index}/{id?}");
+
+		return app;
+	}
 }

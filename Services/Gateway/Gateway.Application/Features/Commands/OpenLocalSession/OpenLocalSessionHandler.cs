@@ -16,7 +16,8 @@ public class OpenLocalSessionHandler(
 {
 	public override async Task<string> HandleInTransactionAsync(OpenLocalSessionCommand command, CancellationToken ct = default)
 	{
-		User user = await usersRepository.GetByLoginAsync(command.Login, ct);
+		User? user = await usersRepository.GetByLoginAsync(command.Login, ct)
+			?? throw new NotFoundException("Пользователь не найден по логину");
 
 		var passwordHash = PasswordHashValue.FromPlainText(command.PasswordString);
 		if (user.PasswordHash != passwordHash)

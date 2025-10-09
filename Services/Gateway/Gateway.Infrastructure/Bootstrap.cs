@@ -1,5 +1,7 @@
 ﻿using Datalake.Gateway.Application.Interfaces;
+using Datalake.Gateway.Application.Interfaces.Repositories;
 using Datalake.Gateway.Infrastructure.Database;
+using Datalake.Gateway.Infrastructure.Database.Repositories;
 using Datalake.Gateway.Infrastructure.InMemory;
 using Datalake.Shared.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +25,9 @@ public static class Bootstrap
 
 		builder.Services.AddSingleton<ISessionsCache, MemorySessionsCache>();
 		builder.Services.AddSingleton<IUsersActivityService, UsersActivityService>();
+
+		builder.Services.AddScoped<IUserSessionsRepository, UserSessionsRepository>();
+		builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 
 		return builder;
 	}

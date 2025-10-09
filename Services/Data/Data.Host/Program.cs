@@ -1,4 +1,5 @@
-﻿using Datalake.Data.Application;
+﻿using Datalake.Data.Api;
+using Datalake.Data.Application;
 using Datalake.Data.Infrastructure;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
@@ -25,6 +26,7 @@ public class Program
 		builder.AddShared(CurrentEnvironment, Version, Assembly.GetCallingAssembly());
 		builder.AddInfrastructure();
 		builder.AddApplication();
+		builder.AddApi();
 		builder.AddHosting();
 
 		// сборка
@@ -55,7 +57,8 @@ public class Program
 		app.UseSharedSentryBodyWriter();
 		app.UseSharedCorsOnError();
 
-		//app.MapApi();
+		app.UseApi();
+		app.MapApi();
 
 		await app.RunAsync();
 	}

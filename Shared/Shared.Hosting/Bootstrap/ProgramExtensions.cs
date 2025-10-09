@@ -62,7 +62,8 @@ public static class ProgramExtensions
 		return builder;
 	}
 
-	public static IMvcBuilder AddSharedJsonOptions(this IMvcBuilder services)
+	public static IMvcBuilder AddSharedJsonOptions(
+		this IMvcBuilder services)
 	{
 		return services.AddJsonOptions(options =>
 		{
@@ -128,12 +129,14 @@ public static class ProgramExtensions
 		});
 	}
 
-	public static IApplicationBuilder UseSharedExceptionsHandler(this IApplicationBuilder app)
+	public static IApplicationBuilder UseSharedExceptionsHandler(
+		this IApplicationBuilder app)
 	{
 		return app.UseExceptionHandler(SharedExceptionsMiddleware.Handler);
 	}
 
-	public static IApplicationBuilder UseSharedSerilogRequestLogging(this IApplicationBuilder app)
+	public static IApplicationBuilder UseSharedSerilogRequestLogging(
+		this IApplicationBuilder app)
 	{
 		return app.UseSerilogRequestLogging(options =>
 		{
@@ -177,12 +180,17 @@ public static class ProgramExtensions
 		});
 	}
 
-	public static IApplicationBuilder UseSharedSentryBodyWriter(this IApplicationBuilder app)
+	public static IApplicationBuilder UseSharedSentryBodyWriter(
+		this IApplicationBuilder app)
 	{
 		return app.UseMiddleware<SentryRequestBodyMiddleware>();
 	}
 
-	public static void NotifyStart(this IApplicationBuilder _, string name, string envName, VersionValue version)
+	public static void NotifyStart(
+		this IApplicationBuilder _,
+		string name,
+		string envName,
+		VersionValue version)
 	{
 		// отправка сообщения в Sentry, чтобы сразу засветить новый релиз
 		string greetings = $"🚀 Приложение {name} запущено. Релиз: {envName}@{version.Short()}";

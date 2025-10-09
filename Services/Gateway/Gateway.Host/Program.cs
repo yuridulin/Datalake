@@ -1,8 +1,10 @@
+using Datalake.Gateway.Api;
+using Datalake.Gateway.Application;
+using Datalake.Gateway.Infrastructure;
 using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Middlewares;
-using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using System.Reflection;
 
@@ -25,23 +27,10 @@ public class Program
 
 		// конфигурация
 		builder.AddShared(CurrentEnvironment, Version, Assembly.GetCallingAssembly());
-		builder.Configuration
-			.AddJsonFile($"ocelot.json", optional: false, reloadOnChange: true);
-
-		// прокси через ocelot и общий swagger
-		builder.Services.AddControllers();
-		builder.Services.AddEndpointsApiExplorer();
-		builder.Services.AddSwaggerGen(c =>
-		{
-			c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-			{
-				Title = "Datalake " + nameof(Gateway),
-				Version = "v1"
-			});
-		});
-
-		builder.Services.AddOcelot(builder.Configuration);
-		builder.Services.AddSwaggerForOcelot(builder.Configuration);
+		builder.AddInfrastructure();
+		builder.AddApplication();
+		builder.AddApi();
+		builder.AddHosting();
 
 		var app = builder.Build();
 
@@ -89,10 +78,8 @@ public class Program
 			.UseSharedSentryBodyWriter()
 			.UseSharedCorsOnError();
 
-		app.MapControllerRoute(
-			name: "default",
-			pattern: "{controller=Home}/{action=Index}/{id?}");
-		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
+		app.UseApi();
+		app.MapApi();
 
 		app.NotifyStart(nameof(Gateway), CurrentEnvironment, Version);
 
