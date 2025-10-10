@@ -2,14 +2,15 @@
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class BlockConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<Block>
+public class BlockConfiguration(TableAccess access) : IEntityTypeConfiguration<Block>
 {
 	public void Configure(EntityTypeBuilder<Block> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(InventorySchema.Blocks.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.Blocks.Name, InventorySchema.Name);
@@ -21,7 +22,7 @@ public class BlockConfiguration(bool isReadOnly = false) : IEntityTypeConfigurat
 			.WithMany(block => block.Children)
 			.HasForeignKey(block => block.ParentId);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			hierarchyRelations.OnDelete(DeleteBehavior.SetNull);
 
 		// связь блоков и тегов
@@ -29,7 +30,7 @@ public class BlockConfiguration(bool isReadOnly = false) : IEntityTypeConfigurat
 			.WithOne(r => r.Block)
 			.HasForeignKey(r => r.BlockId);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			relationToTag.OnDelete(DeleteBehavior.Cascade);
 	}
 }

@@ -2,21 +2,22 @@
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class AuditConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<Log>
+public class AuditConfiguration(TableAccess access) : IEntityTypeConfiguration<Log>
 {
 	public void Configure(EntityTypeBuilder<Log> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(InventorySchema.Logs.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.Logs.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		var relationToAuthors = builder.HasOne(x => x.Author)
@@ -47,7 +48,7 @@ public class AuditConfiguration(bool isReadOnly = false) : IEntityTypeConfigurat
 			.WithMany()
 			.HasForeignKey(x => x.AffectedAccessRightsId);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 		{
 			relationToAuthors.OnDelete(DeleteBehavior.SetNull);
 			relationToBlocks.OnDelete(DeleteBehavior.SetNull);

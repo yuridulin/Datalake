@@ -3,14 +3,15 @@ using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class UserSessionConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<UserSession>
+public class UserSessionConfiguration(TableAccess access) : IEntityTypeConfiguration<UserSession>
 {
 	public void Configure(EntityTypeBuilder<UserSession> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(GatewaySchema.UserSessions.Name, GatewaySchema.Name);
 		else
 			builder.ToTable(GatewaySchema.UserSessions.Name, GatewaySchema.Name);
@@ -18,7 +19,7 @@ public class UserSessionConfiguration(bool isReadOnly = false) : IEntityTypeConf
 		// Настройка ключа
 		builder.HasKey(u => u.Id);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			builder.Property(u => u.Id).ValueGeneratedOnAdd();
 
 		var relationToUser = builder.HasOne(u => u.User)
@@ -26,7 +27,7 @@ public class UserSessionConfiguration(bool isReadOnly = false) : IEntityTypeConf
 			.HasForeignKey(u => u.UserGuid)
 			.HasPrincipalKey(x => x.Guid);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			relationToUser.OnDelete(DeleteBehavior.Cascade);
 
 		// Настройка свойств

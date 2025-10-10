@@ -24,7 +24,7 @@ public class ChangeBlockRulesHandler(
 
 		Block block;
 		int[] oldRulesId;
-		AccessRights[] newRules;
+		AccessRule[] newRules;
 
 		await unitOfWork.BeginTransactionAsync(ct);
 
@@ -37,7 +37,7 @@ public class ChangeBlockRulesHandler(
 			oldRulesId = oldRules.Select(x => x.Id).ToArray();
 			await accessRulesRepository.RemoveRangeAsync(oldRules, ct);
 
-			newRules = command.Rules.Select(x => new AccessRights(x.Type, blockId: block.Id, userGuid: x.UserGuid, userGroupGuid: x.UserGroupGuid)).ToArray();
+			newRules = command.Rules.Select(x => new AccessRule(x.Type, blockId: block.Id, userGuid: x.UserGuid, userGroupGuid: x.UserGroupGuid)).ToArray();
 			await accessRulesRepository.AddRangeAsync(newRules, ct);
 
 			var audit = new Log(command.User.Guid, "Изменены права доступа", blockId: block.Id);

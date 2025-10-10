@@ -12,6 +12,7 @@ public static class ConfigurationsApplyHelper
 		modelBuilder.ApplyConfiguration(new BlockConfiguration(readOnlySettings.Blocks));
 		modelBuilder.ApplyConfiguration(new BlockPropertyConfiguration(readOnlySettings.BlocksProperties));
 		modelBuilder.ApplyConfiguration(new BlockTagConfiguration(readOnlySettings.BlocksTags));
+		modelBuilder.ApplyConfiguration(new CalculatedAccessRuleConfiguration(readOnlySettings.CalculatedAccessRules));
 		modelBuilder.ApplyConfiguration(new EnergoIdConfiguration());
 		modelBuilder.ApplyConfiguration(new SettingsConfiguration(readOnlySettings.Settings));
 		modelBuilder.ApplyConfiguration(new SourceConfiguration(readOnlySettings.Sources));
@@ -27,20 +28,27 @@ public static class ConfigurationsApplyHelper
 
 	public record ReadOnlySettings
 	{
-		public required bool AccessRules { get; init; }
-		public required bool Audit { get; init; }
-		public required bool Blocks { get; init; }
-		public required bool BlocksProperties { get; init; }
-		public required bool BlocksTags { get; init; }
-		public required bool Settings { get; init; }
-		public required bool Sources { get; init; }
-		public required bool Tags { get; init; }
-		public required bool TagsInputs { get; init; }
-		public required bool TagsThresholds { get; init; }
-		public required bool TagsHistory { get; init; }
-		public required bool Users { get; init; }
-		public required bool UserGroups { get; init; }
-		public required bool UserGroupsRelations { get; init; }
-		public required bool UserSessions { get; init; }
+		public required TableAccess AccessRules { get; init; }
+		public required TableAccess Audit { get; init; }
+		public required TableAccess Blocks { get; init; }
+		public required TableAccess BlocksProperties { get; init; }
+		public required TableAccess BlocksTags { get; init; }
+		public required TableAccess CalculatedAccessRules { get; init; }
+		public required TableAccess Settings { get; init; }
+		public required TableAccess Sources { get; init; }
+		public required TableAccess Tags { get; init; }
+		public required TableAccess TagsInputs { get; init; }
+		public required TableAccess TagsThresholds { get; init; }
+		public required TableAccess TagsHistory { get; init; }
+		public required TableAccess Users { get; init; }
+		public required TableAccess UserGroups { get; init; }
+		public required TableAccess UserGroupsRelations { get; init; }
+		public required TableAccess UserSessions { get; init; }
+	}
+
+	public enum TableAccess
+	{
+		Read,
+		Write,
 	}
 }

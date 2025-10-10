@@ -2,21 +2,22 @@
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class UserGroupRelationConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<UserGroupRelation>
+public class UserGroupRelationConfiguration(TableAccess access) : IEntityTypeConfiguration<UserGroupRelation>
 {
 	public void Configure(EntityTypeBuilder<UserGroupRelation> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(InventorySchema.UserGroupRelations.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.UserGroupRelations.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		var relationToUser = builder.HasOne(rel => rel.User)
@@ -29,7 +30,7 @@ public class UserGroupRelationConfiguration(bool isReadOnly = false) : IEntityTy
 
 		builder.HasIndex(rel => new { rel.UserGroupGuid, rel.UserGuid }).IsUnique();
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 		{
 			relationToUser.OnDelete(DeleteBehavior.Cascade);
 			relationToGroup.OnDelete(DeleteBehavior.Cascade);

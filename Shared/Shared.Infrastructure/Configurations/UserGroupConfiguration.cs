@@ -2,14 +2,15 @@
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class UserGroupConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<UserGroup>
+public class UserGroupConfiguration(TableAccess access) : IEntityTypeConfiguration<UserGroup>
 {
 	public void Configure(EntityTypeBuilder<UserGroup> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(InventorySchema.UserGroups.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.UserGroups.Name, InventorySchema.Name);
@@ -21,7 +22,7 @@ public class UserGroupConfiguration(bool isReadOnly = false) : IEntityTypeConfig
 			.WithMany(group => group.Children)
 			.HasForeignKey(group => group.ParentGuid);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			hierarchyRelations.OnDelete(DeleteBehavior.SetNull);
 
 		// связь пользователей и групп пользователей

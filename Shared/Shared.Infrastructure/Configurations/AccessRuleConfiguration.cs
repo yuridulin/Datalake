@@ -2,14 +2,15 @@
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class AccessRuleConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<AccessRights>
+public class AccessRuleConfiguration(TableAccess access) : IEntityTypeConfiguration<AccessRule>
 {
-	public void Configure(EntityTypeBuilder<AccessRights> builder)
+	public void Configure(EntityTypeBuilder<AccessRule> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(InventorySchema.AccessRights.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.AccessRights.Name, InventorySchema.Name);
@@ -37,7 +38,7 @@ public class AccessRuleConfiguration(bool isReadOnly = false) : IEntityTypeConfi
 			.WithMany(x => x.AccessRules)
 			.HasForeignKey(x => x.UserGroupGuid);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 		{
 			relationToBlocks.OnDelete(DeleteBehavior.SetNull);
 			relationToSources.OnDelete(DeleteBehavior.SetNull);

@@ -9,6 +9,24 @@ public static class InventorySchema
 		public static string Name { get; } = nameof(AccessRights);
 	}
 
+	public static class CalculatedAccessRules
+	{
+		public static string Name { get; } = nameof(CalculatedAccessRules);
+
+		public static class Columns
+		{
+			public static string UserGuid { get; } = nameof(UserGuid);
+			public static string AccessType { get; } = nameof(AccessType);
+			public static string IsGlobal { get; } = nameof(IsGlobal);
+			public static string TagId { get; } = nameof(TagId);
+			public static string BlockId { get; } = nameof(BlockId);
+			public static string SourceId { get; } = nameof(SourceId);
+			public static string UserGroupGuid { get; } = nameof(UserGroupGuid);
+			public static string RuleId { get; } = nameof(RuleId);
+			public static string UpdatedAt { get; } = nameof(UpdatedAt);
+		}
+	}
+
 	public static class BlockProperties
 	{
 		public static string Name { get; } = nameof(BlockProperties);

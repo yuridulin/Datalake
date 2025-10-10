@@ -46,7 +46,7 @@ public record class InventoryState : IInventoryCacheState
 	/// Фабричный метод создания нового состояния с нуля
 	/// </summary>
 	public static InventoryState Create(
-		IEnumerable<AccessRights> accessRules,
+		IEnumerable<AccessRule> accessRules,
 		IEnumerable<Block> blocks,
 		IEnumerable<BlockTag> blockTags,
 		IEnumerable<Source> sources,
@@ -162,7 +162,7 @@ public record class InventoryState : IInventoryCacheState
 		};
 	}
 
-	public IInventoryCacheState WithAccessRules(int[] oldRulesId, AccessRights[] newRules)
+	public IInventoryCacheState WithAccessRules(int[] oldRulesId, AccessRule[] newRules)
 	{
 		return this with
 		{

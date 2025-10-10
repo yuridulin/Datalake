@@ -13,9 +13,9 @@ public class EnergoIdQueriesService(
 		var inventory = inventoryCache.State;
 		var energoId = energoIdCache.State;
 
-		var mappedToInventory = inventory.ActiveUsers
-			.Where(x => x.EnergoIdGuid != null)
-			.ToDictionary(x => x.EnergoIdGuid!.Value, x => x.Guid);
+		var mappedToInventory = inventory.Users
+			.Where(x => x.Value.EnergoIdGuid != null)
+			.ToDictionary(x => x.Value.EnergoIdGuid!.Value, x => x.Key);
 
 		var users = energoId.Users
 			.Select(x => new UserEnergoIdInfo

@@ -23,7 +23,7 @@ public class ChangeUserRulesHandler(
 
 		User user;
 		int[] oldRulesId;
-		AccessRights[] newRules;
+		AccessRule[] newRules;
 
 		await unitOfWork.BeginTransactionAsync(ct);
 
@@ -36,7 +36,7 @@ public class ChangeUserRulesHandler(
 			oldRulesId = oldRules.Select(x => x.Id).ToArray();
 			await accessRulesRepository.RemoveRangeAsync(oldRules, ct);
 
-			newRules = command.Rules.Select(x => new AccessRights(x.Type, userGuid: user.Guid, tagId: x.TagId, sourceId: x.SourceId, blockId: x.BlockId)).ToArray();
+			newRules = command.Rules.Select(x => new AccessRule(x.Type, userGuid: user.Guid, tagId: x.TagId, sourceId: x.SourceId, blockId: x.BlockId)).ToArray();
 			await accessRulesRepository.AddRangeAsync(newRules, ct);
 
 			var audit = new Log(command.User.Guid, "Изменены права доступа", userGuid: user.Guid);

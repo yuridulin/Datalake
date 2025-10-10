@@ -1,16 +1,17 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Domain.Interfaces;
+using Datalake.Domain.ValueObjects;
 
 namespace Datalake.Domain.Entities;
 
 /// <summary>
 /// Запись в таблице правил доступа
 /// </summary>
-public record class AccessRights : IWithIdentityKey
+public record class AccessRule : IWithIdentityKey
 {
-	private AccessRights() { }
+	private AccessRule() { }
 
-	public AccessRights(
+	public AccessRule(
 		AccessType accessType,
 		Guid? userGuid = null,
 		Guid? userGroupGuid = null,
@@ -133,4 +134,9 @@ public record class AccessRights : IWithIdentityKey
 	/// Блок, на который действует правило
 	/// </summary>
 	public Block? Block { get; set; }
+
+	/// <summary>
+	/// Рассчитаные по этому правилу указания фактического доступа
+	/// </summary>
+	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
 }

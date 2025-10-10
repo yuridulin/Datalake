@@ -1,5 +1,6 @@
 ﻿using Datalake.Domain.Exceptions;
 using Datalake.Domain.Interfaces;
+using Datalake.Domain.ValueObjects;
 
 namespace Datalake.Domain.Entities;
 
@@ -93,10 +94,15 @@ public record class UserGroup : IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список прямых правил доступа, выданных этой группе учетных записей
 	/// </summary>
-	public ICollection<AccessRights> AccessRules { get; set; } = [];
+	public ICollection<AccessRule> AccessRules { get; set; } = [];
 
 	/// <summary>
 	/// Список сообщений аудита по этой группе учетных записей
 	/// </summary>
 	public ICollection<Log> AuditLogs { get; set; } = [];
+
+	/// <summary>
+	/// Рассчитаные для этой группы учетных записей указания фактического доступа
+	/// </summary>
+	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
 }

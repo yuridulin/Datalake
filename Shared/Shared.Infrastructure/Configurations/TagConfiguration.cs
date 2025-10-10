@@ -2,21 +2,22 @@
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class TagConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<Tag>
+public class TagConfiguration(TableAccess access) : IEntityTypeConfiguration<Tag>
 {
 	public void Configure(EntityTypeBuilder<Tag> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(InventorySchema.Tags.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.Tags.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		// связь тегов с входными тегами (переменными)
@@ -49,10 +50,10 @@ public class TagConfiguration(bool isReadOnly = false) : IEntityTypeConfiguratio
 			.WithOne(r => r.Tag)
 			.HasForeignKey(r => r.TagId);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			relationToBlock.OnDelete(DeleteBehavior.SetNull);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 		{
 			relationToThresholds.OnDelete(DeleteBehavior.Cascade);
 			relationToSource.OnDelete(DeleteBehavior.SetNull);

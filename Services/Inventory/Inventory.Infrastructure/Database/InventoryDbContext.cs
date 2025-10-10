@@ -2,6 +2,7 @@
 using Datalake.Shared.Infrastructure;
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Inventory.Infrastructure.Database;
 
@@ -21,21 +22,22 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 
 		modelBuilder.ApplyConfigurations(new()
 		{
-			AccessRules = false,
-			Audit = false,
-			Blocks = false,
-			BlocksProperties = false,
-			BlocksTags = false,
-			Settings = false,
-			Sources = false,
-			Tags = false,
-			TagsHistory = true,
-			TagsInputs = false,
-			TagsThresholds = false,
-			UserGroups = false,
-			UserGroupsRelations = false,
-			Users = false,
-			UserSessions = true,
+			AccessRules = TableAccess.Write,
+			Audit = TableAccess.Write,
+			Blocks = TableAccess.Write,
+			BlocksProperties = TableAccess.Write,
+			BlocksTags = TableAccess.Write,
+			CalculatedAccessRules = TableAccess.Write,
+			Settings = TableAccess.Write,
+			Sources = TableAccess.Write,
+			Tags = TableAccess.Write,
+			TagsHistory = TableAccess.Read,
+			TagsInputs = TableAccess.Write,
+			TagsThresholds = TableAccess.Write,
+			UserGroups = TableAccess.Write,
+			UserGroupsRelations = TableAccess.Write,
+			Users = TableAccess.Write,
+			UserSessions = TableAccess.Read,
 		});
 	}
 
@@ -44,7 +46,7 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 	/// <summary>
 	/// Таблица прав доступа
 	/// </summary>
-	public virtual DbSet<AccessRights> AccessRights { get; set; }
+	public virtual DbSet<AccessRule> AccessRights { get; set; }
 
 	/// <summary>
 	/// Таблица блоков

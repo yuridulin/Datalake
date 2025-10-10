@@ -196,5 +196,5 @@ public record class Log
 	/// <summary>
 	/// Затронутое правило доступа
 	/// </summary>
-	public AccessRights? AffectedAccessRights { get; set; }
+	public AccessRule? AffectedAccessRights { get; set; }
 }

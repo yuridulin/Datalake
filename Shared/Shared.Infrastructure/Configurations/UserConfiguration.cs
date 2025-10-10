@@ -3,14 +3,15 @@ using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class UserConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<User>
+public class UserConfiguration(TableAccess access) : IEntityTypeConfiguration<User>
 {
 	public void Configure(EntityTypeBuilder<User> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(InventorySchema.Users.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.Users.Name, InventorySchema.Name);

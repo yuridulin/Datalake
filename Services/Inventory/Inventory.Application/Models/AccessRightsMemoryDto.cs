@@ -22,7 +22,7 @@ public record AccessRightsMemoryDto : IWithIdentityKey
 
 	public required int? TagId { get; init; }
 
-	public static AccessRightsMemoryDto FromEntity(AccessRights rule)
+	public static AccessRightsMemoryDto FromEntity(AccessRule rule)
 	{
 		return new()
 		{

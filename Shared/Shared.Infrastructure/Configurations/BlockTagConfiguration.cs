@@ -2,21 +2,22 @@
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class BlockTagConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<BlockTag>
+public class BlockTagConfiguration(TableAccess access) : IEntityTypeConfiguration<BlockTag>
 {
 	public void Configure(EntityTypeBuilder<BlockTag> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(InventorySchema.BlockTags.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.BlockTags.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		var relationToTag = builder.HasOne(rel => rel.Tag)
@@ -29,7 +30,7 @@ public class BlockTagConfiguration(bool isReadOnly = false) : IEntityTypeConfigu
 
 		builder.HasIndex(rel => new { rel.BlockId, rel.TagId }).IsUnique();
 
-		if (!isReadOnly)
+		if (access == TableAccess.Write)
 		{
 			relationToTag.OnDelete(DeleteBehavior.SetNull);
 			relationToBlock.OnDelete(DeleteBehavior.Cascade);

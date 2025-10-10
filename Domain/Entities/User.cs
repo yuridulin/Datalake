@@ -196,7 +196,7 @@ public record class User : IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список прямых правил доступа, выданных этой учетной записи
 	/// </summary>
-	public ICollection<AccessRights> AccessRules { get; set; } = [];
+	public ICollection<AccessRule> AccessRules { get; set; } = [];
 
 	/// <summary>
 	/// Список сообщений аудита, сделанных этим пользователем
@@ -212,4 +212,9 @@ public record class User : IWithGuidKey, ISoftDeletable
 	/// Список актуальных сессий
 	/// </summary>
 	public ICollection<UserSession> Sessions { get; set; } = [];
+
+	/// <summary>
+	/// Рассчитаные для этой учетной записи указания фактического доступа
+	/// </summary>
+	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
 }

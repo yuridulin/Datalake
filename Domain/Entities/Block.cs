@@ -1,5 +1,6 @@
 ﻿using Datalake.Domain.Exceptions;
 using Datalake.Domain.Interfaces;
+using Datalake.Domain.ValueObjects;
 
 namespace Datalake.Domain.Entities;
 
@@ -120,10 +121,15 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 	/// <summary>
 	/// Список прямых правил доступа на этот блок
 	/// </summary>
-	public ICollection<AccessRights> AccessRules { get; set; } = [];
+	public ICollection<AccessRule> AccessRules { get; set; } = [];
 
 	/// <summary>
 	/// Список сообщений аудита по этому блоку
 	/// </summary>
 	public ICollection<Log> AuditLogs { get; set; } = [];
+
+	/// <summary>
+	/// Рассчитаные для этого блока указания фактического доступа
+	/// </summary>
+	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; }
 }

@@ -112,7 +112,7 @@ public interface IInventoryCacheState
 	/// <param name="oldRulesId">Идентификаторы старых правил</param>
 	/// <param name="newRules">Новые правила</param>
 
-	IInventoryCacheState WithAccessRules(int[] oldRulesId, AccessRights[] newRules);
+	IInventoryCacheState WithAccessRules(int[] oldRulesId, AccessRule[] newRules);
 
 	#endregion
 }

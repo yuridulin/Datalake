@@ -2,6 +2,7 @@
 using Datalake.Shared.Infrastructure;
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Gateway.Infrastructure.Database;
 
@@ -21,21 +22,22 @@ public class GatewayDbContext(DbContextOptions<GatewayDbContext> options) : DbCo
 
 		modelBuilder.ApplyConfigurations(new()
 		{
-			AccessRules = true,
-			Audit = true,
-			Blocks = true,
-			BlocksProperties = true,
-			BlocksTags = true,
-			Settings = true,
-			Sources = true,
-			Tags = true,
-			TagsHistory = true,
-			TagsInputs = true,
-			TagsThresholds = true,
-			UserGroups = true,
-			UserGroupsRelations = true,
-			Users = true,
-			UserSessions = false,
+			AccessRules = TableAccess.Read,
+			Audit = TableAccess.Read,
+			Blocks = TableAccess.Read,
+			BlocksProperties = TableAccess.Read,
+			BlocksTags = TableAccess.Read,
+			CalculatedAccessRules = TableAccess.Read,
+			Settings = TableAccess.Read,
+			Sources = TableAccess.Read,
+			Tags = TableAccess.Read,
+			TagsHistory = TableAccess.Read,
+			TagsInputs = TableAccess.Read,
+			TagsThresholds = TableAccess.Read,
+			UserGroups = TableAccess.Read,
+			UserGroupsRelations = TableAccess.Read,
+			Users = TableAccess.Read,
+			UserSessions = TableAccess.Write,
 		});
 	}
 

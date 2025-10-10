@@ -2,14 +2,15 @@
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class TagHistoryConfiguration(bool isReadOnly = false) : IEntityTypeConfiguration<TagHistory>
+public class TagHistoryConfiguration(TableAccess access) : IEntityTypeConfiguration<TagHistory>
 {
 	public void Configure(EntityTypeBuilder<TagHistory> builder)
 	{
-		if (isReadOnly)
+		if (access == TableAccess.Read)
 			builder.ToView(DataSchema.TagsHistory.Name, DataSchema.Name);
 		else
 			builder.ToTable(DataSchema.TagsHistory.Name, DataSchema.Name);
