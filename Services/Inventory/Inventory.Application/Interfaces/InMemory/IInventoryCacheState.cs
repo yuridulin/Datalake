@@ -1,4 +1,5 @@
 ﻿using Datalake.Domain.Entities;
+using Datalake.Inventory.Application.Models;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Application.Interfaces.InMemory;
@@ -13,131 +14,49 @@ public interface IInventoryCacheState
 	/// </summary>
 	long Version { get; }
 
-	#region Коллекции с первичными ключами
+	#region Коллекции
 
 	/// <summary>
 	/// Блоки по локальному идентификатору
 	/// </summary>
-	ImmutableDictionary<int, Block> Blocks { get; }
+	ImmutableDictionary<int, BlockMemoryDto> Blocks { get; }
 
 	/// <summary>
 	/// Источники по идентификатору
 	/// </summary>
-	ImmutableDictionary<int, Source> Sources { get; }
+	ImmutableDictionary<int, SourceMemoryDto> Sources { get; }
 
 	/// <summary>
 	/// Теги по глобальному идентификатору
 	/// </summary>
-	ImmutableDictionary<int, Tag> Tags { get; }
+	ImmutableDictionary<int, TagMemoryDto> Tags { get; }
 
 	/// <summary>
 	/// Учетные записи по идентификатору
 	/// </summary>
-	ImmutableDictionary<Guid, User> Users { get; }
+	ImmutableDictionary<Guid, UserMemoryDto> Users { get; }
 
 	/// <summary>
 	/// Группы учетных записей по идентификатору
 	/// </summary>
-	ImmutableDictionary<Guid, UserGroup> UserGroups { get; }
-
-	#endregion Коллекции с первичными ключами
-
-	#region Коллекции без ключей
+	ImmutableDictionary<Guid, UserGroupMemoryDto> UserGroups { get; }
 
 	/// <summary>
 	/// Правила доступа
 	/// </summary>
-	ImmutableList<AccessRights> AccessRules { get; init; }
-
-	/// <summary>
-	/// Свойства блоков
-	/// </summary>
-	ImmutableList<BlockProperty> BlockProperties { get; init; }
+	ImmutableList<AccessRightsMemoryDto> AccessRules { get; init; }
 
 	/// <summary>
 	/// Связи блоков с тегами
 	/// </summary>
-	ImmutableList<BlockTag> BlockTags { get; init; }
-
-	/// <summary>
-	/// Связи тегов с входными тегами
-	/// </summary>
-	ImmutableList<TagInput> TagInputs { get; init; }
-
-	/// <summary>
-	/// Связи тегов с пороговыми уставками
-	/// </summary>
-	ImmutableList<TagThreshold> TagThresholds { get; init; }
+	ImmutableList<BlockTagMemoryDto> BlockTags { get; init; }
 
 	/// <summary>
 	/// Связи групп с учетными записями
 	/// </summary>
-	ImmutableList<UserGroupRelation> UserGroupRelations { get; init; }
+	ImmutableList<UserGroupRelationMemoryDto> UserGroupRelations { get; init; }
 
-	#endregion Коллекции без ключей
-
-	#region Словари активных объектов (только не удаленные)
-
-	/// <summary>
-	/// Активные блоки по идентификатору
-	/// </summary>
-	ImmutableDictionary<int, Block> ActiveBlocksById { get; }
-
-	/// <summary>
-	/// Активные источники по идентификатору
-	/// </summary>
-	ImmutableDictionary<int, Source> ActiveSourcesById { get; }
-
-	/// <summary>
-	/// Активные теги по глобальному идентификатору
-	/// </summary>
-	ImmutableDictionary<Guid, Tag> ActiveTagsByGuid { get; }
-
-	/// <summary>
-	/// Активные теги по локальному идентификатору
-	/// </summary>
-	ImmutableDictionary<int, Tag> ActiveTagsById { get; }
-
-	/// <summary>
-	/// Активные пользователи по идентификатору
-	/// </summary>
-	ImmutableDictionary<Guid, User> ActiveUsersByGuid { get; }
-
-	/// <summary>
-	/// Активные группы пользователей по идентификатору
-	/// </summary>
-	ImmutableDictionary<Guid, UserGroup> ActiveUserGroupsByGuid { get; }
-
-	#endregion Словари активных объектов (только не удаленные)
-
-	#region Коллекции активных объектов (только не удаленные)
-
-	/// <summary>
-	/// Активные блоки
-	/// </summary>
-	IEnumerable<Block> ActiveBlocks { get; }
-
-	/// <summary>
-	/// Активные источники
-	/// </summary>
-	IEnumerable<Source> ActiveSources { get; }
-
-	/// <summary>
-	/// Активные теги
-	/// </summary>
-	IEnumerable<Tag> ActiveTags { get; }
-
-	/// <summary>
-	/// Активные группы пользователей
-	/// </summary>
-	IEnumerable<User> ActiveUsers { get; }
-
-	/// <summary>
-	/// Активные группы пользователей
-	/// </summary>
-	IEnumerable<UserGroup> ActiveUserGroups { get; }
-
-	#endregion Коллекции активных объектов (только не удаленные)
+	#endregion Коллекции
 
 	#region Вспомогательные методы для модификации
 
@@ -179,20 +98,6 @@ public interface IInventoryCacheState
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <param name="blockTags">Новые связи с блоками</param>
 	IInventoryCacheState WithTagBlocks(int tagId, IEnumerable<BlockTag> blockTags);
-
-	/// <summary>
-	/// Обновляет связи тега с блоками
-	/// </summary>
-	/// <param name="tagId">Идентификатор тега</param>
-	/// <param name="tagInputs">Новые связи с входными тегами</param>
-	IInventoryCacheState WithTagInputs(int tagId, IEnumerable<TagInput> tagInputs);
-
-	/// <summary>
-	/// Обновляет связи тега с блоками
-	/// </summary>
-	/// <param name="tagId">Идентификатор тега</param>
-	/// <param name="tagThresholds">Новые связи с пороговыми уставками</param>
-	IInventoryCacheState WithTagThresholds(int tagId, IEnumerable<TagThreshold> tagThresholds);
 
 	/// <summary>
 	/// Обновляет связи группы учетных записей с учетными записями

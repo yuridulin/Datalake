@@ -50,7 +50,7 @@ public class InventoryCache : IInventoryCache
 
 		await UpdateAsync((_) => newState);
 
-		_logger.LogInformation("Состояние данных перезагружено");
+		_logger.LogInformation("Кэш объектов перезагружен");
 	}
 
 	public async Task<IInventoryCacheState> UpdateAsync(Func<IInventoryCacheState, IInventoryCacheState> update)
@@ -74,27 +74,26 @@ public class InventoryCache : IInventoryCache
 	{
 		return await Measures.Measure(async () =>
 		{
-			var accessRules = await context.AccessRights.AsNoTracking().ToArrayAsync();
-			var blocks = await context.Blocks.AsNoTracking().ToArrayAsync();
-			var blockProperties = await context.BlockProperties.AsNoTracking().ToArrayAsync();
+			// коллекции основных объектов
+			var blocks = await context.Blocks.Where(x => !x.IsDeleted).AsNoTracking().ToArrayAsync();
+			var sources = await context.Sources.Where(x => !x.IsDeleted).AsNoTracking().ToArrayAsync();
+			var tags = await context.Tags.Where(x => !x.IsDeleted).AsNoTracking().ToArrayAsync();
+			var users = await context.Users.Where(x => !x.IsDeleted).AsNoTracking().ToArrayAsync();
+			var userGroups = await context.UserGroups.Where(x => !x.IsDeleted).AsNoTracking().ToArrayAsync();
+
+			// коллекции связующих объектов
 			var blockTags = await context.BlockTags.AsNoTracking().ToArrayAsync();
-			var sources = await context.Sources.AsNoTracking().ToArrayAsync();
-			var tags = await context.Tags.AsNoTracking().ToArrayAsync();
-			var tagInputs = await context.TagInputs.AsNoTracking().ToArrayAsync();
-			//var tagThresholds = await context.TagThresholds.AsNoTracking().ToArrayAsync();
-			var users = await context.Users.AsNoTracking().ToArrayAsync();
-			var userGroups = await context.UserGroups.AsNoTracking().ToArrayAsync();
 			var userGroupRelations = await context.UserGroupRelations.AsNoTracking().ToArrayAsync();
+
+			// коллекция правил
+			var accessRules = await context.AccessRights.AsNoTracking().ToArrayAsync();
 
 			return InventoryState.Create(
 				accessRules: accessRules,
 				blocks: blocks,
-				blockProperties: blockProperties,
 				blockTags: blockTags,
 				sources: sources,
 				tags: tags,
-				tagInputs: tagInputs,
-				//tagThresholds: tagThresholds,
 				users: users,
 				userGroups: userGroups,
 				userGroupRelations: userGroupRelations);

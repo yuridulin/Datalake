@@ -1,6 +1,7 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Models;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.InMemory.Inventory;
@@ -26,15 +27,12 @@ public record class InventoryState : IInventoryCacheState
 			var state = new InventoryState
 			{
 				AccessRules = [],
-				Blocks = ImmutableDictionary<int, Block>.Empty,
-				BlockProperties = [],
+				Blocks = ImmutableDictionary<int, BlockMemoryDto>.Empty,
 				BlockTags = [],
-				Sources = ImmutableDictionary<int, Source>.Empty,
-				Tags = ImmutableDictionary<int, Tag>.Empty,
-				TagInputs = [],
-				TagThresholds = [],
-				Users = ImmutableDictionary<Guid, User>.Empty,
-				UserGroups = ImmutableDictionary<Guid, UserGroup>.Empty,
+				Sources = ImmutableDictionary<int, SourceMemoryDto>.Empty,
+				Tags = ImmutableDictionary<int, TagMemoryDto>.Empty,
+				Users = ImmutableDictionary<Guid, UserMemoryDto>.Empty,
+				UserGroups = ImmutableDictionary<Guid, UserGroupMemoryDto>.Empty,
 				UserGroupRelations = [],
 			};
 
@@ -50,32 +48,27 @@ public record class InventoryState : IInventoryCacheState
 	public static InventoryState Create(
 		IEnumerable<AccessRights> accessRules,
 		IEnumerable<Block> blocks,
-		IEnumerable<BlockProperty> blockProperties,
 		IEnumerable<BlockTag> blockTags,
 		IEnumerable<Source> sources,
 		IEnumerable<Tag> tags,
-		IEnumerable<TagInput> tagInputs,
-		//IEnumerable<TagThresholdEntity> tagThresholds,
 		IEnumerable<User> users,
 		IEnumerable<UserGroup> userGroups,
 		IEnumerable<UserGroupRelation> userGroupRelations)
 	{
 		var state = new InventoryState
 		{
-			AccessRules = accessRules.ToImmutableList(),
-			Blocks = blocks.ToImmutableDictionary(x => x.Id),
-			BlockProperties = blockProperties.ToImmutableList(),
-			BlockTags = blockTags.ToImmutableList(),
-			Sources = sources.ToImmutableDictionary(x => x.Id),
-			Tags = tags.ToImmutableDictionary(x => x.Id),
-			TagInputs = tagInputs.ToImmutableList(),
-			TagThresholds = [] /*tagThresholds.ToImmutableList()*/,
-			Users = users.ToImmutableDictionary(x => x.Guid),
-			UserGroups = userGroups.ToImmutableDictionary(x => x.Guid),
-			UserGroupRelations = userGroupRelations.ToImmutableList(),
+			AccessRules = accessRules.Select(AccessRightsMemoryDto.FromEntity).ToImmutableList(),
+
+			Blocks = blocks.Select(BlockMemoryDto.FromEntity).ToImmutableDictionary(x => x.Id),
+			Sources = sources.Select(SourceMemoryDto.FromEntity).ToImmutableDictionary(x => x.Id),
+			Tags = tags.Select(TagMemoryDto.FromEntity).ToImmutableDictionary(x => x.Id),
+			Users = users.Select(UserMemoryDto.FromEntity).ToImmutableDictionary(x => x.Guid),
+			UserGroups = userGroups.Select(UserGroupMemoryDto.FromEntity).ToImmutableDictionary(x => x.Guid),
+
+			BlockTags = blockTags.Select(BlockTagMemoryDto.FromEntity).ToImmutableList(),
+			UserGroupRelations = userGroupRelations.Select(UserGroupRelationMemoryDto.FromEntity).ToImmutableList(),
 		};
 
-		state.SetActiveDictionaries();
 		state.UpdateVersion();
 
 		return state;
@@ -83,78 +76,25 @@ public record class InventoryState : IInventoryCacheState
 
 	#endregion Фабричные методы создания
 
-	#region Коллекции с первичными ключами
+	#region Коллекции
 
-	public ImmutableDictionary<int, Block> Blocks { get; private set; } = ImmutableDictionary<int, Block>.Empty;
+	public ImmutableDictionary<int, BlockMemoryDto> Blocks { get; private set; } = ImmutableDictionary<int, BlockMemoryDto>.Empty;
 
-	public ImmutableDictionary<int, Source> Sources { get; private set; } = ImmutableDictionary<int, Source>.Empty;
+	public ImmutableDictionary<int, SourceMemoryDto> Sources { get; private set; } = ImmutableDictionary<int, SourceMemoryDto>.Empty;
 
-	public ImmutableDictionary<int, Tag> Tags { get; private set; } = ImmutableDictionary<int, Tag>.Empty;
+	public ImmutableDictionary<int, TagMemoryDto> Tags { get; private set; } = ImmutableDictionary<int, TagMemoryDto>.Empty;
 
-	public ImmutableDictionary<Guid, User> Users { get; private set; } = ImmutableDictionary<Guid, User>.Empty;
+	public ImmutableDictionary<Guid, UserMemoryDto> Users { get; private set; } = ImmutableDictionary<Guid, UserMemoryDto>.Empty;
 
-	public ImmutableDictionary<Guid, UserGroup> UserGroups { get; private set; } = ImmutableDictionary<Guid, UserGroup>.Empty;
+	public ImmutableDictionary<Guid, UserGroupMemoryDto> UserGroups { get; private set; } = ImmutableDictionary<Guid, UserGroupMemoryDto>.Empty;
 
-	#endregion Коллекции с первичными ключами
+	public required ImmutableList<AccessRightsMemoryDto> AccessRules { get; init; }
 
-	#region Коллекции без ключей
+	public required ImmutableList<BlockTagMemoryDto> BlockTags { get; init; }
 
-	public required ImmutableList<AccessRights> AccessRules { get; init; }
-
-	public required ImmutableList<BlockProperty> BlockProperties { get; init; }
-
-	public required ImmutableList<BlockTag> BlockTags { get; init; }
-
-	public required ImmutableList<TagInput> TagInputs { get; init; }
-
-	public required ImmutableList<TagThreshold> TagThresholds { get; init; }
-
-	public required ImmutableList<UserGroupRelation> UserGroupRelations { get; init; }
+	public required ImmutableList<UserGroupRelationMemoryDto> UserGroupRelations { get; init; }
 
 	#endregion Коллекции без ключей
-
-	#region Словари активных объектов (только не удаленные)
-
-	private void SetActiveDictionaries()
-	{
-		// Активные объекты фильтруются из основных словарей
-		ActiveBlocksById = Blocks.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		ActiveSourcesById = Sources.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Id);
-		ActiveTagsByGuid = Tags.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
-		ActiveUsersByGuid = Users.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
-		ActiveUserGroupsByGuid = UserGroups.Values.Where(x => !x.IsDeleted).ToImmutableDictionary(x => x.Guid);
-
-		// Дополнительные индексы для тегов
-		ActiveTagsById = ActiveTagsByGuid.Values.ToImmutableDictionary(x => x.Id);
-	}
-
-	public ImmutableDictionary<int, Block> ActiveBlocksById { get; private set; } = ImmutableDictionary<int, Block>.Empty;
-
-	public ImmutableDictionary<int, Source> ActiveSourcesById { get; private set; } = ImmutableDictionary<int, Source>.Empty;
-
-	public ImmutableDictionary<Guid, Tag> ActiveTagsByGuid { get; private set; } = ImmutableDictionary<Guid, Tag>.Empty;
-
-	public ImmutableDictionary<int, Tag> ActiveTagsById { get; private set; } = ImmutableDictionary<int, Tag>.Empty;
-
-	public ImmutableDictionary<Guid, User> ActiveUsersByGuid { get; private set; } = ImmutableDictionary<Guid, User>.Empty;
-
-	public ImmutableDictionary<Guid, UserGroup> ActiveUserGroupsByGuid { get; private set; } = ImmutableDictionary<Guid, UserGroup>.Empty;
-
-	#endregion Словари активных объектов (только не удаленные)
-
-	#region Коллекции активных объектов (только не удаленные)
-
-	public IEnumerable<Block> ActiveBlocks => ActiveBlocksById.Values;
-
-	public IEnumerable<Source> ActiveSources => ActiveSourcesById.Values;
-
-	public IEnumerable<Tag> ActiveTags => ActiveTagsById.Values;
-
-	public IEnumerable<User> ActiveUsers => ActiveUsersByGuid.Values;
-
-	public IEnumerable<UserGroup> ActiveUserGroups => ActiveUserGroupsByGuid.Values;
-
-	#endregion Коллекции активных объектов (только не удаленные)
 
 	#region Вспомогательные методы для модификации
 
@@ -162,8 +102,7 @@ public record class InventoryState : IInventoryCacheState
 	{
 		return Update(state => state with
 		{
-			Blocks = Apply(Blocks, block),
-			ActiveBlocksById = ApplyAsActive(ActiveBlocksById, block),
+			Blocks = Apply(Blocks, BlockMemoryDto.FromEntity(block)),
 		});
 	}
 
@@ -171,8 +110,7 @@ public record class InventoryState : IInventoryCacheState
 	{
 		return Update(state => state with
 		{
-			Sources = Apply(Sources, source),
-			ActiveSourcesById = ApplyAsActive(ActiveSourcesById, source),
+			Sources = Apply(Sources, SourceMemoryDto.FromEntity(source)),
 		});
 	}
 
@@ -180,9 +118,7 @@ public record class InventoryState : IInventoryCacheState
 	{
 		return Update(state => state with
 		{
-			Tags = Apply(Tags, tag),
-			ActiveTagsById = ApplyAsActive(ActiveTagsById, tag),
-			ActiveTagsByGuid = ApplyAsActive(ActiveTagsByGuid, tag),
+			Tags = Apply(Tags, TagMemoryDto.FromEntity(tag)),
 		});
 	}
 
@@ -190,8 +126,7 @@ public record class InventoryState : IInventoryCacheState
 	{
 		return Update(state => state with
 		{
-			Users = Apply(Users, user),
-			ActiveUsersByGuid = ApplyAsActive(ActiveUsersByGuid, user),
+			Users = Apply(Users, UserMemoryDto.FromEntity(user)),
 		});
 	}
 
@@ -199,8 +134,7 @@ public record class InventoryState : IInventoryCacheState
 	{
 		return Update(state => state with
 		{
-			UserGroups = Apply(UserGroups, userGroup),
-			ActiveUserGroupsByGuid = ApplyAsActive(ActiveUserGroupsByGuid, userGroup),
+			UserGroups = Apply(UserGroups, UserGroupMemoryDto.FromEntity(userGroup)),
 		});
 	}
 
@@ -208,7 +142,7 @@ public record class InventoryState : IInventoryCacheState
 	{
 		return this with
 		{
-			BlockTags = BlockTags.RemoveAll(x => x.BlockId == blockId).AddRange(blockTags),
+			BlockTags = BlockTags.RemoveAll(x => x.BlockId == blockId).AddRange(blockTags.Select(BlockTagMemoryDto.FromEntity)),
 		};
 	}
 
@@ -216,31 +150,15 @@ public record class InventoryState : IInventoryCacheState
 	{
 		return this with
 		{
-			BlockTags = BlockTags.RemoveAll(x => x.TagId == tagId).AddRange(blockTags),
+			BlockTags = BlockTags.RemoveAll(x => x.TagId == tagId).AddRange(blockTags.Select(BlockTagMemoryDto.FromEntity)),
 		};
-	}
-
-	public IInventoryCacheState WithTagInputs(int tagId, IEnumerable<TagInput> tagInputs)
-	{
-		return this with
-		{
-			TagInputs = TagInputs.RemoveAll(x => x.TagId == tagId).AddRange(tagInputs),
-		};
-	}
-
-	public IInventoryCacheState WithTagThresholds(int tagId, IEnumerable<TagThreshold> tagThresholds)
-	{
-		return this/* with
-		{
-			TagThresholds = TagThresholds.RemoveAll(x => x.TagId == tagId).AddRange(tagThresholds),
-		}*/;
 	}
 
 	public IInventoryCacheState WithUserGroupRelations(Guid userGroupGuid, IEnumerable<UserGroupRelation> userGroupRelations)
 	{
 		return this with
 		{
-			UserGroupRelations = UserGroupRelations.RemoveAll(x => x.UserGroupGuid == userGroupGuid).AddRange(userGroupRelations),
+			UserGroupRelations = UserGroupRelations.RemoveAll(x => x.UserGroupGuid == userGroupGuid).AddRange(userGroupRelations.Select(UserGroupRelationMemoryDto.FromEntity)),
 		};
 	}
 
@@ -250,11 +168,11 @@ public record class InventoryState : IInventoryCacheState
 		{
 			AccessRules = AccessRules
 				.RemoveAll(x => oldRulesId.Contains(x.Id))
-				.AddRange(newRules)
+				.AddRange(newRules.Select(AccessRightsMemoryDto.FromEntity))
 		};
 	}
 
-	#endregion
+	#endregion Вспомогательные методы для модификации
 
 	#region Внутренние методы-хэлперы
 
@@ -275,32 +193,6 @@ public record class InventoryState : IInventoryCacheState
 		where TEntity : IWithGuidKey
 	{
 		return dict.ContainsKey(entity.Guid) ? dict.SetItem(entity.Guid, entity) : dict.Add(entity.Guid, entity);
-	}
-
-	private static ImmutableDictionary<int, TEntity> ApplyAsActive<TEntity>(ImmutableDictionary<int, TEntity> dict, TEntity entity)
-		where TEntity : ISoftDeletable, IWithIdentityKey
-	{
-		if (entity.IsDeleted)
-		{
-			return dict.ContainsKey(entity.Id) ? dict.Remove(entity.Id) : dict;
-		}
-		else
-		{
-			return dict.ContainsKey(entity.Id) ? dict.SetItem(entity.Id, entity) : dict.Add(entity.Id, entity);
-		}
-	}
-
-	private static ImmutableDictionary<Guid, TEntity> ApplyAsActive<TEntity>(ImmutableDictionary<Guid, TEntity> dict, TEntity entity)
-		where TEntity : ISoftDeletable, IWithGuidKey
-	{
-		if (entity.IsDeleted)
-		{
-			return dict.ContainsKey(entity.Guid) ? dict.Remove(entity.Guid) : dict;
-		}
-		else
-		{
-			return dict.ContainsKey(entity.Guid) ? dict.SetItem(entity.Guid, entity) : dict.Add(entity.Guid, entity);
-		}
 	}
 
 	#endregion Внутренние методы-хэлперы

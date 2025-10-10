@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Models;
 using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Application.Entities;
 using System.Collections.Concurrent;
@@ -26,12 +26,11 @@ public class UserAccessStateFactory : IUserAccessStateFactory
 		var hashSets = PrepareHashSets(state);
 
 		// Параллельная обработка пользователей для больших наборов
-		var activeUsers = state.ActiveUsers.ToArray();
 		var usersAccess = new ConcurrentDictionary<Guid, UserAccessEntity>();
 
-		Parallel.ForEach(activeUsers, ParallelOptions, user =>
+		Parallel.ForEach(state.Users, ParallelOptions, user =>
 		{
-			usersAccess[user.Guid] = CalculateUserAccess(user, state, precomputed, hashSets);
+			usersAccess[user.Key] = CalculateUserAccess(user.Value, state, precomputed, hashSets);
 		});
 
 		return new(usersAccess.ToDictionary());
@@ -110,12 +109,12 @@ public class UserAccessStateFactory : IUserAccessStateFactory
 	private static Precomputed PrecomputeStructures(IInventoryCacheState state)
 	{
 		// Оптимизация: предварительный расчет иерархии блоков
-		var blockParentMap = state.ActiveBlocks.ToDictionary(b => b.Id, b => b.ParentId);
+		var blockParentMap = state.Blocks.ToDictionary(b => b.Key, b => b.Value.ParentId);
 		var blockAncestors = new Dictionary<int, HashSet<int>>();
-		foreach (var block in state.ActiveBlocks)
+		foreach (var block in state.Blocks)
 		{
 			var ancestors = new HashSet<int>();
-			int? current = block.Id;
+			int? current = block.Key;
 			while (current.HasValue)
 			{
 				ancestors.Add(current.Value);
@@ -124,16 +123,16 @@ public class UserAccessStateFactory : IUserAccessStateFactory
 				else
 					current = null;
 			}
-			blockAncestors[block.Id] = ancestors;
+			blockAncestors[block.Key] = ancestors;
 		}
 
 		// Оптимизация: предварительный расчет иерархии групп
-		var groupParentMap = state.ActiveUserGroups.ToDictionary(g => g.Guid, g => g.ParentGuid);
+		var groupParentMap = state.UserGroups.ToDictionary(g => g.Key, g => g.Value.ParentGuid);
 		var groupAncestors = new Dictionary<Guid, HashSet<Guid>>();
-		foreach (var group in state.ActiveUserGroups)
+		foreach (var group in state.UserGroups)
 		{
 			var ancestors = new HashSet<Guid>();
-			Guid? current = group.Guid;
+			Guid? current = group.Key;
 			while (current.HasValue)
 			{
 				ancestors.Add(current.Value);
@@ -142,7 +141,7 @@ public class UserAccessStateFactory : IUserAccessStateFactory
 				else
 					current = null;
 			}
-			groupAncestors[group.Guid] = ancestors;
+			groupAncestors[group.Key] = ancestors;
 		}
 
 		// Оптимизация: связь пользователь-группы
@@ -198,7 +197,7 @@ public class UserAccessStateFactory : IUserAccessStateFactory
 		return new Precomputed(blockAncestors, blocksByTag, userGroups, directUserGroupRules);
 	}
 
-	private static UserAccessEntity CalculateUserAccess(User user, IInventoryCacheState state, Precomputed precomputed, HashSets hashSets)
+	private static UserAccessEntity CalculateUserAccess(UserMemoryDto user, IInventoryCacheState state, Precomputed precomputed, HashSets hashSets)
 	{
 		Guid userGuid = user.Guid;
 
@@ -299,9 +298,9 @@ public class UserAccessStateFactory : IUserAccessStateFactory
 		hashSets.UserRulesToTags.TryGetValue(userGuid, out var userDirectTagRules);
 
 		// 1. Расчет прав для источников
-		foreach (var source in state.ActiveSources)
+		foreach (var source in state.Sources)
 		{
-			int sourceId = source.Id;
+			int sourceId = source.Key;
 			var rule = globalRule;
 
 			// Пользовательские правила
@@ -326,9 +325,9 @@ public class UserAccessStateFactory : IUserAccessStateFactory
 		}
 
 		// 2. Расчет прав для блоков
-		foreach (var block in state.ActiveBlocks)
+		foreach (var block in state.Blocks)
 		{
-			int blockId = block.Id;
+			int blockId = block.Key;
 			var rule = globalRule;
 
 			// Пользовательские правила для блока
@@ -376,9 +375,9 @@ public class UserAccessStateFactory : IUserAccessStateFactory
 		}
 
 		// 3. Расчет прав для тегов
-		foreach (var tag in state.ActiveTags)
+		foreach (var tag in state.Tags)
 		{
-			int tagId = tag.Id;
+			int tagId = tag.Key;
 			var rule = globalRule;
 
 			// Прямые пользовательские правила

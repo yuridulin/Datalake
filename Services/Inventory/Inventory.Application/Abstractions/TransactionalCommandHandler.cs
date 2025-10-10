@@ -64,9 +64,23 @@ public abstract class TransactionalCommandHandler<TCommand, TResult>(
 			throw;
 		}
 
+		// Fire and forget обновление кэша
 		if (inventoryCache != null)
 		{
-			await inventoryCache.UpdateAsync(UpdateCache);
+			var cacheState = inventoryCache.State;
+			var updateFunc = UpdateCache;
+
+			_ = Task.Run(async () =>
+			{
+				try
+				{
+					await inventoryCache.UpdateAsync(updateFunc);
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Фоновая ошибка обновления кэша");
+				}
+			}, ct);
 		}
 
 		_logger.LogDebug("Выполнение команды {name} завершено", _commandName);
