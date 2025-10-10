@@ -15,6 +15,7 @@ public static class InventorySchema
 
 		public static class Columns
 		{
+			public static string Id { get; } = nameof(Id);
 			public static string UserGuid { get; } = nameof(UserGuid);
 			public static string AccessType { get; } = nameof(AccessType);
 			public static string IsGlobal { get; } = nameof(IsGlobal);

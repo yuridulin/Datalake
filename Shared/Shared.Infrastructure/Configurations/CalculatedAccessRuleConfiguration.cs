@@ -16,6 +16,7 @@ public class CalculatedAccessRuleConfiguration(TableAccess access) : IEntityType
 		else
 			builder.ToTable(Table.Name, InventorySchema.Name);
 
+		builder.Property(x => x.Id).HasColumnName(Table.Columns.Id);
 		builder.Property(x => x.UserGuid).HasColumnName(Table.Columns.UserGuid);
 		builder.Property(x => x.AccessType).HasColumnName(Table.Columns.AccessType);
 		builder.Property(x => x.IsGlobal).HasColumnName(Table.Columns.IsGlobal);
@@ -26,7 +27,13 @@ public class CalculatedAccessRuleConfiguration(TableAccess access) : IEntityType
 		builder.Property(x => x.RuleId).HasColumnName(Table.Columns.RuleId);
 		builder.Property(x => x.UpdatedAt).HasColumnName(Table.Columns.UpdatedAt);
 
-		builder.HasKey(x => new { x.UserGuid, x.BlockId, x.TagId, x.SourceId, x.UserGroupGuid });
+		builder.HasKey(x => x.Id);
+
+		if (access == TableAccess.Write)
+		{
+			builder.Property(x => x.Id).ValueGeneratedOnAdd();
+			builder.HasIndex(x => new { x.UserGuid, x.BlockId, x.TagId, x.SourceId, x.UserGroupGuid }).IsUnique();
+		}
 
 		// связи модели прав с объектами
 		var relationToUsers = builder.HasOne(x => x.User)

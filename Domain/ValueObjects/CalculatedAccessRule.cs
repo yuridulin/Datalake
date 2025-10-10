@@ -139,6 +139,11 @@ public sealed record CalculatedAccessRule
 	#region Свойства
 
 	/// <summary>
+	/// Идентификатор записи
+	/// </summary>
+	public int Id { get; private set; }
+
+	/// <summary>
 	/// Идентификатор учетной записи
 	/// </summary>
 	public required Guid UserGuid { get; init; }
