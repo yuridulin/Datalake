@@ -12,83 +12,83 @@ public class EnergoId
 	/// <summary>
 	/// Идентификатор пользователя
 	/// </summary>
-	public Guid Guid { get; set; }
+	public Guid Guid { get; private set; }
 
 	/// <summary>
 	/// Почтовый адрес
 	/// </summary>
-	public string? Email { get; set; }
+	public string? Email { get; private set; }
 
 	/// <summary>
 	/// Имя учетной записи
 	/// </summary>
-	public string? UserName { get; set; }
+	public string? UserName { get; private set; }
 
 	/// <summary>
 	/// Имя
 	/// </summary>
-	public string? FirstName { get; set; }
+	public string? FirstName { get; private set; }
 
 	/// <summary>
 	/// Отчество
 	/// </summary>
-	public string? MiddleName { get; set; }
+	public string? MiddleName { get; private set; }
 
 	/// <summary>
 	/// Фамилия
 	/// </summary>
-	public string? LastName { get; set; }
+	public string? LastName { get; private set; }
 
 	/// <summary>
 	/// Используется или нет
 	/// </summary>
 	[Required]
-	public bool IsEnabled { get; set; }
+	public bool IsEnabled { get; private set; }
 
 	/// <summary>
 	/// Дата создания
 	/// </summary>
-	public DateTime? CreatedAt { get; set; }
+	public DateTime? CreatedAt { get; private set; }
 
 	/// <summary>
 	/// Код организации?
 	/// </summary>
-	public string? UploaderEnterpriseCode { get; set; }
+	public string? UploaderEnterpriseCode { get; private set; }
 
 	/// <summary>
 	/// Код организации
 	/// </summary>
-	public string? EnterpriseCode { get; set; }
+	public string? EnterpriseCode { get; private set; }
 
 	/// <summary>
 	/// Персональный номер
 	/// </summary>
-	public string? PersonnelNumber { get; set; }
+	public string? PersonnelNumber { get; private set; }
 
 	/// <summary>
 	/// Номер
 	/// </summary>
-	public string? Phone { get; set; }
+	public string? Phone { get; private set; }
 
 	/// <summary>
 	/// Рабочий номер
 	/// </summary>
-	public string? WorkPhone { get; set; }
+	public string? WorkPhone { get; private set; }
 
 	/// <summary>
 	/// Номер мобильного
 	/// </summary>
-	public string? MobilePhone { get; set; }
+	public string? MobilePhone { get; private set; }
 
 	/// <summary>
 	/// Гендер
 	/// </summary>
-	public string? Gender { get; set; }
+	public string? Gender { get; private set; }
 
 	/// <summary>
 	/// Дата рождения
 	/// </summary>
-	public string? Birthday { get; set; }
+	public string? Birthday { get; private set; }
 
 
 	#region Связи

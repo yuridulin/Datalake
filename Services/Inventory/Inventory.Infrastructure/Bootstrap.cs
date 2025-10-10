@@ -10,7 +10,6 @@ using Datalake.Inventory.Infrastructure.Database.Repositories;
 using Datalake.Inventory.Infrastructure.InMemory.EnergoId;
 using Datalake.Inventory.Infrastructure.InMemory.EnergoId.Queries;
 using Datalake.Inventory.Infrastructure.InMemory.Inventory;
-using Datalake.Inventory.Infrastructure.InMemory.Inventory.Queries;
 using Datalake.Inventory.Infrastructure.InMemory.UserAccess;
 using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Infrastructure;

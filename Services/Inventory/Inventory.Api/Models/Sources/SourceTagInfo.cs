@@ -11,6 +11,8 @@ namespace Datalake.Inventory.Api.Models.Sources;
 /// </summary>
 public class SourceTagInfo : TagSimpleInfo, IProtectedEntity
 {
+	public int SourceId { get; set; }
+
 	/// <summary>
 	/// Путь к данным в источнике
 	/// </summary>
