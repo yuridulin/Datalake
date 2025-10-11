@@ -1,7 +1,6 @@
 ﻿using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Infrastructure.Interfaces;
+using Datalake.Inventory.Application.Models;
 using Datalake.Shared.Application.Attributes;
-using Datalake.Shared.Infrastructure;
 using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
 
@@ -11,21 +10,17 @@ namespace Datalake.Inventory.Infrastructure.InMemory.UserAccess;
 public class UserAccessCache : IUserAccessCache
 {
 	private readonly ILogger<UserAccessCache> _logger;
-	private readonly IUserAccessStateFactory _accessStateFactory;
-	private readonly Channel<IInventoryCacheState> _rebuildChannel;
-	private UserAccessState _state = UserAccessState.Empty;
-	private CancellationTokenSource _processingCts = new();
-	private long _lastProcessingDataVersion;
+	private readonly Channel<UsersAccessDto> _rebuildChannel;
+	private readonly SemaphoreSlim semaphore = new(1, 1);
 
-	public UserAccessCache(
-		IInventoryCache inventoryCache,
-		IUserAccessStateFactory accessStateFactory,
-		ILogger<UserAccessCache> logger)
+	private UserAccessCacheState _currentState = UserAccessCacheState.Empty;
+	private CancellationTokenSource _processingCts = new();
+
+	public UserAccessCache(ILogger<UserAccessCache> logger)
 	{
 		_logger = logger;
-		_accessStateFactory = accessStateFactory;
 
-		_rebuildChannel = Channel.CreateBounded<IInventoryCacheState>(
+		_rebuildChannel = Channel.CreateBounded<UsersAccessDto>(
 			new BoundedChannelOptions(1) // Только последнее состояние
 			{
 				SingleReader = true,
@@ -33,47 +28,62 @@ public class UserAccessCache : IUserAccessCache
 				FullMode = BoundedChannelFullMode.DropOldest
 			});
 
-		_ = ProcessRebuildsAsync(_processingCts.Token);
+		_ = ProcessSetTasksAsync(_processingCts.Token);
 
-		inventoryCache.StateChanged += async (_, newState) =>
-		{
-			if (newState.Version > Interlocked.Read(ref _lastProcessingDataVersion))
-			{
-				await _rebuildChannel.Writer.WriteAsync(newState);
-			}
-		};
+		StateChanged += (_, _) => _logger.LogInformation("Кэш прав доступа обновлен");
 	}
 
-	public IUserAccessCacheState State => _state;
+	public async Task SetAsync(UsersAccessDto usersAccess)
+	{
+		await _rebuildChannel.Writer.WriteAsync(usersAccess);
+	}
+
+	public IUserAccessCacheState State => _currentState;
 
 	public event EventHandler<IUserAccessCacheState>? StateChanged;
 
-	private async Task ProcessRebuildsAsync(CancellationToken ct)
+
+	private async Task ProcessSetTasksAsync(CancellationToken ct)
 	{
 		await foreach (var newState in _rebuildChannel.Reader.ReadAllAsync(ct))
 		{
-			await RebuildAsync(newState);
+			await ProcessSetTaskAsync(newState);
 		}
 	}
 
-	private async Task RebuildAsync(IInventoryCacheState newDataState)
+	private async Task ProcessSetTaskAsync(UsersAccessDto usersAccess)
 	{
+		_logger.LogDebug("Вызвано обновление состояния кэша прав доступа версии {version}", usersAccess.Version);
+
+		await semaphore.WaitAsync();
+
 		try
 		{
-			// Гарантируем, что только одна задача выполняется одновременно
-			var newState = await Task.Run(() =>
-					Measures.Measure(() => _accessStateFactory.Create(newDataState), _logger, $"{nameof(UserAccessCache)}"));
+			if (usersAccess.Version <= _currentState.Version)
+			{
+				_logger.LogDebug("Обновление состояния кэша прав доступа версии {version} прекращено - текущая версия новее: {current}", usersAccess.Version, _currentState.Version);
+			}
+			else
+			{
+				var newState = new UserAccessCacheState(usersAccess);
 
-			Interlocked.Exchange(ref _state, newState);
-			Interlocked.Exchange(ref _lastProcessingDataVersion, newDataState.Version);
+				Interlocked.Exchange(ref _currentState, newState);
 
-			_logger.LogInformation("Обновление кэша прав доступа завершено для версии {Version}", newDataState.Version);
+				_logger.LogInformation("Обновление кэша прав доступа завершено для версии {version}", usersAccess.Version);
 
-			_ = Task.Run(() => StateChanged?.Invoke(this, newState));
+				_ = Task.Run(() => StateChanged?.Invoke(this, newState));
+			}
 		}
 		catch (Exception e)
 		{
-			_logger.LogError(e, "Ошибка обновления кэша прав доступа для версии {Version}", newDataState.Version);
+			_logger.LogError(e, "Ошибка обновления кэша прав доступа для версии {version}", usersAccess.Version);
+
+			// нужна ли функция перечитывания из БД?
+			// наверное нет, это ведь зависимые данные, в БД только копия, а не оригинал
+		}
+		finally
+		{
+			semaphore.Release();
 		}
 	}
 }

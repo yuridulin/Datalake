@@ -2,9 +2,18 @@
 
 namespace Datalake.Inventory.Application.Interfaces.InMemory;
 
+/// <summary>
+/// Снимок текущих вычисленных прав доступа
+/// </summary>
 public interface IUserAccessCacheState
 {
-	Dictionary<Guid, UserAccessEntity> GetAll();
+	/// <summary>
+	/// Версия снимка
+	/// </summary>
+	long Version { get; }
 
-	bool TryGet(Guid userIdOrEnergoId, out UserAccessEntity info);
+	/// <summary>
+	/// Вычисленные права доступа для учетных записей
+	/// </summary>
+	IReadOnlyDictionary<Guid, IUserAccessEntity> UsersAccess { get; }
 }

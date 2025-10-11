@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.InMemory.Inventory;
 
-public record class InventoryState : IInventoryCacheState
+public record class InventoryCacheState : IInventoryCacheState
 {
 	public long Version { get; private set; } = DateTime.UtcNow.Ticks;
 
@@ -20,11 +20,11 @@ public record class InventoryState : IInventoryCacheState
 	/// <summary>
 	/// Фабричный метод пустого нового состояния
 	/// </summary>
-	public static InventoryState Empty
+	public static InventoryCacheState Empty
 	{
 		get
 		{
-			var state = new InventoryState
+			var state = new InventoryCacheState
 			{
 				AccessRules = [],
 				Blocks = ImmutableDictionary<int, BlockMemoryDto>.Empty,
@@ -45,7 +45,7 @@ public record class InventoryState : IInventoryCacheState
 	/// <summary>
 	/// Фабричный метод создания нового состояния с нуля
 	/// </summary>
-	public static InventoryState Create(
+	public static InventoryCacheState Create(
 		IEnumerable<AccessRule> accessRules,
 		IEnumerable<Block> blocks,
 		IEnumerable<BlockTag> blockTags,
@@ -55,7 +55,7 @@ public record class InventoryState : IInventoryCacheState
 		IEnumerable<UserGroup> userGroups,
 		IEnumerable<UserGroupRelation> userGroupRelations)
 	{
-		var state = new InventoryState
+		var state = new InventoryCacheState
 		{
 			AccessRules = accessRules.Select(AccessRightsMemoryDto.FromEntity).ToImmutableList(),
 
@@ -176,9 +176,9 @@ public record class InventoryState : IInventoryCacheState
 
 	#region Внутренние методы-хэлперы
 
-	private InventoryState Update(Func<InventoryState, InventoryState> updateFunc)
+	private InventoryCacheState Update(Func<InventoryCacheState, InventoryCacheState> updateFunc)
 	{
-		InventoryState newState = updateFunc(this);
+		InventoryCacheState newState = updateFunc(this);
 		newState.UpdateVersion();
 		return newState;
 	}

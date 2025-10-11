@@ -5,16 +5,16 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.AccessRules.Queries.GetCalculatedAccess;
 
-public interface IGetCalculatedAccessHandler : IQueryHandler<GetCalculatedAccessQuery, IDictionary<Guid, UserAccessEntity>> { }
+public interface IGetCalculatedAccessHandler : IQueryHandler<GetCalculatedAccessQuery, IReadOnlyDictionary<Guid, IUserAccessEntity>> { }
 
 public class GetCalculatedAccessHandler(IUserAccessCache userAccessCache) : IGetCalculatedAccessHandler
 {
-	public Task<IDictionary<Guid, UserAccessEntity>> HandleAsync(GetCalculatedAccessQuery query, CancellationToken ct = default)
+	public Task<IReadOnlyDictionary<Guid, IUserAccessEntity>> HandleAsync(GetCalculatedAccessQuery query, CancellationToken ct = default)
 	{
 		query.User.ThrowIfNoGlobalAccess(AccessType.Admin);
 
-		var data = userAccessCache.State.GetAll();
+		var data = userAccessCache.State.UsersAccess;
 
-		return Task.FromResult<IDictionary<Guid, UserAccessEntity>>(data);
+		return Task.FromResult(data);
 	}
 }

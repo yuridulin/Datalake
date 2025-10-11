@@ -1,7 +1,9 @@
-﻿namespace Datalake.Inventory.Application.Interfaces.InMemory;
+﻿using Datalake.Inventory.Application.Models;
+
+namespace Datalake.Inventory.Application.Interfaces.InMemory;
 
 /// <summary>
-/// Хранилище рассчитанных прав доступа данных
+/// Хранилище вычисленных прав доступа данных
 /// </summary>
 public interface IUserAccessCache
 {
@@ -11,7 +13,13 @@ public interface IUserAccessCache
 	IUserAccessCacheState State { get; }
 
 	/// <summary>
-	/// Событие при изменении состояния
+	/// Создание задания обновления состояния вычисленных прав доступа
+	/// </summary>
+	/// <param name="usersAccess">Вычисленные права доступа</param>
+	Task SetAsync(UsersAccessDto usersAccess);
+
+	/// <summary>
+	/// Событие при успешном завершении изменения состояния
 	/// </summary>
 	event EventHandler<IUserAccessCacheState>? StateChanged;
 }

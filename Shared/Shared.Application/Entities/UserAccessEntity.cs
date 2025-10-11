@@ -11,7 +11,7 @@ public class UserAccessEntity(
 	Dictionary<int, AccessRuleValue>? sourcesRules = null,
 	Dictionary<int, AccessRuleValue>? blocksRules = null,
 	Dictionary<int, AccessRuleValue>? tagsRules = null,
-	UserAccessEntity? underlyingUser = null)
+	UserAccessEntity? underlyingUser = null) : IUserAccessEntity
 {
 	public Guid Guid { get; private set; } = guid;
 

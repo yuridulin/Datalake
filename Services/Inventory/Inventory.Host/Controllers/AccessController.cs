@@ -59,7 +59,7 @@ public class AccessController(IAuthenticator authenticator) : ControllerBase
 	/// <see cref="HttpMethod.Get" />: Получение списка рассчитанных разрешений субъекта на объект для всех субъетов и всех объектов
 	/// </summary>
 	[HttpGet("calculated")]
-	public async Task<ActionResult<IDictionary<Guid, UserAccessEntity>>> GetCalculatedAccessAsync(
+	public async Task<ActionResult<IDictionary<Guid, IUserAccessEntity>>> GetCalculatedAccessAsync(
 		[FromServices] IGetCalculatedAccessHandler handler,
 		CancellationToken ct = default)
 	{

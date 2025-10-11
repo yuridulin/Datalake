@@ -14,9 +14,11 @@ public class InventoryCache : IInventoryCache
 {
 	private readonly IServiceScopeFactory _serviceScopeFactory;
 	private readonly ILogger<InventoryCache> _logger;
+	private readonly Channel<InventoryCacheState> _updateChannel;
 	private readonly SemaphoreSlim _semaphore = new(1, 1);
-	private readonly Channel<InventoryState> _updateChannel;
-	private InventoryState _currentState = InventoryState.Empty;
+	private CancellationTokenSource _processingCts = new();
+
+	private InventoryCacheState _currentState = InventoryCacheState.Empty;
 
 	public InventoryCache(
 		IServiceScopeFactory serviceScopeFactory,
@@ -25,10 +27,7 @@ public class InventoryCache : IInventoryCache
 		_serviceScopeFactory = serviceScopeFactory;
 		_logger = logger;
 
-		StateChanged += (_, _) => _logger.LogInformation("Состояние данных изменено");
-		StateCorrupted += (_, _) => Task.Run(RestoreAsync);
-
-		_updateChannel = Channel.CreateBounded<InventoryState>(
+		_updateChannel = Channel.CreateBounded<InventoryCacheState>(
 			new BoundedChannelOptions(100)
 			{
 				SingleReader = true,
@@ -36,31 +35,26 @@ public class InventoryCache : IInventoryCache
 				FullMode = BoundedChannelFullMode.DropOldest,
 			});
 
-		_ = ProcessUpdatesAsync();
+		_ = ProcessUpdateTasksAsync(_processingCts.Token);
 
-		// начальное заполнение кэша будет запущено, когда все будет готов, извне
+		StateChanged += (_, _) => _logger.LogInformation("Кэш структуры объектов обновлен");
+		StateCorrupted += (_, _) =>
+		{
+			_logger.LogInformation("Состояние данных повреждено, запускается восстановление");
+			_ = Task.Run(RestoreAsync);
+		};
 	}
 
 	public async Task RestoreAsync()
 	{
-		using var scope = _serviceScopeFactory.CreateScope();
-		var db = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
-
-		var newState = await LoadStateFromDatabaseAsync(db);
-
-		await UpdateAsync((_) => newState);
-
-		_logger.LogInformation("Кэш объектов перезагружен");
+		var newState = await LoadStateFromDatabaseAsync();
+		await _updateChannel.Writer.WriteAsync(newState);
 	}
 
-	public async Task<IInventoryCacheState> UpdateAsync(Func<IInventoryCacheState, IInventoryCacheState> update)
+	public async Task UpdateAsync(Func<IInventoryCacheState, IInventoryCacheState> update)
 	{
 		var newState = update(_currentState);
-		if (newState.Version != _currentState.Version)
-		{
-			await _updateChannel.Writer.WriteAsync((InventoryState)newState);
-		}
-		return newState;
+		await _updateChannel.Writer.WriteAsync((InventoryCacheState)newState);
 	}
 
 	public IInventoryCacheState State => _currentState;
@@ -70,10 +64,54 @@ public class InventoryCache : IInventoryCache
 	public event EventHandler<int>? StateCorrupted;
 
 
-	private async Task<IInventoryCacheState> LoadStateFromDatabaseAsync(InventoryDbContext context)
+	private async Task ProcessUpdateTasksAsync(CancellationToken ct)
+	{
+		await foreach (var newState in _updateChannel.Reader.ReadAllAsync(ct))
+		{
+			await ProcessUpdateTaskAsync(newState);
+		}
+	}
+
+	private async Task ProcessUpdateTaskAsync(InventoryCacheState newState)
+	{
+		_logger.LogDebug("Вызвано обновление состояния кэша структуры объектов версии {version}", newState.Version);
+
+		await _semaphore.WaitAsync();
+
+		try
+		{
+			if (newState.Version <= _currentState.Version)
+			{
+				_logger.LogDebug("Обновление состояния кэша структуры объектов версии {version} прекращено - текущая версия новее: {current}", newState.Version, _currentState.Version);
+			}
+			else
+			{
+				Interlocked.Exchange(ref _currentState, newState);
+
+				_logger.LogDebug("Выполнено обновление состояния кэша структуры объектов версии {version}", newState.Version);
+
+				_ = Task.Run(() => StateChanged?.Invoke(this, _currentState));
+			}
+		}
+		catch (Exception e)
+		{
+			_logger.LogWarning("Ошибка при обновлении состояния кэша структуры объектов версии {version}: {message}", newState.Version, e.Message);
+
+			_ = Task.Run(() => StateCorrupted?.Invoke(this, 0));
+		}
+		finally
+		{
+			_semaphore.Release();
+		}
+	}
+
+	private async Task<InventoryCacheState> LoadStateFromDatabaseAsync()
 	{
 		return await Measures.Measure(async () =>
 		{
+			using var scope = _serviceScopeFactory.CreateScope();
+			var context = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
+
 			// коллекции основных объектов
 			var blocks = await context.Blocks.Where(x => !x.IsDeleted).AsNoTracking().ToArrayAsync();
 			var sources = await context.Sources.Where(x => !x.IsDeleted).AsNoTracking().ToArrayAsync();
@@ -88,7 +126,7 @@ public class InventoryCache : IInventoryCache
 			// коллекция правил
 			var accessRules = await context.AccessRights.AsNoTracking().ToArrayAsync();
 
-			return InventoryState.Create(
+			return InventoryCacheState.Create(
 				accessRules: accessRules,
 				blocks: blocks,
 				blockTags: blockTags,
@@ -99,30 +137,5 @@ public class InventoryCache : IInventoryCache
 				userGroupRelations: userGroupRelations);
 
 		}, _logger, nameof(LoadStateFromDatabaseAsync));
-	}
-
-	private async Task ProcessUpdatesAsync()
-	{
-		await foreach (var newState in _updateChannel.Reader.ReadAllAsync())
-		{
-			await _semaphore.WaitAsync();
-
-			try
-			{
-				_currentState = newState;
-
-				_ = Task.Run(() => StateChanged?.Invoke(this, _currentState));
-			}
-			catch (Exception e)
-			{
-				_logger.LogWarning("Ошибка при обновлении состояния основного кэша: {message}", e.Message);
-
-				_ = Task.Run(() => StateCorrupted?.Invoke(this, 0));
-			}
-			finally
-			{
-				_semaphore.Release();
-			}
-		}
 	}
 }

@@ -2,6 +2,7 @@
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Inventory.Application.Repositories;
+using Datalake.Inventory.Application.Services;
 using Datalake.Inventory.Infrastructure.Database;
 using Datalake.Inventory.Infrastructure.Database.Abstractions;
 using Datalake.Inventory.Infrastructure.Database.Initialization;
@@ -65,7 +66,6 @@ public static class Bootstrap
 		builder.Services.AddSingleton<IInventoryCache, InventoryCache>();
 		builder.Services.AddSingleton<IUserAccessCache, UserAccessCache>();
 		builder.Services.AddSingleton<IEnergoIdCache, EnergoIdCache>();
-		builder.Services.AddSingleton<IUserAccessStateFactory, UserAccessStateFactory>();
 
 		// службы
 		builder.Services.AddSingleton<DbInitializer>();

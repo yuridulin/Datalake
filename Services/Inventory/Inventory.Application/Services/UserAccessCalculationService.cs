@@ -1,23 +1,24 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Models;
-using Datalake.Inventory.Infrastructure.Interfaces;
+using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Entities;
 using System.Collections.Concurrent;
 
-namespace Datalake.Inventory.Infrastructure.InMemory.UserAccess;
+namespace Datalake.Inventory.Application.Services;
 
 /// <summary>
 /// Функции предварительного расчета прав доступа для пользователей
 /// </summary>
-public class UserAccessStateFactory : IUserAccessStateFactory
+[Singleton]
+public class UserAccessCalculationService : IUserAccessCalculationService
 {
 	/// <summary>
 	/// Расчет прав доступа по пользователям на основании текущих данных
 	/// </summary>
 	/// <param name="state">Состояние с текущими данными</param>
 	/// <returns>Состояние актуальных прав доступа</returns>
-	public UserAccessState Create(IInventoryCacheState state)
+	public UsersAccessDto CalculateAccess(IInventoryCacheState state)
 	{
 		// Предварительные вычисления
 		var precomputed = PrecomputeStructures(state);
@@ -33,7 +34,11 @@ public class UserAccessStateFactory : IUserAccessStateFactory
 			usersAccess[user.Key] = CalculateUserAccess(user.Value, state, precomputed, hashSets);
 		});
 
-		return new(usersAccess.ToDictionary());
+		return new UsersAccessDto
+		{
+			Version = state.Version,
+			UserAccessEntities = usersAccess.ToDictionary(x => x.Key, x => x.Value as IUserAccessEntity),
+		};
 	}
 
 	private static HashSets PrepareHashSets(IInventoryCacheState state)
