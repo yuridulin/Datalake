@@ -1,4 +1,6 @@
-﻿using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Inventory.Application.Interfaces;
+using Datalake.Inventory.Application.Services;
+using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
@@ -20,6 +22,12 @@ public static class Bootstrap
 			.AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
 				.AsImplementedInterfaces()
 				.WithScopedLifetime());
+
+		builder.Services.AddSingleton<ApplicationStartService>();
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<ApplicationStartService>());
+
+		builder.Services.AddSingleton<IUserAccessCalculationService, UserAccessCalculationService>();
+		builder.Services.AddSingleton<IUserAccessSynchronizationService, UserAccessSynchronizationService>();
 
 		return builder;
 	}

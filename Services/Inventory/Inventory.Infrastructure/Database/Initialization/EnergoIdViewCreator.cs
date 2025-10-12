@@ -135,7 +135,6 @@ public class EnergoIdViewCreator(
 	{
 		await using var cmd = new NpgsqlCommand(sql, conn);
 
-		//logger.LogDebug("SQL: {sql}", sql);
 		await cmd.ExecuteNonQueryAsync(ct);
 	}
 

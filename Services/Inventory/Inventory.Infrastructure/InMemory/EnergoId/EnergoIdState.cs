@@ -8,13 +8,27 @@ namespace Datalake.Inventory.Infrastructure.InMemory.EnergoId;
 /// </summary>
 public record class EnergoIdState : IEnergoIdCacheState
 {
+	private EnergoIdState()
+	{
+		Users = [];
+		UsersByGuid = ImmutableDictionary<Guid, Domain.Entities.EnergoId>.Empty;
+	}
+
+	public EnergoIdState(IEnumerable<Domain.Entities.EnergoId> data)
+	{
+		Users = data.ToImmutableList();
+		UsersByGuid = Users.ToImmutableDictionary(x => x.Guid);
+	}
+
+	public static EnergoIdState Empty => new();
+
 	/// <summary>
 	/// Список пользователей
 	/// </summary>
-	public required ImmutableList<Domain.Entities.EnergoId> Users { get; set; }
+	public ImmutableList<Domain.Entities.EnergoId> Users { get; init; }
 
 	/// <summary>
 	/// Список пользователей, сопоставленный с идентификаторами
 	/// </summary>
-	public required ImmutableDictionary<Guid, Domain.Entities.EnergoId> UsersByGuid { get; set; }
+	public ImmutableDictionary<Guid, Domain.Entities.EnergoId> UsersByGuid { get; init; }
 }

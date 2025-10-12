@@ -17,46 +17,37 @@ public sealed class EnergoIdCache(
 	IServiceScopeFactory scopeFactory,
 	ILogger<EnergoIdCache> logger) : BackgroundService, IEnergoIdCache
 {
-	/// <summary>
-	/// Текущее состояние
-	/// </summary>
-	public IEnergoIdCacheState State => Volatile.Read(ref _state);
+	#region Периодическое обновление
 
-	public override async Task StartAsync(CancellationToken cancellationToken)
-	{
-		//await SafeRefreshAsync(cancellationToken);
-
-		await base.StartAsync(cancellationToken);
-	}
-
-	/// <summary>
-	/// Публичный ручной триггер
-	/// </summary>
-	public Task UpdateAsync(CancellationToken ct = default) => SafeRefreshAsync(ct);
-
-
+	private TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 	private readonly SemaphoreSlim _refreshGate = new(1, 1);
 	static readonly TimeSpan interval = TimeSpan.FromMinutes(1);
-	private EnergoIdState _state = new() { Users = [], UsersByGuid = ImmutableDictionary<Guid, Domain.Entities.EnergoId>.Empty };
 
-	/// <inheritdoc/>
+	public void SetReady() => tcs.TrySetResult();
+
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		// ожидание разрешения на запуск
+		await WaitAsync(stoppingToken);
+
+		// первичная загрузка сразу
+		await SafeRefreshAsync(stoppingToken);
+
+		// таймер на постоянное обновление
 		using var timer = new PeriodicTimer(interval);
 
 		try
 		{
-			// Первичная загрузка сразу
-			//await SafeRefreshAsync(stoppingToken);
-
-			// Периодические обновления
+			// периодические обновления
 			while (await timer.WaitForNextTickAsync(stoppingToken))
 			{
-				//await SafeRefreshAsync(stoppingToken);
+				await SafeRefreshAsync(stoppingToken);
 			}
 		}
 		catch (OperationCanceledException) { /* нормальное завершение */ }
 	}
+
+	private Task WaitAsync(CancellationToken ct = default) => tcs.Task.WaitAsync(ct);
 
 	private async Task SafeRefreshAsync(CancellationToken ct)
 	{
@@ -92,11 +83,25 @@ public sealed class EnergoIdCache(
 
 	private void SetState(IEnumerable<Domain.Entities.EnergoId> data)
 	{
-		var list = data.ToImmutableList();
-		var dict = list.ToImmutableDictionary(x => x.Guid);
-
-		var newState = new EnergoIdState { Users = list, UsersByGuid = dict, };
-
+		var newState = new EnergoIdState(data);
 		Volatile.Write(ref _state, newState);
 	}
+
+	#endregion Периодическое обновление
+
+	#region Состояние
+
+	private EnergoIdState _state = EnergoIdState.Empty;
+
+	/// <summary>
+	/// Текущее состояние
+	/// </summary>
+	public IEnergoIdCacheState State => Volatile.Read(ref _state);
+
+	/// <summary>
+	/// Обновление вне очереди по требованию
+	/// </summary>
+	public Task UpdateAsync(CancellationToken ct = default) => SafeRefreshAsync(ct);
+
+	#endregion Состояние
 }

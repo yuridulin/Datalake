@@ -1,37 +1,28 @@
 ﻿using Datalake.Domain.ValueObjects;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Application.Services;
 
-/// <summary>
-/// Оркестратор обновления зависимых данных
-/// </summary>
 [Singleton]
-public class UserAccessSynchronizationService
+public class UserAccessSynchronizationService(
+	IInventoryCache inventoryCache,
+	IUserAccessCalculationService userAccessCalculationService,
+	IUserAccessCache userAccessCache,
+	IServiceScopeFactory serviceScopeFactory,
+	ILogger<UserAccessSynchronizationService> logger) : IUserAccessSynchronizationService
 {
-	private readonly IInventoryCache inventoryCache;
-	private readonly IUserAccessCache userAccessCache;
-	private readonly IUserAccessCalculationService userAccessCalculationService;
-	private readonly IServiceScopeFactory serviceScopeFactory;
 	private IUserAccessCacheState? previousUsersAccessState;
+	private bool started = false;
 
-	public UserAccessSynchronizationService(
-		IInventoryCache inventoryCache,
-		IUserAccessCalculationService userAccessCalculationService,
-		IUserAccessCache userAccessCache,
-		IServiceScopeFactory serviceScopeFactory)
+	public void Start()
 	{
-		this.inventoryCache = inventoryCache;
-		this.userAccessCalculationService = userAccessCalculationService;
-		this.userAccessCache = userAccessCache;
-		this.serviceScopeFactory = serviceScopeFactory;
-
-		// сначала нужно восстановить состояния, чтобы избежать ненужных обновлений того же самого
-		// это нам уже должен был сделать сервис запуска
-		// и теперь подписываемся на изменения
+		if (started)
+			return;
 
 		inventoryCache.StateChanged += (_, newState) =>
 		{
@@ -42,6 +33,10 @@ public class UserAccessSynchronizationService
 		{
 			_ = Task.Run(CompareAndSaveUsersAccess);
 		};
+
+		started = true;
+
+		logger.LogInformation("Синхронизация кэша прав доступа настроена");
 	}
 
 	/// <summary>
@@ -49,10 +44,17 @@ public class UserAccessSynchronizationService
 	/// </summary>
 	private async Task CalculateAndUpdateUsersAccess()
 	{
-		var inventoryState = inventoryCache.State;
-		var usersAccess = userAccessCalculationService.CalculateAccess(inventoryState);
+		try
+		{
+			var inventoryState = inventoryCache.State;
+			var usersAccess = userAccessCalculationService.CalculateAccess(inventoryState);
 
-		await userAccessCache.SetAsync(usersAccess);
+			await userAccessCache.SetAsync(usersAccess);
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "Ошибка при расчете прав доступа после изменений в структуре");
+		}
 	}
 
 	/// <summary>
@@ -61,16 +63,27 @@ public class UserAccessSynchronizationService
 	/// </summary>
 	private async Task CompareAndSaveUsersAccess()
 	{
-		// сравнение текущего и последнего сохраненного состояний
-		// сделать семафор, чтобы избежать гонок?
-		var oldState = previousUsersAccessState;
-		var newState = userAccessCache.State;
-		Interlocked.Exchange(ref previousUsersAccessState, newState);
-
-		// TODO: вычисление изменений между состояниями (основная работа)
-
-		// TODO: сериализация в CalculatedAccessRule[]
 		List<CalculatedAccessRule> updatedRules = [];
+
+		try
+		{
+			// сравнение текущего и последнего сохраненного состояний
+			// сделать семафор, чтобы избежать гонок?
+			var oldState = previousUsersAccessState;
+			var newState = userAccessCache.State;
+			Interlocked.Exchange(ref previousUsersAccessState, newState);
+
+			// TODO: вычисление изменений между состояниями (основная работа)
+
+			// TODO: сериализация в CalculatedAccessRule[]
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "Ошибка при вычислении изменений в правах доступа");
+		}
+
+		if (updatedRules.Count == 0)
+			return;
 
 		// сохранение
 		_ = SaveUpdatedRules(updatedRules);

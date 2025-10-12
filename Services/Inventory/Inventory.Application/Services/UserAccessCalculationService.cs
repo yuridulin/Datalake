@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Models;
 using Datalake.Shared.Application.Attributes;

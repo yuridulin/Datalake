@@ -1,8 +1,8 @@
-﻿using Datalake.Inventory.Application.Interfaces.InMemory;
+﻿using Datalake.Inventory.Application.Interfaces;
+using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Inventory.Application.Services;
 using Datalake.Inventory.Infrastructure.Database;
 using Datalake.Inventory.Infrastructure.Database.Abstractions;
 using Datalake.Inventory.Infrastructure.Database.Initialization;
@@ -67,11 +67,12 @@ public static class Bootstrap
 		builder.Services.AddSingleton<IUserAccessCache, UserAccessCache>();
 		builder.Services.AddSingleton<IEnergoIdCache, EnergoIdCache>();
 
-		// службы
-		builder.Services.AddSingleton<DbInitializer>();
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<DbInitializer>());
-
+		// настройка
+		builder.Services.AddSingleton<IInfrastructureStartService, InfrastructureStartService>();
+		builder.Services.AddSingleton<IDomainStartService, DomainStartService>();
 		builder.Services.AddSingleton<IEnergoIdViewCreator, EnergoIdViewCreator>();
+
+		// службы
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<IEnergoIdCache>());
 
 		return builder;

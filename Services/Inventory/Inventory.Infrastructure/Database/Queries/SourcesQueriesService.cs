@@ -11,7 +11,7 @@ public class SourcesQueriesService(InventoryDbContext context) : ISourcesQueries
 	private IQueryable<SourceInfo> QuerySourceInfo(bool withCustom = false)
 	{
 		return context.Sources
-			.Where(source => withCustom || !Source.CustomSources.Contains(source.Type))
+			.Where(source => withCustom || !Source.InternalSources.Contains(source.Type))
 			.AsNoTracking()
 			.Select(source => new SourceInfo
 			{

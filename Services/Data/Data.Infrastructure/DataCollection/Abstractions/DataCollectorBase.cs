@@ -19,7 +19,7 @@ public abstract class DataCollectorBase(
 	protected readonly ILogger _logger = logger;
 	protected readonly CancellationTokenSource _tokenSource = new();
 	protected readonly Channel<IEnumerable<TagHistory>> _outputChannel = Channel.CreateUnbounded<IEnumerable<TagHistory>>();
-	protected readonly string _name = Source.CustomSources.Contains(sourceSettings.SourceType)
+	protected readonly string _name = Source.InternalSources.Contains(sourceSettings.SourceType)
 		? sourceSettings.SourceType.ToString()
 		: $"{sourceSettings.SourceName}<{sourceSettings.SourceType}>#{sourceSettings.SourceId}";
 

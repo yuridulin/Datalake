@@ -57,7 +57,7 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 
 	public void UpdateType(SourceType type)
 	{
-		if (CustomSources.Contains(Type))
+		if (InternalSources.Contains(Type))
 			throw new ArgumentException("Создавать или изменять встроенные источники данных запрещено");
 
 		Type = type;
@@ -65,7 +65,7 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 
 	public void UpdateProperties(string name, string? description, string? address)
 	{
-		if (CustomSources.Contains(Type))
+		if (InternalSources.Contains(Type))
 			throw new DomainException(nameof(address), "Изменение встроенных источников данных запрещено");
 
 		if (address == null)
@@ -79,7 +79,7 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 	/// <summary>
 	/// Встроенные не настраиваемые источники данных
 	/// </summary>
-	public static IReadOnlyCollection<SourceType> CustomSources { get; } = new SourceType[]
+	public static IReadOnlyCollection<SourceType> InternalSources { get; } = new SourceType[]
 	{
 		SourceType.System,
 		SourceType.Calculated,
