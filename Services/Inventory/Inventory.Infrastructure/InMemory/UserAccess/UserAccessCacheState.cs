@@ -9,13 +9,13 @@ public record class UserAccessCacheState : IUserAccessCacheState
 {
 	public long Version { get; private set; } = DateTime.MinValue.Ticks;
 
-	public IReadOnlyDictionary<Guid, IUserAccessEntity> UsersAccess => _accessByUserGuid;
+	public IReadOnlyDictionary<Guid, UserAccessEntity> UsersAccess => _accessByUserGuid;
 
 	public static UserAccessCacheState Empty => new();
 
 	private UserAccessCacheState() { }
 
-	private ImmutableDictionary<Guid, IUserAccessEntity> _accessByUserGuid = ImmutableDictionary<Guid, IUserAccessEntity>.Empty;
+	private ImmutableDictionary<Guid, UserAccessEntity> _accessByUserGuid = ImmutableDictionary<Guid, UserAccessEntity>.Empty;
 
 	public UserAccessCacheState(UsersAccessDto usersAccessDto)
 	{

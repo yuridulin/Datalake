@@ -2,11 +2,17 @@
 
 namespace Datalake.Shared.Application.Entities;
 
-public class AccessRuleValue(int id, AccessType access)
+public record class AccessRuleValue
 {
-	public int Id { get; private set; } = id;
+	public AccessRuleValue(int id, AccessType access)
+	{
+		Id = id;
+		Access = access;
+	}
 
-	public AccessType Access { get; private set; } = access;
+	public int Id { get; private set; }
+
+	public AccessType Access { get; private set; }
 
 	/// <summary>
 	/// Проверка, что уровень доступа достаточен по сравнению с необходимым

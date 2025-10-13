@@ -5,5 +5,5 @@ namespace Datalake.Inventory.Application.Repositories;
 
 public interface ISourcesRepository : IRepository<Source, int>
 {
-	Task<IEnumerable<Source>> GetAllAsync();
+	Task<IEnumerable<Source>> GetAllAsync(CancellationToken ct = default);
 }

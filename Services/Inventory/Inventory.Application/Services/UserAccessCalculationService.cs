@@ -38,7 +38,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		return new UsersAccessDto
 		{
 			Version = state.Version,
-			UserAccessEntities = usersAccess.ToDictionary(x => x.Key, x => x.Value as IUserAccessEntity),
+			UserAccessEntities = usersAccess.ToDictionary(x => x.Key, x => x.Value),
 		};
 	}
 

@@ -5,5 +5,5 @@ namespace Datalake.Inventory.Application.Repositories;
 
 public interface IUsersRepository : IRepository<User, Guid>
 {
-	Task<User?> GetByLoginAsync(string login);
+	Task<User?> GetByLoginAsync(string login, CancellationToken ct = default);
 }

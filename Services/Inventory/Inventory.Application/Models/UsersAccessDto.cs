@@ -6,5 +6,5 @@ public record UsersAccessDto
 {
 	public required long Version { get; init; }
 
-	public required Dictionary<Guid, IUserAccessEntity> UserAccessEntities { get; init; }
+	public required Dictionary<Guid, UserAccessEntity> UserAccessEntities { get; init; }
 }
