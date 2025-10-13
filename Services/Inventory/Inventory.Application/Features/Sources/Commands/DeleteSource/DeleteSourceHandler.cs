@@ -15,6 +15,7 @@ public interface IDeleteSourceHandler : ICommandHandler<DeleteSourceCommand, int
 public class DeleteSourceHandler(
 	ISourcesRepository sourcesRepository,
 	IAuditRepository auditRepository,
+	ICalculatedAccessRulesRepository calculatedAccessRulesRepository,
 	IUnitOfWork unitOfWork,
 	IInventoryCache inventoryCache,
 	ILogger<DeleteSourceHandler> logger) :
@@ -38,6 +39,7 @@ public class DeleteSourceHandler(
 		await sourcesRepository.UpdateAsync(source, ct);
 		await _unitOfWork.SaveChangesAsync(ct);
 
+		await calculatedAccessRulesRepository.RemoveBySourceId(source.Id, ct);
 		await auditRepository.AddAsync(new(command.User.Guid, "Источник данных удален", sourceId: source.Id), ct);
 
 		return source.Id;

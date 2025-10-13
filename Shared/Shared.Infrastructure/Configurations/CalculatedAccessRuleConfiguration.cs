@@ -32,7 +32,7 @@ public class CalculatedAccessRuleConfiguration(TableAccess access) : IEntityType
 		if (access == TableAccess.Write)
 		{
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
-			builder.HasIndex(x => new { x.UserGuid, x.BlockId, x.TagId, x.SourceId, x.UserGroupGuid }).IsUnique();
+			builder.HasIndex(x => new { x.UserGuid, x.IsGlobal, x.BlockId, x.TagId, x.SourceId, x.UserGroupGuid }).IsUnique();
 		}
 
 		// связи модели прав с объектами

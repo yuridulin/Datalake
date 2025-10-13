@@ -15,6 +15,7 @@ public interface IDeleteUserHandler : ICommandHandler<DeleteUserCommand, bool> {
 public class DeleteUserHandler(
 	IUsersRepository usersRepository,
 	IAuditRepository auditRepository,
+	ICalculatedAccessRulesRepository calculatedAccessRulesRepository,
 	IUnitOfWork unitOfWork,
 	ILogger<DeleteUserHandler> logger,
 	IInventoryCache inventoryCache) :
@@ -37,6 +38,7 @@ public class DeleteUserHandler(
 
 		await usersRepository.UpdateAsync(user, ct);
 
+		await calculatedAccessRulesRepository.RemoveByUserGuid(user.Guid, ct);
 		await auditRepository.AddAsync(new(command.User.Guid, "Учетная запись удалена", userGuid: user.Guid), ct);
 
 		return true;

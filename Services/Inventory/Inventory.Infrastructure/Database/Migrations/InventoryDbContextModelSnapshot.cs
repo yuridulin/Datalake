@@ -671,7 +671,7 @@ namespace Datalake.Inventory.Infrastructure.Migrations
 
                     b.HasIndex("UserGroupGuid");
 
-                    b.HasIndex("UserGuid", "BlockId", "TagId", "SourceId", "UserGroupGuid")
+                    b.HasIndex("UserGuid", "IsGlobal", "BlockId", "TagId", "SourceId", "UserGroupGuid")
                         .IsUnique();
 
                     b.ToTable("CalculatedAccessRules", "public");

@@ -1,4 +1,5 @@
 ﻿using Datalake.Inventory.Application.Interfaces;
+using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +28,7 @@ public class InfrastructureStartService(
 			await context.Database.MigrateAsync();
 
 			// создание представления пользователей EnergoId
-			var viewCreator = serviceScope.ServiceProvider.GetRequiredService<EnergoIdViewCreator>();
+			var viewCreator = serviceScope.ServiceProvider.GetRequiredService<IEnergoIdViewCreator>();
 			await viewCreator.RecreateAsync();
 
 			logger.LogInformation("Инициализация работы с БД выполнена");

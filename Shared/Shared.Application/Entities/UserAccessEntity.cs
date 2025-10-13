@@ -3,7 +3,7 @@ using Datalake.Domain.Exceptions;
 
 namespace Datalake.Shared.Application.Entities;
 
-public record class UserAccessEntity
+public record struct UserAccessEntity
 {
 	public UserAccessEntity(
 		Guid guid,

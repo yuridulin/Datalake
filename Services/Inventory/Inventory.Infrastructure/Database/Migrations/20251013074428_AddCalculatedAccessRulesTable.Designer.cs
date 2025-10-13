@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Datalake.Inventory.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(InventoryDbContext))]
-    [Migration("20251010185332_AddCaculatedAccessRulesTable")]
-    partial class AddCaculatedAccessRulesTable
+    [Migration("20251013074428_AddCalculatedAccessRulesTable")]
+    partial class AddCalculatedAccessRulesTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -674,7 +674,7 @@ namespace Datalake.Inventory.Infrastructure.Database.Migrations
 
                     b.HasIndex("UserGroupGuid");
 
-                    b.HasIndex("UserGuid", "BlockId", "TagId", "SourceId", "UserGroupGuid")
+                    b.HasIndex("UserGuid", "IsGlobal", "BlockId", "TagId", "SourceId", "UserGroupGuid")
                         .IsUnique();
 
                     b.ToTable("CalculatedAccessRules", "public");

@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Datalake.Inventory.Infrastructure.Database.Migrations
 {
 	/// <inheritdoc />
-	public partial class AddCaculatedAccessRulesTable : Migration
+	public partial class AddCalculatedAccessRulesTable : Migration
 	{
 		/// <inheritdoc />
 		protected override void Up(MigrationBuilder migrationBuilder)
@@ -106,10 +106,10 @@ namespace Datalake.Inventory.Infrastructure.Database.Migrations
 					column: "UserGroupGuid");
 
 			migrationBuilder.CreateIndex(
-					name: "IX_CalculatedAccessRules_UserGuid_BlockId_TagId_SourceId_UserG~",
+					name: "IX_CalculatedAccessRules_UserGuid_IsGlobal_BlockId_TagId_Sourc~",
 					schema: "public",
 					table: "CalculatedAccessRules",
-					columns: new[] { "UserGuid", "BlockId", "TagId", "SourceId", "UserGroupGuid" },
+					columns: new[] { "UserGuid", "IsGlobal", "BlockId", "TagId", "SourceId", "UserGroupGuid" },
 					unique: true);
 		}
 

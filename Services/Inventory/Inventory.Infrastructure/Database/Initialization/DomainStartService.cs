@@ -24,7 +24,7 @@ public class DomainStartService(
 			.Select(x => Source.CreateAsInternal(type: x, name: x.ToString(), description: GetDescription(x)))
 			.ToArray();
 
-		using var scope = serviceScopeFactory.CreateScope();
+		await using var scope = serviceScopeFactory.CreateAsyncScope();
 		var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 		var sourcesRepository = scope.ServiceProvider.GetRequiredService<ISourcesRepository>();
 		var settingsRepository = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
@@ -82,6 +82,10 @@ public class DomainStartService(
 			logger.LogError(ex, "Настройка домена не завершена!");
 			await unitOfWork.RollbackAsync();
 			throw;
+		}
+		finally
+		{
+			await unitOfWork.DisposeAsync();
 		}
 	}
 

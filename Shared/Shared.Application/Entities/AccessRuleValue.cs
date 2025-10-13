@@ -2,7 +2,7 @@
 
 namespace Datalake.Shared.Application.Entities;
 
-public record class AccessRuleValue
+public record struct AccessRuleValue
 {
 	public AccessRuleValue(int id, AccessType access)
 	{

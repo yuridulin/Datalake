@@ -15,6 +15,7 @@ public interface IDeleteUserGroupHandler : ICommandHandler<DeleteUserGroupComman
 public class DeleteUserGroupHandler(
 	IUserGroupsRepository userGroupsRepository,
 	IAuditRepository auditRepository,
+	ICalculatedAccessRulesRepository calculatedAccessRulesRepository,
 	IUnitOfWork unitOfWork,
 	IInventoryCache inventoryCache,
 	ILogger<DeleteUserGroupCommand> logger) :
@@ -36,6 +37,8 @@ public class DeleteUserGroupHandler(
 		userGroup.MarkAsDeleted();
 
 		await userGroupsRepository.UpdateAsync(userGroup, ct);
+
+		await calculatedAccessRulesRepository.RemoveByUserGroupGuid(userGroup.Guid, ct);
 		await auditRepository.AddAsync(new(command.User.Guid, "Группа учетных записей удалена", userGroupGuid: userGroup.Guid), ct);
 
 		return true;

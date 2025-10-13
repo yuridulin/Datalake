@@ -14,6 +14,7 @@ public class DeleteBlockHandler(
 	IUnitOfWork unitOfWork,
 	IBlocksRepository blocksRepository,
 	IAuditRepository auditRepository,
+	ICalculatedAccessRulesRepository calculatedAccessRulesRepository,
 	IInventoryCache inventoryCache) : IDeleteBlockHandler
 {
 	public async Task<bool> HandleAsync(DeleteBlockCommand command, CancellationToken ct = default)
@@ -32,6 +33,7 @@ public class DeleteBlockHandler(
 			block.MarkAsDeleted();
 			await blocksRepository.UpdateAsync(block, ct);
 
+			await calculatedAccessRulesRepository.RemoveByBlockId(command.BlockId, ct);
 			var audit = new Log(command.User.Guid, $"Блок удален", blockId: block.Id);
 			await auditRepository.AddAsync(audit, ct);
 

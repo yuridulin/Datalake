@@ -33,7 +33,7 @@ public class ChangeBlockRulesHandler(
 			block = await blocksRepository.GetByIdAsync(command.BlockId, ct)
 				?? throw InventoryNotFoundException.NotFoundBlock(command.BlockId);
 
-			var oldRules = await accessRulesRepository.GetBlockRulesAsync(block.Id);
+			var oldRules = await accessRulesRepository.GetBlockRulesAsync(block.Id, ct);
 			oldRulesId = oldRules.Select(x => x.Id).ToArray();
 			await accessRulesRepository.RemoveRangeAsync(oldRules, ct);
 

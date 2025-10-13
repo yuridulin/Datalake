@@ -15,6 +15,7 @@ public interface IDeleteTagHandler : ICommandHandler<DeleteTagCommand, bool> { }
 public class DeleteTagHandler(
 	ITagsRepository tagsRepository,
 	IAuditRepository auditRepository,
+	ICalculatedAccessRulesRepository calculatedAccessRulesRepository,
 	IUnitOfWork unitOfWork,
 	IInventoryCache inventoryCache,
 	ILogger<DeleteTagHandler> logger) :
@@ -37,6 +38,7 @@ public class DeleteTagHandler(
 
 		await tagsRepository.UpdateAsync(tag, ct);
 
+		await calculatedAccessRulesRepository.RemoveByTagId(tag.Id, ct);
 		await auditRepository.AddAsync(new(command.User.Guid, "Тег удален", tagId: tag.Id), ct);
 
 		return true;
