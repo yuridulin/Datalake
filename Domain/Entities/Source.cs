@@ -140,7 +140,7 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 	/// <summary>
 	/// Список сообщений аудита по этому источнику
 	/// </summary>
-	public ICollection<Log> AuditLogs { get; set; } = [];
+	public ICollection<AuditLog> AuditLogs { get; set; } = [];
 
 	/// <summary>
 	/// Рассчитаные для этого источника данных указания фактического доступа

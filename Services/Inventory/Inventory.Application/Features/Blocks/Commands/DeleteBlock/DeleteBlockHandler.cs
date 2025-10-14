@@ -34,7 +34,7 @@ public class DeleteBlockHandler(
 			await blocksRepository.UpdateAsync(block, ct);
 
 			await calculatedAccessRulesRepository.RemoveByBlockId(command.BlockId, ct);
-			var audit = new Log(command.User.Guid, $"Блок удален", blockId: block.Id);
+			var audit = new AuditLog(command.User.Guid, $"Блок удален", blockId: block.Id);
 			await auditRepository.AddAsync(audit, ct);
 
 			await unitOfWork.SaveChangesAsync(ct);

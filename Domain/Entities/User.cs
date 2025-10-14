@@ -201,12 +201,12 @@ public record class User : IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список сообщений аудита, сделанных этим пользователем
 	/// </summary>
-	public ICollection<Log> AuditActions { get; set; } = [];
+	public ICollection<AuditLog> AuditActions { get; set; } = [];
 
 	/// <summary>
 	/// Список сообщений аудита по этой учетной записи
 	/// </summary>
-	public ICollection<Log> AuditLogs { get; set; } = [];
+	public ICollection<AuditLog> AuditLogs { get; set; } = [];
 
 	/// <summary>
 	/// Список актуальных сессий

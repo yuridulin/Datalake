@@ -5,9 +5,9 @@ namespace Datalake.Domain.Entities;
 /// <summary>
 /// Запись в таблице записей аудита
 /// </summary>
-public record class Log
+public record class AuditLog
 {
-	private Log() { }
+	private AuditLog() { }
 
 	/// <summary>
 	/// Сообщение ядра, созданное без пользователя
@@ -16,7 +16,7 @@ public record class Log
 	/// <param name="message">Сообщение</param>
 	/// <param name="details">Расшифровка</param>
 	/// <param name="type">Тип</param>
-	public Log(LogCategory category, string message, string? details, LogType type = LogType.Information)
+	public AuditLog(LogCategory category, string message, string? details, LogType type = LogType.Information)
 	{
 		Category = category;
 		Type = type;
@@ -25,7 +25,7 @@ public record class Log
 		Date = DateTime.UtcNow;
 	}
 
-	public Log(Guid? authorGuid, string message, string? details, LogType type = LogType.Success)
+	public AuditLog(Guid? authorGuid, string message, string? details, LogType type = LogType.Success)
 	{
 		Category = LogCategory.Database;
 		AuthorGuid = authorGuid;
@@ -48,7 +48,7 @@ public record class Log
 	/// <param name="userGuid">Идентификатор учетной записи</param>
 	/// <param name="userGroupGuid">Идентификатор группы учетных записей</param>
 	/// <exception cref="InvalidDataException"></exception>
-	public Log(Guid? authorGuid, string message, string? details = null, LogType type = LogType.Success, int? blockId = null, int? tagId = null, int? sourceId = null, Guid? userGuid = null, Guid? userGroupGuid = null)
+	public AuditLog(Guid? authorGuid, string message, string? details = null, LogType type = LogType.Success, int? blockId = null, int? tagId = null, int? sourceId = null, Guid? userGuid = null, Guid? userGroupGuid = null)
 	{
 		Type = type;
 		AuthorGuid = authorGuid;

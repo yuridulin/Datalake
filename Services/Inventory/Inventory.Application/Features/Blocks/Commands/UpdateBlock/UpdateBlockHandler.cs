@@ -47,7 +47,7 @@ public class UpdateBlockHandler(
 			await blockTagsRepository.AddRangeAsync(blockTags, ct);
 		}
 
-		var audit = new Log(command.User.Guid, $"Изменения: diff", blockId: block.Id);
+		var audit = new AuditLog(command.User.Guid, $"Изменения: diff", blockId: block.Id);
 		await auditRepository.AddAsync(audit, ct);
 
 		return block.Id;

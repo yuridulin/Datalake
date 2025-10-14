@@ -3,6 +3,6 @@ using Datalake.Inventory.Application.Interfaces.Persistent;
 
 namespace Datalake.Inventory.Application.Repositories;
 
-public interface IAuditRepository : IRepository<Log, int>
+public interface IAuditRepository : IRepository<AuditLog, int>
 {
 }

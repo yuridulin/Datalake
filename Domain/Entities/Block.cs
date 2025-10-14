@@ -126,7 +126,7 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 	/// <summary>
 	/// Список сообщений аудита по этому блоку
 	/// </summary>
-	public ICollection<Log> AuditLogs { get; set; } = [];
+	public ICollection<AuditLog> AuditLogs { get; set; } = [];
 
 	/// <summary>
 	/// Рассчитаные для этого блока указания фактического доступа

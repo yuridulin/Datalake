@@ -39,7 +39,7 @@ public class ChangeSourceRulesHandler(
 			newRules = command.Rules.Select(x => new AccessRule(x.Type, sourceId: source.Id, userGuid: x.UserGuid, userGroupGuid: x.UserGroupGuid)).ToArray();
 			await accessRulesRepository.AddRangeAsync(newRules, ct);
 
-			var audit = new Log(command.User.Guid, "Изменены права доступа", sourceId: source.Id);
+			var audit = new AuditLog(command.User.Guid, "Изменены права доступа", sourceId: source.Id);
 			await auditRepository.AddAsync(audit, ct);
 			await unitOfWork.SaveChangesAsync(ct);
 		}

@@ -39,7 +39,7 @@ public class ChangeUserGroupRulesHandler(
 			newRules = command.Rules.Select(x => new AccessRule(x.Type, userGroupGuid: userGroup.Guid, tagId: x.TagId, sourceId: x.SourceId, blockId: x.BlockId)).ToArray();
 			await accessRulesRepository.AddRangeAsync(newRules, ct);
 
-			var audit = new Log(command.User.Guid, "Изменены права доступа", userGroupGuid: userGroup.Guid);
+			var audit = new AuditLog(command.User.Guid, "Изменены права доступа", userGroupGuid: userGroup.Guid);
 			await auditRepository.AddAsync(audit, ct);
 			await unitOfWork.SaveChangesAsync(ct);
 		}

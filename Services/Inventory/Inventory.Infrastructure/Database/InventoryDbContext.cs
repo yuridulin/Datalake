@@ -1,4 +1,5 @@
 ﻿using Datalake.Domain.Entities;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Infrastructure;
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -49,6 +50,11 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 	public virtual DbSet<AccessRule> AccessRights { get; set; }
 
 	/// <summary>
+	/// Таблица логов аудита
+	/// </summary>
+	public virtual DbSet<AuditLog> Audit { get; set; }
+
+	/// <summary>
 	/// Таблица блоков
 	/// </summary>
 	public virtual DbSet<Block> Blocks { get; set; }
@@ -64,9 +70,9 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 	public virtual DbSet<BlockTag> BlockTags { get; set; }
 
 	/// <summary>
-	/// Таблица логов аудита
+	/// Таблица рассчитанных прав доступа
 	/// </summary>
-	public virtual DbSet<Log> Audit { get; set; }
+	public virtual DbSet<CalculatedAccessRule> CalculatedAccessRules { get; set; }
 
 	/// <summary>
 	/// Таблица настроек

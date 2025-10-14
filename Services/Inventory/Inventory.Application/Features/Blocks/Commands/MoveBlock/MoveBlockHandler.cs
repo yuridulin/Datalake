@@ -34,7 +34,7 @@ public class MoveBlockHandler(
 
 			block.UpdateParent(command.ParentId);
 
-			var audit = new Log(command.User.Guid, $"Изменения: diff", blockId: block.Id);
+			var audit = new AuditLog(command.User.Guid, $"Изменения: diff", blockId: block.Id);
 			await auditRepository.AddAsync(audit, ct);
 			await unitOfWork.SaveChangesAsync(ct);
 

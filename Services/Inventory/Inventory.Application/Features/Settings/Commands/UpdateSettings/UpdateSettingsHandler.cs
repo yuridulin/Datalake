@@ -44,7 +44,7 @@ public class UpdateSettingsHandler(
 			await settingsRepository.UpdateAsync(settings, ct);
 		}
 
-		var audit = new Log(command.User.Guid, $"Настройки изменены");
+		var audit = new AuditLog(command.User.Guid, $"Настройки изменены");
 		await auditRepository.AddAsync(audit, ct);
 
 		return true;

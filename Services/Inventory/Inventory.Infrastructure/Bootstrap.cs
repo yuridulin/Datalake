@@ -28,10 +28,9 @@ public static class Bootstrap
 		var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
 		connectionString = EnvExpander.FillEnvVariables(connectionString);
 
-		builder.Services
-			.AddNpgsqlDataSource(connectionString)
-			.AddDbContext<InventoryDbContext>(options => options
-				.UseNpgsql(connectionString));
+		builder.Services.AddNpgsqlDataSource(connectionString);
+
+		builder.Services.AddDbContext<InventoryDbContext>(options => options.UseNpgsql(connectionString));
 
 		builder.Services.AddScoped<IUnitOfWork, DbUnitOfWork>();
 

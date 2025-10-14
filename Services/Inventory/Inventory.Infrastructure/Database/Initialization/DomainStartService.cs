@@ -69,7 +69,7 @@ public class DomainStartService(
 				logger.LogDebug("Добавлен отсутствующий администратор по умолчанию");
 			}
 
-			var auditLog = new Log(LogCategory.Core, $"Сервис {nameof(Inventory)} запущен", null);
+			var auditLog = new AuditLog(LogCategory.Core, $"Сервис {nameof(Inventory)} запущен", null);
 			await auditRepository.AddAsync(auditLog);
 
 			await unitOfWork.SaveChangesAsync();

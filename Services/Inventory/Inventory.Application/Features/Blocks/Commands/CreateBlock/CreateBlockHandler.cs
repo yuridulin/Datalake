@@ -37,7 +37,7 @@ public class CreateBlockHandler(
 				await unitOfWork.SaveChangesAsync(ct);
 			}
 
-			var audit = new Log(command.User.Guid, $"Создан новый блок: {block.Name}", blockId: block.Id);
+			var audit = new AuditLog(command.User.Guid, $"Создан новый блок: {block.Name}", blockId: block.Id);
 			await auditRepository.AddAsync(audit, ct);
 			await unitOfWork.SaveChangesAsync(ct);
 

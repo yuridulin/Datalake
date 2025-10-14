@@ -6,9 +6,9 @@ using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class AuditConfiguration(TableAccess access) : IEntityTypeConfiguration<Log>
+public class AuditConfiguration(TableAccess access) : IEntityTypeConfiguration<AuditLog>
 {
-	public void Configure(EntityTypeBuilder<Log> builder)
+	public void Configure(EntityTypeBuilder<AuditLog> builder)
 	{
 		if (access == TableAccess.Read)
 			builder.ToView(InventorySchema.Logs.Name, InventorySchema.Name);

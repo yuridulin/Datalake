@@ -344,7 +344,7 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// <summary>
 	/// Список сообщений аудита по этому тегу
 	/// </summary>
-	public ICollection<Log> AuditLogs { get; set; } = [];
+	public ICollection<AuditLog> AuditLogs { get; set; } = [];
 
 	/// <summary>
 	/// Список связей с блоками, в которых состоит тег
