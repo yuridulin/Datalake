@@ -1,9 +1,8 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Domain.ValueObjects;
 using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Models;
-using Datalake.Shared.Application.Attributes;
-using Datalake.Shared.Application.Entities;
 using System.Collections.Concurrent;
 
 namespace Datalake.Inventory.Application.Services;
@@ -11,7 +10,6 @@ namespace Datalake.Inventory.Application.Services;
 /// <summary>
 /// Функции предварительного расчета прав доступа для пользователей
 /// </summary>
-[Singleton]
 public class UserAccessCalculationService : IUserAccessCalculationService
 {
 	/// <summary>
@@ -292,7 +290,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		// Пропускаем расчет объектов для администраторов и заблокированных
 		if (globalRule.Access is AccessType.Admin or AccessType.None)
 		{
-			return new UserAccessValue(userGuid, user.EnergoIdGuid, globalRule, groupRules);
+			return new UserAccessValue(userGuid, globalRule, groupRules);
 		}
 
 		// Получаем пользовательские правила
@@ -421,7 +419,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		}
 
 		// объект прав пользователя
-		return new UserAccessValue(userGuid, user.EnergoIdGuid, globalRule, groupRules, userSourceRules, userBlockRules, userTagRules);
+		return new UserAccessValue(userGuid, globalRule, groupRules, userSourceRules, userBlockRules, userTagRules);
 	}
 
 	// Вспомогательный метод для добавления правил

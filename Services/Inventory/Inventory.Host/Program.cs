@@ -1,6 +1,7 @@
-using Datalake.Inventory.Application;
-using Datalake.Inventory.Infrastructure;
 using Datalake.Inventory.Api;
+using Datalake.Inventory.Application;
+using Datalake.Inventory.Host.Services;
+using Datalake.Inventory.Infrastructure;
 using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
@@ -63,7 +64,6 @@ public class Program
 			.UseSharedCorsOnError();
 
 		// установка роутинга
-		app.UseApi();
 		app.MapApi();
 
 		// запуск

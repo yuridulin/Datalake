@@ -56,10 +56,6 @@ public class CalculatedAccessRuleConfiguration(TableAccess access) : IEntityType
 			.WithMany(x => x.CalculatedAccessRules)
 			.HasForeignKey(x => x.UserGroupGuid);
 
-		var relationToRules = builder.HasOne(x => x.AccessRule)
-			.WithMany(x => x.CalculatedAccessRules)
-			.HasForeignKey(x => x.RuleId);
-
 		if (access == TableAccess.Write)
 		{
 			relationToUsers.IsRequired().OnDelete(DeleteBehavior.Cascade);
@@ -67,7 +63,6 @@ public class CalculatedAccessRuleConfiguration(TableAccess access) : IEntityType
 			relationToSources.OnDelete(DeleteBehavior.Cascade);
 			relationToTags.OnDelete(DeleteBehavior.Cascade);
 			relationToUserGroups.OnDelete(DeleteBehavior.Cascade);
-			relationToRules.IsRequired().OnDelete(DeleteBehavior.Cascade);
 		}
 	}
 }

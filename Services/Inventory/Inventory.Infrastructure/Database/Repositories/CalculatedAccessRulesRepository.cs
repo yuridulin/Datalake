@@ -33,11 +33,11 @@ public class CalculatedAccessRulesRepository(InventoryDbContext context) : ICalc
 		DO UPDATE SET
 			""{InventorySchema.CalculatedAccessRules.Columns.AccessType}"" = EXCLUDED.""{InventorySchema.CalculatedAccessRules.Columns.AccessType}"",
 			""{InventorySchema.CalculatedAccessRules.Columns.RuleId}"" = EXCLUDED.""{InventorySchema.CalculatedAccessRules.Columns.RuleId}"",
-			""{InventorySchema.CalculatedAccessRules.Columns.AccessType}"" = CASE
+			""{InventorySchema.CalculatedAccessRules.Columns.UpdatedAt}"" = CASE
 				WHEN {InventorySchema.Name}.""{InventorySchema.CalculatedAccessRules.Name}"".""{InventorySchema.CalculatedAccessRules.Columns.AccessType}"" IS DISTINCT FROM EXCLUDED.""{InventorySchema.CalculatedAccessRules.Columns.AccessType}""
 					OR {InventorySchema.Name}.""{InventorySchema.CalculatedAccessRules.Name}"".""{InventorySchema.CalculatedAccessRules.Columns.RuleId}"" IS DISTINCT FROM EXCLUDED.""{InventorySchema.CalculatedAccessRules.Columns.RuleId}""
 				THEN NOW()
-				ELSE {InventorySchema.Name}.""{InventorySchema.CalculatedAccessRules.Name}"".""{InventorySchema.CalculatedAccessRules.Columns.AccessType}""
+				ELSE {InventorySchema.Name}.""{InventorySchema.CalculatedAccessRules.Name}"".""{InventorySchema.CalculatedAccessRules.Columns.UpdatedAt}""
 			END
 		WHERE
 			{InventorySchema.Name}.""{InventorySchema.CalculatedAccessRules.Name}"".""{InventorySchema.CalculatedAccessRules.Columns.AccessType}"" IS DISTINCT FROM EXCLUDED.""{InventorySchema.CalculatedAccessRules.Columns.AccessType}""
@@ -72,7 +72,7 @@ public class CalculatedAccessRulesRepository(InventoryDbContext context) : ICalc
 			valuesSql.Append($"(@p{i}_userGuid, @p{i}_accessType, @p{i}_isGlobal, @p{i}_tagId, @p{i}_blockId, @p{i}_sourceId, @p{i}_userGroupGuid, @p{i}_ruleId, @p{i}_updatedAt)");
 
 			parameters.Add(new NpgsqlParameter($"p{i}_userGuid", r.UserGuid));
-			parameters.Add(new NpgsqlParameter($"p{i}_accessType", r.AccessType));
+			parameters.Add(new NpgsqlParameter($"p{i}_accessType", (int)r.AccessType));
 			parameters.Add(new NpgsqlParameter($"p{i}_isGlobal", r.IsGlobal));
 			parameters.Add(new NpgsqlParameter($"p{i}_tagId", (object?)r.TagId ?? DBNull.Value));
 			parameters.Add(new NpgsqlParameter($"p{i}_blockId", (object?)r.BlockId ?? DBNull.Value));

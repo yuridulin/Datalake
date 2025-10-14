@@ -1,5 +1,5 @@
 ﻿using Datalake.Data.Application.Models.Values;
-using Datalake.Shared.Application.Entities;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.DataCollection.Queries.GetValuesCollectStatus;

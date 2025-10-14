@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Domain.Exceptions;
 using Datalake.Domain.Interfaces;
-using Datalake.Domain.ValueObjects;
 
 namespace Datalake.Domain.Entities;
 
@@ -11,6 +11,16 @@ public record class AccessRule : IWithIdentityKey
 {
 	private AccessRule() { }
 
+	/// <summary>
+	/// Создание нового правила доступа
+	/// </summary>
+	/// <param name="accessType">Уровень доступа</param>
+	/// <param name="userGuid">Идентификатор учетной записи</param>
+	/// <param name="userGroupGuid">Идентификатор группы учетных записей</param>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <param name="sourceId">Идентификатор источника данных</param>
+	/// <param name="blockId">Идентификатор блока</param>
+	/// <exception cref="DomainException">Недостаточно данных</exception>
 	public AccessRule(
 		AccessType accessType,
 		Guid? userGuid = null,
@@ -33,7 +43,7 @@ public record class AccessRule : IWithIdentityKey
 		}
 		else
 		{
-			throw new ArgumentException("Нужно указать или учетную запись, или группу учетных записей");
+			throw new DomainException("Нужно указать или учетную запись, или группу учетных записей");
 		}
 
 		if (tagId.HasValue)
@@ -134,9 +144,4 @@ public record class AccessRule : IWithIdentityKey
 	/// Блок, на который действует правило
 	/// </summary>
 	public Block? Block { get; set; }
-
-	/// <summary>
-	/// Рассчитаные по этому правилу указания фактического доступа
-	/// </summary>
-	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
 }

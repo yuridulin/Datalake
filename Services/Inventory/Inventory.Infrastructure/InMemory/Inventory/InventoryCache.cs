@@ -124,7 +124,7 @@ public class InventoryCache : IInventoryCache
 			var userGroupRelations = await context.UserGroupRelations.AsNoTracking().ToArrayAsync();
 
 			// коллекция правил
-			var accessRules = await context.AccessRights.AsNoTracking().ToArrayAsync();
+			var accessRules = await context.AccessRules.AsNoTracking().ToArrayAsync();
 
 			return InventoryCacheState.Create(
 				accessRules: accessRules,

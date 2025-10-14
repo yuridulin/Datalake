@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option csharp_namespace = "Datalake.Contracts.Internal.Protos";
+
+package inventory;
+
+service InventoryGrpcService {
+  rpc GetCalculatedAccess (GetCalculatedAccessRequest) returns (GetCalculatedAccessResponse);
+  rpc GetCalculatedAccessStream (GetCalculatedAccessRequest) returns (stream GetCalculatedAccessResponse);
+}
+
+message GetCalculatedAccessRequest {
+  repeated string user_guids = 1;
+}
+
+message GetCalculatedAccessResponse {
+  repeated UserAccessResponse user_accesses = 1;
+}
+
+message UserAccessResponse {
+  string user_guid = 1;
+  AccessRule root_rule = 2;
+  map<int32, AccessRule> blocks_rules = 3;
+  map<int32, AccessRule> sources_rules = 4;
+  map<int32, AccessRule> tags_rules = 5;
+  map<string, AccessRule> groups_rules = 6;
+}
+
+message AccessRule {
+  int32 id = 1;
+  int32 access = 2;
+}

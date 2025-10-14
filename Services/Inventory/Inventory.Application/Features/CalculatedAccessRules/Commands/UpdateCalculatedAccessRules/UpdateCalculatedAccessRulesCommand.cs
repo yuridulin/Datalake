@@ -1,7 +1,7 @@
 ﻿using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
-namespace Datalake.Inventory.Application.Features.CalculatedAccessRules.Commands.UpdateRules;
+namespace Datalake.Inventory.Application.Features.CalculatedAccessRules.Commands.UpdateCalculatedAccessRules;
 
 public record UpdateCalculatedAccessRulesCommand : ICommandRequest
 {

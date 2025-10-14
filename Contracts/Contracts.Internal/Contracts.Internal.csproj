@@ -9,4 +9,12 @@
     <RootNamespace>Datalake.Contracts.Internal</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Protos\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\InventoryGrpcService.proto" GrpcServices="None" />
+  </ItemGroup>
+
 </Project>

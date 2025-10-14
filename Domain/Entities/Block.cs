@@ -33,16 +33,29 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 		Description = description;
 	}
 
+	/// <summary>
+	/// Изменение имени
+	/// </summary>
+	/// <param name="newName">Новое имя</param>
 	public void UpdateName(string newName)
 	{
 		Name = newName;
 	}
 
+	/// <summary>
+	/// Изменение описания
+	/// </summary>
+	/// <param name="newDescription">Новое описание</param>
 	public void UpdateDescription(string? newDescription)
 	{
 		Description = newDescription;
 	}
 
+	/// <summary>
+	/// Изменение родительского блока
+	/// </summary>
+	/// <param name="newParentId">Идентификатор родительского блока</param>
+	/// <exception cref="DomainException">Блок родитель сам себе</exception>
 	public void UpdateParent(int? newParentId)
 	{
 		if (newParentId.HasValue && newParentId.Value == Id)
@@ -51,6 +64,7 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 		ParentId = newParentId;
 	}
 
+	/// <inheritdoc />
 	public void MarkAsDeleted()
 	{
 		if (IsDeleted)
@@ -131,5 +145,5 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 	/// <summary>
 	/// Рассчитаные для этого блока указания фактического доступа
 	/// </summary>
-	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; }
+	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
 }

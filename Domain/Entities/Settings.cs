@@ -1,17 +1,31 @@
 ﻿namespace Datalake.Domain.Entities;
 
 /// <summary>
-/// Запись в таблице настроек приложения
+/// Настройки приложения
 /// </summary>
 public record class Settings
 {
 	private Settings() { }
 
+	/// <summary>
+	/// Создание нового объекта настроек
+	/// </summary>
+	/// <param name="keycloakHost"></param>
+	/// <param name="keycloakClient"></param>
+	/// <param name="energoIdApi"></param>
+	/// <param name="instanceName"></param>
 	public Settings(string keycloakHost, string keycloakClient, string energoIdApi, string instanceName)
 	{
 		Update(keycloakHost, keycloakClient, energoIdApi, instanceName);
 	}
 
+	/// <summary>
+	/// Изменение настроек
+	/// </summary>
+	/// <param name="keycloakHost"></param>
+	/// <param name="keycloakClient"></param>
+	/// <param name="energoIdApi"></param>
+	/// <param name="instanceName"></param>
 	public void Update(string keycloakHost, string keycloakClient, string energoIdApi, string instanceName)
 	{
 		LastUpdate = DateTimeOffset.UtcNow;
@@ -24,6 +38,9 @@ public record class Settings
 
 	// поля в БД
 
+	/// <summary>
+	/// Идентификатор
+	/// </summary>
 	public int Id { get; private set; }
 
 	/// <summary>

@@ -1,13 +1,14 @@
 ﻿using Datalake.Inventory.Host.Services;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Interfaces;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using NJsonSchema.Generation;
 
 namespace Datalake.Inventory.Host;
 
 public static class Bootstrap
 {
-	public static IHostApplicationBuilder AddHosting(this IHostApplicationBuilder builder)
+	public static IHostApplicationBuilder AddHosting(this WebApplicationBuilder builder)
 	{
 		// MVC
 		builder.Services
@@ -34,21 +35,29 @@ public static class Bootstrap
 
 		builder.Services.AddSingleton<IAuthenticator, AuthenticationService>();
 
+		builder.Services.AddGrpc();
+
+		builder.WebHost.ConfigureKestrel(options =>
+		{
+			options.ListenAnyIP(8080, o =>
+			{
+				// Разрешаем и HTTP/1.1 (REST) и HTTP/2 (gRPC)
+				o.Protocols = HttpProtocols.Http1AndHttp2;
+			});
+		});
+
 		return builder;
-	}
-
-	public static WebApplication UseApi(this WebApplication app)
-	{
-		app.MapHealthChecks("/health");
-
-		return app;
 	}
 
 	public static WebApplication MapApi(this WebApplication app)
 	{
+		app.MapHealthChecks("/health");
+
 		app.MapControllerRoute(
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");
+
+		app.MapGrpcService<InventoryGrpcServer>();
 
 		return app;
 	}

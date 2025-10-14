@@ -10,6 +10,13 @@ public record class BlockTag : IWithIdentityKey
 {
 	private BlockTag() { }
 
+	/// <summary>
+	/// Создание новой связи блока с тегом
+	/// </summary>
+	/// <param name="blockId">Идентификатор блока</param>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <param name="name">Локальное имя тега</param>
+	/// <param name="relation">Тип связи</param>
 	public BlockTag(int blockId, int tagId, string? name, BlockTagRelation relation = BlockTagRelation.Static)
 	{
 		BlockId = blockId;

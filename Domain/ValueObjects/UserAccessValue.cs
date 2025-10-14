@@ -1,21 +1,19 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Domain.Exceptions;
 
-namespace Datalake.Shared.Application.Entities;
+namespace Datalake.Domain.ValueObjects;
 
 public record struct UserAccessValue
 {
 	public UserAccessValue(
-		Guid guid,
-		Guid? energoId,
+		Guid userGuid,
 		UserAccessRuleValue rootRule,
 		Dictionary<Guid, UserAccessRuleValue>? groupsRules = null,
 		Dictionary<int, UserAccessRuleValue>? sourcesRules = null,
 		Dictionary<int, UserAccessRuleValue>? blocksRules = null,
 		Dictionary<int, UserAccessRuleValue>? tagsRules = null)
 	{
-		Guid = guid;
-		EnergoId = energoId;
+		Guid = userGuid;
 		RootRule = rootRule;
 		GroupsRules = groupsRules ?? [];
 		SourcesRules = sourcesRules ?? [];
@@ -24,8 +22,6 @@ public record struct UserAccessValue
 	}
 
 	public Guid Guid { get; private set; }
-
-	public Guid? EnergoId { get; private set; }
 
 	public UserAccessRuleValue RootRule { get; private set; }
 

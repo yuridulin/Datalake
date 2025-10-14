@@ -103,7 +103,7 @@ public class BlocksQueriesService(InventoryDbContext context) : IBlocksQueriesSe
 			})
 			.ToArrayAsync(ct);
 
-		var rules = await context.AccessRights
+		var rules = await context.AccessRules
 				.Where(rule => rule.BlockId == block.Id)
 				.AsNoTracking()
 				.Select(rule => new AccessRightsForObjectInfo

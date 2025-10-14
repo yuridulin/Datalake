@@ -7,6 +7,8 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class AuditLog
 {
+	#region Конструкторы
+
 	private AuditLog() { }
 
 	/// <summary>
@@ -19,16 +21,6 @@ public record class AuditLog
 	public AuditLog(LogCategory category, string message, string? details, LogType type = LogType.Information)
 	{
 		Category = category;
-		Type = type;
-		Text = message;
-		Details = details;
-		Date = DateTime.UtcNow;
-	}
-
-	public AuditLog(Guid? authorGuid, string message, string? details, LogType type = LogType.Success)
-	{
-		Category = LogCategory.Database;
-		AuthorGuid = authorGuid;
 		Type = type;
 		Text = message;
 		Details = details;
@@ -89,7 +81,9 @@ public record class AuditLog
 			throw new InvalidDataException("Ни один из идентификаторов не указан");
 	}
 
-	// поля в БД
+	#endregion Конструкторы
+
+	#region Поля в БД
 
 	/// <summary>
 	/// Идентификатор
@@ -161,7 +155,9 @@ public record class AuditLog
 	/// </summary>
 	public string? Details { get; private set; }
 
-	// связи
+	#endregion Поля в БД
+
+	#region Связи
 
 	/// <summary>
 	/// Пользователь, совершивший записанное действие
@@ -197,4 +193,6 @@ public record class AuditLog
 	/// Затронутое правило доступа
 	/// </summary>
 	public AccessRule? AffectedAccessRights { get; set; }
+
+	#endregion Связи
 }

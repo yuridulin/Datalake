@@ -1,6 +1,6 @@
 ﻿using Datalake.Data.Application.Interfaces;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Attributes;
-using Datalake.Shared.Application.Entities;
 using Datalake.Shared.Application.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

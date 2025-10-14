@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
 
-namespace Datalake.Shared.Application.Entities;
+namespace Datalake.Domain.ValueObjects;
 
 public record struct UserAccessRuleValue
 {

@@ -4,7 +4,7 @@ using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace Datalake.Inventory.Application.Features.CalculatedAccessRules.Commands.UpdateRules;
+namespace Datalake.Inventory.Application.Features.CalculatedAccessRules.Commands.UpdateCalculatedAccessRules;
 
 public interface IUpdateCalculatedAccessRulesHandler : ICommandHandler<UpdateCalculatedAccessRulesCommand, bool> { }
 

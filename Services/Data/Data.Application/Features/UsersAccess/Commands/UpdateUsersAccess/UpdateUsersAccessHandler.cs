@@ -18,7 +18,7 @@ public class UpdateUsersAccessHandler(
 
 		try
 		{
-			var updatedAccess = await inventoryApiClient.GetCalculatedAccessAsync(command.Guids, ct);
+			var updatedAccess = await inventoryApiClient.GetCalculatedAccessAsync(command.Guids, ct); // старый вызов REST
 			await userAccessStore.UpdateAsync(updatedAccess);
 
 			logger.LogInformation("Рассчитанные права доступа получены и записаны в кэш");

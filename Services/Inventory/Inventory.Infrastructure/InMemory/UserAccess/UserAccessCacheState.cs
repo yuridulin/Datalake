@@ -1,6 +1,6 @@
-﻿using Datalake.Inventory.Application.Interfaces.InMemory;
+﻿using Datalake.Domain.ValueObjects;
+using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Models;
-using Datalake.Shared.Application.Entities;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.InMemory.UserAccess;

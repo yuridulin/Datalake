@@ -47,7 +47,7 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 	/// <summary>
 	/// Таблица прав доступа
 	/// </summary>
-	public virtual DbSet<AccessRule> AccessRights { get; set; }
+	public virtual DbSet<AccessRule> AccessRules { get; set; }
 
 	/// <summary>
 	/// Таблица логов аудита

@@ -198,11 +198,6 @@ public sealed record CalculatedAccessRule
 	public User User { get; private set; } = null!;
 
 	/// <summary>
-	/// Правило, которое оказалось определяющим при расчете
-	/// </summary>
-	public AccessRule AccessRule { get; private set; } = null!;
-
-	/// <summary>
 	/// Тег, доступ к которому рассчитан
 	/// </summary>
 	public Tag? Tag { get; private set; }

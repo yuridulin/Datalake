@@ -36,6 +36,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -45,16 +46,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="storage\logs\" />
-	  <Folder Include="storage\logs\" />
+		<Folder Include="storage\logs\" />
+		<Folder Include="storage\logs\" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\..\Shared\Shared.Api\Shared.Api.csproj" />
-	  <ProjectReference Include="..\..\..\Shared\Shared.Hosting\Shared.Hosting.csproj" />
-	  <ProjectReference Include="..\Inventory.Api\Inventory.Api.csproj" />
-	  <ProjectReference Include="..\Inventory.Application\Inventory.Application.csproj" />
-	  <ProjectReference Include="..\Inventory.Infrastructure\Inventory.Infrastructure.csproj" />
+		<ProjectReference Include="..\..\..\Shared\Shared.Api\Shared.Api.csproj" />
+		<ProjectReference Include="..\..\..\Shared\Shared.Hosting\Shared.Hosting.csproj" />
+		<ProjectReference Include="..\Inventory.Api\Inventory.Api.csproj" />
+		<ProjectReference Include="..\Inventory.Application\Inventory.Application.csproj" />
+		<ProjectReference Include="..\Inventory.Infrastructure\Inventory.Infrastructure.csproj" />
+		<ProjectReference Include="..\..\..\Contracts\Contracts.Internal\Contracts.Internal.csproj" />
+
+		<Protobuf Include="..\..\..\Contracts\Contracts.Internal\Protos\InventoryGrpcService.proto" GrpcServices="Server" />
 	</ItemGroup>
 
 </Project>

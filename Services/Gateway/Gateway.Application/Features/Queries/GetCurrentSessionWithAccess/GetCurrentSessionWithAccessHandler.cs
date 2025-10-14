@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Public.Models;
+using Datalake.Domain.ValueObjects;
 using Datalake.Gateway.Application.Interfaces;
 using Datalake.Gateway.Application.Models;
-using Datalake.Shared.Application.Entities;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Gateway.Application.Features.Queries.GetCurrentSessionWithAccess;

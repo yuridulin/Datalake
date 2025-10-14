@@ -1,6 +1,6 @@
 ﻿using Datalake.Data.Application.Interfaces.Cache;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Attributes;
-using Datalake.Shared.Application.Entities;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 

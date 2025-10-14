@@ -1,4 +1,4 @@
-﻿using Datalake.Shared.Application.Entities;
+﻿using Datalake.Domain.ValueObjects;
 
 namespace Datalake.Data.Application.Interfaces;
 

@@ -1,10 +1,9 @@
 ﻿using Datalake.Contracts.Internal.Messages;
 using Datalake.Domain.ValueObjects;
-using Datalake.Inventory.Application.Features.CalculatedAccessRules.Commands.UpdateRules;
+using Datalake.Inventory.Application.Features.CalculatedAccessRules.Commands.UpdateCalculatedAccessRules;
 using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Shared.Application.Attributes;
-using Datalake.Shared.Application.Entities;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

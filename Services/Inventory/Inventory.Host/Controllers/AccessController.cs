@@ -1,4 +1,5 @@
-﻿using Datalake.Inventory.Api.Models.AccessRules;
+﻿using Datalake.Domain.ValueObjects;
+using Datalake.Inventory.Api.Models.AccessRules;
 using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeBlockRules;
 using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeSourceRules;
 using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeTagRules;
@@ -6,11 +7,9 @@ using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeUserGro
 using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeUserRules;
 using Datalake.Inventory.Application.Features.AccessRules.Models;
 using Datalake.Inventory.Application.Features.AccessRules.Queries.GetAccessRules;
-using Datalake.Inventory.Application.Features.AccessRules.Queries.GetCalculatedAccess;
-using Datalake.Shared.Application.Entities;
+using Datalake.Inventory.Application.Features.CalculatedAccessRules.Queries.GetCalculatedAccessRules;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
@@ -61,7 +60,7 @@ public class AccessController(IAuthenticator authenticator) : ControllerBase
 	/// </summary>
 	[HttpPost("calculated")]
 	public async Task<ActionResult<IDictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
-		[FromServices] IGetCalculatedAccessHandler handler,
+		[FromServices] IGetCalculatedAccessRulesHandler handler,
 		[FromBody] IEnumerable<Guid>? guids,
 		CancellationToken ct = default)
 	{

@@ -1,5 +1,5 @@
-﻿using Datalake.Gateway.Application.Interfaces;
-using Datalake.Shared.Application.Entities;
+﻿using Datalake.Domain.ValueObjects;
+using Datalake.Gateway.Application.Interfaces;
 
 namespace Datalake.Gateway.Infrastructure.Database.Services;
 

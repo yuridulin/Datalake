@@ -1,5 +1,5 @@
 ﻿using Datalake.Data.Api.Models.Values;
-using Datalake.Shared.Application.Entities;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;

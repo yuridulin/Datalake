@@ -2,11 +2,11 @@
 
 public static class InventorySchema
 {
-	public static string Name { get; } = "public";
+	public static string Name { get; } = "inventory";
 
-	public static class AccessRights
+	public static class AccessRules
 	{
-		public static string Name { get; } = nameof(AccessRights);
+		public static string Name { get; } = nameof(AccessRules);
 	}
 
 	public static class CalculatedAccessRules

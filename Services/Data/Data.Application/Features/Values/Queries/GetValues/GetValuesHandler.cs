@@ -7,7 +7,6 @@ using Datalake.Data.Application.Interfaces.Repositories;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Application.Models.Values;
 using Datalake.Domain.ValueObjects;
-using Datalake.Shared.Application.Entities;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 

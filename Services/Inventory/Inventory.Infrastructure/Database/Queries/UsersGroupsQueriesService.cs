@@ -61,7 +61,7 @@ public class UsersGroupsQueriesService(InventoryDbContext context) : IUsersGroup
 			})
 			.ToArrayAsync(ct);
 
-		var groupRules = await context.AccessRights
+		var groupRules = await context.AccessRules
 			.Where(rule => !rule.IsGlobal && rule.UserGroupGuid == userGroup.Guid)
 			.AsNoTracking()
 			.Select(rule => new AccessRightsForOneInfo

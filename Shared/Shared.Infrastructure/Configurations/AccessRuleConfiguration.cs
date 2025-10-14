@@ -11,9 +11,9 @@ public class AccessRuleConfiguration(TableAccess access) : IEntityTypeConfigurat
 	public void Configure(EntityTypeBuilder<AccessRule> builder)
 	{
 		if (access == TableAccess.Read)
-			builder.ToView(InventorySchema.AccessRights.Name, InventorySchema.Name);
+			builder.ToView(InventorySchema.AccessRules.Name, InventorySchema.Name);
 		else
-			builder.ToTable(InventorySchema.AccessRights.Name, InventorySchema.Name);
+			builder.ToTable(InventorySchema.AccessRules.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 

@@ -20,7 +20,7 @@ public class AccessRulesQueriesService(InventoryDbContext context) : IAccessRule
 		int? tagId = null,
 		CancellationToken ct = default)
 	{
-		return await context.AccessRights
+		return await context.AccessRules
 			.Include(rule => rule.Block)
 			.Include(rule => rule.Tag).ThenInclude(x => x!.Source)
 			.Include(rule => rule.Source)

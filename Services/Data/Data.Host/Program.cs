@@ -1,6 +1,7 @@
 ﻿using Datalake.Data.Api;
 using Datalake.Data.Application;
 using Datalake.Data.Infrastructure;
+using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Middlewares;
@@ -51,13 +52,13 @@ public class Program
 				.AllowAnyOrigin()
 				.AllowAnyHeader()
 				.WithExposedHeaders([
-					// добавить для передачи пользователя
+					Headers.UserGuidHeader,
+					Headers.SessionTokenHeander,
 				]);
 		});
 		app.UseSharedSentryBodyWriter();
 		app.UseSharedCorsOnError();
 
-		app.UseApi();
 		app.MapApi();
 
 		await app.RunAsync();

@@ -1,5 +1,5 @@
-﻿using Datalake.Inventory.Api.Models.Tags;
-using Datalake.Shared.Application.Entities;
+﻿using Datalake.Domain.ValueObjects;
+using Datalake.Inventory.Api.Models.Tags;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
