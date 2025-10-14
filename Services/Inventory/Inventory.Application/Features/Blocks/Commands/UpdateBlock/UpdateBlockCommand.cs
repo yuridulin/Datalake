@@ -5,7 +5,7 @@ using Datalake.Shared.Application.Interfaces;
 namespace Datalake.Inventory.Application.Features.Blocks.Commands.UpdateBlock;
 
 public record UpdateBlockCommand(
-	UserAccessEntity User,
+	UserAccessValue User,
 	int BlockId,
 	string Name,
 	string? Description,

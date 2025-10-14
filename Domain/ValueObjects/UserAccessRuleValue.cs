@@ -2,9 +2,9 @@
 
 namespace Datalake.Shared.Application.Entities;
 
-public record struct AccessRuleValue
+public record struct UserAccessRuleValue
 {
-	public AccessRuleValue(int id, AccessType access)
+	public UserAccessRuleValue(int id, AccessType access)
 	{
 		Id = id;
 		Access = access;
@@ -19,10 +19,10 @@ public record struct AccessRuleValue
 	/// </summary>
 	/// <param name="minimal">Минимально необходимый уровень доступа</param>
 	/// <returns>Флаг достаточности</returns>
-	public bool HasAccess(AccessType minimal)
+	public readonly bool HasAccess(AccessType minimal)
 	{
 		return Access >= minimal;
 	}
 
-	public static AccessRuleValue GetDefault() => new(0, AccessType.None);
+	public static UserAccessRuleValue GetDefault() => new(0, AccessType.None);
 }

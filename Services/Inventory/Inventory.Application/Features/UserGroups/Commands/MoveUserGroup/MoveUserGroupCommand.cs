@@ -5,7 +5,7 @@ namespace Datalake.Inventory.Application.Features.UserGroups.Commands.MoveUserGr
 
 public record MoveUserGroupCommand : ICommandRequest, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public required Guid Guid { get; init; }
 

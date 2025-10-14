@@ -5,4 +5,4 @@ using Datalake.Shared.Application.Interfaces;
 namespace Datalake.Inventory.Application.Features.Settings.Queries.GetSettings;
 
 public record GetSettingsQuery(
-	UserAccessEntity User) : IQueryRequest<SettingsInfo>;
+	UserAccessValue User) : IQueryRequest<SettingsInfo>;

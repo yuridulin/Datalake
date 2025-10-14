@@ -6,7 +6,7 @@ namespace Datalake.Inventory.Application.Features.Users.Commands.CreateUser;
 
 public record CreateUserCommand : ICommandRequest, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public string? Login { get; init; }
 

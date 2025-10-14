@@ -6,7 +6,7 @@ namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
 
 public record GetTagsQuery : IQueryRequest<IEnumerable<TagInfo>>, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public IEnumerable<int>? SpecificIdentifiers { get; init; }
 

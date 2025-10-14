@@ -12,9 +12,9 @@ public class AccessUpdateConsumer(
 	{
 		var message = context.Message;
 
-		logger.LogInformation("Notification processed for event: {timestamp}", message.Timestamp);
+		logger.LogInformation("Получено событие обновления прав доступа версии {version}", message.Version);
 
-		_ = handler.HandleAsync(new() { });
+		_ = handler.HandleAsync(new() { Guids = message.AffectedUsers });
 
 		return Task.CompletedTask;
 	}

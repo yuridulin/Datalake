@@ -29,7 +29,7 @@ public class GetCurrentSessionWithAccessHandler(
 		return data;
 	}
 
-	private static AccessInfo MapAccessEntityToInfo(UserAccessEntity entity) => new()
+	private static AccessInfo MapAccessEntityToInfo(UserAccessValue entity) => new()
 	{
 		RootRule = MapAccessRuleToInfo(entity.RootRule),
 		Blocks = entity.BlocksRules.ToDictionary(x => x.Key, x => MapAccessRuleToInfo(x.Value)),
@@ -38,5 +38,5 @@ public class GetCurrentSessionWithAccessHandler(
 		Groups = entity.GroupsRules.ToDictionary(x => x.Key, x => MapAccessRuleToInfo(x.Value)),
 	};
 
-	private static AccessRuleInfo MapAccessRuleToInfo(AccessRuleValue rule) => new(rule.Id, rule.Access);
+	private static AccessRuleInfo MapAccessRuleToInfo(UserAccessRuleValue rule) => new(rule.Id, rule.Access);
 }

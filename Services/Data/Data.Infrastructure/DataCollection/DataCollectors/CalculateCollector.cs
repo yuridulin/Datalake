@@ -43,7 +43,7 @@ public class CalculateCollector(
 	protected override async Task Work()
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
-		List<TagHistory> batch = [];
+		List<TagHistoryValue> batch = [];
 
 		foreach (var scope in calculationScopes)
 		{
@@ -107,7 +107,7 @@ public class CalculateCollector(
 
 			try
 			{
-				TagHistory value = new(scope.TagId, scope.TagType, now, TagQuality.Good, value: result, scope.TagScale);
+				TagHistoryValue value = TagHistoryValue.FromRaw(scope.TagId, scope.TagType, now, TagQuality.Good, value: result, scope.TagScale);
 				errorsStore.Set(scope.TagId, null);
 				batch.Add(value);
 			}
@@ -148,10 +148,10 @@ public class CalculateCollector(
 		public required IEnumerable<TagCalculationInputDto> Inputs { get; init; } = [];
 	}
 
-	private TagHistory HandleError(int tagId, DateTime date, string error)
+	private TagHistoryValue HandleError(int tagId, DateTime date, string error)
 	{
 		errorsStore.Set(tagId, error);
 
-		return new(tagId, date, TagQuality.Bad_CalcError);
+		return TagHistoryValue.AsEmpty(tagId, date, TagQuality.Bad_CalcError);
 	}
 }

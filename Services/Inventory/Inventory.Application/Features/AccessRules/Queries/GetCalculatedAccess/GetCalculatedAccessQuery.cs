@@ -3,7 +3,8 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.AccessRules.Queries.GetCalculatedAccess;
 
-public class GetCalculatedAccessQuery : IQueryRequest<IReadOnlyDictionary<Guid, UserAccessEntity>>, IWithUserAccess
+public class GetCalculatedAccessQuery : IQueryRequest<IReadOnlyDictionary<Guid, UserAccessValue>>, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
+	public required IEnumerable<Guid>? Guids { get; init; }
 }

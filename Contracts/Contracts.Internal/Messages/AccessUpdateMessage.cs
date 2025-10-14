@@ -2,5 +2,7 @@
 
 public record AccessUpdateMessage
 {
-	public DateTime Timestamp { get; init; }
+	public required DateTime Timestamp { get; init; }
+	public required long Version { get; init; }
+	public required IEnumerable<Guid> AffectedUsers { get; init; }
 }

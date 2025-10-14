@@ -20,7 +20,7 @@ public class ManualWriteValuesHandler(
 	public async Task<IEnumerable<ValuesTagResponse>> HandleAsync(ManualWriteValuesCommand command, CancellationToken ct = default)
 	{
 		List<ValuesTagResponse> responses = [];
-		List<TagHistory> recordsToWrite = [];
+		List<TagHistoryValue> recordsToWrite = [];
 
 		foreach (var request in command.Requests)
 		{
@@ -57,7 +57,7 @@ public class ManualWriteValuesHandler(
 				continue;
 			}
 
-			var record = new TagHistory(tag.TagId, tag.TagType, request.Date, request.Quality, request.Value, tag.ScaleSettings?.GetScale());
+			var record = TagHistoryValue.FromRaw(tag.TagId, tag.TagType, request.Date, request.Quality, request.Value, tag.ScaleSettings?.GetScale());
 
 			var result =
 				tag.IsDeleted ? ValueResult.IsDeleted

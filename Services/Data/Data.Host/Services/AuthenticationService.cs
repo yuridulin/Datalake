@@ -9,7 +9,7 @@ namespace Datalake.Data.Host.Services;
 [Singleton]
 public class AuthenticationService(IUserAccessStore cache) : IAuthenticator
 {
-	public UserAccessEntity Authenticate(HttpContext httpContext)
+	public UserAccessValue Authenticate(HttpContext httpContext)
 	{
 		// проверка внешнего (основного) пользователя
 		if (!httpContext.Request.Headers.TryGetValue(Headers.UserGuidHeader, out var userGuidString))

@@ -5,6 +5,6 @@ using Datalake.Shared.Application.Interfaces;
 namespace Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeTagRules;
 
 public record ChangeTagRulesCommand(
-	UserAccessEntity User,
+	UserAccessValue User,
 	int TagId,
 	IEnumerable<ObjectRuleDto> Rules) : ICommandRequest;

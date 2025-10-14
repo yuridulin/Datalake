@@ -6,5 +6,5 @@ namespace Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGrou
 
 public class GetUserGroupsTreeQuery : IQueryRequest<IEnumerable<UserGroupTreeInfo>>, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 }

@@ -10,6 +10,7 @@ using Datalake.Inventory.Application.Features.AccessRules.Queries.GetCalculatedA
 using Datalake.Shared.Application.Entities;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
@@ -56,16 +57,17 @@ public class AccessController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение списка рассчитанных разрешений субъекта на объект для всех субъетов и всех объектов
+	/// <see cref="HttpMethod.Post" />: Получение списка рассчитанных разрешений субъекта на объект для всех субъетов и всех объектов
 	/// </summary>
-	[HttpGet("calculated")]
-	public async Task<ActionResult<IDictionary<Guid, UserAccessEntity>>> GetCalculatedAccessAsync(
+	[HttpPost("calculated")]
+	public async Task<ActionResult<IDictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
 		[FromServices] IGetCalculatedAccessHandler handler,
+		[FromBody] IEnumerable<Guid>? guids,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 
-		var data = await handler.HandleAsync(new() { User = user }, ct);
+		var data = await handler.HandleAsync(new() { User = user, Guids = guids }, ct);
 
 		return Ok(data);
 	}

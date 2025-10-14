@@ -119,7 +119,7 @@ public class InopcCollector : DataCollectorBase
 
 			var collectedValues = response.Tags
 				.SelectMany(item => _itemsTags[item.Name]
-					.Select(tag => new TagHistory(tag.TagId, tag.TagType, now, item.Quality, item.Value, tag.ScaleSettings?.GetScale())))
+					.Select(tag => TagHistoryValue.FromRaw(tag.TagId, tag.TagType, now, item.Quality, item.Value, tag.ScaleSettings?.GetScale())))
 				.ToArray();
 
 			await WriteAsync(collectedValues, response.IsConnected);

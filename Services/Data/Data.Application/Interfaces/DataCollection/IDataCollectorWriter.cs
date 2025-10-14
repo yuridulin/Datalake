@@ -12,5 +12,5 @@ public interface IDataCollectorWriter : IHostedService
 	/// Добавление новых значений в очередь на запись
 	/// </summary>
 	/// <param name="values">Список новых значений</param>
-	void AddToQueue(IEnumerable<TagHistory> values);
+	void AddToQueue(IEnumerable<TagHistoryValue> values);
 }

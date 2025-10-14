@@ -18,7 +18,7 @@ public class DataLinqToDbContext(DataOptions<DataLinqToDbContext> options) : Dat
 		var builder = new FluentMappingBuilder(_mappings);
 
 		builder
-			.Entity<TagHistory>()
+			.Entity<TagHistoryValue>()
 			.HasSchemaName(DataSchema.Name)
 			.HasTableName(DataSchema.TagsHistory.Name)
 			.HasPrimaryKey(x => new { x.TagId, x.Date })
@@ -31,7 +31,7 @@ public class DataLinqToDbContext(DataOptions<DataLinqToDbContext> options) : Dat
 			.Build();
 	}
 
-	public ITable<TagHistory> TagsHistory
-		=> this.GetTable<TagHistory>();
+	public ITable<TagHistoryValue> TagsHistory
+		=> this.GetTable<TagHistoryValue>();
 }
 

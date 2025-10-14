@@ -5,5 +5,5 @@ using Datalake.Shared.Application.Interfaces;
 namespace Datalake.Inventory.Application.Features.Blocks.Queries.GetBlockFull;
 
 public record GetBlockFullQuery(
-	UserAccessEntity User,
+	UserAccessValue User,
 	int BlockId) : IQueryRequest<BlockFullInfo>;

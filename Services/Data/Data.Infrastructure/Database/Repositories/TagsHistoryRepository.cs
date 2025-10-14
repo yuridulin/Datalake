@@ -12,7 +12,7 @@ public class TagsHistoryRepository(
 	DataLinqToDbContext db,
 	ILogger<TagsHistoryRepository> logger) : ITagsHistoryRepository
 {
-	public async Task<bool> WriteAsync(IEnumerable<TagHistory> batch)
+	public async Task<bool> WriteAsync(IEnumerable<TagHistoryValue> batch)
 	{
 		using var transaction = await db.BeginTransactionAsync();
 
@@ -33,14 +33,14 @@ public class TagsHistoryRepository(
 		}
 	}
 
-	public async Task<IEnumerable<TagHistory>> GetAllLastAsync()
+	public async Task<IEnumerable<TagHistoryValue>> GetAllLastAsync()
 	{
-		var values = await db.QueryToArrayAsync<TagHistory>(GetAllLastSql);
+		var values = await db.QueryToArrayAsync<TagHistoryValue>(GetAllLastSql);
 
 		return values;
 	}
 
-	public async Task<IEnumerable<TagHistory>> GetLastAsync(IEnumerable<int> tagsIdentifiers)
+	public async Task<IEnumerable<TagHistoryValue>> GetLastAsync(IEnumerable<int> tagsIdentifiers)
 	{
 		if (!tagsIdentifiers.Any())
 			return [];
@@ -49,12 +49,12 @@ public class TagsHistoryRepository(
 			new(TagsParam, tagsIdentifiers),
 		];
 
-		var values = await db.QueryToArrayAsync<TagHistory>(GetLastSql, parameters);
+		var values = await db.QueryToArrayAsync<TagHistoryValue>(GetLastSql, parameters);
 
 		return values;
 	}
 
-	public async Task<IEnumerable<TagHistory>> GetExactAsync(IEnumerable<int> tagsIdentifiers, DateTime exactDate)
+	public async Task<IEnumerable<TagHistoryValue>> GetExactAsync(IEnumerable<int> tagsIdentifiers, DateTime exactDate)
 	{
 		if (!tagsIdentifiers.Any())
 			return [];
@@ -64,12 +64,12 @@ public class TagsHistoryRepository(
 			new(ExactParam, exactDate),
 		];
 
-		var values = await db.QueryToArrayAsync<TagHistory>(GetExactSql, parameters);
+		var values = await db.QueryToArrayAsync<TagHistoryValue>(GetExactSql, parameters);
 
 		return values;
 	}
 
-	public async Task<IEnumerable<TagHistory>> GetRangeAsync(IEnumerable<int> tagsIdentifiers, DateTime from, DateTime to)
+	public async Task<IEnumerable<TagHistoryValue>> GetRangeAsync(IEnumerable<int> tagsIdentifiers, DateTime from, DateTime to)
 	{
 		if (!tagsIdentifiers.Any())
 			return [];
@@ -80,7 +80,7 @@ public class TagsHistoryRepository(
 			new(ToParam, to),
 		];
 
-		var values = await db.QueryToArrayAsync<TagHistory>(GetRangeSql, parameters);
+		var values = await db.QueryToArrayAsync<TagHistoryValue>(GetRangeSql, parameters);
 
 		return values;
 	}

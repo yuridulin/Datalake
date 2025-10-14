@@ -6,7 +6,7 @@ namespace Datalake.Inventory.Application.Features.Tags.Commands.CreateTag;
 
 public record CreateTagCommand : ICommandRequest, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public required TagType Type { get; init; }
 

@@ -57,6 +57,17 @@ public static class Bootstrap
 		builder.Services.AddSingleton<DbInitializer>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<DbInitializer>());
 
+		// регистрация клиента для сервиса Inventory
+
+		var inventoryBaseUri = builder.Configuration.GetSection("InventoryUri").Get<string>()
+			?? throw new("Адрес сервиса Inventory не прочитан из конфига. Ожидается строковое значение в свойстве 'InventoryUri'");
+
+		builder.Services.AddHttpClient<IInventoryApiClient, InventoryApiClient>((client) =>
+		{
+			client.BaseAddress = new Uri(inventoryBaseUri);
+			client.Timeout = TimeSpan.FromSeconds(10);
+		});
+
 		return builder;
 	}
 }

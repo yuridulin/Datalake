@@ -6,9 +6,9 @@ using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Shared.Infrastructure.Configurations;
 
-public class TagHistoryConfiguration(TableAccess access) : IEntityTypeConfiguration<TagHistory>
+public class TagHistoryConfiguration(TableAccess access) : IEntityTypeConfiguration<TagHistoryValue>
 {
-	public void Configure(EntityTypeBuilder<TagHistory> builder)
+	public void Configure(EntityTypeBuilder<TagHistoryValue> builder)
 	{
 		if (access == TableAccess.Read)
 			builder.ToView(DataSchema.TagsHistory.Name, DataSchema.Name);

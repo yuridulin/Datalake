@@ -48,7 +48,7 @@ public class DataDbContext : DbContext
 		});
 	}
 
-	public virtual DbSet<TagHistory> TagsHistory { get; set; }
+	public virtual DbSet<TagHistoryValue> TagsHistory { get; set; }
 
 	public virtual DbSet<Source> Sources { get; set; }
 

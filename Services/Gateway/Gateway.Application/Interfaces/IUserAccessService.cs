@@ -4,5 +4,5 @@ namespace Datalake.Gateway.Application.Interfaces;
 
 public interface IUserAccessService
 {
-	Task<UserAccessEntity> AuthenticateAsync(Guid userGuid, CancellationToken ct = default);
+	Task<UserAccessValue> AuthenticateAsync(Guid userGuid, CancellationToken ct = default);
 }

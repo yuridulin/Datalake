@@ -4,4 +4,5 @@ namespace Datalake.Data.Application.Features.UsersAccess.Commands.UpdateUsersAcc
 
 public record UpdateUsersAccessCommand : ICommandRequest
 {
+	public required IEnumerable<Guid> Guids { get; init; }
 }

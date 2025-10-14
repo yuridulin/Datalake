@@ -6,5 +6,5 @@ namespace Datalake.Inventory.Application.Features.EnergoId.Queries.GetEnergoId;
 
 public record GetEnergoIdQuery : IQueryRequest<IEnumerable<UserEnergoIdInfo>>, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 }

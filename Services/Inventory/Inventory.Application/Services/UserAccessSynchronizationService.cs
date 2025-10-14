@@ -1,9 +1,11 @@
-﻿using Datalake.Domain.ValueObjects;
+﻿using Datalake.Contracts.Internal.Messages;
+using Datalake.Domain.ValueObjects;
 using Datalake.Inventory.Application.Features.CalculatedAccessRules.Commands.UpdateRules;
 using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Entities;
+using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -15,6 +17,7 @@ public class UserAccessSynchronizationService(
 	IUserAccessCalculationService userAccessCalculationService,
 	IUserAccessCache userAccessCache,
 	IServiceScopeFactory serviceScopeFactory,
+	IPublishEndpoint publishEndpoint,
 	ILogger<UserAccessSynchronizationService> logger) : IUserAccessSynchronizationService
 {
 	private IUserAccessCacheState? previousUsersAccessState;
@@ -76,23 +79,19 @@ public class UserAccessSynchronizationService(
 		logger.LogInformation("Выполняется вычисление изменений в рассчитанных правах доступа");
 		List<CalculatedAccessRule> updatedRules = [];
 
+		var inventoryState = inventoryCache.State;
+		var oldState = previousUsersAccessState;
+		var newState = userAccessCache.State;
+
 		try
 		{
 			// сравнение текущего и последнего сохраненного состояний
-			// сделать семафор, чтобы избежать гонок?
-			var oldState = previousUsersAccessState;
-			var newState = userAccessCache.State;
-
-			// вычисление изменений между состояниями прав
-			List<CalculatedAccessRule> rulesToAddOrUpdate = [];
-			var inventoryState = inventoryCache.State;
-
 			if (oldState == null)
 			{
 				// все правила - на добавление
 				foreach (var userEntity in newState.UsersAccess.Values)
 				{
-					rulesToAddOrUpdate.AddRange(GetAllRules(inventoryState, userEntity));
+					updatedRules.AddRange(GetAllRules(inventoryState, userEntity));
 				}
 			}
 			else
@@ -106,16 +105,16 @@ public class UserAccessSynchronizationService(
 
 					// по пользователю нет прав в прошлой версии - все на добавление
 					if (!oldState.UsersAccess.TryGetValue(userGuid, out var oldEntity))
-						rulesToAddOrUpdate.AddRange(GetAllRules(inventoryState, newEntity));
+						updatedRules.AddRange(GetAllRules(inventoryState, newEntity));
 
 					// проверяем, отличаются ли состояния прав по значению
 					if (newEntity != oldEntity)
-						rulesToAddOrUpdate.AddRange(GetDiffRules(inventoryState, oldEntity, newEntity));
+						updatedRules.AddRange(GetDiffRules(inventoryState, oldEntity, newEntity));
 				}
 			}
 
 			Interlocked.Exchange(ref previousUsersAccessState, newState);
-			logger.LogInformation("Вычисление изменений в рассчитанных правах доступа завершено. Изменений: {count}", rulesToAddOrUpdate.Count);
+			logger.LogInformation("Вычисление изменений в рассчитанных правах доступа завершено. Изменений: {count}", updatedRules.Count);
 		}
 		catch (Exception ex)
 		{
@@ -124,6 +123,29 @@ public class UserAccessSynchronizationService(
 
 		// сохранение
 		await SaveUpdatedRules(updatedRules);
+		await PublishUserAccessUpdated(updatedRules, inventoryState.Version);
+	}
+
+	private async Task PublishUserAccessUpdated(List<CalculatedAccessRule> updatedRules, long version)
+	{
+		if (updatedRules.Count == 0)
+			return;
+
+		try
+		{
+			await publishEndpoint.Publish<AccessUpdateMessage>(new()
+			{
+				Timestamp = DateTime.UtcNow,
+				Version = version,
+				AffectedUsers = updatedRules.Select(r => r.UserGuid).Distinct().ToArray(),
+			});
+
+			logger.LogInformation("Событие обновления прав доступа отправлено");
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "Ошибка при отправке события обновления прав доступа");
+		}
 	}
 
 	/// <summary>
@@ -151,7 +173,7 @@ public class UserAccessSynchronizationService(
 		}
 	}
 
-	private static List<CalculatedAccessRule> GetDiffRules(IInventoryCacheState state, UserAccessEntity previous, UserAccessEntity next)
+	private static List<CalculatedAccessRule> GetDiffRules(IInventoryCacheState state, UserAccessValue previous, UserAccessValue next)
 	{
 		List<CalculatedAccessRule> diff = [];
 
@@ -211,7 +233,7 @@ public class UserAccessSynchronizationService(
 		return diff;
 	}
 
-	private static List<CalculatedAccessRule> GetAllRules(IInventoryCacheState state, UserAccessEntity next)
+	private static List<CalculatedAccessRule> GetAllRules(IInventoryCacheState state, UserAccessValue next)
 	{
 		List<CalculatedAccessRule> rules = [];
 		rules.Add(CalculatedAccessRule.Global(next.Guid, next.RootRule.Access, next.RootRule.Id));

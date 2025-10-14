@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Contracts\Contracts.Internal\Contracts.Internal.csproj" />
     <ProjectReference Include="..\..\..\Shared\Shared.Application\Shared.Application.csproj" />
     <ProjectReference Include="..\Inventory.Api\Inventory.Api.csproj" />
   </ItemGroup>

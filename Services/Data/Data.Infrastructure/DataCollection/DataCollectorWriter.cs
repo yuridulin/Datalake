@@ -22,7 +22,7 @@ public class DataCollectorWriter(
 	private const int MaxRetryAttempts = 3;
 	private const int RetryBaseDelayMs = 1000;
 
-	private readonly Channel<TagHistory> _channel = Channel.CreateUnbounded<TagHistory>(new UnboundedChannelOptions
+	private readonly Channel<TagHistoryValue> _channel = Channel.CreateUnbounded<TagHistoryValue>(new UnboundedChannelOptions
 	{
 		SingleWriter = false,
 		SingleReader = true,
@@ -34,7 +34,7 @@ public class DataCollectorWriter(
 	/// </summary>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		var batch = new List<TagHistory>(BatchSize);
+		var batch = new List<TagHistoryValue>(BatchSize);
 		var lastFlush = DateTime.UtcNow;
 
 		await foreach (var item in _channel.Reader.ReadAllAsync(stoppingToken))
@@ -67,7 +67,7 @@ public class DataCollectorWriter(
 	/// <summary>
 	/// Producer: добавление новых значений в очередь
 	/// </summary>
-	public void AddToQueue(IEnumerable<TagHistory> values)
+	public void AddToQueue(IEnumerable<TagHistoryValue> values)
 	{
 		foreach (var value in values)
 		{
@@ -82,7 +82,7 @@ public class DataCollectorWriter(
 	/// Обработка одного батча: запись с retry
 	/// </summary>
 	private async Task ProcessBatchAsync(
-		List<TagHistory> batch,
+		List<TagHistoryValue> batch,
 		CancellationToken ct)
 	{
 		using var scope = serviceScopeFactory.CreateScope();
@@ -96,7 +96,7 @@ public class DataCollectorWriter(
 	/// </summary>
 	private async Task WriteBatchWithRetryAsync(
 		ISystemWriteValuesHandler systemWriteValuesHandler,
-		List<TagHistory> batch,
+		List<TagHistoryValue> batch,
 		CancellationToken ct)
 	{
 		var attempt = 0;

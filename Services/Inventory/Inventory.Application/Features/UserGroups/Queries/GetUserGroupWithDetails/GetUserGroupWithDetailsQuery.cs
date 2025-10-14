@@ -6,7 +6,7 @@ namespace Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGrou
 
 public class GetUserGroupWithDetailsQuery : IQueryRequest<UserGroupDetailedInfo>, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public required Guid Guid { get; init; }
 }

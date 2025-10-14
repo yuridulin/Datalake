@@ -4,41 +4,41 @@
       "DownstreamPathTemplate": "/api/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "datalake-collector", "Port": 8080 }
+        { "Host": "datalake-data", "Port": 8080 }
       ],
-      "UpstreamPathTemplate": "/collector/api/{everything}",
+      "UpstreamPathTemplate": "/data/api/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
-      "SwaggerKey": "collector"
+      "SwaggerKey": "data"
     },
     {
       "DownstreamPathTemplate": "/api/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "datalake-server", "Port": 8080 }
+        { "Host": "datalake-inventory", "Port": 8080 }
       ],
-      "UpstreamPathTemplate": "/server/api/{everything}",
+      "UpstreamPathTemplate": "/inventory/api/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
-      "SwaggerKey": "server"
+      "SwaggerKey": "inventory"
     }
   ],
   "SwaggerEndPoints": [
     {
-      "Key": "server",
+      "Key": "inventory",
       "Config": [
         {
-          "Name": "Server API",
+          "Name": "Inventory API",
           "Version": "v1",
-          "Url": "http://datalake-server:8080/swagger/v1/swagger.json"
+          "Url": "http://datalake-inventory:8080/swagger/v1/swagger.json"
         }
       ]
     },
     {
-      "Key": "collector",
+      "Key": "data",
       "Config": [
         {
-          "Name": "Collector API",
+          "Name": "Data API",
           "Version": "v1",
-          "Url": "http://datalake-collector:8080/swagger/v1/swagger.json"
+          "Url": "http://datalake-data:8080/swagger/v1/swagger.json"
         }
       ]
     }

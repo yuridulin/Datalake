@@ -9,7 +9,7 @@ namespace Datalake.Inventory.Host.Services;
 [Singleton]
 public class AuthenticationService(IUserAccessCache cache) : IAuthenticator
 {
-	public UserAccessEntity Authenticate(HttpContext httpContext)
+	public UserAccessValue Authenticate(HttpContext httpContext)
 	{
 		if (!httpContext.Request.Headers.TryGetValue(Headers.UserGuidHeader, out var userGuidString))
 			throw new ArgumentException("Идентификатор пользователя не прочитан из заголовка");

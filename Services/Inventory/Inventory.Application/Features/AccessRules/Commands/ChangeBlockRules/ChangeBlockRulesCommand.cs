@@ -5,6 +5,6 @@ using Datalake.Shared.Application.Interfaces;
 namespace Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeBlockRules;
 
 public record ChangeBlockRulesCommand(
-	UserAccessEntity User,
+	UserAccessValue User,
 	int BlockId,
 	IEnumerable<ObjectRuleDto> Rules) : ICommandRequest;

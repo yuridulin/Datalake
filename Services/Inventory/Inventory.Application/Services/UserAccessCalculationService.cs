@@ -28,7 +28,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		var hashSets = PrepareHashSets(state);
 
 		// Параллельная обработка пользователей для больших наборов
-		var usersAccess = new ConcurrentDictionary<Guid, UserAccessEntity>();
+		var usersAccess = new ConcurrentDictionary<Guid, UserAccessValue>();
 
 		Parallel.ForEach(state.Users, ParallelOptions, user =>
 		{
@@ -44,20 +44,20 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 
 	private static HashSets PrepareHashSets(IInventoryCacheState state)
 	{
-		var userGlobalRules = new Dictionary<Guid, AccessRuleValue>();
-		var groupGlobalRules = new Dictionary<Guid, AccessRuleValue>();
+		var userGlobalRules = new Dictionary<Guid, UserAccessRuleValue>();
+		var groupGlobalRules = new Dictionary<Guid, UserAccessRuleValue>();
 
-		var userRulesToSources = new Dictionary<Guid, Dictionary<int, AccessRuleValue>>();
-		var userRulesToBlocks = new Dictionary<Guid, Dictionary<int, AccessRuleValue>>();
-		var userRulesToTags = new Dictionary<Guid, Dictionary<int, AccessRuleValue>>();
+		var userRulesToSources = new Dictionary<Guid, Dictionary<int, UserAccessRuleValue>>();
+		var userRulesToBlocks = new Dictionary<Guid, Dictionary<int, UserAccessRuleValue>>();
+		var userRulesToTags = new Dictionary<Guid, Dictionary<int, UserAccessRuleValue>>();
 
-		var groupRulesToSources = new Dictionary<Guid, Dictionary<int, AccessRuleValue>>();
-		var groupRulesToBlocks = new Dictionary<Guid, Dictionary<int, AccessRuleValue>>();
-		var groupRulesToTags = new Dictionary<Guid, Dictionary<int, AccessRuleValue>>();
+		var groupRulesToSources = new Dictionary<Guid, Dictionary<int, UserAccessRuleValue>>();
+		var groupRulesToBlocks = new Dictionary<Guid, Dictionary<int, UserAccessRuleValue>>();
+		var groupRulesToTags = new Dictionary<Guid, Dictionary<int, UserAccessRuleValue>>();
 
 		foreach (var r in state.AccessRules)
 		{
-			var rule = new AccessRuleValue(r.Id, r.AccessType);
+			var rule = new UserAccessRuleValue(r.Id, r.AccessType);
 
 			if (r.UserGuid.HasValue)
 			{
@@ -151,7 +151,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		}
 
 		// Оптимизация: связь пользователь-группы
-		var directUserGroupRules = new Dictionary<Guid, Dictionary<Guid, AccessRuleValue>>();
+		var directUserGroupRules = new Dictionary<Guid, Dictionary<Guid, UserAccessRuleValue>>();
 		var userGroups = new Dictionary<Guid, HashSet<Guid>>();
 		foreach (var relation in state.UserGroupRelations)
 		{
@@ -168,11 +168,11 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 
 			var userId = relation.UserGuid;
 			var groupId = relation.UserGroupGuid;
-			var rule = new AccessRuleValue(relation.Id, relation.AccessType);
+			var rule = new UserAccessRuleValue(relation.Id, relation.AccessType);
 
 			if (!directUserGroupRules.TryGetValue(userId, out var userRules))
 			{
-				userRules = new Dictionary<Guid, AccessRuleValue>();
+				userRules = new Dictionary<Guid, UserAccessRuleValue>();
 				directUserGroupRules[userId] = userRules;
 			}
 
@@ -203,18 +203,18 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		return new Precomputed(blockAncestors, blocksByTag, userGroups, directUserGroupRules);
 	}
 
-	private static UserAccessEntity CalculateUserAccess(UserMemoryDto user, IInventoryCacheState state, Precomputed precomputed, HashSets hashSets)
+	private static UserAccessValue CalculateUserAccess(UserMemoryDto user, IInventoryCacheState state, Precomputed precomputed, HashSets hashSets)
 	{
 		Guid userGuid = user.Guid;
 
 		// Глобальные правила пользователя
-		var globalRule = hashSets.UserGlobalRules.TryGetValue(userGuid, out var userGlobalRule) ? userGlobalRule : AccessRuleValue.GetDefault();
+		var globalRule = hashSets.UserGlobalRules.TryGetValue(userGuid, out var userGlobalRule) ? userGlobalRule : UserAccessRuleValue.GetDefault();
 
 		// Оптимизация: объединение групповых правил
-		Dictionary<int, AccessRuleValue> groupSourceRules = null!;
-		Dictionary<int, AccessRuleValue> groupBlockRules = null!;
-		Dictionary<int, AccessRuleValue> groupTagRules = null!;
-		Dictionary<Guid, AccessRuleValue> groupRules = [];
+		Dictionary<int, UserAccessRuleValue> groupSourceRules = null!;
+		Dictionary<int, UserAccessRuleValue> groupBlockRules = null!;
+		Dictionary<int, UserAccessRuleValue> groupTagRules = null!;
+		Dictionary<Guid, UserAccessRuleValue> groupRules = [];
 
 		if (precomputed.GroupsByUser.TryGetValue(userGuid, out var userGroupSet))
 		{
@@ -242,9 +242,9 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 			}
 
 			// Предварительное объединение групповых правил
-			groupSourceRules = new Dictionary<int, AccessRuleValue>();
-			groupBlockRules = new Dictionary<int, AccessRuleValue>();
-			groupTagRules = new Dictionary<int, AccessRuleValue>();
+			groupSourceRules = new Dictionary<int, UserAccessRuleValue>();
+			groupBlockRules = new Dictionary<int, UserAccessRuleValue>();
+			groupTagRules = new Dictionary<int, UserAccessRuleValue>();
 
 			foreach (var groupGuid in userGroupSet)
 			{
@@ -292,13 +292,13 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		// Пропускаем расчет объектов для администраторов и заблокированных
 		if (globalRule.Access is AccessType.Admin or AccessType.None)
 		{
-			return new UserAccessEntity(userGuid, user.EnergoIdGuid, globalRule, groupRules);
+			return new UserAccessValue(userGuid, user.EnergoIdGuid, globalRule, groupRules);
 		}
 
 		// Получаем пользовательские правила
-		Dictionary<int, AccessRuleValue> userSourceRules = [];
-		Dictionary<int, AccessRuleValue> userBlockRules = [];
-		Dictionary<int, AccessRuleValue> userTagRules = [];
+		Dictionary<int, UserAccessRuleValue> userSourceRules = [];
+		Dictionary<int, UserAccessRuleValue> userBlockRules = [];
+		Dictionary<int, UserAccessRuleValue> userTagRules = [];
 		hashSets.UserRulesToSources.TryGetValue(userGuid, out var userDirectSourceRules);
 		hashSets.UserRulesToBlocks.TryGetValue(userGuid, out var userDirectBlockRules);
 		hashSets.UserRulesToTags.TryGetValue(userGuid, out var userDirectTagRules);
@@ -421,21 +421,21 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		}
 
 		// объект прав пользователя
-		return new UserAccessEntity(userGuid, user.EnergoIdGuid, globalRule, groupRules, userSourceRules, userBlockRules, userTagRules);
+		return new UserAccessValue(userGuid, user.EnergoIdGuid, globalRule, groupRules, userSourceRules, userBlockRules, userTagRules);
 	}
 
 	// Вспомогательный метод для добавления правил
 	private static void AddToMap<TKey, TValue>(
-		Dictionary<TKey, Dictionary<TValue, AccessRuleValue>> map,
+		Dictionary<TKey, Dictionary<TValue, UserAccessRuleValue>> map,
 		TKey owner,
 		TValue objId,
-		AccessRuleValue rule)
+		UserAccessRuleValue rule)
 		where TKey : notnull
 		where TValue : notnull
 	{
 		if (!map.TryGetValue(owner, out var innerMap))
 		{
-			innerMap = new Dictionary<TValue, AccessRuleValue>();
+			innerMap = new Dictionary<TValue, UserAccessRuleValue>();
 			map[owner] = innerMap;
 		}
 		innerMap[objId] = rule;
@@ -450,15 +450,15 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		Dictionary<int, HashSet<int>> BlockAncestors,
 		Dictionary<int, HashSet<int>> BlocksByTag,
 		Dictionary<Guid, HashSet<Guid>> GroupsByUser,
-		Dictionary<Guid, Dictionary<Guid, AccessRuleValue>> DirectUserGroupRules);
+		Dictionary<Guid, Dictionary<Guid, UserAccessRuleValue>> DirectUserGroupRules);
 
 	private record struct HashSets(
-		Dictionary<Guid, AccessRuleValue> UserGlobalRules,
-		Dictionary<Guid, AccessRuleValue> GroupGlobalRules,
-		Dictionary<Guid, Dictionary<int, AccessRuleValue>> UserRulesToSources,
-		Dictionary<Guid, Dictionary<int, AccessRuleValue>> UserRulesToBlocks,
-		Dictionary<Guid, Dictionary<int, AccessRuleValue>> UserRulesToTags,
-		Dictionary<Guid, Dictionary<int, AccessRuleValue>> GroupRulesToSources,
-		Dictionary<Guid, Dictionary<int, AccessRuleValue>> GroupRulesToBlocks,
-		Dictionary<Guid, Dictionary<int, AccessRuleValue>> GroupRulesToTags);
+		Dictionary<Guid, UserAccessRuleValue> UserGlobalRules,
+		Dictionary<Guid, UserAccessRuleValue> GroupGlobalRules,
+		Dictionary<Guid, Dictionary<int, UserAccessRuleValue>> UserRulesToSources,
+		Dictionary<Guid, Dictionary<int, UserAccessRuleValue>> UserRulesToBlocks,
+		Dictionary<Guid, Dictionary<int, UserAccessRuleValue>> UserRulesToTags,
+		Dictionary<Guid, Dictionary<int, UserAccessRuleValue>> GroupRulesToSources,
+		Dictionary<Guid, Dictionary<int, UserAccessRuleValue>> GroupRulesToBlocks,
+		Dictionary<Guid, Dictionary<int, UserAccessRuleValue>> GroupRulesToTags);
 }

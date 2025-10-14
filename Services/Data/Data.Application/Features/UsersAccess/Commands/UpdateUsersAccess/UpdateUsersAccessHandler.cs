@@ -1,13 +1,30 @@
-﻿using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Data.Application.Interfaces;
+using Datalake.Shared.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Data.Application.Features.UsersAccess.Commands.UpdateUsersAccess;
 
 public interface IUpdateUsersAccessHandler : ICommandHandler<UpdateUsersAccessCommand, bool> { }
 
-public class UpdateUsersAccessHandler : IUpdateUsersAccessHandler
+public class UpdateUsersAccessHandler(
+	IInventoryApiClient inventoryApiClient,
+	ILogger<UpdateUsersAccessHandler> logger) : IUpdateUsersAccessHandler
 {
-	public Task<bool> HandleAsync(UpdateUsersAccessCommand command, CancellationToken ct = default)
+	public async Task<bool> HandleAsync(UpdateUsersAccessCommand command, CancellationToken ct = default)
 	{
-		throw new NotImplementedException();
+		logger.LogInformation("Получено событие обновления рассчитанных прав доступа. Пользователей затронуто: {count}", command.Guids.Count());
+
+		try
+		{
+			var updatedAccess = await inventoryApiClient.GetCalculatedAccessAsync(command.Guids, ct);
+
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "Ошибка при обновлении рассчитанных прав доступа");
+			throw;
+		}
+
+		return true;
 	}
 }

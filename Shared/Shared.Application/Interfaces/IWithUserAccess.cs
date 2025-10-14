@@ -4,5 +4,5 @@ namespace Datalake.Shared.Application.Interfaces;
 
 public interface IWithUserAccess
 {
-	UserAccessEntity User { get; init; }
+	UserAccessValue User { get; init; }
 }

@@ -28,7 +28,7 @@ public class GetValuesHandler(
 		return responses;
 	}
 
-	private List<ValuesTrustedRequest> CheckRequests(UserAccessEntity user, ValuesRequest[] requests)
+	private List<ValuesTrustedRequest> CheckRequests(UserAccessValue user, ValuesRequest[] requests)
 	{
 		List<ValuesTrustedRequest> trustedRequests = new(requests.Length);
 
@@ -152,12 +152,12 @@ public class GetValuesHandler(
 
 		foreach (var sqlScope in sqlScopes)
 		{
-			IEnumerable<TagHistory> databaseValues;
+			IEnumerable<TagHistoryValue> databaseValues;
 
 			// получение среза
 			if (!sqlScope.Settings.Old.HasValue && !sqlScope.Settings.Young.HasValue)
 			{
-				Dictionary<int, TagHistory?> databaseValuesById;
+				Dictionary<int, TagHistoryValue?> databaseValuesById;
 
 				if (sqlScope.Settings.Exact.HasValue)
 				{
@@ -193,7 +193,7 @@ public class GetValuesHandler(
 							if (!databaseValuesById.TryGetValue(tag.TagId, out var value) || value == null)
 							{
 								tag.Result = ValueResult.ValueNotFound;
-								value = new TagHistory(tag.TagId, sqlScope.Settings.Exact.Value, TagQuality.Bad_NoValues);
+								value = TagHistoryValue.AsEmpty(tag.TagId, sqlScope.Settings.Exact.Value, TagQuality.Bad_NoValues);
 							}
 
 							var tagValue = new ValueRecord
@@ -354,14 +354,14 @@ public class GetValuesHandler(
 
 	private const int _stretchLimit = 100000;
 
-	private static List<TagHistory> StretchByResolution(
-		List<TagHistory> valuesByChange,
+	private static List<TagHistoryValue> StretchByResolution(
+		List<TagHistoryValue> valuesByChange,
 		DateTime old,
 		DateTime young,
 		TagResolution resolution)
 	{
 		var timeRange = (young - old).TotalMilliseconds;
-		List<TagHistory> continuous = [];
+		List<TagHistoryValue> continuous = [];
 		DateTime stepDate = old;
 		int step = 0;
 

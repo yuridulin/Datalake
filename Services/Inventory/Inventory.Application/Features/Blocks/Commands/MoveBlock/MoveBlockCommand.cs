@@ -4,6 +4,6 @@ using Datalake.Shared.Application.Interfaces;
 namespace Datalake.Inventory.Application.Features.Blocks.Commands.MoveBlock;
 
 public record MoveBlockCommand(
-	UserAccessEntity User,
+	UserAccessValue User,
 	int BlockId,
 	int? ParentId) : ICommandRequest;

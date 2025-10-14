@@ -10,10 +10,10 @@ namespace Datalake.Data.Infrastructure.InMemory;
 public class CurrentValuesStore(
 	ILogger<CurrentValuesStore> logger) : ICurrentValuesStore
 {
-	private ConcurrentDictionary<int, TagHistory> currentValues = [];
+	private ConcurrentDictionary<int, TagHistoryValue> currentValues = [];
 	private readonly SemaphoreSlim semaphore = new(1, 1);
 
-	public async Task ReloadValuesAsync(IEnumerable<TagHistory> values)
+	public async Task ReloadValuesAsync(IEnumerable<TagHistoryValue> values)
 	{
 		await semaphore.WaitAsync();
 
@@ -21,7 +21,7 @@ public class CurrentValuesStore(
 		{
 
 			var valuesDict = values.ToDictionary(x => x.TagId);
-			var newValues = new ConcurrentDictionary<int, TagHistory>(valuesDict);
+			var newValues = new ConcurrentDictionary<int, TagHistoryValue>(valuesDict);
 
 			Interlocked.Exchange(ref currentValues, newValues);
 
@@ -33,16 +33,16 @@ public class CurrentValuesStore(
 		}
 	}
 
-	public TagHistory? TryGet(int id)
+	public TagHistoryValue? TryGet(int id)
 	{
 		return currentValues.TryGetValue(id, out var value) ? value : null;
 	}
 
-	public Dictionary<int, TagHistory?> GetByIdentifiers(int[] identifiers)
+	public Dictionary<int, TagHistoryValue?> GetByIdentifiers(int[] identifiers)
 	{
 		var state = currentValues;
 
-		Dictionary<int, TagHistory?> result = [];
+		Dictionary<int, TagHistoryValue?> result = [];
 		foreach (var id in identifiers)
 		{
 			if (result.ContainsKey(id)) // если один тег запрошен несколько раз за один запрос
@@ -55,7 +55,7 @@ public class CurrentValuesStore(
 		return result;
 	}
 
-	public bool TryUpdate(int tagId, TagHistory incomingValue)
+	public bool TryUpdate(int tagId, TagHistoryValue incomingValue)
 	{
 		bool updated = true;
 
@@ -74,7 +74,7 @@ public class CurrentValuesStore(
 		return updated;
 	}
 
-	public bool IsNew(int id, TagHistory incomingValue)
+	public bool IsNew(int id, TagHistoryValue incomingValue)
 	{
 		var existingValue = TryGet(id);
 		if (existingValue == null)

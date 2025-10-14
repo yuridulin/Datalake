@@ -3,16 +3,16 @@ using Datalake.Domain.Exceptions;
 
 namespace Datalake.Shared.Application.Entities;
 
-public record struct UserAccessEntity
+public record struct UserAccessValue
 {
-	public UserAccessEntity(
+	public UserAccessValue(
 		Guid guid,
 		Guid? energoId,
-		AccessRuleValue rootRule,
-		Dictionary<Guid, AccessRuleValue>? groupsRules = null,
-		Dictionary<int, AccessRuleValue>? sourcesRules = null,
-		Dictionary<int, AccessRuleValue>? blocksRules = null,
-		Dictionary<int, AccessRuleValue>? tagsRules = null)
+		UserAccessRuleValue rootRule,
+		Dictionary<Guid, UserAccessRuleValue>? groupsRules = null,
+		Dictionary<int, UserAccessRuleValue>? sourcesRules = null,
+		Dictionary<int, UserAccessRuleValue>? blocksRules = null,
+		Dictionary<int, UserAccessRuleValue>? tagsRules = null)
 	{
 		Guid = guid;
 		EnergoId = energoId;
@@ -27,32 +27,32 @@ public record struct UserAccessEntity
 
 	public Guid? EnergoId { get; private set; }
 
-	public AccessRuleValue RootRule { get; private set; }
+	public UserAccessRuleValue RootRule { get; private set; }
 
-	public Dictionary<Guid, AccessRuleValue> GroupsRules { get; private set; }
+	public Dictionary<Guid, UserAccessRuleValue> GroupsRules { get; private set; }
 
-	public Dictionary<int, AccessRuleValue> SourcesRules { get; private set; }
+	public Dictionary<int, UserAccessRuleValue> SourcesRules { get; private set; }
 
-	public Dictionary<int, AccessRuleValue> BlocksRules { get; private set; }
+	public Dictionary<int, UserAccessRuleValue> BlocksRules { get; private set; }
 
-	public Dictionary<int, AccessRuleValue> TagsRules { get; private set; }
+	public Dictionary<int, UserAccessRuleValue> TagsRules { get; private set; }
 
-	public void AddGroupRule(Guid groupGuid, AccessRuleValue rule)
+	public readonly void AddGroupRule(Guid groupGuid, UserAccessRuleValue rule)
 	{
 		GroupsRules[groupGuid] = rule;
 	}
 
-	public void AddSourceRule(int sourceId, AccessRuleValue rule)
+	public readonly void AddSourceRule(int sourceId, UserAccessRuleValue rule)
 	{
 		SourcesRules[sourceId] = rule;
 	}
 
-	public void AddBlockRule(int blockId, AccessRuleValue rule)
+	public readonly void AddBlockRule(int blockId, UserAccessRuleValue rule)
 	{
 		BlocksRules[blockId] = rule;
 	}
 
-	public void AddTagRule(int tagId, AccessRuleValue rule)
+	public readonly void AddTagRule(int tagId, UserAccessRuleValue rule)
 	{
 		TagsRules[tagId] = rule;
 	}
@@ -64,7 +64,7 @@ public record struct UserAccessEntity
 	/// </summary>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="withUnderlying">Проверять ли внутреннего пользователя</param>
-	public bool HasGlobalAccess(AccessType minimalAccess)
+	public readonly bool HasGlobalAccess(AccessType minimalAccess)
 	{
 		bool hasAccess = RootRule.HasAccess(minimalAccess);
 		return hasAccess;
@@ -76,7 +76,7 @@ public record struct UserAccessEntity
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <param name="withUnderlying">Проверять ли внутреннего пользователя</param>
-	public bool HasAccessToSource(AccessType minimalAccess, int sourceId)
+	public readonly bool HasAccessToSource(AccessType minimalAccess, int sourceId)
 	{
 		var access = SourcesRules.TryGetValue(sourceId, out var rule) ? rule : RootRule;
 		var hasAccess = access.HasAccess(minimalAccess);
@@ -89,7 +89,7 @@ public record struct UserAccessEntity
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <param name="withUnderlying">Проверять ли внутреннего пользователя</param>
-	public bool HasAccessToBlock(AccessType minimalAccess, int blockId)
+	public readonly bool HasAccessToBlock(AccessType minimalAccess, int blockId)
 	{
 		var access = BlocksRules.TryGetValue(blockId, out var rule) ? rule : RootRule;
 		var hasAccess = access.HasAccess(minimalAccess);
@@ -102,7 +102,7 @@ public record struct UserAccessEntity
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <param name="withUnderlying">Проверять ли внутреннего пользователя</param>
-	public bool HasAccessToTag(AccessType minimalAccess, int tagId)
+	public readonly bool HasAccessToTag(AccessType minimalAccess, int tagId)
 	{
 		var access = TagsRules.TryGetValue(tagId, out var rule) ? rule : RootRule;
 		var hasAccess = access.HasAccess(minimalAccess);
@@ -115,7 +115,7 @@ public record struct UserAccessEntity
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <param name="withUnderlying">Проверять ли внутреннего пользователя</param>
-	public bool HasAccessToUserGroup(AccessType minimalAccess, Guid groupGuid)
+	public readonly bool HasAccessToUserGroup(AccessType minimalAccess, Guid groupGuid)
 	{
 		var access = GroupsRules.TryGetValue(groupGuid, out var rule) ? rule : RootRule;
 		var hasAccess = access.HasAccess(minimalAccess);
@@ -136,7 +136,7 @@ public record struct UserAccessEntity
 	/// Проверка достаточности глобального уровня доступа
 	/// </summary>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
-	public void ThrowIfNoGlobalAccess(AccessType minimalAccess)
+	public readonly void ThrowIfNoGlobalAccess(AccessType minimalAccess)
 	{
 		if (!HasGlobalAccess(minimalAccess))
 			throw NoAccessUser(Guid);
@@ -147,7 +147,7 @@ public record struct UserAccessEntity
 	/// </summary>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="sourceId">Идентификатор источника</param>
-	public void ThrowIfNoAccessToSource(AccessType minimalAccess, int sourceId)
+	public readonly void ThrowIfNoAccessToSource(AccessType minimalAccess, int sourceId)
 	{
 		if (!HasAccessToSource(minimalAccess, sourceId))
 			throw NoAccessUser(Guid);
@@ -158,7 +158,7 @@ public record struct UserAccessEntity
 	/// </summary>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="blockId">Идентификатор блока</param>
-	public void ThrowIfNoAccessToBlock(AccessType minimalAccess, int blockId)
+	public readonly void ThrowIfNoAccessToBlock(AccessType minimalAccess, int blockId)
 	{
 		if (!HasAccessToBlock(minimalAccess, blockId))
 			throw NoAccessUser(Guid);
@@ -169,7 +169,7 @@ public record struct UserAccessEntity
 	/// </summary>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="tagId">Идентификатор тега</param>
-	public void ThrowIfNoAccessToTag(AccessType minimalAccess, int tagId)
+	public readonly void ThrowIfNoAccessToTag(AccessType minimalAccess, int tagId)
 	{
 		if (!HasAccessToTag(minimalAccess, tagId))
 			throw NoAccessUser(Guid);
@@ -180,7 +180,7 @@ public record struct UserAccessEntity
 	/// </summary>
 	/// <param name="minimalAccess">Минимально необходимый уровень доступа</param>
 	/// <param name="groupGuid">Идентификатор группы</param>
-	public void ThrowIfNoAccessToUserGroup(AccessType minimalAccess, Guid groupGuid)
+	public readonly void ThrowIfNoAccessToUserGroup(AccessType minimalAccess, Guid groupGuid)
 	{
 		if (!HasAccessToUserGroup(minimalAccess, groupGuid))
 			throw NoAccessUser(Guid);
@@ -195,7 +195,7 @@ public record struct UserAccessEntity
 	/// </summary>
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <returns>Правило доступа</returns>
-	public AccessRuleValue GetAccessToSource(int sourceId)
+	public readonly UserAccessRuleValue GetAccessToSource(int sourceId)
 	{
 		return SourcesRules.TryGetValue(sourceId, out var rule) ? rule : RootRule;
 	}
@@ -205,7 +205,7 @@ public record struct UserAccessEntity
 	/// </summary>
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <returns>Правило доступа</returns>
-	public AccessRuleValue GetAccessToBlock(int blockId)
+	public readonly UserAccessRuleValue GetAccessToBlock(int blockId)
 	{
 		return BlocksRules.TryGetValue(blockId, out var rule) ? rule : RootRule;
 	}
@@ -215,7 +215,7 @@ public record struct UserAccessEntity
 	/// </summary>
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <returns>Правило доступа</returns>
-	public AccessRuleValue GetAccessToTag(int tagId)
+	public readonly UserAccessRuleValue GetAccessToTag(int tagId)
 	{
 		return TagsRules.TryGetValue(tagId, out var rule) ? rule : RootRule;
 	}
@@ -225,7 +225,7 @@ public record struct UserAccessEntity
 	/// </summary>
 	/// <param name="groupGuid">Идентификатор группы</param>
 	/// <returns>Правило доступа</returns>
-	public AccessRuleValue GetAccessToUserGroup(Guid groupGuid)
+	public readonly UserAccessRuleValue GetAccessToUserGroup(Guid groupGuid)
 	{
 		return GroupsRules.TryGetValue(groupGuid, out var rule) ? rule : RootRule;
 	}

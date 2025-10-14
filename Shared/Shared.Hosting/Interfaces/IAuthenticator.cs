@@ -4,5 +4,5 @@ namespace Datalake.Shared.Hosting.Interfaces;
 
 public interface IAuthenticator
 {
-	UserAccessEntity Authenticate(Microsoft.AspNetCore.Http.HttpContext httpContext);
+	UserAccessValue Authenticate(Microsoft.AspNetCore.Http.HttpContext httpContext);
 }

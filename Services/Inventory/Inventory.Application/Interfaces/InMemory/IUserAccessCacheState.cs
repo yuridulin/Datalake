@@ -15,5 +15,5 @@ public interface IUserAccessCacheState
 	/// <summary>
 	/// Вычисленные права доступа для учетных записей
 	/// </summary>
-	IReadOnlyDictionary<Guid, UserAccessEntity> UsersAccess { get; }
+	IReadOnlyDictionary<Guid, UserAccessValue> UsersAccess { get; }
 }

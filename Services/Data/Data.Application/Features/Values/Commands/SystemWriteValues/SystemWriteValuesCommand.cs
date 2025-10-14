@@ -5,5 +5,5 @@ namespace Datalake.Data.Application.Features.Values.Commands.SystemWriteValues;
 
 public record SystemWriteValuesCommand : ICommandRequest
 {
-	public required IEnumerable<TagHistory> Values { get; init; }
+	public required IEnumerable<TagHistoryValue> Values { get; init; }
 }

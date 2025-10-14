@@ -5,7 +5,7 @@ namespace Datalake.Inventory.Application.Features.UserGroups.Commands.CreateUser
 
 public record CreateUserGroupCommand : ICommandRequest, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public Guid? ParentGuid { get; init; }
 

@@ -12,11 +12,11 @@ public interface IUserAccessStore
 	/// </summary>
 	/// <param name="guid"></param>
 	/// <returns></returns>
-	UserAccessEntity? TryGet(Guid guid);
+	UserAccessValue? TryGet(Guid guid);
 
 	/// <summary>
 	/// Обновление списка сохраненных прав доступа по запросу извне
 	/// </summary>
-	/// <param name="newAuthInfo">Новые права доступа</param>
-	Task UpdateAsync(IEnumerable<UserAccessEntity> newAuthInfo);
+	/// <param name="usersAccess">Новые права доступа</param>
+	Task UpdateAsync(IDictionary<Guid, UserAccessValue> usersAccess);
 }

@@ -6,7 +6,7 @@ namespace Datalake.Data.Application.Features.DataCollection.Queries.GetValuesCol
 
 public record GetValuesCollectStatusQuery : IQueryRequest<IEnumerable<ValueCollectStatus>>, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public required IEnumerable<int> TagsId { get; init; }
 }

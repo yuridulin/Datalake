@@ -6,7 +6,7 @@ namespace Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeUse
 
 public record ChangeUserRulesCommand : ICommandRequest, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public required Guid UserGuid { get; init; }
 

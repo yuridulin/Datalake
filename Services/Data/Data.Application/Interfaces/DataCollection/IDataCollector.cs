@@ -13,5 +13,5 @@ public interface IDataCollector
 
 	string Name { get; }
 
-	Channel<IEnumerable<TagHistory>> OutputChannel { get; }
+	Channel<IEnumerable<TagHistoryValue>> OutputChannel { get; }
 }

@@ -6,7 +6,7 @@ namespace Datalake.Inventory.Application.Features.Users.Commands.UpdateUser;
 
 public record UpdateUserCommand : ICommandRequest, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public required Guid Guid { get; init; }
 

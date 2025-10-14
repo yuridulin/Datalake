@@ -10,21 +10,21 @@ public interface ICurrentValuesStore
 	/// <summary>
 	/// Обновление текущих значений из БД
 	/// </summary>
-	Task ReloadValuesAsync(IEnumerable<TagHistory> values);
+	Task ReloadValuesAsync(IEnumerable<TagHistoryValue> values);
 
 	/// <summary>
 	/// Получение значения по идентификатору
 	/// </summary>
 	/// <param name="id">Локальный идентификатор тега</param>
 	/// <returns>Значение, если существует</returns>
-	TagHistory? TryGet(int id);
+	TagHistoryValue? TryGet(int id);
 
 	/// <summary>
 	/// Получение значений по идентификаторам в виде словаря
 	/// </summary>
 	/// <param name="identifiers">Локальные идентификаторы тегов</param>
 	/// <returns>Значения, если есть, сопоставленные с идентификаторами</returns>
-	Dictionary<int, TagHistory?> GetByIdentifiers(int[] identifiers);
+	Dictionary<int, TagHistoryValue?> GetByIdentifiers(int[] identifiers);
 
 	/// <summary>
 	/// Проверка, является ли значение новым
@@ -32,7 +32,7 @@ public interface ICurrentValuesStore
 	/// <param name="id">Локальный идентификатор тега</param>
 	/// <param name="incomingValue">Значение для проверки</param>
 	/// <returns></returns>
-	bool IsNew(int id, TagHistory incomingValue);
+	bool IsNew(int id, TagHistoryValue incomingValue);
 
 	/// <summary>
 	/// Попытка записи нового значения. В процессе проходит проверка на новизну. Если значение не новее, то записи не будет.
@@ -40,5 +40,5 @@ public interface ICurrentValuesStore
 	/// <param name="id">Локальный идентификатор тега</param>
 	/// <param name="incomingValue">Значение для записи</param>
 	/// <returns>Флаг, является ли значение новым</returns>
-	bool TryUpdate(int id, TagHistory incomingValue);
+	bool TryUpdate(int id, TagHistoryValue incomingValue);
 }

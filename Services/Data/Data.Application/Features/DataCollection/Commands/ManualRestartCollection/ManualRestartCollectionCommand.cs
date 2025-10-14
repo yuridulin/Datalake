@@ -5,5 +5,5 @@ namespace Datalake.Data.Application.Features.DataCollection.Commands.ManualResta
 
 public record ManualRestartCollectionCommand : ICommandRequest, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 }

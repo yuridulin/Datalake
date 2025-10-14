@@ -5,4 +5,4 @@ using Datalake.Shared.Application.Interfaces;
 namespace Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksTree;
 
 public record GetBlocksTreeQuery(
-	UserAccessEntity User) : IQueryRequest<IEnumerable<BlockTreeInfo>>;
+	UserAccessValue User) : IQueryRequest<IEnumerable<BlockTreeInfo>>;

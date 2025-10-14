@@ -6,7 +6,7 @@ namespace Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;
 
 public record ManualWriteValuesCommand : ICommandRequest, IWithUserAccess
 {
-	public required UserAccessEntity User { get; init; }
+	public required UserAccessValue User { get; init; }
 
 	public required IEnumerable<ValueWriteRequest> Requests { get; init; }
 }

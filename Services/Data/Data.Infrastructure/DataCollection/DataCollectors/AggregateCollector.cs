@@ -71,7 +71,7 @@ public class AggregateCollector : DataCollectorBase
 		var hour = now.Hour;
 		var day = now.Day;
 
-		List<TagHistory> records = [];
+		List<TagHistoryValue> records = [];
 
 		if (_minuteRules.Length > 0 && _lastMinute != minute)
 		{
@@ -101,7 +101,7 @@ public class AggregateCollector : DataCollectorBase
 			await WriteAsync(records);
 	}
 
-	private async Task<List<TagHistory>> GetValuesAsync(TagAggregationRule[] rules, DateTime date, TagResolution period)
+	private async Task<List<TagHistoryValue>> GetValuesAsync(TagAggregationRule[] rules, DateTime date, TagResolution period)
 	{
 		TagHistoryAggregationWeightedValue[] aggregated = await GetAggregatedValuesAsync(rules, date, period);
 
@@ -114,8 +114,8 @@ public class AggregateCollector : DataCollectorBase
 			.Where(x => x.Tag != null)
 			.Select(x => x.Tag.AggregateFunction switch
 			{
-				TagAggregation.Sum => new TagHistory(x.Tag.TagId, x.Value.Date, TagQuality.Good, x.Value.Sum, 1),
-				TagAggregation.Average => new TagHistory(x.Tag.TagId, x.Value.Date, TagQuality.Good, x.Value.Average, 1),
+				TagAggregation.Sum => TagHistoryValue.AsNumeric(x.Tag.TagId, x.Value.Date, TagQuality.Good, x.Value.Sum, 1),
+				TagAggregation.Average => TagHistoryValue.AsNumeric(x.Tag.TagId, x.Value.Date, TagQuality.Good, x.Value.Average, 1),
 				_ => null,
 			})
 			.Where(x => x != null)

@@ -4,5 +4,5 @@ using Datalake.Shared.Application.Interfaces;
 namespace Datalake.Inventory.Application.Features.Blocks.Commands.DeleteBlock;
 
 public record DeleteBlockCommand(
-	UserAccessEntity User,
+	UserAccessValue User,
 	int BlockId) : ICommandRequest;

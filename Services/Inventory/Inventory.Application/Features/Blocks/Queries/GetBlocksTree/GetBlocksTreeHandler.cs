@@ -34,7 +34,7 @@ public class GetBlocksTreeHandler(
 			})
 			.Select(p =>
 			{
-				var rule = new AccessRuleValue(p.Node.AccessRule.RuleId, p.Node.AccessRule.Access);
+				var rule = new UserAccessRuleValue(p.Node.AccessRule.RuleId, p.Node.AccessRule.Access);
 				var hasViewer = rule.HasAccess(AccessType.Viewer);
 
 				if (!hasViewer)

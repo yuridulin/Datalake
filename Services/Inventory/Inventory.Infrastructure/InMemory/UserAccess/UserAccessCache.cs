@@ -67,11 +67,18 @@ public class UserAccessCache : IUserAccessCache
 			{
 				var newState = new UserAccessCacheState(usersAccess);
 
-				Interlocked.Exchange(ref _currentState, newState);
+				if (newState == _currentState)
+				{
+					_logger.LogInformation("Обновление кэша прав доступа завершено для версии {version}, изменений нет", usersAccess.Version);
+				}
+				else
+				{
+					Interlocked.Exchange(ref _currentState, newState);
 
-				_logger.LogInformation("Обновление кэша прав доступа завершено для версии {version}", usersAccess.Version);
+					_logger.LogInformation("Обновление кэша прав доступа завершено для версии {version}, есть изменения", usersAccess.Version);
 
-				_ = Task.Run(() => StateChanged?.Invoke(this, newState));
+					_ = Task.Run(() => StateChanged?.Invoke(this, newState));
+				}
 			}
 		}
 		catch (Exception e)
