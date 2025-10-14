@@ -23,7 +23,7 @@ public class Program
 		var builder = WebApplication.CreateBuilder(args);
 		CurrentEnvironment = builder.Environment.EnvironmentName;
 
-		builder.AddShared(CurrentEnvironment, Version, Assembly.GetCallingAssembly());
+		builder.AddShared(CurrentEnvironment, Version, Assembly.GetExecutingAssembly());
 		builder.AddInfrastructure();
 		builder.AddApplication();
 		builder.AddApi();

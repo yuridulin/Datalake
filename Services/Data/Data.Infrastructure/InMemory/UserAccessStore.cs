@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 namespace Datalake.Data.Infrastructure.InMemory;
 
 [Singleton]
-public class AccessStore(ILogger<AccessStore> logger) : IUserAccessStore
+public class UserAccessStore(ILogger<UserAccessStore> logger) : IUserAccessStore
 {
 	private ConcurrentDictionary<Guid, UserAccessValue> _state = [];
 	private readonly SemaphoreSlim _semaphore = new(1, 1);

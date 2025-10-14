@@ -17,7 +17,6 @@ public class UserAccessSynchronizationService(
 	IUserAccessCalculationService userAccessCalculationService,
 	IUserAccessCache userAccessCache,
 	IServiceScopeFactory serviceScopeFactory,
-	IPublishEndpoint publishEndpoint,
 	ILogger<UserAccessSynchronizationService> logger) : IUserAccessSynchronizationService
 {
 	private IUserAccessCacheState? previousUsersAccessState;
@@ -122,11 +121,19 @@ public class UserAccessSynchronizationService(
 		}
 
 		// сохранение
-		await SaveUpdatedRules(updatedRules);
-		await PublishUserAccessUpdated(updatedRules, inventoryState.Version);
+		if (updatedRules.Count == 0)
+			return;
+
+		await using var scope = serviceScopeFactory.CreateAsyncScope();
+
+		var handler = scope.ServiceProvider.GetRequiredService<IUpdateCalculatedAccessRulesHandler>();
+		var endpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+
+		await SaveUpdatedRules(handler, updatedRules);
+		await PublishUserAccessUpdated(endpoint, updatedRules, inventoryState.Version);
 	}
 
-	private async Task PublishUserAccessUpdated(List<CalculatedAccessRule> updatedRules, long version)
+	private async Task PublishUserAccessUpdated(IPublishEndpoint publishEndpoint, List<CalculatedAccessRule> updatedRules, long version)
 	{
 		if (updatedRules.Count == 0)
 			return;
@@ -152,7 +159,7 @@ public class UserAccessSynchronizationService(
 	/// Сохранение изменившихся вычисленных прав доступа
 	/// </summary>
 	/// <param name="updatedRules">Список изменений</param>
-	private async Task SaveUpdatedRules(List<CalculatedAccessRule> updatedRules)
+	private async Task SaveUpdatedRules(IUpdateCalculatedAccessRulesHandler handler, List<CalculatedAccessRule> updatedRules)
 	{
 		if (updatedRules.Count == 0)
 			return;
@@ -161,8 +168,6 @@ public class UserAccessSynchronizationService(
 
 		try
 		{
-			await using var scope = serviceScopeFactory.CreateAsyncScope();
-			var handler = scope.ServiceProvider.GetRequiredService<IUpdateCalculatedAccessRulesHandler>();
 			await handler.HandleAsync(new() { Rules = updatedRules });
 
 			logger.LogInformation("Изменения рассчитанных прав доступа сохранены");

@@ -1,4 +1,5 @@
 ﻿using Datalake.Data.Application.Interfaces;
+using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -8,6 +9,7 @@ public interface IUpdateUsersAccessHandler : ICommandHandler<UpdateUsersAccessCo
 
 public class UpdateUsersAccessHandler(
 	IInventoryApiClient inventoryApiClient,
+	IUserAccessStore userAccessStore,
 	ILogger<UpdateUsersAccessHandler> logger) : IUpdateUsersAccessHandler
 {
 	public async Task<bool> HandleAsync(UpdateUsersAccessCommand command, CancellationToken ct = default)
@@ -17,7 +19,9 @@ public class UpdateUsersAccessHandler(
 		try
 		{
 			var updatedAccess = await inventoryApiClient.GetCalculatedAccessAsync(command.Guids, ct);
+			await userAccessStore.UpdateAsync(updatedAccess);
 
+			logger.LogInformation("Рассчитанные права доступа получены и записаны в кэш");
 		}
 		catch (Exception ex)
 		{

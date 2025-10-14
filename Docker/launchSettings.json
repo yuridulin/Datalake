@@ -7,10 +7,10 @@
         "datalake-postgres": "StartWithoutDebugging",
         "datalake-keycloak": "StartWithoutDebugging",
         "datalake-rabbitmq": "StartWithoutDebugging",
-        "datalake-gateway": "StartWithoutDebugging",
-        "datalake-inventory": "StartWithoutDebugging",
-        "datalake-data": "StartWithoutDebugging",
-        "datalake-events": "StartWithoutDebugging",
+        "datalake-gateway": "StartDebugging",
+        "datalake-inventory": "StartDebugging",
+        "datalake-data": "StartDebugging",
+        "datalake-events": "DoNotStart",
         "datalake-client": "DoNotStart"
       }
     },
@@ -21,7 +21,7 @@
       "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}/swagger",
       "serviceActions": {
         "datalake-client": "DoNotStart",
-        "datalake-data": "StartWithoutDebugging",
+        "datalake-data": "StartDebugging",
         "datalake-events": "DoNotStart",
         "datalake-gateway": "DoNotStart",
         "datalake-inventory": "DoNotStart",

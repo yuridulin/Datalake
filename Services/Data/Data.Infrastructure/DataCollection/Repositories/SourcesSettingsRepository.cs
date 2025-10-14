@@ -18,6 +18,7 @@ public class SourcesSettingsRepository(DataDbContext context) : ISourcesSettings
 			.Include(x => x.Tags).ThenInclude(x => x.Thresholds)
 			.Include(x => x.Tags).ThenInclude(x => x.ThresholdsSourceTag)
 			.Include(x => x.Tags).ThenInclude(x => x.AggregationSourceTag)
+			.AsSplitQuery()
 			.Where(x => !x.IsDeleted)
 			.AsNoTracking()
 			.Select(source => new SourceSettingsDto

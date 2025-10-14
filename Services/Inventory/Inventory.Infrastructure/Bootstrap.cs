@@ -40,6 +40,7 @@ public static class Bootstrap
 		builder.Services.AddScoped<IBlockPropertiesRepository, BlockPropertiesRepository>();
 		builder.Services.AddScoped<IBlocksRepository, BlocksRepository>();
 		builder.Services.AddScoped<IBlockTagsRepository, BlockTagsRepository>();
+		builder.Services.AddScoped<ICalculatedAccessRulesRepository, CalculatedAccessRulesRepository>();
 		builder.Services.AddScoped<IEnergoIdRepository, EnergoIdRepository>();
 		builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 		builder.Services.AddScoped<ISourcesRepository, SourcesRepository>();

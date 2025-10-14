@@ -40,6 +40,8 @@ public static class Bootstrap
 					.UsePostgreSQL(connectionString);
 			});
 
+		builder.Services.AddSingleton<IUserAccessStore, UserAccessStore>();
+
 		builder.Services.AddScoped<ISourcesSettingsRepository, SourcesSettingsRepository>();
 		builder.Services.AddScoped<ITagsHistoryAggregationRepository, TagsHistoryAggregationRepository>();
 		builder.Services.AddScoped<ITagsHistoryRepository, TagsHistoryRepository>();
