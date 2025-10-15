@@ -6,12 +6,39 @@ using Datalake.Domain.ValueObjects;
 namespace Datalake.Domain.Entities;
 
 /// <summary>
-/// Запись в таблице источников
+/// Источник данных
 /// </summary>
 public record class Source : IWithIdentityKey, ISoftDeletable
 {
+	#region Конструкторы
+
 	private Source() { }
 
+	/// <summary>
+	/// Новый источник без настроек
+	/// </summary>
+	/// <param name="type">Тип источника</param>
+	/// <returns>Источник даннных</returns>
+	public static Source CreateEmpty(SourceType? type)
+	{
+		var source = new Source()
+		{
+			Type = type ?? SourceType.Inopc,
+		};
+
+		if (type != null)
+			source.UpdateType(type.Value);
+
+		return source;
+	}
+
+	/// <summary>
+	/// Новый внутренний источник
+	/// </summary>
+	/// <param name="type">Тип источника</param>
+	/// <param name="name">Название</param>
+	/// <param name="description">Описание</param>
+	/// <returns>Источник даннных</returns>
 	public static Source CreateAsInternal(SourceType type, string name, string? description)
 	{
 		return new()
@@ -23,30 +50,29 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 	}
 
 	/// <summary>
-	/// Новый источник без настроек
-	/// </summary>
-	/// <param name="type">Тип источника</param>
-	public Source(SourceType? type)
-	{
-		type ??= SourceType.Inopc;
-		UpdateType(type.Value);
-	}
-
-	/// <summary>
-	/// Новый источник с настройками настроек
+	/// Новый источник с настройками
 	/// </summary>
 	/// <param name="type">Тип источника</param>
 	/// <param name="address">Адрес конечной точки</param>
 	/// <param name="name">Название</param>
 	/// <param name="description">Описание</param>
-	public Source(SourceType? type, string? name, string? description, string? address) : this(type)
+	/// <returns>Источник даннных</returns>
+	public static Source CreateAsExternal(SourceType? type, string? name, string? description, string? address) 
 	{
-		if (string.IsNullOrEmpty(name))
-			return;
+		var source = CreateEmpty(type);
 
-		UpdateProperties(name, description, address);
+		if (string.IsNullOrEmpty(name))
+			return source;
+
+		source.UpdateProperties(name, description, address);
+		return source;
 	}
 
+	#endregion Конструкторы
+
+	#region Методы
+
+	/// <inheritdoc/>
 	public void MarkAsDeleted()
 	{
 		if (IsDeleted)
@@ -54,7 +80,12 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 
 		IsDeleted = true;
 	}
-
+	
+	/// <summary>
+	/// Изменение типа источника
+	/// </summary>
+	/// <param name="type">Новый тип источника данных</param>
+	/// <exception cref="ArgumentException">Неверный тип</exception>
 	public void UpdateType(SourceType type)
 	{
 		if (InternalSources.Contains(Type))
@@ -63,6 +94,13 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 		Type = type;
 	}
 
+	/// <summary>
+	/// Изменение настроек
+	/// </summary>
+	/// <param name="name">Название</param>
+	/// <param name="description">Описание</param>
+	/// <param name="address">Адрес</param>
+	/// <exception cref="DomainException">Ошибки</exception>
 	public void UpdateProperties(string name, string? description, string? address)
 	{
 		if (InternalSources.Contains(Type))
@@ -88,7 +126,9 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 		SourceType.Unset
 	};
 
-	// поля в БД
+	#endregion Методы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -125,7 +165,9 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 	/// </summary>
 	public bool IsDisabled { get; private set; } = false;
 
-	// связи
+	#endregion Свойства
+
+	#region Связи
 
 	/// <summary>
 	/// Список тегов, получающих значения
@@ -145,5 +187,7 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 	/// <summary>
 	/// Рассчитаные для этого источника данных указания фактического доступа
 	/// </summary>
-	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; }
+	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
+
+	#endregion Связи
 }

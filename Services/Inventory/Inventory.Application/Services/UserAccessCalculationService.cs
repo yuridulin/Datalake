@@ -206,7 +206,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		Guid userGuid = user.Guid;
 
 		// Глобальные правила пользователя
-		var globalRule = hashSets.UserGlobalRules.TryGetValue(userGuid, out var userGlobalRule) ? userGlobalRule : UserAccessRuleValue.GetDefault();
+		var globalRule = hashSets.UserGlobalRules.TryGetValue(userGuid, out var userGlobalRule) ? userGlobalRule : UserAccessRuleValue.Empty();
 
 		// Оптимизация: объединение групповых правил
 		Dictionary<int, UserAccessRuleValue> groupSourceRules = null!;

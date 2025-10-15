@@ -6,12 +6,21 @@ using Datalake.Domain.ValueObjects;
 namespace Datalake.Domain.Entities;
 
 /// <summary>
-/// Запись в таблице тегов
+/// Тег
 /// </summary>
 public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 {
+	#region Конструкторы
+
 	private Tag() { }
 
+	/// <summary>
+	/// Конструктор
+	/// </summary>
+	/// <param name="type">Тип данных</param>
+	/// <param name="sourceType">Тип источника данных</param>
+	/// <param name="sourceId">Идентификатор источника данных</param>
+	/// <param name="sourceItem">Путь к данным источника</param>
 	public Tag(TagType type, SourceType sourceType, int? sourceId, string? sourceItem)
 	{
 		Type = type;
@@ -20,6 +29,11 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 		SourceItem = sourceItem;
 	}
 
+	#endregion Конструкторы
+
+	#region Методы
+
+	/// <inheritdoc/>
 	public void MarkAsDeleted()
 	{
 		if (IsDeleted)
@@ -28,6 +42,11 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 		IsDeleted = true;
 	}
 
+	/// <summary>
+	/// Установка имени по умолчанию
+	/// </summary>
+	/// <param name="sourceType">Тип источника</param>
+	/// <param name="sourceName">Имя источника данных</param>
 	public void SetGenericName(SourceType sourceType, string? sourceName)
 	{
 		Name = sourceType switch
@@ -41,6 +60,29 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 		};
 	}
 
+	/// <summary>
+	/// Изменение настроек
+	/// </summary>
+	/// <param name="name">Имя</param>
+	/// <param name="description">Описание</param>
+	/// <param name="type">Тип данных</param>
+	/// <param name="resolution">Частота</param>
+	/// <param name="sourceId">Идентификатор источника данных</param>
+	/// <param name="sourceType">Тип источника данных</param>
+	/// <param name="sourceItem">Путь к данным в источнике</param>
+	/// <param name="isScaling">Используется ли шкала</param>
+	/// <param name="minEu">Минимум инженерной шкалы</param>
+	/// <param name="maxEu">Максимум инженерной шкалы</param>
+	/// <param name="minRaw">Минимум шкалы реальных значений</param>
+	/// <param name="maxRaw">Максимум шкалы реальных значений</param>
+	/// <param name="formula">Формула расчета</param>
+	/// <param name="aggregation">Тип агрегирования</param>
+	/// <param name="aggregationPeriod">Период агрегирования</param>
+	/// <param name="aggTagId">Идентификатор тега-источника агрегирования</param>
+	/// <param name="aggBlockId">Иденификатор блока-источника агрегирования</param>
+	/// <param name="thresholdTagId">Идентификатор тега-источника порогов</param>
+	/// <param name="thresholdBlockId">Идентификатор блока-источника порогов</param>
+	/// <exception cref="DomainException">Ошибки</exception>
 	public void Update(
 		string? name, string? description, TagType type, TagResolution resolution, int? sourceId, SourceType sourceType,
 		string? sourceItem,
@@ -167,7 +209,9 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 		MaxRaw = maxRaw.Value;
 	}
 
-	#region поля в БД
+	#endregion Методы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -214,9 +258,9 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// </summary>
 	public bool IsDeleted { get; private set; } = false;
 
-	#endregion
+	#endregion Свойства
 
-	#region специфичные для входящих
+	#region Свойства, специфичные для входящих
 
 	/// <summary>
 	/// Идентификатор источника
@@ -228,9 +272,9 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// </summary>
 	public string? SourceItem { get; private set; } = string.Empty;
 
-	#endregion
+	#endregion Свойства, специфичные для входящих
 
-	#region специфичные для числовых
+	#region Свойства, специфичные для числовых
 
 	/// <summary>
 	/// Используется ли преобразование по шкале
@@ -264,9 +308,9 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 		? ((MaxEu - MinEu) / (MaxRaw - MinRaw))
 		: 1;
 
-	#endregion
+	#endregion Свойства, специфичные для числовых
 
-	#region специфичные для вычисляемых
+	#region Свойства, специфичные для вычисляемых
 
 	/// <summary>
 	/// Используемая формула
@@ -283,9 +327,9 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// </summary>
 	public int? ThresholdSourceTagBlockId { get; private set; }
 
-	#endregion
+	#endregion Свойства, специфичные для вычисляемых
 
-	#region специфичные для агрегированных
+	#region Свойства, специфичные для агрегированных
 
 	/// <summary>
 	/// Тип агрегации
@@ -307,9 +351,9 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// </summary>
 	public int? SourceTagBlockId { get; private set; }
 
-	#endregion
+	#endregion Свойства, специфичные для агрегированных
 
-	#region связи
+	#region Связи
 
 	/// <summary>
 	/// Источник
@@ -371,5 +415,5 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// </summary>
 	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
 
-	#endregion
+	#endregion Связи
 }

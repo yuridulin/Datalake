@@ -8,8 +8,18 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class TagInput : IWithIdentityKey
 {
+	#region Конструкторы
+
 	private TagInput() { }
 
+	/// <summary>
+	/// Конструктор
+	/// </summary>
+	/// <param name="tagId">Идентификатор тега</param>
+	/// <param name="inputTagId">Идентификатор входного тега</param>
+	/// <param name="inputBlockId">Идентификатор входного блока</param>
+	/// <param name="variable">Имя переменной</param>
+	/// <exception cref="DomainException"></exception>
 	public TagInput(int tagId, int inputTagId, int? inputBlockId, string variable)
 	{
 		if (string.IsNullOrWhiteSpace(variable))
@@ -20,6 +30,10 @@ public record class TagInput : IWithIdentityKey
 		InputBlockId = inputBlockId;
 		VariableName = variable;
 	}
+
+	#endregion
+
+	#region
 
 	// поля в БД
 
