@@ -7,7 +7,22 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public class EnergoId
 {
+	#region Конструкторы
+
 	private EnergoId() { }
+
+	#endregion Конструкторы
+
+	#region Методы
+
+	/// <summary>
+	/// ФИО пользователя
+	/// </summary>
+	public string GetFullName() => $"{LastName} {FirstName} {MiddleName}";
+
+	#endregion Методы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор пользователя
@@ -90,6 +105,7 @@ public class EnergoId
 	/// </summary>
 	public string? Birthday { get; private set; }
 
+	#endregion Свойства
 
 	#region Связи
 
@@ -97,16 +113,6 @@ public class EnergoId
 	/// Связь с пользователем приложения
 	/// </summary>
 	public User? User { get; set; }
-
-	#endregion
-
-
-	#region Свойства
-
-	/// <summary>
-	/// ФИО пользователя
-	/// </summary>
-	public string GetFullName() => $"{LastName} {FirstName} {MiddleName}";
 
 	#endregion
 }

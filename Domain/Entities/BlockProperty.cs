@@ -8,9 +8,13 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class BlockProperty : IWithIdentityKey
 {
+	#region Конструкторы
+
 	private BlockProperty() { }
 
-	// поля в БД
+	#endregion Конструкторы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -37,10 +41,14 @@ public record class BlockProperty : IWithIdentityKey
 	/// </summary>
 	public string Value { get; private set; } = string.Empty;
 
-	// связи
+	#endregion Свойства
+
+	#region Связи
 
 	/// <summary>
 	/// Блок
 	/// </summary>
 	public Block? Block { get; set; }
+
+	#endregion Связи
 }

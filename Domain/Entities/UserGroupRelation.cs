@@ -8,8 +8,16 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class UserGroupRelation : IWithIdentityKey
 {
+	#region Конструкторы
+
 	private UserGroupRelation() { }
 
+	/// <summary>
+	/// Создание новой связи учетной записи с группой
+	/// </summary>
+	/// <param name="userGroupGuid">Идентификатор группы</param>
+	/// <param name="userGuid">Идентификатор учетной записи</param>
+	/// <param name="accessType">Уровень доступа в рамках группы</param>
 	public UserGroupRelation(Guid userGroupGuid, Guid userGuid, AccessType accessType)
 	{
 		UserGroupGuid = userGroupGuid;
@@ -17,7 +25,9 @@ public record class UserGroupRelation : IWithIdentityKey
 		AccessType = accessType;
 	}
 
-	// поля в БД
+	#endregion Конструкторы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -39,7 +49,9 @@ public record class UserGroupRelation : IWithIdentityKey
 	/// </summary>
 	public AccessType AccessType { get; private set; }
 
-	// связи
+	#endregion Свойства
+
+	#region Связи
 
 	/// <summary>
 	/// Пользователь
@@ -50,4 +62,6 @@ public record class UserGroupRelation : IWithIdentityKey
 	/// Группа пользователей
 	/// </summary>
 	public UserGroup UserGroup { get; set; } = null!;
+
+	#endregion Связи
 }

@@ -29,13 +29,13 @@ public class CreateUserHandler(
 
 	public override async Task<Guid> ExecuteInTransactionAsync(CreateUserCommand command, CancellationToken ct = default)
 	{
-		user = new(
+		user = User.CreateWithType(
 			type: command.Type,
-			fullName: command.FullName,
+			energoIdGuid: command.EnergoIdGuid,
 			login: command.Login,
 			passwordString: command.Password,
-			energoIdGuid: command.EnergoIdGuid,
-			host: command.StaticHost);
+			fullName: command.FullName,
+			email: command.Email);
 
 		await usersRepository.AddAsync(user, ct);
 

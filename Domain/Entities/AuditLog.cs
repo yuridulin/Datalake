@@ -83,7 +83,7 @@ public record class AuditLog
 
 	#endregion Конструкторы
 
-	#region Поля в БД
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -155,7 +155,7 @@ public record class AuditLog
 	/// </summary>
 	public string? Details { get; private set; }
 
-	#endregion Поля в БД
+	#endregion Свойства
 
 	#region Связи
 

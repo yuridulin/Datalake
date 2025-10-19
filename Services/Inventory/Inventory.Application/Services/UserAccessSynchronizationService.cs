@@ -106,7 +106,7 @@ public class UserAccessSynchronizationService(
 						updatedRules.AddRange(GetAllRules(inventoryState, newEntity));
 
 					// проверяем, отличаются ли состояния прав по значению
-					if (newEntity != oldEntity)
+					if (newEntity != oldEntity && oldEntity != null)
 						updatedRules.AddRange(GetDiffRules(inventoryState, oldEntity, newEntity));
 				}
 			}

@@ -4,7 +4,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Users.Queries.GetUserWithDetails;
 
-public record GetUserWithDetailsQuery : IQueryRequest<UserDetailInfo>, IWithUserAccess
+public record GetUserWithDetailsQuery : IQueryRequest<UserInfo>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 

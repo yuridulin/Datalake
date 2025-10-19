@@ -5,6 +5,8 @@
 /// </summary>
 public record class Settings
 {
+	#region Конструкторы
+
 	private Settings() { }
 
 	/// <summary>
@@ -18,6 +20,10 @@ public record class Settings
 	{
 		Update(keycloakHost, keycloakClient, energoIdApi, instanceName);
 	}
+
+	#endregion Конструкторы
+
+	#region Методы
 
 	/// <summary>
 	/// Изменение настроек
@@ -35,8 +41,9 @@ public record class Settings
 		InstanceName = instanceName;
 	}
 
+	#endregion Методы
 
-	// поля в БД
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -67,4 +74,6 @@ public record class Settings
 	/// Название текущей базы данных
 	/// </summary>
 	public string InstanceName { get; private set; } = string.Empty;
+
+	#endregion Свойства
 }

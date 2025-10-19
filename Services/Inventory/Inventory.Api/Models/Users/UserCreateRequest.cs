@@ -9,26 +9,20 @@ namespace Datalake.Inventory.Api.Models.Users;
 public class UserCreateRequest
 {
 	/// <summary>
-	/// Имя для входа
-	/// </summary>
-	public string? Login { get; set; }
-
-	/// <summary>
-	/// Полное имя пользователя
-	/// </summary>
-	public string? FullName { get; set; }
-
-	/// <summary>
-	/// Глобальный уровень доступа
-	/// </summary>
-	[Required]
-	public required AccessType AccessType { get; set; }
-
-	/// <summary>
 	/// Тип учетной записи
 	/// </summary>
 	[Required]
 	public required UserType Type { get; set; }
+
+	/// <summary>
+	/// Идентификатор связанной учетной записи в сервере EnergoId
+	/// </summary>
+	public Guid? EnergoIdGuid { get; set; }
+
+	/// <summary>
+	/// Имя для входа
+	/// </summary>
+	public string? Login { get; set; }
 
 	/// <summary>
 	/// Используемый пароль
@@ -36,12 +30,18 @@ public class UserCreateRequest
 	public string? Password { get; set; }
 
 	/// <summary>
-	/// Адрес статической точки, откуда будет осуществляться доступ
+	/// Полное имя пользователя
 	/// </summary>
-	public string? StaticHost { get; set; }
+	public string? FullName { get; set; }
 
 	/// <summary>
-	/// Идентификатор связанной учетной записи в сервере EnergoId
+	/// Почтовый адрес
 	/// </summary>
-	public Guid? EnergoIdGuid { get; set; }
+	public string? Email { get; set; }
+
+	/// <summary>
+	/// Глобальный уровень доступа
+	/// </summary>
+	[Required]
+	public required AccessType AccessType { get; set; }
 }

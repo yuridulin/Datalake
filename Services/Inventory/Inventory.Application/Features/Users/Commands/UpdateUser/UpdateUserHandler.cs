@@ -14,6 +14,7 @@ public interface IUpdateUserHandler : ICommandHandler<UpdateUserCommand, bool> {
 
 public class UpdateUserHandler(
 	IUsersRepository usersRepository,
+	IAccessRulesRepository accessRulesRepository,
 	IAuditRepository auditRepository,
 	IUnitOfWork unitOfWork,
 	ILogger<UpdateUserHandler> logger,
@@ -33,18 +34,31 @@ public class UpdateUserHandler(
 		user = await usersRepository.GetByIdAsync(command.Guid, ct)
 			?? throw InventoryNotFoundException.NotFoundUser(command.Guid);
 
+		if (user.Type == UserType.Local && !string.IsNullOrEmpty(command.Login))
+		{
+			var userWithNewLogin = await usersRepository.GetByLoginAsync(command.Login, ct);
+			if (userWithNewLogin != null && userWithNewLogin.Guid != user.Guid)
+			{
+				throw new ApplicationException("Указанный логин уже используется другим пользователем");
+			}
+		}
+
 		user.Update(
-			type: command.Type,
-			fullName: command.FullName,
 			login: command.Login,
 			passwordString: command.Password,
-			energoIdGuid: command.EnergoIdGuid,
-			host: command.StaticHost,
-			generateNewHash: command.GenerateNewHash);
+			email: command.Email,
+			fullName: command.FullName);
 
 		await usersRepository.UpdateAsync(user, ct);
-
 		await auditRepository.AddAsync(new(command.User.Guid, "Учетная запись изменена: diff", userGuid: user.Guid), ct);
+
+		var globalRule = await accessRulesRepository.GetUserGlobalRuleAsync(user.Guid, ct);
+		if (globalRule != null && globalRule.AccessType != command.AccessType)
+		{
+			globalRule.UpdateAccess(command.AccessType);
+			await accessRulesRepository.UpdateAsync(globalRule, ct);
+			await auditRepository.AddAsync(new(command.User.Guid, "Изменен уровень общего доступа: diff", userGuid: user.Guid), ct);
+		}
 
 		return true;
 	}

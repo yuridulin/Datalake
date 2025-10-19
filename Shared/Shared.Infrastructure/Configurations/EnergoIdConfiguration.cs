@@ -16,7 +16,7 @@ public class EnergoIdConfiguration : IEntityTypeConfiguration<EnergoId>
 
 		builder.HasOne(x => x.User)
 			.WithOne(x => x.EnergoId)
-			.HasForeignKey<User>(x => x.EnergoIdGuid)
+			.HasForeignKey<User>(x => x.Guid)
 			.HasPrincipalKey<EnergoId>(x => x.Guid);
 	}
 }

@@ -20,13 +20,11 @@ public class UserConfiguration(TableAccess access) : IEntityTypeConfiguration<Us
 		builder.HasKey(u => u.Guid);
 
 		// Настройка индексов
-		builder.HasIndex(u => new { u.Login, u.EnergoIdGuid }).IsUnique();
 		builder.HasIndex(u => u.Type);
 
 		// Настройка свойств
 		builder
 			.Property(u => u.FullName)
-			.IsRequired()
 			.HasMaxLength(200);
 
 		builder

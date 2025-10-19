@@ -10,38 +10,70 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class User : IWithGuidKey, ISoftDeletable
 {
+	#region Конструкторы
+
 	private User() { }
 
-	public User(UserType type, string? fullName, string? login, string? passwordString, Guid? energoIdGuid, string? host, bool generateNewHash = false)
+	/// <summary>
+	/// Создание на основе указанных данных с выбором типа
+	/// </summary>
+	/// <param name="type">Тип учетной записи</param>
+	/// <param name="energoIdGuid">Идентификатор учетной записи EnergoId</param>
+	/// <param name="login">Логин</param>
+	/// <param name="passwordString">Строка пароля</param>
+	/// <param name="fullName">Полное имя</param>
+	/// <param name="email">Почтовый адрес</param>
+	/// <exception cref="DomainException">Тип не поддерживается</exception>
+	public static User CreateWithType(UserType type, Guid? energoIdGuid, string? login, string? passwordString, string? fullName, string? email)
 	{
-		Guid = Guid.NewGuid();
-
-		Update(type, fullName, login, passwordString, energoIdGuid, host, generateNewHash);
-	}
-
-	public static User CreateFromStaticOptions(string name, string token, string? host)
-	{
-		return new User
+		return type switch
 		{
-			Guid = Guid.NewGuid(),
-			Type = UserType.Static,
-			FullName = name,
-			StaticHost = host,
-			PasswordHash = PasswordHashValue.FromExistingHash(token),
+			UserType.Local => CreateFromLoginPassword(login, passwordString, fullName),
+			UserType.EnergoId => CreateFromEnergoId(energoIdGuid, email, fullName),
+			_ => throw new DomainException("Указанный тип учетной записи не поддерживается: " + type),
 		};
 	}
 
-	public static User CreateFromLoginPassword(string login, string password)
+	/// <summary>
+	/// Создание из данных EnergoId
+	/// </summary>
+	/// <param name="energoIdGuid">Идентификатор учетной записи EnergoId</param>
+	/// <param name="email">Почтовый адрес</param>
+	/// <param name="fullName">Полное имя</param>
+	public static User CreateFromEnergoId(Guid? energoIdGuid, string? email, string? fullName)
 	{
-		return new User
+		if (energoIdGuid == null)
+			throw new DomainException("Идентификатор EnergoId является обязательным для учетной записи с таким типом");
+
+		var user = new User
 		{
-			Guid = Guid.NewGuid(),
-			Type = UserType.Local,
-			Login = login,
-			PasswordHash = PasswordHashValue.FromPlainText(password),
+			Guid = energoIdGuid.Value,
 		};
+		user.UpdateAsEnergoId(fullName, email);
+		return user;
 	}
 
+	/// <summary>
+	/// Создание из логин-пароля
+	/// </summary>
+	/// <param name="login">Логин</param>
+	/// <param name="passwordString">Строка пароля</param>
+	/// <param name="fullName">Полное имя</param>
+	public static User CreateFromLoginPassword(string? login, string? passwordString, string? fullName)
+	{
+		var user = new User
+		{
+			Guid = Guid.NewGuid(),
+		};
+		user.UpdateAsLocal(login, passwordString, fullName, null);
+		return user;
+	}
+
+	#endregion Конструкторы
+
+	#region Методы
+
+	/// <inheritdoc/>
 	public void MarkAsDeleted()
 	{
 		if (IsDeleted)
@@ -50,90 +82,61 @@ public record class User : IWithGuidKey, ISoftDeletable
 		IsDeleted = true;
 	}
 
-	public void Update(UserType type, string? fullName, string? login, string? passwordString, Guid? energoIdGuid, string? host, bool generateNewHash = false)
+	/// <summary>
+	/// Изменение учетной записи
+	/// </summary>
+	/// <param name="login">Логин</param>
+	/// <param name="passwordString">Строка пароля</param>
+	/// <param name="fullName">Полное имя</param>
+	/// <param name="email">Почтовый адрес</param>
+	/// <exception cref="DomainException">Тип не поддерживается</exception>
+	public void Update(string? login, string? passwordString, string? email, string? fullName)
 	{
-		if (type == UserType.Local)
+		if (Type == UserType.Local)
+		{
 			UpdateAsLocal(
 				login: login,
 				fullName: fullName,
+				email: email,
 				passwordString: passwordString);
-
-		else if (type == UserType.Static)
-			UpdateAsStatic(
-				fullName: fullName,
-				host: host,
-				generateNewHash: generateNewHash);
-
-		else if (type == UserType.EnergoId)
+		}
+		else if (Type == UserType.EnergoId)
+		{
 			UpdateAsEnergoId(
-				fullName: fullName,
-				energoIdGuid: energoIdGuid);
-
+				email: email,
+				fullName: fullName);
+		}
 		else
-			throw new DomainException("Указанный тип учетной записи не поддерживается: " + type);
+			throw new DomainException("Указанный тип учетной записи не поддерживается: " + Type);
 	}
 
-	private void UpdateAsLocal(string? login, string? fullName, string? passwordString)
+	private void UpdateAsLocal(string? login, string? fullName, string? passwordString, string? email)
 	{
 		if (string.IsNullOrEmpty(login))
 			throw new DomainException("Логин не может быть пустым");
 
+		if (string.IsNullOrEmpty(passwordString))
+			throw new DomainException("Пароль не может быть пустым");
+
 		Type = UserType.Local;
 		Login = login;
 		PasswordHash = PasswordHashValue.FromPlainText(passwordString);
-		SetFullName(fullName);
-
-		EnergoIdGuid = null;
-		StaticHost = null;
-	}
-
-	private void UpdateAsEnergoId(Guid? energoIdGuid, string? fullName)
-	{
-		if (!energoIdGuid.HasValue)
-			throw new DomainException("Идентификатор EnergoId не может быть пустым");
-
-		Type = UserType.EnergoId;
-		EnergoIdGuid = energoIdGuid.Value;
-		SetFullName(fullName);
-
-		Login = null;
-		PasswordHash = null;
-		StaticHost = null;
-	}
-
-	private void UpdateAsStatic(string? fullName, string? host, bool generateNewHash)
-	{
-		Type = UserType.Static;
-		StaticHost = host;
-		SetFullName(fullName);
-
-		if (string.IsNullOrEmpty(PasswordHash?.Value) || generateNewHash)
-			PasswordHash = PasswordHashValue.FromEmpty();
-
-		Login = null;
-		EnergoIdGuid = null;
-	}
-
-	private void SetFullName(string? fullName)
-	{
-		if (string.IsNullOrEmpty(fullName))
-			throw new DomainException("Имя статичной учетной записи является обязательным");
-
+		Email = email;
 		FullName = fullName;
 	}
 
-	/// <summary>
-	/// Проверка пароля (опционально, можно делать через сервис)
-	/// </summary>
-	public bool VerifyPassword(string? plainText)
+	private void UpdateAsEnergoId(string? fullName, string? email)
 	{
-		if (PasswordHash is null)
-			return false;
-
-		return PasswordHash.Verify(plainText);
+		Type = UserType.EnergoId;
+		Login = null;
+		PasswordHash = null;
+		Email = email;
+		FullName = fullName;
 	}
 
-	// поля в БД
+	#endregion Методы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -151,32 +154,28 @@ public record class User : IWithGuidKey, ISoftDeletable
 	public bool IsDeleted { get; private set; } = false;
 
 	/// <summary>
-	/// Имя для входа
+	/// Адрес электронной почты
+	/// </summary>
+	public string? Email { get; private set; }
+
+	/// <summary>
+	/// Имя для входа для локальных пользователей
 	/// </summary>
 	public string? Login { get; private set; }
 
 	/// <summary>
-	/// Полное имя
-	/// </summary>
-	public string FullName { get; private set; } = string.Empty;
-
-	/// <summary>
-	/// Хэш пароля
+	/// Хэш пароля для локальных пользователей
 	/// </summary>
 	public PasswordHashValue? PasswordHash { get; private set; }
 
 	/// <summary>
-	/// Адрес, с которого разрешен доступ
+	/// Полное имя для локальных пользователей
 	/// </summary>
-	public string? StaticHost { get; private set; }
+	public string? FullName { get; private set; }
 
-	/// <summary>
-	/// Идентификатор в EnergoId
-	/// </summary>
-	public Guid? EnergoIdGuid { get; private set; }
+	#endregion Свойства
 
-
-	// связи
+	#region Связи
 
 	/// <summary>
 	/// Список связей с группами пользователей
@@ -217,4 +216,6 @@ public record class User : IWithGuidKey, ISoftDeletable
 	/// Рассчитаные для этой учетной записи указания фактического доступа
 	/// </summary>
 	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
+
+	#endregion Связи
 }

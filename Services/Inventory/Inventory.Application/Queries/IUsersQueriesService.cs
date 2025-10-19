@@ -8,9 +8,9 @@ namespace Datalake.Inventory.Application.Queries;
 public interface IUsersQueriesService
 {
 	/// <summary>
-	/// Получение полной информации о учетных записях, включая группы, права доступа и данные для входа
+	/// Получение полной информации о учетной записи, включая группы и права доступа
 	/// </summary>
-	Task<UserDetailInfo?> GetWithDetailsAsync(
+	Task<UserInfo?> GetByGuidAsync(
 		Guid userGuid,
 		CancellationToken ct = default);
 

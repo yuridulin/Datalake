@@ -10,6 +10,8 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class UserSession
 {
+	#region Конструкторы
+
 	private UserSession() { }
 
 	/// <summary>
@@ -35,31 +37,53 @@ public record class UserSession
 		};
 	}
 
+	#endregion Конструкторы
+
+	#region
+
 	private static bool IsExpire(DateTime date)
 	{
 		return DateTimeExtension.GetCurrentDateTime() <= date;
 	}
 
+	/// <summary>
+	/// Проверка на актуальность
+	/// </summary>
+	/// <exception cref="DomainException">Сессия не актуальна</exception>
 	public void Validate()
 	{
 		if (IsExpire())
 			throw new DomainException("Сессия истекла");
 	}
 
+	/// <summary>
+	/// Обновление сессии на указанное количество времени
+	/// </summary>
+	/// <param name="timeSpan">Время</param>
 	public void Refresh(TimeSpan timeSpan)
 	{
 		ExpirationTime.Add(timeSpan);
 	}
 
+	/// <summary>
+	/// Проверка, истекла ли сессия
+	/// </summary>
 	public bool IsExpire()
 	{
 		return IsExpire(ExpirationTime);
 	}
 
-	public int Id { get; private set; }
+	#endregion
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
+	/// </summary>
+	public int Id { get; private set; }
+
+	/// <summary>
+	/// Идентификатор пользователя
 	/// </summary>
 	public Guid UserGuid { get; private set; }
 
@@ -83,11 +107,15 @@ public record class UserSession
 	/// </summary>
 	public UserType Type { get; private set; }
 
-	// связи
+	#endregion Свойства
+
+	#region Связи
 
 	/// <summary>
 	/// Связанная учетная запись
 	/// </summary>
 	public User User { get; set; } = null!;
+
+	#endregion Связи
 }
 

@@ -8,6 +8,8 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class BlockTag : IWithIdentityKey
 {
+	#region Конструкторы
+
 	private BlockTag() { }
 
 	/// <summary>
@@ -25,7 +27,9 @@ public record class BlockTag : IWithIdentityKey
 		Relation = relation;
 	}
 
-	// поля в БД
+	#endregion Конструкторы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -52,7 +56,9 @@ public record class BlockTag : IWithIdentityKey
 	/// </summary>
 	public BlockTagRelation Relation { get; private set; } = BlockTagRelation.Static;
 
-	// связи
+	#endregion Свойства
+
+	#region Связи
 
 	/// <summary>
 	/// Блок
@@ -63,4 +69,6 @@ public record class BlockTag : IWithIdentityKey
 	/// Тег
 	/// </summary>
 	public Tag? Tag { get; set; }
+
+	#endregion Связи
 }

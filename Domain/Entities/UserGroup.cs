@@ -9,14 +9,31 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class UserGroup : IWithGuidKey, ISoftDeletable
 {
+	#region Конструкторы
+
 	private UserGroup() { }
 
+	/// <summary>
+	/// Создание новой группы учетных записей
+	/// </summary>
+	/// <param name="parentGuid">Идентификатор родительской группы</param>
+	/// <param name="name">Название</param>
+	/// <param name="description">Описание</param>
 	public UserGroup(Guid? parentGuid, string? name, string? description)
 	{
 		UpdateParent(parentGuid);
 		Update(name, description);
 	}
 
+	#endregion Конструкторы
+
+	#region Методы
+
+	/// <summary>
+	/// Изменение родительской группы, в которую входит эта группа
+	/// </summary>
+	/// <param name="parentGuid">Идентификатор родительской группы</param>
+	/// <exception cref="DomainException">Действие не разрешено</exception>
 	public void UpdateParent(Guid? parentGuid)
 	{
 		if (parentGuid.HasValue && parentGuid.Value == Guid)
@@ -25,6 +42,12 @@ public record class UserGroup : IWithGuidKey, ISoftDeletable
 		ParentGuid = parentGuid;
 	}
 
+	/// <summary>
+	/// Изменение свойств группы
+	/// </summary>
+	/// <param name="name">Название</param>
+	/// <param name="description">Описание</param>
+	/// <exception cref="DomainException">Значения не корректны</exception>
 	public void Update(string? name, string? description)
 	{
 		if (string.IsNullOrEmpty(name))
@@ -34,6 +57,7 @@ public record class UserGroup : IWithGuidKey, ISoftDeletable
 		Description = description;
 	}
 
+	/// <inheritdoc/>
 	public void MarkAsDeleted()
 	{
 		if (IsDeleted)
@@ -42,7 +66,9 @@ public record class UserGroup : IWithGuidKey, ISoftDeletable
 		IsDeleted = true;
 	}
 
-	// поля в БД
+	#endregion Методы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -69,7 +95,9 @@ public record class UserGroup : IWithGuidKey, ISoftDeletable
 	/// </summary>
 	public bool IsDeleted { get; private set; } = false;
 
-	// связи
+	#endregion Свойства
+
+	#region Связи
 
 	/// <summary>
 	/// Родительская группа
@@ -105,4 +133,6 @@ public record class UserGroup : IWithGuidKey, ISoftDeletable
 	/// Рассчитаные для этой группы учетных записей указания фактического доступа
 	/// </summary>
 	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
+
+	#endregion Связи
 }

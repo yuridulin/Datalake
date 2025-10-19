@@ -29,7 +29,7 @@ public class CreateSourceHandler(
 
 	public override async Task<int> ExecuteInTransactionAsync(CreateSourceCommand command, CancellationToken ct = default)
 	{
-		source = new(command.Type, address: command.Address, name: command.Name, description: command.Description);
+		source = Source.CreateAsExternal(command.Type, address: command.Address, name: command.Name, description: command.Description);
 
 		await sourcesRepository.AddAsync(source, ct);
 		await _unitOfWork.SaveChangesAsync(ct);

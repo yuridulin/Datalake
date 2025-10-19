@@ -35,13 +35,13 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 		var result = await handler.HandleAsync(new()
 		{
 			User = user,
-			AccessType = request.AccessType,
 			Type = request.Type,
 			EnergoIdGuid = request.EnergoIdGuid,
-			FullName = request.FullName,
 			Login = request.Login,
 			Password = request.Password,
-			StaticHost = request.StaticHost,
+			FullName = request.FullName,
+			Email = request.Email,
+			AccessType = request.AccessType,
 		}, ct);
 
 		return Ok(result);
@@ -74,7 +74,7 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о пользователе</returns>
-	public async Task<ActionResult<UserDetailInfo>> GetWithDetailsAsync(
+	public async Task<ActionResult<UserInfo>> GetWithDetailsAsync(
 		[FromServices] IGetUserWithDetailsHandler handler,
 		[BindRequired, FromRoute] Guid userGuid,
 		CancellationToken ct = default)
@@ -109,14 +109,11 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 		{
 			User = user,
 			Guid = userGuid,
-			AccessType = request.AccessType,
-			Type = request.Type,
-			EnergoIdGuid = request.EnergoIdGuid,
-			FullName = request.FullName,
 			Login = request.Login,
 			Password = request.Password,
-			StaticHost = request.StaticHost,
-			GenerateNewHash = request.CreateNewStaticHash
+			FullName = request.FullName,
+			Email = request.Email,
+			AccessType = request.AccessType,
 		}, ct);
 
 		return NoContent();

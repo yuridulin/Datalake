@@ -31,11 +31,9 @@ public record class TagInput : IWithIdentityKey
 		VariableName = variable;
 	}
 
-	#endregion
+	#endregion Конструкторы
 
-	#region
-
-	// поля в БД
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -62,7 +60,9 @@ public record class TagInput : IWithIdentityKey
 	/// </summary>
 	public string VariableName { get; private set; } = string.Empty;
 
-	// связи
+	#endregion Свойства
+
+	#region Связи
 
 	/// <summary>
 	/// Результирующий тег
@@ -73,4 +73,6 @@ public record class TagInput : IWithIdentityKey
 	/// Входной тег
 	/// </summary>
 	public Tag? InputTag { get; set; }
+
+	#endregion Связи
 }

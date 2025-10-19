@@ -9,6 +9,8 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class Block : IWithIdentityKey, ISoftDeletable
 {
+	#region Конструкторы
+
 	private Block() { }
 
 	/// <summary>
@@ -32,6 +34,10 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 		Name = name;
 		Description = description;
 	}
+
+	#endregion Конструкторы
+
+	#region Методы
 
 	/// <summary>
 	/// Изменение имени
@@ -73,7 +79,9 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 		IsDeleted = true;
 	}
 
-	// поля в БД
+	#endregion Методы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -105,7 +113,9 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 	/// </summary>
 	public bool IsDeleted { get; private set; } = false;
 
-	// связанные данные
+	#endregion Свойства
+
+	#region Связи
 
 	/// <summary>
 	/// Родительский блок
@@ -127,11 +137,6 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 	/// </summary>
 	public ICollection<BlockTag> RelationsToTags { get; set; } = [];
 
-	/*/// <summary>
-	/// Список связанных тегов
-	/// </summary>
-	public ICollection<Tag> Tags { get; set; } = [];*/
-
 	/// <summary>
 	/// Список прямых правил доступа на этот блок
 	/// </summary>
@@ -146,4 +151,6 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 	/// Рассчитаные для этого блока указания фактического доступа
 	/// </summary>
 	public ICollection<CalculatedAccessRule> CalculatedAccessRules { get; set; } = [];
+
+	#endregion Связи
 }

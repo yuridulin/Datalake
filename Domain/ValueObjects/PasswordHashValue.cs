@@ -9,13 +9,12 @@ namespace Datalake.Domain.ValueObjects;
 /// </summary>
 public sealed record PasswordHashValue
 {
+	#region Конструкторы
+
 	private PasswordHashValue(string? hash)
 	{
 		_hash = hash ?? throw new DomainException("Нельзя создать без хэша");
 	}
-
-	public string Value => _hash;
-	private readonly string _hash;
 
 	/// <summary>
 	/// Генерация нового случайного хэша
@@ -51,6 +50,10 @@ public sealed record PasswordHashValue
 		return new PasswordHashValue(hash);
 	}
 
+	#endregion Конструкторы
+
+	#region Методы
+
 	/// <summary>
 	/// Для сохранения в БД
 	/// </summary>
@@ -69,4 +72,16 @@ public sealed record PasswordHashValue
 
 		return _hash == testHashString;
 	}
+
+	#endregion Методы
+
+	#region Свойства
+
+	/// <summary>
+	/// Значение хэша пароля
+	/// </summary>
+	public string Value => _hash;
+	private readonly string _hash;
+
+	#endregion Свойства
 }

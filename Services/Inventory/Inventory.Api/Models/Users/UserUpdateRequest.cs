@@ -29,6 +29,11 @@ public class UserUpdateRequest
 	public string? FullName { get; set; }
 
 	/// <summary>
+	/// Новый почтовый адрес
+	/// </summary>
+	public string? Email { get; set; }
+
+	/// <summary>
 	/// Новый глобальный уровень доступа
 	/// </summary>
 	[Required]

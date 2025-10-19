@@ -60,7 +60,7 @@ public class DomainStartService(
 			var defaultAdminUser = await usersRepository.GetByLoginAsync("admin");
 			if (defaultAdminUser == null)
 			{
-				defaultAdminUser = User.CreateFromLoginPassword("admin", "admin");
+				defaultAdminUser = User.CreateFromLoginPassword("admin", "admin", "Глобальный администратор");
 				await usersRepository.AddAsync(defaultAdminUser);
 
 				var defaultAdminGlobalRule = new AccessRule(AccessType.Admin, defaultAdminUser.Guid);

@@ -14,4 +14,8 @@ public interface IAccessRulesRepository : IRepository<AccessRule, int>
 	public Task<IEnumerable<AccessRule>> GetUserRulesAsync(Guid userGuid, CancellationToken ct = default);
 
 	public Task<IEnumerable<AccessRule>> GetUserGroupRulesAsync(Guid userGroupGuid, CancellationToken ct = default);
+
+	public Task<AccessRule?> GetUserGlobalRuleAsync(Guid userGuid, CancellationToken ct = default);
+
+	public Task<AccessRule?> GetUserGroupGlobalRuleAsync(Guid userGroupGuid, CancellationToken ct = default);
 }

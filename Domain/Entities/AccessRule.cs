@@ -9,6 +9,8 @@ namespace Datalake.Domain.Entities;
 /// </summary>
 public record class AccessRule : IWithIdentityKey
 {
+	#region Конструкторы
+
 	private AccessRule() { }
 
 	/// <summary>
@@ -76,7 +78,22 @@ public record class AccessRule : IWithIdentityKey
 		}
 	}
 
-	// поля в БД
+	#endregion Конструкторы
+
+	#region Методы
+
+	/// <summary>
+	/// Изменение уровня доступа правила
+	/// </summary>
+	/// <param name="accessType">Тип правила</param>
+	public void UpdateAccess(AccessType accessType)
+	{
+		AccessType = accessType;
+	}
+
+	#endregion Методы
+
+	#region Свойства
 
 	/// <summary>
 	/// Идентификатор
@@ -118,7 +135,9 @@ public record class AccessRule : IWithIdentityKey
 	/// </summary>
 	public AccessType AccessType { get; private set; } = AccessType.Denied;
 
-	// связи
+	#endregion Свойства
+
+	#region Связи
 
 	/// <summary>
 	/// Пользователь, на которого выдано правило
@@ -144,4 +163,6 @@ public record class AccessRule : IWithIdentityKey
 	/// Блок, на который действует правило
 	/// </summary>
 	public Block? Block { get; set; }
+
+	#endregion Связи
 }
