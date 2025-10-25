@@ -20,7 +20,10 @@ public class UserConfiguration(TableAccess access) : IEntityTypeConfiguration<Us
 		builder.HasKey(u => u.Guid);
 
 		// Настройка индексов
-		builder.HasIndex(u => u.Type);
+		if (access == TableAccess.Write)
+		{
+			builder.HasIndex(u => u.Type);
+		}
 
 		// Настройка свойств
 		builder

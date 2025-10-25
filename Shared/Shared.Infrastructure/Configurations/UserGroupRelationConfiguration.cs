@@ -28,10 +28,10 @@ public class UserGroupRelationConfiguration(TableAccess access) : IEntityTypeCon
 			.WithMany(group => group.UsersRelations)
 			.HasForeignKey(rel => rel.UserGroupGuid);
 
-		builder.HasIndex(rel => new { rel.UserGroupGuid, rel.UserGuid }).IsUnique();
-
 		if (access == TableAccess.Write)
 		{
+			builder.HasIndex(rel => new { rel.UserGroupGuid, rel.UserGuid }).IsUnique();
+
 			relationToUser.OnDelete(DeleteBehavior.Cascade);
 			relationToGroup.OnDelete(DeleteBehavior.Cascade);
 		}

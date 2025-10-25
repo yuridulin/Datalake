@@ -28,10 +28,10 @@ public class BlockTagConfiguration(TableAccess access) : IEntityTypeConfiguratio
 			.WithMany(e => e.RelationsToTags)
 			.HasForeignKey(rel => rel.BlockId);
 
-		builder.HasIndex(rel => new { rel.BlockId, rel.TagId }).IsUnique();
-
 		if (access == TableAccess.Write)
 		{
+			builder.HasIndex(rel => new { rel.BlockId, rel.TagId }).IsUnique();
+
 			relationToTag.OnDelete(DeleteBehavior.SetNull);
 			relationToBlock.OnDelete(DeleteBehavior.Cascade);
 		}

@@ -61,6 +61,8 @@ public class Program
 
 		app.MapApi();
 
+		// запуск
+		app.NotifyStart(nameof(Data), CurrentEnvironment, Version);
 		await app.RunAsync();
 	}
 }

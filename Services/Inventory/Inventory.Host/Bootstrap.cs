@@ -3,6 +3,7 @@ using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using NJsonSchema.Generation;
+using System.Net;
 
 namespace Datalake.Inventory.Host;
 
@@ -35,7 +36,25 @@ public static class Bootstrap
 
 		builder.Services.AddSingleton<IAuthenticator, AuthenticationService>();
 
-		builder.Services.AddGrpc();
+		builder.Services.AddGrpc(options =>
+		{
+			options.EnableDetailedErrors = true;
+		});
+
+		builder.WebHost.ConfigureKestrel(options =>
+		{
+			// Порт для REST (HTTP/1.1)
+			options.Listen(IPAddress.Any, 8080, o =>
+			{
+				o.Protocols = HttpProtocols.Http1;
+			});
+
+			// Порт для gRPC (HTTP/2)
+			options.Listen(IPAddress.Any, 5000, o =>
+			{
+				o.Protocols = HttpProtocols.Http2;
+			});
+		});
 
 		return builder;
 	}
