@@ -1,5 +1,5 @@
 ﻿using Datalake.Data.Application.Interfaces.Cache;
-using Datalake.Domain.ValueObjects;
+using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -10,10 +10,10 @@ namespace Datalake.Data.Infrastructure.InMemory;
 public class CurrentValuesStore(
 	ILogger<CurrentValuesStore> logger) : ICurrentValuesStore
 {
-	private ConcurrentDictionary<int, TagHistoryValue> currentValues = [];
+	private ConcurrentDictionary<int, TagValue> currentValues = [];
 	private readonly SemaphoreSlim semaphore = new(1, 1);
 
-	public async Task ReloadValuesAsync(IEnumerable<TagHistoryValue> values)
+	public async Task ReloadValuesAsync(IEnumerable<TagValue> values)
 	{
 		await semaphore.WaitAsync();
 
@@ -21,7 +21,7 @@ public class CurrentValuesStore(
 		{
 
 			var valuesDict = values.ToDictionary(x => x.TagId);
-			var newValues = new ConcurrentDictionary<int, TagHistoryValue>(valuesDict);
+			var newValues = new ConcurrentDictionary<int, TagValue>(valuesDict);
 
 			Interlocked.Exchange(ref currentValues, newValues);
 
@@ -33,16 +33,16 @@ public class CurrentValuesStore(
 		}
 	}
 
-	public TagHistoryValue? TryGet(int id)
+	public TagValue? TryGet(int id)
 	{
 		return currentValues.TryGetValue(id, out var value) ? value : null;
 	}
 
-	public Dictionary<int, TagHistoryValue?> GetByIdentifiers(int[] identifiers)
+	public Dictionary<int, TagValue?> GetByIdentifiers(int[] identifiers)
 	{
 		var state = currentValues;
 
-		Dictionary<int, TagHistoryValue?> result = [];
+		Dictionary<int, TagValue?> result = [];
 		foreach (var id in identifiers)
 		{
 			if (result.ContainsKey(id)) // если один тег запрошен несколько раз за один запрос
@@ -55,7 +55,7 @@ public class CurrentValuesStore(
 		return result;
 	}
 
-	public bool TryUpdate(int tagId, TagHistoryValue incomingValue)
+	public bool TryUpdate(int tagId, TagValue incomingValue)
 	{
 		bool updated = true;
 
@@ -74,7 +74,7 @@ public class CurrentValuesStore(
 		return updated;
 	}
 
-	public bool IsNew(int id, TagHistoryValue incomingValue)
+	public bool IsNew(int id, TagValue incomingValue)
 	{
 		var existingValue = TryGet(id);
 		if (existingValue == null)

@@ -5,7 +5,7 @@ using Datalake.Data.Api.Models.Values;
 using Datalake.Data.Application.Features.Values.Commands.SystemWriteValues;
 using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Data.Application.Models.Tags;
-using Datalake.Domain.ValueObjects;
+using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;
@@ -20,7 +20,7 @@ public class ManualWriteValuesHandler(
 	public async Task<IEnumerable<ValuesTagResponse>> HandleAsync(ManualWriteValuesCommand command, CancellationToken ct = default)
 	{
 		List<ValuesTagResponse> responses = [];
-		List<TagHistoryValue> recordsToWrite = [];
+		List<TagValue> recordsToWrite = [];
 
 		foreach (var request in command.Requests)
 		{
@@ -57,7 +57,7 @@ public class ManualWriteValuesHandler(
 				continue;
 			}
 
-			var record = TagHistoryValue.FromRaw(tag.TagId, tag.TagType, request.Date, request.Quality, request.Value, tag.ScaleSettings?.GetScale());
+			var record = TagValue.FromRaw(tag.TagId, tag.TagType, request.Date, request.Quality, request.Value, tag.ScaleSettings?.GetScale());
 
 			var result =
 				tag.IsDeleted ? ValueResult.IsDeleted

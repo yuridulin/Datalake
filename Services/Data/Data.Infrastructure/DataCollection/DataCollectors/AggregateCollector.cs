@@ -5,7 +5,7 @@ using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;
 using Datalake.Data.Infrastructure.DataCollection.Interfaces;
 using Datalake.Data.Infrastructure.DataCollection.Models;
-using Datalake.Domain.ValueObjects;
+using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -71,7 +71,7 @@ public class AggregateCollector : DataCollectorBase
 		var hour = now.Hour;
 		var day = now.Day;
 
-		List<TagHistoryValue> records = [];
+		List<TagValue> records = [];
 
 		if (_minuteRules.Length > 0 && _lastMinute != minute)
 		{
@@ -101,9 +101,9 @@ public class AggregateCollector : DataCollectorBase
 			await WriteAsync(records);
 	}
 
-	private async Task<List<TagHistoryValue>> GetValuesAsync(TagAggregationRule[] rules, DateTime date, TagResolution period)
+	private async Task<List<TagValue>> GetValuesAsync(TagAggregationRule[] rules, DateTime date, TagResolution period)
 	{
-		TagHistoryAggregationWeightedValue[] aggregated = await GetAggregatedValuesAsync(rules, date, period);
+		TagWeightedValue[] aggregated = await GetAggregatedValuesAsync(rules, date, period);
 
 		var result = aggregated
 			.Select(value => new
@@ -114,8 +114,8 @@ public class AggregateCollector : DataCollectorBase
 			.Where(x => x.Tag != null)
 			.Select(x => x.Tag.AggregateFunction switch
 			{
-				TagAggregation.Sum => TagHistoryValue.AsNumeric(x.Tag.TagId, x.Value.Date, TagQuality.Good, x.Value.Sum, 1),
-				TagAggregation.Average => TagHistoryValue.AsNumeric(x.Tag.TagId, x.Value.Date, TagQuality.Good, x.Value.Average, 1),
+				TagAggregation.Sum => TagValue.AsNumeric(x.Tag.TagId, x.Value.Date, TagQuality.Good, x.Value.Sum, 1),
+				TagAggregation.Average => TagValue.AsNumeric(x.Tag.TagId, x.Value.Date, TagQuality.Good, x.Value.Average, 1),
 				_ => null,
 			})
 			.Where(x => x != null)
@@ -124,15 +124,15 @@ public class AggregateCollector : DataCollectorBase
 		return result!;
 	}
 
-	private async Task<TagHistoryAggregationWeightedValue[]> GetAggregatedValuesAsync(
+	private async Task<TagWeightedValue[]> GetAggregatedValuesAsync(
 		TagAggregationRule[] rules,
 		DateTime date,
 		TagResolution period)
 	{
 		using var scope = _serviceScopeFactory.CreateScope();
-		var aggregationRepository = scope.ServiceProvider.GetRequiredService<ITagsHistoryAggregationRepository>();
+		var aggregationRepository = scope.ServiceProvider.GetRequiredService<ITagsValuesAggregationRepository>();
 
-		var aggregatedValues = await aggregationRepository.GetWeightedAggregatedValuesAsync(rules.Select(x => x.SourceTagId).ToArray(), date, period);
+		var aggregatedValues = await aggregationRepository.GetWeightedValuesAsync(rules.Select(x => x.SourceTagId).ToArray(), date, period);
 		return aggregatedValues;
 	}
 

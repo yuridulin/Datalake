@@ -37,7 +37,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.10">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>

@@ -1,6 +1,6 @@
 ﻿using Datalake.Data.Application.Features.Values.Commands.SystemWriteValues;
 using Datalake.Data.Application.Interfaces.DataCollection;
-using Datalake.Domain.ValueObjects;
+using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,7 +22,7 @@ public class DataCollectorWriter(
 	private const int MaxRetryAttempts = 3;
 	private const int RetryBaseDelayMs = 1000;
 
-	private readonly Channel<TagHistoryValue> _channel = Channel.CreateUnbounded<TagHistoryValue>(new UnboundedChannelOptions
+	private readonly Channel<TagValue> _channel = Channel.CreateUnbounded<TagValue>(new UnboundedChannelOptions
 	{
 		SingleWriter = false,
 		SingleReader = true,
@@ -34,7 +34,7 @@ public class DataCollectorWriter(
 	/// </summary>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		var batch = new List<TagHistoryValue>(BatchSize);
+		var batch = new List<TagValue>(BatchSize);
 		var lastFlush = DateTime.UtcNow;
 
 		await foreach (var item in _channel.Reader.ReadAllAsync(stoppingToken))
@@ -67,7 +67,7 @@ public class DataCollectorWriter(
 	/// <summary>
 	/// Producer: добавление новых значений в очередь
 	/// </summary>
-	public void AddToQueue(IEnumerable<TagHistoryValue> values)
+	public void AddToQueue(IEnumerable<TagValue> values)
 	{
 		foreach (var value in values)
 		{
@@ -82,7 +82,7 @@ public class DataCollectorWriter(
 	/// Обработка одного батча: запись с retry
 	/// </summary>
 	private async Task ProcessBatchAsync(
-		List<TagHistoryValue> batch,
+		List<TagValue> batch,
 		CancellationToken ct)
 	{
 		using var scope = serviceScopeFactory.CreateScope();
@@ -96,7 +96,7 @@ public class DataCollectorWriter(
 	/// </summary>
 	private async Task WriteBatchWithRetryAsync(
 		ISystemWriteValuesHandler systemWriteValuesHandler,
-		List<TagHistoryValue> batch,
+		List<TagValue> batch,
 		CancellationToken ct)
 	{
 		var attempt = 0;

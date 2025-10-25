@@ -1,4 +1,4 @@
-﻿using Datalake.Domain.ValueObjects;
+﻿using Datalake.Domain.Entities;
 using System.Threading.Channels;
 
 namespace Datalake.Data.Application.Interfaces.DataCollection;
@@ -13,5 +13,5 @@ public interface IDataCollector
 
 	string Name { get; }
 
-	Channel<IEnumerable<TagHistoryValue>> OutputChannel { get; }
+	Channel<IEnumerable<TagValue>> OutputChannel { get; }
 }

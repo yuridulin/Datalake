@@ -19,7 +19,7 @@ public static class ConfigurationsApplyHelper
 		modelBuilder.ApplyConfiguration(new TagConfiguration(readOnlySettings.Tags));
 		modelBuilder.ApplyConfiguration(new TagInputConfiguration(readOnlySettings.TagsInputs));
 		modelBuilder.ApplyConfiguration(new TagThresholdConfiguration(readOnlySettings.TagsThresholds));
-		modelBuilder.ApplyConfiguration(new TagHistoryConfiguration(readOnlySettings.TagsHistory));
+		modelBuilder.ApplyConfiguration(new TagValueConfiguration(readOnlySettings.TagsValues));
 		modelBuilder.ApplyConfiguration(new UserConfiguration(readOnlySettings.Users));
 		modelBuilder.ApplyConfiguration(new UserGroupConfiguration(readOnlySettings.UserGroups));
 		modelBuilder.ApplyConfiguration(new UserGroupRelationConfiguration(readOnlySettings.UserGroupsRelations));
@@ -39,7 +39,7 @@ public static class ConfigurationsApplyHelper
 		public required TableAccess Tags { get; init; }
 		public required TableAccess TagsInputs { get; init; }
 		public required TableAccess TagsThresholds { get; init; }
-		public required TableAccess TagsHistory { get; init; }
+		public required TableAccess TagsValues { get; init; }
 		public required TableAccess Users { get; init; }
 		public required TableAccess UserGroups { get; init; }
 		public required TableAccess UserGroupsRelations { get; init; }

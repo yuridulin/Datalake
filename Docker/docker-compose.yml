@@ -128,6 +128,7 @@ services:
     restart: always
     ports:
       - 7601:8080
+      - 5001:5001
     volumes:
       - "../Services/Inventory/Inventory.Host/storage:/app/storage"
 

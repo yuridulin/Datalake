@@ -4,7 +4,7 @@ using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;
-using Datalake.Domain.ValueObjects;
+using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
 using NCalc;
@@ -43,7 +43,7 @@ public class CalculateCollector(
 	protected override async Task Work()
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
-		List<TagHistoryValue> batch = [];
+		List<TagValue> batch = [];
 
 		foreach (var scope in calculationScopes)
 		{
@@ -107,7 +107,7 @@ public class CalculateCollector(
 
 			try
 			{
-				TagHistoryValue value = TagHistoryValue.FromRaw(scope.TagId, scope.TagType, now, TagQuality.Good, value: result, scope.TagScale);
+				TagValue value = TagValue.FromRaw(scope.TagId, scope.TagType, now, TagQuality.Good, value: result, scope.TagScale);
 				errorsStore.Set(scope.TagId, null);
 				batch.Add(value);
 			}
@@ -148,10 +148,10 @@ public class CalculateCollector(
 		public required IEnumerable<TagCalculationInputDto> Inputs { get; init; } = [];
 	}
 
-	private TagHistoryValue HandleError(int tagId, DateTime date, string error)
+	private TagValue HandleError(int tagId, DateTime date, string error)
 	{
 		errorsStore.Set(tagId, error);
 
-		return TagHistoryValue.AsEmpty(tagId, date, TagQuality.Bad_CalcError);
+		return TagValue.AsEmpty(tagId, date, TagQuality.Bad_CalcError);
 	}
 }

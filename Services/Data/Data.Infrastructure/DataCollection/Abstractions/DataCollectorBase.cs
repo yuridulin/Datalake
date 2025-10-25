@@ -1,7 +1,6 @@
 ﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Domain.Entities;
-using Datalake.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
 
@@ -18,7 +17,7 @@ public abstract class DataCollectorBase(
 	protected readonly SourceSettingsDto _source = sourceSettings;
 	protected readonly ILogger _logger = logger;
 	protected readonly CancellationTokenSource _tokenSource = new();
-	protected readonly Channel<IEnumerable<TagHistoryValue>> _outputChannel = Channel.CreateUnbounded<IEnumerable<TagHistoryValue>>();
+	protected readonly Channel<IEnumerable<TagValue>> _outputChannel = Channel.CreateUnbounded<IEnumerable<TagValue>>();
 	protected readonly string _name = Source.InternalSources.Contains(sourceSettings.SourceType)
 		? sourceSettings.SourceType.ToString()
 		: $"{sourceSettings.SourceName}<{sourceSettings.SourceType}>#{sourceSettings.SourceId}";
@@ -26,7 +25,7 @@ public abstract class DataCollectorBase(
 	protected CancellationToken _stoppingToken;
 	private volatile bool _stopped = false;
 
-	public Channel<IEnumerable<TagHistoryValue>> OutputChannel => _outputChannel;
+	public Channel<IEnumerable<TagValue>> OutputChannel => _outputChannel;
 
 	public string Name => _name;
 
@@ -81,7 +80,7 @@ public abstract class DataCollectorBase(
 		_logger.LogDebug("Сборщик {name} окончательно остановлен", _name);
 	}
 
-	protected virtual async Task WriteAsync(IEnumerable<TagHistoryValue> values, bool connected = true)
+	protected virtual async Task WriteAsync(IEnumerable<TagValue> values, bool connected = true)
 	{
 		if (_stopped || _tokenSource.IsCancellationRequested)
 			return;

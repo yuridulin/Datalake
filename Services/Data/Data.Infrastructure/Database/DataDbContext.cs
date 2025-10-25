@@ -1,5 +1,4 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Infrastructure;
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -38,7 +37,7 @@ public class DataDbContext : DbContext
 			Settings = TableAccess.Read,
 			Sources = TableAccess.Read,
 			Tags = TableAccess.Read,
-			TagsHistory = TableAccess.Write,
+			TagsValues = TableAccess.Write,
 			TagsInputs = TableAccess.Read,
 			TagsThresholds = TableAccess.Read,
 			UserGroups = TableAccess.Read,
@@ -48,7 +47,7 @@ public class DataDbContext : DbContext
 		});
 	}
 
-	public virtual DbSet<TagHistoryValue> TagsHistory { get; set; }
+	public virtual DbSet<TagValue> TagsHistory { get; set; }
 
 	public virtual DbSet<Source> Sources { get; set; }
 

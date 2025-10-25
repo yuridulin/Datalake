@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Datalake.Inventory.Infrastructure.Migrations
+namespace Datalake.Inventory.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(InventoryDbContext))]
     partial class InventoryDbContextModelSnapshot : ModelSnapshot

@@ -23,7 +23,7 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Datalake.Domain.Entities.AccessRights", b =>
+            modelBuilder.Entity("Datalake.Domain.Entities.AccessRule", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("integer");
@@ -63,154 +63,10 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("AccessRights", "public");
+                    b.ToView("AccessRules", "inventory");
                 });
 
-            modelBuilder.Entity("Datalake.Domain.Entities.Block", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("GlobalId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParentId");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("Blocks", "public");
-                });
-
-            modelBuilder.Entity("Datalake.Domain.Entities.BlockProperty", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("BlockId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BlockId");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("BlockProperties", "public");
-                });
-
-            modelBuilder.Entity("Datalake.Domain.Entities.BlockTag", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("BlockId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Relation")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TagId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TagId");
-
-                    b.HasIndex("BlockId", "TagId")
-                        .IsUnique();
-
-                    b.ToTable((string)null);
-
-                    b.ToView("BlockTags", "public");
-                });
-
-            modelBuilder.Entity("Datalake.Domain.Entities.EnergoId", b =>
-                {
-                    b.Property<Guid>("Guid")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Birthday")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EnterpriseCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("FirstName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Gender")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("MiddleName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("MobilePhone")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PersonnelNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UploaderEnterpriseCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("WorkPhone")
-                        .HasColumnType("text");
-
-                    b.HasKey("Guid");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("Users", "energo-id");
-                });
-
-            modelBuilder.Entity("Datalake.Domain.Entities.Log", b =>
+            modelBuilder.Entity("Datalake.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
@@ -273,7 +129,151 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("Logs", "public");
+                    b.ToView("Logs", "inventory");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.Entities.Block", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("GlobalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("Blocks", "inventory");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.Entities.BlockProperty", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BlockId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlockId");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("BlockProperties", "inventory");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.Entities.BlockTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BlockId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Relation")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TagId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagId");
+
+                    b.HasIndex("BlockId", "TagId")
+                        .IsUnique();
+
+                    b.ToTable((string)null);
+
+                    b.ToView("BlockTags", "inventory");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.Entities.EnergoId", b =>
+                {
+                    b.Property<Guid>("Guid")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Birthday")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EnterpriseCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MiddleName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MobilePhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PersonnelNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UploaderEnterpriseCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("WorkPhone")
+                        .HasColumnType("text");
+
+                    b.HasKey("Guid");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("Users", "energo-id");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.Settings", b =>
@@ -304,7 +304,7 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("Settings", "public");
+                    b.ToView("Settings", "inventory");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.Source", b =>
@@ -335,7 +335,7 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("Sources", "public");
+                    b.ToView("Sources", "inventory");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.Tag", b =>
@@ -417,7 +417,7 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("Tags", "public");
+                    b.ToView("Tags", "inventory");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.TagInput", b =>
@@ -446,7 +446,7 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("TagInputs", "public");
+                    b.ToView("TagInputs", "inventory");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.TagThreshold", b =>
@@ -469,7 +469,38 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("TagThresholds", "public");
+                    b.ToView("TagThresholds", "inventory");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.Entities.TagValue", b =>
+                {
+                    b.Property<int>("TagId")
+                        .HasColumnType("integer")
+                        .HasColumnName("TagId");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("Date");
+
+                    b.Property<bool?>("Boolean")
+                        .HasColumnType("boolean")
+                        .HasColumnName("Boolean");
+
+                    b.Property<float?>("Number")
+                        .HasColumnType("real")
+                        .HasColumnName("Number");
+
+                    b.Property<byte>("Quality")
+                        .HasColumnType("smallint")
+                        .HasColumnName("Quality");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text")
+                        .HasColumnName("Text");
+
+                    b.HasKey("TagId", "Date");
+
+                    b.ToTable("TagsValues", "data");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.User", b =>
@@ -477,11 +508,10 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
                     b.Property<Guid>("Guid")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("EnergoIdGuid")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
 
                     b.Property<string>("FullName")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
@@ -496,9 +526,6 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("PasswordHash");
 
-                    b.Property<string>("StaticHost")
-                        .HasColumnType("text");
-
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -506,17 +533,11 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.HasKey("Guid");
 
-                    b.HasIndex("EnergoIdGuid")
-                        .IsUnique();
-
                     b.HasIndex("Type");
-
-                    b.HasIndex("Login", "EnergoIdGuid")
-                        .IsUnique();
 
                     b.ToTable((string)null);
 
-                    b.ToView("Users", "public");
+                    b.ToView("Users", "inventory");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.UserGroup", b =>
@@ -543,7 +564,7 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("UserGroups", "public");
+                    b.ToView("UserGroups", "inventory");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.UserGroupRelation", b =>
@@ -569,44 +590,102 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("UserGroupRelations", "public");
+                    b.ToView("UserGroupRelations", "inventory");
                 });
 
-            modelBuilder.Entity("Datalake.Domain.ValueObjects.TagHistory", b =>
+            modelBuilder.Entity("Datalake.Domain.Entities.UserSession", b =>
                 {
-                    b.Property<bool?>("Boolean")
-                        .HasColumnType("boolean")
-                        .HasColumnName("Boolean");
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("Date");
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<float?>("Number")
-                        .HasColumnType("real")
-                        .HasColumnName("Number");
+                    b.Property<DateTime>("ExpirationTime")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<byte>("Quality")
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("Token");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("UserGuid")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserGuid");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("UserSessions", "gateway");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.ValueObjects.CalculatedAccessRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer")
+                        .HasColumnName("Id");
+
+                    b.Property<byte>("AccessType")
                         .HasColumnType("smallint")
-                        .HasColumnName("Quality");
+                        .HasColumnName("AccessType");
 
-                    b.Property<int>("TagId")
+                    b.Property<int?>("BlockId")
+                        .HasColumnType("integer")
+                        .HasColumnName("BlockId");
+
+                    b.Property<bool>("IsGlobal")
+                        .HasColumnType("boolean")
+                        .HasColumnName("IsGlobal");
+
+                    b.Property<int>("RuleId")
+                        .HasColumnType("integer")
+                        .HasColumnName("RuleId");
+
+                    b.Property<int?>("SourceId")
+                        .HasColumnType("integer")
+                        .HasColumnName("SourceId");
+
+                    b.Property<int?>("TagId")
                         .HasColumnType("integer")
                         .HasColumnName("TagId");
 
-                    b.Property<string>("Text")
-                        .HasColumnType("text")
-                        .HasColumnName("Text");
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt");
 
-                    b.HasIndex("TagId", "Date")
-                        .IsUnique()
-                        .IsDescending(false, true)
-                        .HasDatabaseName("TagsHistory_TagId_Date_idx");
+                    b.Property<Guid?>("UserGroupGuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("UserGroupGuid");
 
-                    b.ToTable("TagsHistory", "data");
+                    b.Property<Guid>("UserGuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("UserGuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlockId");
+
+                    b.HasIndex("SourceId");
+
+                    b.HasIndex("TagId");
+
+                    b.HasIndex("UserGroupGuid");
+
+                    b.HasIndex("UserGuid");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("CalculatedAccessRules", "inventory");
                 });
 
-            modelBuilder.Entity("Datalake.Domain.Entities.AccessRights", b =>
+            modelBuilder.Entity("Datalake.Domain.Entities.AccessRule", b =>
                 {
                     b.HasOne("Datalake.Domain.Entities.Block", "Block")
                         .WithMany("AccessRules")
@@ -639,46 +718,9 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
                     b.Navigation("UserGroup");
                 });
 
-            modelBuilder.Entity("Datalake.Domain.Entities.Block", b =>
+            modelBuilder.Entity("Datalake.Domain.Entities.AuditLog", b =>
                 {
-                    b.HasOne("Datalake.Domain.Entities.Block", "Parent")
-                        .WithMany("Children")
-                        .HasForeignKey("ParentId");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("Datalake.Domain.Entities.BlockProperty", b =>
-                {
-                    b.HasOne("Datalake.Domain.Entities.Block", "Block")
-                        .WithMany("Properties")
-                        .HasForeignKey("BlockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-                });
-
-            modelBuilder.Entity("Datalake.Domain.Entities.BlockTag", b =>
-                {
-                    b.HasOne("Datalake.Domain.Entities.Block", "Block")
-                        .WithMany("RelationsToTags")
-                        .HasForeignKey("BlockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Datalake.Domain.Entities.Tag", "Tag")
-                        .WithMany("RelationsToBlocks")
-                        .HasForeignKey("TagId");
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Tag");
-                });
-
-            modelBuilder.Entity("Datalake.Domain.Entities.Log", b =>
-                {
-                    b.HasOne("Datalake.Domain.Entities.AccessRights", "AffectedAccessRights")
+                    b.HasOne("Datalake.Domain.Entities.AccessRule", "AffectedAccessRights")
                         .WithMany()
                         .HasForeignKey("AffectedAccessRightsId");
 
@@ -719,6 +761,43 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
                     b.Navigation("AffectedUserGroup");
 
                     b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.Entities.Block", b =>
+                {
+                    b.HasOne("Datalake.Domain.Entities.Block", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId");
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.Entities.BlockProperty", b =>
+                {
+                    b.HasOne("Datalake.Domain.Entities.Block", "Block")
+                        .WithMany("Properties")
+                        .HasForeignKey("BlockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.Entities.BlockTag", b =>
+                {
+                    b.HasOne("Datalake.Domain.Entities.Block", "Block")
+                        .WithMany("RelationsToTags")
+                        .HasForeignKey("BlockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Datalake.Domain.Entities.Tag", "Tag")
+                        .WithMany("RelationsToBlocks")
+                        .HasForeignKey("TagId");
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.Tag", b =>
@@ -776,7 +855,9 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
                 {
                     b.HasOne("Datalake.Domain.Entities.EnergoId", "EnergoId")
                         .WithOne("User")
-                        .HasForeignKey("Datalake.Domain.Entities.User", "EnergoIdGuid");
+                        .HasForeignKey("Datalake.Domain.Entities.User", "Guid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("EnergoId");
                 });
@@ -809,11 +890,59 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
                     b.Navigation("UserGroup");
                 });
 
+            modelBuilder.Entity("Datalake.Domain.Entities.UserSession", b =>
+                {
+                    b.HasOne("Datalake.Domain.Entities.User", "User")
+                        .WithMany("Sessions")
+                        .HasForeignKey("UserGuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Datalake.Domain.ValueObjects.CalculatedAccessRule", b =>
+                {
+                    b.HasOne("Datalake.Domain.Entities.Block", "Block")
+                        .WithMany("CalculatedAccessRules")
+                        .HasForeignKey("BlockId");
+
+                    b.HasOne("Datalake.Domain.Entities.Source", "Source")
+                        .WithMany("CalculatedAccessRules")
+                        .HasForeignKey("SourceId");
+
+                    b.HasOne("Datalake.Domain.Entities.Tag", "Tag")
+                        .WithMany("CalculatedAccessRules")
+                        .HasForeignKey("TagId");
+
+                    b.HasOne("Datalake.Domain.Entities.UserGroup", "UserGroup")
+                        .WithMany("CalculatedAccessRules")
+                        .HasForeignKey("UserGroupGuid");
+
+                    b.HasOne("Datalake.Domain.Entities.User", "User")
+                        .WithMany("CalculatedAccessRules")
+                        .HasForeignKey("UserGuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Source");
+
+                    b.Navigation("Tag");
+
+                    b.Navigation("User");
+
+                    b.Navigation("UserGroup");
+                });
+
             modelBuilder.Entity("Datalake.Domain.Entities.Block", b =>
                 {
                     b.Navigation("AccessRules");
 
                     b.Navigation("AuditLogs");
+
+                    b.Navigation("CalculatedAccessRules");
 
                     b.Navigation("Children");
 
@@ -833,6 +962,8 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.Navigation("AuditLogs");
 
+                    b.Navigation("CalculatedAccessRules");
+
                     b.Navigation("Tags");
                 });
 
@@ -843,6 +974,8 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
                     b.Navigation("AggregateTagsUsingThisTag");
 
                     b.Navigation("AuditLogs");
+
+                    b.Navigation("CalculatedAccessRules");
 
                     b.Navigation("Inputs");
 
@@ -863,7 +996,11 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
 
                     b.Navigation("AuditLogs");
 
+                    b.Navigation("CalculatedAccessRules");
+
                     b.Navigation("GroupsRelations");
+
+                    b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("Datalake.Domain.Entities.UserGroup", b =>
@@ -871,6 +1008,8 @@ namespace Datalake.Data.Infrastructure.Database.Migrations
                     b.Navigation("AccessRules");
 
                     b.Navigation("AuditLogs");
+
+                    b.Navigation("CalculatedAccessRules");
 
                     b.Navigation("Children");
 

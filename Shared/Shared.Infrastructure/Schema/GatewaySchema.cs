@@ -3,6 +3,7 @@
 public static class GatewaySchema
 {
 	public static string Name { get; } = "gateway";
+	public static string Migrations { get; } = "__EFMigrationsHistory";
 
 	public static class UserSessions
 	{

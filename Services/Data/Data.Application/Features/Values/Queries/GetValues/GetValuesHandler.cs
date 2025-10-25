@@ -6,6 +6,7 @@ using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Data.Application.Interfaces.Repositories;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Application.Models.Values;
+using Datalake.Domain.Entities;
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -147,16 +148,16 @@ public class GetValuesHandler(
 			.ToArray();
 
 		using var scope = serviceScopeFactory.CreateScope();
-		var tagsHistoryRepository = scope.ServiceProvider.GetRequiredService<ITagsHistoryRepository>();
+		var tagsHistoryRepository = scope.ServiceProvider.GetRequiredService<ITagsValuesRepository>();
 
 		foreach (var sqlScope in sqlScopes)
 		{
-			IEnumerable<TagHistoryValue> databaseValues;
+			IEnumerable<TagValue> databaseValues;
 
 			// получение среза
 			if (!sqlScope.Settings.Old.HasValue && !sqlScope.Settings.Young.HasValue)
 			{
-				Dictionary<int, TagHistoryValue?> databaseValuesById;
+				Dictionary<int, TagValue?> databaseValuesById;
 
 				if (sqlScope.Settings.Exact.HasValue)
 				{
@@ -192,7 +193,7 @@ public class GetValuesHandler(
 							if (!databaseValuesById.TryGetValue(tag.TagId, out var value) || value == null)
 							{
 								tag.Result = ValueResult.ValueNotFound;
-								value = TagHistoryValue.AsEmpty(tag.TagId, sqlScope.Settings.Exact.Value, TagQuality.Bad_NoValues);
+								value = TagValue.AsEmpty(tag.TagId, sqlScope.Settings.Exact.Value, TagQuality.Bad_NoValues);
 							}
 
 							var tagValue = new ValueRecord
@@ -353,14 +354,14 @@ public class GetValuesHandler(
 
 	private const int _stretchLimit = 100000;
 
-	private static List<TagHistoryValue> StretchByResolution(
-		List<TagHistoryValue> valuesByChange,
+	private static List<TagValue> StretchByResolution(
+		List<TagValue> valuesByChange,
 		DateTime old,
 		DateTime young,
 		TagResolution resolution)
 	{
 		var timeRange = (young - old).TotalMilliseconds;
-		List<TagHistoryValue> continuous = [];
+		List<TagValue> continuous = [];
 		DateTime stepDate = old;
 		int step = 0;
 

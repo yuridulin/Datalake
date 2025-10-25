@@ -5,6 +5,7 @@ using Datalake.Gateway.Infrastructure.Database.Repositories;
 using Datalake.Gateway.Infrastructure.Database.Services;
 using Datalake.Gateway.Infrastructure.InMemory;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,10 +20,14 @@ public static class Bootstrap
 		var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
 		connectionString = EnvExpander.FillEnvVariables(connectionString);
 
-		builder.Services
-			.AddNpgsqlDataSource(connectionString)
-			.AddDbContext<GatewayDbContext>(options => options
-				.UseNpgsql(connectionString));
+		builder.Services.AddNpgsqlDataSource(connectionString);
+		builder.Services.AddDbContext<GatewayDbContext>(options =>
+		{
+			options.UseNpgsql(connectionString, npgsql =>
+			{
+				npgsql.MigrationsHistoryTable(GatewaySchema.Migrations, GatewaySchema.Name);
+			});
+		});
 
 		builder.Services.AddSingleton<ISessionsCache, MemorySessionsCache>();
 		builder.Services.AddSingleton<IUsersActivityService, UsersActivityService>();
@@ -33,8 +38,7 @@ public static class Bootstrap
 
 		builder.Services.AddScoped<IUserAccessService, UserAccessService>();
 
-		builder.Services.AddSingleton<DbInitializer>();
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<DbInitializer>());
+		builder.Services.AddHostedService<GatewayDbStartupService>();
 
 		return builder;
 	}

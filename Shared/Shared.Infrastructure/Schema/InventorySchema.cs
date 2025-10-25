@@ -3,6 +3,7 @@
 public static class InventorySchema
 {
 	public static string Name { get; } = "inventory";
+	public static string Migrations { get; } = "__EFMigrationsHistory";
 
 	public static class AccessRules
 	{

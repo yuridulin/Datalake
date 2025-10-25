@@ -31,7 +31,7 @@ public class GatewayDbContext(DbContextOptions<GatewayDbContext> options) : DbCo
 			Settings = TableAccess.Read,
 			Sources = TableAccess.Read,
 			Tags = TableAccess.Read,
-			TagsHistory = TableAccess.Read,
+			TagsValues = TableAccess.Read,
 			TagsInputs = TableAccess.Read,
 			TagsThresholds = TableAccess.Read,
 			UserGroups = TableAccess.Read,

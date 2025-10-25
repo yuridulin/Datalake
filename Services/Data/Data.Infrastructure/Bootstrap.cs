@@ -11,6 +11,7 @@ using Datalake.Data.Infrastructure.DataCollection.Repositories;
 using Datalake.Data.Infrastructure.DataReceive;
 using Datalake.Data.Infrastructure.InMemory;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Schema;
 using LinqToDB;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
@@ -28,23 +29,27 @@ public static class Bootstrap
 		var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
 		connectionString = EnvExpander.FillEnvVariables(connectionString);
 
-		builder.Services
-			.AddDbContext<DataDbContext>(options => options.UseNpgsql(connectionString));
-
-		builder.Services
-			.AddLinqToDBContext<DataLinqToDbContext>((provider, options) =>
+		builder.Services.AddDbContext<DataDbContext>(options =>
+		{
+			options.UseNpgsql(connectionString, npgsql =>
 			{
-				return options
-					.UseDefaultLogging(provider)
-					.UseTraceLevel(System.Diagnostics.TraceLevel.Verbose)
-					.UsePostgreSQL(connectionString);
+				npgsql.MigrationsHistoryTable(DataSchema.Migrations, DataSchema.Name);
 			});
+		});
+
+		builder.Services.AddLinqToDBContext<DataDbLinqContext>((provider, options) =>
+		{
+			return options
+				.UseDefaultLogging(provider)
+				.UseTraceLevel(System.Diagnostics.TraceLevel.Verbose)
+				.UsePostgreSQL(connectionString);
+		});
 
 		builder.Services.AddSingleton<IUserAccessStore, UserAccessStore>();
 
 		builder.Services.AddScoped<ISourcesSettingsRepository, SourcesSettingsRepository>();
-		builder.Services.AddScoped<ITagsHistoryAggregationRepository, TagsHistoryAggregationRepository>();
-		builder.Services.AddScoped<ITagsHistoryRepository, TagsHistoryRepository>();
+		builder.Services.AddScoped<ITagsValuesAggregationRepository, TagsValuesAggregationRepository>();
+		builder.Services.AddScoped<ITagsValuesRepository, TagsValuesRepository>();
 
 		builder.Services.AddSingleton<IDataCollectorFactory, DataCollectorFactory>();
 		builder.Services.AddSingleton<IDataCollectorProcessor, DataCollectorProcessor>();
@@ -56,8 +61,7 @@ public static class Bootstrap
 
 		builder.Services.AddSingleton<IReceiverService, ReceiverService>();
 
-		builder.Services.AddSingleton<DbInitializer>();
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<DbInitializer>());
+		builder.Services.AddHostedService<DataDbStartupService>();
 
 		return builder;
 	}

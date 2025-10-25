@@ -14,6 +14,7 @@ using Datalake.Inventory.Infrastructure.InMemory.Inventory;
 using Datalake.Inventory.Infrastructure.InMemory.UserAccess;
 using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +31,13 @@ public static class Bootstrap
 
 		builder.Services.AddNpgsqlDataSource(connectionString);
 
-		builder.Services.AddDbContext<InventoryDbContext>(options => options.UseNpgsql(connectionString));
+		builder.Services.AddDbContext<InventoryDbContext>(options =>
+		{
+			options.UseNpgsql(connectionString, npgsql =>
+			{
+				npgsql.MigrationsHistoryTable(InventorySchema.Migrations, InventorySchema.Name);
+			});
+		});
 
 		builder.Services.AddScoped<IUnitOfWork, DbUnitOfWork>();
 

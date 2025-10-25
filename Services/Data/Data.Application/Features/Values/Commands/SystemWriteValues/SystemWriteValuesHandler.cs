@@ -7,7 +7,7 @@ namespace Datalake.Data.Application.Features.Values.Commands.SystemWriteValues;
 public interface ISystemWriteValuesHandler : ICommandHandler<SystemWriteValuesCommand, bool> { }
 
 public class SystemWriteValuesHandler(
-	ITagsHistoryRepository tagsHistoryRepository,
+	ITagsValuesRepository tagsHistoryRepository,
 	ICurrentValuesStore currentValuesStore) : ISystemWriteValuesHandler
 {
 	public async Task<bool> HandleAsync(SystemWriteValuesCommand command, CancellationToken ct = default)

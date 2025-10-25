@@ -1,4 +1,4 @@
-﻿using Datalake.Domain.ValueObjects;
+﻿using Datalake.Domain.Entities;
 using Microsoft.Extensions.Hosting;
 
 namespace Datalake.Data.Application.Interfaces.DataCollection;
@@ -12,5 +12,5 @@ public interface IDataCollectorWriter : IHostedService
 	/// Добавление новых значений в очередь на запись
 	/// </summary>
 	/// <param name="values">Список новых значений</param>
-	void AddToQueue(IEnumerable<TagHistoryValue> values);
+	void AddToQueue(IEnumerable<TagValue> values);
 }

@@ -32,7 +32,7 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 			Settings = TableAccess.Write,
 			Sources = TableAccess.Write,
 			Tags = TableAccess.Write,
-			TagsHistory = TableAccess.Read,
+			TagsValues = TableAccess.Read,
 			TagsInputs = TableAccess.Write,
 			TagsThresholds = TableAccess.Write,
 			UserGroups = TableAccess.Write,

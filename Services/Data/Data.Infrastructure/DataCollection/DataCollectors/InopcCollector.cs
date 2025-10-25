@@ -4,7 +4,7 @@ using Datalake.Data.Application.Interfaces;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;
-using Datalake.Domain.ValueObjects;
+using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -119,7 +119,7 @@ public class InopcCollector : DataCollectorBase
 
 			var collectedValues = response.Tags
 				.SelectMany(item => _itemsTags[item.Name]
-					.Select(tag => TagHistoryValue.FromRaw(tag.TagId, tag.TagType, now, item.Quality, item.Value, tag.ScaleSettings?.GetScale())))
+					.Select(tag => TagValue.FromRaw(tag.TagId, tag.TagType, now, item.Quality, item.Value, tag.ScaleSettings?.GetScale())))
 				.ToArray();
 
 			await WriteAsync(collectedValues, response.IsConnected);

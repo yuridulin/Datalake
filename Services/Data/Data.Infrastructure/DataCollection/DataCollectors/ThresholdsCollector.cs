@@ -5,7 +5,7 @@ using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;
-using Datalake.Domain.ValueObjects;
+using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -41,7 +41,7 @@ public class ThresholdsCollector(
 	protected override async Task Work()
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
-		List<TagHistoryValue> batch = [];
+		List<TagValue> batch = [];
 
 		foreach (var (tag, inputId, map) in _thresholds)
 		{
@@ -56,12 +56,12 @@ public class ThresholdsCollector(
 					var outputValue = LookupValue(map, incomingValue.Number.Value);
 
 					errorsStore.Set(tag.TagId, null);
-					batch.Add(TagHistoryValue.AsNumeric(tag.TagId, now, TagQuality.Good, outputValue, tag.ScaleSettings?.GetScale()));
+					batch.Add(TagValue.AsNumeric(tag.TagId, now, TagQuality.Good, outputValue, tag.ScaleSettings?.GetScale()));
 				}
 				else
 				{
 					errorsStore.Set(tag.TagId, "Значение входного тега - не число");
-					batch.Add(TagHistoryValue.AsEmpty(tag.TagId, now, TagQuality.Bad_NoValues));
+					batch.Add(TagValue.AsEmpty(tag.TagId, now, TagQuality.Bad_NoValues));
 				}
 			}
 		}
