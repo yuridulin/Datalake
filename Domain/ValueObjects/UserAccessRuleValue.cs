@@ -5,7 +5,7 @@ namespace Datalake.Domain.ValueObjects;
 /// <summary>
 /// Рассчитанный уровень доступа
 /// </summary>
-public record struct UserAccessRuleValue
+public record class UserAccessRuleValue
 {
 	/// <summary>
 	/// Создание рассчитанного уровня доступа
@@ -33,7 +33,7 @@ public record struct UserAccessRuleValue
 	/// </summary>
 	/// <param name="minimal">Минимально необходимый уровень доступа</param>
 	/// <returns>Флаг достаточности</returns>
-	public readonly bool HasAccess(AccessType minimal)
+	public bool HasAccess(AccessType minimal)
 	{
 		return Access >= minimal;
 	}
