@@ -22,8 +22,7 @@ public static class Bootstrap
 				.AsImplementedInterfaces()
 				.WithScopedLifetime());
 
-		builder.Services.AddSingleton<DataCollectionStartService>();
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<DataCollectionStartService>());
+		builder.Services.AddHostedService<DataCollectionStartService>();
 
 		return builder;
 	}

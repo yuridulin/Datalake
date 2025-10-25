@@ -89,11 +89,11 @@ services:
       datalake-postgres:
         condition: service_healthy
     environment:
-      DATALAKE_HOST: datalake-postgres
-      DATALAKE_PORT: 5432
-      DATALAKE_DB: datalake
-      DATALAKE_DB_USER: postgres
-      DATALAKE_DB_PASS: postgres
+      DB_HOST: datalake-postgres
+      DB_PORT: 5432
+      DB_NAME: datalake
+      DB_USER: postgres
+      DB_PASS: postgres
       APP_VERSION: DEV
     restart: always
     ports:
@@ -119,11 +119,11 @@ services:
       timeout: 2s
       retries: 5
     environment:
-      DATALAKE_HOST: datalake-postgres
-      DATALAKE_PORT: 5432
-      DATALAKE_DB: datalake
-      DATALAKE_DB_USER: postgres
-      DATALAKE_DB_PASS: postgres
+      DB_HOST: datalake-postgres
+      DB_PORT: 5432
+      DB_NAME: datalake
+      DB_USER: postgres
+      DB_PASS: postgres
       APP_VERSION: DEV
     restart: always
     ports:
@@ -175,11 +175,11 @@ services:
       timeout: 2s
       retries: 5
     environment:
-      DATALAKE_HOST: datalake-postgres
-      DATALAKE_PORT: 5432
-      DATALAKE_DB: datalake
-      DATALAKE_DB_USER: postgres
-      DATALAKE_DB_PASS: postgres
+      DB_HOST: datalake-postgres
+      DB_PORT: 5432
+      DB_NAME: datalake
+      DB_USER: postgres
+      DB_PASS: postgres
       APP_VERSION: DEV
     restart: always
     ports:

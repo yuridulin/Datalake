@@ -5,12 +5,16 @@ using Datalake.Domain.ValueObjects;
 
 namespace Datalake.Data.Host.Services;
 
-public class GrpcInventoryApiClient(InventoryGrpcService.InventoryGrpcServiceClient client) : IInventoryApiClient
+public class GrpcInventoryApiClient(
+	InventoryGrpcService.InventoryGrpcServiceClient client,
+	ILogger<GrpcInventoryApiClient> logger) : IInventoryApiClient
 {
 	public async Task<Dictionary<Guid, UserAccessValue>> GetCalculatedAccessAsync(
 		IEnumerable<Guid> guids,
 		CancellationToken ct = default)
 	{
+		logger.LogInformation("Получение рассчитанных ");
+
 		var request = new GetCalculatedAccessRequest();
 		request.UserGuids.AddRange(guids.Select(g => g.ToString()));
 

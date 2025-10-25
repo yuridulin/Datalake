@@ -37,15 +37,6 @@ public static class Bootstrap
 
 		builder.Services.AddGrpc();
 
-		builder.WebHost.ConfigureKestrel(options =>
-		{
-			options.ListenAnyIP(8080, o =>
-			{
-				// Разрешаем и HTTP/1.1 (REST) и HTTP/2 (gRPC)
-				o.Protocols = HttpProtocols.Http1AndHttp2;
-			});
-		});
-
 		return builder;
 	}
 
