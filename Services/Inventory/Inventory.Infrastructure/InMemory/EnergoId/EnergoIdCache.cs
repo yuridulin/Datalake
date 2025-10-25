@@ -4,7 +4,6 @@ using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.InMemory.EnergoId;
 
