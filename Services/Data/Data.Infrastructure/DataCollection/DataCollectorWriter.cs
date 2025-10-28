@@ -22,22 +22,19 @@ public class DataCollectorWriter(
 	private const int MaxRetryAttempts = 3;
 	private const int RetryBaseDelayMs = 1000;
 
-	private readonly Channel<TagValue> _channel = Channel.CreateUnbounded<TagValue>(new UnboundedChannelOptions
+	private readonly Channel<TagValue> channel = Channel.CreateUnbounded<TagValue>(new UnboundedChannelOptions
 	{
 		SingleWriter = false,
 		SingleReader = true,
 		AllowSynchronousContinuations = false
 	});
 
-	/// <summary>
-	/// Основной consumer-loop: читает из канала, формирует батчи и записывает в БД
-	/// </summary>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		var batch = new List<TagValue>(BatchSize);
 		var lastFlush = DateTime.UtcNow;
 
-		await foreach (var item in _channel.Reader.ReadAllAsync(stoppingToken))
+		await foreach (var item in channel.Reader.ReadAllAsync(stoppingToken))
 		{
 			batch.Add(item);
 
@@ -50,37 +47,33 @@ public class DataCollectorWriter(
 			}
 		}
 
-		// После Complete(): финальная запись оставшегося набора
+		// финальная запись оставшегося набора
 		if (batch.Count > 0)
 			await ProcessBatchAsync(batch, stoppingToken);
 	}
 
-	/// <summary>
-	/// Пометка канала завершённым, чтобы consumer завершился
-	/// </summary>
 	public override async Task StopAsync(CancellationToken cancellationToken)
 	{
-		_channel.Writer.Complete();
+		channel.Writer.Complete();
 		await base.StopAsync(cancellationToken);
 	}
 
-	/// <summary>
-	/// Producer: добавление новых значений в очередь
-	/// </summary>
-	public void AddToQueue(IEnumerable<TagValue> values)
+	public async Task AddValuesToQueueAsync(IReadOnlyCollection<TagValue> values, CancellationToken cancellationToken = default)
 	{
 		foreach (var value in values)
 		{
-			if (!_channel.Writer.TryWrite(value))
+			try
 			{
-				logger.LogCritical("Не удалось записать в канал!");
+				await channel.Writer.WriteAsync(value, cancellationToken);
+			}
+			catch(OperationCanceledException)
+			{
+				// Игнорируем - система останавливается
+				break;
 			}
 		}
 	}
 
-	/// <summary>
-	/// Обработка одного батча: запись с retry
-	/// </summary>
 	private async Task ProcessBatchAsync(
 		List<TagValue> batch,
 		CancellationToken ct)
@@ -91,9 +84,6 @@ public class DataCollectorWriter(
 		await WriteBatchWithRetryAsync(systemWriteValuesHandler, batch, ct);
 	}
 
-	/// <summary>
-	/// Метод записи в БД с экспоненциальным бэкоффом
-	/// </summary>
 	private async Task WriteBatchWithRetryAsync(
 		ISystemWriteValuesHandler systemWriteValuesHandler,
 		List<TagValue> batch,

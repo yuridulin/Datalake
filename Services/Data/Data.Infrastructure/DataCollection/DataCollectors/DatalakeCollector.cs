@@ -1,4 +1,5 @@
-﻿using Datalake.Data.Application.Models.Sources;
+﻿using Datalake.Data.Application.Interfaces.DataCollection;
+using Datalake.Data.Application.Models.Sources;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
@@ -7,31 +8,29 @@ namespace Datalake.Data.Infrastructure.DataCollection.DataCollectors;
 
 [Transient]
 public class DatalakeCollector(
-	SourceSettingsDto source,
-	ILogger<DatalakeCollector> logger) : DataCollectorBase(source, logger)
+	IDataCollectorProcessor processor,
+	ILogger<DatalakeCollector> logger,
+	SourceSettingsDto source) : DataCollectorBase(processor, logger, source)
 {
-	public override void Start(CancellationToken stoppingToken)
+	public override Task StartAsync(CancellationToken stoppingToken)
 	{
-		if (_source.RemoteSettings == null)
+		if (source.RemoteSettings == null)
 		{
-			Task.Run(() => WriteAsync([], false), stoppingToken);
-			_logger.LogWarning("Сборщик \"{name}\" не имеет настроек получения данных и не будет запущен", _name);
-			return;
+			this.logger.LogWarning("Сборщик {name} не имеет настроек получения данных и не будет запущен", Name);
+			return Task.CompletedTask;
 		}
 
-		if (string.IsNullOrEmpty(_source.RemoteSettings.RemoteHost))
+		if (string.IsNullOrEmpty(source.RemoteSettings.RemoteHost))
 		{
-			Task.Run(() => WriteAsync([], false), stoppingToken);
-			_logger.LogWarning("Сборщик \"{name}\" не имеет адреса для получения данных и не будет запущен", _name);
-			return;
+			this.logger.LogWarning("Сборщик \"{name}\" не имеет адреса для получения данных и не будет запущен", Name);
+			return Task.CompletedTask;
 		}
 
-		Task.Run(() => WriteAsync([], true), stoppingToken);
-		base.Start(stoppingToken);
+		return base.StartAsync(stoppingToken);
 	}
 
-	protected override async Task Work()
+	protected override Task WorkAsync(CancellationToken cancellationToken)
 	{
-		await WriteAsync([]);
+		return Task.CompletedTask;
 	}
 }

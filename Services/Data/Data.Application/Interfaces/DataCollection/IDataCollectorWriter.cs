@@ -11,6 +11,5 @@ public interface IDataCollectorWriter : IHostedService
 	/// <summary>
 	/// Добавление новых значений в очередь на запись
 	/// </summary>
-	/// <param name="values">Список новых значений</param>
-	void AddToQueue(IEnumerable<TagValue> values);
+	Task AddValuesToQueueAsync(IReadOnlyCollection<TagValue> values, CancellationToken cancellationToken = default);
 }

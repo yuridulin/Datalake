@@ -15,37 +15,29 @@ namespace Datalake.Data.Infrastructure.DataCollection.DataCollectors;
 public class ThresholdsCollector(
 	ICurrentValuesStore valuesStore,
 	IDataCollectionErrorsStore errorsStore,
-	SourceSettingsDto source,
-	ILogger<DatalakeCollector> logger) : DataCollectorBase(source, logger)
+	IDataCollectorProcessor processor,
+	ILogger<DatalakeCollector> logger,
+	SourceSettingsDto source) : DataCollectorBase(processor, logger, source)
 {
-	public override void Start(CancellationToken stoppingToken)
+	public override Task StartAsync(CancellationToken stoppingToken)
 	{
 		if (_thresholds.Length == 0)
 		{
-			Task.Run(() => WriteAsync([], false), stoppingToken);
-			_logger.LogWarning("Сборщик \"{name}\" не имеет правил расчета и не будет запущен", _name);
-			return;
+			this.logger.LogWarning("Сборщик \"{name}\" не имеет правил расчета и не будет запущен", Name);
+			return Task.CompletedTask;
 		}
 
-		Task.Run(() => WriteAsync([], true), stoppingToken);
-		base.Start(stoppingToken);
+		return base.StartAsync(stoppingToken);
 	}
 
-	public override void PrepareToStop()
-	{
-		base.PrepareToStop();
-
-		_thresholds = [];
-	}
-
-	protected override async Task Work()
+	protected override async Task WorkAsync(CancellationToken cancellationToken)
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
 		List<TagValue> batch = [];
 
 		foreach (var (tag, inputId, map) in _thresholds)
 		{
-			if (_tokenSource.IsCancellationRequested)
+			if (!isRunning)
 				break;
 
 			var incomingValue = valuesStore.TryGet(inputId);
@@ -66,7 +58,7 @@ public class ThresholdsCollector(
 			}
 		}
 
-		await WriteAsync(batch);
+		await WriteValuesAsync(batch, cancellationToken);
 	}
 
 

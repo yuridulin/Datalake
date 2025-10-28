@@ -23,14 +23,14 @@ public class DataCollectorFactory(
 			SourceType.Datalake
 				=> ActivatorUtilities.CreateInstance<DatalakeCollector>(provider, source),
 
-			SourceType.Calculated
-				=> ActivatorUtilities.CreateInstance<CalculateCollector>(provider, source),
+			//SourceType.Calculated
+				//=> ActivatorUtilities.CreateInstance<CalculateCollector>(provider, source),
 
 			SourceType.System
 				=> ActivatorUtilities.CreateInstance<SystemCollector>(provider, source),
 
-			SourceType.Aggregated
-				=> ActivatorUtilities.CreateInstance<AggregateCollector>(provider, source),
+			//SourceType.Aggregated
+				//=> ActivatorUtilities.CreateInstance<AggregateCollector>(provider, source),
 
 			SourceType.Manual
 				=> ActivatorUtilities.CreateInstance<ManualCollector>(provider, source),

@@ -166,7 +166,7 @@ services:
     container_name: datalake-events
     build:
       context: ../
-      dockerfile: ./Services/EventsService/Dockerfile
+      dockerfile: ./Services/Events/Events.Host/Dockerfile
     depends_on:
       datalake-postgres:
         condition: service_healthy
@@ -186,7 +186,7 @@ services:
     ports:
       - 7603:8080
     volumes:
-      - "../Services/EventsService/storage:/app/storage"
+      - "../Services/Events/Events.Host/storage:/app/storage"
 
 
 # Необязательные дополнения
@@ -195,13 +195,13 @@ services:
   datalake-client:
     container_name: datalake-client
     build:
-      context: ../Client/datalake
+      context: ../Clients/datalake
       dockerfile: Dockerfile
     restart: always
     ports:
       - "7604:7604"
     volumes:
-      - ../Client/datalake:/app
+      - ../Clients/datalake:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development

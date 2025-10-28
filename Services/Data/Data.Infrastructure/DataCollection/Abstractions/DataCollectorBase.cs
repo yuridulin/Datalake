@@ -1,8 +1,8 @@
 ﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Domain.Entities;
+using Datalake.Shared.Application.Exceptions;
 using Microsoft.Extensions.Logging;
-using System.Threading.Channels;
 
 namespace Datalake.Data.Infrastructure.DataCollection.Abstractions;
 
@@ -10,90 +10,123 @@ namespace Datalake.Data.Infrastructure.DataCollection.Abstractions;
 /// Базовый класс сборщика с реализацией основных механизмов
 /// </summary>
 public abstract class DataCollectorBase(
-	SourceSettingsDto sourceSettings,
+	IDataCollectorProcessor processor,
 	ILogger logger,
+	SourceSettingsDto source,
 	int workInterval = 1000) : IDataCollector
 {
-	protected readonly SourceSettingsDto _source = sourceSettings;
-	protected readonly ILogger _logger = logger;
-	protected readonly CancellationTokenSource _tokenSource = new();
-	protected readonly Channel<IEnumerable<TagValue>> _outputChannel = Channel.CreateUnbounded<IEnumerable<TagValue>>();
-	protected readonly string _name = Source.InternalSources.Contains(sourceSettings.SourceType)
-		? sourceSettings.SourceType.ToString()
-		: $"{sourceSettings.SourceName}<{sourceSettings.SourceType}>#{sourceSettings.SourceId}";
+	protected readonly IDataCollectorProcessor processor = processor;
+	protected readonly ILogger logger = logger;
+	protected readonly SourceSettingsDto source = source;
+	protected volatile bool isRunning = false;
 
-	protected CancellationToken _stoppingToken;
-	private volatile bool _stopped = false;
+	private readonly CancellationTokenSource localCts = new();
+	private Task workLoopTask = Task.CompletedTask;
 
-	public Channel<IEnumerable<TagValue>> OutputChannel => _outputChannel;
+	public string Name { get; } = Source.InternalSources.Contains(source.SourceType)
+		? source.SourceType.ToString()
+		: $"{source.SourceName}<{source.SourceType}>#{source.SourceId}";
 
-	public string Name => _name;
-
-	public virtual void Start(CancellationToken stoppingToken = default)
+	public virtual Task StartAsync(CancellationToken cancellationToken = default)
 	{
-		_stopped = false;
-		_stoppingToken = stoppingToken;
-		_logger.LogDebug("Сборщик {name} запущен", _name);
+		if (isRunning)
+			return Task.CompletedTask;
 
-		_ = WorkLoop();
-	}
-
-	protected virtual async Task WorkLoop()
-	{
-		while (!_tokenSource.Token.IsCancellationRequested)
+		isRunning = true;
+		logger.LogInformation("Запуск сборщика {name}", Name);
+		try
 		{
-			try
-			{
-				await Work();
-				await Task.Delay(workInterval, _tokenSource.Token);
-			}
-			catch (OperationCanceledException)
-			{
-				await WriteAsync([], false);
-				break; // Выход при отмене
-			}
-			catch (Exception ex) when (ex is not OperationCanceledException)
-			{
-				_logger.LogDebug("Сборщик {name}: {err}", _name, ex.Message);
-				await WriteAsync([], false);
-				await Task.Delay(5000, _tokenSource.Token);
-			}
+			// создаем локальный токен отмены, который также сработает, если внешний процессор пришлет отмену
+			var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, localCts.Token);
+
+			workLoopTask = WorkLoopAsync(linkedCts.Token);
+			return Task.CompletedTask;
 		}
-		_logger.LogDebug("Сборщик {name} завершил работу", _name);
+		catch (Exception ex)
+		{
+			isRunning = false;
+			logger.LogError(ex, "Критическая ошибка при запуске сборщика {name}", Name);
+
+			throw new InfrastructureException($"Не удалось запустить сборщик {Name}: {ex.Message}");
+		}
 	}
 
-	protected abstract Task Work();
-
-	public virtual void PrepareToStop()
+	public virtual async Task StopAsync()
 	{
-		_tokenSource.Cancel();
-		_outputChannel.Writer.TryComplete();
-		_logger.LogDebug("Сборщик {name} готовится к остановке", _name);
-	}
-
-	public virtual void Stop()
-	{
-		if (_stopped)
-			return;
-		_stopped = true;
-
-		_logger.LogDebug("Сборщик {name} окончательно остановлен", _name);
-	}
-
-	protected virtual async Task WriteAsync(IEnumerable<TagValue> values, bool connected = true)
-	{
-		if (_stopped || _tokenSource.IsCancellationRequested)
+		if (!isRunning)
 			return;
 
-		if (!values.Any())
-			return;
+		logger.LogDebug("Остановка сборщика {name}", Name);
+
+		isRunning = false;
+		localCts.Cancel();
 
 		try
 		{
-			await _outputChannel.Writer.WriteAsync(values, _stoppingToken);
+			var timeoutTask = Task.Delay(TimeSpan.FromSeconds(5));
+			var completedTask = await Task.WhenAny(workLoopTask, timeoutTask);
+
+			if (completedTask == timeoutTask)
+			{
+				logger.LogWarning("Таймаут остановки сборщика {name}", Name);
+			}
 		}
-		catch (ChannelClosedException)
+		catch (Exception ex)
 		{
+			logger.LogWarning(ex, "Ошибка при остановке сборщика {name}", Name);
+		}
+
+		logger.LogInformation("Сборщик {name} остановлен", Name);
+	}
+
+	protected abstract Task WorkAsync(CancellationToken cancellationToken);
+
+	protected async Task WriteValuesAsync(IReadOnlyCollection<TagValue> values, CancellationToken cancellationToken)
+	{
+		await processor.WriteValuesAsync(values, cancellationToken);
+	}
+
+	private async Task WorkLoopAsync(CancellationToken cancellationToken)
+	{
+		try
+		{
+			logger.LogInformation("Сборщик {name} начал работу", Name);
+
+			while (isRunning && !cancellationToken.IsCancellationRequested)
+			{
+				try
+				{
+					await WorkAsync(cancellationToken);
+
+					if (workInterval > 0)
+					{
+						await Task.Delay(workInterval, cancellationToken);
+					}
+				}
+				catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+				{
+					logger.LogDebug("Работа сборщика {name} отменена", Name);
+					break;
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(ex, "Ошибка в работе сборщика {name}", Name);
+
+					// пауза перед повторной попыткой
+					if (isRunning)
+					{
+						await Task.Delay(5000, cancellationToken);
+					}
+				}
+			}
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			logger.LogCritical(ex, "Критическая ошибка в рабочем цикле сборщика {name}", Name);
+		}
+		finally
+		{
+			logger.LogDebug("Сборщик {name} завершил работу", Name);
 		}
 	}
 }

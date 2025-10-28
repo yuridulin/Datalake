@@ -16,38 +16,30 @@ namespace Datalake.Data.Infrastructure.DataCollection.DataCollectors;
 public class CalculateCollector(
 	ICurrentValuesStore valuesStore,
 	IDataCollectionErrorsStore errorsStore,
-	SourceSettingsDto source,
-	ILogger<DatalakeCollector> logger) : DataCollectorBase(source, logger)
+	IDataCollectorProcessor processor,
+	ILogger<DatalakeCollector> logger,
+	SourceSettingsDto source) : DataCollectorBase(processor, logger, source)
 {
-	public override void Start(CancellationToken stoppingToken)
+	public override Task StartAsync(CancellationToken stoppingToken)
 	{
 		// если тегов нет, то и работать незачем
 		if (!calculationScopes.Any())
 		{
-			Task.Run(() => WriteAsync([], false), stoppingToken);
-			_logger.LogWarning("Сборщик \"{name}\" не имеет правил расчета и не будет запущен", _name);
-			return;
+			this.logger.LogWarning("Сборщик {name} не имеет правил расчета и не будет запущен", Name);
+			return Task.CompletedTask;
 		}
 
-		Task.Run(() => WriteAsync([], true), stoppingToken);
-		base.Start(stoppingToken);
+		return base.StartAsync(stoppingToken);
 	}
 
-	public override void PrepareToStop()
-	{
-		base.PrepareToStop();
-
-		calculationScopes = [];
-	}
-
-	protected override async Task Work()
+	protected override async Task WorkAsync(CancellationToken cancellationToken)
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
 		List<TagValue> batch = [];
 
 		foreach (var scope in calculationScopes)
 		{
-			if (_tokenSource.IsCancellationRequested)
+			if (!isRunning)
 				break;
 
 			// установка переменных для формулы
@@ -117,7 +109,7 @@ public class CalculateCollector(
 			}
 		}
 
-		await WriteAsync(batch);
+		await WriteValuesAsync(batch, cancellationToken);
 	}
 
 	/// <summary>

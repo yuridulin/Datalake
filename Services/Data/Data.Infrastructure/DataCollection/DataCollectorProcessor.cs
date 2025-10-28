@@ -1,101 +1,85 @@
 ﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
+using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
 
 namespace Datalake.Data.Infrastructure.DataCollection;
 
 [Singleton]
 public class DataCollectorProcessor(
-	IDataCollectorFactory dataCollectorFactory,
+	IDataCollectorFactory collectorsFactory,
 	IDataCollectorWriter dataWriter,
 	ILogger<DataCollectorProcessor> logger) : IDataCollectorProcessor
 {
-	private List<IDataCollector> _collectors = [];
-	private readonly ConcurrentDictionary<IDataCollector, Task> _activeCollectorsTasks = new();
-	private readonly SemaphoreSlim _restartLock = new(1, 1);
+	private readonly List<IDataCollector> collectors = new();
+	private readonly CancellationTokenSource globalCts = new();
+	private readonly SemaphoreSlim restartLock = new(1, 1);
 
-	public async Task RestartAsync(IEnumerable<SourceSettingsDto> sourcesSettings)
+	public async Task RestartAsync(IEnumerable<SourceSettingsDto> sources)
 	{
-		await _restartLock.WaitAsync();
+		await restartLock.WaitAsync();
 
 		try
 		{
-			await RestartCollectors(sourcesSettings);
+			await StartAsync(sources);
 		}
 		finally
 		{
-			_restartLock.Release();
+			restartLock.Release();
 		}
 	}
 
-	private async Task RestartCollectors(IEnumerable<SourceSettingsDto> sourcesSettings)
+	private async Task StartAsync(IEnumerable<SourceSettingsDto> sources)
 	{
-		logger.LogInformation("Выполняется обновление сборщиков");
+		logger.LogInformation("Запуск системы сбора данных");
 
 		// Останавливаем текущие сборщики
-		await StopCollecting();
+		await StopAsync();
 
 		// Создаём новые сборщики
-		_collectors = sourcesSettings
-			.Select(dataCollectorFactory.Create)
-			.Where(x => x != null)
-			.ToList()!;
-
-		// Запускаем новые сборщики и обработчики их каналов
-		foreach (var collector in _collectors)
+		collectors.Clear();
+		foreach (var source in sources)
 		{
-			collector.Start();
-			var processingTask = ProcessCollectorOutput(collector);
-			_activeCollectorsTasks[collector] = processingTask;
-
+			var collector = collectorsFactory.Create(source);
+			if (collector != null)
+			{
+				collectors.Add(collector);
+			}
 		}
 
-		logger.LogInformation("Обновление сборщиков завершено");
+		// Запускаем новые сборщики и обработчики их каналов
+		foreach (var collector in collectors)
+			await collector.StartAsync(globalCts.Token);
+
+		logger.LogInformation("Система сбора данных запущена");
 	}
 
-	private async Task StopCollecting()
+	private async Task StopAsync()
 	{
-		foreach (var collector in _collectors)
-			collector.PrepareToStop();
+		if (collectors.Count == 0)
+			return;
+
+		logger.LogInformation("Остановка системы сбора данных");
+
+		var stopTasks = new List<Task>();
+		foreach (var collector in collectors)
+			stopTasks.Add(Task.Run(collector.StopAsync));
 
 		var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
-		var completedTask = await Task.WhenAny(
-			Task.WhenAll(_activeCollectorsTasks.Values),
-			timeoutTask
-		);
+		var completedTask = await Task.WhenAny(Task.WhenAll(stopTasks), timeoutTask);
 
 		if (completedTask == timeoutTask)
 		{
 			logger.LogWarning("Таймаут остановки обработчиков!");
 		}
 
-		foreach (var collector in _collectors)
-			collector.Stop();
-
-		_activeCollectorsTasks.Clear();
+		collectors.Clear();
+		logger.LogInformation("Система сбора данных остановлена");
 	}
 
-	private async Task ProcessCollectorOutput(IDataCollector collector)
+	public async Task WriteValuesAsync(IReadOnlyCollection<TagValue> values, CancellationToken cancellationToken = default)
 	{
-		try
-		{
-			await foreach (var batch in collector.OutputChannel.Reader.ReadAllAsync())
-			{
-				if (batch?.Any() ?? false)
-				{
-					dataWriter.AddToQueue(batch);
-				}
-			}
-		}
-		catch (OperationCanceledException)
-		{
-			// Корректное завершение при отмене
-		}
-		catch (Exception ex)
-		{
-			logger.LogError(ex, "Ошибка обработки вывода сборщика {CollectorName}", collector.Name);
-		}
+		await dataWriter.AddValuesToQueueAsync(values, cancellationToken);
 	}
 }

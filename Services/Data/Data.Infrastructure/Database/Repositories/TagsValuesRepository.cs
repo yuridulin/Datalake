@@ -2,6 +2,7 @@
 using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Infrastructure.Schema;
+using LinqToDB;
 using LinqToDB.Data;
 using Microsoft.Extensions.Logging;
 
@@ -94,9 +95,14 @@ public class TagsValuesRepository(
 
 	private static string ToParam { get; } = "@toDate";
 
-	private static string TempTableForWrite { get; } = "TagsHistoryState";
+	private static string TempTableForWrite { get; } = "TagsValuesTemp";
 
-	private static BulkCopyOptions BulkCopyOptions { get; } = new() { TableName = TempTableForWrite, BulkCopyType = BulkCopyType.ProviderSpecific, };
+	private static BulkCopyOptions BulkCopyOptions { get; } = new()
+	{
+		TableOptions = TableOptions.IsTemporary,
+		TableName = TempTableForWrite,
+		BulkCopyType = BulkCopyType.ProviderSpecific,
+	};
 
 	private static string CreateTempTableForWrite { get; } = $@"
 		CREATE TEMPORARY TABLE ""{TempTableForWrite}"" (LIKE {DataSchema.Name}.""{DataSchema.TagsValues.Name}"" EXCLUDING INDEXES)

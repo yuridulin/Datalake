@@ -62,6 +62,7 @@ public static class Bootstrap
 		builder.Services.AddSingleton<IReceiverService, ReceiverService>();
 
 		builder.Services.AddHostedService<DataDbStartupService>();
+		builder.Services.AddHostedService(provider => provider.GetRequiredService<IDataCollectorWriter>());
 
 		return builder;
 	}
