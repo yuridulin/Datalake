@@ -1,20 +1,15 @@
 ﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
-using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
-using Microsoft.Extensions.Logging;
 
 namespace Datalake.Data.Infrastructure.DataCollection;
 
 [Singleton]
-public class DataCollectorProcessor(
-	IDataCollectorFactory collectorsFactory,
-	IDataCollectorWriter dataWriter,
-	ILogger<DataCollectorProcessor> logger) : IDataCollectorProcessor
+public class DataCollectorProcessor(IDataCollectorFactory collectorsFactory) : IDataCollectorProcessor
 {
 	private readonly List<IDataCollector> collectors = new();
-	private readonly CancellationTokenSource globalCts = new();
 	private readonly SemaphoreSlim restartLock = new(1, 1);
+	private CancellationTokenSource? globalCts;
 
 	public async Task RestartAsync(IEnumerable<SourceSettingsDto> sources)
 	{
@@ -32,13 +27,8 @@ public class DataCollectorProcessor(
 
 	private async Task StartAsync(IEnumerable<SourceSettingsDto> sources)
 	{
-		logger.LogInformation("Запуск системы сбора данных");
-
-		// Останавливаем текущие сборщики
 		await StopAsync();
 
-		// Создаём новые сборщики
-		collectors.Clear();
 		foreach (var source in sources)
 		{
 			var collector = collectorsFactory.Create(source);
@@ -48,38 +38,28 @@ public class DataCollectorProcessor(
 			}
 		}
 
-		// Запускаем новые сборщики и обработчики их каналов
+		globalCts = new();
 		foreach (var collector in collectors)
-			await collector.StartAsync(globalCts.Token);
-
-		logger.LogInformation("Система сбора данных запущена");
+			_ = collector.StartAsync(globalCts.Token);
 	}
 
 	private async Task StopAsync()
 	{
+		if (globalCts == null)
+			return;
+
+		globalCts.Cancel();
+
 		if (collectors.Count == 0)
 			return;
 
-		logger.LogInformation("Остановка системы сбора данных");
-
-		var stopTasks = new List<Task>();
-		foreach (var collector in collectors)
-			stopTasks.Add(Task.Run(collector.StopAsync));
-
-		var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
-		var completedTask = await Task.WhenAny(Task.WhenAll(stopTasks), timeoutTask);
-
-		if (completedTask == timeoutTask)
+		try
 		{
-			logger.LogWarning("Таймаут остановки обработчиков!");
+			Task.WaitAll(collectors.Select(x => x.StopAsync()));
 		}
-
-		collectors.Clear();
-		logger.LogInformation("Система сбора данных остановлена");
-	}
-
-	public async Task WriteValuesAsync(IReadOnlyCollection<TagValue> values, CancellationToken cancellationToken = default)
-	{
-		await dataWriter.AddValuesToQueueAsync(values, cancellationToken);
+		finally
+		{
+			collectors.Clear();
+		}
 	}
 }

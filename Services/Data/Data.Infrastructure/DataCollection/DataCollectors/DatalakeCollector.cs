@@ -8,29 +8,18 @@ namespace Datalake.Data.Infrastructure.DataCollection.DataCollectors;
 
 [Transient]
 public class DatalakeCollector(
-	IDataCollectorProcessor processor,
-	ILogger<DatalakeCollector> logger,
-	SourceSettingsDto source) : DataCollectorBase(processor, logger, source)
+	IDataCollectorWriter writer,
+	ILogger<DatalakeCollector> _,
+	SourceSettingsDto source) : DataCollectorBase(writer, _, source)
 {
-	public override Task StartAsync(CancellationToken stoppingToken)
+	public override Task StartAsync(CancellationToken cancellationToken)
 	{
 		if (source.RemoteSettings == null)
-		{
-			this.logger.LogWarning("Сборщик {name} не имеет настроек получения данных и не будет запущен", Name);
-			return Task.CompletedTask;
-		}
+			return NotStartAsync("нет настроек получения данных");
 
 		if (string.IsNullOrEmpty(source.RemoteSettings.RemoteHost))
-		{
-			this.logger.LogWarning("Сборщик \"{name}\" не имеет адреса для получения данных и не будет запущен", Name);
-			return Task.CompletedTask;
-		}
+			return NotStartAsync("адрес для получения данных пуст");
 
-		return base.StartAsync(stoppingToken);
-	}
-
-	protected override Task WorkAsync(CancellationToken cancellationToken)
-	{
-		return Task.CompletedTask;
+		return base.StartAsync(cancellationToken);
 	}
 }

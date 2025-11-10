@@ -40,8 +40,8 @@ public class Program
 		}
 
 		app.UseOpenApi();
-		app.UseSharedExceptionsHandler();
-		app.UseSentryTracing();
+		//app.UseSharedExceptionsHandler();
+		//app.UseSentryTracing();
 		app.UseSharedSerilogRequestLogging();
 		app.UseHttpsRedirection();
 		app.UseRouting();
@@ -56,8 +56,8 @@ public class Program
 					Headers.SessionTokenHeander,
 				]);
 		});
-		app.UseSharedSentryBodyWriter();
-		app.UseSharedCorsOnError();
+		//app.UseSharedSentryBodyWriter();
+		//app.UseSharedCorsOnError();
 
 		app.MapApi();
 

@@ -15,5 +15,9 @@ public interface ITagsValuesAggregationRepository
 	/// <param name="date">Момент времени, относительно которого определяется прошедший период</param>
 	/// <param name="period">Размер прошедшего периода</param>
 	/// <returns>По одному значению на каждый тег</returns>
-	Task<TagWeightedValue[]> GetWeightedValuesAsync(int[] tagsIdentifiers, DateTime? date = null, TagResolution period = TagResolution.Hour);
+	Task<TagWeightedValue[]> GetWeightedValuesAsync(
+		IReadOnlyCollection<int> tagsIdentifiers,
+		DateTime? date = null,
+		TagResolution period = TagResolution.Hour,
+		CancellationToken cancellationToken = default);
 }

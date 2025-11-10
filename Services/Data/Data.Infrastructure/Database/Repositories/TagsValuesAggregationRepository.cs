@@ -12,11 +12,12 @@ namespace Datalake.Data.Infrastructure.Database.Repositories;
 public class TagsValuesAggregationRepository(DataDbLinqContext db) : ITagsValuesAggregationRepository
 {
 	public async Task<TagWeightedValue[]> GetWeightedValuesAsync(
-		int[] identifiers,
+		IReadOnlyCollection<int> identifiers,
 		DateTime? moment = null,
-		TagResolution period = TagResolution.Hour)
+		TagResolution period = TagResolution.Hour,
+		CancellationToken cancellationToken = default)
 	{
-		if (identifiers.Length == 0)
+		if (identifiers.Count == 0)
 			return [];
 
 		// Задаем входные параметры
@@ -121,7 +122,7 @@ public class TagsValuesAggregationRepository(DataDbLinqContext db) : ITagsValues
 				g.Sum(x => x.Number * x.Weight) ?? 0);
 
 		// Выполнение запроса
-		var aggregated = await result.ToArrayAsync();
+		var aggregated = await result.ToArrayAsync(cancellationToken);
 
 		return aggregated;
 	}

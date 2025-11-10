@@ -4,7 +4,7 @@ public interface IDataCollector
 {
 	string Name { get; }
 
-	Task StartAsync(CancellationToken stoppingToken = default);
+	Task StartAsync(CancellationToken cancellationToken);
 
 	Task StopAsync();
 }

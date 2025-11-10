@@ -22,6 +22,8 @@ public class DataCollectorWriter(
 	private const int MaxRetryAttempts = 3;
 	private const int RetryBaseDelayMs = 1000;
 
+	private CancellationToken globalToken;
+	private readonly List<TagValue> batch = new(BatchSize);
 	private readonly Channel<TagValue> channel = Channel.CreateUnbounded<TagValue>(new UnboundedChannelOptions
 	{
 		SingleWriter = false,
@@ -31,17 +33,17 @@ public class DataCollectorWriter(
 
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		var batch = new List<TagValue>(BatchSize);
-		var lastFlush = DateTime.UtcNow;
+		globalToken = stoppingToken;
 
-		await foreach (var item in channel.Reader.ReadAllAsync(stoppingToken))
+		var lastFlush = DateTime.UtcNow;
+		await foreach (var item in channel.Reader.ReadAllAsync(globalToken))
 		{
 			batch.Add(item);
 
 			var elapsed = (DateTime.UtcNow - lastFlush).TotalMilliseconds;
 			if (batch.Count >= BatchSize || elapsed >= MaxBatchDelayMs)
 			{
-				await ProcessBatchAsync(batch, stoppingToken);
+				await ProcessBatchAsync(); // ждем запись, а новые значения накапливаются в канале
 				batch.Clear();
 				lastFlush = DateTime.UtcNow;
 			}
@@ -49,7 +51,7 @@ public class DataCollectorWriter(
 
 		// финальная запись оставшегося набора
 		if (batch.Count > 0)
-			await ProcessBatchAsync(batch, stoppingToken);
+			await ProcessBatchAsync();
 	}
 
 	public override async Task StopAsync(CancellationToken cancellationToken)
@@ -58,66 +60,58 @@ public class DataCollectorWriter(
 		await base.StopAsync(cancellationToken);
 	}
 
-	public async Task AddValuesToQueueAsync(IReadOnlyCollection<TagValue> values, CancellationToken cancellationToken = default)
+	public async Task WriteAsync(IReadOnlyCollection<TagValue> values)
 	{
 		foreach (var value in values)
 		{
 			try
 			{
-				await channel.Writer.WriteAsync(value, cancellationToken);
+				await channel.Writer.WriteAsync(value, globalToken);
 			}
-			catch(OperationCanceledException)
+			catch (OperationCanceledException)
 			{
-				// Игнорируем - система останавливается
+				// игнорируем - система останавливается
 				break;
 			}
 		}
 	}
 
-	private async Task ProcessBatchAsync(
-		List<TagValue> batch,
-		CancellationToken ct)
+	private async Task ProcessBatchAsync()
 	{
 		using var scope = serviceScopeFactory.CreateScope();
 		var systemWriteValuesHandler = scope.ServiceProvider.GetRequiredService<ISystemWriteValuesHandler>();
 
-		await WriteBatchWithRetryAsync(systemWriteValuesHandler, batch, ct);
+		await WriteBatchWithRetryAsync(systemWriteValuesHandler);
 	}
 
-	private async Task WriteBatchWithRetryAsync(
-		ISystemWriteValuesHandler systemWriteValuesHandler,
-		List<TagValue> batch,
-		CancellationToken ct)
+	private async Task WriteBatchWithRetryAsync(ISystemWriteValuesHandler systemWriteValuesHandler)
 	{
 		var attempt = 0;
-		while (attempt < MaxRetryAttempts && !ct.IsCancellationRequested)
+		while (attempt < MaxRetryAttempts && !globalToken.IsCancellationRequested)
 		{
 			try
 			{
-				await systemWriteValuesHandler.HandleAsync(new() { Values = batch }, ct);
+				// отправляем команду, а не просто пишем в реп
+				// команда выполнит обновление кэша и другие связанные операции
+				await systemWriteValuesHandler.HandleAsync(new() { Values = batch }, globalToken);
 				return;
 			}
 			catch (Exception ex)
 			{
 				attempt++;
-				logger.LogWarning(ex,
-					"Ошибка записи (попытка {Attempt}/{Max})",
-					attempt, MaxRetryAttempts);
+				logger.LogWarning(ex, "Ошибка записи: попытка {attempt} из {max}", attempt, MaxRetryAttempts);
 
 				if (attempt < MaxRetryAttempts)
 				{
-					var delay = TimeSpan.FromMilliseconds(
-						RetryBaseDelayMs * Math.Pow(2, attempt - 1));
-					await Task.Delay(delay, ct);
+					var delay = TimeSpan.FromMilliseconds(RetryBaseDelayMs * Math.Pow(2, attempt - 1));
+					await Task.Delay(delay, globalToken);
 				}
 			}
 		}
 
 		if (attempt >= MaxRetryAttempts)
 		{
-			logger.LogError(
-				"Не удалось записать пачку из {Count} значений после {Max} попыток",
-				batch.Count, MaxRetryAttempts);
+			logger.LogError("Не удалось записать пачку из {count} значений после {max} попыток", batch.Count, MaxRetryAttempts);
 		}
 	}
 }

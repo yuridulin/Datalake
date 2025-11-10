@@ -4,7 +4,7 @@ namespace Datalake.Data.Application.Interfaces.Repositories;
 
 public interface ITagsValuesRepository
 {
-	Task<bool> WriteAsync(IEnumerable<TagValue> batch);
+	Task<bool> WriteAsync(IReadOnlyList<TagValue> batch);
 
 	Task<IEnumerable<TagValue>> GetRangeAsync(IEnumerable<int> tagsIdentifiers, DateTime from, DateTime to);
 

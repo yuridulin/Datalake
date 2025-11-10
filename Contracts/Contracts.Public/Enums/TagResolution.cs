@@ -69,4 +69,14 @@ public enum TagResolution
 	/// 20 минут
 	/// </summary>
 	Minute20 = 12,
+
+	/// <summary>
+	/// Год
+	/// </summary>
+	Year = 13,
+
+	/// <summary>
+	/// Квартал
+	/// </summary>
+	Quarter = 14,
 }

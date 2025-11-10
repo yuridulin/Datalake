@@ -6,7 +6,7 @@ using Datalake.Data.Infrastructure.Database;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.EntityFrameworkCore;
 
-namespace Datalake.Data.Infrastructure.DataCollection.Repositories;
+namespace Datalake.Data.Infrastructure.Database.Repositories;
 
 [Scoped]
 public class SourcesSettingsRepository(DataDbContext context) : ISourcesSettingsRepository

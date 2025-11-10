@@ -8,12 +8,8 @@ namespace Datalake.Data.Infrastructure.DataCollection.DataCollectors;
 
 [Transient]
 public class SystemCollector(
-	IDataCollectorProcessor processor,
+	IDataCollectorWriter writer,
 	ILogger<DatalakeCollector> logger,
-	SourceSettingsDto source) : DataCollectorBase(processor, logger, source)
+	SourceSettingsDto source) : DataCollectorBase(writer, logger, source)
 {
-	protected override Task WorkAsync(CancellationToken cancellationToken)
-	{
-		return Task.CompletedTask;
-	}
 }

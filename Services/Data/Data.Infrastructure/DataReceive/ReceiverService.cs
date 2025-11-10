@@ -6,13 +6,14 @@ using Datalake.Data.Infrastructure.DataReceive.Converters;
 using Datalake.Data.Infrastructure.DataReceive.Inopc;
 using Datalake.Data.Infrastructure.DataReceive.Inopc.Enums;
 using Datalake.Shared.Application.Attributes;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace Datalake.Data.Infrastructure.DataReceive;
 
 [Singleton]
-public class ReceiverService : IReceiverService
+public class ReceiverService(ILogger<ReceiverService> logger) : IReceiverService
 {
 	private static JsonSerializerOptions JsonOptions { get; } = new()
 	{
@@ -44,7 +45,11 @@ public class ReceiverService : IReceiverService
 				inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>(JsonOptions);
 			}
 		}
-		catch { }
+		catch (OperationCanceledException) { }
+		catch (Exception ex)
+		{
+			logger.LogWarning("Не удалось получить данные. Адрес: {url}, ошибка: {err}", address, ex.Message);
+		}
 
 		response.Timestamp = inopcResponse?.Timestamp ?? DateTimeExtension.GetCurrentDateTime();
 		if (inopcResponse != null)

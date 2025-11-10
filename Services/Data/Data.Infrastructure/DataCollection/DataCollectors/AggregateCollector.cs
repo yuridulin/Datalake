@@ -14,56 +14,52 @@ using Microsoft.Extensions.Logging;
 namespace Datalake.Data.Infrastructure.DataCollection.DataCollectors;
 
 [Transient]
-public class AggregateCollector : DataCollectorBase
+public class AggregateCollector(
+	IServiceScopeFactory serviceScopeFactory,
+	IDataCollectorWriter writer,
+	ILogger<AggregateCollector> _,
+	SourceSettingsDto source) : DataCollectorBase(writer, _, source, 100)
 {
-	public AggregateCollector(
-		IServiceScopeFactory serviceScopeFactory,
-		IDataCollectorProcessor processor,
-		ILogger<AggregateCollector> logger,
-		SourceSettingsDto source) : base(processor, logger, source, 100)
+	public override Task StartAsync(CancellationToken cancellationToken = default)
 	{
-		this.serviceScopeFactory = serviceScopeFactory;
+		bool notEmpty = false;
 
-		allRules = source.NotDeletedTags
-			.Where(x => x.AggregationSettings != null)
-			.Select(tag => new TagAggregationRule
+		foreach (var tag in source.NotDeletedTags)
+		{
+			if (tag.AggregationSettings == null)
+				continue;
+
+			if (!notEmpty) notEmpty = true;
+			var rule = new TagAggregationRule
 			{
 				TagId = tag.TagId,
 				AggregateFunction = tag.AggregationSettings!.AggregateFunction,
 				AggregatePeriod = tag.AggregationSettings.AggregatePeriod,
 				SourceTagId = tag.AggregationSettings.SourceTagId,
 				SourceTagType = tag.AggregationSettings.SourceTagType,
-			})
-			.ToArray();
+			};
 
-		minuteRules = allRules.Where(x => x.AggregatePeriod == TagResolution.Minute).ToArray();
-		hourRules = allRules.Where(x => x.AggregatePeriod == TagResolution.Hour).ToArray();
-		dayRules = allRules.Where(x => x.AggregatePeriod == TagResolution.Day).ToArray();
-	}
-
-	public override Task StartAsync(CancellationToken stoppingToken = default)
-	{
-		if (allRules.Length == 0)
-		{
-			logger.LogWarning("Сборщик {name} не имеет правил агрегирования и не будет запущен", Name);
-			return Task.CompletedTask;
+			if (tag.AggregationSettings.AggregatePeriod == TagResolution.Minute)
+			{
+				minuteRules[rule.SourceTagId] = rule;
+			}
+			else if (tag.AggregationSettings.AggregatePeriod == TagResolution.Hour)
+			{
+				hourRules[rule.SourceTagId] = rule;
+			}
+			else if (tag.AggregationSettings.AggregatePeriod == TagResolution.Day)
+			{
+				dayRules[rule.SourceTagId] = rule;
+			}
 		}
 
-		return base.StartAsync(stoppingToken);
+		if (!notEmpty)
+			return NotStartAsync("нет правил агрегации");
+
+		return base.StartAsync(cancellationToken);
 	}
 
-	#region Реализация
-
-	private readonly IServiceScopeFactory serviceScopeFactory;
-	private readonly TagAggregationRule[] allRules;
-	private readonly TagAggregationRule[] minuteRules;
-	private readonly TagAggregationRule[] hourRules;
-	private readonly TagAggregationRule[] dayRules;
-	private int lastMinute = -1;
-	private int lastHour = -1;
-	private int lastDay = -1;
-
-	protected override async Task WorkAsync(CancellationToken cancellationToken)
+	protected override async Task<List<TagValue>> ExecuteAsync(CancellationToken cancellationToken)
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
 
@@ -73,43 +69,42 @@ public class AggregateCollector : DataCollectorBase
 
 		List<TagValue> records = [];
 
-		if (isRunning && minuteRules.Length > 0 && lastMinute != minute)
+		if (minuteRules.Count > 0 && lastMinute != minute)
 		{
 			logger.LogInformation("Расчет минутных значений: {now}", now);
-			var minuteValues = await GetValuesAsync(minuteRules, now, TagResolution.Minute);
+			var minuteValues = await GetValuesAsync(minuteRules, now, TagResolution.Minute, cancellationToken);
 			records.AddRange(minuteValues);
 			lastMinute = minute;
 		}
 
-		if (isRunning && hourRules.Length > 0 && lastHour != hour)
+		if (hourRules.Count > 0 && lastHour != hour)
 		{
 			logger.LogInformation("Расчет часовых значений: {now}", now);
-			var hourValues = await GetValuesAsync(hourRules, now, TagResolution.Hour);
+			var hourValues = await GetValuesAsync(hourRules, now, TagResolution.Hour, cancellationToken);
 			records.AddRange(hourValues);
 			lastHour = hour;
 		}
 
-		if (isRunning && dayRules.Length > 0 && lastDay != day)
+		if (dayRules.Count > 0 && lastDay != day)
 		{
 			logger.LogInformation("Расчет суточных значений: {now}", now);
-			var dayValues = await GetValuesAsync(dayRules, now, TagResolution.Day);
+			var dayValues = await GetValuesAsync(dayRules, now, TagResolution.Day, cancellationToken);
 			records.AddRange(dayValues);
 			lastDay = day;
 		}
 
-		if (records.Count > 0)
-			await WriteValuesAsync(records, cancellationToken);
+		return records;
 	}
 
-	private async Task<List<TagValue>> GetValuesAsync(TagAggregationRule[] rules, DateTime date, TagResolution period)
+	private async Task<List<TagValue>> GetValuesAsync(Dictionary<int, TagAggregationRule> rules, DateTime date, TagResolution period, CancellationToken cancellationToken)
 	{
-		TagWeightedValue[] aggregated = await GetAggregatedValuesAsync(rules, date, period);
+		TagWeightedValue[] aggregated = await GetAggregatedValuesAsync(rules.Keys, date, period, cancellationToken);
 
 		var result = aggregated
 			.Select(value => new
 			{
 				Value = value,
-				Tag = rules.FirstOrDefault(x => x.SourceTagId == value.TagId),
+				Tag = rules.TryGetValue(value.TagId, out var tag) ? tag : null,
 			})
 			.Where(x => x.Tag != null)
 			.Select(x => x.Tag.AggregateFunction switch
@@ -125,21 +120,27 @@ public class AggregateCollector : DataCollectorBase
 	}
 
 	private async Task<TagWeightedValue[]> GetAggregatedValuesAsync(
-		TagAggregationRule[] rules,
+		IReadOnlyCollection<int> identifiers,
 		DateTime date,
-		TagResolution period)
+		TagResolution period,
+		CancellationToken cancellationToken)
 	{
 		using var scope = serviceScopeFactory.CreateScope();
 		var aggregationRepository = scope.ServiceProvider.GetRequiredService<ITagsValuesAggregationRepository>();
 
-		var aggregatedValues = await aggregationRepository.GetWeightedValuesAsync(rules.Select(x => x.SourceTagId).ToArray(), date, period);
+		var aggregatedValues = await aggregationRepository.GetWeightedValuesAsync(identifiers, date, period, cancellationToken);
 		return aggregatedValues;
 	}
+
+	private Dictionary<int, TagAggregationRule> minuteRules = [];
+	private Dictionary<int, TagAggregationRule> hourRules = [];
+	private Dictionary<int, TagAggregationRule> dayRules = [];
+	private int lastMinute = -1;
+	private int lastHour = -1;
+	private int lastDay = -1;
 
 	record TagAggregationRule : TagAggregationSettingsDto
 	{
 		public int TagId { get; init; }
 	}
-
-	#endregion
 }

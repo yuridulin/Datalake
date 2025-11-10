@@ -1,6 +1,7 @@
 ﻿using Datalake.Data.Application.Interfaces.Repositories;
 using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
+using Datalake.Shared.Infrastructure;
 using Datalake.Shared.Infrastructure.Schema;
 using LinqToDB;
 using LinqToDB.Data;
@@ -13,25 +14,30 @@ public class TagsValuesRepository(
 	DataDbLinqContext db,
 	ILogger<TagsValuesRepository> logger) : ITagsValuesRepository
 {
-	public async Task<bool> WriteAsync(IEnumerable<TagValue> batch)
+	public async Task<bool> WriteAsync(IReadOnlyList<TagValue> batch)
 	{
-		using var transaction = await db.BeginTransactionAsync();
-
-		try
+		return await Measures.MeasureAsync(async () =>
 		{
-			await db.ExecuteAsync(CreateTempTableForWrite);
-			await db.BulkCopyAsync(BulkCopyOptions, batch);
-			await db.ExecuteAsync(WriteSql);
+			using var transaction = await db.BeginTransactionAsync();
 
-			await transaction.CommitAsync();
-			return true;
-		}
-		catch (Exception e)
-		{
-			logger.LogError(e, "Не удалось записать данные");
-			await transaction.RollbackAsync();
-			return false;
-		}
+			try
+			{
+				await db.ExecuteAsync(CreateTempTableForWrite);
+				await db.BulkCopyAsync(BulkCopyOptions, batch);
+				await db.ExecuteAsync(WriteSql);
+
+				await transaction.CommitAsync();
+
+				logger.LogDebug("Записано значений: {count}", batch.Count);
+				return true;
+			}
+			catch (Exception e)
+			{
+				logger.LogError(e, "Не удалось записать данные");
+				await transaction.RollbackAsync();
+				return false;
+			}
+		}, logger, nameof(WriteAsync));
 	}
 
 	public async Task<IEnumerable<TagValue>> GetAllLastAsync()

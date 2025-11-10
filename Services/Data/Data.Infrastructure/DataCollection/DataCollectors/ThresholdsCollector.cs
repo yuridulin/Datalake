@@ -15,29 +15,26 @@ namespace Datalake.Data.Infrastructure.DataCollection.DataCollectors;
 public class ThresholdsCollector(
 	ICurrentValuesStore valuesStore,
 	IDataCollectionErrorsStore errorsStore,
-	IDataCollectorProcessor processor,
+	IDataCollectorWriter writer,
 	ILogger<DatalakeCollector> logger,
-	SourceSettingsDto source) : DataCollectorBase(processor, logger, source)
+	SourceSettingsDto source) : DataCollectorBase(writer, logger, source)
 {
-	public override Task StartAsync(CancellationToken stoppingToken)
+	public override Task StartAsync(CancellationToken cancellationToken)
 	{
 		if (_thresholds.Length == 0)
-		{
-			this.logger.LogWarning("Сборщик \"{name}\" не имеет правил расчета и не будет запущен", Name);
-			return Task.CompletedTask;
-		}
+			return NotStartAsync("нет правил расчета");
 
-		return base.StartAsync(stoppingToken);
+		return base.StartAsync(cancellationToken);
 	}
 
-	protected override async Task WorkAsync(CancellationToken cancellationToken)
+	protected override async Task<List<TagValue>> ExecuteAsync(CancellationToken cancellationToken)
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
 		List<TagValue> batch = [];
 
 		foreach (var (tag, inputId, map) in _thresholds)
 		{
-			if (!isRunning)
+			if (cancellationToken.IsCancellationRequested)
 				break;
 
 			var incomingValue = valuesStore.TryGet(inputId);
@@ -58,7 +55,7 @@ public class ThresholdsCollector(
 			}
 		}
 
-		await WriteValuesAsync(batch, cancellationToken);
+		return batch;
 	}
 
 

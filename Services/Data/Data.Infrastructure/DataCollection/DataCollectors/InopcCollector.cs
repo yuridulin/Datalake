@@ -12,15 +12,19 @@ using Microsoft.Extensions.Logging;
 namespace Datalake.Data.Infrastructure.DataCollection.DataCollectors;
 
 [Transient]
-public class InopcCollector : DataCollectorBase
+public class InopcCollector(
+	IReceiverService receiverService,
+	IDataCollectorWriter writer,
+	ILogger<DatalakeCollector> logger,
+	SourceSettingsDto source) : DataCollectorBase(writer, logger, source)
 {
-	public InopcCollector(
-		IReceiverService receiverService,
-		IDataCollectorProcessor processor,
-		ILogger<DatalakeCollector> logger,
-		SourceSettingsDto source) : base(processor, logger, source)
+	public override Task StartAsync(CancellationToken cancellationToken)
 	{
-		this.receiverService = receiverService;
+		if (source.RemoteSettings == null)
+			return NotStartAsync("нет настроек получения данных");
+
+		if (string.IsNullOrEmpty(source.RemoteSettings.RemoteHost))
+			return NotStartAsync("адрес для получения данных пуст");
 
 		itemsToSend = [];
 		itemsTags = [];
@@ -55,41 +59,22 @@ public class InopcCollector : DataCollectorBase
 		itemsToSend = uniqueItems
 			.Select(kv => new Item { TagName = kv.Key, Resolution = kv.Value, LastAsk = DateTime.MinValue })
 			.ToList();
-	}
-
-	public override Task StartAsync(CancellationToken stoppingToken)
-	{
-		if (source.RemoteSettings == null)
-		{
-			logger.LogWarning("Сборщик {name} не имеет настроек получения данных и не будет запущен", Name);
-			return Task.CompletedTask;
-		}
-
-		if (string.IsNullOrEmpty(source.RemoteSettings.RemoteHost))
-		{
-			logger.LogWarning("Сборщик {name} не имеет адреса для получения данных и не будет запущен", Name);
-			return Task.CompletedTask;
-		}
 
 		if (itemsToSend.Count == 0)
-		{
-			logger.LogWarning("Сборщик {name} не имеет значений для запроса и не будет запущен", Name);
-			return Task.CompletedTask;
-		}
+			return NotStartAsync("нет тегов для получения данных");
 
-		return base.StartAsync(stoppingToken);
+		return base.StartAsync(cancellationToken);
 	}
 
-
 	#region Реализация
+	private List<Item> itemsToSend = [];
+	private Dictionary<string, List<TagSettingsDto>> itemsTags = [];
 
-	private readonly List<Item> itemsToSend;
-	private readonly IReceiverService receiverService;
-	private readonly Dictionary<string, List<TagSettingsDto>> itemsTags;
-
-	protected override async Task WorkAsync(CancellationToken cancellationToken)
+	protected override async Task<List<TagValue>> ExecuteAsync(CancellationToken cancellationToken)
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
+
+		List<TagValue> values = [];
 		List<Item> tags = [];
 
 		foreach (var item in itemsToSend)
@@ -112,21 +97,24 @@ public class InopcCollector : DataCollectorBase
 			var items = tags.Select(x => x.TagName).ToArray();
 
 			var response = await receiverService.AskInopc(items, source.RemoteSettings!.RemoteHost);
-			var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
-			now = DateTimeExtension.GetCurrentDateTime();
+			if (response.IsConnected)
+			{
+				var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
+				now = DateTimeExtension.GetCurrentDateTime();
 
-			var collectedValues = response.Tags
-				.SelectMany(item => itemsTags[item.Name]
-					.Select(tag => TagValue.FromRaw(tag.TagId, tag.TagType, now, item.Quality, item.Value, tag.ScaleSettings?.GetScale())))
-				.ToArray();
-
-			await WriteValuesAsync(collectedValues, cancellationToken);
+				values = response.Tags
+					.SelectMany(item => itemsTags[item.Name]
+						.Select(tag => TagValue.FromRaw(tag.TagId, tag.TagType, now, item.Quality, item.Value, tag.ScaleSettings?.GetScale())))
+					.ToList();
+			}
 
 			foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
 			{
 				tag.LastAsk = now;
 			}
 		}
+
+		return values;
 	}
 
 	private record class Item
