@@ -70,11 +70,10 @@ public class InopcCollector(
 	private List<Item> itemsToSend = [];
 	private Dictionary<string, List<TagSettingsDto>> itemsTags = [];
 
-	protected override async Task<List<TagValue>> ExecuteAsync(CancellationToken cancellationToken)
+	protected override async Task ExecuteAsync(CollectorUpdate state, CancellationToken cancellationToken)
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
 
-		List<TagValue> values = [];
 		List<Item> tags = [];
 
 		foreach (var item in itemsToSend)
@@ -102,10 +101,11 @@ public class InopcCollector(
 				var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
 				now = DateTimeExtension.GetCurrentDateTime();
 
-				values = response.Tags
+				state.Values = response.Tags
 					.SelectMany(item => itemsTags[item.Name]
 						.Select(tag => TagValue.FromRaw(tag.TagId, tag.TagType, now, item.Quality, item.Value, tag.ScaleSettings?.GetScale())))
 					.ToList();
+				state.IsActive = true;
 			}
 
 			foreach (var tag in tags.Where(x => response.Tags.Select(t => t.Name).Contains(x.TagName)))
@@ -113,8 +113,6 @@ public class InopcCollector(
 				tag.LastAsk = now;
 			}
 		}
-
-		return values;
 	}
 
 	private record class Item

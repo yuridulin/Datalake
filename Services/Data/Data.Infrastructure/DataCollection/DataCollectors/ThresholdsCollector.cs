@@ -27,10 +27,9 @@ public class ThresholdsCollector(
 		return base.StartAsync(cancellationToken);
 	}
 
-	protected override async Task<List<TagValue>> ExecuteAsync(CancellationToken cancellationToken)
+	protected override async Task ExecuteAsync(CollectorUpdate state, CancellationToken cancellationToken)
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
-		List<TagValue> batch = [];
 
 		foreach (var (tag, inputId, map) in _thresholds)
 		{
@@ -45,17 +44,17 @@ public class ThresholdsCollector(
 					var outputValue = LookupValue(map, incomingValue.Number.Value);
 
 					errorsStore.Set(tag.TagId, null);
-					batch.Add(TagValue.AsNumeric(tag.TagId, now, TagQuality.Good, outputValue, tag.ScaleSettings?.GetScale()));
+					state.Values.Add(TagValue.AsNumeric(tag.TagId, now, TagQuality.Good, outputValue, tag.ScaleSettings?.GetScale()));
 				}
 				else
 				{
 					errorsStore.Set(tag.TagId, "Значение входного тега - не число");
-					batch.Add(TagValue.AsEmpty(tag.TagId, now, TagQuality.Bad_NoValues));
+					state.Values.Add(TagValue.AsEmpty(tag.TagId, now, TagQuality.Bad_NoValues));
 				}
 			}
 		}
 
-		return batch;
+		state.IsActive = true;
 	}
 
 

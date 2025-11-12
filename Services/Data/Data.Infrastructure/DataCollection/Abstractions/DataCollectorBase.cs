@@ -39,6 +39,11 @@ public abstract class DataCollectorBase(
 	private async Task WorkAsync(CancellationToken cancellationToken)
 	{
 		DateTime executionStart;
+		CollectorUpdate state = new()
+		{
+			Values = new(source.Tags.Count()),
+			IsActive = false,
+		};
 
 		try
 		{
@@ -48,11 +53,13 @@ public abstract class DataCollectorBase(
 			{
 				executionStart = DateTime.UtcNow;
 
-				var newValues = await ExecuteAsync(cancellationToken);
-				if (newValues.Count > 0)
+				state.Values.Clear();
+				await ExecuteAsync(state, cancellationToken);
+				for (int i = 0; i < state.Values.Count; i++)
 				{
-					await writer.WriteAsync(newValues);
+					await writer.WriteAsync(state.Values[i]);
 				}
+				// TODO: запись количества изменений и состояние источника в стор статистики
 
 				var millisecondsToNextRun = workInterval - (int)(DateTime.UtcNow - executionStart).TotalMilliseconds;
 				if (millisecondsToNextRun > 0)
@@ -71,9 +78,16 @@ public abstract class DataCollectorBase(
 		}
 	}
 
-	protected virtual async Task<List<TagValue>> ExecuteAsync(CancellationToken cancellationToken) => [];
+	protected virtual Task ExecuteAsync(CollectorUpdate state, CancellationToken cancellationToken) => Task.CompletedTask;
 
 	public virtual async Task StopAsync() => await DisposeAsync();
 
 	public async ValueTask DisposeAsync() => GC.SuppressFinalize(this);
+
+	protected class CollectorUpdate
+	{
+		public required List<TagValue> Values { get; set; }
+
+		public bool IsActive { get; set; }
+	}
 }

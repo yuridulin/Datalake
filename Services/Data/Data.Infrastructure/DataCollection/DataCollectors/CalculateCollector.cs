@@ -28,11 +28,10 @@ public class CalculateCollector(
 		return base.StartAsync(cancellationToken);
 	}
 
-	protected override async Task<List<TagValue>> ExecuteAsync(CancellationToken cancellationToken)
+	protected override async Task ExecuteAsync(CollectorUpdate state, CancellationToken cancellationToken)
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
 
-		List<TagValue> batch = [];
 		foreach (var scope in calculationScopes)
 		{
 			if (cancellationToken.IsCancellationRequested)
@@ -75,7 +74,7 @@ public class CalculateCollector(
 
 			if (error != null)
 			{
-				batch.Add(HandleError(scope.TagId, now, error));
+				state.Values.Add(HandleError(scope.TagId, now, error));
 				continue;
 			}
 
@@ -87,7 +86,7 @@ public class CalculateCollector(
 			}
 			catch (Exception ex)
 			{
-				batch.Add(HandleError(scope.TagId, now, ex.Message
+				state.Values.Add(HandleError(scope.TagId, now, ex.Message
 					.Replace("Parameter ", "Параметр [")
 					.Replace(" not defined.", "] не найден")));
 				continue;
@@ -97,15 +96,15 @@ public class CalculateCollector(
 			{
 				TagValue value = TagValue.FromRaw(scope.TagId, scope.TagType, now, TagQuality.Good, value: result, scope.TagScale);
 				errorsStore.Set(scope.TagId, null);
-				batch.Add(value);
+				state.Values.Add(value);
 			}
 			catch (Exception ex)
 			{
-				batch.Add(HandleError(scope.TagId, now, ex.Message));
+				state.Values.Add(HandleError(scope.TagId, now, ex.Message));
 			}
 		}
 
-		return batch;
+		state.IsActive = true;
 	}
 
 	/// <summary>

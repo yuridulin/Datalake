@@ -60,21 +60,7 @@ public class DataCollectorWriter(
 		await base.StopAsync(cancellationToken);
 	}
 
-	public async Task WriteAsync(IReadOnlyCollection<TagValue> values)
-	{
-		foreach (var value in values)
-		{
-			try
-			{
-				await channel.Writer.WriteAsync(value, globalToken);
-			}
-			catch (OperationCanceledException)
-			{
-				// игнорируем - система останавливается
-				break;
-			}
-		}
-	}
+	public ValueTask WriteAsync(TagValue value) => channel.Writer.WriteAsync(value, globalToken);
 
 	private async Task ProcessBatchAsync()
 	{

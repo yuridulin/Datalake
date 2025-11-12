@@ -11,5 +11,5 @@ public interface IDataCollectorWriter : IHostedService
 	/// <summary>
 	/// Добавление новых значений в очередь на запись
 	/// </summary>
-	Task WriteAsync(IReadOnlyCollection<TagValue> values);
+	ValueTask WriteAsync(TagValue value);
 }

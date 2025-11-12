@@ -55,7 +55,7 @@ public class DataCollectorProcessor(IDataCollectorFactory collectorsFactory) : I
 
 		try
 		{
-			Task.WaitAll(collectors.Select(x => x.StopAsync()));
+			await Task.WhenAll(collectors.Select(x => x.StopAsync()));
 		}
 		finally
 		{

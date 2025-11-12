@@ -59,7 +59,7 @@ public class AggregateCollector(
 		return base.StartAsync(cancellationToken);
 	}
 
-	protected override async Task<List<TagValue>> ExecuteAsync(CancellationToken cancellationToken)
+	protected override async Task ExecuteAsync(CollectorUpdate state, CancellationToken cancellationToken)
 	{
 		var now = DateTimeExtension.GetCurrentDateTime();
 
@@ -67,13 +67,11 @@ public class AggregateCollector(
 		var hour = now.Hour;
 		var day = now.Day;
 
-		List<TagValue> records = [];
-
 		if (minuteRules.Count > 0 && lastMinute != minute)
 		{
 			logger.LogInformation("Расчет минутных значений: {now}", now);
 			var minuteValues = await GetValuesAsync(minuteRules, now, TagResolution.Minute, cancellationToken);
-			records.AddRange(minuteValues);
+			state.Values.AddRange(minuteValues);
 			lastMinute = minute;
 		}
 
@@ -81,7 +79,7 @@ public class AggregateCollector(
 		{
 			logger.LogInformation("Расчет часовых значений: {now}", now);
 			var hourValues = await GetValuesAsync(hourRules, now, TagResolution.Hour, cancellationToken);
-			records.AddRange(hourValues);
+			state.Values.AddRange(hourValues);
 			lastHour = hour;
 		}
 
@@ -89,11 +87,11 @@ public class AggregateCollector(
 		{
 			logger.LogInformation("Расчет суточных значений: {now}", now);
 			var dayValues = await GetValuesAsync(dayRules, now, TagResolution.Day, cancellationToken);
-			records.AddRange(dayValues);
+			state.Values.AddRange(dayValues);
 			lastDay = day;
 		}
 
-		return records;
+		state.IsActive = true;
 	}
 
 	private async Task<List<TagValue>> GetValuesAsync(Dictionary<int, TagAggregationRule> rules, DateTime date, TagResolution period, CancellationToken cancellationToken)
