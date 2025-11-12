@@ -99,8 +99,7 @@ public class ManualWriteValuesHandler(
 		if (writeResult)
 		{
 			// обновление в кэше текущих данных
-			foreach (var record in uniqueRecords)
-				currentValuesStore.TryUpdate(record.TagId, record);
+			currentValuesStore.TryUpdate(uniqueRecords);
 		}
 		else
 		{

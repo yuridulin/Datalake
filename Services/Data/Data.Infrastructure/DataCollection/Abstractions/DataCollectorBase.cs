@@ -39,6 +39,8 @@ public abstract class DataCollectorBase(
 	private async Task WorkAsync(CancellationToken cancellationToken)
 	{
 		DateTime executionStart;
+		double elapsed;
+		int delay;
 		CollectorUpdate state = new()
 		{
 			Values = new(source.Tags.Count()),
@@ -61,11 +63,13 @@ public abstract class DataCollectorBase(
 				}
 				// TODO: запись количества изменений и состояние источника в стор статистики
 
-				var millisecondsToNextRun = workInterval - (int)(DateTime.UtcNow - executionStart).TotalMilliseconds;
-				if (millisecondsToNextRun > 0)
-				{
-					await Task.Delay(millisecondsToNextRun, cancellationToken);
-				}
+				elapsed = (DateTime.UtcNow - executionStart).TotalMilliseconds;
+				delay = Math.Max(500, workInterval - (int)elapsed);
+
+				if (state.Values.Count > 0)
+					logger.LogDebug("Сборщик {name} собрал значения: {count} за {elapsed} мс", Name, state.Values.Count, elapsed);
+
+				await Task.Delay(delay, cancellationToken);
 			}
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)

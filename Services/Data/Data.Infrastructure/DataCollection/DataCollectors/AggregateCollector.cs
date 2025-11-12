@@ -18,7 +18,7 @@ public class AggregateCollector(
 	IServiceScopeFactory serviceScopeFactory,
 	IDataCollectorWriter writer,
 	ILogger<AggregateCollector> _,
-	SourceSettingsDto source) : DataCollectorBase(writer, _, source, 100)
+	SourceSettingsDto source) : DataCollectorBase(writer, _, source)
 {
 	public override Task StartAsync(CancellationToken cancellationToken = default)
 	{

@@ -16,7 +16,7 @@ public class InopcCollector(
 	IReceiverService receiverService,
 	IDataCollectorWriter writer,
 	ILogger<DatalakeCollector> logger,
-	SourceSettingsDto source) : DataCollectorBase(writer, logger, source)
+	SourceSettingsDto source) : DataCollectorBase(writer, logger, source, 5000)
 {
 	public override Task StartAsync(CancellationToken cancellationToken)
 	{

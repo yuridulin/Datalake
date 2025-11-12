@@ -55,23 +55,24 @@ public class CurrentValuesStore(
 		return result;
 	}
 
-	public bool TryUpdate(int tagId, TagValue incomingValue)
+	public bool TryUpdate(IReadOnlyList<TagValue> incomingValues)
 	{
-		bool updated = true;
-
-		currentValues.AddOrUpdate(
-			tagId,
-			incomingValue,
-			(key, existingValue) =>
+		List<int> updatedValues = [];
+		foreach (var incomingValue in incomingValues)
+		{
+			if (TryUpdate(incomingValue))
 			{
-				if (existingValue.IsNew(incomingValue))
-					return incomingValue;
+				updatedValues.Add(incomingValue.TagId);
+			}
+		}
 
-				updated = false;
-				return existingValue;
-			});
+		if (updatedValues.Count > 0)
+		{
+			OnValuesChanged(updatedValues);
+			return true;
+		}
 
-		return updated;
+		return false;
 	}
 
 	public bool IsNew(int id, TagValue incomingValue)
@@ -82,5 +83,33 @@ public class CurrentValuesStore(
 
 		return existingValue.IsNew(incomingValue);
 	}
-}
 
+	/// <inheritdoc/>
+	public event EventHandler<ValuesChangedEventArgs>? ValuesChanged;
+
+	private bool TryUpdate(TagValue incomingValue)
+	{
+		bool updated = true;
+		currentValues.AddOrUpdate(
+			incomingValue.TagId,
+			incomingValue,
+			(key, existingValue) =>
+			{
+				if (existingValue.IsNew(incomingValue))
+					return incomingValue;
+
+				updated = false;
+				return existingValue;
+			});
+		return updated;
+	}
+
+	/// <summary>
+	/// Вызов события изменения значений тегов
+	/// </summary>
+	/// <param name="changedTagIds">Идентификаторы измененных тегов</param>
+	private void OnValuesChanged(IReadOnlyList<int> changedTagIds)
+	{
+		ValuesChanged?.Invoke(this, new ValuesChangedEventArgs(changedTagIds));
+	}
+}

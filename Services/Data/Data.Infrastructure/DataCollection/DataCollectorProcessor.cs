@@ -1,4 +1,5 @@
-﻿using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Shared.Application.Attributes;
 
@@ -17,6 +18,7 @@ public class DataCollectorProcessor(IDataCollectorFactory collectorsFactory) : I
 
 		try
 		{
+			await StopAsync();
 			await StartAsync(sources);
 		}
 		finally
@@ -27,8 +29,6 @@ public class DataCollectorProcessor(IDataCollectorFactory collectorsFactory) : I
 
 	private async Task StartAsync(IEnumerable<SourceSettingsDto> sources)
 	{
-		await StopAsync();
-
 		foreach (var source in sources)
 		{
 			var collector = collectorsFactory.Create(source);
@@ -40,7 +40,7 @@ public class DataCollectorProcessor(IDataCollectorFactory collectorsFactory) : I
 
 		globalCts = new();
 		foreach (var collector in collectors)
-			_ = collector.StartAsync(globalCts.Token);
+			_ = Task.Run(() => collector.StartAsync(globalCts.Token));
 	}
 
 	private async Task StopAsync()

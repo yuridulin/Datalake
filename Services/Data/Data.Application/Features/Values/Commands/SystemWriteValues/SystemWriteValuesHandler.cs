@@ -22,8 +22,7 @@ public class SystemWriteValuesHandler(
 			return false;
 
 		// обновление в кэше текущих данных
-		foreach (var record in uniqueRecords)
-			currentValuesStore.TryUpdate(record.TagId, record);
+		currentValuesStore.TryUpdate(uniqueRecords);
 
 		return true;
 	}

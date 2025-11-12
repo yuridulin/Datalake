@@ -78,7 +78,6 @@ public class Program
 			.UseSharedSentryBodyWriter()
 			.UseSharedCorsOnError();
 
-		app.UseApi();
 		app.MapApi();
 
 		app.NotifyStart(nameof(Gateway), CurrentEnvironment, Version);
