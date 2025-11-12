@@ -15,7 +15,7 @@ namespace Datalake.Inventory.Host.Controllers;
 /// Теги
 /// </summary>
 [ApiController]
-[Route("api/v1/tags")]
+[Route("api/tags")]
 public class TagsController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>

@@ -17,7 +17,7 @@ namespace Datalake.Inventory.Host.Controllers;
 /// Взаимодействие с блоками
 /// </summary>
 [ApiController]
-[Route("api/v1/blocks")]
+[Route("api/blocks")]
 public class BlocksController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>
@@ -46,6 +46,7 @@ public class BlocksController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="handler">Обработчик</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список блоков</returns>
+	[HttpGet]
 	public async Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
 		[FromServices] IGetBlocksWithTagsHandler handler,
 		CancellationToken ct = default)
@@ -64,6 +65,7 @@ public class BlocksController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Информация о блоке</returns>
+	[HttpGet("{blockId}")]
 	public async Task<ActionResult<BlockFullInfo>> GetAsync(
 		[FromServices] IGetBlockFullHandler handler,
 		[BindRequired, FromRoute] int blockId,
@@ -82,6 +84,7 @@ public class BlocksController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="handler">Обработчик</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список обособленных блоков с вложенными блоками</returns>
+	[HttpGet("tree")]
 	public async Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync(
 		[FromServices] IGetBlocksTreeHandler handler,
 		CancellationToken ct = default)
@@ -100,6 +103,7 @@ public class BlocksController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <param name="request">Новые данные блока</param>
 	/// <param name="ct">Токен отмены</param>
+	[HttpPut("{blockId}")]
 	public async Task<ActionResult> UpdateAsync(
 		[FromServices] IUpdateBlockHandler handler,
 		[BindRequired, FromRoute] int blockId,
@@ -125,6 +129,7 @@ public class BlocksController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <param name="parentId">Идентификатор родительского блока</param>
 	/// <param name="ct">Токен отмены</param>
+	[HttpPut("{blockId}/move")]
 	public async Task<ActionResult> MoveAsync(
 		[FromServices] IMoveBlockHandler handler,
 		[BindRequired, FromRoute] int blockId,
@@ -144,6 +149,7 @@ public class BlocksController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="handler">Обработчик</param>
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <param name="ct">Токен отмены</param>
+	[HttpDelete("{blockId}")]
 	public async Task<ActionResult> DeleteAsync(
 		[FromServices] IDeleteBlockHandler handler,
 		[BindRequired, FromRoute] int blockId,

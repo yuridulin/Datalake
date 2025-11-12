@@ -14,7 +14,7 @@ namespace Datalake.Inventory.Host.Controllers;
 /// Учетные записи
 /// </summary>
 [ApiController]
-[Route("api/v1/users")]
+[Route("api/users")]
 public class UsersController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>
@@ -53,6 +53,7 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="handler">Обработчик</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список пользователей</returns>
+	[HttpGet]
 	public async Task<ActionResult<IEnumerable<UserInfo>>> GetAllAsync(
 		[FromServices] IGetUsersHandler handler,
 		CancellationToken ct = default)
@@ -74,6 +75,7 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о пользователе</returns>
+	[HttpGet("{userGuid}")]
 	public async Task<ActionResult<UserInfo>> GetWithDetailsAsync(
 		[FromServices] IGetUserWithDetailsHandler handler,
 		[BindRequired, FromRoute] Guid userGuid,
@@ -97,6 +99,7 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="request">Новые данные пользователя</param>
 	/// <param name="ct">Токен отмены</param>
+	[HttpPut("{userGuid}")]
 	public async Task<ActionResult> UpdateAsync(
 		[FromServices] IUpdateUserHandler handler,
 		[BindRequired, FromRoute] Guid userGuid,
@@ -125,6 +128,7 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="handler">Обработчик</param>
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="ct">Токен отмены</param>
+	[HttpDelete("{userGuid}")]
 	public async Task<ActionResult> DeleteAsync(
 		[FromServices] IDeleteUserHandler handler,
 		[BindRequired, FromRoute] Guid userGuid,

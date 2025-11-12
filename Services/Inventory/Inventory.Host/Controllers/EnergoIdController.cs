@@ -10,7 +10,7 @@ namespace Datalake.Inventory.Host.Controllers;
 /// Учетные записи
 /// </summary>
 [ApiController]
-[Route("api/v1/energo-id")]
+[Route("api/energo-id")]
 public class EnergoIdController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>

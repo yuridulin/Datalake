@@ -14,7 +14,7 @@ namespace Datalake.Inventory.Host.Controllers;
 /// Источники данных
 /// </summary>
 [ApiController]
-[Route("api/v1/sources")]
+[Route("api/sources")]
 public class SourcesController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>
@@ -51,6 +51,7 @@ public class SourcesController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о источнике</returns>
+	[HttpGet("{sourceId}")]
 	public async Task<ActionResult<SourceInfo>> GetAsync(
 		[FromServices] IGetSourceHandler handler,
 		[BindRequired, FromRoute] int sourceId,
@@ -70,6 +71,7 @@ public class SourcesController(IAuthenticator authenticator) : ControllerBase
 	/// <param name="withCustom">Включить ли в список системные источники</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список источников</returns>
+	[HttpGet]
 	public async Task<ActionResult<IEnumerable<SourceInfo>>> GetAllAsync(
 		[FromServices] IGetSourcesHandler handler,
 		[FromQuery] bool withCustom = false,

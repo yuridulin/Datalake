@@ -17,7 +17,7 @@ namespace Datalake.Inventory.Host.Controllers;
 /// Правила доступа
 /// </summary>
 [ApiController]
-[Route("api/v1/access")]
+[Route("api/access")]
 public class AccessController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>

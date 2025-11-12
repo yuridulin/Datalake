@@ -12,7 +12,7 @@ namespace Datalake.Inventory.Host.Controllers;
 /// Настройки и состояние системы
 /// </summary>
 [ApiController]
-[Route("api/v1/system")]
+[Route("api/system")]
 public class SystemController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>

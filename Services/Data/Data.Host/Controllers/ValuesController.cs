@@ -11,7 +11,7 @@ namespace Datalake.Data.Host.Controllers;
 /// Данные тегов
 /// </summary>
 [ApiController]
-[Route("api/v1/values")]
+[Route("api/values")]
 public class ValuesController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>

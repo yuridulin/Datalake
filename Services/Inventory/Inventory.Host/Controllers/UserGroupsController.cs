@@ -17,7 +17,7 @@ namespace Datalake.Inventory.Host.Controllers;
 /// Группы учетных записей
 /// </summary>
 [ApiController]
-[Route("api/v1/user-groups")]
+[Route("api/user-groups")]
 public class UserGroupsController(IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>

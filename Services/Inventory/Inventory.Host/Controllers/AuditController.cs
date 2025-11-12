@@ -9,7 +9,7 @@ namespace Datalake.Inventory.Host.Controllers;
 /// Аудит изменений
 /// </summary>
 [ApiController]
-[Route("api/v1/blocks")]
+[Route("api/audit")]
 public class AuditController : ControllerBase
 {
 	/// <summary>
@@ -29,6 +29,7 @@ public class AuditController : ControllerBase
 	/// <param name="author"></param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список сообщений аудита</returns>
+	[HttpGet]
 	public async Task<ActionResult<IEnumerable<LogInfo>>> GetAsync(
 		[FromServices] IGetAuditHandler handler,
 		[FromQuery] int? lastId = null,
