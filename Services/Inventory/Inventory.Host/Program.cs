@@ -1,8 +1,7 @@
-using Datalake.Inventory.Api;
+using Datalake.Contracts.Internal.Constants;
+using Datalake.Contracts.Public;
 using Datalake.Inventory.Application;
-using Datalake.Inventory.Host.Services;
 using Datalake.Inventory.Infrastructure;
-using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Middlewares;
@@ -25,6 +24,7 @@ public class Program
 		var builder = WebApplication.CreateBuilder(args);
 		CurrentEnvironment = builder.Environment.EnvironmentName;
 
+		// конфигурация
 		builder.AddShared(CurrentEnvironment, Version, Assembly.GetExecutingAssembly());
 		builder.AddInfrastructure();
 		builder.AddApplication();
@@ -37,31 +37,29 @@ public class Program
 		// пайп обработки запросов
 		if (!app.Environment.IsProduction())
 		{
-			app
-				.UseDeveloperExceptionPage()
-				.UseOpenApi()
-				.UseSwaggerUi();
+			app.UseDeveloperExceptionPage();
+			app.UseOpenApi();
+			app.UseSwaggerUi();
 		}
 
-		app
-			.UseSharedExceptionsHandler()
-			.UseSentryTracing()
-			.UseSharedSerilogRequestLogging()
-			.UseHttpsRedirection()
-			.UseRouting()
-			.UseCors(policy =>
-			{
-				policy
-					.AllowAnyMethod()
-					.AllowAnyOrigin()
-					.AllowAnyHeader()
-					.WithExposedHeaders([
-						Headers.UserGuidHeader,
-						Headers.SessionTokenHeander,
-					]);
-			})
-			.UseSharedSentryBodyWriter()
-			.UseSharedCorsOnError();
+		app.UseSharedExceptionsHandler();
+		app.UseSentryTracing();
+		app.UseSharedSerilogRequestLogging();
+		app.UseHttpsRedirection();
+		app.UseRouting();
+		app.UseCors(policy =>
+		{
+			policy
+				.AllowAnyMethod()
+				.AllowAnyOrigin()
+				.AllowAnyHeader()
+				.WithExposedHeaders([
+					Headers.UserGuidHeader,
+					Headers.SessionTokenHeander,
+				]);
+		});
+		app.UseSharedSentryBodyWriter();
+		app.UseSharedCorsOnError();
 
 		// установка роутинга
 		app.MapApi();

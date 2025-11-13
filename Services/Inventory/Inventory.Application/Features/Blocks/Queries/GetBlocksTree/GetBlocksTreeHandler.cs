@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
+using Datalake.Contracts.Public.Models.Blocks;
 using Datalake.Domain.ValueObjects;
-using Datalake.Inventory.Api.Models.Blocks;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Interfaces;
 

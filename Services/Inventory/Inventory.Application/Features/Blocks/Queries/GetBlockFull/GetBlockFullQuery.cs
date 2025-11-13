@@ -1,5 +1,5 @@
-﻿using Datalake.Domain.ValueObjects;
-using Datalake.Inventory.Api.Models.Blocks;
+﻿using Datalake.Contracts.Public.Models.Blocks;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Blocks.Queries.GetBlockFull;

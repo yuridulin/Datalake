@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Api.Models.UserGroups;
-using Datalake.Inventory.Api.Models.Users;
+using Datalake.Contracts.Public.Models.UserGroups;
+using Datalake.Contracts.Public.Models.Users;
 using Datalake.Inventory.Application.Queries;
 using Microsoft.EntityFrameworkCore;
 using System.Data;

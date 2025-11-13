@@ -1,5 +1,5 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Api.Models.UserGroups;
+using Datalake.Contracts.Public.Models.UserGroups;
 using Datalake.Inventory.Application.Exceptions;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Interfaces;

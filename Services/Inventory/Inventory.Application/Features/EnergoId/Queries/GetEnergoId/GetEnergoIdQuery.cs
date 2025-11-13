@@ -1,5 +1,5 @@
-﻿using Datalake.Domain.ValueObjects;
-using Datalake.Inventory.Api.Models.Users;
+﻿using Datalake.Contracts.Public.Models.Users;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.EnergoId.Queries.GetEnergoId;

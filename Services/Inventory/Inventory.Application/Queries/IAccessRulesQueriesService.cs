@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Api.Models.AccessRules;
+﻿using Datalake.Contracts.Public.Models.AccessRules;
 
 namespace Datalake.Inventory.Application.Queries;
 

@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Api.Models.Tags;
+﻿using Datalake.Contracts.Public.Models.Tags;
 using Datalake.Inventory.Application.Features.Tags.Commands.CreateTag;
 using Datalake.Inventory.Application.Features.Tags.Commands.DeleteTag;
 using Datalake.Inventory.Application.Features.Tags.Commands.UpdateTag;
@@ -16,23 +16,23 @@ namespace Datalake.Inventory.Host.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/tags")]
-public class TagsController(IAuthenticator authenticator) : ControllerBase
+public class TagsController(
+	IServiceProvider serviceProvider,
+	IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>
-	/// <see cref="HttpMethod.Post" />: Создание нового тега
+	/// Создание нового тега
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="request">Необходимые данные для создания тега</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Идентификатор нового тега в локальной базе данных</returns>
 	[HttpPost]
 	public async Task<ActionResult<TagInfo>> CreateAsync(
-		[FromServices] ICreateTagHandler handler,
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<ICreateTagHandler>();
 		var result = await handler.HandleAsync(new()
 		{
 			User = user,
@@ -46,20 +46,18 @@ public class TagsController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
+	/// Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Объект информации о теге</returns>
 	[HttpGet("{tagId}")]
 	public async Task<ActionResult<TagFullInfo>> GetAsync(
-		[FromServices] IGetTagWithDetailsHandler handler,
 		[FromRoute] int tagId,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IGetTagWithDetailsHandler>();
 		var data = await handler.HandleAsync(new()
 		{
 			User = user,
@@ -70,9 +68,8 @@ public class TagsController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение списка тегов, включая информацию о источниках и настройках получения данных
+	/// Получение списка тегов, включая информацию о источниках и настройках получения данных
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="sourceId">Идентификатор источника. Если указан, будут выбраны теги только этого источника</param>
 	/// <param name="tagsId">Список локальных идентификаторов тегов</param>
 	/// <param name="tagsGuid">Список глобальных идентификаторов тегов</param>
@@ -80,14 +77,13 @@ public class TagsController(IAuthenticator authenticator) : ControllerBase
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet]
 	public async Task<ActionResult<TagInfo[]>> GetAllAsync(
-		[FromServices] IGetTagsHandler handler,
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IGetTagsHandler>();
 		var data = await handler.HandleAsync(new()
 		{
 			User = user,
@@ -100,21 +96,19 @@ public class TagsController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Put" />: Изменение тега
+	/// Изменение тега
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <param name="request">Новые данные тега</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{tagId}")]
 	public async Task<ActionResult> UpdateAsync(
-		[FromServices] IUpdateTagHandler handler,
 		[BindRequired, FromRoute] int tagId,
 		[BindRequired, FromBody] TagUpdateRequest request,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IUpdateTagHandler>();
 		await handler.HandleAsync(new()
 		{
 			User = user,
@@ -154,19 +148,17 @@ public class TagsController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Delete" />: Удаление тега
+	/// Удаление тега
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpDelete("{tagId}")]
 	public async Task<ActionResult> DeleteAsync(
-		[FromServices] IDeleteTagHandler handler,
 		[BindRequired, FromRoute] int tagId,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IDeleteTagHandler>();
 		await handler.HandleAsync(new()
 		{
 			User = user,

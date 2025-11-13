@@ -25,6 +25,7 @@ public static class ProgramExtensions
 		// конфиг
 		var storage = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage");
 		var configs = Path.Combine(storage, "config");
+		Directory.CreateDirectory(configs);
 		builder.Configuration
 			.SetBasePath(configs)
 			.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)

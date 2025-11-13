@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Api.Models.Tags;
+﻿using Datalake.Contracts.Public.Models.Tags;
 
 namespace Datalake.Inventory.Application.Queries;
 

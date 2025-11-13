@@ -1,7 +1,7 @@
-﻿using Datalake.Data.Api;
+﻿using Datalake.Contracts.Internal.Constants;
+using Datalake.Contracts.Public;
 using Datalake.Data.Application;
 using Datalake.Data.Infrastructure;
-using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Middlewares;
@@ -24,6 +24,7 @@ public class Program
 		var builder = WebApplication.CreateBuilder(args);
 		CurrentEnvironment = builder.Environment.EnvironmentName;
 
+		// конфигурация
 		builder.AddShared(CurrentEnvironment, Version, Assembly.GetExecutingAssembly());
 		builder.AddInfrastructure();
 		builder.AddApplication();
@@ -33,15 +34,16 @@ public class Program
 		// сборка
 		var app = builder.Build();
 
+		// пайп обработки запросов
 		if (!app.Environment.IsProduction())
 		{
 			app.UseDeveloperExceptionPage();
+			app.UseOpenApi();
 			app.UseSwaggerUi();
 		}
 
-		app.UseOpenApi();
-		//app.UseSharedExceptionsHandler();
-		//app.UseSentryTracing();
+		app.UseSharedExceptionsHandler();
+		app.UseSentryTracing();
 		app.UseSharedSerilogRequestLogging();
 		app.UseHttpsRedirection();
 		app.UseRouting();
@@ -56,9 +58,10 @@ public class Program
 					Headers.SessionTokenHeander,
 				]);
 		});
-		//app.UseSharedSentryBodyWriter();
-		//app.UseSharedCorsOnError();
+		app.UseSharedSentryBodyWriter();
+		app.UseSharedCorsOnError();
 
+		// установка роутинга
 		app.MapApi();
 
 		// запуск

@@ -1,9 +1,9 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Api.Models.AccessRules;
-using Datalake.Inventory.Api.Models.Blocks;
-using Datalake.Inventory.Api.Models.Sources;
-using Datalake.Inventory.Api.Models.Tags;
-using Datalake.Inventory.Api.Models.UserGroups;
+using Datalake.Contracts.Public.Models.AccessRules;
+using Datalake.Contracts.Public.Models.Blocks;
+using Datalake.Contracts.Public.Models.Sources;
+using Datalake.Contracts.Public.Models.Tags;
+using Datalake.Contracts.Public.Models.UserGroups;
 using Datalake.Inventory.Application.Queries;
 using Microsoft.EntityFrameworkCore;
 

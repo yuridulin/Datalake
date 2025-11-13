@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Api.Models.Blocks;
+﻿using Datalake.Contracts.Public.Models.Blocks;
 
 namespace Datalake.Inventory.Application.Queries;
 

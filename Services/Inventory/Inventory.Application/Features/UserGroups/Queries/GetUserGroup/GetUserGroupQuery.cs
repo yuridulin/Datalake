@@ -1,5 +1,5 @@
-﻿using Datalake.Domain.ValueObjects;
-using Datalake.Inventory.Api.Models.UserGroups;
+﻿using Datalake.Contracts.Public.Models.UserGroups;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroup;

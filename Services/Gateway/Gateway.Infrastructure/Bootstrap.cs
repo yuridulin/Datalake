@@ -29,6 +29,7 @@ public static class Bootstrap
 			});
 		});
 
+		builder.Services.AddMemoryCache();
 		builder.Services.AddSingleton<ISessionsCache, MemorySessionsCache>();
 		builder.Services.AddSingleton<IUsersActivityService, UsersActivityService>();
 

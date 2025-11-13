@@ -1,6 +1,6 @@
-﻿using Datalake.Domain.ValueObjects;
+﻿using Datalake.Contracts.Internal.Constants;
+using Datalake.Domain.ValueObjects;
 using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Hosting.Interfaces;
 

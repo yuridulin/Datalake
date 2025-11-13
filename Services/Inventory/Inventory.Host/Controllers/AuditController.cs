@@ -1,5 +1,5 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Api.Models.LogModels;
+using Datalake.Contracts.Public.Models.LogModels;
 using Datalake.Inventory.Application.Features.Audit.Queries.GetAudit;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,12 +10,12 @@ namespace Datalake.Inventory.Host.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/audit")]
-public class AuditController : ControllerBase
+public class AuditController(
+	IServiceProvider serviceProvider) : ControllerBase
 {
 	/// <summary>
 	/// Получение списка сообщений аудита
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="lastId">Идентификатор последнего сообщения. Будут присланы только более поздние</param>
 	/// <param name="firstId">Идентификатор первого сообщения. Будут присланы только более ранние</param>
 	/// <param name="take"></param>
@@ -31,7 +31,6 @@ public class AuditController : ControllerBase
 	/// <returns>Список сообщений аудита</returns>
 	[HttpGet]
 	public async Task<ActionResult<IEnumerable<LogInfo>>> GetAsync(
-		[FromServices] IGetAuditHandler handler,
 		[FromQuery] int? lastId = null,
 		[FromQuery] int? firstId = null,
 		[FromQuery] int? take = null,
@@ -45,6 +44,7 @@ public class AuditController : ControllerBase
 		[FromQuery] Guid? author = null,
 		CancellationToken ct = default)
 	{
+		var handler = serviceProvider.GetRequiredService<IGetAuditHandler>();
 		var data = await handler.HandleAsync(new(lastId, firstId, take, source, block, tag, user, group, categories, types, author), ct);
 
 		return Ok(data);

@@ -1,9 +1,9 @@
-﻿using Datalake.Gateway.Api.Models.Auth;
-using Datalake.Gateway.Application.Features.Commands.CloseSession;
+﻿using Datalake.Gateway.Application.Features.Commands.CloseSession;
 using Datalake.Gateway.Application.Features.Commands.OpenEnergoIdSession;
 using Datalake.Gateway.Application.Features.Commands.OpenLocalSession;
 using Datalake.Gateway.Application.Features.Queries.GetCurrentSessionWithAccess;
 using Datalake.Gateway.Application.Models;
+using Datalake.Gateway.Application.Models.Auth;
 using Datalake.Gateway.Host.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -14,11 +14,11 @@ namespace Datalake.Gateway.Host.Controllers;
 /// Управление сессиями, логин/логаут
 /// </summary>
 [ApiController]
-[Route("api/v1/sessions")]
+[Route("sessions")]
 public class AuthController(ISessionTokenExtractor tokenExtractor) : ControllerBase
 {
 	/// <summary>
-	/// <see cref="HttpMethod.Post" />: Аутентификация локального пользователя по связке "имя для входа/пароль"
+	/// Аутентификация локального пользователя по связке "имя для входа/пароль"
 	/// </summary>
 	/// <param name="request">Данные для входа</param>
 	/// <returns>Данные о учетной записи</returns>
@@ -36,7 +36,7 @@ public class AuthController(ISessionTokenExtractor tokenExtractor) : ControllerB
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Post" />: Аутентификация пользователя, прошедшего проверку на сервере EnergoId
+	/// Аутентификация пользователя, прошедшего проверку на сервере EnergoId
 	/// </summary>
 	/// <param name="request">Данные пользователя Keycloak</param>
 	/// <returns>Данные о учетной записи</returns>
@@ -54,7 +54,7 @@ public class AuthController(ISessionTokenExtractor tokenExtractor) : ControllerB
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение информации о учетной записи на основе текущей сессии
+	/// Получение информации о учетной записи на основе текущей сессии
 	/// </summary>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpGet("identify")]

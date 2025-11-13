@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Api.Models.Sources;
+﻿using Datalake.Contracts.Public.Models.Sources;
 using Datalake.Inventory.Application.Features.Sources.Commands.CreateSource;
 using Datalake.Inventory.Application.Features.Sources.Commands.DeleteSource;
 using Datalake.Inventory.Application.Features.Sources.Commands.UpdateSource;
@@ -15,23 +15,23 @@ namespace Datalake.Inventory.Host.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/sources")]
-public class SourcesController(IAuthenticator authenticator) : ControllerBase
+public class SourcesController(
+	IServiceProvider serviceProvider,
+	IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>
-	/// <see cref="HttpMethod.Post" />: Создание источника на основе переданных данных
+	/// Создание источника на основе переданных данных
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="request">Данные нового источника</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Идентификатор источника</returns>
 	[HttpPost]
 	public async Task<ActionResult<int>> CreateAsync(
-		[FromServices] ICreateSourceHandler handler,
 		[FromBody] SourceInfo? request,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<ICreateSourceHandler>();
 		var result = await handler.HandleAsync(new()
 		{
 			User = user,
@@ -45,61 +45,55 @@ public class SourcesController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение данных о источнике
+	/// Получение данных о источнике
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о источнике</returns>
 	[HttpGet("{sourceId}")]
 	public async Task<ActionResult<SourceInfo>> GetAsync(
-		[FromServices] IGetSourceHandler handler,
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IGetSourceHandler>();
 		var data = await handler.HandleAsync(new() { User = user, SourceId = sourceId }, ct);
 
 		return Ok(data);
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение списка источников
+	/// Получение списка источников
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="withCustom">Включить ли в список системные источники</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список источников</returns>
 	[HttpGet]
 	public async Task<ActionResult<IEnumerable<SourceInfo>>> GetAllAsync(
-		[FromServices] IGetSourcesHandler handler,
 		[FromQuery] bool withCustom = false,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IGetSourcesHandler>();
 		var data = await handler.HandleAsync(new() { User = user, WithCustom = withCustom }, ct);
 
 		return Ok(data);
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Put" />: Изменение источника
+	/// Изменение источника
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <param name="request">Новые данные источника</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{sourceId}")]
 	public async Task<ActionResult> UpdateAsync(
-		[FromServices] IUpdateSourceHandler handler,
 		[BindRequired, FromRoute] int sourceId,
 		[BindRequired, FromBody] SourceUpdateRequest request,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IUpdateSourceHandler>();
 		await handler.HandleAsync(new()
 		{
 			User = user,
@@ -115,19 +109,17 @@ public class SourcesController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Delete" />: Удаление источника
+	/// Удаление источника
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpDelete("{sourceId}")]
 	public async Task<ActionResult> DeleteAsync(
-		[FromServices] IDeleteSourceHandler handler,
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IDeleteSourceHandler>();
 		await handler.HandleAsync(new()
 		{
 			User = user,

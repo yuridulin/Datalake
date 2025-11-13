@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Api.Models.UserGroups;
+﻿using Datalake.Contracts.Public.Models.UserGroups;
 
 namespace Datalake.Inventory.Application.Queries;
 

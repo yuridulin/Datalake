@@ -1,11 +1,11 @@
 ﻿using Datalake.Contracts.Public.Enums;
 using Datalake.Contracts.Public.Extensions;
-using Datalake.Inventory.Api.Models.Blocks;
-using Datalake.Inventory.Api.Models.LogModels;
-using Datalake.Inventory.Api.Models.Sources;
-using Datalake.Inventory.Api.Models.Tags;
-using Datalake.Inventory.Api.Models.UserGroups;
-using Datalake.Inventory.Api.Models.Users;
+using Datalake.Contracts.Public.Models.Blocks;
+using Datalake.Contracts.Public.Models.LogModels;
+using Datalake.Contracts.Public.Models.Sources;
+using Datalake.Contracts.Public.Models.Tags;
+using Datalake.Contracts.Public.Models.UserGroups;
+using Datalake.Contracts.Public.Models.Users;
 using Datalake.Inventory.Application.Queries;
 using Microsoft.EntityFrameworkCore;
 

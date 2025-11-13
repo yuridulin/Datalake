@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Api.Models.Users;
+﻿using Datalake.Contracts.Public.Models.Users;
 using Datalake.Inventory.Application.Features.Users.Commands.CreateUser;
 using Datalake.Inventory.Application.Features.Users.Commands.DeleteUser;
 using Datalake.Inventory.Application.Features.Users.Commands.UpdateUser;
@@ -15,23 +15,23 @@ namespace Datalake.Inventory.Host.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/users")]
-public class UsersController(IAuthenticator authenticator) : ControllerBase
+public class UsersController(
+	IServiceProvider serviceProvider,
+	IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>
-	/// <see cref="HttpMethod.Post" />: Создание пользователя на основании переданных данных
+	/// Создание пользователя на основании переданных данных
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="request">Данные нового пользователя</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Идентификатор пользователя</returns>
 	[HttpPost]
 	public async Task<ActionResult<Guid>> CreateAsync(
-		[FromServices] ICreateUserHandler handler,
 		[BindRequired, FromBody] UserCreateRequest request,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<ICreateUserHandler>();
 		var result = await handler.HandleAsync(new()
 		{
 			User = user,
@@ -48,18 +48,16 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение списка пользователей
+	/// Получение списка пользователей
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список пользователей</returns>
 	[HttpGet]
 	public async Task<ActionResult<IEnumerable<UserInfo>>> GetAllAsync(
-		[FromServices] IGetUsersHandler handler,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IGetUsersHandler>();
 		var data = await handler.HandleAsync(new()
 		{
 			User = user,
@@ -69,20 +67,18 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение детализированной информации о пользователе
+	/// Получение детализированной информации о пользователе
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о пользователе</returns>
 	[HttpGet("{userGuid}")]
 	public async Task<ActionResult<UserInfo>> GetWithDetailsAsync(
-		[FromServices] IGetUserWithDetailsHandler handler,
 		[BindRequired, FromRoute] Guid userGuid,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IGetUserWithDetailsHandler>();
 		var data = await handler.HandleAsync(new()
 		{
 			User = user,
@@ -93,21 +89,19 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Put" />: Изменение пользователя
+	/// Изменение пользователя
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="request">Новые данные пользователя</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{userGuid}")]
 	public async Task<ActionResult> UpdateAsync(
-		[FromServices] IUpdateUserHandler handler,
 		[BindRequired, FromRoute] Guid userGuid,
 		[BindRequired, FromBody] UserUpdateRequest request,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IUpdateUserHandler>();
 		await handler.HandleAsync(new()
 		{
 			User = user,
@@ -123,19 +117,17 @@ public class UsersController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Delete" />: Удаление пользователя
+	/// Удаление пользователя
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpDelete("{userGuid}")]
 	public async Task<ActionResult> DeleteAsync(
-		[FromServices] IDeleteUserHandler handler,
 		[BindRequired, FromRoute] Guid userGuid,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IDeleteUserHandler>();
 		await handler.HandleAsync(new()
 		{
 			User = user,

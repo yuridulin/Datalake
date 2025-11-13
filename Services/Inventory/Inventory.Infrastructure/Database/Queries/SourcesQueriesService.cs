@@ -1,6 +1,6 @@
-﻿using Datalake.Domain.Entities;
-using Datalake.Inventory.Api.Models.Sources;
-using Datalake.Inventory.Api.Models.Tags;
+﻿using Datalake.Contracts.Public.Models.Sources;
+using Datalake.Contracts.Public.Models.Tags;
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Queries;
 using Microsoft.EntityFrameworkCore;
 

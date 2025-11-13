@@ -1,5 +1,5 @@
 ﻿# --- 1. Рантайм (финальный базовый образ) ---
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER root
 
 # Устанавливаем curl для healthcheck
@@ -22,7 +22,7 @@ COPY Clients/datalake ./
 RUN npm run build
 
 # --- 3. Сборка .NET SDK ---
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # 3.1. Кэшируем restore: копируем все csproj, привязанные к Server

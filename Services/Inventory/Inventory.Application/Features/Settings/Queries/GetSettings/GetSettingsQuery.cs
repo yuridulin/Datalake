@@ -1,5 +1,5 @@
-﻿using Datalake.Domain.ValueObjects;
-using Datalake.Inventory.Api.Models.Settings;
+﻿using Datalake.Contracts.Public.Models.Settings;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Settings.Queries.GetSettings;

@@ -1,11 +1,10 @@
-using Datalake.Gateway.Api;
+using Datalake.Contracts.Internal.Constants;
+using Datalake.Contracts.Public;
 using Datalake.Gateway.Application;
 using Datalake.Gateway.Infrastructure;
-using Datalake.Shared.Api.Constants;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Middlewares;
-using Ocelot.Middleware;
 using System.Reflection;
 
 namespace Datalake.Gateway.Host;
@@ -26,63 +25,60 @@ public class Program
 		CurrentEnvironment = builder.Environment.EnvironmentName;
 
 		// конфигурация
-		builder.AddShared(CurrentEnvironment, Version, Assembly.GetCallingAssembly());
+		builder.AddShared(CurrentEnvironment, Version, Assembly.GetExecutingAssembly());
 		builder.AddInfrastructure();
 		builder.AddApplication();
 		builder.AddApi();
 		builder.AddHosting();
 
+		// сборка
 		var app = builder.Build();
 
+		// пайп обработки запросов
 		if (!app.Environment.IsProduction())
 		{
 			app.UseDeveloperExceptionPage();
+			app.UseOpenApi();
+			app.UseSwaggerUi();
 		}
 
-		app.UseSwagger();
-		app.UseSwaggerForOcelotUI(opt =>
+		app.UseSharedExceptionsHandler();
+		app.UseSentryTracing();
+		app.UseSharedSerilogRequestLogging();
+		app.UseHttpsRedirection();
+		app.UseRouting();
+		app.UseDefaultFiles();
+		app.UseStaticFiles(new StaticFileOptions
 		{
-			opt.PathToSwaggerGenerator = "/swagger/docs";
-		});
-
-		app
-			.UseSharedExceptionsHandler()
-			.UseSentryTracing()
-			.UseSharedSerilogRequestLogging()
-			.UseHttpsRedirection()
-			.UseRouting()
-			.UseDefaultFiles()
-			.UseStaticFiles(new StaticFileOptions
+			OnPrepareResponse = (ctx) =>
 			{
-				OnPrepareResponse = (ctx) =>
+				if (ctx.File.Name == "index.html")
 				{
-					if (ctx.File.Name == "index.html")
-					{
-						ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
-						ctx.Context.Response.Headers.Append("Pragma", "no-cache");
-						ctx.Context.Response.Headers.Append("Expires", "0");
-					}
+					ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+					ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+					ctx.Context.Response.Headers.Append("Expires", "0");
 				}
-			})
-			.UseCors(policy =>
-			{
-				policy
-					.AllowAnyMethod()
-					.AllowAnyOrigin()
-					.AllowAnyHeader()
-					.WithExposedHeaders([
-						Headers.UserGuidHeader,
-						Headers.SessionTokenHeander,
-					]);
-			})
-			.UseSharedSentryBodyWriter()
-			.UseSharedCorsOnError();
+			}
+		});
+		app.UseCors(policy =>
+		{
+			policy
+				.AllowAnyMethod()
+				.AllowAnyOrigin()
+				.AllowAnyHeader()
+				.WithExposedHeaders([
+					Headers.UserGuidHeader,
+					Headers.SessionTokenHeander,
+				]);
+		});
+		app.UseSharedSentryBodyWriter();
+		app.UseSharedCorsOnError();
 
+		// установка роутинга
 		app.MapApi();
 
+		// запуск
 		app.NotifyStart(nameof(Gateway), CurrentEnvironment, Version);
-
-		await app.UseOcelot();
 		await app.RunAsync();
 	}
 }

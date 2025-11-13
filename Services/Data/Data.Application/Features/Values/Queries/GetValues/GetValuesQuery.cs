@@ -1,4 +1,4 @@
-﻿using Datalake.Data.Api.Models.Values;
+﻿using Datalake.Contracts.Public.Models.Data.Values;
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 

@@ -1,5 +1,5 @@
 ﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Inventory.Api.Models.LogModels;
+using Datalake.Contracts.Public.Models.LogModels;
 
 namespace Datalake.Inventory.Application.Queries;
 

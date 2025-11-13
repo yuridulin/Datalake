@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Api.Models.Settings;
+﻿using Datalake.Contracts.Public.Models.Settings;
 using Datalake.Inventory.Application.Features.Cache.Commands.ReloadCache;
 using Datalake.Inventory.Application.Features.Settings.Commands.UpdateSettings;
 using Datalake.Inventory.Application.Features.Settings.Queries.GetSettings;
@@ -13,38 +13,37 @@ namespace Datalake.Inventory.Host.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/system")]
-public class SystemController(IAuthenticator authenticator) : ControllerBase
+public class SystemController(
+	IServiceProvider serviceProvider,
+	IAuthenticator authenticator) : ControllerBase
 {
 	/// <summary>
-	/// <see cref="HttpMethod.Get" />: Получение информации о настройках сервера
+	/// Получение информации о настройках сервера
 	/// </summary>
 	/// <returns>Информация о настройках</returns>
 	[HttpGet("settings")]
 	public async Task<ActionResult<SettingsInfo>> GetSettingsAsync(
-		[FromServices] IGetSettingsHandler handler,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IGetSettingsHandler>();
 		var data = await handler.HandleAsync(new(user), ct);
 
 		return data;
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Put" />: Изменение информации о настройках сервера
+	/// Изменение информации о настройках сервера
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="newSettings">Новые настройки сервера</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("settings")]
 	public async Task<ActionResult> UpdateSettingsAsync(
-		[FromServices] IUpdateSettingsHandler handler,
 		[BindRequired][FromBody] SettingsInfo newSettings,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IUpdateSettingsHandler>();
 		await handler.HandleAsync(new(
 			user,
 			KeycloakClient: newSettings.EnergoIdClient,
@@ -56,17 +55,15 @@ public class SystemController(IAuthenticator authenticator) : ControllerBase
 	}
 
 	/// <summary>
-	/// <see cref="HttpMethod.Post" /> Принудительная перезагрузка состояния БД в кэш
+	/// Принудительная перезагрузка состояния БД в кэш
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPost("cache")]
 	public async Task<ActionResult> RestartStateAsync(
-		[FromServices] IReloadCacheHandler handler,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-
+		var handler = serviceProvider.GetRequiredService<IReloadCacheHandler>();
 		await handler.HandleAsync(new() { User = user }, ct);
 
 		return NoContent();
