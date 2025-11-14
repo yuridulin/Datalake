@@ -7,30 +7,18 @@ using Datalake.Inventory.Application.Features.Blocks.Models;
 using Datalake.Inventory.Application.Features.Blocks.Queries.GetBlockFull;
 using Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksTree;
 using Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksWithTags;
+using Datalake.Shared.Hosting.Controllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-/// <summary>
-/// Взаимодействие с блоками
-/// </summary>
-[ApiController]
-[Route("api/blocks")]
 public class BlocksController(
 	IServiceProvider serviceProvider,
-	IAuthenticator authenticator) : ControllerBase
+	IAuthenticator authenticator) : InventoryBlocksControllerBase
 {
-	/// <summary>
-	/// Создание нового блока на основании переданной информации
-	/// </summary>
-	/// <param name="parentId">Идентификатор родительского блока</param>
-	/// <param name="blockInfo">Данные о новом блоке</param>
-	/// <param name="ct">Токен отмены</param>
-	/// <returns>Идентификатор блока</returns>
-	[HttpPost]
-	public async Task<ActionResult<int>> CreateAsync(
+	public override async Task<ActionResult<int>> CreateAsync(
 		[FromQuery] int? parentId,
 		[FromBody] BlockFullInfo? blockInfo,
 		CancellationToken ct = default)
@@ -41,13 +29,7 @@ public class BlocksController(
 		return key;
 	}
 
-	/// <summary>
-	/// Получение списка блоков с базовой информацией о них
-	/// </summary>
-	/// <param name="ct">Токен отмены</param>
-	/// <returns>Список блоков</returns>
-	[HttpGet]
-	public async Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
+	public override async Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -57,14 +39,7 @@ public class BlocksController(
 		return Ok(data);
 	}
 
-	/// <summary>
-	/// Получение информации о выбранном блоке
-	/// </summary>
-	/// <param name="blockId">Идентификатор блока</param>
-	/// <param name="ct">Токен отмены</param>
-	/// <returns>Информация о блоке</returns>
-	[HttpGet("{blockId}")]
-	public async Task<ActionResult<BlockFullInfo>> GetAsync(
+	public override async Task<ActionResult<BlockFullInfo>> GetAsync(
 		[BindRequired, FromRoute] int blockId,
 		CancellationToken ct = default)
 	{
@@ -75,13 +50,7 @@ public class BlocksController(
 		return Ok(data);
 	}
 
-	/// <summary>
-	/// Получение иерархической структуры всех блоков
-	/// </summary>
-	/// <param name="ct">Токен отмены</param>
-	/// <returns>Список обособленных блоков с вложенными блоками</returns>
-	[HttpGet("tree")]
-	public async Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync(
+	public override async Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -91,14 +60,7 @@ public class BlocksController(
 		return Ok(data);
 	}
 
-	/// <summary>
-	/// Изменение блока
-	/// </summary>
-	/// <param name="blockId">Идентификатор блока</param>
-	/// <param name="request">Новые данные блока</param>
-	/// <param name="ct">Токен отмены</param>
-	[HttpPut("{blockId}")]
-	public async Task<ActionResult> UpdateAsync(
+	public override async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int blockId,
 		[BindRequired, FromBody] BlockUpdateRequest request,
 		CancellationToken ct = default)
@@ -115,14 +77,7 @@ public class BlocksController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Перемещение блока
-	/// </summary>
-	/// <param name="blockId">Идентификатор блока</param>
-	/// <param name="parentId">Идентификатор родительского блока</param>
-	/// <param name="ct">Токен отмены</param>
-	[HttpPut("{blockId}/move")]
-	public async Task<ActionResult> MoveAsync(
+	public override async Task<ActionResult> MoveAsync(
 		[BindRequired, FromRoute] int blockId,
 		[FromQuery] int? parentId,
 		CancellationToken ct = default)
@@ -134,13 +89,7 @@ public class BlocksController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Удаление блока
-	/// </summary>
-	/// <param name="blockId">Идентификатор блока</param>
-	/// <param name="ct">Токен отмены</param>
-	[HttpDelete("{blockId}")]
-	public async Task<ActionResult> DeleteAsync(
+	public override async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int blockId,
 		CancellationToken ct = default)
 	{

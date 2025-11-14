@@ -29,7 +29,8 @@ public class AggregateCollector(
 			if (tag.AggregationSettings == null)
 				continue;
 
-			if (!notEmpty) notEmpty = true;
+			if (!notEmpty)
+				notEmpty = true;
 			var rule = new TagAggregationRule
 			{
 				TagId = tag.TagId,

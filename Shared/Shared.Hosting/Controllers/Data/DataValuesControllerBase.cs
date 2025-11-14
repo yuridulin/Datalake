@@ -8,8 +8,9 @@ namespace Datalake.Shared.Hosting.Controllers.Data;
 /// Данные тегов
 /// </summary>
 [ApiController]
+[ApiExplorerSettings(GroupName = "Data")]
 [Route("api/v1/data/values")]
-public abstract class BaseValuesController : ControllerBase
+public abstract class DataValuesControllerBase : ControllerBase
 {
 	/// <summary>
 	/// Получение значений на основании списка запросов

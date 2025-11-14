@@ -7,6 +7,7 @@
     <AssemblyTitle>Datalake.Shared.Hosting</AssemblyTitle>
     <AssemblyName>Datalake.Shared.Hosting</AssemblyName>
     <RootNamespace>Datalake.Shared.Hosting</RootNamespace>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

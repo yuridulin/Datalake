@@ -1,27 +1,17 @@
 ﻿using Datalake.Contracts.Models.Users;
 using Datalake.Inventory.Application.Features.EnergoId.Commands.ReloadEnergoId;
 using Datalake.Inventory.Application.Features.EnergoId.Queries.GetEnergoId;
+using Datalake.Shared.Hosting.Controllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-/// <summary>
-/// Учетные записи
-/// </summary>
-[ApiController]
-[Route("api/energo-id")]
 public class EnergoIdController(
 	IServiceProvider serviceProvider,
-	IAuthenticator authenticator) : ControllerBase
+	IAuthenticator authenticator) : InventoryEnergoIdControllerBase
 {
-	/// <summary>
-	/// Получение списка пользователей, определенных на сервере EnergoId
-	/// </summary>
-	/// <param name="ct">Токен отмены</param>
-	/// <returns>Список учетных записей EnergoId с отметкой на каждой, за какой учетной записью приложения закреплена</returns>
-	[HttpGet]
-	public async Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdAsync(
+	public override async Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -31,12 +21,7 @@ public class EnergoIdController(
 		return Ok(data);
 	}
 
-	/// <summary>
-	/// Обновление данных из EnergoId
-	/// </summary>
-	/// <param name="ct">Токен отмены</param>
-	[HttpPut]
-	public async Task<ActionResult> UpdateEnergoIdAsync(
+	public override async Task<ActionResult> UpdateEnergoIdAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);

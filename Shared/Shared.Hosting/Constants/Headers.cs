@@ -1,4 +1,4 @@
-﻿namespace Datalake.Contracts.Internal.Constants;
+﻿namespace Datalake.Shared.Hosting.Constants;
 
 public static class Headers
 {

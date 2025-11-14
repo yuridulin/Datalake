@@ -1,4 +1,5 @@
-﻿using Datalake.Data.Host.Services;
+﻿using Datalake.Data.Application.Interfaces;
+using Datalake.Data.Host.Services;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Interfaces;
 using NJsonSchema.Generation;
@@ -38,6 +39,8 @@ public static class BootstrapExtensions
 
 		var inventoryBaseUri = builder.Configuration.GetSection("InventoryUri").Get<string>()
 			?? throw new("Адрес сервиса Inventory не прочитан из конфига. Ожидается строковое значение в свойстве 'InventoryUri'");
+
+		builder.Services.AddSingleton<IInventoryApiClient, InventoryApiClient>();
 
 		return builder;
 	}

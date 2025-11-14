@@ -10,6 +10,7 @@
     <RootNamespace>Datalake.Gateway.Host</RootNamespace>
     <AssemblyName>Datalake.Gateway.Host</AssemblyName>
     <AssemblyTitle>Datalake.Gateway.Host</AssemblyTitle>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ProxyControllers\Inventory\" />
     <Folder Include="storage\logs\" />
   </ItemGroup>
 

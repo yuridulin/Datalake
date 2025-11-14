@@ -1,5 +1,4 @@
 ﻿using Datalake.Contracts.Interfaces;
-using Datalake.Contracts.Models;
 using Datalake.Contracts.Models.Tags;
 using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;

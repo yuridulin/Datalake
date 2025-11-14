@@ -1,5 +1,4 @@
 ﻿using Datalake.Contracts.Interfaces;
-using Datalake.Contracts.Models;
 
 namespace Datalake.Contracts.Models.Tags;
 

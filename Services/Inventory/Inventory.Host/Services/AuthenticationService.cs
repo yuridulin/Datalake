@@ -1,7 +1,7 @@
-﻿using Datalake.Contracts.Internal.Constants;
-using Datalake.Domain.ValueObjects;
+﻿using Datalake.Domain.ValueObjects;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Shared.Application.Attributes;
+using Datalake.Shared.Hosting.Constants;
 using Datalake.Shared.Hosting.Interfaces;
 
 namespace Datalake.Inventory.Host.Services;

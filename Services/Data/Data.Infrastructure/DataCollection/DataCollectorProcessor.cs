@@ -1,5 +1,4 @@
-﻿using Datalake.Domain.Enums;
-using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Shared.Application.Attributes;
 

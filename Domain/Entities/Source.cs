@@ -57,7 +57,7 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 	/// <param name="name">Название</param>
 	/// <param name="description">Описание</param>
 	/// <returns>Источник даннных</returns>
-	public static Source CreateAsExternal(SourceType? type, string? name, string? description, string? address) 
+	public static Source CreateAsExternal(SourceType? type, string? name, string? description, string? address)
 	{
 		var source = CreateEmpty(type);
 
@@ -80,7 +80,7 @@ public record class Source : IWithIdentityKey, ISoftDeletable
 
 		IsDeleted = true;
 	}
-	
+
 	/// <summary>
 	/// Изменение типа источника
 	/// </summary>

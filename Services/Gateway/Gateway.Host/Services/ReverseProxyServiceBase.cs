@@ -18,24 +18,34 @@ public abstract class ReverseProxyService(HttpClient httpClient)
 		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 	};
 
-	public async Task<ActionResult<TResponse>> ProxyAsync<TResponse>(
+	public Task<ActionResult> ProxyAsync(
+		HttpContext context,
+		CancellationToken cancellationToken = default) => ProxyAsync(context, null, null, cancellationToken);
+
+	public Task<ActionResult<TResponse>> ProxyAsync<TResponse>(
+		HttpContext context,
+		CancellationToken cancellationToken = default) => ProxyAsync<TResponse>(context, null, null, cancellationToken);
+
+	public Task<ActionResult> ProxyAsync(
+		HttpContext context,
+		object? body,
+		CancellationToken cancellationToken = default) => ProxyAsync(context, body, null, cancellationToken);
+
+	public Task<ActionResult<TResponse>> ProxyAsync<TResponse>(
+		HttpContext context,
+		object? body,
+		CancellationToken cancellationToken = default) => ProxyAsync<TResponse>(context, body, null, cancellationToken);
+
+	public async Task<ActionResult> ProxyAsync(
 		HttpContext context,
 		object? body = null,
 		Dictionary<string, string>? headers = null,
 		CancellationToken cancellationToken = default)
 	{
 		HttpResponseMessage? response = null;
-
 		try
 		{
-			var method = HttpMethod.Parse(context.Request.Method);
-			var relativePath = GetRelativePath(context);
-			var queryString = context.Request.QueryString.Value ?? string.Empty;
-
-			var requestMessage = CreateHttpRequestMessage(method, $"{relativePath}{queryString}", body, headers, context);
-
-			// Отправляем запрос с чтением только заголовков
-			response = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+			response = await SendProxyRequestAsync(context, body, headers, cancellationToken);
 
 			if (!response.IsSuccessStatusCode)
 			{
@@ -43,17 +53,47 @@ public abstract class ReverseProxyService(HttpClient httpClient)
 				return new EmptyResult();
 			}
 
-			// Прямая потоковая передача без лишних копирований
 			await CopyResponseStreamAsync(response, context, cancellationToken);
 			return new EmptyResult();
 		}
 		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
 		{
-			// Клиент отменил запрос - это нормально
 			response?.Dispose();
 			throw;
 		}
-		catch (Exception)
+		catch
+		{
+			response?.Dispose();
+			throw;
+		}
+	}
+
+	public async Task<ActionResult<TResponse>> ProxyAsync<TResponse>(
+		HttpContext context,
+		object? body = null,
+		Dictionary<string, string>? headers = null,
+		CancellationToken cancellationToken = default)
+	{
+		HttpResponseMessage? response = null;
+		try
+		{
+			response = await SendProxyRequestAsync(context, body, headers, cancellationToken);
+
+			if (!response.IsSuccessStatusCode)
+			{
+				await HandleErrorResponse(response, context);
+				return new EmptyResult();
+			}
+
+			var result = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
+			return new ActionResult<TResponse>(result!);
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			response?.Dispose();
+			throw;
+		}
+		catch
 		{
 			response?.Dispose();
 			throw;
@@ -118,6 +158,21 @@ public abstract class ReverseProxyService(HttpClient httpClient)
 		}
 
 		return fullPath.TrimStart('/');
+	}
+
+	private async Task<HttpResponseMessage> SendProxyRequestAsync(
+		HttpContext context,
+		object? body,
+		Dictionary<string, string>? headers,
+		CancellationToken cancellationToken)
+	{
+		var method = HttpMethod.Parse(context.Request.Method);
+		var relativePath = GetRelativePath(context);
+		var queryString = context.Request.QueryString.Value ?? string.Empty;
+
+		var requestMessage = CreateHttpRequestMessage(method, $"{relativePath}{queryString}", body, headers, context);
+
+		return await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 	}
 
 	private static async Task CopyResponseStreamAsync(

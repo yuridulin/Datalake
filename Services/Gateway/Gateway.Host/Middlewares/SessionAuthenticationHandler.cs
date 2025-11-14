@@ -1,8 +1,8 @@
-﻿using Datalake.Contracts.Internal.Constants;
-using Datalake.Domain.Exceptions;
+﻿using Datalake.Domain.Exceptions;
 using Datalake.Gateway.Application.Interfaces;
 using Datalake.Gateway.Application.Models;
 using Datalake.Gateway.Host.Interfaces;
+using Datalake.Shared.Hosting.Constants;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;

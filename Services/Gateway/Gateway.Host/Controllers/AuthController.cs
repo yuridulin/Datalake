@@ -14,21 +14,26 @@ namespace Datalake.Gateway.Host.Controllers;
 /// Управление сессиями, логин/логаут
 /// </summary>
 [ApiController]
-[Route("sessions")]
-public class AuthController(ISessionTokenExtractor tokenExtractor) : ControllerBase
+[ApiExplorerSettings(GroupName = "Gateway")]
+[Route("api/v1/sessions")]
+public class AuthController(
+	IServiceProvider serviceProvider,
+	ISessionTokenExtractor tokenExtractor) : ControllerBase
 {
 	/// <summary>
 	/// Аутентификация локального пользователя по связке "имя для входа/пароль"
 	/// </summary>
 	/// <param name="request">Данные для входа</param>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("local")]
 	public async Task<ActionResult<SessionInfo>> AuthenticateLocalAsync(
-		[FromServices] IOpenLocalSessionHandler openHandler,
-		[FromServices] IGetCurrentSessionWithAccessHandler getHandler,
 		[BindRequired, FromBody] AuthLoginPassRequest request,
 		CancellationToken ct = default)
 	{
+		var openHandler = serviceProvider.GetRequiredService<IOpenLocalSessionHandler>();
+		var getHandler = serviceProvider.GetRequiredService<IGetCurrentSessionWithAccessHandler>();
+
 		var sessionToken = await openHandler.HandleAsync(new() { Login = request.Login, PasswordString = request.Password }, ct);
 		var sessionInfo = await getHandler.HandleAsync(new() { Token = sessionToken }, ct);
 
@@ -39,14 +44,16 @@ public class AuthController(ISessionTokenExtractor tokenExtractor) : ControllerB
 	/// Аутентификация пользователя, прошедшего проверку на сервере EnergoId
 	/// </summary>
 	/// <param name="request">Данные пользователя Keycloak</param>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("energo-id")]
 	public async Task<ActionResult<SessionInfo>> AuthenticateEnergoIdUserAsync(
-		[FromServices] IOpenEnergoIdSessionHandler openHandler,
-		[FromServices] IGetCurrentSessionWithAccessHandler getHandler,
 		[BindRequired, FromBody] AuthEnergoIdRequest request,
 		CancellationToken ct = default)
 	{
+		var openHandler = serviceProvider.GetRequiredService<IOpenEnergoIdSessionHandler>();
+		var getHandler = serviceProvider.GetRequiredService<IGetCurrentSessionWithAccessHandler>();
+
 		var sessionToken = await openHandler.HandleAsync(new() { Guid = request.EnergoIdGuid }, ct);
 		var sessionInfo = await getHandler.HandleAsync(new() { Token = sessionToken }, ct);
 
@@ -56,13 +63,15 @@ public class AuthController(ISessionTokenExtractor tokenExtractor) : ControllerB
 	/// <summary>
 	/// Получение информации о учетной записи на основе текущей сессии
 	/// </summary>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpGet("identify")]
 	public async Task<ActionResult<SessionInfo?>> IdentifyAsync(
-		[FromServices] IGetCurrentSessionWithAccessHandler handler,
 		CancellationToken ct = default)
 	{
 		var token = tokenExtractor.ExtractToken(HttpContext);
+
+		var handler = serviceProvider.GetRequiredService<IGetCurrentSessionWithAccessHandler>();
 
 		var sessionInfo = await handler.HandleAsync(new() { Token = token }, ct);
 
@@ -72,12 +81,14 @@ public class AuthController(ISessionTokenExtractor tokenExtractor) : ControllerB
 	/// <summary>
 	/// <see cref="HttpMethod.Delete"/>: Закрытие уканной сессии пользователя
 	/// </summary>
+	/// <param name="ct">Токен отмены</param>
 	[HttpDelete]
 	public async Task<ActionResult> LogoutAsync(
-		[FromServices] ICloseSessionHandler handler,
 		CancellationToken ct = default)
 	{
 		var token = tokenExtractor.ExtractToken(HttpContext);
+
+		var handler = serviceProvider.GetRequiredService<ICloseSessionHandler>();
 
 		await handler.HandleAsync(new() { Token = token }, ct);
 

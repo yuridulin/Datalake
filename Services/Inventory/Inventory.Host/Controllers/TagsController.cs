@@ -5,29 +5,18 @@ using Datalake.Inventory.Application.Features.Tags.Commands.UpdateTag;
 using Datalake.Inventory.Application.Features.Tags.Models;
 using Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
 using Datalake.Inventory.Application.Features.Tags.Queries.GetTagWithDetails;
+using Datalake.Shared.Hosting.Controllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-/// <summary>
-/// Теги
-/// </summary>
-[ApiController]
-[Route("api/tags")]
 public class TagsController(
 	IServiceProvider serviceProvider,
-	IAuthenticator authenticator) : ControllerBase
+	IAuthenticator authenticator) : InventoryTagsControllerBase
 {
-	/// <summary>
-	/// Создание нового тега
-	/// </summary>
-	/// <param name="request">Необходимые данные для создания тега</param>
-	/// <param name="ct">Токен отмены</param>
-	/// <returns>Идентификатор нового тега в локальной базе данных</returns>
-	[HttpPost]
-	public async Task<ActionResult<TagInfo>> CreateAsync(
+	public override async Task<ActionResult<TagInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default)
 	{
@@ -45,14 +34,7 @@ public class TagsController(
 		return Ok(result);
 	}
 
-	/// <summary>
-	/// Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
-	/// </summary>
-	/// <param name="tagId">Идентификатор тега</param>
-	/// <param name="ct">Токен отмены</param>
-	/// <returns>Объект информации о теге</returns>
-	[HttpGet("{tagId}")]
-	public async Task<ActionResult<TagFullInfo>> GetAsync(
+	public override async Task<ActionResult<TagFullInfo>> GetAsync(
 		[FromRoute] int tagId,
 		CancellationToken ct = default)
 	{
@@ -67,16 +49,7 @@ public class TagsController(
 		return Ok(data);
 	}
 
-	/// <summary>
-	/// Получение списка тегов, включая информацию о источниках и настройках получения данных
-	/// </summary>
-	/// <param name="sourceId">Идентификатор источника. Если указан, будут выбраны теги только этого источника</param>
-	/// <param name="tagsId">Список локальных идентификаторов тегов</param>
-	/// <param name="tagsGuid">Список глобальных идентификаторов тегов</param>
-	/// <param name="ct">Токен отмены</param>
-	/// <returns>Плоский список объектов информации о тегах</returns>
-	[HttpGet]
-	public async Task<ActionResult<TagInfo[]>> GetAllAsync(
+	public override async Task<ActionResult<TagInfo[]>> GetAllAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
@@ -95,14 +68,7 @@ public class TagsController(
 		return Ok(data);
 	}
 
-	/// <summary>
-	/// Изменение тега
-	/// </summary>
-	/// <param name="tagId">Идентификатор тега</param>
-	/// <param name="request">Новые данные тега</param>
-	/// <param name="ct">Токен отмены</param>
-	[HttpPut("{tagId}")]
-	public async Task<ActionResult> UpdateAsync(
+	public override async Task<ActionResult> UpdateAsync(
 		[BindRequired, FromRoute] int tagId,
 		[BindRequired, FromBody] TagUpdateRequest request,
 		CancellationToken ct = default)
@@ -147,13 +113,7 @@ public class TagsController(
 		return NoContent();
 	}
 
-	/// <summary>
-	/// Удаление тега
-	/// </summary>
-	/// <param name="tagId">Идентификатор тега</param>
-	/// <param name="ct">Токен отмены</param>
-	[HttpDelete("{tagId}")]
-	public async Task<ActionResult> DeleteAsync(
+	public override async Task<ActionResult> DeleteAsync(
 		[BindRequired, FromRoute] int tagId,
 		CancellationToken ct = default)
 	{

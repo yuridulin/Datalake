@@ -1,36 +1,15 @@
-﻿using Datalake.Domain.Enums;
-using Datalake.Contracts.Models.LogModels;
+﻿using Datalake.Contracts.Models.LogModels;
+using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Features.Audit.Queries.GetAudit;
+using Datalake.Shared.Hosting.Controllers.Inventory;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-/// <summary>
-/// Аудит изменений
-/// </summary>
-[ApiController]
-[Route("api/audit")]
 public class AuditController(
-	IServiceProvider serviceProvider) : ControllerBase
+	IServiceProvider serviceProvider) : InventoryAuditControllerBase
 {
-	/// <summary>
-	/// Получение списка сообщений аудита
-	/// </summary>
-	/// <param name="lastId">Идентификатор последнего сообщения. Будут присланы только более поздние</param>
-	/// <param name="firstId">Идентификатор первого сообщения. Будут присланы только более ранние</param>
-	/// <param name="take"></param>
-	/// <param name="source"></param>
-	/// <param name="block"></param>
-	/// <param name="tag"></param>
-	/// <param name="user"></param>
-	/// <param name="group"></param>
-	/// <param name="categories"></param>
-	/// <param name="types"></param>
-	/// <param name="author"></param>
-	/// <param name="ct">Токен отмены</param>
-	/// <returns>Список сообщений аудита</returns>
-	[HttpGet]
-	public async Task<ActionResult<IEnumerable<LogInfo>>> GetAsync(
+	public override async Task<ActionResult<IEnumerable<LogInfo>>> GetAsync(
 		[FromQuery] int? lastId = null,
 		[FromQuery] int? firstId = null,
 		[FromQuery] int? take = null,

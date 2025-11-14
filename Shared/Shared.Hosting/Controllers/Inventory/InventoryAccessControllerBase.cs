@@ -8,7 +8,8 @@ namespace Datalake.Shared.Hosting.Controllers.Inventory;
 /// Правила доступа
 /// </summary>
 [ApiController]
-[Route("api/v1/data/access")]
+[ApiExplorerSettings(GroupName = "Inventory")]
+[Route("api/v1/inventory/access")]
 public abstract class InventoryAccessControllerBase : ControllerBase
 {
 	/// <summary>

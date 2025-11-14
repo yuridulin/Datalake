@@ -10,7 +10,7 @@ namespace Datalake.Data.Host.Controllers;
 
 public class ValuesController(
 	IServiceProvider serviceProvider,
-	IAuthenticator authenticator) : BaseValuesController
+	IAuthenticator authenticator) : DataValuesControllerBase
 {
 	public override async Task<ActionResult<IEnumerable<ValuesResponse>>> GetAsync(
 		[BindRequired, FromBody] IEnumerable<ValuesRequest> requests,

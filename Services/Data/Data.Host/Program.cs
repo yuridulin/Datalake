@@ -1,9 +1,9 @@
-﻿using Datalake.Contracts.Internal.Constants;
-using Datalake.Contracts;
+﻿using Datalake.Contracts;
 using Datalake.Data.Application;
 using Datalake.Data.Infrastructure;
 using Datalake.Shared.Hosting;
 using Datalake.Shared.Hosting.Bootstrap;
+using Datalake.Shared.Hosting.Constants;
 using Datalake.Shared.Hosting.Middlewares;
 using System.Reflection;
 

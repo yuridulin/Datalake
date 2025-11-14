@@ -77,6 +77,7 @@ public static class Bootstrap
 			});
 
 		builder.Services.AddSingleton<DataReverseProxyService>();
+		builder.Services.AddSingleton<InventoryReverseProxyService>();
 
 		return builder;
 	}

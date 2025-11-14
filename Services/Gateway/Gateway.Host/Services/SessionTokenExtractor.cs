@@ -1,6 +1,6 @@
-﻿using Datalake.Contracts.Internal.Constants;
-using Datalake.Gateway.Host.Interfaces;
+﻿using Datalake.Gateway.Host.Interfaces;
 using Datalake.Shared.Application.Exceptions;
+using Datalake.Shared.Hosting.Constants;
 
 namespace Datalake.Gateway.Host.Services;
 
