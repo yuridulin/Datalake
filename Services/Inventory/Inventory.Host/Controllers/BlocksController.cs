@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Blocks;
+﻿using Datalake.Contracts.Models.Blocks;
 using Datalake.Inventory.Application.Features.Blocks.Commands.CreateBlock;
 using Datalake.Inventory.Application.Features.Blocks.Commands.DeleteBlock;
 using Datalake.Inventory.Application.Features.Blocks.Commands.MoveBlock;
@@ -44,7 +44,6 @@ public class BlocksController(
 	/// <summary>
 	/// Получение списка блоков с базовой информацией о них
 	/// </summary>
-	/// <param name="handler">Обработчик</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список блоков</returns>
 	[HttpGet]

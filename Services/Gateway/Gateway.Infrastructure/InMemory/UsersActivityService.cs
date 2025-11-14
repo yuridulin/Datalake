@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Extensions;
+﻿using Datalake.Domain.Extensions;
 using Datalake.Gateway.Application.Interfaces;
 using System.Collections.Concurrent;
 

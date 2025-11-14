@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Users;
+﻿using Datalake.Contracts.Models.Users;
 using Datalake.Inventory.Application.Features.Users.Commands.CreateUser;
 using Datalake.Inventory.Application.Features.Users.Commands.DeleteUser;
 using Datalake.Inventory.Application.Features.Users.Commands.UpdateUser;

@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Enums;
+﻿using Datalake.Domain.Enums;
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 

@@ -1,5 +1,5 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Models.UserGroups;
+﻿using Datalake.Contracts.Models.UserGroups;
+using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Interfaces;
 

@@ -1,5 +1,5 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Data.Application.Models.Tags;
+﻿using Datalake.Data.Application.Models.Tags;
+using Datalake.Domain.Enums;
 
 namespace Datalake.Data.Application.Models.Values;
 

@@ -1,6 +1,6 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Extensions;
+﻿using Datalake.Domain.Enums;
 using Datalake.Domain.Exceptions;
+using Datalake.Domain.Extensions;
 using Datalake.Domain.ValueObjects;
 
 namespace Datalake.Domain.Entities;

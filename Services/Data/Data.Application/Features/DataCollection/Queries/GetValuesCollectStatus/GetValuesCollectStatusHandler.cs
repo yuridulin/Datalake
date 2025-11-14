@@ -1,6 +1,6 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Values;
+using Datalake.Domain.Enums;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.DataCollection.Queries.GetValuesCollectStatus;

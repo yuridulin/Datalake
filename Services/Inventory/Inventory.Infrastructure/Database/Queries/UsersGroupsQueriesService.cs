@@ -1,9 +1,9 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Models.AccessRules;
-using Datalake.Contracts.Public.Models.Blocks;
-using Datalake.Contracts.Public.Models.Sources;
-using Datalake.Contracts.Public.Models.Tags;
-using Datalake.Contracts.Public.Models.UserGroups;
+﻿using Datalake.Contracts.Models.AccessRules;
+using Datalake.Contracts.Models.Blocks;
+using Datalake.Contracts.Models.Sources;
+using Datalake.Contracts.Models.Tags;
+using Datalake.Contracts.Models.UserGroups;
+using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
 using Microsoft.EntityFrameworkCore;
 

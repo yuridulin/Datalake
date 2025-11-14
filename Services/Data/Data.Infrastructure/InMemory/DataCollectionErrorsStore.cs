@@ -1,6 +1,6 @@
-﻿using Datalake.Contracts.Public.Extensions;
-using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Values;
+using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using System.Collections.Concurrent;
 

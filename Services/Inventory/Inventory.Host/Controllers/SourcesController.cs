@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Sources;
+﻿using Datalake.Contracts.Models.Sources;
 using Datalake.Inventory.Application.Features.Sources.Commands.CreateSource;
 using Datalake.Inventory.Application.Features.Sources.Commands.DeleteSource;
 using Datalake.Inventory.Application.Features.Sources.Commands.UpdateSource;

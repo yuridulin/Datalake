@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Enums;
+﻿using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Gateway.Application.Models;

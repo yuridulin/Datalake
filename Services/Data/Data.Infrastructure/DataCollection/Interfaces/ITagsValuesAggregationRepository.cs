@@ -1,5 +1,5 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Data.Infrastructure.DataCollection.Models;
+﻿using Datalake.Data.Infrastructure.DataCollection.Models;
+using Datalake.Domain.Enums;
 
 namespace Datalake.Data.Infrastructure.DataCollection.Interfaces;
 

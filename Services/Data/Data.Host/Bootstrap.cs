@@ -1,6 +1,4 @@
-﻿using Datalake.Contracts.Internal.Protos;
-using Datalake.Data.Application.Interfaces;
-using Datalake.Data.Host.Services;
+﻿using Datalake.Data.Host.Services;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Interfaces;
 using NJsonSchema.Generation;
@@ -40,15 +38,6 @@ public static class BootstrapExtensions
 
 		var inventoryBaseUri = builder.Configuration.GetSection("InventoryUri").Get<string>()
 			?? throw new("Адрес сервиса Inventory не прочитан из конфига. Ожидается строковое значение в свойстве 'InventoryUri'");
-
-		AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-		builder.Services.AddGrpcClient<InventoryGrpcService.InventoryGrpcServiceClient>(options =>
-		{
-			options.Address = new Uri(inventoryBaseUri);
-		});
-
-		builder.Services.AddScoped<IInventoryApiClient, GrpcInventoryApiClient>();
 
 		return builder;
 	}

@@ -1,5 +1,5 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Domain.Entities;
+﻿using Datalake.Domain.Entities;
+using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Interfaces.Persistent;
 using Datalake.Inventory.Application.Repositories;

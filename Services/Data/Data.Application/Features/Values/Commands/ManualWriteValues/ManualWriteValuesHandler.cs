@@ -1,10 +1,10 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Extensions;
-using Datalake.Contracts.Public.Models.Data.Values;
+﻿using Datalake.Contracts.Models.Data.Values;
 using Datalake.Data.Application.Features.Values.Commands.SystemWriteValues;
 using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Domain.Entities;
+using Datalake.Domain.Enums;
+using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;

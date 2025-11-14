@@ -1,5 +1,5 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Models.Tags;
+﻿using Datalake.Contracts.Models.Tags;
+using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
 using Microsoft.EntityFrameworkCore;
 

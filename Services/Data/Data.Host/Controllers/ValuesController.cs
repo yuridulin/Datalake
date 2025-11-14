@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Data.Values;
+﻿using Datalake.Contracts.Models.Data.Values;
 using Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;
 using Datalake.Data.Application.Features.Values.Queries.GetValues;
 using Datalake.Shared.Hosting.Controllers.Data;
@@ -25,11 +25,6 @@ public class ValuesController(
 		}, ct);
 
 		return Ok(data);
-	}
-
-	public override async Task<ActionResult<TestCase>> GetAsync(CancellationToken ct = default)
-	{
-		return Ok(new TestCase { Message = "Всё круто!" });
 	}
 
 	public override async Task<ActionResult<IEnumerable<ValuesTagResponse>>> WriteAsync(

@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Sources;
+﻿using Datalake.Contracts.Models.Sources;
 
 namespace Datalake.Inventory.Application.Queries;
 

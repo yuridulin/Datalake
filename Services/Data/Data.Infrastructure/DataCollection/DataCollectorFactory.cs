@@ -1,7 +1,7 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Data.Infrastructure.DataCollection.DataCollectors;
+using Datalake.Domain.Enums;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

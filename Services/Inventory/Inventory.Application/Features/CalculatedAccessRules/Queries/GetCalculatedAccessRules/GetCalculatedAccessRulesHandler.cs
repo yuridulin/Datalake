@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Enums;
+﻿using Datalake.Domain.Enums;
 using Datalake.Domain.ValueObjects;
 using Datalake.Inventory.Application.Features.CalculatedAccessRules.Queries.GetCalculatedAccessRulesInternal;
 using Datalake.Shared.Application.Interfaces;

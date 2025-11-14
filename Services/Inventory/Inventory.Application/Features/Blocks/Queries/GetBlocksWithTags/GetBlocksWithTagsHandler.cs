@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Blocks;
+﻿using Datalake.Contracts.Models.Blocks;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Interfaces;
 

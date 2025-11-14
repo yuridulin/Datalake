@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Enums;
+﻿using Datalake.Domain.Enums;
 
 namespace Datalake.Data.Application.Models.Tags;
 

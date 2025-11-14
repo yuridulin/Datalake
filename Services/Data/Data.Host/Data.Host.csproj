@@ -50,7 +50,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.11">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -65,7 +64,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Contracts\Contracts.Internal\Contracts.Internal.csproj" />
     <ProjectReference Include="..\..\..\Shared\Shared.Hosting\Shared.Hosting.csproj" />
     <ProjectReference Include="..\Data.Application\Data.Application.csproj" />
     <ProjectReference Include="..\Data.Infrastructure\Data.Infrastructure.csproj" />

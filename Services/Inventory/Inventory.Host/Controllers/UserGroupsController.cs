@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.UserGroups;
+﻿using Datalake.Contracts.Models.UserGroups;
 using Datalake.Inventory.Application.Features.UserGroups.Commands.CreateUserGroup;
 using Datalake.Inventory.Application.Features.UserGroups.Commands.DeleteUserGroup;
 using Datalake.Inventory.Application.Features.UserGroups.Commands.MoveUserGroup;

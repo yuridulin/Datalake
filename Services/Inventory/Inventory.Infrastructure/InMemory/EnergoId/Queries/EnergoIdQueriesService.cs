@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Users;
+﻿using Datalake.Contracts.Models.Users;
 using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Queries;
 

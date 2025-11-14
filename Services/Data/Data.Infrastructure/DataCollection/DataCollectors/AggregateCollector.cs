@@ -1,12 +1,12 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Extensions;
-using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;
 using Datalake.Data.Infrastructure.DataCollection.Interfaces;
 using Datalake.Data.Infrastructure.DataCollection.Models;
 using Datalake.Domain.Entities;
+using Datalake.Domain.Enums;
+using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

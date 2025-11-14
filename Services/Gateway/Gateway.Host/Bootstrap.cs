@@ -2,6 +2,7 @@
 using Datalake.Gateway.Host.Services;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Infrastructure;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using NJsonSchema.Generation;
 
 namespace Datalake.Gateway.Host;
@@ -35,21 +36,45 @@ public static class Bootstrap
 
 		builder.Services.AddScoped<ISessionTokenExtractor, SessionTokenExtractor>();
 
-		builder.Services.AddHttpClient("Data", (sp, c) =>
+		builder.Services.Configure<IISServerOptions>(options =>
 		{
-			var baseAddress = builder.Configuration.GetSection("Services").GetSection("Data").Get<string>()
-				?? throw new Exception("Адрес сервиса Data не получен");
-
-			c.BaseAddress = new Uri(EnvExpander.FillEnvVariables(baseAddress));
+			options.MaxRequestBodySize = 100 * 1024 * 1024; // 100MB
 		});
 
-		builder.Services.AddHttpClient("Inventory", (sp, c) =>
+		builder.Services.Configure<KestrelServerOptions>(options =>
 		{
-			var baseAddress = builder.Configuration.GetSection("Services").GetSection("Inventory").Get<string>()
-				?? throw new Exception("Адрес сервиса Inventory не получен");
-
-			c.BaseAddress = new Uri(EnvExpander.FillEnvVariables(baseAddress));
+			options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100MB
 		});
+
+		builder.Services
+			.AddHttpClient("Data", (provider, client) =>
+			{
+				var baseAddress = builder.Configuration.GetSection("Services").GetSection("Data").Get<string>()
+					?? throw new Exception("Адрес сервиса Data не получен");
+
+				client.BaseAddress = new Uri(EnvExpander.FillEnvVariables(baseAddress));
+			})
+			.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+			{
+				PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+				UseProxy = false,
+				UseCookies = false
+			});
+
+		builder.Services
+			.AddHttpClient("Inventory", (provider, client) =>
+			{
+				var baseAddress = builder.Configuration.GetSection("Services").GetSection("Inventory").Get<string>()
+					?? throw new Exception("Адрес сервиса Inventory не получен");
+
+				client.BaseAddress = new Uri(EnvExpander.FillEnvVariables(baseAddress));
+			})
+			.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+			{
+				PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+				UseProxy = false,
+				UseCookies = false
+			});
 
 		builder.Services.AddSingleton<DataReverseProxyService>();
 
@@ -58,6 +83,8 @@ public static class Bootstrap
 
 	public static WebApplication MapApi(this WebApplication app)
 	{
+		app.UseReverseProxy();
+
 		app.MapHealthChecks("/health");
 
 		app.MapControllerRoute(
@@ -65,7 +92,6 @@ public static class Bootstrap
 			pattern: "{controller=Home}/{action=Index}/{id?}");
 
 		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
-
 
 		return app;
 	}

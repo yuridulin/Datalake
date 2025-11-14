@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models;
+﻿using Datalake.Contracts.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Gateway.Application.Models;

@@ -1,10 +1,10 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Extensions;
-using Datalake.Data.Application.Interfaces;
+﻿using Datalake.Data.Application.Interfaces;
 using Datalake.Data.Application.Models;
 using Datalake.Data.Infrastructure.DataReceive.Converters;
 using Datalake.Data.Infrastructure.DataReceive.Inopc;
 using Datalake.Data.Infrastructure.DataReceive.Inopc.Enums;
+using Datalake.Domain.Enums;
+using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;

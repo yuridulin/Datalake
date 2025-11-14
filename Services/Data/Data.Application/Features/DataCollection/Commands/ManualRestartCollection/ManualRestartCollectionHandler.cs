@@ -1,4 +1,5 @@
 ﻿using Datalake.Data.Application.Features.DataCollection.Commands.RestartCollection;
+using Datalake.Domain.Enums;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.DataCollection.Commands.ManualRestartCollection;
@@ -9,7 +10,7 @@ public class ManualRestartCollectionHandler(IRestartCollectionHandler restartCol
 {
 	public Task<bool> HandleAsync(ManualRestartCollectionCommand command, CancellationToken ct = default)
 	{
-		command.User.ThrowIfNoGlobalAccess(Contracts.Public.Enums.AccessType.Admin);
+		command.User.ThrowIfNoGlobalAccess(AccessType.Admin);
 
 		return restartCollectionHandler.HandleAsync(new(), ct);
 	}

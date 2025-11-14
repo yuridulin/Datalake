@@ -1,6 +1,4 @@
-﻿using Datalake.Shared.Application.Attributes;
-using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Net.Mime;
 using System.Text;
@@ -9,18 +7,10 @@ using System.Text.Json.Serialization;
 
 namespace Datalake.Gateway.Host.Services;
 
-[Singleton]
-public class DataReverseProxyService(
-	IHttpClientFactory httpClientFactory,
-	ILogger<DataReverseProxyService> logger)
-	: ReverseProxyService(httpClientFactory.CreateClient("Data"), logger)
-{
-}
-
 /// <summary>
 /// Основа сервиса для прозрачного проксирования запросов в контроллерах Gateway API
 /// </summary>
-public abstract class ReverseProxyService(HttpClient httpClient, ILogger logger)
+public abstract class ReverseProxyService(HttpClient httpClient)
 {
 	protected virtual JsonSerializerOptions JsonSerializerOptions { get; } = new()
 	{
@@ -34,99 +24,45 @@ public abstract class ReverseProxyService(HttpClient httpClient, ILogger logger)
 		Dictionary<string, string>? headers = null,
 		CancellationToken cancellationToken = default)
 	{
+		HttpResponseMessage? response = null;
+
 		try
 		{
 			var method = HttpMethod.Parse(context.Request.Method);
 			var relativePath = GetRelativePath(context);
 			var queryString = context.Request.QueryString.Value ?? string.Empty;
 
-			var response = await SendProxyRequestAsync(method, $"{relativePath}{queryString}", body, headers, context, cancellationToken);
-			var result = await ProcessResponseAsync<TResponse>(response);
-			return new OkObjectResult(result);
-		}
-		catch (ReverseProxyTransparentException ex)
-		{
-			return new ObjectResult(ex.OriginalContent) { StatusCode = (int)ex.StatusCode };
-		}
-	}
+			var requestMessage = CreateHttpRequestMessage(method, $"{relativePath}{queryString}", body, headers, context);
 
-	public async Task<ActionResult<TResponse>> ProxyStreamAsync<TResponse>(
-		HttpContext context,
-		object? body = null,
-		Dictionary<string, string>? headers = null,
-		CancellationToken cancellationToken = default)
-	{
-		try
-		{
-			var method = HttpMethod.Parse(context.Request.Method);
-			var relativePath = GetRelativePath(context);
-			var queryString = context.Request.QueryString.Value ?? string.Empty;
-
-			var response = await SendProxyRequestAsync(method, $"{relativePath}{queryString}", body, headers, context, cancellationToken, true);
-			return await ReturnStreamResponse(response, context);
-		}
-		catch (ReverseProxyTransparentException ex)
-		{
-			return new ObjectResult(ex.OriginalContent) { StatusCode = (int)ex.StatusCode };
-		}
-	}
-
-	private async Task<HttpResponseMessage> SendProxyRequestAsync(
-		HttpMethod method,
-		string relativePath,
-		object? body,
-		Dictionary<string, string>? headers,
-		HttpContext context,
-		CancellationToken cancellationToken,
-		bool headersOnly = false)
-	{
-		var absoluteUri = new Uri(httpClient.BaseAddress ?? throw new Exception("Базовый адрес не задан"), relativePath);
-
-		HttpResponseMessage response = null!;
-		Stopwatch? stopwatch = null;
-
-		if (logger.IsEnabled(LogLevel.Debug))
-			stopwatch = Stopwatch.StartNew();
-
-		try
-		{
-			if (logger.IsEnabled(LogLevel.Debug))
-				logger.LogDebug("Proxy {method} request to {uri}", method, absoluteUri);
-
-			var requestMessage = CreateHttpRequestMessage(method, relativePath, body, headers, context);
-
-			response = headersOnly
-					? await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-					: await httpClient.SendAsync(requestMessage, cancellationToken);
+			// Отправляем запрос с чтением только заголовков
+			response = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
 			if (!response.IsSuccessStatusCode)
 			{
-				await ThrowTransparentError(response);
+				await HandleErrorResponse(response, context);
+				return new EmptyResult();
 			}
 
-			if (logger.IsEnabled(LogLevel.Debug))
-				logger.LogDebug("Proxy {method} request to {uri} ... OK: {ms} ms", method, absoluteUri, stopwatch?.ElapsedMilliseconds);
-
-			return response;
+			// Прямая потоковая передача без лишних копирований
+			await CopyResponseStreamAsync(response, context, cancellationToken);
+			return new EmptyResult();
 		}
-		catch (Exception exception)
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
 		{
-			if (logger.IsEnabled(LogLevel.Debug))
-				logger.LogDebug(exception, "Proxy {method} request to {uri}... FAILED after {ms} ms", method, absoluteUri, stopwatch?.ElapsedMilliseconds);
-
+			// Клиент отменил запрос - это нормально
 			response?.Dispose();
 			throw;
 		}
-		finally
+		catch (Exception)
 		{
-			if (logger.IsEnabled(LogLevel.Debug))
-				stopwatch?.Stop();
+			response?.Dispose();
+			throw;
 		}
 	}
 
 	private HttpRequestMessage CreateHttpRequestMessage(
 		HttpMethod method,
-				string relativePath,
+		string relativePath,
 		object? body,
 		Dictionary<string, string>? headers,
 		HttpContext context)
@@ -137,7 +73,7 @@ public abstract class ReverseProxyService(HttpClient httpClient, ILogger logger)
 			RequestUri = new Uri(relativePath, UriKind.Relative)
 		};
 
-		// Добавляем тело запроса
+		// Добавляем тело запроса (оптимизированная сериализация)
 		if (body != null)
 		{
 			requestMessage.Content = new StringContent(
@@ -164,27 +100,6 @@ public abstract class ReverseProxyService(HttpClient httpClient, ILogger logger)
 		return requestMessage;
 	}
 
-	private async Task<T> ProcessResponseAsync<T>(HttpResponseMessage response)
-	{
-		var contentString = await response.Content.ReadAsStringAsync();
-
-		if (typeof(T) == typeof(string))
-			return (T)(object)contentString;
-
-		return string.IsNullOrEmpty(contentString)
-			? default!
-			: JsonSerializer.Deserialize<T>(contentString, JsonSerializerOptions)!;
-	}
-
-	private static async Task ThrowTransparentError(HttpResponseMessage response)
-	{
-		var statusCode = response.StatusCode;
-		var content = await response.Content.ReadAsStringAsync();
-		var contentType = response.Content.Headers.ContentType?.MediaType ?? "text/plain";
-
-		throw new ReverseProxyTransparentException(statusCode, content, contentType);
-	}
-
 	private static string GetRelativePath(HttpContext context)
 	{
 		// Получаем полный путь из запроса
@@ -205,13 +120,40 @@ public abstract class ReverseProxyService(HttpClient httpClient, ILogger logger)
 		return fullPath.TrimStart('/');
 	}
 
-	private static async Task<FileStreamResult> ReturnStreamResponse(HttpResponseMessage response, HttpContext context)
+	private static async Task CopyResponseStreamAsync(
+		HttpResponseMessage response,
+		HttpContext context,
+		CancellationToken cancellationToken)
 	{
-		var stream = await response.Content.ReadAsStreamAsync();
-		var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/json";
-
+		// Устанавливаем статус и основные заголовки
 		context.Response.StatusCode = (int)response.StatusCode;
-		return new FileStreamResult(stream, contentType);
+
+		// Копируем только необходимые заголовки
+		if (response.Content.Headers.ContentType is not null)
+		{
+			context.Response.ContentType = response.Content.Headers.ContentType.MediaType!;
+		}
+
+		if (response.Content.Headers.ContentLength.HasValue)
+		{
+			context.Response.ContentLength = response.Content.Headers.ContentLength.Value;
+		}
+
+		// Прямое копирование потока
+		using var sourceStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+		await sourceStream.CopyToAsync(context.Response.Body, 81920, cancellationToken); // Увеличили буфер
+	}
+
+	// Оптимизированная обработка ошибок для потокового режима
+	private static async Task HandleErrorResponse(HttpResponseMessage response, HttpContext context)
+	{
+		var statusCode = response.StatusCode;
+		var content = await response.Content.ReadAsStringAsync();
+		var contentType = response.Content.Headers.ContentType?.MediaType ?? "text/plain";
+
+		context.Response.StatusCode = (int)statusCode;
+		context.Response.ContentType = contentType;
+		await context.Response.WriteAsync(content);
 	}
 }
 

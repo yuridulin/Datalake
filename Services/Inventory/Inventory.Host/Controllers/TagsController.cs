@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Tags;
+﻿using Datalake.Contracts.Models.Tags;
 using Datalake.Inventory.Application.Features.Tags.Commands.CreateTag;
 using Datalake.Inventory.Application.Features.Tags.Commands.DeleteTag;
 using Datalake.Inventory.Application.Features.Tags.Commands.UpdateTag;

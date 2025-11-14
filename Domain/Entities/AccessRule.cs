@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Enums;
+﻿using Datalake.Domain.Enums;
 using Datalake.Domain.Exceptions;
 using Datalake.Domain.Interfaces;
 

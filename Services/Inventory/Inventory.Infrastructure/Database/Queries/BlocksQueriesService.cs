@@ -1,11 +1,11 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Models.AccessRules;
-using Datalake.Contracts.Public.Models.Blocks;
-using Datalake.Contracts.Public.Models.UserGroups;
-using Datalake.Contracts.Public.Models.Users;
+﻿using Datalake.Contracts.Models.AccessRules;
+using Datalake.Contracts.Models.Blocks;
+using Datalake.Contracts.Models.UserGroups;
+using Datalake.Contracts.Models.Users;
+using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
 using Microsoft.EntityFrameworkCore;
-using static Datalake.Contracts.Public.Models.Blocks.BlockFullInfo;
+using static Datalake.Contracts.Models.Blocks.BlockFullInfo;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 

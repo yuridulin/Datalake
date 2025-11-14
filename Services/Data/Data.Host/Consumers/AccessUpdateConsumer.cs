@@ -1,5 +1,5 @@
-﻿using Datalake.Contracts.Internal.Messages;
-using Datalake.Data.Application.Features.UsersAccess.Commands.UpdateUsersAccess;
+﻿using Datalake.Data.Application.Features.UsersAccess.Commands.UpdateUsersAccess;
+using Datalake.Shared.Application.Models;
 using MassTransit;
 
 namespace Datalake.Data.Host.Consumers;

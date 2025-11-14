@@ -1,6 +1,7 @@
-﻿using Datalake.Contracts.Public.Models.Sources;
-using Datalake.Contracts.Public.Models.Tags;
+﻿using Datalake.Contracts.Models.Sources;
+using Datalake.Contracts.Models.Tags;
 using Datalake.Domain.Entities;
+using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,7 +38,7 @@ public class SourcesQueriesService(InventoryDbContext context) : ISourcesQueries
 				Name = tag.Name,
 				Type = tag.Type,
 				Resolution = tag.Resolution,
-				SourceType = Contracts.Public.Enums.SourceType.Unset,
+				SourceType = SourceType.Unset,
 				Aggregation = tag.Aggregation,
 				AggregationPeriod = tag.AggregationPeriod,
 				Thresholds = tag.Thresholds
@@ -87,7 +88,7 @@ public class SourcesQueriesService(InventoryDbContext context) : ISourcesQueries
 				Name = tag.Name,
 				Type = tag.Type,
 				Resolution = tag.Resolution,
-				SourceType = Contracts.Public.Enums.SourceType.Unset,
+				SourceType = SourceType.Unset,
 				Aggregation = tag.Aggregation,
 				AggregationPeriod = tag.AggregationPeriod,
 				FormulaInputs = Array.Empty<SourceTagInfo.TagInputMinimalInfo>(),

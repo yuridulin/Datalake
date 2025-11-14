@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Users;
+﻿using Datalake.Contracts.Models.Users;
 using Datalake.Inventory.Application.Features.EnergoId.Commands.ReloadEnergoId;
 using Datalake.Inventory.Application.Features.EnergoId.Queries.GetEnergoId;
 using Datalake.Shared.Hosting.Interfaces;

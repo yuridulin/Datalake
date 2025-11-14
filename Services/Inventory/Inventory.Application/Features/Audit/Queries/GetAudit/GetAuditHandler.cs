@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.LogModels;
+﻿using Datalake.Contracts.Models.LogModels;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Interfaces;

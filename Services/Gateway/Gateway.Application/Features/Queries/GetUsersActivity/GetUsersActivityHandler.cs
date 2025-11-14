@@ -1,4 +1,5 @@
-﻿using Datalake.Gateway.Application.Interfaces;
+﻿using Datalake.Domain.Enums;
+using Datalake.Gateway.Application.Interfaces;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Gateway.Application.Features.Queries.GetUsersActivity;
@@ -10,7 +11,7 @@ public class GetUsersActivityHandler(
 {
 	public Task<IDictionary<Guid, DateTime?>> HandleAsync(GetUsersActivityQuery query, CancellationToken ct = default)
 	{
-		query.User.ThrowIfNoGlobalAccess(Contracts.Public.Enums.AccessType.Manager);
+		query.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 
 		Dictionary<Guid, DateTime?> activity = [];
 

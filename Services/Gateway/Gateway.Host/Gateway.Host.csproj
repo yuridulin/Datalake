@@ -23,11 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="ProxyControllers\Inventory\" />
     <Folder Include="storage\logs\" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Contracts\Contracts.Internal\Contracts.Internal.csproj" />
     <ProjectReference Include="..\..\..\Shared\Shared.Hosting\Shared.Hosting.csproj" />
     <ProjectReference Include="..\Gateway.Application\Gateway.Application.csproj" />
     <ProjectReference Include="..\Gateway.Infrastructure\Gateway.Infrastructure.csproj" />

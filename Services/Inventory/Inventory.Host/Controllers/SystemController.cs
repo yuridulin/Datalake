@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Public.Models.Settings;
+﻿using Datalake.Contracts.Models.Settings;
 using Datalake.Inventory.Application.Features.Cache.Commands.ReloadCache;
 using Datalake.Inventory.Application.Features.Settings.Commands.UpdateSettings;
 using Datalake.Inventory.Application.Features.Settings.Queries.GetSettings;

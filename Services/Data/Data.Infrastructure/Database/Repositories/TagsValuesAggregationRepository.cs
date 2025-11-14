@@ -1,7 +1,7 @@
-﻿using Datalake.Contracts.Public.Enums;
-using Datalake.Contracts.Public.Extensions;
+﻿using Datalake.Domain.Extensions;
 using Datalake.Data.Infrastructure.DataCollection.Interfaces;
 using Datalake.Data.Infrastructure.DataCollection.Models;
+using Datalake.Domain.Enums;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Exceptions;
 using LinqToDB;

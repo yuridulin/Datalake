@@ -1,5 +1,5 @@
 using Datalake.Contracts.Internal.Constants;
-using Datalake.Contracts.Public;
+using Datalake.Contracts;
 using Datalake.Gateway.Application;
 using Datalake.Gateway.Infrastructure;
 using Datalake.Shared.Hosting;
