@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Gateway.Host.ProxyControllers.Inventory;
 
-/// <inheritdoc />
+/// <inheritdoc cref="InventoryUsersControllerBase" />
 public class InventoryUsersController(InventoryReverseProxyService proxyService) : InventoryUsersControllerBase
 {
 	/// <inheritdoc />
@@ -16,7 +16,8 @@ public class InventoryUsersController(InventoryReverseProxyService proxyService)
 			=> proxyService.ProxyAsync<Guid>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<IEnumerable<UserInfo>>> GetAllAsync(
+	public override Task<ActionResult<IEnumerable<UserInfo>>> GetAsync(
+		[FromQuery] Guid? userGuid,
 		CancellationToken ct = default)
 			=> proxyService.ProxyAsync<IEnumerable<UserInfo>>(HttpContext, ct);
 

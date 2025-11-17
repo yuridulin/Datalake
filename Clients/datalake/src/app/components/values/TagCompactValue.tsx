@@ -1,40 +1,42 @@
 import TagQualityEl from '@/app/components/TagQualityEl'
-import { TagQuality, TagType } from '@/generated/data-contracts'
-import { TagValue } from '@/types/tagValue'
+import { TagQuality, TagType, ValueRecord } from '@/generated/data-contracts'
 import { theme } from 'antd'
 
 type TagCompactOptions = {
-	value: TagValue
+	record: ValueRecord | null
 	type: TagType
 	quality: TagQuality | null
 }
 
-export default function TagCompactValue({ value, type, quality }: TagCompactOptions) {
+const TagCompactValue = ({ record, type: tagType, quality }: TagCompactOptions) => {
 	const { token } = theme.useToken()
 
 	let color = ''
-	let v: TagValue = ''
+	let v: string = '?'
 
-	switch (type) {
-		case TagType.String:
-			color = '#6abe39'
-			v = value ?? '?'
-			break
-		case TagType.Boolean:
-			color = '#5273e0'
-			v = value ? 'True' : 'False'
-			break
-		case TagType.Number:
-			color = '#e87040'
-			v = value ?? '?'
-			break
+	if (record) {
+		switch (tagType) {
+			case TagType.String:
+				color = '#6abe39'
+				v = record.text ?? '?'
+				break
+			case TagType.Boolean:
+				color = '#5273e0'
+				v = record.boolean != null ? (record.boolean ? 'True' : 'False') : '?'
+				break
+			case TagType.Number:
+				color = '#e87040'
+				v = record.number != null ? String(record.number) : '?'
+				break
+		}
 	}
 
 	return (
 		<>
 			{quality !== null && (
 				<>
-					{<TagQualityEl quality={quality} />}&ensp;
+					<TagQualityEl quality={quality} />
+					&ensp;
 					<span style={{ color: token.colorBorder }}>|</span>
 					&ensp;
 				</>
@@ -43,3 +45,5 @@ export default function TagCompactValue({ value, type, quality }: TagCompactOpti
 		</>
 	)
 }
+
+export default TagCompactValue

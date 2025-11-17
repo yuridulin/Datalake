@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Gateway.Host.ProxyControllers.Data;
 
-/// <inheritdoc />
+/// <inheritdoc cref="DataValuesControllerBase" />
 public class DataValuesController(DataReverseProxyService proxyService) : DataValuesControllerBase
 {
 	/// <inheritdoc />

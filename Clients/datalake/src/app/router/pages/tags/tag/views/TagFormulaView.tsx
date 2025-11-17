@@ -3,7 +3,7 @@ import InfoTable, { InfoTableProps } from '@/app/components/infoTable/InfoTable'
 import PollingLoader from '@/app/components/loaders/PollingLoader'
 import TagReceiveStateEl from '@/app/components/TagReceiveStateEl'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { TagInputInfo, TagReceiveState, ValueRecord } from '@/generated/data-contracts'
+import { TagInputInfo, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Table } from 'antd'
@@ -20,7 +20,7 @@ type TagFormulaValues = Record<number, ValueRecord>
 const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 	const store = useAppStore()
 	const [values, setValues] = useState<TagFormulaValues>({})
-	const [state, setState] = useState<TagReceiveState | undefined>()
+	const [status, setStatus] = useState<string | undefined>()
 
 	const renderFormulaWithValues = useCallback(
 		(values: TagFormulaValues) => {
@@ -63,7 +63,7 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 					let valueContent = <>?</>
 
 					if (valueInfo) {
-						valueContent = <TagCompactValue type={input.type} value={valueInfo.value} quality={null} />
+						valueContent = <TagCompactValue type={input.type} record={valueInfo} quality={null} />
 					}
 
 					return valueContent
@@ -79,13 +79,13 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 	const info: InfoTableProps['items'] = {
 		Формула: formula,
 		Выражение: renderFormulaWithValues(values),
-		'Последний расчет': <TagReceiveStateEl receiveState={state} />,
+		'Последний расчет': <TagReceiveStateEl receiveState={status} />,
 	}
 
 	const getValues = useCallback(() => {
 		if (!inputs.length) return
 		return Promise.all([
-			store.api.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: inputs.map((x) => x.id) }]).then((res) => {
+			store.api.dataValuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: inputs.map((x) => x.id) }]).then((res) => {
 				const newValues = res.data[0].tags.reduce((acc, next) => {
 					acc[next.id] = next.values[0]
 					return acc
@@ -93,9 +93,9 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 				setValues(newValues)
 			}),
 			store.api
-				.statesGetTagsReceive([id])
-				.then((res) => setState(res.data[id]))
-				.catch(() => setState(undefined)),
+				.dataTagsGetStatus({ tagsId: [id] })
+				.then((res) => setStatus(res.data[id]))
+				.catch(() => setStatus(undefined)),
 		])
 	}, [store.api, id, inputs])
 
@@ -126,7 +126,7 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 								width: '10em',
 								render: (_, x) => {
 									const value = values[x.id]
-									return value ? <TagCompactValue type={x.type} quality={value.quality} value={value.value} /> : <>?</>
+									return value ? <TagCompactValue type={x.type} quality={value.quality} record={value} /> : <>?</>
 								},
 							},
 							{

@@ -7,11 +7,12 @@ import UserGroupButton from '@/app/components/buttons/UserGroupButton'
 import {
 	AccessRuleInfo,
 	AccessType,
+	InventoryAccessGetCalculatedAccessPayload,
 	SourceType,
 	TagResolution,
 	TagSimpleInfo,
 	TagType,
-	UserAuthInfo,
+	UserAccessValue,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { Divider, Tree } from 'antd'
@@ -21,7 +22,6 @@ import 'react18-json-view/src/style.css'
 
 type UserAuthWithNames = {
 	guid: string
-	fullName: string
 	globalAccess: AccessType
 	accessRule: AccessRuleInfo
 	groups: {
@@ -59,9 +59,9 @@ const AccessSettings = () => {
 		let sources: Record<number, string>
 		let blocks: Record<number, string>
 		let tags: Record<string, TagSimpleInfo>
-		let auth: Record<string, UserAuthInfo>
+		let auth: Record<string, UserAccessValue>
 		Promise.all([
-			store.api.userGroupsGetAll().then((res) => {
+			store.api.inventoryUserGroupsGetAll().then((res) => {
 				groups = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.guid] = item.name
@@ -70,7 +70,7 @@ const AccessSettings = () => {
 					{} as Record<string, string>,
 				)
 			}),
-			store.api.sourcesGetAll().then((res) => {
+			store.api.inventorySourcesGetAll().then((res) => {
 				sources = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.id] = item.name
@@ -79,7 +79,7 @@ const AccessSettings = () => {
 					{} as Record<string, string>,
 				)
 			}),
-			store.api.blocksGetAll().then((res) => {
+			store.api.inventoryBlocksGetAll().then((res) => {
 				blocks = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.id] = item.name
@@ -88,7 +88,7 @@ const AccessSettings = () => {
 					{} as Record<string, string>,
 				)
 			}),
-			store.api.tagsGetAll().then((res) => {
+			store.api.inventoryTagsGetAll().then((res) => {
 				tags = res.data.reduce(
 					(accumulator, item) => {
 						accumulator[item.guid] = item
@@ -97,43 +97,47 @@ const AccessSettings = () => {
 					{} as Record<string, TagSimpleInfo>,
 				)
 			}),
-			store.api.systemGetAccess().then((res) => {
-				auth = res.data
-			}),
+			store.api
+				.inventoryAccessGetCalculatedAccess(null as unknown as InventoryAccessGetCalculatedAccessPayload)
+				.then((res) => {
+					auth = res.data
+				}),
 		]).then(() => {
 			const users: UserAuthWithNames[] = Object.values(auth).map((info) => ({
 				guid: info.guid,
-				fullName: info.fullName,
-				accessRule: info.accessRule,
+				accessRule: {
+					ruleId: info.rootRule.id,
+					access: info.rootRule.access,
+				},
 				globalAccess: info.rootRule.access,
-				groups: Object.entries(info.groups).map(([key, value]) => ({
+				groups: Object.entries(info.groupsRules).map(([key, value]) => ({
 					guid: key,
 					name: groups[key],
 					accessRule: {
-						ruleId: value.ruleId,
+						ruleId: value.id,
 						access: value.access,
 					},
 				})),
-				sources: Object.entries(info.sources).map(([key, value]) => ({
+				sources: Object.entries(info.sourcesRules).map(([key, value]) => ({
 					id: key,
 					name: sources[Number(key)],
 					accessRule: {
-						ruleId: value.ruleId,
+						ruleId: value.id,
 						access: value.access,
 					},
 				})),
-				blocks: Object.entries(info.blocks).map(([key, value]) => ({
+				blocks: Object.entries(info.blocksRules).map(([key, value]) => ({
 					id: key,
 					name: blocks[Number(key)],
 					accessRule: {
-						ruleId: value.ruleId,
+						ruleId: value.id,
 						access: value.access,
 					},
 				})),
-				tags: Object.entries(info.tags).map(([key, value]) => ({
+				tags: Object.entries(info.tagsRules).map(([key, value]) => ({
 					...tags[key],
 					accessRule: {
-						ruleId: value.ruleId,
+						ruleId: value.id,
 						access: value.access,
 					},
 				})),
@@ -146,7 +150,7 @@ const AccessSettings = () => {
 						<UserButton
 							userInfo={{
 								guid: user.guid,
-								fullName: user.fullName,
+								fullName: user.guid,
 								accessRule: user.accessRule,
 							}}
 							check={false}

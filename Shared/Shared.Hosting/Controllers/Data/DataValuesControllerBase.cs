@@ -16,6 +16,7 @@ public abstract class DataValuesControllerBase : ControllerBase
 	/// Получение значений на основании списка запросов
 	/// </summary>
 	/// <param name="requests">Список запросов с настройками</param>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список ответов на запросы</returns>
 	[HttpPost]
 	public abstract Task<ActionResult<IEnumerable<ValuesResponse>>> GetAsync(
@@ -26,6 +27,7 @@ public abstract class DataValuesControllerBase : ControllerBase
 	/// Запись значений на основании списка запросов
 	/// </summary>
 	/// <param name="requests">Список запросов на изменение</param>
+	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список измененных значений</returns>
 	[HttpPut]
 	public abstract Task<ActionResult<IEnumerable<ValuesTagResponse>>> WriteAsync(

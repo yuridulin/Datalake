@@ -7,4 +7,6 @@ namespace Datalake.Inventory.Application.Features.Users.Queries.GetUsers;
 public record GetUsersQuery : IQueryRequest<IEnumerable<UserInfo>>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
+
+	public required Guid? UserGuid { get; init; }
 }

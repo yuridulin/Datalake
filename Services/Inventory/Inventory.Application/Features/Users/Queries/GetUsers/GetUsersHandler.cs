@@ -14,8 +14,15 @@ public class GetUsersHandler(
 	{
 		query.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 
-		var data = await usersQueriesService.GetAsync(ct);
+		if (query.UserGuid.HasValue)
+		{
+			var info = await usersQueriesService.GetByGuidAsync(query.UserGuid.Value, ct)
+				?? throw new ApplicationException($"Запрошенный пользователь не найден");
 
+			return [info];
+		}
+
+		var data = await usersQueriesService.GetAsync(ct);
 		return data;
 	}
 }

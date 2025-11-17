@@ -8,11 +8,11 @@ const CollectSettings = () => {
 
 	const restartState = () => {
 		setWait(true)
-		store.api.systemRestartState().then((res) => res.status === 204 && setWait(false))
+		store.api.inventorySystemRestartState().then((res) => res.status === 204 && setWait(false))
 	}
 	const restartValues = () => {
 		setWait(true)
-		store.api.systemRestartValues().then((res) => res.status === 204 && setWait(false))
+		store.api.dataSystemRestartCollection().then((res) => res.status === 204 && setWait(false))
 	}
 
 	return (

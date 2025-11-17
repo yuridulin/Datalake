@@ -2,10 +2,10 @@ import { AccessType } from '../generated/data-contracts'
 
 function hasAccess(current: AccessType, minimal: AccessType): boolean {
 	switch (minimal) {
-		case AccessType.NotSet:
+		case AccessType.None:
 			return true
-		case AccessType.NoAccess:
-			return current !== AccessType.NoAccess
+		case AccessType.Denied:
+			return current !== AccessType.Denied
 		case AccessType.Viewer:
 			return (
 				current === AccessType.Viewer ||

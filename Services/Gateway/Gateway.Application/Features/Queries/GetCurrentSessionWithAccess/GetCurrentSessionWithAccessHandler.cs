@@ -10,12 +10,14 @@ public interface IGetCurrentSessionWithAccessHandler : IQueryHandler<GetCurrentS
 
 public class GetCurrentSessionWithAccessHandler(
 	ISessionsService sessionsService,
-	IUserAccessService userAccessService) : IGetCurrentSessionWithAccessHandler
+	IUserAccessStore userAccessService) : IGetCurrentSessionWithAccessHandler
 {
 	public async Task<UserSessionWithAccessInfo> HandleAsync(GetCurrentSessionWithAccessQuery query, CancellationToken ct = default)
 	{
 		var sessionInfo = await sessionsService.GetAsync(query.Token, ct);
-		var access = await userAccessService.AuthenticateAsync(sessionInfo.UserGuid, ct);
+
+		var access = userAccessService.TryGet(sessionInfo.UserGuid)
+			?? throw new ApplicationException("Доступ пользователя не найден");
 
 		var data = new UserSessionWithAccessInfo
 		{

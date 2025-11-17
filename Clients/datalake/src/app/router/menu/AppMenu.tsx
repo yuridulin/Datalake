@@ -30,7 +30,7 @@ const items = [
 		key: 'blocks',
 		label: 'Блоки',
 		type: 'group' as MenuType,
-		minimalAccess: AccessType.NotSet,
+		minimalAccess: AccessType.None,
 		children: [
 			{
 				key: routes.blocks.list,
@@ -40,7 +40,7 @@ const items = [
 						&emsp;Дерево блоков
 					</NavLink>
 				),
-				minimalAccess: AccessType.NotSet,
+				minimalAccess: AccessType.None,
 			},
 		],
 	},
@@ -48,7 +48,7 @@ const items = [
 		key: 'tags-group',
 		type: 'group' as MenuType,
 		label: 'Теги',
-		minimalAccess: AccessType.NotSet,
+		minimalAccess: AccessType.None,
 		children: [
 			{
 				key: routes.tags.list,
@@ -58,7 +58,7 @@ const items = [
 						&emsp;Все теги
 					</NavLink>
 				),
-				minimalAccess: AccessType.NotSet,
+				minimalAccess: AccessType.None,
 			},
 			{
 				key: routes.tags.manual,
@@ -97,7 +97,7 @@ const items = [
 		label: 'Значения',
 		type: 'group' as MenuType,
 		path: '',
-		minimalAccess: AccessType.NotSet,
+		minimalAccess: AccessType.None,
 		children: [
 			{
 				key: routes.values.tagsViewer,
@@ -107,7 +107,7 @@ const items = [
 						&emsp;Просмотр
 					</NavLink>
 				),
-				minimalAccess: AccessType.NotSet,
+				minimalAccess: AccessType.None,
 			},
 			{
 				key: routes.values.tagsWriter,
@@ -117,7 +117,7 @@ const items = [
 						&emsp;Запись
 					</NavLink>
 				),
-				minimalAccess: AccessType.NotSet,
+				minimalAccess: AccessType.None,
 			},
 		],
 	},
@@ -143,7 +143,7 @@ const items = [
 		key: 'admin',
 		label: 'Администрирование',
 		type: 'group' as MenuType,
-		minimalAccess: AccessType.NotSet,
+		minimalAccess: AccessType.None,
 		children: [
 			{
 				key: routes.stats.logs,
@@ -153,7 +153,7 @@ const items = [
 						&emsp;Журнал
 					</NavLink>
 				),
-				minimalAccess: AccessType.NotSet,
+				minimalAccess: AccessType.None,
 			},
 			{
 				key: routes.users.list,
@@ -163,7 +163,7 @@ const items = [
 						&emsp;Пользователи
 					</NavLink>
 				),
-				minimalAccess: AccessType.NotSet,
+				minimalAccess: AccessType.None,
 			},
 			{
 				key: routes.userGroups.list,
@@ -173,7 +173,7 @@ const items = [
 						&emsp;Группы пользователей
 					</NavLink>
 				),
-				minimalAccess: AccessType.NotSet,
+				minimalAccess: AccessType.None,
 			},
 			{
 				key: routes.admin.settings,

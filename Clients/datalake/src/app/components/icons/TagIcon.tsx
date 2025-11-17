@@ -20,7 +20,7 @@ const TagIcon = ({ type }: TagIconProps) => {
 			return <CalculatorOutlined style={{ color: blue[4] }} />
 		case SourceType.System:
 			return <LineChartOutlined style={{ color: blue[4] }} />
-		case SourceType.NotSet:
+		case SourceType.Unset:
 			return <QuestionCircleOutlined style={{ color: blue[4] }} />
 		default:
 			return <TagOutlined style={{ color: blue[4] }} />

@@ -15,7 +15,7 @@ public class OpenEnergoIdSessionHandler(
 {
 	public override async Task<string> HandleInTransactionAsync(OpenEnergoIdSessionCommand command, CancellationToken ct = default)
 	{
-		User? user = await usersRepository.GetByEnergoIdAsync(command.Guid, ct)
+		User? user = await usersRepository.GetByGuidAsync(command.Guid, ct)
 			?? throw new NotFoundException("Пользователь не найден по идентификатору EnergoId");
 
 		var token = await sessionsService.OpenAsync(user, ct);

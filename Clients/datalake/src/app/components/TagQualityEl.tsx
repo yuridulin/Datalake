@@ -3,7 +3,6 @@ import {
 	BorderOutlined,
 	CalculatorOutlined,
 	CheckCircleOutlined,
-	CloseCircleOutlined,
 	FormOutlined,
 	MoreOutlined,
 	QuestionOutlined,
@@ -21,9 +20,6 @@ const TagQualityEl = ({ quality }: TagQualityElProps) => {
 	switch (quality) {
 		case TagQuality.Good:
 			return <CheckCircleOutlined style={{ color: token.colorSuccess }} title='Достоверное значение' />
-
-		case TagQuality.Bad:
-			return <CloseCircleOutlined style={{ color: token.colorError }} title='Значение не достоверно' />
 
 		case TagQuality.BadNoConnect:
 			return <ApiOutlined style={{ color: token.colorError }} title='Потеря связи' />

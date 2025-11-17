@@ -1,5 +1,5 @@
 import { loginWithKeycloak } from '@/app/router/auth/keycloak/keycloakService'
-import { UserLoginPass } from '@/generated/data-contracts'
+import { AuthLoginPassRequest } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Form, Input, Space } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -15,11 +15,11 @@ const style = {
 const Login = observer(() => {
 	const store = useAppStore()
 
-	const onFinish = (values: UserLoginPass) => {
+	const onFinish = (values: AuthLoginPassRequest) => {
 		store.loginLocal(values.login, values.password)
 	}
 
-	const onFinishFailed = (errorInfo: ValidateErrorEntity<UserLoginPass>) => {
+	const onFinishFailed = (errorInfo: ValidateErrorEntity<AuthLoginPassRequest>) => {
 		console.warn('Failed:', errorInfo)
 	}
 
@@ -37,7 +37,7 @@ const Login = observer(() => {
 			}}
 		>
 			<div style={style}>
-				<Form<UserLoginPass>
+				<Form<AuthLoginPassRequest>
 					name='basic'
 					labelCol={{ span: 8 }}
 					wrapperCol={{ span: 16 }}
@@ -46,7 +46,7 @@ const Login = observer(() => {
 					onFinishFailed={onFinishFailed}
 					autoComplete='on'
 				>
-					<Form.Item<UserLoginPass>
+					<Form.Item<AuthLoginPassRequest>
 						label='Имя учётной записи'
 						name='login'
 						rules={[{ required: true, message: 'Имя не введено' }]}
@@ -54,7 +54,7 @@ const Login = observer(() => {
 						<Input name='username' autoComplete='username' />
 					</Form.Item>
 
-					<Form.Item<UserLoginPass>
+					<Form.Item<AuthLoginPassRequest>
 						label='Пароль'
 						name='password'
 						rules={[{ required: true, message: 'Пароль не введён' }]}

@@ -15,9 +15,10 @@ namespace Datalake.Data.Application.Features.Values.Queries.GetValues;
 public interface IGetValuesHandler : IQueryHandler<GetValuesQuery, IEnumerable<ValuesResponse>> { }
 
 public class GetValuesHandler(
-		ITagsStore tagsStore,
-		ICurrentValuesStore currentValuesStore,
-		IServiceScopeFactory serviceScopeFactory) : IGetValuesHandler
+	ITagsSettingsStore tagsStore,
+	ITagsUsageStore tagsUsageStore,
+	IValuesStore currentValuesStore,
+	IServiceScopeFactory serviceScopeFactory) : IGetValuesHandler
 {
 	public async Task<IEnumerable<ValuesResponse>> HandleAsync(GetValuesQuery query, CancellationToken ct = default)
 	{
@@ -56,6 +57,8 @@ public class GetValuesHandler(
 								? ValueResult.NoAccess
 								: tag.IsDeleted ? ValueResult.IsDeleted : ValueResult.Ok,
 						});
+
+						tagsUsageStore.RegisterUsage(tag.TagId, request.RequestKey);
 					}
 					else
 					{
@@ -95,6 +98,8 @@ public class GetValuesHandler(
 								? ValueResult.NoAccess
 								: tag.IsDeleted ? ValueResult.IsDeleted : ValueResult.Ok,
 						});
+
+						tagsUsageStore.RegisterUsage(tag.TagId, request.RequestKey);
 					}
 					else
 					{

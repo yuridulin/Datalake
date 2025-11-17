@@ -8,7 +8,7 @@ namespace Datalake.Gateway.Infrastructure.Database.Repositories;
 [Scoped]
 public class UsersRepository(GatewayDbContext context) : IUsersRepository
 {
-	public async Task<User?> GetByEnergoIdAsync(Guid guid, CancellationToken ct = default)
+	public async Task<User?> GetByGuidAsync(Guid guid, CancellationToken ct = default)
 	{
 		return await context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Guid == guid, ct);
 	}

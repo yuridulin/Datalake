@@ -26,10 +26,12 @@ public abstract class InventoryUsersControllerBase : ControllerBase
 	/// <summary>
 	/// Получение списка пользователей
 	/// </summary>
+	/// <param name="userGuid">Идентификатор запрошенного пользователя</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список пользователей</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<IEnumerable<UserInfo>>> GetAllAsync(
+	public abstract Task<ActionResult<IEnumerable<UserInfo>>> GetAsync(
+		[FromQuery] Guid? userGuid,
 		CancellationToken ct = default);
 
 	/// <summary>

@@ -9,14 +9,14 @@ const LocalSettings = () => {
 	const [form] = Form.useForm<SettingsInfo>()
 
 	const load = () => {
-		store.api.systemGetSettings().then((res) => {
+		store.api.inventorySystemGetSettings().then((res) => {
 			setSettings(res.data)
 			form.setFieldsValue(res.data)
 		})
 	}
 
 	const update = (newSettings: SettingsInfo) => {
-		store.api.systemUpdateSettings({ ...settings, ...newSettings }).then(() => {
+		store.api.inventorySystemUpdateSettings({ ...settings, ...newSettings }).then(() => {
 			document.title = 'Datalake | ' + newSettings.instanceName
 		})
 	}

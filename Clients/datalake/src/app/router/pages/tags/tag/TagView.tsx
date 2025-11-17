@@ -14,12 +14,11 @@ import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
 import {
 	AccessType,
-	AggregationPeriod,
 	BlockTagRelation,
 	SourceType,
 	TagAggregation,
-	TagCalculation,
 	TagFullInfo,
+	TagResolution,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
@@ -45,10 +44,10 @@ const TagView = observer(() => {
 		setLoading(true)
 
 		Promise.all([
-			store.api.tagsGet(Number(id)).then((res) => setTag(res.data)),
+			store.api.inventoryTagsGet(Number(id)).then((res) => setTag(res.data)),
 			store.api
-				.statesGetTag(Number(id))
-				.then((res) => setMetrics(res.data))
+				.dataTagsGetUsage({ tagsId: [Number(id)] })
+				.then((res) => setMetrics(res.data[id]))
 				.catch(() => setMetrics({})),
 		]).finally(() => setLoading(false))
 	}, [store.api, id])
@@ -68,11 +67,11 @@ const TagView = observer(() => {
 		info['Тип агрегирования'] = (
 			<>
 				{tag.aggregation === TagAggregation.Average ? 'Среднее' : 'Сумма'} за{' '}
-				{tag.aggregationPeriod === AggregationPeriod.Minute
+				{tag.aggregationPeriod === TagResolution.Minute
 					? 'прошедшую минуту'
-					: tag.aggregationPeriod === AggregationPeriod.Hour
+					: tag.aggregationPeriod === TagResolution.Hour
 						? 'прошедший час'
-						: tag.aggregationPeriod === AggregationPeriod.Day
+						: tag.aggregationPeriod === TagResolution.Day
 							? 'прошедшие сутки'
 							: '?'}
 			</>
@@ -196,15 +195,15 @@ const TagView = observer(() => {
 			_tabs.push({
 				key: 'calc',
 				label: 'Расчет',
-				children:
-					tag.calculation === TagCalculation.Formula ? (
-						<TagFormulaView id={Number(id)} formula={tag.formula} inputs={tag.formulaInputs} />
-					) : tag.calculation === TagCalculation.Thresholds ? (
-						<TagThresholdsView tag={tag} />
-					) : (
-						<>Тип расчета не выбран</>
-					),
+				children: <TagFormulaView id={Number(id)} formula={tag.formula} inputs={tag.formulaInputs} />,
 			})
+		else if (tag.sourceId === SourceType.Thresholds) {
+			_tabs.push({
+				key: 'calc',
+				label: 'Расчет',
+				children: <TagThresholdsView tag={tag} />,
+			})
+		}
 		return _tabs
 	}, [tag, metrics, id, relations, tagMapping])
 

@@ -7,7 +7,6 @@ import {
 	BlockTagRelation,
 	BlockUpdateRequest,
 	SourceType,
-	TagResolution,
 	TagSimpleInfo,
 	TagType,
 } from '@/generated/data-contracts'
@@ -38,7 +37,7 @@ const BlockForm = observer(() => {
 	const [loading, setLoading] = useState(true)
 
 	const getBlock = () => {
-		store.api.blocksGet(Number(id)).then((res) => {
+		store.api.inventoryBlocksGet(Number(id)).then((res) => {
 			const attachedTags = res.data.tags.map(
 				(tag) =>
 					({
@@ -56,19 +55,19 @@ const BlockForm = observer(() => {
 	}
 
 	const updateBlock = (newInfo: BlockUpdateRequest) => {
-		store.api.blocksUpdate(Number(id), newInfo).catch(() => {
+		store.api.inventoryBlocksUpdate(Number(id), newInfo).catch(() => {
 			app.notification.error({ message: 'Ошибка при сохранении' })
 		})
 	}
 
 	const deleteBlock = () => {
-		store.api.blocksDelete(Number(id)).then(() => navigate(routes.blocks.root))
+		store.api.inventoryBlocksDelete(Number(id)).then(() => navigate(routes.blocks.root))
 	}
 
 	const getTags = () => {
 		setLoading(true)
 		store.api
-			.tagsGetAll()
+			.inventoryTagsGetAll()
 			.then((res) => {
 				setTags(
 					res.data
@@ -150,10 +149,9 @@ const BlockForm = observer(() => {
 															label: 'Создать строковый мануальный тег и добавить как поле',
 															onClick: () => {
 																store.api
-																	.tagsCreate({
+																	.inventoryTagsCreate({
 																		blockId: Number(id),
 																		tagType: TagType.String,
-																		resolution: TagResolution.NotSet,
 																		sourceId: SourceType.Manual,
 																	})
 																	.then((res) => {
@@ -178,10 +176,9 @@ const BlockForm = observer(() => {
 															label: 'Создать числовой мануальный тег и добавить как поле',
 															onClick: () => {
 																store.api
-																	.tagsCreate({
+																	.inventoryTagsCreate({
 																		blockId: Number(id),
 																		tagType: TagType.Number,
-																		resolution: TagResolution.NotSet,
 																		sourceId: SourceType.Manual,
 																	})
 																	.then((res) => {
@@ -206,10 +203,9 @@ const BlockForm = observer(() => {
 															label: 'Создать логический мануальный тег и добавить как поле',
 															onClick: () => {
 																store.api
-																	.tagsCreate({
+																	.inventoryTagsCreate({
 																		blockId: Number(id),
 																		tagType: TagType.Boolean,
-																		resolution: TagResolution.NotSet,
 																		sourceId: SourceType.Manual,
 																	})
 																	.then((res) => {

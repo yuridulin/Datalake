@@ -29,9 +29,12 @@ public class CreateSourceHandler(
 
 	public override async Task<int> ExecuteInTransactionAsync(CreateSourceCommand command, CancellationToken ct = default)
 	{
-		source = Source.CreateAsExternal(command.Type, address: command.Address, name: command.Name, description: command.Description);
+		source = Source.CreateAsExternal(SourceType.Inopc, address: string.Empty, name: string.Empty, description: null);
 
 		await sourcesRepository.AddAsync(source, ct);
+		await _unitOfWork.SaveChangesAsync(ct);
+
+		source.UpdateProperties($"Источник {source.Id}", source.Description, source.Address);
 		await _unitOfWork.SaveChangesAsync(ct);
 
 		await auditRepository.AddAsync(new(command.User.Guid, "Создан источник данных", sourceId: source.Id), ct);

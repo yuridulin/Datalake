@@ -4,7 +4,6 @@ import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagViewerModeProps } from '@/app/router/pages/values/types/TagViewerModeProps'
 import { TagTypeName } from '@/functions/getTagTypeName'
 import { SourceType, TagQuality, TagResolution, TagType, ValueRecord } from '@/generated/data-contracts'
-import { TagValue } from '@/types/tagValue'
 import { Table } from 'antd'
 import Column from 'antd/lib/table/Column'
 import ExcelJS from 'exceljs'
@@ -18,7 +17,9 @@ type ExactValuesRowType = {
 	guid: string
 	localName: string
 	type: TagType
-	value: TagValue
+	number: number | null | undefined
+	text: string | null | undefined
+	boolean: boolean | null | undefined
 	quality: TagQuality
 	resolution: TagResolution
 	sourceType: SourceType
@@ -32,9 +33,7 @@ const ExactValuesMode = forwardRef<ExcelExportModeHandles, TagViewerModeProps>((
 	})
 
 	const exactValues: ExactValuesRowType[] = relations.map(({ relationId, value: x }) => {
-		const valueObject: ValueRecord = x.values.length
-			? x.values[0]
-			: { date: '', dateString: '', quality: TagQuality.BadNoValues, value: null }
+		const valueObject: ValueRecord = x.values.length ? x.values[0] : { date: '', quality: TagQuality.BadNoValues }
 
 		return {
 			relationId,
@@ -43,10 +42,11 @@ const ExactValuesMode = forwardRef<ExcelExportModeHandles, TagViewerModeProps>((
 			guid: x.guid,
 			localName: x.localName,
 			type: x.type,
-			value: valueObject.value,
+			number: valueObject.number,
+			text: valueObject.text,
+			boolean: valueObject.boolean,
 			quality: valueObject.quality,
 			sourceType: x.sourceType,
-			date: valueObject.dateString,
 		} as ExactValuesRowType
 	})
 
@@ -67,8 +67,8 @@ const ExactValuesMode = forwardRef<ExcelExportModeHandles, TagViewerModeProps>((
 
 				// Данные
 				exactValues.forEach((tag) => {
-					const value = tag.value !== null ? String(tag.value) : ''
-					const qualityValue = tag.quality ?? TagQuality.Bad
+					const value = tag.text ?? tag.number ?? tag.boolean ?? ''
+					const qualityValue = tag.quality ?? TagQuality.Unknown
 
 					const row = worksheet.addRow({
 						tag: tag.localName,
@@ -115,7 +115,7 @@ const ExactValuesMode = forwardRef<ExcelExportModeHandles, TagViewerModeProps>((
 					title='Значение'
 					dataIndex='value'
 					render={(_, row: ExactValuesRowType) => (
-						<TagCompactValue type={row.type} value={row.value ?? null} quality={row.quality ?? TagQuality.Bad} />
+						<TagCompactValue type={row.type} record={row} quality={row.quality ?? TagQuality.Unknown} />
 					)}
 				/>
 				<Column title='Время записи' dataIndex='value' render={(_, row: ExactValuesRowType) => row.date} />

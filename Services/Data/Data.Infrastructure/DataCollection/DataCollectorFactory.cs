@@ -1,6 +1,6 @@
 ﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
-using Datalake.Data.Infrastructure.DataCollection.DataCollectors;
+using Datalake.Data.Infrastructure.DataCollection.Collectors;
 using Datalake.Domain.Enums;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;

@@ -11,31 +11,38 @@
  */
 
 import {
-  AccessRightsApplyRequest,
   AccessRightsInfo,
+  AuthEnergoIdRequest,
+  AuthLoginPassRequest,
+  BlockCreateRequest,
   BlockFullInfo,
   BlockTreeInfo,
   BlockUpdateRequest,
   BlockWithTagsInfo,
-  KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo,
+  DataSourcesGetActivityPayload,
+  DataValuesGetPayload,
+  DataValuesWritePayload,
+  InventoryAccessGetCalculatedAccessPayload,
+  InventoryAccessSetBlockRulesPayload,
+  InventoryAccessSetSourceRulesPayload,
+  InventoryAccessSetTagRulesPayload,
+  InventoryAccessSetUserGroupRulesPayload,
+  InventoryAccessSetUserRulesPayload,
   LogCategory,
   LogInfo,
   LogType,
   SettingsInfo,
-  SourceEntryInfo,
+  SourceActivityInfo,
   SourceInfo,
   SourceItemInfo,
-  SourceStateInfo,
   SourceUpdateRequest,
-  StatesGetTagsReceivePayload,
   TagCreateRequest,
   TagFullInfo,
   TagInfo,
-  TagReceiveState,
+  TagMetricRequest,
   TagUpdateRequest,
-  UserAuthInfo,
+  UserAccessValue,
   UserCreateRequest,
-  UserDetailInfo,
   UserEnergoIdInfo,
   UserGroupCreateRequest,
   UserGroupDetailedInfo,
@@ -43,13 +50,11 @@ import {
   UserGroupTreeInfo,
   UserGroupUpdateRequest,
   UserInfo,
-  UserLoginPass,
-  UserSessionInfo,
+  UserSessionWithAccessInfo,
+  UsersGetActivityPayload,
   UserUpdateRequest,
-  ValuesGetPayload,
   ValuesResponse,
   ValuesTagResponse,
-  ValuesWritePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -59,13 +64,13 @@ export class Api<
   /**
    * No description
    *
-   * @tags Access
-   * @name AccessGet
-   * @summary Get: Получение списка прямых (не глобальных) разрешений субъекта на объект
-   * @request GET:/api/access
+   * @tags InventoryAccess
+   * @name InventoryAccessGet
+   * @summary Получение списка прямых (не глобальных) разрешений субъекта на объект
+   * @request GET:/api/v1/inventory/access
    * @response `200` `(AccessRightsInfo)[]` Список разрешений
    */
-  accessGet = (
+  inventoryAccessGet = (
     query?: {
       /**
        * Идентификтатор пользователя
@@ -96,7 +101,7 @@ export class Api<
     params: RequestParams = {},
   ) =>
     this.request<AccessRightsInfo[], any>({
-      path: `/api/access`,
+      path: `/api/v1/inventory/access`,
       method: "GET",
       query: query,
       format: "json",
@@ -105,19 +110,41 @@ export class Api<
   /**
    * No description
    *
-   * @tags Access
-   * @name AccessApplyChanges
-   * @summary Post: Изменение разрешений для группы пользователей
-   * @request POST:/api/access
+   * @tags InventoryAccess
+   * @name InventoryAccessGetCalculatedAccess
+   * @summary Получение списка рассчитанных разрешений субъекта на объект для всех субъетов и всех объектов
+   * @request POST:/api/v1/inventory/access/calculated
+   * @response `200` `Record<string,UserAccessValue>`
+   */
+  inventoryAccessGetCalculatedAccess = (
+    data: InventoryAccessGetCalculatedAccessPayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<Record<string, UserAccessValue>, any>({
+      path: `/api/v1/inventory/access/calculated`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventoryAccess
+   * @name InventoryAccessSetBlockRules
+   * @summary Изменение разрешений для блок
+   * @request PUT:/api/v1/inventory/access/block/{blockId}
    * @response `200` `File`
    */
-  accessApplyChanges = (
-    data: AccessRightsApplyRequest,
+  inventoryAccessSetBlockRules = (
+    blockId: number,
+    data: InventoryAccessSetBlockRulesPayload,
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/access`,
-      method: "POST",
+      path: `/api/v1/inventory/access/block/${blockId}`,
+      method: "PUT",
       body: data,
       type: ContentType.Json,
       ...params,
@@ -125,124 +152,145 @@ export class Api<
   /**
    * No description
    *
-   * @tags Auth
-   * @name AuthAuthenticateLocal
-   * @summary Post: Аутентификация локального пользователя по связке "имя для входа/пароль"
-   * @request POST:/api/auth/local
-   * @response `200` `UserSessionInfo` Данные о учетной записи
-   */
-  authAuthenticateLocal = (data: UserLoginPass, params: RequestParams = {}) =>
-    this.request<UserSessionInfo, any>({
-      path: `/api/auth/local`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Auth
-   * @name AuthAuthenticateEnergoIdUser
-   * @summary Post: Аутентификация пользователя, прошедшего проверку на сервере EnergoId
-   * @request POST:/api/auth/energo-id
-   * @response `200` `UserSessionInfo` Данные о учетной записи
-   */
-  authAuthenticateEnergoIdUser = (
-    data: UserEnergoIdInfo,
-    params: RequestParams = {},
-  ) =>
-    this.request<UserSessionInfo, any>({
-      path: `/api/auth/energo-id`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Auth
-   * @name AuthIdentify
-   * @summary Get: Получение информации о учетной записи на основе текущей сессии
-   * @request GET:/api/auth/identify
-   * @response `200` `UserSessionInfo` Данные о учетной записи
-   */
-  authIdentify = (params: RequestParams = {}) =>
-    this.request<UserSessionInfo, any>({
-      path: `/api/auth/identify`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Auth
-   * @name AuthLogout
-   * @summary Delete: Закрытие уканной сессии пользователя
-   * @request DELETE:/api/auth/logout
+   * @tags InventoryAccess
+   * @name InventoryAccessSetSourceRules
+   * @summary Изменение разрешений на источник данных
+   * @request PUT:/api/v1/inventory/access/source/{sourceId}
    * @response `200` `File`
    */
-  authLogout = (
-    query: {
-      /** Сессионный токен доступа */
-      token: string;
+  inventoryAccessSetSourceRules = (
+    sourceId: number,
+    data: InventoryAccessSetSourceRulesPayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<File, any>({
+      path: `/api/v1/inventory/access/source/${sourceId}`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventoryAccess
+   * @name InventoryAccessSetTagRules
+   * @summary Изменение разрешений для тега
+   * @request PUT:/api/v1/inventory/access/tag/{tagId}
+   * @response `200` `File`
+   */
+  inventoryAccessSetTagRules = (
+    tagId: number,
+    data: InventoryAccessSetTagRulesPayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<File, any>({
+      path: `/api/v1/inventory/access/tag/${tagId}`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventoryAccess
+   * @name InventoryAccessSetUserGroupRules
+   * @summary Изменение разрешений для группы учетных записей
+   * @request PUT:/api/v1/inventory/access/user-group/{userGroupGuid}
+   * @response `200` `File`
+   */
+  inventoryAccessSetUserGroupRules = (
+    userGroupGuid: string,
+    data: InventoryAccessSetUserGroupRulesPayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<File, any>({
+      path: `/api/v1/inventory/access/user-group/${userGroupGuid}`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventoryAccess
+   * @name InventoryAccessSetUserRules
+   * @summary Изменение разрешений для учетной записи
+   * @request PUT:/api/v1/inventory/access/user/{userGuid}
+   * @response `200` `File`
+   */
+  inventoryAccessSetUserRules = (
+    userGuid: string,
+    data: InventoryAccessSetUserRulesPayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<File, any>({
+      path: `/api/v1/inventory/access/user/${userGuid}`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventoryAudit
+   * @name InventoryAuditGet
+   * @summary Получение списка сообщений аудита
+   * @request GET:/api/v1/inventory/audit
+   * @response `200` `(LogInfo)[]` Список сообщений аудита
+   */
+  inventoryAuditGet = (
+    query?: {
+      /**
+       * Идентификатор последнего сообщения. Будут присланы только более поздние
+       * @format int32
+       */
+      lastId?: number | null;
+      /**
+       * Идентификатор первого сообщения. Будут присланы только более ранние
+       * @format int32
+       */
+      firstId?: number | null;
+      /** @format int32 */
+      take?: number | null;
+      /** @format int32 */
+      source?: number | null;
+      /** @format int32 */
+      block?: number | null;
+      /** @format guid */
+      tag?: string | null;
+      /** @format guid */
+      user?: string | null;
+      /** @format guid */
+      group?: string | null;
+      "categories[]"?: LogCategory[] | null;
+      "types[]"?: LogType[] | null;
+      /** @format guid */
+      author?: string | null;
     },
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
-      path: `/api/auth/logout`,
-      method: "DELETE",
-      query: query,
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Blocks
-   * @name BlocksCreate
-   * @summary Post: Создание нового блока на основании переданной информации
-   * @request POST:/api/blocks
-   * @response `200` `BlockWithTagsInfo` Идентификатор блока
-   */
-  blocksCreate = (data: BlockFullInfo, params: RequestParams = {}) =>
-    this.request<BlockWithTagsInfo, any>({
-      path: `/api/blocks`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Blocks
-   * @name BlocksGetAll
-   * @summary Get: Получение списка блоков с базовой информацией о них
-   * @request GET:/api/blocks
-   * @response `200` `(BlockWithTagsInfo)[]` Список блоков
-   */
-  blocksGetAll = (params: RequestParams = {}) =>
-    this.request<BlockWithTagsInfo[], any>({
-      path: `/api/blocks`,
+    this.request<LogInfo[], any>({
+      path: `/api/v1/inventory/audit`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
   /**
    * No description
    *
-   * @tags Blocks
-   * @name BlocksCreateEmpty
-   * @summary Post: Создание нового отдельного блока с информацией по умолчанию
-   * @request POST:/api/blocks/empty
-   * @response `200` `BlockWithTagsInfo` Идентификатор блока
+   * @tags InventoryBlocks
+   * @name InventoryBlocksCreate
+   * @summary Создание нового блока на основании переданной информации
+   * @request POST:/api/v1/inventory/blocks
+   * @response `200` `number` Идентификатор блока
    */
-  blocksCreateEmpty = (
+  inventoryBlocksCreate = (
+    data: BlockCreateRequest,
     query?: {
       /**
        * Идентификатор родительского блока
@@ -252,25 +300,27 @@ export class Api<
     },
     params: RequestParams = {},
   ) =>
-    this.request<BlockWithTagsInfo, any>({
-      path: `/api/blocks/empty`,
+    this.request<number, any>({
+      path: `/api/v1/inventory/blocks`,
       method: "POST",
       query: query,
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });
   /**
    * No description
    *
-   * @tags Blocks
-   * @name BlocksGet
-   * @summary Get: Получение информации о выбранном блоке
-   * @request GET:/api/blocks/{id}
-   * @response `200` `BlockFullInfo` Информация о блоке
+   * @tags InventoryBlocks
+   * @name InventoryBlocksGetAll
+   * @summary Получение списка блоков с базовой информацией о них
+   * @request GET:/api/v1/inventory/blocks
+   * @response `200` `(BlockWithTagsInfo)[]` Список блоков
    */
-  blocksGet = (id: number, params: RequestParams = {}) =>
-    this.request<BlockFullInfo, any>({
-      path: `/api/blocks/${id}`,
+  inventoryBlocksGetAll = (params: RequestParams = {}) =>
+    this.request<BlockWithTagsInfo[], any>({
+      path: `/api/v1/inventory/blocks`,
       method: "GET",
       format: "json",
       ...params,
@@ -278,19 +328,35 @@ export class Api<
   /**
    * No description
    *
-   * @tags Blocks
-   * @name BlocksUpdate
-   * @summary Put: Изменение блока
-   * @request PUT:/api/blocks/{id}
+   * @tags InventoryBlocks
+   * @name InventoryBlocksGet
+   * @summary Получение информации о выбранном блоке
+   * @request GET:/api/v1/inventory/blocks/{blockId}
+   * @response `200` `BlockFullInfo` Информация о блоке
+   */
+  inventoryBlocksGet = (blockId: number, params: RequestParams = {}) =>
+    this.request<BlockFullInfo, any>({
+      path: `/api/v1/inventory/blocks/${blockId}`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventoryBlocks
+   * @name InventoryBlocksUpdate
+   * @summary Изменение блока
+   * @request PUT:/api/v1/inventory/blocks/{blockId}
    * @response `200` `File`
    */
-  blocksUpdate = (
-    id: number,
+  inventoryBlocksUpdate = (
+    blockId: number,
     data: BlockUpdateRequest,
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/blocks/${id}`,
+      path: `/api/v1/inventory/blocks/${blockId}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
@@ -299,30 +365,30 @@ export class Api<
   /**
    * No description
    *
-   * @tags Blocks
-   * @name BlocksDelete
-   * @summary Delete: Удаление блока
-   * @request DELETE:/api/blocks/{id}
+   * @tags InventoryBlocks
+   * @name InventoryBlocksDelete
+   * @summary Удаление блока
+   * @request DELETE:/api/v1/inventory/blocks/{blockId}
    * @response `200` `File`
    */
-  blocksDelete = (id: number, params: RequestParams = {}) =>
+  inventoryBlocksDelete = (blockId: number, params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/blocks/${id}`,
+      path: `/api/v1/inventory/blocks/${blockId}`,
       method: "DELETE",
       ...params,
     });
   /**
    * No description
    *
-   * @tags Blocks
-   * @name BlocksGetTree
-   * @summary Get: Получение иерархической структуры всех блоков
-   * @request GET:/api/blocks/tree
+   * @tags InventoryBlocks
+   * @name InventoryBlocksGetTree
+   * @summary Получение иерархической структуры всех блоков
+   * @request GET:/api/v1/inventory/blocks/tree
    * @response `200` `(BlockTreeInfo)[]` Список обособленных блоков с вложенными блоками
    */
-  blocksGetTree = (params: RequestParams = {}) =>
+  inventoryBlocksGetTree = (params: RequestParams = {}) =>
     this.request<BlockTreeInfo[], any>({
-      path: `/api/blocks/tree`,
+      path: `/api/v1/inventory/blocks/tree`,
       method: "GET",
       format: "json",
       ...params,
@@ -330,17 +396,17 @@ export class Api<
   /**
    * No description
    *
-   * @tags Blocks
-   * @name BlocksMove
-   * @summary Post: Перемещение блока
-   * @request POST:/api/blocks/{id}/move
+   * @tags InventoryBlocks
+   * @name InventoryBlocksMove
+   * @summary Перемещение блока
+   * @request PUT:/api/v1/inventory/blocks/{blockId}/move
    * @response `200` `File`
    */
-  blocksMove = (
-    id: number,
+  inventoryBlocksMove = (
+    blockId: number,
     query?: {
       /**
-       * Идентификатор нового родительского блока
+       * Идентификатор родительского блока
        * @format int32
        */
       parentId?: number | null;
@@ -348,23 +414,54 @@ export class Api<
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/blocks/${id}/move`,
-      method: "POST",
+      path: `/api/v1/inventory/blocks/${blockId}/move`,
+      method: "PUT",
       query: query,
       ...params,
     });
   /**
    * No description
    *
-   * @tags Sources
-   * @name SourcesCreateEmpty
-   * @summary Post: Создание источника с информацией по умолчанию
-   * @request POST:/api/sources/empty
-   * @response `200` `SourceInfo` Идентификатор источника
+   * @tags InventoryEnergoId
+   * @name InventoryEnergoIdGetEnergoId
+   * @summary Получение списка пользователей, определенных на сервере EnergoId
+   * @request GET:/api/v1/inventory/energo-id
+   * @response `200` `(UserEnergoIdInfo)[]` Список учетных записей EnergoId с отметкой на каждой, за какой учетной записью приложения закреплена
    */
-  sourcesCreateEmpty = (params: RequestParams = {}) =>
-    this.request<SourceInfo, any>({
-      path: `/api/sources/empty`,
+  inventoryEnergoIdGetEnergoId = (params: RequestParams = {}) =>
+    this.request<UserEnergoIdInfo[], any>({
+      path: `/api/v1/inventory/energo-id`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventoryEnergoId
+   * @name InventoryEnergoIdUpdateEnergoId
+   * @summary Обновление данных из EnergoId
+   * @request PUT:/api/v1/inventory/energo-id
+   * @response `200` `File`
+   */
+  inventoryEnergoIdUpdateEnergoId = (params: RequestParams = {}) =>
+    this.request<File, any>({
+      path: `/api/v1/inventory/energo-id`,
+      method: "PUT",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventorySources
+   * @name InventorySourcesCreate
+   * @summary Создание источника
+   * @request POST:/api/v1/inventory/sources
+   * @response `200` `number` Идентификатор источника
+   */
+  inventorySourcesCreate = (params: RequestParams = {}) =>
+    this.request<number, any>({
+      path: `/api/v1/inventory/sources`,
       method: "POST",
       format: "json",
       ...params,
@@ -372,31 +469,13 @@ export class Api<
   /**
    * No description
    *
-   * @tags Sources
-   * @name SourcesCreate
-   * @summary Post: Создание источника на основе переданных данных
-   * @request POST:/api/sources
-   * @response `200` `SourceInfo` Идентификатор источника
-   */
-  sourcesCreate = (data: SourceInfo, params: RequestParams = {}) =>
-    this.request<SourceInfo, any>({
-      path: `/api/sources`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Sources
-   * @name SourcesGetAll
-   * @summary Get: Получение списка источников
-   * @request GET:/api/sources
+   * @tags InventorySources
+   * @name InventorySourcesGetAll
+   * @summary Получение списка источников
+   * @request GET:/api/v1/inventory/sources
    * @response `200` `(SourceInfo)[]` Список источников
    */
-  sourcesGetAll = (
+  inventorySourcesGetAll = (
     query?: {
       /**
        * Включить ли в список системные источники
@@ -407,7 +486,7 @@ export class Api<
     params: RequestParams = {},
   ) =>
     this.request<SourceInfo[], any>({
-      path: `/api/sources`,
+      path: `/api/v1/inventory/sources`,
       method: "GET",
       query: query,
       format: "json",
@@ -416,15 +495,15 @@ export class Api<
   /**
    * No description
    *
-   * @tags Sources
-   * @name SourcesGet
-   * @summary Get: Получение данных о источнике
-   * @request GET:/api/sources/{id}
+   * @tags InventorySources
+   * @name InventorySourcesGet
+   * @summary Получение данных о источнике
+   * @request GET:/api/v1/inventory/sources/{sourceId}
    * @response `200` `SourceInfo` Данные о источнике
    */
-  sourcesGet = (id: number, params: RequestParams = {}) =>
+  inventorySourcesGet = (sourceId: number, params: RequestParams = {}) =>
     this.request<SourceInfo, any>({
-      path: `/api/sources/${id}`,
+      path: `/api/v1/inventory/sources/${sourceId}`,
       method: "GET",
       format: "json",
       ...params,
@@ -432,19 +511,19 @@ export class Api<
   /**
    * No description
    *
-   * @tags Sources
-   * @name SourcesUpdate
-   * @summary Put: Изменение источника
-   * @request PUT:/api/sources/{id}
+   * @tags InventorySources
+   * @name InventorySourcesUpdate
+   * @summary Изменение источника
+   * @request PUT:/api/v1/inventory/sources/{sourceId}
    * @response `200` `File`
    */
-  sourcesUpdate = (
-    id: number,
+  inventorySourcesUpdate = (
+    sourceId: number,
     data: SourceUpdateRequest,
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/sources/${id}`,
+      path: `/api/v1/inventory/sources/${sourceId}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
@@ -453,252 +532,30 @@ export class Api<
   /**
    * No description
    *
-   * @tags Sources
-   * @name SourcesDelete
-   * @summary Delete: Удаление источника
-   * @request DELETE:/api/sources/{id}
+   * @tags InventorySources
+   * @name InventorySourcesDelete
+   * @summary Удаление источника
+   * @request DELETE:/api/v1/inventory/sources/{sourceId}
    * @response `200` `File`
    */
-  sourcesDelete = (id: number, params: RequestParams = {}) =>
+  inventorySourcesDelete = (sourceId: number, params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/sources/${id}`,
+      path: `/api/v1/inventory/sources/${sourceId}`,
       method: "DELETE",
       ...params,
     });
   /**
    * No description
    *
-   * @tags Sources
-   * @name SourcesGetItems
-   * @summary Get: Получение доступных значений источника
-   * @request GET:/api/sources/{id}/items
-   * @response `200` `(SourceItemInfo)[]` Список данных источника
-   */
-  sourcesGetItems = (id: number, params: RequestParams = {}) =>
-    this.request<SourceItemInfo[], any>({
-      path: `/api/sources/${id}/items`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Sources
-   * @name SourcesGetItemsWithTags
-   * @summary Get: Получение доступных значений и связанных тегов источника
-   * @request GET:/api/sources/{id}/items-and-tags
-   * @response `200` `(SourceEntryInfo)[]` Список данных источника
-   */
-  sourcesGetItemsWithTags = (id: number, params: RequestParams = {}) =>
-    this.request<SourceEntryInfo[], any>({
-      path: `/api/sources/${id}/items-and-tags`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags States
-   * @name StatesGetUsers
-   * @summary Get: Информация о визитах пользователей
-   * @request GET:/api/states/users
-   * @response `200` `Record<string,string>` Даты визитов, сопоставленные с идентификаторами пользователей
-   */
-  statesGetUsers = (params: RequestParams = {}) =>
-    this.request<Record<string, string>, any>({
-      path: `/api/states/users`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags States
-   * @name StatesGetSources
-   * @summary Get: Информация о подключении к источникам данных
-   * @request GET:/api/states/sources
-   * @response `200` `Record<string,SourceStateInfo>`
-   */
-  statesGetSources = (params: RequestParams = {}) =>
-    this.request<Record<string, SourceStateInfo>, any>({
-      path: `/api/states/sources`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags States
-   * @name StatesGetTags
-   * @summary Get: Информация о подключении к источникам данных
-   * @request GET:/api/states/tags
-   * @response `200` `Record<string,Record<string,string>>`
-   */
-  statesGetTags = (params: RequestParams = {}) =>
-    this.request<Record<string, Record<string, string>>, any>({
-      path: `/api/states/tags`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags States
-   * @name StatesGetTag
-   * @summary Get: Информация о подключении к источникам данных
-   * @request GET:/api/states/tags/{id}
-   * @response `200` `Record<string,string>`
-   */
-  statesGetTag = (id: number, params: RequestParams = {}) =>
-    this.request<Record<string, string>, any>({
-      path: `/api/states/tags/${id}`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags States
-   * @name StatesGetValues
-   * @summary Get: Получение метрик запросов на чтение
-   * @request GET:/api/states/values
-   * @response `200` `(KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo)[]`
-   */
-  statesGetValues = (params: RequestParams = {}) =>
-    this.request<
-      KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo[],
-      any
-    >({
-      path: `/api/states/values`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags States
-   * @name StatesGetTagsReceive
-   * @summary Post: Получение ошибок получения значений тегов
-   * @request POST:/api/states/calculation
-   * @response `200` `Record<string,TagReceiveState>`
-   */
-  statesGetTagsReceive = (
-    data: StatesGetTagsReceivePayload,
-    params: RequestParams = {},
-  ) =>
-    this.request<Record<string, TagReceiveState>, any>({
-      path: `/api/states/calculation`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemGetLastUpdate
-   * @summary Get: Получение даты последнего изменения структуры базы данных
-   * @request GET:/api/system/last
-   * @response `200` `string` Дата в строковом виде
-   */
-  systemGetLastUpdate = (params: RequestParams = {}) =>
-    this.request<string, any>({
-      path: `/api/system/last`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemGetLogs
-   * @summary Get: Получение списка сообщений
-   * @request GET:/api/system/logs
-   * @response `200` `(LogInfo)[]` Список сообщений
-   */
-  systemGetLogs = (
-    query?: {
-      /**
-       * Идентификатор сообщения, с которого начать отсчёт количества в сторону более поздних
-       * @format int32
-       */
-      lastId?: number | null;
-      /**
-       * Идентификатор сообщения, с которого начать отсчёт количества в сторону более ранних
-       * @format int32
-       */
-      firstId?: number | null;
-      /**
-       * Сколько сообщений получить за этот запрос
-       * @format int32
-       */
-      take?: number | null;
-      /**
-       * Идентификатор затронутого источника
-       * @format int32
-       */
-      source?: number | null;
-      /**
-       * Идентификатор затронутого блока
-       * @format int32
-       */
-      block?: number | null;
-      /**
-       * Идентификатор затронутого тега
-       * @format guid
-       */
-      tag?: string | null;
-      /**
-       * Идентификатор затронутого пользователя
-       * @format guid
-       */
-      user?: string | null;
-      /**
-       * Идентификатор затронутой группы пользователей
-       * @format guid
-       */
-      group?: string | null;
-      /** Выбранные категории сообщений */
-      "categories[]"?: LogCategory[] | null;
-      /** Выбранные типы сообщений */
-      "types[]"?: LogType[] | null;
-      /**
-       * Идентификатор пользователя, создавшего сообщение
-       * @format guid
-       */
-      author?: string | null;
-    },
-    params: RequestParams = {},
-  ) =>
-    this.request<LogInfo[], any>({
-      path: `/api/system/logs`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemGetSettings
-   * @summary Get: Получение информации о настройках сервера
-   * @request GET:/api/system/settings
+   * @tags InventorySystem
+   * @name InventorySystemGetSettings
+   * @summary Получение информации о настройках сервера
+   * @request GET:/api/v1/inventory/system/settings
    * @response `200` `SettingsInfo` Информация о настройках
    */
-  systemGetSettings = (params: RequestParams = {}) =>
+  inventorySystemGetSettings = (params: RequestParams = {}) =>
     this.request<SettingsInfo, any>({
-      path: `/api/system/settings`,
+      path: `/api/v1/inventory/system/settings`,
       method: "GET",
       format: "json",
       ...params,
@@ -706,15 +563,18 @@ export class Api<
   /**
    * No description
    *
-   * @tags System
-   * @name SystemUpdateSettings
-   * @summary Put: Изменение информации о настройках сервера
-   * @request PUT:/api/system/settings
+   * @tags InventorySystem
+   * @name InventorySystemUpdateSettings
+   * @summary Изменение информации о настройках сервера
+   * @request PUT:/api/v1/inventory/system/settings
    * @response `200` `File`
    */
-  systemUpdateSettings = (data: SettingsInfo, params: RequestParams = {}) =>
+  inventorySystemUpdateSettings = (
+    data: SettingsInfo,
+    params: RequestParams = {},
+  ) =>
     this.request<File, any>({
-      path: `/api/system/settings`,
+      path: `/api/v1/inventory/system/settings`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
@@ -723,61 +583,30 @@ export class Api<
   /**
    * No description
    *
-   * @tags System
-   * @name SystemRestartState
-   * @summary Put: Перестроение кэша
-   * @request PUT:/api/system/restart/state
+   * @tags InventorySystem
+   * @name InventorySystemRestartState
+   * @summary Принудительная перезагрузка состояния БД в кэш
+   * @request POST:/api/v1/inventory/system/cache
    * @response `200` `File`
    */
-  systemRestartState = (params: RequestParams = {}) =>
+  inventorySystemRestartState = (params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/system/restart/state`,
-      method: "PUT",
+      path: `/api/v1/inventory/system/cache`,
+      method: "POST",
       ...params,
     });
   /**
    * No description
    *
-   * @tags System
-   * @name SystemRestartValues
-   * @summary Put: Перестроение кэша текущих (последних) значений
-   * @request PUT:/api/system/restart/values
-   * @response `200` `File`
-   */
-  systemRestartValues = (params: RequestParams = {}) =>
-    this.request<File, any>({
-      path: `/api/system/restart/values`,
-      method: "PUT",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags System
-   * @name SystemGetAccess
-   * @summary Get: Получение списка вычисленных прав доступа для каждого пользователя
-   * @request GET:/api/system/access
-   * @response `200` `Record<string,UserAuthInfo>`
-   */
-  systemGetAccess = (params: RequestParams = {}) =>
-    this.request<Record<string, UserAuthInfo>, any>({
-      path: `/api/system/access`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Tags
-   * @name TagsCreate
-   * @summary Post: Создание нового тега
-   * @request POST:/api/tags
+   * @tags InventoryTags
+   * @name InventoryTagsCreate
+   * @summary Создание нового тега
+   * @request POST:/api/v1/inventory/tags
    * @response `200` `TagInfo` Идентификатор нового тега в локальной базе данных
    */
-  tagsCreate = (data: TagCreateRequest, params: RequestParams = {}) =>
+  inventoryTagsCreate = (data: TagCreateRequest, params: RequestParams = {}) =>
     this.request<TagInfo, any>({
-      path: `/api/tags`,
+      path: `/api/v1/inventory/tags`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -787,13 +616,13 @@ export class Api<
   /**
    * No description
    *
-   * @tags Tags
-   * @name TagsGetAll
-   * @summary Get: Получение списка тегов, включая информацию о источниках и настройках получения данных
-   * @request GET:/api/tags
+   * @tags InventoryTags
+   * @name InventoryTagsGetAll
+   * @summary Получение списка тегов, включая информацию о источниках и настройках получения данных
+   * @request GET:/api/v1/inventory/tags
    * @response `200` `(TagInfo)[]` Плоский список объектов информации о тегах
    */
-  tagsGetAll = (
+  inventoryTagsGetAll = (
     query?: {
       /**
        * Идентификатор источника. Если указан, будут выбраны теги только этого источника
@@ -801,16 +630,14 @@ export class Api<
        */
       sourceId?: number | null;
       /** Список локальных идентификаторов тегов */
-      id?: number[] | null;
-      /** Список текущих наименований тегов */
-      names?: string[] | null;
+      tagsId?: number[] | null;
       /** Список глобальных идентификаторов тегов */
-      guids?: string[] | null;
+      tagsGuid?: string[] | null;
     },
     params: RequestParams = {},
   ) =>
     this.request<TagInfo[], any>({
-      path: `/api/tags`,
+      path: `/api/v1/inventory/tags`,
       method: "GET",
       query: query,
       format: "json",
@@ -819,15 +646,15 @@ export class Api<
   /**
    * No description
    *
-   * @tags Tags
-   * @name TagsGet
-   * @summary Get: Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
-   * @request GET:/api/tags/{id}
+   * @tags InventoryTags
+   * @name InventoryTagsGet
+   * @summary Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
+   * @request GET:/api/v1/inventory/tags/{tagId}
    * @response `200` `TagFullInfo` Объект информации о теге
    */
-  tagsGet = (id: number, params: RequestParams = {}) =>
+  inventoryTagsGet = (tagId: number, params: RequestParams = {}) =>
     this.request<TagFullInfo, any>({
-      path: `/api/tags/${id}`,
+      path: `/api/v1/inventory/tags/${tagId}`,
       method: "GET",
       format: "json",
       ...params,
@@ -835,19 +662,19 @@ export class Api<
   /**
    * No description
    *
-   * @tags Tags
-   * @name TagsUpdate
-   * @summary Put: Изменение тега
-   * @request PUT:/api/tags/{id}
+   * @tags InventoryTags
+   * @name InventoryTagsUpdate
+   * @summary Изменение тега
+   * @request PUT:/api/v1/inventory/tags/{tagId}
    * @response `200` `File`
    */
-  tagsUpdate = (
-    id: number,
+  inventoryTagsUpdate = (
+    tagId: number,
     data: TagUpdateRequest,
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/tags/${id}`,
+      path: `/api/v1/inventory/tags/${tagId}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
@@ -856,33 +683,33 @@ export class Api<
   /**
    * No description
    *
-   * @tags Tags
-   * @name TagsDelete
-   * @summary Delete: Удаление тега
-   * @request DELETE:/api/tags/{id}
+   * @tags InventoryTags
+   * @name InventoryTagsDelete
+   * @summary Удаление тега
+   * @request DELETE:/api/v1/inventory/tags/{tagId}
    * @response `200` `File`
    */
-  tagsDelete = (id: number, params: RequestParams = {}) =>
+  inventoryTagsDelete = (tagId: number, params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/tags/${id}`,
+      path: `/api/v1/inventory/tags/${tagId}`,
       method: "DELETE",
       ...params,
     });
   /**
    * No description
    *
-   * @tags UserGroups
-   * @name UserGroupsCreate
-   * @summary Post: Создание новой группы пользователей
-   * @request POST:/api/user-groups
-   * @response `200` `UserGroupInfo` Идентификатор новой группы пользователей
+   * @tags InventoryUserGroups
+   * @name InventoryUserGroupsCreate
+   * @summary Создание новой группы пользователей
+   * @request POST:/api/v1/inventory/user-groups
+   * @response `200` `string` Идентификатор новой группы пользователей
    */
-  userGroupsCreate = (
+  inventoryUserGroupsCreate = (
     data: UserGroupCreateRequest,
     params: RequestParams = {},
   ) =>
-    this.request<UserGroupInfo, any>({
-      path: `/api/user-groups`,
+    this.request<string, any>({
+      path: `/api/v1/inventory/user-groups`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -892,15 +719,15 @@ export class Api<
   /**
    * No description
    *
-   * @tags UserGroups
-   * @name UserGroupsGetAll
-   * @summary Get: Получение плоского списка групп пользователей
-   * @request GET:/api/user-groups
+   * @tags InventoryUserGroups
+   * @name InventoryUserGroupsGetAll
+   * @summary Получение плоского списка групп пользователей
+   * @request GET:/api/v1/inventory/user-groups
    * @response `200` `(UserGroupInfo)[]` Список групп
    */
-  userGroupsGetAll = (params: RequestParams = {}) =>
+  inventoryUserGroupsGetAll = (params: RequestParams = {}) =>
     this.request<UserGroupInfo[], any>({
-      path: `/api/user-groups`,
+      path: `/api/v1/inventory/user-groups`,
       method: "GET",
       format: "json",
       ...params,
@@ -908,15 +735,34 @@ export class Api<
   /**
    * No description
    *
-   * @tags UserGroups
-   * @name UserGroupsGet
-   * @summary Get: Получение информации о выбранной группе пользователей
-   * @request GET:/api/user-groups/{groupGuid}
+   * @tags InventoryUserGroups
+   * @name InventoryUserGroupsGetTree
+   * @summary Получение иерархической структуры всех групп пользователей
+   * @request GET:/api/v1/inventory/user-groups/tree
+   * @response `200` `(UserGroupTreeInfo)[]` Список обособленных групп с вложенными подгруппами
+   */
+  inventoryUserGroupsGetTree = (params: RequestParams = {}) =>
+    this.request<UserGroupTreeInfo[], any>({
+      path: `/api/v1/inventory/user-groups/tree`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventoryUserGroups
+   * @name InventoryUserGroupsGet
+   * @summary Получение информации о выбранной группе пользователей
+   * @request GET:/api/v1/inventory/user-groups/{userGroupGuid}
    * @response `200` `UserGroupInfo` Информация о группе
    */
-  userGroupsGet = (groupGuid: string, params: RequestParams = {}) =>
+  inventoryUserGroupsGet = (
+    userGroupGuid: string,
+    params: RequestParams = {},
+  ) =>
     this.request<UserGroupInfo, any>({
-      path: `/api/user-groups/${groupGuid}`,
+      path: `/api/v1/inventory/user-groups/${userGroupGuid}`,
       method: "GET",
       format: "json",
       ...params,
@@ -924,19 +770,19 @@ export class Api<
   /**
    * No description
    *
-   * @tags UserGroups
-   * @name UserGroupsUpdate
-   * @summary Put: Изменение группы пользователей
-   * @request PUT:/api/user-groups/{groupGuid}
+   * @tags InventoryUserGroups
+   * @name InventoryUserGroupsUpdate
+   * @summary Изменение группы пользователей
+   * @request PUT:/api/v1/inventory/user-groups/{userGroupGuid}
    * @response `200` `File`
    */
-  userGroupsUpdate = (
-    groupGuid: string,
+  inventoryUserGroupsUpdate = (
+    userGroupGuid: string,
     data: UserGroupUpdateRequest,
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/user-groups/${groupGuid}`,
+      path: `/api/v1/inventory/user-groups/${userGroupGuid}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
@@ -945,46 +791,36 @@ export class Api<
   /**
    * No description
    *
-   * @tags UserGroups
-   * @name UserGroupsDelete
-   * @summary Delete: Удаление группы пользователей
-   * @request DELETE:/api/user-groups/{groupGuid}
+   * @tags InventoryUserGroups
+   * @name InventoryUserGroupsDelete
+   * @summary Удаление группы пользователей
+   * @request DELETE:/api/v1/inventory/user-groups/{userGroupGuid}
    * @response `200` `File`
    */
-  userGroupsDelete = (groupGuid: string, params: RequestParams = {}) =>
+  inventoryUserGroupsDelete = (
+    userGroupGuid: string,
+    params: RequestParams = {},
+  ) =>
     this.request<File, any>({
-      path: `/api/user-groups/${groupGuid}`,
+      path: `/api/v1/inventory/user-groups/${userGroupGuid}`,
       method: "DELETE",
       ...params,
     });
   /**
    * No description
    *
-   * @tags UserGroups
-   * @name UserGroupsGetTree
-   * @summary Get: Получение иерархической структуры всех групп пользователей
-   * @request GET:/api/user-groups/tree
-   * @response `200` `(UserGroupTreeInfo)[]` Список обособленных групп с вложенными подгруппами
-   */
-  userGroupsGetTree = (params: RequestParams = {}) =>
-    this.request<UserGroupTreeInfo[], any>({
-      path: `/api/user-groups/tree`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags UserGroups
-   * @name UserGroupsGetWithDetails
-   * @summary Get: Получение детализированной информации о группе пользователей
-   * @request GET:/api/user-groups/{groupGuid}/detailed
+   * @tags InventoryUserGroups
+   * @name InventoryUserGroupsGetWithDetails
+   * @summary Получение детализированной информации о группе пользователей
+   * @request GET:/api/v1/inventory/user-groups/{userGroupGuid}/details
    * @response `200` `UserGroupDetailedInfo` Информация о группе с подгруппами и списком пользователей
    */
-  userGroupsGetWithDetails = (groupGuid: string, params: RequestParams = {}) =>
+  inventoryUserGroupsGetWithDetails = (
+    userGroupGuid: string,
+    params: RequestParams = {},
+  ) =>
     this.request<UserGroupDetailedInfo, any>({
-      path: `/api/user-groups/${groupGuid}/detailed`,
+      path: `/api/v1/inventory/user-groups/${userGroupGuid}/details`,
       method: "GET",
       format: "json",
       ...params,
@@ -992,13 +828,13 @@ export class Api<
   /**
    * No description
    *
-   * @tags UserGroups
-   * @name UserGroupsMove
-   * @summary Post: Перемещение группы пользователей
-   * @request POST:/api/user-groups/{groupGuid}/move
+   * @tags InventoryUserGroups
+   * @name InventoryUserGroupsMove
+   * @summary Перемещение группы пользователей
+   * @request PUT:/api/v1/inventory/user-groups/{groupGuid}/move
    * @response `200` `File`
    */
-  userGroupsMove = (
+  inventoryUserGroupsMove = (
     groupGuid: string,
     query?: {
       /**
@@ -1010,23 +846,26 @@ export class Api<
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/user-groups/${groupGuid}/move`,
-      method: "POST",
+      path: `/api/v1/inventory/user-groups/${groupGuid}/move`,
+      method: "PUT",
       query: query,
       ...params,
     });
   /**
    * No description
    *
-   * @tags Users
-   * @name UsersCreate
-   * @summary Post: Создание пользователя на основании переданных данных
-   * @request POST:/api/users
-   * @response `200` `UserInfo` Идентификатор пользователя
+   * @tags InventoryUsers
+   * @name InventoryUsersCreate
+   * @summary Создание пользователя на основании переданных данных
+   * @request POST:/api/v1/inventory/users
+   * @response `200` `string` Идентификатор пользователя
    */
-  usersCreate = (data: UserCreateRequest, params: RequestParams = {}) =>
-    this.request<UserInfo, any>({
-      path: `/api/users`,
+  inventoryUsersCreate = (
+    data: UserCreateRequest,
+    params: RequestParams = {},
+  ) =>
+    this.request<string, any>({
+      path: `/api/v1/inventory/users`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -1036,31 +875,44 @@ export class Api<
   /**
    * No description
    *
-   * @tags Users
-   * @name UsersGetAll
-   * @summary Get: Получение списка пользователей
-   * @request GET:/api/users
+   * @tags InventoryUsers
+   * @name InventoryUsersGet
+   * @summary Получение списка пользователей
+   * @request GET:/api/v1/inventory/users
    * @response `200` `(UserInfo)[]` Список пользователей
    */
-  usersGetAll = (params: RequestParams = {}) =>
+  inventoryUsersGet = (
+    query?: {
+      /**
+       * Идентификатор запрошенного пользователя
+       * @format guid
+       */
+      userGuid?: string | null;
+    },
+    params: RequestParams = {},
+  ) =>
     this.request<UserInfo[], any>({
-      path: `/api/users`,
+      path: `/api/v1/inventory/users`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
   /**
    * No description
    *
-   * @tags Users
-   * @name UsersGet
-   * @summary Get: Получение данных о пользователе
-   * @request GET:/api/users/{userGuid}
-   * @response `200` `UserInfo` Данные пользователя
+   * @tags InventoryUsers
+   * @name InventoryUsersGetWithDetails
+   * @summary Получение детализированной информации о пользователе
+   * @request GET:/api/v1/inventory/users/{userGuid}
+   * @response `200` `UserInfo` Данные о пользователе
    */
-  usersGet = (userGuid: string, params: RequestParams = {}) =>
+  inventoryUsersGetWithDetails = (
+    userGuid: string,
+    params: RequestParams = {},
+  ) =>
     this.request<UserInfo, any>({
-      path: `/api/users/${userGuid}`,
+      path: `/api/v1/inventory/users/${userGuid}`,
       method: "GET",
       format: "json",
       ...params,
@@ -1068,19 +920,19 @@ export class Api<
   /**
    * No description
    *
-   * @tags Users
-   * @name UsersUpdate
-   * @summary Put: Изменение пользователя
-   * @request PUT:/api/users/{userGuid}
+   * @tags InventoryUsers
+   * @name InventoryUsersUpdate
+   * @summary Изменение пользователя
+   * @request PUT:/api/v1/inventory/users/{userGuid}
    * @response `200` `File`
    */
-  usersUpdate = (
+  inventoryUsersUpdate = (
     userGuid: string,
     data: UserUpdateRequest,
     params: RequestParams = {},
   ) =>
     this.request<File, any>({
-      path: `/api/users/${userGuid}`,
+      path: `/api/v1/inventory/users/${userGuid}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
@@ -1089,15 +941,215 @@ export class Api<
   /**
    * No description
    *
-   * @tags Users
-   * @name UsersDelete
-   * @summary Delete: Удаление пользователя
-   * @request DELETE:/api/users/{userGuid}
+   * @tags InventoryUsers
+   * @name InventoryUsersDelete
+   * @summary Удаление пользователя
+   * @request DELETE:/api/v1/inventory/users/{userGuid}
    * @response `200` `File`
    */
-  usersDelete = (userGuid: string, params: RequestParams = {}) =>
+  inventoryUsersDelete = (userGuid: string, params: RequestParams = {}) =>
     this.request<File, any>({
-      path: `/api/users/${userGuid}`,
+      path: `/api/v1/inventory/users/${userGuid}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags DataSources
+   * @name DataSourcesGetActivity
+   * @summary Получение данных о статистике сбора данных по источнику
+   * @request POST:/api/v1/data/sources/activity
+   * @response `200` `(SourceActivityInfo)[]`
+   */
+  dataSourcesGetActivity = (
+    data: DataSourcesGetActivityPayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<SourceActivityInfo[], any>({
+      path: `/api/v1/data/sources/activity`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags DataSources
+   * @name DataSourcesGetItems
+   * @summary Получение удаленных значений с источника
+   * @request GET:/api/v1/data/sources/{sourceId}/items
+   * @response `200` `(SourceItemInfo)[]`
+   */
+  dataSourcesGetItems = (sourceId: number, params: RequestParams = {}) =>
+    this.request<SourceItemInfo[], any>({
+      path: `/api/v1/data/sources/${sourceId}/items`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags DataSystem
+   * @name DataSystemRestartCollection
+   * @summary Перезапуск системы сбора данных
+   * @request POST:/api/v1/data/system
+   * @response `200` `File`
+   */
+  dataSystemRestartCollection = (params: RequestParams = {}) =>
+    this.request<File, any>({
+      path: `/api/v1/data/system`,
+      method: "POST",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags DataTags
+   * @name DataTagsGetStatus
+   * @summary Запись данных о состоянии последнего получения/вычисления значений тегов
+   * @request POST:/api/v1/data/tags/status
+   * @response `200` `Record<string,string>` Объект состояния последнего получениея/вычисления, сопоставленный с идентификаторами
+   */
+  dataTagsGetStatus = (data: TagMetricRequest, params: RequestParams = {}) =>
+    this.request<Record<string, string>, any>({
+      path: `/api/v1/data/tags/status`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags DataTags
+   * @name DataTagsGetUsage
+   * @summary Получение данных о использовании тегов
+   * @request POST:/api/v1/data/tags/usage
+   * @response `200` `Record<string,Record<string,string>>` Объект статистики использования, сопоставленный с идентификаторами
+   */
+  dataTagsGetUsage = (data: TagMetricRequest, params: RequestParams = {}) =>
+    this.request<Record<string, Record<string, string>>, any>({
+      path: `/api/v1/data/tags/usage`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags DataValues
+   * @name DataValuesGet
+   * @summary Получение значений на основании списка запросов
+   * @request POST:/api/v1/data/values
+   * @response `200` `(ValuesResponse)[]` Список ответов на запросы
+   */
+  dataValuesGet = (data: DataValuesGetPayload, params: RequestParams = {}) =>
+    this.request<ValuesResponse[], any>({
+      path: `/api/v1/data/values`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags DataValues
+   * @name DataValuesWrite
+   * @summary Запись значений на основании списка запросов
+   * @request PUT:/api/v1/data/values
+   * @response `200` `(ValuesTagResponse)[]` Список измененных значений
+   */
+  dataValuesWrite = (
+    data: DataValuesWritePayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<ValuesTagResponse[], any>({
+      path: `/api/v1/data/values`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthAuthenticateLocal
+   * @summary Аутентификация локального пользователя по связке "имя для входа/пароль"
+   * @request POST:/api/v1/gateway/sessions/local
+   * @response `200` `UserSessionWithAccessInfo` Данные о учетной записи
+   */
+  authAuthenticateLocal = (
+    data: AuthLoginPassRequest,
+    params: RequestParams = {},
+  ) =>
+    this.request<UserSessionWithAccessInfo, any>({
+      path: `/api/v1/gateway/sessions/local`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthAuthenticateEnergoIdUser
+   * @summary Аутентификация пользователя, прошедшего проверку на сервере EnergoId
+   * @request POST:/api/v1/gateway/sessions/energo-id
+   * @response `200` `UserSessionWithAccessInfo` Данные о учетной записи
+   */
+  authAuthenticateEnergoIdUser = (
+    data: AuthEnergoIdRequest,
+    params: RequestParams = {},
+  ) =>
+    this.request<UserSessionWithAccessInfo, any>({
+      path: `/api/v1/gateway/sessions/energo-id`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthIdentify
+   * @summary Получение информации о учетной записи на основе текущей сессии
+   * @request GET:/api/v1/gateway/sessions/identify
+   * @response `200` `UserSessionWithAccessInfo` Данные о учетной записи
+   */
+  authIdentify = (params: RequestParams = {}) =>
+    this.request<UserSessionWithAccessInfo, any>({
+      path: `/api/v1/gateway/sessions/identify`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Auth
+   * @name AuthLogout
+   * @summary Delete: Закрытие уканной сессии пользователя
+   * @request DELETE:/api/v1/gateway/sessions
+   * @response `200` `File`
+   */
+  authLogout = (params: RequestParams = {}) =>
+    this.request<File, any>({
+      path: `/api/v1/gateway/sessions`,
       method: "DELETE",
       ...params,
     });
@@ -1105,80 +1157,18 @@ export class Api<
    * No description
    *
    * @tags Users
-   * @name UsersGetWithDetails
-   * @summary Get: Получение детализированной информации о пользователе
-   * @request GET:/api/users/{userGuid}/detailed
-   * @response `200` `UserDetailInfo` Данные о пользователе
+   * @name UsersGetActivity
+   * @summary Получение времени последней активности пользователей
+   * @request POST:/api/v1/gateway/users/activity
+   * @response `200` `Record<string,string | null>`
    */
-  usersGetWithDetails = (userGuid: string, params: RequestParams = {}) =>
-    this.request<UserDetailInfo, any>({
-      path: `/api/users/${userGuid}/detailed`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Users
-   * @name UsersGetEnergoId
-   * @summary Get: Получение списка пользователей, определенных на сервере EnergoId
-   * @request GET:/api/users/energo-id
-   * @response `200` `(UserEnergoIdInfo)[]` Список пользователей
-   */
-  usersGetEnergoId = (params: RequestParams = {}) =>
-    this.request<UserEnergoIdInfo[], any>({
-      path: `/api/users/energo-id`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Users
-   * @name UsersUpdateEnergoId
-   * @summary Put: Обновление данных из EnergoId
-   * @request PUT:/api/users/energo-id
-   * @response `200` `File`
-   */
-  usersUpdateEnergoId = (params: RequestParams = {}) =>
-    this.request<File, any>({
-      path: `/api/users/energo-id`,
-      method: "PUT",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Values
-   * @name ValuesGet
-   * @summary Post: Получение значений на основании списка запросов
-   * @request POST:/api/values
-   * @response `200` `(ValuesResponse)[]` Список ответов на запросы
-   */
-  valuesGet = (data: ValuesGetPayload, params: RequestParams = {}) =>
-    this.request<ValuesResponse[], any>({
-      path: `/api/values`,
+  usersGetActivity = (
+    data: UsersGetActivityPayload,
+    params: RequestParams = {},
+  ) =>
+    this.request<Record<string, string | null>, any>({
+      path: `/api/v1/gateway/users/activity`,
       method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Values
-   * @name ValuesWrite
-   * @summary Put: Запись значений на основании списка запросов
-   * @request PUT:/api/values
-   * @response `200` `(ValuesTagResponse)[]` Список измененных начений
-   */
-  valuesWrite = (data: ValuesWritePayload, params: RequestParams = {}) =>
-    this.request<ValuesTagResponse[], any>({
-      path: `/api/values`,
-      method: "PUT",
       body: data,
       type: ContentType.Json,
       format: "json",

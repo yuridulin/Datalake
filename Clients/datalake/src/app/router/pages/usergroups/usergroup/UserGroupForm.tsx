@@ -25,7 +25,7 @@ const UserGroupForm = observer(() => {
 	const [users, setUsers] = useState([] as { label: string; value: string }[])
 
 	const getGroup = (guid: string) => {
-		store.api.userGroupsGetWithDetails(guid).then((res) => {
+		store.api.inventoryUserGroupsGetWithDetails(guid).then((res) => {
 			if (res.data.guid) {
 				setGroup(res.data)
 				form.setFieldsValue({
@@ -41,7 +41,7 @@ const UserGroupForm = observer(() => {
 
 	const updateGroup = (newInfo: UserGroupUpdateRequest) => {
 		store.api
-			.userGroupsUpdate(String(id), {
+			.inventoryUserGroupsUpdate(String(id), {
 				...newInfo,
 				users: newInfo.users || group.users || [],
 			})
@@ -51,13 +51,13 @@ const UserGroupForm = observer(() => {
 	}
 
 	const deleteGroup = () => {
-		store.api.userGroupsDelete(String(id)).then(() => navigate(routes.userGroups.toList()))
+		store.api.inventoryUserGroupsDelete(String(id)).then(() => navigate(routes.userGroups.toList()))
 	}
 
 	const getGety = () => setGety(!!group.guid)
 
 	const getUsers = () => {
-		store.api.usersGetAll().then((res) => {
+		store.api.inventoryUsersGet().then((res) => {
 			if (res.data)
 				setUsers(
 					res.data.map((x) => ({
@@ -138,7 +138,7 @@ const UserGroupForm = observer(() => {
 													title='Добавить новое значение'
 													onClick={() =>
 														add({
-															accessType: AccessType.NotSet,
+															accessType: AccessType.None,
 														})
 													}
 												>

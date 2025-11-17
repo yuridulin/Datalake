@@ -1,7 +1,7 @@
 import { logout } from '@/app/router/auth/keycloak/keycloakService'
 import routes from '@/app/router/routes'
 import { Api } from '@/generated/Api'
-import { AccessRuleInfo, AccessType, UserAuthInfo, UserSessionInfo, UserType } from '@/generated/data-contracts'
+import { AccessRuleInfo, AccessType, UserSessionWithAccessInfo, UserType } from '@/generated/data-contracts'
 import { NotificationInstance } from 'antd/es/notification/interface'
 import { AxiosError, AxiosResponse } from 'axios'
 import { makeAutoObservable } from 'mobx'
@@ -46,7 +46,7 @@ const accessHeader = 'd-access-type'
 const identityHeader = 'd-identity'
 const themeKey = 'd-theme'
 
-export class AppStore implements UserAuthInfo {
+export class AppStore {
 	//#region Инициализация
 
 	// объект работы с сервером
@@ -201,13 +201,12 @@ export class AppStore implements UserAuthInfo {
 	// сохраняемые в LS настройки
 	fullName: string = localStorage.getItem(nameHeader) || ''
 	token: string = localStorage.getItem(tokenHeader) || ''
-	globalAccessType: AccessType = Number(localStorage.getItem(accessHeader) || AccessType.NotSet) as AccessType
+	globalAccessType: AccessType = Number(localStorage.getItem(accessHeader) || AccessType.None) as AccessType
 
 	// настройки с бэкенда
 	guid: string = ''
 	type: UserType | null = null
 	rootRule!: AccessRuleInfo
-	underlyingUser?: UserAuthInfo | null | undefined
 	energoId?: string | null | undefined
 	accessRule: AccessRuleInfo = { ruleId: 0, access: this.globalAccessType }
 	groups: Record<string, AccessRuleInfo> = {}
@@ -215,27 +214,27 @@ export class AppStore implements UserAuthInfo {
 	blocks: Record<number, AccessRuleInfo> = {}
 	tags: Record<string, AccessRuleInfo> = {}
 
-	public setAuthData = (session: UserSessionInfo) => {
-		const data = session.authInfo
+	public setAuthData = (session: UserSessionWithAccessInfo) => {
+		const access = session.access
 
 		log('SET store.authToken =', session.token)
-		log('SET store.authLogin =', data.fullName)
-		log('SET store.globalAccessType =', data.rootRule.access)
+		//log('SET store.authLogin =', access.fullName)
+		log('SET store.globalAccessType =', access.rootRule.access)
 
 		this.type = session.type
 		this.token = session.token
-		this.fullName = data.fullName
-		this.globalAccessType = data.rootRule.access
-		this.sources = data.sources
-		this.blocks = data.blocks
-		this.tags = data.tags
-		this.groups = data.groups
-		this.rootRule = data.rootRule
+		//this.fullName = access.fullName
+		this.globalAccessType = access.rootRule.access
+		this.sources = access.sources
+		this.blocks = access.blocks
+		this.tags = access.tags
+		this.groups = access.groups
+		this.rootRule = access.rootRule
 
 		localStorage.setItem(tokenHeader, session.token)
-		localStorage.setItem(nameHeader, data.fullName)
-		localStorage.setItem(accessHeader, String(data.rootRule.access))
-		localStorage.setItem(identityHeader, JSON.stringify(data))
+		//localStorage.setItem(nameHeader, access.fullName)
+		localStorage.setItem(accessHeader, String(access.rootRule.access))
+		localStorage.setItem(identityHeader, JSON.stringify(access))
 
 		this.setAuthenticated(true)
 	}
@@ -255,10 +254,10 @@ export class AppStore implements UserAuthInfo {
 	public clearAuthData = () => {
 		log('SET store.authToken =', '')
 		log('SET store.authLogin =', '')
-		log('SET store.globalAccessType =', AccessType.NotSet)
+		log('SET store.globalAccessType =', AccessType.None)
 		this.token = ''
 		this.fullName = ''
-		this.globalAccessType = AccessType.NotSet
+		this.globalAccessType = AccessType.None
 		localStorage.removeItem(tokenHeader)
 		localStorage.removeItem(nameHeader)
 		localStorage.removeItem(accessHeader)
@@ -295,7 +294,7 @@ export class AppStore implements UserAuthInfo {
 	}
 
 	public logout = () => {
-		this.api.authLogout({ token: this.token }).then(() => {
+		this.api.authLogout().then(() => {
 			if (this.type === UserType.EnergoId) logout()
 			this.clearAuthData()
 		})

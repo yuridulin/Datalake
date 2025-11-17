@@ -2,9 +2,9 @@ import { AccessType } from '../generated/data-contracts'
 
 export default function getAccessTypeName(type: AccessType) {
 	switch (type) {
-		case AccessType.NotSet:
+		case AccessType.None:
 			return 'Базовый'
-		case AccessType.NoAccess:
+		case AccessType.Denied:
 			return 'Нет доступа'
 		case AccessType.Viewer:
 			return 'Просмотр'

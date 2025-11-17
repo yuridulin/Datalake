@@ -1,4 +1,5 @@
-﻿using Datalake.Gateway.Host.Interfaces;
+﻿using Datalake.Gateway.Application.Interfaces;
+using Datalake.Gateway.Host.Interfaces;
 using Datalake.Gateway.Host.Services;
 using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Infrastructure;
@@ -7,8 +8,14 @@ using NJsonSchema.Generation;
 
 namespace Datalake.Gateway.Host;
 
+/// <summary>
+/// Расширение для настройки
+/// </summary>
 public static class Bootstrap
 {
+	/// <summary>
+	/// Настройка хост-приложения
+	/// </summary>
 	public static IHostApplicationBuilder AddHosting(this IHostApplicationBuilder builder)
 	{
 		// MVC
@@ -35,6 +42,7 @@ public static class Bootstrap
 			.AddEndpointsApiExplorer();
 
 		builder.Services.AddScoped<ISessionTokenExtractor, SessionTokenExtractor>();
+		builder.Services.AddSingleton<IInventoryApiClient, InventoryApiClient>();
 
 		builder.Services.Configure<IISServerOptions>(options =>
 		{

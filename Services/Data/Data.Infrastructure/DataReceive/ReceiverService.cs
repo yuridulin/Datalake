@@ -6,6 +6,7 @@ using Datalake.Data.Infrastructure.DataReceive.Inopc.Enums;
 using Datalake.Domain.Enums;
 using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
+using Datalake.Shared.Application.Exceptions;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -22,8 +23,11 @@ public class ReceiverService(ILogger<ReceiverService> logger) : IReceiverService
 
 	private static HttpClient HttpClient { get; } = new() { Timeout = TimeSpan.FromSeconds(1), };
 
-	public async Task<RemoteResponseDto> AskInopc(string[] tags, string address)
+	public async Task<RemoteResponseDto> AskInopcAsync(string[]? tags, string? address, int? port = 81)
 	{
+		if (string.IsNullOrEmpty(address))
+			throw new InfrastructureException("Адрес источника данных не указан");
+
 		RemoteResponseDto response = new()
 		{
 			IsConnected = false,
@@ -36,10 +40,10 @@ public class ReceiverService(ILogger<ReceiverService> logger) : IReceiverService
 		{
 			var request = new InopcRequest
 			{
-				Tags = tags
+				Tags = tags ?? [],
 			};
 
-			var answer = await HttpClient.PostAsJsonAsync("http://" + address + ":81/api/storage/read", request);
+			var answer = await HttpClient.PostAsJsonAsync($"http://{address}:{port}/api/storage/read", request);
 			if (answer.IsSuccessStatusCode)
 			{
 				inopcResponse = await answer.Content.ReadFromJsonAsync<InopcResponse>(JsonOptions);

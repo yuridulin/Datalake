@@ -3,8 +3,8 @@ import TagButton from '@/app/components/buttons/TagButton'
 import PollingLoader from '@/app/components/loaders/PollingLoader'
 import TagReceiveStateEl from '@/app/components/TagReceiveStateEl'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import compareValues from '@/functions/compareValues'
-import { TagInfo, TagQuality, TagReceiveState, ValueRecord } from '@/generated/data-contracts'
+import { compareDateStrings, compareRecords } from '@/functions/compareValues'
+import { TagInfo, TagQuality, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
@@ -27,19 +27,19 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 	const loadValues = useCallback(() => {
 		return Promise.all([
 			store.api
-				.valuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: viewingTags.map((x) => x.id) }])
+				.dataValuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: viewingTags.map((x) => x.id) }])
 				.then((res) => {
 					setValues(Object.fromEntries(res.data[0].tags.map((x) => [x.id, x.values[0]])))
 				})
 				.catch(() => setValues(Object.fromEntries(Object.keys(viewingTags).map((prop) => [prop, null])))),
 			store.api
-				.statesGetTagsReceive(viewingTags.map((x) => x.id))
+				.dataTagsGetStatus({ tagsId: viewingTags.map((x) => x.id) })
 				.then((res) => setStates(res.data))
 				.catch(() => setStates({})),
 		])
 	}, [store.api, viewingTags])
 
-	const [states, setStates] = useState<Record<number, TagReceiveState | undefined>>({})
+	const [states, setStates] = useState<Record<number, string>>({})
 
 	const doSearch = useCallback(() => {
 		setViewingTags(
@@ -100,12 +100,12 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 						<Column<TagInfo>
 							title='Значение'
 							width='12em'
-							sorter={(a: TagInfo, b: TagInfo) => compareValues(values[a.id]?.value, values[b.id]?.value)}
+							sorter={(a: TagInfo, b: TagInfo) => compareRecords(values[a.id], values[b.id])}
 							render={(_, record: TagInfo) => {
 								const value = values[record.id]
 								return (
 									<TagCompactValue
-										value={value?.value}
+										record={value}
 										type={record.type}
 										quality={value?.quality ?? TagQuality.BadNoConnect}
 									/>
@@ -115,10 +115,10 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 						<Column<TagInfo>
 							title='Дата записи'
 							width='13em'
-							sorter={(a: TagInfo, b: TagInfo) => compareValues(values[a.id]?.date, values[b.id]?.date)}
+							sorter={(a: TagInfo, b: TagInfo) => compareDateStrings(values[a.id]?.date, values[b.id]?.date)}
 							render={(_, record: TagInfo) => {
 								const value = values[record.id]
-								return value?.dateString
+								return value?.date
 							}}
 						/>
 					</>
@@ -127,7 +127,7 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 					<Column<TagInfo>
 						title='Последний расчет'
 						width='25em'
-						sorter={(a: TagInfo, b: TagInfo) => compareValues(states[a.id]?.message ?? '', states[b.id]?.message ?? '')}
+						sorter={(a: TagInfo, b: TagInfo) => states[a.id]?.localeCompare(states[b.id])}
 						render={(_, record: TagInfo) => {
 							const state = states[record.id]
 							return <TagReceiveStateEl receiveState={state} />

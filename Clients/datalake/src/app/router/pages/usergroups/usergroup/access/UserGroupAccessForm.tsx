@@ -2,7 +2,7 @@ import AccessTypeEl from '@/app/components/AccessTypeEl'
 import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
-import { AccessRightsIdInfo, AccessType, UserGroupInfo } from '@/generated/data-contracts'
+import { AccessType, UserGroupInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
@@ -12,9 +12,14 @@ import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 
-type FormType = AccessRightsIdInfo & {
+type FormType = {
 	key: string
 	choosedObject: 'source' | 'block' | 'tag'
+	id: number | null
+	accessType: AccessType
+	sourceId: number | null
+	blockId: number | null
+	tagId: number | null
 }
 
 const objectOptions: DefaultOptionType[] = [
@@ -48,19 +53,22 @@ const UserGroupAccessForm = () => {
 		if (!id) return
 		setLoading(true)
 		const loaders = [
-			store.api.userGroupsGet(String(id)).then((res) => {
+			store.api.inventoryUserGroupsGet(String(id)).then((res) => {
 				setGroup(res.data)
 			}),
-			store.api.sourcesGetAll().then((res) => setSources(res.data.map((x) => ({ label: x.name, value: x.id })))),
-			store.api.blocksGetAll().then((res) => setBlocks(res.data.map((x) => ({ label: x.name, value: x.id })))),
-			store.api.tagsGetAll().then((res) => setTags(res.data.map((x) => ({ label: x.name, value: x.id })))),
 			store.api
-				.accessGet({ userGroup: String(id) })
+				.inventorySourcesGetAll()
+				.then((res) => setSources(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			store.api.inventoryBlocksGetAll().then((res) => setBlocks(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			store.api.inventoryTagsGetAll().then((res) => setTags(res.data.map((x) => ({ label: x.name, value: x.id })))),
+			store.api
+				.inventoryAccessGet({ userGroup: String(id) })
 				.then((res) => {
 					setForm(
 						res.data
 							.filter((x) => !x.isGlobal)
 							.map((x) => ({
+								id: x.id,
 								sourceId: x.source?.id ?? null,
 								blockId: x.block?.id ?? null,
 								tagId: x.tag?.id ?? null,
@@ -76,9 +84,9 @@ const UserGroupAccessForm = () => {
 	}
 
 	const updateRights = () => {
-		store.api.accessApplyChanges({
-			userGroupGuid: String(id),
-			rights: form.map((x) => {
+		store.api.inventoryAccessSetUserGroupRules(
+			String(id),
+			form.map((x) => {
 				switch (x.choosedObject) {
 					case 'source':
 						return { ...x, blockId: null, tagId: null }
@@ -90,7 +98,7 @@ const UserGroupAccessForm = () => {
 						return { ...x, blockId: null, sourceId: null }
 				}
 			}),
-		})
+		)
 	}
 
 	useEffect(getRights, [store.api, id])
@@ -104,9 +112,13 @@ const UserGroupAccessForm = () => {
 							setForm([
 								...form,
 								{
+									id: null,
 									key: String(Date.now()),
 									choosedObject: 'block',
-									accessType: AccessType.NotSet,
+									accessType: AccessType.None,
+									blockId: null,
+									sourceId: null,
+									tagId: null,
 								},
 							])
 						}}

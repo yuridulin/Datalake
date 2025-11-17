@@ -16,7 +16,6 @@ public class SourcesController(
 	IAuthenticator authenticator) : InventorySourcesControllerBase
 {
 	public override async Task<ActionResult<int>> CreateAsync(
-		[FromBody] SourceInfo? request,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -24,10 +23,6 @@ public class SourcesController(
 		var result = await handler.HandleAsync(new()
 		{
 			User = user,
-			Address = request?.Address,
-			Description = request?.Description,
-			Name = request?.Name,
-			Type = request?.Type,
 		}, ct);
 
 		return Ok(result);

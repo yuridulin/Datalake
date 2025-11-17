@@ -1,5 +1,6 @@
 ﻿using Datalake.Domain.Enums;
 using Datalake.Domain.Exceptions;
+using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Domain.ValueObjects;
 
@@ -38,31 +39,37 @@ public record class UserAccessValue
 	/// <summary>
 	/// Идентификатор учетной записи
 	/// </summary>
+	[Required]
 	public Guid Guid { get; private set; }
 
 	/// <summary>
 	/// Глобальный уровень доступа
 	/// </summary>
+	[Required]
 	public UserAccessRuleValue RootRule { get; private set; }
 
 	/// <summary>
 	/// Уровни доступа к группам учетных групп
 	/// </summary>
+	[Required]
 	public Dictionary<Guid, UserAccessRuleValue> GroupsRules { get; private set; }
 
 	/// <summary>
 	/// Уровни доступа к источникам данных
 	/// </summary>
+	[Required]
 	public Dictionary<int, UserAccessRuleValue> SourcesRules { get; private set; }
 
 	/// <summary>
 	/// Уровни доступа к блокам
 	/// </summary>
+	[Required]
 	public Dictionary<int, UserAccessRuleValue> BlocksRules { get; private set; }
 
 	/// <summary>
 	/// Уровни доступа к тегам
 	/// </summary>
+	[Required]
 	public Dictionary<int, UserAccessRuleValue> TagsRules { get; private set; }
 
 	#endregion

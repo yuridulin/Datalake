@@ -25,7 +25,7 @@ const UserGroupsCreateModal = ({ onCreate, parentGuid = undefined, isSmall = fal
 	const finishForm = (formData: UserGroupCreateRequest) => {
 		if (parentGuid) formData.parentGuid = parentGuid
 		store.api
-			.userGroupsCreate(formData)
+			.inventoryUserGroupsCreate(formData)
 			.then(() => {
 				closeModal()
 				onCreate()

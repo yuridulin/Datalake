@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Gateway.Host.ProxyControllers.Inventory;
 
-/// <inheritdoc />
+/// <inheritdoc cref="InventoryAccessControllerBase" />
 public class InventoryAccessController(InventoryReverseProxyService proxyService) : InventoryAccessControllerBase
 {
 	/// <inheritdoc />

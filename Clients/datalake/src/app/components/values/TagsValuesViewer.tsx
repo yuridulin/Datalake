@@ -112,7 +112,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 						}
 
 		return store.api
-			.valuesGet([
+			.dataValuesGet([
 				{
 					requestKey: CLIENT_REQUESTKEY,
 					tagsId: tagIds,
@@ -362,7 +362,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 			)}
 			{values.length ? (
 				settings.mode === TimeModes.OLD_YOUNG ? (
-					<TimedValuesMode ref={tableRef} relations={values} locf={settings.resolution === TagResolution.NotSet} />
+					<TimedValuesMode ref={tableRef} relations={values} locf={settings.resolution === TagResolution.None} />
 				) : (
 					<ExactValuesMode ref={tableRef} relations={values} />
 				)

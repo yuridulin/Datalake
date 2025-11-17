@@ -36,7 +36,8 @@ public class UsersController(
 		return Ok(result);
 	}
 
-	public override async Task<ActionResult<IEnumerable<UserInfo>>> GetAllAsync(
+	public override async Task<ActionResult<IEnumerable<UserInfo>>> GetAsync(
+		[FromQuery] Guid? userGuid,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -44,6 +45,7 @@ public class UsersController(
 		var data = await handler.HandleAsync(new()
 		{
 			User = user,
+			UserGuid = userGuid,
 		}, ct);
 
 		return Ok(data);

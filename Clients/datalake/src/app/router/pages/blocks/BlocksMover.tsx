@@ -37,7 +37,7 @@ const BlocksMover = observer(() => {
 	const { token } = theme.useToken()
 
 	function load() {
-		store.api.blocksGetTree().then((res) => setBlocks(transformBlockTreeInfo(res.data)))
+		store.api.inventoryBlocksGetTree().then((res) => setBlocks(transformBlockTreeInfo(res.data)))
 	}
 
 	const findParentKey = (data: TreeDataNode[], key: React.Key): React.Key | null => {
@@ -104,7 +104,7 @@ const BlocksMover = observer(() => {
 
 		setLoading(true)
 		store.api
-			.blocksMove(Number(info.dragNode.key), {
+			.inventoryBlocksMove(Number(info.dragNode.key), {
 				parentId: Number(parentKey),
 			})
 			.then(() => {

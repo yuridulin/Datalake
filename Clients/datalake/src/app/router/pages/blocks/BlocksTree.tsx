@@ -67,7 +67,7 @@ const BlocksTree = observer(() => {
 	// Load blocks data
 	const loadBlocks = useCallback(async () => {
 		try {
-			const res = await store.api.blocksGetAll()
+			const res = await store.api.inventoryBlocksGetAll()
 			return setData(res.data)
 		} catch {
 			return setData([])
@@ -84,7 +84,7 @@ const BlocksTree = observer(() => {
 
 	// Create new block
 	const createBlock = () => {
-		store.api.blocksCreateEmpty().then(loadBlocks)
+		store.api.inventoryBlocksCreate({}).then(loadBlocks)
 	}
 
 	// Table columns configuration

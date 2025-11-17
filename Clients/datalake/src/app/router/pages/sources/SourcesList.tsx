@@ -3,7 +3,7 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { timeAgo } from '@/functions/dateHandle'
 import getSourceTypeName from '@/functions/getSourceTypeName'
-import { AccessType, SourceInfo, SourceStateInfo, SourceType } from '@/generated/data-contracts'
+import { AccessType, SourceActivityInfo, SourceInfo, SourceType } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
@@ -18,24 +18,32 @@ interface DataCell extends SourceInfo {
 	link: string
 }
 
-const ExcludedTypes = [SourceType.NotSet, SourceType.System]
+const ExcludedTypes = [SourceType.Unset, SourceType.System]
 const NotEnteredTypes = [SourceType.Aggregated, SourceType.Calculated, SourceType.Manual]
 
 const SourcesList = observer(() => {
 	useDatalakeTitle('Источники')
 	const store = useAppStore()
 	const [sources, setSources] = useState([] as DataCell[])
-	const [states, setStates] = useState({} as Record<string, SourceStateInfo>)
+	const [states, setStates] = useState({} as Record<number, SourceActivityInfo>)
 
 	const getStates = useCallback(async () => {
-		const res = await store.api.statesGetSources()
-		setStates(res.data)
-	}, [store.api])
+		const res = await store.api.dataSourcesGetActivity(sources.map((x) => x.id))
+		setStates(
+			res.data.reduce(
+				(agg, next) => {
+					agg[next.sourceId] = next
+					return agg
+				},
+				{} as Record<number, SourceActivityInfo>,
+			),
+		)
+	}, [store.api, sources])
 
 	const load = useCallback(() => {
 		setSources([])
 		store.api
-			.sourcesGetAll({ withCustom: true })
+			.inventorySourcesGetAll({ withCustom: true })
 			.then((res) => {
 				const [system, user]: DataCell[] = [
 					{
@@ -43,7 +51,7 @@ const SourcesList = observer(() => {
 						id: -2000,
 						name: 'Системные источники',
 						isDisabled: false,
-						type: SourceType.NotSet,
+						type: SourceType.Unset,
 						children: [],
 						link: '',
 					},
@@ -52,7 +60,7 @@ const SourcesList = observer(() => {
 						id: -1000,
 						name: 'Пользовательские источники',
 						isDisabled: false,
-						type: SourceType.NotSet,
+						type: SourceType.Unset,
 						children: [],
 						link: '',
 					},
@@ -86,10 +94,10 @@ const SourcesList = observer(() => {
 
 	const createSource = useCallback(() => {
 		store.api
-			.sourcesCreateEmpty()
-			.then((res) => {
+			.inventorySourcesCreate()
+			.then(() => {
 				load()
-				notification.success({ message: 'Создан источник ' + res.data.name })
+				notification.success({ message: 'Источник создан' })
 			})
 			.catch(() => notification.error({ message: 'Не удалось создать источник' }))
 	}, [store.api, load])
@@ -128,7 +136,7 @@ const SourcesList = observer(() => {
 						if (!state) return <Tag>?</Tag>
 						return (
 							<span>
-								{!state.isTryConnected ? (
+								{!state.lastTry ? (
 									<Tag icon={<DisconnectOutlined />} color='default' title='Попыток подключения не было'>
 										не исп.
 									</Tag>

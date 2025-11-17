@@ -1,6 +1,6 @@
 import CreatedTagLinker from '@/app/components/CreatedTagsLinker'
 import PageHeader from '@/app/components/PageHeader'
-import { SourceType, TagInfo, TagResolution, TagType } from '@/generated/data-contracts'
+import { SourceType, TagInfo, TagType } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from 'antd'
@@ -16,7 +16,7 @@ const TagsManualList = () => {
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
 			store.api
-				.tagsGetAll({ sourceId: SourceType.Manual })
+				.inventoryTagsGetAll({ sourceId: SourceType.Manual })
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags
@@ -25,10 +25,9 @@ const TagsManualList = () => {
 
 	const createTag = useCallback(() => {
 		store.api
-			.tagsCreate({
+			.inventoryTagsCreate({
 				sourceId: SourceType.Manual,
 				tagType: TagType.Number,
-				resolution: TagResolution.NotSet,
 			})
 			.then((res) => {
 				getTags()

@@ -17,7 +17,7 @@ const UserCreate = observer(() => {
 	const store = useAppStore()
 	const navigate = useNavigate()
 	const [request, setRequest] = useState({
-		accessType: AccessType.NotSet,
+		accessType: AccessType.None,
 		password: '',
 		staticHost: '',
 		type: UserType.Local,
@@ -26,13 +26,13 @@ const UserCreate = observer(() => {
 
 	function load() {
 		store.api
-			.usersGetEnergoId()
+			.inventoryEnergoIdGetEnergoId()
 			.then((res) => !!res && setKeycloakInfo(res.data.sort((a, b) => a.fullName.localeCompare(b.fullName))))
 	}
 
 	function create() {
-		store.api.usersCreate(request).then((res) => {
-			navigate(routes.users.toUserForm(res.data.guid))
+		store.api.inventoryUsersCreate(request).then((res) => {
+			navigate(routes.users.toUserForm(res.data))
 		})
 	}
 
@@ -78,7 +78,6 @@ const UserCreate = observer(() => {
 						value={request.type}
 						onChange={(e) => setRequest({ ...request, type: e.target.value })}
 					>
-						<Radio.Button value={UserType.Static}>Статичная учетная запись</Radio.Button>
 						<Radio.Button value={UserType.Local}>Базовая учетная запись</Radio.Button>
 						<Radio.Button value={UserType.EnergoId}>Учетная запись EnergoID</Radio.Button>
 					</Radio.Group>
@@ -104,7 +103,7 @@ const UserCreate = observer(() => {
 
 				<div
 					style={{
-						display: request.type === UserType.Local || request.type === UserType.Static ? 'inherit' : 'none',
+						display: request.type === UserType.Local ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Полное имя'>
@@ -114,25 +113,6 @@ const UserCreate = observer(() => {
 								setRequest({
 									...request,
 									fullName: e.target.value,
-								})
-							}
-						/>
-					</FormRow>
-				</div>
-
-				<div
-					style={{
-						display: request.type === UserType.Static ? 'inherit' : 'none',
-					}}
-				>
-					<FormRow title='Адрес, с которого разрешен доступ'>
-						<Input
-							value={request.staticHost || ''}
-							placeholder='Если адрес не указан, доступ разрешен из любого источника'
-							onChange={(e) =>
-								setRequest({
-									...request,
-									staticHost: e.target.value,
 								})
 							}
 						/>

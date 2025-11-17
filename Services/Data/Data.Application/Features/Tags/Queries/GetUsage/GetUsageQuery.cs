@@ -1,0 +1,13 @@
+﻿using Datalake.Domain.ValueObjects;
+using Datalake.Shared.Application.Interfaces;
+
+namespace Datalake.Data.Application.Features.Tags.Queries.GetUsage;
+
+public record GetUsageQuery : IQueryRequest<IDictionary<int, IDictionary<string, DateTime>>>, IWithUserAccess
+{
+	public required UserAccessValue User { get; init; }
+
+	public IEnumerable<int>? TagsId { get; init; }
+
+	public IEnumerable<Guid>? TagsGuid { get; init; }
+}

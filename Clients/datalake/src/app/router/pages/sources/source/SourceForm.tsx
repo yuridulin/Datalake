@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import SourceItems from './SourceItems'
 
-const AvailableSourceTypes = [SourceType.NotSet, SourceType.Inopc, SourceType.Datalake]
+const AvailableSourceTypes = [SourceType.Unset, SourceType.Inopc, SourceType.Datalake]
 
 const SourceForm = () => {
 	const store = useAppStore()
@@ -21,13 +21,13 @@ const SourceForm = () => {
 
 	const [request, setRequest] = useState<SourceUpdateRequest>({
 		name: '',
-		type: SourceType.NotSet,
+		type: SourceType.Unset,
 		isDisabled: false,
 	})
 	const [source, setSource] = useState({} as SourceInfo)
 
 	function load() {
-		store.api.sourcesGet(Number(id)).then((res) => {
+		store.api.inventorySourcesGet(Number(id)).then((res) => {
 			const sourceInfo = res.data
 			setSource(sourceInfo)
 			setRequest({
@@ -41,11 +41,11 @@ const SourceForm = () => {
 	}
 
 	function sourceUpdate() {
-		store.api.sourcesUpdate(Number(id), request).then(load)
+		store.api.inventorySourcesUpdate(Number(id), request).then(load)
 	}
 
 	function sourceDelete() {
-		store.api.sourcesDelete(Number(id)).then(() => navigate(routes.sources.list))
+		store.api.inventorySourcesDelete(Number(id)).then(() => navigate(routes.sources.list))
 	}
 
 	useEffect(() => {

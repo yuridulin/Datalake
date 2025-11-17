@@ -22,12 +22,11 @@ const UsersList = observer(() => {
 	const store = useAppStore()
 	const navigate = useNavigate()
 	const [users, setUsers] = useState([] as UserInfo[])
-	const [states, setStates] = useState({} as { [key: string]: string })
+	const [states, setStates] = useState<Record<string, string | null>>({})
 	const [search, setSearch] = useState('')
 
 	const load = () => {
-		store.api.usersGetAll().then((res) => setUsers(res.data))
-		//getStates()
+		store.api.inventoryUsersGet().then((res) => setUsers(res.data))
 	}
 
 	const create = () => {
@@ -36,8 +35,8 @@ const UsersList = observer(() => {
 
 	const getStates = useCallback(() => {
 		if (!store.hasGlobalAccess(AccessType.Manager)) return
-		return store.api.statesGetUsers().then((res) => setStates(res.data))
-	}, [store])
+		return store.api.usersGetActivity(users.map((x) => x.guid)).then((res) => setStates(res.data))
+	}, [store, users])
 
 	const columns: TableColumnsType<UserInfo> = [
 		{

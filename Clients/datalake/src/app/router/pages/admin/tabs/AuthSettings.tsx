@@ -9,13 +9,13 @@ const AuthSettings = () => {
 	const [form] = Form.useForm<SettingsInfo>()
 
 	const load = () => {
-		store.api.systemGetSettings().then((res) => {
+		store.api.inventorySystemGetSettings().then((res) => {
 			setSettings(res.data)
 			form.setFieldsValue(res.data)
 		})
 	}
 	const update = (newSettings: SettingsInfo) => {
-		store.api.systemUpdateSettings({ ...settings, ...newSettings })
+		store.api.inventorySystemUpdateSettings({ ...settings, ...newSettings })
 	}
 
 	useEffect(load, [store.api, form])

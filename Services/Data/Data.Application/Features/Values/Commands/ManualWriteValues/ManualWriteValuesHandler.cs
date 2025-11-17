@@ -13,8 +13,8 @@ public interface IManualWriteValuesHandler : ICommandHandler<ManualWriteValuesCo
 
 public class ManualWriteValuesHandler(
 	ISystemWriteValuesHandler systemWriteValuesHandler,
-	ICurrentValuesStore currentValuesStore,
-	ITagsStore tagsStore) : IManualWriteValuesHandler
+	IValuesStore currentValuesStore,
+	ITagsSettingsStore tagsStore) : IManualWriteValuesHandler
 {
 	public async Task<IEnumerable<ValuesTagResponse>> HandleAsync(ManualWriteValuesCommand command, CancellationToken ct = default)
 	{

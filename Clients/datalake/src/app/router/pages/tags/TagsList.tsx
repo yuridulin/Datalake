@@ -13,7 +13,7 @@ const Tags = () => {
 	const getTags = useCallback(() => {
 		setTags((prevTags) => {
 			store.api
-				.tagsGetAll()
+				.inventoryTagsGetAll()
 				.then((res) => setTags(res.data))
 				.catch(() => setTags([]))
 			return prevTags

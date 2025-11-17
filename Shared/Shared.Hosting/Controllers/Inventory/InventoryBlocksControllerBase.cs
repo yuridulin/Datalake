@@ -16,13 +16,13 @@ public abstract class InventoryBlocksControllerBase : ControllerBase
 	/// Создание нового блока на основании переданной информации
 	/// </summary>
 	/// <param name="parentId">Идентификатор родительского блока</param>
-	/// <param name="blockInfo">Данные о новом блоке</param>
+	/// <param name="request">Данные о новом блоке</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Идентификатор блока</returns>
 	[HttpPost]
 	public abstract Task<ActionResult<int>> CreateAsync(
 		[FromQuery] int? parentId,
-		[FromBody] BlockFullInfo? blockInfo,
+		[FromBody, BindRequired] BlockCreateRequest request,
 		CancellationToken ct = default);
 
 	/// <summary>

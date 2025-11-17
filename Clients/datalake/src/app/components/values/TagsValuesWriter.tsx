@@ -71,7 +71,7 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 		const tagIds = Array.from(new Set(relations.map((relId) => tagMapping[relId]?.id).filter(Boolean)))
 
 		store.api
-			.valuesGet([
+			.dataValuesGet([
 				{
 					requestKey: CLIENT_REQUESTKEY,
 					tagsId: tagIds,
@@ -97,7 +97,7 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 							values: [],
 							result: ValueResult.Ok,
 							value: tagValue,
-							newValue: tagValue?.value,
+							newValue: tagValue.boolean ?? tagValue.number ?? tagValue.text,
 							hasNewValue: false,
 						} as ExactValue
 					})
@@ -130,11 +130,11 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 			},
 			{} as Record<number, ValueWriteRequest>,
 		)
-		store.api.valuesWrite(Object.values(valuesToWrite)).then(getValues)
+		store.api.dataValuesWrite(Object.values(valuesToWrite)).then(getValues)
 	}
 
 	const setNewValue = (id: number, newValue: TagValue) => {
-		setValues(values.map((x) => (x.id != id ? x : { ...x, newValue, hasNewValue: x.value.value !== newValue })))
+		setValues(values.map((x) => (x.id != id ? x : { ...x, newValue, hasNewValue: x.value.text !== newValue }))) // TODO: неправильно же!
 	}
 
 	// Автоматический запрос в интегрированном режиме
@@ -188,7 +188,7 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 						<Column<ExactValue>
 							title='Текущее значение'
 							render={(_, record) => (
-								<TagCompactValue type={record.type} value={record.value.value} quality={record.value.quality} />
+								<TagCompactValue type={record.type} record={record.value} quality={record.value.quality} />
 							)}
 						/>
 						<Column<ExactValue>

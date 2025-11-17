@@ -4,12 +4,12 @@ import { DefaultOptionType } from 'antd/es/select'
 
 export const accessOptions: DefaultOptionType[] = [
 	{
-		label: <AccessTypeEl type={AccessType.NotSet} bordered={false} />,
-		value: AccessType.NotSet,
+		label: <AccessTypeEl type={AccessType.None} bordered={false} />,
+		value: AccessType.None,
 	},
 	{
-		label: <AccessTypeEl type={AccessType.NoAccess} bordered={false} />,
-		value: AccessType.NoAccess,
+		label: <AccessTypeEl type={AccessType.Denied} bordered={false} />,
+		value: AccessType.Denied,
 	},
 	{
 		label: <AccessTypeEl type={AccessType.Viewer} bordered={false} />,

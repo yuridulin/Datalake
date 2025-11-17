@@ -13,14 +13,12 @@ namespace Datalake.Shared.Hosting.Controllers.Inventory;
 public abstract class InventorySourcesControllerBase : ControllerBase
 {
 	/// <summary>
-	/// Создание источника на основе переданных данных
+	/// Создание источника
 	/// </summary>
-	/// <param name="request">Данные нового источника</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Идентификатор источника</returns>
 	[HttpPost]
 	public abstract Task<ActionResult<int>> CreateAsync(
-		[FromBody] SourceInfo? request,
 		CancellationToken ct = default);
 
 	/// <summary>

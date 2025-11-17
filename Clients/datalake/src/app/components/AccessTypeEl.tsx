@@ -5,7 +5,7 @@ import { Tag } from 'antd'
 export default function AccessTypeEl({ type, bordered = true }: { type: AccessType; bordered?: boolean }) {
 	const name = getAccessTypeName(type)
 	switch (type) {
-		case AccessType.NoAccess:
+		case AccessType.Denied:
 			return (
 				<Tag color='volcano' bordered={bordered}>
 					{name}

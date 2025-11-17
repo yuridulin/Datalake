@@ -4,7 +4,7 @@ import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithIn
 import { TransformedData } from '@/app/router/pages/values/types/TransformedData'
 import compareValues from '@/functions/compareValues'
 import { TagTypeName } from '@/functions/getTagTypeName'
-import { TagQuality } from '@/generated/data-contracts'
+import { TagQuality, ValueRecord } from '@/generated/data-contracts'
 import { TagValue } from '@/types/tagValue'
 import { Table } from 'antd'
 import { ColumnType } from 'antd/es/table'
@@ -32,20 +32,13 @@ const TimedValuesMode = forwardRef<ExcelExportModeHandles, TimedValuesModeProps>
 
 	relations.forEach(({ relationId, value }) => {
 		if (!value?.values) return
-		const { id, guid, name, type, values: tagValues } = value
+		const { values: tagValues } = value
 
-		tagValues.forEach(({ date, dateString, value: tagVal, quality }) => {
-			if (!dateMap.has(date)) {
-				dateMap.set(date, { time: dateString, dateString })
+		tagValues.forEach((record) => {
+			if (!dateMap.has(record.date)) {
+				dateMap.set(record.date, { time: record.date, dateString: record.date })
 			}
-			dateMap.get(date)![String(relationId)] = {
-				id,
-				guid,
-				name,
-				type,
-				value: tagVal,
-				quality,
-			}
+			dateMap.get(record.date)![String(relationId)] = record
 		})
 	})
 
@@ -92,9 +85,8 @@ const TimedValuesMode = forwardRef<ExcelExportModeHandles, TimedValuesModeProps>
 			title: meta.localName,
 			key: String(relationId),
 			dataIndex: String(relationId),
-			render: (cell: { value: TagValue; quality: TagQuality } | undefined) => (
-				<TagCompactValue type={meta.type} value={cell?.value ?? null} quality={cell?.quality ?? TagQuality.Bad} />
-			),
+			render: (cell: ValueRecord | undefined) =>
+				cell ? <TagCompactValue type={meta.type} record={cell} quality={cell?.quality ?? TagQuality.Unknown} /> : <></>,
 		})),
 	]
 

@@ -1,11 +1,10 @@
-﻿using Datalake.Domain.ValueObjects;
-using Datalake.Shared.Application.Interfaces;
+﻿using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Gateway.Application.Features.Queries.GetUsersActivity;
 
-public record GetUsersActivityQuery : IQueryRequest<IDictionary<Guid, DateTime?>>, IWithUserAccess
+public record GetUsersActivityQuery : IQueryRequest<IDictionary<Guid, DateTime?>>
 {
-	public required UserAccessValue User { get; init; }
+	public required string Token { get; init; }
 
 	public required IEnumerable<Guid> Users { get; init; }
 }

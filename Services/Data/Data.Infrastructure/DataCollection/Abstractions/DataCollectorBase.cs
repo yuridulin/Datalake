@@ -1,4 +1,5 @@
-﻿using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Data.Application.Interfaces.Cache;
+using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Domain.Entities;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ namespace Datalake.Data.Infrastructure.DataCollection.Abstractions;
 /// Базовый класс сборщика с реализацией основных механизмов
 /// </summary>
 public abstract class DataCollectorBase(
+	ISourcesActivityStore sourcesActivityStore,
 	IDataCollectorWriter writer,
 	ILogger logger,
 	SourceSettingsDto source,
@@ -24,7 +26,9 @@ public abstract class DataCollectorBase(
 
 	public virtual Task StartAsync(CancellationToken cancellationToken)
 	{
-		logger.LogInformation("Запуск сборщика {name}", Name);
+		if (logger.IsEnabled(LogLevel.Information))
+			logger.LogInformation("Запуск сборщика {name}", Name);
+
 		_ = WorkAsync(cancellationToken);
 
 		return Task.CompletedTask;
@@ -32,7 +36,9 @@ public abstract class DataCollectorBase(
 
 	protected Task NotStartAsync(string reason)
 	{
-		logger.LogWarning("Сборщик {name} не будет запущен: {reason}", Name, reason);
+		if (logger.IsEnabled(LogLevel.Warning))
+			logger.LogWarning("Сборщик {name} не будет запущен: {reason}", Name, reason);
+
 		return Task.CompletedTask;
 	}
 
@@ -41,15 +47,18 @@ public abstract class DataCollectorBase(
 		DateTime executionStart;
 		double elapsed;
 		int delay;
+		int tagsCount = source.Tags.Count();
+
 		CollectorUpdate state = new()
 		{
-			Values = new(source.Tags.Count()),
+			Values = new(tagsCount),
 			IsActive = false,
 		};
 
 		try
 		{
-			logger.LogInformation("Сборщик {name} начал работу", Name);
+			if (logger.IsEnabled(LogLevel.Information))
+				logger.LogInformation("Сборщик {name} начал работу", Name);
 
 			while (!cancellationToken.IsCancellationRequested)
 			{
@@ -61,12 +70,13 @@ public abstract class DataCollectorBase(
 				{
 					await writer.WriteAsync(state.Values[i]);
 				}
-				// TODO: запись количества изменений и состояние источника в стор статистики
+
+				sourcesActivityStore.Set(source.SourceId, tagsCount, state.IsActive, state.Values.Count);
 
 				elapsed = (DateTime.UtcNow - executionStart).TotalMilliseconds;
 				delay = Math.Max(500, workInterval - (int)elapsed);
 
-				if (state.Values.Count > 0)
+				if (state.Values.Count > 0 && logger.IsEnabled(LogLevel.Debug))
 					logger.LogDebug("Сборщик {name} собрал значения: {count} за {elapsed} мс", Name, state.Values.Count, elapsed);
 
 				await Task.Delay(delay, cancellationToken);
@@ -74,11 +84,13 @@ public abstract class DataCollectorBase(
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
-			logger.LogCritical(ex, "Критическая ошибка в рабочем цикле сборщика {name}", Name);
+			if (logger.IsEnabled(LogLevel.Critical))
+				logger.LogCritical(ex, "Критическая ошибка в рабочем цикле сборщика {name}", Name);
 		}
 		finally
 		{
-			logger.LogDebug("Сборщик {name} завершил работу", Name);
+			if (logger.IsEnabled(LogLevel.Debug))
+				logger.LogDebug("Сборщик {name} завершил работу", Name);
 		}
 	}
 

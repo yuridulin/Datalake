@@ -15,7 +15,7 @@ namespace Datalake.Gateway.Host.Controllers;
 /// </summary>
 [ApiController]
 [ApiExplorerSettings(GroupName = "Gateway")]
-[Route("api/v1/sessions")]
+[Route("api/v1/gateway/sessions")]
 public class AuthController(
 	IServiceProvider serviceProvider,
 	ISessionTokenExtractor tokenExtractor) : ControllerBase
@@ -27,7 +27,7 @@ public class AuthController(
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("local")]
-	public async Task<ActionResult<SessionInfo>> AuthenticateLocalAsync(
+	public async Task<ActionResult<UserSessionWithAccessInfo>> AuthenticateLocalAsync(
 		[BindRequired, FromBody] AuthLoginPassRequest request,
 		CancellationToken ct = default)
 	{
@@ -47,7 +47,7 @@ public class AuthController(
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpPost("energo-id")]
-	public async Task<ActionResult<SessionInfo>> AuthenticateEnergoIdUserAsync(
+	public async Task<ActionResult<UserSessionWithAccessInfo>> AuthenticateEnergoIdUserAsync(
 		[BindRequired, FromBody] AuthEnergoIdRequest request,
 		CancellationToken ct = default)
 	{
@@ -66,7 +66,7 @@ public class AuthController(
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о учетной записи</returns>
 	[HttpGet("identify")]
-	public async Task<ActionResult<SessionInfo?>> IdentifyAsync(
+	public async Task<ActionResult<UserSessionWithAccessInfo?>> IdentifyAsync(
 		CancellationToken ct = default)
 	{
 		var token = tokenExtractor.ExtractToken(HttpContext);

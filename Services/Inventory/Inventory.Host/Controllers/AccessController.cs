@@ -11,6 +11,7 @@ using Datalake.Inventory.Application.Features.CalculatedAccessRules.Queries.GetC
 using Datalake.Shared.Hosting.Controllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Runtime.InteropServices;
 
 namespace Datalake.Inventory.Host.Controllers;
 
@@ -41,7 +42,7 @@ public class AccessController(
 	}
 
 	public override async Task<ActionResult<IDictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
-		[FromBody] IEnumerable<Guid>? guids,
+		[FromBody, Optional] IEnumerable<Guid>? guids,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);

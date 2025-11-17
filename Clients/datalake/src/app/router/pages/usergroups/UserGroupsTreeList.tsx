@@ -24,7 +24,7 @@ const UserGroupsTreeList = observer(() => {
 	const [groups, setGroups] = useState([] as UserGroupTreeInfo[])
 
 	const load = () => {
-		store.api.userGroupsGetTree().then((res) => {
+		store.api.inventoryUserGroupsGetTree().then((res) => {
 			setGroups(res.data.map((x) => setEmptyAsLeafs(x)))
 		})
 	}

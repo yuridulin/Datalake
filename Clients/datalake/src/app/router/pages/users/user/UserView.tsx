@@ -6,7 +6,7 @@ import TabsView from '@/app/components/tabsView/TabsView'
 import routes from '@/app/router/routes'
 import getUserTypeName from '@/functions/getUserTypeName'
 import hasAccess from '@/functions/hasAccess'
-import { AccessType, UserDetailInfo } from '@/generated/data-contracts'
+import { AccessType, UserInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin } from 'antd'
@@ -19,13 +19,13 @@ const UserView = observer(() => {
 	const navigate = useNavigate()
 	const { id } = useParams()
 	useDatalakeTitle('Пользователи', id)
-	const [info, setInfo] = useState(null as UserDetailInfo | null)
+	const [info, setInfo] = useState(null as UserInfo | null)
 	const [loading, setLoading] = useState(true)
 
 	const load = () => {
 		if (!id) return
 		setLoading(true)
-		store.api.usersGetWithDetails(String(id)).then((res) => {
+		store.api.inventoryUsersGetWithDetails(String(id)).then((res) => {
 			setInfo(res.data)
 			setLoading(false)
 		})

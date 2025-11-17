@@ -3,7 +3,7 @@ import UserIcon from '@/app/components/icons/UserIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
-import { AccessType, UserDetailInfo, UserEnergoIdInfo, UserType, UserUpdateRequest } from '@/generated/data-contracts'
+import { AccessType, UserEnergoIdInfo, UserInfo, UserType, UserUpdateRequest } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
@@ -13,9 +13,8 @@ import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-type UserInfoProps = UserDetailInfo & {
+type UserInfoProps = UserInfo & {
 	oldType: UserType
-	hash: string
 }
 
 interface EnergoIdOption extends DefaultOptionType {
@@ -34,7 +33,6 @@ const UserForm = observer(() => {
 	const [oldName, setOldName] = useState('')
 	const [userInfo, setUser] = useState({
 		oldType: UserType.Local,
-		hash: '',
 	} as UserInfoProps)
 	const [request, setRequest] = useState({} as UserUpdateRequest)
 	const [newType, setNewType] = useState(UserType.Local)
@@ -44,12 +42,11 @@ const UserForm = observer(() => {
 	const load = () => {
 		if (!id) return
 		setLoading(true)
-		store.api.usersGetWithDetails(String(id)).then((res) => {
+		store.api.inventoryUsersGetWithDetails(String(id)).then((res) => {
 			setNewType(res.data.type)
 			setUser({
 				...res.data,
 				oldType: res.data.type,
-				hash: res.data.hash ?? '',
 			})
 			setRequest({
 				login: res.data.login,
@@ -57,7 +54,6 @@ const UserForm = observer(() => {
 				fullName: res.data.fullName,
 				createNewStaticHash: false,
 				password: '',
-				staticHost: res.data.staticHost,
 				energoIdGuid: res.data.energoIdGuid,
 				type: res.data.type,
 			})
@@ -65,29 +61,20 @@ const UserForm = observer(() => {
 			setLoading(false)
 		})
 
-		store.api.usersGetEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
+		store.api.inventoryEnergoIdGetEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
 	}
 
 	useEffect(load, [store.api, id])
 
 	function update() {
-		store.api.usersUpdate(String(id), request).then((res) => {
+		store.api.inventoryUsersUpdate(String(id), request).then((res) => {
 			if (res.status >= 300) return
 			load()
 		})
 	}
 
 	function del() {
-		store.api.usersDelete(String(id)).then(() => navigate(routes.users.list))
-	}
-
-	function generateNewHash() {
-		store.api
-			.usersUpdate(String(id), {
-				...request,
-				createNewStaticHash: true,
-			})
-			.then(() => load())
+		store.api.inventoryUsersDelete(String(id)).then(() => navigate(routes.users.list))
 	}
 
 	const options: EnergoIdOption[] = keycloakUsers.map((x) => ({
@@ -159,7 +146,6 @@ const UserForm = observer(() => {
 						disabled={!hasAccess(store.globalAccessType, AccessType.Manager)}
 						onChange={(e) => setNewType(e.target.value)}
 					>
-						<Radio.Button value={UserType.Static}>Статичная учетная запись</Radio.Button>
 						<Radio.Button value={UserType.Local}>Базовая учетная запись</Radio.Button>
 						<Radio.Button value={UserType.EnergoId}>Учетная запись EnergoID</Radio.Button>
 					</Radio.Group>
@@ -185,7 +171,7 @@ const UserForm = observer(() => {
 
 				<div
 					style={{
-						display: newType === UserType.Local || newType === UserType.Static ? 'inherit' : 'none',
+						display: newType === UserType.Local ? 'inherit' : 'none',
 					}}
 				>
 					<FormRow title='Полное имя'>
@@ -199,44 +185,6 @@ const UserForm = observer(() => {
 							}
 						/>
 					</FormRow>
-				</div>
-
-				<div
-					style={{
-						display: store.hasGlobalAccess(AccessType.Admin) && newType === UserType.Static ? 'inherit' : 'none',
-					}}
-				>
-					<FormRow title='Адрес, с которого разрешен доступ'>
-						<Input
-							value={request.staticHost || ''}
-							placeholder='Если адрес не указан, доступ разрешен из любого источника'
-							onChange={(e) =>
-								setRequest({
-									...request,
-									staticHost: e.target.value,
-								})
-							}
-						/>
-					</FormRow>
-					{userInfo.oldType === UserType.Static ? (
-						<FormRow title='Ключ для доступа'>
-							<Input disabled value={userInfo.hash} />
-							<div style={{ marginTop: '.5em' }}>
-								<Button
-									type='primary'
-									onClick={() => {
-										navigator.clipboard.writeText(userInfo.hash ?? '')
-									}}
-								>
-									Скопировать
-								</Button>
-								&ensp;
-								<Button onClick={generateNewHash}>Создать новый</Button>
-							</div>
-						</FormRow>
-					) : (
-						<></>
-					)}
 				</div>
 
 				<div

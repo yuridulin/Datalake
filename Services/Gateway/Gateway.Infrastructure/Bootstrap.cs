@@ -37,7 +37,7 @@ public static class Bootstrap
 		builder.Services.AddScoped<IUserSessionsRepository, UserSessionsRepository>();
 		builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 
-		builder.Services.AddScoped<IUserAccessService, UserAccessService>();
+		builder.Services.AddScoped<IUserAccessStore, UserAccessStore>();
 
 		builder.Services.AddHostedService<GatewayDbStartupService>();
 

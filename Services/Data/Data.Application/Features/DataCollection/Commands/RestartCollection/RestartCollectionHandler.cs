@@ -9,10 +9,10 @@ namespace Datalake.Data.Application.Features.DataCollection.Commands.RestartColl
 public interface IRestartCollectionHandler : ICommandHandler<RestartCollectionCommand, bool> { }
 
 public class RestartCollectionHandler(
-	ISourcesSettingsRepository sourcesRepository,
+	ISourcesQueriesService sourcesRepository,
 	IDataCollectorProcessor dataCollectorProcessor,
 	ILogger<RestartCollectionHandler> logger,
-	ITagsStore tagsStore) : IRestartCollectionHandler
+	ITagsSettingsStore tagsStore) : IRestartCollectionHandler
 {
 	public async Task<bool> HandleAsync(RestartCollectionCommand command, CancellationToken ct = default)
 	{

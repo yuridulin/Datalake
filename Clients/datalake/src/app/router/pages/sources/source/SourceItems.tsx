@@ -10,7 +10,6 @@ import {
 	SourceTagInfo,
 	SourceUpdateRequest,
 	TagInfo,
-	TagResolution,
 	TagType,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
@@ -307,7 +306,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		if (!source.id) return
 		setStatus('loading')
 		store.api
-			.sourcesGetItemsWithTags(source.id)
+			.dataSourcesGetItems(source.id)
 			.then((res) => {
 				setStatus('success')
 				setItems(res.data)
@@ -323,12 +322,11 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 
 	const createTag = async (item: string, tagType: TagType) => {
 		store.api
-			.tagsCreate({
+			.inventoryTagsCreate({
 				name: '',
 				tagType: tagType,
 				sourceId: source.id,
 				sourceItem: item,
-				resolution: TagResolution.Minute,
 			})
 			.then((res) => {
 				if (!res.data?.id) return
@@ -357,7 +355,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 	}
 
 	const deleteTag = (tagId: number) => {
-		store.api.tagsDelete(tagId).then(reload)
+		store.api.inventoryTagsDelete(tagId).then(reload)
 	}
 
 	const doSearch = debounce((value: string) => {

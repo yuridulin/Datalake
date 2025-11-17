@@ -20,7 +20,7 @@ const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
 	const [values, setValues] = useState<TagThresholdsValues>({})
 
 	const getValues = useCallback(async () => {
-		const res = await store.api.valuesGet([
+		const res = await store.api.dataValuesGet([
 			{ requestKey: CLIENT_REQUESTKEY, tagsId: [tag.id, tag.thresholdSourceTag?.id ?? 0] },
 		])
 		const newValues: TagThresholdsValues = {}
@@ -35,21 +35,21 @@ const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
 			key: '1',
 			render(_, record) {
 				const current = values[tag.id]
-				return current && record.result == current.value ? <DollarCircleOutlined /> : <></>
+				return current && record.result == current.number ? <DollarCircleOutlined /> : <></>
 			},
 		},
 		{
 			dataIndex: 'threshold',
 			title: 'Входное значение',
 			render(value) {
-				return <TagCompactValue value={value} quality={TagQuality.GoodLOCF} type={TagType.Number} />
+				return <TagCompactValue record={value} quality={TagQuality.GoodLOCF} type={TagType.Number} />
 			},
 		},
 		{
 			dataIndex: 'result',
 			title: 'Результирующее значение',
 			render(value) {
-				return <TagCompactValue value={value} quality={TagQuality.GoodLOCF} type={TagType.Number} />
+				return <TagCompactValue record={value} quality={TagQuality.GoodLOCF} type={TagType.Number} />
 			},
 		},
 	]
@@ -59,7 +59,7 @@ const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
 		const inputValue = values[tag.thresholdSourceTag.id]
 		if (!inputValue) return <></>
 
-		return <TagCompactValue type={tag.thresholdSourceTag.type} value={inputValue.value} quality={inputValue.quality} />
+		return <TagCompactValue type={tag.thresholdSourceTag.type} record={inputValue} quality={inputValue.quality} />
 	}
 
 	return (

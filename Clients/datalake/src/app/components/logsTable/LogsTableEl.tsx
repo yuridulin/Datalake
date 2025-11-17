@@ -98,7 +98,7 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 
 	const loadNewLogs = () => {
 		store.api
-			.systemGetLogs({
+			.inventoryAuditGet({
 				lastId: logs.reduce((acc, log) => (log.id > acc ? log.id : acc), 0),
 				take: step,
 				source: sourceId,
@@ -115,7 +115,7 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 
 	const loadOldLogs = () => {
 		store.api
-			.systemGetLogs({
+			.inventoryAuditGet({
 				firstId: logs.reduce((acc, log) => (log.id < acc ? log.id : acc), Infinity),
 				take: step,
 				source: sourceId,

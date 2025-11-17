@@ -6,14 +6,13 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Gateway.Host.ProxyControllers.Inventory;
 
-/// <inheritdoc />
+/// <inheritdoc cref="InventorySourcesControllerBase" />
 public class InventorySourcesController(InventoryReverseProxyService proxyService) : InventorySourcesControllerBase
 {
 	/// <inheritdoc />
 	public override Task<ActionResult<int>> CreateAsync(
-		[FromBody] SourceInfo? request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<int>(HttpContext, request, ct);
+			=> proxyService.ProxyAsync<int>(HttpContext, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<SourceInfo>> GetAsync(

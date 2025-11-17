@@ -8,7 +8,7 @@ public interface ISystemWriteValuesHandler : ICommandHandler<SystemWriteValuesCo
 
 public class SystemWriteValuesHandler(
 	ITagsValuesRepository tagsHistoryRepository,
-	ICurrentValuesStore currentValuesStore) : ISystemWriteValuesHandler
+	IValuesStore currentValuesStore) : ISystemWriteValuesHandler
 {
 	public async Task<bool> HandleAsync(SystemWriteValuesCommand command, CancellationToken ct = default)
 	{

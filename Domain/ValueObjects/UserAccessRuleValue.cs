@@ -1,4 +1,5 @@
 ﻿using Datalake.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Domain.ValueObjects;
 
@@ -21,11 +22,13 @@ public record class UserAccessRuleValue
 	/// <summary>
 	/// Идентификатор правила, на основе которого выполнен расчет
 	/// </summary>
+	[Required]
 	public int Id { get; private set; }
 
 	/// <summary>
 	/// Уровень доступа
 	/// </summary>
+	[Required]
 	public AccessType Access { get; private set; }
 
 	/// <summary>

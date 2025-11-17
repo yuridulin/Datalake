@@ -2,7 +2,7 @@ import AccessTypeEl from '@/app/components/AccessTypeEl'
 import BlockIcon from '@/app/components/icons/BlockIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
-import { AccessRightsIdInfo, AccessType, BlockSimpleInfo } from '@/generated/data-contracts'
+import { AccessRightsInfo, AccessType, BlockSimpleInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
@@ -12,7 +12,7 @@ import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 
-type FormType = AccessRightsIdInfo & {
+type FormType = AccessRightsInfo & {
 	key: string
 	choosedObject: 'group' | 'user'
 }
@@ -43,13 +43,13 @@ const BlockAccessForm = () => {
 		if (!id) return
 		setLoading(true)
 		const loaders = [
-			store.api.blocksGet(Number(id)).then((res) => {
+			store.api.inventoryBlocksGet(Number(id)).then((res) => {
 				setBlock(res.data)
 			}),
 			store.api
-				.userGroupsGetAll()
+				.inventoryUserGroupsGetAll()
 				.then((res) => setUserGroups(res.data.map((x) => ({ label: x.name, value: x.guid })))),
-			store.api.usersGetAll().then((res) =>
+			store.api.inventoryUsersGet().then((res) =>
 				setUsers(
 					res.data.map((x) => ({
 						label: x.fullName,
@@ -58,12 +58,14 @@ const BlockAccessForm = () => {
 				),
 			),
 			store.api
-				.accessGet({ block: Number(id) })
+				.inventoryAccessGet({ block: Number(id) })
 				.then((res) => {
 					setForm(
 						res.data
 							.filter((x) => !x.isGlobal)
 							.map((x) => ({
+								id: x.id,
+								isGlobal: x.isGlobal,
 								userGroupGuid: x.userGroup?.guid ?? null,
 								userGuid: x.user?.guid ?? null,
 								accessType: x.accessType,
@@ -78,9 +80,9 @@ const BlockAccessForm = () => {
 	}
 
 	const updateRights = () => {
-		store.api.accessApplyChanges({
-			blockId: Number(id),
-			rights: form.map((x) => {
+		store.api.inventoryAccessSetBlockRules(
+			Number(id),
+			form.map((x) => {
 				switch (x.choosedObject) {
 					case 'group':
 						return { ...x, userGuid: null }
@@ -89,7 +91,7 @@ const BlockAccessForm = () => {
 						return { ...x, userGroupGuid: null }
 				}
 			}),
-		})
+		)
 	}
 
 	useEffect(getRights, [store.api, id])
@@ -103,9 +105,10 @@ const BlockAccessForm = () => {
 							setForm([
 								...form,
 								{
+									isGlobal: false,
 									key: String(Date.now()),
 									choosedObject: 'group',
-									accessType: AccessType.NotSet,
+									accessType: AccessType.None,
 								},
 							])
 						}}

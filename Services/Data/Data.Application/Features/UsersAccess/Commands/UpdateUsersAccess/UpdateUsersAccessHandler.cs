@@ -14,7 +14,8 @@ public class UpdateUsersAccessHandler(
 {
 	public async Task<bool> HandleAsync(UpdateUsersAccessCommand command, CancellationToken ct = default)
 	{
-		logger.LogInformation("Получено событие обновления рассчитанных прав доступа. Пользователей затронуто: {count}", command.Guids.Count());
+		if (logger.IsEnabled(LogLevel.Information))
+			logger.LogInformation("Получено событие обновления рассчитанных прав доступа. Пользователей затронуто: {count}", command.Guids.Count());
 
 		try
 		{

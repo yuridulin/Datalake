@@ -36,7 +36,7 @@ const BlockView = observer(() => {
 	const getBlock = () => {
 		setReady(false)
 		store.api
-			.blocksGet(Number(id))
+			.inventoryBlocksGet(Number(id))
 			.then((res) => {
 				res.data.adults = res.data.adults.reverse()
 				setBlock(res.data)
@@ -46,7 +46,7 @@ const BlockView = observer(() => {
 	}
 
 	const createChild = () => {
-		store.api.blocksCreateEmpty({ parentId: Number(id) }).then(getBlock)
+		store.api.inventoryBlocksCreate({ parentId: Number(id) }).then(getBlock)
 	}
 
 	useEffect(getBlock, [store.api, id])

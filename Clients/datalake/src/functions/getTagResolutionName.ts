@@ -7,7 +7,7 @@ export const enum TagResolutionMode {
 }
 
 export const TagResolutionNames: Record<TagResolution, string> = {
-	[TagResolution.NotSet]: 'По изменению',
+	[TagResolution.None]: 'По изменению',
 	[TagResolution.Second]: 'Секунда',
 	[TagResolution.Minute]: 'Минута',
 	[TagResolution.Minute3]: '3 минуты',
@@ -20,10 +20,12 @@ export const TagResolutionNames: Record<TagResolution, string> = {
 	[TagResolution.Day]: 'Сутки',
 	[TagResolution.Week]: 'Неделя',
 	[TagResolution.Month]: 'Месяц',
+	[TagResolution.Quarter]: 'Квартал',
+	[TagResolution.Year]: 'Год',
 }
 
 const TagResolutionSmallNames: Record<TagResolution, string> = {
-	[TagResolution.NotSet]: '',
+	[TagResolution.None]: '',
 	[TagResolution.Second]: 'секунда',
 	[TagResolution.Minute]: 'минута',
 	[TagResolution.Minute3]: '3 минуты',
@@ -36,10 +38,12 @@ const TagResolutionSmallNames: Record<TagResolution, string> = {
 	[TagResolution.Day]: 'сутки',
 	[TagResolution.Week]: 'неделя',
 	[TagResolution.Month]: 'месяц',
+	[TagResolution.Quarter]: 'квартал',
+	[TagResolution.Year]: 'год',
 }
 
 const TagResolutionIntegratedNames: Record<TagResolution, string> = {
-	[TagResolution.NotSet]: '',
+	[TagResolution.None]: '',
 	[TagResolution.Second]: 'по секундам',
 	[TagResolution.Minute]: 'по минутам',
 	[TagResolution.Minute3]: 'каждые 3 минуты',
@@ -52,6 +56,8 @@ const TagResolutionIntegratedNames: Record<TagResolution, string> = {
 	[TagResolution.Day]: 'по суткам',
 	[TagResolution.Week]: 'по неделям',
 	[TagResolution.Month]: 'по месяцам',
+	[TagResolution.Quarter]: 'по кварталам',
+	[TagResolution.Year]: 'по годам',
 }
 
 const TagResolutionNameModeSelector = {

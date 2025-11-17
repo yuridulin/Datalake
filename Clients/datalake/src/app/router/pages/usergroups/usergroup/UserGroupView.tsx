@@ -36,7 +36,7 @@ const UserGroupView = observer(() => {
 		setReady(false)
 		if (!id) return
 		store.api
-			.userGroupsGetWithDetails(id)
+			.inventoryUserGroupsGetWithDetails(id)
 			.then((res) => {
 				if (res.data?.guid) {
 					setGroup(res.data)

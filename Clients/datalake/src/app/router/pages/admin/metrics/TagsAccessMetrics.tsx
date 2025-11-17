@@ -35,7 +35,7 @@ const TagsAccessMetrics = () => {
 
 		Promise.all([
 			store.api
-				.tagsGetAll()
+				.inventoryTagsGetAll()
 				.then((res) => {
 					tags = res.data
 				})
@@ -43,7 +43,7 @@ const TagsAccessMetrics = () => {
 					notification.error({ message: 'Не удалось прочитать список тегов' })
 				}),
 			store.api
-				.statesGetTags()
+				.dataTagsGetUsage({})
 				.then((res) => {
 					metrics = res.data
 				})

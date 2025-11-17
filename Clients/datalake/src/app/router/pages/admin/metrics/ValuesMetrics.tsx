@@ -1,8 +1,9 @@
-import { KeyValuePairOfValuesRequestKeyAndValuesRequestUsageInfo as Metric } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { useCallback, useEffect, useState } from 'react'
+
+type Metric = Record<string, Record<string, string>>
 
 const columns: ColumnsType<Metric> = [
 	{
@@ -46,14 +47,14 @@ const columns: ColumnsType<Metric> = [
 const ValuesMetrics = () => {
 	const store = useAppStore()
 	const [loading, setLoading] = useState<boolean>(false)
-	const [metrics, setMetrics] = useState<Metric[]>([])
+	const [metrics, setMetrics] = useState<Metric>({})
 
 	const getMetrics = useCallback(() => {
 		setLoading(true)
 		store.api
-			.statesGetValues()
+			.dataTagsGetUsage({})
 			.then((res) => setMetrics(res.data))
-			.catch(() => setMetrics([]))
+			.catch(() => setMetrics({}))
 			.finally(() => setLoading(false))
 	}, [store.api])
 

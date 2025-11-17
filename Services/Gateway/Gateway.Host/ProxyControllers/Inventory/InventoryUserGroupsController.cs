@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Gateway.Host.ProxyControllers.Inventory;
 
-/// <inheritdoc />
+/// <inheritdoc cref="InventoryUserGroupsControllerBase" />
 public class InventoryUserGroupsController(InventoryReverseProxyService proxyService) : InventoryUserGroupsControllerBase
 {
 	/// <inheritdoc />

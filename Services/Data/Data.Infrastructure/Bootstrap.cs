@@ -3,6 +3,7 @@ using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Interfaces.Repositories;
 using Datalake.Data.Infrastructure.Database;
+using Datalake.Data.Infrastructure.Database.QueriesServices;
 using Datalake.Data.Infrastructure.Database.Repositories;
 using Datalake.Data.Infrastructure.Database.Services;
 using Datalake.Data.Infrastructure.DataCollection;
@@ -46,17 +47,20 @@ public static class Bootstrap
 
 		builder.Services.AddSingleton<IUserAccessStore, UserAccessStore>();
 
-		builder.Services.AddScoped<ISourcesSettingsRepository, SourcesSettingsRepository>();
-		builder.Services.AddScoped<ITagsValuesAggregationRepository, TagsValuesAggregationRepository>();
+		builder.Services.AddScoped<ISourcesRepository, SourcesRepository>();
+		builder.Services.AddScoped<ISourcesQueriesService, SourcesQueriesService>();
 		builder.Services.AddScoped<ITagsValuesRepository, TagsValuesRepository>();
+		builder.Services.AddScoped<ITagsValuesAggregationRepository, TagsValuesAggregationRepository>();
 
 		builder.Services.AddSingleton<IDataCollectorFactory, DataCollectorFactory>();
 		builder.Services.AddSingleton<IDataCollectorProcessor, DataCollectorProcessor>();
 		builder.Services.AddSingleton<IDataCollectorWriter, DataCollectorWriter>();
 
-		builder.Services.AddSingleton<ICurrentValuesStore, CurrentValuesStore>();
-		builder.Services.AddSingleton<ITagsStore, TagsStore>();
-		builder.Services.AddSingleton<IDataCollectionErrorsStore, DataCollectionErrorsStore>();
+		builder.Services.AddSingleton<IValuesStore, ValuesStore>();
+		builder.Services.AddSingleton<ITagsSettingsStore, TagsSettingsStore>();
+		builder.Services.AddSingleton<ITagsUsageStore, TagsUsageStore>();
+		builder.Services.AddSingleton<ITagsCollectionStatusStore, TagsCollectionStatusStore>();
+		builder.Services.AddSingleton<ISourcesActivityStore, SourcesActivityStore>();
 
 		builder.Services.AddSingleton<IReceiverService, ReceiverService>();
 

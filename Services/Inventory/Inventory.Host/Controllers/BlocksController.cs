@@ -20,12 +20,19 @@ public class BlocksController(
 {
 	public override async Task<ActionResult<int>> CreateAsync(
 		[FromQuery] int? parentId,
-		[FromBody] BlockFullInfo? blockInfo,
+		[FromBody] BlockCreateRequest request,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<ICreateBlockHandler>();
-		var key = await handler.HandleAsync(new(user, blockInfo?.ParentId ?? parentId, blockInfo?.Name, blockInfo?.Description), ct);
+		var key = await handler.HandleAsync(new()
+		{
+			User = user,
+			ParentId = request.ParentId,
+			Name = request.Name,
+			Description = request.Description,
+		}, ct);
+
 		return key;
 	}
 
