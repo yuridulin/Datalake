@@ -4,14 +4,7 @@ import { LoadStatus } from '@/app/components/loaders/loaderTypes'
 import StatusLoader from '@/app/components/loaders/StatusLoader'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import compareValues from '@/functions/compareValues'
-import {
-	SourceEntryInfo,
-	SourceInfo,
-	SourceTagInfo,
-	SourceUpdateRequest,
-	TagInfo,
-	TagType,
-} from '@/generated/data-contracts'
+import { SourceInfo, SourceItemInfo, SourceUpdateRequest, TagInfo, TagType } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import {
 	CheckCircleOutlined,
@@ -26,10 +19,68 @@ import debounce from 'debounce'
 import { useCallback, useEffect, useState } from 'react'
 import { useLocalStorage } from 'react-use'
 
+type SourceTagInfo = TagInfo & { item?: string }
+
+type SourceEntryInfo = {
+	itemInfo?: SourceItemInfo
+	tagInfo?: SourceTagInfo
+	isTagInUse?: string
+}
+
 interface GroupedEntry {
 	path: string
 	itemInfo?: SourceEntryInfo['itemInfo']
 	tagInfoArray: SourceTagInfo[]
+}
+
+const toSourceTagInfo = (tag: TagInfo): SourceTagInfo => {
+	return {
+		...tag,
+		item: tag.sourceItem ?? '',
+	}
+}
+
+const getLastUsage = (usage?: Record<string, string>) => {
+	if (!usage) return undefined
+	return Object.values(usage).reduce<string | undefined>((latest, current) => {
+		if (!current) return latest
+		if (!latest) return current
+		return dayjs(current).isAfter(dayjs(latest)) ? current : latest
+	}, undefined)
+}
+
+const mergeEntries = (
+	sourceItems: SourceItemInfo[],
+	tags: TagInfo[],
+	usage: Record<string, Record<string, string>>,
+): SourceEntryInfo[] => {
+	const entries: SourceEntryInfo[] = []
+	const itemsByPath = new Map(sourceItems.map((item) => [item.path, item]))
+	const taggedPaths = new Set<string>()
+
+	tags.forEach((tag) => {
+		if (tag.sourceItem) taggedPaths.add(tag.sourceItem)
+		const itemInfo = tag.sourceItem ? itemsByPath.get(tag.sourceItem) : undefined
+		entries.push({
+			itemInfo,
+			tagInfo: toSourceTagInfo(tag),
+			isTagInUse: getLastUsage(usage?.[tag.id]),
+		})
+	})
+
+	sourceItems.forEach((item) => {
+		if (!taggedPaths.has(item.path)) {
+			entries.push({ itemInfo: item })
+		}
+	})
+
+	return entries.sort((a, b) => {
+		const pathA = a.itemInfo?.path ?? a.tagInfo?.item ?? ''
+		const pathB = b.itemInfo?.path ?? b.tagInfo?.item ?? ''
+		const byPath = compareValues(pathA, pathB)
+		if (byPath !== 0) return byPath
+		return compareValues(a.tagInfo?.name, b.tagInfo?.name)
+	})
 }
 
 function groupEntries(items: SourceEntryInfo[]): GroupedEntry[] {
@@ -150,7 +201,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 							<TagCompactValue
 								type={child.group.itemInfo.type}
 								quality={child.group.itemInfo.quality}
-								value={child.group.itemInfo.value}
+								record={child.group.itemInfo.value ?? null}
 							/>
 						)}
 					</div>
@@ -238,7 +289,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 					<TagCompactValue
 						type={record.itemInfo.type}
 						quality={record.itemInfo.quality}
-						value={record.itemInfo.value}
+						record={record.itemInfo.value ?? null}
 					/>
 				) : (
 					<></>
@@ -305,17 +356,38 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 	const reload = () => {
 		if (!source.id) return
 		setStatus('loading')
-		store.api
-			.dataSourcesGetItems(source.id)
-			.then((res) => {
+		setErr(false)
+
+		const fetchData = async () => {
+			try {
+				const [sourceItemsResponse, tagsResponse] = await Promise.all([
+					store.api.dataSourcesGetItems(source.id),
+					store.api.inventoryTagsGetAll({ sourceId: source.id }),
+				])
+
+				const tags = tagsResponse.data ?? []
+				const tagIds = tags.map((tag) => tag.id).filter((id): id is number => typeof id === 'number')
+
+				let usage: Record<string, Record<string, string>> = {}
+				if (tagIds.length > 0) {
+					try {
+						const usageResponse = await store.api.dataTagsGetUsage({ tagsId: tagIds })
+						usage = usageResponse.data ?? {}
+					} catch (usageError) {
+						console.error('Не удалось получить usage тегов', usageError)
+					}
+				}
+
+				const merged = mergeEntries(sourceItemsResponse.data ?? [], tags, usage)
+				setItems(merged)
 				setStatus('success')
-				setItems(res.data)
-				setErr(false)
-			})
-			.catch(() => {
+			} catch {
 				setStatus('error')
 				setErr(true)
-			})
+			}
+		}
+
+		fetchData()
 	}
 
 	const reloadDone = useCallback(() => setStatus('default'), [])
@@ -331,26 +403,11 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 			.then((res) => {
 				if (!res.data?.id) return
 				setCreated(res.data)
-				setItems(
-					items.map((x) =>
-						x.itemInfo?.path === item
-							? {
-									...x,
-									tagInfo: {
-										id: res.data.id,
-										guid: res.data.guid,
-										item: res.data.sourceItem ?? item,
-										name: res.data.name,
-										sourceType: source.id,
-										type: res.data.type,
-										accessRule: { ruleId: 0, access: 0 },
-										formulaInputs: [],
-										resolution: res.data.resolution,
-									},
-								}
-							: x,
-					),
-				)
+				const newTag: SourceTagInfo = {
+					...res.data,
+					item: res.data.sourceItem ?? item,
+				}
+				setItems((prev) => prev.map((x) => (x.itemInfo?.path === item ? { ...x, tagInfo: newTag } : x)))
 			})
 	}
 
