@@ -1,5 +1,4 @@
-﻿using Datalake.Domain.Extensions;
-using Datalake.Gateway.Application.Interfaces;
+﻿using Datalake.Gateway.Application.Interfaces;
 using System.Collections.Concurrent;
 
 namespace Datalake.Gateway.Infrastructure.InMemory;
@@ -17,7 +16,7 @@ public class UsersActivityService : IUsersActivityService
 	{
 		_state.AddOrUpdate(
 			userGuid,
-			(_) => DateTimeExtension.GetCurrentDateTime(),
-			(_, _) => DateTimeExtension.GetCurrentDateTime());
+			(_) => DateTime.UtcNow,
+			(_, _) => DateTime.UtcNow);
 	}
 }

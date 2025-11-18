@@ -1,5 +1,4 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Domain.ValueObjects;
 using Datalake.Gateway.Application.Interfaces;
 using Datalake.Gateway.Application.Interfaces.Repositories;
 using Datalake.Shared.Application.Exceptions;
@@ -19,8 +18,7 @@ public class OpenLocalSessionHandler(
 		User? user = await usersRepository.GetByLoginAsync(command.Login, ct)
 			?? throw new NotFoundException("Пользователь не найден по логину");
 
-		var passwordHash = PasswordHashValue.FromPlainText(command.PasswordString);
-		if (user.PasswordHash != passwordHash)
+		if (user.PasswordHash?.Verify(command.PasswordString) ?? false)
 			throw new UnauthenticatedException("Пароль не подходит");
 
 		var token = await sessionsService.OpenAsync(user, ct);

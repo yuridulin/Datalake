@@ -5,7 +5,6 @@ using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;
 using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
-using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +29,7 @@ public class ThresholdsCollector(
 
 	protected override async Task ExecuteAsync(CollectorUpdate state, CancellationToken cancellationToken)
 	{
-		var now = DateTimeExtension.GetCurrentDateTime();
+		var now = DateTime.UtcNow;
 
 		foreach (var (tag, inputId, map) in _thresholds)
 		{

@@ -12,30 +12,48 @@ namespace Datalake.Gateway.Host.Services;
 /// </summary>
 public abstract class ReverseProxyService(HttpClient httpClient)
 {
+	/// <summary>
+	/// Настройки JSON
+	/// </summary>
 	protected virtual JsonSerializerOptions JsonSerializerOptions { get; } = new()
 	{
 		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 	};
 
+	/// <summary>
+	/// Проксирование запроса без ответа
+	/// </summary>
 	public Task<ActionResult> ProxyAsync(
 		HttpContext context,
 		CancellationToken cancellationToken = default) => ProxyAsync(context, null, null, cancellationToken);
 
+	/// <summary>
+	/// Проксирование запроса с передачей ответа без обработки
+	/// </summary>
 	public Task<ActionResult<TResponse>> ProxyAsync<TResponse>(
 		HttpContext context,
 		CancellationToken cancellationToken = default) => ProxyAsync<TResponse>(context, null, null, cancellationToken);
 
+	/// <summary>
+	/// Проксирование запроса без ответа
+	/// </summary>
 	public Task<ActionResult> ProxyAsync(
 		HttpContext context,
 		object? body,
 		CancellationToken cancellationToken = default) => ProxyAsync(context, body, null, cancellationToken);
 
+	/// <summary>
+	/// Проксирование запроса с передачей ответа без обработки
+	/// </summary>
 	public Task<ActionResult<TResponse>> ProxyAsync<TResponse>(
 		HttpContext context,
 		object? body,
 		CancellationToken cancellationToken = default) => ProxyAsync<TResponse>(context, body, null, cancellationToken);
 
+	/// <summary>
+	/// Проксирование запроса без ответа
+	/// </summary>
 	public async Task<ActionResult> ProxyAsync(
 		HttpContext context,
 		object? body = null,
@@ -68,6 +86,9 @@ public abstract class ReverseProxyService(HttpClient httpClient)
 		}
 	}
 
+	/// <summary>
+	/// Проксирование запроса с передачей ответа без обработки
+	/// </summary>
 	public async Task<ActionResult<TResponse>> ProxyAsync<TResponse>(
 		HttpContext context,
 		object? body = null,
@@ -218,8 +239,19 @@ public abstract class ReverseProxyService(HttpClient httpClient)
 public class ReverseProxyTransparentException(HttpStatusCode statusCode, string originalContent, string contentType)
 	: Exception($"Proxy received error: {statusCode}")
 {
+	/// <summary>
+	/// Код запроса
+	/// </summary>
 	public HttpStatusCode StatusCode { get; } = statusCode;
+
+	/// <summary>
+	/// Исходный контент
+	/// </summary>
 	public string OriginalContent { get; } = originalContent;
+
+	/// <summary>
+	/// Тип исходного контента
+	/// </summary>
 	public string ContentType { get; } = contentType;
 }
 
@@ -228,6 +260,9 @@ public class ReverseProxyTransparentException(HttpStatusCode statusCode, string 
 /// </summary>
 public class ReverseProxyTransparentExceptionMiddleware(RequestDelegate next, ILogger<ReverseProxyTransparentExceptionMiddleware> logger)
 {
+	/// <summary>
+	/// Обработка запроса
+	/// </summary>
 	public async Task InvokeAsync(HttpContext context)
 	{
 		try
@@ -251,6 +286,9 @@ public class ReverseProxyTransparentExceptionMiddleware(RequestDelegate next, IL
 /// </summary>
 public static class ReverseProxyDependencyInjections
 {
+	/// <summary>
+	/// Подключение обработки ошибок прокси-запросов
+	/// </summary>
 	public static IApplicationBuilder UseReverseProxy(this IApplicationBuilder app)
 	{
 		app.UseMiddleware<ReverseProxyTransparentExceptionMiddleware>();

@@ -2,7 +2,7 @@
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
-namespace Datalake.Data.Application.Features.Tags.Queries.GetTagsCollectionStatus;
+namespace Datalake.Data.Application.Features.Tags.Queries.GetCollectionStatus;
 
 public record GetTagsCollectionStatusQuery : IQueryRequest<IEnumerable<TagCollectionStatus>>, IWithUserAccess
 {

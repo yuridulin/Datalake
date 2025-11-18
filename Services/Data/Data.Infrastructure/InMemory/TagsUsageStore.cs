@@ -1,5 +1,4 @@
 ﻿using Datalake.Data.Application.Interfaces.Cache;
-using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using System.Collections.Concurrent;
 
@@ -38,7 +37,7 @@ public record TagUsage
 
 	public void Update(string requestKey)
 	{
-		RequestsUsage[requestKey] = DateTimeExtension.GetCurrentDateTime();
+		RequestsUsage[requestKey] = DateTime.UtcNow;
 	}
 
 	public int TagId { get; }

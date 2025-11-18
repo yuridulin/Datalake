@@ -28,17 +28,6 @@ public static class DateTimeExtension
 	public const string Time = "HH:mm:ss";
 
 	/// <summary>
-	/// Получение текущей даты в выбранном часовом поясе
-	/// </summary>
-	public static DateTime GetCurrentDateTime()
-	{
-		// Только попробуйте еще где-то запустить
-		TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
-		DateTime localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
-		return localTime;
-	}
-
-	/// <summary>
 	/// Преобразование диапазона времени в строковое представление
 	/// </summary>
 	/// <param name="timeSpan">Диапазон времени</param>

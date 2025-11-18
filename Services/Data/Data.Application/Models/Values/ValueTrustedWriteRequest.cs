@@ -1,6 +1,5 @@
 ﻿using Datalake.Data.Application.Models.Tags;
 using Datalake.Domain.Enums;
-using Datalake.Domain.Extensions;
 
 namespace Datalake.Data.Application.Models.Values;
 
@@ -10,7 +9,7 @@ internal class ValueTrustedWriteRequest
 
 	internal object? Value { get; set; }
 
-	internal DateTime? Date { get; set; } = DateTimeExtension.GetCurrentDateTime();
+	internal DateTime? Date { get; set; } = DateTime.UtcNow;
 
 	internal TagQuality? Quality { get; set; }
 }

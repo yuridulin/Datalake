@@ -2,10 +2,16 @@
 
 namespace Datalake.Shared.Hosting;
 
+/// <summary>
+/// Значение версии приложения
+/// </summary>
 public class VersionValue
 {
 	private string _version;
 
+	/// <summary>
+	/// Конструктор
+	/// </summary>
 	public VersionValue()
 	{
 		_version = Environment.GetEnvironmentVariable("APP_VERSION")
@@ -14,10 +20,8 @@ public class VersionValue
 	}
 
 	/// <summary>
-	/// Обрезка версии до первых двух цифр (major.minor)
+	/// Усеченная версия (major.minor)
 	/// </summary>
-	/// <param name="version">Текущая версия</param>
-	/// <returns>Усеченная версия</returns>
 	public string Short()
 	{
 		if (string.IsNullOrWhiteSpace(_version))
@@ -29,6 +33,9 @@ public class VersionValue
 			: _version;
 	}
 
+	/// <summary>
+	/// Полная версия
+	/// </summary>
 	public string Full()
 	{
 		return _version ?? string.Empty;

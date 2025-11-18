@@ -9,12 +9,18 @@ using System.Reflection;
 
 namespace Datalake.Gateway.Host;
 
+/// <summary>
+/// Gateway API сервис
+/// </summary>
 public class Program
 {
 	internal static string CurrentEnvironment { get; set; } = string.Empty;
 
 	internal static VersionValue Version { get; set; } = new();
 
+	/// <summary>
+	/// Основной метод работы
+	/// </summary>
 	public static async Task Main(string[] args)
 	{
 		// дефолт сообщение, чтобы увидеть факт запуска

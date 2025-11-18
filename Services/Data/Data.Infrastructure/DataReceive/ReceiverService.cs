@@ -4,7 +4,6 @@ using Datalake.Data.Infrastructure.DataReceive.Converters;
 using Datalake.Data.Infrastructure.DataReceive.Inopc;
 using Datalake.Data.Infrastructure.DataReceive.Inopc.Enums;
 using Datalake.Domain.Enums;
-using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -52,10 +51,11 @@ public class ReceiverService(ILogger<ReceiverService> logger) : IReceiverService
 		catch (OperationCanceledException) { }
 		catch (Exception ex)
 		{
-			logger.LogWarning("Не удалось получить данные. Адрес: {url}, ошибка: {err}", address, ex.Message);
+			if (logger.IsEnabled(LogLevel.Warning))
+				logger.LogWarning("Не удалось получить данные. Адрес: {url}, ошибка: {err}", address, ex.Message);
 		}
 
-		response.Timestamp = inopcResponse?.Timestamp ?? DateTimeExtension.GetCurrentDateTime();
+		response.Timestamp = inopcResponse?.Timestamp ?? DateTime.UtcNow;
 		if (inopcResponse != null)
 		{
 			response.IsConnected = true;

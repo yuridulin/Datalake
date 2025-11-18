@@ -12,6 +12,8 @@ public class InventoryApiClient(
 		IEnumerable<Guid> guids,
 		CancellationToken ct = default)
 	{
+		logger.LogInformation("Сделай меня уже наконец");
+
 		throw new NotImplementedException("Не сделано");
 	}
 }

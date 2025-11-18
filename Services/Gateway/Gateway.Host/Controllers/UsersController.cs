@@ -28,7 +28,7 @@ public class UsersController(
 		var handler = serviceProvider.GetRequiredService<IGetUsersActivityHandler>();
 		var result = await handler.HandleAsync(new()
 		{
-			Token	= token,
+			Token = token,
 			Users = users,
 		});
 

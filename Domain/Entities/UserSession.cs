@@ -1,6 +1,5 @@
 ﻿using Datalake.Domain.Enums;
 using Datalake.Domain.Exceptions;
-using Datalake.Domain.Extensions;
 using Datalake.Domain.ValueObjects;
 
 namespace Datalake.Domain.Entities;
@@ -25,7 +24,7 @@ public record class UserSession
 		if (expirationTime != null && IsExpire(expirationTime.Value))
 			throw new DomainException("Дата истекания сессии не может быть в прошлом");
 
-		var now = DateTimeExtension.GetCurrentDateTime();
+		var now = DateTime.UtcNow;
 
 		return new()
 		{
@@ -43,7 +42,7 @@ public record class UserSession
 
 	private static bool IsExpire(DateTime date)
 	{
-		return DateTimeExtension.GetCurrentDateTime() <= date;
+		return DateTime.UtcNow <= date;
 	}
 
 	/// <summary>

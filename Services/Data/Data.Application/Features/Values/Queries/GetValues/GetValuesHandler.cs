@@ -172,7 +172,7 @@ public class GetValuesHandler(
 				{
 					// Если не указывается ни одна дата, выполняется получение текущих значений. Не убирать!
 					databaseValuesById = currentValuesStore.GetByIdentifiers(sqlScope.TagsId);
-					sqlScope.Settings.Exact = DateTimeExtension.GetCurrentDateTime();
+					sqlScope.Settings.Exact = DateTime.UtcNow;
 				}
 
 				foreach (var request in sqlScope.Requests)
@@ -228,7 +228,7 @@ public class GetValuesHandler(
 			// получение истории
 			else
 			{
-				sqlScope.Settings.Young ??= DateTimeExtension.GetCurrentDateTime();
+				sqlScope.Settings.Young ??= DateTime.UtcNow;
 				sqlScope.Settings.Old ??= sqlScope.Settings.Young;
 
 				databaseValues = await tagsHistoryRepository.GetRangeAsync(sqlScope.TagsId, sqlScope.Settings.Old.Value, sqlScope.Settings.Young.Value);

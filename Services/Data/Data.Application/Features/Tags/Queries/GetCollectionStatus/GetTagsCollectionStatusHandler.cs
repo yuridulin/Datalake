@@ -3,7 +3,7 @@ using Datalake.Data.Application.Models.Values;
 using Datalake.Domain.Enums;
 using Datalake.Shared.Application.Interfaces;
 
-namespace Datalake.Data.Application.Features.Tags.Queries.GetTagsCollectionStatus;
+namespace Datalake.Data.Application.Features.Tags.Queries.GetCollectionStatus;
 
 public interface IGetTagsCollectionStatusHandler : IQueryHandler<GetTagsCollectionStatusQuery, IEnumerable<TagCollectionStatus>> { }
 

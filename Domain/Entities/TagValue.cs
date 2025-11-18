@@ -1,6 +1,5 @@
 ﻿using Datalake.Domain.Enums;
 using Datalake.Domain.Exceptions;
-using Datalake.Domain.Extensions;
 using System.Globalization;
 
 namespace Datalake.Domain.Entities;
@@ -26,7 +25,7 @@ public sealed record class TagValue
 		return new()
 		{
 			TagId = tagId,
-			Date = date ?? DateTimeExtension.GetCurrentDateTime(),
+			Date = date ?? DateTime.UtcNow,
 			Quality = quality ?? TagQuality.Bad_NoValues,
 		};
 	}

@@ -18,8 +18,14 @@ using System.Reflection;
 
 namespace Datalake.Shared.Hosting.Bootstrap;
 
+/// <summary>
+/// Расширение программы
+/// </summary>
 public static class ProgramExtensions
 {
+	/// <summary>
+	/// Добавление общих для всех сервисов настроек
+	/// </summary>
 	public static WebApplicationBuilder AddShared(this WebApplicationBuilder builder, string envName, VersionValue version, Assembly assembly)
 	{
 		// конфиг
@@ -63,6 +69,9 @@ public static class ProgramExtensions
 		return builder;
 	}
 
+	/// <summary>
+	/// Добавление общих настроек JSON
+	/// </summary>
 	public static IMvcBuilder AddSharedJsonOptions(
 		this IMvcBuilder services)
 	{
@@ -74,6 +83,9 @@ public static class ProgramExtensions
 		});
 	}
 
+	/// <summary>
+	/// Добавление общей настройки работы с сетевыми событиями
+	/// </summary>
 	public static IServiceCollection AddSharedMassTransit(
 		this IServiceCollection services,
 		IConfiguration configuration,
@@ -105,6 +117,9 @@ public static class ProgramExtensions
 		return services;
 	}
 
+	/// <summary>
+	/// Добавление общей работы с Sentry
+	/// </summary>
 	public static void UseSharedSentry(
 		this WebApplicationBuilder builder,
 		string environment,
@@ -130,12 +145,18 @@ public static class ProgramExtensions
 		});
 	}
 
+	/// <summary>
+	/// Добавление общей обработки ошибок ASP.NET
+	/// </summary>
 	public static IApplicationBuilder UseSharedExceptionsHandler(
 		this IApplicationBuilder app)
 	{
 		return app.UseExceptionHandler(SharedExceptionsMiddleware.Handler);
 	}
 
+	/// <summary>
+	/// Добавление общей обработки сообщений об ошибках в Serilog
+	/// </summary>
 	public static IApplicationBuilder UseSharedSerilogRequestLogging(
 		this IApplicationBuilder app)
 	{
@@ -181,12 +202,22 @@ public static class ProgramExtensions
 		});
 	}
 
+	/// <summary>
+	/// Добавление общей записи тела запроса в сообщение об ошибке Sentry
+	/// </summary>
 	public static IApplicationBuilder UseSharedSentryBodyWriter(
 		this IApplicationBuilder app)
 	{
 		return app.UseMiddleware<SentryRequestBodyMiddleware>();
 	}
 
+	/// <summary>
+	/// Создание сообщения о запуске сервиса
+	/// </summary>
+	/// <param name="_"></param>
+	/// <param name="name"></param>
+	/// <param name="envName"></param>
+	/// <param name="version"></param>
 	public static void NotifyStart(
 		this IApplicationBuilder _,
 		string name,

@@ -4,7 +4,6 @@ using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
-using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;
@@ -24,7 +23,7 @@ public class ManualWriteValuesHandler(
 		foreach (var request in command.Requests)
 		{
 			TagSettingsDto? tag = null;
-			var date = request.Date ?? DateTimeExtension.GetCurrentDateTime();
+			var date = request.Date ?? DateTime.UtcNow;
 
 			if (request.Id.HasValue)
 				tag = tagsStore.TryGet(request.Id.Value);

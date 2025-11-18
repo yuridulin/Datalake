@@ -90,6 +90,9 @@ public static class Bootstrap
 		return builder;
 	}
 
+	/// <summary>
+	/// Настройка обработки запросов
+	/// </summary>
 	public static WebApplication MapApi(this WebApplication app)
 	{
 		app.UseReverseProxy();

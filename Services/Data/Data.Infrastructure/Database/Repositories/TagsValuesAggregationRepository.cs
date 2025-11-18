@@ -21,7 +21,7 @@ public class TagsValuesAggregationRepository(DataDbLinqContext db) : ITagsValues
 			return [];
 
 		// Задаем входные параметры
-		var now = moment ?? DateTimeExtension.GetCurrentDateTime();
+		var now = moment ?? DateTime.UtcNow;
 
 		DateTime periodStart, periodEnd;
 		switch (period)

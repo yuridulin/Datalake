@@ -1,6 +1,5 @@
 ﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Models.Values;
-using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using System.Collections.Concurrent;
 
@@ -26,7 +25,7 @@ public class TagsCollectionStatusStore : ITagsCollectionStatusStore
 
 	public void Set(int identifier, string? value)
 	{
-		var status = new TagCollectionStatus { Date = DateTimeExtension.GetCurrentDateTime(), HasError = string.IsNullOrEmpty(value), ErrorMessage = value };
+		var status = new TagCollectionStatus { Date = DateTime.UtcNow, HasError = string.IsNullOrEmpty(value), ErrorMessage = value };
 
 		_state.AddOrUpdate(
 			identifier,

@@ -74,7 +74,7 @@ public class InopcCollector(
 
 	protected override async Task ExecuteAsync(CollectorUpdate state, CancellationToken cancellationToken)
 	{
-		var now = DateTimeExtension.GetCurrentDateTime();
+		var now = DateTime.UtcNow;
 
 		List<Item> tags = [];
 
@@ -101,7 +101,7 @@ public class InopcCollector(
 			if (response.IsConnected)
 			{
 				var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);
-				now = DateTimeExtension.GetCurrentDateTime();
+				now = DateTime.UtcNow;
 
 				state.Values = response.Tags
 					.SelectMany(item => itemsTags[item.Name]

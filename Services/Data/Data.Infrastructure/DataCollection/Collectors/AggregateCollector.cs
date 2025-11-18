@@ -7,7 +7,6 @@ using Datalake.Data.Infrastructure.DataCollection.Interfaces;
 using Datalake.Data.Infrastructure.DataCollection.Models;
 using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
-using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -64,7 +63,7 @@ public class AggregateCollector(
 
 	protected override async Task ExecuteAsync(CollectorUpdate state, CancellationToken cancellationToken)
 	{
-		var now = DateTimeExtension.GetCurrentDateTime();
+		var now = DateTime.UtcNow;
 
 		var minute = now.Minute;
 		var hour = now.Hour;
@@ -72,7 +71,9 @@ public class AggregateCollector(
 
 		if (minuteRules.Count > 0 && lastMinute != minute)
 		{
-			logger.LogInformation("Расчет минутных значений: {now}", now);
+			if (logger.IsEnabled(LogLevel.Information))
+				logger.LogInformation("Расчет минутных значений: {now}", now);
+
 			var minuteValues = await GetValuesAsync(minuteRules, now, TagResolution.Minute, cancellationToken);
 			state.Values.AddRange(minuteValues);
 			lastMinute = minute;
@@ -80,7 +81,9 @@ public class AggregateCollector(
 
 		if (hourRules.Count > 0 && lastHour != hour)
 		{
-			logger.LogInformation("Расчет часовых значений: {now}", now);
+			if (logger.IsEnabled(LogLevel.Information))
+				logger.LogInformation("Расчет часовых значений: {now}", now);
+
 			var hourValues = await GetValuesAsync(hourRules, now, TagResolution.Hour, cancellationToken);
 			state.Values.AddRange(hourValues);
 			lastHour = hour;
@@ -88,7 +91,9 @@ public class AggregateCollector(
 
 		if (dayRules.Count > 0 && lastDay != day)
 		{
-			logger.LogInformation("Расчет суточных значений: {now}", now);
+			if (logger.IsEnabled(LogLevel.Information))
+				logger.LogInformation("Расчет суточных значений: {now}", now);
+
 			var dayValues = await GetValuesAsync(dayRules, now, TagResolution.Day, cancellationToken);
 			state.Values.AddRange(dayValues);
 			lastDay = day;

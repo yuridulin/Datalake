@@ -3,8 +3,14 @@ using Microsoft.AspNetCore.Http;
 
 namespace Datalake.Shared.Hosting.Middlewares;
 
+/// <summary>
+/// Включение политики CORS для сообщений об ошибках
+/// </summary>
 public static class EnsureCorsMiddleware
 {
+	/// <summary>
+	/// Включение политики CORS для сообщений об ошибках
+	/// </summary>
 	public static IApplicationBuilder UseSharedCorsOnError(this IApplicationBuilder builder)
 	{
 		return builder.Use(async (httpContext, next) =>

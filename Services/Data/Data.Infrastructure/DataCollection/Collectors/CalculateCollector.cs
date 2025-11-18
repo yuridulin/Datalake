@@ -4,7 +4,6 @@ using Datalake.Data.Application.Models.Sources;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;
 using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
-using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Logging;
 using NCalc;
@@ -78,7 +77,7 @@ public class CalculateCollector(
 			return;
 		}
 
-		var now = DateTimeExtension.GetCurrentDateTime();
+		var now = DateTime.UtcNow;
 
 		foreach (var scope in calculationScopes.Where(s => scopesToRecalculate.Contains(s.TagId)))
 		{

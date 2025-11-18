@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace Datalake.Shared.Hosting.Bootstrap;
 
+/// <summary>
+/// Настройки сериализации JSON, универсальные для всего приложения
+/// </summary>
 public static class JsonSettings
 {
 	/// <summary>

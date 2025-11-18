@@ -11,8 +11,14 @@ using Microsoft.Extensions.Hosting;
 
 namespace Datalake.Shared.Hosting.Middlewares;
 
+/// <summary>
+/// Перехватчик для обработки ошибок
+/// </summary>
 public class SharedExceptionsMiddleware
 {
+	/// <summary>
+	/// Перехватчик для обработки ошибок
+	/// </summary>
 	public static void Handler(IApplicationBuilder exceptionHandlerApp)
 	{
 		exceptionHandlerApp.Run(async context =>

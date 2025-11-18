@@ -13,7 +13,7 @@ public class DataTagsController(DataReverseProxyService proxyService) : DataTags
 	public override Task<ActionResult<IDictionary<int, string>>> GetStatusAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IDictionary<int, string>> (HttpContext, body: request, cancellationToken: ct);
+			=> proxyService.ProxyAsync<IDictionary<int, string>>(HttpContext, body: request, cancellationToken: ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<IDictionary<int, IDictionary<string, DateTime>>>> GetUsageAsync(

@@ -1,6 +1,5 @@
 ﻿using Datalake.Contracts.Models.Sources;
 using Datalake.Data.Application.Interfaces.Cache;
-using Datalake.Domain.Extensions;
 using Datalake.Shared.Application.Attributes;
 using System.Collections.Concurrent;
 
@@ -13,7 +12,7 @@ public class SourcesActivityStore : ISourcesActivityStore
 
 	public void Set(int sourceId, int tagsCount, bool isActive, int receivedCount)
 	{
-		var now = DateTimeExtension.GetCurrentDateTime();
+		var now = DateTime.UtcNow;
 
 		activity.AddOrUpdate(
 			sourceId,

@@ -10,6 +10,9 @@ using System.Text.Encodings.Web;
 
 namespace Datalake.Gateway.Host.Middlewares;
 
+/// <summary>
+/// Перехватчик, проверяющий сессию и выставляющий необходимые заголовки для сервисов
+/// </summary>
 public class SessionAuthenticationHandler(
 	ISessionTokenExtractor sessionTokenExtractor,
 	ISessionsService service,
@@ -17,15 +20,17 @@ public class SessionAuthenticationHandler(
 	ILoggerFactory logger,
 	UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
+	/// <summary>
+	/// Обработка события аутентификации
+	/// </summary>
 	protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
 	{
-		// Извлекаем токен сессии
-		var sessionToken = sessionTokenExtractor.ExtractToken(Request);
-
 		// Проверяем сессию
 		SessionInfo sessionInfo;
 		try
 		{
+			// Извлекаем токен сессии
+			var sessionToken = sessionTokenExtractor.ExtractToken(Request);
 			sessionInfo = await service.GetAsync(sessionToken);
 
 			// Создаем principal с claims
