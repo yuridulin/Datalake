@@ -18,7 +18,7 @@ public class OpenLocalSessionHandler(
 		User? user = await usersRepository.GetByLoginAsync(command.Login, ct)
 			?? throw new NotFoundException("Пользователь не найден по логину");
 
-		if (user.PasswordHash?.Verify(command.PasswordString) ?? false)
+		if (user.PasswordHash?.Verify(command.PasswordString) != true)
 			throw new UnauthenticatedException("Пароль не подходит");
 
 		var token = await sessionsService.OpenAsync(user, ct);

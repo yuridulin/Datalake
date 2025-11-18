@@ -272,3 +272,6 @@ dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:silent
 dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:silent
 dotnet_style_parentheses_in_other_operators = never_if_unnecessary:silent
 dotnet_style_require_accessibility_modifiers = for_non_interface_members:silent
+
+# Требовать именованные аргументы для методов с 3+ параметрами
+dotnet_diagnostic.IDE0043.severity = warning

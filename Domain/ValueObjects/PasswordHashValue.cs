@@ -35,8 +35,7 @@ public sealed record PasswordHashValue
 		if (string.IsNullOrEmpty(plainText))
 			throw new DomainException("Пароль не может быть пустым");
 
-		var hash = SHA1.HashData(Encoding.UTF8.GetBytes(plainText));
-		return new PasswordHashValue(Convert.ToBase64String(hash));
+		return new PasswordHashValue(HashString(plainText));
 	}
 
 	/// <summary>
@@ -67,10 +66,17 @@ public sealed record PasswordHashValue
 		if (string.IsNullOrEmpty(plainText))
 			return false;
 
-		var testHash = SHA1.HashData(Encoding.UTF8.GetBytes(plainText));
-		var testHashString = Convert.ToBase64String(testHash);
+		var testHashString = HashString(plainText);
 
 		return _hash == testHashString;
+	}
+
+	private static string HashString(string plainText)
+	{
+		var bytes = Encoding.UTF8.GetBytes(plainText);
+		var hash = SHA1.HashData(bytes);
+		var hashString = Convert.ToBase64String(hash);
+		return hashString;
 	}
 
 	#endregion Методы

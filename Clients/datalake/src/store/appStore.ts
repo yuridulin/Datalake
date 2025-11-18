@@ -76,7 +76,7 @@ export class AppStore {
 
 	private createApiClient() {
 		const api = new Api({
-			baseURL: isLocal ? window.location.origin + '/' : 'http://localhost:7630/',
+			baseURL: isLocal ? window.location.origin + '/' : 'http://localhost:7600/',
 			validateStatus(status) {
 				return status >= 200 && status < 300
 			},

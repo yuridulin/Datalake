@@ -12,9 +12,12 @@ import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 
-type FormType = AccessRightsInfo & {
+type FormType = Omit<AccessRightsInfo, 'id'> & {
+	id?: number
 	key: string
 	choosedObject: 'group' | 'user'
+	userGroupGuid?: string | null
+	userGuid?: string | null
 }
 
 const objectOptions: DefaultOptionType[] = [
@@ -83,13 +86,14 @@ const BlockAccessForm = () => {
 		store.api.inventoryAccessSetBlockRules(
 			Number(id),
 			form.map((x) => {
-				switch (x.choosedObject) {
-					case 'group':
-						return { ...x, userGuid: null }
-
-					case 'user':
-						return { ...x, userGroupGuid: null }
+				const baseRule = {
+					accessType: x.accessType,
+					userGroupGuid: x.choosedObject === 'group' ? x.userGroupGuid : null,
+					userGuid: x.choosedObject === 'user' ? x.userGuid : null,
 				}
+
+				// Для существующих правил сохраняем id, для новых - не передаем id
+				return x.id ? { ...baseRule, id: x.id } : baseRule
 			}),
 		)
 	}
@@ -109,6 +113,8 @@ const BlockAccessForm = () => {
 									key: String(Date.now()),
 									choosedObject: 'group',
 									accessType: AccessType.None,
+									userGroupGuid: null,
+									userGuid: null,
 								},
 							])
 						}}

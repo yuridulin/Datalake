@@ -42,17 +42,7 @@ public record class UserSession
 
 	private static bool IsExpire(DateTime date)
 	{
-		return DateTime.UtcNow <= date;
-	}
-
-	/// <summary>
-	/// Проверка на актуальность
-	/// </summary>
-	/// <exception cref="DomainException">Сессия не актуальна</exception>
-	public void Validate()
-	{
-		if (IsExpire())
-			throw new DomainException("Сессия истекла");
+		return DateTime.UtcNow > date;
 	}
 
 	/// <summary>
@@ -61,7 +51,7 @@ public record class UserSession
 	/// <param name="timeSpan">Время</param>
 	public void Refresh(TimeSpan timeSpan)
 	{
-		ExpirationTime.Add(timeSpan);
+		ExpirationTime += timeSpan;
 	}
 
 	/// <summary>

@@ -3,12 +3,21 @@ import { Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { useCallback, useEffect, useState } from 'react'
 
-type Metric = Record<string, Record<string, string>>
+type MetricItem = {
+	key: {
+		requestKey: string
+	}
+	value: {
+		requestsLast24h: string
+		lastExecutionTime: string
+		lastValuesCount: string
+	}
+}
 
-const columns: ColumnsType<Metric> = [
+const columns: ColumnsType<MetricItem> = [
 	{
 		key: 1,
-		dataIndex: ['key', 'requestKey'],
+		dataIndex: 'key.requestKey',
 		title: 'Запрос',
 		render(_, record) {
 			return <>{record.key?.requestKey}</>
@@ -47,14 +56,25 @@ const columns: ColumnsType<Metric> = [
 const ValuesMetrics = () => {
 	const store = useAppStore()
 	const [loading, setLoading] = useState<boolean>(false)
-	const [metrics, setMetrics] = useState<Metric>({})
+	const [metrics, setMetrics] = useState<MetricItem[]>([])
 
 	const getMetrics = useCallback(() => {
 		setLoading(true)
 		store.api
 			.dataTagsGetUsage({})
-			.then((res) => setMetrics(res.data))
-			.catch(() => setMetrics({}))
+			.then((res) => {
+				// Преобразуем объект в массив для отображения в таблице
+				const metricsArray: MetricItem[] = Object.entries(res.data).map(([key, value]) => ({
+					key: { requestKey: key },
+					value: {
+						requestsLast24h: value.requestsLast24h || '0',
+						lastExecutionTime: value.lastExecutionTime || '0',
+						lastValuesCount: value.lastValuesCount || '0',
+					},
+				}))
+				setMetrics(metricsArray)
+			})
+			.catch(() => setMetrics([]))
 			.finally(() => setLoading(false))
 	}, [store.api])
 

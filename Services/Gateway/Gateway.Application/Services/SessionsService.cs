@@ -11,6 +11,7 @@ namespace Datalake.Gateway.Application.Services;
 public class SessionsService(
 	IUsersActivityService usersStateService,
 	ISessionsCache cache,
+	IUnitOfWork unitOfWork,
 	IUserSessionsRepository repository) : ISessionsService
 {
 	public async Task<SessionInfo> GetAsync(string sessionToken, CancellationToken ct = default)
@@ -19,15 +20,14 @@ public class SessionsService(
 			?? await repository.GetByTokenAsync(sessionToken, ct)
 			?? throw new ApplicationException("Сессия не найдена по токену: " + sessionToken);
 
-		try
+		// Проверяем валидность сессии
+		if (session.IsExpire())
 		{
-			session.Validate();
-		}
-		catch (DomainException)
-		{
+			// Автоматически удаляем просроченную сессию
 			await repository.DeleteAsync(session, ct);
+			await unitOfWork.SaveChangesAsync(ct);
 			await cache.RemoveAsync(sessionToken);
-			throw;
+			throw new DomainException("Сессия истекла");
 		}
 
 		usersStateService.Set(session.UserGuid);

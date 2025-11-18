@@ -94,23 +94,17 @@ public record class User : IWithGuidKey, ISoftDeletable
 	{
 		if (Type == UserType.Local)
 		{
-			UpdateAsLocal(
-				login: login,
-				fullName: fullName,
-				email: email,
-				passwordString: passwordString);
+			UpdateAsLocal(login, passwordString, fullName, email);
 		}
 		else if (Type == UserType.EnergoId)
 		{
-			UpdateAsEnergoId(
-				email: email,
-				fullName: fullName);
+			UpdateAsEnergoId(fullName, email);
 		}
 		else
 			throw new DomainException("Указанный тип учетной записи не поддерживается: " + Type);
 	}
 
-	private void UpdateAsLocal(string? login, string? fullName, string? passwordString, string? email)
+	private void UpdateAsLocal(string? login, string? passwordString, string? fullName, string? email)
 	{
 		if (string.IsNullOrEmpty(login))
 			throw new DomainException("Логин не может быть пустым");
