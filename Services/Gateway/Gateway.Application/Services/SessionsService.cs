@@ -17,7 +17,7 @@ public class SessionsService(
 {
 	public async Task<UserSessionInfo> GetAsync(string sessionToken, CancellationToken ct = default)
 	{
-		UserSession session = await cache.GetAsync(sessionToken)
+		UserSession session = cache.Get(sessionToken)
 			?? await repository.GetByTokenAsync(sessionToken, ct)
 			?? throw new ApplicationException("Сессия не найдена по токену: " + sessionToken);
 
@@ -27,7 +27,8 @@ public class SessionsService(
 			// Автоматически удаляем просроченную сессию
 			await repository.DeleteAsync(session, ct);
 			await unitOfWork.SaveChangesAsync(ct);
-			await cache.RemoveAsync(sessionToken);
+			cache.Remove(sessionToken);
+
 			throw new DomainException("Сессия истекла");
 		}
 
@@ -70,7 +71,7 @@ public class SessionsService(
 		}
 
 		usersActivityStore.Set(session.UserGuid);
-		await cache.SetAsync(session.Token.Value, session);
+		cache.Set(session.Token.Value, session);
 
 		return session.Token.Value;
 	}
@@ -82,6 +83,6 @@ public class SessionsService(
 		if (session != null)
 			await repository.DeleteAsync(session, ct);
 
-		await cache.RemoveAsync(token);
+		cache.Remove(token);
 	}
 }

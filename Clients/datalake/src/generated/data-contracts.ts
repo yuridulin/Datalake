@@ -1123,7 +1123,7 @@ export interface ValueWriteRequest {
   quality?: TagQuality | null;
 }
 
-export type UserSessionWithAccessInfo = SessionInfo & {
+export type UserSessionWithAccessInfo = UserSessionInfo & {
   access: AccessInfo;
 };
 
@@ -1135,7 +1135,7 @@ export interface AccessInfo {
   tags: Record<string, AccessRuleInfo>;
 }
 
-export interface SessionInfo {
+export interface UserSessionInfo {
   /** @minLength 1 */
   token: string;
   /**

@@ -67,12 +67,6 @@ public static class Bootstrap
 		// общение между сервисами
 		builder.Services.AddSharedMassTransit(builder.Configuration, assembly);
 
-		// MemoryCache для IUserAccessCache
-		builder.Services.AddMemoryCache(options =>
-		{
-			options.SizeLimit = 10000; // Ограничение на количество записей
-		});
-
 		return builder;
 	}
 

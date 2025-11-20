@@ -1,38 +1,28 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Gateway.Application.Interfaces.Storage;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
 
 namespace Datalake.Gateway.Infrastructure.InMemory;
 
-public class SessionsStore(IMemoryCache memoryCache) : ISessionsStore
+public class SessionsStore : ISessionsStore
 {
-	private static TimeSpan MemoryCacheDuration { get; } = TimeSpan.FromMinutes(5);
+	private readonly ConcurrentDictionary<string, UserSession> store = [];
 
-	public Task<UserSession?> GetAsync(string token)
+	public UserSession? Get(string token)
 	{
-		if (memoryCache.TryGetValue<UserSession>(token, out var session))
-			return Task.FromResult(session);
+		if (store.TryGetValue(token, out var session))
+			return session;
 
-		return Task.FromResult<UserSession?>(null);
+		return null;
 	}
 
-	public Task RefreshAsync(UserSession session)
+	public void Remove(string token)
 	{
-		memoryCache.Remove(session.Token.Value);
-		memoryCache.Set(session.Token.Value, session, MemoryCacheDuration);
-		return Task.CompletedTask;
+		store.TryRemove(token, out _);
 	}
 
-	public Task RemoveAsync(string token)
+	public void Set(string token, UserSession session)
 	{
-		memoryCache.Remove(token);
-		return Task.CompletedTask;
-	}
-
-	public Task SetAsync(string token, UserSession session)
-	{
-		memoryCache.Set(token, session, MemoryCacheDuration);
-		return Task.CompletedTask;
+		store.AddOrUpdate(token, _ => session, (_, _) => session);
 	}
 }
