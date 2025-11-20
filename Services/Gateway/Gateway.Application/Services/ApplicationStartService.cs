@@ -24,7 +24,7 @@ public class ApplicationStartService(
 			await using var scope = serviceScopeFactory.CreateAsyncScope();
 
 			var accessHandler = scope.ServiceProvider.GetRequiredService<IUpdateUsersAccessHandler>();
-			await accessHandler.HandleAsync(new() { Guids = [] }, stoppingToken);
+			await accessHandler.HandleAsync(new() { Guids = [], IsAllUsers = true }, stoppingToken);
 
 			logger.LogInformation("Приложение в работе");
 		}

@@ -1,5 +1,4 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -35,12 +34,5 @@ public class UserSessionConfiguration(TableAccess access) : IEntityTypeConfigura
 			.Property(u => u.Type)
 			.HasConversion<string>()
 			.HasMaxLength(20);
-
-		builder
-			.Property(x => x.Token)
-			.HasConversion(
-				token => token.ToString(),
-				rawHash => PasswordHashValue.FromExistingHash(rawHash))
-			.HasColumnName(GatewaySchema.UserSessions.Columns.Token);
 	}
 }

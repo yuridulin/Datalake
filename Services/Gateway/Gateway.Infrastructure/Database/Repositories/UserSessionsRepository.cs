@@ -31,7 +31,7 @@ public class UserSessionsRepository(GatewayDbContext context) : IUserSessionsRep
 
 	public async Task<UserSession?> GetByTokenAsync(string token, CancellationToken ct = default)
 	{
-		return await context.UserSessions.FirstOrDefaultAsync(x => x.Token.Value == token, ct);
+		return await context.UserSessions.FirstOrDefaultAsync(x => x.Token == token, ct);
 	}
 
 	public Task UpdateAsync(UserSession userSession, CancellationToken ct = default)

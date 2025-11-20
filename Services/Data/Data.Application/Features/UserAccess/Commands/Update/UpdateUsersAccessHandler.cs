@@ -16,13 +16,18 @@ public class UpdateUsersAccessHandler(
 	public async Task<bool> HandleAsync(UpdateUsersAccessCommand command, CancellationToken ct = default)
 	{
 		if (logger.IsEnabled(LogLevel.Information))
-			logger.LogInformation("Получено событие обновления рассчитанных прав доступа. Пользователей затронуто: {count}", command.Guids.Count());
+		{
+			if (command.IsAllUsers)
+				logger.LogInformation("Получено событие обновления рассчитанных прав доступа. Затронуты все ользователи");
+			else
+				logger.LogInformation("Получено событие обновления рассчитанных прав доступа. Пользователей затронуто: {count}", command.Guids.Count());
+		}
 
 		try
 		{
-			var updatedAccess = command.Guids.Any()
-				? await userAccessRepository.GetMultipleAsync(command.Guids, ct)
-				: await userAccessRepository.GetAllAsync(ct);
+			var updatedAccess = command.IsAllUsers
+				? await userAccessRepository.GetAllAsync(ct)
+				: await userAccessRepository.GetMultipleAsync(command.Guids, ct);
 
 			userAccessCache.Set(updatedAccess);
 			logger.LogInformation("Рассчитанные права доступа получены и записаны в кэш");

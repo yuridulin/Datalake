@@ -18,7 +18,7 @@ public class GetCurrentSessionWithAccessHandler(
 		var sessionInfo = await sessionsService.GetAsync(query.Token, ct);
 
 		var access = userAccessStore.Get(sessionInfo.UserGuid)
-			?? throw new ApplicationException("Доступ пользователя не найден");
+			?? new UserAccessValue(sessionInfo.UserGuid, UserAccessRuleValue.Empty);
 
 		var data = new UserSessionWithAccessInfo
 		{

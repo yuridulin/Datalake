@@ -1,6 +1,6 @@
 ﻿using Datalake.Domain.Enums;
 using Datalake.Domain.Exceptions;
-using Datalake.Domain.ValueObjects;
+using System.Security.Cryptography;
 
 namespace Datalake.Domain.Entities;
 
@@ -30,7 +30,7 @@ public record class UserSession
 		{
 			UserGuid = userGuid,
 			Type = type,
-			Token = PasswordHashValue.FromEmpty(),
+			Token = CreateToken(),
 			Created = now,
 			ExpirationTime = expirationTime ?? now.AddDays(7),
 		};
@@ -38,7 +38,7 @@ public record class UserSession
 
 	#endregion Конструкторы
 
-	#region
+	#region Методы
 
 	private static bool IsExpire(DateTime date)
 	{
@@ -62,7 +62,18 @@ public record class UserSession
 		return IsExpire(ExpirationTime);
 	}
 
-	#endregion
+	/// <summary>
+	/// Генерация нового случайного хэша
+	/// </summary>
+	private static string CreateToken()
+	{
+		using var rng = RandomNumberGenerator.Create();
+		var randomNumber = new byte[32];
+		rng.GetBytes(randomNumber);
+		return Convert.ToBase64String(randomNumber);
+	}
+
+	#endregion Методы
 
 	#region Свойства
 
@@ -89,7 +100,7 @@ public record class UserSession
 	/// <summary>
 	/// Токен доступа
 	/// </summary>
-	public PasswordHashValue Token { get; private set; } = null!;
+	public string Token { get; private set; } = null!;
 
 	/// <summary>
 	/// Тип входа в сессию. Нужен, чтобы правильно выйти

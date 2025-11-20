@@ -17,17 +17,6 @@ public sealed record PasswordHashValue
 	}
 
 	/// <summary>
-	/// Генерация нового случайного хэша
-	/// </summary>
-	public static PasswordHashValue FromEmpty()
-	{
-		using var rng = RandomNumberGenerator.Create();
-		var randomNumber = new byte[32];
-		rng.GetBytes(randomNumber);
-		return new PasswordHashValue(Convert.ToBase64String(randomNumber));
-	}
-
-	/// <summary>
 	/// Создать из plain text
 	/// </summary>
 	public static PasswordHashValue FromPlainText(string? plainText)

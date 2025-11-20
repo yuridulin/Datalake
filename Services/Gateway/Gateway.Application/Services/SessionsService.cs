@@ -36,7 +36,7 @@ public class SessionsService(
 
 		var info = new UserSessionInfo
 		{
-			Token = session.Token.Value,
+			Token = session.Token,
 			UserGuid = session.UserGuid,
 			Type = session.Type,
 			ExpirationTime = session.ExpirationTime,
@@ -71,9 +71,9 @@ public class SessionsService(
 		}
 
 		usersActivityStore.Set(session.UserGuid);
-		cache.Set(session.Token.Value, session);
+		cache.Set(session.Token, session);
 
-		return session.Token.Value;
+		return session.Token;
 	}
 
 	public async Task CloseAsync(string token, CancellationToken ct = default)

@@ -27,7 +27,7 @@ public class ApplicationStartService(
 			var accessHandler = scope.ServiceProvider.GetRequiredService<IUpdateUsersAccessHandler>();
 			var restartHandler = scope.ServiceProvider.GetRequiredService<IRestartCollectionHandler>();
 
-			var accessTask = accessHandler.HandleAsync(new() { Guids = [] }, stoppingToken);
+			var accessTask = accessHandler.HandleAsync(new() { Guids = [], IsAllUsers = true, }, stoppingToken);
 			var restartTask = restartHandler.HandleAsync(new(), stoppingToken);
 
 			await Task.WhenAll(accessTask, restartTask);

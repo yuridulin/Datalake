@@ -16,6 +16,13 @@ public class SessionMiddleware(
 	/// <inheritdoc/>
 	public async Task InvokeAsync(HttpContext context, RequestDelegate next)
 	{
+		// Пропускаем запросы health-check
+		if (context.Request.Path.StartsWithSegments("/health"))
+		{
+			await next(context);
+			return;
+		}
+
 		// Пропускаем аутентификацию для эндпоинтов сессий
 		if (context.Request.Path.StartsWithSegments("/api/v1/gateway/sessions") &&
 			context.Request.Method != "GET" && context.Request.Method != "DELETE")
