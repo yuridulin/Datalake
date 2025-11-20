@@ -1,12 +1,12 @@
 ﻿using Datalake.Contracts.Models.Users;
-using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Queries;
 
 namespace Datalake.Inventory.Infrastructure.InMemory.EnergoId.Queries;
 
 public class EnergoIdQueriesService(
-	IInventoryCache inventoryCache,
-	IEnergoIdCache energoIdCache) : IEnergoIdQueriesService
+	IInventoryStore inventoryCache,
+	IEnergoIdStore energoIdCache) : IEnergoIdQueriesService
 {
 	public Task<IEnumerable<UserEnergoIdInfo>> GetAsync(CancellationToken ct = default)
 	{

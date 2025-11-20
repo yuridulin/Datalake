@@ -1,5 +1,5 @@
 ﻿using Datalake.Inventory.Application.Abstractions;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;

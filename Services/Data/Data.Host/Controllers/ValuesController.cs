@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Models.Data.Values;
 using Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;
 using Datalake.Data.Application.Features.Values.Queries.GetValues;
-using Datalake.Shared.Hosting.Controllers.Data;
+using Datalake.Shared.Hosting.AbstractControllers.Data;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

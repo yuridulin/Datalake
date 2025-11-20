@@ -1,8 +1,7 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Abstractions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -15,7 +14,7 @@ public class CreateSourceHandler(
 	ISourcesRepository sourcesRepository,
 	IAuditRepository auditRepository,
 	IUnitOfWork unitOfWork,
-	IInventoryCache inventoryCache,
+	IInventoryStore inventoryCache,
 	ILogger<CreateSourceHandler> logger) :
 		TransactionalCommandHandler<CreateSourceCommand, int>(unitOfWork, logger, inventoryCache),
 		ICreateSourceHandler
@@ -42,5 +41,5 @@ public class CreateSourceHandler(
 		return source.Id;
 	}
 
-	public override IInventoryCacheState UpdateCache(IInventoryCacheState state) => state.WithSource(source);
+	public override IInventoryState UpdateCache(IInventoryState state) => state.WithSource(source);
 }

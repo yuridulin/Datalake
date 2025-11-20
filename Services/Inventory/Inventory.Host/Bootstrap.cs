@@ -1,5 +1,6 @@
 ﻿using Datalake.Inventory.Host.Services;
-using Datalake.Shared.Hosting.Bootstrap;
+using Datalake.Shared.Hosting;
+using Datalake.Shared.Hosting.Constants;
 using Datalake.Shared.Hosting.Interfaces;
 using NJsonSchema.Generation;
 
@@ -32,6 +33,7 @@ public static class Bootstrap
 			})
 			.AddEndpointsApiExplorer();
 
+		// Сервисы
 		builder.Services.AddSingleton<IAuthenticator, AuthenticationService>();
 
 		return builder;

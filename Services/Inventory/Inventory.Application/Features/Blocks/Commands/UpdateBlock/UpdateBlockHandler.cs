@@ -2,8 +2,7 @@
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Abstractions;
 using Datalake.Inventory.Application.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -17,7 +16,7 @@ public class UpdateBlockHandler(
 	IBlockTagsRepository blockTagsRepository,
 	IAuditRepository auditRepository,
 	IUnitOfWork unitOfWork,
-	IInventoryCache inventoryCache,
+	IInventoryStore inventoryCache,
 	ILogger<UpdateBlockHandler> logger) :
 		TransactionalCommandHandler<UpdateBlockCommand, int>(unitOfWork, logger, inventoryCache),
 		IUpdateBlockHandler
@@ -53,5 +52,5 @@ public class UpdateBlockHandler(
 		return block.Id;
 	}
 
-	public override IInventoryCacheState UpdateCache(IInventoryCacheState state) => state.WithBlock(block).WithBlockTags(block.Id, blockTags);
+	public override IInventoryState UpdateCache(IInventoryState state) => state.WithBlock(block).WithBlockTags(block.Id, blockTags);
 }

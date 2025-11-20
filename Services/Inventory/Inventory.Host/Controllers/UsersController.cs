@@ -4,7 +4,7 @@ using Datalake.Inventory.Application.Features.Users.Commands.DeleteUser;
 using Datalake.Inventory.Application.Features.Users.Commands.UpdateUser;
 using Datalake.Inventory.Application.Features.Users.Queries.GetUsers;
 using Datalake.Inventory.Application.Features.Users.Queries.GetUserWithDetails;
-using Datalake.Shared.Hosting.Controllers.Inventory;
+using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

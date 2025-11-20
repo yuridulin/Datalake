@@ -2,8 +2,7 @@
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Abstractions;
 using Datalake.Inventory.Application.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -18,7 +17,7 @@ public class DeleteUserHandler(
 	ICalculatedAccessRulesRepository calculatedAccessRulesRepository,
 	IUnitOfWork unitOfWork,
 	ILogger<DeleteUserHandler> logger,
-	IInventoryCache inventoryCache) :
+	IInventoryStore inventoryCache) :
 		TransactionalCommandHandler<DeleteUserCommand, bool>(unitOfWork, logger, inventoryCache),
 		IDeleteUserHandler
 {
@@ -44,5 +43,5 @@ public class DeleteUserHandler(
 		return true;
 	}
 
-	public override IInventoryCacheState UpdateCache(IInventoryCacheState state) => state.WithUser(user);
+	public override IInventoryState UpdateCache(IInventoryState state) => state.WithUser(user);
 }

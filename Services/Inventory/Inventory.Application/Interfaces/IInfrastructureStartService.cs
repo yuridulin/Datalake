@@ -2,5 +2,5 @@
 
 public interface IInfrastructureStartService
 {
-	Task StartAsync();
+	Task StartAsync(CancellationToken stoppingToken);
 }

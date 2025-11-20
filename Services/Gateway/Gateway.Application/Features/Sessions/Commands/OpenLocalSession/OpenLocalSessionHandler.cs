@@ -1,0 +1,28 @@
+﻿using Datalake.Domain.Entities;
+using Datalake.Gateway.Application.Abstractions;
+using Datalake.Gateway.Application.Interfaces;
+using Datalake.Gateway.Application.Interfaces.Repositories;
+using Datalake.Shared.Application.Exceptions;
+using Datalake.Shared.Application.Interfaces;
+
+namespace Datalake.Gateway.Application.Features.Sessions.Commands.OpenLocalSession;
+
+public interface IOpenLocalSessionHandler : ICommandHandler<OpenLocalSessionCommand, string> { }
+
+public class OpenLocalSessionHandler(
+	IUnitOfWork unitOfWork,
+	IUsersRepository usersRepository,
+	ISessionsService sessionsService) : TransactionHandler<OpenLocalSessionCommand, string>(unitOfWork), IOpenLocalSessionHandler
+{
+	public override async Task<string> HandleInTransactionAsync(OpenLocalSessionCommand command, CancellationToken ct = default)
+	{
+		User? user = await usersRepository.GetByLoginAsync(command.Login, ct)
+			?? throw new NotFoundException("Пользователь не найден по логину");
+
+		if (user.PasswordHash?.Verify(command.PasswordString) != true)
+			throw new UnauthenticatedException("Пароль не подходит");
+
+		var token = await sessionsService.OpenAsync(user, ct);
+		return token;
+	}
+}

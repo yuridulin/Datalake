@@ -1,6 +1,6 @@
 ﻿using Datalake.Data.Application.Interfaces;
-using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Data.Application.Interfaces.DataCollection;
+using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;

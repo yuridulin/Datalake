@@ -8,7 +8,7 @@ using Datalake.Inventory.Application.Features.AccessRules.Commands.ChangeUserRul
 using Datalake.Inventory.Application.Features.AccessRules.Models;
 using Datalake.Inventory.Application.Features.AccessRules.Queries.GetAccessRules;
 using Datalake.Inventory.Application.Features.CalculatedAccessRules.Queries.GetCalculatedAccessRules;
-using Datalake.Shared.Hosting.Controllers.Inventory;
+using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime.InteropServices;

@@ -1,4 +1,4 @@
-﻿using Datalake.Gateway.Application.Features.Queries.GetUsersActivity;
+﻿using Datalake.Gateway.Application.Features.Users.Queries.GetUsersActivity;
 using Datalake.Gateway.Host.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

@@ -1,7 +1,7 @@
-﻿using Datalake.Gateway.Application.Features.Commands.CloseSession;
-using Datalake.Gateway.Application.Features.Commands.OpenEnergoIdSession;
-using Datalake.Gateway.Application.Features.Commands.OpenLocalSession;
-using Datalake.Gateway.Application.Features.Queries.GetCurrentSessionWithAccess;
+﻿using Datalake.Gateway.Application.Features.Sessions.Commands.CloseSession;
+using Datalake.Gateway.Application.Features.Sessions.Commands.OpenEnergoIdSession;
+using Datalake.Gateway.Application.Features.Sessions.Commands.OpenLocalSession;
+using Datalake.Gateway.Application.Features.Sessions.Queries.GetCurrentSessionWithAccess;
 using Datalake.Gateway.Application.Models;
 using Datalake.Gateway.Application.Models.Auth;
 using Datalake.Gateway.Host.Interfaces;

@@ -1,7 +1,6 @@
 ﻿using Datalake.Domain.ValueObjects;
 using Datalake.Inventory.Application.Features.CalculatedAccessRules.Commands.UpdateCalculatedAccessRules;
 using Datalake.Inventory.Application.Interfaces;
-using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Models;
 using MassTransit;
@@ -12,13 +11,13 @@ namespace Datalake.Inventory.Application.Services;
 
 [Singleton]
 public class UserAccessSynchronizationService(
-	IInventoryCache inventoryCache,
+	IInventoryStore inventoryCache,
 	IUserAccessCalculationService userAccessCalculationService,
-	IUserAccessCache userAccessCache,
+	IUsersAccessStore userAccessCache,
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<UserAccessSynchronizationService> logger) : IUserAccessSynchronizationService
 {
-	private IUserAccessCacheState? previousUsersAccessState;
+	private IUserAccessState? previousUsersAccessState;
 	private bool started = false;
 
 	public void Start()
@@ -177,7 +176,7 @@ public class UserAccessSynchronizationService(
 		}
 	}
 
-	private static List<CalculatedAccessRule> GetDiffRules(IInventoryCacheState state, UserAccessValue previous, UserAccessValue next)
+	private static List<CalculatedAccessRule> GetDiffRules(IInventoryState state, UserAccessValue previous, UserAccessValue next)
 	{
 		List<CalculatedAccessRule> diff = [];
 
@@ -237,7 +236,7 @@ public class UserAccessSynchronizationService(
 		return diff;
 	}
 
-	private static List<CalculatedAccessRule> GetAllRules(IInventoryCacheState state, UserAccessValue next)
+	private static List<CalculatedAccessRule> GetAllRules(IInventoryState state, UserAccessValue next)
 	{
 		List<CalculatedAccessRule> rules = [];
 		rules.Add(CalculatedAccessRule.Global(next.Guid, next.RootRule.Access, next.RootRule.Id));

@@ -1,5 +1,7 @@
 ﻿using Datalake.Domain.Entities;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Interfaces;
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
@@ -11,7 +13,7 @@ namespace Datalake.Gateway.Infrastructure.Database;
 /// </summary>
 /// Add-Migration NAME -Context Datalake.Gateway.Infrastructure.Database.GatewayDbContext -OutputDir Database\Migrations
 /// Remove-Migration -Context Datalake.Gateway.Infrastructure.Database.GatewayDbContext
-public class GatewayDbContext(DbContextOptions<GatewayDbContext> options) : DbContext(options)
+public class GatewayDbContext(DbContextOptions<GatewayDbContext> options) : DbContext(options), IUserAccessDbContext
 {
 	/// <summary>
 	/// Конфигурация связей между таблицами БД
@@ -50,4 +52,6 @@ public class GatewayDbContext(DbContextOptions<GatewayDbContext> options) : DbCo
 	/// Таблица текущих сессий пользователей
 	/// </summary>
 	public virtual DbSet<UserSession> UserSessions { get; set; }
+
+	public virtual DbSet<CalculatedAccessRule> CalculatedAccessRules { get; set; }
 }

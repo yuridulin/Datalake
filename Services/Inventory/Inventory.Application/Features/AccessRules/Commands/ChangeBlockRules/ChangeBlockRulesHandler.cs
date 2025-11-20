@@ -1,8 +1,7 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 
@@ -15,7 +14,7 @@ public class ChangeBlockRulesHandler(
 	IAccessRulesRepository accessRulesRepository,
 	IAuditRepository auditRepository,
 	IUnitOfWork unitOfWork,
-	IInventoryCache inventoryCache) : IChangeBlockRulesHandler
+	IInventoryStore inventoryCache) : IChangeBlockRulesHandler
 {
 	public async Task<bool> HandleAsync(ChangeBlockRulesCommand command, CancellationToken ct = default)
 	{

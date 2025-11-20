@@ -2,8 +2,7 @@
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Abstractions;
 using Datalake.Inventory.Application.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -17,7 +16,7 @@ public class MoveUserGroupHandler(
 	IAuditRepository auditRepository,
 	IUnitOfWork unitOfWork,
 	ILogger<MoveUserGroupHandler> logger,
-	IInventoryCache inventoryCache) :
+	IInventoryStore inventoryCache) :
 		TransactionalCommandHandler<MoveUserGroupCommand, bool>(unitOfWork, logger, inventoryCache),
 		IMoveUserGroupHandler
 {
@@ -41,5 +40,5 @@ public class MoveUserGroupHandler(
 		return true;
 	}
 
-	public override IInventoryCacheState UpdateCache(IInventoryCacheState state) => state.WithUserGroup(userGroup);
+	public override IInventoryState UpdateCache(IInventoryState state) => state.WithUserGroup(userGroup);
 }

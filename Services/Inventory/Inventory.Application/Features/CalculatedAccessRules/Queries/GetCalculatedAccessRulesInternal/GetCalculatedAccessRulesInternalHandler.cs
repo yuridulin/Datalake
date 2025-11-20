@@ -1,12 +1,12 @@
 ﻿using Datalake.Domain.ValueObjects;
-using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.CalculatedAccessRules.Queries.GetCalculatedAccessRulesInternal;
 
 public interface IGetCalculatedAccessRulesInternalHandler : IQueryHandler<GetCalculatedAccessRulesInternalQuery, IReadOnlyDictionary<Guid, UserAccessValue>> { }
 
-public class GetCalculatedAccessRulesInternalHandler(IUserAccessCache userAccessCache) : IGetCalculatedAccessRulesInternalHandler, IQueryHandler<GetCalculatedAccessRulesInternalQuery, IReadOnlyDictionary<Guid, UserAccessValue>>
+public class GetCalculatedAccessRulesInternalHandler(IUsersAccessStore userAccessCache) : IGetCalculatedAccessRulesInternalHandler, IQueryHandler<GetCalculatedAccessRulesInternalQuery, IReadOnlyDictionary<Guid, UserAccessValue>>
 {
 	public Task<IReadOnlyDictionary<Guid, UserAccessValue>> HandleAsync(GetCalculatedAccessRulesInternalQuery query, CancellationToken ct = default)
 	{

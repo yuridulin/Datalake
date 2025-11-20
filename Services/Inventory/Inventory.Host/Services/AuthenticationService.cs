@@ -1,5 +1,5 @@
 ﻿using Datalake.Domain.ValueObjects;
-using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Hosting.Constants;
 using Datalake.Shared.Hosting.Interfaces;
@@ -7,7 +7,7 @@ using Datalake.Shared.Hosting.Interfaces;
 namespace Datalake.Inventory.Host.Services;
 
 [Singleton]
-public class AuthenticationService(IUserAccessCache cache) : IAuthenticator
+public class AuthenticationService(IUsersAccessStore cache) : IAuthenticator
 {
 	public UserAccessValue Authenticate(HttpContext httpContext)
 	{

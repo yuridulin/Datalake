@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Models.Users;
 using Datalake.Inventory.Application.Features.EnergoId.Commands.ReloadEnergoId;
 using Datalake.Inventory.Application.Features.EnergoId.Queries.GetEnergoId;
-using Datalake.Shared.Hosting.Controllers.Inventory;
+using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

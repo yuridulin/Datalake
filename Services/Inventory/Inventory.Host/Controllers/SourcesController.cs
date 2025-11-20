@@ -4,7 +4,7 @@ using Datalake.Inventory.Application.Features.Sources.Commands.DeleteSource;
 using Datalake.Inventory.Application.Features.Sources.Commands.UpdateSource;
 using Datalake.Inventory.Application.Features.Sources.Queries.GetSource;
 using Datalake.Inventory.Application.Features.Sources.Queries.GetSources;
-using Datalake.Shared.Hosting.Controllers.Inventory;
+using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

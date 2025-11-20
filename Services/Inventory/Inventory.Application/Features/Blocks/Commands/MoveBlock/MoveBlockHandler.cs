@@ -1,8 +1,7 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 
@@ -14,7 +13,7 @@ public class MoveBlockHandler(
 	IUnitOfWork unitOfWork,
 	IBlocksRepository blocksRepository,
 	IAuditRepository auditRepository,
-	IInventoryCache inventoryCache) : IMoveBlockHandler
+	IInventoryStore inventoryCache) : IMoveBlockHandler
 {
 	public async Task<int> HandleAsync(MoveBlockCommand command, CancellationToken ct = default)
 	{

@@ -1,5 +1,5 @@
 ﻿using Datalake.Data.Application.Features.DataCollection.Commands.ManualRestartCollection;
-using Datalake.Shared.Hosting.Controllers.Data;
+using Datalake.Shared.Hosting.AbstractControllers.Data;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

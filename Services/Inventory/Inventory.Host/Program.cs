@@ -2,7 +2,6 @@ using Datalake.Contracts;
 using Datalake.Inventory.Application;
 using Datalake.Inventory.Infrastructure;
 using Datalake.Shared.Hosting;
-using Datalake.Shared.Hosting.Bootstrap;
 using Datalake.Shared.Hosting.Constants;
 using Datalake.Shared.Hosting.Middlewares;
 using System.Reflection;

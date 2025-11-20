@@ -1,5 +1,5 @@
-﻿using Datalake.Data.Application.Interfaces.Cache;
-using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Data.Application.Interfaces.DataCollection;
+using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Data.Application.Models.Sources;
 using Datalake.Data.Infrastructure.DataCollection.Abstractions;
 using Datalake.Domain.Entities;

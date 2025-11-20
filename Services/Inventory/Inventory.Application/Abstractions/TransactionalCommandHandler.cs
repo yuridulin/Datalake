@@ -1,6 +1,5 @@
 ﻿using Datalake.Domain.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Shared.Application.Exceptions;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -11,7 +10,7 @@ namespace Datalake.Inventory.Application.Abstractions;
 public abstract class TransactionalCommandHandler<TCommand, TResult>(
 	IUnitOfWork unitOfWork,
 	ILogger logger,
-	IInventoryCache? inventoryCache = null) : ICommandHandler<TCommand, TResult>
+	IInventoryStore? inventoryCache = null) : ICommandHandler<TCommand, TResult>
 		where TCommand : ICommandRequest
 		where TResult : notnull
 {
@@ -24,7 +23,7 @@ public abstract class TransactionalCommandHandler<TCommand, TResult>(
 
 	public abstract Task<TResult> ExecuteInTransactionAsync(TCommand command, CancellationToken ct = default);
 
-	public virtual IInventoryCacheState UpdateCache(IInventoryCacheState state) => state;
+	public virtual IInventoryState UpdateCache(IInventoryState state) => state;
 
 	public virtual async Task<TResult> HandleAsync(TCommand command, CancellationToken ct = default)
 	{

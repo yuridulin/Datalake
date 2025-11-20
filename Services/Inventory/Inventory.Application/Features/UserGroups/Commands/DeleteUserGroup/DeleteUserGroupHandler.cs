@@ -2,8 +2,7 @@
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Abstractions;
 using Datalake.Inventory.Application.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -17,7 +16,7 @@ public class DeleteUserGroupHandler(
 	IAuditRepository auditRepository,
 	ICalculatedAccessRulesRepository calculatedAccessRulesRepository,
 	IUnitOfWork unitOfWork,
-	IInventoryCache inventoryCache,
+	IInventoryStore inventoryCache,
 	ILogger<DeleteUserGroupCommand> logger) :
 		TransactionalCommandHandler<DeleteUserGroupCommand, bool>(unitOfWork, logger, inventoryCache),
 		IDeleteUserGroupHandler
@@ -44,5 +43,5 @@ public class DeleteUserGroupHandler(
 		return true;
 	}
 
-	public override IInventoryCacheState UpdateCache(IInventoryCacheState state) => state.WithUserGroup(userGroup);
+	public override IInventoryState UpdateCache(IInventoryState state) => state.WithUserGroup(userGroup);
 }

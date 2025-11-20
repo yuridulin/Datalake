@@ -15,21 +15,21 @@ public class InfrastructureStartService(
 	IServiceScopeFactory serviceScopeFactory,
 	ILogger<InfrastructureStartService> logger) : IInfrastructureStartService
 {
-	public async Task StartAsync()
+	public async Task StartAsync(CancellationToken stoppingToken)
 	{
 		logger.LogInformation("Запущена инициализация работы с БД");
 
 		try
 		{
-			using var serviceScope = serviceScopeFactory.CreateScope();
+			await using var serviceScope = serviceScopeFactory.CreateAsyncScope();
 
 			// выполняем миграции через EF
 			var context = serviceScope.ServiceProvider.GetRequiredService<InventoryDbContext>();
-			await context.Database.MigrateAsync();
+			await context.Database.MigrateAsync(cancellationToken: stoppingToken);
 
 			// создание представления пользователей EnergoId
 			var viewCreator = serviceScope.ServiceProvider.GetRequiredService<IEnergoIdViewCreator>();
-			await viewCreator.RecreateAsync();
+			await viewCreator.RecreateAsync(stoppingToken);
 
 			logger.LogInformation("Инициализация работы с БД выполнена");
 		}

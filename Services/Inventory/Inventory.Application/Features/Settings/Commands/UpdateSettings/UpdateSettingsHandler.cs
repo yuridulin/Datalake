@@ -1,8 +1,9 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Abstractions;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
+using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -10,6 +11,7 @@ namespace Datalake.Inventory.Application.Features.Settings.Commands.UpdateSettin
 
 public interface IUpdateSettingsHandler : ICommandHandler<UpdateSettingsCommand, bool> { }
 
+[Scoped]
 public class UpdateSettingsHandler(
 	ISettingsRepository settingsRepository,
 	IAuditRepository auditRepository,

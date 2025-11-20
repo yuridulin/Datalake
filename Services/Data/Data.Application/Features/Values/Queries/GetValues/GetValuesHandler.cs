@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Models.Data.Values;
-using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Data.Application.Interfaces.Repositories;
+using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Data.Application.Models.Values;
 using Datalake.Domain.Entities;

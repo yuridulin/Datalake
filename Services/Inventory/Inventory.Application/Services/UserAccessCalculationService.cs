@@ -1,7 +1,6 @@
 ﻿using Datalake.Domain.Enums;
 using Datalake.Domain.ValueObjects;
 using Datalake.Inventory.Application.Interfaces;
-using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Inventory.Application.Models;
 using System.Collections.Concurrent;
 
@@ -17,7 +16,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 	/// </summary>
 	/// <param name="state">Состояние с текущими данными</param>
 	/// <returns>Состояние актуальных прав доступа</returns>
-	public UsersAccessDto CalculateAccess(IInventoryCacheState state)
+	public UsersAccessDto CalculateAccess(IInventoryState state)
 	{
 		// Предварительные вычисления
 		var precomputed = PrecomputeStructures(state);
@@ -40,7 +39,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		};
 	}
 
-	private static HashSets PrepareHashSets(IInventoryCacheState state)
+	private static HashSets PrepareHashSets(IInventoryState state)
 	{
 		var userGlobalRules = new Dictionary<Guid, UserAccessRuleValue>();
 		var groupGlobalRules = new Dictionary<Guid, UserAccessRuleValue>();
@@ -110,7 +109,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 			groupRulesToTags);
 	}
 
-	private static Precomputed PrecomputeStructures(IInventoryCacheState state)
+	private static Precomputed PrecomputeStructures(IInventoryState state)
 	{
 		// Оптимизация: предварительный расчет иерархии блоков
 		var blockParentMap = state.Blocks.ToDictionary(b => b.Key, b => b.Value.ParentId);
@@ -201,7 +200,7 @@ public class UserAccessCalculationService : IUserAccessCalculationService
 		return new Precomputed(blockAncestors, blocksByTag, userGroups, directUserGroupRules);
 	}
 
-	private static UserAccessValue CalculateUserAccess(UserMemoryDto user, IInventoryCacheState state, Precomputed precomputed, HashSets hashSets)
+	private static UserAccessValue CalculateUserAccess(UserMemoryDto user, IInventoryState state, Precomputed precomputed, HashSets hashSets)
 	{
 		Guid userGuid = user.Guid;
 

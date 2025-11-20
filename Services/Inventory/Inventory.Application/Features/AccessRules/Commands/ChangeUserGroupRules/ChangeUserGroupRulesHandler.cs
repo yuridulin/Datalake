@@ -1,8 +1,7 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 
@@ -15,7 +14,7 @@ public class ChangeUserGroupRulesHandler(
 	IAccessRulesRepository accessRulesRepository,
 	IAuditRepository auditRepository,
 	IUnitOfWork unitOfWork,
-	IInventoryCache inventoryCache) : IChangeUserGroupRulesHandler
+	IInventoryStore inventoryCache) : IChangeUserGroupRulesHandler
 {
 	public async Task<bool> HandleAsync(ChangeUserGroupRulesCommand command, CancellationToken ct = default)
 	{

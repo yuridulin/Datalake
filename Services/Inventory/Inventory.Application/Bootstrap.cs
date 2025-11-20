@@ -11,23 +11,25 @@ public static class Bootstrap
 {
 	public static IHostApplicationBuilder AddApplication(this IHostApplicationBuilder builder)
 	{
-		// черная магия для регистрации обработчиков
+		// CQRS
 		builder.Services.Scan(scan => scan
 			.FromAssemblies(Assembly.GetExecutingAssembly())
 			.AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
 				.AsImplementedInterfaces()
 				.WithScopedLifetime());
+
 		builder.Services.Scan(scan => scan
 			.FromAssemblies(Assembly.GetExecutingAssembly())
 			.AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
 				.AsImplementedInterfaces()
 				.WithScopedLifetime());
 
-		builder.Services.AddSingleton<ApplicationStartService>();
-		builder.Services.AddHostedService(provider => provider.GetRequiredService<ApplicationStartService>());
-
+		// Системы
 		builder.Services.AddSingleton<IUserAccessCalculationService, UserAccessCalculationService>();
 		builder.Services.AddSingleton<IUserAccessSynchronizationService, UserAccessSynchronizationService>();
+
+		// Настройка
+		builder.Services.AddHostedService<ApplicationStartService>();
 
 		return builder;
 	}

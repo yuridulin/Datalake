@@ -1,13 +1,13 @@
-﻿using Datalake.Data.Application.Interfaces.Cache;
-using Datalake.Domain.ValueObjects;
+﻿using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Attributes;
+using Datalake.Shared.Application.Interfaces.AccessRules;
 using Datalake.Shared.Hosting.Constants;
 using Datalake.Shared.Hosting.Interfaces;
 
 namespace Datalake.Data.Host.Services;
 
 [Singleton]
-public class AuthenticationService(IUserAccessStore cache) : IAuthenticator
+public class AuthenticationService(IUsersAccessStore userAccessStore) : IAuthenticator
 {
 	public UserAccessValue Authenticate(HttpContext httpContext)
 	{
@@ -18,7 +18,7 @@ public class AuthenticationService(IUserAccessStore cache) : IAuthenticator
 		if (!Guid.TryParse(userGuidString, out var userGuid))
 			throw new InvalidCastException("Идентификатор пользователя не прочитан как GUID");
 
-		var user = cache.TryGet(userGuid)
+		var user = userAccessStore.Get(userGuid)
 			?? throw new KeyNotFoundException($"Пользователь не найден по идентификатору: {userGuid}");
 
 		return user;

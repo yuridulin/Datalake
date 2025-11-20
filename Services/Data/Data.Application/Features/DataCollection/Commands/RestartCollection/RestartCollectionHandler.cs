@@ -1,6 +1,6 @@
-﻿using Datalake.Data.Application.Interfaces.Cache;
-using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Interfaces.Repositories;
+using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 

@@ -1,17 +1,21 @@
-﻿using Datalake.Gateway.Application.Features.UsersAccess.Commands.UpdateUsersAccess;
+﻿using Datalake.Gateway.Application.Features.UserAccess.Commands.Update;
+using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Models;
 using MassTransit;
 
 namespace Datalake.Gateway.Host.Consumers;
 
 /// <summary>
-/// Обработка события пересчета прав доступа
+/// Обработка события обновления рассчитанных прав доступа
 /// </summary>
+[Scoped]
 public class AccessUpdateConsumer(
 	IUpdateUsersAccessHandler handler,
 	ILogger<AccessUpdateConsumer> logger) : IConsumer<AccessUpdateMessage>
 {
-	/// <inheritdoc/>
+	/// <summary>
+	/// Обработка события обновления рассчитанных прав доступа
+	/// </summary>
 	public Task Consume(ConsumeContext<AccessUpdateMessage> context)
 	{
 		var message = context.Message;

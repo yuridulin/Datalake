@@ -1,12 +1,12 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Interfaces;
-using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Models;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.InMemory.Inventory;
 
-public record class InventoryCacheState : IInventoryCacheState
+public record class InventoryCacheState : IInventoryState
 {
 	public long Version { get; private set; } = DateTime.UtcNow.Ticks;
 
@@ -98,7 +98,7 @@ public record class InventoryCacheState : IInventoryCacheState
 
 	#region Вспомогательные методы для модификации
 
-	public IInventoryCacheState WithBlock(Block block)
+	public IInventoryState WithBlock(Block block)
 	{
 		return Update(state => state with
 		{
@@ -106,7 +106,7 @@ public record class InventoryCacheState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithSource(Source source)
+	public IInventoryState WithSource(Source source)
 	{
 		return Update(state => state with
 		{
@@ -114,7 +114,7 @@ public record class InventoryCacheState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithTag(Tag tag)
+	public IInventoryState WithTag(Tag tag)
 	{
 		return Update(state => state with
 		{
@@ -122,7 +122,7 @@ public record class InventoryCacheState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithUser(User user)
+	public IInventoryState WithUser(User user)
 	{
 		return Update(state => state with
 		{
@@ -130,7 +130,7 @@ public record class InventoryCacheState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithUserGroup(UserGroup userGroup)
+	public IInventoryState WithUserGroup(UserGroup userGroup)
 	{
 		return Update(state => state with
 		{
@@ -138,7 +138,7 @@ public record class InventoryCacheState : IInventoryCacheState
 		});
 	}
 
-	public IInventoryCacheState WithBlockTags(int blockId, IEnumerable<BlockTag> blockTags)
+	public IInventoryState WithBlockTags(int blockId, IEnumerable<BlockTag> blockTags)
 	{
 		return this with
 		{
@@ -146,7 +146,7 @@ public record class InventoryCacheState : IInventoryCacheState
 		};
 	}
 
-	public IInventoryCacheState WithTagBlocks(int tagId, IEnumerable<BlockTag> blockTags)
+	public IInventoryState WithTagBlocks(int tagId, IEnumerable<BlockTag> blockTags)
 	{
 		return this with
 		{
@@ -154,7 +154,7 @@ public record class InventoryCacheState : IInventoryCacheState
 		};
 	}
 
-	public IInventoryCacheState WithUserGroupRelations(Guid userGroupGuid, IEnumerable<UserGroupRelation> userGroupRelations)
+	public IInventoryState WithUserGroupRelations(Guid userGroupGuid, IEnumerable<UserGroupRelation> userGroupRelations)
 	{
 		return this with
 		{
@@ -162,7 +162,7 @@ public record class InventoryCacheState : IInventoryCacheState
 		};
 	}
 
-	public IInventoryCacheState WithAccessRules(int[] oldRulesId, AccessRule[] newRules)
+	public IInventoryState WithAccessRules(int[] oldRulesId, AccessRule[] newRules)
 	{
 		return this with
 		{

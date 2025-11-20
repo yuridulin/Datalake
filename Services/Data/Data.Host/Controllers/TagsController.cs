@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Models.Tags;
 using Datalake.Data.Application.Features.Tags.Queries.GetCollectionStatus;
 using Datalake.Data.Application.Features.Tags.Queries.GetUsage;
-using Datalake.Shared.Hosting.Controllers.Data;
+using Datalake.Shared.Hosting.AbstractControllers.Data;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

@@ -1,8 +1,7 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 
@@ -15,7 +14,7 @@ public class DeleteBlockHandler(
 	IBlocksRepository blocksRepository,
 	IAuditRepository auditRepository,
 	ICalculatedAccessRulesRepository calculatedAccessRulesRepository,
-	IInventoryCache inventoryCache) : IDeleteBlockHandler
+	IInventoryStore inventoryCache) : IDeleteBlockHandler
 {
 	public async Task<bool> HandleAsync(DeleteBlockCommand command, CancellationToken ct = default)
 	{

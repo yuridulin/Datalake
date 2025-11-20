@@ -2,8 +2,7 @@
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Abstractions;
 using Datalake.Inventory.Application.Exceptions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -19,7 +18,7 @@ public class CreateTagHandler(
 	IBlockTagsRepository blockTagsRepository,
 	IAuditRepository auditRepository,
 	IUnitOfWork unitOfWork,
-	IInventoryCache inventoryCache,
+	IInventoryStore inventoryCache,
 	ILogger<CreateTagHandler> logger) :
 		TransactionalCommandHandler<CreateTagCommand, int>(unitOfWork, logger, inventoryCache),
 		ICreateTagHandler
@@ -83,7 +82,7 @@ public class CreateTagHandler(
 		return tag.Id;
 	}
 
-	public override IInventoryCacheState UpdateCache(IInventoryCacheState state) => blockTag == null
+	public override IInventoryState UpdateCache(IInventoryState state) => blockTag == null
 		? state.WithTag(tag)
 		: state.WithTag(tag).WithTagBlocks(tag.Id, [blockTag]);
 }

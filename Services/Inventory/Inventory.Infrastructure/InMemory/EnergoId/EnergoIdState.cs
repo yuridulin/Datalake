@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Application.Interfaces.InMemory;
+﻿using Datalake.Inventory.Application.Interfaces;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.InMemory.EnergoId;
@@ -6,7 +6,7 @@ namespace Datalake.Inventory.Infrastructure.InMemory.EnergoId;
 /// <summary>
 /// Состояние пользователей EnergoId
 /// </summary>
-public record class EnergoIdState : IEnergoIdCacheState
+public record class EnergoIdState : IEnergoIdState
 {
 	private EnergoIdState()
 	{

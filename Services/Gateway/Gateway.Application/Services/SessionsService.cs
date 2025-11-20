@@ -2,6 +2,7 @@
 using Datalake.Domain.Exceptions;
 using Datalake.Gateway.Application.Interfaces;
 using Datalake.Gateway.Application.Interfaces.Repositories;
+using Datalake.Gateway.Application.Interfaces.Storage;
 using Datalake.Gateway.Application.Models;
 using Datalake.Shared.Application.Attributes;
 
@@ -9,12 +10,12 @@ namespace Datalake.Gateway.Application.Services;
 
 [Scoped]
 public class SessionsService(
-	IUsersActivityService usersStateService,
-	ISessionsCache cache,
+	IUsersActivityStore usersActivityStore,
+	ISessionsStore cache,
 	IUnitOfWork unitOfWork,
 	IUserSessionsRepository repository) : ISessionsService
 {
-	public async Task<SessionInfo> GetAsync(string sessionToken, CancellationToken ct = default)
+	public async Task<UserSessionInfo> GetAsync(string sessionToken, CancellationToken ct = default)
 	{
 		UserSession session = await cache.GetAsync(sessionToken)
 			?? await repository.GetByTokenAsync(sessionToken, ct)
@@ -30,9 +31,9 @@ public class SessionsService(
 			throw new DomainException("Сессия истекла");
 		}
 
-		usersStateService.Set(session.UserGuid);
+		usersActivityStore.Set(session.UserGuid);
 
-		var info = new SessionInfo
+		var info = new UserSessionInfo
 		{
 			Token = session.Token.Value,
 			UserGuid = session.UserGuid,
@@ -68,7 +69,7 @@ public class SessionsService(
 			session = existSession;
 		}
 
-		usersStateService.Set(session.UserGuid);
+		usersActivityStore.Set(session.UserGuid);
 		await cache.SetAsync(session.Token.Value, session);
 
 		return session.Token.Value;

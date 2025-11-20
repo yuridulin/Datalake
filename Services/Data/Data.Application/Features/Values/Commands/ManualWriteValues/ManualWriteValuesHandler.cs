@@ -1,6 +1,6 @@
 ﻿using Datalake.Contracts.Models.Data.Values;
 using Datalake.Data.Application.Features.Values.Commands.SystemWriteValues;
-using Datalake.Data.Application.Interfaces.Cache;
+using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Data.Application.Models.Tags;
 using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;

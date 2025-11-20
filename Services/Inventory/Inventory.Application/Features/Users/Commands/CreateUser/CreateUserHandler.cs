@@ -1,8 +1,7 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Abstractions;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -16,7 +15,7 @@ public class CreateUserHandler(
 	IAuditRepository auditRepository,
 	IUnitOfWork unitOfWork,
 	ILogger<CreateUserHandler> logger,
-	IInventoryCache inventoryCache) :
+	IInventoryStore inventoryCache) :
 		TransactionalCommandHandler<CreateUserCommand, Guid>(unitOfWork, logger, inventoryCache),
 		ICreateUserHandler
 {
@@ -44,5 +43,5 @@ public class CreateUserHandler(
 		return user.Guid;
 	}
 
-	public override IInventoryCacheState UpdateCache(IInventoryCacheState state) => state.WithUser(user);
+	public override IInventoryState UpdateCache(IInventoryState state) => state.WithUser(user);
 }

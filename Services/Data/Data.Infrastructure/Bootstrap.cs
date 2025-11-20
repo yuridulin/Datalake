@@ -1,7 +1,7 @@
 ﻿using Datalake.Data.Application.Interfaces;
-using Datalake.Data.Application.Interfaces.Cache;
 using Datalake.Data.Application.Interfaces.DataCollection;
 using Datalake.Data.Application.Interfaces.Repositories;
+using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Data.Infrastructure.Database;
 using Datalake.Data.Infrastructure.Database.QueriesServices;
 using Datalake.Data.Infrastructure.Database.Repositories;
@@ -10,7 +10,9 @@ using Datalake.Data.Infrastructure.DataCollection;
 using Datalake.Data.Infrastructure.DataCollection.Interfaces;
 using Datalake.Data.Infrastructure.DataReceive;
 using Datalake.Data.Infrastructure.InMemory;
+using Datalake.Shared.Application.Interfaces.AccessRules;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.InMemory;
 using Datalake.Shared.Infrastructure.Schema;
 using LinqToDB;
 using LinqToDB.AspNet;
@@ -26,6 +28,7 @@ public static class Bootstrap
 {
 	public static IHostApplicationBuilder AddInfrastructure(this IHostApplicationBuilder builder)
 	{
+		// БД
 		var connectionString = builder.Configuration.GetConnectionString("Default") ?? "";
 		connectionString = EnvExpander.FillEnvVariables(connectionString);
 
@@ -36,7 +39,6 @@ public static class Bootstrap
 				npgsql.MigrationsHistoryTable(DataSchema.Migrations, DataSchema.Name);
 			});
 		});
-
 		builder.Services.AddLinqToDBContext<DataDbLinqContext>((provider, options) =>
 		{
 			return options
@@ -45,27 +47,32 @@ public static class Bootstrap
 				.UsePostgreSQL(connectionString);
 		});
 
-		builder.Services.AddSingleton<IUserAccessStore, UserAccessStore>();
-
+		// БД: репозитории
 		builder.Services.AddScoped<ISourcesRepository, SourcesRepository>();
-		builder.Services.AddScoped<ISourcesQueriesService, SourcesQueriesService>();
 		builder.Services.AddScoped<ITagsValuesRepository, TagsValuesRepository>();
 		builder.Services.AddScoped<ITagsValuesAggregationRepository, TagsValuesAggregationRepository>();
+		builder.Services.AddScoped<IUserAccessRepository, UserAccessRepository>();
 
-		builder.Services.AddSingleton<IDataCollectorFactory, DataCollectorFactory>();
-		builder.Services.AddSingleton<IDataCollectorProcessor, DataCollectorProcessor>();
-		builder.Services.AddSingleton<IDataCollectorWriter, DataCollectorWriter>();
+		// БД: получение данных
+		builder.Services.AddScoped<ISourcesQueriesService, SourcesQueriesService>();
 
+		// Кэширование
 		builder.Services.AddSingleton<IValuesStore, ValuesStore>();
 		builder.Services.AddSingleton<ITagsSettingsStore, TagsSettingsStore>();
 		builder.Services.AddSingleton<ITagsUsageStore, TagsUsageStore>();
 		builder.Services.AddSingleton<ITagsCollectionStatusStore, TagsCollectionStatusStore>();
 		builder.Services.AddSingleton<ISourcesActivityStore, SourcesActivityStore>();
+		builder.Services.AddSingleton<IUsersAccessStore, UsersAccessStore>();
 
+		// Системы
 		builder.Services.AddSingleton<IReceiverService, ReceiverService>();
-
-		builder.Services.AddHostedService<DataDbStartupService>();
+		builder.Services.AddSingleton<IDataCollectorFactory, DataCollectorFactory>();
+		builder.Services.AddSingleton<IDataCollectorProcessor, DataCollectorProcessor>();
+		builder.Services.AddSingleton<IDataCollectorWriter, DataCollectorWriter>();
 		builder.Services.AddHostedService(provider => provider.GetRequiredService<IDataCollectorWriter>());
+
+		// Настройка
+		builder.Services.AddSingleton<IInfrastructureStartService, InfrastructureStartService>();
 
 		return builder;
 	}

@@ -1,11 +1,11 @@
 ﻿using Datalake.Domain.ValueObjects;
-using Datalake.Inventory.Application.Interfaces.InMemory;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Models;
 using System.Collections.Immutable;
 
 namespace Datalake.Inventory.Infrastructure.InMemory.UserAccess;
 
-public record class UserAccessCacheState : IUserAccessCacheState
+public record class UserAccessCacheState : IUserAccessState
 {
 	public long Version { get; private set; } = DateTime.MinValue.Ticks;
 

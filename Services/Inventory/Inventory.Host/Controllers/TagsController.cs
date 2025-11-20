@@ -5,7 +5,7 @@ using Datalake.Inventory.Application.Features.Tags.Commands.UpdateTag;
 using Datalake.Inventory.Application.Features.Tags.Models;
 using Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
 using Datalake.Inventory.Application.Features.Tags.Queries.GetTagWithDetails;
-using Datalake.Shared.Hosting.Controllers.Inventory;
+using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

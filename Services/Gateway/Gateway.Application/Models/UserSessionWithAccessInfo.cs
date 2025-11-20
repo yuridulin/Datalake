@@ -2,7 +2,7 @@
 
 namespace Datalake.Gateway.Application.Models;
 
-public record UserSessionWithAccessInfo : SessionInfo
+public record UserSessionWithAccessInfo : UserSessionInfo
 {
 	/// <summary>
 	/// Информация о правах пользователя

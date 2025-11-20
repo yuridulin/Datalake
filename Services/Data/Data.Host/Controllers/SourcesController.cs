@@ -1,7 +1,7 @@
 ﻿using Datalake.Contracts.Models.Sources;
 using Datalake.Data.Application.Features.Sources.Queries.GetActivity;
 using Datalake.Data.Application.Features.Sources.Queries.GetRemoteItems;
-using Datalake.Shared.Hosting.Controllers.Data;
+using Datalake.Shared.Hosting.AbstractControllers.Data;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

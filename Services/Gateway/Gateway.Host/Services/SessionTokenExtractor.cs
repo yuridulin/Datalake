@@ -1,10 +1,12 @@
 ﻿using Datalake.Gateway.Host.Interfaces;
+using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Application.Exceptions;
 using Datalake.Shared.Hosting.Constants;
 
 namespace Datalake.Gateway.Host.Services;
 
 /// <inheritdoc cref="ISessionTokenExtractor" />
+[Scoped]
 public class SessionTokenExtractor : ISessionTokenExtractor
 {
 	/// <inheritdoc/>

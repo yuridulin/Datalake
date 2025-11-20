@@ -1,4 +1,4 @@
-﻿using Datalake.Data.Application.Interfaces.DataCollection;
+﻿using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Data.Application.Models.Values;
 using Datalake.Shared.Application.Attributes;
 using System.Collections.Concurrent;

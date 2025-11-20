@@ -26,7 +26,7 @@ public class SessionAuthenticationHandler(
 	protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
 	{
 		// Проверяем сессию
-		SessionInfo sessionInfo;
+		UserSessionInfo sessionInfo;
 		try
 		{
 			// Извлекаем токен сессии

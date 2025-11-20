@@ -1,7 +1,9 @@
-﻿using Datalake.Gateway.Application.Interfaces;
-using Datalake.Gateway.Host.Interfaces;
+﻿using Datalake.Gateway.Host.Interfaces;
+using Datalake.Gateway.Host.Proxy.Abstractions;
+using Datalake.Gateway.Host.Proxy.Services;
 using Datalake.Gateway.Host.Services;
-using Datalake.Shared.Hosting.Bootstrap;
+using Datalake.Shared.Hosting;
+using Datalake.Shared.Hosting.Constants;
 using Datalake.Shared.Infrastructure;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using NJsonSchema.Generation;
@@ -42,13 +44,12 @@ public static class Bootstrap
 			.AddEndpointsApiExplorer();
 
 		builder.Services.AddScoped<ISessionTokenExtractor, SessionTokenExtractor>();
-		builder.Services.AddSingleton<IInventoryApiClient, InventoryApiClient>();
 
+		// Прокси
 		builder.Services.Configure<IISServerOptions>(options =>
 		{
 			options.MaxRequestBodySize = 100 * 1024 * 1024; // 100MB
 		});
-
 		builder.Services.Configure<KestrelServerOptions>(options =>
 		{
 			options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100MB
@@ -95,7 +96,8 @@ public static class Bootstrap
 	/// </summary>
 	public static WebApplication MapApi(this WebApplication app)
 	{
-		app.UseReverseProxy();
+		// Обработка ошибок при проксировании запросов
+		app.UseReverseProxyMiddleware();
 
 		app.MapHealthChecks("/health");
 
@@ -103,6 +105,7 @@ public static class Bootstrap
 			name: "default",
 			pattern: "{controller=Home}/{action=Index}/{id?}");
 
+		// Сброс на стартовую страницу клиента, если self-host
 		app.MapFallbackToFile("{*path:regex(^(?!api).*$)}", "/index.html");
 
 		return app;

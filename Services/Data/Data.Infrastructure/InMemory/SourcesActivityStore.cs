@@ -1,5 +1,5 @@
 ﻿using Datalake.Contracts.Models.Sources;
-using Datalake.Data.Application.Interfaces.Cache;
+using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Shared.Application.Attributes;
 using System.Collections.Concurrent;
 

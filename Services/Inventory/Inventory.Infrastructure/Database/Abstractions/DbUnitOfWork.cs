@@ -1,4 +1,4 @@
-﻿using Datalake.Inventory.Application.Interfaces.Persistent;
+﻿using Datalake.Inventory.Application.Interfaces;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.EntityFrameworkCore.Storage;
 

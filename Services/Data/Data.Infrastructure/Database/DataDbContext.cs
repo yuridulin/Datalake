@@ -1,5 +1,7 @@
 ﻿using Datalake.Domain.Entities;
+using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Interfaces;
 using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
@@ -11,7 +13,7 @@ namespace Datalake.Data.Infrastructure.Database;
 /// </summary>
 /// Add-Migration NAME -Context Datalake.Data.Infrastructure.Database.DataDbContext -OutputDir Database\Migrations
 /// Remove-Migration -Context Datalake.Data.Infrastructure.Database.DataDbContext
-public class DataDbContext : DbContext
+public class DataDbContext : DbContext, IUserAccessDbContext
 {
 	public DataDbContext(DbContextOptions<DataDbContext> options) : base(options)
 	{
@@ -56,4 +58,6 @@ public class DataDbContext : DbContext
 	public virtual DbSet<TagInput> TagInputs { get; set; }
 
 	public virtual DbSet<TagThreshold> TagThresholds { get; set; }
+
+	public virtual DbSet<CalculatedAccessRule> CalculatedAccessRules { get; set; }
 }

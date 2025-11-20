@@ -1,7 +1,7 @@
 ﻿using Datalake.Inventory.Application.Interfaces;
-using Datalake.Inventory.Application.Interfaces.InMemory;
 using Datalake.Shared.Application.Attributes;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Application.Services;
 
@@ -9,25 +9,38 @@ namespace Datalake.Inventory.Application.Services;
 public class ApplicationStartService(
 	IInfrastructureStartService infrastructureStartService,
 	IDomainStartService domainStartService,
-	IInventoryCache inventoryCache,
-	IEnergoIdCache energoIdCache,
-	IUserAccessSynchronizationService userAccessSynchronizationService) : BackgroundService
+	IInventoryStore inventoryCache,
+	IEnergoIdStore energoIdCache,
+	IUserAccessSynchronizationService userAccessSynchronizationService,
+	ILogger<ApplicationStartService> logger) : BackgroundService
 {
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		// нужно выполнить инициализацию БД
-		await infrastructureStartService.StartAsync();
+		logger.LogInformation("Запущена инициализация работы приложения");
 
-		// создать необходимые записи
-		await domainStartService.StartAsync();
+		try
+		{
+			// нужно выполнить инициализацию БД
+			await infrastructureStartService.StartAsync(stoppingToken);
 
-		// загрузить и создать начальное состояние для кэша структуры
-		await inventoryCache.RestoreAsync();
+			// создать необходимые записи
+			await domainStartService.StartAsync();
 
-		// загрузить и создать начальное состояние для кэша пользователей EnergoId (если не откажемся от него)
-		energoIdCache.SetReady();
+			// загрузить и создать начальное состояние для кэша структуры
+			await inventoryCache.RestoreAsync();
 
-		// все кэши готовы, запускаем синхронизацию кэша прав вслед за кэшем структуры
-		userAccessSynchronizationService.Start();
+			// загрузить и создать начальное состояние для кэша пользователей EnergoId (если не откажемся от него)
+			energoIdCache.SetReady();
+
+			// все кэши готовы, запускаем синхронизацию кэша прав вслед за кэшем структуры
+			userAccessSynchronizationService.Start();
+
+			logger.LogInformation("Приложение в работе");
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "Инициализация работы приложения не выполнена!");
+			throw;
+		}
 	}
 }

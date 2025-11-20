@@ -1,7 +1,6 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
-using Datalake.Inventory.Application.Interfaces.InMemory;
-using Datalake.Inventory.Application.Interfaces.Persistent;
+using Datalake.Inventory.Application.Interfaces;
 using Datalake.Inventory.Application.Repositories;
 using Datalake.Shared.Application.Interfaces;
 
@@ -13,7 +12,7 @@ public class CreateBlockHandler(
 	IUnitOfWork unitOfWork,
 	IBlocksRepository blocksRepository,
 	IAuditRepository auditRepository,
-	IInventoryCache inventoryCache) : ICreateBlockHandler
+	IInventoryStore inventoryCache) : ICreateBlockHandler
 {
 	public async Task<int> HandleAsync(CreateBlockCommand command, CancellationToken ct = default)
 	{

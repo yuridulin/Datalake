@@ -7,7 +7,7 @@ using Datalake.Inventory.Application.Features.Blocks.Models;
 using Datalake.Inventory.Application.Features.Blocks.Queries.GetBlockFull;
 using Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksTree;
 using Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksWithTags;
-using Datalake.Shared.Hosting.Controllers.Inventory;
+using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
