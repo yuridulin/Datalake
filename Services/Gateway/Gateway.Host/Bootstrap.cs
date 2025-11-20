@@ -1,4 +1,5 @@
 ﻿using Datalake.Gateway.Host.Interfaces;
+using Datalake.Gateway.Host.Middlewares;
 using Datalake.Gateway.Host.Proxy.Abstractions;
 using Datalake.Gateway.Host.Proxy.Services;
 using Datalake.Gateway.Host.Services;
@@ -44,6 +45,8 @@ public static class Bootstrap
 			.AddEndpointsApiExplorer();
 
 		builder.Services.AddScoped<ISessionTokenExtractor, SessionTokenExtractor>();
+		builder.Services.AddScoped<SessionMiddleware>();
+		builder.Services.AddScoped<ReverseProxyExceptionMiddleware>();
 
 		// Прокси
 		builder.Services.Configure<IISServerOptions>(options =>
@@ -96,8 +99,8 @@ public static class Bootstrap
 	/// </summary>
 	public static WebApplication MapApi(this WebApplication app)
 	{
-		// Обработка ошибок при проксировании запросов
-		app.UseReverseProxyMiddleware();
+		app.UseMiddleware<SessionMiddleware>();
+		app.UseMiddleware<ReverseProxyExceptionMiddleware>();
 
 		app.MapHealthChecks("/health");
 

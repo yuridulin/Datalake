@@ -40,11 +40,10 @@ try {
 }
 
 // константы заголовков и ключей localStorage
-const nameHeader = 'd-name'
-const tokenHeader = 'd-access-token'
-const accessHeader = 'd-access-type'
-const identityHeader = 'd-identity'
+const sessionTokenHeader = 'X-Session-Token'
 const themeKey = 'd-theme'
+
+const emptyRule: AccessRuleInfo = { ruleId: 0, access: AccessType.None }
 
 export class AppStore {
 	//#region Инициализация
@@ -84,8 +83,8 @@ export class AppStore {
 
 		api.instance.interceptors.request.use(
 			(config) => {
-				log('SEND TOKEN ', this.token, 'IsAuthenticated: ', this.isAuthenticated)
-				config.headers[tokenHeader] = this.token
+				log('SEND TOKEN ', this.sessionToken, 'IsAuthenticated: ', this.isAuthenticated)
+				config.headers[sessionTokenHeader] = this.sessionToken
 				return config
 			},
 			(err) => Promise.reject(err),
@@ -100,7 +99,7 @@ export class AppStore {
 					return response
 				}
 				// переход на логин, если нет доступа
-				else if (response.status === 403 || response.status === 400) {
+				else if (response.status === 401 || response.status === 400) {
 					this.setAuthenticated(false)
 				}
 				// нормальное развитие событий
@@ -125,7 +124,7 @@ export class AppStore {
 			(error: AxiosError) => {
 				this.setConnectionStatus(error.request?.status !== 0 /*  || error.code === 'ERR_NETWORK' */)
 
-				if (error.response?.status === 403 || error.response?.status === 400) {
+				if (error.response?.status === 401 || error.response?.status === 400) {
 					this.setAuthenticated(false)
 					if (!error.config?.url?.endsWith('identify') && this.notify)
 						this.notify.error({ placement: 'bottomLeft', message: String(error.response?.data) })
@@ -199,16 +198,12 @@ export class AppStore {
 	//#region Методы аутентификации
 
 	// сохраняемые в LS настройки
-	fullName: string = localStorage.getItem(nameHeader) || ''
-	token: string = localStorage.getItem(tokenHeader) || ''
-	globalAccessType: AccessType = Number(localStorage.getItem(accessHeader) || AccessType.None) as AccessType
+	sessionToken: string = localStorage.getItem(sessionTokenHeader) || ''
 
 	// настройки с бэкенда
-	guid: string = ''
+	userGuid: string | null = null
 	type: UserType | null = null
-	rootRule!: AccessRuleInfo
-	energoId?: string | null | undefined
-	accessRule: AccessRuleInfo = { ruleId: 0, access: this.globalAccessType }
+	rootRule: AccessRuleInfo = emptyRule
 	groups: Record<string, AccessRuleInfo> = {}
 	sources: Record<number, AccessRuleInfo> = {}
 	blocks: Record<number, AccessRuleInfo> = {}
@@ -217,24 +212,18 @@ export class AppStore {
 	public setAuthData = (session: UserSessionWithAccessInfo) => {
 		const access = session.access
 
-		log('SET store.authToken =', session.token)
-		//log('SET store.authLogin =', access.fullName)
-		log('SET store.globalAccessType =', access.rootRule.access)
+		log('SET store.sessionToken =', session.token)
+		this.sessionToken = session.token
+		localStorage.setItem(sessionTokenHeader, session.token)
 
+		this.userGuid = session.userGuid
 		this.type = session.type
-		this.token = session.token
-		//this.fullName = access.fullName
-		this.globalAccessType = access.rootRule.access
+		this.rootRule = access.rootRule
+
 		this.sources = access.sources
 		this.blocks = access.blocks
 		this.tags = access.tags
 		this.groups = access.groups
-		this.rootRule = access.rootRule
-
-		localStorage.setItem(tokenHeader, session.token)
-		//localStorage.setItem(nameHeader, access.fullName)
-		localStorage.setItem(accessHeader, String(access.rootRule.access))
-		localStorage.setItem(identityHeader, JSON.stringify(access))
 
 		this.setAuthenticated(true)
 	}
@@ -252,15 +241,19 @@ export class AppStore {
 	}
 
 	public clearAuthData = () => {
-		log('SET store.authToken =', '')
-		log('SET store.authLogin =', '')
-		log('SET store.globalAccessType =', AccessType.None)
-		this.token = ''
-		this.fullName = ''
-		this.globalAccessType = AccessType.None
-		localStorage.removeItem(tokenHeader)
-		localStorage.removeItem(nameHeader)
-		localStorage.removeItem(accessHeader)
+		log('REMOVE store.sessionToken')
+		this.sessionToken = ''
+		localStorage.removeItem(sessionTokenHeader)
+
+		this.userGuid = null
+		this.type = null
+		this.rootRule = emptyRule
+
+		this.sources = {}
+		this.blocks = {}
+		this.tags = {}
+		this.groups = {}
+
 		this.setAuthenticated(false)
 	}
 
@@ -305,27 +298,27 @@ export class AppStore {
 	//#region Проверки прав
 
 	hasGlobalAccess(minimal: AccessType) {
-		return hasAccess(this.globalAccessType, minimal)
+		return hasAccess(this.rootRule.access, minimal)
 	}
 
 	hasAccessToSource(minimal: AccessType, id: number) {
 		const rule = this.sources[id] ?? this.rootRule
-		return hasAccess(rule?.access ?? this.globalAccessType, minimal)
+		return hasAccess(rule?.access ?? this.rootRule.access, minimal)
 	}
 
 	hasAccessToBlock(minimal: AccessType, id: number) {
 		const rule = this.blocks[id] ?? this.rootRule
-		return hasAccess(rule?.access ?? this.globalAccessType, minimal)
+		return hasAccess(rule?.access ?? this.rootRule.access, minimal)
 	}
 
 	hasAccessToTag(minimal: AccessType, id: number) {
 		const rule = this.tags[id] ?? this.rootRule
-		return hasAccess(rule?.access ?? this.globalAccessType, minimal)
+		return hasAccess(rule?.access ?? this.rootRule.access, minimal)
 	}
 
 	hasAccessToGroup(minimal: AccessType, guid: string) {
 		const rule = this.groups[guid] ?? this.rootRule
-		return hasAccess(rule?.access ?? this.globalAccessType, minimal)
+		return hasAccess(rule?.access ?? this.rootRule.access, minimal)
 	}
 
 	//#endregion Проверки прав

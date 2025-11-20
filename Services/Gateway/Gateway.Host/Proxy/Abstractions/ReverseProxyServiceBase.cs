@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net;
+﻿using Datalake.Shared.Hosting.Constants;
+using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
@@ -10,7 +10,7 @@ namespace Datalake.Gateway.Host.Proxy.Abstractions;
 /// <summary>
 /// Основа сервиса для прозрачного проксирования запросов в контроллерах Gateway API
 /// </summary>
-public abstract class ReverseProxyService(HttpClient httpClient)
+public abstract class ReverseProxyServiceBase(HttpClient httpClient)
 {
 	/// <summary>
 	/// Настройки JSON
@@ -149,6 +149,12 @@ public abstract class ReverseProxyService(HttpClient httpClient)
 			requestMessage.Headers.TryAddWithoutValidation("Authorization", auth.ToString());
 		}
 
+		// Копируем UserGuid для downstream сервисов
+		if (context.Request.Headers.TryGetValue(Headers.UserGuidHeader, out var userGuid))
+		{
+			requestMessage.Headers.TryAddWithoutValidation(Headers.UserGuidHeader, userGuid.ToString());
+		}
+
 		// Добавляем дополнительные заголовки
 		if (headers != null)
 		{
@@ -230,69 +236,5 @@ public abstract class ReverseProxyService(HttpClient httpClient)
 		context.Response.StatusCode = (int)statusCode;
 		context.Response.ContentType = contentType;
 		await context.Response.WriteAsync(content);
-	}
-}
-
-/// <summary>
-/// Исключение для прозрачного перенаправления ошибок
-/// </summary>
-public class ReverseProxyTransparentException(HttpStatusCode statusCode, string originalContent, string contentType)
-	: Exception($"Proxy received error: {statusCode}")
-{
-	/// <summary>
-	/// Код запроса
-	/// </summary>
-	public HttpStatusCode StatusCode { get; } = statusCode;
-
-	/// <summary>
-	/// Исходный контент
-	/// </summary>
-	public string OriginalContent { get; } = originalContent;
-
-	/// <summary>
-	/// Тип исходного контента
-	/// </summary>
-	public string ContentType { get; } = contentType;
-}
-
-/// <summary>
-/// Middleware для обработки прозрачных ошибок прокси
-/// </summary>
-public class ReverseProxyTransparentExceptionMiddleware(RequestDelegate next, ILogger<ReverseProxyTransparentExceptionMiddleware> logger)
-{
-	/// <summary>
-	/// Обработка запроса
-	/// </summary>
-	public async Task InvokeAsync(HttpContext context)
-	{
-		try
-		{
-			await next(context);
-		}
-		catch (ReverseProxyTransparentException ex)
-		{
-			if (logger.IsEnabled(LogLevel.Debug))
-				logger.LogDebug("Transparent proxy error: {StatusCode} - {ContentType}", ex.StatusCode, ex.ContentType);
-
-			context.Response.StatusCode = (int)ex.StatusCode;
-			context.Response.ContentType = ex.ContentType;
-			await context.Response.WriteAsync(ex.OriginalContent);
-		}
-	}
-}
-
-/// <summary>
-/// Вспомогательный класс для регистрации обработчика ошибок в DI
-/// </summary>
-public static class ReverseProxyDependencyInjections
-{
-	/// <summary>
-	/// Подключение обработки ошибок прокси-запросов
-	/// </summary>
-	public static IApplicationBuilder UseReverseProxyMiddleware(this IApplicationBuilder app)
-	{
-		app.UseMiddleware<ReverseProxyTransparentExceptionMiddleware>();
-
-		return app;
 	}
 }

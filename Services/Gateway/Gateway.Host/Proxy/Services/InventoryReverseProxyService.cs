@@ -8,6 +8,6 @@ namespace Datalake.Gateway.Host.Proxy.Services;
 /// </summary>
 [Singleton]
 public class InventoryReverseProxyService(IHttpClientFactory httpClientFactory)
-	: ReverseProxyService(httpClientFactory.CreateClient("Inventory"))
+	: ReverseProxyServiceBase(httpClientFactory.CreateClient("Inventory"))
 {
 }

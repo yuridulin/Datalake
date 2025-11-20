@@ -13,7 +13,11 @@ public class SessionTokenExtractor : ISessionTokenExtractor
 	public string ExtractToken(HttpRequest request)
 	{
 		var sessionToken = request.Headers[Headers.SessionTokenHeander].FirstOrDefault();
-		return sessionToken ?? throw new UnauthenticatedException("Токен сессии не получен");
+
+		if (string.IsNullOrEmpty(sessionToken))
+			throw new UnauthenticatedException("Токен сессии не получен");
+
+		return sessionToken;
 	}
 
 	/// <inheritdoc/>

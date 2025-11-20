@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { LogoutOutlined, MoonOutlined, SunOutlined, UserOutlined } from '@ant-design/icons'
 import { Button, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const panel: React.CSSProperties = {
@@ -38,6 +39,19 @@ const title: React.CSSProperties = {
 const UserPanel = observer(() => {
 	const store = useAppStore()
 
+	const [name, setName] = useState('')
+
+	const getName = useCallback(() => {
+		if (store.userGuid === null) setName('')
+		else {
+			store.api.inventoryUsersGet({ userGuid: store.userGuid }).then((res) => {
+				setName(res.data[0].fullName)
+			})
+		}
+	}, [store.api, store.userGuid])
+
+	useEffect(getName, [getName])
+
 	return (
 		<div style={panel}>
 			<div style={row}>
@@ -61,7 +75,7 @@ const UserPanel = observer(() => {
 				<div style={left}>
 					<UserOutlined />
 					&ensp;
-					{store.fullName}
+					{name}
 				</div>
 				<div style={right}>
 					<Button type='link' onClick={store.logout} title='Выход из учетной записи'>
@@ -71,7 +85,7 @@ const UserPanel = observer(() => {
 			</div>
 			<div style={row}>
 				<div style={left}>
-					<AccessTypeEl bordered={false} type={store.globalAccessType} />
+					<AccessTypeEl bordered={false} type={store.rootRule.access} />
 				</div>
 				<div style={right}>
 					{store.type === UserType.Local ? (
