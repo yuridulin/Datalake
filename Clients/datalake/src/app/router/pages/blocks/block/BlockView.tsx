@@ -13,7 +13,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { RightOutlined } from '@ant-design/icons'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 
 const childrenContainerStyle = {
@@ -27,6 +27,8 @@ const BlockView = observer(() => {
 
 	const [ready, setReady] = useState(false)
 	const [block, setBlock] = useState({} as BlockFullInfo)
+	const hasLoadedRef = useRef(false)
+	const lastIdRef = useRef<string | undefined>(id)
 
 	const items: InfoTableProps['items'] = {
 		Имя: block.name,
@@ -49,7 +51,17 @@ const BlockView = observer(() => {
 		store.api.inventoryBlocksCreate({ parentId: Number(id) }).then(getBlock)
 	}
 
-	useEffect(getBlock, [store.api, id])
+	useEffect(() => {
+		// Если изменился id, сбрасываем флаг загрузки
+		if (lastIdRef.current !== id) {
+			hasLoadedRef.current = false
+			lastIdRef.current = id
+		}
+
+		if (hasLoadedRef.current || !id) return
+		hasLoadedRef.current = true
+		getBlock()
+	}, [store.api, id])
 
 	// Создаем маппинг тегов для TagValuesViewer
 	const tagMapping = useMemo(() => {

@@ -9,7 +9,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 interface DataCell extends SourceInfo {
@@ -26,8 +26,10 @@ const SourcesList = observer(() => {
 	const store = useAppStore()
 	const [sources, setSources] = useState([] as DataCell[])
 	const [states, setStates] = useState({} as Record<number, SourceActivityInfo>)
+	const hasLoadedRef = useRef(false)
 
 	const getStates = useCallback(async () => {
+		if (sources.length === 0) return
 		const res = await store.api.dataSourcesGetActivity(sources.map((x) => x.id))
 		setStates(
 			res.data.reduce(
@@ -85,17 +87,17 @@ const SourcesList = observer(() => {
 				system.children = system.children?.sort((a, b) => a.name.localeCompare(b.name))
 				user.children = user.children?.sort((a, b) => a.name.localeCompare(b.name))
 				setSources([user, system])
-				getStates()
 			})
 			.catch(() => {
 				notification.error({ message: 'Не удалось получить список источников' })
 			})
-	}, [store.api, getStates])
+	}, [store.api])
 
 	const createSource = useCallback(() => {
 		store.api
 			.inventorySourcesCreate()
 			.then(() => {
+				hasLoadedRef.current = false
 				load()
 				notification.success({ message: 'Источник создан' })
 			})
@@ -215,7 +217,18 @@ const SourcesList = observer(() => {
 		[states],
 	)
 
-	useEffect(load, [load])
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		load()
+	}, [load])
+
+	// Загружаем состояния после того, как sources установлены
+	useEffect(() => {
+		if (sources.length > 0) {
+			getStates()
+		}
+	}, [sources, getStates])
 
 	return (
 		<>

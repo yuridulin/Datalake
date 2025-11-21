@@ -1,7 +1,7 @@
 import { useAppStore } from '@/store/useAppStore'
 import { Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type MetricItem = {
 	key: {
@@ -57,8 +57,12 @@ const ValuesMetrics = () => {
 	const store = useAppStore()
 	const [loading, setLoading] = useState<boolean>(false)
 	const [metrics, setMetrics] = useState<MetricItem[]>([])
+	const hasLoadedRef = useRef(false)
 
-	const getMetrics = useCallback(() => {
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+
 		setLoading(true)
 		store.api
 			.dataTagsGetUsage({})
@@ -77,8 +81,6 @@ const ValuesMetrics = () => {
 			.catch(() => setMetrics([]))
 			.finally(() => setLoading(false))
 	}, [store.api])
-
-	useEffect(getMetrics, [getMetrics])
 
 	return <Table size='small' bordered={false} dataSource={metrics} columns={columns} loading={loading} />
 }

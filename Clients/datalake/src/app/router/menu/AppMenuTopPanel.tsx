@@ -4,7 +4,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { LogoutOutlined, MoonOutlined, SunOutlined, UserOutlined } from '@ant-design/icons'
 import { Button, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const panel: React.CSSProperties = {
@@ -40,17 +40,27 @@ const UserPanel = observer(() => {
 	const store = useAppStore()
 
 	const [name, setName] = useState('')
+	const hasLoadedRef = useRef(false)
+	const lastUserGuidRef = useRef<string | null>(store.userGuid)
 
-	const getName = useCallback(() => {
-		if (store.userGuid === null) setName('')
-		else {
+	useEffect(() => {
+		// Если изменился userGuid, сбрасываем флаг загрузки
+		if (lastUserGuidRef.current !== store.userGuid) {
+			hasLoadedRef.current = false
+			lastUserGuidRef.current = store.userGuid
+		}
+
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+
+		if (store.userGuid === null) {
+			setName('')
+		} else {
 			store.api.inventoryUsersGet({ userGuid: store.userGuid }).then((res) => {
 				setName(res.data[0].fullName)
 			})
 		}
 	}, [store.api, store.userGuid])
-
-	useEffect(getName, [getName])
 
 	return (
 		<div style={panel}>

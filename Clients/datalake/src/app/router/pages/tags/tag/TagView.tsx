@@ -25,7 +25,7 @@ import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Button, Spin, Table, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import TagFormulaView from './views/TagFormulaView'
 import TagThresholdsView from './views/TagThresholdsView'
@@ -37,6 +37,8 @@ const TagView = observer(() => {
 	const [tag, setTag] = useState({} as TagFullInfo)
 	const [isLoading, setLoading] = useState(false)
 	const [metrics, setMetrics] = useState({} as Record<string, string>)
+	const hasLoadedRef = useRef(false)
+	const lastIdRef = useRef<string | undefined>(id)
 
 	// получение инфо
 	const loadTagData = useCallback(() => {
@@ -52,7 +54,17 @@ const TagView = observer(() => {
 		]).finally(() => setLoading(false))
 	}, [store.api, id])
 
-	useEffect(loadTagData, [loadTagData])
+	useEffect(() => {
+		// Если изменился id, сбрасываем флаг загрузки
+		if (lastIdRef.current !== id) {
+			hasLoadedRef.current = false
+			lastIdRef.current = id
+		}
+
+		if (hasLoadedRef.current || !id) return
+		hasLoadedRef.current = true
+		loadTagData()
+	}, [loadTagData, id])
 
 	const info: InfoTableProps['items'] = {
 		Название: <CopyableText text={tag.name} />,

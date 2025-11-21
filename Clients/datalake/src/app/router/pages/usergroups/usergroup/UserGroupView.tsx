@@ -10,7 +10,7 @@ import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 import { default as MembersTable } from './parts/MembersTable'
 import ObjectsWithAccess from './parts/ObjectsWithAccess'
@@ -32,6 +32,9 @@ const UserGroupView = observer(() => {
 		'Общий уровень доступа группы': <AccessTypeEl type={group.globalAccessType} />,
 	}
 
+	const hasLoadedRef = useRef(false)
+	const lastIdRef = useRef<string | undefined>(id)
+
 	const load = () => {
 		setReady(false)
 		if (!id) return
@@ -50,7 +53,17 @@ const UserGroupView = observer(() => {
 		setReady(!!group.guid)
 	}
 
-	useEffect(load, [store.api, id])
+	useEffect(() => {
+		// Если изменился id, сбрасываем флаг загрузки
+		if (lastIdRef.current !== id) {
+			hasLoadedRef.current = false
+			lastIdRef.current = id
+		}
+
+		if (hasLoadedRef.current || !id) return
+		hasLoadedRef.current = true
+		load()
+	}, [store.api, id])
 	useEffect(checkReady, [group])
 
 	return !ready ? (

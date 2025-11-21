@@ -11,7 +11,7 @@ import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 
 const UserView = observer(() => {
@@ -21,17 +21,25 @@ const UserView = observer(() => {
 	useDatalakeTitle('Пользователи', id)
 	const [info, setInfo] = useState(null as UserInfo | null)
 	const [loading, setLoading] = useState(true)
+	const hasLoadedRef = useRef(false)
+	const lastIdRef = useRef<string | undefined>(id)
 
-	const load = () => {
-		if (!id) return
+	useEffect(() => {
+		// Если изменился id, сбрасываем флаг загрузки
+		if (lastIdRef.current !== id) {
+			hasLoadedRef.current = false
+			lastIdRef.current = id
+		}
+
+		if (hasLoadedRef.current || !id) return
+		hasLoadedRef.current = true
+
 		setLoading(true)
 		store.api.inventoryUsersGetWithDetails(String(id)).then((res) => {
 			setInfo(res.data)
 			setLoading(false)
 		})
-	}
-
-	useEffect(load, [store.api, id])
+	}, [store.api, id])
 
 	return loading ? (
 		<Spin />

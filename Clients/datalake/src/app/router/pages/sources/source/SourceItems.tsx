@@ -16,7 +16,7 @@ import {
 import { Alert, Button, Col, Input, Popconfirm, Radio, Row, Table, TableColumnsType, Tag, theme, Tree } from 'antd'
 import dayjs from 'dayjs'
 import debounce from 'debounce'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocalStorage } from 'react-use'
 
 type SourceTagInfo = TagInfo & { item?: string }
@@ -135,6 +135,8 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 	const [viewMode, setViewMode] = useLocalStorage(localStorageKey, 'table' as ViewModeState)
 	const { token } = theme.useToken()
 	const [status, setStatus] = useState<LoadStatus>('default')
+	const hasLoadedRef = useRef(false)
+	const lastSourceIdRef = useRef<number | undefined>(source.id)
 
 	// Функция для построения дерева
 	const buildTree = (groups: GroupedEntry[]): TreeNodeData[] => {
@@ -443,7 +445,17 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[items],
 	)
-	useEffect(reload, [store.api, source])
+	useEffect(() => {
+		// Если изменился source.id, сбрасываем флаг загрузки
+		if (lastSourceIdRef.current !== source.id) {
+			hasLoadedRef.current = false
+			lastSourceIdRef.current = source.id
+		}
+
+		if (hasLoadedRef.current || !source.id) return
+		hasLoadedRef.current = true
+		reload()
+	}, [store.api, source])
 
 	if (source.address !== request.address || source.type !== request.type)
 		return <Alert message='Тип источника изменен. Сохраните, чтобы продолжить' />

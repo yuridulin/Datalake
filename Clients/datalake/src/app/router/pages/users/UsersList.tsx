@@ -14,7 +14,7 @@ import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const UsersList = observer(() => {
@@ -25,6 +25,8 @@ const UsersList = observer(() => {
 	const [states, setStates] = useState<Record<string, string | null>>({})
 	const [search, setSearch] = useState('')
 
+	const hasLoadedRef = useRef(false)
+
 	const load = () => {
 		store.api.inventoryUsersGet().then((res) => setUsers(res.data))
 	}
@@ -34,7 +36,7 @@ const UsersList = observer(() => {
 	}
 
 	const getStates = useCallback(() => {
-		if (!store.hasGlobalAccess(AccessType.Manager)) return
+		if (!store.hasGlobalAccess(AccessType.Manager) || users.length === 0) return
 		return store.api.usersGetActivity(users.map((x) => x.guid)).then((res) => setStates(res.data))
 	}, [store, users])
 
@@ -88,7 +90,11 @@ const UsersList = observer(() => {
 		},
 	]
 
-	useEffect(load, [store.api, getStates])
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		load()
+	}, [store.api])
 
 	return (
 		<>

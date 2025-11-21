@@ -20,7 +20,7 @@ import {
 import { useAppStore } from '@/store/useAppStore'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Spin } from 'antd'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 type SourceOption = {
@@ -69,6 +69,9 @@ const TagForm = () => {
 	} as UpdateRequest)
 	const [items, setItems] = useState([] as { value: string }[])
 	const [strategy, setStrategy] = useState(SourceStrategy.Manual)
+	const hasLoadedRef = useRef(false)
+	const lastIdRef = useRef<string | undefined>(id)
+	const lastSourceIdRef = useRef<number | undefined>(request.sourceId)
 	useEffect(() => console.log(request), [request])
 
 	// получение инфо
@@ -131,6 +134,7 @@ const TagForm = () => {
 	const getItems = useCallback(() => {
 		if (!request.sourceId || request.sourceId <= 0) {
 			setItems([])
+			hasLoadedItemsRef.current = false
 			return
 		}
 		store.api.dataSourcesGetItems(request.sourceId).then((res) => {
@@ -142,8 +146,30 @@ const TagForm = () => {
 		})
 	}, [store.api, request.sourceId])
 
-	useEffect(loadTagData, [store.api, id])
-	useEffect(getItems, [getItems])
+	useEffect(() => {
+		// Если изменился id, сбрасываем флаг загрузки
+		if (lastIdRef.current !== id) {
+			hasLoadedRef.current = false
+			lastIdRef.current = id
+		}
+
+		if (hasLoadedRef.current || !id) return
+		hasLoadedRef.current = true
+		loadTagData()
+	}, [store.api, id])
+
+	useEffect(() => {
+		// Если изменился sourceId, сбрасываем флаг загрузки
+		if (lastSourceIdRef.current !== request.sourceId) {
+			lastSourceIdRef.current = request.sourceId
+		}
+
+		if (!request.sourceId || request.sourceId <= 0) {
+			setItems([])
+			return
+		}
+		getItems()
+	}, [getItems, request.sourceId])
 
 	useEffect(() => {
 		if (strategy === SourceStrategy.FromSource && (request.sourceId ?? 0) < 0) {
