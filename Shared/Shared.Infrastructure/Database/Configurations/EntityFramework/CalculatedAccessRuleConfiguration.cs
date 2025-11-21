@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Table = Datalake.Shared.Infrastructure.Database.Schema.InventorySchema.CalculatedAccessRules;
 
-namespace Datalake.Shared.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations.EntityFramework;
 
 public class CalculatedAccessRuleConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<CalculatedAccessRule>
 {

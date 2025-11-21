@@ -1,37 +1,45 @@
-﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Application.Attributes;
-using Datalake.Shared.Infrastructure.Database.Schema;
+﻿using Datalake.Shared.Application.Attributes;
+using Datalake.Shared.Infrastructure.Database;
 using LinqToDB;
-using LinqToDB.Data;
 using LinqToDB.Mapping;
 
 namespace Datalake.Data.Infrastructure.Database;
 
+/// <summary>
+/// Контекст LinqToDB для работы с данными тегов
+/// </summary>
 [Scoped]
-public class DataDbLinqContext(DataOptions<DataDbLinqContext> options) : DataConnection(options.Options.UseMappingSchema(_mappings))
+public class DataDbLinqContext(DataOptions<DataDbLinqContext> options) : AbstractLinqToDbContext(
+	options.Options,
+	CreateMappingSchema())
 {
-	private static readonly MappingSchema _mappings;
-
-	static DataDbLinqContext()
+	private static MappingSchema CreateMappingSchema()
 	{
-		_mappings = new MappingSchema();
-		var builder = new FluentMappingBuilder(_mappings);
+		var mappings = new MappingSchema();
+		var builder = new FluentMappingBuilder(mappings);
 
-		builder
-			.Entity<TagValue>()
-			.HasSchemaName(DataSchema.Name)
-			.HasTableName(DataSchema.TagsValues.Name)
-			.HasPrimaryKey(x => new { x.TagId, x.Date })
-			.Property(x => x.TagId).HasColumnName(DataSchema.TagsValues.Columns.TagId)
-			.Property(x => x.Date).HasColumnName(DataSchema.TagsValues.Columns.Date)
-			.Property(x => x.Text).HasColumnName(DataSchema.TagsValues.Columns.Text)
-			.Property(x => x.Number).HasColumnName(DataSchema.TagsValues.Columns.Number)
-			.Property(x => x.Boolean).HasColumnName(DataSchema.TagsValues.Columns.Boolean)
-			.Property(x => x.Quality).HasColumnName(DataSchema.TagsValues.Columns.Quality)
-			.Build();
+		ApplyConfigurations(builder, TableAccessConfiguration);
+
+		return mappings;
 	}
 
-	public ITable<TagValue> TagsValues
-		=> this.GetTable<TagValue>();
+	private static DatabaseTableAccessConfiguration TableAccessConfiguration { get; } = new()
+	{
+		AccessRules = DatabaseTableAccess.Read,
+		Audit = DatabaseTableAccess.Read,
+		Blocks = DatabaseTableAccess.Read,
+		BlocksProperties = DatabaseTableAccess.Read,
+		BlocksTags = DatabaseTableAccess.Read,
+		CalculatedAccessRules = DatabaseTableAccess.Read,
+		Settings = DatabaseTableAccess.Read,
+		Sources = DatabaseTableAccess.Read,
+		Tags = DatabaseTableAccess.Read,
+		TagsValues = DatabaseTableAccess.Write,
+		TagsInputs = DatabaseTableAccess.Read,
+		TagsThresholds = DatabaseTableAccess.Read,
+		UserGroups = DatabaseTableAccess.Read,
+		UserGroupsRelations = DatabaseTableAccess.Read,
+		Users = DatabaseTableAccess.Read,
+		UserSessions = DatabaseTableAccess.Read,
+	};
 }
-

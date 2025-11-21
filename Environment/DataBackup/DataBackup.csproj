@@ -14,7 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.11" />
     <PackageReference Include="Npgsql" Version="9.0.4" />
-    <PackageReference Include="Redpoint.ThirdParty.System.CommandLine" Version="2025.1302.173" />
+    <PackageReference Include="Redpoint.ThirdParty.System.CommandLine" Version="2025.1324.9" />
   </ItemGroup>
 
   <ItemGroup>

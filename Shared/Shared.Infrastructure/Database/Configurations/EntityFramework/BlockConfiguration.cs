@@ -3,7 +3,7 @@ using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Shared.Infrastructure.Database.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations.EntityFramework;
 
 public class BlockConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<Block>
 {
