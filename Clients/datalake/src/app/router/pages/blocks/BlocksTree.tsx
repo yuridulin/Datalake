@@ -126,11 +126,11 @@ const BlocksTree = observer(() => {
 		<>
 			<PageHeader
 				right={[
-					<ProtectedButton access={store.globalAccessType} required={AccessType.Admin}>
+					<ProtectedButton access={store.getGlobalAccess()} required={AccessType.Admin}>
 						<NavLink to={routes.blocks.toMoveForm()}>Изменить иерархию</NavLink>
 					</ProtectedButton>,
 					<ProtectedButton
-						access={store.globalAccessType}
+						access={store.getGlobalAccess()}
 						required={AccessType.Admin}
 						type='primary'
 						onClick={createBlock}

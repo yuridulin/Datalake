@@ -127,7 +127,7 @@ const UserForm = observer(() => {
 					<Select
 						value={request.accessType}
 						defaultValue={request.accessType}
-						options={accessOptions.filter((x) => hasAccess(store.globalAccessType, x.value as AccessType))}
+						options={accessOptions.filter((x) => hasAccess(store.getGlobalAccess(), x.value as AccessType))}
 						style={{ width: '12em' }}
 						disabled={!hasAccess(userInfo.accessRule.access, AccessType.Manager)}
 						onChange={(e) =>
@@ -143,7 +143,7 @@ const UserForm = observer(() => {
 					<Radio.Group
 						buttonStyle='solid'
 						value={newType}
-						disabled={!hasAccess(store.globalAccessType, AccessType.Manager)}
+						disabled={!hasAccess(store.getGlobalAccess(), AccessType.Manager)}
 						onChange={(e) => setNewType(e.target.value)}
 					>
 						<Radio.Button value={UserType.Local}>Базовая учетная запись</Radio.Button>
@@ -234,7 +234,7 @@ const UserForm = observer(() => {
 									fullName: typedOption.data.fullName,
 								})
 							}}
-							disabled={!hasAccess(store.globalAccessType, AccessType.Manager)}
+							disabled={!hasAccess(store.getGlobalAccess(), AccessType.Manager)}
 							style={{ width: '100%' }}
 						/>
 					</FormRow>

@@ -134,7 +134,7 @@ const TagForm = () => {
 	const getItems = useCallback(() => {
 		if (!request.sourceId || request.sourceId <= 0) {
 			setItems([])
-			hasLoadedItemsRef.current = false
+			hasLoadedRef.current = false
 			return
 		}
 		store.api.dataSourcesGetItems(request.sourceId).then((res) => {

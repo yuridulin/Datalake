@@ -121,7 +121,7 @@ const UserGroupForm = observer(() => {
 				<Form.Item<UserGroupUpdateRequest> label='Базовый уровень доступа группы' name='accessType'>
 					<Select
 						placeholder='Выберите уровень доступа'
-						options={accessOptions.filter((x) => hasAccess(store.globalAccessType, x.value as AccessType))}
+						options={accessOptions.filter((x) => hasAccess(store.getGlobalAccess(), x.value as AccessType))}
 					/>
 				</Form.Item>
 				{store.hasAccessToGroup(AccessType.Manager, String(id)) && (

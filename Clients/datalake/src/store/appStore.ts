@@ -5,7 +5,6 @@ import { AccessRuleInfo, AccessType, UserSessionWithAccessInfo, UserType } from 
 import { NotificationInstance } from 'antd/es/notification/interface'
 import { AxiosError, AxiosResponse } from 'axios'
 import { makeAutoObservable } from 'mobx'
-import hasAccess from '../functions/hasAccess'
 
 const debug = false
 const log = (...text: unknown[]) => {
@@ -297,28 +296,48 @@ export class AppStore {
 
 	//#region Проверки прав
 
-	hasGlobalAccess(minimal: AccessType) {
-		return hasAccess(this.rootRule.access, minimal)
+	hasGlobalAccess(minimal: AccessType): boolean {
+		return this.getGlobalAccess() >= minimal
 	}
 
-	hasAccessToSource(minimal: AccessType, id: number) {
-		const rule = this.sources[id] ?? this.rootRule
-		return hasAccess(rule?.access ?? this.rootRule.access, minimal)
+	hasAccessToSource(minimal: AccessType, id: number): boolean {
+		return this.getAccessToSource(id) >= minimal
 	}
 
-	hasAccessToBlock(minimal: AccessType, id: number) {
-		const rule = this.blocks[id] ?? this.rootRule
-		return hasAccess(rule?.access ?? this.rootRule.access, minimal)
+	hasAccessToBlock(minimal: AccessType, id: number): boolean {
+		return this.getAccessToBlock(id) >= minimal
 	}
 
-	hasAccessToTag(minimal: AccessType, id: number) {
-		const rule = this.tags[id] ?? this.rootRule
-		return hasAccess(rule?.access ?? this.rootRule.access, minimal)
+	hasAccessToTag(minimal: AccessType, id: number): boolean {
+		return this.getAccessToTag(id) >= minimal
 	}
 
-	hasAccessToGroup(minimal: AccessType, guid: string) {
-		const rule = this.groups[guid] ?? this.rootRule
-		return hasAccess(rule?.access ?? this.rootRule.access, minimal)
+	hasAccessToGroup(minimal: AccessType, guid: string): boolean {
+		return this.getAccessToGroup(guid) >= minimal
+	}
+
+	//#endregion Проверки прав
+
+	//#region Получение прав
+
+	getGlobalAccess(): AccessType {
+		return this.rootRule.access
+	}
+
+	getAccessToSource(id: number): AccessType {
+		return this.sources[id]?.ruleId ?? this.rootRule.ruleId
+	}
+
+	getAccessToBlock(id: number) {
+		return this.blocks[id]?.ruleId ?? this.rootRule.ruleId
+	}
+
+	getAccessToTag(id: number) {
+		return this.tags[id]?.ruleId ?? this.rootRule.ruleId
+	}
+
+	getAccessToGroup(guid: string) {
+		return this.groups[guid]?.ruleId ?? this.rootRule.ruleId
 	}
 
 	//#endregion Проверки прав
