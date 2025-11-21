@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Models.Tags;
+﻿using Datalake.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 

@@ -11,7 +11,7 @@ public interface IAuditQueriesService
 		int? take = null,
 		int? sourceId = null,
 		int? blockId = null,
-		Guid? tagGuid = null,
+		int? tagId = null,
 		Guid? userGuid = null,
 		Guid? groupGuid = null,
 		LogCategory[]? categories = null,

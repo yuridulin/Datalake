@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Contracts.Models.UserGroups;
+namespace Datalake.Contracts.Requests;
 
 /// <summary>
 /// Данные запроса для создания группы пользователей

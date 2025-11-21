@@ -1,12 +1,11 @@
-﻿using Datalake.Contracts.Interfaces;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Contracts.Models.UserGroups;
 
 /// <summary>
 /// Базовая информация о группе пользователей
 /// </summary>
-public class UserGroupSimpleInfo : IProtectedEntity
+public class UserGroupSimpleInfo
 {
 	/// <summary>
 	/// Идентификатор группы
@@ -19,10 +18,4 @@ public class UserGroupSimpleInfo : IProtectedEntity
 	/// </summary>
 	[Required]
 	public required string Name { get; set; }
-
-	/// <summary>
-	/// Правило доступа
-	/// </summary>
-	[Required]
-	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

@@ -16,7 +16,7 @@ public class InventoryAuditController(InventoryReverseProxyService proxyService)
 		[FromQuery] int? take = null,
 		[FromQuery] int? source = null,
 		[FromQuery] int? block = null,
-		[FromQuery] Guid? tag = null,
+		[FromQuery] int? tag = null,
 		[FromQuery] Guid? user = null,
 		[FromQuery] Guid? group = null,
 		[FromQuery(Name = "categories[]")] LogCategory[]? categories = null,

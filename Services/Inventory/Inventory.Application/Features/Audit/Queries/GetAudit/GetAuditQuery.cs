@@ -10,7 +10,7 @@ public record GetAuditQuery(
 	int? Take = null,
 	int? SourceId = null,
 	int? BlockId = null,
-	Guid? TagGuid = null,
+	int? TagId = null,
 	Guid? UserGuid = null,
 	Guid? GroupGuid = null,
 	LogCategory[]? Categories = null,

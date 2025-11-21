@@ -3,17 +3,16 @@ using Datalake.Contracts.Models.Tags;
 using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
-using Microsoft.EntityFrameworkCore;
+using LinqToDB;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
-public class SourcesQueriesService(InventoryDbContext context) : ISourcesQueriesService
+public class SourcesQueriesService(InventoryDbLinqContext context) : ISourcesQueriesService
 {
 	private IQueryable<SourceInfo> QuerySourceInfo(bool withCustom = false)
 	{
 		return context.Sources
 			.Where(source => withCustom || !Source.InternalSources.Contains(source.Type))
-			.AsNoTracking()
 			.Select(source => new SourceInfo
 			{
 				Id = source.Id,
@@ -28,7 +27,6 @@ public class SourcesQueriesService(InventoryDbContext context) : ISourcesQueries
 	private IQueryable<SourceTagInfo> QuerySourceTagWithRelationsInfo()
 	{
 		return context.Tags
-			.AsNoTracking()
 			.Select(tag => new SourceTagInfo
 			{
 				Id = tag.Id,
@@ -78,7 +76,6 @@ public class SourcesQueriesService(InventoryDbContext context) : ISourcesQueries
 	private IQueryable<SourceTagInfo> QuerySourceTagInfo()
 	{
 		return context.Tags
-			.AsNoTracking()
 			.Select(tag => new SourceTagInfo
 			{
 				Id = tag.Id,

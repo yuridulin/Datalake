@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Models.Tags;
+﻿using Datalake.Contracts.Requests;
 using Datalake.Gateway.Host.Proxy.Services;
 using Datalake.Shared.Hosting.AbstractControllers.Data;
 using Microsoft.AspNetCore.Mvc;

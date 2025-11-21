@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Models.Tags;
+﻿using Datalake.Contracts.Requests;
 using Datalake.Data.Application.Features.Tags.Queries.GetCollectionStatus;
 using Datalake.Data.Application.Features.Tags.Queries.GetUsage;
 using Datalake.Shared.Hosting.AbstractControllers.Data;

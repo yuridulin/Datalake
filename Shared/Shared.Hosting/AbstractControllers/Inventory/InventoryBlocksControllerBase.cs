@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Models.Blocks;
+using Datalake.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -31,7 +32,7 @@ public abstract class InventoryBlocksControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
+	public abstract Task<ActionResult<BlockTreeWithTagsInfo[]>> GetAllAsync(
 		CancellationToken ct = default);
 
 	/// <summary>
@@ -41,7 +42,7 @@ public abstract class InventoryBlocksControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Информация о блоке</returns>
 	[HttpGet("{blockId}")]
-	public abstract Task<ActionResult<BlockFullInfo>> GetAsync(
+	public abstract Task<ActionResult<BlockDetailedInfo>> GetAsync(
 		[BindRequired, FromRoute] int blockId,
 		CancellationToken ct = default);
 

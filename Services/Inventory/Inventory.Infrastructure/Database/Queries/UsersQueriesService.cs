@@ -1,17 +1,13 @@
-﻿using Datalake.Contracts.Models;
-using Datalake.Contracts.Models.UserGroups;
-using Datalake.Contracts.Models.Users;
+﻿using Datalake.Contracts.Models.Users;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using Datalake.Inventory.Infrastructure.Database.Extensions;
+using LinqToDB;
 using System.Data;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
-public class UsersQueriesService(
-	InventoryDbContext context,
-	ILogger<UsersQueriesService> logger) : IUsersQueriesService
+public class UsersQueriesService(InventoryDbLinqContext context) : IUsersQueriesService
 {
 	public async Task<IEnumerable<UserInfo>> GetAsync(CancellationToken ct = default)
 	{
@@ -24,45 +20,25 @@ public class UsersQueriesService(
 		var query = QueryUsersInfo()
 			.Where(user => user.Guid == userGuid);
 
-		return await query.FirstOrDefaultAsync(cancellationToken: ct);
+		return await query.FirstOrDefaultAsync(ct);
 	}
 
 	private IQueryable<UserInfo> QueryUsersInfo()
 	{
 		return
 			from user in context.Users
-			where !user.IsDeleted
-			join energoUser in context.EnergoId on user.Guid equals energoUser.Guid into eu
-			from energoUser in eu.DefaultIfEmpty()
-			let userGlobalRule = user.AccessRules.OrderBy(r => r.Id).FirstOrDefault()
-			let groupRelations = user.GroupsRelations
-				.Where(gr => gr.UserGroup != null && !gr.UserGroup.IsDeleted)
-				.Select(gr => new
-				{
-					Group = gr.UserGroup!,
-					GroupGlobalRule = gr.UserGroup!.AccessRules.OrderBy(r => r.Id).FirstOrDefault()
-				})
-				.ToList()
+			from energo in context.EnergoId.LeftJoin(x => x.Guid == user.Guid)
+			from rule in context.CalculatedAccessRules.LeftJoin(x => x.UserGuid == user.Guid && x.IsGlobal)
 			select new UserInfo
 			{
 				Guid = user.Guid,
-				FullName = user.Type == UserType.Local
-					? (user.FullName == null ? (user.Login == null ? string.Empty : user.Login!) : user.FullName!)
-					: $"{energoUser.LastName} {energoUser.FirstName} {energoUser.MiddleName}",
-				AccessType = userGlobalRule != null ? userGlobalRule.AccessType : AccessType.None,
-				AccessRule = userGlobalRule != null
-						? new AccessRuleInfo(userGlobalRule.Id, userGlobalRule.AccessType)
-						: new AccessRuleInfo(0, AccessType.None),
-				Login = user.Login,
 				Type = user.Type,
-				UserGroups = groupRelations.Select(gr => new UserGroupSimpleInfo
-				{
-					Guid = gr.Group.Guid,
-					Name = gr.Group.Name,
-					AccessRule = gr.GroupGlobalRule != null
-						? new AccessRuleInfo(gr.GroupGlobalRule.Id, gr.GroupGlobalRule.AccessType)
-						: new AccessRuleInfo(0, AccessType.None)
-				}).ToList()
+				FullName = user.Type == UserType.EnergoId
+					? (energo == null ? "Имя не найдено в EnergoId" : $"{energo.LastName} {energo.FirstName} {energo.MiddleName}")
+					: (user.FullName ?? user.Login ?? "Имя не найдено в системе"),
+				AccessType = rule == null ? AccessType.None : rule.AccessType,
+				EnergoIdGuid = user.Type == UserType.EnergoId ? user.Guid : null,
+				Login = user.Type == UserType.Local ? user.Login : null,
 			};
 	}
 }

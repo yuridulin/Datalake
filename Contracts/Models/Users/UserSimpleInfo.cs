@@ -1,28 +1,28 @@
-﻿using Datalake.Contracts.Interfaces;
+﻿using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Contracts.Models.Users;
 
 /// <summary>
-/// Базовая информация о пользователе
+/// Базовая информация о учетной записи
 /// </summary>
-public class UserSimpleInfo : IProtectedEntity
+public class UserSimpleInfo
 {
 	/// <summary>
-	/// Идентификатор пользователя
+	/// Идентификатор учетной записи
 	/// </summary>
 	[Required]
 	public required Guid Guid { get; set; }
 
 	/// <summary>
-	/// Имя пользователя
+	/// Тип учетной записи
+	/// </summary>
+	[Required]
+	public required UserType Type { get; set; }
+
+	/// <summary>
+	/// Имя учетной записи
 	/// </summary>
 	[Required]
 	public required string FullName { get; set; }
-
-	/// <summary>
-	/// Правило доступа
-	/// </summary>
-	[Required]
-	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

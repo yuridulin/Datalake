@@ -1,7 +1,8 @@
-﻿using Datalake.Domain.Enums;
+﻿using Datalake.Contracts.Models.Tags;
+using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Contracts.Models.Tags;
+namespace Datalake.Contracts.Requests;
 
 /// <summary>
 /// Данные запроса для изменение тега

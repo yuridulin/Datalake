@@ -1,6 +1,6 @@
 ﻿using Datalake.Domain.Enums;
 
-namespace Datalake.Contracts.Models.AccessRules;
+namespace Datalake.Contracts.Requests;
 
 /// <summary>
 /// Необходимая информация для создания правила доступа на конкретный объект

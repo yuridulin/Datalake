@@ -1,7 +1,7 @@
 ﻿using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Contracts.Models.Users;
+namespace Datalake.Contracts.Requests;
 
 /// <summary>
 /// Данные запроса на создание пользователя

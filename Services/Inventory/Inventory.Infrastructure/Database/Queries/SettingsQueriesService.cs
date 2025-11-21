@@ -1,10 +1,10 @@
 ﻿using Datalake.Contracts.Models.Settings;
 using Datalake.Inventory.Application.Queries;
-using Microsoft.EntityFrameworkCore;
+using LinqToDB;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
-public class SettingsQueriesService(InventoryDbContext context) : ISettingsQueriesService
+public class SettingsQueriesService(InventoryDbLinqContext context) : ISettingsQueriesService
 {
 	public async Task<SettingsInfo?> GetAsync(CancellationToken ct = default)
 	{
@@ -16,6 +16,6 @@ public class SettingsQueriesService(InventoryDbContext context) : ISettingsQueri
 				EnergoIdClient = x.KeycloakClient,
 				EnergoIdHost = x.KeycloakHost,
 			})
-			.FirstOrDefaultAsync(cancellationToken: ct);
+			.FirstOrDefaultAsync(ct);
 	}
 }

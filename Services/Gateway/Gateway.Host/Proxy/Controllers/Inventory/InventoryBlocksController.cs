@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Models.Blocks;
+using Datalake.Contracts.Requests;
 using Datalake.Gateway.Host.Proxy.Services;
 using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Microsoft.AspNetCore.Mvc;
@@ -17,15 +18,15 @@ public class InventoryBlocksController(InventoryReverseProxyService proxyService
 			=> proxyService.ProxyAsync<int>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
+	public override Task<ActionResult<BlockTreeWithTagsInfo[]>> GetAllAsync(
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<BlockWithTagsInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<BlockTreeWithTagsInfo[]>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<BlockFullInfo>> GetAsync(
+	public override Task<ActionResult<BlockDetailedInfo>> GetAsync(
 		[BindRequired, FromRoute] int blockId,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<BlockFullInfo>(HttpContext, ct);
+			=> proxyService.ProxyAsync<BlockDetailedInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync(

@@ -19,11 +19,4 @@ public interface IUsersGroupsQueriesService
 	/// </summary>
 	Task<IEnumerable<UserGroupInfo>> GetAsync(
 		CancellationToken ct = default);
-
-	/// <summary>
-	/// Запрос информации о группах пользователей с правами, подгруппами и участниками
-	/// </summary>
-	Task<UserGroupDetailedInfo?> GetWithDetailsAsync(
-		Guid userGroupGuid,
-		CancellationToken ct = default);
 }

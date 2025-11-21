@@ -1,4 +1,4 @@
-﻿namespace Datalake.Contracts.Models.Blocks;
+﻿namespace Datalake.Contracts.Requests;
 
 public record BlockCreateRequest
 {

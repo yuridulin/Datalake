@@ -1,7 +1,7 @@
 ﻿using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Contracts.Models.Sources;
+namespace Datalake.Contracts.Requests;
 
 /// <summary>
 /// Данные для изменения источника данных

@@ -1,5 +1,4 @@
-﻿using Datalake.Contracts.Models.Abstractions;
-using Datalake.Contracts.Models.Tags;
+﻿using Datalake.Contracts.Models.Tags;
 using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
@@ -8,7 +7,7 @@ namespace Datalake.Contracts.Models.Blocks;
 /// <summary>
 /// Информация о закреплённом теге
 /// </summary>
-public class BlockNestedTagInfo : TagSimpleInfo, INestedItem
+public class BlockNestedTagInfo
 {
 	/// <summary>
 	/// Тип поля блока для этого тега
@@ -19,12 +18,12 @@ public class BlockNestedTagInfo : TagSimpleInfo, INestedItem
 	/// <summary>
 	/// Свое имя тега в общем списке
 	/// </summary>
-	[Required]
-	public string LocalName { get; set; } = string.Empty;
+	public string? LocalName { get; set; }
 
 	/// <summary>
-	/// Идентификатор источника данных
+	/// Используемый тег
 	/// </summary>
-	[Required]
-	public int SourceId { get; set; }
+	public TagSimpleInfo? Tag { get; set; }
+	public int BlockId { get; set; }
+	public int? TagId { get; set; }
 }

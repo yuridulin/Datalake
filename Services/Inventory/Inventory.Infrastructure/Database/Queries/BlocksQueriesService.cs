@@ -1,145 +1,70 @@
-﻿using Datalake.Contracts.Models.AccessRules;
-using Datalake.Contracts.Models.Blocks;
-using Datalake.Contracts.Models.UserGroups;
-using Datalake.Contracts.Models.Users;
-using Datalake.Domain.Enums;
+﻿using Datalake.Contracts.Models.Blocks;
 using Datalake.Inventory.Application.Queries;
-using Microsoft.EntityFrameworkCore;
-using static Datalake.Contracts.Models.Blocks.BlockFullInfo;
+using Datalake.Inventory.Infrastructure.Database.Extensions;
+using LinqToDB;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
-public class BlocksQueriesService(InventoryDbContext context) : IBlocksQueriesService
+public class BlocksQueriesService(InventoryDbLinqContext context) : IBlocksQueriesService
 {
-	private IQueryable<BlockWithTagsInfo> QueryBlockWithTagInfo()
+	public async Task<IEnumerable<BlockTreeInfo>> GetAsync(CancellationToken ct = default)
 	{
-		return context.Blocks
-			.Where(x => !x.IsDeleted)
-			.AsNoTracking()
-			.Select(block => new BlockWithTagsInfo
+		return await QueryBlockTree().ToArrayAsync(ct);
+	}
+
+	public async Task<BlockTreeInfo?> GetAsync(int blockId, CancellationToken ct = default)
+	{
+		return await QueryBlockTree().FirstOrDefaultAsync(x => x.Id == blockId, ct);
+	}
+
+	public async Task<BlockTreeInfo[]> GetWithParentsAsync(int blockId, CancellationToken ct = default)
+	{
+		var cte = context.GetCte<BlockTreeInfo>(nested =>
+		{
+			var baseQuery = QueryBlockTree().Where(x => x.Id == blockId);
+			var recursiveQuery =
+				from block in QueryBlockTree()
+				from parent in nested.InnerJoin(x => x.Id == block.ParentBlockId)
+				select parent;
+
+			return baseQuery.Concat(recursiveQuery);
+		});
+
+		return await cte.ToArrayAsync(ct);
+	}
+
+	public async Task<BlockNestedTagInfo[]> GetBlockNestedTagsAsync(IEnumerable<int> blocksId, CancellationToken ct = default)
+	{
+		return await QueryBlockTags()
+			.Where(x => blocksId.Contains(x.BlockId))
+			.ToArrayAsync(ct);
+	}
+
+	internal IQueryable<BlockTreeInfo> QueryBlockTree()
+	{
+		return
+			from block in context.Blocks
+			select new BlockTreeInfo
 			{
 				Id = block.Id,
 				Guid = block.GlobalId,
 				Name = block.Name,
-				Description = block.Description,
-				ParentId = block.ParentId,
-				Tags = block.RelationsToTags
-					.Where(rel => rel.Tag != null && !rel.Tag.IsDeleted)
-					.Select(rel => new BlockNestedTagInfo
-					{
-						Id = rel.Tag!.Id,
-						Name = rel.Tag.Name,
-						Guid = rel.Tag.GlobalGuid,
-						RelationType = rel.Relation,
-						LocalName = rel.Name ?? rel.Tag.Name,
-						Type = rel.Tag.Type,
-						Resolution = rel.Tag.Resolution,
-						SourceId = rel.Tag.SourceId,
-						SourceType = rel.Tag.Source == null || rel.Tag.Source.IsDeleted ? SourceType.Unset : rel.Tag.Source.Type,
-					})
-					.ToArray(),
-			});
+				ParentBlockId = block.ParentId,
+			};
 	}
 
-	public async Task<IEnumerable<BlockWithTagsInfo>> GetWithTagsAsync(CancellationToken ct = default)
+	internal IQueryable<BlockNestedTagInfo> QueryBlockTags()
 	{
-		return await QueryBlockWithTagInfo().ToArrayAsync(ct);
-	}
-
-	public async Task<BlockFullInfo?> GetFullAsync(int blockId, CancellationToken ct = default)
-	{
-		var block = await QueryBlockWithTagInfo().FirstOrDefaultAsync(x => x.Id == blockId, ct);
-
-		if (block == null)
-			return null;
-
-		var adults = new List<BlockTreeInfo>();
-
-		// TODO: конченная штука, нужно переделать или на RecursiveCTE, или на использование вьюхи с Anchestors
-		BlockParentInfo? firstParent = null;
-		int? currentParentId = block.ParentId;
-		while (currentParentId.HasValue)
-		{
-			var adult = await context.Blocks
-				.Where(x => !x.IsDeleted && x.Id == currentParentId)
-				.AsNoTracking()
-				.Select(x => new BlockTreeInfo
-				{
-					Id = x.Id,
-					Guid = x.GlobalId,
-					Name = x.Name,
-					ParentId = x.ParentId,
-				})
-				.FirstOrDefaultAsync(ct);
-
-			if (adult != null)
+		return
+			from relation in context.BlockTags
+			from tag in context.Tags.AsSimpleInfo(context.Sources).LeftJoin(x => x.Id == relation.TagId)
+			select new BlockNestedTagInfo
 			{
-				adults.Add(adult);
-				currentParentId = adult.ParentId;
-
-				firstParent ??= new BlockParentInfo { Id = adult.Id, Name = adult.Name };
-			}
-		}
-
-		var children = await context.Blocks
-			.Where(x => x.ParentId == block.Id && !x.IsDeleted)
-			.AsNoTracking()
-			.Select(child => new BlockChildInfo
-			{
-				Id = child.Id,
-				Name = child.Name,
-			})
-			.ToArrayAsync(ct);
-
-		var properties = await context.BlockProperties
-			.Where(x => x.BlockId == block.Id)
-			.AsNoTracking()
-			.Select(property => new BlockPropertyInfo
-			{
-				Id = property.Id,
-				Name = property.Name,
-				Type = property.Type,
-				Value = property.Value,
-			})
-			.ToArrayAsync(ct);
-
-		var rules = await context.AccessRules
-				.Where(rule => rule.BlockId == block.Id)
-				.AsNoTracking()
-				.Select(rule => new AccessRightsForObjectInfo
-				{
-					Id = rule.Id,
-					IsGlobal = rule.IsGlobal,
-					AccessType = rule.AccessType,
-					User = rule.User == null || rule.User.IsDeleted ? null : new UserSimpleInfo
-					{
-						Guid = rule.User.Guid,
-						FullName = rule.User.FullName ?? string.Empty,
-					},
-					UserGroup = rule.UserGroup == null || rule.UserGroup.IsDeleted ? null : new UserGroupSimpleInfo
-					{
-						Guid = rule.UserGroup.Guid,
-						Name = rule.UserGroup.Name,
-					},
-				})
-				.ToArrayAsync(ct);
-
-		var data = new BlockFullInfo
-		{
-			Id = block.Id,
-			Guid = block.Guid,
-			Name = block.Name,
-			Description = block.Description,
-			ParentId = block.ParentId,
-			Tags = block.Tags,
-			AccessRule = block.AccessRule,
-			Parent = firstParent,
-			Adults = adults.ToArray(),
-			Children = children,
-			Properties = properties,
-			AccessRights = rules,
-		};
-
-		return data;
+				BlockId = relation.BlockId,
+				LocalName = relation.Name,
+				RelationType = relation.Relation,
+				TagId = relation.TagId,
+				Tag = tag,
+			};
 	}
 }

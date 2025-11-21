@@ -1,16 +1,11 @@
 ﻿using Datalake.Contracts.Models.AccessRules;
-using Datalake.Contracts.Models.Blocks;
-using Datalake.Contracts.Models.Sources;
-using Datalake.Contracts.Models.Tags;
-using Datalake.Contracts.Models.UserGroups;
-using Datalake.Contracts.Models.Users;
-using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
-using Microsoft.EntityFrameworkCore;
+using Datalake.Inventory.Infrastructure.Database.Extensions;
+using LinqToDB;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
-public class AccessRulesQueriesService(InventoryDbContext context) : IAccessRulesQueriesService
+public class AccessRulesQueriesService(InventoryDbLinqContext context) : IAccessRulesQueriesService
 {
 	public async Task<IEnumerable<AccessRightsInfo>> GetAsync(
 		Guid? userGuid = null,
@@ -20,57 +15,31 @@ public class AccessRulesQueriesService(InventoryDbContext context) : IAccessRule
 		int? tagId = null,
 		CancellationToken ct = default)
 	{
-		return await context.AccessRules
-			.Include(rule => rule.Block)
-			.Include(rule => rule.Tag).ThenInclude(x => x!.Source)
-			.Include(rule => rule.Source)
-			.Include(rule => rule.User).ThenInclude(x => x!.EnergoId)
-			.Include(rule => rule.UserGroup)
-			.Where(rule => !rule.IsGlobal)
-			.Where(rule => !userGuid.HasValue || rule.UserGuid == userGuid)
-			.Where(rule => !userGroupGuid.HasValue || rule.UserGroupGuid == userGroupGuid)
-			.Where(rule => !sourceId.HasValue || rule.SourceId == sourceId)
-			.Where(rule => !blockId.HasValue || rule.BlockId == blockId)
-			.Where(rule => !tagId.HasValue || rule.TagId == tagId)
-			.AsNoTracking()
-			.Select(rule => new AccessRightsInfo
+		var query =
+			from rule in context.AccessRules
+			from block in context.Blocks.AsSimpleInfo().LeftJoin(x => x.Id == rule.BlockId)
+			from tag in context.Tags.AsSimpleInfo(context.Sources).LeftJoin(x => x.Id == rule.TagId)
+			from source in context.Sources.AsSimpleInfo().LeftJoin(x => x.Id == rule.SourceId)
+			from user in context.Users.AsSimpleInfo(context.EnergoId).LeftJoin(x => x.Guid == rule.UserGuid)
+			from usergroup in context.UserGroups.AsSimpleInfo().LeftJoin(x => x.Guid == rule.UserGroupGuid)
+			where !rule.IsGlobal &&
+				(blockId == null || blockId == rule.BlockId) &&
+				(tagId == null || tagId == rule.TagId) &&
+				(sourceId == null || sourceId == rule.SourceId) &&
+				(userGuid == null || userGuid == rule.UserGuid) &&
+				(userGroupGuid == null || userGroupGuid == rule.UserGroupGuid)
+			select new AccessRightsInfo
 			{
 				Id = rule.Id,
 				AccessType = rule.AccessType,
 				IsGlobal = rule.IsGlobal,
-				User = rule.User == null || rule.User.IsDeleted ? null : new UserSimpleInfo
-				{
-					Guid = rule.User.Guid,
-					FullName = rule.User.EnergoId == null
-						? (rule.User.FullName ?? string.Empty)
-						: $"{rule.User.EnergoId.LastName} {rule.User.EnergoId.FirstName} {rule.User.EnergoId.MiddleName}",
-				},
-				UserGroup = rule.UserGroup == null || rule.UserGroup.IsDeleted ? null : new UserGroupSimpleInfo
-				{
-					Guid = rule.UserGroup.Guid,
-					Name = rule.UserGroup.Name,
-				},
-				Source = rule.Source == null || rule.Source.IsDeleted ? null : new SourceSimpleInfo
-				{
-					Id = rule.Source.Id,
-					Name = rule.Source.Name,
-				},
-				Block = rule.Block == null || rule.Block.IsDeleted ? null : new BlockSimpleInfo
-				{
-					Id = rule.Block.Id,
-					Guid = rule.Block.GlobalId,
-					Name = rule.Block.Name,
-				},
-				Tag = rule.Tag == null || rule.Tag.IsDeleted ? null : new TagSimpleInfo
-				{
-					Id = rule.Tag.Id,
-					Guid = rule.Tag.GlobalGuid,
-					Name = rule.Tag.Name,
-					Type = rule.Tag.Type,
-					Resolution = rule.Tag.Resolution,
-					SourceType = rule.Tag.Source == null ? SourceType.Unset : rule.Tag.Source.Type,
-				}
-			})
-			.ToArrayAsync(ct);
+				User = user,
+				UserGroup = usergroup,
+				Source = source,
+				Block = block,
+				Tag = tag,
+			};
+
+		return await query.ToArrayAsync(ct);
 	}
 }

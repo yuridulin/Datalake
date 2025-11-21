@@ -13,6 +13,8 @@ using Datalake.Inventory.Infrastructure.InMemory.UserAccess;
 using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Infrastructure;
 using Datalake.Shared.Infrastructure.Database.Schema;
+using LinqToDB.AspNet;
+using LinqToDB.AspNet.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +37,13 @@ public static class Bootstrap
 			{
 				npgsql.MigrationsHistoryTable(InventorySchema.Migrations, InventorySchema.Name);
 			});
+		});
+		builder.Services.AddLinqToDBContext<InventoryDbLinqContext>((provider, options) =>
+		{
+			return options
+				.UseDefaultLogging(provider)
+				.UseTraceLevel(System.Diagnostics.TraceLevel.Verbose)
+				.UsePostgreSQL(connectionString);
 		});
 
 		// БД: репозитории

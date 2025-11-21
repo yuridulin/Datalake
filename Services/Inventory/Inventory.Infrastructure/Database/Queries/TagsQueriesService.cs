@@ -1,11 +1,11 @@
 ﻿using Datalake.Contracts.Models.Tags;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
-using Microsoft.EntityFrameworkCore;
+using LinqToDB;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
-public class TagsQueriesService(InventoryDbContext context) : ITagsQueriesService
+public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesService
 {
 	public async Task<TagFullInfo?> GetWithDetailsAsync(int tagId, CancellationToken ct = default)
 	{
@@ -73,7 +73,6 @@ public class TagsQueriesService(InventoryDbContext context) : ITagsQueriesServic
 	{
 		return context.Tags
 			.Where(tag => !tag.IsDeleted)
-			.AsNoTracking()
 			.Select(tag => new TagInfo
 			{
 				Id = tag.Id,

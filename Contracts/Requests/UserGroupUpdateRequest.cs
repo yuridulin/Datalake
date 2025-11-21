@@ -1,7 +1,8 @@
-﻿using Datalake.Domain.Enums;
+﻿using Datalake.Contracts.Models.UserGroups;
+using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Contracts.Models.UserGroups;
+namespace Datalake.Contracts.Requests;
 
 /// <summary>
 /// Данные запроса для изменения группы пользователей

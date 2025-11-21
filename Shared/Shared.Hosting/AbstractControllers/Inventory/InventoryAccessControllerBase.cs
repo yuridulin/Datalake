@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Models.AccessRules;
+using Datalake.Contracts.Requests;
 using Datalake.Domain.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 

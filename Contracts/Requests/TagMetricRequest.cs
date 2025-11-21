@@ -1,4 +1,4 @@
-﻿namespace Datalake.Contracts.Models.Tags;
+﻿namespace Datalake.Contracts.Requests;
 
 public record TagMetricRequest
 {

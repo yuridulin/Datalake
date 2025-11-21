@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Contracts.Models.Tags;
+namespace Datalake.Contracts.Requests;
 
 /// <summary>
 /// Необходимая информация для привязки тега в качестве входного для 

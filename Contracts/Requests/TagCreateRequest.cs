@@ -1,7 +1,7 @@
 ﻿using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Contracts.Models.Tags;
+namespace Datalake.Contracts.Requests;
 
 /// <summary>
 /// Необходимые данные для создания тега

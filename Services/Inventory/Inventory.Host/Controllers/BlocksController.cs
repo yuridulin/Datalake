@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Models.Blocks;
+using Datalake.Contracts.Requests;
 using Datalake.Inventory.Application.Features.Blocks.Commands.CreateBlock;
 using Datalake.Inventory.Application.Features.Blocks.Commands.DeleteBlock;
 using Datalake.Inventory.Application.Features.Blocks.Commands.MoveBlock;
@@ -36,7 +37,7 @@ public class BlocksController(
 		return key;
 	}
 
-	public override async Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
+	public override async Task<ActionResult<BlockTreeWithTagsInfo[]>> GetAllAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -46,7 +47,7 @@ public class BlocksController(
 		return Ok(data);
 	}
 
-	public override async Task<ActionResult<BlockFullInfo>> GetAsync(
+	public override async Task<ActionResult<BlockDetailedInfo>> GetAsync(
 		[BindRequired, FromRoute] int blockId,
 		CancellationToken ct = default)
 	{

@@ -1,7 +1,7 @@
 ﻿using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Datalake.Contracts.Models.Blocks;
+namespace Datalake.Contracts.Requests;
 
 /// <summary>
 /// Новая информация о блоке

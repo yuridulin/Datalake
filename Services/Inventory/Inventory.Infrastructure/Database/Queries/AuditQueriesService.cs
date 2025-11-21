@@ -1,17 +1,13 @@
-﻿using Datalake.Contracts.Models.Blocks;
-using Datalake.Contracts.Models.LogModels;
-using Datalake.Contracts.Models.Sources;
-using Datalake.Contracts.Models.Tags;
-using Datalake.Contracts.Models.UserGroups;
-using Datalake.Contracts.Models.Users;
+﻿using Datalake.Contracts.Models.LogModels;
 using Datalake.Domain.Enums;
 using Datalake.Domain.Extensions;
 using Datalake.Inventory.Application.Queries;
-using Microsoft.EntityFrameworkCore;
+using Datalake.Inventory.Infrastructure.Database.Extensions;
+using LinqToDB;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
-public class AuditQueriesService(InventoryDbContext context) : IAuditQueriesService
+public class AuditQueriesService(InventoryDbLinqContext context) : IAuditQueriesService
 {
 	public async Task<IEnumerable<LogInfo>> GetAsync(
 		int? lastId = null,
@@ -19,7 +15,7 @@ public class AuditQueriesService(InventoryDbContext context) : IAuditQueriesServ
 		int? take = null,
 		int? sourceId = null,
 		int? blockId = null,
-		Guid? tagGuid = null,
+		int? tagId = null,
 		Guid? userGuid = null,
 		Guid? groupGuid = null,
 		LogCategory[]? categories = null,
@@ -27,54 +23,38 @@ public class AuditQueriesService(InventoryDbContext context) : IAuditQueriesServ
 		Guid? authorGuid = null,
 		CancellationToken ct = default)
 	{
-		var query = context.Audit
-			.Include(x => x.Author)
-			.Include(log => log.AffectedSource)
-			.Include(log => log.AffectedBlock)
-			.Include(log => log.AffectedTag)
-					.ThenInclude(tag => tag!.Source)
-			.Include(log => log.AffectedUser)
-			.Include(log => log.AffectedUserGroup)
-			.AsNoTracking()
-			.AsQueryable();
-
-		// Применяем фильтры для включения удаленных объектов
-		query = query.Where(log =>
-			(log.Author == null || !log.Author.IsDeleted) &&
-			(log.AffectedSource == null || !log.AffectedSource.IsDeleted) &&
-			(log.AffectedBlock == null || !log.AffectedBlock.IsDeleted) &&
-			(log.AffectedTag == null || !log.AffectedTag.IsDeleted) &&
-			(log.AffectedUser == null || !log.AffectedUser.IsDeleted) &&
-			(log.AffectedUserGroup == null || !log.AffectedUserGroup.IsDeleted) &&
-			(log.AffectedTag == null || log.AffectedTag.Source == null || !log.AffectedTag.Source.IsDeleted));
-
-		// Применяем дополнительные фильтры
-		if (authorGuid != null)
-			query = query.Where(x => x.Author != null && x.Author.Guid == authorGuid.Value);
-
-		if (sourceId != null)
-			query = query.Where(x => x.AffectedSource != null && x.AffectedSource.Id == sourceId.Value);
-
-		if (blockId != null)
-			query = query.Where(x => x.AffectedBlock != null && x.AffectedBlock.Id == blockId.Value);
-
-		if (tagGuid != null)
-			query = query.Where(x => x.AffectedTag != null && x.AffectedTag.Guid == tagGuid.Value);
-
-		if (userGuid != null)
-			query = query.Where(x => x.AffectedUser != null && x.AffectedUser.Guid == userGuid.Value);
-
-		if (groupGuid != null)
-			query = query.Where(x => x.AffectedUserGroup != null && x.AffectedUserGroup.Guid == groupGuid.Value);
-
-		if (categories != null && categories.Length > 0)
-			query = query.Where(x => categories.Contains(x.Category));
-
-		if (types != null && types.Length > 0)
-			query = query.Where(x => types.Contains(x.Type));
-
-		if (authorGuid != null)
-			query = query.Where(x => x.Author != null && x.Author.Guid == authorGuid.Value);
+		var query =
+			from log in context.Audit
+			from author in context.Users.AsSimpleInfo(context.EnergoId).LeftJoin(x => x.Guid == log.AuthorGuid)
+			from source in context.Sources.AsSimpleInfo().LeftJoin(x => x.Id == log.AffectedSourceId)
+			from tag in context.Tags.AsSimpleInfo(context.Sources).LeftJoin(x => x.Id == log.AffectedTagId)
+			from block in context.Blocks.AsSimpleInfo().LeftJoin(x => x.Id == log.AffectedBlockId)
+			from user in context.Users.AsSimpleInfo(context.EnergoId).LeftJoin(x => x.Guid == log.AffectedUserGuid)
+			from usergroup in context.UserGroups.AsSimpleInfo().LeftJoin(x => x.Guid == log.AffectedUserGroupGuid)
+			where
+				(authorGuid == null || authorGuid.Value == log.AuthorGuid) &&
+				(sourceId == null || sourceId.Value == log.AffectedSourceId) &&
+				(tagId == null || tagId.Value == log.AffectedTagId) &&
+				(blockId == null || blockId.Value == log.AffectedBlockId) &&
+				(userGuid == null || userGuid.Value == log.AffectedUserGuid) &&
+				(groupGuid == null || groupGuid.Value == log.AffectedUserGroupGuid) &&
+				(types == null || types.Contains(log.Type)) &&
+				(categories == null || categories.Contains(log.Category))
+			select new LogInfo
+			{
+				Id = log.Id,
+				Category = log.Category,
+				DateString = log.Date.HierarchicalWithMilliseconds(),
+				Text = log.Text,
+				Type = log.Type,
+				Details = log.Details,
+				Author = author,
+				AffectedSource = source,
+				AffectedBlock = block,
+				AffectedTag = tag,
+				AffectedUser = user,
+				AffectedUserGroup = usergroup,
+			};
 
 		query = query
 			.OrderByDescending(x => x.Id);
@@ -87,52 +67,6 @@ public class AuditQueriesService(InventoryDbContext context) : IAuditQueriesServ
 		if (take.HasValue)
 			query = query.Take(take.Value);
 
-		// Проекция в LogInfo
-		return await query
-			.Select(log => new LogInfo
-			{
-				Id = log.Id,
-				Category = log.Category,
-				DateString = log.Date.HierarchicalWithMilliseconds(),
-				Text = log.Text,
-				Type = log.Type,
-				Details = log.Details,
-				Author = log.Author == null ? null : new UserSimpleInfo
-				{
-					Guid = log.Author.Guid,
-					FullName = log.Author.FullName ?? log.Author.Login ?? string.Empty,
-				},
-				AffectedSource = log.AffectedSource == null ? null : new SourceSimpleInfo
-				{
-					Id = log.AffectedSource.Id,
-					Name = log.AffectedSource.Name,
-				},
-				AffectedBlock = log.AffectedBlock == null ? null : new BlockSimpleInfo
-				{
-					Id = log.AffectedBlock.Id,
-					Guid = log.AffectedBlock.GlobalId,
-					Name = log.AffectedBlock.Name,
-				},
-				AffectedTag = log.AffectedTag == null ? null : new TagSimpleInfo
-				{
-					Id = log.AffectedTag.Id,
-					Guid = log.AffectedTag.Guid,
-					Name = log.AffectedTag.Name,
-					Type = log.AffectedTag.Type,
-					Resolution = log.AffectedTag.Resolution,
-					SourceType = log.AffectedTag.Source == null ? SourceType.Unset : log.AffectedTag.Source.Type,
-				},
-				AffectedUser = log.AffectedUser == null ? null : new UserSimpleInfo
-				{
-					Guid = log.AffectedUser.Guid,
-					FullName = log.AffectedUser.FullName ?? log.AffectedUser.Login ?? string.Empty,
-				},
-				AffectedUserGroup = log.AffectedUserGroup == null ? null : new UserGroupSimpleInfo
-				{
-					Guid = log.AffectedUserGroup.Guid,
-					Name = log.AffectedUserGroup.Name,
-				},
-			})
-			.ToArrayAsync(cancellationToken: ct);
+		return await query.ToArrayAsync(ct);
 	}
 }

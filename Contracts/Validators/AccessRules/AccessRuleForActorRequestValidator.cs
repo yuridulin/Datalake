@@ -1,4 +1,4 @@
-﻿using Datalake.Contracts.Models.AccessRules;
+﻿using Datalake.Contracts.Requests;
 using FluentValidation;
 
 namespace Datalake.Contracts.Validators.AccessRules;

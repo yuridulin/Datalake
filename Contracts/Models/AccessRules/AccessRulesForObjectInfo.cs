@@ -6,7 +6,7 @@ namespace Datalake.Contracts.Models.AccessRules;
 /// <summary>
 /// Информация о разрешении на объект для субьекта
 /// </summary>
-public class AccessRightsForObjectInfo : AccessRightsSimpleInfo
+public class AccessRulesForObjectInfo : AccessRightsSimpleInfo
 {
 	/// <summary>
 	/// Информация о группе пользователей

@@ -21,16 +21,16 @@ public class UserInfo : UserSimpleInfo
 	public required AccessType AccessType { get; set; }
 
 	/// <summary>
-	/// Тип учётной записи
-	/// </summary>
-	[Required]
-	public UserType Type { get; set; }
-
-	/// <summary>
 	/// Идентификатор пользователя в сервере EnergoId
 	/// </summary>
 	public Guid? EnergoIdGuid { get; set; }
+}
 
+/// <summary>
+/// Информация о пользователе и группах, в которых он состоит
+/// </summary>
+public class UserWithGroupsInfo : UserInfo
+{
 	/// <summary>
 	/// Список групп, в которые входит пользователь
 	/// </summary>

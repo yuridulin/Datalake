@@ -18,7 +18,7 @@ public class GetAuditHandler(IAuditQueriesService auditQueriesService) : IGetAud
 			query.Take,
 			query.SourceId,
 			query.BlockId,
-			query.TagGuid,
+			query.TagId,
 			query.UserGuid,
 			query.GroupGuid,
 			query.Categories,

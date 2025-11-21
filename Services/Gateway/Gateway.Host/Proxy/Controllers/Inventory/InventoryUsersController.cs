@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Models.Users;
+using Datalake.Contracts.Requests;
 using Datalake.Gateway.Host.Proxy.Services;
 using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Microsoft.AspNetCore.Mvc;

@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Models.UserGroups;
+using Datalake.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
