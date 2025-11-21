@@ -17,8 +17,11 @@ public class AuthenticationService(IUsersAccessStore cache) : IAuthenticator
 		if (!Guid.TryParse(userGuidString, out var userGuid))
 			throw new InvalidCastException("Идентификатор пользователя не прочитан как GUID");
 
+		if (cache.State.Version == 0)
+			throw new ApplicationException("Система не готова к работе");
+
 		if (!cache.State.UsersAccess.TryGetValue(userGuid, out var user))
-			throw new KeyNotFoundException($"Внешний пользователь не найден по идентификатору: {userGuid}");
+			throw new KeyNotFoundException($"Пользователь не найден по идентификатору: {userGuid}");
 
 		return user;
 	}

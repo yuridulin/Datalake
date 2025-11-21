@@ -4,7 +4,7 @@ import { SourceType, TagInfo, TagType } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from 'antd'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import TagsTable from './TagsTable'
 
 const TagsAggregatedList = () => {
@@ -12,15 +12,13 @@ const TagsAggregatedList = () => {
 	const store = useAppStore()
 	const [tags, setTags] = useState([] as TagInfo[])
 	const [created, setCreated] = useState(null as TagInfo | null)
+	const hasLoadedRef = useRef(false)
 
 	const getTags = useCallback(() => {
-		setTags((prevTags) => {
-			store.api
-				.inventoryTagsGetAll({ sourceId: SourceType.Aggregated })
-				.then((res) => setTags(res.data))
-				.catch(() => setTags([]))
-			return prevTags
-		})
+		store.api
+			.inventoryTagsGetAll({ sourceId: SourceType.Aggregated })
+			.then((res) => setTags(res.data))
+			.catch(() => setTags([]))
 	}, [store.api])
 
 	const createTag = useCallback(() => {
@@ -36,7 +34,11 @@ const TagsAggregatedList = () => {
 			.catch()
 	}, [store.api, getTags])
 
-	useEffect(getTags, [getTags])
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		getTags()
+	}, [getTags])
 
 	return (
 		<>

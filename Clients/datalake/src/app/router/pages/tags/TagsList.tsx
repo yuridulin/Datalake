@@ -2,25 +2,24 @@ import PageHeader from '@/app/components/PageHeader'
 import { TagInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import TagsTable from './TagsTable'
 
 const Tags = () => {
 	useDatalakeTitle('Теги')
 	const store = useAppStore()
 	const [tags, setTags] = useState([] as TagInfo[])
+	const hasLoadedRef = useRef(false)
 
-	const getTags = useCallback(() => {
-		setTags((prevTags) => {
-			store.api
-				.inventoryTagsGetAll()
-				.then((res) => setTags(res.data))
-				.catch(() => setTags([]))
-			return prevTags
-		})
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+
+		store.api
+			.inventoryTagsGetAll()
+			.then((res) => setTags(res.data))
+			.catch(() => setTags([]))
 	}, [store.api])
-
-	useEffect(getTags, [getTags])
 
 	return (
 		<>
