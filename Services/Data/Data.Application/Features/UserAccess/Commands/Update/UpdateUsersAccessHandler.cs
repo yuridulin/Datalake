@@ -9,7 +9,7 @@ public interface IUpdateUsersAccessHandler : ICommandHandler<UpdateUsersAccessCo
 
 [Scoped]
 public class UpdateUsersAccessHandler(
-	IUserAccessRepository userAccessRepository,
+	IUserAccessValuesRepository userAccessRepository,
 	IUsersAccessStore userAccessCache,
 	ILogger<UpdateUsersAccessHandler> logger) : IUpdateUsersAccessHandler
 {

@@ -12,7 +12,7 @@ using Datalake.Inventory.Infrastructure.InMemory.Inventory;
 using Datalake.Inventory.Infrastructure.InMemory.UserAccess;
 using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Infrastructure;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

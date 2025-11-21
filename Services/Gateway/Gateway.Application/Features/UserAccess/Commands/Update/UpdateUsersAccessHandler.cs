@@ -7,7 +7,7 @@ namespace Datalake.Gateway.Application.Features.UserAccess.Commands.Update;
 public interface IUpdateUsersAccessHandler : ICommandHandler<UpdateUsersAccessCommand, bool> { }
 
 public class UpdateUsersAccessHandler(
-	IUserAccessRepository userAccessRepository,
+	IUserAccessValuesRepository userAccessRepository,
 	IUsersAccessStore userAccessCache,
 	ILogger<UpdateUsersAccessHandler> logger) : IUpdateUsersAccessHandler
 {

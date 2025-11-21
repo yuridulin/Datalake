@@ -10,6 +10,6 @@ public class EnergoIdRepository(InventoryDbContext context) : IEnergoIdRepositor
 {
 	public async Task<IEnumerable<EnergoId>> GetAsync(CancellationToken ct = default)
 	{
-		return await context.EnergoIdView.ToArrayAsync(ct);
+		return await context.EnergoId.ToArrayAsync(ct);
 	}
 }

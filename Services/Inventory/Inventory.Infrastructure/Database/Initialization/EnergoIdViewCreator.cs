@@ -2,7 +2,7 @@
 using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Infrastructure;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Npgsql;

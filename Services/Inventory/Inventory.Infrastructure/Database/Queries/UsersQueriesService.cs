@@ -32,7 +32,7 @@ public class UsersQueriesService(
 		return
 			from user in context.Users
 			where !user.IsDeleted
-			join energoUser in context.EnergoIdView on user.Guid equals energoUser.Guid into eu
+			join energoUser in context.EnergoId on user.Guid equals energoUser.Guid into eu
 			from energoUser in eu.DefaultIfEmpty()
 			let userGlobalRule = user.AccessRules.OrderBy(r => r.Id).FirstOrDefault()
 			let groupRelations = user.GroupsRelations

@@ -1,9 +1,9 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
 public class EnergoIdConfiguration : IEntityTypeConfiguration<EnergoId>
 {

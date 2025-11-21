@@ -1,10 +1,6 @@
-﻿using Datalake.Domain.Entities;
-using Datalake.Domain.ValueObjects;
-using Datalake.Shared.Infrastructure;
-using Datalake.Shared.Infrastructure.Interfaces;
-using Datalake.Shared.Infrastructure.Schema;
+﻿using Datalake.Shared.Infrastructure.Database;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Gateway.Infrastructure.Database;
 
@@ -13,45 +9,27 @@ namespace Datalake.Gateway.Infrastructure.Database;
 /// </summary>
 /// Add-Migration NAME -Context Datalake.Gateway.Infrastructure.Database.GatewayDbContext -OutputDir Database\Migrations
 /// Remove-Migration -Context Datalake.Gateway.Infrastructure.Database.GatewayDbContext
-public class GatewayDbContext(DbContextOptions<GatewayDbContext> options) : DbContext(options), IUserAccessDbContext
+public class GatewayDbContext(DbContextOptions<GatewayDbContext> options) : AbstractDbContext(options)
 {
-	/// <summary>
-	/// Конфигурация связей между таблицами БД
-	/// </summary>
-	protected override void OnModelCreating(ModelBuilder modelBuilder)
+	public override string DefaultSchema { get; } = GatewaySchema.Name;
+
+	public override DatabaseTableAccessConfiguration TableAccessConfiguration { get; } = new()
 	{
-		modelBuilder.HasDefaultSchema(GatewaySchema.Name);
-
-		modelBuilder.ApplyConfigurations(new()
-		{
-			AccessRules = TableAccess.Read,
-			Audit = TableAccess.Read,
-			Blocks = TableAccess.Read,
-			BlocksProperties = TableAccess.Read,
-			BlocksTags = TableAccess.Read,
-			CalculatedAccessRules = TableAccess.Read,
-			Settings = TableAccess.Read,
-			Sources = TableAccess.Read,
-			Tags = TableAccess.Read,
-			TagsValues = TableAccess.Read,
-			TagsInputs = TableAccess.Read,
-			TagsThresholds = TableAccess.Read,
-			UserGroups = TableAccess.Read,
-			UserGroupsRelations = TableAccess.Read,
-			Users = TableAccess.Read,
-			UserSessions = TableAccess.Write,
-		});
-	}
-
-	/// <summary>
-	/// Таблица пользователей
-	/// </summary>
-	public virtual DbSet<User> Users { get; set; }
-
-	/// <summary>
-	/// Таблица текущих сессий пользователей
-	/// </summary>
-	public virtual DbSet<UserSession> UserSessions { get; set; }
-
-	public virtual DbSet<CalculatedAccessRule> CalculatedAccessRules { get; set; }
+		AccessRules = DatabaseTableAccess.Read,
+		Audit = DatabaseTableAccess.Read,
+		Blocks = DatabaseTableAccess.Read,
+		BlocksProperties = DatabaseTableAccess.Read,
+		BlocksTags = DatabaseTableAccess.Read,
+		CalculatedAccessRules = DatabaseTableAccess.Read,
+		Settings = DatabaseTableAccess.Read,
+		Sources = DatabaseTableAccess.Read,
+		Tags = DatabaseTableAccess.Read,
+		TagsValues = DatabaseTableAccess.Read,
+		TagsInputs = DatabaseTableAccess.Read,
+		TagsThresholds = DatabaseTableAccess.Read,
+		UserGroups = DatabaseTableAccess.Read,
+		UserGroupsRelations = DatabaseTableAccess.Read,
+		Users = DatabaseTableAccess.Read,
+		UserSessions = DatabaseTableAccess.Write,
+	};
 }

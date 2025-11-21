@@ -1,4 +1,4 @@
-﻿namespace Datalake.Shared.Infrastructure.Schema;
+﻿namespace Datalake.Shared.Infrastructure.Database.Schema;
 
 public static class GatewaySchema
 {

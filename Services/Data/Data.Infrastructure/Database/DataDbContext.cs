@@ -1,10 +1,6 @@
-﻿using Datalake.Domain.Entities;
-using Datalake.Domain.ValueObjects;
-using Datalake.Shared.Infrastructure;
-using Datalake.Shared.Infrastructure.Interfaces;
-using Datalake.Shared.Infrastructure.Schema;
+﻿using Datalake.Shared.Infrastructure.Database;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
 namespace Datalake.Data.Infrastructure.Database;
 
@@ -13,51 +9,33 @@ namespace Datalake.Data.Infrastructure.Database;
 /// </summary>
 /// Add-Migration NAME -Context Datalake.Data.Infrastructure.Database.DataDbContext -OutputDir Database\Migrations
 /// Remove-Migration -Context Datalake.Data.Infrastructure.Database.DataDbContext
-public class DataDbContext : DbContext, IUserAccessDbContext
+public class DataDbContext(DbContextOptions<DataDbContext> options) : AbstractDbContext(options)
 {
-	public DataDbContext(DbContextOptions<DataDbContext> options) : base(options)
+	public override string DefaultSchema { get; } = DataSchema.Name;
+
+	public override DatabaseTableAccessConfiguration TableAccessConfiguration { get; } = new()
+	{
+		AccessRules = DatabaseTableAccess.Read,
+		Audit = DatabaseTableAccess.Read,
+		Blocks = DatabaseTableAccess.Read,
+		BlocksProperties = DatabaseTableAccess.Read,
+		BlocksTags = DatabaseTableAccess.Read,
+		CalculatedAccessRules = DatabaseTableAccess.Read,
+		Settings = DatabaseTableAccess.Read,
+		Sources = DatabaseTableAccess.Read,
+		Tags = DatabaseTableAccess.Read,
+		TagsValues = DatabaseTableAccess.Write,
+		TagsInputs = DatabaseTableAccess.Read,
+		TagsThresholds = DatabaseTableAccess.Read,
+		UserGroups = DatabaseTableAccess.Read,
+		UserGroupsRelations = DatabaseTableAccess.Read,
+		Users = DatabaseTableAccess.Read,
+		UserSessions = DatabaseTableAccess.Read,
+	};
+
+	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 	{
 		// Отключаем отслеживание изменений для повышения производительности
-		ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+		optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 	}
-
-	/// <summary>
-	/// Конфигурация связей между таблицами БД
-	/// </summary>
-	protected override void OnModelCreating(ModelBuilder modelBuilder)
-	{
-		modelBuilder.HasDefaultSchema(DataSchema.Name);
-
-		modelBuilder.ApplyConfigurations(new()
-		{
-			AccessRules = TableAccess.Read,
-			Audit = TableAccess.Read,
-			Blocks = TableAccess.Read,
-			BlocksProperties = TableAccess.Read,
-			BlocksTags = TableAccess.Read,
-			CalculatedAccessRules = TableAccess.Read,
-			Settings = TableAccess.Read,
-			Sources = TableAccess.Read,
-			Tags = TableAccess.Read,
-			TagsValues = TableAccess.Write,
-			TagsInputs = TableAccess.Read,
-			TagsThresholds = TableAccess.Read,
-			UserGroups = TableAccess.Read,
-			UserGroupsRelations = TableAccess.Read,
-			Users = TableAccess.Read,
-			UserSessions = TableAccess.Read,
-		});
-	}
-
-	public virtual DbSet<TagValue> TagsHistory { get; set; }
-
-	public virtual DbSet<Source> Sources { get; set; }
-
-	public virtual DbSet<Tag> Tags { get; set; }
-
-	public virtual DbSet<TagInput> TagInputs { get; set; }
-
-	public virtual DbSet<TagThreshold> TagThresholds { get; set; }
-
-	public virtual DbSet<CalculatedAccessRule> CalculatedAccessRules { get; set; }
 }

@@ -1,16 +1,15 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class TagValueConfiguration(TableAccess access) : IEntityTypeConfiguration<TagValue>
+public class TagValueConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<TagValue>
 {
 	public void Configure(EntityTypeBuilder<TagValue> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(DataSchema.TagsValues.Name, DataSchema.Name);
 		else
 			builder.ToTable(DataSchema.TagsValues.Name, DataSchema.Name);

@@ -12,8 +12,8 @@ using Datalake.Data.Infrastructure.DataReceive;
 using Datalake.Data.Infrastructure.InMemory;
 using Datalake.Shared.Application.Interfaces.AccessRules;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Datalake.Shared.Infrastructure.InMemory;
-using Datalake.Shared.Infrastructure.Schema;
 using LinqToDB;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
@@ -51,7 +51,7 @@ public static class Bootstrap
 		builder.Services.AddScoped<ISourcesRepository, SourcesRepository>();
 		builder.Services.AddScoped<ITagsValuesRepository, TagsValuesRepository>();
 		builder.Services.AddScoped<ITagsValuesAggregationRepository, TagsValuesAggregationRepository>();
-		builder.Services.AddScoped<IUserAccessRepository, UserAccessRepository>();
+		builder.Services.AddScoped<IUserAccessValuesRepository, UserAccessValuesRepository>();
 
 		// БД: получение данных
 		builder.Services.AddScoped<ISourcesQueriesService, SourcesQueriesService>();

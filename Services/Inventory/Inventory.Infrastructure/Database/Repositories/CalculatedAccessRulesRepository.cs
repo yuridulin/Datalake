@@ -1,6 +1,6 @@
 ﻿using Datalake.Domain.ValueObjects;
 using Datalake.Inventory.Application.Repositories;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using System.Text;

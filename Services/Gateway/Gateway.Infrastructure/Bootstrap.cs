@@ -7,8 +7,8 @@ using Datalake.Gateway.Infrastructure.Database.Services;
 using Datalake.Gateway.Infrastructure.InMemory;
 using Datalake.Shared.Application.Interfaces.AccessRules;
 using Datalake.Shared.Infrastructure;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Datalake.Shared.Infrastructure.InMemory;
-using Datalake.Shared.Infrastructure.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,7 +37,7 @@ public static class Bootstrap
 		builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 		builder.Services.AddScoped<IUserSessionsRepository, UserSessionsRepository>();
 		builder.Services.AddScoped<IUsersRepository, UsersRepository>();
-		builder.Services.AddScoped<IUserAccessRepository, UserAccessRepository>();
+		builder.Services.AddScoped<IUserAccessValuesRepository, UserAccessValuesRepository>();
 
 		// БД: получение данных
 

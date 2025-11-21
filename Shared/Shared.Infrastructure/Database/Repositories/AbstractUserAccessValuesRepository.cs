@@ -1,11 +1,10 @@
 ﻿using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces.AccessRules;
-using Datalake.Shared.Infrastructure.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace Datalake.Shared.Infrastructure.Repositories;
+namespace Datalake.Shared.Infrastructure.Database.Repositories;
 
-public abstract class UserAccessAbstractRepository(IUserAccessDbContext context) : IUserAccessRepository
+public class AbstractUserAccessValuesRepository(AbstractDbContext context) : IUserAccessValuesRepository
 {
 	public async Task<Dictionary<Guid, UserAccessValue>> GetAllAsync(CancellationToken ct = default)
 	{

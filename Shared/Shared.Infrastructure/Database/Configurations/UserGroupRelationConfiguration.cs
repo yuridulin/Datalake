@@ -1,23 +1,22 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class UserGroupRelationConfiguration(TableAccess access) : IEntityTypeConfiguration<UserGroupRelation>
+public class UserGroupRelationConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<UserGroupRelation>
 {
 	public void Configure(EntityTypeBuilder<UserGroupRelation> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(InventorySchema.UserGroupRelations.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.UserGroupRelations.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		var relationToUser = builder.HasOne(rel => rel.User)
@@ -28,7 +27,7 @@ public class UserGroupRelationConfiguration(TableAccess access) : IEntityTypeCon
 			.WithMany(group => group.UsersRelations)
 			.HasForeignKey(rel => rel.UserGroupGuid);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 		{
 			builder.HasIndex(rel => new { rel.UserGroupGuid, rel.UserGuid }).IsUnique();
 

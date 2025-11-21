@@ -2,7 +2,7 @@
 using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Attributes;
 using Datalake.Shared.Infrastructure;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using LinqToDB;
 using LinqToDB.Data;
 using Microsoft.Extensions.Logging;

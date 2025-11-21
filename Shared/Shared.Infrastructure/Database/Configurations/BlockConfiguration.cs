@@ -1,16 +1,15 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class BlockConfiguration(TableAccess access) : IEntityTypeConfiguration<Block>
+public class BlockConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<Block>
 {
 	public void Configure(EntityTypeBuilder<Block> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(InventorySchema.Blocks.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.Blocks.Name, InventorySchema.Name);
@@ -22,7 +21,7 @@ public class BlockConfiguration(TableAccess access) : IEntityTypeConfiguration<B
 			.WithMany(block => block.Children)
 			.HasForeignKey(block => block.ParentId);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			hierarchyRelations.OnDelete(DeleteBehavior.SetNull);
 
 		// связь блоков и тегов
@@ -30,7 +29,7 @@ public class BlockConfiguration(TableAccess access) : IEntityTypeConfiguration<B
 			.WithOne(r => r.Block)
 			.HasForeignKey(r => r.BlockId);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			relationToTag.OnDelete(DeleteBehavior.Cascade);
 	}
 }

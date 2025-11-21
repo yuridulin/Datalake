@@ -1,17 +1,16 @@
 ﻿using Datalake.Domain.ValueObjects;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
-using Table = Datalake.Shared.Infrastructure.Schema.InventorySchema.CalculatedAccessRules;
+using Table = Datalake.Shared.Infrastructure.Database.Schema.InventorySchema.CalculatedAccessRules;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class CalculatedAccessRuleConfiguration(TableAccess access) : IEntityTypeConfiguration<CalculatedAccessRule>
+public class CalculatedAccessRuleConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<CalculatedAccessRule>
 {
 	public void Configure(EntityTypeBuilder<CalculatedAccessRule> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(Table.Name, InventorySchema.Name);
 		else
 			builder.ToTable(Table.Name, InventorySchema.Name);
@@ -29,7 +28,7 @@ public class CalculatedAccessRuleConfiguration(TableAccess access) : IEntityType
 
 		builder.HasKey(x => x.Id);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 		{
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 			builder.HasIndex(x => new { x.UserGuid, x.IsGlobal, x.BlockId, x.TagId, x.SourceId, x.UserGroupGuid }).IsUnique();
@@ -56,7 +55,7 @@ public class CalculatedAccessRuleConfiguration(TableAccess access) : IEntityType
 			.WithMany(x => x.CalculatedAccessRules)
 			.HasForeignKey(x => x.UserGroupGuid);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 		{
 			relationToUsers.IsRequired().OnDelete(DeleteBehavior.Cascade);
 			relationToBlocks.OnDelete(DeleteBehavior.Cascade);

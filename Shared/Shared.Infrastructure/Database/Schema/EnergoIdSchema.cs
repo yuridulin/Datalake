@@ -1,4 +1,4 @@
-﻿namespace Datalake.Shared.Infrastructure.Schema;
+﻿namespace Datalake.Shared.Infrastructure.Database.Schema;
 
 /// <summary>
 /// Константы базы данных с внешними данными (пользователи EnergoId)

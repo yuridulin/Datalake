@@ -1,7 +1,7 @@
-﻿using Datalake.Shared.Infrastructure.Repositories;
+﻿using Datalake.Shared.Infrastructure.Database.Repositories;
 
 namespace Datalake.Gateway.Infrastructure.Database.Repositories;
 
-public class UserAccessRepository(GatewayDbContext context) : UserAccessAbstractRepository(context)
+public class UserAccessValuesRepository(GatewayDbContext context) : AbstractUserAccessValuesRepository(context)
 {
 }

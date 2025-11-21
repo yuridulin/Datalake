@@ -1,23 +1,22 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class AuditConfiguration(TableAccess access) : IEntityTypeConfiguration<AuditLog>
+public class AuditConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<AuditLog>
 {
 	public void Configure(EntityTypeBuilder<AuditLog> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(InventorySchema.Logs.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.Logs.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		var relationToAuthors = builder.HasOne(x => x.Author)
@@ -48,7 +47,7 @@ public class AuditConfiguration(TableAccess access) : IEntityTypeConfiguration<A
 			.WithMany()
 			.HasForeignKey(x => x.AffectedAccessRightsId);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 		{
 			relationToAuthors.OnDelete(DeleteBehavior.SetNull);
 			relationToBlocks.OnDelete(DeleteBehavior.SetNull);

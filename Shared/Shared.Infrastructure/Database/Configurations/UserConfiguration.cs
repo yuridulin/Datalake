@@ -1,17 +1,16 @@
 ﻿using Datalake.Domain.Entities;
 using Datalake.Domain.ValueObjects;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class UserConfiguration(TableAccess access) : IEntityTypeConfiguration<User>
+public class UserConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<User>
 {
 	public void Configure(EntityTypeBuilder<User> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(InventorySchema.Users.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.Users.Name, InventorySchema.Name);
@@ -20,7 +19,7 @@ public class UserConfiguration(TableAccess access) : IEntityTypeConfiguration<Us
 		builder.HasKey(u => u.Guid);
 
 		// Настройка индексов
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 		{
 			builder.HasIndex(u => u.Type);
 		}

@@ -1,23 +1,22 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class TagThresholdConfiguration(TableAccess access) : IEntityTypeConfiguration<TagThreshold>
+public class TagThresholdConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<TagThreshold>
 {
 	public void Configure(EntityTypeBuilder<TagThreshold> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(InventorySchema.TagThresholds.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.TagThresholds.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 	}
 }

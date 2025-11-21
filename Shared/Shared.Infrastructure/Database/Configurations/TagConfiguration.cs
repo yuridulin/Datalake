@@ -1,23 +1,22 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class TagConfiguration(TableAccess access) : IEntityTypeConfiguration<Tag>
+public class TagConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<Tag>
 {
 	public void Configure(EntityTypeBuilder<Tag> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(InventorySchema.Tags.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.Tags.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		// связь тегов с входными тегами (переменными)
@@ -50,10 +49,10 @@ public class TagConfiguration(TableAccess access) : IEntityTypeConfiguration<Tag
 			.WithOne(r => r.Tag)
 			.HasForeignKey(r => r.TagId);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			relationToBlock.OnDelete(DeleteBehavior.SetNull);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 		{
 			relationToThresholds.OnDelete(DeleteBehavior.Cascade);
 			relationToSource.OnDelete(DeleteBehavior.SetNull);

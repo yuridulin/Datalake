@@ -1,23 +1,22 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class SourceConfiguration(TableAccess access) : IEntityTypeConfiguration<Source>
+public class SourceConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<Source>
 {
 	public void Configure(EntityTypeBuilder<Source> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(InventorySchema.Sources.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.Sources.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		// связь источников и тегов
@@ -25,7 +24,7 @@ public class SourceConfiguration(TableAccess access) : IEntityTypeConfiguration<
 			.WithOne(tag => tag.Source)
 			.HasForeignKey(tag => tag.SourceId);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			relationToTags.OnDelete(DeleteBehavior.SetNull);
 	}
 }

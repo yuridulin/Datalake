@@ -2,7 +2,7 @@
 
 namespace Datalake.Shared.Application.Interfaces.AccessRules;
 
-public interface IUserAccessRepository
+public interface IUserAccessValuesRepository
 {
 	Task<Dictionary<Guid, UserAccessValue>> GetAllAsync(
 		CancellationToken ct = default);

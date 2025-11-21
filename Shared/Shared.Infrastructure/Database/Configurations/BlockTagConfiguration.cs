@@ -1,23 +1,22 @@
 ﻿using Datalake.Domain.Entities;
-using Datalake.Shared.Infrastructure.Schema;
+using Datalake.Shared.Infrastructure.Database.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using static Datalake.Shared.Infrastructure.ConfigurationsApplyHelper;
 
-namespace Datalake.Shared.Infrastructure.Configurations;
+namespace Datalake.Shared.Infrastructure.Database.Configurations;
 
-public class BlockTagConfiguration(TableAccess access) : IEntityTypeConfiguration<BlockTag>
+public class BlockTagConfiguration(DatabaseTableAccess access) : IEntityTypeConfiguration<BlockTag>
 {
 	public void Configure(EntityTypeBuilder<BlockTag> builder)
 	{
-		if (access == TableAccess.Read)
+		if (access == DatabaseTableAccess.Read)
 			builder.ToView(InventorySchema.BlockTags.Name, InventorySchema.Name);
 		else
 			builder.ToTable(InventorySchema.BlockTags.Name, InventorySchema.Name);
 
 		builder.HasKey(x => x.Id);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 			builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
 		var relationToTag = builder.HasOne(rel => rel.Tag)
@@ -28,7 +27,7 @@ public class BlockTagConfiguration(TableAccess access) : IEntityTypeConfiguratio
 			.WithMany(e => e.RelationsToTags)
 			.HasForeignKey(rel => rel.BlockId);
 
-		if (access == TableAccess.Write)
+		if (access == DatabaseTableAccess.Write)
 		{
 			builder.HasIndex(rel => new { rel.BlockId, rel.TagId }).IsUnique();
 
