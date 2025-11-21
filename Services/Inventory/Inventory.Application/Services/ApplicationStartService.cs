@@ -26,14 +26,14 @@ public class ApplicationStartService(
 			// создать необходимые записи
 			await domainStartService.StartAsync();
 
-			// загрузить и создать начальное состояние для кэша структуры
-			await inventoryCache.RestoreAsync();
-
 			// загрузить и создать начальное состояние для кэша пользователей EnergoId (если не откажемся от него)
 			energoIdCache.SetReady();
 
-			// все кэши готовы, запускаем синхронизацию кэша прав вслед за кэшем структуры
+			// настроить синхронизацию кэша прав вслед за кэшем структуры
 			userAccessSynchronizationService.Start();
+
+			// загрузить и создать начальное состояние для кэша структуры
+			await inventoryCache.RestoreAsync();
 
 			logger.LogInformation("Приложение в работе");
 		}
