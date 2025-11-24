@@ -7,19 +7,8 @@ namespace Datalake.Contracts.Models.Tags;
 /// <summary>
 /// Информация о теге
 /// </summary>
-public class TagInfo : TagSimpleInfo, IProtectedEntity
+public class TagWithSettingsInfo : TagSimpleInfo, IProtectedEntity
 {
-	/// <summary>
-	/// Произвольное описание тега
-	/// </summary>
-	public string? Description { get; set; }
-
-	/// <summary>
-	/// Идентификатор источника данных
-	/// </summary>
-	[Required]
-	public required int SourceId { get; set; }
-
 	/// <summary>
 	/// Путь к данным в источнике
 	/// </summary>
@@ -38,7 +27,7 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// <summary>
 	/// Пороговые значения, по которым выбирается итоговое значение
 	/// </summary>
-	public List<TagThresholdInfo>? Thresholds { get; set; }
+	public TagThresholdInfo[]? Thresholds { get; set; }
 
 	/// <summary>
 	/// Входной тег, по значениям которого выбирается значение из пороговой таблицы
@@ -79,7 +68,7 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// Входные переменные для формулы, по которой рассчитывается значение
 	/// </summary>
 	[Required]
-	public required TagInputInfo[] FormulaInputs { get; set; } = [];
+	public TagInputInfo[] FormulaInputs { get; set; } = [];
 
 	/// <summary>
 	/// Тип агрегации
@@ -95,7 +84,4 @@ public class TagInfo : TagSimpleInfo, IProtectedEntity
 	/// Идентификатор тега, который будет источником данных для расчета агрегированного значения
 	/// </summary>
 	public TagAsInputInfo? SourceTag { get; set; }
-
-	/// <inheritdoc />
-	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

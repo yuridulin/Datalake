@@ -46,8 +46,10 @@ public static class SimpleInfoQueryExtensions
 				Id = tag.Id,
 				Guid = tag.GlobalGuid,
 				Name = tag.Name,
+				Description = tag.Description,
 				Resolution = tag.Resolution,
 				Type = tag.Type,
+				SourceId = source.Id,
 				SourceType = source.Type,
 			};
 	}

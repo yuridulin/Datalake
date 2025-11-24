@@ -1,4 +1,4 @@
-﻿using Datalake.Data.Application.Models.Values;
+﻿using Datalake.Contracts.Models.Tags;
 
 namespace Datalake.Data.Application.Interfaces.Storage;
 
@@ -12,7 +12,7 @@ public interface ITagsCollectionStatusStore
 	/// </summary>
 	/// <param name="tagsIdentifiers">Идентификаторы тегов</param>
 	/// <returns>Ошибки, сопоставленные с идентификаторами тегов</returns>
-	IEnumerable<TagCollectionStatus> Get(IEnumerable<int> tagsIdentifiers);
+	IEnumerable<TagStatusInfo> Get(IEnumerable<int> tagsIdentifiers);
 
 	/// <summary>
 	/// Сохранение состояния расчета по выбранному тегу

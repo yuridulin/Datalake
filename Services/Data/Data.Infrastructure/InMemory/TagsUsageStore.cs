@@ -15,7 +15,7 @@ public class TagsUsageStore : ITagsUsageStore
 		info.Update(requestKey);
 	}
 
-	public IDictionary<string, DateTime>? GetUsage(int tagId)
+	public Dictionary<string, DateTime>? Get(int tagId)
 	{
 		_usage.TryGetValue(tagId, out var info);
 		return info?.RequestsUsage;

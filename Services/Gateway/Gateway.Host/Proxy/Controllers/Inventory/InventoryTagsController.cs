@@ -1,5 +1,6 @@
 ﻿using Datalake.Contracts.Models.Tags;
 using Datalake.Contracts.Requests;
+using Datalake.Domain.Enums;
 using Datalake.Gateway.Host.Proxy.Services;
 using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Microsoft.AspNetCore.Mvc;
@@ -11,24 +12,34 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Inventory;
 public class InventoryTagsController(InventoryReverseProxyService proxyService) : InventoryTagsControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult<TagInfo>> CreateAsync(
+	public override Task<ActionResult<TagWithSettingsInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<TagInfo>(HttpContext, request, ct);
+			=> proxyService.ProxyAsync<TagWithSettingsInfo>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<TagFullInfo>> GetAsync(
+	public override Task<ActionResult<TagWithSettingsAndBlocksInfo>> GetWithSettingsAndBlocksAsync(
 		[FromRoute] int tagId,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<TagFullInfo>(HttpContext, ct);
+			=> proxyService.ProxyAsync<TagWithSettingsAndBlocksInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<TagInfo[]>> GetAllAsync(
+	public override Task<ActionResult<TagSimpleInfo[]>> GetAllAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
+		[FromQuery] TagType? type,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<TagInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<TagSimpleInfo[]>(HttpContext, ct);
+
+	/// <inheritdoc />
+	public override Task<ActionResult<TagWithSettingsInfo[]>> GetAllWithSettingsAsync(
+		[FromQuery] int? sourceId,
+		[FromQuery] int[]? tagsId,
+		[FromQuery] Guid[]? tagsGuid,
+		[FromQuery] TagType? type,
+		CancellationToken ct = default)
+			=> proxyService.ProxyAsync<TagWithSettingsInfo[]>(HttpContext, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult> UpdateAsync(

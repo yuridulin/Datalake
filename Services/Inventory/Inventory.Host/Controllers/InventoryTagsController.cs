@@ -1,11 +1,13 @@
 ﻿using Datalake.Contracts.Models.Tags;
 using Datalake.Contracts.Requests;
+using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Features.Tags.Commands.CreateTag;
 using Datalake.Inventory.Application.Features.Tags.Commands.DeleteTag;
 using Datalake.Inventory.Application.Features.Tags.Commands.UpdateTag;
 using Datalake.Inventory.Application.Features.Tags.Models;
 using Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
-using Datalake.Inventory.Application.Features.Tags.Queries.GetTagWithDetails;
+using Datalake.Inventory.Application.Features.Tags.Queries.GetTagsWithSettings;
+using Datalake.Inventory.Application.Features.Tags.Queries.GetTagWithSettingsAndBlocks;
 using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +19,7 @@ public class InventoryTagsController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryTagsControllerBase
 {
-	public override async Task<ActionResult<TagInfo>> CreateAsync(
+	public override async Task<ActionResult<TagWithSettingsInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default)
 	{
@@ -35,12 +37,12 @@ public class InventoryTagsController(
 		return Ok(result);
 	}
 
-	public override async Task<ActionResult<TagFullInfo>> GetAsync(
+	public override async Task<ActionResult<TagWithSettingsAndBlocksInfo>> GetWithSettingsAndBlocksAsync(
 		[FromRoute] int tagId,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-		var handler = serviceProvider.GetRequiredService<IGetTagWithDetailsHandler>();
+		var handler = serviceProvider.GetRequiredService<ITagWithSettingsAndBlocksHandler>();
 		var data = await handler.HandleAsync(new()
 		{
 			User = user,
@@ -50,10 +52,12 @@ public class InventoryTagsController(
 		return Ok(data);
 	}
 
-	public override async Task<ActionResult<TagInfo[]>> GetAllAsync(
+
+	public override async Task<ActionResult<TagSimpleInfo[]>> GetAllAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
+		[FromQuery] TagType? type,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -64,6 +68,28 @@ public class InventoryTagsController(
 			SpecificIdentifiers = tagsId,
 			SpecificGuids = tagsGuid,
 			SpecificSourceId = sourceId,
+			SpecificType = type,
+		}, ct);
+
+		return Ok(data);
+	}
+
+	public override async Task<ActionResult<TagWithSettingsInfo[]>> GetAllWithSettingsAsync(
+		[FromQuery] int? sourceId,
+		[FromQuery] int[]? tagsId,
+		[FromQuery] Guid[]? tagsGuid,
+		[FromQuery] TagType? type,
+		CancellationToken ct = default)
+	{
+		var user = authenticator.Authenticate(HttpContext);
+		var handler = serviceProvider.GetRequiredService<IGetTagsWithSettingsHandler>();
+		var data = await handler.HandleAsync(new()
+		{
+			User = user,
+			SpecificIdentifiers = tagsId,
+			SpecificGuids = tagsGuid,
+			SpecificSourceId = sourceId,
+			SpecificType = type,
 		}, ct);
 
 		return Ok(data);

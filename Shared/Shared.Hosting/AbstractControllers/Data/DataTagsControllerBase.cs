@@ -1,4 +1,5 @@
-﻿using Datalake.Contracts.Requests;
+﻿using Datalake.Contracts.Models.Tags;
+using Datalake.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -19,7 +20,7 @@ public abstract class DataTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Объект статистики использования, сопоставленный с идентификаторами</returns>
 	[HttpPost("usage")]
-	public abstract Task<ActionResult<IDictionary<int, IDictionary<string, DateTime>>>> GetUsageAsync(
+	public abstract Task<ActionResult<IEnumerable<TagUsageInfo>>> GetUsageAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default);
 
@@ -30,7 +31,7 @@ public abstract class DataTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Объект состояния последнего получениея/вычисления, сопоставленный с идентификаторами</returns>
 	[HttpPost("status")]
-	public abstract Task<ActionResult<IDictionary<int, string>>> GetStatusAsync(
+	public abstract Task<ActionResult<IEnumerable<TagStatusInfo>>> GetStatusAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default);
 }

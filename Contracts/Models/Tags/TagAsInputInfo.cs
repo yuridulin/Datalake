@@ -11,7 +11,4 @@ public class TagAsInputInfo : TagSimpleInfo, IProtectedEntity
 	/// Идентификатор блока, в котором тег был выбран. Если не укзан, то тег выбран из не распределенных
 	/// </summary>
 	public int? BlockId { get; set; }
-
-	/// <inheritdoc />
-	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

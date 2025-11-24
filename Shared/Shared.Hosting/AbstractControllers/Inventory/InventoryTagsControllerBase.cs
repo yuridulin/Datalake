@@ -1,5 +1,6 @@
 ﻿using Datalake.Contracts.Models.Tags;
 using Datalake.Contracts.Requests;
+using Datalake.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -20,7 +21,7 @@ public abstract class InventoryTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Идентификатор нового тега в локальной базе данных</returns>
 	[HttpPost]
-	public abstract Task<ActionResult<TagInfo>> CreateAsync(
+	public abstract Task<ActionResult<TagWithSettingsInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default);
 
@@ -31,8 +32,25 @@ public abstract class InventoryTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Объект информации о теге</returns>
 	[HttpGet("{tagId}")]
-	public abstract Task<ActionResult<TagFullInfo>> GetAsync(
+	public abstract Task<ActionResult<TagWithSettingsAndBlocksInfo>> GetWithSettingsAndBlocksAsync(
 		[FromRoute] int tagId,
+		CancellationToken ct = default);
+
+	/// <summary>
+	/// Получение списка тегов, включая краткую информацию о источниках
+	/// </summary>
+	/// <param name="sourceId">Идентификатор источника. Если указан, будут выбраны теги только этого источника</param>
+	/// <param name="tagsId">Список локальных идентификаторов тегов</param>
+	/// <param name="tagsGuid">Список глобальных идентификаторов тегов</param>
+	/// <param name="type">Тип данных тегов</param>
+	/// <param name="ct">Токен отмены</param>
+	/// <returns>Плоский список объектов информации о тегах</returns>
+	[HttpGet]
+	public abstract Task<ActionResult<TagSimpleInfo[]>> GetAllAsync(
+		[FromQuery] int? sourceId,
+		[FromQuery] int[]? tagsId,
+		[FromQuery] Guid[]? tagsGuid,
+		[FromQuery] TagType? type,
 		CancellationToken ct = default);
 
 	/// <summary>
@@ -41,13 +59,15 @@ public abstract class InventoryTagsControllerBase : ControllerBase
 	/// <param name="sourceId">Идентификатор источника. Если указан, будут выбраны теги только этого источника</param>
 	/// <param name="tagsId">Список локальных идентификаторов тегов</param>
 	/// <param name="tagsGuid">Список глобальных идентификаторов тегов</param>
+	/// <param name="type">Тип данных тегов</param>
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
-	[HttpGet]
-	public abstract Task<ActionResult<TagInfo[]>> GetAllAsync(
+	[HttpPut("{tagId}/settings")]
+	public abstract Task<ActionResult<TagWithSettingsInfo[]>> GetAllWithSettingsAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
+		[FromQuery] TagType? type,
 		CancellationToken ct = default);
 
 	/// <summary>

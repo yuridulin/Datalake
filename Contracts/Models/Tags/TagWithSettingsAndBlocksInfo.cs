@@ -5,7 +5,7 @@ namespace Datalake.Contracts.Models.Tags;
 /// <summary>
 /// Полная информация о теге
 /// </summary>
-public class TagFullInfo : TagInfo
+public class TagWithSettingsAndBlocksInfo : TagWithSettingsInfo
 {
 	/// <summary>
 	/// Список блоков, в которых используется этот тег

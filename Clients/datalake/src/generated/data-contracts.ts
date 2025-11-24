@@ -289,6 +289,7 @@ export interface TagSimpleInfo {
   guid: string;
   /** @minLength 1 */
   name: string;
+  description?: string | null;
   /**
    * Тип данных
    *
@@ -317,6 +318,8 @@ export interface TagSimpleInfo {
    * 14 = Quarter
    */
   resolution: TagResolution;
+  /** @format int32 */
+  sourceId: number;
   /**
    * Тип получения данных с источника
    *
@@ -330,21 +333,6 @@ export interface TagSimpleInfo {
    * -1 = Calculated
    */
   sourceType: SourceType;
-}
-
-export interface BlockSimpleInfo {
-  /** @format int32 */
-  id: number;
-  /** @format int32 */
-  parentBlockId?: number | null;
-  /**
-   * @format guid
-   * @minLength 1
-   */
-  guid: string;
-  /** @minLength 1 */
-  name: string;
-  description?: string | null;
   accessRule: AccessRuleInfo;
 }
 
@@ -362,6 +350,22 @@ export interface AccessRuleInfo {
    * 5 = Admin
    */
   access: AccessType;
+}
+
+export interface BlockSimpleInfo {
+  /** @format int32 */
+  id: number;
+  /** @format int32 */
+  parentBlockId?: number | null;
+  /**
+   * @format guid
+   * @minLength 1
+   */
+  guid: string;
+  /** @minLength 1 */
+  name: string;
+  description?: string | null;
+  accessRule: AccessRuleInfo;
 }
 
 export interface SourceSimpleInfo {
@@ -648,10 +652,7 @@ export interface SettingsInfo {
   instanceName: string;
 }
 
-export type TagInfo = TagSimpleInfo & {
-  description?: string | null;
-  /** @format int32 */
-  sourceId: number;
+export type TagWithSettingsInfo = TagSimpleInfo & {
   sourceItem?: string | null;
   sourceName?: string | null;
   formula?: string | null;
@@ -670,7 +671,6 @@ export type TagInfo = TagSimpleInfo & {
   aggregation?: TagAggregation | null;
   aggregationPeriod?: TagResolution | null;
   sourceTag?: TagAsInputInfo | null;
-  accessRule?: AccessRuleInfo;
 };
 
 export interface TagThresholdInfo {
@@ -683,16 +683,15 @@ export interface TagThresholdInfo {
 export type TagAsInputInfo = TagSimpleInfo & {
   /** @format int32 */
   blockId?: number | null;
-  accessRule?: AccessRuleInfo;
 };
 
-export type TagInputInfo = TagSimpleInfo & {
+export interface TagInputInfo {
   /** @minLength 1 */
   variableName: string;
   /** @format int32 */
   blockId?: number | null;
-  accessRule?: AccessRuleInfo;
-};
+  tag?: TagSimpleInfo | null;
+}
 
 export interface TagCreateRequest {
   name?: string | null;
@@ -711,7 +710,7 @@ export interface TagCreateRequest {
   blockId?: number | null;
 }
 
-export type TagFullInfo = TagInfo & {
+export type TagWithSettingsAndBlocksInfo = TagWithSettingsInfo & {
   blocks: TagBlockRelationInfo[];
 };
 
@@ -983,9 +982,24 @@ export interface SourceItemInfo {
   quality: TagQuality;
 }
 
+export interface TagStatusInfo {
+  /** @format int32 */
+  tagId?: number;
+  /** @format date-time */
+  date?: string;
+  isError?: boolean;
+  status?: string | null;
+}
+
 export interface TagMetricRequest {
   tagsId?: number[] | null;
   tagsGuid?: string[] | null;
+}
+
+export interface TagUsageInfo {
+  /** @format int32 */
+  tagId?: number;
+  requests?: Record<string, string>;
 }
 
 export interface ValuesResponse {

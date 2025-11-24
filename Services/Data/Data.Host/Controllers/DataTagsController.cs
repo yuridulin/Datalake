@@ -1,4 +1,5 @@
-﻿using Datalake.Contracts.Requests;
+﻿using Datalake.Contracts.Models.Tags;
+using Datalake.Contracts.Requests;
 using Datalake.Data.Application.Features.Tags.Queries.GetCollectionStatus;
 using Datalake.Data.Application.Features.Tags.Queries.GetUsage;
 using Datalake.Shared.Hosting.AbstractControllers.Data;
@@ -8,11 +9,11 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Data.Host.Controllers;
 
-public class TagsController(
+public class DataTagsController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : DataTagsControllerBase
 {
-	public override async Task<ActionResult<IDictionary<int, string>>> GetStatusAsync(
+	public override async Task<ActionResult<IEnumerable<TagStatusInfo>>> GetStatusAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default)
 	{
@@ -27,7 +28,7 @@ public class TagsController(
 		return Ok(data);
 	}
 
-	public override async Task<ActionResult<IDictionary<int, IDictionary<string, DateTime>>>> GetUsageAsync(
+	public override async Task<ActionResult<IEnumerable<TagUsageInfo>>> GetUsageAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default)
 	{

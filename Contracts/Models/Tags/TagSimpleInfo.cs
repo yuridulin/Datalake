@@ -1,4 +1,5 @@
-﻿using Datalake.Domain.Enums;
+﻿using Datalake.Contracts.Interfaces;
+using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Contracts.Models.Tags;
@@ -6,7 +7,7 @@ namespace Datalake.Contracts.Models.Tags;
 /// <summary>
 /// Базовая информация о теге, достаточная, чтобы на него сослаться
 /// </summary>
-public class TagSimpleInfo
+public class TagSimpleInfo : IProtectedEntity
 {
 	/// <summary>
 	/// Идентификатор тега в локальной базе
@@ -27,6 +28,11 @@ public class TagSimpleInfo
 	public required string Name { get; set; }
 
 	/// <summary>
+	/// Произвольное описание тега
+	/// </summary>
+	public string? Description { get; set; }
+
+	/// <summary>
 	/// Тип данных тега
 	/// </summary>
 	[Required]
@@ -39,8 +45,20 @@ public class TagSimpleInfo
 	public required TagResolution Resolution { get; set; }
 
 	/// <summary>
+	/// Идентификатор источника данных
+	/// </summary>
+	[Required]
+	public required int SourceId { get; set; }
+
+	/// <summary>
 	/// Тип данных источника
 	/// </summary>
 	[Required]
 	public required SourceType SourceType { get; set; } = SourceType.Datalake;
+
+	/// <summary>
+	/// Доступ к данному тегу
+	/// </summary>
+	[Required]
+	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

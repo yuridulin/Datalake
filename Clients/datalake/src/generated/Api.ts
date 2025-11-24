@@ -37,10 +37,14 @@ import {
   SourceItemInfo,
   SourceUpdateRequest,
   TagCreateRequest,
-  TagFullInfo,
-  TagInfo,
   TagMetricRequest,
+  TagSimpleInfo,
+  TagStatusInfo,
+  TagType,
   TagUpdateRequest,
+  TagUsageInfo,
+  TagWithSettingsAndBlocksInfo,
+  TagWithSettingsInfo,
   UserAccessValue,
   UserCreateRequest,
   UserEnergoIdInfo,
@@ -603,10 +607,10 @@ export class Api<
    * @name InventoryTagsCreate
    * @summary Создание нового тега
    * @request POST:/api/v1/inventory/tags
-   * @response `200` `TagInfo` Идентификатор нового тега в локальной базе данных
+   * @response `200` `TagWithSettingsInfo` Идентификатор нового тега в локальной базе данных
    */
   inventoryTagsCreate = (data: TagCreateRequest, params: RequestParams = {}) =>
-    this.request<TagInfo, any>({
+    this.request<TagWithSettingsInfo, any>({
       path: `/api/v1/inventory/tags`,
       method: "POST",
       body: data,
@@ -619,9 +623,9 @@ export class Api<
    *
    * @tags InventoryTags
    * @name InventoryTagsGetAll
-   * @summary Получение списка тегов, включая информацию о источниках и настройках получения данных
+   * @summary Получение списка тегов, включая краткую информацию о источниках
    * @request GET:/api/v1/inventory/tags
-   * @response `200` `(TagInfo)[]` Плоский список объектов информации о тегах
+   * @response `200` `(TagSimpleInfo)[]` Плоский список объектов информации о тегах
    */
   inventoryTagsGetAll = (
     query?: {
@@ -634,10 +638,12 @@ export class Api<
       tagsId?: number[] | null;
       /** Список глобальных идентификаторов тегов */
       tagsGuid?: string[] | null;
+      /** Тип данных тегов */
+      type?: TagType | null;
     },
     params: RequestParams = {},
   ) =>
-    this.request<TagInfo[], any>({
+    this.request<TagSimpleInfo[], any>({
       path: `/api/v1/inventory/tags`,
       method: "GET",
       query: query,
@@ -648,13 +654,16 @@ export class Api<
    * No description
    *
    * @tags InventoryTags
-   * @name InventoryTagsGet
+   * @name InventoryTagsGetWithSettingsAndBlocks
    * @summary Получение информации о конкретном теге, включая информацию о источнике и настройках получения данных
    * @request GET:/api/v1/inventory/tags/{tagId}
-   * @response `200` `TagFullInfo` Объект информации о теге
+   * @response `200` `TagWithSettingsAndBlocksInfo` Объект информации о теге
    */
-  inventoryTagsGet = (tagId: number, params: RequestParams = {}) =>
-    this.request<TagFullInfo, any>({
+  inventoryTagsGetWithSettingsAndBlocks = (
+    tagId: number,
+    params: RequestParams = {},
+  ) =>
+    this.request<TagWithSettingsAndBlocksInfo, any>({
       path: `/api/v1/inventory/tags/${tagId}`,
       method: "GET",
       format: "json",
@@ -694,6 +703,39 @@ export class Api<
     this.request<File, any>({
       path: `/api/v1/inventory/tags/${tagId}`,
       method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags InventoryTags
+   * @name InventoryTagsGetAllWithSettings
+   * @summary Получение списка тегов, включая информацию о источниках и настройках получения данных
+   * @request PUT:/api/v1/inventory/tags/{tagId}/settings
+   * @response `200` `(TagWithSettingsInfo)[]` Плоский список объектов информации о тегах
+   */
+  inventoryTagsGetAllWithSettings = (
+    tagId: string,
+    query?: {
+      /**
+       * Идентификатор источника. Если указан, будут выбраны теги только этого источника
+       * @format int32
+       */
+      sourceId?: number | null;
+      /** Список локальных идентификаторов тегов */
+      tagsId?: number[] | null;
+      /** Список глобальных идентификаторов тегов */
+      tagsGuid?: string[] | null;
+      /** Тип данных тегов */
+      type?: TagType | null;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<TagWithSettingsInfo[], any>({
+      path: `/api/v1/inventory/tags/${tagId}/settings`,
+      method: "PUT",
+      query: query,
+      format: "json",
       ...params,
     });
   /**
@@ -1013,10 +1055,10 @@ export class Api<
    * @name DataTagsGetStatus
    * @summary Запись данных о состоянии последнего получения/вычисления значений тегов
    * @request POST:/api/v1/data/tags/status
-   * @response `200` `Record<string,string>` Объект состояния последнего получениея/вычисления, сопоставленный с идентификаторами
+   * @response `200` `(TagStatusInfo)[]` Объект состояния последнего получениея/вычисления, сопоставленный с идентификаторами
    */
   dataTagsGetStatus = (data: TagMetricRequest, params: RequestParams = {}) =>
-    this.request<Record<string, string>, any>({
+    this.request<TagStatusInfo[], any>({
       path: `/api/v1/data/tags/status`,
       method: "POST",
       body: data,
@@ -1031,10 +1073,10 @@ export class Api<
    * @name DataTagsGetUsage
    * @summary Получение данных о использовании тегов
    * @request POST:/api/v1/data/tags/usage
-   * @response `200` `Record<string,Record<string,string>>` Объект статистики использования, сопоставленный с идентификаторами
+   * @response `200` `(TagUsageInfo)[]` Объект статистики использования, сопоставленный с идентификаторами
    */
   dataTagsGetUsage = (data: TagMetricRequest, params: RequestParams = {}) =>
-    this.request<Record<string, Record<string, string>>, any>({
+    this.request<TagUsageInfo[], any>({
       path: `/api/v1/data/tags/usage`,
       method: "POST",
       body: data,

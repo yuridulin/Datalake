@@ -60,7 +60,7 @@ const BlocksTree = observer(() => {
 					({
 						...block,
 						name: meta[block.id] || block.name,
-						children: [],
+						//children: [],
 					}) as BlockTreeInfo,
 			)
 	}, [search, data, tree, meta])

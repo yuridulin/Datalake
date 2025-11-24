@@ -1,12 +1,11 @@
-﻿using Datalake.Contracts.Interfaces;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Contracts.Models.Tags;
 
 /// <summary>
 /// Тег, используемый как входной параметр в формуле
 /// </summary>
-public class TagInputInfo : TagSimpleInfo, IProtectedEntity
+public class TagInputInfo
 {
 	/// <summary>
 	/// Имя переменной, используемое в формуле
@@ -19,6 +18,8 @@ public class TagInputInfo : TagSimpleInfo, IProtectedEntity
 	/// </summary>
 	public int? BlockId { get; set; }
 
-	/// <inheritdoc />
-	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
+	/// <summary>
+	/// Связанный тег
+	/// </summary>
+	public TagSimpleInfo? Tag { get; set; }
 }

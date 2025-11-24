@@ -1,4 +1,5 @@
-﻿using Datalake.Contracts.Requests;
+﻿using Datalake.Contracts.Models.Tags;
+using Datalake.Contracts.Requests;
 using Datalake.Gateway.Host.Proxy.Services;
 using Datalake.Shared.Hosting.AbstractControllers.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -10,14 +11,14 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Data;
 public class DataTagsController(DataReverseProxyService proxyService) : DataTagsControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult<IDictionary<int, string>>> GetStatusAsync(
+	public override Task<ActionResult<IEnumerable<TagStatusInfo>>> GetStatusAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IDictionary<int, string>>(HttpContext, body: request, cancellationToken: ct);
+			=> proxyService.ProxyAsync<IEnumerable<TagStatusInfo>>(HttpContext, body: request, cancellationToken: ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<IDictionary<int, IDictionary<string, DateTime>>>> GetUsageAsync(
+	public override Task<ActionResult<IEnumerable<TagUsageInfo>>> GetUsageAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IDictionary<int, IDictionary<string, DateTime>>>(HttpContext, body: request, cancellationToken: ct);
+			=> proxyService.ProxyAsync<IEnumerable<TagUsageInfo>>(HttpContext, body: request, cancellationToken: ct);
 }

@@ -1,147 +1,147 @@
-﻿using Datalake.Contracts.Models.Blocks;
-using Datalake.Contracts.Models.Tags;
+﻿using Datalake.Contracts.Models.Tags;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
+using Datalake.Inventory.Infrastructure.Database.Extensions;
 using LinqToDB;
 
 namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
 public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesService
 {
-	public async Task<TagFullInfo?> GetWithDetailsAsync(int tagId, CancellationToken ct = default)
-	{
-		var tag = await QueryTagInfo().FirstOrDefaultAsync(x => x.Id == tagId, ct);
-
-		if (tag == null)
-			return null;
-
-		var blocks = await context.BlockTags
-			.Where(relation => relation.TagId == tagId)
-			.Where(relation => relation.Block != null && !relation.Block.IsDeleted)
-			.Select(relation => new TagBlockRelationInfo
-			{
-				RelationId = relation.Id,
-				LocalName = relation.Name,
-				Block = new BlockSimpleInfo
-				{
-					Id = relation.Block.Id,
-					Guid = relation.Block.GlobalId,
-					Name = relation.Block.Name,
-					Description = relation.Block.Description,
-					ParentBlockId = relation.Block.ParentId,
-				},
-			})
-			.ToArrayAsync(ct);
-
-		return new TagFullInfo
-		{
-			Id = tag.Id,
-			Guid = tag.Guid,
-			Name = tag.Name,
-			Resolution = tag.Resolution,
-			SourceId = tag.SourceId,
-			Type = tag.Type,
-			SourceType = tag.SourceType,
-			FormulaInputs = tag.FormulaInputs,
-			IsScaling = tag.IsScaling,
-			MaxEu = tag.MaxEu,
-			MaxRaw = tag.MaxRaw,
-			MinEu = tag.MinEu,
-			MinRaw = tag.MinRaw,
-			AccessRule = tag.AccessRule,
-			Aggregation = tag.Aggregation,
-			AggregationPeriod = tag.AggregationPeriod,
-			Description = tag.Description,
-			Formula = tag.Formula,
-			SourceItem = tag.SourceItem,
-			SourceName = tag.SourceName,
-			SourceTag = tag.SourceTag,
-			Thresholds = tag.Thresholds,
-			ThresholdSourceTag = tag.ThresholdSourceTag,
-			Blocks = blocks,
-		};
-	}
-
-	public async Task<IEnumerable<TagInfo>> GetAsync(
-		IEnumerable<int>? identifiers,
-		IEnumerable<Guid>? guids,
-		int? sourceId,
+	public async Task<TagSimpleInfo[]> GetAsync(
+		IEnumerable<int>? identifiers = null,
+		IEnumerable<Guid>? guids = null,
+		TagType? type = null,
+		int? sourceId = null,
 		CancellationToken ct = default)
 	{
-		return await QueryTagInfo()
-			.Where(tag => identifiers == null || identifiers.Contains(tag.Id))
-			.Where(tag => guids == null || guids.Contains(tag.Guid))
-			.Where(tag => sourceId == null || tag.SourceId == sourceId)
-			.ToArrayAsync(ct);
+		var query = context.Tags.AsSimpleInfo(context.Sources);
+
+		if (identifiers?.Count() > 0)
+			query = query.Where(x => identifiers.Contains(x.Id));
+		if (guids?.Count() > 0)
+			query = query.Where(x => guids.Contains(x.Guid));
+		if (type != null)
+			query = query.Where(x => x.Type == type);
+		if (sourceId != null)
+			query = query.Where(x => x.SourceId == sourceId);
+
+		return await query.ToArrayAsync(ct);
 	}
 
-	private IQueryable<TagInfo> QueryTagInfo()
+	public async Task<TagWithSettingsInfo[]> GetWithSettingsAsync(
+		IEnumerable<int>? identifiers = null,
+		IEnumerable<Guid>? guids = null,
+		TagType? type = null,
+		int? sourceId = null,
+		CancellationToken ct = default)
 	{
-		return context.Tags
-			.Where(tag => !tag.IsDeleted)
-			.Select(tag => new TagInfo
+		var query =
+			from tag in context.Tags
+			from source in context.Sources.InnerJoin(x => x.Id == tag.SourceId)
+			from aggregationTag in context.Tags.AsSimpleInfo(context.Sources).LeftJoin(x => x.Id == tag.SourceTagId)
+			from thresholdTag in context.Tags.AsSimpleInfo(context.Sources).LeftJoin(x => x.Id == tag.ThresholdSourceTagId)
+			select new TagWithSettingsInfo
 			{
 				Id = tag.Id,
-				Guid = tag.GlobalGuid,
+				Guid = tag.Guid,
 				Name = tag.Name,
+				Aggregation = tag.Aggregation,
+				AggregationPeriod = tag.AggregationPeriod,
 				Description = tag.Description,
-				Resolution = tag.Resolution,
-				Type = tag.Type,
 				Formula = tag.Formula,
-				Thresholds = tag.Thresholds
-					.Select(x => new TagThresholdInfo
-					{
-						Threshold = x.InputValue,
-						Result = x.OutputValue,
-					})
-					.ToList(),
-				ThresholdSourceTag = tag.ThresholdsSourceTag == null || tag.ThresholdsSourceTag.IsDeleted ? null : new TagAsInputInfo
-				{
-					Id = tag.ThresholdsSourceTag.Id,
-					Resolution = tag.ThresholdsSourceTag.Resolution,
-					Guid = tag.ThresholdsSourceTag.GlobalGuid,
-					Name = tag.ThresholdsSourceTag.Name,
-					Type = tag.ThresholdsSourceTag.Type,
-					BlockId = tag.ThresholdSourceTagBlockId,
-					SourceType = tag.ThresholdsSourceTag.Source == null || tag.ThresholdsSourceTag.Source.IsDeleted
-						? SourceType.Unset
-						: tag.ThresholdsSourceTag.Source.Type,
-				},
-				FormulaInputs = tag.Inputs
-					.Where(inputRelation => inputRelation.Tag != null && !inputRelation.Tag.IsDeleted)
-					.Select(inputRelation => new TagInputInfo
-					{
-						Id = inputRelation.InputTag!.Id,
-						Guid = inputRelation.InputTag.GlobalGuid,
-						Name = inputRelation.InputTag.Name,
-						VariableName = inputRelation.VariableName,
-						Type = inputRelation.InputTag.Type,
-						Resolution = inputRelation.InputTag.Resolution,
-						BlockId = inputRelation.InputBlockId,
-						SourceType = inputRelation.InputTag.Source == null || inputRelation.InputTag.Source.IsDeleted ? SourceType.Unset : inputRelation.InputTag.Source.Type,
-					})
-					.ToArray(),
 				IsScaling = tag.IsScaling,
 				MaxEu = tag.MaxEu,
 				MaxRaw = tag.MaxRaw,
 				MinEu = tag.MinEu,
 				MinRaw = tag.MinRaw,
-				SourceId = tag.SourceId,
+				Resolution = tag.Resolution,
+				SourceId = source.Id,
+				SourceType = source.Type,
+				Type = tag.Type,
 				SourceItem = tag.SourceItem,
-				SourceType = tag.Source == null || tag.Source.IsDeleted ? SourceType.Unset : tag.Source.Type,
-				SourceName = tag.Source == null || tag.Source.IsDeleted ? "Unknown" : tag.Source.Name,
-				SourceTag = tag.AggregationSourceTag == null || tag.AggregationSourceTag.IsDeleted ? null : new TagAsInputInfo
+				SourceName = source.Name,
+				SourceTag = aggregationTag == null ? null : new TagAsInputInfo
 				{
-					Id = tag.AggregationSourceTag.Id,
-					Resolution = tag.AggregationSourceTag.Resolution,
-					Guid = tag.AggregationSourceTag.GlobalGuid,
-					Name = tag.AggregationSourceTag.Name,
-					Type = tag.AggregationSourceTag.Type,
+					Id = aggregationTag.Id,
+					Guid = aggregationTag.Guid,
+					Name = aggregationTag.Name,
+					Resolution = aggregationTag.Resolution,
+					Type = aggregationTag.Type,
+					SourceId = aggregationTag.Id,
+					SourceType = aggregationTag.SourceType,
 					BlockId = tag.SourceTagBlockId,
-					SourceType = tag.AggregationSourceTag.Source == null || tag.AggregationSourceTag.Source.IsDeleted ? SourceType.Unset : tag.AggregationSourceTag.Source.Type,
+					Description = aggregationTag.Description,
 				},
-				Aggregation = tag.Aggregation,
-				AggregationPeriod = tag.AggregationPeriod,
-			});
+				ThresholdSourceTag = thresholdTag == null ? null : new TagAsInputInfo
+				{
+					Id = thresholdTag.Id,
+					Guid = thresholdTag.Guid,
+					Name = thresholdTag.Name,
+					Resolution = thresholdTag.Resolution,
+					Type = thresholdTag.Type,
+					SourceId = thresholdTag.Id,
+					SourceType = thresholdTag.SourceType,
+					BlockId = tag.ThresholdSourceTagBlockId,
+					Description = thresholdTag.Description,
+				},
+			};
+
+		if (identifiers?.Count() > 0)
+			query = query.Where(x => identifiers.Contains(x.Id));
+		if (guids?.Count() > 0)
+			query = query.Where(x => guids.Contains(x.Guid));
+		if (type != null)
+			query = query.Where(x => x.Type == type);
+		if (sourceId != null)
+			query = query.Where(x => x.SourceId == sourceId);
+
+		return await query.ToArrayAsync(ct);
+	}
+
+	public async Task<TagInputInfo[]> GetInputsAsync(IEnumerable<int> tagsId, CancellationToken ct = default)
+	{
+		var query =
+			from input in context.TagInputs
+			from tag in context.Tags.AsSimpleInfo(context.Sources).LeftJoin(x => x.Id == input.InputTagId)
+			where tagsId.Contains(input.TagId)
+			select new TagInputInfo
+			{
+				VariableName = input.VariableName,
+				BlockId = input.InputBlockId,
+				Tag = tag,
+			};
+
+		return await query.ToArrayAsync(ct);
+	}
+
+	public async Task<TagThresholdInfo[]> GetThresholdsAsync(IEnumerable<int> tagsId, CancellationToken ct = default)
+	{
+		var query =
+			from threshold in context.TagThresholds
+			where tagsId.Contains(threshold.TagId)
+			select new TagThresholdInfo
+			{
+				Threshold = threshold.InputValue,
+				Result = threshold.OutputValue,
+			};
+
+		return await query.ToArrayAsync(ct);
+	}
+
+	public async Task<TagBlockRelationInfo[]> GetRelationsToBlocksAsync(int tagId, CancellationToken ct = default)
+	{
+		var query =
+			from relation in context.BlockTags
+			from block in context.Blocks.AsSimpleInfo().LeftJoin(x => x.Id == relation.BlockId)
+			where relation.TagId == tagId
+			select new TagBlockRelationInfo
+			{
+				LocalName = relation.Name,
+				RelationId = relation.Id,
+				Block = block,
+			};
+
+		return await query.ToArrayAsync(ct);
 	}
 }

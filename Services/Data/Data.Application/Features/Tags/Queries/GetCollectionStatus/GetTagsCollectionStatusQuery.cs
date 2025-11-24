@@ -1,10 +1,10 @@
-﻿using Datalake.Data.Application.Models.Values;
+﻿using Datalake.Contracts.Models.Tags;
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Tags.Queries.GetCollectionStatus;
 
-public record GetTagsCollectionStatusQuery : IQueryRequest<IEnumerable<TagCollectionStatus>>, IWithUserAccess
+public record GetTagsCollectionStatusQuery : IQueryRequest<IEnumerable<TagStatusInfo>>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 

@@ -2,9 +2,9 @@
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
-namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTagWithDetails;
+namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTagWithSettingsAndBlocks;
 
-public record GetTagWithDetailsQuery : IQueryRequest<TagFullInfo>, IWithUserAccess
+public record GetTagWithDetailsQuery : IQueryRequest<TagWithSettingsAndBlocksInfo>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 

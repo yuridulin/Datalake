@@ -4,7 +4,7 @@ import PollingLoader from '@/app/components/loaders/PollingLoader'
 import TagReceiveStateEl from '@/app/components/TagReceiveStateEl'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { compareDateStrings, compareRecords } from '@/functions/compareValues'
-import { TagInfo, TagQuality, ValueRecord } from '@/generated/data-contracts'
+import { SourceSimpleInfo, SourceType, TagQuality, TagSimpleInfo, TagStatusInfo, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
@@ -12,7 +12,7 @@ import Column from 'antd/es/table/Column'
 import { useCallback, useEffect, useState } from 'react'
 
 interface TagsTableProps {
-	tags: TagInfo[]
+	tags: TagSimpleInfo[]
 	hideSource?: boolean
 	hideValue?: boolean
 	showState?: boolean
@@ -22,7 +22,7 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 	const store = useAppStore()
 	const [viewingTags, setViewingTags] = useState(tags)
 	const [search, setSearch] = useState('')
-	const [values, setValues] = useState({} as { [key: number]: ValueRecord | null })
+	const [values, setValues] = useState<Record<number, ValueRecord>>({})
 
 	const loadValues = useCallback(() => {
 		return Promise.all([
@@ -31,15 +31,50 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 				.then((res) => {
 					setValues(Object.fromEntries(res.data[0].tags.map((x) => [x.id, x.values[0]])))
 				})
-				.catch(() => setValues(Object.fromEntries(Object.keys(viewingTags).map((prop) => [prop, null])))),
+				.catch(() => setValues({})),
 			store.api
 				.dataTagsGetStatus({ tagsId: viewingTags.map((x) => x.id) })
-				.then((res) => setStates(res.data))
+				.then((res) => {
+					const statesMap: Record<number, TagStatusInfo> = {}
+					res.data.forEach((status) => {
+						if (status.tagId !== undefined) {
+							statesMap[status.tagId] = status
+						}
+					})
+					setStates(statesMap)
+				})
 				.catch(() => setStates({})),
 		])
 	}, [store.api, viewingTags])
 
-	const [states, setStates] = useState<Record<number, string>>({})
+	const [states, setStates] = useState<Record<number, TagStatusInfo>>({})
+	const [sources, setSources] = useState<Record<number, SourceSimpleInfo>>({})
+
+	const loadSources = useCallback(() => {
+		if (hideSource) return Promise.resolve()
+
+		return store.api
+			.inventorySourcesGetAll({ withCustom: true })
+			.then((res) => {
+				const sourcesMap: Record<number, SourceSimpleInfo> = {}
+				res.data.forEach((source) => {
+					sourcesMap[source.id] = { id: source.id, name: source.name }
+				})
+				// Добавляем специальные системные источники
+				sourcesMap[SourceType.Manual] = { id: SourceType.Manual, name: 'Мануальный' }
+				sourcesMap[SourceType.Calculated] = { id: SourceType.Calculated, name: 'Вычисляемый' }
+				sourcesMap[SourceType.Aggregated] = { id: SourceType.Aggregated, name: 'Агрегатный' }
+				setSources(sourcesMap)
+			})
+			.catch(() => {
+				// В случае ошибки добавляем хотя бы системные источники
+				setSources({
+					[SourceType.Manual]: { id: SourceType.Manual, name: 'Мануальный' },
+					[SourceType.Calculated]: { id: SourceType.Calculated, name: 'Вычисляемый' },
+					[SourceType.Aggregated]: { id: SourceType.Aggregated, name: 'Агрегатный' },
+				})
+			})
+	}, [store.api, hideSource])
 
 	const doSearch = useCallback(() => {
 		setViewingTags(
@@ -48,11 +83,15 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 	}, [search, tags])
 
 	useEffect(doSearch, [doSearch, search, tags])
+
+	useEffect(() => {
+		loadSources()
+	}, [loadSources])
 	return (
 		<>
 			{viewingTags.length ? <PollingLoader pollingFunction={loadValues} interval={5000} /> : <></>}
 			<Table size='small' dataSource={viewingTags} showSorterTooltip={false} rowKey='id'>
-				<Column<TagInfo>
+				<Column<TagSimpleInfo>
 					title={
 						<div style={{ display: 'flex', alignItems: 'center' }}>
 							<div style={{ padding: '0 1em' }}>Название</div>
@@ -74,34 +113,44 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 					dataIndex='name'
 					defaultSortOrder='ascend'
 					width='40%'
-					sorter={(a: TagInfo, b: TagInfo) => (a.name ?? '').localeCompare(b.name ?? '')}
+					sorter={(a: TagSimpleInfo, b: TagSimpleInfo) => (a.name ?? '').localeCompare(b.name ?? '')}
 					render={(_, tag) => <TagButton tag={tag} />}
 				/>
-				<Column<TagInfo>
+				<Column<TagSimpleInfo>
 					title='Описание'
 					dataIndex='description'
-					sorter={(a: TagInfo, b: TagInfo) => (a.description ?? '').localeCompare(b.description ?? '')}
+					sorter={(a: TagSimpleInfo, b: TagSimpleInfo) => (a.description ?? '').localeCompare(b.description ?? '')}
 				/>
 				{!hideSource && (
-					<Column<TagInfo>
+					<Column<TagSimpleInfo>
 						title='Источник'
 						dataIndex='sourceId'
 						width='18em'
-						sorter={(a: TagInfo, b: TagInfo) =>
-							(a.sourceName ?? String(a.sourceId)).localeCompare(b.sourceName ?? String(b.sourceId))
-						}
-						render={(_, record) => (
-							<SourceButton source={{ id: record.sourceId ?? 0, name: record.sourceName ?? '?' }} />
-						)}
+						sorter={(a: TagSimpleInfo, b: TagSimpleInfo) => {
+							const sourceA = sources[a.sourceId]?.name ?? String(a.sourceId)
+							const sourceB = sources[b.sourceId]?.name ?? String(b.sourceId)
+							return sourceA.localeCompare(sourceB)
+						}}
+						render={(_, record) => {
+							const source = sources[record.sourceId]
+							return (
+								<SourceButton
+									source={{
+										id: record.sourceId ?? 0,
+										name: source?.name ?? String(record.sourceId ?? '?'),
+									}}
+								/>
+							)
+						}}
 					/>
 				)}
 				{!hideValue && (
 					<>
-						<Column<TagInfo>
+						<Column<TagSimpleInfo>
 							title='Значение'
 							width='12em'
-							sorter={(a: TagInfo, b: TagInfo) => compareRecords(values[a.id], values[b.id])}
-							render={(_, record: TagInfo) => {
+							sorter={(a: TagSimpleInfo, b: TagSimpleInfo) => compareRecords(values[a.id], values[b.id])}
+							render={(_, record: TagSimpleInfo) => {
 								const value = values[record.id]
 								return (
 									<TagCompactValue
@@ -112,11 +161,13 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 								)
 							}}
 						/>
-						<Column<TagInfo>
+						<Column<TagSimpleInfo>
 							title='Дата записи'
 							width='13em'
-							sorter={(a: TagInfo, b: TagInfo) => compareDateStrings(values[a.id]?.date, values[b.id]?.date)}
-							render={(_, record: TagInfo) => {
+							sorter={(a: TagSimpleInfo, b: TagSimpleInfo) =>
+								compareDateStrings(values[a.id]?.date, values[b.id]?.date)
+							}
+							render={(_, record: TagSimpleInfo) => {
 								const value = values[record.id]
 								return value?.date
 							}}
@@ -124,13 +175,20 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 					</>
 				)}
 				{showState && (
-					<Column<TagInfo>
+					<Column<TagSimpleInfo>
 						title='Последний расчет'
 						width='25em'
-						sorter={(a: TagInfo, b: TagInfo) => states[a.id]?.localeCompare(states[b.id])}
-						render={(_, record: TagInfo) => {
+						sorter={(a: TagSimpleInfo, b: TagSimpleInfo) => {
+							const stateA = states[a.id]
+							const stateB = states[b.id]
+							const statusA = stateA?.isError ? stateA.status ?? '' : ''
+							const statusB = stateB?.isError ? stateB.status ?? '' : ''
+							return statusA.localeCompare(statusB)
+						}}
+						render={(_, record: TagSimpleInfo) => {
 							const state = states[record.id]
-							return <TagReceiveStateEl receiveState={state} />
+							const errorMessage = state?.isError ? state.status ?? undefined : undefined
+							return <TagReceiveStateEl receiveState={errorMessage} />
 						}}
 					/>
 				)}

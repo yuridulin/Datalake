@@ -1,16 +1,16 @@
-﻿using Datalake.Data.Application.Interfaces.Storage;
-using Datalake.Data.Application.Models.Values;
+﻿using Datalake.Contracts.Models.Tags;
+using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Domain.Enums;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Tags.Queries.GetCollectionStatus;
 
-public interface IGetTagsCollectionStatusHandler : IQueryHandler<GetTagsCollectionStatusQuery, IEnumerable<TagCollectionStatus>> { }
+public interface IGetTagsCollectionStatusHandler : IQueryHandler<GetTagsCollectionStatusQuery, IEnumerable<TagStatusInfo>> { }
 
 public class GetTagsCollectionStatusHandler(
 	ITagsCollectionStatusStore collectionStatusStore) : IGetTagsCollectionStatusHandler
 {
-	public Task<IEnumerable<TagCollectionStatus>> HandleAsync(GetTagsCollectionStatusQuery query, CancellationToken ct = default)
+	public Task<IEnumerable<TagStatusInfo>> HandleAsync(GetTagsCollectionStatusQuery query, CancellationToken ct = default)
 	{
 		List<int> allowedTagsId = [];
 

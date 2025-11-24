@@ -3,15 +3,15 @@ using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Shared.Application.Interfaces;
 
-namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
+namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTagsWithSettings;
 
-public interface IGetTagsHandler : IQueryHandler<GetTagsQuery, IEnumerable<TagSimpleInfo>> { }
+public interface IGetTagsWithSettingsHandler : IQueryHandler<GetTagsWithSettingsQuery, IEnumerable<TagWithSettingsInfo>> { }
 
-public class GetTagsHandler(ITagsQueriesService tagsQueriesService) : IGetTagsHandler
+public class GetTagsWithSettingsHandler(ITagsQueriesService tagsQueriesService) : IGetTagsWithSettingsHandler
 {
-	public async Task<IEnumerable<TagSimpleInfo>> HandleAsync(GetTagsQuery query, CancellationToken ct = default)
+	public async Task<IEnumerable<TagWithSettingsInfo>> HandleAsync(GetTagsWithSettingsQuery query, CancellationToken ct = default)
 	{
-		var data = await tagsQueriesService.GetAsync(
+		var data = await tagsQueriesService.GetWithSettingsAsync(
 			query.SpecificIdentifiers,
 			query.SpecificGuids,
 			query.SpecificType,

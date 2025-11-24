@@ -3,9 +3,9 @@ using Datalake.Domain.Enums;
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
-namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
+namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTagsWithSettings;
 
-public record GetTagsQuery : IQueryRequest<IEnumerable<TagSimpleInfo>>, IWithUserAccess
+public record GetTagsWithSettingsQuery : IQueryRequest<IEnumerable<TagWithSettingsInfo>>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 

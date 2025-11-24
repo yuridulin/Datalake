@@ -1,5 +1,5 @@
-﻿using Datalake.Data.Application.Interfaces.Storage;
-using Datalake.Data.Application.Models.Values;
+﻿using Datalake.Contracts.Models.Tags;
+using Datalake.Data.Application.Interfaces.Storage;
 using Datalake.Shared.Application.Attributes;
 using System.Collections.Concurrent;
 
@@ -8,11 +8,11 @@ namespace Datalake.Data.Infrastructure.InMemory;
 [Singleton]
 public class TagsCollectionStatusStore : ITagsCollectionStatusStore
 {
-	private ConcurrentDictionary<int, TagCollectionStatus> _state = [];
+	private ConcurrentDictionary<int, TagStatusInfo> _state = [];
 
-	public IEnumerable<TagCollectionStatus> Get(IEnumerable<int> identifiers)
+	public IEnumerable<TagStatusInfo> Get(IEnumerable<int> identifiers)
 	{
-		List<TagCollectionStatus> statuses = new(identifiers.Count());
+		List<TagStatusInfo> statuses = new(identifiers.Count());
 
 		foreach (var id in identifiers)
 		{
@@ -25,7 +25,11 @@ public class TagsCollectionStatusStore : ITagsCollectionStatusStore
 
 	public void Set(int identifier, string? value)
 	{
-		var status = new TagCollectionStatus { Date = DateTime.UtcNow, HasError = string.IsNullOrEmpty(value), ErrorMessage = value };
+		var status = new TagStatusInfo(
+			identifier,
+			DateTime.UtcNow,
+			!string.IsNullOrEmpty(value),
+			value);
 
 		_state.AddOrUpdate(
 			identifier,

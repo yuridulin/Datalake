@@ -10,8 +10,6 @@ namespace Datalake.Contracts.Models.Sources;
 /// </summary>
 public class SourceTagInfo : TagSimpleInfo, IProtectedEntity
 {
-	public int SourceId { get; set; }
-
 	/// <summary>
 	/// Путь к данным в источнике
 	/// </summary>
@@ -53,9 +51,6 @@ public class SourceTagInfo : TagSimpleInfo, IProtectedEntity
 	/// Временное окно для расчета агрегированного значения
 	/// </summary>
 	public TagResolution? AggregationPeriod { get; set; }
-
-	/// <inheritdoc />
-	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 
 	/// <summary>
 	/// Минимальная информация о переменных для расчета значений по формуле
