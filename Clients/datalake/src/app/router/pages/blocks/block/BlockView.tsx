@@ -7,7 +7,7 @@ import TabsView from '@/app/components/tabsView/TabsView'
 import { encodeBlockTagPair, FlattenedNestedTagsType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
-import { AccessType, BlockFullInfo } from '@/generated/data-contracts'
+import { AccessType, BlockDetailedInfo, BlockSimpleInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { RightOutlined } from '@ant-design/icons'
@@ -26,7 +26,7 @@ const BlockView = observer(() => {
 	useDatalakeTitle('Блоки', '#' + id)
 
 	const [ready, setReady] = useState(false)
-	const [block, setBlock] = useState({} as BlockFullInfo)
+	const [block, setBlock] = useState({} as BlockDetailedInfo)
 	const hasLoadedRef = useRef(false)
 	const lastIdRef = useRef<string | undefined>(id)
 
@@ -44,7 +44,7 @@ const BlockView = observer(() => {
 				setBlock(res.data)
 				setReady(true)
 			})
-			.catch(() => setBlock({} as BlockFullInfo))
+			.catch(() => setBlock({} as BlockDetailedInfo))
 	}
 
 	const createChild = () => {
@@ -67,25 +67,24 @@ const BlockView = observer(() => {
 	const tagMapping = useMemo(() => {
 		const mapping: FlattenedNestedTagsType = {}
 		block.tags?.forEach((tag) => {
-			const value = encodeBlockTagPair(block.id, tag.id)
+			const tagId = tag.tag?.id ?? tag.tagId ?? 0
+			const value = encodeBlockTagPair(block.id, tagId)
+			const tagInfo = tag.tag
 			mapping[value] = {
-				id: tag.id,
-				guid: tag.guid,
-				name: tag.name,
-				type: tag.type,
-				resolution: tag.resolution,
-				sourceId: tag.sourceId,
-				sourceType: tag.sourceType,
+				...tag,
 				blockId: block.id,
-				localName: tag.localName,
-				relationType: tag.relationType,
+				localName: tag.localName ?? tagInfo?.name ?? '',
 			}
 		})
 		return mapping
 	}, [block.tags, block.id])
 
 	const relations = useMemo(
-		() => block.tags?.map((tag) => encodeBlockTagPair(block.id, tag.id)) || [],
+		() =>
+			block.tags?.map((tag) => {
+				const tagId = tag.tag?.id ?? tag.tagId ?? 0
+				return encodeBlockTagPair(block.id, tagId)
+			}) || [],
 		[block.tags, block.id],
 	)
 
@@ -133,7 +132,7 @@ const BlockView = observer(() => {
 							block.adults.length > 0 ? (
 								<div style={{ display: 'flex' }}>
 									<BlockButton block={block.adults[0]} />
-									{block.adults.slice(1).map((x) => (
+									{block.adults.slice(1).map((x: BlockSimpleInfo) => (
 										<div key={x.id}>
 											<RightOutlined style={{ margin: '0 1em', fontSize: '7px' }} />
 											<BlockButton block={x} />
@@ -156,14 +155,15 @@ const BlockView = observer(() => {
 						children: (
 							<>
 								{block.children?.length > 0 ? (
-									block.children.map((record, i) => (
+									block.children.map((record: BlockSimpleInfo, i: number) => (
 										<div key={i} style={childrenContainerStyle}>
 											<BlockButton
 												key={record.id}
 												block={{
 													id: record.id ?? 0,
 													name: record.name ?? '',
-													guid: '',
+													guid: record.guid ?? '',
+													accessRule: record.accessRule,
 												}}
 											/>
 										</div>

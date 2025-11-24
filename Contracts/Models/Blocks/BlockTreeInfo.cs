@@ -1,12 +1,15 @@
-﻿namespace Datalake.Contracts.Models.Blocks;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Datalake.Contracts.Models.Blocks;
 
 /// <summary>
 /// Информация о блоке в иерархическом представлении
 /// </summary>
-public class BlockTreeInfo : BlockSimpleInfo
+public record BlockTreeInfo : BlockWithTagsInfo
 {
 	/// <summary>
-	/// Идентификатор родительского блока
+	/// Вложенные блоки
 	/// </summary>
-	public int? ParentBlockId { get; set; }
+	[Required]
+	public required IEnumerable<BlockTreeInfo> Children { get; set; }
 }

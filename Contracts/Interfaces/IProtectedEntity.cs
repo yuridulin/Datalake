@@ -12,5 +12,5 @@ public interface IProtectedEntity
 	/// Правило доступа
 	/// </summary>
 	[Required]
-	public AccessRuleInfo AccessRule { get; set; }
+	public AccessRuleInfo AccessRule { get; }
 }

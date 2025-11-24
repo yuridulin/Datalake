@@ -54,7 +54,7 @@ const UserForm = observer(() => {
 				fullName: res.data.fullName,
 				createNewStaticHash: false,
 				password: '',
-				energoIdGuid: res.data.energoIdGuid,
+				energoIdGuid: res.data.type === UserType.EnergoId ? res.data.guid : null,
 				type: res.data.type,
 			})
 			setOldName(res.data.fullName ?? id)
@@ -129,7 +129,7 @@ const UserForm = observer(() => {
 						defaultValue={request.accessType}
 						options={accessOptions.filter((x) => hasAccess(store.getGlobalAccess(), x.value as AccessType))}
 						style={{ width: '12em' }}
-						disabled={!hasAccess(userInfo.accessRule.access, AccessType.Manager)}
+						disabled={!store.hasGlobalAccess(AccessType.Manager)}
 						onChange={(e) =>
 							setRequest({
 								...request,

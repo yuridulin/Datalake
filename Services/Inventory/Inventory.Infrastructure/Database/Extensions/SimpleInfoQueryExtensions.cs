@@ -20,6 +20,8 @@ public static class SimpleInfoQueryExtensions
 				Id = block.Id,
 				Guid = block.GlobalId,
 				Name = block.Name,
+				Description = block.Description,
+				ParentBlockId = block.ParentId,
 			};
 	}
 

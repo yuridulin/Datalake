@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-public class SystemController(
+public class InventorySystemController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventorySystemControllerBase
 {

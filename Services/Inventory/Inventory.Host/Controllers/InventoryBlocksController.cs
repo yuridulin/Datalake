@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-public class BlocksController(
+public class InventoryBlocksController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryBlocksControllerBase
 {
@@ -37,12 +37,12 @@ public class BlocksController(
 		return key;
 	}
 
-	public override async Task<ActionResult<BlockTreeWithTagsInfo[]>> GetAllAsync(
+	public override async Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IGetBlocksWithTagsHandler>();
-		var data = await handler.HandleAsync(new(user), ct);
+		var data = await handler.HandleAsync(new() { User = user }, ct);
 
 		return Ok(data);
 	}
@@ -52,7 +52,7 @@ public class BlocksController(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-		var handler = serviceProvider.GetRequiredService<IGetBlockFullHandler>();
+		var handler = serviceProvider.GetRequiredService<IGetBlockDetailedHandler>();
 		var data = await handler.HandleAsync(new(user, blockId), ct);
 
 		return Ok(data);

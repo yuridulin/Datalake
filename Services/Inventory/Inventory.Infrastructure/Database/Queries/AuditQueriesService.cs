@@ -37,9 +37,7 @@ public class AuditQueriesService(InventoryDbLinqContext context) : IAuditQueries
 				(tagId == null || tagId.Value == log.AffectedTagId) &&
 				(blockId == null || blockId.Value == log.AffectedBlockId) &&
 				(userGuid == null || userGuid.Value == log.AffectedUserGuid) &&
-				(groupGuid == null || groupGuid.Value == log.AffectedUserGroupGuid) &&
-				(types == null || types.Contains(log.Type)) &&
-				(categories == null || categories.Contains(log.Category))
+				(groupGuid == null || groupGuid.Value == log.AffectedUserGroupGuid)
 			select new LogInfo
 			{
 				Id = log.Id,
@@ -63,6 +61,12 @@ public class AuditQueriesService(InventoryDbLinqContext context) : IAuditQueries
 			query = query.Where(x => x.Id > lastId.Value);
 		else if (firstId.HasValue)
 			query = query.Where(x => x.Id < firstId.Value);
+
+		if (types != null)
+			query = query.Where(x => types.Contains(x.Type));
+
+		if (categories != null)
+			query = query.Where(x => categories.Contains(x.Category));
 
 		if (take.HasValue)
 			query = query.Take(take.Value);

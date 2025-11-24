@@ -5,8 +5,7 @@ import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
 import routes from '@/app/router/routes'
 import getUserTypeName from '@/functions/getUserTypeName'
-import hasAccess from '@/functions/hasAccess'
-import { AccessType, UserInfo } from '@/generated/data-contracts'
+import { AccessType, UserWithGroupsInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin } from 'antd'
@@ -19,7 +18,7 @@ const UserView = observer(() => {
 	const navigate = useNavigate()
 	const { id } = useParams()
 	useDatalakeTitle('Пользователи', id)
-	const [info, setInfo] = useState(null as UserInfo | null)
+	const [info, setInfo] = useState(null as UserWithGroupsInfo | null)
 	const [loading, setLoading] = useState(true)
 	const hasLoadedRef = useRef(false)
 	const lastIdRef = useRef<string | undefined>(id)
@@ -49,7 +48,7 @@ const UserView = observer(() => {
 				left={[<Button onClick={() => navigate(-1)}>К предыдущей странице</Button>]}
 				right={[
 					store.hasGlobalAccess(AccessType.Admin) && <Button disabled>Редактировать разрешения</Button>,
-					hasAccess(info.accessRule.access, AccessType.Manager) && (
+					store.hasGlobalAccess(AccessType.Manager) && (
 						<NavLink to={routes.users.toUserForm(info.guid)}>
 							<Button>Редактировать учетную запись</Button>
 						</NavLink>

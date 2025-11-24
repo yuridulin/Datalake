@@ -15,24 +15,25 @@ import routes from '../../routes'
 const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<number, string>] => {
 	const meta: Record<number, string> = {}
 
-	const buildHierarchy = (id: number | null, prefix = ''): BlockTreeInfo[] | null => {
+	const buildHierarchy = (id: number | null, prefix = ''): BlockTreeInfo[] => {
 		const hierarchy = blocks
-			.filter((block) => block.parentId === id)
+			.filter((block) => block.parentBlockId === id)
 			.map((block) => {
 				const fullName = prefix ? `${prefix} > ${block.name}` : block.name
 				meta[block.id] = fullName
+				const children = buildHierarchy(block.id, fullName)
 				return {
 					...block,
-					fullName,
-					children: buildHierarchy(block.id, fullName),
+					children: children.length > 0 ? children : [],
 				}
 			})
 			.sort((a, b) => a.name.localeCompare(b.name))
 
-		return hierarchy.length === 0 ? null : hierarchy
+		return hierarchy
 	}
 
-	return [buildHierarchy(null), meta]
+	const treeResult = buildHierarchy(null)
+	return [treeResult.length > 0 ? treeResult : null, meta]
 }
 
 const EXPAND_KEY = 'expandedBlocks'
@@ -49,7 +50,7 @@ const BlocksTree = observer(() => {
 	const [tree, meta] = useMemo(() => makeTree(data), [data])
 
 	// Filter and transform data based on search
-	const viewData = useMemo(() => {
+	const viewData = useMemo((): BlockTreeInfo[] => {
 		if (!search) return tree ?? []
 
 		return data
@@ -58,8 +59,8 @@ const BlocksTree = observer(() => {
 				(block) =>
 					({
 						...block,
-						fullName: meta[block.id] || block.name,
 						name: meta[block.id] || block.name,
+						children: [],
 					}) as BlockTreeInfo,
 			)
 	}, [search, data, tree, meta])

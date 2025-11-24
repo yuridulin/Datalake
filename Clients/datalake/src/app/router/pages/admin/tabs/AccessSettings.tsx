@@ -147,14 +147,13 @@ const AccessSettings = () => {
 			const treeData: DataNode[] = users.map((user) => ({
 				title: (
 					<>
-						<UserButton
-							userInfo={{
-								guid: user.guid,
-								fullName: user.guid,
-								accessRule: user.accessRule,
-							}}
-							check={false}
-						/>{' '}
+					<UserButton
+						userInfo={{
+							guid: user.guid,
+							fullName: user.guid,
+							type: 1,
+						}}
+					/>{' '}
 						: <AccessTypeEl type={user.globalAccess} />
 					</>
 				),
@@ -210,7 +209,7 @@ const AccessSettings = () => {
 											id: Number(block.id),
 											guid: '',
 											name: block.name,
-											//accessRule: user.accessRule,
+											accessRule: block.accessRule,
 										}}
 									/>{' '}
 									: <AccessTypeEl type={block.accessRule.access} />

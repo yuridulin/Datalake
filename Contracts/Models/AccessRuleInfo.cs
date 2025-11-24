@@ -1,4 +1,5 @@
 ﻿using Datalake.Domain.Enums;
+using Datalake.Domain.ValueObjects;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Contracts.Models;
@@ -19,6 +20,15 @@ public record AccessRuleInfo(int RuleId, AccessType Access)
 	/// </summary>
 	[Required]
 	public AccessType Access { get; } = Access;
+
+	/// <summary>
+	/// Создание информации по правилу
+	/// </summary>
+	/// <param name="ruleValue">Правило</param>
+	public static AccessRuleInfo FromRule(UserAccessRuleValue ruleValue)
+	{
+		return new(ruleValue.Id, ruleValue.Access);
+	}
 
 	/// <summary>
 	/// Заглушка для неопределенного уровня доступа

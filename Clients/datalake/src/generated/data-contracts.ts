@@ -57,17 +57,6 @@ export enum TagQuality {
 }
 
 /**
- * Тип учётной записи
- *
- * 1 = Local
- * 3 = EnergoId
- */
-export enum UserType {
-  Local = 1,
-  EnergoId = 3,
-}
-
-/**
  * Способ получения агрегированного значения
  *
  * 0 = None
@@ -141,6 +130,25 @@ export enum LogCategory {
   Users = 80,
   UserGroups = 90,
   Blocks = 100,
+}
+
+/**
+ * Уровень доступа
+ *
+ * 0 = None
+ * 1 = Viewer
+ * 2 = Editor
+ * 3 = Manager
+ * 4 = Denied
+ * 5 = Admin
+ */
+export enum AccessType {
+  None = 0,
+  Viewer = 1,
+  Editor = 2,
+  Manager = 3,
+  Denied = 4,
+  Admin = 5,
 }
 
 /**
@@ -223,22 +231,14 @@ export enum TagType {
 }
 
 /**
- * Уровень доступа
+ * Тип учётной записи
  *
- * 0 = None
- * 1 = Viewer
- * 2 = Editor
- * 3 = Manager
- * 4 = Denied
- * 5 = Admin
+ * 1 = Local
+ * 3 = EnergoId
  */
-export enum AccessType {
-  None = 0,
-  Viewer = 1,
-  Editor = 2,
-  Manager = 3,
-  Denied = 4,
-  Admin = 5,
+export enum UserType {
+  Local = 1,
+  EnergoId = 3,
 }
 
 export type AccessRightsInfo = AccessRightsForOneInfo & {
@@ -254,23 +254,6 @@ export interface UserGroupSimpleInfo {
   guid: string;
   /** @minLength 1 */
   name: string;
-  accessRule: AccessRuleInfo;
-}
-
-export interface AccessRuleInfo {
-  /** @format int32 */
-  ruleId: number;
-  /**
-   * Уровень доступа
-   *
-   * 0 = None
-   * 1 = Viewer
-   * 2 = Editor
-   * 3 = Manager
-   * 4 = Denied
-   * 5 = Admin
-   */
-  access: AccessType;
 }
 
 export interface UserSimpleInfo {
@@ -279,9 +262,15 @@ export interface UserSimpleInfo {
    * @minLength 1
    */
   guid: string;
+  /**
+   * Тип учётной записи
+   *
+   * 1 = Local
+   * 3 = EnergoId
+   */
+  type: UserType;
   /** @minLength 1 */
   fullName: string;
-  accessRule: AccessRuleInfo;
 }
 
 export type AccessRightsForOneInfo = AccessRightsSimpleInfo & {
@@ -346,6 +335,8 @@ export interface TagSimpleInfo {
 export interface BlockSimpleInfo {
   /** @format int32 */
   id: number;
+  /** @format int32 */
+  parentBlockId?: number | null;
   /**
    * @format guid
    * @minLength 1
@@ -353,6 +344,24 @@ export interface BlockSimpleInfo {
   guid: string;
   /** @minLength 1 */
   name: string;
+  description?: string | null;
+  accessRule: AccessRuleInfo;
+}
+
+export interface AccessRuleInfo {
+  /** @format int32 */
+  ruleId: number;
+  /**
+   * Уровень доступа
+   *
+   * 0 = None
+   * 1 = Viewer
+   * 2 = Editor
+   * 3 = Manager
+   * 4 = Denied
+   * 5 = Admin
+   */
+  access: AccessType;
 }
 
 export interface SourceSimpleInfo {
@@ -498,14 +507,10 @@ export interface BlockCreateRequest {
 }
 
 export type BlockWithTagsInfo = BlockSimpleInfo & {
-  /** @format int32 */
-  parentId?: number | null;
-  description?: string | null;
-  accessRule: AccessRuleInfo;
   tags: BlockNestedTagInfo[];
 };
 
-export type BlockNestedTagInfo = TagSimpleInfo & {
+export interface BlockNestedTagInfo {
   /**
    * Тип связи тега и блока
    *
@@ -514,31 +519,25 @@ export type BlockNestedTagInfo = TagSimpleInfo & {
    * 2 = Output
    */
   relationType: BlockTagRelation;
-  /** @minLength 1 */
-  localName: string;
+  localName?: string | null;
+  tag?: TagSimpleInfo | null;
   /** @format int32 */
-  sourceId: number;
-};
+  blockId?: number;
+  /** @format int32 */
+  tagId?: number | null;
+}
 
-export type BlockFullInfo = BlockWithTagsInfo & {
-  parent?: BlockParentInfo | null;
-  children: BlockChildInfo[];
+export type BlockDetailedInfo = BlockWithTagsInfo & {
+  children: BlockSimpleInfo[];
+  adults: BlockSimpleInfo[];
   properties: BlockPropertyInfo[];
-  accessRights: AccessRightsForObjectInfo[];
-  adults: BlockTreeInfo[];
+  accessRules: AccessRulesForObjectInfo[];
 };
 
-export type BlockParentInfo = BlockNestedItem & object;
-
-export interface BlockNestedItem {
+export interface BlockPropertyInfo {
   /** @format int32 */
   id?: number;
   name?: string;
-}
-
-export type BlockChildInfo = BlockNestedItem & object;
-
-export type BlockPropertyInfo = BlockNestedItem & {
   /**
    * Тип данных
    *
@@ -549,17 +548,15 @@ export type BlockPropertyInfo = BlockNestedItem & {
   type: TagType;
   /** @minLength 1 */
   value: string;
-};
+}
 
-export type AccessRightsForObjectInfo = AccessRightsSimpleInfo & {
+export type AccessRulesForObjectInfo = AccessRightsSimpleInfo & {
   userGroup?: UserGroupSimpleInfo | null;
   user?: UserSimpleInfo | null;
 };
 
 export type BlockTreeInfo = BlockWithTagsInfo & {
-  children?: BlockTreeInfo[] | null;
-  /** @minLength 1 */
-  fullName: string;
+  children: BlockTreeInfo[];
 };
 
 export interface BlockUpdateRequest {
@@ -718,11 +715,12 @@ export type TagFullInfo = TagInfo & {
   blocks: TagBlockRelationInfo[];
 };
 
-export type TagBlockRelationInfo = BlockSimpleInfo & {
+export interface TagBlockRelationInfo {
   /** @format int32 */
   relationId: number;
   localName?: string | null;
-};
+  block?: BlockSimpleInfo | null;
+}
 
 export interface TagUpdateRequest {
   /** @minLength 1 */
@@ -815,6 +813,7 @@ export type UserGroupInfo = UserGroupSimpleInfo & {
    * 5 = Admin
    */
   globalAccessType: AccessType;
+  accessRule: AccessRuleInfo;
 };
 
 export type UserGroupTreeInfo = UserGroupInfo & {
@@ -825,17 +824,12 @@ export type UserGroupTreeInfo = UserGroupInfo & {
 };
 
 export type UserGroupDetailedInfo = UserGroupInfo & {
-  users: UserGroupUsersInfo[];
+  users: UserGroupMemberInfo[];
   subgroups: UserGroupSimpleInfo[];
   accessRights: AccessRightsForOneInfo[];
 };
 
-export interface UserGroupUsersInfo {
-  /**
-   * @format guid
-   * @minLength 1
-   */
-  guid: string;
+export type UserGroupMemberInfo = UserSimpleInfo & {
   /**
    * Уровень доступа
    *
@@ -847,8 +841,7 @@ export interface UserGroupUsersInfo {
    * 5 = Admin
    */
   accessType: AccessType;
-  fullName?: string | null;
-}
+};
 
 export type UserGroupUpdateRequest = UserGroupCreateRequest & {
   /**
@@ -862,7 +855,7 @@ export type UserGroupUpdateRequest = UserGroupCreateRequest & {
    * 5 = Admin
    */
   accessType: AccessType;
-  users: UserGroupUsersInfo[];
+  users: UserGroupMemberInfo[];
 };
 
 export interface UserCreateRequest {
@@ -894,6 +887,7 @@ export interface UserCreateRequest {
 
 export type UserInfo = UserSimpleInfo & {
   login?: string | null;
+  email?: string | null;
   /**
    * Уровень доступа
    *
@@ -905,15 +899,9 @@ export type UserInfo = UserSimpleInfo & {
    * 5 = Admin
    */
   accessType: AccessType;
-  /**
-   * Тип учётной записи
-   *
-   * 1 = Local
-   * 3 = EnergoId
-   */
-  type: UserType;
-  /** @format guid */
-  energoIdGuid?: string | null;
+};
+
+export type UserWithGroupsInfo = UserInfo & {
   userGroups: UserGroupSimpleInfo[];
 };
 

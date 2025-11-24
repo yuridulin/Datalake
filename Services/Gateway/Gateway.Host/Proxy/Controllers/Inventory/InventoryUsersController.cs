@@ -23,10 +23,10 @@ public class InventoryUsersController(InventoryReverseProxyService proxyService)
 			=> proxyService.ProxyAsync<IEnumerable<UserInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<UserInfo>> GetWithDetailsAsync(
+	public override Task<ActionResult<UserWithGroupsInfo>> GetWithDetailsAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<UserInfo>(HttpContext, ct);
+			=> proxyService.ProxyAsync<UserWithGroupsInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult> UpdateAsync(

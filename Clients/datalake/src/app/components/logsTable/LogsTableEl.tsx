@@ -11,7 +11,7 @@ import { useMemo, useState } from 'react'
 type LogsTableElProps = {
 	sourceId?: number
 	blockId?: number
-	tagGuid?: string
+	tagId?: number
 	userGuid?: string
 	userGroupGuid?: string
 }
@@ -73,14 +73,14 @@ const columns: ColumnType<LogInfo>[] = [
 	},
 ]
 
-const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: LogsTableElProps) => {
+const LogsTableEl = ({ sourceId, blockId, tagId, userGuid, userGroupGuid }: LogsTableElProps) => {
 	const store = useAppStore()
 
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const [reachEnd, setReachEnd] = useState(false)
 	const isGlobal = useMemo(
-		() => !sourceId && !blockId && !tagGuid && !userGuid && !userGroupGuid,
-		[sourceId, blockId, tagGuid, userGuid, userGroupGuid],
+		() => !sourceId && !blockId && !tagId && !userGuid && !userGroupGuid,
+		[sourceId, blockId, tagId, userGuid, userGroupGuid],
 	)
 	const step = useMemo(() => (isGlobal ? 100 : 10), [isGlobal])
 
@@ -103,7 +103,7 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 				take: step,
 				source: sourceId,
 				block: blockId,
-				tag: tagGuid,
+				tag: tagId,
 				user: userGuid,
 				group: userGroupGuid,
 			})
@@ -120,7 +120,7 @@ const LogsTableEl = ({ sourceId, blockId, tagGuid, userGuid, userGroupGuid }: Lo
 				take: step,
 				source: sourceId,
 				block: blockId,
-				tag: tagGuid,
+				tag: tagId,
 				user: userGuid,
 				group: userGroupGuid,
 			})

@@ -10,6 +10,8 @@ public class UserConfiguration(DatabaseTableAccess access) : ILinqToDbEntityConf
 {
 	public void Configure(EntityMappingBuilder<User> builder)
 	{
+		_ = access; // Заглушка, чтобы не видеть предупреждение о не используемом параметре
+
 		builder
 			.HasSchemaName(InventorySchema.Name)
 			.HasTableName(InventorySchema.Users.Name)

@@ -15,7 +15,7 @@ import {
   AuthEnergoIdRequest,
   AuthLoginPassRequest,
   BlockCreateRequest,
-  BlockFullInfo,
+  BlockDetailedInfo,
   BlockTreeInfo,
   BlockUpdateRequest,
   BlockWithTagsInfo,
@@ -53,6 +53,7 @@ import {
   UserSessionWithAccessInfo,
   UsersGetActivityPayload,
   UserUpdateRequest,
+  UserWithGroupsInfo,
   ValuesResponse,
   ValuesTagResponse,
 } from "./data-contracts";
@@ -260,8 +261,8 @@ export class Api<
       source?: number | null;
       /** @format int32 */
       block?: number | null;
-      /** @format guid */
-      tag?: string | null;
+      /** @format int32 */
+      tag?: number | null;
       /** @format guid */
       user?: string | null;
       /** @format guid */
@@ -332,10 +333,10 @@ export class Api<
    * @name InventoryBlocksGet
    * @summary Получение информации о выбранном блоке
    * @request GET:/api/v1/inventory/blocks/{blockId}
-   * @response `200` `BlockFullInfo` Информация о блоке
+   * @response `200` `BlockDetailedInfo` Информация о блоке
    */
   inventoryBlocksGet = (blockId: number, params: RequestParams = {}) =>
-    this.request<BlockFullInfo, any>({
+    this.request<BlockDetailedInfo, any>({
       path: `/api/v1/inventory/blocks/${blockId}`,
       method: "GET",
       format: "json",
@@ -905,13 +906,13 @@ export class Api<
    * @name InventoryUsersGetWithDetails
    * @summary Получение детализированной информации о пользователе
    * @request GET:/api/v1/inventory/users/{userGuid}
-   * @response `200` `UserInfo` Данные о пользователе
+   * @response `200` `UserWithGroupsInfo` Данные о пользователе
    */
   inventoryUsersGetWithDetails = (
     userGuid: string,
     params: RequestParams = {},
   ) =>
-    this.request<UserInfo, any>({
+    this.request<UserWithGroupsInfo, any>({
       path: `/api/v1/inventory/users/${userGuid}`,
       method: "GET",
       format: "json",

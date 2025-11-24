@@ -32,7 +32,7 @@ public abstract class InventoryBlocksControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<BlockTreeWithTagsInfo[]>> GetAllAsync(
+	public abstract Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
 		CancellationToken ct = default);
 
 	/// <summary>

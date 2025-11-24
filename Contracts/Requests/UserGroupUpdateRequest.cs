@@ -19,5 +19,5 @@ public class UserGroupUpdateRequest : UserGroupCreateRequest
 	/// Список пользователей, которые включены в эту группу
 	/// </summary>
 	[Required]
-	public required UserGroupUsersInfo[] Users { get; set; } = [];
+	public required UserGroupMemberInfo[] Users { get; set; } = [];
 }

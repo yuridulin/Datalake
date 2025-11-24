@@ -7,7 +7,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
@@ -24,17 +24,17 @@ const UserGroupsTreeList = observer(() => {
 	const [groups, setGroups] = useState([] as UserGroupTreeInfo[])
 	const hasLoadedRef = useRef(false)
 
-	const load = () => {
+	const load = useCallback(() => {
 		store.api.inventoryUserGroupsGetTree().then((res) => {
 			setGroups(res.data.map((x) => setEmptyAsLeafs(x)))
 		})
-	}
+	}, [store.api])
 
 	useEffect(() => {
 		if (hasLoadedRef.current) return
 		hasLoadedRef.current = true
 		load()
-	}, [store.api])
+	}, [store.api, load])
 
 	const expandKey = 'expandedUserGroups'
 	const [expandedRowKeys, setExpandedRowKeys] = useLocalStorage(expandKey, [] as string[])

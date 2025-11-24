@@ -1,4 +1,5 @@
-﻿using Datalake.Contracts.Models.Users;
+﻿using Datalake.Contracts.Models.UserGroups;
+using Datalake.Contracts.Models.Users;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Inventory.Infrastructure.Database.Extensions;
@@ -23,6 +24,16 @@ public class UsersQueriesService(InventoryDbLinqContext context) : IUsersQueries
 		return await query.FirstOrDefaultAsync(ct);
 	}
 
+	public async Task<IEnumerable<UserGroupSimpleInfo>> GetGroupsWithMemberAsync(Guid userGuid, CancellationToken ct)
+	{
+		var query =
+			from relation in context.UserGroupRelations
+			from userGroup in context.UserGroups.AsSimpleInfo().InnerJoin(x => x.Guid == relation.UserGroupGuid)
+			select userGroup;
+
+		return await query.ToArrayAsync(ct);
+	}
+
 	private IQueryable<UserInfo> QueryUsersInfo()
 	{
 		return
@@ -37,7 +48,6 @@ public class UsersQueriesService(InventoryDbLinqContext context) : IUsersQueries
 					? (energo == null ? "Имя не найдено в EnergoId" : $"{energo.LastName} {energo.FirstName} {energo.MiddleName}")
 					: (user.FullName ?? user.Login ?? "Имя не найдено в системе"),
 				AccessType = rule == null ? AccessType.None : rule.AccessType,
-				EnergoIdGuid = user.Type == UserType.EnergoId ? user.Guid : null,
 				Login = user.Type == UserType.Local ? user.Login : null,
 			};
 	}

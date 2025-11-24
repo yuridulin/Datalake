@@ -18,9 +18,9 @@ public class InventoryBlocksController(InventoryReverseProxyService proxyService
 			=> proxyService.ProxyAsync<int>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<BlockTreeWithTagsInfo[]>> GetAllAsync(
+	public override Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<BlockTreeWithTagsInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<BlockWithTagsInfo[]>(HttpContext, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<BlockDetailedInfo>> GetAsync(

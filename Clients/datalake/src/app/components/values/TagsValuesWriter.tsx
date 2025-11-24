@@ -68,7 +68,16 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 			return setValues([])
 		}
 
-		const tagIds = Array.from(new Set(relations.map((relId) => tagMapping[relId]?.id).filter(Boolean)))
+		const tagIds = Array.from(
+			new Set(
+				relations
+					.map((relId) => {
+						const tagInfo = tagMapping[relId]
+						return tagInfo?.tag?.id ?? tagInfo?.tagId
+					})
+					.filter((id): id is number => id !== null && id !== undefined),
+			),
+		)
 
 		store.api
 			.dataValuesGet([
@@ -88,16 +97,28 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 					.filter((relId) => tagMapping[relId])
 					.map((relId) => {
 						const tagInfo = tagMapping[relId]
-						const tagValues = tagValuesMap.get(tagInfo.id) || []
+						const tagId = tagInfo.tag?.id ?? tagInfo.tagId ?? 0
+						const tagValues = tagValuesMap.get(tagId) || []
 						const tagValue = tagValues?.[0]
+						const tag = tagInfo.tag
+
+						if (!tag) {
+							throw new Error(`Tag not found for relation ${relId}`)
+						}
 
 						return {
 							...tagInfo,
+							id: tag.id,
+							guid: tag.guid,
+							name: tag.name,
+							type: tag.type,
+							resolution: tag.resolution,
+							sourceType: tag.sourceType,
 							relationId: relId,
 							values: [],
 							result: ValueResult.Ok,
 							value: tagValue,
-							newValue: tagValue.boolean ?? tagValue.number ?? tagValue.text,
+							newValue: tagValue?.boolean ?? tagValue?.number ?? tagValue?.text,
 							hasNewValue: false,
 						} as ExactValue
 					})

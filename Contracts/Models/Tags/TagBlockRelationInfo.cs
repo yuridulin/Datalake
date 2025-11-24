@@ -6,7 +6,7 @@ namespace Datalake.Contracts.Models.Tags;
 /// <summary>
 /// Краткая информация о блоке, имеющем связь с тегом, включая локальное имя тега в блоке
 /// </summary>
-public class TagBlockRelationInfo : BlockSimpleInfo
+public class TagBlockRelationInfo
 {
 	/// <summary>
 	/// Идентификатор связи
@@ -18,4 +18,9 @@ public class TagBlockRelationInfo : BlockSimpleInfo
 	/// Локальное имя тега в блоке
 	/// </summary>
 	public string? LocalName { get; set; }
+
+	/// <summary>
+	/// Связанный блок
+	/// </summary>
+	public BlockSimpleInfo? Block { get; set; }
 }

@@ -42,7 +42,7 @@ public abstract class InventoryUsersControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о пользователе</returns>
 	[HttpGet("{userGuid}")]
-	public abstract Task<ActionResult<UserInfo>> GetWithDetailsAsync(
+	public abstract Task<ActionResult<UserWithGroupsInfo>> GetWithDetailsAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		CancellationToken ct = default);
 

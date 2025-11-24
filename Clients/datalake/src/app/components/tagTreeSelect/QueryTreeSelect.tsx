@@ -29,13 +29,15 @@ const flattenNestedTags = (
 
 	blockTree.forEach((block) => {
 		const currentParents = [...parentNames, { ...block }]
-		block.tags.forEach((tag) => {
-			const value = encodeBlockTagPair(block.id, tag.id)
-			mapping[value] = {
-				...tag,
-				blockId: block.id,
-			}
-		})
+	block.tags.forEach((tag) => {
+		const tagId = tag.tag?.id ?? tag.tagId ?? 0
+		const value = encodeBlockTagPair(block.id, tagId)
+		mapping[value] = {
+			...tag,
+			blockId: block.id,
+			localName: tag.localName ?? tag.tag?.name ?? '',
+		}
+	})
 		const childrenMapping = flattenNestedTags(block.children, currentParents)
 		mapping = { ...mapping, ...childrenMapping }
 	})

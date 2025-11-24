@@ -8,6 +8,8 @@ public class TagValueConfiguration(DatabaseTableAccess access) : ILinqToDbEntity
 {
 	public void Configure(EntityMappingBuilder<TagValue> builder)
 	{
+		_ = access;
+
 		builder
 			.HasSchemaName(DataSchema.Name)
 			.HasTableName(DataSchema.TagsValues.Name)

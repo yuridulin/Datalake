@@ -136,7 +136,8 @@ const TagView = observer(() => {
 									title: 'Блок',
 									dataIndex: 'id',
 									width: '40%',
-									render: (_, block) => <BlockButton block={block} />,
+									render: (_, relation) =>
+										relation.block ? <BlockButton block={relation.block} /> : <i>нет</i>,
 								},
 								{
 									key: 'name',
@@ -150,7 +151,7 @@ const TagView = observer(() => {
 			{
 				key: 'logs',
 				label: 'События',
-				children: <LogsTableEl tagGuid={tag.guid} />,
+				children: <LogsTableEl tagId={tag.id} />,
 			},
 			{
 				key: 'metrics',

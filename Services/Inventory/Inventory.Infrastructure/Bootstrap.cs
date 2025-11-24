@@ -13,6 +13,7 @@ using Datalake.Inventory.Infrastructure.InMemory.UserAccess;
 using Datalake.Inventory.Infrastructure.Interfaces;
 using Datalake.Shared.Infrastructure;
 using Datalake.Shared.Infrastructure.Database.Schema;
+using LinqToDB;
 using LinqToDB.AspNet;
 using LinqToDB.AspNet.Logging;
 using Microsoft.EntityFrameworkCore;

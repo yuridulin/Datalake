@@ -8,6 +8,8 @@ public class UserGroupConfiguration(DatabaseTableAccess access) : ILinqToDbEntit
 {
 	public void Configure(EntityMappingBuilder<UserGroup> builder)
 	{
+		_ = access;
+
 		builder
 			.HasSchemaName(InventorySchema.Name)
 			.HasTableName(InventorySchema.UserGroups.Name)

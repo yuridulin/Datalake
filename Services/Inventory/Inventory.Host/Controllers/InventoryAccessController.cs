@@ -16,7 +16,7 @@ using System.Runtime.InteropServices;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-public class AccessController(
+public class InventoryAccessController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryAccessControllerBase
 {

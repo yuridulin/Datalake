@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-public class EnergoIdController(
+public class InventoryEnergoIdController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryEnergoIdControllerBase
 {

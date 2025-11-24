@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-public class UserGroupsController(
+public class InventoryUserGroupsController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryUserGroupsControllerBase
 {

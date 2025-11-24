@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Models.Blocks;
+using Datalake.Domain.Entities;
 
 namespace Datalake.Inventory.Application.Queries;
 
@@ -8,22 +9,21 @@ namespace Datalake.Inventory.Application.Queries;
 public interface IBlocksQueriesService
 {
 	/// <summary>
-	/// Запрос информации о конкретном блоке со всеми его отношениями к другим объектам
+	/// Запрос информации о блоках
 	/// </summary>
-	Task<BlockTreeInfo?> GetAsync(int blockId, CancellationToken ct = default);
-
-	/// <summary>
-	/// Запрос информации о блоках со списками тегов
-	/// </summary>
-	Task<IEnumerable<BlockTreeInfo>> GetAsync(CancellationToken ct = default);
+	Task<Block[]> GetAllAsync(CancellationToken ct = default);
 
 	/// <summary>
 	/// Запрос информации о блоке и его родителях
 	/// </summary>
-	Task<BlockTreeInfo[]> GetWithParentsAsync(int blockId, CancellationToken ct = default);
+	Task<Block[]> GetWithParentsAsync(int blockId, CancellationToken ct = default);
 
 	/// <summary>
 	/// Запрос списка закрепленных за блоками тегов
 	/// </summary>
-	Task<BlockNestedTagInfo[]> GetBlockNestedTagsAsync(IEnumerable<int> blocksId, CancellationToken ct = default);
+	Task<BlockNestedTagInfo[]> GetNestedTagsAsync(IEnumerable<int> blocksId, CancellationToken ct = default);
+
+	Task<BlockSimpleInfo[]> GetNestedBlocksAsync(int id, CancellationToken ct);
+
+	Task<BlockPropertyInfo[]> GetPropertiesAsync(int id, CancellationToken ct);
 }

@@ -4,5 +4,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksWithTags;
 
-public record GetBlocksWithTagsQuery(
-	UserAccessValue User) : IQueryRequest<IEnumerable<BlockTreeWithTagsInfo>>;
+public record GetBlocksWithTagsQuery : IQueryRequest<IEnumerable<BlockWithTagsInfo>>
+{
+	public required UserAccessValue User { get; init; }
+}

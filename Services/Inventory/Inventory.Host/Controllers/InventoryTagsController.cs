@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-public class TagsController(
+public class InventoryTagsController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryTagsControllerBase
 {

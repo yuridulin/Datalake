@@ -41,8 +41,8 @@ const BlockForm = observer(() => {
 			const attachedTags = res.data.tags.map(
 				(tag) =>
 					({
-						id: tag.id,
-						name: tag.localName,
+						id: tag.tag?.id ?? tag.tagId ?? 0,
+						name: tag.localName ?? tag.tag?.name ?? '',
 						relation: tag.relationType,
 					}) as AttachedTag,
 			)

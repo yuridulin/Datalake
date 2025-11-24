@@ -1,4 +1,5 @@
-﻿using Datalake.Contracts.Models.Tags;
+﻿using Datalake.Contracts.Models.Blocks;
+using Datalake.Contracts.Models.Tags;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Queries;
 using LinqToDB;
@@ -19,11 +20,16 @@ public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesSe
 			.Where(relation => relation.Block != null && !relation.Block.IsDeleted)
 			.Select(relation => new TagBlockRelationInfo
 			{
-				Id = relation.Block.Id,
-				Guid = relation.Block.GlobalId,
-				Name = relation.Block.Name,
 				RelationId = relation.Id,
 				LocalName = relation.Name,
+				Block = new BlockSimpleInfo
+				{
+					Id = relation.Block.Id,
+					Guid = relation.Block.GlobalId,
+					Name = relation.Block.Name,
+					Description = relation.Block.Description,
+					ParentBlockId = relation.Block.ParentId,
+				},
 			})
 			.ToArrayAsync(ct);
 

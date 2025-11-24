@@ -6,7 +6,7 @@ namespace Datalake.Contracts.Models.Blocks;
 /// <summary>
 /// Информация о блоке
 /// </summary>
-public class BlockDetailedInfo : BlockTreeWithTagsInfo
+public record BlockDetailedInfo : BlockWithTagsInfo
 {
 	/// <summary>
 	/// Список дочерних блоков
@@ -18,7 +18,7 @@ public class BlockDetailedInfo : BlockTreeWithTagsInfo
 	/// Список родительских блоков
 	/// </summary>
 	[Required]
-	public BlockTreeInfo[] Adults { get; set; } = [];
+	public BlockSimpleInfo[] Adults { get; set; } = [];
 
 	/// <summary>
 	/// Список статических свойств блока

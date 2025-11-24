@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-public class AuditController(
+public class InventoryAuditController(
 	IServiceProvider serviceProvider) : InventoryAuditControllerBase
 {
 	public override async Task<ActionResult<IEnumerable<LogInfo>>> GetAsync(

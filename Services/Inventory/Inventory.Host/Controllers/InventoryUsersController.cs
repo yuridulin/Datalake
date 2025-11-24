@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-public class UsersController(
+public class InventoryUsersController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryUsersControllerBase
 {
@@ -52,7 +52,7 @@ public class UsersController(
 		return Ok(data);
 	}
 
-	public override async Task<ActionResult<UserInfo>> GetWithDetailsAsync(
+	public override async Task<ActionResult<UserWithGroupsInfo>> GetWithDetailsAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		CancellationToken ct = default)
 	{

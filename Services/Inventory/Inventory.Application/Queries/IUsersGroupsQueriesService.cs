@@ -19,4 +19,18 @@ public interface IUsersGroupsQueriesService
 	/// </summary>
 	Task<IEnumerable<UserGroupInfo>> GetAsync(
 		CancellationToken ct = default);
+
+	/// <summary>
+	/// Получение дочерних групп по выбранной
+	/// </summary>
+	/// <param name="userGroupGuid">Идентификатор выбранной учетной группы</param>
+	/// <param name="ct">Токен отмены</param>
+	Task<UserGroupSimpleInfo[]> GetByParentGuidAsync(Guid userGroupGuid, CancellationToken ct);
+
+	/// <summary>
+	/// Получение участников выбранной группы
+	/// </summary>
+	/// <param name="userGroupGuid">Идентификатор выбранной учетной группы</param>
+	/// <param name="ct">Токен отмены</param>
+	Task<UserGroupMemberInfo[]> GetMembersAsync(Guid userGroupGuid, CancellationToken ct);
 }

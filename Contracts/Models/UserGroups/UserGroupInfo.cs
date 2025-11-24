@@ -1,4 +1,5 @@
-﻿using Datalake.Domain.Enums;
+﻿using Datalake.Contracts.Interfaces;
+using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Contracts.Models.UserGroups;
@@ -6,7 +7,7 @@ namespace Datalake.Contracts.Models.UserGroups;
 /// <summary>
 /// Информация о группе пользователей
 /// </summary>
-public class UserGroupInfo : UserGroupSimpleInfo
+public class UserGroupInfo : UserGroupSimpleInfo, IProtectedEntity
 {
 	/// <summary>
 	/// Произвольное описание группы
@@ -23,4 +24,10 @@ public class UserGroupInfo : UserGroupSimpleInfo
 	/// </summary>
 	[Required]
 	public required AccessType GlobalAccessType { get; set; }
+
+	/// <summary>
+	/// Правило доступа к этой группе
+	/// </summary>
+	[Required]
+	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

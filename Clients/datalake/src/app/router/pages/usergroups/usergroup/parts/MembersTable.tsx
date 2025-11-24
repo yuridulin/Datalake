@@ -1,29 +1,18 @@
 import AccessTypeEl from '@/app/components/AccessTypeEl'
 import UserButton from '@/app/components/buttons/UserButton'
-import { AccessType, UserGroupUsersInfo } from '@/generated/data-contracts'
+import { UserGroupMemberInfo } from '@/generated/data-contracts'
 import { Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 
 type MembersTableProps = {
-	users: UserGroupUsersInfo[]
+	users: UserGroupMemberInfo[]
 }
 
-const columns: ColumnsType<UserGroupUsersInfo> = [
+const columns: ColumnsType<UserGroupMemberInfo> = [
 	{
 		title: 'Имя',
 		dataIndex: 'name',
-		render: (_, record) =>
-			record ? (
-				<UserButton
-					userInfo={{
-						guid: record.guid,
-						fullName: record.fullName || '?',
-						accessRule: { ruleId: 0, access: AccessType.Viewer },
-					}}
-				></UserButton>
-			) : (
-				<>?</>
-			),
+		render: (_, record) => (record ? <UserButton userInfo={record} /> : <>?</>),
 	},
 	{
 		title: 'Уровень доступа к управлению группой и подгруппами',

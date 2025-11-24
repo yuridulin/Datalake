@@ -12,7 +12,7 @@ public class UserGroupDetailedInfo : UserGroupInfo
 	/// Список пользователей этой группы
 	/// </summary>
 	[Required]
-	public required UserGroupUsersInfo[] Users { get; set; } = [];
+	public required UserGroupMemberInfo[] Users { get; set; } = [];
 
 	/// <summary>
 	/// Список подгрупп этой группы

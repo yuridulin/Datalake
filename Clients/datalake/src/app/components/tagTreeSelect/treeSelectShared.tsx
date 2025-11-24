@@ -67,24 +67,25 @@ export const convertToTreeSelectNodes = (
 				data: block,
 				children: [
 					...block.tags.map((tag) => {
-						const tagValue = encodeBlockTagPair(block.id, tag.id)
+						const tagId = tag.tag?.id ?? tag.tagId ?? 0
+						const tagValue = encodeBlockTagPair(block.id, tagId)
 						return {
 							title: (
 								<div style={{ display: 'flex' }}>
-									<TagIcon type={tag.sourceType} />
-									&ensp;{tag.localName}
+									<TagIcon type={tag.tag?.sourceType ?? SourceType.Unset} />
+									&ensp;{tag.localName ?? tag.tag?.name ?? ''}
 									&emsp;
 									<pre style={{ display: 'inline-block', color: token.colorTextDisabled, margin: 0 }}>
-										{block.id > 0 && <>{tag.name}&emsp;</>}#{tag.id}
-										{tag.resolution > 0 && <>&emsp;{getTagResolutionName(tag.resolution)}</>}
+										{block.id > 0 && tag.tag?.name && <>{tag.tag.name}&emsp;</>}#{tagId}
+										{tag.tag?.resolution && tag.tag.resolution > 0 && <>&emsp;{getTagResolutionName(tag.tag.resolution)}</>}
 									</pre>
 								</div>
 							),
 							key: tagValue,
 							value: tagValue,
-							fullTitle: `${fullTitle}.${tag.localName}`,
+							fullTitle: `${fullTitle}.${tag.localName ?? tag.tag?.name ?? ''}`,
 							data: { ...tag, blockId: block.id },
-							disabled: manual && tag.sourceType !== SourceType.Manual,
+							disabled: manual && tag.tag?.sourceType !== SourceType.Manual,
 						}
 					}),
 					...convertToTreeSelectNodes(block.children, currentPath, token, manual),
@@ -103,18 +104,19 @@ export const filterTreeNode = (inputValue: string, treeNode: DefaultOptionType):
 	if (node.data) {
 		const data = node.data
 
-		if ('fullName' in data) {
+		if ('children' in data && 'tags' in data) {
 			const block = data as BlockTreeInfo
-			if (block.name?.toLowerCase().includes(searchText) || block.fullName?.toLowerCase().includes(searchText)) {
+			if (block.name?.toLowerCase().includes(searchText)) {
 				return true
 			}
 		} else if ('relationType' in data) {
 			const tag = data as BlockNestedTagInfo
+			const tagId = tag.tag?.id ?? tag.tagId
 			if (
-				tag.name?.toLowerCase().includes(searchText) ||
+				tag.tag?.name?.toLowerCase().includes(searchText) ||
 				tag.localName?.toLowerCase().includes(searchText) ||
-				String(tag.id) == searchText ||
-				tag.guid?.toLowerCase() == searchText
+				(tagId && String(tagId) == searchText) ||
+				tag.tag?.guid?.toLowerCase() == searchText
 			) {
 				return true
 			}
@@ -128,7 +130,10 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 	const allTagIds = new Set<number>()
 	const collectTagIds = (blocks: BlockTreeInfo[]) => {
 		blocks.forEach((block) => {
-			block.tags.forEach((tag) => allTagIds.add(tag.id))
+			block.tags.forEach((tag) => {
+				const tagId = tag.tag?.id ?? tag.tagId
+				if (tagId) allTagIds.add(tagId)
+			})
 			if (block.children) collectTagIds(block.children)
 		})
 	}
@@ -137,17 +142,17 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 	const orphanTags: BlockNestedTagInfo[] = allTags
 		.filter((tag) => !allTagIds.has(tag.id))
 		.map((tag) => ({
-			...tag,
 			relationType: BlockTagRelation.Static,
 			localName: tag.name,
-			sourceId: 0,
+			tag: tag,
+			tagId: tag.id,
+			blockId: 0,
 		}))
 
 	const allBlocksBlock: BlockTreeInfo = {
 		id: ALL_BLOCKS_ID,
 		guid: 'virtual',
 		name: ALL_BLOCKS_NAME,
-		fullName: ALL_BLOCKS_NAME,
 		tags: [],
 		children: blocksTree,
 		accessRule: {
@@ -160,7 +165,6 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 		id: ORPHANS_ID,
 		guid: 'virtual',
 		name: ORPHANS_NAME,
-		fullName: ORPHANS_NAME,
 		tags: orphanTags,
 		children: [],
 		accessRule: {
@@ -173,12 +177,12 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 		id: ALL_TAGS_ID,
 		guid: 'all-tags',
 		name: ALL_TAGS_NAME,
-		fullName: ALL_TAGS_NAME,
 		tags: allTags.map((tag) => ({
-			...tag,
 			relationType: BlockTagRelation.Static,
 			localName: tag.name,
-			sourceId: 0,
+			tag: tag,
+			tagId: tag.id,
+			blockId: 0,
 		})),
 		children: [],
 		accessRule: {

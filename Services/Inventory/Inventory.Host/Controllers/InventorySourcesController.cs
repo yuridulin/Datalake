@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Inventory.Host.Controllers;
 
-public class SourcesController(
+public class InventorySourcesController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventorySourcesControllerBase
 {

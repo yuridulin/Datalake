@@ -5,16 +5,11 @@ namespace Datalake.Contracts.Models.Blocks;
 /// <summary>
 /// Информация о блоке
 /// </summary>
-public class BlockTreeWithTagsInfo : BlockTreeInfo
+public record BlockWithTagsInfo : BlockSimpleInfo
 {
-	/// <summary>
-	/// Текстовое описание
-	/// </summary>
-	public string? Description { get; set; }
-
 	/// <summary>
 	/// Список прикреплённых тегов
 	/// </summary>
 	[Required]
-	public BlockNestedTagInfo[] Tags { get; set; } = [];
+	public IEnumerable<BlockNestedTagInfo> Tags { get; set; } = [];
 }

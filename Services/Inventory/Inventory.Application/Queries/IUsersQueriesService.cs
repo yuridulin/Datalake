@@ -1,4 +1,5 @@
-﻿using Datalake.Contracts.Models.Users;
+﻿using Datalake.Contracts.Models.UserGroups;
+using Datalake.Contracts.Models.Users;
 
 namespace Datalake.Inventory.Application.Queries;
 
@@ -19,4 +20,11 @@ public interface IUsersQueriesService
 	/// </summary>
 	Task<IEnumerable<UserInfo>> GetAsync(
 		CancellationToken ct = default);
+
+	/// <summary>
+	/// Получение информации о группах, в которых состоит учетная запись
+	/// </summary>
+	/// <param name="userGuid">Идентификатор учетной записи</param>
+	/// <param name="ct">Токен отмены</param>
+	Task<IEnumerable<UserGroupSimpleInfo>> GetGroupsWithMemberAsync(Guid userGuid, CancellationToken ct);
 }

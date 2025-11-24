@@ -98,7 +98,16 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 			return setValues([])
 		}
 
-		const tagIds = Array.from(new Set(settings.activeRelations.map((relId) => tagMapping[relId]?.id).filter(Boolean)))
+		const tagIds = Array.from(
+			new Set(
+				settings.activeRelations
+					.map((relId) => {
+						const tagInfo = tagMapping[relId]
+						return tagInfo?.tag?.id ?? tagInfo?.tagId
+					})
+					.filter((id): id is number => id !== null && id !== undefined),
+			),
+		)
 
 		const timeSettings =
 			settings.mode === TimeModes.LIVE
@@ -129,7 +138,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 					.filter((relId) => tagMapping[relId])
 					.map((relId) => {
 						const tagInfo = tagMapping[relId]
-						const tagValues = tagValuesMap.get(tagInfo.id) || []
+						const tagId = tagInfo.tag?.id ?? tagInfo.tagId ?? 0
+						const tagValues = tagValuesMap.get(tagId) || []
 
 						return {
 							relationId: relId,

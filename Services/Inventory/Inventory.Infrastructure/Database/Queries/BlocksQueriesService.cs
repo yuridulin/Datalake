@@ -1,4 +1,5 @@
 ﻿using Datalake.Contracts.Models.Blocks;
+using Datalake.Domain.Entities;
 using Datalake.Inventory.Application.Queries;
 using Datalake.Inventory.Infrastructure.Database.Extensions;
 using LinqToDB;
@@ -7,25 +8,24 @@ namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
 public class BlocksQueriesService(InventoryDbLinqContext context) : IBlocksQueriesService
 {
-	public async Task<IEnumerable<BlockTreeInfo>> GetAsync(CancellationToken ct = default)
+	public async Task<Block[]> GetAllAsync(CancellationToken ct = default)
 	{
-		return await QueryBlockTree().ToArrayAsync(ct);
+		var query =
+			from block in context.Blocks
+			select block;
+
+		return await query.ToArrayAsync(ct);
 	}
 
-	public async Task<BlockTreeInfo?> GetAsync(int blockId, CancellationToken ct = default)
+	public async Task<Block[]> GetWithParentsAsync(int blockId, CancellationToken ct = default)
 	{
-		return await QueryBlockTree().FirstOrDefaultAsync(x => x.Id == blockId, ct);
-	}
-
-	public async Task<BlockTreeInfo[]> GetWithParentsAsync(int blockId, CancellationToken ct = default)
-	{
-		var cte = context.GetCte<BlockTreeInfo>(nested =>
+		var cte = context.GetCte<Block>(nested =>
 		{
-			var baseQuery = QueryBlockTree().Where(x => x.Id == blockId);
+			var baseQuery = context.Blocks.Where(x => x.Id == blockId);
 			var recursiveQuery =
-				from block in QueryBlockTree()
-				from parent in nested.InnerJoin(x => x.Id == block.ParentBlockId)
-				select parent;
+				from block in context.Blocks
+				from child in nested.InnerJoin(x => x.ParentId == block.Id)
+				select block;
 
 			return baseQuery.Concat(recursiveQuery);
 		});
@@ -33,31 +33,12 @@ public class BlocksQueriesService(InventoryDbLinqContext context) : IBlocksQueri
 		return await cte.ToArrayAsync(ct);
 	}
 
-	public async Task<BlockNestedTagInfo[]> GetBlockNestedTagsAsync(IEnumerable<int> blocksId, CancellationToken ct = default)
+	public async Task<BlockNestedTagInfo[]> GetNestedTagsAsync(IEnumerable<int> blocksId, CancellationToken ct = default)
 	{
-		return await QueryBlockTags()
-			.Where(x => blocksId.Contains(x.BlockId))
-			.ToArrayAsync(ct);
-	}
-
-	internal IQueryable<BlockTreeInfo> QueryBlockTree()
-	{
-		return
-			from block in context.Blocks
-			select new BlockTreeInfo
-			{
-				Id = block.Id,
-				Guid = block.GlobalId,
-				Name = block.Name,
-				ParentBlockId = block.ParentId,
-			};
-	}
-
-	internal IQueryable<BlockNestedTagInfo> QueryBlockTags()
-	{
-		return
+		var query =
 			from relation in context.BlockTags
 			from tag in context.Tags.AsSimpleInfo(context.Sources).LeftJoin(x => x.Id == relation.TagId)
+			where blocksId.Contains(relation.BlockId)
 			select new BlockNestedTagInfo
 			{
 				BlockId = relation.BlockId,
@@ -66,5 +47,33 @@ public class BlocksQueriesService(InventoryDbLinqContext context) : IBlocksQueri
 				TagId = relation.TagId,
 				Tag = tag,
 			};
+
+		return await query.ToArrayAsync(ct);
+	}
+
+	public async Task<BlockSimpleInfo[]> GetNestedBlocksAsync(int id, CancellationToken ct)
+	{
+		var query =
+			from block in context.Blocks.AsSimpleInfo()
+			where block.ParentBlockId == id
+			select block;
+
+		return await query.ToArrayAsync(ct);
+	}
+
+	public async Task<BlockPropertyInfo[]> GetPropertiesAsync(int id, CancellationToken ct)
+	{
+		var query =
+			from property in context.BlockProperties
+			where property.BlockId == id
+			select new BlockPropertyInfo
+			{
+				Id = property.Id,
+				Name = property.Name,
+				Type = property.Type,
+				Value = property.Value,
+			};
+
+		return await query.ToArrayAsync(ct);
 	}
 }
