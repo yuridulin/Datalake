@@ -1,4 +1,5 @@
 import AppError from '@/app/components/AppError'
+import ErrorBoundary from '@/app/components/ErrorBoundary'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Offline } from '../pages/Offline'
 import AppLayout from './AppLayout'
@@ -45,7 +46,11 @@ const AppRouter = createBrowserRouter([
 	},
 	{
 		path: '/',
-		element: <AppLayout />,
+		element: (
+			<ErrorBoundary>
+				<AppLayout />
+			</ErrorBoundary>
+		),
 		children: [
 			{
 				path: '/',
