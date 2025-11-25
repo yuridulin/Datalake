@@ -25,8 +25,8 @@ export type FlattenedNestedTagsType = Record<string, BlockFlattenNestedTagInfo>
 export type TagMappingType = Record<string, BlockFlattenNestedTagInfo>
 
 const ALL_BLOCKS_ID = -1
-const ORPHANS_ID = -2
-const ALL_TAGS_ID = -3
+export const ORPHANS_ID = -2
+export const ALL_TAGS_ID = -3
 
 const ALL_BLOCKS_NAME: string = '1.Дерево блоков'
 const ORPHANS_NAME: string = '2.Нераспределенные теги'
@@ -146,7 +146,7 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 			localName: tag.name,
 			tag: tag,
 			tagId: tag.id,
-			blockId: 0,
+			blockId: ORPHANS_ID, // Используем ORPHANS_ID для консистентности
 		}))
 
 	const allBlocksBlock: BlockTreeInfo = {
@@ -182,7 +182,7 @@ export const createFullTree = ([blocksTree, allTags]: [blocksTree: BlockTreeInfo
 			localName: tag.name,
 			tag: tag,
 			tagId: tag.id,
-			blockId: 0,
+			blockId: ALL_TAGS_ID, // Используем ALL_TAGS_ID для консистентности
 		})),
 		children: [],
 		accessRule: {

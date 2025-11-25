@@ -153,7 +153,7 @@ public class TagsValuesRepository(
 			""{DataSchema.TagsValues.Columns.Number}"",
 			""{DataSchema.TagsValues.Columns.Quality}""
 		FROM {DataSchema.Name}.""{DataSchema.TagsValues.Name}""
-		WHERE ""{DataSchema.TagsValues.Columns.TagId}"" IN {TagsParam}
+		WHERE ""{DataSchema.TagsValues.Columns.TagId}"" = ANY({TagsParam})
 		ORDER BY ""{DataSchema.TagsValues.Columns.TagId}"", ""{DataSchema.TagsValues.Columns.Date}"" DESC;";
 
 	private static string GetExactSql { get; } = $@"
@@ -185,7 +185,7 @@ public class TagsValuesRepository(
 				""{DataSchema.TagsValues.Columns.Quality}""
 			FROM {DataSchema.Name}.""{DataSchema.TagsValues.Name}""
 			WHERE
-				""{DataSchema.TagsValues.Columns.TagId}"" IN {TagsParam}
+				""{DataSchema.TagsValues.Columns.TagId}"" = ANY({TagsParam})
 				AND ""{DataSchema.TagsValues.Columns.Date}"" <= {FromParam}
 			ORDER BY ""{DataSchema.TagsValues.Columns.TagId}"", ""{DataSchema.TagsValues.Columns.Date}"" DESC
 		) AS valuesBefore
@@ -198,7 +198,7 @@ public class TagsValuesRepository(
 			""{DataSchema.TagsValues.Columns.Quality}""
 		FROM {DataSchema.Name}.""{DataSchema.TagsValues.Name}""
 		WHERE
-			""{DataSchema.TagsValues.Columns.TagId}"" IN {TagsParam}
+			""{DataSchema.TagsValues.Columns.TagId}"" = ANY({TagsParam})
 			AND ""{DataSchema.TagsValues.Columns.Date}"" > {FromParam}
 			AND ""{DataSchema.TagsValues.Columns.Date}"" <= {ToParam};";
 }

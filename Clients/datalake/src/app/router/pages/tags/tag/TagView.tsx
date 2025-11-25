@@ -8,7 +8,7 @@ import LogsTableEl from '@/app/components/logsTable/LogsTableEl'
 import PageHeader from '@/app/components/PageHeader'
 import TabsView from '@/app/components/tabsView/TabsView'
 import TagResolutionEl from '@/app/components/TagResolutionEl'
-import { encodeBlockTagPair, TagMappingType } from '@/app/components/tagTreeSelect/treeSelectShared'
+import { ALL_TAGS_ID, encodeBlockTagPair, TagMappingType } from '@/app/components/tagTreeSelect/treeSelectShared'
 import TagTypeEl from '@/app/components/TagTypeEl'
 import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
@@ -96,10 +96,11 @@ const TagView = observer(() => {
 		const rels: string[] = []
 
 		// Основной тег - создаем правильную структуру BlockNestedTagInfo
-		const value = encodeBlockTagPair(0, tag.id) // Виртуальный ID для связи
+		// Используем ALL_TAGS_ID для совместимости с QueryTreeSelect
+		const value = encodeBlockTagPair(ALL_TAGS_ID, tag.id)
 		mapping[value] = {
 			relationType: BlockTagRelation.Static,
-			blockId: 0,
+			blockId: ALL_TAGS_ID,
 			tagId: tag.id,
 			localName: tag.name,
 			tag: tag, // TagWithSettingsAndBlocksInfo расширяет TagSimpleInfo, поэтому совместим
