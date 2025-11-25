@@ -150,13 +150,21 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 			.filter((relId) => tagMapping[relId])
 			.map((relId) => {
 				const tagInfo = tagMapping[relId]
-				const tagId = tagInfo.tag?.id ?? tagInfo.tagId ?? 0
+				const tag = tagInfo.tag
+				const tagId = tag?.id ?? tagInfo.tagId ?? 0
 				const tagValues = tagValuesMap.get(tagId) || []
 
 				return {
 					relationId: relId,
 					value: {
 						...tagInfo,
+						// Явно добавляем поля из tag для совместимости с ValuesTagResponse
+						id: tag?.id ?? tagId,
+						guid: tag?.guid ?? '',
+						name: tag?.name ?? tagInfo.localName,
+						type: tag?.type,
+						resolution: tag?.resolution,
+						sourceType: tag?.sourceType,
 						values: tagValues,
 					} as TagValueWithInfo,
 				}
