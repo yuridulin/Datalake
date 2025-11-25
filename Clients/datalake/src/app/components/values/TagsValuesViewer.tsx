@@ -47,8 +47,6 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	const navigate = useNavigate()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const initialMode = (searchParams.get(URL_PARAMS.VIEWER_MODE) as TimeMode) || TimeModes.LIVE
-	const [isLoading, setLoading] = useState(false)
-	const [values, setValues] = useState<{ relationId: string; value: TagValueWithInfo }[]>([])
 	const [showWrite, setWrite] = useState<boolean>(false)
 
 	const tableRef = useRef<ExcelExportModeHandles>(null)
@@ -67,10 +65,12 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	if (onChange) onChange(settings)
 
 	// последние настройки на момент успешного запроса
-	const [lastFetchSettings, setLastFetchSettings] = useState<ViewerSettings>(settings)
+	// Инициализируем как null, чтобы при первом рендере isDirty был true
+	const [lastFetchSettings, setLastFetchSettings] = useState<ViewerSettings | null>(null)
 
 	const isTimeDirty = useMemo(
 		() =>
+			!lastFetchSettings ||
 			settings.mode !== lastFetchSettings.mode ||
 			settings.resolution !== lastFetchSettings.resolution ||
 			!settings.exact.isSame(lastFetchSettings.exact) ||
@@ -81,22 +81,20 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 
 	// Проверка, что настройки изменились
 	const isDirty = useMemo(
-		() => isTimeDirty || isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations),
+		() => !lastFetchSettings || isTimeDirty || isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations),
 		[settings, lastFetchSettings, isTimeDirty],
 	)
 
 	useEffect(() => {
 		if (isArraysDifferent(settings.activeRelations, relations)) {
-			setSettings({ ...settings, activeRelations: relations })
+			setSettings((prev) => ({ ...prev, activeRelations: relations }))
 		}
-	}, [relations, settings])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [relations])
 
-	const getValues = useCallback(() => {
-		setLoading(true)
-		if (settings.activeRelations.length === 0) {
-			setLoading(false)
-			return setValues([])
-		}
+	// Формируем запрос для получения значений
+	const valuesRequest = useMemo(() => {
+		if (settings.activeRelations.length === 0) return null
 
 		const tagIds = Array.from(
 			new Set(
@@ -109,6 +107,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 			),
 		)
 
+		if (tagIds.length === 0) return null
+
 		const timeSettings =
 			settings.mode === TimeModes.LIVE
 				? {}
@@ -120,48 +120,75 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 							resolution: settings.resolution,
 						}
 
-		return store.api
-			.dataValuesGet([
-				{
-					requestKey: CLIENT_REQUESTKEY,
-					tagsId: tagIds,
-					...timeSettings,
-				},
-			])
-			.then((res) => {
-				const tagValuesMap = new Map<number, ValueRecord[]>()
-				res.data[0].tags.forEach((tag) => {
-					tagValuesMap.set(tag.id, tag.values)
-				})
+		return [
+			{
+				requestKey: CLIENT_REQUESTKEY,
+				tagsId: tagIds,
+				...timeSettings,
+			},
+		]
+	}, [settings, tagMapping])
 
-				const newValues = settings.activeRelations
-					.filter((relId) => tagMapping[relId])
-					.map((relId) => {
-						const tagInfo = tagMapping[relId]
-						const tagId = tagInfo.tag?.id ?? tagInfo.tagId ?? 0
-						const tagValues = tagValuesMap.get(tagId) || []
+	// Получаем значения из store (реактивно через MobX)
+	const valuesResponse = valuesRequest ? store.valuesStore.getValues(valuesRequest) : []
 
-						return {
-							relationId: relId,
-							value: {
-								...tagInfo,
-								values: tagValues,
-							} as TagValueWithInfo,
-						}
-					})
+	// Проверяем состояние загрузки
+	const isLoading = valuesRequest ? store.valuesStore.isLoadingValues(valuesRequest) : false
 
-				setValues(newValues)
-				setLastFetchSettings(settings)
-				setWrite(res.data[0].tags.some((x) => x.sourceType === SourceType.Manual))
+	// Преобразуем данные из store в формат компонента
+	const values = useMemo(() => {
+		if (valuesResponse.length === 0 || settings.activeRelations.length === 0) {
+			return []
+		}
+
+		const tagValuesMap = new Map<number, ValueRecord[]>()
+		valuesResponse[0]?.tags.forEach((tag) => {
+			tagValuesMap.set(tag.id, tag.values)
+		})
+
+		return settings.activeRelations
+			.filter((relId) => tagMapping[relId])
+			.map((relId) => {
+				const tagInfo = tagMapping[relId]
+				const tagId = tagInfo.tag?.id ?? tagInfo.tagId ?? 0
+				const tagValues = tagValuesMap.get(tagId) || []
+
+				return {
+					relationId: relId,
+					value: {
+						...tagInfo,
+						values: tagValues,
+					} as TagValueWithInfo,
+				}
 			})
-			.catch(console.error)
-			.finally(() => setLoading(false))
-	}, [store.api, tagMapping, settings])
+	}, [valuesResponse, settings.activeRelations, tagMapping])
 
+	// Обновляем showWrite на основе ответа
 	useEffect(() => {
-		if (!integrated) return
-		getValues()
-	}, [settings, integrated, getValues])
+		if (valuesResponse.length > 0 && valuesResponse[0]?.tags) {
+			const hasManual = valuesResponse[0].tags.some((x) => x.sourceType === SourceType.Manual)
+			setWrite(hasManual)
+		}
+	}, [valuesResponse])
+
+	// Функция для принудительного обновления значений (для polling и ручного запроса)
+	const refreshValues = useCallback(async () => {
+		if (!valuesRequest) return
+		await store.valuesStore.refreshValues(valuesRequest)
+		setLastFetchSettings(settings)
+	}, [store.valuesStore, valuesRequest, settings])
+
+	// Автоматически обновляем значения при изменении настроек в integrated режиме
+	useEffect(() => {
+		if (!integrated || !valuesRequest) return
+		// При первом монтировании или при изменении настроек принудительно загружаем данные
+		const shouldRefresh = !lastFetchSettings || isDirty
+		if (shouldRefresh) {
+			store.valuesStore.refreshValues(valuesRequest).then(() => {
+				setLastFetchSettings(settings)
+			}).catch(console.error)
+		}
+	}, [integrated, valuesRequest, isDirty, lastFetchSettings, settings, store.valuesStore])
 
 	useEffect(() => {
 		if (!isTimeDirty) return
@@ -334,7 +361,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 					<Row style={{ marginTop: '1em' }}>
 						<Col flex='10em'>
 							<Button
-								onClick={getValues}
+								onClick={refreshValues}
 								icon={<PlaySquareOutlined />}
 								type='primary'
 								disabled={!settings.activeRelations.length || isLoading}
@@ -367,8 +394,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 				</>
 			)}
 
-			{settings.mode === TimeModes.LIVE && settings.activeRelations.length > 0 && (
-				<PollingLoader pollingFunction={getValues} interval={5000} statusDuration={400} />
+			{settings.mode === TimeModes.LIVE && settings.activeRelations.length > 0 && valuesRequest && (
+				<PollingLoader pollingFunction={refreshValues} interval={5000} statusDuration={400} />
 			)}
 			{values.length ? (
 				settings.mode === TimeModes.OLD_YOUNG ? (

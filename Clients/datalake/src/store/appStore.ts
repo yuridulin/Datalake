@@ -5,6 +5,12 @@ import { AccessRuleInfo, AccessType, UserSessionWithAccessInfo, UserType } from 
 import { NotificationInstance } from 'antd/es/notification/interface'
 import { AxiosError, AxiosResponse } from 'axios'
 import { makeAutoObservable } from 'mobx'
+import { BlocksStore } from './dataStores/BlocksStore'
+import { SourcesStore } from './dataStores/SourcesStore'
+import { TagsStore } from './dataStores/TagsStore'
+import { UserGroupsStore } from './dataStores/UserGroupsStore'
+import { UsersStore } from './dataStores/UsersStore'
+import { ValuesStore } from './dataStores/ValuesStore'
 
 const debug = false
 const log = (...text: unknown[]) => {
@@ -60,6 +66,14 @@ export class AppStore {
 	instanceName: string
 	version: string
 
+	// Stores для кэширования данных
+	tagsStore: TagsStore
+	blocksStore: BlocksStore
+	sourcesStore: SourcesStore
+	valuesStore: ValuesStore
+	usersStore: UsersStore
+	userGroupsStore: UserGroupsStore
+
 	constructor() {
 		makeAutoObservable(this)
 		log('loading...')
@@ -67,6 +81,15 @@ export class AppStore {
 		this.api = this.createApiClient()
 		this.instanceName = 'Datalake' + (instanceName ? ' | ' + instanceName : '')
 		this.version = version
+
+		// Инициализируем stores
+		this.tagsStore = new TagsStore(this.api)
+		this.blocksStore = new BlocksStore(this.api)
+		this.sourcesStore = new SourcesStore(this.api)
+		this.valuesStore = new ValuesStore(this.api)
+		this.usersStore = new UsersStore(this.api)
+		this.userGroupsStore = new UserGroupsStore(this.api)
+
 		if (window.location.pathname !== routes.auth.keycloak) {
 			this.refreshAuthData()
 		}

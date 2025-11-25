@@ -6,11 +6,11 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTagWithSettingsAndBlocks;
 
-public interface ITagWithSettingsAndBlocksHandler : IQueryHandler<GetTagWithDetailsQuery, TagWithSettingsAndBlocksInfo> { }
+public interface ITagWithSettingsAndBlocksHandler : IQueryHandler<GetTagWithSettingsAndBlocksQuery, TagWithSettingsAndBlocksInfo> { }
 
 public class GetTagWithSettingsAndBlocksHandler(ITagsQueriesService tagsQueriesService) : ITagWithSettingsAndBlocksHandler
 {
-	public async Task<TagWithSettingsAndBlocksInfo> HandleAsync(GetTagWithDetailsQuery query, CancellationToken ct = default)
+	public async Task<TagWithSettingsAndBlocksInfo> HandleAsync(GetTagWithSettingsAndBlocksQuery query, CancellationToken ct = default)
 	{
 		query.User.ThrowIfNoAccessToTag(AccessType.Viewer, query.Id);
 

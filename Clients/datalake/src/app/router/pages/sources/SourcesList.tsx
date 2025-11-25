@@ -30,7 +30,10 @@ const SourcesList = observer(() => {
 
 	const getStates = useCallback(async () => {
 		if (sources.length === 0) return
-		const res = await store.api.dataSourcesGetActivity(sources.map((x) => x.id))
+		// Собираем ID только реальных источников, исключая группы
+		const sourceIds = sources.flatMap((group) => (group.children || []).map((child) => child.id))
+		if (sourceIds.length === 0) return
+		const res = await store.api.dataSourcesGetActivity(sourceIds)
 		setStates(
 			res.data.reduce(
 				(agg, next) => {

@@ -4,7 +4,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTagWithSettingsAndBlocks;
 
-public record GetTagWithDetailsQuery : IQueryRequest<TagWithSettingsAndBlocksInfo>, IWithUserAccess
+public record GetTagWithSettingsAndBlocksQuery : IQueryRequest<TagWithSettingsAndBlocksInfo>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 

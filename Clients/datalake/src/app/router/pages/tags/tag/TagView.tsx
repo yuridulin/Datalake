@@ -17,7 +17,6 @@ import {
 	BlockTagRelation,
 	SourceType,
 	TagAggregation,
-	TagFullInfo,
 	TagResolution,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
@@ -25,7 +24,7 @@ import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Button, Spin, Table, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import TagFormulaView from './views/TagFormulaView'
 import TagThresholdsView from './views/TagThresholdsView'
@@ -34,78 +33,76 @@ const TagView = observer(() => {
 	const store = useAppStore()
 	const { id } = useParams()
 	const navigate = useNavigate()
-	const [tag, setTag] = useState({} as TagFullInfo)
-	const [isLoading, setLoading] = useState(false)
 	const [metrics, setMetrics] = useState({} as Record<string, string>)
-	const hasLoadedRef = useRef(false)
-	const lastIdRef = useRef<string | undefined>(id)
 
-	// получение инфо
-	const loadTagData = useCallback(() => {
-		if (!id) return
-		setLoading(true)
+	// Получаем тег из store (реактивно через MobX)
+	const tagId = id ? Number(id) : undefined
+	const tag = tagId ? store.tagsStore.getTagById(tagId) : undefined
+	const isLoading = tagId ? store.tagsStore.isLoadingTag(tagId) : false
 
-		Promise.all([
-			store.api.inventoryTagsGet(Number(id)).then((res) => setTag(res.data)),
-			store.api
-				.dataTagsGetUsage({ tagsId: [Number(id)] })
-				.then((res) => setMetrics(res.data[id]))
-				.catch(() => setMetrics({})),
-		]).finally(() => setLoading(false))
-	}, [store.api, id])
-
+	// Загружаем метрики использования тега
 	useEffect(() => {
-		// Если изменился id, сбрасываем флаг загрузки
-		if (lastIdRef.current !== id) {
-			hasLoadedRef.current = false
-			lastIdRef.current = id
+		if (!tagId) return
+
+		store.api
+			.dataTagsGetUsage({ tagsId: [tagId] })
+			.then((res) => {
+				const tagUsage = res.data?.find((item) => item.tagId === tagId)
+				setMetrics(tagUsage?.requests ?? {})
+			})
+			.catch(() => setMetrics({}))
+	}, [store.api, tagId])
+
+	const info: InfoTableProps['items'] = useMemo(() => {
+		if (!tag) return {}
+
+		const items: InfoTableProps['items'] = {
+			Название: <CopyableText text={tag.name} />,
+			Описание: tag.description == null ? <i>нет</i> : <pre>{tag.description}</pre>,
+			Источник: <SourceButton source={{ id: tag.sourceId, name: tag.sourceName || '?' }} />,
+			'Интервал обновления':
+				tag.sourceId !== SourceType.Manual && tag.sourceId !== SourceType.Calculated && (
+					<TagResolutionEl resolution={tag.resolution} full={true} />
+				),
 		}
 
-		if (hasLoadedRef.current || !id) return
-		hasLoadedRef.current = true
-		loadTagData()
-	}, [loadTagData, id])
+		if (tag.sourceId === SourceType.Aggregated) {
+			items['Тип агрегирования'] = (
+				<>
+					{tag.aggregation === TagAggregation.Average ? 'Среднее' : 'Сумма'} за{' '}
+					{tag.aggregationPeriod === TagResolution.Minute
+						? 'прошедшую минуту'
+						: tag.aggregationPeriod === TagResolution.Hour
+							? 'прошедший час'
+							: tag.aggregationPeriod === TagResolution.Day
+								? 'прошедшие сутки'
+								: '?'}
+				</>
+			)
+			items['Тег-источник агрегирования'] = tag.sourceTag ? <TagButton tag={tag.sourceTag} /> : <i>нет</i>
+		} else if (tag.sourceId > 0) {
+			items['Путь к значению'] = <code>{tag.sourceItem}</code>
+		}
 
-	const info: InfoTableProps['items'] = {
-		Название: <CopyableText text={tag.name} />,
-		Описание: tag.description == null ? <i>нет</i> : <pre>{tag.description}</pre>,
-		Источник: <SourceButton source={{ id: tag.sourceId, name: tag.sourceName || '?' }} />,
-		'Интервал обновления': tag.sourceId !== SourceType.Manual && tag.sourceId !== SourceType.Manual && (
-			<TagResolutionEl resolution={tag.resolution} full={true} />
-		),
-	}
+		items['Тип данных'] = <TagTypeEl tagType={tag.type} />
 
-	if (tag.sourceId === SourceType.Aggregated) {
-		info['Тип агрегирования'] = (
-			<>
-				{tag.aggregation === TagAggregation.Average ? 'Среднее' : 'Сумма'} за{' '}
-				{tag.aggregationPeriod === TagResolution.Minute
-					? 'прошедшую минуту'
-					: tag.aggregationPeriod === TagResolution.Hour
-						? 'прошедший час'
-						: tag.aggregationPeriod === TagResolution.Day
-							? 'прошедшие сутки'
-							: '?'}
-			</>
-		)
-		info['Тег-источник агрегирования'] = tag.sourceTag ? <TagButton tag={tag.sourceTag} /> : <i>нет</i>
-	} else if (tag.sourceId > 0) {
-		info['Путь к значению'] = <code>{tag.sourceItem}</code>
-	}
-
-	info['Тип данных'] = <TagTypeEl tagType={tag.type} />
+		return items
+	}, [tag])
 
 	const { tagMapping, relations } = useMemo(() => {
+		if (!tag) return { tagMapping: {} as TagMappingType, relations: [] as string[] }
+
 		const mapping: TagMappingType = {}
 		const rels: string[] = []
 
-		// Основной тег
+		// Основной тег - создаем правильную структуру BlockNestedTagInfo
 		const value = encodeBlockTagPair(0, tag.id) // Виртуальный ID для связи
 		mapping[value] = {
-			...tag,
-			blockId: 0,
-			localName: tag.name,
 			relationType: BlockTagRelation.Static,
+			blockId: 0,
+			tagId: tag.id,
+			localName: tag.name,
+			tag: tag, // TagWithSettingsAndBlocksInfo расширяет TagSimpleInfo, поэтому совместим
 		}
 		rels.push(value)
 
@@ -113,6 +110,8 @@ const TagView = observer(() => {
 	}, [tag])
 
 	const tabs = useMemo(() => {
+		if (!tag) return []
+
 		const _tabs = [
 			{
 				key: 'history',
@@ -208,27 +207,38 @@ const TagView = observer(() => {
 			_tabs.push({
 				key: 'calc',
 				label: 'Расчет',
-				children: <TagFormulaView id={Number(id)} formula={tag.formula} inputs={tag.formulaInputs} />,
+				children: <TagFormulaView id={tagId!} formula={tag.formula} inputs={tag.formulaInputs} />,
 			})
 		else if (tag.sourceId === SourceType.Thresholds) {
 			_tabs.push({
 				key: 'calc',
 				label: 'Расчет',
-				children: <TagThresholdsView tag={tag} />,
+				// TagWithSettingsAndBlocksInfo совместим с TagFullInfo для этого компонента
+				children: <TagThresholdsView tag={tag as Parameters<typeof TagThresholdsView>[0]['tag']} />,
 			})
 		}
 		return _tabs
-	}, [tag, metrics, id, relations, tagMapping])
+	}, [tag, metrics, tagId, relations, tagMapping])
 
-	return isLoading ? (
-		<Spin />
-	) : (
+	if (!tagId) {
+		return <Spin />
+	}
+
+	if (isLoading && !tag) {
+		return <Spin />
+	}
+
+	if (!tag) {
+		return <div>Тег не найден</div>
+	}
+
+	return (
 		<>
 			<PageHeader
 				left={[<Button onClick={() => navigate(routes.tags.list)}>К списку тегов</Button>]}
 				right={[
 					store.hasAccessToTag(AccessType.Editor, tag.id) ? (
-						<NavLink to={routes.tags.toEditTag(Number(id))}>
+						<NavLink to={routes.tags.toEditTag(tagId)}>
 							<Button>Редактирование тега</Button>
 						</NavLink>
 					) : (

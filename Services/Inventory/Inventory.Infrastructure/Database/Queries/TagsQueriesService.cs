@@ -36,54 +36,64 @@ public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesSe
 		int? sourceId = null,
 		CancellationToken ct = default)
 	{
-		var query =
+		var simpleTagQuery =
 			from tag in context.Tags
 			from source in context.Sources.InnerJoin(x => x.Id == tag.SourceId)
-			from aggregationTag in context.Tags.AsSimpleInfo(context.Sources).LeftJoin(x => x.Id == tag.SourceTagId)
-			from thresholdTag in context.Tags.AsSimpleInfo(context.Sources).LeftJoin(x => x.Id == tag.ThresholdSourceTagId)
+			select new { Tag = tag, Source = source };
+
+		var query =
+			from tag in simpleTagQuery
+			from aggregationTag in simpleTagQuery.LeftJoin(x => x.Tag.Id == tag.Tag.SourceTagId)
+			from thresholdTag in simpleTagQuery.LeftJoin(x => x.Tag.Id == tag.Tag.ThresholdSourceTagId)
 			select new TagWithSettingsInfo
 			{
-				Id = tag.Id,
-				Guid = tag.Guid,
-				Name = tag.Name,
-				Aggregation = tag.Aggregation,
-				AggregationPeriod = tag.AggregationPeriod,
-				Description = tag.Description,
-				Formula = tag.Formula,
-				IsScaling = tag.IsScaling,
-				MaxEu = tag.MaxEu,
-				MaxRaw = tag.MaxRaw,
-				MinEu = tag.MinEu,
-				MinRaw = tag.MinRaw,
-				Resolution = tag.Resolution,
-				SourceId = source.Id,
-				SourceType = source.Type,
-				Type = tag.Type,
-				SourceItem = tag.SourceItem,
-				SourceName = source.Name,
+				Id = tag.Tag.Id,
+				Guid = tag.Tag.GlobalGuid,
+				Name = tag.Tag.Name,
+				Aggregation = tag.Tag.Aggregation,
+				AggregationPeriod = tag.Tag.AggregationPeriod,
+				Description = tag.Tag.Description,
+				Formula = tag.Tag.Formula,
+				IsScaling = tag.Tag.IsScaling,
+				MaxEu = tag.Tag.MaxEu,
+				MaxRaw = tag.Tag.MaxRaw,
+				MinEu = tag.Tag.MinEu,
+				MinRaw = tag.Tag.MinRaw,
+				Resolution = tag.Tag.Resolution,
+				Type = tag.Tag.Type,
+				SourceItem = tag.Tag.SourceItem,
+
+				SourceId = tag.Source.Id,
+				SourceType = tag.Source.Type,
+				SourceName = tag.Source.Name,
+
 				SourceTag = aggregationTag == null ? null : new TagAsInputInfo
 				{
-					Id = aggregationTag.Id,
-					Guid = aggregationTag.Guid,
-					Name = aggregationTag.Name,
-					Resolution = aggregationTag.Resolution,
-					Type = aggregationTag.Type,
-					SourceId = aggregationTag.Id,
-					SourceType = aggregationTag.SourceType,
-					BlockId = tag.SourceTagBlockId,
-					Description = aggregationTag.Description,
+					BlockId = tag.Tag.SourceTagBlockId,
+
+					Id = aggregationTag.Tag.Id,
+					Guid = aggregationTag.Tag.GlobalGuid,
+					Name = aggregationTag.Tag.Name,
+					Resolution = aggregationTag.Tag.Resolution,
+					Type = aggregationTag.Tag.Type,
+					Description = aggregationTag.Tag.Description,
+
+					SourceId = aggregationTag.Source.Id,
+					SourceType = aggregationTag.Source.Type,
 				},
 				ThresholdSourceTag = thresholdTag == null ? null : new TagAsInputInfo
 				{
-					Id = thresholdTag.Id,
-					Guid = thresholdTag.Guid,
-					Name = thresholdTag.Name,
-					Resolution = thresholdTag.Resolution,
-					Type = thresholdTag.Type,
-					SourceId = thresholdTag.Id,
-					SourceType = thresholdTag.SourceType,
-					BlockId = tag.ThresholdSourceTagBlockId,
-					Description = thresholdTag.Description,
+					BlockId = tag.Tag.ThresholdSourceTagBlockId,
+
+					Id = thresholdTag.Tag.Id,
+					Guid = thresholdTag.Tag.GlobalGuid,
+					Name = thresholdTag.Tag.Name,
+					Resolution = thresholdTag.Tag.Resolution,
+					Type = thresholdTag.Tag.Type,
+					Description = thresholdTag.Tag.Description,
+
+					SourceId = thresholdTag.Source.Id,
+					SourceType = thresholdTag.Source.Type,
 				},
 			};
 

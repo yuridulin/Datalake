@@ -165,7 +165,7 @@ public class TagsValuesRepository(
 			""{DataSchema.TagsValues.Columns.Quality}""
 		FROM {DataSchema.Name}.""{DataSchema.TagsValues.Name}""
 		WHERE
-			""{DataSchema.TagsValues.Columns.TagId}"" IN {TagsParam}
+			""{DataSchema.TagsValues.Columns.TagId}"" = ANY({TagsParam})
 			AND ""{DataSchema.TagsValues.Columns.Date}"" <= {ExactParam}
 		ORDER BY ""{DataSchema.TagsValues.Columns.TagId}"", ""{DataSchema.TagsValues.Columns.Date}"" DESC";
 

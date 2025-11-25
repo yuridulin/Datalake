@@ -7,7 +7,7 @@ import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
@@ -42,9 +42,11 @@ const BlocksTree = observer(() => {
 	useDatalakeTitle('Блоки')
 
 	const store = useAppStore()
-	const [data, setData] = useState<BlockWithTagsInfo[]>([])
 	const [search, setSearch] = useState('')
 	const [expandedRowKeys, setExpandedRowKeys] = useLocalStorage(EXPAND_KEY, [] as number[])
+
+	// Получаем данные из store (реактивно через MobX)
+	const data = store.blocksStore.getBlocks()
 
 	// Create tree structure and metadata
 	const [tree, meta] = useMemo(() => makeTree(data), [data])
@@ -65,16 +67,6 @@ const BlocksTree = observer(() => {
 			)
 	}, [search, data, tree, meta])
 
-	// Load blocks data
-	const loadBlocks = useCallback(async () => {
-		try {
-			const res = await store.api.inventoryBlocksGetAll()
-			return setData(res.data)
-		} catch {
-			return setData([])
-		}
-	}, [store.api])
-
 	// Handle expand/collapse of tree nodes
 	const handleExpand = (expanded: boolean, record: BlockTreeInfo) => {
 		const exists = expandedRowKeys ?? []
@@ -84,8 +76,14 @@ const BlocksTree = observer(() => {
 	}
 
 	// Create new block
-	const createBlock = () => {
-		store.api.inventoryBlocksCreate({}).then(loadBlocks)
+	const createBlock = async () => {
+		try {
+			await store.api.inventoryBlocksCreate({})
+			// Инвалидируем кэш и обновляем данные
+			await store.blocksStore.refreshBlocks()
+		} catch (error) {
+			console.error('Failed to create block:', error)
+		}
 	}
 
 	// Table columns configuration
@@ -143,7 +141,7 @@ const BlocksTree = observer(() => {
 				Блоки верхнего уровня
 			</PageHeader>
 
-			<PollingLoader pollingFunction={loadBlocks} interval={60000} />
+			<PollingLoader pollingFunction={() => store.blocksStore.refreshBlocks()} interval={60000} />
 			<Table
 				showSorterTooltip={false}
 				size='small'
