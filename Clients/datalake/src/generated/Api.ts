@@ -33,9 +33,9 @@ import {
   LogType,
   SettingsInfo,
   SourceActivityInfo,
-  SourceInfo,
   SourceItemInfo,
   SourceUpdateRequest,
+  SourceWithSettingsInfo,
   TagCreateRequest,
   TagMetricRequest,
   TagSimpleInfo,
@@ -478,7 +478,7 @@ export class Api<
    * @name InventorySourcesGetAll
    * @summary Получение списка источников
    * @request GET:/api/v1/inventory/sources
-   * @response `200` `(SourceInfo)[]` Список источников
+   * @response `200` `(SourceWithSettingsInfo)[]` Список источников
    */
   inventorySourcesGetAll = (
     query?: {
@@ -490,7 +490,7 @@ export class Api<
     },
     params: RequestParams = {},
   ) =>
-    this.request<SourceInfo[], any>({
+    this.request<SourceWithSettingsInfo[], any>({
       path: `/api/v1/inventory/sources`,
       method: "GET",
       query: query,
@@ -504,10 +504,10 @@ export class Api<
    * @name InventorySourcesGet
    * @summary Получение данных о источнике
    * @request GET:/api/v1/inventory/sources/{sourceId}
-   * @response `200` `SourceInfo` Данные о источнике
+   * @response `200` `SourceWithSettingsInfo` Данные о источнике
    */
   inventorySourcesGet = (sourceId: number, params: RequestParams = {}) =>
-    this.request<SourceInfo, any>({
+    this.request<SourceWithSettingsInfo, any>({
       path: `/api/v1/inventory/sources/${sourceId}`,
       method: "GET",
       format: "json",

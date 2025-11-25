@@ -1,5 +1,4 @@
 ﻿using Datalake.Contracts.Interfaces;
-using Datalake.Contracts.Models.Tags;
 using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
@@ -8,68 +7,40 @@ namespace Datalake.Contracts.Models.Sources;
 /// <summary>
 /// Информация о теге, берущем данные из этого источника
 /// </summary>
-public class SourceTagInfo : TagSimpleInfo, IProtectedEntity
+public class SourceTagInfo : IProtectedEntity
 {
 	/// <summary>
 	/// Путь к данным в источнике
 	/// </summary>
-	[Required]
-	public required string Item { get; set; }
+	public string? Item { get; set; }
 
 	/// <summary>
-	/// Формула, на основе которой вычисляется значение
-	/// </summary>
-	public string? Formula { get; set; }
-
-	/// <summary>
-	/// Пороговые значения, по которым выбирается итоговое значение
-	/// </summary>
-	public List<TagThresholdInfo>? Thresholds { get; set; }
-
-	/// <summary>
-	/// Входной тег, по значениям которого выбирается значение из пороговой таблицы
-	/// </summary>
-	public TagInputMinimalInfo? ThresholdSourceTag { get; set; }
-
-	/// <summary>
-	/// Входные переменные для формулы, по которой рассчитывается значение
+	/// Идентификатор тега в локальной базе
 	/// </summary>
 	[Required]
-	public required TagInputMinimalInfo[] FormulaInputs { get; set; } = [];
+	public required int Id { get; set; }
 
 	/// <summary>
-	/// Входной тег, по значениям которого считается агрегированное значение
+	/// Имя тега
 	/// </summary>
-	public TagInputMinimalInfo? SourceTag { get; set; }
+	[Required]
+	public required string Name { get; set; }
 
 	/// <summary>
-	/// Тип агрегации
+	/// Тип данных тега
 	/// </summary>
-	public TagAggregation? Aggregation { get; set; }
+	[Required]
+	public required TagType Type { get; set; }
 
 	/// <summary>
-	/// Временное окно для расчета агрегированного значения
+	/// Частота записи тега
 	/// </summary>
-	public TagResolution? AggregationPeriod { get; set; }
+	[Required]
+	public required TagResolution Resolution { get; set; }
 
 	/// <summary>
-	/// Минимальная информация о переменных для расчета значений по формуле
+	/// Доступ к данному тегу
 	/// </summary>
-	public class TagInputMinimalInfo
-	{
-		/// <summary>
-		/// Идентификатор входного тега
-		/// </summary>
-		public required int InputTagId { get; set; }
-
-		/// <summary>
-		/// Тип данных входного тега
-		/// </summary>
-		public required TagType InputTagType { get; set; }
-
-		/// <summary>
-		/// Имя переменной
-		/// </summary>
-		public required string VariableName { get; set; }
-	}
+	[Required]
+	public AccessRuleInfo AccessRule { get; set; } = AccessRuleInfo.Default;
 }

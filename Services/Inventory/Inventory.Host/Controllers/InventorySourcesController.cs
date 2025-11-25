@@ -3,8 +3,8 @@ using Datalake.Contracts.Requests;
 using Datalake.Inventory.Application.Features.Sources.Commands.CreateSource;
 using Datalake.Inventory.Application.Features.Sources.Commands.DeleteSource;
 using Datalake.Inventory.Application.Features.Sources.Commands.UpdateSource;
-using Datalake.Inventory.Application.Features.Sources.Queries.GetSource;
-using Datalake.Inventory.Application.Features.Sources.Queries.GetSources;
+using Datalake.Inventory.Application.Features.Sources.Queries.GetSourcesWithSettings;
+using Datalake.Inventory.Application.Features.Sources.Queries.GetSourceWithSettingsAndTags;
 using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -29,23 +29,23 @@ public class InventorySourcesController(
 		return Ok(result);
 	}
 
-	public override async Task<ActionResult<SourceInfo>> GetAsync(
+	public override async Task<ActionResult<SourceWithSettingsInfo>> GetAsync(
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-		var handler = serviceProvider.GetRequiredService<IGetSourceHandler>();
+		var handler = serviceProvider.GetRequiredService<IGetSourceWithSettingsAndTagsHandler>();
 		var data = await handler.HandleAsync(new() { User = user, SourceId = sourceId }, ct);
 
 		return Ok(data);
 	}
 
-	public override async Task<ActionResult<IEnumerable<SourceInfo>>> GetAllAsync(
+	public override async Task<ActionResult<IEnumerable<SourceWithSettingsInfo>>> GetAllAsync(
 		[FromQuery] bool withCustom = false,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-		var handler = serviceProvider.GetRequiredService<IGetSourcesHandler>();
+		var handler = serviceProvider.GetRequiredService<IGetSourcesWithSettingsHandler>();
 		var data = await handler.HandleAsync(new() { User = user, WithCustom = withCustom }, ct);
 
 		return Ok(data);

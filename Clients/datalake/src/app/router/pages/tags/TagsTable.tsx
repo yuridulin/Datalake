@@ -4,7 +4,7 @@ import PollingLoader from '@/app/components/loaders/PollingLoader'
 import TagReceiveStateEl from '@/app/components/TagReceiveStateEl'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { compareDateStrings, compareRecords } from '@/functions/compareValues'
-import { SourceSimpleInfo, SourceType, TagQuality, TagSimpleInfo, TagStatusInfo } from '@/generated/data-contracts'
+import { SourceSimpleInfo, TagQuality, TagSimpleInfo, TagStatusInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
@@ -39,8 +39,13 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 		return Object.fromEntries(valuesResponse[0].tags.map((x) => [x.id, x.values[0]]))
 	}, [valuesResponse])
 
-	const statuses = store.valuesStore.getStatus(tagIds)
+	// Получаем статусы только если они отображаются
+	const statuses = useMemo(
+		() => (showState ? store.valuesStore.getStatus(tagIds) : {}),
+		[showState, tagIds, store.valuesStore],
+	)
 	const states = useMemo(() => {
+		if (!showState) return {}
 		const statesMap: Record<number, TagStatusInfo> = {}
 		tagIds.forEach((tagId) => {
 			const status = statuses[tagId]
@@ -53,15 +58,17 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 			}
 		})
 		return statesMap
-	}, [statuses, tagIds])
+	}, [statuses, tagIds, showState])
 
 	const loadValues = useCallback(async () => {
 		if (tagIds.length === 0) return
-		await Promise.all([
-			store.valuesStore.refreshValues(valuesRequest),
-			store.valuesStore.refreshStatus(tagIds),
-		])
-	}, [store.valuesStore, valuesRequest, tagIds])
+		const promises = [store.valuesStore.refreshValues(valuesRequest)]
+		// Запрашиваем статусы только если они отображаются
+		if (showState) {
+			promises.push(store.valuesStore.refreshStatus(tagIds))
+		}
+		await Promise.all(promises)
+	}, [store.valuesStore, valuesRequest, tagIds, showState])
 
 	// Получаем источники из store (реактивно через MobX)
 	const sourcesData = store.sourcesStore.getSources()
@@ -69,12 +76,14 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 		if (hideSource) return {}
 		const map: Record<number, SourceSimpleInfo> = {}
 		sourcesData.forEach((source) => {
-			map[source.id] = { id: source.id, name: source.name }
+			map[source.id] = {
+				id: source.id,
+				name: source.name,
+				type: source.type,
+				accessRule: source.accessRule,
+			}
 		})
-		// Добавляем специальные системные источники
-		map[SourceType.Manual] = { id: SourceType.Manual, name: 'Мануальный' }
-		map[SourceType.Calculated] = { id: SourceType.Calculated, name: 'Вычисляемый' }
-		map[SourceType.Aggregated] = { id: SourceType.Aggregated, name: 'Агрегатный' }
+		// NOTE: Cпециальные системные источники уже есть в списке - как и обычные
 		return map
 	}, [sourcesData, hideSource])
 
@@ -133,10 +142,14 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 							const source = sources[record.sourceId]
 							return (
 								<SourceButton
-									source={{
-										id: record.sourceId ?? 0,
-										name: source?.name ?? String(record.sourceId ?? '?'),
-									}}
+									source={
+										source ?? {
+											id: record.sourceId ?? 0,
+											name: String(record.sourceId ?? '?'),
+											type: 0,
+											accessRule: { ruleId: 0, access: 0 },
+										}
+									}
 								/>
 							)
 						}}

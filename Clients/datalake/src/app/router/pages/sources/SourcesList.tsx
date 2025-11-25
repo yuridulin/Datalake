@@ -3,7 +3,7 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { timeAgo } from '@/functions/dateHandle'
 import getSourceTypeName from '@/functions/getSourceTypeName'
-import { AccessType, SourceInfo, SourceType } from '@/generated/data-contracts'
+import { AccessType, SourceWithSettingsInfo, SourceType } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
@@ -12,7 +12,7 @@ import { observer } from 'mobx-react-lite'
 import { useCallback, useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 
-interface DataCell extends SourceInfo {
+interface DataCell extends SourceWithSettingsInfo {
 	isGroup: boolean
 	children?: DataCell[]
 	link: string
@@ -37,6 +37,7 @@ const SourcesList = observer(() => {
 				name: 'Системные источники',
 				isDisabled: false,
 				type: SourceType.Unset,
+				accessRule: { ruleId: 0, access: 0 },
 				children: [],
 				link: '',
 			},
@@ -46,6 +47,7 @@ const SourcesList = observer(() => {
 				name: 'Пользовательские источники',
 				isDisabled: false,
 				type: SourceType.Unset,
+				accessRule: { ruleId: 0, access: 0 },
 				children: [],
 				link: '',
 			},

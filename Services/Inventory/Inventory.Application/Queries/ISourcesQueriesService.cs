@@ -8,30 +8,23 @@ namespace Datalake.Inventory.Application.Queries;
 public interface ISourcesQueriesService
 {
 	/// <summary>
-	/// Запрос информации о источниках без связей
+	/// Запрос информации о источниках
 	/// </summary>
 	/// <param name="withCustom">Включать ли системные источники в запрос</param>
 	/// <param name="ct">Токен отмены</param>
-	Task<IEnumerable<SourceInfo>> GetAsync(
-		bool withCustom = false,
-		CancellationToken ct = default);
+	Task<SourceWithSettingsInfo[]> GetAllAsync(bool withCustom = false, CancellationToken ct = default);
 
 	/// <summary>
-	/// Запрос информации о источниках вместе со списками зависящих тегов
+	/// Запрос информации о источнике
 	/// </summary>
-	Task<SourceWithTagsInfo?> GetWithTagsAsync(
-		int sourceId,
-		CancellationToken ct = default);
+	/// <param name="sourceId">Идентификатор</param>
+	/// <param name="ct">Токен отмены</param>
+	Task<SourceWithSettingsInfo?> GetByIdAsync(int sourceId, CancellationToken ct = default);
 
 	/// <summary>
-	/// Запрос информации о источниках вместе со списками зависящих тегов
+	/// Запрос информации о тегах источника
 	/// </summary>
-	Task<IEnumerable<SourceWithTagsInfo>> GetWithTagsAsync(
-		CancellationToken ct = default);
-
-	/// <summary>
-	/// Запрос информации о источниках вместе со списками зависящих тегов
-	/// </summary>
-	Task<IEnumerable<SourceWithTagsInfo>> GetWithTagsAndSourceTagsAsync(
-		CancellationToken ct = default);
+	/// <param name="sourceId">Идентификатор</param>
+	/// <param name="ct">Токен отмены</param>
+	Task<SourceTagInfo[]> GetSourceTagsAsync(int sourceId, CancellationToken ct);
 }

@@ -40,6 +40,9 @@ const TagView = observer(() => {
 	const tag = tagId ? store.tagsStore.getTagById(tagId) : undefined
 	const isLoading = tagId ? store.tagsStore.isLoadingTag(tagId) : false
 
+	// Получаем источник из store, если sourceId > 0 (не системный источник)
+	const source = tag?.sourceId && tag.sourceId > 0 ? store.sourcesStore.getSourceById(tag.sourceId) : undefined
+
 	// Загружаем метрики использования тега
 	useEffect(() => {
 		if (!tagId) return
@@ -59,7 +62,18 @@ const TagView = observer(() => {
 		const items: InfoTableProps['items'] = {
 			Название: <CopyableText text={tag.name} />,
 			Описание: tag.description == null ? <i>нет</i> : <pre>{tag.description}</pre>,
-			Источник: <SourceButton source={{ id: tag.sourceId, name: tag.sourceName || '?' }} />,
+			Источник: (
+				<SourceButton
+					source={
+						source ?? {
+							id: tag.sourceId ?? 0,
+							name: tag.sourceName || '?',
+							type: tag.sourceType ?? SourceType.Unset,
+							accessRule: { ruleId: 0, access: 0 },
+						}
+					}
+				/>
+			),
 			'Интервал обновления':
 				tag.sourceId !== SourceType.Manual && tag.sourceId !== SourceType.Calculated && (
 					<TagResolutionEl resolution={tag.resolution} full={true} />
@@ -87,7 +101,7 @@ const TagView = observer(() => {
 		items['Тип данных'] = <TagTypeEl tagType={tag.type} />
 
 		return items
-	}, [tag])
+	}, [tag, source])
 
 	const { tagMapping, relations } = useMemo(() => {
 		if (!tag) return { tagMapping: {} as TagMappingType, relations: [] as string[] }

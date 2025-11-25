@@ -1,5 +1,5 @@
 import { Api } from '@/generated/Api'
-import { SourceActivityInfo, SourceInfo } from '@/generated/data-contracts'
+import { SourceActivityInfo, SourceWithSettingsInfo } from '@/generated/data-contracts'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
 
@@ -8,10 +8,10 @@ import { BaseCacheStore } from './BaseCacheStore'
  */
 export class SourcesStore extends BaseCacheStore {
 	// Кэш списка источников
-	private _sourcesCache = observable.box<SourceInfo[] | null>(null)
+	private _sourcesCache = observable.box<SourceWithSettingsInfo[] | null>(null)
 
 	// Кэш отдельных источников по ID
-	private _sourcesByIdCache = observable.map<number, SourceInfo>()
+	private _sourcesByIdCache = observable.map<number, SourceWithSettingsInfo>()
 
 	// Кэш состояний активности источников (ключ: sourceId)
 	private _activityCache = observable.map<number, SourceActivityInfo>()
@@ -39,7 +39,7 @@ export class SourcesStore extends BaseCacheStore {
 	 * Получает список всех источников
 	 * @returns Список источников
 	 */
-	getSources(): SourceInfo[] {
+	getSources(): SourceWithSettingsInfo[] {
 		const cacheKey = 'sources_list'
 		const cached = this._sourcesCache.get()
 
@@ -62,7 +62,7 @@ export class SourcesStore extends BaseCacheStore {
 	 * @param id Идентификатор источника
 	 * @returns Информация об источнике или undefined
 	 */
-	getSourceById(id: number): SourceInfo | undefined {
+	getSourceById(id: number): SourceWithSettingsInfo | undefined {
 		const cacheKey = `source_${id}`
 		const cached = this._sourcesByIdCache.get(id)
 

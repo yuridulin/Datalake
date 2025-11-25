@@ -4,7 +4,7 @@ import { LoadStatus } from '@/app/components/loaders/loaderTypes'
 import StatusLoader from '@/app/components/loaders/StatusLoader'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import compareValues from '@/functions/compareValues'
-import { SourceInfo, SourceItemInfo, SourceUpdateRequest, TagSimpleInfo, TagType } from '@/generated/data-contracts'
+import { SourceItemInfo, SourceUpdateRequest, SourceWithSettingsInfo, TagSimpleInfo, TagType } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import {
 	CheckCircleOutlined,
@@ -110,7 +110,7 @@ interface TreeNodeData {
 }
 
 type SourceItemsProps = {
-	source: SourceInfo
+	source: SourceWithSettingsInfo
 	request: SourceUpdateRequest
 }
 

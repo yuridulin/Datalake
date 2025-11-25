@@ -33,6 +33,7 @@ type UserAuthWithNames = {
 		accessRule: AccessRuleInfo
 		name: string
 		id: string
+		type: SourceType
 	}[]
 	blocks: {
 		accessRule: AccessRuleInfo
@@ -122,6 +123,7 @@ const AccessSettings = () => {
 				sources: Object.entries(info.sourcesRules).map(([key, value]) => ({
 					id: key,
 					name: sources[Number(key)],
+					type: SourceType.Unset,
 					accessRule: {
 						ruleId: value.id,
 						access: value.access,
@@ -191,7 +193,8 @@ const AccessSettings = () => {
 										source={{
 											id: Number(source.id),
 											name: source.name,
-											//accessRule: user.accessRule,
+											type: source.type,
+											accessRule: source.accessRule,
 										}}
 									/>{' '}
 									: <AccessTypeEl type={source.accessRule.access} />

@@ -373,6 +373,21 @@ export interface SourceSimpleInfo {
   id: number;
   /** @minLength 1 */
   name: string;
+  description?: string | null;
+  /**
+   * Тип получения данных с источника
+   *
+   * 0 = System
+   * 1 = Inopc
+   * 3 = Datalake
+   * -666 = Unset
+   * -4 = Thresholds
+   * -3 = Aggregated
+   * -2 = Manual
+   * -1 = Calculated
+   */
+  type: SourceType;
+  accessRule: AccessRuleInfo;
 }
 
 export interface AccessRightsSimpleInfo {
@@ -600,24 +615,9 @@ export interface UserEnergoIdInfo {
   fullName: string;
 }
 
-export type SourceInfo = SourceSimpleInfo & {
-  description?: string | null;
+export type SourceWithSettingsInfo = SourceSimpleInfo & {
   address?: string | null;
-  /**
-   * Тип получения данных с источника
-   *
-   * 0 = System
-   * 1 = Inopc
-   * 3 = Datalake
-   * -666 = Unset
-   * -4 = Thresholds
-   * -3 = Aggregated
-   * -2 = Manual
-   * -1 = Calculated
-   */
-  type: SourceType;
   isDisabled: boolean;
-  accessRule?: AccessRuleInfo;
 };
 
 export interface SourceUpdateRequest {

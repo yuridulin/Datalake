@@ -2,9 +2,9 @@
 using Datalake.Domain.ValueObjects;
 using Datalake.Shared.Application.Interfaces;
 
-namespace Datalake.Inventory.Application.Features.Sources.Queries.GetSources;
+namespace Datalake.Inventory.Application.Features.Sources.Queries.GetSourcesWithSettings;
 
-public class GetSourcesQuery : IQueryRequest<IEnumerable<SourceInfo>>
+public class GetSourcesWithSettingsQuery : IQueryRequest<IEnumerable<SourceWithSettingsInfo>>
 {
 	public required UserAccessValue User { get; init; }
 
