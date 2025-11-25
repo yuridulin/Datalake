@@ -22,10 +22,12 @@ public class ReceiverService(ILogger<ReceiverService> logger) : IReceiverService
 
 	private static HttpClient HttpClient { get; } = new() { Timeout = TimeSpan.FromSeconds(1), };
 
-	public async Task<RemoteResponseDto> AskInopcAsync(string[]? tags, string? address, int? port = 81)
+	public async Task<RemoteResponseDto> AskInopcAsync(string[]? tags, string? address, int? port)
 	{
 		if (string.IsNullOrEmpty(address))
 			throw new InfrastructureException("Адрес источника данных не указан");
+		if (port is null)
+			throw new InfrastructureException("Порт источника данных не указан");
 
 		RemoteResponseDto response = new()
 		{

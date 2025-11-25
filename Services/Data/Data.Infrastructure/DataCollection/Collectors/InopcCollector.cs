@@ -20,13 +20,19 @@ public class InopcCollector(
 	ILogger<DatalakeCollector> logger,
 	SourceSettingsDto source) : DataCollectorBase(sourcesActivityStore, writer, logger, source, 5000)
 {
-	public override Task StartAsync(CancellationToken cancellationToken)
+	public override async Task StartAsync(CancellationToken cancellationToken)
 	{
 		if (source.RemoteSettings == null)
-			return NotStartAsync("нет настроек получения данных");
+		{
+			await NotStartAsync("нет настроек получения данных");
+			return;
+		}
 
 		if (string.IsNullOrEmpty(source.RemoteSettings.RemoteHost))
-			return NotStartAsync("адрес для получения данных пуст");
+		{
+			await NotStartAsync("адрес для получения данных пуст");
+			return;
+		}
 
 		itemsToSend = [];
 		itemsTags = [];
@@ -63,9 +69,15 @@ public class InopcCollector(
 			.ToList();
 
 		if (itemsToSend.Count == 0)
-			return NotStartAsync("нет тегов для получения данных");
+		{
+			await NotStartAsync("нет тегов для получения данных");
+			return;
+		}
 
-		return base.StartAsync(cancellationToken);
+		// чтобы размазать нагрузку по сети, делаем отложенный запуск со случайным шагом (джиттер)
+		await Task.Delay(Randomizer.Next(100, 1000), cancellationToken);
+
+		await base.StartAsync(cancellationToken);
 	}
 
 	#region Реализация
@@ -96,8 +108,11 @@ public class InopcCollector(
 		if (tags.Count > 0)
 		{
 			var items = tags.Select(x => x.TagName).ToArray();
+			var port = 81;  // TODO: добавить в модель источника способ задать порт
+			var address = source.RemoteSettings!.RemoteHost;
 
-			var response = await receiverService.AskInopcAsync(items, source.RemoteSettings!.RemoteHost, null);
+			var response = await receiverService.AskInopcAsync(items, address, port);
+
 			if (response.IsConnected)
 			{
 				var itemsValues = response.Tags.ToDictionary(x => x.Name, x => x);

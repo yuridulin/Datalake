@@ -20,6 +20,8 @@ public abstract class DataCollectorBase(
 	protected readonly ILogger logger = logger;
 	protected readonly SourceSettingsDto source = source;
 
+	protected static Random Randomizer { get; } = new();
+
 	public string Name { get; } = Source.InternalSources.Contains(source.SourceType)
 		? source.SourceType.ToString()
 		: $"{source.SourceName}<{source.SourceType}>#{source.SourceId}";
