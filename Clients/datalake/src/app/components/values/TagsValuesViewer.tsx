@@ -9,7 +9,7 @@ import { deserializeDate, serializeDate } from '@/functions/dateHandle'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { SELECTED_SEPARATOR, setViewerParams, TimeMode, TimeModes, URL_PARAMS } from '@/functions/urlParams'
-import { SourceType, TagResolution, ValueRecord } from '@/generated/data-contracts'
+import { SourceType, TagResolution, ValueRecord, ValuesRequest } from '@/generated/data-contracts'
 import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
@@ -51,6 +51,9 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	const [showWrite, setWrite] = useState<boolean>(false)
 
 	const tableRef = useRef<ExcelExportModeHandles>(null)
+	const previousValuesRequestRef = useRef<ValuesRequest[] | null>(null)
+	const previousTagMappingRef = useRef<TagMappingType>(tagMapping)
+	const previousRelationsRef = useRef<string[]>(relations)
 
 	const [settings, setSettings] = useState<ViewerSettings>({
 		activeRelations: relations,
@@ -82,7 +85,10 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 
 	// Проверка, что настройки изменились
 	const isDirty = useMemo(
-		() => !lastFetchSettings || isTimeDirty || isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations),
+		() =>
+			!lastFetchSettings ||
+			isTimeDirty ||
+			isArraysDifferent(settings.activeRelations, lastFetchSettings.activeRelations),
 		[settings, lastFetchSettings, isTimeDirty],
 	)
 
@@ -92,6 +98,33 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [relations])
+
+	// Сбрасываем lastFetchSettings при изменении tagMapping или relations (например, при переходе на другой блок)
+	useEffect(() => {
+		// Сравниваем ключи объектов tagMapping
+		const prevTagMappingKeys = Object.keys(previousTagMappingRef.current).sort()
+		const currentTagMappingKeys = Object.keys(tagMapping).sort()
+		const keysLengthChanged = prevTagMappingKeys.length !== currentTagMappingKeys.length
+		const keysOrderChanged = prevTagMappingKeys.some((key, i) => key !== currentTagMappingKeys[i])
+		const keysContentChanged = prevTagMappingKeys.some((key) => {
+			const prev = previousTagMappingRef.current[key]
+			const curr = tagMapping[key]
+			return prev?.tagId !== curr?.tagId || prev?.tag?.id !== curr?.tag?.id
+		})
+		const tagMappingChanged = keysLengthChanged || keysOrderChanged || keysContentChanged
+
+		const relationsChanged = isArraysDifferent(previousRelationsRef.current, relations)
+
+		if (tagMappingChanged || relationsChanged) {
+			// Сбрасываем lastFetchSettings, чтобы заставить перезагрузку данных
+			setLastFetchSettings(null)
+			// Сбрасываем previousValuesRequestRef, чтобы becameAvailable сработал
+			previousValuesRequestRef.current = null
+		}
+
+		previousTagMappingRef.current = tagMapping
+		previousRelationsRef.current = relations
+	}, [tagMapping, relations])
 
 	// Формируем запрос для получения значений
 	const valuesRequest = useMemo(() => {
@@ -131,10 +164,12 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	}, [settings, tagMapping])
 
 	// Получаем значения из store (реактивно через MobX)
-	const valuesResponse = useMemo(
-		() => (valuesRequest ? store.valuesStore.getValues(valuesRequest) : []),
-		[valuesRequest, store.valuesStore],
-	)
+	// ВАЖНО: НЕ используем useMemo для valuesResponse, чтобы MobX observer мог отследить изменения в observable map
+	// Когда данные загружаются асинхронно и попадают в _valuesCache, MobX автоматически перерендерит компонент
+	// Используем useMemo только для стабилизации ссылки на valuesRequest
+	const valuesRequestStable = useMemo(() => valuesRequest, [valuesRequest])
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const valuesResponse = valuesRequestStable ? store.valuesStore.getValues(valuesRequestStable) : []
 
 	// Проверяем состояние загрузки
 	const isLoading = valuesRequest ? store.valuesStore.isLoadingValues(valuesRequest) : false
@@ -192,19 +227,35 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 
 	// Автоматически обновляем значения при изменении настроек в integrated режиме
 	useEffect(() => {
-		if (!integrated || !valuesRequest) return
-		// При первом монтировании или при изменении настроек принудительно загружаем данные
-		const shouldRefresh = !lastFetchSettings || isDirty
-		if (shouldRefresh) {
-			store.valuesStore.refreshValues(valuesRequest).then(() => {
-				setLastFetchSettings(settings)
-			}).catch((error) => {
-				logger.error(error instanceof Error ? error : new Error(String(error)), {
-					component: 'TagsValuesViewer',
-					action: 'refreshValues',
-				})
-			})
+		if (!integrated || !valuesRequest) {
+			// Обновляем ref даже если valuesRequest null
+			previousValuesRequestRef.current = valuesRequest
+			return
 		}
+
+		// Проверяем, стал ли valuesRequest доступным впервые (изменился с null на не-null)
+		const becameAvailable = previousValuesRequestRef.current === null && valuesRequest !== null
+
+		// При первом монтировании или при изменении настроек принудительно загружаем данные
+		// Также загружаем данные, если relations стали доступными (когда valuesRequest изменился с null на не-null)
+		const shouldRefresh = !lastFetchSettings || isDirty || becameAvailable
+
+		if (shouldRefresh) {
+			store.valuesStore
+				.refreshValues(valuesRequest)
+				.then(() => {
+					setLastFetchSettings(settings)
+				})
+				.catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'TagsValuesViewer',
+						action: 'refreshValues',
+					})
+				})
+		}
+
+		// Обновляем ref после проверки
+		previousValuesRequestRef.current = valuesRequest
 	}, [integrated, valuesRequest, isDirty, lastFetchSettings, settings, store.valuesStore])
 
 	useEffect(() => {
