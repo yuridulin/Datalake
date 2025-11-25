@@ -1,44 +1,36 @@
 import CreatedTagLinker from '@/app/components/CreatedTagsLinker'
 import PageHeader from '@/app/components/PageHeader'
-import { SourceType, TagInfo, TagType } from '@/generated/data-contracts'
+import { SourceType, TagType, TagWithSettingsInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from 'antd'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { observer } from 'mobx-react-lite'
+import { useCallback, useState } from 'react'
 import TagsTable from './TagsTable'
 
-const TagsAggregatedList = () => {
+const TagsAggregatedList = observer(() => {
 	useDatalakeTitle('Теги', 'Агрегированные')
 	const store = useAppStore()
-	const [tags, setTags] = useState([] as TagInfo[])
-	const [created, setCreated] = useState(null as TagInfo | null)
-	const hasLoadedRef = useRef(false)
+	// Получаем теги из store (реактивно через MobX)
+	const tags = store.tagsStore.getTags(SourceType.Aggregated)
+	const [created, setCreated] = useState(null as TagWithSettingsInfo | null)
 
-	const getTags = useCallback(() => {
-		store.api
-			.inventoryTagsGetAll({ sourceId: SourceType.Aggregated })
-			.then((res) => setTags(res.data))
-			.catch(() => setTags([]))
-	}, [store.api])
-
-	const createTag = useCallback(() => {
-		store.api
-			.inventoryTagsCreate({
+	const createTag = useCallback(async () => {
+		try {
+			const response = await store.api.inventoryTagsCreate({
 				sourceId: SourceType.Aggregated,
 				tagType: TagType.Number,
 			})
-			.then((res) => {
-				getTags()
-				setCreated(res.data)
-			})
-			.catch()
-	}, [store.api, getTags])
-
-	useEffect(() => {
-		if (hasLoadedRef.current) return
-		hasLoadedRef.current = true
-		getTags()
-	}, [getTags])
+			// Инвалидируем кэш и обновляем данные
+			if (response.data) {
+				store.tagsStore.invalidateTag(response.data.id)
+				await store.tagsStore.refreshTags(SourceType.Aggregated)
+				setCreated(response.data)
+			}
+		} catch (error) {
+			console.error('Failed to create tag:', error)
+		}
+	}, [store])
 
 	return (
 		<>
@@ -49,6 +41,6 @@ const TagsAggregatedList = () => {
 			<TagsTable tags={tags} hideSource={true} showState={true} />
 		</>
 	)
-}
+})
 
 export default TagsAggregatedList

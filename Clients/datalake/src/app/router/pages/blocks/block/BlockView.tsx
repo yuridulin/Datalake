@@ -13,7 +13,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { RightOutlined } from '@ant-design/icons'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 
 const childrenContainerStyle = {
@@ -25,43 +25,39 @@ const BlockView = observer(() => {
 	const { id } = useParams()
 	useDatalakeTitle('Блоки', '#' + id)
 
-	const [ready, setReady] = useState(false)
-	const [block, setBlock] = useState({} as BlockDetailedInfo)
-	const hasLoadedRef = useRef(false)
-	const lastIdRef = useRef<string | undefined>(id)
+	const blockId = id ? Number(id) : undefined
+	// Получаем блок из store (реактивно через MobX)
+	const blockData = blockId ? store.blocksStore.getBlockById(blockId) : undefined
+	const isLoading = blockId ? store.blocksStore.isLoadingBlocks() : false
+
+	// Обрабатываем данные блока
+	const block = useMemo(() => {
+		if (!blockData) return {} as BlockDetailedInfo
+		// Создаем копию, чтобы не мутировать оригинал
+		const processed = { ...blockData }
+		if (processed.adults) {
+			processed.adults = [...processed.adults].reverse()
+		}
+		return processed
+	}, [blockData])
 
 	const items: InfoTableProps['items'] = {
 		Имя: block.name,
 		Описание: block.description || <i>нет</i>,
 	}
 
-	const getBlock = () => {
-		setReady(false)
-		store.api
-			.inventoryBlocksGet(Number(id))
-			.then((res) => {
-				res.data.adults = res.data.adults.reverse()
-				setBlock(res.data)
-				setReady(true)
-			})
-			.catch(() => setBlock({} as BlockDetailedInfo))
-	}
-
-	const createChild = () => {
-		store.api.inventoryBlocksCreate({ parentId: Number(id) }).then(getBlock)
-	}
-
-	useEffect(() => {
-		// Если изменился id, сбрасываем флаг загрузки
-		if (lastIdRef.current !== id) {
-			hasLoadedRef.current = false
-			lastIdRef.current = id
+	const createChild = async () => {
+		try {
+			await store.api.inventoryBlocksCreate({ parentId: Number(id) })
+			// Инвалидируем кэш и обновляем данные
+			if (blockId) {
+				store.blocksStore.invalidateBlock(blockId)
+				await store.blocksStore.refreshBlocks()
+			}
+		} catch (error) {
+			console.error('Failed to create child block:', error)
 		}
-
-		if (hasLoadedRef.current || !id) return
-		hasLoadedRef.current = true
-		getBlock()
-	}, [store.api, id])
+	}
 
 	// Создаем маппинг тегов для TagValuesViewer
 	const tagMapping = useMemo(() => {
@@ -88,9 +84,9 @@ const BlockView = observer(() => {
 		[block.tags, block.id],
 	)
 
-	return !ready ? (
+	return isLoading && !blockData ? (
 		<Spin />
-	) : (
+	) : blockData ? (
 		<>
 			<PageHeader
 				left={[
@@ -191,7 +187,7 @@ const BlockView = observer(() => {
 				]}
 			/>
 		</>
-	)
+	) : null
 })
 
 export default BlockView

@@ -10,7 +10,7 @@ import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 import { default as MembersTable } from './parts/MembersTable'
 import ObjectsWithAccess from './parts/ObjectsWithAccess'
@@ -35,7 +35,7 @@ const UserGroupView = observer(() => {
 	const hasLoadedRef = useRef(false)
 	const lastIdRef = useRef<string | undefined>(id)
 
-	const load = () => {
+	const load = useCallback(() => {
 		setReady(false)
 		if (!id) return
 		store.api
@@ -47,7 +47,7 @@ const UserGroupView = observer(() => {
 				}
 			})
 			.catch(() => setGroup(defaultGroup))
-	}
+	}, [id, store.api])
 
 	const checkReady = () => {
 		setReady(!!group.guid)
@@ -63,7 +63,7 @@ const UserGroupView = observer(() => {
 		if (hasLoadedRef.current || !id) return
 		hasLoadedRef.current = true
 		load()
-	}, [store.api, id])
+	}, [store.api, id, load])
 	useEffect(checkReady, [group])
 
 	return !ready ? (

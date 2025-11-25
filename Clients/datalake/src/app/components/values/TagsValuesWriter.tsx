@@ -5,6 +5,7 @@ import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithIn
 import { deserializeDate, serializeDate } from '@/functions/dateHandle'
 import { URL_PARAMS } from '@/functions/urlParams'
 import {
+	AccessRuleInfo,
 	SourceType,
 	TagQuality,
 	TagType,
@@ -20,7 +21,7 @@ import { Button, Checkbox, DatePicker, Divider, Input, InputNumber, Space, Spin,
 import Column from 'antd/es/table/Column'
 import { Dayjs } from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 type ExactValue = TagValueWithInfo & {
@@ -28,6 +29,8 @@ type ExactValue = TagValueWithInfo & {
 	relationId: string
 	newValue?: TagValue
 	hasNewValue: boolean
+	sourceId?: number
+	accessRule?: AccessRuleInfo
 }
 
 interface TagsValuesWriterProps {
@@ -39,7 +42,6 @@ interface TagsValuesWriterProps {
 const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }: TagsValuesWriterProps) => {
 	const store = useAppStore()
 	const [searchParams, setSearchParams] = useSearchParams()
-	const [values, setValues] = useState<ExactValue[]>([])
 	const [loading, setLoading] = useState(false)
 	const [initialLoadDone, setInitialLoadDone] = useState(false)
 
@@ -61,73 +63,111 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 		}
 	}, [exactDate, integrated, searchParams, setSearchParams])
 
-	const getValues = useCallback(() => {
-		setLoading(true)
-		if (relations.length === 0) {
-			setLoading(false)
-			return setValues([])
+	const tagIds = useMemo(
+		() =>
+			Array.from(
+				new Set(
+					relations
+						.map((relId) => {
+							const tagInfo = tagMapping[relId]
+							return tagInfo?.tag?.id ?? tagInfo?.tagId
+						})
+						.filter((id): id is number => id !== null && id !== undefined),
+				),
+			),
+		[relations, tagMapping],
+	)
+
+	const valuesRequest = useMemo(
+		() =>
+			tagIds.length > 0
+				? [
+						{
+							requestKey: CLIENT_REQUESTKEY,
+							tagsId: tagIds,
+							exact: exactDate ? serializeDate(exactDate) : null,
+						},
+					]
+				: null,
+		[tagIds, exactDate],
+	)
+
+	// Получаем значения из store (реактивно через MobX)
+	const valuesResponse = useMemo(
+		() => (valuesRequest ? store.valuesStore.getValues(valuesRequest) : []),
+		[valuesRequest, store.valuesStore],
+	)
+
+	// Преобразуем данные из store в формат компонента
+	const valuesFromStore = useMemo(() => {
+		if (valuesResponse.length === 0 || relations.length === 0) {
+			return []
 		}
 
-		const tagIds = Array.from(
-			new Set(
-				relations
-					.map((relId) => {
-						const tagInfo = tagMapping[relId]
-						return tagInfo?.tag?.id ?? tagInfo?.tagId
-					})
-					.filter((id): id is number => id !== null && id !== undefined),
-			),
-		)
+		const tagValuesMap = new Map<number, ValueRecord[]>()
+		valuesResponse[0]?.tags.forEach((tag) => {
+			tagValuesMap.set(tag.id, tag.values)
+		})
 
-		store.api
-			.dataValuesGet([
-				{
-					requestKey: CLIENT_REQUESTKEY,
-					tagsId: tagIds,
-					exact: exactDate ? serializeDate(exactDate) : null,
-				},
-			])
-			.then((res) => {
-				const tagValuesMap = new Map<number, ValueRecord[]>()
-				res.data[0].tags.forEach((tag) => {
-					tagValuesMap.set(tag.id, tag.values)
-				})
+		return relations
+			.filter((relId) => tagMapping[relId])
+			.map((relId) => {
+				const tagInfo = tagMapping[relId]
+				const tagId = tagInfo.tag?.id ?? tagInfo.tagId ?? 0
+				const tagValues = tagValuesMap.get(tagId) || []
+				const tagValue = tagValues?.[0]
+				const tag = tagInfo.tag
 
-				const newValues = relations
-					.filter((relId) => tagMapping[relId])
-					.map((relId) => {
-						const tagInfo = tagMapping[relId]
-						const tagId = tagInfo.tag?.id ?? tagInfo.tagId ?? 0
-						const tagValues = tagValuesMap.get(tagId) || []
-						const tagValue = tagValues?.[0]
-						const tag = tagInfo.tag
+				if (!tag) {
+					throw new Error(`Tag not found for relation ${relId}`)
+				}
 
-						if (!tag) {
-							throw new Error(`Tag not found for relation ${relId}`)
-						}
-
-						return {
-							...tagInfo,
-							id: tag.id,
-							guid: tag.guid,
-							name: tag.name,
-							type: tag.type,
-							resolution: tag.resolution,
-							sourceType: tag.sourceType,
-							relationId: relId,
-							values: [],
-							result: ValueResult.Ok,
-							value: tagValue,
-							newValue: tagValue?.boolean ?? tagValue?.number ?? tagValue?.text,
-							hasNewValue: false,
-						} as ExactValue
-					})
-
-				setValues(newValues)
+				return {
+					...tagInfo,
+					id: tag.id,
+					guid: tag.guid,
+					name: tag.name,
+					type: tag.type,
+					resolution: tag.resolution,
+					sourceType: tag.sourceType,
+					sourceId: tag.sourceId,
+					accessRule: tag.accessRule,
+					relationId: relId,
+					values: [],
+					result: ValueResult.Ok,
+					value: tagValue,
+					newValue: tagValue?.boolean ?? tagValue?.number ?? tagValue?.text,
+					hasNewValue: false,
+				} as ExactValue
 			})
-			.catch(console.error)
-			.finally(() => setLoading(false))
-	}, [exactDate, relations, tagMapping, store.api])
+	}, [valuesResponse, relations, tagMapping])
+
+	// Используем значения из store как основу, но храним локальные изменения
+	const [localValues, setLocalValues] = useState<ExactValue[]>([])
+
+	// Синхронизируем значения из store с локальным состоянием
+	useEffect(() => {
+		setLocalValues(valuesFromStore)
+	}, [valuesFromStore])
+
+	const values = localValues
+
+	const getValues = useCallback(async () => {
+		if (relations.length === 0) {
+			return
+		}
+
+		if (!valuesRequest) return
+
+		setLoading(true)
+		try {
+			await store.valuesStore.refreshValues(valuesRequest)
+		} catch (error) {
+			console.error('Failed to load values:', error)
+		} finally {
+			setLoading(false)
+		}
+	}, [relations, valuesRequest, store.valuesStore])
 
 	// Автоматический запрос при инициализации, если есть настройки из URL
 	useEffect(() => {
@@ -137,7 +177,7 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 		}
 	}, [relations, exactDate, initialLoadDone, getValues])
 
-	const writeValues = () => {
+	const writeValues = async () => {
 		const valuesToWrite = values.reduce(
 			(acc, next) => {
 				if (acc[next.id]) return acc
@@ -151,11 +191,18 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 			},
 			{} as Record<number, ValueWriteRequest>,
 		)
-		store.api.dataValuesWrite(Object.values(valuesToWrite)).then(getValues)
+		try {
+			await store.api.dataValuesWrite(Object.values(valuesToWrite))
+			// Инвалидируем кэш значений для записанных тегов
+			store.valuesStore.invalidateValues(tagIds)
+			await getValues()
+		} catch (error) {
+			console.error('Failed to write values:', error)
+		}
 	}
 
 	const setNewValue = (id: number, newValue: TagValue) => {
-		setValues(values.map((x) => (x.id != id ? x : { ...x, newValue, hasNewValue: x.value.text !== newValue }))) // TODO: неправильно же!
+		setLocalValues(localValues.map((x) => (x.id != id ? x : { ...x, newValue, hasNewValue: x.value.text !== newValue }))) // TODO: неправильно же!
 	}
 
 	// Автоматический запрос в интегрированном режиме
@@ -203,7 +250,20 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 						<Column<ExactValue>
 							title='Тег'
 							render={(_, record) => {
-								return <TagButton tag={record} />
+								return (
+									<TagButton
+										tag={{
+											id: record.id,
+											guid: record.guid,
+											name: record.name,
+											type: record.type,
+											resolution: record.resolution,
+											sourceType: record.sourceType,
+											sourceId: record.sourceId ?? 0,
+											accessRule: record.accessRule ?? { ruleId: 0, access: 0 },
+										}}
+									/>
+								)
 							}}
 						/>
 						<Column<ExactValue>

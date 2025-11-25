@@ -14,30 +14,26 @@ import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const UsersList = observer(() => {
 	useDatalakeTitle('Пользователи')
 	const store = useAppStore()
 	const navigate = useNavigate()
-	const [users, setUsers] = useState([] as UserInfo[])
+	// Получаем пользователей из store (реактивно через MobX)
+	const users = store.usersStore.getUsers()
 	const [states, setStates] = useState<Record<string, string | null>>({})
 	const [search, setSearch] = useState('')
-
-	const hasLoadedRef = useRef(false)
-
-	const load = () => {
-		store.api.inventoryUsersGet().then((res) => setUsers(res.data))
-	}
 
 	const create = () => {
 		navigate(routes.users.create)
 	}
 
-	const getStates = useCallback(() => {
+	const getStates = useCallback(async () => {
 		if (!store.hasGlobalAccess(AccessType.Manager) || users.length === 0) return
-		return store.api.usersGetActivity(users.map((x) => x.guid)).then((res) => setStates(res.data))
+		const res = await store.api.usersGetActivity(users.map((x) => x.guid))
+		setStates(res.data)
 	}, [store, users])
 
 	const columns: TableColumnsType<UserInfo> = [
@@ -90,11 +86,6 @@ const UsersList = observer(() => {
 		},
 	]
 
-	useEffect(() => {
-		if (hasLoadedRef.current) return
-		hasLoadedRef.current = true
-		load()
-	}, [store.api])
 
 	return (
 		<>

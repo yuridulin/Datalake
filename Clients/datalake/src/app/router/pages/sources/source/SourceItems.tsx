@@ -4,7 +4,7 @@ import { LoadStatus } from '@/app/components/loaders/loaderTypes'
 import StatusLoader from '@/app/components/loaders/StatusLoader'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import compareValues from '@/functions/compareValues'
-import { SourceInfo, SourceItemInfo, SourceUpdateRequest, TagInfo, TagType } from '@/generated/data-contracts'
+import { SourceInfo, SourceItemInfo, SourceUpdateRequest, TagSimpleInfo, TagType } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import {
 	CheckCircleOutlined,
@@ -19,7 +19,7 @@ import debounce from 'debounce'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocalStorage } from 'react-use'
 
-type SourceTagInfo = TagInfo & { item?: string }
+type SourceTagInfo = TagSimpleInfo & { item?: string; sourceItem?: string | null }
 
 type SourceEntryInfo = {
 	itemInfo?: SourceItemInfo
@@ -33,7 +33,7 @@ interface GroupedEntry {
 	tagInfoArray: SourceTagInfo[]
 }
 
-const toSourceTagInfo = (tag: TagInfo): SourceTagInfo => {
+const toSourceTagInfo = (tag: TagSimpleInfo & { sourceItem?: string | null }): SourceTagInfo => {
 	return {
 		...tag,
 		item: tag.sourceItem ?? '',
@@ -51,7 +51,7 @@ const getLastUsage = (usage?: Record<string, string>) => {
 
 const mergeEntries = (
 	sourceItems: SourceItemInfo[],
-	tags: TagInfo[],
+	tags: (TagSimpleInfo & { sourceItem?: string | null })[],
 	usage: Record<string, Record<string, string>>,
 ): SourceEntryInfo[] => {
 	const entries: SourceEntryInfo[] = []
@@ -130,7 +130,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 	const [items, setItems] = useState([] as SourceEntryInfo[])
 	const [searchedItems, setSearchedItems] = useState([] as SourceEntryInfo[])
 	const [err, setErr] = useState(true)
-	const [created, setCreated] = useState(null as TagInfo | null)
+	const [created, setCreated] = useState(null as SourceTagInfo | null)
 	const [search, setSearch] = useState('')
 	const [viewMode, setViewMode] = useLocalStorage(localStorageKey, 'table' as ViewModeState)
 	const { token } = theme.useToken()
@@ -355,7 +355,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		},
 	]
 
-	const reload = () => {
+	const reload = useCallback(() => {
 		if (!source.id) return
 		setStatus('loading')
 		setErr(false)
@@ -374,7 +374,13 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 				if (tagIds.length > 0) {
 					try {
 						const usageResponse = await store.api.dataTagsGetUsage({ tagsId: tagIds })
-						usage = usageResponse.data ?? {}
+						// Преобразуем массив TagUsageInfo[] в Record<string, Record<string, string>>
+						usage = (usageResponse.data ?? []).reduce((acc, item) => {
+							if (item.tagId !== null && item.tagId !== undefined) {
+								acc[String(item.tagId)] = item.requests ?? {}
+							}
+							return acc
+						}, {} as Record<string, Record<string, string>>)
 					} catch (usageError) {
 						console.error('Не удалось получить usage тегов', usageError)
 					}
@@ -390,7 +396,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		}
 
 		fetchData()
-	}
+	}, [source.id, store.api])
 
 	const reloadDone = useCallback(() => setStatus('default'), [])
 
@@ -455,7 +461,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		if (hasLoadedRef.current || !source.id) return
 		hasLoadedRef.current = true
 		reload()
-	}, [store.api, source])
+	}, [store.api, source, reload])
 
 	if (source.address !== request.address || source.type !== request.type)
 		return <Alert message='Тип источника изменен. Сохраните, чтобы продолжить' />

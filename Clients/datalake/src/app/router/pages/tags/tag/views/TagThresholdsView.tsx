@@ -1,7 +1,7 @@
 import TagButton from '@/app/components/buttons/TagButton'
 import PollingLoader from '@/app/components/loaders/PollingLoader'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
-import { TagFullInfo, TagQuality, TagThresholdInfo, TagType, ValueRecord } from '@/generated/data-contracts'
+import { TagQuality, TagThresholdInfo, TagType, TagWithSettingsAndBlocksInfo, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { DollarCircleOutlined } from '@ant-design/icons'
@@ -10,7 +10,7 @@ import { ColumnsType } from 'antd/es/table'
 import { useCallback, useState } from 'react'
 
 interface TagThresholdsViewProps {
-	tag: TagFullInfo
+	tag: TagWithSettingsAndBlocksInfo
 }
 
 type TagThresholdsValues = Record<number, ValueRecord>

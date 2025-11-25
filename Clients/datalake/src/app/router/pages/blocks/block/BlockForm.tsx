@@ -7,7 +7,6 @@ import {
 	BlockTagRelation,
 	BlockUpdateRequest,
 	SourceType,
-	TagSimpleInfo,
 	TagType,
 } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
@@ -15,13 +14,8 @@ import { useAppStore } from '@/store/useAppStore'
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { App, Button, Dropdown, Form, Input, Popconfirm, Select, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-
-interface TagInfo extends TagSimpleInfo {
-	label: string
-	value: number
-}
 
 const BlockForm = observer(() => {
 	const store = useAppStore()
@@ -32,58 +26,73 @@ const BlockForm = observer(() => {
 	const navigate = useNavigate()
 	const [form] = Form.useForm<BlockUpdateRequest>()
 
+	const blockId = id ? Number(id) : undefined
+	// Получаем блок из store (реактивно через MobX)
+	const blockData = blockId ? store.blocksStore.getBlockById(blockId) : undefined
+
+	// Получаем теги из store (реактивно через MobX)
+	const tagsData = store.tagsStore.getTags()
+	const tags = useMemo(
+		() =>
+			tagsData
+				.map((x) => ({
+					...x,
+					label: x.name,
+					value: x.id,
+				}))
+				.sort((a, b) => a.label.localeCompare(b.label)),
+		[tagsData],
+	)
+
 	const [block, setBlock] = useState({} as BlockUpdateRequest)
-	const [tags, setTags] = useState([] as TagInfo[])
 	const [loading, setLoading] = useState(true)
 
-	const getBlock = () => {
-		store.api.inventoryBlocksGet(Number(id)).then((res) => {
-			const attachedTags = res.data.tags.map(
-				(tag) =>
-					({
-						id: tag.tag?.id ?? tag.tagId ?? 0,
-						name: tag.localName ?? tag.tag?.name ?? '',
-						relation: tag.relationType,
-					}) as AttachedTag,
-			)
-			setBlock({ ...res.data, tags: attachedTags })
-			form.setFieldsValue({
-				...res.data,
-				tags: attachedTags,
-			} as BlockUpdateRequest)
-		})
-	}
+	// Обновляем локальное состояние блока при загрузке из store
+	useEffect(() => {
+		if (!blockData) {
+			setLoading(true)
+			return
+		}
 
-	const updateBlock = (newInfo: BlockUpdateRequest) => {
-		store.api.inventoryBlocksUpdate(Number(id), newInfo).catch(() => {
+		const attachedTags = blockData.tags.map(
+			(tag) =>
+				({
+					id: tag.tag?.id ?? tag.tagId ?? 0,
+					name: tag.localName ?? tag.tag?.name ?? '',
+					relation: tag.relationType,
+				}) as AttachedTag,
+		)
+		const blockUpdate: BlockUpdateRequest = { ...blockData, tags: attachedTags }
+		setBlock(blockUpdate)
+		form.setFieldsValue(blockUpdate)
+		setLoading(false)
+	}, [blockData, form])
+
+	const updateBlock = async (newInfo: BlockUpdateRequest) => {
+		try {
+			await store.api.inventoryBlocksUpdate(Number(id), newInfo)
+			// Инвалидируем кэш и обновляем данные
+			if (blockId) {
+				store.blocksStore.invalidateBlock(blockId)
+				await store.blocksStore.refreshBlocks()
+			}
+		} catch {
 			app.notification.error({ message: 'Ошибка при сохранении' })
-		})
+		}
 	}
 
-	const deleteBlock = () => {
-		store.api.inventoryBlocksDelete(Number(id)).then(() => navigate(routes.blocks.root))
+	const deleteBlock = async () => {
+		try {
+			await store.api.inventoryBlocksDelete(Number(id))
+			// Инвалидируем кэш
+			if (blockId) {
+				store.blocksStore.invalidateBlock(blockId)
+			}
+			navigate(routes.blocks.root)
+		} catch (error) {
+			console.error('Failed to delete block:', error)
+		}
 	}
-
-	const getTags = () => {
-		setLoading(true)
-		store.api
-			.inventoryTagsGetAll()
-			.then((res) => {
-				setTags(
-					res.data
-						.map((x) => ({
-							...x,
-							label: x.name,
-							value: x.id,
-						}))
-						.sort((a, b) => a.label.localeCompare(b.label)),
-				)
-			})
-			.finally(() => setLoading(false))
-	}
-
-	useEffect(getBlock, [store.api, id, form])
-	useEffect(getTags, [store.api])
 
 	// Получаем текущие значения формы для проверки дубликатов
 	const attachedTagsList = Form.useWatch('tags', form) || []
@@ -154,15 +163,10 @@ const BlockForm = observer(() => {
 																		tagType: TagType.String,
 																		sourceId: SourceType.Manual,
 																	})
-																	.then((res) => {
-																		setTags([
-																			...tags,
-																			{
-																				...res.data,
-																				label: res.data.name,
-																				value: res.data.id,
-																			},
-																		])
+																	.then(async (res) => {
+																		// Инвалидируем кэш тегов
+																		store.tagsStore.invalidateTag(res.data.id)
+																		await store.tagsStore.refreshTags()
 																		add({
 																			id: res.data.id,
 																			name: res.data.name,
@@ -181,15 +185,10 @@ const BlockForm = observer(() => {
 																		tagType: TagType.Number,
 																		sourceId: SourceType.Manual,
 																	})
-																	.then((res) => {
-																		setTags([
-																			...tags,
-																			{
-																				...res.data,
-																				label: res.data.name,
-																				value: res.data.id,
-																			},
-																		])
+																	.then(async (res) => {
+																		// Инвалидируем кэш тегов
+																		store.tagsStore.invalidateTag(res.data.id)
+																		await store.tagsStore.refreshTags()
 																		add({
 																			id: res.data.id,
 																			name: res.data.name,
@@ -208,15 +207,10 @@ const BlockForm = observer(() => {
 																		tagType: TagType.Boolean,
 																		sourceId: SourceType.Manual,
 																	})
-																	.then((res) => {
-																		setTags([
-																			...tags,
-																			{
-																				...res.data,
-																				label: res.data.name,
-																				value: res.data.id,
-																			},
-																		])
+																	.then(async (res) => {
+																		// Инвалидируем кэш тегов
+																		store.tagsStore.invalidateTag(res.data.id)
+																		await store.tagsStore.refreshTags()
 																		add({
 																			id: res.data.id,
 																			name: res.data.name,

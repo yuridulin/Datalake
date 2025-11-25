@@ -7,7 +7,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
@@ -21,20 +21,13 @@ const setEmptyAsLeafs = (group: UserGroupTreeInfo): UserGroupTreeInfo => ({
 const UserGroupsTreeList = observer(() => {
 	useDatalakeTitle('Группы')
 	const store = useAppStore()
-	const [groups, setGroups] = useState([] as UserGroupTreeInfo[])
-	const hasLoadedRef = useRef(false)
+	// Получаем дерево групп из store (реактивно через MobX)
+	const groupsData = store.userGroupsStore.getTree()
+	const groups = useMemo(() => groupsData.map((x) => setEmptyAsLeafs(x)), [groupsData])
 
-	const load = useCallback(() => {
-		store.api.inventoryUserGroupsGetTree().then((res) => {
-			setGroups(res.data.map((x) => setEmptyAsLeafs(x)))
-		})
-	}, [store.api])
-
-	useEffect(() => {
-		if (hasLoadedRef.current) return
-		hasLoadedRef.current = true
-		load()
-	}, [store.api, load])
+	const load = useCallback(async () => {
+		await store.userGroupsStore.refreshTree()
+	}, [store.userGroupsStore])
 
 	const expandKey = 'expandedUserGroups'
 	const [expandedRowKeys, setExpandedRowKeys] = useLocalStorage(expandKey, [] as string[])

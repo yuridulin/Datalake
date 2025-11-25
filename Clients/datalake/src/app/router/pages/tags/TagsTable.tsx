@@ -4,12 +4,13 @@ import PollingLoader from '@/app/components/loaders/PollingLoader'
 import TagReceiveStateEl from '@/app/components/TagReceiveStateEl'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { compareDateStrings, compareRecords } from '@/functions/compareValues'
-import { SourceSimpleInfo, SourceType, TagQuality, TagSimpleInfo, TagStatusInfo, ValueRecord } from '@/generated/data-contracts'
+import { SourceSimpleInfo, SourceType, TagQuality, TagSimpleInfo, TagStatusInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
-import { useCallback, useEffect, useState } from 'react'
+import { observer } from 'mobx-react-lite'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 interface TagsTableProps {
 	tags: TagSimpleInfo[]
@@ -18,63 +19,64 @@ interface TagsTableProps {
 	showState?: boolean
 }
 
-const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = false }: TagsTableProps) => {
+const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showState = false }: TagsTableProps) => {
 	const store = useAppStore()
 	const [viewingTags, setViewingTags] = useState(tags)
 	const [search, setSearch] = useState('')
-	const [values, setValues] = useState<Record<number, ValueRecord>>({})
 
-	const loadValues = useCallback(() => {
-		return Promise.all([
-			store.api
-				.dataValuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: viewingTags.map((x) => x.id) }])
-				.then((res) => {
-					setValues(Object.fromEntries(res.data[0].tags.map((x) => [x.id, x.values[0]])))
-				})
-				.catch(() => setValues({})),
-			store.api
-				.dataTagsGetStatus({ tagsId: viewingTags.map((x) => x.id) })
-				.then((res) => {
-					const statesMap: Record<number, TagStatusInfo> = {}
-					res.data.forEach((status) => {
-						if (status.tagId !== undefined) {
-							statesMap[status.tagId] = status
-						}
-					})
-					setStates(statesMap)
-				})
-				.catch(() => setStates({})),
+	// Получаем значения и статусы из store (реактивно через MobX)
+	const tagIds = useMemo(() => viewingTags.map((x) => x.id), [viewingTags])
+	const valuesRequest = useMemo(
+		() => [{ requestKey: CLIENT_REQUESTKEY, tagsId: tagIds }],
+		[tagIds],
+	)
+	const valuesResponse = useMemo(
+		() => (tagIds.length > 0 ? store.valuesStore.getValues(valuesRequest) : []),
+		[tagIds.length, valuesRequest, store.valuesStore],
+	)
+	const values = useMemo(() => {
+		if (valuesResponse.length === 0) return {}
+		return Object.fromEntries(valuesResponse[0].tags.map((x) => [x.id, x.values[0]]))
+	}, [valuesResponse])
+
+	const statuses = store.valuesStore.getStatus(tagIds)
+	const states = useMemo(() => {
+		const statesMap: Record<number, TagStatusInfo> = {}
+		tagIds.forEach((tagId) => {
+			const status = statuses[tagId]
+			if (status) {
+				statesMap[tagId] = {
+					tagId,
+					status,
+					isError: status !== 'Ok',
+				}
+			}
+		})
+		return statesMap
+	}, [statuses, tagIds])
+
+	const loadValues = useCallback(async () => {
+		if (tagIds.length === 0) return
+		await Promise.all([
+			store.valuesStore.refreshValues(valuesRequest),
+			store.valuesStore.refreshStatus(tagIds),
 		])
-	}, [store.api, viewingTags])
+	}, [store.valuesStore, valuesRequest, tagIds])
 
-	const [states, setStates] = useState<Record<number, TagStatusInfo>>({})
-	const [sources, setSources] = useState<Record<number, SourceSimpleInfo>>({})
-
-	const loadSources = useCallback(() => {
-		if (hideSource) return Promise.resolve()
-
-		return store.api
-			.inventorySourcesGetAll({ withCustom: true })
-			.then((res) => {
-				const sourcesMap: Record<number, SourceSimpleInfo> = {}
-				res.data.forEach((source) => {
-					sourcesMap[source.id] = { id: source.id, name: source.name }
-				})
-				// Добавляем специальные системные источники
-				sourcesMap[SourceType.Manual] = { id: SourceType.Manual, name: 'Мануальный' }
-				sourcesMap[SourceType.Calculated] = { id: SourceType.Calculated, name: 'Вычисляемый' }
-				sourcesMap[SourceType.Aggregated] = { id: SourceType.Aggregated, name: 'Агрегатный' }
-				setSources(sourcesMap)
-			})
-			.catch(() => {
-				// В случае ошибки добавляем хотя бы системные источники
-				setSources({
-					[SourceType.Manual]: { id: SourceType.Manual, name: 'Мануальный' },
-					[SourceType.Calculated]: { id: SourceType.Calculated, name: 'Вычисляемый' },
-					[SourceType.Aggregated]: { id: SourceType.Aggregated, name: 'Агрегатный' },
-				})
-			})
-	}, [store.api, hideSource])
+	// Получаем источники из store (реактивно через MobX)
+	const sourcesData = store.sourcesStore.getSources()
+	const sources = useMemo(() => {
+		if (hideSource) return {}
+		const map: Record<number, SourceSimpleInfo> = {}
+		sourcesData.forEach((source) => {
+			map[source.id] = { id: source.id, name: source.name }
+		})
+		// Добавляем специальные системные источники
+		map[SourceType.Manual] = { id: SourceType.Manual, name: 'Мануальный' }
+		map[SourceType.Calculated] = { id: SourceType.Calculated, name: 'Вычисляемый' }
+		map[SourceType.Aggregated] = { id: SourceType.Aggregated, name: 'Агрегатный' }
+		return map
+	}, [sourcesData, hideSource])
 
 	const doSearch = useCallback(() => {
 		setViewingTags(
@@ -83,10 +85,6 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 	}, [search, tags])
 
 	useEffect(doSearch, [doSearch, search, tags])
-
-	useEffect(() => {
-		loadSources()
-	}, [loadSources])
 	return (
 		<>
 			{viewingTags.length ? <PollingLoader pollingFunction={loadValues} interval={5000} /> : <></>}
@@ -195,6 +193,6 @@ const TagsTable = ({ tags, hideSource = false, hideValue = false, showState = fa
 			</Table>
 		</>
 	)
-}
+})
 
 export default TagsTable

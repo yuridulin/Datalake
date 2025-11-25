@@ -58,12 +58,12 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 				// Ищем соответствующий входной параметр
 				const input = inputs?.find((x) => x.variableName === variableName)
 
-				if (input) {
-					const valueInfo = values[input.id]
+				if (input && input.tag) {
+					const valueInfo = values[input.tag.id]
 					let valueContent = <>?</>
 
 					if (valueInfo) {
-						valueContent = <TagCompactValue type={input.type} record={valueInfo} quality={null} />
+						valueContent = <TagCompactValue type={input.tag.type} record={valueInfo} quality={null} />
 					}
 
 					return valueContent
@@ -84,8 +84,10 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 
 	const getValues = useCallback(() => {
 		if (!inputs.length) return
+		const tagIds = inputs.map((x) => x.tag?.id).filter((id): id is number => id !== null && id !== undefined)
+		if (!tagIds.length) return
 		return Promise.all([
-			store.api.dataValuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: inputs.map((x) => x.id) }]).then((res) => {
+			store.api.dataValuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: tagIds }]).then((res) => {
 				const newValues = res.data[0].tags.reduce((acc, next) => {
 					acc[next.id] = next.values[0]
 					return acc
@@ -94,7 +96,10 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 			}),
 			store.api
 				.dataTagsGetStatus({ tagsId: [id] })
-				.then((res) => setStatus(res.data[id]))
+				.then((res) => {
+					const statusInfo = res.data[id]
+					setStatus(statusInfo?.status ?? undefined)
+				})
 				.catch(() => setStatus(undefined)),
 		])
 	}, [store.api, id, inputs])
@@ -125,14 +130,15 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 								title: 'Значение',
 								width: '10em',
 								render: (_, x) => {
-									const value = values[x.id]
-									return value ? <TagCompactValue type={x.type} quality={value.quality} record={value} /> : <>?</>
+									if (!x.tag) return <>?</>
+									const value = values[x.tag.id]
+									return value ? <TagCompactValue type={x.tag.type} quality={value.quality} record={value} /> : <>?</>
 								},
 							},
 							{
 								key: 'link',
 								title: 'Используемый тег',
-								render: (_, x) => <TagButton tag={x} />,
+								render: (_, x) => (x.tag ? <TagButton tag={x.tag} /> : <>не задан</>),
 							},
 						]}
 					/>

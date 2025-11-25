@@ -7,26 +7,19 @@ import TagTreeSelect from '@/app/components/tagTreeSelect/TagTreeSelect'
 import routes from '@/app/router/routes'
 import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import {
-	BlockTreeInfo,
 	SourceType,
 	TagAggregation,
-	TagInfo,
 	TagResolution,
-	TagSimpleInfo,
 	TagType,
 	TagUpdateInputRequest,
 	TagUpdateRequest,
+	TagWithSettingsAndBlocksInfo,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-
-type SourceOption = {
-	value: number
-	label: string
-}
 
 enum SourceStrategy {
 	Manual = SourceType.Manual,
@@ -57,10 +50,7 @@ const TagForm = () => {
 	const navigate = useNavigate()
 
 	// инфо
-	const [tag, setTag] = useState({} as TagInfo)
-	const [sources, setSources] = useState([] as SourceOption[])
-	const [blocks, setBlocks] = useState([] as BlockTreeInfo[])
-	const [tags, setTags] = useState([] as TagSimpleInfo[])
+	const [tag, setTag] = useState({} as TagWithSettingsAndBlocksInfo)
 
 	// изменяемые
 	const [isLoading, setLoading] = useState(false)
@@ -70,66 +60,69 @@ const TagForm = () => {
 	const [items, setItems] = useState([] as { value: string }[])
 	const [strategy, setStrategy] = useState(SourceStrategy.Manual)
 	const hasLoadedRef = useRef(false)
-	const lastIdRef = useRef<string | undefined>(id)
 	const lastSourceIdRef = useRef<number | undefined>(request.sourceId)
 	useEffect(() => console.log(request), [request])
 
-	// получение инфо
-	const loadTagData = () => {
-		if (!id) return
-		setLoading(true)
+	// Получаем данные из stores (реактивно через MobX)
+	const blocksData = store.blocksStore.getTree()
+	const tagsData = store.tagsStore.getTags()
+	const sourcesData = store.sourcesStore.getSources()
 
-		Promise.all([
-			store.api
-				.inventoryBlocksGetTree()
-				.then((res) => setBlocks(res.data))
-				.catch(() => setBlocks([])),
-			store.api
-				.inventoryTagsGetAll()
-				.then((res) => {
-					setTags(res.data)
-				})
-				.catch(() => setTags([])),
-			store.api.inventoryTagsGet(Number(id)).then((res) => {
-				const info = res.data
-				setTag(info)
-				setRequest({
-					...info,
-					sourceTagId: info.sourceTag?.id,
-					sourceTagBlockId: info.sourceTag?.blockId,
-					thresholdSourceTagId: info.thresholdSourceTag?.id,
-					thresholdSourceTagBlockId: info.thresholdSourceTag?.blockId,
-					formulaInputs: info.formulaInputs.map(
-						(x, index) =>
-							({
-								key: index,
-								tagId: x.id,
-								blockId: x.blockId,
-								variableName: x.variableName,
-							}) as unknown as UpdateInputRequest,
-					),
-					thresholds: info.thresholds ?? [],
-				})
-				setStrategy(
-					info.sourceId == SourceType.Manual
-						? SourceStrategy.Manual
-						: info.sourceId == SourceType.Calculated
-							? SourceStrategy.Calculated
-							: info.sourceId == SourceType.Aggregated
-								? SourceStrategy.Aggregated
-								: SourceStrategy.FromSource,
-				)
-			}),
-			store.api.inventorySourcesGetAll().then((res) => {
-				setSources(
-					res.data.map((source) => ({
-						value: source.id,
-						label: source.name,
-					})),
-				)
-			}),
-		]).finally(() => setLoading(false))
-	}
+	// Преобразуем данные в нужный формат
+	const blocks = useMemo(() => blocksData, [blocksData])
+	const tags = useMemo(() => tagsData, [tagsData])
+	const sources = useMemo(
+		() =>
+			sourcesData.map((source) => ({
+				value: source.id,
+				label: source.name,
+			})),
+		[sourcesData],
+	)
+
+	// Получаем тег из store
+	const tagId = id ? Number(id) : undefined
+	const tagInfo = tagId ? store.tagsStore.getTagById(tagId) : undefined
+
+	// Загружаем данные тега при первом монтировании или изменении id
+	useEffect(() => {
+		if (!tagId) return
+
+		// Если тег уже загружен, обновляем локальное состояние
+		if (tagInfo) {
+			setTag(tagInfo)
+			setRequest({
+				...tagInfo,
+				sourceTagId: tagInfo.sourceTag?.id,
+				sourceTagBlockId: tagInfo.sourceTag?.blockId,
+				thresholdSourceTagId: tagInfo.thresholdSourceTag?.id,
+				thresholdSourceTagBlockId: tagInfo.thresholdSourceTag?.blockId,
+				formulaInputs: tagInfo.formulaInputs.map(
+					(x, index) =>
+						({
+							key: index,
+							tagId: x.tag?.id,
+							blockId: x.blockId,
+							variableName: x.variableName,
+						}) as unknown as UpdateInputRequest,
+				),
+				thresholds: tagInfo.thresholds ?? [],
+			})
+			setStrategy(
+				tagInfo.sourceId == SourceType.Manual
+					? SourceStrategy.Manual
+					: tagInfo.sourceId == SourceType.Calculated
+						? SourceStrategy.Calculated
+						: tagInfo.sourceId == SourceType.Aggregated
+							? SourceStrategy.Aggregated
+							: SourceStrategy.FromSource,
+			)
+			setLoading(false)
+		} else {
+			// Если тег еще не загружен, показываем загрузку
+			setLoading(true)
+		}
+	}, [tagId, tagInfo])
 
 	const getItems = useCallback(() => {
 		if (!request.sourceId || request.sourceId <= 0) {
@@ -146,17 +139,6 @@ const TagForm = () => {
 		})
 	}, [store.api, request.sourceId])
 
-	useEffect(() => {
-		// Если изменился id, сбрасываем флаг загрузки
-		if (lastIdRef.current !== id) {
-			hasLoadedRef.current = false
-			lastIdRef.current = id
-		}
-
-		if (hasLoadedRef.current || !id) return
-		hasLoadedRef.current = true
-		loadTagData()
-	}, [store.api, id])
 
 	useEffect(() => {
 		// Если изменился sourceId, сбрасываем флаг загрузки
@@ -185,17 +167,26 @@ const TagForm = () => {
 		navigate(routes.tags.list)
 	}, [navigate])
 
-	const tagUpdate = () => {
-		store.api.inventoryTagsUpdate(Number(id), {
-			...request,
-			sourceId: strategy === SourceStrategy.FromSource ? request.sourceId : strategy,
-			formulaInputs: strategy === SourceStrategy.Calculated ? request.formulaInputs : [],
-			formula: strategy === SourceStrategy.Calculated ? request.formula : null,
-			sourceItem: strategy === SourceStrategy.FromSource ? request.sourceItem : null,
-			aggregation: strategy === SourceStrategy.Aggregated ? request.aggregation : null,
-			aggregationPeriod: strategy === SourceStrategy.Aggregated ? request.aggregationPeriod : null,
-			sourceTagId: strategy == SourceStrategy.Aggregated ? request.sourceTagId : null,
-		})
+	const tagUpdate = async () => {
+		try {
+			await store.api.inventoryTagsUpdate(Number(id), {
+				...request,
+				sourceId: strategy === SourceStrategy.FromSource ? request.sourceId : strategy,
+				formulaInputs: strategy === SourceStrategy.Calculated ? request.formulaInputs : [],
+				formula: strategy === SourceStrategy.Calculated ? request.formula : null,
+				sourceItem: strategy === SourceStrategy.FromSource ? request.sourceItem : null,
+				aggregation: strategy === SourceStrategy.Aggregated ? request.aggregation : null,
+				aggregationPeriod: strategy === SourceStrategy.Aggregated ? request.aggregationPeriod : null,
+				sourceTagId: strategy == SourceStrategy.Aggregated ? request.sourceTagId : null,
+			})
+			// Инвалидируем кэш тега после обновления
+			if (tagId) {
+				store.tagsStore.invalidateTag(tagId)
+				await store.tagsStore.refreshTags()
+			}
+		} catch (error) {
+			console.error('Failed to update tag:', error)
+		}
 	}
 
 	const tagDelete = () => store.api.inventoryTagsDelete(Number(id)).then(back)

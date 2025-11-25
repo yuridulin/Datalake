@@ -1,9 +1,9 @@
 import TagButton from '@/app/components/buttons/TagButton'
 import { Alert } from 'antd'
-import { TagInfo } from '../../generated/data-contracts'
+import { TagSimpleInfo } from '../../generated/data-contracts'
 
 type CreatedTagLinkerProps = {
-	tag: TagInfo
+	tag: TagSimpleInfo
 	onClose: (() => void) | undefined
 }
 

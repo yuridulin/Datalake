@@ -67,13 +67,31 @@ const ValuesMetrics = () => {
 		store.api
 			.dataTagsGetUsage({})
 			.then((res) => {
+				// Преобразуем массив TagUsageInfo в объект, группируя по requestKey
+				const usageByRequestKey: Record<string, { requests: string[]; lastExecutionTime: string }> = {}
+
+				res.data.forEach((tagUsage) => {
+					if (tagUsage.requests) {
+						Object.entries(tagUsage.requests).forEach(([requestKey, dateTime]) => {
+							if (!usageByRequestKey[requestKey]) {
+								usageByRequestKey[requestKey] = { requests: [], lastExecutionTime: '' }
+							}
+							usageByRequestKey[requestKey].requests.push(dateTime)
+							// Берем последнее время выполнения
+							if (!usageByRequestKey[requestKey].lastExecutionTime || dateTime > usageByRequestKey[requestKey].lastExecutionTime) {
+								usageByRequestKey[requestKey].lastExecutionTime = dateTime
+							}
+						})
+					}
+				})
+
 				// Преобразуем объект в массив для отображения в таблице
-				const metricsArray: MetricItem[] = Object.entries(res.data).map(([key, value]) => ({
-					key: { requestKey: key },
+				const metricsArray: MetricItem[] = Object.entries(usageByRequestKey).map(([requestKey, data]) => ({
+					key: { requestKey },
 					value: {
-						requestsLast24h: value.requestsLast24h || '0',
-						lastExecutionTime: value.lastExecutionTime || '0',
-						lastValuesCount: value.lastValuesCount || '0',
+						requestsLast24h: String(data.requests.length),
+						lastExecutionTime: data.lastExecutionTime || '0',
+						lastValuesCount: '0', // Эта информация недоступна в TagUsageInfo
 					},
 				}))
 				setMetrics(metricsArray)

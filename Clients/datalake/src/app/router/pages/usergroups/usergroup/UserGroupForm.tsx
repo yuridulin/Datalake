@@ -2,14 +2,14 @@ import UserGroupIcon from '@/app/components/icons/UserGroupIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
-import { AccessType, UserGroupDetailedInfo, UserGroupUpdateRequest } from '@/generated/data-contracts'
+import { AccessType, UserGroupUpdateRequest } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { App, Button, Form, Input, Popconfirm, Select, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 
 const UserGroupForm = observer(() => {
@@ -20,69 +20,69 @@ const UserGroupForm = observer(() => {
 	useDatalakeTitle('Группы', id, 'Изменение')
 	const [form] = Form.useForm<UserGroupUpdateRequest>()
 
-	const [ready, setGety] = useState(false)
-	const [group, setGroup] = useState({} as UserGroupDetailedInfo)
-	const [users, setUsers] = useState([] as { label: string; value: string }[])
+	// Получаем группу из store (реактивно через MobX)
+	const groupData = id ? store.userGroupsStore.getGroupByGuid(id) : undefined
+	const isLoadingGroup = id ? store.userGroupsStore.isLoadingGroups() : false
 
-	const getGroup = (guid: string) => {
-		store.api.inventoryUserGroupsGetWithDetails(guid).then((res) => {
-			if (res.data.guid) {
-				setGroup(res.data)
-				form.setFieldsValue({
-					name: res.data.name,
-					description: res.data.description,
-					parentGuid: null,
-					accessType: res.data.globalAccessType,
-					users: res.data.users,
-				} as UserGroupUpdateRequest)
-			}
-		})
-	}
+	// Получаем пользователей из store (реактивно через MobX)
+	const usersData = store.usersStore.getUsers()
+	const users = useMemo(
+		() =>
+			usersData.map((x) => ({
+				value: x.guid,
+				label: x.fullName || '?',
+			})),
+		[usersData],
+	)
 
-	const updateGroup = (newInfo: UserGroupUpdateRequest) => {
-		store.api
-			.inventoryUserGroupsUpdate(String(id), {
+	// Обновляем форму при загрузке группы из store
+	useEffect(() => {
+		if (!groupData) return
+
+		form.setFieldsValue({
+			name: groupData.name,
+			description: groupData.description,
+			parentGuid: null,
+			accessType: groupData.globalAccessType,
+			users: groupData.users,
+		} as UserGroupUpdateRequest)
+	}, [groupData, form])
+
+	const updateGroup = async (newInfo: UserGroupUpdateRequest) => {
+		try {
+			await store.api.inventoryUserGroupsUpdate(String(id), {
 				...newInfo,
-				users: newInfo.users || group.users || [],
+				users: newInfo.users || groupData?.users || [],
 			})
-			.catch(() => {
-				app.notification.error({ message: 'Ошибка при сохранении' })
-			})
+			// Инвалидируем кэш и обновляем данные
+			if (id) {
+				store.userGroupsStore.invalidateGroup(id)
+				await store.userGroupsStore.refreshGroups()
+			}
+		} catch {
+			app.notification.error({ message: 'Ошибка при сохранении' })
+		}
 	}
 
-	const deleteGroup = () => {
-		store.api.inventoryUserGroupsDelete(String(id)).then(() => navigate(routes.userGroups.toList()))
-	}
-
-	const getGety = () => setGety(!!group.guid)
-
-	const getUsers = () => {
-		store.api.inventoryUsersGet().then((res) => {
-			if (res.data)
-				setUsers(
-					res.data.map((x) => ({
-						value: x.guid,
-						label: x.fullName || '?',
-					})),
-				)
-		})
-	}
-
-	const load = () => {
-		getGroup(String(id))
-		getUsers()
+	const deleteGroup = async () => {
+		try {
+			await store.api.inventoryUserGroupsDelete(String(id))
+			// Инвалидируем кэш
+			if (id) {
+				store.userGroupsStore.invalidateGroup(id)
+			}
+			navigate(routes.userGroups.toList())
+		} catch (error) {
+			console.error('Failed to delete user group:', error)
+		}
 	}
 
 	const filterUserOption = (input: string, option?: { label: string; value: string }) =>
 		(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(load, [id])
-	useEffect(getGety, [group, users])
-
-	return !ready ? (
+	return isLoadingGroup && !groupData ? (
 		<Spin />
-	) : (
+	) : groupData ? (
 		<>
 			<PageHeader
 				left={[
@@ -91,7 +91,7 @@ const UserGroupForm = observer(() => {
 					</NavLink>,
 				]}
 				right={[
-					hasAccess(group.accessRule.access, AccessType.Editor) && (
+					hasAccess(groupData.accessRule.access, AccessType.Editor) && (
 						<Popconfirm
 							title='Вы уверены, что хотите удалить эту группу?'
 							placement='bottom'
@@ -108,7 +108,7 @@ const UserGroupForm = observer(() => {
 				]}
 				icon={<UserGroupIcon />}
 			>
-				{group.name}
+				{groupData.name}
 			</PageHeader>
 
 			<Form form={form} onFinish={updateGroup} labelCol={{ span: 8 }}>
@@ -183,7 +183,7 @@ const UserGroupForm = observer(() => {
 				)}
 			</Form>
 		</>
-	)
+	) : null
 })
 
 export default UserGroupForm

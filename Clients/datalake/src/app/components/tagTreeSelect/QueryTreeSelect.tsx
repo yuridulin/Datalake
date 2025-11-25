@@ -8,10 +8,11 @@ import {
 } from '@/app/components/tagTreeSelect/treeSelectShared'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { RELATION_TAG_SEPARATOR, SELECTED_SEPARATOR, URL_PARAMS } from '@/functions/urlParams'
-import { BlockSimpleInfo, BlockTreeInfo, TagSimpleInfo } from '@/generated/data-contracts'
+import { BlockSimpleInfo, BlockTreeInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { theme, TreeSelect } from 'antd'
 import { DataNode } from 'antd/es/tree'
+import { observer } from 'mobx-react-lite'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
@@ -45,7 +46,7 @@ const flattenNestedTags = (
 	return mapping
 }
 
-const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly = false }) => {
+const QueryTreeSelect: React.FC<QueryTreeSelectProps> = observer(({ onChange, manualOnly = false }) => {
 	const store = useAppStore()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const [checkedValues, setCheckedValues] = useState<string[]>([])
@@ -61,24 +62,18 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 		return param.split('~')
 	}, [searchParams])
 
+	// Получаем данные из stores (реактивно через MobX)
+	const blocksTree = store.blocksStore.getTree()
+	const tags = store.tagsStore.getTags()
+
+	// Обновляем дерево при изменении данных
 	useEffect(() => {
 		setLoading(false)
-		Promise.all([
-			store.api
-				.inventoryBlocksGetTree()
-				.then((res) => res.data)
-				.catch(() => [] as BlockTreeInfo[]),
-			store.api
-				.inventoryTagsGetAll()
-				.then((res) => res.data)
-				.catch(() => [] as TagSimpleInfo[]),
-		]).then((data) => {
-			const fullTree = createFullTree(data)
-			setTagMapping(flattenNestedTags(fullTree))
-			setTreeData(convertToTreeSelectNodes(fullTree, undefined, token, manualOnly))
-			setLoading(true)
-		})
-	}, [token, store.api, manualOnly])
+		const fullTree = createFullTree([blocksTree, tags])
+		setTagMapping(flattenNestedTags(fullTree))
+		setTreeData(convertToTreeSelectNodes(fullTree, undefined, token, manualOnly))
+		setLoading(true)
+	}, [token, blocksTree, tags, manualOnly])
 
 	useEffect(() => {
 		if (!loading) return
@@ -137,6 +132,6 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = ({ onChange, manualOnly 
 			onSearch={setSearchValue}
 		/>
 	)
-}
+})
 
 export default QueryTreeSelect

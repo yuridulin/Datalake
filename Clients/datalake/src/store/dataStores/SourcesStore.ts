@@ -10,19 +10,25 @@ export class SourcesStore extends BaseCacheStore {
 	// Кэш списка источников
 	private _sourcesCache = observable.box<SourceInfo[] | null>(null)
 
+	// Кэш отдельных источников по ID
+	private _sourcesByIdCache = observable.map<number, SourceInfo>()
+
 	// Кэш состояний активности источников (ключ: sourceId)
 	private _activityCache = observable.map<number, SourceActivityInfo>()
 
 	// TTL для разных типов данных (в миллисекундах)
 	private readonly TTL_LIST = 5 * 60 * 1000 // 5 минут для списка
+	private readonly TTL_ITEM = 10 * 60 * 1000 // 10 минут для отдельного источника
 	private readonly TTL_ACTIVITY = 30 * 1000 // 30 секунд для состояний активности
 
 	constructor(private api: Api) {
 		super()
 		makeObservable(this, {
 			getSources: true,
+			getSourceById: true,
 			getActivity: true,
 			isLoadingSources: true,
+			isLoadingSource: true,
 			invalidateSource: true,
 			refreshSources: true,
 			refreshActivity: true,
@@ -49,6 +55,29 @@ export class SourcesStore extends BaseCacheStore {
 		}
 
 		return cached ?? []
+	}
+
+	/**
+	 * Получает конкретный источник по ID
+	 * @param id Идентификатор источника
+	 * @returns Информация об источнике или undefined
+	 */
+	getSourceById(id: number): SourceInfo | undefined {
+		const cacheKey = `source_${id}`
+		const cached = this._sourcesByIdCache.get(id)
+
+		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
+			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
+				this.loadSourceById(id).catch(console.error)
+			}
+			return cached
+		}
+
+		if (!this.isLoading(cacheKey)) {
+			this.loadSourceById(id).catch(console.error)
+		}
+
+		return cached
 	}
 
 	/**
@@ -94,11 +123,21 @@ export class SourcesStore extends BaseCacheStore {
 	}
 
 	/**
+	 * Проверяет, идет ли загрузка конкретного источника
+	 * @param id Идентификатор источника
+	 * @returns true, если идет загрузка
+	 */
+	isLoadingSource(id: number): boolean {
+		return this.isLoading(`source_${id}`)
+	}
+
+	/**
 	 * Инвалидирует кэш для конкретного источника
 	 * @param id Идентификатор источника
 	 */
 	invalidateSource(id: number): void {
 		runInAction(() => {
+			this._sourcesByIdCache.delete(id)
 			this._activityCache.delete(id)
 			// Инвалидируем список, так как он может содержать этот источник
 			this.invalidateCache('sources_list')
@@ -153,6 +192,33 @@ export class SourcesStore extends BaseCacheStore {
 	}
 
 	/**
+	 * Загружает конкретный источник по ID
+	 * @param id Идентификатор источника
+	 */
+	private async loadSourceById(id: number): Promise<void> {
+		const cacheKey = `source_${id}`
+
+		if (this.isLoading(cacheKey)) return
+
+		this.setLoading(cacheKey, true)
+
+		try {
+			const response = await this.api.inventorySourcesGet(id)
+
+			if (response.status === 200) {
+				runInAction(() => {
+					this._sourcesByIdCache.set(id, response.data)
+					this.setLastFetchTime(cacheKey)
+				})
+			}
+		} catch (error) {
+			console.error(`Failed to load source ${id}:`, error)
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
 	 * Загружает состояния активности источников
 	 * @param sourceIds Массив идентификаторов источников
 	 */
@@ -166,9 +232,7 @@ export class SourcesStore extends BaseCacheStore {
 		this.setLoading(cacheKey, true)
 
 		try {
-			const response = await this.api.dataSourcesGetActivity({
-				sourceIds: sourceIds,
-			})
+			const response = await this.api.dataSourcesGetActivity(sourceIds)
 
 			if (response.status === 200) {
 				runInAction(() => {

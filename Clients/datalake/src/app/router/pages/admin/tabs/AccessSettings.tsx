@@ -46,6 +46,7 @@ type UserAuthWithNames = {
 		type: TagType
 		resolution: TagResolution
 		sourceType: SourceType
+		sourceId: number
 		accessRule: AccessRuleInfo
 	}[]
 }
@@ -136,6 +137,7 @@ const AccessSettings = () => {
 				})),
 				tags: Object.entries(info.tagsRules).map(([key, value]) => ({
 					...tags[key],
+					sourceId: tags[key]?.sourceId ?? 0,
 					accessRule: {
 						ruleId: value.id,
 						access: value.access,
@@ -226,13 +228,14 @@ const AccessSettings = () => {
 								<>
 									<TagButton
 										tag={{
-											id: 0,
+											id: tag.id ?? 0,
 											guid: tag.guid,
 											name: tag.name,
 											resolution: tag.resolution,
 											sourceType: tag.sourceType,
 											type: tag.type,
-											//accessRule: user.accessRule,
+											sourceId: tag.sourceId ?? 0,
+											accessRule: tag.accessRule,
 										}}
 									/>{' '}
 									: <AccessTypeEl type={tag.accessRule.access} />

@@ -3,13 +3,13 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { timeAgo } from '@/functions/dateHandle'
 import getSourceTypeName from '@/functions/getSourceTypeName'
-import { AccessType, SourceActivityInfo, SourceInfo, SourceType } from '@/generated/data-contracts'
+import { AccessType, SourceInfo, SourceType } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 
 interface DataCell extends SourceInfo {
@@ -24,88 +24,75 @@ const NotEnteredTypes = [SourceType.Aggregated, SourceType.Calculated, SourceTyp
 const SourcesList = observer(() => {
 	useDatalakeTitle('Источники')
 	const store = useAppStore()
-	const [sources, setSources] = useState([] as DataCell[])
-	const [states, setStates] = useState({} as Record<number, SourceActivityInfo>)
-	const hasLoadedRef = useRef(false)
+	// Получаем источники из store (реактивно через MobX)
+	const sourcesData = store.sourcesStore.getSources()
+
+	// Преобразуем данные в формат компонента
+	const sources = useMemo(() => {
+		if (sourcesData.length === 0) return []
+		const [system, user]: DataCell[] = [
+			{
+				isGroup: true,
+				id: -2000,
+				name: 'Системные источники',
+				isDisabled: false,
+				type: SourceType.Unset,
+				children: [],
+				link: '',
+			},
+			{
+				isGroup: true,
+				id: -1000,
+				name: 'Пользовательские источники',
+				isDisabled: false,
+				type: SourceType.Unset,
+				children: [],
+				link: '',
+			},
+		]
+		sourcesData.forEach((next) => {
+			if (ExcludedTypes.includes(next.type)) return
+			if (NotEnteredTypes.includes(next.type)) {
+				const link =
+					next.type === SourceType.Aggregated
+						? routes.tags.aggregated
+						: next.type === SourceType.Calculated
+							? routes.tags.calc
+							: next.type === SourceType.Manual
+								? routes.tags.manual
+								: ''
+				system.children?.push({ ...next, isGroup: false, link })
+			} else {
+				user.children?.push({ ...next, isGroup: false, link: routes.sources.toEditSource(next.id) })
+			}
+		})
+		system.children = system.children?.sort((a, b) => a.name.localeCompare(b.name))
+		user.children = user.children?.sort((a, b) => a.name.localeCompare(b.name))
+		return [user, system]
+	}, [sourcesData])
+
+	// Получаем состояния активности из store
+	const sourceIds = useMemo(
+		() => sources.flatMap((group) => (group.children || []).map((child) => child.id)),
+		[sources],
+	)
+	const states = store.sourcesStore.getActivity(sourceIds)
 
 	const getStates = useCallback(async () => {
-		if (sources.length === 0) return
-		// Собираем ID только реальных источников, исключая группы
-		const sourceIds = sources.flatMap((group) => (group.children || []).map((child) => child.id))
 		if (sourceIds.length === 0) return
-		const res = await store.api.dataSourcesGetActivity(sourceIds)
-		setStates(
-			res.data.reduce(
-				(agg, next) => {
-					agg[next.sourceId] = next
-					return agg
-				},
-				{} as Record<number, SourceActivityInfo>,
-			),
-		)
-	}, [store.api, sources])
+		await store.sourcesStore.refreshActivity(sourceIds)
+	}, [store.sourcesStore, sourceIds])
 
-	const load = useCallback(() => {
-		setSources([])
-		store.api
-			.inventorySourcesGetAll({ withCustom: true })
-			.then((res) => {
-				const [system, user]: DataCell[] = [
-					{
-						isGroup: true,
-						id: -2000,
-						name: 'Системные источники',
-						isDisabled: false,
-						type: SourceType.Unset,
-						children: [],
-						link: '',
-					},
-					{
-						isGroup: true,
-						id: -1000,
-						name: 'Пользовательские источники',
-						isDisabled: false,
-						type: SourceType.Unset,
-						children: [],
-						link: '',
-					},
-				]
-				res.data.reduce((agg, next) => {
-					if (ExcludedTypes.includes(next.type)) return agg
-					if (NotEnteredTypes.includes(next.type)) {
-						const link =
-							next.type === SourceType.Aggregated
-								? routes.tags.aggregated
-								: next.type === SourceType.Calculated
-									? routes.tags.calc
-									: next.type === SourceType.Manual
-										? routes.tags.manual
-										: ''
-						system.children?.push({ ...next, isGroup: false, link })
-					} else {
-						user.children?.push({ ...next, isGroup: false, link: routes.sources.toEditSource(next.id) })
-					}
-					return agg
-				}, [])
-				system.children = system.children?.sort((a, b) => a.name.localeCompare(b.name))
-				user.children = user.children?.sort((a, b) => a.name.localeCompare(b.name))
-				setSources([user, system])
-			})
-			.catch(() => {
-				notification.error({ message: 'Не удалось получить список источников' })
-			})
-	}, [store.api])
-
-	const createSource = useCallback(() => {
-		store.api
-			.inventorySourcesCreate()
-			.then(() => {
-				hasLoadedRef.current = false
-				load()
-				notification.success({ message: 'Источник создан' })
-			})
-			.catch(() => notification.error({ message: 'Не удалось создать источник' }))
-	}, [store.api, load])
+	const createSource = useCallback(async () => {
+		try {
+			await store.api.inventorySourcesCreate()
+			// Инвалидируем кэш и обновляем данные
+			await store.sourcesStore.refreshSources()
+			notification.success({ message: 'Источник создан' })
+		} catch {
+			notification.error({ message: 'Не удалось создать источник' })
+		}
+	}, [store])
 
 	const columns = useMemo(
 		() =>
@@ -220,18 +207,6 @@ const SourcesList = observer(() => {
 		[states],
 	)
 
-	useEffect(() => {
-		if (hasLoadedRef.current) return
-		hasLoadedRef.current = true
-		load()
-	}, [load])
-
-	// Загружаем состояния после того, как sources установлены
-	useEffect(() => {
-		if (sources.length > 0) {
-			getStates()
-		}
-	}, [sources, getStates])
 
 	return (
 		<>

@@ -23,6 +23,8 @@ type ExactValuesRowType = {
 	quality: TagQuality
 	resolution: TagResolution
 	sourceType: SourceType
+	sourceId?: number
+	accessRule?: { ruleId: number; access: number }
 	date: string
 }
 
@@ -47,6 +49,8 @@ const ExactValuesMode = forwardRef<ExcelExportModeHandles, TagViewerModeProps>((
 			boolean: valueObject.boolean,
 			quality: valueObject.quality,
 			sourceType: x.sourceType,
+			sourceId: 'sourceId' in x ? (x as { sourceId?: number }).sourceId : undefined,
+			accessRule: 'accessRule' in x ? (x as { accessRule?: { ruleId: number; access: number } }).accessRule : undefined,
 		} as ExactValuesRowType
 	})
 
@@ -109,7 +113,16 @@ const ExactValuesMode = forwardRef<ExcelExportModeHandles, TagViewerModeProps>((
 					title='Тег'
 					dataIndex='guid'
 					width='25%'
-					render={(_, row: ExactValuesRowType) => <TagButton tag={{ ...row, name: row.localName }} />}
+					render={(_, row: ExactValuesRowType) => (
+						<TagButton
+							tag={{
+								...row,
+								name: row.localName,
+								sourceId: row.sourceId ?? 0,
+								accessRule: row.accessRule ?? { ruleId: 0, access: 0 },
+							}}
+						/>
+					)}
 				/>
 				<Column
 					title='Значение'

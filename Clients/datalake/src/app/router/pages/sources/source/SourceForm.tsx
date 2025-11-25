@@ -3,56 +3,72 @@ import SourceIcon from '@/app/components/icons/SourceIcon'
 import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
-import { SourceInfo, SourceType, SourceUpdateRequest } from '@/generated/data-contracts'
+import { SourceType, SourceUpdateRequest } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
-import { Button, Input, Popconfirm, Radio } from 'antd'
+import { Button, Input, Popconfirm, Radio, Spin } from 'antd'
+import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import SourceItems from './SourceItems'
 
 const AvailableSourceTypes = [SourceType.Unset, SourceType.Inopc, SourceType.Datalake]
 
-const SourceForm = () => {
+const SourceForm = observer(() => {
 	const store = useAppStore()
 	const { id } = useParams()
 	useDatalakeTitle('Источники', '#' + id)
 	const navigate = useNavigate()
+
+	const sourceId = id ? Number(id) : undefined
+	// Получаем источник из store (реактивно через MobX)
+	const sourceData = sourceId ? store.sourcesStore.getSourceById(sourceId) : undefined
+	const isLoading = sourceId ? store.sourcesStore.isLoadingSource(sourceId) : false
 
 	const [request, setRequest] = useState<SourceUpdateRequest>({
 		name: '',
 		type: SourceType.Unset,
 		isDisabled: false,
 	})
-	const [source, setSource] = useState({} as SourceInfo)
 
-	function load() {
-		store.api.inventorySourcesGet(Number(id)).then((res) => {
-			const sourceInfo = res.data
-			setSource(sourceInfo)
-			setRequest({
-				isDisabled: sourceInfo.isDisabled,
-				name: sourceInfo.name,
-				type: sourceInfo.type,
-				address: sourceInfo.address,
-				description: sourceInfo.description,
-			})
-		})
-	}
-
-	function sourceUpdate() {
-		store.api.inventorySourcesUpdate(Number(id), request).then(load)
-	}
-
-	function sourceDelete() {
-		store.api.inventorySourcesDelete(Number(id)).then(() => navigate(routes.sources.list))
-	}
-
+	// Обновляем локальное состояние при загрузке из store
 	useEffect(() => {
-		if (!id) return
-		load()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [id])
+		if (!sourceData) return
+
+		setRequest({
+			isDisabled: sourceData.isDisabled,
+			name: sourceData.name,
+			type: sourceData.type,
+			address: sourceData.address,
+			description: sourceData.description,
+		})
+	}, [sourceData])
+
+	const sourceUpdate = async () => {
+		try {
+			await store.api.inventorySourcesUpdate(Number(id), request)
+			// Инвалидируем кэш и обновляем данные
+			if (sourceId) {
+				store.sourcesStore.invalidateSource(sourceId)
+				await store.sourcesStore.refreshSources()
+			}
+		} catch (error) {
+			console.error('Failed to update source:', error)
+		}
+	}
+
+	const sourceDelete = async () => {
+		try {
+			await store.api.inventorySourcesDelete(Number(id))
+			// Инвалидируем кэш
+			if (sourceId) {
+				store.sourcesStore.invalidateSource(sourceId)
+			}
+			navigate(routes.sources.list)
+		} catch (error) {
+			console.error('Failed to delete source:', error)
+		}
+	}
 
 	return (
 		<>
@@ -74,70 +90,76 @@ const SourceForm = () => {
 				]}
 				icon={<SourceIcon />}
 			>
-				{source.name}
+				{sourceData?.name ?? ''}
 			</PageHeader>
-			<FormRow title='Имя'>
-				<Input value={request.name} onChange={(e) => setRequest({ ...request, name: e.target.value })} />
-			</FormRow>
-			<FormRow title='Описание'>
-				<Input.TextArea
-					value={request.description ?? ''}
-					onChange={(e) => setRequest({ ...request, description: e.target.value })}
-				/>
-			</FormRow>
-			<FormRow title='Активность'>
-				<Radio.Group
-					value={request.isDisabled ?? false}
-					onChange={(e) => setRequest({ ...request, isDisabled: e.target.value })}
-				>
-					<Radio.Button key={1} value={false}>
-						Запущен
-					</Radio.Button>
-					<Radio.Button key={0} value={true}>
-						Остановлен
-					</Radio.Button>
-				</Radio.Group>
-			</FormRow>
-			<FormRow title='Тип источника'>
-				<Radio.Group
-					buttonStyle='solid'
-					value={request.type}
-					onChange={(e) => setRequest({ ...request, type: e.target.value })}
-				>
-					{AvailableSourceTypes.map((x) => (
-						<Radio.Button
-							key={x}
-							value={x}
-							style={{
-								fontWeight: x === source.type ? 'bold' : 'inherit',
-								textDecoration: x === source.type ? 'underline' : 'inherit',
-							}}
-						>
-							{getSourceTypeName(x)}
-						</Radio.Button>
-					))}
-				</Radio.Group>
-			</FormRow>
-			{request.type > 0 && (
+			{isLoading && !sourceData ? (
+				<Spin />
+			) : (
 				<>
-					<FormRow title='Адрес'>
-						<Input
-							value={request.address ?? ''}
-							onChange={(e) =>
-								setRequest({
-									...request,
-									address: e.target.value,
-								})
-							}
+					<FormRow title='Имя'>
+						<Input value={request.name} onChange={(e) => setRequest({ ...request, name: e.target.value })} />
+					</FormRow>
+					<FormRow title='Описание'>
+						<Input.TextArea
+							value={request.description ?? ''}
+							onChange={(e) => setRequest({ ...request, description: e.target.value })}
 						/>
 					</FormRow>
-					<FormRow title='Доступные значения'>
-						<SourceItems source={source} request={request} />
+					<FormRow title='Активность'>
+						<Radio.Group
+							value={request.isDisabled ?? false}
+							onChange={(e) => setRequest({ ...request, isDisabled: e.target.value })}
+						>
+							<Radio.Button key={1} value={false}>
+								Запущен
+							</Radio.Button>
+							<Radio.Button key={0} value={true}>
+								Остановлен
+							</Radio.Button>
+						</Radio.Group>
 					</FormRow>
+					<FormRow title='Тип источника'>
+						<Radio.Group
+							buttonStyle='solid'
+							value={request.type}
+							onChange={(e) => setRequest({ ...request, type: e.target.value })}
+						>
+							{AvailableSourceTypes.map((x) => (
+								<Radio.Button
+									key={x}
+									value={x}
+									style={{
+										fontWeight: x === sourceData?.type ? 'bold' : 'inherit',
+										textDecoration: x === sourceData?.type ? 'underline' : 'inherit',
+									}}
+								>
+									{getSourceTypeName(x)}
+								</Radio.Button>
+							))}
+						</Radio.Group>
+					</FormRow>
+					{request.type > 0 && (
+						<>
+							<FormRow title='Адрес'>
+								<Input
+									value={request.address ?? ''}
+									onChange={(e) =>
+										setRequest({
+											...request,
+											address: e.target.value,
+										})
+									}
+								/>
+							</FormRow>
+							<FormRow title='Доступные значения'>
+								{sourceData && <SourceItems source={sourceData} request={request} />}
+							</FormRow>
+						</>
+					)}
 				</>
 			)}
 		</>
 	)
-}
+})
 
 export default SourceForm

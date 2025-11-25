@@ -130,7 +130,10 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	}, [settings, tagMapping])
 
 	// Получаем значения из store (реактивно через MobX)
-	const valuesResponse = valuesRequest ? store.valuesStore.getValues(valuesRequest) : []
+	const valuesResponse = useMemo(
+		() => (valuesRequest ? store.valuesStore.getValues(valuesRequest) : []),
+		[valuesRequest, store.valuesStore],
+	)
 
 	// Проверяем состояние загрузки
 	const isLoading = valuesRequest ? store.valuesStore.isLoadingValues(valuesRequest) : false

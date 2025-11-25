@@ -37,44 +37,61 @@ const UserForm = observer(() => {
 	const [request, setRequest] = useState({} as UserUpdateRequest)
 	const [newType, setNewType] = useState(UserType.Local)
 	const [keycloakUsers, setKeycloakUsers] = useState<UserEnergoIdInfo[]>([])
-	const [loading, setLoading] = useState(true)
+	// Получаем пользователя из store (реактивно через MobX)
+	const userData = id ? store.usersStore.getUserByGuid(id) : undefined
+	const isLoading = id ? store.usersStore.isLoadingUsers() : false
 
-	const load = () => {
-		if (!id) return
-		setLoading(true)
-		store.api.inventoryUsersGetWithDetails(String(id)).then((res) => {
-			setNewType(res.data.type)
-			setUser({
-				...res.data,
-				oldType: res.data.type,
-			})
-			setRequest({
-				login: res.data.login,
-				accessType: res.data.accessType,
-				fullName: res.data.fullName,
-				createNewStaticHash: false,
-				password: '',
-				energoIdGuid: res.data.type === UserType.EnergoId ? res.data.guid : null,
-				type: res.data.type,
-			})
-			setOldName(res.data.fullName ?? id)
-			setLoading(false)
+	// Обновляем локальное состояние при загрузке из store
+	useEffect(() => {
+		if (!userData) return
+
+		setNewType(userData.type)
+		setUser({
+			...userData,
+			oldType: userData.type,
 		})
+		setRequest({
+			login: userData.login,
+			accessType: userData.accessType,
+			fullName: userData.fullName,
+			createNewStaticHash: false,
+			password: '',
+			energoIdGuid: userData.type === UserType.EnergoId ? userData.guid : null,
+			type: userData.type,
+		})
+		setOldName(userData.fullName ?? id)
+	}, [userData, id])
 
+	// Загружаем список EnergoId пользователей
+	useEffect(() => {
 		store.api.inventoryEnergoIdGetEnergoId().then((res) => !!res && setKeycloakUsers(res.data))
+	}, [store.api])
+
+	const update = async () => {
+		try {
+			const response = await store.api.inventoryUsersUpdate(String(id), request)
+			if (response.status >= 300) return
+			// Инвалидируем кэш и обновляем данные
+			if (id) {
+				store.usersStore.invalidateUser(id)
+				await store.usersStore.refreshUsers()
+			}
+		} catch (error) {
+			console.error('Failed to update user:', error)
+		}
 	}
 
-	useEffect(load, [store.api, id])
-
-	function update() {
-		store.api.inventoryUsersUpdate(String(id), request).then((res) => {
-			if (res.status >= 300) return
-			load()
-		})
-	}
-
-	function del() {
-		store.api.inventoryUsersDelete(String(id)).then(() => navigate(routes.users.list))
+	const del = async () => {
+		try {
+			await store.api.inventoryUsersDelete(String(id))
+			// Инвалидируем кэш
+			if (id) {
+				store.usersStore.invalidateUser(id)
+			}
+			navigate(routes.users.list)
+		} catch (error) {
+			console.error('Failed to delete user:', error)
+		}
 	}
 
 	const options: EnergoIdOption[] = keycloakUsers.map((x) => ({
@@ -98,9 +115,9 @@ const UserForm = observer(() => {
 		search: `${x.fullName ?? ''} ${x.email ?? ''} ${x.energoIdGuid ?? ''}`.toLowerCase(),
 	}))
 
-	return loading ? (
+	return isLoading && !userData ? (
 		<Spin />
-	) : (
+	) : userData ? (
 		<>
 			<PageHeader
 				left={[<Button onClick={() => navigate(routes.users.list)}>Вернуться</Button>]}
@@ -241,7 +258,7 @@ const UserForm = observer(() => {
 				</div>
 			</form>
 		</>
-	)
+	) : null
 })
 
 export default UserForm

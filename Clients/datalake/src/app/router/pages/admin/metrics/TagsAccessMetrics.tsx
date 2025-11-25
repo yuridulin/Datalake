@@ -42,11 +42,17 @@ const TagsAccessMetrics = () => {
 				.catch(() => {
 					notification.error({ message: 'Не удалось прочитать список тегов' })
 				}),
-			store.api
-				.dataTagsGetUsage({})
-				.then((res) => {
-					metrics = res.data
-				})
+		store.api
+			.dataTagsGetUsage({})
+			.then((res) => {
+				// Преобразуем массив TagUsageInfo[] в Record<string, Record<string, string>>
+				metrics = (res.data ?? []).reduce((acc, item) => {
+					if (item.tagId !== null && item.tagId !== undefined) {
+						acc[String(item.tagId)] = item.requests ?? {}
+					}
+					return acc
+				}, {} as Record<string, Record<string, string>>)
+			})
 				.catch(() => {
 					notification.error({ message: 'Не удалось прочитать метрики доступа к тегам' })
 				}),

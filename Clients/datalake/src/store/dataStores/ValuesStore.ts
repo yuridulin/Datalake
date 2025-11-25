@@ -1,5 +1,5 @@
 import { Api } from '@/generated/Api'
-import { DataValuesGetPayload, TagStatusInfo, ValueRecord, ValuesResponse } from '@/generated/data-contracts'
+import { DataValuesGetPayload, ValuesResponse } from '@/generated/data-contracts'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
 
@@ -90,9 +90,10 @@ export class ValuesStore extends BaseCacheStore {
 
 	/**
 	 * Инвалидирует кэш значений для указанных тегов
-	 * @param tagsId Массив идентификаторов тегов
+	 * @param _tagsId Массив идентификаторов тегов (не используется, но оставлен для совместимости API)
 	 */
-	invalidateValues(tagsId: number[]): void {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	invalidateValues(_tagsId: number[]): void {
 		runInAction(() => {
 			// Инвалидируем все кэшированные запросы, которые содержат эти теги
 			// Это упрощенная версия - в реальности нужно проверять содержимое запросов
