@@ -17,7 +17,7 @@ import {
 import { useAppStore } from '@/store/useAppStore'
 import { Divider, Tree } from 'antd'
 import { DataNode } from 'antd/es/tree'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import 'react18-json-view/src/style.css'
 
 type UserAuthWithNames = {
@@ -55,6 +55,7 @@ type UserAuthWithNames = {
 const AccessSettings = () => {
 	const store = useAppStore()
 	const [rights, setRights] = useState([] as DataNode[])
+	const hasLoadedRef = useRef(false)
 
 	const load = () => {
 		let groups: Record<string, string>
@@ -254,7 +255,16 @@ const AccessSettings = () => {
 		})
 	}
 
-	useEffect(load, [store.api])
+	useEffect(() => {
+		hasLoadedRef.current = false
+	}, [store.api])
+
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		load()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [store.api])
 
 	return (
 		<>

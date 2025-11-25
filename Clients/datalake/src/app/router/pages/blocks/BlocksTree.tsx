@@ -7,7 +7,7 @@ import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
@@ -85,6 +85,11 @@ const BlocksTree = observer(() => {
 			console.error('Failed to create block:', error)
 		}
 	}
+
+	// Обновляем данные при переходе на страницу
+	useEffect(() => {
+		store.blocksStore.refreshBlocks().catch(console.error)
+	}, [store.blocksStore])
 
 	// Table columns configuration
 	const columns: TableColumnsType<BlockTreeInfo> = [

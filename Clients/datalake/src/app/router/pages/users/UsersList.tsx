@@ -14,7 +14,7 @@ import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const UsersList = observer(() => {
@@ -35,6 +35,11 @@ const UsersList = observer(() => {
 		const res = await store.api.usersGetActivity(users.map((x) => x.guid))
 		setStates(res.data)
 	}, [store, users])
+
+	// Обновляем данные при переходе на страницу
+	useEffect(() => {
+		store.usersStore.refreshUsers().catch(console.error)
+	}, [store.usersStore])
 
 	const columns: TableColumnsType<UserInfo> = [
 		{

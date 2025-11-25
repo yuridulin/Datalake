@@ -15,7 +15,7 @@ public interface IReceiverService
 	/// <param name="items">Список запрашиваемых значений</param>
 	/// <param name="address">Адрес сервера</param>
 	/// <returns>Ответ с данными</returns>
-	Task<RemoteResponseDto> AskSourceAsync(SourceType sourceType, string[]? items, string? address, int? port)
+	Task<RemoteResponseDto> AskSourceAsync(SourceType sourceType, string[]? items = null, string? address = null, int? port = 81)
 	{
 		return sourceType switch
 		{

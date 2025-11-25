@@ -5,7 +5,7 @@ import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import TagsTable from './TagsTable'
 
 const TagsAggregatedList = observer(() => {
@@ -31,6 +31,11 @@ const TagsAggregatedList = observer(() => {
 			console.error('Failed to create tag:', error)
 		}
 	}, [store])
+
+	// Обновляем данные при переходе на страницу
+	useEffect(() => {
+		store.tagsStore.refreshTags(SourceType.Aggregated).catch(console.error)
+	}, [store.tagsStore])
 
 	return (
 		<>

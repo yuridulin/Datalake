@@ -2,7 +2,7 @@ import { TagSimpleInfo } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { notification, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type TagWithMetric = {
 	id: number
@@ -28,6 +28,7 @@ const columns: ColumnsType<TagWithMetric> = [
 const TagsAccessMetrics = () => {
 	const store = useAppStore()
 	const [tagsMetrics, setTagsMetrics] = useState([] as TagWithMetric[])
+	const hasLoadedRef = useRef(false)
 
 	const initialLoad = () => {
 		let tags: TagSimpleInfo[] = []
@@ -75,7 +76,16 @@ const TagsAccessMetrics = () => {
 			})
 	}
 
-	useEffect(initialLoad, [store.api])
+	useEffect(() => {
+		hasLoadedRef.current = false
+	}, [store.api])
+
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		initialLoad()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [store.api])
 
 	return (
 		<Table

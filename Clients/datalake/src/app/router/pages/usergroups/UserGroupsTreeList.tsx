@@ -7,7 +7,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
@@ -27,6 +27,11 @@ const UserGroupsTreeList = observer(() => {
 
 	const load = useCallback(async () => {
 		await store.userGroupsStore.refreshTree()
+	}, [store.userGroupsStore])
+
+	// Обновляем данные при переходе на страницу
+	useEffect(() => {
+		store.userGroupsStore.refreshTree().catch(console.error)
 	}, [store.userGroupsStore])
 
 	const expandKey = 'expandedUserGroups'

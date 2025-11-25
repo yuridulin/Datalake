@@ -9,7 +9,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 
 interface DataCell extends SourceWithSettingsInfo {
@@ -95,6 +95,11 @@ const SourcesList = observer(() => {
 			notification.error({ message: 'Не удалось создать источник' })
 		}
 	}, [store])
+
+	// Обновляем данные при переходе на страницу
+	useEffect(() => {
+		store.sourcesStore.refreshSources().catch(console.error)
+	}, [store.sourcesStore])
 
 	const columns = useMemo(
 		() =>

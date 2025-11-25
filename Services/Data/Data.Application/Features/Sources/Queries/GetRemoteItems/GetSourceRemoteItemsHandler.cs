@@ -21,10 +21,8 @@ public class GetSourceRemoteItemsHandler(
 			?? throw new ApplicationException("Источник данных не найден");
 
 		var sourceItemsResponse = await receiverService.AskSourceAsync(
-			source.Type,
-			null,
-			source.Address,
-			null);
+			sourceType: source.Type,
+			address: source.Address);
 
 		var sourceItems = sourceItemsResponse.Tags
 			.DistinctBy(x => x.Name)
