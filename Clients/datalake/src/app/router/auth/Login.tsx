@@ -1,5 +1,6 @@
 import { loginWithKeycloak } from '@/app/router/auth/keycloak/keycloakService'
 import { AuthLoginPassRequest } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Form, Input, Space } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -20,7 +21,7 @@ const Login = observer(() => {
 	}
 
 	const onFinishFailed = (errorInfo: ValidateErrorEntity<AuthLoginPassRequest>) => {
-		console.warn('Failed:', errorInfo)
+		logger.warn('Login form validation failed', { component: 'Login', errorInfo })
 	}
 
 	return store.isAuthenticated ? (

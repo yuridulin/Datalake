@@ -5,6 +5,7 @@ import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
 import { AccessType, UserEnergoIdInfo, UserInfo, UserType, UserUpdateRequest } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { Button, Input, Popconfirm, Radio, Select, Spin, Tag } from 'antd'
@@ -77,7 +78,11 @@ const UserForm = observer(() => {
 				await store.usersStore.refreshUsers()
 			}
 		} catch (error) {
-			console.error('Failed to update user:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to update user'), {
+				component: 'UserForm',
+				action: 'update',
+				userId: id,
+			})
 		}
 	}
 
@@ -90,7 +95,11 @@ const UserForm = observer(() => {
 			}
 			navigate(routes.users.list)
 		} catch (error) {
-			console.error('Failed to delete user:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to delete user'), {
+				component: 'UserForm',
+				action: 'del',
+				userId: id,
+			})
 		}
 	}
 

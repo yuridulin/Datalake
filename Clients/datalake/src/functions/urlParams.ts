@@ -1,4 +1,5 @@
 import { serializeDate } from '@/functions/dateHandle'
+import { logger } from '@/services/logger'
 import { Dayjs } from 'dayjs'
 
 export const TimeModes = {
@@ -35,7 +36,7 @@ export interface ViewerParams {
 // Установка параметров просмотра значений в URLSearchParams
 export const setViewerParams = (searchParams: URLSearchParams, params: ViewerParams): void => {
 	if (!params.mode) {
-		console.warn('Режим чтения данных не получен!')
+		logger.warn('Режим чтения данных не получен!', { component: 'urlParams', action: 'setViewerParams' })
 		return
 	}
 

@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { BlockDetailedInfo, BlockTreeInfo, BlockWithTagsInfo } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
 
@@ -44,13 +45,25 @@ export class BlocksStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadBlocks().catch(console.error)
+				this.loadBlocks().catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'BlocksStore',
+						method: 'getBlocks',
+						action: 'loadBlocks',
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadBlocks().catch(console.error)
+			this.loadBlocks().catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'BlocksStore',
+					method: 'getBlocks',
+					action: 'loadBlocks',
+				})
+			})
 		}
 
 		return cached ?? []
@@ -66,13 +79,25 @@ export class BlocksStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_TREE)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_TREE)) {
-				this.loadTree().catch(console.error)
+				this.loadTree().catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'BlocksStore',
+						method: 'getTree',
+						action: 'loadTree',
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadTree().catch(console.error)
+			this.loadTree().catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'BlocksStore',
+					method: 'getTree',
+					action: 'loadTree',
+				})
+			})
 		}
 
 		return cached ?? []
@@ -89,13 +114,27 @@ export class BlocksStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadBlockById(id).catch(console.error)
+				this.loadBlockById(id).catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'BlocksStore',
+						method: 'getBlockById',
+						action: 'loadBlockById',
+						blockId: id,
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadBlockById(id).catch(console.error)
+			this.loadBlockById(id).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'BlocksStore',
+					method: 'getBlockById',
+					action: 'loadBlockById',
+					blockId: id,
+				})
+			})
 		}
 
 		return cached
@@ -158,7 +197,10 @@ export class BlocksStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load blocks:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load blocks'), {
+				component: 'BlocksStore',
+				method: 'loadBlocks',
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
@@ -184,7 +226,10 @@ export class BlocksStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load blocks tree:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load blocks tree'), {
+				component: 'BlocksStore',
+				method: 'loadTree',
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
@@ -211,7 +256,11 @@ export class BlocksStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error(`Failed to load block ${id}:`, error)
+			logger.error(error instanceof Error ? error : new Error(`Failed to load block ${id}`), {
+				component: 'BlocksStore',
+				method: 'loadBlockById',
+				blockId: id,
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}

@@ -1,6 +1,7 @@
 import { Button, Result } from 'antd'
 import { ErrorResponse, isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom'
 import { HomeOutlined, ReloadOutlined } from '@ant-design/icons'
+import { logger } from '@/services/logger'
 
 const AppError = () => {
 	const error = useRouteError()
@@ -18,8 +19,11 @@ const AppError = () => {
 	} else if (typeof error === 'string') {
 		errorMessage = error
 	} else {
-		// TODO: Заменить на logger после реализации пункта 1.2
-		console.error('Unknown route error:', error)
+		logger.error('Unknown route error', {
+			component: 'AppError',
+			action: 'handleRouteError',
+			errorType: typeof error,
+		})
 		errorMessage = 'Произошла неизвестная ошибка'
 	}
 

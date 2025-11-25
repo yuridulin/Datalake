@@ -13,6 +13,7 @@ import {
 	ValueResult,
 	ValueWriteRequest,
 } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { TagValue } from '@/types/tagValue'
@@ -163,7 +164,10 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 		try {
 			await store.valuesStore.refreshValues(valuesRequest)
 		} catch (error) {
-			console.error('Failed to load values:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load values'), {
+				component: 'TagsValuesWriter',
+				action: 'getValues',
+			})
 		} finally {
 			setLoading(false)
 		}
@@ -197,7 +201,10 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 			store.valuesStore.invalidateValues(tagIds)
 			await getValues()
 		} catch (error) {
-			console.error('Failed to write values:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to write values'), {
+				component: 'TagsValuesWriter',
+				action: 'writeValues',
+			})
 		}
 	}
 

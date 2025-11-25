@@ -2,6 +2,7 @@ import CreatedTagLinker from '@/app/components/CreatedTagsLinker'
 import PageHeader from '@/app/components/PageHeader'
 import { SourceType, TagType, TagWithSettingsInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -28,13 +29,21 @@ const TagsCalculatedList = observer(() => {
 				setCreated(response.data)
 			}
 		} catch (error) {
-			console.error('Failed to create tag:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to create tag'), {
+				component: 'TagsCalculatedList',
+				action: 'createTag',
+			})
 		}
 	}, [store])
 
 	// Обновляем данные при переходе на страницу
 	useEffect(() => {
-		store.tagsStore.refreshTags(SourceType.Calculated).catch(console.error)
+		store.tagsStore.refreshTags(SourceType.Calculated).catch((error) => {
+			logger.error(error instanceof Error ? error : new Error(String(error)), {
+				component: 'TagsCalculatedList',
+				action: 'refreshTags',
+			})
+		})
 	}, [store.tagsStore])
 
 	return (

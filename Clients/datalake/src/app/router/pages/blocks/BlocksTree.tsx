@@ -4,6 +4,7 @@ import PageHeader from '@/app/components/PageHeader'
 import ProtectedButton from '@/app/components/ProtectedButton'
 import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -82,13 +83,21 @@ const BlocksTree = observer(() => {
 			// Инвалидируем кэш и обновляем данные
 			await store.blocksStore.refreshBlocks()
 		} catch (error) {
-			console.error('Failed to create block:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to create block'), {
+				component: 'BlocksTree',
+				action: 'handleCreateBlock',
+			})
 		}
 	}
 
 	// Обновляем данные при переходе на страницу
 	useEffect(() => {
-		store.blocksStore.refreshBlocks().catch(console.error)
+		store.blocksStore.refreshBlocks().catch((error) => {
+			logger.error(error instanceof Error ? error : new Error(String(error)), {
+				component: 'BlocksTree',
+				action: 'refreshBlocks',
+			})
+		})
 	}, [store.blocksStore])
 
 	// Table columns configuration

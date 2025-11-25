@@ -3,6 +3,7 @@ import UserGroupButton from '@/app/components/buttons/UserGroupButton'
 import PageHeader from '@/app/components/PageHeader'
 import { AccessType, UserGroupTreeInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
@@ -31,7 +32,12 @@ const UserGroupsTreeList = observer(() => {
 
 	// Обновляем данные при переходе на страницу
 	useEffect(() => {
-		store.userGroupsStore.refreshTree().catch(console.error)
+		store.userGroupsStore.refreshTree().catch((error) => {
+			logger.error(error instanceof Error ? error : new Error(String(error)), {
+				component: 'UserGroupsTreeList',
+				action: 'refreshTree',
+			})
+		})
 	}, [store.userGroupsStore])
 
 	const expandKey = 'expandedUserGroups'

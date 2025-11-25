@@ -3,6 +3,7 @@ import PollingLoader from '@/app/components/loaders/PollingLoader'
 import LogCategoryEl from '@/app/components/LogCategoryEl'
 import getLogCategoryName from '@/functions/getLogCategoryName'
 import { LogCategory, LogInfo } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import { ColumnType } from 'antd/es/table'
@@ -86,7 +87,12 @@ const LogsTableEl = ({ sourceId, blockId, tagId, userGuid, userGroupGuid }: Logs
 
 	const addLogs = (newLogs: LogInfo[]) => {
 		if (!newLogs.length) return
-		console.log('addLogs from', Math.min(...newLogs.map((x) => x.id)), 'to', Math.max(...newLogs.map((x) => x.id)))
+		logger.debug('addLogs', {
+			component: 'LogsTableEl',
+			action: 'addLogs',
+			from: Math.min(...newLogs.map((x) => x.id)),
+			to: Math.max(...newLogs.map((x) => x.id)),
+		})
 		setLogs(() => {
 			const uniqueLogs: Record<number, LogInfo> = {}
 			logs.concat(newLogs).forEach((log) => {

@@ -5,6 +5,7 @@ import StatusLoader from '@/app/components/loaders/StatusLoader'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import compareValues from '@/functions/compareValues'
 import { SourceItemInfo, SourceUpdateRequest, SourceWithSettingsInfo, TagSimpleInfo, TagType } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import {
 	CheckCircleOutlined,
@@ -382,7 +383,10 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 							return acc
 						}, {} as Record<string, Record<string, string>>)
 					} catch (usageError) {
-						console.error('Не удалось получить usage тегов', usageError)
+						logger.error(usageError instanceof Error ? usageError : new Error('Не удалось получить usage тегов'), {
+							component: 'SourceItems',
+							action: 'loadSourceItems',
+						})
 					}
 				}
 

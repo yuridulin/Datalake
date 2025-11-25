@@ -1,4 +1,5 @@
 import routes from '@/app/router/routes'
+import { logger } from '@/services/logger'
 import { appStore } from '@/store/appStore'
 import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
@@ -12,12 +13,12 @@ let keycloakClient: string = 'null'
 try {
 	keycloakDb = KEYCLOAK_DB
 } catch {
-	console.log('LOCAL_API is not defined - set', null)
+	logger.debug('KEYCLOAK_DB is not defined - set', null, { component: 'keycloakService' })
 }
 try {
 	keycloakClient = KEYCLOAK_CLIENT
 } catch {
-	console.log('KEYCLOAK_CLIENT is not defined - set', null)
+	logger.debug('KEYCLOAK_CLIENT is not defined - set', null, { component: 'keycloakService' })
 }
 
 // настройки keycloak

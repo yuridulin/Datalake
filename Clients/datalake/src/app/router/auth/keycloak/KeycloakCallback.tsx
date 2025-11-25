@@ -1,5 +1,6 @@
 import { handleCallback } from '@/app/router/auth/keycloak/keycloakService'
 import routes from '@/app/router/routes'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Alert, Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -18,7 +19,7 @@ const KeycloakCallback = observer(() => {
 
 		const processAuth = async () => {
 			const result = await handleCallback()
-			console.log(result)
+			logger.debug('Keycloak callback result', { component: 'KeycloakCallback', result })
 
 			if (result.success) {
 				store.loginKeycloak(result.user!.sub, result.user!.email ?? '', result.user!.name ?? '')

@@ -10,6 +10,7 @@ import { TagResolutionNames } from '@/functions/getTagResolutionName'
 import isArraysDifferent from '@/functions/isArraysDifferent'
 import { SELECTED_SEPARATOR, setViewerParams, TimeMode, TimeModes, URL_PARAMS } from '@/functions/urlParams'
 import { SourceType, TagResolution, ValueRecord } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { PlaySquareOutlined } from '@ant-design/icons'
@@ -197,7 +198,12 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 		if (shouldRefresh) {
 			store.valuesStore.refreshValues(valuesRequest).then(() => {
 				setLastFetchSettings(settings)
-			}).catch(console.error)
+			}).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'TagsValuesViewer',
+					action: 'refreshValues',
+				})
+			})
 		}
 	}, [integrated, valuesRequest, isDirty, lastFetchSettings, settings, store.valuesStore])
 

@@ -1,5 +1,6 @@
 import PageHeader from '@/app/components/PageHeader'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { observer } from 'mobx-react-lite'
 import { useEffect } from 'react'
@@ -13,7 +14,12 @@ const Tags = observer(() => {
 
 	// Обновляем данные при переходе на страницу
 	useEffect(() => {
-		store.tagsStore.refreshTags().catch(console.error)
+		store.tagsStore.refreshTags().catch((error) => {
+			logger.error(error instanceof Error ? error : new Error(String(error)), {
+				component: 'TagsList',
+				action: 'refreshTags',
+			})
+		})
 	}, [store.tagsStore])
 
 	return (

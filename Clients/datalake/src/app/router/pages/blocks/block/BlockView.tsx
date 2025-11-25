@@ -9,6 +9,7 @@ import TagsValuesViewer from '@/app/components/values/TagsValuesViewer'
 import routes from '@/app/router/routes'
 import { AccessType, BlockDetailedInfo, BlockSimpleInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { RightOutlined } from '@ant-design/icons'
 import { Button, Spin } from 'antd'
@@ -55,7 +56,11 @@ const BlockView = observer(() => {
 				await store.blocksStore.refreshBlocks()
 			}
 		} catch (error) {
-			console.error('Failed to create child block:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to create child block'), {
+				component: 'BlockView',
+				action: 'handleCreateChild',
+				parentBlockId: blockId,
+			})
 		}
 	}
 

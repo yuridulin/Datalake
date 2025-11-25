@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { UserInfo, UserWithGroupsInfo } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
 
@@ -38,13 +39,25 @@ export class UsersStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadUsers().catch(console.error)
+				this.loadUsers().catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'UsersStore',
+						method: 'getUsers',
+						action: 'loadUsers',
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadUsers().catch(console.error)
+			this.loadUsers().catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'UsersStore',
+					method: 'getUsers',
+					action: 'loadUsers',
+				})
+			})
 		}
 
 		return cached ?? []
@@ -61,13 +74,27 @@ export class UsersStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadUserByGuid(guid).catch(console.error)
+				this.loadUserByGuid(guid).catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'UsersStore',
+						method: 'getUserByGuid',
+						action: 'loadUserByGuid',
+						userGuid: guid,
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadUserByGuid(guid).catch(console.error)
+			this.loadUserByGuid(guid).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'UsersStore',
+					method: 'getUserByGuid',
+					action: 'loadUserByGuid',
+					userGuid: guid,
+				})
+			})
 		}
 
 		return cached
@@ -121,7 +148,10 @@ export class UsersStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load users:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load users'), {
+				component: 'UsersStore',
+				method: 'loadUsers',
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
@@ -150,7 +180,11 @@ export class UsersStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error(`Failed to load user ${guid}:`, error)
+			logger.error(error instanceof Error ? error : new Error(`Failed to load user ${guid}`), {
+				component: 'UsersStore',
+				method: 'loadUserByGuid',
+				userGuid: guid,
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}

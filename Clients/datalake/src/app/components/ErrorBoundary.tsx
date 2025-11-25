@@ -1,6 +1,7 @@
 import { Alert, Button, Result } from 'antd'
 import { Component, ErrorInfo, ReactNode } from 'react'
 import { ReloadOutlined, HomeOutlined } from '@ant-design/icons'
+import { logger } from '@/services/logger'
 
 interface Props {
 	children: ReactNode
@@ -32,17 +33,17 @@ class ErrorBoundary extends Component<Props, State> {
 	}
 
 	componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-		// Логируем ошибку
-		// TODO: Заменить на logger после реализации пункта 1.2
-		console.error('ErrorBoundary caught an error:', error, errorInfo)
+		// Логируем ошибку через logger
+		logger.error(error, {
+			component: 'ErrorBoundary',
+			action: 'componentDidCatch',
+			componentStack: errorInfo.componentStack,
+		})
 
 		this.setState({
 			error,
 			errorInfo,
 		})
-
-		// Здесь можно отправить ошибку в систему мониторинга
-		// Например: logErrorToService(error, errorInfo)
 	}
 
 	handleReload = () => {

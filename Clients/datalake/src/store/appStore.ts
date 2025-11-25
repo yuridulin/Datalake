@@ -12,10 +12,12 @@ import { UserGroupsStore } from './dataStores/UserGroupsStore'
 import { UsersStore } from './dataStores/UsersStore'
 import { ValuesStore } from './dataStores/ValuesStore'
 
+import { logger } from '@/services/logger'
+
 const debug = false
 const log = (...text: unknown[]) => {
 	if (!debug) return
-	console.log(text)
+	logger.debug(...text)
 }
 
 // передача констант с сервера

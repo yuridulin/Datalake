@@ -4,6 +4,7 @@ import routes from '@/app/router/routes'
 import hasAccess from '@/functions/hasAccess'
 import { AccessType, UserGroupUpdateRequest } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
@@ -73,7 +74,11 @@ const UserGroupForm = observer(() => {
 			}
 			navigate(routes.userGroups.toList())
 		} catch (error) {
-			console.error('Failed to delete user group:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to delete user group'), {
+				component: 'UserGroupForm',
+				action: 'del',
+				groupId: id,
+			})
 		}
 	}
 

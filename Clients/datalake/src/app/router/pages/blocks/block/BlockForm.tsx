@@ -10,6 +10,7 @@ import {
 	TagType,
 } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { App, Button, Dropdown, Form, Input, Popconfirm, Select, Spin } from 'antd'
@@ -90,7 +91,11 @@ const BlockForm = observer(() => {
 			}
 			navigate(routes.blocks.root)
 		} catch (error) {
-			console.error('Failed to delete block:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to delete block'), {
+				component: 'BlockForm',
+				action: 'blockDelete',
+				blockId,
+			})
 		}
 	}
 

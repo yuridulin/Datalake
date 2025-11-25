@@ -5,6 +5,7 @@ import routes from '@/app/router/routes'
 import getSourceTypeName from '@/functions/getSourceTypeName'
 import { SourceType, SourceUpdateRequest } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Input, Popconfirm, Radio, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -53,7 +54,11 @@ const SourceForm = observer(() => {
 				await store.sourcesStore.refreshSources()
 			}
 		} catch (error) {
-			console.error('Failed to update source:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to update source'), {
+				component: 'SourceForm',
+				action: 'sourceUpdate',
+				sourceId,
+			})
 		}
 	}
 
@@ -66,7 +71,11 @@ const SourceForm = observer(() => {
 			}
 			navigate(routes.sources.list)
 		} catch (error) {
-			console.error('Failed to delete source:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to delete source'), {
+				component: 'SourceForm',
+				action: 'sourceDelete',
+				sourceId,
+			})
 		}
 	}
 

@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { UserGroupDetailedInfo, UserGroupInfo, UserGroupTreeInfo } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
 
@@ -44,13 +45,25 @@ export class UserGroupsStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadGroups().catch(console.error)
+				this.loadGroups().catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'UserGroupsStore',
+						method: 'getGroups',
+						action: 'loadGroups',
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadGroups().catch(console.error)
+			this.loadGroups().catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'UserGroupsStore',
+					method: 'getGroups',
+					action: 'loadGroups',
+				})
+			})
 		}
 
 		return cached ?? []
@@ -66,13 +79,25 @@ export class UserGroupsStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_TREE)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_TREE)) {
-				this.loadTree().catch(console.error)
+				this.loadTree().catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'UserGroupsStore',
+						method: 'getTree',
+						action: 'loadTree',
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadTree().catch(console.error)
+			this.loadTree().catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'UserGroupsStore',
+					method: 'getTree',
+					action: 'loadTree',
+				})
+			})
 		}
 
 		return cached ?? []
@@ -89,13 +114,27 @@ export class UserGroupsStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadGroupByGuid(guid).catch(console.error)
+				this.loadGroupByGuid(guid).catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'UserGroupsStore',
+						method: 'getGroupByGuid',
+						action: 'loadGroupByGuid',
+						groupGuid: guid,
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadGroupByGuid(guid).catch(console.error)
+			this.loadGroupByGuid(guid).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'UserGroupsStore',
+					method: 'getGroupByGuid',
+					action: 'loadGroupByGuid',
+					groupGuid: guid,
+				})
+			})
 		}
 
 		return cached
@@ -158,7 +197,10 @@ export class UserGroupsStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load user groups:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load user groups'), {
+				component: 'UserGroupsStore',
+				method: 'loadGroups',
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
@@ -184,7 +226,10 @@ export class UserGroupsStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load user groups tree:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load user groups tree'), {
+				component: 'UserGroupsStore',
+				method: 'loadTree',
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
@@ -211,7 +256,11 @@ export class UserGroupsStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error(`Failed to load user group ${guid}:`, error)
+			logger.error(error instanceof Error ? error : new Error(`Failed to load user group ${guid}`), {
+				component: 'UserGroupsStore',
+				method: 'loadGroupByGuid',
+				groupGuid: guid,
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}

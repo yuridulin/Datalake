@@ -1,4 +1,5 @@
 import { TagSimpleInfo } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { notification, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
@@ -71,7 +72,10 @@ const TagsAccessMetrics = () => {
 				)
 			})
 			.catch((e) => {
-				console.error(e)
+				logger.error(e instanceof Error ? e : new Error(String(e)), {
+					component: 'TagsAccessMetrics',
+					action: 'loadMetrics',
+				})
 				notification.error({ message: 'Ошибка при построении списка метрик' })
 			})
 	}

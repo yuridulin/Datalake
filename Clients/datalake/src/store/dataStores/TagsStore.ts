@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { SourceType, TagSimpleInfo, TagWithSettingsAndBlocksInfo } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
 
@@ -42,14 +43,28 @@ export class TagsStore extends BaseCacheStore {
 		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
 			// Если кэш устарел на 80%, обновляем в фоне
 			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadTags(sourceId).catch(console.error)
+				this.loadTags(sourceId).catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'TagsStore',
+						method: 'getTags',
+						action: 'loadTags',
+						sourceId,
+					})
+				})
 			}
 			return cached
 		}
 
 		// Если кэша нет или он невалиден, загружаем синхронно
 		if (!this.isLoading(cacheKey)) {
-			this.loadTags(sourceId).catch(console.error)
+			this.loadTags(sourceId).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'TagsStore',
+					method: 'getTags',
+					action: 'loadTags',
+					sourceId,
+				})
+			})
 		}
 
 		// Возвращаем устаревший кэш, если есть, иначе пустой массив
@@ -67,13 +82,27 @@ export class TagsStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadTagById(id).catch(console.error)
+				this.loadTagById(id).catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'TagsStore',
+						method: 'getTagById',
+						action: 'loadTagById',
+						tagId: id,
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadTagById(id).catch(console.error)
+			this.loadTagById(id).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'TagsStore',
+					method: 'getTagById',
+					action: 'loadTagById',
+					tagId: id,
+				})
+			})
 		}
 
 		return cached
@@ -144,7 +173,11 @@ export class TagsStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load tags:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load tags'), {
+				component: 'TagsStore',
+				method: 'loadTags',
+				sourceId,
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
@@ -171,7 +204,11 @@ export class TagsStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error(`Failed to load tag ${id}:`, error)
+			logger.error(error instanceof Error ? error : new Error(`Failed to load tag ${id}`), {
+				component: 'TagsStore',
+				method: 'loadTagById',
+				tagId: id,
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}

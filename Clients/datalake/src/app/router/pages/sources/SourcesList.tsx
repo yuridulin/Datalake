@@ -5,6 +5,7 @@ import { timeAgo } from '@/functions/dateHandle'
 import getSourceTypeName from '@/functions/getSourceTypeName'
 import { AccessType, SourceWithSettingsInfo, SourceType } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
@@ -98,7 +99,12 @@ const SourcesList = observer(() => {
 
 	// Обновляем данные при переходе на страницу
 	useEffect(() => {
-		store.sourcesStore.refreshSources().catch(console.error)
+		store.sourcesStore.refreshSources().catch((error) => {
+			logger.error(error instanceof Error ? error : new Error(String(error)), {
+				component: 'SourcesList',
+				action: 'refreshSources',
+			})
+		})
 	}, [store.sourcesStore])
 
 	const columns = useMemo(

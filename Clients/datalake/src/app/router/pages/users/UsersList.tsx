@@ -9,6 +9,7 @@ import { timeAgo } from '@/functions/dateHandle'
 import getUserTypeName from '@/functions/getUserTypeName'
 import { AccessType, UserInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
@@ -38,7 +39,12 @@ const UsersList = observer(() => {
 
 	// Обновляем данные при переходе на страницу
 	useEffect(() => {
-		store.usersStore.refreshUsers().catch(console.error)
+		store.usersStore.refreshUsers().catch((error) => {
+			logger.error(error instanceof Error ? error : new Error(String(error)), {
+				component: 'UsersList',
+				action: 'refreshUsers',
+			})
+		})
 	}, [store.usersStore])
 
 	const columns: TableColumnsType<UserInfo> = [

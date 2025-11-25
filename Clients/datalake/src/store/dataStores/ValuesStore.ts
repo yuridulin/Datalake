@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { DataValuesGetPayload, ValuesResponse } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
 
@@ -42,13 +43,25 @@ export class ValuesStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_VALUES)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_VALUES)) {
-				this.loadValues(request).catch(console.error)
+				this.loadValues(request).catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'ValuesStore',
+						method: 'getValues',
+						action: 'loadValues',
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadValues(request).catch(console.error)
+			this.loadValues(request).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'ValuesStore',
+					method: 'getValues',
+					action: 'loadValues',
+				})
+			})
 		}
 
 		return cached ?? []
@@ -82,7 +95,14 @@ export class ValuesStore extends BaseCacheStore {
 
 		// Обновляем в фоне, если нужно
 		if (needRefresh.length > 0 && !this.isLoading('status')) {
-			this.loadStatus(needRefresh).catch(console.error)
+			this.loadStatus(needRefresh).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'ValuesStore',
+					method: 'getStatus',
+					action: 'loadStatus',
+					tagsId: needRefresh,
+				})
+			})
 		}
 
 		return result
@@ -166,7 +186,10 @@ export class ValuesStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load values:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load values'), {
+				component: 'ValuesStore',
+				method: 'loadValues',
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
@@ -202,7 +225,11 @@ export class ValuesStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load tags status:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load tags status'), {
+				component: 'ValuesStore',
+				method: 'loadStatus',
+				tagsId: tagsId,
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}

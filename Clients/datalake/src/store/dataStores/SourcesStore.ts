@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { SourceActivityInfo, SourceWithSettingsInfo } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
 
@@ -45,13 +46,25 @@ export class SourcesStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadSources().catch(console.error)
+				this.loadSources().catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'SourcesStore',
+						method: 'getSources',
+						action: 'loadSources',
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadSources().catch(console.error)
+			this.loadSources().catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'SourcesStore',
+					method: 'getSources',
+					action: 'loadSources',
+				})
+			})
 		}
 
 		return cached ?? []
@@ -68,13 +81,27 @@ export class SourcesStore extends BaseCacheStore {
 
 		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
 			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadSourceById(id).catch(console.error)
+				this.loadSourceById(id).catch((error) => {
+					logger.error(error instanceof Error ? error : new Error(String(error)), {
+						component: 'SourcesStore',
+						method: 'getSourceById',
+						action: 'loadSourceById',
+						sourceId: id,
+					})
+				})
 			}
 			return cached
 		}
 
 		if (!this.isLoading(cacheKey)) {
-			this.loadSourceById(id).catch(console.error)
+			this.loadSourceById(id).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'SourcesStore',
+					method: 'getSourceById',
+					action: 'loadSourceById',
+					sourceId: id,
+				})
+			})
 		}
 
 		return cached
@@ -108,7 +135,14 @@ export class SourcesStore extends BaseCacheStore {
 
 		// Обновляем в фоне, если нужно
 		if (needRefresh.length > 0 && !this.isLoading('activity')) {
-			this.loadActivity(needRefresh).catch(console.error)
+			this.loadActivity(needRefresh).catch((error) => {
+				logger.error(error instanceof Error ? error : new Error(String(error)), {
+					component: 'SourcesStore',
+					method: 'getActivity',
+					action: 'loadActivity',
+					sourceIds: needRefresh,
+				})
+			})
 		}
 
 		return result
@@ -185,7 +219,10 @@ export class SourcesStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load sources:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load sources'), {
+				component: 'SourcesStore',
+				method: 'loadSources',
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
@@ -212,7 +249,11 @@ export class SourcesStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error(`Failed to load source ${id}:`, error)
+			logger.error(error instanceof Error ? error : new Error(`Failed to load source ${id}`), {
+				component: 'SourcesStore',
+				method: 'loadSourceById',
+				sourceId: id,
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
@@ -243,7 +284,11 @@ export class SourcesStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			console.error('Failed to load sources activity:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to load sources activity'), {
+				component: 'SourcesStore',
+				method: 'loadActivity',
+				sourceIds: sourceIds,
+			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}

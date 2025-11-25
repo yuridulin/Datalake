@@ -15,6 +15,7 @@ import {
 	TagUpdateRequest,
 	TagWithSettingsAndBlocksInfo,
 } from '@/generated/data-contracts'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Alert, Button, Checkbox, Input, InputNumber, Popconfirm, Radio, Select, Spin } from 'antd'
@@ -61,7 +62,9 @@ const TagForm = () => {
 	const [strategy, setStrategy] = useState(SourceStrategy.Manual)
 	const hasLoadedRef = useRef(false)
 	const lastSourceIdRef = useRef<number | undefined>(request.sourceId)
-	useEffect(() => console.log(request), [request])
+	useEffect(() => {
+		logger.debug('TagForm request changed', { component: 'TagForm', request })
+	}, [request])
 
 	// Получаем данные из stores (реактивно через MobX)
 	const blocksData = store.blocksStore.getTree()
@@ -185,7 +188,11 @@ const TagForm = () => {
 				await store.tagsStore.refreshTags()
 			}
 		} catch (error) {
-			console.error('Failed to update tag:', error)
+			logger.error(error instanceof Error ? error : new Error('Failed to update tag'), {
+				component: 'TagForm',
+				action: 'tagUpdate',
+				tagId: id,
+			})
 		}
 	}
 
