@@ -54,6 +54,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	const previousValuesRequestRef = useRef<ValuesRequest[] | null>(null)
 	const previousTagMappingRef = useRef<TagMappingType>(tagMapping)
 	const previousRelationsRef = useRef<string[]>(relations)
+	const valuesRequestRef = useRef<ValuesRequest[] | null>(null)
 
 	const [settings, setSettings] = useState<ViewerSettings>({
 		activeRelations: relations,
@@ -64,6 +65,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 		mode: initialMode,
 		update: integrated,
 	})
+
+	const settingsRef = useRef<ViewerSettings>(settings)
 
 	// когда мы получили настройки по умолчанию, мы отдаем им наружу
 	if (onChange) onChange(settings)
@@ -218,12 +221,24 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 		}
 	}, [valuesResponse])
 
+	// Обновляем ref при изменении valuesRequest и settings
+	useEffect(() => {
+		valuesRequestRef.current = valuesRequest
+	}, [valuesRequest])
+
+	useEffect(() => {
+		settingsRef.current = settings
+	}, [settings])
+
 	// Функция для принудительного обновления значений (для polling и ручного запроса)
+	// Используем ref, чтобы функция не пересоздавалась при изменении valuesRequest или settings
 	const refreshValues = useCallback(async () => {
-		if (!valuesRequest) return
-		await store.valuesStore.refreshValues(valuesRequest)
-		setLastFetchSettings(settings)
-	}, [store.valuesStore, valuesRequest, settings])
+		const currentRequest = valuesRequestRef.current
+		if (!currentRequest) return
+		await store.valuesStore.refreshValues(currentRequest)
+		// Используем актуальные settings из ref
+		setLastFetchSettings(settingsRef.current)
+	}, [store.valuesStore])
 
 	// Автоматически обновляем значения при изменении настроек в integrated режиме
 	useEffect(() => {

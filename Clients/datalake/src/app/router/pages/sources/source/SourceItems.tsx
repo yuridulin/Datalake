@@ -4,7 +4,13 @@ import { LoadStatus } from '@/app/components/loaders/loaderTypes'
 import StatusLoader from '@/app/components/loaders/StatusLoader'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import compareValues from '@/functions/compareValues'
-import { SourceItemInfo, SourceUpdateRequest, SourceWithSettingsInfo, TagSimpleInfo, TagType } from '@/generated/data-contracts'
+import {
+	SourceItemInfo,
+	SourceUpdateRequest,
+	SourceWithSettingsInfo,
+	TagSimpleInfo,
+	TagType,
+} from '@/generated/data-contracts'
 import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import {
@@ -376,12 +382,15 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 					try {
 						const usageResponse = await store.api.dataTagsGetUsage({ tagsId: tagIds })
 						// Преобразуем массив TagUsageInfo[] в Record<string, Record<string, string>>
-						usage = (usageResponse.data ?? []).reduce((acc, item) => {
-							if (item.tagId !== null && item.tagId !== undefined) {
-								acc[String(item.tagId)] = item.requests ?? {}
-							}
-							return acc
-						}, {} as Record<string, Record<string, string>>)
+						usage = (usageResponse.data ?? []).reduce(
+							(acc, item) => {
+								if (item.tagId !== null && item.tagId !== undefined) {
+									acc[String(item.tagId)] = item.requests ?? {}
+								}
+								return acc
+							},
+							{} as Record<string, Record<string, string>>,
+						)
 					} catch (usageError) {
 						logger.error(usageError instanceof Error ? usageError : new Error('Не удалось получить usage тегов'), {
 							component: 'SourceItems',
