@@ -29,7 +29,7 @@ public abstract class InventorySourcesControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Данные о источнике</returns>
 	[HttpGet("{sourceId}")]
-	public abstract Task<ActionResult<SourceWithSettingsInfo>> GetAsync(
+	public abstract Task<ActionResult<SourceWithSettingsAndTagsInfo>> GetAsync(
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default);
 

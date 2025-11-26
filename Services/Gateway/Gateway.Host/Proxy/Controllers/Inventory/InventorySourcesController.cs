@@ -16,10 +16,10 @@ public class InventorySourcesController(InventoryReverseProxyService proxyServic
 			=> proxyService.ProxyAsync<int>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<SourceWithSettingsInfo>> GetAsync(
+	public override Task<ActionResult<SourceWithSettingsAndTagsInfo>> GetAsync(
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<SourceWithSettingsInfo>(HttpContext, ct);
+			=> proxyService.ProxyAsync<SourceWithSettingsAndTagsInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<IEnumerable<SourceWithSettingsInfo>>> GetAllAsync(

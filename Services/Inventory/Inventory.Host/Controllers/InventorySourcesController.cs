@@ -29,7 +29,7 @@ public class InventorySourcesController(
 		return Ok(result);
 	}
 
-	public override async Task<ActionResult<SourceWithSettingsInfo>> GetAsync(
+	public override async Task<ActionResult<SourceWithSettingsAndTagsInfo>> GetAsync(
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default)
 	{

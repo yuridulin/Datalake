@@ -35,6 +35,7 @@ import {
   SourceActivityInfo,
   SourceItemInfo,
   SourceUpdateRequest,
+  SourceWithSettingsAndTagsInfo,
   SourceWithSettingsInfo,
   TagCreateRequest,
   TagMetricRequest,
@@ -504,10 +505,10 @@ export class Api<
    * @name InventorySourcesGet
    * @summary Получение данных о источнике
    * @request GET:/api/v1/inventory/sources/{sourceId}
-   * @response `200` `SourceWithSettingsInfo` Данные о источнике
+   * @response `200` `SourceWithSettingsAndTagsInfo` Данные о источнике
    */
   inventorySourcesGet = (sourceId: number, params: RequestParams = {}) =>
-    this.request<SourceWithSettingsInfo, any>({
+    this.request<SourceWithSettingsAndTagsInfo, any>({
       path: `/api/v1/inventory/sources/${sourceId}`,
       method: "GET",
       format: "json",

@@ -615,6 +615,47 @@ export interface UserEnergoIdInfo {
   fullName: string;
 }
 
+export type SourceWithSettingsAndTagsInfo = SourceWithSettingsInfo & {
+  tags: SourceTagInfo[];
+};
+
+export interface SourceTagInfo {
+  item?: string | null;
+  /** @format int32 */
+  id: number;
+  /** @minLength 1 */
+  name: string;
+  /**
+   * Тип данных
+   *
+   * 0 = String
+   * 1 = Number
+   * 2 = Boolean
+   */
+  type: TagType;
+  /**
+   * Частота записи/чтения значения
+   *
+   * 0 = None
+   * 1 = Minute
+   * 2 = Hour
+   * 3 = Day
+   * 4 = HalfHour
+   * 5 = Week
+   * 6 = Month
+   * 7 = Second
+   * 8 = Minute3
+   * 9 = Minute5
+   * 10 = Minute10
+   * 11 = Minute15
+   * 12 = Minute20
+   * 13 = Year
+   * 14 = Quarter
+   */
+  resolution: TagResolution;
+  accessRule: AccessRuleInfo;
+}
+
 export type SourceWithSettingsInfo = SourceSimpleInfo & {
   address?: string | null;
   isDisabled: boolean;

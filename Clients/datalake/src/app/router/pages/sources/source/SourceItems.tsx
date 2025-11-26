@@ -5,9 +5,10 @@ import StatusLoader from '@/app/components/loaders/StatusLoader'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import compareValues from '@/functions/compareValues'
 import {
+	SourceTagInfo as ApiSourceTagInfo,
 	SourceItemInfo,
 	SourceUpdateRequest,
-	SourceWithSettingsInfo,
+	SourceWithSettingsAndTagsInfo,
 	TagSimpleInfo,
 	TagType,
 } from '@/generated/data-contracts'
@@ -26,7 +27,8 @@ import debounce from 'debounce'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocalStorage } from 'react-use'
 
-type SourceTagInfo = TagSimpleInfo & { item?: string; sourceItem?: string | null }
+// Расширяем SourceTagInfo из API до TagSimpleInfo для совместимости с компонентами
+type SourceTagInfo = TagSimpleInfo & { item?: string | null }
 
 type SourceEntryInfo = {
 	itemInfo?: SourceItemInfo
@@ -36,14 +38,24 @@ type SourceEntryInfo = {
 
 interface GroupedEntry {
 	path: string
-	itemInfo?: SourceEntryInfo['itemInfo']
+	itemInfo?: SourceItemInfo
 	tagInfoArray: SourceTagInfo[]
 }
 
-const toSourceTagInfo = (tag: TagSimpleInfo & { sourceItem?: string | null }): SourceTagInfo => {
+// Преобразует SourceTagInfo из API в полный SourceTagInfo с расширенными полями TagSimpleInfo
+// Использует значения из source для недостающих полей
+const toSourceTagInfo = (tag: ApiSourceTagInfo, sourceId: number, sourceType: number): SourceTagInfo => {
 	return {
-		...tag,
-		item: tag.sourceItem ?? '',
+		id: tag.id,
+		guid: `tag-${tag.id}`, // Временный guid на основе id, если нужен полный guid - можно получить отдельно
+		name: tag.name,
+		description: null,
+		type: tag.type,
+		resolution: tag.resolution,
+		sourceId: sourceId,
+		sourceType: sourceType,
+		accessRule: tag.accessRule,
+		item: tag.item ?? null,
 	}
 }
 
@@ -58,23 +70,26 @@ const getLastUsage = (usage?: Record<string, string>) => {
 
 const mergeEntries = (
 	sourceItems: SourceItemInfo[],
-	tags: (TagSimpleInfo & { sourceItem?: string | null })[],
+	tags: SourceTagInfo[],
 	usage: Record<string, Record<string, string>>,
 ): SourceEntryInfo[] => {
 	const entries: SourceEntryInfo[] = []
 	const itemsByPath = new Map(sourceItems.map((item) => [item.path, item]))
 	const taggedPaths = new Set<string>()
 
+	// Сначала обрабатываем теги и собираем информацию о помеченных путях
 	tags.forEach((tag) => {
-		if (tag.sourceItem) taggedPaths.add(tag.sourceItem)
-		const itemInfo = tag.sourceItem ? itemsByPath.get(tag.sourceItem) : undefined
+		const itemPath = tag.item
+		if (itemPath) taggedPaths.add(itemPath)
+		const itemInfo = itemPath ? itemsByPath.get(itemPath) : undefined
 		entries.push({
 			itemInfo,
-			tagInfo: toSourceTagInfo(tag),
+			tagInfo: tag,
 			isTagInUse: getLastUsage(usage?.[tag.id]),
 		})
 	})
 
+	// Затем добавляем items, которые не были помечены тегами
 	sourceItems.forEach((item) => {
 		if (!taggedPaths.has(item.path)) {
 			entries.push({ itemInfo: item })
@@ -92,9 +107,19 @@ const mergeEntries = (
 
 function groupEntries(items: SourceEntryInfo[]): GroupedEntry[] {
 	const map = items.reduce<Record<string, GroupedEntry>>((acc, x) => {
-		const key = x.itemInfo?.path || '__no_path__'
+		// Используем path из itemInfo, если есть, иначе из tagInfo.item
+		const key = x.itemInfo?.path || x.tagInfo?.item || '__no_path__'
 		if (!acc[key]) {
 			acc[key] = { path: key, itemInfo: x.itemInfo, tagInfoArray: [] }
+		}
+		// Если itemInfo отсутствует в группе, но есть в текущем entry, добавляем его
+		if (!acc[key].itemInfo && x.itemInfo) {
+			acc[key].itemInfo = x.itemInfo
+		}
+		// Если itemInfo отсутствует, но есть tagInfo с item, и мы нашли itemInfo в другом entry,
+		// обновляем path группы на правильный путь из itemInfo
+		if (acc[key].itemInfo && acc[key].path !== acc[key].itemInfo.path) {
+			acc[key].path = acc[key].itemInfo.path
 		}
 		if (x.tagInfo) {
 			acc[key].tagInfoArray.push(x.tagInfo)
@@ -117,7 +142,7 @@ interface TreeNodeData {
 }
 
 type SourceItemsProps = {
-	source: SourceWithSettingsInfo
+	source: SourceWithSettingsAndTagsInfo
 	request: SourceUpdateRequest
 }
 
@@ -200,6 +225,16 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 				const tagsCount = sub.reduce((sum, n) => sum + n.countTags, 0) + (child.countTags || 0)
 
 				// заголовок: если лист, на первой строке — value
+				if (child.group?.itemInfo) {
+					const record = {
+						date: new Date().toDateString(),
+						quality: child.group.itemInfo.quality,
+						boolean: child.group.itemInfo.type === TagType.Boolean ? Boolean(child.group.itemInfo.value) : null,
+						number: child.group.itemInfo.type === TagType.Number ? Number(child.group.itemInfo.value) : null,
+						text: child.group.itemInfo.type === TagType.String ? String(child.group.itemInfo.value) : null,
+					}
+					console.log(child.group?.itemInfo, record)
+				}
 				const title = isLeaf ? (
 					<div style={{ display: 'flex', flexDirection: 'row' }}>
 						{/* 2) Имя узла */}
@@ -210,7 +245,13 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 							<TagCompactValue
 								type={child.group.itemInfo.type}
 								quality={child.group.itemInfo.quality}
-								record={child.group.itemInfo.value ?? null}
+								record={{
+									date: new Date().toDateString(),
+									quality: child.group.itemInfo.quality,
+									boolean: child.group.itemInfo.type === TagType.Boolean ? Boolean(child.group.itemInfo.value) : null,
+									number: child.group.itemInfo.type === TagType.Number ? Number(child.group.itemInfo.value) : null,
+									text: child.group.itemInfo.type === TagType.String ? String(child.group.itemInfo.value) : null,
+								}}
 							/>
 						)}
 					</div>
@@ -298,7 +339,13 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 					<TagCompactValue
 						type={record.itemInfo.type}
 						quality={record.itemInfo.quality}
-						record={record.itemInfo.value ?? null}
+						record={{
+							date: new Date().toDateString(),
+							quality: record.itemInfo.quality,
+							boolean: record.itemInfo.type === TagType.Boolean ? Boolean(record.itemInfo.value) : null,
+							number: record.itemInfo.type === TagType.Number ? Number(record.itemInfo.value) : null,
+							text: record.itemInfo.type === TagType.String ? String(record.itemInfo.value) : null,
+						}}
 					/>
 				) : (
 					<></>
@@ -369,12 +416,15 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 
 		const fetchData = async () => {
 			try {
-				const [sourceItemsResponse, tagsResponse] = await Promise.all([
-					store.api.dataSourcesGetItems(source.id),
-					store.api.inventoryTagsGetAll({ sourceId: source.id }),
-				])
+				const sourceItemsResponse = await store.api.dataSourcesGetItems(source.id)
 
-				const tags = tagsResponse.data ?? []
+				// Используем теги из source.tags вместо запроса inventoryTagsGetAll
+				const apiTags = source.tags ?? []
+
+				// Преобразуем ApiSourceTagInfo в SourceTagInfo с полными полями TagSimpleInfo
+				// Используем значения из source для недостающих полей (sourceId, sourceType)
+				const tags: SourceTagInfo[] = apiTags.map((apiTag) => toSourceTagInfo(apiTag, source.id, source.type))
+
 				const tagIds = tags.map((tag) => tag.id).filter((id): id is number => typeof id === 'number')
 
 				let usage: Record<string, Record<string, string>> = {}
@@ -409,7 +459,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 		}
 
 		fetchData()
-	}, [source.id, store.api])
+	}, [source.id, source.tags, source.type, store.api])
 
 	const reloadDone = useCallback(() => setStatus('default'), [])
 
@@ -536,7 +586,7 @@ const SourceItems = ({ source, request }: SourceItemsProps) => {
 											setPaginationConfig({ current: page, pageSize: pageSize || 10 })
 										},
 									}}
-									rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? '')}
+									rowKey={(row) => (row.itemInfo?.path ?? '') + (row.tagInfo?.guid ?? String(row.tagInfo?.id ?? ''))}
 								/>
 							) : (
 								<Tree
