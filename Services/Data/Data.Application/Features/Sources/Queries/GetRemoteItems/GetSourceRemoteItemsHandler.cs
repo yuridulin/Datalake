@@ -1,6 +1,8 @@
-﻿using Datalake.Contracts.Models.Sources;
+﻿using Datalake.Contracts.Models.Data.Values;
+using Datalake.Contracts.Models.Sources;
 using Datalake.Data.Application.Interfaces;
 using Datalake.Data.Application.Interfaces.Repositories;
+using Datalake.Domain.Entities;
 using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Sources.Queries.GetRemoteItems;
@@ -24,9 +26,26 @@ public class GetSourceRemoteItemsHandler(
 			sourceType: source.Type,
 			address: source.Address);
 
+		var date = DateTime.UtcNow;
 		var sourceItems = sourceItemsResponse.Tags
 			.DistinctBy(x => x.Name)
-			.Select(x => new SourceItemInfo { Path = x.Name, Type = x.Type, Value = x.Value, Quality = x.Quality })
+			.Select(x =>
+			{
+				var value = TagValue.FromRaw(0, x.Type, date, x.Quality, x.Value, null);
+				return new SourceItemInfo
+				{
+					Path = x.Name,
+					Type = x.Type,
+					Value = new ValueRecord
+					{
+						Date = value.Date,
+						Boolean = value.Boolean,
+						Number = value.Number,
+						Text = value.Text,
+						Quality = value.Quality,
+					}
+				};
+			})
 			.ToArray();
 
 		return sourceItems;

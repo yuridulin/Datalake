@@ -1006,7 +1006,19 @@ export interface SourceItemInfo {
    * 2 = Boolean
    */
   type: TagType;
-  value?: any;
+  value: ValueRecord;
+}
+
+export interface ValueRecord {
+  /**
+   * @format date-time
+   * @minLength 1
+   */
+  date: string;
+  text?: string | null;
+  /** @format float */
+  number?: number | null;
+  boolean?: boolean | null;
   /**
    * Достоверность значения
    *
@@ -1112,32 +1124,6 @@ export interface ValuesTagResponse {
    */
   result: ValueResult;
   values: ValueRecord[];
-}
-
-export interface ValueRecord {
-  /**
-   * @format date-time
-   * @minLength 1
-   */
-  date: string;
-  text?: string | null;
-  /** @format float */
-  number?: number | null;
-  boolean?: boolean | null;
-  /**
-   * Достоверность значения
-   *
-   * 0 = Unknown
-   * 4 = Bad_NoConnect
-   * 8 = Bad_NoValues
-   * 12 = Bad_CalcError
-   * 26 = Bad_ManualWrite
-   * 100 = Bad_LOCF
-   * 192 = Good
-   * 200 = Good_LOCF
-   * 216 = Good_ManualWrite
-   */
-  quality: TagQuality;
 }
 
 export interface ValuesRequest {

@@ -1,4 +1,5 @@
-﻿using Datalake.Domain.Enums;
+﻿using Datalake.Contracts.Models.Data.Values;
+using Datalake.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Datalake.Contracts.Models.Sources;
@@ -6,28 +7,23 @@ namespace Datalake.Contracts.Models.Sources;
 /// <summary>
 /// Информация о удалённой записи с данными источника
 /// </summary>
-public class SourceItemInfo
+public record SourceItemInfo
 {
 	/// <summary>
 	/// Путь к данным в источнике
 	/// </summary>
 	[Required]
-	public required string Path { get; set; }
+	public required string Path { get; init; }
 
 	/// <summary>
 	/// Тип данных
 	/// </summary>
 	[Required]
-	public TagType Type { get; set; }
+	public required TagType Type { get; init; }
 
 	/// <summary>
-	/// Значение, прочитанное с источника при опросе
-	/// </summary>
-	public object? Value { get; set; }
-
-	/// <summary>
-	/// Достоверность значения
+	/// Значение
 	/// </summary>
 	[Required]
-	public TagQuality Quality { get; set; } = TagQuality.Unknown;
+	public required ValueRecord Value { get; init; }
 }
