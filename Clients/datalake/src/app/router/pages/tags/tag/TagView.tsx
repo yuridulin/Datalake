@@ -43,6 +43,16 @@ const TagView = observer(() => {
 	// Получаем источник из store, если sourceId > 0 (не системный источник)
 	const source = tag?.sourceId && tag.sourceId > 0 ? store.sourcesStore.getSourceById(tag.sourceId) : undefined
 
+	// Загружаем данные тега и источника при первом монтировании или изменении id
+	useEffect(() => {
+		if (tagId) {
+			store.tagsStore.refreshTagById(tagId)
+		}
+		if (tag?.sourceId && tag.sourceId > 0) {
+			store.sourcesStore.refreshSourceById(tag.sourceId)
+		}
+	}, [tagId, tag?.sourceId, store.tagsStore, store.sourcesStore])
+
 	// Загружаем метрики использования тега
 	useEffect(() => {
 		if (!tagId) return

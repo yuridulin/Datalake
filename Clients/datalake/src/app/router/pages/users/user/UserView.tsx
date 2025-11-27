@@ -19,7 +19,14 @@ const UserView = observer(() => {
 	useDatalakeTitle('Пользователи', id)
 	// Получаем пользователя из store (реактивно через MobX)
 	const info = id ? store.usersStore.getUserByGuid(id) : undefined
-	const isLoading = id ? store.usersStore.isLoadingUsers() : false
+	const isLoading = id ? store.usersStore.isLoadingUser(id) : false
+
+	// Загружаем данные пользователя при первом монтировании или изменении id
+	useEffect(() => {
+		if (id) {
+			store.usersStore.refreshUserByGuid(id)
+		}
+	}, [id, store.usersStore])
 
 	return isLoading && !info ? (
 		<Spin />

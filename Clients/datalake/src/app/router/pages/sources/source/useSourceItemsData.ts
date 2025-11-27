@@ -39,10 +39,18 @@ export const useSourceItemsData = (source: SourceWithSettingsAndTagsInfo) => {
 					try {
 						const usageResponse = await store.api.dataTagsGetUsage({ tagsId: tagIds })
 						// Преобразуем массив TagUsageInfo[] в Record<string, Record<string, string>>
+						// Новая модель: каждый элемент массива - одно использование с одним request
 						usage = (usageResponse.data ?? []).reduce(
 							(acc, item) => {
-								if (item.tagId !== null && item.tagId !== undefined) {
-									acc[String(item.tagId)] = item.requests ?? {}
+								if (item.tagId !== null && item.tagId !== undefined && item.request) {
+									const tagIdKey = String(item.tagId)
+									if (!acc[tagIdKey]) {
+										acc[tagIdKey] = {}
+									}
+									// request - это ключ, date - значение
+									if (item.date) {
+										acc[tagIdKey][item.request] = item.date
+									}
 								}
 								return acc
 							},
@@ -71,26 +79,39 @@ export const useSourceItemsData = (source: SourceWithSettingsAndTagsInfo) => {
 	const reloadDone = useCallback(() => setStatus('default'), [])
 
 	const createTag = async (item: string, tagType: TagType) => {
-		store.api
-			.inventoryTagsCreate({
+		try {
+			const createdTag = await store.tagsStore.createTag({
 				name: '',
 				tagType: tagType,
 				sourceId: source.id,
 				sourceItem: item,
 			})
-			.then((res) => {
-				if (!res.data?.id) return
-				setCreated(res.data)
+			if (createdTag) {
+				setCreated(createdTag)
 				const newTag: SourceTagInfo = {
-					...res.data,
-					item: res.data.sourceItem ?? item,
+					...createdTag,
+					item: item,
 				}
 				setItems((prev) => prev.map((x) => (x.itemInfo?.path === item ? { ...x, tagInfo: newTag } : x)))
+			}
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to create tag'), {
+				component: 'useSourceItemsData',
+				action: 'createTag',
 			})
+		}
 	}
 
-	const deleteTag = (tagId: number) => {
-		store.api.inventoryTagsDelete(tagId).then(reload)
+	const deleteTag = async (tagId: number) => {
+		try {
+			await store.tagsStore.deleteTag(tagId)
+			reload()
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to delete tag'), {
+				component: 'useSourceItemsData',
+				action: 'deleteTag',
+			})
+		}
 	}
 
 	useEffect(() => {

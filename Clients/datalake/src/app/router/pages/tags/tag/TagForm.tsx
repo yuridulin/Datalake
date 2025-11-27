@@ -67,7 +67,7 @@ const TagForm = () => {
 	}, [request])
 
 	// Получаем данные из stores (реактивно через MobX)
-	const blocksData = store.blocksStore.getTree()
+	const blocksData = store.blocksStore.tree
 	const tagsData = store.tagsStore.getTags()
 	const sourcesData = store.sourcesStore.getSources()
 
@@ -87,7 +87,16 @@ const TagForm = () => {
 	const tagId = id ? Number(id) : undefined
 	const tagInfo = tagId ? store.tagsStore.getTagById(tagId) : undefined
 
-	// Загружаем данные тега при первом монтировании или изменении id
+	// Загружаем данные при первом монтировании
+	useEffect(() => {
+		store.tagsStore.refreshTags()
+		store.sourcesStore.refreshSources()
+		if (tagId) {
+			store.tagsStore.refreshTagById(tagId)
+		}
+	}, [store.tagsStore, store.sourcesStore, tagId])
+
+	// Загружаем данные тега при изменении id
 	useEffect(() => {
 		if (!tagId) return
 
@@ -142,7 +151,6 @@ const TagForm = () => {
 		})
 	}, [store.api, request.sourceId])
 
-
 	useEffect(() => {
 		// Если изменился sourceId, сбрасываем флаг загрузки
 		if (lastSourceIdRef.current !== request.sourceId) {
@@ -172,7 +180,7 @@ const TagForm = () => {
 
 	const tagUpdate = async () => {
 		try {
-			await store.api.inventoryTagsUpdate(Number(id), {
+			await store.tagsStore.updateTag(Number(id), {
 				...request,
 				sourceId: strategy === SourceStrategy.FromSource ? request.sourceId : strategy,
 				formulaInputs: strategy === SourceStrategy.Calculated ? request.formulaInputs : [],
@@ -182,11 +190,6 @@ const TagForm = () => {
 				aggregationPeriod: strategy === SourceStrategy.Aggregated ? request.aggregationPeriod : null,
 				sourceTagId: strategy == SourceStrategy.Aggregated ? request.sourceTagId : null,
 			})
-			// Инвалидируем кэш тега после обновления
-			if (tagId) {
-				store.tagsStore.invalidateTag(tagId)
-				store.tagsStore.refreshTags()
-			}
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to update tag'), {
 				component: 'TagForm',
@@ -196,7 +199,18 @@ const TagForm = () => {
 		}
 	}
 
-	const tagDelete = () => store.api.inventoryTagsDelete(Number(id)).then(back)
+	const tagDelete = async () => {
+		try {
+			await store.tagsStore.deleteTag(Number(id))
+			back()
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to delete tag'), {
+				component: 'TagForm',
+				action: 'tagDelete',
+				tagId: id,
+			})
+		}
+	}
 
 	const addParam = () => {
 		if (strategy !== SourceStrategy.Calculated) return

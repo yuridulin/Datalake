@@ -1,52 +1,236 @@
+// UsersStore.ts
 import { Api } from '@/generated/Api'
-import { UserInfo, UserWithGroupsInfo } from '@/generated/data-contracts'
+import { UserCreateRequest, UserInfo, UserUpdateRequest, UserWithGroupsInfo } from '@/generated/data-contracts'
 import { logger } from '@/services/logger'
-import { makeObservable, observable, runInAction } from 'mobx'
+import { computed, makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from '../abstractions/BaseCacheStore'
 
-/**
- * Store для управления пользователями с кэшированием последнего успешного ответа
- */
 export class UsersStore extends BaseCacheStore {
+	// Observable данные
+	private usersCache = observable.box<UserInfo[]>([])
+	private usersByGuidCache = observable.map<string, UserWithGroupsInfo>()
+
 	constructor(private api: Api) {
 		super()
-
 		makeObservable(this, {
-			getUsers: true,
-			getUserByGuid: true,
+			// Computed свойства
+			statistics: computed,
+			usersMap: computed,
 		})
 	}
 
+	//#region Методы получения
+
 	/**
 	 * Получает список всех пользователей
-	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
 	 * @returns Список пользователей из кэша (может быть пустым, пока данные загружаются)
 	 */
 	public getUsers(): UserInfo[] {
-		const reactive = this.usersCache.get()
-		this.tryLoadUsers()
-		return reactive ?? []
+		return this.usersCache.get()
 	}
 
+	/**
+	 * Получает конкретного пользователя по GUID
+	 * @param guid GUID пользователя
+	 * @returns Информация о пользователе или undefined
+	 */
+	public getUserByGuid(guid: string): UserWithGroupsInfo | undefined {
+		return this.usersByGuidCache.get(guid)
+	}
+
+	//#endregion
+
+	//#region Computed свойства
+
+	/**
+	 * Маппинг GUID -> пользователь для быстрого доступа
+	 */
+	get usersMap(): Map<string, UserInfo> {
+		return computed(() => {
+			const users = this.usersCache.get()
+			const map = new Map<string, UserInfo>()
+			users.forEach((user) => {
+				map.set(user.guid, user)
+			})
+			return map
+		}).get()
+	}
+
+	/**
+	 * Статистика по пользователям
+	 */
+	get statistics() {
+		return computed(() => {
+			const users = this.usersCache.get()
+
+			const byType = new Map<string, number>()
+			users.forEach((user) => {
+				const type = user.type?.toString() ?? 'unknown'
+				byType.set(type, (byType.get(type) ?? 0) + 1)
+			})
+
+			return {
+				totalUsers: users.length,
+				byType: Object.fromEntries(byType),
+				withEmail: users.filter((u) => u.email).length,
+				withFullName: users.filter((u) => u.fullName).length,
+			}
+		}).get()
+	}
+
+	//#endregion
+
+	//#region Публичные методы для компонентов
+
+	/**
+	 * Сигнал обновления списка пользователей
+	 */
 	public refreshUsers() {
 		this.tryLoadUsers()
 	}
 
-	private usersCacheKey = 'users'
-	private usersCache = observable.box<UserInfo[]>([])
+	/**
+	 * Сигнал обновления конкретного пользователя
+	 */
+	public refreshUserByGuid(guid: string) {
+		this.tryLoadUserByGuid(guid)
+	}
+
+	/**
+	 * Создание нового пользователя
+	 */
+	public async createUser(data: UserCreateRequest): Promise<string | undefined> {
+		const cacheKey = 'creating-user'
+
+		if (this.isLoading(cacheKey)) return undefined
+		this.setLoading(cacheKey, true)
+
+		try {
+			const response = await this.api.inventoryUsersCreate(data)
+
+			runInAction(() => {
+				logger.info('User created successfully', {
+					component: 'UsersStore',
+					method: 'createUser',
+					userGuid: response.data,
+				})
+
+				this.tryLoadUsers()
+			})
+
+			return response.data
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to create user'), {
+				component: 'UsersStore',
+				method: 'createUser',
+			})
+			throw error
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
+	 * Обновление пользователя
+	 */
+	public async updateUser(guid: string, data: UserUpdateRequest): Promise<void> {
+		const cacheKey = `updating-user-${guid}`
+
+		if (this.isLoading(cacheKey)) return
+		this.setLoading(cacheKey, true)
+
+		try {
+			await this.api.inventoryUsersUpdate(guid, data)
+
+			runInAction(() => {
+				logger.info('User updated successfully', {
+					component: 'UsersStore',
+					method: 'updateUser',
+					userGuid: guid,
+				})
+
+				this.refreshUsers()
+				this.refreshUserByGuid(guid)
+			})
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to update user'), {
+				component: 'UsersStore',
+				method: 'updateUser',
+				userGuid: guid,
+			})
+			throw error
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
+	 * Удаление пользователя
+	 */
+	public async deleteUser(guid: string): Promise<void> {
+		const cacheKey = `deleting-user-${guid}`
+
+		if (this.isLoading(cacheKey)) return
+		this.setLoading(cacheKey, true)
+
+		try {
+			await this.api.inventoryUsersDelete(guid)
+
+			runInAction(() => {
+				logger.info('User deleted successfully', {
+					component: 'UsersStore',
+					method: 'deleteUser',
+					userGuid: guid,
+				})
+
+				this.refreshUsers()
+				this.usersByGuidCache.delete(guid) // удаляем кэшированные данные
+			})
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to delete user'), {
+				component: 'UsersStore',
+				method: 'deleteUser',
+				userGuid: guid,
+			})
+			throw error
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
+	 * Инвалидирует кэш для конкретного пользователя
+	 * @param guid GUID пользователя
+	 */
+	public invalidateUser(guid: string): void {
+		runInAction(() => {
+			this.usersByGuidCache.delete(guid)
+		})
+	}
+
+	/**
+	 * Проверяет, идет ли загрузка списка пользователей
+	 */
+	public isLoadingUsers(): boolean {
+		return this.isLoading('users')
+	}
+
+	/**
+	 * Проверяет, идет ли загрузка конкретного пользователя
+	 * @param guid GUID пользователя
+	 */
+	public isLoadingUser(guid: string): boolean {
+		return this.isLoading(`user_${guid}`)
+	}
+
+	//#endregion
+
+	//#region Приватные методы загрузки
 
 	private async tryLoadUsers(): Promise<void> {
-		const cacheKey = this.usersCacheKey
-		const isLoading = this.isLoading(cacheKey)
+		const cacheKey = 'users'
 
-		if (isLoading) {
-			logger.debug('Skipping - already loading', {
-				component: 'UsersStore',
-				method: 'tryLoadUsers',
-			})
-			return
-		}
-
+		if (this.isLoading(cacheKey)) return
 		this.setLoading(cacheKey, true)
 
 		try {
@@ -68,32 +252,10 @@ export class UsersStore extends BaseCacheStore {
 		}
 	}
 
-	/**
-	 * Получает конкретного пользователя по GUID
-	 * @param guid GUID пользователя
-	 * @returns Информация о пользователе или undefined
-	 */
-	getUserByGuid(guid: string): UserWithGroupsInfo | undefined {
-		const reactive = this.usersByGuidCache.get(guid)
-		this.tryLoadUserByGuid(guid)
-		return reactive
-	}
-
-	private usersByGuidCacheKey = (guid: string) => `user_${guid}`
-	private usersByGuidCache = observable.map<string, UserWithGroupsInfo>()
-
 	private async tryLoadUserByGuid(guid: string): Promise<void> {
-		const cacheKey = this.usersByGuidCacheKey(guid)
-		const isLoading = this.isLoading(cacheKey)
+		const cacheKey = `user_${guid}`
 
-		if (isLoading) {
-			logger.debug('Skipping - already loading', {
-				component: 'UsersStore',
-				method: 'tryLoadUserByGuid',
-			})
-			return
-		}
-
+		if (this.isLoading(cacheKey)) return
 		this.setLoading(cacheKey, true)
 
 		try {
@@ -106,22 +268,15 @@ export class UsersStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			logger.error(error instanceof Error ? error : new Error(`Failed to load user ${guid}`), {
+			logger.error(error instanceof Error ? error : new Error('Failed to load user by guid'), {
 				component: 'UsersStore',
 				method: 'tryLoadUserByGuid',
+				userGuid: guid,
 			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
 	}
 
-	/**
-	 * Инвалидирует кэш для конкретного пользователя
-	 * @param guid GUID пользователя
-	 */
-	invalidateUser(guid: string): void {
-		runInAction(() => {
-			this.usersByGuidCache.delete(guid)
-		})
-	}
+	//#endregion
 }

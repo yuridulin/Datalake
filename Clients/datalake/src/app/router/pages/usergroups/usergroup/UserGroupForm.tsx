@@ -35,6 +35,14 @@ const UserGroupForm = observer(() => {
 		[usersData],
 	)
 
+	// Загружаем данные при первом монтировании
+	useEffect(() => {
+		store.usersStore.refreshUsers()
+		if (id) {
+			store.userGroupsStore.refreshGroupByGuid(id)
+		}
+	}, [id, store.usersStore, store.userGroupsStore])
+
 	// Обновляем форму при загрузке группы из store
 	useEffect(() => {
 		if (!groupData) return
@@ -50,14 +58,10 @@ const UserGroupForm = observer(() => {
 
 	const updateGroup = async (newInfo: UserGroupUpdateRequest) => {
 		try {
-			await store.api.inventoryUserGroupsUpdate(String(id), {
+			await store.userGroupsStore.updateGroup(String(id), {
 				...newInfo,
 				users: newInfo.users || groupData?.users || [],
 			})
-			if (id) {
-				store.userGroupsStore.invalidateGroup(id)
-				store.userGroupsStore.refreshGroups()
-			}
 		} catch {
 			app.notification.error({ message: 'Ошибка при сохранении' })
 		}
@@ -65,11 +69,7 @@ const UserGroupForm = observer(() => {
 
 	const deleteGroup = async () => {
 		try {
-			await store.api.inventoryUserGroupsDelete(String(id))
-			// Инвалидируем кэш
-			if (id) {
-				store.userGroupsStore.invalidateGroup(id)
-			}
+			await store.userGroupsStore.deleteGroup(String(id))
 			navigate(routes.userGroups.toList())
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to delete user group'), {

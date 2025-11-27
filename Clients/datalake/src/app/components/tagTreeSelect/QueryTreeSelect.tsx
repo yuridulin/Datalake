@@ -63,8 +63,14 @@ const QueryTreeSelect: React.FC<QueryTreeSelectProps> = observer(({ onChange, ma
 	}, [searchParams])
 
 	// Получаем данные из stores (реактивно через MobX)
-	const blocksTree = store.blocksStore.getTree()
+	const blocksTree = store.blocksStore.tree
 	const tags = store.tagsStore.getTags()
+
+	// Загружаем данные при первом монтировании
+	useEffect(() => {
+		store.blocksStore.refreshBlocks()
+		store.tagsStore.refreshTags()
+	}, [store.blocksStore, store.tagsStore])
 
 	// Обновляем дерево при изменении данных
 	useEffect(() => {

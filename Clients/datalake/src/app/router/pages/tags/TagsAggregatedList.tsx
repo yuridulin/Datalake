@@ -1,6 +1,6 @@
 import CreatedTagLinker from '@/app/components/CreatedTagsLinker'
 import PageHeader from '@/app/components/PageHeader'
-import { SourceType, TagType, TagWithSettingsInfo } from '@/generated/data-contracts'
+import { SourceType, TagSimpleInfo, TagType } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
@@ -13,19 +13,17 @@ const TagsAggregatedList = observer(() => {
 	useDatalakeTitle('Теги', 'Агрегированные')
 	const store = useAppStore()
 	const tags = store.tagsStore.getTags(SourceType.Aggregated)
-	const [created, setCreated] = useState(null as TagWithSettingsInfo | null)
+	const [created, setCreated] = useState(null as TagSimpleInfo | null)
 	const hasLoadedRef = useRef(false)
 
 	const createTag = useCallback(async () => {
 		try {
-			const response = await store.api.inventoryTagsCreate({
+			const createdTag = await store.tagsStore.createTag({
 				sourceId: SourceType.Aggregated,
 				tagType: TagType.Number,
 			})
-			if (response.data) {
-				store.tagsStore.invalidateTag(response.data.id)
-				store.tagsStore.refreshTags(SourceType.Aggregated)
-				setCreated(response.data)
+			if (createdTag) {
+				setCreated(createdTag)
 			}
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to create tag'), {

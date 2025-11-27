@@ -5,6 +5,7 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { AccessType, UserCreateRequest, UserEnergoIdInfo, UserType } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
+import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { accessOptions } from '@/types/accessOptions'
 import { Button, Input, Radio, Select } from 'antd'
@@ -30,10 +31,18 @@ const UserCreate = observer(() => {
 			.then((res) => !!res && setKeycloakInfo(res.data.sort((a, b) => a.fullName.localeCompare(b.fullName))))
 	}
 
-	function create() {
-		store.api.inventoryUsersCreate(request).then((res) => {
-			navigate(routes.users.toUserForm(res.data))
-		})
+	async function create() {
+		try {
+			const userGuid = await store.usersStore.createUser(request)
+			if (userGuid) {
+				navigate(routes.users.toUserForm(userGuid))
+			}
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to create user'), {
+				component: 'UserCreate',
+				action: 'create',
+			})
+		}
 	}
 
 	// Filter `option.label` match the user type `input`

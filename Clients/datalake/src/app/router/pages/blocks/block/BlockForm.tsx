@@ -48,6 +48,11 @@ const BlockForm = observer(() => {
 		[tagsData],
 	)
 
+	// Загружаем теги при первом монтировании
+	useEffect(() => {
+		store.tagsStore.refreshTags()
+	}, [store.tagsStore])
+
 	const [block, setBlock] = useState({} as BlockUpdateRequest)
 
 	// Обновляем локальное состояние блока при загрузке из store

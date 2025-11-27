@@ -31,6 +31,13 @@ const SourceForm = observer(() => {
 		isDisabled: false,
 	})
 
+	// Загружаем данные источника при первом монтировании или изменении id
+	useEffect(() => {
+		if (sourceId) {
+			store.sourcesStore.refreshSourceById(sourceId)
+		}
+	}, [sourceId, store.sourcesStore])
+
 	// Обновляем локальное состояние при загрузке из store
 	useEffect(() => {
 		if (!sourceData) return
@@ -46,11 +53,7 @@ const SourceForm = observer(() => {
 
 	const sourceUpdate = async () => {
 		try {
-			await store.api.inventorySourcesUpdate(Number(id), request)
-			if (sourceId) {
-				store.sourcesStore.invalidateSource(sourceId)
-				store.sourcesStore.refreshSources()
-			}
+			await store.sourcesStore.updateSource(Number(id), request)
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to update source'), {
 				component: 'SourceForm',
@@ -62,11 +65,7 @@ const SourceForm = observer(() => {
 
 	const sourceDelete = async () => {
 		try {
-			await store.api.inventorySourcesDelete(Number(id))
-			// Инвалидируем кэш
-			if (sourceId) {
-				store.sourcesStore.invalidateSource(sourceId)
-			}
+			await store.sourcesStore.deleteSource(Number(id))
 			navigate(routes.sources.list)
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to delete source'), {

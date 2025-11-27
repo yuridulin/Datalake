@@ -1,53 +1,232 @@
+// SourcesStore.ts
 import { Api } from '@/generated/Api'
-import { SourceActivityInfo, SourceWithSettingsAndTagsInfo, SourceWithSettingsInfo } from '@/generated/data-contracts'
+import {
+	SourceActivityInfo,
+	SourceUpdateRequest,
+	SourceWithSettingsAndTagsInfo,
+	SourceWithSettingsInfo,
+} from '@/generated/data-contracts'
 import { logger } from '@/services/logger'
-import { makeObservable, observable, runInAction } from 'mobx'
+import { computed, makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from '../abstractions/BaseCacheStore'
 
-/**
- * Store для управления источниками с кэшированием последнего успешного ответа
- */
 export class SourcesStore extends BaseCacheStore {
+	// Observable данные
+	private sourcesCache = observable.box<SourceWithSettingsInfo[]>([])
+	private sourcesByIdCache = observable.map<number, SourceWithSettingsAndTagsInfo>()
+	private activityCache = observable.map<number, SourceActivityInfo>()
+
 	constructor(private api: Api) {
 		super()
-
 		makeObservable(this, {
-			getSources: true,
-			getSourceById: true,
-			getActivity: true,
+			// Computed свойства
+			sourcesMap: computed,
 		})
 	}
 
+	//#region Методы получения
+
 	/**
 	 * Получает список всех источников
-	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
 	 * @returns Список источников из кэша (может быть пустым, пока данные загружаются)
 	 */
 	public getSources(): SourceWithSettingsInfo[] {
-		const reactive = this.sourcesCache.get()
-		this.tryLoadSources()
-		return reactive ?? []
+		return this.sourcesCache.get()
 	}
 
+	/**
+	 * Получает конкретный источник по ID
+	 * @param id Идентификатор источника
+	 * @returns Информация об источнике или undefined
+	 */
+	public getSourceById(id: number): SourceWithSettingsAndTagsInfo | undefined {
+		return this.sourcesByIdCache.get(id)
+	}
+
+	/**
+	 * Получает состояния активности для указанных источников
+	 * @param sourceIds Массив идентификаторов источников
+	 * @returns Объект с состояниями активности (ключ: sourceId)
+	 */
+	public getActivity(sourceIds: number[]): Record<number, SourceActivityInfo> {
+		if (sourceIds.length === 0) return {}
+
+		const result: Record<number, SourceActivityInfo> = {}
+		for (const sourceId of sourceIds) {
+			const cached = this.activityCache.get(sourceId)
+			if (cached) {
+				result[sourceId] = cached
+			}
+		}
+
+		return result
+	}
+
+	//#endregion
+
+	//#region Computed свойства
+
+	/**
+	 * Маппинг ID -> источник для быстрого доступа
+	 */
+	get sourcesMap(): Map<number, SourceWithSettingsInfo> {
+		return computed(() => {
+			const sources = this.sourcesCache.get()
+			const map = new Map<number, SourceWithSettingsInfo>()
+			sources.forEach((source) => {
+				map.set(source.id, source)
+			})
+			return map
+		}).get()
+	}
+
+	//#endregion
+
+	//#region Публичные методы для компонентов
+
+	/**
+	 * Сигнал обновления списка источников
+	 */
 	public refreshSources() {
 		this.tryLoadSources()
 	}
 
-	private sourcesCacheKey = 'sources'
-	private sourcesCache = observable.box<SourceWithSettingsInfo[]>([])
+	/**
+	 * Сигнал обновления конкретного источника
+	 */
+	public refreshSourceById(id: number) {
+		this.tryLoadSourceById(id)
+	}
+
+	/**
+	 * Сигнал обновления активности источников
+	 */
+	public refreshActivity(sourceIds: number[]) {
+		this.tryLoadActivity(sourceIds)
+	}
+
+	/**
+	 * Создание нового источника
+	 */
+	public async createSource(): Promise<number | undefined> {
+		const cacheKey = 'creating-source'
+
+		if (this.isLoading(cacheKey)) return undefined
+		this.setLoading(cacheKey, true)
+
+		try {
+			const response = await this.api.inventorySourcesCreate()
+
+			runInAction(() => {
+				logger.info('Source created successfully', {
+					component: 'SourcesStore',
+					method: 'createSource',
+					sourceId: response.data,
+				})
+
+				this.tryLoadSources()
+			})
+
+			return response.data
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to create source'), {
+				component: 'SourcesStore',
+				method: 'createSource',
+			})
+			throw error
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
+	 * Обновление источника
+	 */
+	public async updateSource(id: number, data: SourceUpdateRequest): Promise<void> {
+		const cacheKey = `updating-source-${id}`
+
+		if (this.isLoading(cacheKey)) return
+		this.setLoading(cacheKey, true)
+
+		try {
+			await this.api.inventorySourcesUpdate(id, data)
+
+			runInAction(() => {
+				logger.info('Source updated successfully', {
+					component: 'SourcesStore',
+					method: 'updateSource',
+					sourceId: id,
+				})
+
+				this.refreshSources()
+				this.refreshSourceById(id)
+			})
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to update source'), {
+				component: 'SourcesStore',
+				method: 'updateSource',
+				sourceId: id,
+			})
+			throw error
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
+	 * Удаление источника
+	 */
+	public async deleteSource(id: number): Promise<void> {
+		const cacheKey = `deleting-source-${id}`
+
+		if (this.isLoading(cacheKey)) return
+		this.setLoading(cacheKey, true)
+
+		try {
+			await this.api.inventorySourcesDelete(id)
+
+			runInAction(() => {
+				logger.info('Source deleted successfully', {
+					component: 'SourcesStore',
+					method: 'deleteSource',
+					sourceId: id,
+				})
+
+				this.refreshSources()
+				this.sourcesByIdCache.delete(id) // удаляем кэшированные данные
+				this.activityCache.delete(id) // удаляем кэш активности
+			})
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to delete source'), {
+				component: 'SourcesStore',
+				method: 'deleteSource',
+				sourceId: id,
+			})
+			throw error
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
+	 * Инвалидирует кэш для конкретного источника
+	 * @param id Идентификатор источника
+	 */
+	public invalidateSource(id: number): void {
+		runInAction(() => {
+			this.sourcesByIdCache.delete(id)
+			this.activityCache.delete(id)
+		})
+	}
+
+	//#endregion
+
+	//#region Приватные методы загрузки
 
 	private async tryLoadSources(): Promise<void> {
-		const cacheKey = this.sourcesCacheKey
-		const isLoading = this.isLoading(cacheKey)
+		const cacheKey = 'sources'
 
-		if (isLoading) {
-			logger.debug('Skipping - already loading', {
-				component: 'SourcesStore',
-				method: 'tryLoadSources',
-			})
-			return
-		}
-
+		if (this.isLoading(cacheKey)) return
 		this.setLoading(cacheKey, true)
 
 		try {
@@ -71,32 +250,10 @@ export class SourcesStore extends BaseCacheStore {
 		}
 	}
 
-	/**
-	 * Получает конкретный источник по ID
-	 * @param id Идентификатор источника
-	 * @returns Информация об источнике или undefined
-	 */
-	getSourceById(id: number): SourceWithSettingsAndTagsInfo | undefined {
-		const reactive = this.sourcesByIdCache.get(id)
-		this.tryLoadSourceById(id)
-		return reactive
-	}
-
-	private sourcesByIdCacheKey = (id: number) => `source_${id}`
-	private sourcesByIdCache = observable.map<number, SourceWithSettingsAndTagsInfo>()
-
 	private async tryLoadSourceById(id: number): Promise<void> {
-		const cacheKey = this.sourcesByIdCacheKey(id)
-		const isLoading = this.isLoading(cacheKey)
+		const cacheKey = `source_${id}`
 
-		if (isLoading) {
-			logger.debug('Skipping - already loading', {
-				component: 'SourcesStore',
-				method: 'tryLoadSourceById',
-			})
-			return
-		}
-
+		if (this.isLoading(cacheKey)) return
 		this.setLoading(cacheKey, true)
 
 		try {
@@ -109,56 +266,22 @@ export class SourcesStore extends BaseCacheStore {
 				})
 			}
 		} catch (error) {
-			logger.error(error instanceof Error ? error : new Error(`Failed to load source ${id}`), {
+			logger.error(error instanceof Error ? error : new Error('Failed to load source by id'), {
 				component: 'SourcesStore',
 				method: 'tryLoadSourceById',
+				sourceId: id,
 			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
 	}
 
-	/**
-	 * Получает состояния активности для указанных источников
-	 * @param sourceIds Массив идентификаторов источников
-	 * @returns Объект с состояниями активности (ключ: sourceId)
-	 */
-	getActivity(sourceIds: number[]): Record<number, SourceActivityInfo> {
-		if (sourceIds.length === 0) return {}
-
-		const result: Record<number, SourceActivityInfo> = {}
-		for (const sourceId of sourceIds) {
-			const cached = this.activityCache.get(sourceId)
-			if (cached) {
-				result[sourceId] = cached
-			}
-		}
-
-		this.tryLoadActivity(sourceIds)
-		return result
-	}
-
-	public refreshActivity(sourceIds: number[]) {
-		this.tryLoadActivity(sourceIds)
-	}
-
-	private activityCacheKey = 'activity'
-	private activityCache = observable.map<number, SourceActivityInfo>()
-
 	private async tryLoadActivity(sourceIds: number[]): Promise<void> {
 		if (sourceIds.length === 0) return
 
-		const cacheKey = this.activityCacheKey
-		const isLoading = this.isLoading(cacheKey)
+		const cacheKey = 'activity'
 
-		if (isLoading) {
-			logger.debug('Skipping - already loading', {
-				component: 'SourcesStore',
-				method: 'tryLoadActivity',
-			})
-			return
-		}
-
+		if (this.isLoading(cacheKey)) return
 		this.setLoading(cacheKey, true)
 
 		try {
@@ -182,14 +305,5 @@ export class SourcesStore extends BaseCacheStore {
 		}
 	}
 
-	/**
-	 * Инвалидирует кэш для конкретного источника
-	 * @param id Идентификатор источника
-	 */
-	invalidateSource(id: number): void {
-		runInAction(() => {
-			this.sourcesByIdCache.delete(id)
-			this.activityCache.delete(id)
-		})
-	}
+	//#endregion
 }

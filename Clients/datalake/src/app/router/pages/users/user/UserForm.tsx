@@ -70,13 +70,7 @@ const UserForm = observer(() => {
 
 	const update = async () => {
 		try {
-			const response = await store.api.inventoryUsersUpdate(String(id), request)
-			if (response.status >= 300) return
-			// Инвалидируем кэш и обновляем данные
-			if (id) {
-				store.usersStore.invalidateUser(id)
-				store.usersStore.refreshUsers()
-			}
+			await store.usersStore.updateUser(String(id), request)
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to update user'), {
 				component: 'UserForm',
@@ -88,11 +82,7 @@ const UserForm = observer(() => {
 
 	const del = async () => {
 		try {
-			await store.api.inventoryUsersDelete(String(id))
-			// Инвалидируем кэш
-			if (id) {
-				store.usersStore.invalidateUser(id)
-			}
+			await store.usersStore.deleteUser(String(id))
 			navigate(routes.users.list)
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to delete user'), {

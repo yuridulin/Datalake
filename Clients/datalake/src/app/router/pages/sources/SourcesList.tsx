@@ -3,14 +3,13 @@ import PageHeader from '@/app/components/PageHeader'
 import routes from '@/app/router/routes'
 import { timeAgo } from '@/functions/dateHandle'
 import getSourceTypeName from '@/functions/getSourceTypeName'
-import { AccessType, SourceWithSettingsInfo, SourceType } from '@/generated/data-contracts'
+import { AccessType, SourceType, SourceWithSettingsInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
-import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 
 interface DataCell extends SourceWithSettingsInfo {
@@ -88,8 +87,7 @@ const SourcesList = observer(() => {
 
 	const createSource = useCallback(async () => {
 		try {
-			await store.api.inventorySourcesCreate()
-			store.sourcesStore.refreshSources()
+			await store.sourcesStore.createSource()
 			notification.success({ message: 'Источник создан' })
 		} catch {
 			notification.error({ message: 'Не удалось создать источник' })
@@ -216,7 +214,6 @@ const SourcesList = observer(() => {
 			] as TableColumnsType<DataCell>,
 		[states],
 	)
-
 
 	return (
 		<>

@@ -15,7 +15,8 @@ const Tags = observer(() => {
 		if (hasLoadedRef.current) return
 		hasLoadedRef.current = true
 		store.tagsStore.refreshTags()
-	}, [store.tagsStore])
+		store.sourcesStore.refreshSources()
+	}, [store.tagsStore, store.sourcesStore])
 
 	return (
 		<>
