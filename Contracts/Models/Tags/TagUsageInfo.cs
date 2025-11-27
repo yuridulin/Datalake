@@ -2,7 +2,8 @@
 
 public record TagUsageInfo(
 	int TagId,
-	Dictionary<string, DateTime> Requests);
+	DateTime Date,
+	string Request);
 
 public record TagStatusInfo(
 	int TagId,

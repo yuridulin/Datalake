@@ -7,28 +7,24 @@ namespace Datalake.Data.Infrastructure.InMemory;
 [Singleton]
 public class TagsUsageStore : ITagsUsageStore
 {
-	private readonly ConcurrentDictionary<int, TagUsage> _usage = new();
+	private readonly ConcurrentDictionary<int, TagUsage> usage = new();
 
 	public void RegisterUsage(int tagId, string requestKey)
 	{
-		var info = _usage.GetOrAdd(tagId, _ => new TagUsage(tagId));
+		var info = usage.GetOrAdd(tagId, _ => new TagUsage(tagId));
 		info.Update(requestKey);
 	}
 
-	public Dictionary<string, DateTime>? Get(int tagId)
+	public IDictionary<string, DateTime>? Get(int tagId)
 	{
-		_usage.TryGetValue(tagId, out var info);
+		usage.TryGetValue(tagId, out var info);
 		return info?.RequestsUsage;
 	}
 }
 
-public record TagUsage
+public class TagUsage(int tagId)
 {
-	public TagUsage(int tagId)
-	{
-		TagId = tagId;
-		RequestsUsage = [];
-	}
+	private readonly ConcurrentDictionary<string, DateTime> usage = [];
 
 	public TagUsage(int tagId, string requestKey) : this(tagId)
 	{
@@ -37,10 +33,10 @@ public record TagUsage
 
 	public void Update(string requestKey)
 	{
-		RequestsUsage[requestKey] = DateTime.UtcNow;
+		usage.AddOrUpdate(requestKey, (_) => DateTime.UtcNow, (_, _) => DateTime.UtcNow);
 	}
 
-	public int TagId { get; }
+	public int TagId { get; } = tagId;
 
-	public Dictionary<string, DateTime> RequestsUsage { get; }
+	public IDictionary<string, DateTime> RequestsUsage => usage;
 }

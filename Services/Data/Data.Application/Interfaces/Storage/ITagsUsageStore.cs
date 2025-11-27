@@ -4,5 +4,5 @@ public interface ITagsUsageStore
 {
 	void RegisterUsage(int tagId, string requestKey);
 
-	Dictionary<string, DateTime>? Get(int tagId);
+	IDictionary<string, DateTime>? Get(int tagId);
 }

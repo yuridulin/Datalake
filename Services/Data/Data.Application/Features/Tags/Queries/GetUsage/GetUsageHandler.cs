@@ -38,8 +38,11 @@ public class GetUsageHandler(
 		foreach (var tagId in identifiers)
 		{
 			var usage = tagsUsageStore.Get(tagId);
-			if (usage != null)
-				usageList.Add(new(tagId, usage));
+			if (usage == null)
+				continue;
+
+			foreach (var req in usage)
+				usageList.Add(new(tagId, req.Value, req.Key));
 		}
 
 		return usageList;
