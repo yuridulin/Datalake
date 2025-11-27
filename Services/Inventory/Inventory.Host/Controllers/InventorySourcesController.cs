@@ -26,7 +26,7 @@ public class InventorySourcesController(
 			User = user,
 		}, ct);
 
-		return Ok(result);
+		return result;
 	}
 
 	public override async Task<ActionResult<SourceWithSettingsAndTagsInfo>> GetAsync(
@@ -37,7 +37,7 @@ public class InventorySourcesController(
 		var handler = serviceProvider.GetRequiredService<IGetSourceWithSettingsAndTagsHandler>();
 		var data = await handler.HandleAsync(new() { User = user, SourceId = sourceId }, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult<IEnumerable<SourceWithSettingsInfo>>> GetAllAsync(
@@ -48,7 +48,7 @@ public class InventorySourcesController(
 		var handler = serviceProvider.GetRequiredService<IGetSourcesWithSettingsHandler>();
 		var data = await handler.HandleAsync(new() { User = user, WithCustom = withCustom }, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult> UpdateAsync(
@@ -58,7 +58,7 @@ public class InventorySourcesController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IUpdateSourceHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			SourceId = sourceId,
@@ -69,7 +69,7 @@ public class InventorySourcesController(
 			IsDisabled = request.IsDisabled,
 		}, ct);
 
-		return Ok();
+		return data;
 	}
 
 	public override async Task<ActionResult> DeleteAsync(
@@ -78,12 +78,12 @@ public class InventorySourcesController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IDeleteSourceHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			SourceId = sourceId
 		}, ct);
 
-		return Ok();
+		return data;
 	}
 }

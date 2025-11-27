@@ -21,12 +21,17 @@ public record class Tag : IWithIdentityKey, IWithGuidKey, ISoftDeletable
 	/// <param name="sourceType">Тип источника данных</param>
 	/// <param name="sourceId">Идентификатор источника данных</param>
 	/// <param name="sourceItem">Путь к данным источника</param>
-	public Tag(TagType type, SourceType sourceType, int? sourceId, string? sourceItem)
+	public static Tag Create(TagType type, SourceType sourceType, int? sourceId, string? sourceItem)
 	{
-		Type = type;
+		var tag = new Tag
+		{
+			GlobalGuid = Guid.NewGuid(),
+			Type = type,
+			SourceItem = sourceItem,
+		};
 
-		UpdateSource(sourceType, sourceId);
-		SourceItem = sourceItem;
+		tag.UpdateSource(sourceType, sourceId);
+		return tag;
 	}
 
 	#endregion Конструкторы

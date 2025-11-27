@@ -4,7 +4,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Sources.Queries.GetActivity;
 
-public record class GetSourcesActivityQuery : IQueryRequest<IEnumerable<SourceActivityInfo>>, IWithUserAccess
+public record class GetSourcesActivityQuery : IQueryRequest<SourceActivityInfo[]>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 

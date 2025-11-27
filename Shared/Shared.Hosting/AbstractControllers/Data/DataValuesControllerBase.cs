@@ -19,7 +19,7 @@ public abstract class DataValuesControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список ответов на запросы</returns>
 	[HttpPost]
-	public abstract Task<ActionResult<IEnumerable<ValuesResponse>>> GetAsync(
+	public abstract Task<ActionResult<List<ValuesResponse>>> GetAsync(
 		[BindRequired, FromBody] IEnumerable<ValuesRequest> requests,
 		CancellationToken ct = default);
 
@@ -30,7 +30,7 @@ public abstract class DataValuesControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список измененных значений</returns>
 	[HttpPut]
-	public abstract Task<ActionResult<IEnumerable<ValuesTagResponse>>> WriteAsync(
+	public abstract Task<ActionResult<List<ValuesTagResponse>>> WriteAsync(
 		[BindRequired, FromBody] IEnumerable<ValueWriteRequest> requests,
 		CancellationToken ct = default);
 }

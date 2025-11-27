@@ -26,6 +26,6 @@ public class InventoryAuditController(
 		var handler = serviceProvider.GetRequiredService<IGetAuditHandler>();
 		var data = await handler.HandleAsync(new(lastId, firstId, take, source, block, tag, user, group, categories, types, author), ct);
 
-		return Ok(data);
+		return data;
 	}
 }

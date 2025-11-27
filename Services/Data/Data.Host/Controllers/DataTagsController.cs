@@ -13,7 +13,7 @@ public class DataTagsController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : DataTagsControllerBase
 {
-	public override async Task<ActionResult<IEnumerable<TagStatusInfo>>> GetStatusAsync(
+	public override async Task<ActionResult<List<TagStatusInfo>>> GetStatusAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default)
 	{
@@ -25,10 +25,10 @@ public class DataTagsController(
 			TagsId = request.TagsId ?? [],
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
-	public override async Task<ActionResult<IEnumerable<TagUsageInfo>>> GetUsageAsync(
+	public override async Task<ActionResult<List<TagUsageInfo>>> GetUsageAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default)
 	{
@@ -41,6 +41,6 @@ public class DataTagsController(
 			TagsGuid = request.TagsGuid,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 }

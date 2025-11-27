@@ -19,7 +19,7 @@ public class InventoryTagsController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryTagsControllerBase
 {
-	public override async Task<ActionResult<TagWithSettingsInfo>> CreateAsync(
+	public override async Task<ActionResult<int>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default)
 	{
@@ -34,7 +34,7 @@ public class InventoryTagsController(
 			SourceItem = request.SourceItem,
 		}, ct);
 
-		return Ok(result);
+		return result;
 	}
 
 	public override async Task<ActionResult<TagWithSettingsAndBlocksInfo>> GetWithSettingsAndBlocksAsync(
@@ -49,7 +49,7 @@ public class InventoryTagsController(
 			Id = tagId,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 
@@ -71,7 +71,7 @@ public class InventoryTagsController(
 			SpecificType = type,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult<TagWithSettingsInfo[]>> GetAllWithSettingsAsync(
@@ -92,7 +92,7 @@ public class InventoryTagsController(
 			SpecificType = type,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult> UpdateAsync(
@@ -102,7 +102,7 @@ public class InventoryTagsController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IUpdateTagHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			Id = tagId,
@@ -137,7 +137,7 @@ public class InventoryTagsController(
 			})
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> DeleteAsync(
@@ -146,12 +146,12 @@ public class InventoryTagsController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IDeleteTagHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			Id = tagId,
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 }

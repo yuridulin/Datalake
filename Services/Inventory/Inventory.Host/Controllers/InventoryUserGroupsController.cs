@@ -25,7 +25,7 @@ public class InventoryUserGroupsController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<ICreateUserGroupHandler>();
-		var result = await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			ParentGuid = request.ParentGuid,
@@ -33,7 +33,7 @@ public class InventoryUserGroupsController(
 			Description = request.Description,
 		}, ct);
 
-		return Ok(result);
+		return data;
 	}
 
 	public override async Task<ActionResult<IEnumerable<UserGroupInfo>>> GetAllAsync(
@@ -46,7 +46,7 @@ public class InventoryUserGroupsController(
 			User = user,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult<UserGroupInfo>> GetAsync(
@@ -61,7 +61,7 @@ public class InventoryUserGroupsController(
 			Guid = userGroupGuid,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult<UserGroupTreeInfo[]>> GetTreeAsync(
@@ -74,7 +74,7 @@ public class InventoryUserGroupsController(
 			User = user,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult<UserGroupDetailedInfo>> GetWithDetailsAsync(
@@ -89,7 +89,7 @@ public class InventoryUserGroupsController(
 			Guid = userGroupGuid,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult> UpdateAsync(
@@ -99,7 +99,7 @@ public class InventoryUserGroupsController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IUpdateUserGroupHandler>();
-		await handler.HandleAsync(new()
+		var data = handler.HandleAsync(new()
 		{
 			User = user,
 			Guid = userGroupGuid,
@@ -108,7 +108,7 @@ public class InventoryUserGroupsController(
 			Users = request.Users.Select(x => new UserRelationDto { Guid = x.Guid, AccessType = x.AccessType })
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> MoveAsync(
@@ -118,14 +118,14 @@ public class InventoryUserGroupsController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IMoveUserGroupHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			Guid = groupGuid,
 			ParentGuid = parentGuid,
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> DeleteAsync(
@@ -134,12 +134,12 @@ public class InventoryUserGroupsController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IDeleteUserGroupHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			Guid = userGroupGuid,
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 }

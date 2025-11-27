@@ -32,6 +32,6 @@ public class UsersController(
 			Users = users,
 		});
 
-		return Ok(result);
+		return result;
 	}
 }

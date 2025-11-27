@@ -8,11 +8,11 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Data.Host.Controllers;
 
-public class SourcesController(
+public class DataSourcesController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : DataSourcesControllerBase
 {
-	public override async Task<ActionResult<IEnumerable<SourceActivityInfo>>> GetActivityAsync(
+	public override async Task<ActionResult<SourceActivityInfo[]>> GetActivityAsync(
 		[BindRequired, FromBody] int[] sourcesId,
 		CancellationToken ct = default)
 	{
@@ -24,10 +24,10 @@ public class SourcesController(
 			SourcesId = sourcesId
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
-	public override async Task<ActionResult<IEnumerable<SourceItemInfo>>> GetItemsAsync(
+	public override async Task<ActionResult<List<SourceItemInfo>>> GetItemsAsync(
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default)
 	{
@@ -39,6 +39,6 @@ public class SourcesController(
 			SourceId = sourceId
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 }

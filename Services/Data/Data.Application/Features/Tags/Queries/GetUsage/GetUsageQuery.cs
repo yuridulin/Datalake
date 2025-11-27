@@ -4,7 +4,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Tags.Queries.GetUsage;
 
-public record GetUsageQuery : IQueryRequest<IEnumerable<TagUsageInfo>>, IWithUserAccess
+public record GetUsageQuery : IQueryRequest<List<TagUsageInfo>>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 

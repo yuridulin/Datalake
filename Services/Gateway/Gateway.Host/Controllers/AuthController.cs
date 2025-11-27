@@ -34,10 +34,10 @@ public class AuthController(
 		var openHandler = serviceProvider.GetRequiredService<IOpenLocalSessionHandler>();
 		var getHandler = serviceProvider.GetRequiredService<IGetCurrentSessionWithAccessHandler>();
 
-		var sessionToken = await openHandler.HandleAsync(new() { Login = request.Login, PasswordString = request.Password }, ct);
-		var sessionInfo = await getHandler.HandleAsync(new() { Token = sessionToken }, ct);
+		var token = await openHandler.HandleAsync(new() { Login = request.Login, PasswordString = request.Password }, ct);
+		var data = await getHandler.HandleAsync(new() { Token = token }, ct);
 
-		return Ok(sessionInfo);
+		return data;
 	}
 
 	/// <summary>
@@ -54,10 +54,10 @@ public class AuthController(
 		var openHandler = serviceProvider.GetRequiredService<IOpenEnergoIdSessionHandler>();
 		var getHandler = serviceProvider.GetRequiredService<IGetCurrentSessionWithAccessHandler>();
 
-		var sessionToken = await openHandler.HandleAsync(new() { Guid = request.EnergoIdGuid }, ct);
-		var sessionInfo = await getHandler.HandleAsync(new() { Token = sessionToken }, ct);
+		var token = await openHandler.HandleAsync(new() { Guid = request.EnergoIdGuid }, ct);
+		var data = await getHandler.HandleAsync(new() { Token = token }, ct);
 
-		return Ok(sessionInfo);
+		return data;
 	}
 
 	/// <summary>
@@ -70,12 +70,10 @@ public class AuthController(
 		CancellationToken ct = default)
 	{
 		var token = tokenExtractor.ExtractToken(HttpContext);
-
 		var handler = serviceProvider.GetRequiredService<IGetCurrentSessionWithAccessHandler>();
+		var data = await handler.HandleAsync(new() { Token = token }, ct);
 
-		var sessionInfo = await handler.HandleAsync(new() { Token = token }, ct);
-
-		return Ok(sessionInfo);
+		return data;
 	}
 
 	/// <summary>
@@ -87,11 +85,9 @@ public class AuthController(
 		CancellationToken ct = default)
 	{
 		var token = tokenExtractor.ExtractToken(HttpContext);
-
 		var handler = serviceProvider.GetRequiredService<ICloseSessionHandler>();
+		var data = await handler.HandleAsync(new() { Token = token }, ct);
 
-		await handler.HandleAsync(new() { Token = token }, ct);
-
-		return NoContent();
+		return data;
 	}
 }

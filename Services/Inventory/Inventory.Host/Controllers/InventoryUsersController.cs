@@ -22,7 +22,7 @@ public class InventoryUsersController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<ICreateUserHandler>();
-		var result = await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			Type = request.Type,
@@ -34,7 +34,7 @@ public class InventoryUsersController(
 			AccessType = request.AccessType,
 		}, ct);
 
-		return Ok(result);
+		return data;
 	}
 
 	public override async Task<ActionResult<IEnumerable<UserInfo>>> GetAsync(
@@ -49,7 +49,7 @@ public class InventoryUsersController(
 			UserGuid = userGuid,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult<UserWithGroupsInfo>> GetWithDetailsAsync(
@@ -64,7 +64,7 @@ public class InventoryUsersController(
 			Guid = userGuid,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult> UpdateAsync(
@@ -74,7 +74,7 @@ public class InventoryUsersController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IUpdateUserHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			Guid = userGuid,
@@ -85,7 +85,7 @@ public class InventoryUsersController(
 			AccessType = request.AccessType,
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> DeleteAsync(
@@ -94,12 +94,12 @@ public class InventoryUsersController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IDeleteUserHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			Guid = userGuid,
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 }

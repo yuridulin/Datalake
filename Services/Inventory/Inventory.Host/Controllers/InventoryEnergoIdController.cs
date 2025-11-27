@@ -18,7 +18,7 @@ public class InventoryEnergoIdController(
 		var handler = serviceProvider.GetRequiredService<IGetEnergoIdHandler>();
 		var data = await handler.HandleAsync(new() { User = user }, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult> UpdateEnergoIdAsync(
@@ -26,8 +26,8 @@ public class InventoryEnergoIdController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IReloadEnergoIdHandler>();
-		await handler.HandleAsync(new() { User = user }, ct);
+		var data = await handler.HandleAsync(new() { User = user }, ct);
 
-		return NoContent();
+		return data;
 	}
 }

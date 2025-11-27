@@ -18,7 +18,7 @@ public abstract class DataSourcesControllerBase : ControllerBase
 	/// <param name="sourcesId">Список идентификаторов источников данных</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPost("activity")]
-	public abstract Task<ActionResult<IEnumerable<SourceActivityInfo>>> GetActivityAsync(
+	public abstract Task<ActionResult<SourceActivityInfo[]>> GetActivityAsync(
 		[BindRequired, FromBody] int[] sourcesId,
 		CancellationToken ct = default);
 
@@ -28,7 +28,7 @@ public abstract class DataSourcesControllerBase : ControllerBase
 	/// <param name="sourceId">Идентификатор источника данных</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpGet("{sourceId}/items")]
-	public abstract Task<ActionResult<IEnumerable<SourceItemInfo>>> GetItemsAsync(
+	public abstract Task<ActionResult<List<SourceItemInfo>>> GetItemsAsync(
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default);
 }

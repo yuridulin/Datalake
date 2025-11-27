@@ -20,7 +20,7 @@ public abstract class DataTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Объект статистики использования, сопоставленный с идентификаторами</returns>
 	[HttpPost("usage")]
-	public abstract Task<ActionResult<IEnumerable<TagUsageInfo>>> GetUsageAsync(
+	public abstract Task<ActionResult<List<TagUsageInfo>>> GetUsageAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default);
 
@@ -31,7 +31,7 @@ public abstract class DataTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Объект состояния последнего получениея/вычисления, сопоставленный с идентификаторами</returns>
 	[HttpPost("status")]
-	public abstract Task<ActionResult<IEnumerable<TagStatusInfo>>> GetStatusAsync(
+	public abstract Task<ActionResult<List<TagStatusInfo>>> GetStatusAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default);
 }

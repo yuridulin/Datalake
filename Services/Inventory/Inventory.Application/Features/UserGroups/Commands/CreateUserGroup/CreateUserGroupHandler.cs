@@ -28,7 +28,7 @@ public class CreateUserGroupHandler(
 
 	public override async Task<Guid> ExecuteInTransactionAsync(CreateUserGroupCommand command, CancellationToken ct = default)
 	{
-		userGroup = new(parentGuid: command.ParentGuid, name: command.Name, description: command.Description);
+		userGroup = UserGroup.Create(command.ParentGuid, command.Name, command.Description);
 
 		await userGroupsRepository.AddAsync(userGroup, ct);
 		await _unitOfWork.SaveChangesAsync(ct);

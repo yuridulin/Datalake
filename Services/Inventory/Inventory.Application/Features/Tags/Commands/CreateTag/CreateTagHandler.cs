@@ -60,7 +60,7 @@ public class CreateTagHandler(
 			throw InventoryNotFoundException.NotFoundBlock(command.BlockId.Value);
 		}
 
-		tag = new(
+		tag = Tag.Create(
 			type: command.Type,
 			sourceType: sourceType,
 			sourceId: command.SourceId,

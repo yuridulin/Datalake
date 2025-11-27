@@ -5,13 +5,13 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Tags.Queries.GetUsage;
 
-public interface IGetUsageHandler : IQueryHandler<GetUsageQuery, IEnumerable<TagUsageInfo>> { }
+public interface IGetUsageHandler : IQueryHandler<GetUsageQuery, List<TagUsageInfo>> { }
 
 public class GetUsageHandler(
 	ITagsSettingsStore tagsSettingsStore,
 	ITagsUsageStore tagsUsageStore) : IGetUsageHandler
 {
-	public async Task<IEnumerable<TagUsageInfo>> HandleAsync(GetUsageQuery query, CancellationToken ct = default)
+	public async Task<List<TagUsageInfo>> HandleAsync(GetUsageQuery query, CancellationToken ct = default)
 	{
 		HashSet<int> identifiers = [];
 		if (query.TagsId != null)

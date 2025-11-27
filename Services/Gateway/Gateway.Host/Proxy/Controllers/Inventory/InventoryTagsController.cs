@@ -12,10 +12,10 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Inventory;
 public class InventoryTagsController(InventoryReverseProxyService proxyService) : InventoryTagsControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult<TagWithSettingsInfo>> CreateAsync(
+	public override Task<ActionResult<int>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<TagWithSettingsInfo>(HttpContext, request, ct);
+			=> proxyService.ProxyAsync<int>(HttpContext, request, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<TagWithSettingsAndBlocksInfo>> GetWithSettingsAndBlocksAsync(

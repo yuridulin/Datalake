@@ -19,10 +19,17 @@ public record class UserGroup : IWithGuidKey, ISoftDeletable
 	/// <param name="parentGuid">Идентификатор родительской группы</param>
 	/// <param name="name">Название</param>
 	/// <param name="description">Описание</param>
-	public UserGroup(Guid? parentGuid, string? name, string? description)
+	public static UserGroup Create(Guid? parentGuid, string? name, string? description)
 	{
-		UpdateParent(parentGuid);
-		Update(name, description);
+		var group = new UserGroup
+		{
+			Guid = Guid.NewGuid(),
+		};
+
+		group.UpdateParent(parentGuid);
+		group.Update(name, description);
+
+		return group;
 	}
 
 	#endregion Конструкторы

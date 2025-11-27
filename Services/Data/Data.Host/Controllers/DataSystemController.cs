@@ -5,11 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Datalake.Data.Host.Controllers;
 
-public class SystemController(
+public class DataSystemController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : DataSystemControllerBase
 {
-	public override async Task<ActionResult> RestartCollectionAsync(
+	public override async Task<ActionResult<bool>> RestartCollectionAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -19,6 +19,6 @@ public class SystemController(
 			User = user,
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 }

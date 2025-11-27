@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Datalake.Data.Application.Features.Values.Queries.GetValues;
 
-public interface IGetValuesHandler : IQueryHandler<GetValuesQuery, IEnumerable<ValuesResponse>> { }
+public interface IGetValuesHandler : IQueryHandler<GetValuesQuery, List<ValuesResponse>> { }
 
 public class GetValuesHandler(
 	ITagsSettingsStore tagsStore,
@@ -20,7 +20,7 @@ public class GetValuesHandler(
 	IValuesStore currentValuesStore,
 	IServiceScopeFactory serviceScopeFactory) : IGetValuesHandler
 {
-	public async Task<IEnumerable<ValuesResponse>> HandleAsync(GetValuesQuery query, CancellationToken ct = default)
+	public async Task<List<ValuesResponse>> HandleAsync(GetValuesQuery query, CancellationToken ct = default)
 	{
 		var trustedRequests = CheckRequests(query.User, query.Requests.ToArray());
 		var responses = await GetResponsesAsync(trustedRequests);

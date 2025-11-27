@@ -19,8 +19,8 @@ public class CreateBlockHandler(
 		command.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 
 		Block block = string.IsNullOrEmpty(command.Name)
-			? new(command.ParentId)
-			: new(command.ParentId, command.Name, command.Description);
+			? Block.CreateEmpty(command.ParentId)
+			: Block.Create(command.ParentId, command.Name, command.Description);
 
 		await unitOfWork.BeginTransactionAsync(ct);
 

@@ -21,7 +21,7 @@ public abstract class InventoryTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Идентификатор нового тега в локальной базе данных</returns>
 	[HttpPost]
-	public abstract Task<ActionResult<TagWithSettingsInfo>> CreateAsync(
+	public abstract Task<ActionResult<int>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default);
 

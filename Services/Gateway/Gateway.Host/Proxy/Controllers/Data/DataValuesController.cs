@@ -10,14 +10,14 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Data;
 public class DataValuesController(DataReverseProxyService proxyService) : DataValuesControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult<IEnumerable<ValuesResponse>>> GetAsync(
+	public override Task<ActionResult<List<ValuesResponse>>> GetAsync(
 		[BindRequired, FromBody] IEnumerable<ValuesRequest> requests,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IEnumerable<ValuesResponse>>(HttpContext, body: requests, cancellationToken: ct);
+			=> proxyService.ProxyAsync<List<ValuesResponse>>(HttpContext, body: requests, cancellationToken: ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<IEnumerable<ValuesTagResponse>>> WriteAsync(
+	public override Task<ActionResult<List<ValuesTagResponse>>> WriteAsync(
 		[BindRequired, FromBody] IEnumerable<ValueWriteRequest> requests,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IEnumerable<ValuesTagResponse>>(HttpContext, body: requests, cancellationToken: ct);
+			=> proxyService.ProxyAsync<List<ValuesTagResponse>>(HttpContext, body: requests, cancellationToken: ct);
 }

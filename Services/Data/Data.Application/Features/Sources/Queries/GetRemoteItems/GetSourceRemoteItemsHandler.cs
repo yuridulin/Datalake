@@ -7,13 +7,13 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Sources.Queries.GetRemoteItems;
 
-public interface IGetSourceRemoteItemsHandler : IQueryHandler<GetSourceRemoteItemsQuery, IEnumerable<SourceItemInfo>> { }
+public interface IGetSourceRemoteItemsHandler : IQueryHandler<GetSourceRemoteItemsQuery, List<SourceItemInfo>> { }
 
 public class GetSourceRemoteItemsHandler(
 	ISourcesRepository sourcesRepository,
 	IReceiverService receiverService) : IGetSourceRemoteItemsHandler
 {
-	public async Task<IEnumerable<SourceItemInfo>> HandleAsync(
+	public async Task<List<SourceItemInfo>> HandleAsync(
 		GetSourceRemoteItemsQuery query,
 		CancellationToken ct = default)
 	{
@@ -46,7 +46,7 @@ public class GetSourceRemoteItemsHandler(
 					}
 				};
 			})
-			.ToArray();
+			.ToList();
 
 		return sourceItems;
 	}

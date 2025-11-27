@@ -39,7 +39,7 @@ public class InventoryAccessController(
 			UserGuid = userGuid,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult<IDictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
@@ -50,7 +50,7 @@ public class InventoryAccessController(
 		var handler = serviceProvider.GetRequiredService<IGetCalculatedAccessRulesHandler>();
 		var data = await handler.HandleAsync(new() { User = user, Guids = guids }, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult> SetUserRulesAsync(
@@ -60,7 +60,7 @@ public class InventoryAccessController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IChangeUserRulesHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			UserGuid = userGuid,
@@ -73,7 +73,7 @@ public class InventoryAccessController(
 			})
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> SetUserGroupRulesAsync(
@@ -83,7 +83,7 @@ public class InventoryAccessController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IChangeUserGroupRulesHandler>();
-		await handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			UserGroupGuid = userGroupGuid,
@@ -96,7 +96,7 @@ public class InventoryAccessController(
 			})
 		}, ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> SetSourceRulesAsync(
@@ -106,7 +106,7 @@ public class InventoryAccessController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IChangeSourceRulesHandler>();
-		await handler.HandleAsync(new(
+		var data = await handler.HandleAsync(new(
 			user,
 			sourceId,
 			requests.Select(x => new ObjectRuleDto(
@@ -114,7 +114,7 @@ public class InventoryAccessController(
 				UserGuid: x.UserGuid,
 				UserGroupGuid: x.UserGroupGuid))), ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> SetBlockRulesAsync(
@@ -124,7 +124,7 @@ public class InventoryAccessController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IChangeBlockRulesHandler>();
-		await handler.HandleAsync(new(
+		var data = await handler.HandleAsync(new(
 			user,
 			blockId,
 			requests.Select(x => new ObjectRuleDto(
@@ -132,7 +132,7 @@ public class InventoryAccessController(
 				UserGuid: x.UserGuid,
 				UserGroupGuid: x.UserGroupGuid))), ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> SetTagRulesAsync(
@@ -142,7 +142,7 @@ public class InventoryAccessController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IChangeTagRulesHandler>();
-		await handler.HandleAsync(new(
+		var data = await handler.HandleAsync(new(
 			user,
 			tagId,
 			requests.Select(x => new ObjectRuleDto(
@@ -150,6 +150,6 @@ public class InventoryAccessController(
 				UserGuid: x.UserGuid,
 				UserGroupGuid: x.UserGroupGuid))), ct);
 
-		return NoContent();
+		return data;
 	}
 }

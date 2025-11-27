@@ -8,11 +8,11 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Datalake.Data.Host.Controllers;
 
-public class ValuesController(
+public class DataValuesController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : DataValuesControllerBase
 {
-	public override async Task<ActionResult<IEnumerable<ValuesResponse>>> GetAsync(
+	public override async Task<ActionResult<List<ValuesResponse>>> GetAsync(
 		[BindRequired, FromBody] IEnumerable<ValuesRequest> requests,
 		CancellationToken ct = default)
 	{
@@ -24,10 +24,10 @@ public class ValuesController(
 			Requests = requests,
 		}, ct);
 
-		return Ok(data);
+		return data;
 	}
 
-	public override async Task<ActionResult<IEnumerable<ValuesTagResponse>>> WriteAsync(
+	public override async Task<ActionResult<List<ValuesTagResponse>>> WriteAsync(
 		[BindRequired, FromBody] IEnumerable<ValueWriteRequest> requests,
 		CancellationToken ct = default)
 	{
@@ -39,6 +39,6 @@ public class ValuesController(
 			Requests = requests,
 		}, ct);
 
-		return Ok(result);
+		return result;
 	}
 }

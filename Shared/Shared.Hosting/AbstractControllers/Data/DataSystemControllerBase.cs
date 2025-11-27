@@ -15,6 +15,6 @@ public abstract class DataSystemControllerBase : ControllerBase
 	/// </summary>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPost]
-	public abstract Task<ActionResult> RestartCollectionAsync(
+	public abstract Task<ActionResult<bool>> RestartCollectionAsync(
 		CancellationToken ct = default);
 }

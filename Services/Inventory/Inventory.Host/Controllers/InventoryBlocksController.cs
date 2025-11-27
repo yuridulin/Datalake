@@ -44,7 +44,7 @@ public class InventoryBlocksController(
 		var handler = serviceProvider.GetRequiredService<IGetBlocksWithTagsHandler>();
 		var data = await handler.HandleAsync(new() { User = user }, ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult<BlockDetailedInfo>> GetAsync(
@@ -55,7 +55,7 @@ public class InventoryBlocksController(
 		var handler = serviceProvider.GetRequiredService<IGetBlockDetailedHandler>();
 		var data = await handler.HandleAsync(new(user, blockId), ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync(
@@ -65,7 +65,7 @@ public class InventoryBlocksController(
 		var handler = serviceProvider.GetRequiredService<IGetBlocksTreeHandler>();
 		var data = await handler.HandleAsync(new(user), ct);
 
-		return Ok(data);
+		return data;
 	}
 
 	public override async Task<ActionResult> UpdateAsync(
@@ -75,14 +75,14 @@ public class InventoryBlocksController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IUpdateBlockHandler>();
-		await handler.HandleAsync(new(
+		var data = await handler.HandleAsync(new(
 			user,
 			blockId,
 			request.Name,
 			request.Description,
 			request.Tags.Select(x => new BlockTagDto(x.Id, x.Name, x.Relation))), ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> MoveAsync(
@@ -92,9 +92,9 @@ public class InventoryBlocksController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IMoveBlockHandler>();
-		await handler.HandleAsync(new(user, blockId, parentId), ct);
+		var data = await handler.HandleAsync(new(user, blockId, parentId), ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> DeleteAsync(
@@ -103,8 +103,8 @@ public class InventoryBlocksController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IDeleteBlockHandler>();
-		await handler.HandleAsync(new(user, blockId), ct);
+		var data = await handler.HandleAsync(new(user, blockId), ct);
 
-		return NoContent();
+		return data;
 	}
 }

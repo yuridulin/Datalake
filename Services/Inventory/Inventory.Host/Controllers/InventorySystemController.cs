@@ -29,14 +29,14 @@ public class InventorySystemController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IUpdateSettingsHandler>();
-		await handler.HandleAsync(new(
+		var data = await handler.HandleAsync(new(
 			user,
 			KeycloakClient: newSettings.EnergoIdClient,
 			KeycloakHost: newSettings.EnergoIdHost,
 			EnergoIdApi: newSettings.EnergoIdApi,
 			InstanceName: newSettings.InstanceName), ct);
 
-		return NoContent();
+		return data;
 	}
 
 	public override async Task<ActionResult> RestartStateAsync(
@@ -44,8 +44,8 @@ public class InventorySystemController(
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IReloadCacheHandler>();
-		await handler.HandleAsync(new() { User = user }, ct);
+		var data = await handler.HandleAsync(new() { User = user }, ct);
 
-		return NoContent();
+		return data;
 	}
 }

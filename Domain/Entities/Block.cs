@@ -17,10 +17,16 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 	/// Создание пустого нового блока
 	/// </summary>
 	/// <param name="parentId">Идентификатор родительского блока</param>
-	public Block(int? parentId)
+	public static Block CreateEmpty(int? parentId)
 	{
-		GlobalId = Guid.NewGuid();
-		ParentId = parentId;
+		var block = new Block
+		{
+			GlobalId = Guid.NewGuid(),
+			ParentId = parentId,
+			Name = string.Empty,
+		};
+
+		return block;
 	}
 
 	/// <summary>
@@ -29,10 +35,14 @@ public record class Block : IWithIdentityKey, ISoftDeletable
 	/// <param name="parentId">Идентификатор родительского блока</param>
 	/// <param name="name">Имя блока</param>
 	/// <param name="description">Описание блока</param>
-	public Block(int? parentId, string name, string? description) : this(parentId)
+	public static Block Create(int? parentId, string name, string? description)
 	{
-		Name = name;
-		Description = description;
+		var block = CreateEmpty(parentId);
+
+		block.Name = name;
+		block.Description = description;
+
+		return block;
 	}
 
 	#endregion Конструкторы

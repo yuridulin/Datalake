@@ -8,14 +8,14 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Values.Commands.ManualWriteValues;
 
-public interface IManualWriteValuesHandler : ICommandHandler<ManualWriteValuesCommand, IEnumerable<ValuesTagResponse>> { }
+public interface IManualWriteValuesHandler : ICommandHandler<ManualWriteValuesCommand, List<ValuesTagResponse>> { }
 
 public class ManualWriteValuesHandler(
 	ISystemWriteValuesHandler systemWriteValuesHandler,
 	IValuesStore currentValuesStore,
 	ITagsSettingsStore tagsStore) : IManualWriteValuesHandler
 {
-	public async Task<IEnumerable<ValuesTagResponse>> HandleAsync(ManualWriteValuesCommand command, CancellationToken ct = default)
+	public async Task<List<ValuesTagResponse>> HandleAsync(ManualWriteValuesCommand command, CancellationToken ct = default)
 	{
 		List<ValuesTagResponse> responses = [];
 		List<TagValue> recordsToWrite = [];

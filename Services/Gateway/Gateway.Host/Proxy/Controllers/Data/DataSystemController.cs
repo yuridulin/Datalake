@@ -8,6 +8,6 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Data;
 public class DataSystemController(DataReverseProxyService proxyService) : DataSystemControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult> RestartCollectionAsync(CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, cancellationToken: ct);
+	public override Task<ActionResult<bool>> RestartCollectionAsync(CancellationToken ct = default)
+		=> proxyService.ProxyAsync<bool>(HttpContext, cancellationToken: ct);
 }

@@ -4,7 +4,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Data.Application.Features.Sources.Queries.GetRemoteItems;
 
-public record GetSourceRemoteItemsQuery : IQueryRequest<IEnumerable<SourceItemInfo>>, IWithUserAccess
+public record GetSourceRemoteItemsQuery : IQueryRequest<List<SourceItemInfo>>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 
