@@ -1,18 +1,21 @@
 import PageHeader from '@/app/components/PageHeader'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
-import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import TagsTable from './TagsTable'
 
 const Tags = observer(() => {
 	useDatalakeTitle('Теги')
 	const store = useAppStore()
-	// Получаем теги из store (реактивно через MobX)
 	const tags = store.tagsStore.getTags()
+	const hasLoadedRef = useRef(false)
 
-	// getTags() автоматически загрузит данные при первом вызове
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		store.tagsStore.refreshTags()
+	}, [store.tagsStore])
 
 	return (
 		<>

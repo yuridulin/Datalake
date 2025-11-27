@@ -2,40 +2,15 @@ import BlockButton from '@/app/components/buttons/BlockButton'
 import PollingLoader from '@/app/components/loaders/PollingLoader'
 import PageHeader from '@/app/components/PageHeader'
 import ProtectedButton from '@/app/components/ProtectedButton'
-import { AccessType, BlockNestedTagInfo, BlockTreeInfo, BlockWithTagsInfo } from '@/generated/data-contracts'
+import { AccessType, BlockNestedTagInfo, BlockTreeInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
-import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
-
-const makeTree = (blocks: BlockWithTagsInfo[]): [BlockTreeInfo[] | null, Record<number, string>] => {
-	const meta: Record<number, string> = {}
-
-	const buildHierarchy = (id: number | null, prefix = ''): BlockTreeInfo[] => {
-		const hierarchy = blocks
-			.filter((block) => block.parentBlockId === id)
-			.map((block) => {
-				const fullName = prefix ? `${prefix} > ${block.name}` : block.name
-				meta[block.id] = fullName
-				const children = buildHierarchy(block.id, fullName)
-				return {
-					...block,
-					children: children.length > 0 ? children : [],
-				}
-			})
-			.sort((a, b) => a.name.localeCompare(b.name))
-
-		return hierarchy
-	}
-
-	const treeResult = buildHierarchy(null)
-	return [treeResult.length > 0 ? treeResult : null, meta]
-}
 
 const EXPAND_KEY = 'expandedBlocks'
 
@@ -44,26 +19,9 @@ const BlocksTree = observer(() => {
 
 	const store = useAppStore()
 	const [search, setSearch] = useState('')
+
 	const [expandedRowKeys, setExpandedRowKeys] = useLocalStorage(EXPAND_KEY, [] as number[])
-	const data = store.blocksStore.getBlocks()
-	const hasLoadedRef = useRef(false)
-
-	const [tree, meta] = useMemo(() => makeTree(data), [data])
-
-	const viewData = useMemo((): BlockTreeInfo[] => {
-		if (!search) return tree ?? []
-
-		return data
-			.filter((block) => block.name?.toLowerCase().includes(search.toLowerCase()))
-			.map(
-				(block) =>
-					({
-						...block,
-						name: meta[block.id] || block.name,
-						//children: [],
-					}) as BlockTreeInfo,
-			)
-	}, [search, data, tree, meta])
+	const tree = store.blocksStore.searchBlocks(search)
 
 	const handleExpand = (expanded: boolean, record: BlockTreeInfo) => {
 		const exists = expandedRowKeys ?? []
@@ -72,22 +30,8 @@ const BlocksTree = observer(() => {
 		setExpandedRowKeys(newKeys)
 	}
 
-	const createBlock = async () => {
-		try {
-			await store.api.inventoryBlocksCreate({}).then(store.blocksStore.refreshBlocks)
-		} catch (error) {
-			logger.error(error instanceof Error ? error : new Error('Failed to create block'), {
-				component: 'BlocksTree',
-				action: 'handleCreateBlock',
-			})
-		}
-	}
-
-	useEffect(() => {
-		if (hasLoadedRef.current) return
-		hasLoadedRef.current = true
-		store.blocksStore.refreshBlocks()
-	}, [store.blocksStore])
+	const refreshFunc = useCallback(() => store.blocksStore.refreshBlocks(), [store.blocksStore])
+	useEffect(refreshFunc, [refreshFunc])
 
 	const columns: TableColumnsType<BlockTreeInfo> = [
 		{
@@ -134,21 +78,21 @@ const BlocksTree = observer(() => {
 						access={store.getGlobalAccess()}
 						required={AccessType.Admin}
 						type='primary'
-						onClick={createBlock}
+						onClick={store.blocksStore.createBlock}
 					>
-						Добавить блок
+						Добавить блок верхнего уровня
 					</ProtectedButton>,
 				]}
 			>
 				Блоки верхнего уровня
 			</PageHeader>
 
-			<PollingLoader pollingFunction={store.blocksStore.refreshBlocks} interval={60000} />
+			<PollingLoader pollingFunction={refreshFunc} interval={5000} />
 			<Table
 				showSorterTooltip={false}
 				size='small'
 				columns={columns}
-				dataSource={viewData}
+				dataSource={tree}
 				pagination={false}
 				expandable={{
 					expandedRowKeys,

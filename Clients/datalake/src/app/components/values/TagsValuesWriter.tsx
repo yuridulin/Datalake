@@ -169,7 +169,7 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 
 		setLoading(true)
 		try {
-			await store.valuesStore.refreshValues(valuesRequest)
+			store.valuesStore.refreshValues(valuesRequest)
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to load values'), {
 				component: 'TagsValuesWriter',

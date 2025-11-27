@@ -23,7 +23,6 @@ const UserGroupForm = observer(() => {
 
 	// Получаем группу из store (реактивно через MobX)
 	const groupData = id ? store.userGroupsStore.getGroupByGuid(id) : undefined
-	const isLoadingGroup = id ? store.userGroupsStore.isLoadingGroups() : false
 
 	// Получаем пользователей из store (реактивно через MobX)
 	const usersData = store.usersStore.getUsers()
@@ -55,10 +54,9 @@ const UserGroupForm = observer(() => {
 				...newInfo,
 				users: newInfo.users || groupData?.users || [],
 			})
-			// Инвалидируем кэш и обновляем данные
 			if (id) {
 				store.userGroupsStore.invalidateGroup(id)
-				await store.userGroupsStore.refreshGroups()
+				store.userGroupsStore.refreshGroups()
 			}
 		} catch {
 			app.notification.error({ message: 'Ошибка при сохранении' })
@@ -85,7 +83,7 @@ const UserGroupForm = observer(() => {
 	const filterUserOption = (input: string, option?: { label: string; value: string }) =>
 		(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
 
-	return isLoadingGroup && !groupData ? (
+	return !groupData ? (
 		<Spin />
 	) : groupData ? (
 		<>

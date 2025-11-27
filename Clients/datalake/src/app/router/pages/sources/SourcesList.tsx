@@ -81,23 +81,28 @@ const SourcesList = observer(() => {
 	)
 	const states = store.sourcesStore.getActivity(sourceIds)
 
-	const getStates = useCallback(async () => {
+	const getStates = useCallback(() => {
 		if (sourceIds.length === 0) return
-		await store.sourcesStore.refreshActivity(sourceIds)
+		store.sourcesStore.refreshActivity(sourceIds)
 	}, [store.sourcesStore, sourceIds])
 
 	const createSource = useCallback(async () => {
 		try {
 			await store.api.inventorySourcesCreate()
-			// Инвалидируем кэш и обновляем данные
-			await store.sourcesStore.refreshSources()
+			store.sourcesStore.refreshSources()
 			notification.success({ message: 'Источник создан' })
 		} catch {
 			notification.error({ message: 'Не удалось создать источник' })
 		}
 	}, [store])
 
-	// getSources() автоматически загрузит данные при первом вызове
+	const hasLoadedRef = useRef(false)
+
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		store.sourcesStore.refreshSources()
+	}, [store.sourcesStore])
 
 	const columns = useMemo(
 		() =>

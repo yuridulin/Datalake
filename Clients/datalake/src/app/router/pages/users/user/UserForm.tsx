@@ -75,7 +75,7 @@ const UserForm = observer(() => {
 			// Инвалидируем кэш и обновляем данные
 			if (id) {
 				store.usersStore.invalidateUser(id)
-				await store.usersStore.refreshUsers()
+				store.usersStore.refreshUsers()
 			}
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to update user'), {

@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import routes from '../../routes'
 
-function transformBlockTreeInfo(blocks: BlockTreeInfo[] | null | undefined): TreeDataNode[] {
+function transformBlockTreeInfo(blocks: BlockTreeInfo[]): TreeDataNode[] {
 	if (!blocks) return []
 	const data = blocks.map((block) => {
 		const transformedBlock: TreeDataNode = {
@@ -36,9 +36,9 @@ const BlocksMover = observer(() => {
 	const [loading, setLoading] = useState(false)
 	const { token } = theme.useToken()
 
-	function load() {
-		store.api.inventoryBlocksGetTree().then((res) => setBlocks(transformBlockTreeInfo(res.data)))
-	}
+	useEffect(() => {
+		transformBlockTreeInfo(store.blocksStore.tree)
+	}, [store.blocksStore.tree])
 
 	const findParentKey = (data: TreeDataNode[], key: React.Key): React.Key | null => {
 		for (let i = 0; i < data.length; i++) {
@@ -103,10 +103,8 @@ const BlocksMover = observer(() => {
 		const parentKey = findParentKey(data, dragKey)
 
 		setLoading(true)
-		store.api
-			.inventoryBlocksMove(Number(info.dragNode.key), {
-				parentId: Number(parentKey),
-			})
+		store.blocksStore
+			.moveBlock(Number(info.dragNode.key), Number(parentKey))
 			.then(() => {
 				setBlocks(data)
 				setLoading(false)
@@ -117,8 +115,6 @@ const BlocksMover = observer(() => {
 
 		setBlocks(data)
 	}
-
-	useEffect(load, [store.api])
 
 	return (
 		<>

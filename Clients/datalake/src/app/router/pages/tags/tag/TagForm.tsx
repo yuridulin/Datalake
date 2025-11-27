@@ -185,7 +185,7 @@ const TagForm = () => {
 			// Инвалидируем кэш тега после обновления
 			if (tagId) {
 				store.tagsStore.invalidateTag(tagId)
-				await store.tagsStore.refreshTags()
+				store.tagsStore.refreshTags()
 			}
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to update tag'), {

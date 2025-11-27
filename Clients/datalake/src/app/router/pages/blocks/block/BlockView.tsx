@@ -14,7 +14,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { RightOutlined } from '@ant-design/icons'
 import { Button, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 
 const childrenContainerStyle = {
@@ -22,16 +22,18 @@ const childrenContainerStyle = {
 }
 
 const BlockView = observer(() => {
-	const store = useAppStore()
 	const { id } = useParams()
-	useDatalakeTitle('Блоки', '#' + id)
+	const blockId = Number(id)
+	useDatalakeTitle('Блоки', '#' + blockId)
 
-	const blockId = id ? Number(id) : undefined
-	// Получаем блок из store (реактивно через MobX)
-	const blockData = blockId ? store.blocksStore.getBlockById(blockId) : undefined
-	const isLoading = blockId ? store.blocksStore.isLoadingBlocks() : false
+	const store = useAppStore()
 
-	// Обрабатываем данные блока
+	useEffect(() => {
+		store.blocksStore.refreshDetailedById(blockId)
+	}, [blockId, store.blocksStore])
+
+	const blockData = store.blocksStore.getDetailedById(blockId)
+
 	const block = useMemo(() => {
 		if (!blockData) return {} as BlockDetailedInfo
 		// Создаем копию, чтобы не мутировать оригинал
@@ -49,12 +51,7 @@ const BlockView = observer(() => {
 
 	const createChild = async () => {
 		try {
-			await store.api.inventoryBlocksCreate({ parentId: Number(id) })
-			// Инвалидируем кэш и обновляем данные
-			if (blockId) {
-				store.blocksStore.invalidateBlock(blockId)
-				await store.blocksStore.refreshBlocks()
-			}
+			store.blocksStore.createBlock({ parentId: blockId })
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to create child block'), {
 				component: 'BlockView',
@@ -89,9 +86,9 @@ const BlockView = observer(() => {
 		[block.tags, block.id],
 	)
 
-	return isLoading && !blockData ? (
+	return !blockData ? (
 		<Spin />
-	) : blockData ? (
+	) : (
 		<>
 			<PageHeader
 				left={[
@@ -130,7 +127,7 @@ const BlockView = observer(() => {
 						key: 'parents',
 						label: 'Родительские блоки',
 						children:
-							block.adults.length > 0 ? (
+							block.adults && block.adults.length > 0 ? (
 								<div style={{ display: 'flex' }}>
 									<BlockButton block={block.adults[0]} />
 									{block.adults.slice(1).map((x: BlockSimpleInfo) => (
@@ -192,7 +189,7 @@ const BlockView = observer(() => {
 				]}
 			/>
 		</>
-	) : null
+	)
 })
 
 export default BlockView

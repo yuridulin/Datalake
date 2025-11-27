@@ -1052,7 +1052,9 @@ export interface TagMetricRequest {
 export interface TagUsageInfo {
   /** @format int32 */
   tagId?: number;
-  requests?: Record<string, string>;
+  /** @format date-time */
+  date?: string;
+  request?: string;
 }
 
 export interface ValuesResponse {

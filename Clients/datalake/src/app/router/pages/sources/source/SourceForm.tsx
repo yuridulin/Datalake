@@ -24,7 +24,6 @@ const SourceForm = observer(() => {
 	const sourceId = id ? Number(id) : undefined
 	// Получаем источник из store (реактивно через MobX)
 	const sourceData = sourceId ? store.sourcesStore.getSourceById(sourceId) : undefined
-	const isLoading = sourceId ? store.sourcesStore.isLoadingSource(sourceId) : false
 
 	const [request, setRequest] = useState<SourceUpdateRequest>({
 		name: '',
@@ -48,10 +47,9 @@ const SourceForm = observer(() => {
 	const sourceUpdate = async () => {
 		try {
 			await store.api.inventorySourcesUpdate(Number(id), request)
-			// Инвалидируем кэш и обновляем данные
 			if (sourceId) {
 				store.sourcesStore.invalidateSource(sourceId)
-				await store.sourcesStore.refreshSources()
+				store.sourcesStore.refreshSources()
 			}
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to update source'), {
@@ -101,7 +99,7 @@ const SourceForm = observer(() => {
 			>
 				{sourceData?.name ?? ''}
 			</PageHeader>
-			{isLoading && !sourceData ? (
+			{!sourceData ? (
 				<Spin />
 			) : (
 				<>

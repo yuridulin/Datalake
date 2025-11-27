@@ -1,35 +1,19 @@
 import { Api } from '@/generated/Api'
 import { DataValuesGetPayload, ValuesResponse } from '@/generated/data-contracts'
-import { CACHE_TTL } from '@/config/cacheConfig'
 import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
-import { BaseCacheStore } from './BaseCacheStore'
+import { BaseCacheStore } from '../abstractions/BaseCacheStore'
 
 /**
- * Store для управления значениями тегов с кэшированием
- * Особенности: короткий TTL из-за частых обновлений, поддержка polling
+ * Store для управления значениями тегов с кэшированием последнего успешного ответа
  */
 export class ValuesStore extends BaseCacheStore {
-	// Кэш значений по ключу запроса (JSON.stringify запроса)
-	private _valuesCache = observable.map<string, ValuesResponse[]>()
-
-	// Кэш статусов тегов (ключ: tagId)
-	private _statusCache = observable.map<number, string>()
-
-	// TTL для разных типов данных (в миллисекундах)
-	private readonly TTL_VALUES = CACHE_TTL.VALUES.VALUES
-	private readonly TTL_STATUS = CACHE_TTL.VALUES.STATUS
-
 	constructor(private api: Api) {
 		super()
+
 		makeObservable(this, {
 			getValues: true,
 			getStatus: true,
-			invalidateValues: true,
-			invalidateStatus: true,
-			refreshValues: true,
-			refreshStatus: true,
-			isLoadingValues: true,
 		})
 	}
 
@@ -38,140 +22,34 @@ export class ValuesStore extends BaseCacheStore {
 	 * @param request Запрос на получение значений
 	 * @returns Массив ответов с значениями
 	 */
-	getValues(request: DataValuesGetPayload): ValuesResponse[] {
+	public getValues(request: DataValuesGetPayload): ValuesResponse[] {
 		const cacheKey = this.getCacheKey(request)
-		const cached = this._valuesCache.get(cacheKey)
-
-		// Если запрос не идет, запускаем его
-		if (!this.isLoading(cacheKey)) {
-			this.loadValues(request, 'get-request').catch((error) => {
-				logger.error(error instanceof Error ? error : new Error(String(error)), {
-					component: 'ValuesStore',
-					method: 'getValues',
-					action: 'loadValues',
-				})
-			})
-		}
-
-		// Возвращаем текущий кэш (может быть пустым)
-		return cached ?? []
+		const reactive = this.valuesCache.get(cacheKey)
+		this.tryLoadValues(request)
+		return reactive ?? []
 	}
 
-	/**
-	 * Получает статусы тегов
-	 * @param tagsId Массив идентификаторов тегов
-	 * @returns Объект со статусами (ключ: tagId)
-	 */
-	getStatus(tagsId: number[]): Record<number, string> {
-		if (tagsId.length === 0) return {}
-
-		const result: Record<number, string> = {}
-		const needRefresh: number[] = []
-
-		// Проверяем кэш для каждого тега
-		for (const tagId of tagsId) {
-			const cached = this._statusCache.get(tagId)
-			if (cached) {
-				result[tagId] = cached
-			}
-			needRefresh.push(tagId)
-		}
-
-		// Загружаем данные, если запрос не идет
-		if (needRefresh.length > 0 && !this.isLoading('status')) {
-			this.loadStatus(needRefresh, 'get-request').catch((error) => {
-				logger.error(error instanceof Error ? error : new Error(String(error)), {
-					component: 'ValuesStore',
-					method: 'getStatus',
-					action: 'loadStatus',
-					tagsId: needRefresh,
-				})
-			})
-		}
-
-		return result
+	public refreshValues(request: DataValuesGetPayload) {
+		this.tryLoadValues(request)
 	}
 
-	/**
-	 * Инвалидирует кэш значений для указанных тегов
-	 * @param _tagsId Массив идентификаторов тегов (не используется, но оставлен для совместимости API)
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	invalidateValues(_tagsId: number[]): void {
-		runInAction(() => {
-			// Инвалидируем все кэшированные запросы, которые содержат эти теги
-			// Это упрощенная версия - в реальности нужно проверять содержимое запросов
-			this._valuesCache.clear()
-		})
+	private getCacheKey(request: DataValuesGetPayload): string {
+		return JSON.stringify(request)
 	}
 
-	/**
-	 * Инвалидирует кэш статусов для указанных тегов
-	 * @param tagsId Массив идентификаторов тегов
-	 */
-	invalidateStatus(tagsId: number[]): void {
-		runInAction(() => {
-			for (const tagId of tagsId) {
-				this._statusCache.delete(tagId)
-				this.invalidateCache(`status_${tagId}`)
-			}
-		})
-	}
+	private valuesCache = observable.map<string, ValuesResponse[]>()
 
-	/**
-	 * Принудительно обновляет значения
-	 * @param request Запрос на получение значений
-	 */
-	async refreshValues(request: DataValuesGetPayload): Promise<void> {
-		// Просто вызываем loadValues - он сам проверит, идет ли загрузка
-		await this.loadValues(request, 'manual-refresh')
-	}
-
-	/**
-	 * Принудительно обновляет статусы тегов
-	 * @param tagsId Массив идентификаторов тегов
-	 */
-	async refreshStatus(tagsId: number[]): Promise<void> {
-		for (const tagId of tagsId) {
-			this.invalidateCache(`status_${tagId}`)
-		}
-		await this.loadStatus(tagsId, 'manual-refresh')
-	}
-
-	/**
-	 * Проверяет, идет ли загрузка для указанного запроса
-	 * @param request Запрос на получение значений
-	 * @returns true, если идет загрузка
-	 */
-	isLoadingValues(request: DataValuesGetPayload): boolean {
+	private async tryLoadValues(request: DataValuesGetPayload): Promise<void> {
 		const cacheKey = this.getCacheKey(request)
-		return this.isLoading(cacheKey)
-	}
+		const isLoading = this.isLoading(cacheKey)
 
-	/**
-	 * Загружает значения с сервера
-	 * @param request Запрос на получение значений
-	 * @param reason Причина вызова запроса (для логирования)
-	 */
-	private async loadValues(request: DataValuesGetPayload, reason: string = 'unknown'): Promise<void> {
-		const cacheKey = this.getCacheKey(request)
-
-		if (this.isLoading(cacheKey)) {
-			logger.debug(`[ValuesStore] Skipping loadValues - already loading`, {
+		if (isLoading) {
+			logger.debug('Skipping - already loading', {
 				component: 'ValuesStore',
-				method: 'loadValues',
-				cacheKey,
-				reason,
+				method: 'tryLoadValues',
 			})
 			return
 		}
-
-		logger.info(`[ValuesStore] API Request: dataValuesGet`, {
-			component: 'ValuesStore',
-			method: 'loadValues',
-			cacheKey,
-			reason,
-		})
 
 		this.setLoading(cacheKey, true)
 
@@ -180,14 +58,14 @@ export class ValuesStore extends BaseCacheStore {
 
 			if (response.status === 200) {
 				runInAction(() => {
-					this._valuesCache.set(cacheKey, response.data)
+					this.valuesCache.set(cacheKey, response.data)
 					this.setLastFetchTime(cacheKey)
 				})
 			}
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to load values'), {
 				component: 'ValuesStore',
-				method: 'loadValues',
+				method: 'tryLoadValues',
 			})
 		} finally {
 			this.setLoading(cacheKey, false)
@@ -195,33 +73,45 @@ export class ValuesStore extends BaseCacheStore {
 	}
 
 	/**
-	 * Загружает статусы тегов с сервера
+	 * Получает статусы тегов
 	 * @param tagsId Массив идентификаторов тегов
-	 * @param reason Причина вызова запроса (для логирования)
+	 * @returns Объект со статусами (ключ: tagId)
 	 */
-	private async loadStatus(tagsId: number[], reason: string = 'unknown'): Promise<void> {
+	public getStatus(tagsId: number[]): Record<number, string> {
+		if (tagsId.length === 0) return {}
+
+		const result: Record<number, string> = {}
+		for (const tagId of tagsId) {
+			const cached = this.statusCache.get(tagId)
+			if (cached) {
+				result[tagId] = cached
+			}
+		}
+
+		this.tryLoadStatus(tagsId)
+		return result
+	}
+
+	public refreshStatus(tagsId: number[]) {
+		this.tryLoadStatus(tagsId)
+	}
+
+	private statusCacheKey = 'status'
+	private statusCache = observable.map<number, string>()
+
+	private async tryLoadStatus(tagsId: number[]): Promise<void> {
 		if (tagsId.length === 0) return
 
-		const cacheKey = 'status'
+		const cacheKey = this.statusCacheKey
+		const isLoading = this.isLoading(cacheKey)
 
-		if (this.isLoading(cacheKey)) {
-			logger.debug(`[ValuesStore] Skipping loadStatus - already loading`, {
+		if (isLoading) {
+			logger.debug('Skipping - already loading', {
 				component: 'ValuesStore',
-				method: 'loadStatus',
-				cacheKey,
-				reason,
-				tagsId,
+				method: 'tryLoadStatus',
 			})
 			return
 		}
-
-		logger.info(`[ValuesStore] API Request: dataTagsGetStatus`, {
-			component: 'ValuesStore',
-			method: 'loadStatus',
-			cacheKey,
-			reason,
-			tagsId,
-		})
 
 		this.setLoading(cacheKey, true)
 
@@ -235,7 +125,7 @@ export class ValuesStore extends BaseCacheStore {
 					for (const statusInfo of response.data) {
 						if (statusInfo.tagId !== undefined) {
 							const status = statusInfo.status ?? (statusInfo.isError ? 'Error' : 'Ok')
-							this._statusCache.set(statusInfo.tagId, status)
+							this.statusCache.set(statusInfo.tagId, status)
 							this.setLastFetchTime(`status_${statusInfo.tagId}`)
 						}
 					}
@@ -244,8 +134,7 @@ export class ValuesStore extends BaseCacheStore {
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to load tags status'), {
 				component: 'ValuesStore',
-				method: 'loadStatus',
-				tagsId: tagsId,
+				method: 'tryLoadStatus',
 			})
 		} finally {
 			this.setLoading(cacheKey, false)
@@ -253,12 +142,37 @@ export class ValuesStore extends BaseCacheStore {
 	}
 
 	/**
-	 * Генерирует ключ кэша для запроса значений
-	 * @param request Запрос на получение значений
-	 * @returns Ключ кэша
+	 * Инвалидирует кэш значений для указанных тегов
+	 * @param _tagsId Массив идентификаторов тегов (не используется, но оставлен для совместимости API)
 	 */
-	getCacheKey(request: DataValuesGetPayload): string {
-		// Создаем уникальный ключ на основе содержимого запроса
-		return JSON.stringify(request)
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	invalidateValues(_tagsId: number[]): void {
+		runInAction(() => {
+			// Инвалидируем все кэшированные запросы, которые содержат эти теги
+			// Это упрощенная версия - в реальности нужно проверять содержимое запросов
+			this.valuesCache.clear()
+		})
+	}
+
+	/**
+	 * Инвалидирует кэш статусов для указанных тегов
+	 * @param tagsId Массив идентификаторов тегов
+	 */
+	invalidateStatus(tagsId: number[]): void {
+		runInAction(() => {
+			for (const tagId of tagsId) {
+				this.statusCache.delete(tagId)
+			}
+		})
+	}
+
+	/**
+	 * Проверяет, идет ли загрузка для указанного запроса
+	 * @param request Запрос на получение значений
+	 * @returns true, если идет загрузка
+	 */
+	isLoadingValues(request: DataValuesGetPayload): boolean {
+		const cacheKey = this.getCacheKey(request)
+		return this.isLoading(cacheKey)
 	}
 }

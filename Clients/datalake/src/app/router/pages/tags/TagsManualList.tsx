@@ -6,15 +6,15 @@ import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import TagsTable from './TagsTable'
 
 const TagsManualList = observer(() => {
 	useDatalakeTitle('Теги', 'Мануальные')
 	const store = useAppStore()
-	// Получаем теги из store (реактивно через MobX)
 	const tags = store.tagsStore.getTags(SourceType.Manual)
 	const [created, setCreated] = useState(null as TagWithSettingsInfo | null)
+	const hasLoadedRef = useRef(false)
 
 	const createTag = useCallback(async () => {
 		try {
@@ -22,10 +22,9 @@ const TagsManualList = observer(() => {
 				sourceId: SourceType.Manual,
 				tagType: TagType.Number,
 			})
-			// Инвалидируем кэш и обновляем данные
 			if (response.data) {
 				store.tagsStore.invalidateTag(response.data.id)
-				await store.tagsStore.refreshTags(SourceType.Manual)
+				store.tagsStore.refreshTags(SourceType.Manual)
 				setCreated(response.data)
 			}
 		} catch (error) {
@@ -36,7 +35,11 @@ const TagsManualList = observer(() => {
 		}
 	}, [store])
 
-	// getTags() автоматически загрузит данные при первом вызове
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		store.tagsStore.refreshTags(SourceType.Manual)
+	}, [store.tagsStore])
 
 	return (
 		<>

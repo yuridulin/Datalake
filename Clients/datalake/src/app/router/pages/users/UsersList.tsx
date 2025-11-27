@@ -9,13 +9,12 @@ import { timeAgo } from '@/functions/dateHandle'
 import getUserTypeName from '@/functions/getUserTypeName'
 import { AccessType, UserInfo } from '@/generated/data-contracts'
 import useDatalakeTitle from '@/hooks/useDatalakeTitle'
-import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { ClockCircleOutlined } from '@ant-design/icons'
 import { Button, Input, Table, TableColumnsType, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const UsersList = observer(() => {
@@ -37,7 +36,13 @@ const UsersList = observer(() => {
 		setStates(res.data)
 	}, [store, users])
 
-	// getUsers() автоматически загрузит данные при первом вызове
+	const hasLoadedRef = useRef(false)
+
+	useEffect(() => {
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		store.usersStore.refreshUsers()
+	}, [store.usersStore])
 
 	const columns: TableColumnsType<UserInfo> = [
 		{
@@ -88,7 +93,6 @@ const UsersList = observer(() => {
 			sorter: (a, b) => a.type.toString().localeCompare(b.type.toString()),
 		},
 	]
-
 
 	return (
 		<>

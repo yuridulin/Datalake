@@ -19,17 +19,20 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const BlockForm = observer(() => {
-	const store = useAppStore()
-	const app = App.useApp()
 	const { id } = useParams()
+	const blockId = Number(id)
 	useDatalakeTitle('Блоки', '#' + id, 'Изменение')
 
+	const store = useAppStore()
+	useEffect(() => {
+		store.blocksStore.refreshDetailedById(blockId)
+	}, [blockId, store.blocksStore])
+
+	const blockData = store.blocksStore.getDetailedById(blockId)
+
+	const app = App.useApp()
 	const navigate = useNavigate()
 	const [form] = Form.useForm<BlockUpdateRequest>()
-
-	const blockId = id ? Number(id) : undefined
-	// Получаем блок из store (реактивно через MobX)
-	const blockData = blockId ? store.blocksStore.getBlockById(blockId) : undefined
 
 	// Получаем теги из store (реактивно через MobX)
 	const tagsData = store.tagsStore.getTags()
@@ -46,15 +49,10 @@ const BlockForm = observer(() => {
 	)
 
 	const [block, setBlock] = useState({} as BlockUpdateRequest)
-	const [loading, setLoading] = useState(true)
 
 	// Обновляем локальное состояние блока при загрузке из store
 	useEffect(() => {
-		if (!blockData) {
-			setLoading(true)
-			return
-		}
-
+		if (!blockData) return
 		const attachedTags = blockData.tags.map(
 			(tag) =>
 				({
@@ -66,17 +64,13 @@ const BlockForm = observer(() => {
 		const blockUpdate: BlockUpdateRequest = { ...blockData, tags: attachedTags }
 		setBlock(blockUpdate)
 		form.setFieldsValue(blockUpdate)
-		setLoading(false)
 	}, [blockData, form])
 
 	const updateBlock = async (newInfo: BlockUpdateRequest) => {
 		try {
-			await store.api.inventoryBlocksUpdate(Number(id), newInfo)
-			// Инвалидируем кэш и обновляем данные
-			if (blockId) {
-				store.blocksStore.invalidateBlock(blockId)
-				await store.blocksStore.refreshBlocks()
-			}
+			await store.api.inventoryBlocksUpdate(blockId, newInfo)
+			store.blocksStore.refreshDetailedById(blockId)
+			store.blocksStore.refreshBlocks()
 		} catch {
 			app.notification.error({ message: 'Ошибка при сохранении' })
 		}
@@ -85,10 +79,8 @@ const BlockForm = observer(() => {
 	const deleteBlock = async () => {
 		try {
 			await store.api.inventoryBlocksDelete(Number(id))
-			// Инвалидируем кэш
-			if (blockId) {
-				store.blocksStore.invalidateBlock(blockId)
-			}
+			store.blocksStore.refreshBlocks()
+			store.blocksStore.refreshDetailedById(blockId)
 			navigate(routes.blocks.root)
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to delete block'), {
@@ -102,14 +94,14 @@ const BlockForm = observer(() => {
 	// Получаем текущие значения формы для проверки дубликатов
 	const attachedTagsList = Form.useWatch('tags', form) || []
 
-	return loading ? (
+	return !blockData ? (
 		<Spin />
 	) : (
 		<>
 			<PageHeader
-				left={[<Button onClick={() => navigate(routes.blocks.toViewBlock(Number(id)))}>Вернуться</Button>]}
+				left={[<Button onClick={() => navigate(routes.blocks.toViewBlock(blockId))}>Вернуться</Button>]}
 				right={[
-					store.hasAccessToBlock(AccessType.Admin, Number(id)) && (
+					store.hasAccessToBlock(AccessType.Admin, blockId) && (
 						<Popconfirm
 							title='Вы уверены, что хотите удалить этот блок?'
 							placement='bottom'
@@ -120,7 +112,7 @@ const BlockForm = observer(() => {
 							<Button>Удалить</Button>
 						</Popconfirm>
 					),
-					<Button type='primary' onClick={() => form.submit()}>
+					<Button type='primary' onClick={form.submit}>
 						Сохранить
 					</Button>,
 				]}
@@ -171,7 +163,7 @@ const BlockForm = observer(() => {
 																	.then(async (res) => {
 																		// Инвалидируем кэш тегов
 																		store.tagsStore.invalidateTag(res.data.id)
-																		await store.tagsStore.refreshTags()
+																		store.tagsStore.refreshTags()
 																		add({
 																			id: res.data.id,
 																			name: res.data.name,
@@ -193,7 +185,7 @@ const BlockForm = observer(() => {
 																	.then(async (res) => {
 																		// Инвалидируем кэш тегов
 																		store.tagsStore.invalidateTag(res.data.id)
-																		await store.tagsStore.refreshTags()
+																		store.tagsStore.refreshTags()
 																		add({
 																			id: res.data.id,
 																			name: res.data.name,
@@ -215,7 +207,7 @@ const BlockForm = observer(() => {
 																	.then(async (res) => {
 																		// Инвалидируем кэш тегов
 																		store.tagsStore.invalidateTag(res.data.id)
-																		await store.tagsStore.refreshTags()
+																		store.tagsStore.refreshTags()
 																		add({
 																			id: res.data.id,
 																			name: res.data.name,

@@ -8,7 +8,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
@@ -26,18 +26,16 @@ const UserGroupsTreeList = observer(() => {
 	const groupsData = store.userGroupsStore.getTree()
 	const groups = useMemo(() => groupsData.map((x) => setEmptyAsLeafs(x)), [groupsData])
 
-	const load = useCallback(async () => {
-		await store.userGroupsStore.refreshTree()
+	const load = useCallback(() => {
+		store.userGroupsStore.refreshTree()
 	}, [store.userGroupsStore])
 
-	// Обновляем данные при переходе на страницу
+	const hasLoadedRef = useRef(false)
+
 	useEffect(() => {
-		store.userGroupsStore.refreshTree().catch((error) => {
-			logger.error(error instanceof Error ? error : new Error(String(error)), {
-				component: 'UserGroupsTreeList',
-				action: 'refreshTree',
-			})
-		})
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		store.userGroupsStore.refreshTree()
 	}, [store.userGroupsStore])
 
 	const expandKey = 'expandedUserGroups'

@@ -1,57 +1,245 @@
+// BlocksStore.ts
 import { Api } from '@/generated/Api'
-import { BlockDetailedInfo, BlockTreeInfo, BlockWithTagsInfo } from '@/generated/data-contracts'
+import { BlockDetailedInfo, BlockTreeInfo, BlockUpdateRequest, BlockWithTagsInfo } from '@/generated/data-contracts'
 import { logger } from '@/services/logger'
-import { makeObservable, observable, runInAction } from 'mobx'
-import { BaseCacheStore } from './BaseCacheStore'
+import { computed, makeObservable, observable, runInAction } from 'mobx'
+import { BaseCacheStore } from '../abstractions/BaseCacheStore'
 
-/**
- * Store для управления блоками с кэшированием последнего успешного ответа
- */
 export class BlocksStore extends BaseCacheStore {
+	// Observable данные
+	private blocksCache = observable.box<BlockWithTagsInfo[]>([])
+	private blocksByIdCache = observable.map<number, BlockDetailedInfo>()
+
 	constructor(private api: Api) {
 		super()
-
 		makeObservable(this, {
-			getBlocks: true,
-			getTree: true,
-			getBlockById: true,
+			// Computed свойства
+			tree: computed,
+			flatTreeMap: computed,
+			statistics: computed,
 		})
 	}
 
+	//#region Методы получения
+
+	public getDetailedById(id: number): BlockDetailedInfo | undefined {
+		return this.blocksByIdCache.get(id)
+	}
+
+	//#endregion
+
+	//#region Computed свойства
+
 	/**
-	 * Получает список всех блоков
-	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
-	 * @returns Список блоков из кэша (может быть пустым, пока данные загружаются)
+	 * Дерево блоков - автоматически строится из плоского списка
 	 */
-	public getBlocks(): BlockWithTagsInfo[] {
-		return this.blocksCache.get()
+	get tree(): BlockTreeInfo[] {
+		const blocks = this.blocksCache.get()
+		return this.buildTree(blocks)
 	}
 
-	public refreshBlocks() {
-		this.tryLoadBlocks()
-	}
+	/**
+	 * Плоский маппинг ID -> полный путь в дереве
+	 */
+	get flatTreeMap(): Map<number, string> {
+		const map = new Map<number, string>()
 
-	private blocksCacheKey = 'blocks'
+		const buildPaths = (nodes: BlockTreeInfo[], parentPath: string = '') => {
+			nodes.forEach((node) => {
+				const fullPath = parentPath ? `${parentPath} > ${node.name}` : node.name
+				map.set(node.id, fullPath)
 
-	private blocksCache = observable.box<BlockWithTagsInfo[]>([])
-
-	private async tryLoadBlocks(): Promise<void> {
-		const cacheKey = this.blocksCacheKey
-		const isLoading = this.isLoading(cacheKey)
-
-		if (isLoading) {
-			logger.debug('Skipping - already loading', {
-				component: 'BlocksStore',
-				method: 'tryLoadBlocks',
+				if (node.children && node.children.length > 0) {
+					buildPaths(node.children, fullPath)
+				}
 			})
-			return
 		}
 
+		buildPaths(this.tree)
+		return map
+	}
+
+	/**
+	 * Статистика по блокам
+	 */
+	get statistics() {
+		return computed(() => {
+			const blocks = this.blocksCache.get()
+			const tree = this.tree
+
+			const calculateMaxDepth = (nodes: BlockTreeInfo[], currentDepth: number = 1): number => {
+				if (!nodes || nodes.length === 0) return currentDepth
+
+				let maxDepth = currentDepth
+				nodes.forEach((node) => {
+					if (node.children && node.children.length > 0) {
+						const depth = calculateMaxDepth(node.children, currentDepth + 1)
+						maxDepth = Math.max(maxDepth, depth)
+					}
+				})
+
+				return maxDepth
+			}
+
+			return {
+				totalBlocks: blocks.length,
+				rootBlocks: tree.length,
+				blocksWithChildren: tree.filter((node) => node.children && node.children.length > 0).length,
+				blocksWithoutChildren: tree.filter((node) => !node.children || node.children.length === 0).length,
+				maxDepth: calculateMaxDepth(tree),
+			}
+		}).get()
+	}
+
+	//#endregion
+
+	//#region Публичные методы для компонентов
+
+	/**
+	 * Сигнал обновления списка блоков
+	 */
+	public refreshBlocks() {
+		this.tryLoad()
+	}
+
+	/**
+	 * Сигнал обновления конкретного блока
+	 */
+	public refreshDetailedById(id: number) {
+		this.tryLoadDetailedById(id)
+	}
+
+	/**
+	 * Создание нового блока
+	 */
+	public async createBlock(data: Partial<{ parentId: number }> = {}): Promise<void> {
+		const cacheKey = 'creating-block'
+
+		if (this.isLoading(cacheKey)) return
+		this.setLoading(cacheKey, true)
+
+		try {
+			const response = await this.api.inventoryBlocksCreate(data)
+
+			runInAction(() => {
+				logger.info('Block created successfully', {
+					component: 'BlocksStore',
+					method: 'createBlock',
+					blockId: response.data,
+				})
+
+				this.tryLoad()
+			})
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to create block'), {
+				component: 'BlocksStore',
+				method: 'createBlock',
+			})
+			throw error
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
+	 * Обновление блока
+	 */
+	public async updateBlock(id: number, data: BlockUpdateRequest): Promise<void> {
+		const cacheKey = `updating-block-${id}`
+
+		if (this.isLoading(cacheKey)) return
+		this.setLoading(cacheKey, true)
+
+		try {
+			await this.api.inventoryBlocksUpdate(id, data)
+
+			runInAction(() => {
+				logger.info('Block updated successfully', {
+					component: 'BlocksStore',
+					method: 'updateBlock',
+					blockId: id,
+				})
+
+				this.refreshBlocks()
+				this.refreshDetailedById(id)
+			})
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to update block'), {
+				component: 'BlocksStore',
+				method: 'updateBlock',
+				blockId: id,
+			})
+			throw error
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
+	 * Удаление блока
+	 */
+	public async deleteBlock(id: number): Promise<void> {
+		const cacheKey = `deleting-block-${id}`
+
+		if (this.isLoading(cacheKey)) return
+		this.setLoading(cacheKey, true)
+
+		try {
+			await this.api.inventoryBlocksDelete(id)
+
+			runInAction(() => {
+				logger.info('Block deleted successfully', {
+					component: 'BlocksStore',
+					method: 'deleteBlock',
+					blockId: id,
+				})
+
+				this.refreshBlocks()
+				this.blocksByIdCache.delete(id) // удаляем кэшированные данные
+			})
+		} catch (error) {
+			logger.error(error instanceof Error ? error : new Error('Failed to delete block'), {
+				component: 'BlocksStore',
+				method: 'deleteBlock',
+				blockId: id,
+			})
+			throw error
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	/**
+	 * Перемещение блока
+	 */
+	public async moveBlock(blockId: number, newParentId: number | null): Promise<void> {
+		const cacheKey = `moving-block-${blockId}`
+
+		if (this.isLoading(cacheKey)) return
+		this.setLoading(cacheKey, true)
+
+		try {
+			await this.api.inventoryBlocksMove(blockId, { parentId: newParentId })
+			runInAction(() => {
+				this.refreshBlocks()
+			})
+		} finally {
+			this.setLoading(cacheKey, false)
+		}
+	}
+
+	//#endregion
+
+	//#region Приватные методы загрузки
+
+	private async tryLoad(): Promise<void> {
+		const cacheKey = 'blocks'
+
+		if (this.isLoading(cacheKey)) return
 		this.setLoading(cacheKey, true)
 
 		try {
 			const response = await this.api.inventoryBlocksGetAll()
-
 			if (response.status === 200) {
 				runInAction(() => {
 					this.blocksCache.set(response.data)
@@ -61,109 +249,110 @@ export class BlocksStore extends BaseCacheStore {
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to load blocks'), {
 				component: 'BlocksStore',
-				method: 'tryLoadBlocks',
+				method: 'tryLoad',
 			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
 	}
 
-	/**
-	 * Получает дерево блоков
-	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
-	 * @returns Дерево блоков из кэша (может быть пустым, пока данные загружаются)
-	 */
-	public getTree(): BlockTreeInfo[] {
-		const reactive = this.blocksTreeCache.get()
-		this.tryLoadBlocksTree()
-		return reactive
-	}
+	private async tryLoadDetailedById(id: number): Promise<void> {
+		const cacheKey = `blocks-detailed:${id}`
 
-	private blocksTreeCacheKey = 'blocks-tree'
-	private blocksTreeCache = observable.box<BlockTreeInfo[]>([])
-
-	private async tryLoadBlocksTree(): Promise<void> {
-		const cacheKey = this.blocksTreeCacheKey
-		const isLoading = this.isLoading(cacheKey)
-
-		if (isLoading) {
-			logger.debug('Skipping - already loading', {
-				component: 'BlocksStore',
-				method: 'tryLoadBlocksTree',
-			})
-			return
-		}
-
+		if (this.isLoading(cacheKey)) return
 		this.setLoading(cacheKey, true)
 
 		try {
-			const response = await this.api.inventoryBlocksGetTree()
-
+			const response = await this.api.inventoryBlocksGet(id)
 			if (response.status === 200) {
 				runInAction(() => {
-					this.blocksTreeCache.set(response.data)
-					this.setLastFetchTime(cacheKey)
-				})
-			}
-		} catch (error) {
-			logger.error(error instanceof Error ? error : new Error('Failed to load blocks tree'), {
-				component: 'BlocksStore',
-				method: 'tryLoadBlocksTree',
-			})
-		} finally {
-			this.setLoading(cacheKey, false)
-		}
-	}
-
-	/**
-	 * Получает конкретный блок по ID
-	 * @param id Идентификатор блока
-	 * @returns Информация о блоке или undefined
-	 */
-	getBlockById(id: number): BlockDetailedInfo | undefined {
-		const reactive = this.blocksByIdCache.get(id)
-		this.tryLoadBlocksById(id)
-		return reactive
-	}
-
-	private blocksByIdCacheKey = (id: number) => `blocks-detailed:${id}`
-	private blocksByIdCache = observable.map<number, BlockDetailedInfo>()
-
-	/**
-	 * Загружает конкретный блок по ID
-	 * @param id Идентификатор блока
-	 * @param reason Причина вызова запроса (для логирования)
-	 */
-	private async tryLoadBlocksById(id: number): Promise<void> {
-		const cacheKey = this.blocksByIdCacheKey(id)
-		const isLoading = this.isLoading(cacheKey)
-
-		if (isLoading) {
-			logger.debug('Skipping - already loading', {
-				component: 'BlocksStore',
-				method: 'blocksByIdCacheKey',
-			})
-			return
-		}
-
-		this.setLoading(cacheKey, true)
-
-		try {
-			const response = await this.api.inventoryBlocksGetTree()
-
-			if (response.status === 200) {
-				runInAction(() => {
-					this.blocksTreeCache.set(response.data)
+					this.blocksByIdCache.set(id, response.data)
 					this.setLastFetchTime(cacheKey)
 				})
 			}
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to load block by id'), {
 				component: 'BlocksStore',
-				method: 'blocksByIdCacheKey',
+				method: 'tryLoadBlocksById',
+				blockId: id,
 			})
 		} finally {
 			this.setLoading(cacheKey, false)
 		}
 	}
+
+	//#endregion
+
+	//#region Вспомогательные методы
+
+	/**
+	 * Построение дерева из плоского списка
+	 */
+	private buildTree(blocks: BlockWithTagsInfo[]): BlockTreeInfo[] {
+		if (!blocks || blocks.length === 0) return []
+
+		const blockMap = new Map<number, BlockTreeInfo>()
+		const roots: BlockTreeInfo[] = []
+
+		// Создаем узлы
+		blocks.forEach((block) => {
+			blockMap.set(block.id, {
+				...block,
+				children: [],
+			} as BlockTreeInfo)
+		})
+
+		// Строим иерархию
+		blocks.forEach((block) => {
+			const node = blockMap.get(block.id)!
+
+			if (block.parentBlockId && blockMap.has(block.parentBlockId)) {
+				const parent = blockMap.get(block.parentBlockId)!
+				parent.children!.push(node)
+			} else {
+				roots.push(node)
+			}
+		})
+
+		// Сортируем
+		roots.forEach((root) => this.sortChildren(root))
+		return roots.sort((a, b) => a.name.localeCompare(b.name))
+	}
+
+	private sortChildren(node: BlockTreeInfo) {
+		if (node.children && node.children.length > 0) {
+			node.children.sort((a, b) => a.name.localeCompare(b.name))
+			node.children.forEach((child) => this.sortChildren(child))
+		}
+	}
+
+	/**
+	 * Поиск по дереву
+	 */
+	public searchBlocks(searchTerm: string): BlockTreeInfo[] {
+		if (!searchTerm) return this.tree
+
+		const searchLower = searchTerm.toLowerCase()
+
+		const filterTree = (nodes: BlockTreeInfo[]): BlockTreeInfo[] => {
+			return nodes
+				.map((node) => {
+					const matches = node.name.toLowerCase().includes(searchLower)
+					const children = node.children ? filterTree(node.children) : []
+
+					if (matches || children.length > 0) {
+						return {
+							...node,
+							children: children.length > 0 ? children : [],
+						}
+					}
+					return null
+				})
+				.filter(Boolean) as BlockTreeInfo[]
+		}
+
+		return filterTree(this.tree)
+	}
+
+	//#endregion
 }

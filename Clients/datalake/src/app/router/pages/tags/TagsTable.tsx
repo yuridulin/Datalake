@@ -60,14 +60,13 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 		return statesMap
 	}, [statuses, tagIds, showState])
 
-	const loadValues = useCallback(async () => {
+	const loadValues = useCallback(() => {
 		if (tagIds.length === 0) return
-		const promises = [store.valuesStore.refreshValues(valuesRequest)]
+		store.valuesStore.refreshValues(valuesRequest)
 		// Запрашиваем статусы только если они отображаются
 		if (showState) {
-			promises.push(store.valuesStore.refreshStatus(tagIds))
+			store.valuesStore.refreshStatus(tagIds)
 		}
-		await Promise.all(promises)
 	}, [store.valuesStore, valuesRequest, tagIds, showState])
 
 	// Получаем источники из store (реактивно через MobX)

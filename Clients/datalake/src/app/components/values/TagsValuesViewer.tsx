@@ -235,7 +235,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	const refreshValues = useCallback(async () => {
 		const currentRequest = valuesRequestRef.current
 		if (!currentRequest) return
-		await store.valuesStore.refreshValues(currentRequest)
+		store.valuesStore.refreshValues(currentRequest)
 		// Используем актуальные settings из ref
 		setLastFetchSettings(settingsRef.current)
 	}, [store.valuesStore])
@@ -256,8 +256,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 		const shouldRefresh = !lastFetchSettings || isDirty || becameAvailable
 
 		if (shouldRefresh) {
-			store.valuesStore
-				.refreshValues(valuesRequest)
+			store.api
+				.dataValuesGet(valuesRequest)
 				.then(() => {
 					setLastFetchSettings(settings)
 				})
@@ -271,7 +271,7 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 
 		// Обновляем ref после проверки
 		previousValuesRequestRef.current = valuesRequest
-	}, [integrated, valuesRequest, isDirty, lastFetchSettings, settings, store.valuesStore])
+	}, [integrated, valuesRequest, isDirty, lastFetchSettings, settings, store.api])
 
 	useEffect(() => {
 		if (!isTimeDirty) return
