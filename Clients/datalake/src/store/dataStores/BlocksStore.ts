@@ -1,4 +1,3 @@
-// BlocksStore.ts
 import { Api } from '@/generated/Api'
 import { BlockDetailedInfo, BlockTreeInfo, BlockUpdateRequest, BlockWithTagsInfo } from '@/generated/data-contracts'
 import { logger } from '@/services/logger'
@@ -16,7 +15,6 @@ export class BlocksStore extends BaseCacheStore {
 			// Computed свойства
 			tree: computed,
 			flatTreeMap: computed,
-			statistics: computed,
 		})
 	}
 
@@ -57,38 +55,6 @@ export class BlocksStore extends BaseCacheStore {
 
 		buildPaths(this.tree)
 		return map
-	}
-
-	/**
-	 * Статистика по блокам
-	 */
-	get statistics() {
-		return computed(() => {
-			const blocks = this.blocksCache.get()
-			const tree = this.tree
-
-			const calculateMaxDepth = (nodes: BlockTreeInfo[], currentDepth: number = 1): number => {
-				if (!nodes || nodes.length === 0) return currentDepth
-
-				let maxDepth = currentDepth
-				nodes.forEach((node) => {
-					if (node.children && node.children.length > 0) {
-						const depth = calculateMaxDepth(node.children, currentDepth + 1)
-						maxDepth = Math.max(maxDepth, depth)
-					}
-				})
-
-				return maxDepth
-			}
-
-			return {
-				totalBlocks: blocks.length,
-				rootBlocks: tree.length,
-				blocksWithChildren: tree.filter((node) => node.children && node.children.length > 0).length,
-				blocksWithoutChildren: tree.filter((node) => !node.children || node.children.length === 0).length,
-				maxDepth: calculateMaxDepth(tree),
-			}
-		}).get()
 	}
 
 	//#endregion

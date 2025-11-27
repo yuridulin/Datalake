@@ -1,4 +1,3 @@
-// SourcesStore.ts
 import { Api } from '@/generated/Api'
 import {
 	SourceActivityInfo,
@@ -19,8 +18,7 @@ export class SourcesStore extends BaseCacheStore {
 	constructor(private api: Api) {
 		super()
 		makeObservable(this, {
-			// Computed свойства
-			sourcesMap: computed,
+			activityState: computed,
 		})
 	}
 
@@ -30,7 +28,7 @@ export class SourcesStore extends BaseCacheStore {
 	 * Получает список всех источников
 	 * @returns Список источников из кэша (может быть пустым, пока данные загружаются)
 	 */
-	public getSources(): SourceWithSettingsInfo[] {
+	public get sources(): SourceWithSettingsInfo[] {
 		return this.sourcesCache.get()
 	}
 
@@ -44,40 +42,11 @@ export class SourcesStore extends BaseCacheStore {
 	}
 
 	/**
-	 * Получает состояния активности для указанных источников
-	 * @param sourceIds Массив идентификаторов источников
-	 * @returns Объект с состояниями активности (ключ: sourceId)
+	 * Реактивное состояние активности источников
+	 * Компоненты могут использовать этот геттер для подписки на изменения
 	 */
-	public getActivity(sourceIds: number[]): Record<number, SourceActivityInfo> {
-		if (sourceIds.length === 0) return {}
-
-		const result: Record<number, SourceActivityInfo> = {}
-		for (const sourceId of sourceIds) {
-			const cached = this.activityCache.get(sourceId)
-			if (cached) {
-				result[sourceId] = cached
-			}
-		}
-
-		return result
-	}
-
-	//#endregion
-
-	//#region Computed свойства
-
-	/**
-	 * Маппинг ID -> источник для быстрого доступа
-	 */
-	get sourcesMap(): Map<number, SourceWithSettingsInfo> {
-		return computed(() => {
-			const sources = this.sourcesCache.get()
-			const map = new Map<number, SourceWithSettingsInfo>()
-			sources.forEach((source) => {
-				map.set(source.id, source)
-			})
-			return map
-		}).get()
+	public get activityState(): Map<number, SourceActivityInfo> {
+		return new Map(this.activityCache.entries())
 	}
 
 	//#endregion
@@ -99,7 +68,7 @@ export class SourcesStore extends BaseCacheStore {
 	}
 
 	/**
-	 * Сигнал обновления активности источников
+	 * Сигнал обновления активности указанных источников
 	 */
 	public refreshActivity(sourceIds: number[]) {
 		this.tryLoadActivity(sourceIds)
@@ -208,17 +177,6 @@ export class SourcesStore extends BaseCacheStore {
 		}
 	}
 
-	/**
-	 * Инвалидирует кэш для конкретного источника
-	 * @param id Идентификатор источника
-	 */
-	public invalidateSource(id: number): void {
-		runInAction(() => {
-			this.sourcesByIdCache.delete(id)
-			this.activityCache.delete(id)
-		})
-	}
-
 	//#endregion
 
 	//#region Приватные методы загрузки
@@ -286,20 +244,25 @@ export class SourcesStore extends BaseCacheStore {
 
 		try {
 			const response = await this.api.dataSourcesGetActivity(sourceIds)
-
-			if (response.status === 200) {
-				runInAction(() => {
-					for (const activity of response.data) {
-						this.activityCache.set(activity.sourceId, activity)
-						this.setLastFetchTime(`activity_${activity.sourceId}`)
-					}
+			runInAction(() => {
+				response.data.forEach((activity) => {
+					this.activityCache.set(activity.sourceId, activity)
 				})
-			}
+				this.setLastFetchTime(cacheKey)
+
+				logger.debug('Activities refreshed successfully', {
+					component: 'SourcesStore',
+					method: 'refreshActivities',
+					sourceIds: sourceIds,
+					updatedCount: response.data.length,
+				})
+			})
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to load sources activity'), {
 				component: 'SourcesStore',
 				method: 'tryLoadActivity',
 			})
+			throw error
 		} finally {
 			this.setLoading(cacheKey, false)
 		}

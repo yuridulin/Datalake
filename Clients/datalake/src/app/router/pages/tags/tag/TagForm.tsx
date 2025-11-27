@@ -66,21 +66,26 @@ const TagForm = () => {
 		logger.debug('TagForm request changed', { component: 'TagForm', request })
 	}, [request])
 
-	// Получаем данные из stores (реактивно через MobX)
 	const blocksData = store.blocksStore.tree
 	const tagsData = store.tagsStore.getTags()
-	const sourcesData = store.sourcesStore.getSources()
 
 	// Преобразуем данные в нужный формат
 	const blocks = useMemo(() => blocksData, [blocksData])
 	const tags = useMemo(() => tagsData, [tagsData])
-	const sources = useMemo(
-		() =>
-			sourcesData.map((source) => ({
+
+	const sources = store.sourcesStore.sources
+	const sourcesOptions = useMemo(
+		() => [
+			{
+				value: SourceType.Unset,
+				label: '? не выбран',
+			},
+			...sources.map((source) => ({
 				value: source.id,
 				label: source.name,
 			})),
-		[sourcesData],
+		],
+		[sources],
 	)
 
 	// Получаем тег из store
@@ -673,13 +678,7 @@ const TagForm = () => {
 				<FormRow title='Используемый источник'>
 					<Select
 						showSearch
-						options={[
-							{
-								value: SourceType.Unset,
-								label: '? не выбран',
-							},
-							...sources,
-						]}
+						options={sourcesOptions}
 						value={request.sourceId}
 						onChange={(value) =>
 							setRequest((prev) => ({
