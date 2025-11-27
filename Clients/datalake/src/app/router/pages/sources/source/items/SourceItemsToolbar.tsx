@@ -1,5 +1,5 @@
 import { Button, Col, Input, Radio, Row } from 'antd'
-import { ViewModeState } from './SourceItems.types'
+import { ViewModeState } from './utils/SourceItems.types'
 
 type SourceItemsToolbarProps = {
 	search: string

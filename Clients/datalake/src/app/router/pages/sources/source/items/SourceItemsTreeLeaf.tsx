@@ -2,7 +2,7 @@ import TagButton from '@/app/components/buttons/TagButton'
 import { TagType } from '@/generated/data-contracts'
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons'
 import { Button, Popconfirm } from 'antd'
-import { GroupedEntry } from './SourceItems.types'
+import { GroupedEntry } from './utils/SourceItems.types'
 
 type SourceItemsTreeLeafProps = {
 	group: GroupedEntry

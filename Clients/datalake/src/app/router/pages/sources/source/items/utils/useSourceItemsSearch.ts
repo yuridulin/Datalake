@@ -1,6 +1,6 @@
+import { SourceEntryInfo } from '@/app/router/pages/sources/source/items/utils/SourceItems.types'
 import debounce from 'debounce'
 import { useCallback, useEffect, useState } from 'react'
-import { SourceEntryInfo } from './SourceItems.types'
 
 export const useSourceItemsSearch = (items: SourceEntryInfo[]) => {
 	const [search, setSearch] = useState('')

@@ -1,16 +1,15 @@
 import CreatedTagLinker from '@/app/components/CreatedTagsLinker'
 import StatusLoader from '@/app/components/loaders/StatusLoader'
+import { useSourceItemsSearch } from '@/app/router/pages/sources/source/items/utils/useSourceItemsSearch'
 import { SourceUpdateRequest, SourceWithSettingsAndTagsInfo } from '@/generated/data-contracts'
 import { Alert } from 'antd'
 import { useLocalStorage } from 'react-use'
-import { ViewModeState } from './SourceItems.types'
-import { groupEntries } from './SourceItems.utils'
 import { SourceItemsTable } from './SourceItemsTable'
 import { SourceItemsToolbar } from './SourceItemsToolbar'
 import { SourceItemsTree } from './SourceItemsTree'
-import { useSourceItemsData } from './useSourceItemsData'
-import { useSourceItemsSearch } from './useSourceItemsSearch'
-
+import { ViewModeState } from './utils/SourceItems.types'
+import { groupEntries } from './utils/SourceItems.utils'
+import { useSourceItemsData } from './utils/useSourceItemsData'
 type SourceItemsProps = {
 	source: SourceWithSettingsAndTagsInfo
 	request: SourceUpdateRequest

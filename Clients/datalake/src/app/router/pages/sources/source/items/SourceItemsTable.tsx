@@ -5,7 +5,7 @@ import { TagType } from '@/generated/data-contracts'
 import { CheckCircleOutlined, CloseCircleOutlined, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons'
 import { Button, Popconfirm, Table, TableColumnsType, Tag, theme } from 'antd'
 import dayjs from 'dayjs'
-import { SourceEntryInfo } from './SourceItems.types'
+import { SourceEntryInfo } from './utils/SourceItems.types'
 
 type SourceItemsTableProps = {
 	items: SourceEntryInfo[]

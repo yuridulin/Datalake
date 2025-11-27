@@ -2,9 +2,9 @@ import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagType } from '@/generated/data-contracts'
 import { DownOutlined } from '@ant-design/icons'
 import { Tree, theme } from 'antd'
-import { GroupedEntry, TreeNodeData } from './SourceItems.types'
-import { formatCount } from './SourceItems.utils'
 import { SourceItemsTreeLeaf } from './SourceItemsTreeLeaf'
+import { GroupedEntry, TreeNodeData } from './utils/SourceItems.types'
+import { formatCount } from './utils/SourceItems.utils'
 
 type SourceItemsTreeProps = {
 	groups: GroupedEntry[]

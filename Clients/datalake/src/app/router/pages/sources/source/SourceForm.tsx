@@ -9,9 +9,9 @@ import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Input, Popconfirm, Radio, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import SourceItems from './SourceItems'
+import SourceItems from './items/SourceItems'
 
 const AvailableSourceTypes = [SourceType.Unset, SourceType.Inopc, SourceType.Datalake]
 
@@ -22,38 +22,36 @@ const SourceForm = observer(() => {
 	const navigate = useNavigate()
 
 	const sourceId = id ? Number(id) : undefined
-	// Получаем источник из store (реактивно через MobX)
-	const sourceData = sourceId ? store.sourcesStore.getSourceById(sourceId) : undefined
+	const source = sourceId ? store.sourcesStore.getSourceById(sourceId) : undefined
 
+	// Загружаем данные источника при первом монтировании или изменении id
+	const refreshSourceFunc = useCallback(() => {
+		if (sourceId) {
+			store.sourcesStore.refreshSourceById(sourceId)
+		}
+	}, [sourceId, store.sourcesStore])
+	useEffect(refreshSourceFunc, [refreshSourceFunc])
+
+	// Обновляем локальное состояние при загрузке из store
 	const [request, setRequest] = useState<SourceUpdateRequest>({
 		name: '',
 		type: SourceType.Unset,
 		isDisabled: false,
 	})
-
-	// Загружаем данные источника при первом монтировании или изменении id
 	useEffect(() => {
-		if (sourceId) {
-			store.sourcesStore.refreshSourceById(sourceId)
-		}
-	}, [sourceId, store.sourcesStore])
-
-	// Обновляем локальное состояние при загрузке из store
-	useEffect(() => {
-		if (!sourceData) return
-
+		if (!source) return
 		setRequest({
-			isDisabled: sourceData.isDisabled,
-			name: sourceData.name,
-			type: sourceData.type,
-			address: sourceData.address,
-			description: sourceData.description,
+			isDisabled: source.isDisabled,
+			name: source.name,
+			type: source.type,
+			address: source.address,
+			description: source.description,
 		})
-	}, [sourceData])
+	}, [source])
 
-	const sourceUpdate = async () => {
+	const sourceUpdate = useCallback(async () => {
 		try {
-			await store.sourcesStore.updateSource(Number(id), request)
+			if (sourceId) await store.sourcesStore.updateSource(sourceId, request)
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to update source'), {
 				component: 'SourceForm',
@@ -61,11 +59,11 @@ const SourceForm = observer(() => {
 				sourceId,
 			})
 		}
-	}
+	}, [sourceId, store.sourcesStore, request])
 
-	const sourceDelete = async () => {
+	const sourceDelete = useCallback(async () => {
 		try {
-			await store.sourcesStore.deleteSource(Number(id))
+			if (sourceId) await store.sourcesStore.deleteSource(sourceId)
 			navigate(routes.sources.list)
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to delete source'), {
@@ -74,7 +72,7 @@ const SourceForm = observer(() => {
 				sourceId,
 			})
 		}
-	}
+	}, [sourceId, store.sourcesStore, navigate])
 
 	return (
 		<>
@@ -96,9 +94,9 @@ const SourceForm = observer(() => {
 				]}
 				icon={<SourceIcon />}
 			>
-				{sourceData?.name ?? ''}
+				{source?.name ?? ''}
 			</PageHeader>
-			{!sourceData ? (
+			{!source ? (
 				<Spin />
 			) : (
 				<>
@@ -135,8 +133,8 @@ const SourceForm = observer(() => {
 									key={x}
 									value={x}
 									style={{
-										fontWeight: x === sourceData?.type ? 'bold' : 'inherit',
-										textDecoration: x === sourceData?.type ? 'underline' : 'inherit',
+										fontWeight: x === source?.type ? 'bold' : 'inherit',
+										textDecoration: x === source?.type ? 'underline' : 'inherit',
 									}}
 								>
 									{getSourceTypeName(x)}
@@ -158,7 +156,7 @@ const SourceForm = observer(() => {
 								/>
 							</FormRow>
 							<FormRow title='Доступные значения'>
-								{sourceData && <SourceItems source={sourceData} request={request} />}
+								{source && <SourceItems source={source} request={request} />}
 							</FormRow>
 						</>
 					)}
