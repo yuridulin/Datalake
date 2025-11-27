@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { SourceActivityInfo, SourceWithSettingsAndTagsInfo, SourceWithSettingsInfo } from '@/generated/data-contracts'
+import { CACHE_TTL } from '@/config/cacheConfig'
 import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
@@ -18,9 +19,9 @@ export class SourcesStore extends BaseCacheStore {
 	private _activityCache = observable.map<number, SourceActivityInfo>()
 
 	// TTL для разных типов данных (в миллисекундах)
-	private readonly TTL_LIST = 5 * 60 * 1000 // 5 минут для списка
-	private readonly TTL_ITEM = 10 * 60 * 1000 // 10 минут для отдельного источника
-	private readonly TTL_ACTIVITY = 30 * 1000 // 30 секунд для состояний активности
+	private readonly TTL_LIST = CACHE_TTL.SOURCES.LIST
+	private readonly TTL_ITEM = CACHE_TTL.SOURCES.ITEM
+	private readonly TTL_ACTIVITY = CACHE_TTL.SOURCES.ACTIVITY
 
 	constructor(private api: Api) {
 		super()
@@ -38,27 +39,16 @@ export class SourcesStore extends BaseCacheStore {
 
 	/**
 	 * Получает список всех источников
-	 * @returns Список источников
+	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
+	 * @returns Список источников из кэша (может быть пустым, пока данные загружаются)
 	 */
 	getSources(): SourceWithSettingsInfo[] {
 		const cacheKey = 'sources_list'
 		const cached = this._sourcesCache.get()
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadSources().catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'SourcesStore',
-						method: 'getSources',
-						action: 'loadSources',
-					})
-				})
-			}
-			return cached
-		}
-
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadSources().catch((error) => {
+			this.loadSources('get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'SourcesStore',
 					method: 'getSources',
@@ -67,6 +57,7 @@ export class SourcesStore extends BaseCacheStore {
 			})
 		}
 
+		// Возвращаем текущий кэш (может быть пустым)
 		return cached ?? []
 	}
 
@@ -79,22 +70,9 @@ export class SourcesStore extends BaseCacheStore {
 		const cacheKey = `source_${id}`
 		const cached = this._sourcesByIdCache.get(id)
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadSourceById(id).catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'SourcesStore',
-						method: 'getSourceById',
-						action: 'loadSourceById',
-						sourceId: id,
-					})
-				})
-			}
-			return cached
-		}
-
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadSourceById(id).catch((error) => {
+			this.loadSourceById(id, 'get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'SourcesStore',
 					method: 'getSourceById',
@@ -104,6 +82,7 @@ export class SourcesStore extends BaseCacheStore {
 			})
 		}
 
+		// Возвращаем текущий кэш
 		return cached
 	}
 
@@ -120,22 +99,16 @@ export class SourcesStore extends BaseCacheStore {
 
 		// Проверяем кэш для каждого источника
 		for (const sourceId of sourceIds) {
-			const cacheKey = `activity_${sourceId}`
 			const cached = this._activityCache.get(sourceId)
-
-			if (cached && this.isCacheValid(cacheKey, this.TTL_ACTIVITY)) {
+			if (cached) {
 				result[sourceId] = cached
-				if (this.shouldRefresh(cacheKey, this.TTL_ACTIVITY)) {
-					needRefresh.push(sourceId)
-				}
-			} else {
-				needRefresh.push(sourceId)
 			}
+			needRefresh.push(sourceId)
 		}
 
-		// Обновляем в фоне, если нужно
+		// Загружаем данные, если запрос не идет
 		if (needRefresh.length > 0 && !this.isLoading('activity')) {
-			this.loadActivity(needRefresh).catch((error) => {
+			this.loadActivity(needRefresh, 'get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'SourcesStore',
 					method: 'getActivity',
@@ -154,6 +127,14 @@ export class SourcesStore extends BaseCacheStore {
 	 */
 	isLoadingSources(): boolean {
 		return this.isLoading('sources_list')
+	}
+
+	/**
+	 * Проверяет, есть ли данные в кэше для списка источников
+	 * @returns true, если данные были загружены хотя бы раз
+	 */
+	hasSourcesCache(): boolean {
+		return this.hasCache('sources_list')
 	}
 
 	/**
@@ -182,8 +163,8 @@ export class SourcesStore extends BaseCacheStore {
 	 * Принудительно обновляет список источников
 	 */
 	async refreshSources(): Promise<void> {
-		this.invalidateCache('sources_list')
-		await this.loadSources()
+		// Просто вызываем loadSources - он сам проверит, идет ли загрузка
+		await this.loadSources('manual-refresh')
 	}
 
 	/**
@@ -194,16 +175,32 @@ export class SourcesStore extends BaseCacheStore {
 		for (const sourceId of sourceIds) {
 			this.invalidateCache(`activity_${sourceId}`)
 		}
-		await this.loadActivity(sourceIds)
+		await this.loadActivity(sourceIds, 'manual-refresh')
 	}
 
 	/**
 	 * Загружает список источников с сервера
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadSources(): Promise<void> {
+	private async loadSources(reason: string = 'unknown'): Promise<void> {
 		const cacheKey = 'sources_list'
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[SourcesStore] Skipping loadSources - already loading`, {
+				component: 'SourcesStore',
+				method: 'loadSources',
+				cacheKey,
+				reason,
+			})
+			return
+		}
+
+		logger.info(`[SourcesStore] API Request: inventorySourcesGetAll`, {
+			component: 'SourcesStore',
+			method: 'loadSources',
+			cacheKey,
+			reason,
+		})
 
 		this.setLoading(cacheKey, true)
 
@@ -231,11 +228,29 @@ export class SourcesStore extends BaseCacheStore {
 	/**
 	 * Загружает конкретный источник по ID
 	 * @param id Идентификатор источника
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadSourceById(id: number): Promise<void> {
+	private async loadSourceById(id: number, reason: string = 'unknown'): Promise<void> {
 		const cacheKey = `source_${id}`
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[SourcesStore] Skipping loadSourceById - already loading`, {
+				component: 'SourcesStore',
+				method: 'loadSourceById',
+				cacheKey,
+				reason,
+				sourceId: id,
+			})
+			return
+		}
+
+		logger.info(`[SourcesStore] API Request: inventorySourcesGet`, {
+			component: 'SourcesStore',
+			method: 'loadSourceById',
+			cacheKey,
+			reason,
+			sourceId: id,
+		})
 
 		this.setLoading(cacheKey, true)
 
@@ -262,13 +277,31 @@ export class SourcesStore extends BaseCacheStore {
 	/**
 	 * Загружает состояния активности источников
 	 * @param sourceIds Массив идентификаторов источников
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadActivity(sourceIds: number[]): Promise<void> {
+	private async loadActivity(sourceIds: number[], reason: string = 'unknown'): Promise<void> {
 		if (sourceIds.length === 0) return
 
 		const cacheKey = 'activity'
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[SourcesStore] Skipping loadActivity - already loading`, {
+				component: 'SourcesStore',
+				method: 'loadActivity',
+				cacheKey,
+				reason,
+				sourceIds,
+			})
+			return
+		}
+
+		logger.info(`[SourcesStore] API Request: dataSourcesGetActivity`, {
+			component: 'SourcesStore',
+			method: 'loadActivity',
+			cacheKey,
+			reason,
+			sourceIds,
+		})
 
 		this.setLoading(cacheKey, true)
 

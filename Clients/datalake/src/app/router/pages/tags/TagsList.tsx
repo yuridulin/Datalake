@@ -12,15 +12,7 @@ const Tags = observer(() => {
 	// Получаем теги из store (реактивно через MobX)
 	const tags = store.tagsStore.getTags()
 
-	// Обновляем данные при переходе на страницу
-	useEffect(() => {
-		store.tagsStore.refreshTags().catch((error) => {
-			logger.error(error instanceof Error ? error : new Error(String(error)), {
-				component: 'TagsList',
-				action: 'refreshTags',
-			})
-		})
-	}, [store.tagsStore])
+	// getTags() автоматически загрузит данные при первом вызове
 
 	return (
 		<>

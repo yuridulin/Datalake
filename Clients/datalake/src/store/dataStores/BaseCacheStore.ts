@@ -5,36 +5,11 @@ import { runInAction } from 'mobx'
  * Предоставляет общую логику для работы с TTL и валидацией кэша
  */
 export abstract class BaseCacheStore {
-	// Время последнего запроса для каждого ключа кэша
-	protected _lastFetchTime: Map<string, number> = new Map()
+	/** Время последнего запроса для каждого ключа кэша */
+	protected lastFetchTime: Map<string, number> = new Map()
 
-	// Состояния загрузки для каждого ключа
-	protected _loadingStates: Map<string, boolean> = new Map()
-
-	/**
-	 * Проверяет, валиден ли кэш для указанного ключа и типа данных
-	 * @param cacheKey Ключ кэша
-	 * @param ttl Время жизни кэша в миллисекундах
-	 * @returns true, если кэш валиден
-	 */
-	protected isCacheValid(cacheKey: string, ttl: number): boolean {
-		const lastFetch = this._lastFetchTime.get(cacheKey)
-		if (!lastFetch) return false
-		return Date.now() - lastFetch < ttl
-	}
-
-	/**
-	 * Проверяет, нужно ли обновить кэш (80% от TTL)
-	 * @param cacheKey Ключ кэша
-	 * @param ttl Время жизни кэша в миллисекундах
-	 * @returns true, если нужно обновить
-	 */
-	protected shouldRefresh(cacheKey: string, ttl: number): boolean {
-		const lastFetch = this._lastFetchTime.get(cacheKey)
-		if (!lastFetch) return true
-		const refreshThreshold = ttl * 0.8 // 80% от TTL
-		return Date.now() - lastFetch >= refreshThreshold
-	}
+	/** Состояния загрузки для каждого ключа */
+	protected loadingStates: Map<string, boolean> = new Map()
 
 	/**
 	 * Устанавливает время последнего запроса
@@ -42,7 +17,7 @@ export abstract class BaseCacheStore {
 	 */
 	protected setLastFetchTime(cacheKey: string): void {
 		runInAction(() => {
-			this._lastFetchTime.set(cacheKey, Date.now())
+			this.lastFetchTime.set(cacheKey, Date.now())
 		})
 	}
 
@@ -53,7 +28,7 @@ export abstract class BaseCacheStore {
 	 */
 	protected setLoading(cacheKey: string, loading: boolean): void {
 		runInAction(() => {
-			this._loadingStates.set(cacheKey, loading)
+			this.loadingStates.set(cacheKey, loading)
 		})
 	}
 
@@ -63,26 +38,6 @@ export abstract class BaseCacheStore {
 	 * @returns true, если идет загрузка
 	 */
 	protected isLoading(cacheKey: string): boolean {
-		return this._loadingStates.get(cacheKey) ?? false
-	}
-
-	/**
-	 * Инвалидирует кэш для указанного ключа
-	 * @param cacheKey Ключ кэша
-	 */
-	protected invalidateCache(cacheKey: string): void {
-		runInAction(() => {
-			this._lastFetchTime.delete(cacheKey)
-		})
-	}
-
-	/**
-	 * Очищает весь кэш
-	 */
-	protected clearCache(): void {
-		runInAction(() => {
-			this._lastFetchTime.clear()
-			this._loadingStates.clear()
-		})
+		return this.loadingStates.get(cacheKey) ?? false
 	}
 }

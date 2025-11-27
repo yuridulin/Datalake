@@ -97,15 +97,7 @@ const SourcesList = observer(() => {
 		}
 	}, [store])
 
-	// Обновляем данные при переходе на страницу
-	useEffect(() => {
-		store.sourcesStore.refreshSources().catch((error) => {
-			logger.error(error instanceof Error ? error : new Error(String(error)), {
-				component: 'SourcesList',
-				action: 'refreshSources',
-			})
-		})
-	}, [store.sourcesStore])
+	// getSources() автоматически загрузит данные при первом вызове
 
 	const columns = useMemo(
 		() =>

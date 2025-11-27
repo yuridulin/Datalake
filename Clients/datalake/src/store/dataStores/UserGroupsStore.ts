@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { UserGroupDetailedInfo, UserGroupInfo, UserGroupTreeInfo } from '@/generated/data-contracts'
+import { CACHE_TTL } from '@/config/cacheConfig'
 import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
@@ -18,9 +19,9 @@ export class UserGroupsStore extends BaseCacheStore {
 	private _groupsByGuidCache = observable.map<string, UserGroupDetailedInfo>()
 
 	// TTL для разных типов данных (в миллисекундах)
-	private readonly TTL_LIST = 5 * 60 * 1000 // 5 минут для списка
-	private readonly TTL_TREE = 5 * 60 * 1000 // 5 минут для дерева
-	private readonly TTL_ITEM = 10 * 60 * 1000 // 10 минут для отдельной группы
+	private readonly TTL_LIST = CACHE_TTL.USER_GROUPS.LIST
+	private readonly TTL_TREE = CACHE_TTL.USER_GROUPS.TREE
+	private readonly TTL_ITEM = CACHE_TTL.USER_GROUPS.ITEM
 
 	constructor(private api: Api) {
 		super()
@@ -37,27 +38,16 @@ export class UserGroupsStore extends BaseCacheStore {
 
 	/**
 	 * Получает список всех групп
-	 * @returns Список групп
+	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
+	 * @returns Список групп из кэша (может быть пустым, пока данные загружаются)
 	 */
 	getGroups(): UserGroupInfo[] {
 		const cacheKey = 'groups_list'
 		const cached = this._groupsCache.get()
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadGroups().catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'UserGroupsStore',
-						method: 'getGroups',
-						action: 'loadGroups',
-					})
-				})
-			}
-			return cached
-		}
-
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadGroups().catch((error) => {
+			this.loadGroups('get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'UserGroupsStore',
 					method: 'getGroups',
@@ -66,32 +56,22 @@ export class UserGroupsStore extends BaseCacheStore {
 			})
 		}
 
+		// Возвращаем текущий кэш (может быть пустым)
 		return cached ?? []
 	}
 
 	/**
 	 * Получает дерево групп
-	 * @returns Дерево групп
+	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
+	 * @returns Дерево групп из кэша (может быть пустым, пока данные загружаются)
 	 */
 	getTree(): UserGroupTreeInfo[] {
 		const cacheKey = 'groups_tree'
 		const cached = this._groupsTreeCache.get()
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_TREE)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_TREE)) {
-				this.loadTree().catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'UserGroupsStore',
-						method: 'getTree',
-						action: 'loadTree',
-					})
-				})
-			}
-			return cached
-		}
-
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadTree().catch((error) => {
+			this.loadTree('get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'UserGroupsStore',
 					method: 'getTree',
@@ -100,6 +80,7 @@ export class UserGroupsStore extends BaseCacheStore {
 			})
 		}
 
+		// Возвращаем текущий кэш (может быть пустым)
 		return cached ?? []
 	}
 
@@ -112,22 +93,9 @@ export class UserGroupsStore extends BaseCacheStore {
 		const cacheKey = `group_${guid}`
 		const cached = this._groupsByGuidCache.get(guid)
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadGroupByGuid(guid).catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'UserGroupsStore',
-						method: 'getGroupByGuid',
-						action: 'loadGroupByGuid',
-						groupGuid: guid,
-					})
-				})
-			}
-			return cached
-		}
-
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadGroupByGuid(guid).catch((error) => {
+			this.loadGroupByGuid(guid, 'get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'UserGroupsStore',
 					method: 'getGroupByGuid',
@@ -137,6 +105,7 @@ export class UserGroupsStore extends BaseCacheStore {
 			})
 		}
 
+		// Возвращаем текущий кэш
 		return cached
 	}
 
@@ -165,25 +134,41 @@ export class UserGroupsStore extends BaseCacheStore {
 	 * Принудительно обновляет список групп
 	 */
 	async refreshGroups(): Promise<void> {
-		this.invalidateCache('groups_list')
-		await this.loadGroups()
+		// Просто вызываем loadGroups - он сам проверит, идет ли загрузка
+		await this.loadGroups('manual-refresh')
 	}
 
 	/**
 	 * Принудительно обновляет дерево групп
 	 */
 	async refreshTree(): Promise<void> {
-		this.invalidateCache('groups_tree')
-		await this.loadTree()
+		// Просто вызываем loadTree - он сам проверит, идет ли загрузка
+		await this.loadTree('manual-refresh')
 	}
 
 	/**
 	 * Загружает список групп с сервера
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadGroups(): Promise<void> {
+	private async loadGroups(reason: string = 'unknown'): Promise<void> {
 		const cacheKey = 'groups_list'
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[UserGroupsStore] Skipping loadGroups - already loading`, {
+				component: 'UserGroupsStore',
+				method: 'loadGroups',
+				cacheKey,
+				reason,
+			})
+			return
+		}
+
+		logger.info(`[UserGroupsStore] API Request: inventoryUserGroupsGetAll`, {
+			component: 'UserGroupsStore',
+			method: 'loadGroups',
+			cacheKey,
+			reason,
+		})
 
 		this.setLoading(cacheKey, true)
 
@@ -208,11 +193,27 @@ export class UserGroupsStore extends BaseCacheStore {
 
 	/**
 	 * Загружает дерево групп с сервера
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadTree(): Promise<void> {
+	private async loadTree(reason: string = 'unknown'): Promise<void> {
 		const cacheKey = 'groups_tree'
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[UserGroupsStore] Skipping loadTree - already loading`, {
+				component: 'UserGroupsStore',
+				method: 'loadTree',
+				cacheKey,
+				reason,
+			})
+			return
+		}
+
+		logger.info(`[UserGroupsStore] API Request: inventoryUserGroupsGetTree`, {
+			component: 'UserGroupsStore',
+			method: 'loadTree',
+			cacheKey,
+			reason,
+		})
 
 		this.setLoading(cacheKey, true)
 
@@ -238,11 +239,29 @@ export class UserGroupsStore extends BaseCacheStore {
 	/**
 	 * Загружает конкретную группу по GUID
 	 * @param guid GUID группы
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadGroupByGuid(guid: string): Promise<void> {
+	private async loadGroupByGuid(guid: string, reason: string = 'unknown'): Promise<void> {
 		const cacheKey = `group_${guid}`
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[UserGroupsStore] Skipping loadGroupByGuid - already loading`, {
+				component: 'UserGroupsStore',
+				method: 'loadGroupByGuid',
+				cacheKey,
+				reason,
+				groupGuid: guid,
+			})
+			return
+		}
+
+		logger.info(`[UserGroupsStore] API Request: inventoryUserGroupsGetWithDetails`, {
+			component: 'UserGroupsStore',
+			method: 'loadGroupByGuid',
+			cacheKey,
+			reason,
+			groupGuid: guid,
+		})
 
 		this.setLoading(cacheKey, true)
 

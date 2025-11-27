@@ -3,7 +3,7 @@ import routes from '@/app/router/routes'
 import { Api } from '@/generated/Api'
 import { AccessRuleInfo, AccessType, UserSessionWithAccessInfo, UserType } from '@/generated/data-contracts'
 import { NotificationInstance } from 'antd/es/notification/interface'
-import { AxiosError, AxiosResponse } from 'axios'
+import { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { makeAutoObservable } from 'mobx'
 import { BlocksStore } from './dataStores/BlocksStore'
 import { SourcesStore } from './dataStores/SourcesStore'
@@ -13,6 +13,8 @@ import { UsersStore } from './dataStores/UsersStore'
 import { ValuesStore } from './dataStores/ValuesStore'
 
 import { logger } from '@/services/logger'
+import { calculateDelay, parseRetryAfter, shouldRetry } from '@/utils/retry'
+import { RETRY_CONFIG } from '@/config/retryConfig'
 
 const debug = false
 const log = (...text: unknown[]) => {
@@ -145,26 +147,67 @@ export class AppStore {
 
 				return response
 			},
-			(error: AxiosError) => {
+			async (error: AxiosError) => {
 				this.setConnectionStatus(error.request?.status !== 0 /*  || error.code === 'ERR_NETWORK' */)
 
-				if (error.response?.status === 401 || error.response?.status === 400) {
+				const statusCode = error.response?.status
+				const config = error.config as InternalAxiosRequestConfig & { __retryCount?: number }
+
+				// Инициализируем счетчик попыток, если его еще нет
+				if (!config.__retryCount) {
+					config.__retryCount = 0
+				}
+
+				// Проверяем, нужно ли делать retry
+				if (shouldRetry(statusCode) && config.__retryCount < RETRY_CONFIG.MAX_RETRIES) {
+					config.__retryCount += 1
+
+					// Получаем Retry-After заголовок, если есть
+					const retryAfterHeader = error.response?.headers?.['retry-after']
+					const retryAfter = retryAfterHeader ? parseRetryAfter(retryAfterHeader) : null
+
+					// Вычисляем задержку
+					const delay = calculateDelay(config.__retryCount - 1, retryAfter)
+
+					// Логируем попытку
+					logger.warn(
+						`Retry attempt ${config.__retryCount}/${RETRY_CONFIG.MAX_RETRIES} for ${config.url} after ${delay}ms`,
+						{
+							component: 'AppStore',
+							method: 'responseInterceptor',
+							statusCode,
+							url: config.url,
+							attempt: config.__retryCount,
+						},
+					)
+
+					// Ждем перед следующей попыткой
+					await new Promise((resolve) => setTimeout(resolve, delay))
+
+					// Повторяем запрос
+					return api.instance(config)
+				}
+
+				// Если не нужно делать retry или попытки исчерпаны, обрабатываем ошибку как обычно
+				if (statusCode === 401 || statusCode === 400) {
 					this.setAuthenticated(false)
-					if (!error.config?.url?.endsWith('identify') && this.notify)
+					if (!config?.url?.endsWith('identify') && this.notify)
 						this.notify.error({ placement: 'bottomLeft', message: String(error.response?.data) })
-					return
+					return Promise.reject(error)
 				}
 
 				// сообщения после выполнения действий
 				if (error.request?.status === 500) {
 					let message = (error.response?.data as { error: string })?.error ?? (error.request?.responseText as string)
 					if (message.indexOf('\n\n') > -1) message = message.substring(0, message.indexOf('\n\n'))
-					return this.notify?.error({ placement: 'bottomLeft', message: message })
+					this.notify?.error({ placement: 'bottomLeft', message: message })
+					return Promise.reject(error)
 				}
 
 				// сообщения о транспортной ошибке
 				else if (this.isConnected) {
-					return this.notify?.error({ placement: 'bottomLeft', message: error.message })
+					this.notify?.error({ placement: 'bottomLeft', message: error.message })
+					return Promise.reject(error)
 				}
 
 				return Promise.reject(error)

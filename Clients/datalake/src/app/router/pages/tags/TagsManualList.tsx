@@ -36,15 +36,7 @@ const TagsManualList = observer(() => {
 		}
 	}, [store])
 
-	// Обновляем данные при переходе на страницу
-	useEffect(() => {
-		store.tagsStore.refreshTags(SourceType.Manual).catch((error) => {
-			logger.error(error instanceof Error ? error : new Error(String(error)), {
-				component: 'TagsManualList',
-				action: 'refreshTags',
-			})
-		})
-	}, [store.tagsStore])
+	// getTags() автоматически загрузит данные при первом вызове
 
 	return (
 		<>

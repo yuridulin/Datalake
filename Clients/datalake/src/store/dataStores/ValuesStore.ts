@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { DataValuesGetPayload, ValuesResponse } from '@/generated/data-contracts'
+import { CACHE_TTL } from '@/config/cacheConfig'
 import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
@@ -16,8 +17,8 @@ export class ValuesStore extends BaseCacheStore {
 	private _statusCache = observable.map<number, string>()
 
 	// TTL для разных типов данных (в миллисекундах)
-	private readonly TTL_VALUES = 30 * 1000 // 30 секунд для значений
-	private readonly TTL_STATUS = 10 * 1000 // 10 секунд для статусов
+	private readonly TTL_VALUES = CACHE_TTL.VALUES.VALUES
+	private readonly TTL_STATUS = CACHE_TTL.VALUES.STATUS
 
 	constructor(private api: Api) {
 		super()
@@ -41,21 +42,9 @@ export class ValuesStore extends BaseCacheStore {
 		const cacheKey = this.getCacheKey(request)
 		const cached = this._valuesCache.get(cacheKey)
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_VALUES)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_VALUES)) {
-				this.loadValues(request).catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'ValuesStore',
-						method: 'getValues',
-						action: 'loadValues',
-					})
-				})
-			}
-			return cached
-		}
-
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadValues(request).catch((error) => {
+			this.loadValues(request, 'get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'ValuesStore',
 					method: 'getValues',
@@ -64,6 +53,7 @@ export class ValuesStore extends BaseCacheStore {
 			})
 		}
 
+		// Возвращаем текущий кэш (может быть пустым)
 		return cached ?? []
 	}
 
@@ -80,22 +70,16 @@ export class ValuesStore extends BaseCacheStore {
 
 		// Проверяем кэш для каждого тега
 		for (const tagId of tagsId) {
-			const cacheKey = `status_${tagId}`
 			const cached = this._statusCache.get(tagId)
-
-			if (cached && this.isCacheValid(cacheKey, this.TTL_STATUS)) {
+			if (cached) {
 				result[tagId] = cached
-				if (this.shouldRefresh(cacheKey, this.TTL_STATUS)) {
-					needRefresh.push(tagId)
-				}
-			} else {
-				needRefresh.push(tagId)
 			}
+			needRefresh.push(tagId)
 		}
 
-		// Обновляем в фоне, если нужно
+		// Загружаем данные, если запрос не идет
 		if (needRefresh.length > 0 && !this.isLoading('status')) {
-			this.loadStatus(needRefresh).catch((error) => {
+			this.loadStatus(needRefresh, 'get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'ValuesStore',
 					method: 'getStatus',
@@ -139,9 +123,8 @@ export class ValuesStore extends BaseCacheStore {
 	 * @param request Запрос на получение значений
 	 */
 	async refreshValues(request: DataValuesGetPayload): Promise<void> {
-		const cacheKey = this.getCacheKey(request)
-		this.invalidateCache(cacheKey)
-		await this.loadValues(request)
+		// Просто вызываем loadValues - он сам проверит, идет ли загрузка
+		await this.loadValues(request, 'manual-refresh')
 	}
 
 	/**
@@ -152,7 +135,7 @@ export class ValuesStore extends BaseCacheStore {
 		for (const tagId of tagsId) {
 			this.invalidateCache(`status_${tagId}`)
 		}
-		await this.loadStatus(tagsId)
+		await this.loadStatus(tagsId, 'manual-refresh')
 	}
 
 	/**
@@ -168,11 +151,27 @@ export class ValuesStore extends BaseCacheStore {
 	/**
 	 * Загружает значения с сервера
 	 * @param request Запрос на получение значений
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadValues(request: DataValuesGetPayload): Promise<void> {
+	private async loadValues(request: DataValuesGetPayload, reason: string = 'unknown'): Promise<void> {
 		const cacheKey = this.getCacheKey(request)
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[ValuesStore] Skipping loadValues - already loading`, {
+				component: 'ValuesStore',
+				method: 'loadValues',
+				cacheKey,
+				reason,
+			})
+			return
+		}
+
+		logger.info(`[ValuesStore] API Request: dataValuesGet`, {
+			component: 'ValuesStore',
+			method: 'loadValues',
+			cacheKey,
+			reason,
+		})
 
 		this.setLoading(cacheKey, true)
 
@@ -198,13 +197,31 @@ export class ValuesStore extends BaseCacheStore {
 	/**
 	 * Загружает статусы тегов с сервера
 	 * @param tagsId Массив идентификаторов тегов
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadStatus(tagsId: number[]): Promise<void> {
+	private async loadStatus(tagsId: number[], reason: string = 'unknown'): Promise<void> {
 		if (tagsId.length === 0) return
 
 		const cacheKey = 'status'
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[ValuesStore] Skipping loadStatus - already loading`, {
+				component: 'ValuesStore',
+				method: 'loadStatus',
+				cacheKey,
+				reason,
+				tagsId,
+			})
+			return
+		}
+
+		logger.info(`[ValuesStore] API Request: dataTagsGetStatus`, {
+			component: 'ValuesStore',
+			method: 'loadStatus',
+			cacheKey,
+			reason,
+			tagsId,
+		})
 
 		this.setLoading(cacheKey, true)
 

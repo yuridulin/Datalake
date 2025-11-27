@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { SourceType, TagSimpleInfo, TagWithSettingsAndBlocksInfo } from '@/generated/data-contracts'
+import { CACHE_TTL } from '@/config/cacheConfig'
 import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
@@ -15,8 +16,8 @@ export class TagsStore extends BaseCacheStore {
 	private _tagsByIdCache = observable.map<number, TagWithSettingsAndBlocksInfo>()
 
 	// TTL для разных типов данных (в миллисекундах)
-	private readonly TTL_LIST = 5 * 60 * 1000 // 5 минут для списков
-	private readonly TTL_ITEM = 10 * 60 * 1000 // 10 минут для отдельного тега
+	private readonly TTL_LIST = CACHE_TTL.TAGS.LIST
+	private readonly TTL_ITEM = CACHE_TTL.TAGS.ITEM
 
 	constructor(private api: Api) {
 		super()
@@ -31,33 +32,18 @@ export class TagsStore extends BaseCacheStore {
 	}
 
 	/**
-	 * Получает список тегов с stale-while-revalidate паттерном
+	 * Получает список тегов
+	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
 	 * @param sourceId Опциональный идентификатор источника для фильтрации
-	 * @returns Список тегов (может быть из кэша, если данные устарели)
+	 * @returns Список тегов из кэша (может быть пустым, пока данные загружаются)
 	 */
 	getTags(sourceId?: SourceType): TagSimpleInfo[] {
 		const cacheKey = this.getCacheKey(sourceId)
 		const cached = this._tagsCache.get(cacheKey)
 
-		// Если кэш валиден, возвращаем его
-		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
-			// Если кэш устарел на 80%, обновляем в фоне
-			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadTags(sourceId).catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'TagsStore',
-						method: 'getTags',
-						action: 'loadTags',
-						sourceId,
-					})
-				})
-			}
-			return cached
-		}
-
-		// Если кэша нет или он невалиден, загружаем синхронно
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadTags(sourceId).catch((error) => {
+			this.loadTags(sourceId, 'get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'TagsStore',
 					method: 'getTags',
@@ -67,7 +53,7 @@ export class TagsStore extends BaseCacheStore {
 			})
 		}
 
-		// Возвращаем устаревший кэш, если есть, иначе пустой массив
+		// Возвращаем текущий кэш (может быть пустым)
 		return cached ?? []
 	}
 
@@ -80,22 +66,9 @@ export class TagsStore extends BaseCacheStore {
 		const cacheKey = `tag_${id}`
 		const cached = this._tagsByIdCache.get(id)
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadTagById(id).catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'TagsStore',
-						method: 'getTagById',
-						action: 'loadTagById',
-						tagId: id,
-					})
-				})
-			}
-			return cached
-		}
-
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadTagById(id).catch((error) => {
+			this.loadTagById(id, 'get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'TagsStore',
 					method: 'getTagById',
@@ -105,6 +78,7 @@ export class TagsStore extends BaseCacheStore {
 			})
 		}
 
+		// Возвращаем текущий кэш
 		return cached
 	}
 
@@ -115,6 +89,15 @@ export class TagsStore extends BaseCacheStore {
 	 */
 	isLoadingTags(sourceId?: SourceType): boolean {
 		return this.isLoading(this.getCacheKey(sourceId))
+	}
+
+	/**
+	 * Проверяет, есть ли данные в кэше для списка тегов
+	 * @param sourceId Опциональный идентификатор источника
+	 * @returns true, если данные были загружены хотя бы раз
+	 */
+	hasTagsCache(sourceId?: SourceType): boolean {
+		return this.hasCache(this.getCacheKey(sourceId))
 	}
 
 	/**
@@ -145,19 +128,35 @@ export class TagsStore extends BaseCacheStore {
 	 * @param sourceId Опциональный идентификатор источника
 	 */
 	async refreshTags(sourceId?: SourceType): Promise<void> {
-		const cacheKey = this.getCacheKey(sourceId)
-		this.invalidateCache(cacheKey)
-		await this.loadTags(sourceId)
+		// Просто вызываем loadTags - он сам проверит, идет ли загрузка
+		await this.loadTags(sourceId, 'manual-refresh')
 	}
 
 	/**
 	 * Загружает список тегов с сервера
 	 * @param sourceId Опциональный идентификатор источника
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadTags(sourceId?: SourceType): Promise<void> {
+	private async loadTags(sourceId?: SourceType, reason: string = 'unknown'): Promise<void> {
 		const cacheKey = this.getCacheKey(sourceId)
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[TagsStore] Skipping loadTags - already loading`, {
+				component: 'TagsStore',
+				method: 'loadTags',
+				cacheKey,
+				reason,
+			})
+			return
+		}
+
+		logger.info(`[TagsStore] API Request: inventoryTagsGetAll`, {
+			component: 'TagsStore',
+			method: 'loadTags',
+			cacheKey,
+			reason,
+			sourceId,
+		})
 
 		this.setLoading(cacheKey, true)
 
@@ -186,11 +185,29 @@ export class TagsStore extends BaseCacheStore {
 	/**
 	 * Загружает конкретный тег по ID
 	 * @param id Идентификатор тега
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadTagById(id: number): Promise<void> {
+	private async loadTagById(id: number, reason: string = 'unknown'): Promise<void> {
 		const cacheKey = `tag_${id}`
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[TagsStore] Skipping loadTagById - already loading`, {
+				component: 'TagsStore',
+				method: 'loadTagById',
+				cacheKey,
+				reason,
+				tagId: id,
+			})
+			return
+		}
+
+		logger.info(`[TagsStore] API Request: inventoryTagsGetWithSettingsAndBlocks`, {
+			component: 'TagsStore',
+			method: 'loadTagById',
+			cacheKey,
+			reason,
+			tagId: id,
+		})
 
 		this.setLoading(cacheKey, true)
 

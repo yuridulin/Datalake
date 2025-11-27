@@ -37,15 +37,7 @@ const UsersList = observer(() => {
 		setStates(res.data)
 	}, [store, users])
 
-	// Обновляем данные при переходе на страницу
-	useEffect(() => {
-		store.usersStore.refreshUsers().catch((error) => {
-			logger.error(error instanceof Error ? error : new Error(String(error)), {
-				component: 'UsersList',
-				action: 'refreshUsers',
-			})
-		})
-	}, [store.usersStore])
+	// getUsers() автоматически загрузит данные при первом вызове
 
 	const columns: TableColumnsType<UserInfo> = [
 		{

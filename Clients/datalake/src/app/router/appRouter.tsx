@@ -1,39 +1,43 @@
 import AppError from '@/app/components/AppError'
 import ErrorBoundary from '@/app/components/ErrorBoundary'
+import LoadingFallback from '@/app/components/LoadingFallback'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { Offline } from '../pages/Offline'
 import AppLayout from './AppLayout'
 import Login from './auth/Login'
 import KeycloakCallback from './auth/keycloak/KeycloakCallback'
-import SettingsPage from './pages/admin/SettingsPage'
-import TagsAccessMetrics from './pages/admin/metrics/TagsAccessMetrics'
-import ValuesMetrics from './pages/admin/metrics/ValuesMetrics'
-import BlocksMover from './pages/blocks/BlocksMover'
-import BlocksTree from './pages/blocks/BlocksTree'
-import BlockForm from './pages/blocks/block/BlockForm'
-import BlockView from './pages/blocks/block/BlockView'
-import BlockAccessForm from './pages/blocks/block/access/BlockAccessForm'
-import LogsTable from './pages/dashboard/LogsTable'
-import SourcesList from './pages/sources/SourcesList'
-import SourceForm from './pages/sources/source/SourceForm'
-import TagsAggregatedList from './pages/tags/TagsAggregatedList'
-import TagsCalculatedList from './pages/tags/TagsCalculatedList'
-import TagsList from './pages/tags/TagsList'
-import TagsManualList from './pages/tags/TagsManualList'
-import TagForm from './pages/tags/tag/TagForm'
-import TagView from './pages/tags/tag/TagView'
-import UserGroupsTreeList from './pages/usergroups/UserGroupsTreeList'
-import UserGroupsTreeMove from './pages/usergroups/UserGroupsTreeMove'
-import UserGroupForm from './pages/usergroups/usergroup/UserGroupForm'
-import UserGroupView from './pages/usergroups/usergroup/UserGroupView'
-import UserGroupAccessForm from './pages/usergroups/usergroup/access/UserGroupAccessForm'
-import UsersList from './pages/users/UsersList'
-import UserCreate from './pages/users/user/UserCreate'
-import UserForm from './pages/users/user/UserForm'
-import UserView from './pages/users/user/UserView'
-import TagsViewer from './pages/values/TagsViewer'
-import TagsWriter from './pages/values/TagsWriter'
 import routes from './routes'
+
+// Lazy loading для всех страниц
+const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'))
+const TagsAccessMetrics = lazy(() => import('./pages/admin/metrics/TagsAccessMetrics'))
+const ValuesMetrics = lazy(() => import('./pages/admin/metrics/ValuesMetrics'))
+const BlocksMover = lazy(() => import('./pages/blocks/BlocksMover'))
+const BlocksTree = lazy(() => import('./pages/blocks/BlocksTree'))
+const BlockForm = lazy(() => import('./pages/blocks/block/BlockForm'))
+const BlockView = lazy(() => import('./pages/blocks/block/BlockView'))
+const BlockAccessForm = lazy(() => import('./pages/blocks/block/access/BlockAccessForm'))
+const LogsTable = lazy(() => import('./pages/dashboard/LogsTable'))
+const SourcesList = lazy(() => import('./pages/sources/SourcesList'))
+const SourceForm = lazy(() => import('./pages/sources/source/SourceForm'))
+const TagsAggregatedList = lazy(() => import('./pages/tags/TagsAggregatedList'))
+const TagsCalculatedList = lazy(() => import('./pages/tags/TagsCalculatedList'))
+const TagsList = lazy(() => import('./pages/tags/TagsList'))
+const TagsManualList = lazy(() => import('./pages/tags/TagsManualList'))
+const TagForm = lazy(() => import('./pages/tags/tag/TagForm'))
+const TagView = lazy(() => import('./pages/tags/tag/TagView'))
+const UserGroupsTreeList = lazy(() => import('./pages/usergroups/UserGroupsTreeList'))
+const UserGroupsTreeMove = lazy(() => import('./pages/usergroups/UserGroupsTreeMove'))
+const UserGroupForm = lazy(() => import('./pages/usergroups/usergroup/UserGroupForm'))
+const UserGroupView = lazy(() => import('./pages/usergroups/usergroup/UserGroupView'))
+const UserGroupAccessForm = lazy(() => import('./pages/usergroups/usergroup/access/UserGroupAccessForm'))
+const UsersList = lazy(() => import('./pages/users/UsersList'))
+const UserCreate = lazy(() => import('./pages/users/user/UserCreate'))
+const UserForm = lazy(() => import('./pages/users/user/UserForm'))
+const UserView = lazy(() => import('./pages/users/user/UserView'))
+const TagsViewer = lazy(() => import('./pages/values/TagsViewer'))
+const TagsWriter = lazy(() => import('./pages/values/TagsWriter'))
 
 const AppRouter = createBrowserRouter([
 	{
@@ -59,7 +63,11 @@ const AppRouter = createBrowserRouter([
 			// logs
 			{
 				path: routes.stats.logs,
-				element: <LogsTable />,
+				element: (
+					<Suspense fallback={<LoadingFallback />}>
+						<LogsTable />
+					</Suspense>
+				),
 			},
 			// users
 			{
@@ -67,19 +75,35 @@ const AppRouter = createBrowserRouter([
 				children: [
 					{
 						path: routes.users.list,
-						element: <UsersList />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<UsersList />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.users.create,
-						element: <UserCreate />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<UserCreate />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.users.view,
-						element: <UserView />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<UserView />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.users.edit,
-						element: <UserForm />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<UserForm />
+							</Suspense>
+						),
 					},
 				],
 			},
@@ -89,30 +113,54 @@ const AppRouter = createBrowserRouter([
 				children: [
 					{
 						path: routes.userGroups.list,
-						element: <UserGroupsTreeList />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<UserGroupsTreeList />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.userGroups.move,
-						element: <UserGroupsTreeMove />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<UserGroupsTreeMove />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.userGroups.view,
-						element: <UserGroupView />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<UserGroupView />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.userGroups.edit,
-						element: <UserGroupForm />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<UserGroupForm />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.userGroups.access.edit,
-						element: <UserGroupAccessForm />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<UserGroupAccessForm />
+							</Suspense>
+						),
 					},
 				],
 			},
 			// settings
 			{
 				path: routes.admin.settings,
-				element: <SettingsPage />,
+				element: (
+					<Suspense fallback={<LoadingFallback />}>
+						<SettingsPage />
+					</Suspense>
+				),
 			},
 			// metrics
 			{
@@ -120,11 +168,19 @@ const AppRouter = createBrowserRouter([
 				children: [
 					{
 						path: routes.admin.metrics.tags,
-						element: <TagsAccessMetrics />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<TagsAccessMetrics />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.admin.metrics.values,
-						element: <ValuesMetrics />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<ValuesMetrics />
+							</Suspense>
+						),
 					},
 				],
 			},
@@ -134,11 +190,19 @@ const AppRouter = createBrowserRouter([
 				children: [
 					{
 						path: routes.sources.list,
-						element: <SourcesList />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<SourcesList />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.sources.edit,
-						element: <SourceForm />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<SourceForm />
+							</Suspense>
+						),
 					},
 				],
 			},
@@ -151,29 +215,53 @@ const AppRouter = createBrowserRouter([
 						children: [
 							{
 								path: routes.tags.list,
-								element: <TagsList />,
+								element: (
+									<Suspense fallback={<LoadingFallback />}>
+										<TagsList />
+									</Suspense>
+								),
 							},
 							{
 								path: routes.tags.view,
-								element: <TagView />,
+								element: (
+									<Suspense fallback={<LoadingFallback />}>
+										<TagView />
+									</Suspense>
+								),
 							},
 							{
 								path: routes.tags.edit,
-								element: <TagForm />,
+								element: (
+									<Suspense fallback={<LoadingFallback />}>
+										<TagForm />
+									</Suspense>
+								),
 							},
 						],
 					},
 					{
 						path: routes.tags.manual,
-						element: <TagsManualList />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<TagsManualList />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.tags.calc,
-						element: <TagsCalculatedList />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<TagsCalculatedList />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.tags.aggregated,
-						element: <TagsAggregatedList />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<TagsAggregatedList />
+							</Suspense>
+						),
 					},
 				],
 			},
@@ -183,11 +271,19 @@ const AppRouter = createBrowserRouter([
 				children: [
 					{
 						path: routes.values.tagsViewer,
-						element: <TagsViewer />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<TagsViewer />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.values.tagsWriter,
-						element: <TagsWriter />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<TagsWriter />
+							</Suspense>
+						),
 					},
 				],
 			},
@@ -197,23 +293,43 @@ const AppRouter = createBrowserRouter([
 				children: [
 					{
 						path: routes.blocks.list,
-						element: <BlocksTree />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<BlocksTree />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.blocks.mover,
-						element: <BlocksMover />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<BlocksMover />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.blocks.view,
-						element: <BlockView />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<BlockView />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.blocks.edit,
-						element: <BlockForm />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<BlockForm />
+							</Suspense>
+						),
 					},
 					{
 						path: routes.blocks.access.edit,
-						element: <BlockAccessForm />,
+						element: (
+							<Suspense fallback={<LoadingFallback />}>
+								<BlockAccessForm />
+							</Suspense>
+						),
 					},
 				],
 			},

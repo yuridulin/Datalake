@@ -1,5 +1,6 @@
 import { Api } from '@/generated/Api'
 import { UserInfo, UserWithGroupsInfo } from '@/generated/data-contracts'
+import { CACHE_TTL } from '@/config/cacheConfig'
 import { logger } from '@/services/logger'
 import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
@@ -15,8 +16,8 @@ export class UsersStore extends BaseCacheStore {
 	private _usersByGuidCache = observable.map<string, UserWithGroupsInfo>()
 
 	// TTL для разных типов данных (в миллисекундах)
-	private readonly TTL_LIST = 5 * 60 * 1000 // 5 минут для списка
-	private readonly TTL_ITEM = 10 * 60 * 1000 // 10 минут для отдельного пользователя
+	private readonly TTL_LIST = CACHE_TTL.USERS.LIST
+	private readonly TTL_ITEM = CACHE_TTL.USERS.ITEM
 
 	constructor(private api: Api) {
 		super()
@@ -31,27 +32,16 @@ export class UsersStore extends BaseCacheStore {
 
 	/**
 	 * Получает список всех пользователей
-	 * @returns Список пользователей
+	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
+	 * @returns Список пользователей из кэша (может быть пустым, пока данные загружаются)
 	 */
 	getUsers(): UserInfo[] {
 		const cacheKey = 'users_list'
 		const cached = this._usersCache.get()
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadUsers().catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'UsersStore',
-						method: 'getUsers',
-						action: 'loadUsers',
-					})
-				})
-			}
-			return cached
-		}
-
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadUsers().catch((error) => {
+			this.loadUsers('get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'UsersStore',
 					method: 'getUsers',
@@ -60,6 +50,7 @@ export class UsersStore extends BaseCacheStore {
 			})
 		}
 
+		// Возвращаем текущий кэш (может быть пустым)
 		return cached ?? []
 	}
 
@@ -72,22 +63,9 @@ export class UsersStore extends BaseCacheStore {
 		const cacheKey = `user_${guid}`
 		const cached = this._usersByGuidCache.get(guid)
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadUserByGuid(guid).catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'UsersStore',
-						method: 'getUserByGuid',
-						action: 'loadUserByGuid',
-						userGuid: guid,
-					})
-				})
-			}
-			return cached
-		}
-
+		// Если запрос не идет, запускаем его
 		if (!this.isLoading(cacheKey)) {
-			this.loadUserByGuid(guid).catch((error) => {
+			this.loadUserByGuid(guid, 'get-request').catch((error) => {
 				logger.error(error instanceof Error ? error : new Error(String(error)), {
 					component: 'UsersStore',
 					method: 'getUserByGuid',
@@ -97,6 +75,7 @@ export class UsersStore extends BaseCacheStore {
 			})
 		}
 
+		// Возвращаем текущий кэш
 		return cached
 	}
 
@@ -106,6 +85,14 @@ export class UsersStore extends BaseCacheStore {
 	 */
 	isLoadingUsers(): boolean {
 		return this.isLoading('users_list')
+	}
+
+	/**
+	 * Проверяет, есть ли данные в кэше для списка пользователей
+	 * @returns true, если данные были загружены хотя бы раз
+	 */
+	hasUsersCache(): boolean {
+		return this.hasCache('users_list')
 	}
 
 	/**
@@ -124,17 +111,33 @@ export class UsersStore extends BaseCacheStore {
 	 * Принудительно обновляет список пользователей
 	 */
 	async refreshUsers(): Promise<void> {
-		this.invalidateCache('users_list')
-		await this.loadUsers()
+		// Просто вызываем loadUsers - он сам проверит, идет ли загрузка
+		await this.loadUsers('manual-refresh')
 	}
 
 	/**
 	 * Загружает список пользователей с сервера
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadUsers(): Promise<void> {
+	private async loadUsers(reason: string = 'unknown'): Promise<void> {
 		const cacheKey = 'users_list'
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[UsersStore] Skipping loadUsers - already loading`, {
+				component: 'UsersStore',
+				method: 'loadUsers',
+				cacheKey,
+				reason,
+			})
+			return
+		}
+
+		logger.info(`[UsersStore] API Request: inventoryUsersGet`, {
+			component: 'UsersStore',
+			method: 'loadUsers',
+			cacheKey,
+			reason,
+		})
 
 		this.setLoading(cacheKey, true)
 
@@ -160,11 +163,29 @@ export class UsersStore extends BaseCacheStore {
 	/**
 	 * Загружает конкретного пользователя по GUID
 	 * @param guid GUID пользователя
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadUserByGuid(guid: string): Promise<void> {
+	private async loadUserByGuid(guid: string, reason: string = 'unknown'): Promise<void> {
 		const cacheKey = `user_${guid}`
 
-		if (this.isLoading(cacheKey)) return
+		if (this.isLoading(cacheKey)) {
+			logger.debug(`[UsersStore] Skipping loadUserByGuid - already loading`, {
+				component: 'UsersStore',
+				method: 'loadUserByGuid',
+				cacheKey,
+				reason,
+				userGuid: guid,
+			})
+			return
+		}
+
+		logger.info(`[UsersStore] API Request: inventoryUsersGetWithDetails`, {
+			component: 'UsersStore',
+			method: 'loadUserByGuid',
+			cacheKey,
+			reason,
+			userGuid: guid,
+		})
 
 		this.setLoading(cacheKey, true)
 

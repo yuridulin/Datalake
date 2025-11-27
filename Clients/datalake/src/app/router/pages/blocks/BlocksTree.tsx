@@ -8,7 +8,7 @@ import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
@@ -45,14 +45,11 @@ const BlocksTree = observer(() => {
 	const store = useAppStore()
 	const [search, setSearch] = useState('')
 	const [expandedRowKeys, setExpandedRowKeys] = useLocalStorage(EXPAND_KEY, [] as number[])
-
-	// Получаем данные из store (реактивно через MobX)
 	const data = store.blocksStore.getBlocks()
+	const hasLoadedRef = useRef(false)
 
-	// Create tree structure and metadata
 	const [tree, meta] = useMemo(() => makeTree(data), [data])
 
-	// Filter and transform data based on search
 	const viewData = useMemo((): BlockTreeInfo[] => {
 		if (!search) return tree ?? []
 
@@ -68,7 +65,6 @@ const BlocksTree = observer(() => {
 			)
 	}, [search, data, tree, meta])
 
-	// Handle expand/collapse of tree nodes
 	const handleExpand = (expanded: boolean, record: BlockTreeInfo) => {
 		const exists = expandedRowKeys ?? []
 		const newKeys = expanded ? [...exists, record.id] : exists.filter((id) => id !== record.id)
@@ -76,12 +72,9 @@ const BlocksTree = observer(() => {
 		setExpandedRowKeys(newKeys)
 	}
 
-	// Create new block
 	const createBlock = async () => {
 		try {
-			await store.api.inventoryBlocksCreate({})
-			// Инвалидируем кэш и обновляем данные
-			await store.blocksStore.refreshBlocks()
+			await store.api.inventoryBlocksCreate({}).then(store.blocksStore.refreshBlocks)
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to create block'), {
 				component: 'BlocksTree',
@@ -90,17 +83,12 @@ const BlocksTree = observer(() => {
 		}
 	}
 
-	// Обновляем данные при переходе на страницу
 	useEffect(() => {
-		store.blocksStore.refreshBlocks().catch((error) => {
-			logger.error(error instanceof Error ? error : new Error(String(error)), {
-				component: 'BlocksTree',
-				action: 'refreshBlocks',
-			})
-		})
+		if (hasLoadedRef.current) return
+		hasLoadedRef.current = true
+		store.blocksStore.refreshBlocks()
 	}, [store.blocksStore])
 
-	// Table columns configuration
 	const columns: TableColumnsType<BlockTreeInfo> = [
 		{
 			title: (
@@ -155,7 +143,7 @@ const BlocksTree = observer(() => {
 				Блоки верхнего уровня
 			</PageHeader>
 
-			<PollingLoader pollingFunction={() => store.blocksStore.refreshBlocks()} interval={60000} />
+			<PollingLoader pollingFunction={store.blocksStore.refreshBlocks} interval={60000} />
 			<Table
 				showSorterTooltip={false}
 				size='small'

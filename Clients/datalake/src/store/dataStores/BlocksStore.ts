@@ -5,185 +5,47 @@ import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from './BaseCacheStore'
 
 /**
- * Store для управления блоками с кэшированием
+ * Store для управления блоками с кэшированием последнего успешного ответа
  */
 export class BlocksStore extends BaseCacheStore {
-	// Кэш всех блоков (observable для реактивности)
-	private _blocksCache = observable.box<BlockWithTagsInfo[] | null>(null)
-
-	// Кэш дерева блоков (observable для реактивности)
-	private _blocksTreeCache = observable.box<BlockTreeInfo[] | null>(null)
-
-	// Кэш отдельных блоков по ID (observable Map)
-	private _blocksByIdCache = observable.map<number, BlockDetailedInfo>()
-
-	// TTL для разных типов данных (в миллисекундах)
-	private readonly TTL_LIST = 1 * 60 * 1000 // 1 минута для списка (обновляется через polling)
-	private readonly TTL_TREE = 1 * 60 * 1000 // 1 минута для дерева
-	private readonly TTL_ITEM = 5 * 60 * 1000 // 5 минут для отдельного блока
-
 	constructor(private api: Api) {
 		super()
+
 		makeObservable(this, {
 			getBlocks: true,
 			getTree: true,
 			getBlockById: true,
-			isLoadingBlocks: true,
-			invalidateBlock: true,
-			refreshBlocks: true,
-			refreshTree: true,
 		})
 	}
 
 	/**
 	 * Получает список всех блоков
-	 * @returns Список блоков
+	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
+	 * @returns Список блоков из кэша (может быть пустым, пока данные загружаются)
 	 */
-	getBlocks(): BlockWithTagsInfo[] {
-		const cacheKey = 'blocks_list'
-		const cached = this._blocksCache.get()
+	public getBlocks(): BlockWithTagsInfo[] {
+		return this.blocksCache.get()
+	}
 
-		if (cached && this.isCacheValid(cacheKey, this.TTL_LIST)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_LIST)) {
-				this.loadBlocks().catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'BlocksStore',
-						method: 'getBlocks',
-						action: 'loadBlocks',
-					})
-				})
-			}
-			return cached
-		}
+	public refreshBlocks() {
+		this.tryLoadBlocks()
+	}
 
-		if (!this.isLoading(cacheKey)) {
-			this.loadBlocks().catch((error) => {
-				logger.error(error instanceof Error ? error : new Error(String(error)), {
-					component: 'BlocksStore',
-					method: 'getBlocks',
-					action: 'loadBlocks',
-				})
+	private blocksCacheKey = 'blocks'
+
+	private blocksCache = observable.box<BlockWithTagsInfo[]>([])
+
+	private async tryLoadBlocks(): Promise<void> {
+		const cacheKey = this.blocksCacheKey
+		const isLoading = this.isLoading(cacheKey)
+
+		if (isLoading) {
+			logger.debug('Skipping - already loading', {
+				component: 'BlocksStore',
+				method: 'tryLoadBlocks',
 			})
+			return
 		}
-
-		return cached ?? []
-	}
-
-	/**
-	 * Получает дерево блоков
-	 * @returns Дерево блоков
-	 */
-	getTree(): BlockTreeInfo[] {
-		const cacheKey = 'blocks_tree'
-		const cached = this._blocksTreeCache.get()
-
-		if (cached && this.isCacheValid(cacheKey, this.TTL_TREE)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_TREE)) {
-				this.loadTree().catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'BlocksStore',
-						method: 'getTree',
-						action: 'loadTree',
-					})
-				})
-			}
-			return cached
-		}
-
-		if (!this.isLoading(cacheKey)) {
-			this.loadTree().catch((error) => {
-				logger.error(error instanceof Error ? error : new Error(String(error)), {
-					component: 'BlocksStore',
-					method: 'getTree',
-					action: 'loadTree',
-				})
-			})
-		}
-
-		return cached ?? []
-	}
-
-	/**
-	 * Получает конкретный блок по ID
-	 * @param id Идентификатор блока
-	 * @returns Информация о блоке или undefined
-	 */
-	getBlockById(id: number): BlockDetailedInfo | undefined {
-		const cacheKey = `block_${id}`
-		const cached = this._blocksByIdCache.get(id)
-
-		if (cached && this.isCacheValid(cacheKey, this.TTL_ITEM)) {
-			if (this.shouldRefresh(cacheKey, this.TTL_ITEM)) {
-				this.loadBlockById(id).catch((error) => {
-					logger.error(error instanceof Error ? error : new Error(String(error)), {
-						component: 'BlocksStore',
-						method: 'getBlockById',
-						action: 'loadBlockById',
-						blockId: id,
-					})
-				})
-			}
-			return cached
-		}
-
-		if (!this.isLoading(cacheKey)) {
-			this.loadBlockById(id).catch((error) => {
-				logger.error(error instanceof Error ? error : new Error(String(error)), {
-					component: 'BlocksStore',
-					method: 'getBlockById',
-					action: 'loadBlockById',
-					blockId: id,
-				})
-			})
-		}
-
-		return cached
-	}
-
-	/**
-	 * Проверяет, идет ли загрузка блоков
-	 * @returns true, если идет загрузка
-	 */
-	isLoadingBlocks(): boolean {
-		return this.isLoading('blocks_list')
-	}
-
-	/**
-	 * Инвалидирует кэш для конкретного блока
-	 * @param id Идентификатор блока
-	 */
-	invalidateBlock(id: number): void {
-		runInAction(() => {
-			this._blocksByIdCache.delete(id)
-			// Инвалидируем списки, так как они могут содержать этот блок
-			this.invalidateCache('blocks_list')
-			this.invalidateCache('blocks_tree')
-		})
-	}
-
-	/**
-	 * Принудительно обновляет список блоков
-	 */
-	async refreshBlocks(): Promise<void> {
-		this.invalidateCache('blocks_list')
-		await this.loadBlocks()
-	}
-
-	/**
-	 * Принудительно обновляет дерево блоков
-	 */
-	async refreshTree(): Promise<void> {
-		this.invalidateCache('blocks_tree')
-		await this.loadTree()
-	}
-
-	/**
-	 * Загружает список блоков с сервера
-	 */
-	private async loadBlocks(): Promise<void> {
-		const cacheKey = 'blocks_list'
-
-		if (this.isLoading(cacheKey)) return
 
 		this.setLoading(cacheKey, true)
 
@@ -192,14 +54,14 @@ export class BlocksStore extends BaseCacheStore {
 
 			if (response.status === 200) {
 				runInAction(() => {
-					this._blocksCache.set(response.data)
+					this.blocksCache.set(response.data)
 					this.setLastFetchTime(cacheKey)
 				})
 			}
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to load blocks'), {
 				component: 'BlocksStore',
-				method: 'loadBlocks',
+				method: 'tryLoadBlocks',
 			})
 		} finally {
 			this.setLoading(cacheKey, false)
@@ -207,12 +69,30 @@ export class BlocksStore extends BaseCacheStore {
 	}
 
 	/**
-	 * Загружает дерево блоков с сервера
+	 * Получает дерево блоков
+	 * Возвращает текущий кэш и запускает запрос на сервер, если он еще не идет
+	 * @returns Дерево блоков из кэша (может быть пустым, пока данные загружаются)
 	 */
-	private async loadTree(): Promise<void> {
-		const cacheKey = 'blocks_tree'
+	public getTree(): BlockTreeInfo[] {
+		const reactive = this.blocksTreeCache.get()
+		this.tryLoadBlocksTree()
+		return reactive
+	}
 
-		if (this.isLoading(cacheKey)) return
+	private blocksTreeCacheKey = 'blocks-tree'
+	private blocksTreeCache = observable.box<BlockTreeInfo[]>([])
+
+	private async tryLoadBlocksTree(): Promise<void> {
+		const cacheKey = this.blocksTreeCacheKey
+		const isLoading = this.isLoading(cacheKey)
+
+		if (isLoading) {
+			logger.debug('Skipping - already loading', {
+				component: 'BlocksStore',
+				method: 'tryLoadBlocksTree',
+			})
+			return
+		}
 
 		this.setLoading(cacheKey, true)
 
@@ -221,14 +101,14 @@ export class BlocksStore extends BaseCacheStore {
 
 			if (response.status === 200) {
 				runInAction(() => {
-					this._blocksTreeCache.set(response.data)
+					this.blocksTreeCache.set(response.data)
 					this.setLastFetchTime(cacheKey)
 				})
 			}
 		} catch (error) {
 			logger.error(error instanceof Error ? error : new Error('Failed to load blocks tree'), {
 				component: 'BlocksStore',
-				method: 'loadTree',
+				method: 'tryLoadBlocksTree',
 			})
 		} finally {
 			this.setLoading(cacheKey, false)
@@ -236,30 +116,51 @@ export class BlocksStore extends BaseCacheStore {
 	}
 
 	/**
+	 * Получает конкретный блок по ID
+	 * @param id Идентификатор блока
+	 * @returns Информация о блоке или undefined
+	 */
+	getBlockById(id: number): BlockDetailedInfo | undefined {
+		const reactive = this.blocksByIdCache.get(id)
+		this.tryLoadBlocksById(id)
+		return reactive
+	}
+
+	private blocksByIdCacheKey = (id: number) => `blocks-detailed:${id}`
+	private blocksByIdCache = observable.map<number, BlockDetailedInfo>()
+
+	/**
 	 * Загружает конкретный блок по ID
 	 * @param id Идентификатор блока
+	 * @param reason Причина вызова запроса (для логирования)
 	 */
-	private async loadBlockById(id: number): Promise<void> {
-		const cacheKey = `block_${id}`
+	private async tryLoadBlocksById(id: number): Promise<void> {
+		const cacheKey = this.blocksByIdCacheKey(id)
+		const isLoading = this.isLoading(cacheKey)
 
-		if (this.isLoading(cacheKey)) return
+		if (isLoading) {
+			logger.debug('Skipping - already loading', {
+				component: 'BlocksStore',
+				method: 'blocksByIdCacheKey',
+			})
+			return
+		}
 
 		this.setLoading(cacheKey, true)
 
 		try {
-			const response = await this.api.inventoryBlocksGet(id)
+			const response = await this.api.inventoryBlocksGetTree()
 
 			if (response.status === 200) {
 				runInAction(() => {
-					this._blocksByIdCache.set(id, response.data)
+					this.blocksTreeCache.set(response.data)
 					this.setLastFetchTime(cacheKey)
 				})
 			}
 		} catch (error) {
-			logger.error(error instanceof Error ? error : new Error(`Failed to load block ${id}`), {
+			logger.error(error instanceof Error ? error : new Error('Failed to load block by id'), {
 				component: 'BlocksStore',
-				method: 'loadBlockById',
-				blockId: id,
+				method: 'blocksByIdCacheKey',
 			})
 		} finally {
 			this.setLoading(cacheKey, false)

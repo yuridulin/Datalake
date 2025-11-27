@@ -36,15 +36,7 @@ const TagsCalculatedList = observer(() => {
 		}
 	}, [store])
 
-	// Обновляем данные при переходе на страницу
-	useEffect(() => {
-		store.tagsStore.refreshTags(SourceType.Calculated).catch((error) => {
-			logger.error(error instanceof Error ? error : new Error(String(error)), {
-				component: 'TagsCalculatedList',
-				action: 'refreshTags',
-			})
-		})
-	}, [store.tagsStore])
+	// getTags() автоматически загрузит данные при первом вызове
 
 	return (
 		<>
