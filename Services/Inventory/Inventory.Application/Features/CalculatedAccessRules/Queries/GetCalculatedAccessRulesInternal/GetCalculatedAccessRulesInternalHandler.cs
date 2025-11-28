@@ -4,11 +4,11 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.CalculatedAccessRules.Queries.GetCalculatedAccessRulesInternal;
 
-public interface IGetCalculatedAccessRulesInternalHandler : IQueryHandler<GetCalculatedAccessRulesInternalQuery, IReadOnlyDictionary<Guid, UserAccessValue>> { }
+public interface IGetCalculatedAccessRulesInternalHandler : IQueryHandler<GetCalculatedAccessRulesInternalQuery, Dictionary<Guid, UserAccessValue>> { }
 
-public class GetCalculatedAccessRulesInternalHandler(IUsersAccessStore userAccessCache) : IGetCalculatedAccessRulesInternalHandler, IQueryHandler<GetCalculatedAccessRulesInternalQuery, IReadOnlyDictionary<Guid, UserAccessValue>>
+public class GetCalculatedAccessRulesInternalHandler(IUsersAccessStore userAccessCache) : IGetCalculatedAccessRulesInternalHandler, IQueryHandler<GetCalculatedAccessRulesInternalQuery, Dictionary<Guid, UserAccessValue>>
 {
-	public Task<IReadOnlyDictionary<Guid, UserAccessValue>> HandleAsync(GetCalculatedAccessRulesInternalQuery query, CancellationToken ct = default)
+	public Task<Dictionary<Guid, UserAccessValue>> HandleAsync(GetCalculatedAccessRulesInternalQuery query, CancellationToken ct = default)
 	{
 		var state = userAccessCache.State.UsersAccess;
 
@@ -27,6 +27,6 @@ public class GetCalculatedAccessRulesInternalHandler(IUsersAccessStore userAcces
 			data = new(state);
 		}
 
-		return Task.FromResult<IReadOnlyDictionary<Guid, UserAccessValue>>(data);
+		return Task.FromResult(data);
 	}
 }

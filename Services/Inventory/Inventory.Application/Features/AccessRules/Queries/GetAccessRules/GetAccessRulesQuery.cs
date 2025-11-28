@@ -3,7 +3,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.AccessRules.Queries.GetAccessRules;
 
-public record GetAccessRulesQuery : IQueryRequest<IEnumerable<AccessRightsInfo>>
+public record GetAccessRulesQuery : IQueryRequest<List<AccessRightsInfo>>
 {
 	public Guid? UserGuid { get; init; }
 	public Guid? UserGroupGuid { get; init; }

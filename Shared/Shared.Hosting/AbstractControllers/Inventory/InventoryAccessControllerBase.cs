@@ -24,7 +24,7 @@ public abstract class InventoryAccessControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список разрешений</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<AccessRightsInfo[]>> GetAsync(
+	public abstract Task<ActionResult<List<AccessRightsInfo>>> GetAsync(
 		[FromQuery(Name = "user")] Guid? userGuid = null,
 		[FromQuery(Name = "userGroup")] Guid? userGroupGuid = null,
 		[FromQuery(Name = "source")] int? sourceId = null,
@@ -36,7 +36,7 @@ public abstract class InventoryAccessControllerBase : ControllerBase
 	/// Получение списка рассчитанных разрешений субъекта на объект для всех субъетов и всех объектов
 	/// </summary>
 	[HttpPost("calculated")]
-	public abstract Task<ActionResult<IDictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
+	public abstract Task<ActionResult<Dictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
 		[FromBody] IEnumerable<Guid>? guids,
 		CancellationToken ct = default);
 

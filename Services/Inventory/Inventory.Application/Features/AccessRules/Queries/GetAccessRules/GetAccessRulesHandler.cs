@@ -4,15 +4,15 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.AccessRules.Queries.GetAccessRules;
 
-public interface IGetAccessRulesHandler : IQueryHandler<GetAccessRulesQuery, IEnumerable<AccessRightsInfo>> { }
+public interface IGetAccessRulesHandler : IQueryHandler<GetAccessRulesQuery, List<AccessRightsInfo>> { }
 
 public class GetAccessRulesHandler(
 	IAccessRulesQueriesService accessRulesQueriesService) : IGetAccessRulesHandler
 {
-	public async Task<IEnumerable<AccessRightsInfo>> HandleAsync(GetAccessRulesQuery query, CancellationToken ct = default)
+	public async Task<List<AccessRightsInfo>> HandleAsync(GetAccessRulesQuery query, CancellationToken ct = default)
 	{
 		var data = await accessRulesQueriesService.GetAsync(query.UserGuid, query.UserGroupGuid, query.SourceId, query.BlockId, query.TagId, ct);
 
-		return data;
+		return data.ToList();
 	}
 }

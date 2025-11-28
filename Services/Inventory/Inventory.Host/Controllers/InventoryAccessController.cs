@@ -20,7 +20,7 @@ public class InventoryAccessController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryAccessControllerBase
 {
-	public override async Task<ActionResult<AccessRightsInfo[]>> GetAsync(
+	public override async Task<ActionResult<List<AccessRightsInfo>>> GetAsync(
 		[FromQuery(Name = "user")] Guid? userGuid = null,
 		[FromQuery(Name = "userGroup")] Guid? userGroupGuid = null,
 		[FromQuery(Name = "source")] int? sourceId = null,
@@ -42,7 +42,7 @@ public class InventoryAccessController(
 		return data;
 	}
 
-	public override async Task<ActionResult<IDictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
+	public override async Task<ActionResult<Dictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
 		[FromBody, Optional] IEnumerable<Guid>? guids,
 		CancellationToken ct = default)
 	{

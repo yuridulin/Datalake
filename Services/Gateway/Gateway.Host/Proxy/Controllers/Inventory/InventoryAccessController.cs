@@ -11,20 +11,20 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Inventory;
 public class InventoryAccessController(InventoryReverseProxyService proxyService) : InventoryAccessControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult<AccessRightsInfo[]>> GetAsync(
+	public override Task<ActionResult<List<AccessRightsInfo>>> GetAsync(
 		[FromQuery(Name = "user")] Guid? userGuid = null,
 		[FromQuery(Name = "userGroup")] Guid? userGroupGuid = null,
 		[FromQuery(Name = "source")] int? sourceId = null,
 		[FromQuery(Name = "block")] int? blockId = null,
 		[FromQuery(Name = "tag")] int? tagId = null,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<AccessRightsInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<AccessRightsInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<IDictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
+	public override Task<ActionResult<Dictionary<Guid, UserAccessValue>>> GetCalculatedAccessAsync(
 		[FromBody] IEnumerable<Guid>? guids,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IDictionary<Guid, UserAccessValue>>(HttpContext, guids, ct);
+			=> proxyService.ProxyAsync<Dictionary<Guid, UserAccessValue>>(HttpContext, guids, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult> SetBlockRulesAsync(
