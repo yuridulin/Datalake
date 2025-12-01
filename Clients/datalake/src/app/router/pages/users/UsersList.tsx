@@ -32,6 +32,7 @@ const UsersList = observer(() => {
 
 	const getStates = useCallback(async () => {
 		if (!store.hasGlobalAccess(AccessType.Manager) || users.length === 0) return
+		console.log('getStates trigger')
 		const res = await store.api.usersGetActivity(users.map((x) => x.guid))
 		setStates(res.data)
 	}, [store, users])

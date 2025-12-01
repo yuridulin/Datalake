@@ -4,14 +4,7 @@ import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { TagValueWithInfo } from '@/app/router/pages/values/types/TagValueWithInfo'
 import { deserializeDate, serializeDate } from '@/functions/dateHandle'
 import { URL_PARAMS } from '@/functions/urlParams'
-import {
-	SourceType,
-	TagQuality,
-	TagType,
-	ValueRecord,
-	ValueResult,
-	ValueWriteRequest,
-} from '@/generated/data-contracts'
+import { SourceType, TagQuality, TagType, ValueRecord, ValueWriteRequest } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { TagValue } from '@/types/tagValue'
@@ -26,7 +19,7 @@ import { useSearchParams } from 'react-router-dom'
 type ExactValue = TagValueWithInfo & {
 	value: ValueRecord
 	relationId: string
-	newValue?: TagValue
+	newValue?: ValueRecord
 	hasNewValue: boolean
 }
 
@@ -68,7 +61,9 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 			return setValues([])
 		}
 
-		const tagIds = Array.from(new Set(relations.map((relId) => tagMapping[relId]?.id).filter(Boolean)))
+		const tagIds = Array.from(
+			new Set(relations.map((relId) => tagMapping[relId]?.tagId).filter((id): id is number => typeof id === 'number')),
+		)
 
 		store.api
 			.dataValuesGet([
@@ -88,17 +83,19 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 					.filter((relId) => tagMapping[relId])
 					.map((relId) => {
 						const tagInfo = tagMapping[relId]
-						const tagValues = tagValuesMap.get(tagInfo.id) || []
+						const tagValues = (tagInfo.tagId && tagValuesMap.get(tagInfo.tagId)) || []
 						const tagValue = tagValues?.[0]
 
 						return {
 							...tagInfo,
-							relationId: relId,
-							values: [],
-							result: ValueResult.Ok,
-							value: tagValue,
-							newValue: tagValue?.value,
+							blockId: tagInfo.blockId,
+							guid: tagInfo.tag?.guid,
+							id: tagInfo.tag?.id,
+							localName: tagInfo.localName,
 							hasNewValue: false,
+							name: tagInfo.tag?.name,
+							relationId: relId,
+							newValue: tagValue,
 						} as ExactValue
 					})
 
@@ -134,7 +131,31 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 	}
 
 	const setNewValue = (id: number, newValue: TagValue) => {
-		setValues(values.map((x) => (x.id != id ? x : { ...x, newValue, hasNewValue: x.value.value !== newValue })))
+		setValues(
+			values.map((x) => {
+				if (x.id !== id) return x
+
+				// Преобразуем TagValue в ValueRecord | undefined
+				const newValueRecord: ValueRecord | undefined =
+					newValue === null || newValue === undefined
+						? undefined
+						: {
+								date: x.value.date,
+								quality: x.value.quality,
+								...(typeof newValue === 'string'
+									? { text: newValue }
+									: typeof newValue === 'number'
+										? { number: newValue }
+										: { boolean: newValue }),
+							}
+
+				// Сравниваем текущее значение с новым
+				const currentValue = x.value.text ?? x.value.number ?? x.value.boolean ?? null
+				const hasNewValue = currentValue !== newValue
+
+				return { ...x, newValue: newValueRecord, hasNewValue }
+			}),
+		)
 	}
 
 	// Автоматический запрос в интегрированном режиме
@@ -182,13 +203,14 @@ const TagsValuesWriter = observer(({ relations, tagMapping, integrated = false }
 						<Column<ExactValue>
 							title='Тег'
 							render={(_, record) => {
-								return <TagButton tag={record} />
+								if (!record.tag) return <></>
+								return <TagButton tag={record.tag} />
 							}}
 						/>
 						<Column<ExactValue>
 							title='Текущее значение'
 							render={(_, record) => (
-								<TagCompactValue type={record.type} value={record.value.value} quality={record.value.quality} />
+								<TagCompactValue type={record.type} record={record.value} quality={record.value.quality} />
 							)}
 						/>
 						<Column<ExactValue>

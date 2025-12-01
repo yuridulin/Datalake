@@ -99,7 +99,11 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 		}
 
 		const tagIds = Array.from(
-			new Set(settings.activeRelations.map((relId) => tagMapping[relId]?.tagId).filter(Boolean)),
+			new Set(
+				settings.activeRelations
+					.map((relId) => tagMapping[relId]?.tagId)
+					.filter((id): id is number => typeof id === 'number'),
+			),
 		)
 
 		const timeSettings =

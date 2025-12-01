@@ -47,6 +47,8 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 		}
 	}, [token.colorWarning])
 
+	useEffect(() => console.log('polling status', [status]), [status])
+
 	const executePoll = useCallback(async () => {
 		if (!isMountedRef.current) return // Прерываем если компонент размонтирован
 

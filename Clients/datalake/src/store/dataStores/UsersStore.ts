@@ -2,7 +2,7 @@
 import { Api } from '@/generated/Api'
 import { UserCreateRequest, UserInfo, UserUpdateRequest, UserWithGroupsInfo } from '@/generated/data-contracts'
 import { logger } from '@/services/logger'
-import { computed, makeObservable, observable, runInAction } from 'mobx'
+import { makeObservable, observable, runInAction } from 'mobx'
 import { BaseCacheStore } from '../abstractions/BaseCacheStore'
 
 export class UsersStore extends BaseCacheStore {
@@ -12,11 +12,7 @@ export class UsersStore extends BaseCacheStore {
 
 	constructor(private api: Api) {
 		super()
-		makeObservable(this, {
-			// Computed свойства
-			statistics: computed,
-			usersMap: computed,
-		})
+		makeObservable(this, {})
 	}
 
 	//#region Методы получения
@@ -36,46 +32,6 @@ export class UsersStore extends BaseCacheStore {
 	 */
 	public getUserByGuid(guid: string): UserWithGroupsInfo | undefined {
 		return this.usersByGuidCache.get(guid)
-	}
-
-	//#endregion
-
-	//#region Computed свойства
-
-	/**
-	 * Маппинг GUID -> пользователь для быстрого доступа
-	 */
-	get usersMap(): Map<string, UserInfo> {
-		return computed(() => {
-			const users = this.usersCache.get()
-			const map = new Map<string, UserInfo>()
-			users.forEach((user) => {
-				map.set(user.guid, user)
-			})
-			return map
-		}).get()
-	}
-
-	/**
-	 * Статистика по пользователям
-	 */
-	get statistics() {
-		return computed(() => {
-			const users = this.usersCache.get()
-
-			const byType = new Map<string, number>()
-			users.forEach((user) => {
-				const type = user.type?.toString() ?? 'unknown'
-				byType.set(type, (byType.get(type) ?? 0) + 1)
-			})
-
-			return {
-				totalUsers: users.length,
-				byType: Object.fromEntries(byType),
-				withEmail: users.filter((u) => u.email).length,
-				withFullName: users.filter((u) => u.fullName).length,
-			}
-		}).get()
 	}
 
 	//#endregion
