@@ -18,7 +18,7 @@ public interface IUsersQueriesService
 	/// <summary>
 	/// Запрос полной информации о учетных записях, включая группы и права доступа
 	/// </summary>
-	Task<IEnumerable<UserInfo>> GetAsync(
+	Task<List<UserInfo>> GetAsync(
 		CancellationToken ct = default);
 
 	/// <summary>
@@ -26,5 +26,5 @@ public interface IUsersQueriesService
 	/// </summary>
 	/// <param name="userGuid">Идентификатор учетной записи</param>
 	/// <param name="ct">Токен отмены</param>
-	Task<IEnumerable<UserGroupSimpleInfo>> GetGroupsWithMemberAsync(Guid userGuid, CancellationToken ct);
+	Task<List<UserGroupSimpleInfo>> GetGroupsWithMemberAsync(Guid userGuid, CancellationToken ct);
 }

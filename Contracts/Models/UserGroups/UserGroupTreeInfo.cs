@@ -11,7 +11,7 @@ public class UserGroupTreeInfo : UserGroupInfo
 	/// Список подгрупп
 	/// </summary>
 	[Required]
-	public UserGroupTreeInfo[] Children { get; set; } = [];
+	public List<UserGroupTreeInfo> Children { get; set; } = [];
 
 	/// <summary>
 	/// Идентификатор родительской группы

@@ -10,7 +10,7 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Inventory;
 public class InventoryAuditController(InventoryReverseProxyService proxyService) : InventoryAuditControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult<IEnumerable<LogInfo>>> GetAsync(
+	public override Task<ActionResult<List<LogInfo>>> GetAsync(
 		[FromQuery] int? lastId = null,
 		[FromQuery] int? firstId = null,
 		[FromQuery] int? take = null,
@@ -23,5 +23,5 @@ public class InventoryAuditController(InventoryReverseProxyService proxyService)
 		[FromQuery(Name = "types[]")] LogType[]? types = null,
 		[FromQuery] Guid? author = null,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IEnumerable<LogInfo>>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<LogInfo>>(HttpContext, ct);
 }

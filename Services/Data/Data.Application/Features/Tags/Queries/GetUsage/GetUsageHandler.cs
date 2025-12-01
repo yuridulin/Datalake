@@ -42,7 +42,7 @@ public class GetUsageHandler(
 				continue;
 
 			foreach (var req in usage)
-				usageList.Add(new(tagId, req.Value, req.Key));
+				usageList.Add(new() { TagId = tagId, Request = req.Key, Date = req.Value });
 		}
 
 		return usageList;

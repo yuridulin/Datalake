@@ -9,12 +9,12 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Inventory;
 public class InventoryEnergoIdController(InventoryReverseProxyService proxyService) : InventoryEnergoIdControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdAsync(
+	public override Task<ActionResult<List<UserEnergoIdInfo>>> GetEnergoIdAsync(
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<UserEnergoIdInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<UserEnergoIdInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> UpdateEnergoIdAsync(
+	public override Task<ActionResult<bool>> UpdateEnergoIdAsync(
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, ct);
 }

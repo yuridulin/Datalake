@@ -9,7 +9,7 @@ namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
 public class AuditQueriesService(InventoryDbLinqContext context) : IAuditQueriesService
 {
-	public async Task<IEnumerable<LogInfo>> GetAsync(
+	public async Task<List<LogInfo>> GetAsync(
 		int? lastId = null,
 		int? firstId = null,
 		int? take = null,
@@ -71,6 +71,6 @@ public class AuditQueriesService(InventoryDbLinqContext context) : IAuditQueries
 		if (take.HasValue)
 			query = query.Take(take.Value);
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 }

@@ -25,9 +25,7 @@ interface LogContext {
  */
 const isDev = (): boolean => {
 	return (
-		window.location.hostname === 'localhost' ||
-		window.location.hostname === '127.0.0.1' ||
-		!window.location.hostname
+		window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname
 	)
 }
 
@@ -62,6 +60,7 @@ const sendToServer = (level: LogLevel, message: string, error?: Error, context?:
 	// В будущем здесь можно добавить отправку на сервер
 	// Например, через API endpoint для логирования
 	if (level === 'error' || level === 'warn') {
+		message = message + error + context
 		// Пока не реализовано - можно добавить позже
 		// await api.logs.create({ level, message, error: error?.stack, context })
 	}
@@ -90,7 +89,7 @@ class Logger {
 	 * Логирует предупреждение
 	 */
 	warn(...args: unknown[]): void {
-		const message = args.map(arg => String(arg)).join(' ')
+		const message = args.map((arg) => String(arg)).join(' ')
 		console.warn('[WARN]', ...args)
 		sendToServer('warn', message)
 	}

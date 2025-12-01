@@ -159,19 +159,17 @@ const BlockForm = observer(() => {
 															key: '1',
 															label: 'Создать строковый мануальный тег и добавить как поле',
 															onClick: () => {
-																store.api
-																	.inventoryTagsCreate({
+																store.tagsStore
+																	.createTag({
 																		blockId: Number(id),
 																		tagType: TagType.String,
 																		sourceId: SourceType.Manual,
 																	})
 																	.then(async (res) => {
-																		// Инвалидируем кэш тегов
-																		store.tagsStore.invalidateTag(res.data.id)
-																		store.tagsStore.refreshTags()
+																		if (!res) return
 																		add({
-																			id: res.data.id,
-																			name: res.data.name,
+																			id: res.id,
+																			name: res.name,
 																			relation: BlockTagRelation.Static,
 																		} as AttachedTag)
 																	})
@@ -181,19 +179,17 @@ const BlockForm = observer(() => {
 															key: '2',
 															label: 'Создать числовой мануальный тег и добавить как поле',
 															onClick: () => {
-																store.api
-																	.inventoryTagsCreate({
+																store.tagsStore
+																	.createTag({
 																		blockId: Number(id),
 																		tagType: TagType.Number,
 																		sourceId: SourceType.Manual,
 																	})
 																	.then(async (res) => {
-																		// Инвалидируем кэш тегов
-																		store.tagsStore.invalidateTag(res.data.id)
-																		store.tagsStore.refreshTags()
+																		if (!res) return
 																		add({
-																			id: res.data.id,
-																			name: res.data.name,
+																			id: res.id,
+																			name: res.name,
 																			relation: BlockTagRelation.Static,
 																		} as AttachedTag)
 																	})
@@ -203,19 +199,17 @@ const BlockForm = observer(() => {
 															key: '3',
 															label: 'Создать логический мануальный тег и добавить как поле',
 															onClick: () => {
-																store.api
-																	.inventoryTagsCreate({
+																store.tagsStore
+																	.createTag({
 																		blockId: Number(id),
 																		tagType: TagType.Boolean,
 																		sourceId: SourceType.Manual,
 																	})
 																	.then(async (res) => {
-																		// Инвалидируем кэш тегов
-																		store.tagsStore.invalidateTag(res.data.id)
-																		store.tagsStore.refreshTags()
+																		if (!res) return
 																		add({
-																			id: res.data.id,
-																			name: res.data.name,
+																			id: res.id,
+																			name: res.name,
 																			relation: BlockTagRelation.Static,
 																		} as AttachedTag)
 																	})

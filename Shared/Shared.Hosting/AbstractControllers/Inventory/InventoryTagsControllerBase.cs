@@ -21,7 +21,7 @@ public abstract class InventoryTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Идентификатор нового тега в локальной базе данных</returns>
 	[HttpPost]
-	public abstract Task<ActionResult<int>> CreateAsync(
+	public abstract Task<ActionResult<TagSimpleInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default);
 
@@ -46,7 +46,7 @@ public abstract class InventoryTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<TagSimpleInfo[]>> GetAllAsync(
+	public abstract Task<ActionResult<List<TagSimpleInfo>>> GetAllAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
@@ -63,7 +63,7 @@ public abstract class InventoryTagsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Плоский список объектов информации о тегах</returns>
 	[HttpPut("{tagId}/settings")]
-	public abstract Task<ActionResult<TagWithSettingsInfo[]>> GetAllWithSettingsAsync(
+	public abstract Task<ActionResult<List<TagWithSettingsInfo>>> GetAllWithSettingsAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
@@ -77,7 +77,7 @@ public abstract class InventoryTagsControllerBase : ControllerBase
 	/// <param name="request">Новые данные тега</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{tagId}")]
-	public abstract Task<ActionResult> UpdateAsync(
+	public abstract Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] int tagId,
 		[BindRequired, FromBody] TagUpdateRequest request,
 		CancellationToken ct = default);
@@ -88,7 +88,7 @@ public abstract class InventoryTagsControllerBase : ControllerBase
 	/// <param name="tagId">Идентификатор тега</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpDelete("{tagId}")]
-	public abstract Task<ActionResult> DeleteAsync(
+	public abstract Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] int tagId,
 		CancellationToken ct = default);
 }

@@ -11,7 +11,7 @@ public interface ITagsQueriesService
 	/// <summary>
 	/// Запрос информации о тегах
 	/// </summary>
-	Task<TagSimpleInfo[]> GetAsync(
+	Task<List<TagSimpleInfo>> GetAsync(
 		IEnumerable<int>? identifiers = null,
 		IEnumerable<Guid>? guids = null,
 		TagType? type = null,
@@ -21,7 +21,7 @@ public interface ITagsQueriesService
 	/// <summary>
 	/// Запрос информации о тегах и их источниках данных
 	/// </summary>
-	Task<TagWithSettingsInfo[]> GetWithSettingsAsync(
+	Task<List<TagWithSettingsInfo>> GetWithSettingsAsync(
 		IEnumerable<int>? identifiers = null,
 		IEnumerable<Guid>? guids = null,
 		TagType? type = null,
@@ -31,19 +31,19 @@ public interface ITagsQueriesService
 	/// <summary>
 	/// Запрос полной информации о тегах, их блоках и источниках данных
 	/// </summary>
-	Task<TagBlockRelationInfo[]> GetRelationsToBlocksAsync(int tagId, CancellationToken ct = default);
+	Task<List<TagBlockRelationInfo>> GetRelationsToBlocksAsync(int tagId, CancellationToken ct = default);
 
 	/// <summary>
 	/// Получение тегов-переменных для расчета
 	/// </summary>
 	/// <param name="tagsId">Идентификаторы тегов-получателей</param>
 	/// <param name="ct">Токен отмены</param>
-	Task<TagInputInfo[]> GetInputsAsync(IEnumerable<int> tagsId, CancellationToken ct = default);
+	Task<List<TagInputInfo>> GetInputsAsync(IEnumerable<int> tagsId, CancellationToken ct = default);
 
 	/// <summary>
 	/// Получение устанок тегов
 	/// </summary>
 	/// <param name="tagsId">Идентификаторы тегов-получателей</param>
 	/// <param name="ct">Токен отмены</param>
-	Task<TagThresholdInfo[]> GetThresholdsAsync(IEnumerable<int> tagsId, CancellationToken ct = default);
+	Task<List<TagThresholdInfo>> GetThresholdsAsync(IEnumerable<int> tagsId, CancellationToken ct = default);
 }

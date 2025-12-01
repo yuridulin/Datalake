@@ -18,9 +18,9 @@ public class InventoryBlocksController(InventoryReverseProxyService proxyService
 			=> proxyService.ProxyAsync<int>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
+	public override Task<ActionResult<List<BlockWithTagsInfo>>> GetAllAsync(
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<BlockWithTagsInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<BlockWithTagsInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<BlockDetailedInfo>> GetAsync(
@@ -29,27 +29,27 @@ public class InventoryBlocksController(InventoryReverseProxyService proxyService
 			=> proxyService.ProxyAsync<BlockDetailedInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync(
+	public override Task<ActionResult<List<BlockTreeInfo>>> GetTreeAsync(
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<BlockTreeInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<BlockTreeInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> UpdateAsync(
+	public override Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] int blockId,
 		[BindRequired, FromBody] BlockUpdateRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, request, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> MoveAsync(
+	public override Task<ActionResult<bool>> MoveAsync(
 		[BindRequired, FromRoute] int blockId,
 		[FromQuery] int? parentId,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> DeleteAsync(
+	public override Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] int blockId,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, ct);
 }

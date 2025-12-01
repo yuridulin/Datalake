@@ -27,37 +27,37 @@ public class InventoryAccessController(InventoryReverseProxyService proxyService
 			=> proxyService.ProxyAsync<Dictionary<Guid, UserAccessValue>>(HttpContext, guids, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> SetBlockRulesAsync(
+	public override Task<ActionResult<bool>> SetBlockRulesAsync(
 		[FromRoute] int blockId,
 		[FromBody] AccessRuleForObjectRequest[] requests,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, requests, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, requests, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> SetSourceRulesAsync(
+	public override Task<ActionResult<bool>> SetSourceRulesAsync(
 		[FromRoute] int sourceId,
 		[FromBody] AccessRuleForObjectRequest[] requests,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, requests, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, requests, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> SetTagRulesAsync(
+	public override Task<ActionResult<bool>> SetTagRulesAsync(
 		[FromRoute] int tagId,
 		[FromBody] AccessRuleForObjectRequest[] requests,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, requests, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, requests, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> SetUserGroupRulesAsync(
+	public override Task<ActionResult<bool>> SetUserGroupRulesAsync(
 		[FromRoute] Guid userGroupGuid,
 		[FromBody] AccessRuleForActorRequest[] requests,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, requests, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, requests, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> SetUserRulesAsync(
+	public override Task<ActionResult<bool>> SetUserRulesAsync(
 		[FromRoute] Guid userGuid,
 		[FromBody] AccessRuleForActorRequest[] requests,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, requests, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, requests, ct);
 }

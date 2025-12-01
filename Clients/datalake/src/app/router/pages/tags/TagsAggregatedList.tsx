@@ -12,7 +12,7 @@ import TagsTable from './TagsTable'
 const TagsAggregatedList = observer(() => {
 	useDatalakeTitle('Теги', 'Агрегированные')
 	const store = useAppStore()
-	const tags = store.tagsStore.getTags(SourceType.Aggregated)
+	const tags = store.tagsStore.agregatedTags
 	const [created, setCreated] = useState(null as TagSimpleInfo | null)
 	const hasLoadedRef = useRef(false)
 
@@ -36,7 +36,7 @@ const TagsAggregatedList = observer(() => {
 	useEffect(() => {
 		if (hasLoadedRef.current) return
 		hasLoadedRef.current = true
-		store.tagsStore.refreshTags(SourceType.Aggregated)
+		store.tagsStore.refreshTags()
 	}, [store.tagsStore])
 
 	return (

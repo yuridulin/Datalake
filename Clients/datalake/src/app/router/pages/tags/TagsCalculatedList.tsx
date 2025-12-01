@@ -12,7 +12,7 @@ import TagsTable from './TagsTable'
 const TagsCalculatedList = observer(() => {
 	useDatalakeTitle('Теги', 'Вычисляемые')
 	const store = useAppStore()
-	const tags = store.tagsStore.getTags(SourceType.Calculated)
+	const tags = store.tagsStore.calculatedTags
 	const [created, setCreated] = useState(null as TagSimpleInfo | null)
 	const hasLoadedRef = useRef(false)
 
@@ -36,7 +36,7 @@ const TagsCalculatedList = observer(() => {
 	useEffect(() => {
 		if (hasLoadedRef.current) return
 		hasLoadedRef.current = true
-		store.tagsStore.refreshTags(SourceType.Calculated)
+		store.tagsStore.refreshTags()
 	}, [store.tagsStore])
 
 	return (

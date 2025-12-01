@@ -1,5 +1,5 @@
-import { AppStore } from '@/store/AppStore'
+import { AppStore } from '@/store/appStore'
+import { AppStoreContext } from '@/store/appStoreContext'
 import { useContext } from 'react'
-import { AppStoreContext } from './AppStoreContext'
 
 export const useAppStore = (): AppStore => useContext(AppStoreContext)

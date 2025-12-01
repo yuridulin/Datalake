@@ -11,5 +11,5 @@ public class SourceWithSettingsAndTagsInfo : SourceWithSettingsInfo
 	/// Список тегов, которые получают данные из этого источника
 	/// </summary>
 	[Required]
-	public SourceTagInfo[] Tags { get; set; } = [];
+	public List<SourceTagInfo> Tags { get; set; } = [];
 }

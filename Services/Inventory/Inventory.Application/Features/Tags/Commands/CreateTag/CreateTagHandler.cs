@@ -1,4 +1,5 @@
-﻿using Datalake.Domain.Entities;
+﻿using Datalake.Contracts.Models.Tags;
+using Datalake.Domain.Entities;
 using Datalake.Domain.Enums;
 using Datalake.Inventory.Application.Abstractions;
 using Datalake.Inventory.Application.Exceptions;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Application.Features.Tags.Commands.CreateTag;
 
-public interface ICreateTagHandler : ICommandHandler<CreateTagCommand, int> { }
+public interface ICreateTagHandler : ICommandHandler<CreateTagCommand, TagSimpleInfo> { }
 
 public class CreateTagHandler(
 	ITagsRepository tagsRepository,
@@ -20,7 +21,7 @@ public class CreateTagHandler(
 	IUnitOfWork unitOfWork,
 	IInventoryStore inventoryCache,
 	ILogger<CreateTagHandler> logger) :
-		TransactionalCommandHandler<CreateTagCommand, int>(unitOfWork, logger, inventoryCache),
+		TransactionalCommandHandler<CreateTagCommand, TagSimpleInfo>(unitOfWork, logger, inventoryCache),
 		ICreateTagHandler
 {
 	public override void CheckPermissions(CreateTagCommand command)
@@ -42,7 +43,7 @@ public class CreateTagHandler(
 	Tag tag = null!;
 	BlockTag? blockTag = null;
 
-	public override async Task<int> ExecuteInTransactionAsync(CreateTagCommand command, CancellationToken ct = default)
+	public override async Task<TagSimpleInfo> ExecuteInTransactionAsync(CreateTagCommand command, CancellationToken ct = default)
 	{
 		Source? source = null;
 		SourceType sourceType = SourceType.Manual;
@@ -79,7 +80,18 @@ public class CreateTagHandler(
 
 		await auditRepository.AddAsync(new(command.User.Guid, "Создан тег: " + tag.Type, tagId: tag.Id), ct);
 
-		return tag.Id;
+		return new()
+		{
+			Guid = tag.Guid,
+			Id = tag.Id,
+			Name = tag.Name,
+			Resolution = tag.Resolution,
+			SourceId = tag.SourceId,
+			SourceType = sourceType,
+			Type = tag.Type,
+			Description = tag.Description,
+			AccessRule = new(0, AccessType.Viewer),
+		};
 	}
 
 	public override IInventoryState UpdateCache(IInventoryState state) => blockTag == null

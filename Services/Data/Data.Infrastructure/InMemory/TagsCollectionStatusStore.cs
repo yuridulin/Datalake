@@ -25,11 +25,13 @@ public class TagsCollectionStatusStore : ITagsCollectionStatusStore
 
 	public void Set(int identifier, string? value)
 	{
-		var status = new TagStatusInfo(
-			identifier,
-			DateTime.UtcNow,
-			!string.IsNullOrEmpty(value),
-			value);
+		var status = new TagStatusInfo
+		{
+			TagId = identifier,
+			Date = DateTime.UtcNow,
+			IsError = !string.IsNullOrEmpty(value),
+			Status = value,
+		};
 
 		_state.AddOrUpdate(
 			identifier,

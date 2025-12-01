@@ -53,7 +53,7 @@ public class InventoryAccessController(
 		return data;
 	}
 
-	public override async Task<ActionResult> SetUserRulesAsync(
+	public override async Task<ActionResult<bool>> SetUserRulesAsync(
 		[FromRoute] Guid userGuid,
 		[FromBody] AccessRuleForActorRequest[] requests,
 		CancellationToken ct = default)
@@ -76,7 +76,7 @@ public class InventoryAccessController(
 		return data;
 	}
 
-	public override async Task<ActionResult> SetUserGroupRulesAsync(
+	public override async Task<ActionResult<bool>> SetUserGroupRulesAsync(
 		[FromRoute] Guid userGroupGuid,
 		[FromBody] AccessRuleForActorRequest[] requests,
 		CancellationToken ct = default)
@@ -99,7 +99,7 @@ public class InventoryAccessController(
 		return data;
 	}
 
-	public override async Task<ActionResult> SetSourceRulesAsync(
+	public override async Task<ActionResult<bool>> SetSourceRulesAsync(
 		[FromRoute] int sourceId,
 		[FromBody] AccessRuleForObjectRequest[] requests,
 		CancellationToken ct = default)
@@ -117,7 +117,7 @@ public class InventoryAccessController(
 		return data;
 	}
 
-	public override async Task<ActionResult> SetBlockRulesAsync(
+	public override async Task<ActionResult<bool>> SetBlockRulesAsync(
 		[FromRoute] int blockId,
 		[FromBody] AccessRuleForObjectRequest[] requests,
 		CancellationToken ct = default)
@@ -135,7 +135,7 @@ public class InventoryAccessController(
 		return data;
 	}
 
-	public override async Task<ActionResult> SetTagRulesAsync(
+	public override async Task<ActionResult<bool>> SetTagRulesAsync(
 		[FromRoute] int tagId,
 		[FromBody] AccessRuleForObjectRequest[] requests,
 		CancellationToken ct = default)

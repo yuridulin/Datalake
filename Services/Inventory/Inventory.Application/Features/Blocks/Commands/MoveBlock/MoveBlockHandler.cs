@@ -7,7 +7,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Blocks.Commands.MoveBlock;
 
-public interface IMoveBlockHandler : ICommandHandler<MoveBlockCommand, int> { }
+public interface IMoveBlockHandler : ICommandHandler<MoveBlockCommand, bool> { }
 
 public class MoveBlockHandler(
 	IUnitOfWork unitOfWork,
@@ -15,7 +15,7 @@ public class MoveBlockHandler(
 	IAuditRepository auditRepository,
 	IInventoryStore inventoryCache) : IMoveBlockHandler
 {
-	public async Task<int> HandleAsync(MoveBlockCommand command, CancellationToken ct = default)
+	public async Task<bool> HandleAsync(MoveBlockCommand command, CancellationToken ct = default)
 	{
 		command.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 
@@ -47,6 +47,6 @@ public class MoveBlockHandler(
 
 		await inventoryCache.UpdateAsync(state => state.WithBlock(block));
 
-		return block.Id;
+		return true;
 	}
 }

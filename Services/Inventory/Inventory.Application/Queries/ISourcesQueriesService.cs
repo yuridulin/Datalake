@@ -12,7 +12,7 @@ public interface ISourcesQueriesService
 	/// </summary>
 	/// <param name="withCustom">Включать ли системные источники в запрос</param>
 	/// <param name="ct">Токен отмены</param>
-	Task<SourceWithSettingsInfo[]> GetAllAsync(bool withCustom = false, CancellationToken ct = default);
+	Task<List<SourceWithSettingsInfo>> GetAllAsync(bool withCustom = false, CancellationToken ct = default);
 
 	/// <summary>
 	/// Запрос информации о источнике
@@ -26,5 +26,5 @@ public interface ISourcesQueriesService
 	/// </summary>
 	/// <param name="sourceId">Идентификатор</param>
 	/// <param name="ct">Токен отмены</param>
-	Task<SourceTagInfo[]> GetSourceTagsAsync(int sourceId, CancellationToken ct);
+	Task<List<SourceTagInfo>> GetSourceTagsAsync(int sourceId, CancellationToken ct);
 }

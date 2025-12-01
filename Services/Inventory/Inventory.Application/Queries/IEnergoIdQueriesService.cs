@@ -4,5 +4,5 @@ namespace Datalake.Inventory.Application.Queries;
 
 public interface IEnergoIdQueriesService
 {
-	Task<IEnumerable<UserEnergoIdInfo>> GetAsync(CancellationToken ct = default);
+	Task<List<UserEnergoIdInfo>> GetAsync(CancellationToken ct = default);
 }

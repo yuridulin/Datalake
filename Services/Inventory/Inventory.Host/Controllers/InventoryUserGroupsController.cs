@@ -7,6 +7,7 @@ using Datalake.Inventory.Application.Features.UserGroups.Commands.UpdateUserGrou
 using Datalake.Inventory.Application.Features.UserGroups.Models;
 using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroup;
 using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroups;
+using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroupsTree;
 using Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroupWithDetails;
 using Datalake.Shared.Hosting.AbstractControllers.Inventory;
 using Datalake.Shared.Hosting.Interfaces;
@@ -36,7 +37,7 @@ public class InventoryUserGroupsController(
 		return data;
 	}
 
-	public override async Task<ActionResult<IEnumerable<UserGroupInfo>>> GetAllAsync(
+	public override async Task<ActionResult<List<UserGroupInfo>>> GetAllAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -64,11 +65,11 @@ public class InventoryUserGroupsController(
 		return data;
 	}
 
-	public override async Task<ActionResult<UserGroupTreeInfo[]>> GetTreeAsync(
+	public override async Task<ActionResult<List<UserGroupTreeInfo>>> GetTreeAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
-		var handler = serviceProvider.GetRequiredService<IGetUserGroupsHandler>();
+		var handler = serviceProvider.GetRequiredService<IGetUserGroupsTreeHandler>();
 		var data = await handler.HandleAsync(new()
 		{
 			User = user,
@@ -92,14 +93,14 @@ public class InventoryUserGroupsController(
 		return data;
 	}
 
-	public override async Task<ActionResult> UpdateAsync(
+	public override async Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] Guid userGroupGuid,
 		[BindRequired, FromBody] UserGroupUpdateRequest request,
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IUpdateUserGroupHandler>();
-		var data = handler.HandleAsync(new()
+		var data = await handler.HandleAsync(new()
 		{
 			User = user,
 			Guid = userGroupGuid,
@@ -111,7 +112,7 @@ public class InventoryUserGroupsController(
 		return data;
 	}
 
-	public override async Task<ActionResult> MoveAsync(
+	public override async Task<ActionResult<bool>> MoveAsync(
 		[BindRequired, FromRoute] Guid groupGuid,
 		[FromQuery] Guid? parentGuid,
 		CancellationToken ct = default)
@@ -128,7 +129,7 @@ public class InventoryUserGroupsController(
 		return data;
 	}
 
-	public override async Task<ActionResult> DeleteAsync(
+	public override async Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] Guid userGroupGuid,
 		CancellationToken ct = default)
 	{

@@ -27,7 +27,7 @@ public class TagWithSettingsInfo : TagSimpleInfo, IProtectedEntity
 	/// <summary>
 	/// Пороговые значения, по которым выбирается итоговое значение
 	/// </summary>
-	public TagThresholdInfo[]? Thresholds { get; set; }
+	public List<TagThresholdInfo>? Thresholds { get; set; }
 
 	/// <summary>
 	/// Входной тег, по значениям которого выбирается значение из пороговой таблицы
@@ -68,7 +68,7 @@ public class TagWithSettingsInfo : TagSimpleInfo, IProtectedEntity
 	/// Входные переменные для формулы, по которой рассчитывается значение
 	/// </summary>
 	[Required]
-	public TagInputInfo[] FormulaInputs { get; set; } = [];
+	public List<TagInputInfo> FormulaInputs { get; set; } = [];
 
 	/// <summary>
 	/// Тип агрегации

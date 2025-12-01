@@ -30,7 +30,7 @@ public abstract class InventoryUserGroupsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список групп</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<IEnumerable<UserGroupInfo>>> GetAllAsync(
+	public abstract Task<ActionResult<List<UserGroupInfo>>> GetAllAsync(
 		CancellationToken ct = default);
 
 	/// <summary>
@@ -39,7 +39,7 @@ public abstract class InventoryUserGroupsControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список обособленных групп с вложенными подгруппами</returns>
 	[HttpGet("tree")]
-	public abstract Task<ActionResult<UserGroupTreeInfo[]>> GetTreeAsync(
+	public abstract Task<ActionResult<List<UserGroupTreeInfo>>> GetTreeAsync(
 		CancellationToken ct = default);
 
 	/// <summary>
@@ -71,7 +71,7 @@ public abstract class InventoryUserGroupsControllerBase : ControllerBase
 	/// <param name="parentGuid">Идентификатор новой родительской группы</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{groupGuid}/move")]
-	public abstract Task<ActionResult> MoveAsync(
+	public abstract Task<ActionResult<bool>> MoveAsync(
 		[BindRequired, FromRoute] Guid groupGuid,
 		[FromQuery] Guid? parentGuid,
 		CancellationToken ct = default);
@@ -83,7 +83,7 @@ public abstract class InventoryUserGroupsControllerBase : ControllerBase
 	/// <param name="request">Новые данные</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{userGroupGuid}")]
-	public abstract Task<ActionResult> UpdateAsync(
+	public abstract Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] Guid userGroupGuid,
 		[BindRequired, FromBody] UserGroupUpdateRequest request,
 		CancellationToken ct = default);
@@ -94,7 +94,7 @@ public abstract class InventoryUserGroupsControllerBase : ControllerBase
 	/// <param name="userGroupGuid">Идентификатор группы</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpDelete("{userGroupGuid}")]
-	public abstract Task<ActionResult> DeleteAsync(
+	public abstract Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] Guid userGroupGuid,
 		CancellationToken ct = default);
 }

@@ -47,7 +47,7 @@ public abstract class InventoryAccessControllerBase : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("user/{userGuid}")]
-	public abstract Task<ActionResult> SetUserRulesAsync(
+	public abstract Task<ActionResult<bool>> SetUserRulesAsync(
 		[FromRoute] Guid userGuid,
 		[FromBody] AccessRuleForActorRequest[] requests,
 		CancellationToken ct = default);
@@ -59,7 +59,7 @@ public abstract class InventoryAccessControllerBase : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("user-group/{userGroupGuid}")]
-	public abstract Task<ActionResult> SetUserGroupRulesAsync(
+	public abstract Task<ActionResult<bool>> SetUserGroupRulesAsync(
 		[FromRoute] Guid userGroupGuid,
 		[FromBody] AccessRuleForActorRequest[] requests,
 		CancellationToken ct = default);
@@ -71,7 +71,7 @@ public abstract class InventoryAccessControllerBase : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("source/{sourceId}")]
-	public abstract Task<ActionResult> SetSourceRulesAsync(
+	public abstract Task<ActionResult<bool>> SetSourceRulesAsync(
 		[FromRoute] int sourceId,
 		[FromBody] AccessRuleForObjectRequest[] requests,
 		CancellationToken ct = default);
@@ -83,7 +83,7 @@ public abstract class InventoryAccessControllerBase : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("block/{blockId}")]
-	public abstract Task<ActionResult> SetBlockRulesAsync(
+	public abstract Task<ActionResult<bool>> SetBlockRulesAsync(
 		[FromRoute] int blockId,
 		[FromBody] AccessRuleForObjectRequest[] requests,
 		CancellationToken ct = default);
@@ -95,7 +95,7 @@ public abstract class InventoryAccessControllerBase : ControllerBase
 	/// <param name="requests">Список изменений</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("tag/{tagId}")]
-	public abstract Task<ActionResult> SetTagRulesAsync(
+	public abstract Task<ActionResult<bool>> SetTagRulesAsync(
 		[FromRoute] int tagId,
 		[FromBody] AccessRuleForObjectRequest[] requests,
 		CancellationToken ct = default);

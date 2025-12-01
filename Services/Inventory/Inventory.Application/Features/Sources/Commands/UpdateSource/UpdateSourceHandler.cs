@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Application.Features.Sources.Commands.UpdateSource;
 
-public interface IUpdateSourceHandler : ICommandHandler<UpdateSourceCommand, int> { }
+public interface IUpdateSourceHandler : ICommandHandler<UpdateSourceCommand, bool> { }
 
 public class UpdateSourceHandler(
 	ISourcesRepository sourcesRepository,
@@ -17,7 +17,7 @@ public class UpdateSourceHandler(
 	IUnitOfWork unitOfWork,
 	IInventoryStore inventoryCache,
 	ILogger<UpdateSourceHandler> logger) :
-		TransactionalCommandHandler<UpdateSourceCommand, int>(unitOfWork, logger, inventoryCache),
+		TransactionalCommandHandler<UpdateSourceCommand, bool>(unitOfWork, logger, inventoryCache),
 		IUpdateSourceHandler
 {
 	public override void CheckPermissions(UpdateSourceCommand command)
@@ -27,7 +27,7 @@ public class UpdateSourceHandler(
 
 	Source source = null!;
 
-	public override async Task<int> ExecuteInTransactionAsync(UpdateSourceCommand command, CancellationToken ct = default)
+	public override async Task<bool> ExecuteInTransactionAsync(UpdateSourceCommand command, CancellationToken ct = default)
 	{
 		source = await sourcesRepository.GetByIdAsync(command.SourceId, ct)
 			?? throw InventoryNotFoundException.NotFoundSource(command.SourceId);
@@ -40,7 +40,7 @@ public class UpdateSourceHandler(
 
 		await auditRepository.AddAsync(new(command.User.Guid, "Источник данных удален", sourceId: source.Id), ct);
 
-		return source.Id;
+		return true;
 	}
 
 	public override IInventoryState UpdateCache(IInventoryState state) => state.WithSource(source);

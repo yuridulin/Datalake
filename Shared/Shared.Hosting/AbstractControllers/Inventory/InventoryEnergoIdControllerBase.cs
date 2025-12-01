@@ -17,7 +17,7 @@ public abstract class InventoryEnergoIdControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список учетных записей EnergoId с отметкой на каждой, за какой учетной записью приложения закреплена</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdAsync(
+	public abstract Task<ActionResult<List<UserEnergoIdInfo>>> GetEnergoIdAsync(
 		CancellationToken ct = default);
 
 	/// <summary>
@@ -25,6 +25,6 @@ public abstract class InventoryEnergoIdControllerBase : ControllerBase
 	/// </summary>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut]
-	public abstract Task<ActionResult> UpdateEnergoIdAsync(
+	public abstract Task<ActionResult<bool>> UpdateEnergoIdAsync(
 		CancellationToken ct = default);
 }

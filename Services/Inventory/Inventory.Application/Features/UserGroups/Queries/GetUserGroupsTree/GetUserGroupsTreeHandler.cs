@@ -5,12 +5,12 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroupsTree;
 
-public interface IGetUserGroupsTreeHandler : IQueryHandler<GetUserGroupsTreeQuery, IEnumerable<UserGroupTreeInfo>> { }
+public interface IGetUserGroupsTreeHandler : IQueryHandler<GetUserGroupsTreeQuery, List<UserGroupTreeInfo>> { }
 
 public class GetUserGroupsTreeHandler(
 	IUsersGroupsQueriesService usersGroupsQueriesService) : IGetUserGroupsTreeHandler
 {
-	public async Task<IEnumerable<UserGroupTreeInfo>> HandleAsync(GetUserGroupsTreeQuery query, CancellationToken ct = default)
+	public async Task<List<UserGroupTreeInfo>> HandleAsync(GetUserGroupsTreeQuery query, CancellationToken ct = default)
 	{
 		var data = await usersGroupsQueriesService.GetAsync(ct);
 
@@ -19,7 +19,7 @@ public class GetUserGroupsTreeHandler(
 		return tree;
 	}
 
-	private static UserGroupTreeInfo[] GetChildren(GetUserGroupsTreeQuery query, IEnumerable<UserGroupInfo> groups, Guid? guid)
+	private static List<UserGroupTreeInfo> GetChildren(GetUserGroupsTreeQuery query, IEnumerable<UserGroupInfo> groups, Guid? guid)
 	{
 		return groups
 			.Where(x => x.ParentGroupGuid == guid)
@@ -47,7 +47,7 @@ public class GetUserGroupsTreeHandler(
 
 				return group;
 			})
-			.Where(x => x.Children.Length > 0)
-			.ToArray();
+			.Where(x => x.Children.Count > 0)
+			.ToList();
 	}
 }

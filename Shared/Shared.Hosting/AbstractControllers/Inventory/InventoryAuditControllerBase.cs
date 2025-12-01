@@ -29,7 +29,7 @@ public abstract class InventoryAuditControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список сообщений аудита</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<IEnumerable<LogInfo>>> GetAsync(
+	public abstract Task<ActionResult<List<LogInfo>>> GetAsync(
 		[FromQuery] int? lastId = null,
 		[FromQuery] int? firstId = null,
 		[FromQuery] int? take = null,

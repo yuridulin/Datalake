@@ -5,12 +5,12 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroups;
 
-public interface IGetUserGroupsHandler : IQueryHandler<GetUserGroupsQuery, IEnumerable<UserGroupInfo>> { }
+public interface IGetUserGroupsHandler : IQueryHandler<GetUserGroupsQuery, List<UserGroupInfo>> { }
 
 public class GetUserGroupsHandler(
 	IUsersGroupsQueriesService usersGroupsQueriesService) : IGetUserGroupsHandler
 {
-	public async Task<IEnumerable<UserGroupInfo>> HandleAsync(GetUserGroupsQuery query, CancellationToken ct = default)
+	public async Task<List<UserGroupInfo>> HandleAsync(GetUserGroupsQuery query, CancellationToken ct = default)
 	{
 		var data = await usersGroupsQueriesService.GetAsync(ct);
 

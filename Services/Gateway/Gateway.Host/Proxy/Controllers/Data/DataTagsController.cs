@@ -11,14 +11,14 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Data;
 public class DataTagsController(DataReverseProxyService proxyService) : DataTagsControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult<IEnumerable<TagStatusInfo>>> GetStatusAsync(
+	public override Task<ActionResult<List<TagStatusInfo>>> GetStatusAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IEnumerable<TagStatusInfo>>(HttpContext, body: request, cancellationToken: ct);
+			=> proxyService.ProxyAsync<List<TagStatusInfo>>(HttpContext, body: request, cancellationToken: ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<IEnumerable<TagUsageInfo>>> GetUsageAsync(
+	public override Task<ActionResult<List<TagUsageInfo>>> GetUsageAsync(
 		[BindRequired, FromBody] TagMetricRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IEnumerable<TagUsageInfo>>(HttpContext, body: request, cancellationToken: ct);
+			=> proxyService.ProxyAsync<List<TagUsageInfo>>(HttpContext, body: request, cancellationToken: ct);
 }

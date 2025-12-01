@@ -81,7 +81,7 @@ public class AuthController(
 	/// </summary>
 	/// <param name="ct">Токен отмены</param>
 	[HttpDelete]
-	public async Task<ActionResult> LogoutAsync(
+	public async Task<ActionResult<bool>> LogoutAsync(
 		CancellationToken ct = default)
 	{
 		var token = tokenExtractor.ExtractToken(HttpContext);

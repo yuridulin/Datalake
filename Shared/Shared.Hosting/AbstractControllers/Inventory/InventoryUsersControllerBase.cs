@@ -31,7 +31,7 @@ public abstract class InventoryUsersControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список пользователей</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<IEnumerable<UserInfo>>> GetAsync(
+	public abstract Task<ActionResult<List<UserInfo>>> GetAsync(
 		[FromQuery] Guid? userGuid,
 		CancellationToken ct = default);
 
@@ -53,7 +53,7 @@ public abstract class InventoryUsersControllerBase : ControllerBase
 	/// <param name="request">Новые данные пользователя</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{userGuid}")]
-	public abstract Task<ActionResult> UpdateAsync(
+	public abstract Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		[BindRequired, FromBody] UserUpdateRequest request,
 		CancellationToken ct = default);
@@ -64,7 +64,7 @@ public abstract class InventoryUsersControllerBase : ControllerBase
 	/// <param name="userGuid">Идентификатор пользователя</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpDelete("{userGuid}")]
-	public abstract Task<ActionResult> DeleteAsync(
+	public abstract Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		CancellationToken ct = default);
 }

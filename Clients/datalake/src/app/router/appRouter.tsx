@@ -1,18 +1,15 @@
 import AppError from '@/app/components/AppError'
 import ErrorBoundary from '@/app/components/ErrorBoundary'
 import LoadingFallback from '@/app/components/LoadingFallback'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Offline } from '../pages/Offline'
 import AppLayout from './AppLayout'
 import Login from './auth/Login'
 import KeycloakCallback from './auth/keycloak/KeycloakCallback'
 import routes from './routes'
 
-// Lazy loading для всех страниц
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'))
-const TagsAccessMetrics = lazy(() => import('./pages/admin/metrics/TagsAccessMetrics'))
-const ValuesMetrics = lazy(() => import('./pages/admin/metrics/ValuesMetrics'))
 const BlocksMover = lazy(() => import('./pages/blocks/BlocksMover'))
 const BlocksTree = lazy(() => import('./pages/blocks/BlocksTree'))
 const BlockForm = lazy(() => import('./pages/blocks/block/BlockForm'))
@@ -161,28 +158,6 @@ const AppRouter = createBrowserRouter([
 						<SettingsPage />
 					</Suspense>
 				),
-			},
-			// metrics
-			{
-				path: routes.admin.metrics.root,
-				children: [
-					{
-						path: routes.admin.metrics.tags,
-						element: (
-							<Suspense fallback={<LoadingFallback />}>
-								<TagsAccessMetrics />
-							</Suspense>
-						),
-					},
-					{
-						path: routes.admin.metrics.values,
-						element: (
-							<Suspense fallback={<LoadingFallback />}>
-								<ValuesMetrics />
-							</Suspense>
-						),
-					},
-				],
 			},
 			// sources
 			{

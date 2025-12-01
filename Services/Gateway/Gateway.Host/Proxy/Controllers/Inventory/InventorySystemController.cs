@@ -15,13 +15,13 @@ public class InventorySystemController(InventoryReverseProxyService proxyService
 			=> proxyService.ProxyAsync<SettingsInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> UpdateSettingsAsync(
+	public override Task<ActionResult<bool>> UpdateSettingsAsync(
 		[BindRequired][FromBody] SettingsInfo newSettings,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, newSettings, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, newSettings, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> RestartStateAsync(
+	public override Task<ActionResult<bool>> RestartStateAsync(
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, ct);
 }

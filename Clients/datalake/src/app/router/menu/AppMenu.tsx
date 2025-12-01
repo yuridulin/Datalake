@@ -9,13 +9,7 @@ import UserIcon from '@/app/components/icons/UserIcon'
 import { AccessType } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { blue } from '@ant-design/colors'
-import {
-	EditOutlined,
-	MenuUnfoldOutlined,
-	PlaySquareOutlined,
-	SettingOutlined,
-	UnorderedListOutlined,
-} from '@ant-design/icons'
+import { EditOutlined, PlaySquareOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Menu, theme } from 'antd'
 import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { observer } from 'mobx-react-lite'
@@ -181,26 +175,6 @@ const items = [
 					<NavLink to={routes.admin.settings}>
 						<SettingOutlined style={{ color: blue[5] }} />
 						&emsp;Настройки
-					</NavLink>
-				),
-				minimalAccess: AccessType.Admin,
-			},
-			{
-				key: routes.admin.metrics.tags,
-				label: (
-					<NavLink to={routes.admin.metrics.tags}>
-						<MenuUnfoldOutlined style={{ color: blue[5] }} />
-						&emsp;Метрики доступа к тегам
-					</NavLink>
-				),
-				minimalAccess: AccessType.Admin,
-			},
-			{
-				key: routes.admin.metrics.values,
-				label: (
-					<NavLink to={routes.admin.metrics.values}>
-						<MenuUnfoldOutlined style={{ color: blue[5] }} />
-						&emsp;Метрики запросов на чтение
 					</NavLink>
 				),
 				minimalAccess: AccessType.Admin,

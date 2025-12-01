@@ -42,7 +42,7 @@ public class GetUserGroupWithDetailsHandler(
 					Source = x.Source,
 					Tag = x.Tag,
 				})
-				.ToArray(),
+				.ToList(),
 			Users = await usersGroupsQueriesService.GetMembersAsync(userGroup.Guid, ct),
 		};
 	}

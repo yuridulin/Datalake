@@ -26,7 +26,7 @@ public abstract class InventorySystemControllerBase : ControllerBase
 	/// <param name="newSettings">Новые настройки сервера</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("settings")]
-	public abstract Task<ActionResult> UpdateSettingsAsync(
+	public abstract Task<ActionResult<bool>> UpdateSettingsAsync(
 		[BindRequired][FromBody] SettingsInfo newSettings,
 		CancellationToken ct = default);
 
@@ -35,6 +35,6 @@ public abstract class InventorySystemControllerBase : ControllerBase
 	/// </summary>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPost("cache")]
-	public abstract Task<ActionResult> RestartStateAsync(
+	public abstract Task<ActionResult<bool>> RestartStateAsync(
 		CancellationToken ct = default);
 }

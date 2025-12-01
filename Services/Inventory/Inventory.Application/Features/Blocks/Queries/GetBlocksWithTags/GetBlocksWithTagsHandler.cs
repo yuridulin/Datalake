@@ -8,12 +8,12 @@ namespace Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksWithTa
 /// <summary>
 /// Запрос информации о блоках со списками тегов
 /// </summary>
-public interface IGetBlocksWithTagsHandler : IQueryHandler<GetBlocksWithTagsQuery, IEnumerable<BlockWithTagsInfo>> { }
+public interface IGetBlocksWithTagsHandler : IQueryHandler<GetBlocksWithTagsQuery, List<BlockWithTagsInfo>> { }
 
 public class GetBlocksWithTagsHandler(
 	IBlocksQueriesService blocksQueriesService) : IGetBlocksWithTagsHandler
 {
-	public async Task<IEnumerable<BlockWithTagsInfo>> HandleAsync(GetBlocksWithTagsQuery query, CancellationToken ct = default)
+	public async Task<List<BlockWithTagsInfo>> HandleAsync(GetBlocksWithTagsQuery query, CancellationToken ct = default)
 	{
 		var blocks = await blocksQueriesService.GetAllAsync(ct);
 		var blocksTags = await blocksQueriesService.GetNestedTagsAsync(blocks.Select(x => x.Id), ct);
@@ -33,6 +33,6 @@ public class GetBlocksWithTagsHandler(
 				Tags = tagsByBlock.TryGetValue(block.Id, out var tags) ? tags : [],
 				AccessRule = AccessRuleInfo.FromRule(query.User.GetAccessToBlock(block.Id)),
 			})
-			.ToArray();
+			.ToList();
 	}
 }

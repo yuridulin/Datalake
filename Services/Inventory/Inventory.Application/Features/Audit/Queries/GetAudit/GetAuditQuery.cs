@@ -15,4 +15,4 @@ public record GetAuditQuery(
 	Guid? GroupGuid = null,
 	LogCategory[]? Categories = null,
 	LogType[]? Types = null,
-	Guid? AuthorGuid = null) : IQueryRequest<IEnumerable<LogInfo>>;
+	Guid? AuthorGuid = null) : IQueryRequest<List<LogInfo>>;

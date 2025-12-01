@@ -8,10 +8,10 @@ namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
 public class UsersGroupsQueriesService(InventoryDbLinqContext context) : IUsersGroupsQueriesService
 {
-	public async Task<IEnumerable<UserGroupInfo>> GetAsync(
+	public async Task<List<UserGroupInfo>> GetAsync(
 		CancellationToken ct = default)
 	{
-		return await QueryUserGroupInfo().ToArrayAsync(ct);
+		return await QueryUserGroupInfo().ToListAsync(ct);
 	}
 
 	public async Task<UserGroupInfo?> GetAsync(
@@ -21,7 +21,7 @@ public class UsersGroupsQueriesService(InventoryDbLinqContext context) : IUsersG
 		return await QueryUserGroupInfo().FirstOrDefaultAsync(x => x.Guid == userGroupGuid, ct);
 	}
 
-	public async Task<UserGroupSimpleInfo[]> GetByParentGuidAsync(Guid userGroupGuid, CancellationToken ct)
+	public async Task<List<UserGroupSimpleInfo>> GetByParentGuidAsync(Guid userGroupGuid, CancellationToken ct)
 	{
 		var query =
 			from userGroup in context.UserGroups
@@ -32,10 +32,10 @@ public class UsersGroupsQueriesService(InventoryDbLinqContext context) : IUsersG
 				Name = userGroup.Name,
 			};
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 
-	public async Task<UserGroupMemberInfo[]> GetMembersAsync(Guid userGroupGuid, CancellationToken ct)
+	public async Task<List<UserGroupMemberInfo>> GetMembersAsync(Guid userGroupGuid, CancellationToken ct)
 	{
 		var query =
 			from relation in context.UserGroupRelations
@@ -48,7 +48,7 @@ public class UsersGroupsQueriesService(InventoryDbLinqContext context) : IUsersG
 				AccessType = relation.AccessType,
 			};
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 
 	private IQueryable<UserGroupInfo> QueryUserGroupInfo()

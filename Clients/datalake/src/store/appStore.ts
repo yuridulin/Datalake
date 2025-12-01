@@ -10,11 +10,8 @@ import { SourcesStore } from './dataStores/SourcesStore'
 import { TagsStore } from './dataStores/TagsStore'
 import { UserGroupsStore } from './dataStores/UserGroupsStore'
 import { UsersStore } from './dataStores/UsersStore'
-import { ValuesStore } from './dataStores/ValuesStore'
 
 import { logger } from '@/services/logger'
-import { calculateDelay, parseRetryAfter, shouldRetry } from '@/utils/retry'
-import { RETRY_CONFIG } from '@/config/retryConfig'
 
 const debug = false
 const log = (...text: unknown[]) => {
@@ -74,7 +71,6 @@ export class AppStore {
 	tagsStore: TagsStore
 	blocksStore: BlocksStore
 	sourcesStore: SourcesStore
-	valuesStore: ValuesStore
 	usersStore: UsersStore
 	userGroupsStore: UserGroupsStore
 
@@ -90,7 +86,6 @@ export class AppStore {
 		this.tagsStore = new TagsStore(this.api)
 		this.blocksStore = new BlocksStore(this.api)
 		this.sourcesStore = new SourcesStore(this.api)
-		this.valuesStore = new ValuesStore(this.api)
 		this.usersStore = new UsersStore(this.api)
 		this.userGroupsStore = new UserGroupsStore(this.api)
 
@@ -151,44 +146,8 @@ export class AppStore {
 				this.setConnectionStatus(error.request?.status !== 0 /*  || error.code === 'ERR_NETWORK' */)
 
 				const statusCode = error.response?.status
-				const config = error.config as InternalAxiosRequestConfig & { __retryCount?: number }
+				const config = error.config as InternalAxiosRequestConfig
 
-				// Инициализируем счетчик попыток, если его еще нет
-				if (!config.__retryCount) {
-					config.__retryCount = 0
-				}
-
-				// Проверяем, нужно ли делать retry
-				if (shouldRetry(statusCode) && config.__retryCount < RETRY_CONFIG.MAX_RETRIES) {
-					config.__retryCount += 1
-
-					// Получаем Retry-After заголовок, если есть
-					const retryAfterHeader = error.response?.headers?.['retry-after']
-					const retryAfter = retryAfterHeader ? parseRetryAfter(retryAfterHeader) : null
-
-					// Вычисляем задержку
-					const delay = calculateDelay(config.__retryCount - 1, retryAfter)
-
-					// Логируем попытку
-					logger.warn(
-						`Retry attempt ${config.__retryCount}/${RETRY_CONFIG.MAX_RETRIES} for ${config.url} after ${delay}ms`,
-						{
-							component: 'AppStore',
-							method: 'responseInterceptor',
-							statusCode,
-							url: config.url,
-							attempt: config.__retryCount,
-						},
-					)
-
-					// Ждем перед следующей попыткой
-					await new Promise((resolve) => setTimeout(resolve, delay))
-
-					// Повторяем запрос
-					return api.instance(config)
-				}
-
-				// Если не нужно делать retry или попытки исчерпаны, обрабатываем ошибку как обычно
 				if (statusCode === 401 || statusCode === 400) {
 					this.setAuthenticated(false)
 					if (!config?.url?.endsWith('identify') && this.notify)

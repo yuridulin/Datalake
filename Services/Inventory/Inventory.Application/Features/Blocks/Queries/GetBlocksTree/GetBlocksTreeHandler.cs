@@ -4,23 +4,23 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Blocks.Queries.GetBlocksTree;
 
-public interface IGetBlocksTreeHandler : IQueryHandler<GetBlocksTreeQuery, IEnumerable<BlockTreeInfo>> { }
+public interface IGetBlocksTreeHandler : IQueryHandler<GetBlocksTreeQuery, List<BlockTreeInfo>> { }
 
 public class GetBlocksTreeHandler(
 	IGetBlocksWithTagsHandler getHandler) : IGetBlocksTreeHandler
 {
-	public async Task<IEnumerable<BlockTreeInfo>> HandleAsync(GetBlocksTreeQuery query, CancellationToken ct = default)
+	public async Task<List<BlockTreeInfo>> HandleAsync(GetBlocksTreeQuery query, CancellationToken ct = default)
 	{
 		var blocksWithTags = await getHandler.HandleAsync(new() { User = query.User, }, ct);
 
-		return BuildTree(blocksWithTags is BlockWithTagsInfo[] array ? array : blocksWithTags.ToArray());
+		return BuildTree(blocksWithTags);
 	}
 
-	public static BlockTreeInfo[] BuildTree(BlockWithTagsInfo[] flatArray)
+	public static List<BlockTreeInfo> BuildTree(List<BlockWithTagsInfo> flatArray)
 	{
 		var lookup = flatArray.ToLookup(b => b.ParentBlockId);
 
-		BlockTreeInfo[] BuildChildren(int? parentId)
+		List<BlockTreeInfo> BuildChildren(int? parentId)
 		{
 			return lookup[parentId]
 				.OrderBy(b => b.Name)
@@ -35,7 +35,7 @@ public class GetBlocksTreeHandler(
 					Tags = b.Tags,
 					Children = BuildChildren(b.Id)
 				})
-				.ToArray();
+				.ToList();
 		}
 
 		return BuildChildren(null);

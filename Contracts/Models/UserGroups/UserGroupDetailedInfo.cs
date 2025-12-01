@@ -12,17 +12,17 @@ public class UserGroupDetailedInfo : UserGroupInfo
 	/// Список пользователей этой группы
 	/// </summary>
 	[Required]
-	public required UserGroupMemberInfo[] Users { get; set; } = [];
+	public required List<UserGroupMemberInfo> Users { get; set; } = [];
 
 	/// <summary>
 	/// Список подгрупп этой группы
 	/// </summary>
 	[Required]
-	public required UserGroupSimpleInfo[] Subgroups { get; set; } = [];
+	public required List<UserGroupSimpleInfo> Subgroups { get; set; } = [];
 
 	/// <summary>
 	/// Разрешения, выданные на эту группу
 	/// </summary>
 	[Required]
-	public required AccessRightsForOneInfo[] AccessRights { get; set; } = [];
+	public required List<AccessRightsForOneInfo> AccessRights { get; set; } = [];
 }

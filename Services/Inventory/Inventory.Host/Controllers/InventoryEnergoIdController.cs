@@ -11,17 +11,16 @@ public class InventoryEnergoIdController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryEnergoIdControllerBase
 {
-	public override async Task<ActionResult<UserEnergoIdInfo[]>> GetEnergoIdAsync(
+	public override async Task<ActionResult<List<UserEnergoIdInfo>>> GetEnergoIdAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
 		var handler = serviceProvider.GetRequiredService<IGetEnergoIdHandler>();
 		var data = await handler.HandleAsync(new() { User = user }, ct);
-
 		return data;
 	}
 
-	public override async Task<ActionResult> UpdateEnergoIdAsync(
+	public override async Task<ActionResult<bool>> UpdateEnergoIdAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);

@@ -7,7 +7,7 @@ namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
 public class SourcesQueriesService(InventoryDbLinqContext context) : ISourcesQueriesService
 {
-	public async Task<SourceWithSettingsInfo[]> GetAllAsync(bool withCustom = false, CancellationToken ct = default)
+	public async Task<List<SourceWithSettingsInfo>> GetAllAsync(bool withCustom = false, CancellationToken ct = default)
 	{
 		var query =
 			from source in context.Sources
@@ -22,7 +22,7 @@ public class SourcesQueriesService(InventoryDbLinqContext context) : ISourcesQue
 				IsDisabled = source.IsDisabled,
 			};
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 
 	public async Task<SourceWithSettingsInfo?> GetByIdAsync(int sourceId, CancellationToken ct)
@@ -43,7 +43,7 @@ public class SourcesQueriesService(InventoryDbLinqContext context) : ISourcesQue
 		return await query.FirstOrDefaultAsync(ct);
 	}
 
-	public async Task<SourceTagInfo[]> GetSourceTagsAsync(int sourceId, CancellationToken ct)
+	public async Task<List<SourceTagInfo>> GetSourceTagsAsync(int sourceId, CancellationToken ct)
 	{
 		var query =
 			from tag in context.Tags
@@ -57,6 +57,6 @@ public class SourcesQueriesService(InventoryDbLinqContext context) : ISourcesQue
 				Type = tag.Type,
 			};
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 }

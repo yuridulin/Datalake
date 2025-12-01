@@ -5,7 +5,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
 
-public record GetTagsQuery : IQueryRequest<IEnumerable<TagSimpleInfo>>, IWithUserAccess
+public record GetTagsQuery : IQueryRequest<List<TagSimpleInfo>>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 

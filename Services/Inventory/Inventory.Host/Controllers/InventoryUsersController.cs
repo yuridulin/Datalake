@@ -37,7 +37,7 @@ public class InventoryUsersController(
 		return data;
 	}
 
-	public override async Task<ActionResult<IEnumerable<UserInfo>>> GetAsync(
+	public override async Task<ActionResult<List<UserInfo>>> GetAsync(
 		[FromQuery] Guid? userGuid,
 		CancellationToken ct = default)
 	{
@@ -67,7 +67,7 @@ public class InventoryUsersController(
 		return data;
 	}
 
-	public override async Task<ActionResult> UpdateAsync(
+	public override async Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		[BindRequired, FromBody] UserUpdateRequest request,
 		CancellationToken ct = default)
@@ -88,7 +88,7 @@ public class InventoryUsersController(
 		return data;
 	}
 
-	public override async Task<ActionResult> DeleteAsync(
+	public override async Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		CancellationToken ct = default)
 	{

@@ -12,7 +12,7 @@ import TagsTable from './TagsTable'
 const TagsManualList = observer(() => {
 	useDatalakeTitle('Теги', 'Мануальные')
 	const store = useAppStore()
-	const tags = store.tagsStore.getTags(SourceType.Manual)
+	const tags = store.tagsStore.manualTags
 	const [created, setCreated] = useState(null as TagSimpleInfo | null)
 	const hasLoadedRef = useRef(false)
 
@@ -36,7 +36,7 @@ const TagsManualList = observer(() => {
 	useEffect(() => {
 		if (hasLoadedRef.current) return
 		hasLoadedRef.current = true
-		store.tagsStore.refreshTags(SourceType.Manual)
+		store.tagsStore.refreshTags()
 	}, [store.tagsStore])
 
 	return (

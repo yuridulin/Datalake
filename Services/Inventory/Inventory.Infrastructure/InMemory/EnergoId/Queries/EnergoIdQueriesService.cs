@@ -8,7 +8,7 @@ public class EnergoIdQueriesService(
 	IInventoryStore inventoryCache,
 	IEnergoIdStore energoIdCache) : IEnergoIdQueriesService
 {
-	public Task<IEnumerable<UserEnergoIdInfo>> GetAsync(CancellationToken ct = default)
+	public Task<List<UserEnergoIdInfo>> GetAsync(CancellationToken ct = default)
 	{
 		var inventory = inventoryCache.State;
 		var energoId = energoIdCache.State;
@@ -25,8 +25,8 @@ public class EnergoIdQueriesService(
 				Email = x.Email ?? "нет адреса",
 				UserGuid = mappedToInventory.TryGetValue(x.Guid, out var userGuid) ? userGuid : null,
 			})
-			.ToArray();
+			.ToList();
 
-		return Task.FromResult<IEnumerable<UserEnergoIdInfo>>(users);
+		return Task.FromResult(users);
 	}
 }

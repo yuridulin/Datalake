@@ -40,7 +40,7 @@ public class InventorySourcesController(
 		return data;
 	}
 
-	public override async Task<ActionResult<IEnumerable<SourceWithSettingsInfo>>> GetAllAsync(
+	public override async Task<ActionResult<List<SourceWithSettingsInfo>>> GetAllAsync(
 		[FromQuery] bool withCustom = false,
 		CancellationToken ct = default)
 	{
@@ -51,7 +51,7 @@ public class InventorySourcesController(
 		return data;
 	}
 
-	public override async Task<ActionResult> UpdateAsync(
+	public override async Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] int sourceId,
 		[BindRequired, FromBody] SourceUpdateRequest request,
 		CancellationToken ct = default)
@@ -72,7 +72,7 @@ public class InventorySourcesController(
 		return data;
 	}
 
-	public override async Task<ActionResult> DeleteAsync(
+	public override async Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default)
 	{

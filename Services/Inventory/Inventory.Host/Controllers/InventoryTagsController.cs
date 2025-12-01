@@ -19,7 +19,7 @@ public class InventoryTagsController(
 	IServiceProvider serviceProvider,
 	IAuthenticator authenticator) : InventoryTagsControllerBase
 {
-	public override async Task<ActionResult<int>> CreateAsync(
+	public override async Task<ActionResult<TagSimpleInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default)
 	{
@@ -53,7 +53,7 @@ public class InventoryTagsController(
 	}
 
 
-	public override async Task<ActionResult<TagSimpleInfo[]>> GetAllAsync(
+	public override async Task<ActionResult<List<TagSimpleInfo>>> GetAllAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
@@ -74,7 +74,7 @@ public class InventoryTagsController(
 		return data;
 	}
 
-	public override async Task<ActionResult<TagWithSettingsInfo[]>> GetAllWithSettingsAsync(
+	public override async Task<ActionResult<List<TagWithSettingsInfo>>> GetAllWithSettingsAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
@@ -95,7 +95,7 @@ public class InventoryTagsController(
 		return data;
 	}
 
-	public override async Task<ActionResult> UpdateAsync(
+	public override async Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] int tagId,
 		[BindRequired, FromBody] TagUpdateRequest request,
 		CancellationToken ct = default)
@@ -140,7 +140,7 @@ public class InventoryTagsController(
 		return data;
 	}
 
-	public override async Task<ActionResult> DeleteAsync(
+	public override async Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] int tagId,
 		CancellationToken ct = default)
 	{

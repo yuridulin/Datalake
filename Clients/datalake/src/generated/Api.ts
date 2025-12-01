@@ -141,18 +141,19 @@ export class Api<
    * @name InventoryAccessSetBlockRules
    * @summary Изменение разрешений для блок
    * @request PUT:/api/v1/inventory/access/block/{blockId}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryAccessSetBlockRules = (
     blockId: number,
     data: InventoryAccessSetBlockRulesPayload,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/access/block/${blockId}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -162,18 +163,19 @@ export class Api<
    * @name InventoryAccessSetSourceRules
    * @summary Изменение разрешений на источник данных
    * @request PUT:/api/v1/inventory/access/source/{sourceId}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryAccessSetSourceRules = (
     sourceId: number,
     data: InventoryAccessSetSourceRulesPayload,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/access/source/${sourceId}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -183,18 +185,19 @@ export class Api<
    * @name InventoryAccessSetTagRules
    * @summary Изменение разрешений для тега
    * @request PUT:/api/v1/inventory/access/tag/{tagId}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryAccessSetTagRules = (
     tagId: number,
     data: InventoryAccessSetTagRulesPayload,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/access/tag/${tagId}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -204,18 +207,19 @@ export class Api<
    * @name InventoryAccessSetUserGroupRules
    * @summary Изменение разрешений для группы учетных записей
    * @request PUT:/api/v1/inventory/access/user-group/{userGroupGuid}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryAccessSetUserGroupRules = (
     userGroupGuid: string,
     data: InventoryAccessSetUserGroupRulesPayload,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/access/user-group/${userGroupGuid}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -225,18 +229,19 @@ export class Api<
    * @name InventoryAccessSetUserRules
    * @summary Изменение разрешений для учетной записи
    * @request PUT:/api/v1/inventory/access/user/{userGuid}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryAccessSetUserRules = (
     userGuid: string,
     data: InventoryAccessSetUserRulesPayload,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/access/user/${userGuid}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -354,18 +359,19 @@ export class Api<
    * @name InventoryBlocksUpdate
    * @summary Изменение блока
    * @request PUT:/api/v1/inventory/blocks/{blockId}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryBlocksUpdate = (
     blockId: number,
     data: BlockUpdateRequest,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/blocks/${blockId}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -375,12 +381,13 @@ export class Api<
    * @name InventoryBlocksDelete
    * @summary Удаление блока
    * @request DELETE:/api/v1/inventory/blocks/{blockId}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryBlocksDelete = (blockId: number, params: RequestParams = {}) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/blocks/${blockId}`,
       method: "DELETE",
+      format: "json",
       ...params,
     });
   /**
@@ -406,7 +413,7 @@ export class Api<
    * @name InventoryBlocksMove
    * @summary Перемещение блока
    * @request PUT:/api/v1/inventory/blocks/{blockId}/move
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryBlocksMove = (
     blockId: number,
@@ -419,10 +426,11 @@ export class Api<
     },
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/blocks/${blockId}/move`,
       method: "PUT",
       query: query,
+      format: "json",
       ...params,
     });
   /**
@@ -448,12 +456,13 @@ export class Api<
    * @name InventoryEnergoIdUpdateEnergoId
    * @summary Обновление данных из EnergoId
    * @request PUT:/api/v1/inventory/energo-id
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryEnergoIdUpdateEnergoId = (params: RequestParams = {}) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/energo-id`,
       method: "PUT",
+      format: "json",
       ...params,
     });
   /**
@@ -521,18 +530,19 @@ export class Api<
    * @name InventorySourcesUpdate
    * @summary Изменение источника
    * @request PUT:/api/v1/inventory/sources/{sourceId}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventorySourcesUpdate = (
     sourceId: number,
     data: SourceUpdateRequest,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/sources/${sourceId}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -542,12 +552,13 @@ export class Api<
    * @name InventorySourcesDelete
    * @summary Удаление источника
    * @request DELETE:/api/v1/inventory/sources/{sourceId}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventorySourcesDelete = (sourceId: number, params: RequestParams = {}) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/sources/${sourceId}`,
       method: "DELETE",
+      format: "json",
       ...params,
     });
   /**
@@ -573,17 +584,18 @@ export class Api<
    * @name InventorySystemUpdateSettings
    * @summary Изменение информации о настройках сервера
    * @request PUT:/api/v1/inventory/system/settings
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventorySystemUpdateSettings = (
     data: SettingsInfo,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/system/settings`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -593,12 +605,13 @@ export class Api<
    * @name InventorySystemRestartState
    * @summary Принудительная перезагрузка состояния БД в кэш
    * @request POST:/api/v1/inventory/system/cache
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventorySystemRestartState = (params: RequestParams = {}) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/system/cache`,
       method: "POST",
+      format: "json",
       ...params,
     });
   /**
@@ -608,10 +621,10 @@ export class Api<
    * @name InventoryTagsCreate
    * @summary Создание нового тега
    * @request POST:/api/v1/inventory/tags
-   * @response `200` `TagWithSettingsInfo` Идентификатор нового тега в локальной базе данных
+   * @response `200` `TagSimpleInfo` Идентификатор нового тега в локальной базе данных
    */
   inventoryTagsCreate = (data: TagCreateRequest, params: RequestParams = {}) =>
-    this.request<TagWithSettingsInfo, any>({
+    this.request<TagSimpleInfo, any>({
       path: `/api/v1/inventory/tags`,
       method: "POST",
       body: data,
@@ -677,18 +690,19 @@ export class Api<
    * @name InventoryTagsUpdate
    * @summary Изменение тега
    * @request PUT:/api/v1/inventory/tags/{tagId}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryTagsUpdate = (
     tagId: number,
     data: TagUpdateRequest,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/tags/${tagId}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -698,12 +712,13 @@ export class Api<
    * @name InventoryTagsDelete
    * @summary Удаление тега
    * @request DELETE:/api/v1/inventory/tags/{tagId}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryTagsDelete = (tagId: number, params: RequestParams = {}) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/tags/${tagId}`,
       method: "DELETE",
+      format: "json",
       ...params,
     });
   /**
@@ -818,18 +833,19 @@ export class Api<
    * @name InventoryUserGroupsUpdate
    * @summary Изменение группы пользователей
    * @request PUT:/api/v1/inventory/user-groups/{userGroupGuid}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryUserGroupsUpdate = (
     userGroupGuid: string,
     data: UserGroupUpdateRequest,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/user-groups/${userGroupGuid}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -839,15 +855,16 @@ export class Api<
    * @name InventoryUserGroupsDelete
    * @summary Удаление группы пользователей
    * @request DELETE:/api/v1/inventory/user-groups/{userGroupGuid}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryUserGroupsDelete = (
     userGroupGuid: string,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/user-groups/${userGroupGuid}`,
       method: "DELETE",
+      format: "json",
       ...params,
     });
   /**
@@ -876,7 +893,7 @@ export class Api<
    * @name InventoryUserGroupsMove
    * @summary Перемещение группы пользователей
    * @request PUT:/api/v1/inventory/user-groups/{groupGuid}/move
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryUserGroupsMove = (
     groupGuid: string,
@@ -889,10 +906,11 @@ export class Api<
     },
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/user-groups/${groupGuid}/move`,
       method: "PUT",
       query: query,
+      format: "json",
       ...params,
     });
   /**
@@ -968,18 +986,19 @@ export class Api<
    * @name InventoryUsersUpdate
    * @summary Изменение пользователя
    * @request PUT:/api/v1/inventory/users/{userGuid}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryUsersUpdate = (
     userGuid: string,
     data: UserUpdateRequest,
     params: RequestParams = {},
   ) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/users/${userGuid}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
+      format: "json",
       ...params,
     });
   /**
@@ -989,12 +1008,13 @@ export class Api<
    * @name InventoryUsersDelete
    * @summary Удаление пользователя
    * @request DELETE:/api/v1/inventory/users/{userGuid}
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   inventoryUsersDelete = (userGuid: string, params: RequestParams = {}) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/inventory/users/${userGuid}`,
       method: "DELETE",
+      format: "json",
       ...params,
     });
   /**
@@ -1041,12 +1061,13 @@ export class Api<
    * @name DataSystemRestartCollection
    * @summary Перезапуск системы сбора данных
    * @request POST:/api/v1/data/system
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   dataSystemRestartCollection = (params: RequestParams = {}) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/data/system`,
       method: "POST",
+      format: "json",
       ...params,
     });
   /**
@@ -1189,12 +1210,13 @@ export class Api<
    * @name AuthLogout
    * @summary Delete: Закрытие уканной сессии пользователя
    * @request DELETE:/api/v1/gateway/sessions
-   * @response `200` `File`
+   * @response `200` `boolean`
    */
   authLogout = (params: RequestParams = {}) =>
-    this.request<File, any>({
+    this.request<boolean, any>({
       path: `/api/v1/gateway/sessions`,
       method: "DELETE",
+      format: "json",
       ...params,
     });
   /**

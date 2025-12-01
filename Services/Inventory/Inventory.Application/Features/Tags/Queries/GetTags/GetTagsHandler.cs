@@ -5,11 +5,11 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Tags.Queries.GetTags;
 
-public interface IGetTagsHandler : IQueryHandler<GetTagsQuery, IEnumerable<TagSimpleInfo>> { }
+public interface IGetTagsHandler : IQueryHandler<GetTagsQuery, List<TagSimpleInfo>> { }
 
 public class GetTagsHandler(ITagsQueriesService tagsQueriesService) : IGetTagsHandler
 {
-	public async Task<IEnumerable<TagSimpleInfo>> HandleAsync(GetTagsQuery query, CancellationToken ct = default)
+	public async Task<List<TagSimpleInfo>> HandleAsync(GetTagsQuery query, CancellationToken ct = default)
 	{
 		var data = await tagsQueriesService.GetAsync(
 			query.SpecificIdentifiers,

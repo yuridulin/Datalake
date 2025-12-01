@@ -5,12 +5,12 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Audit.Queries.GetAudit;
 
-public interface IGetAuditHandler : IQueryHandler<GetAuditQuery, IEnumerable<LogInfo>> { }
+public interface IGetAuditHandler : IQueryHandler<GetAuditQuery, List<LogInfo>> { }
 
 [Scoped]
 public class GetAuditHandler(IAuditQueriesService auditQueriesService) : IGetAuditHandler
 {
-	public Task<IEnumerable<LogInfo>> HandleAsync(GetAuditQuery query, CancellationToken ct = default)
+	public Task<List<LogInfo>> HandleAsync(GetAuditQuery query, CancellationToken ct = default)
 	{
 		return auditQueriesService.GetAsync(
 			query.LastId,

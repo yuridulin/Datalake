@@ -37,7 +37,7 @@ public class InventoryBlocksController(
 		return key;
 	}
 
-	public override async Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
+	public override async Task<ActionResult<List<BlockWithTagsInfo>>> GetAllAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -58,7 +58,7 @@ public class InventoryBlocksController(
 		return data;
 	}
 
-	public override async Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync(
+	public override async Task<ActionResult<List<BlockTreeInfo>>> GetTreeAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);
@@ -68,7 +68,7 @@ public class InventoryBlocksController(
 		return data;
 	}
 
-	public override async Task<ActionResult> UpdateAsync(
+	public override async Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] int blockId,
 		[BindRequired, FromBody] BlockUpdateRequest request,
 		CancellationToken ct = default)
@@ -85,7 +85,7 @@ public class InventoryBlocksController(
 		return data;
 	}
 
-	public override async Task<ActionResult> MoveAsync(
+	public override async Task<ActionResult<bool>> MoveAsync(
 		[BindRequired, FromRoute] int blockId,
 		[FromQuery] int? parentId,
 		CancellationToken ct = default)
@@ -97,7 +97,7 @@ public class InventoryBlocksController(
 		return data;
 	}
 
-	public override async Task<ActionResult> DeleteAsync(
+	public override async Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] int blockId,
 		CancellationToken ct = default)
 	{

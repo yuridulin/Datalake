@@ -4,7 +4,7 @@ import PollingLoader from '@/app/components/loaders/PollingLoader'
 import TagReceiveStateEl from '@/app/components/TagReceiveStateEl'
 import TagCompactValue from '@/app/components/values/TagCompactValue'
 import { compareDateStrings, compareRecords } from '@/functions/compareValues'
-import { SourceSimpleInfo, TagQuality, TagSimpleInfo, TagStatusInfo } from '@/generated/data-contracts'
+import { SourceSimpleInfo, TagQuality, TagSimpleInfo, TagStatusInfo, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
@@ -22,55 +22,40 @@ interface TagsTableProps {
 const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showState = false }: TagsTableProps) => {
 	const store = useAppStore()
 	const [viewingTags, setViewingTags] = useState(tags)
-	const [search, setSearch] = useState('')
+	const tagsId = useMemo(() => viewingTags.map((x) => x.id), [viewingTags])
 
-	// Получаем значения и статусы из store (реактивно через MobX)
-	const tagIds = useMemo(() => viewingTags.map((x) => x.id), [viewingTags])
-	const valuesRequest = useMemo(
-		() => [{ requestKey: CLIENT_REQUESTKEY, tagsId: tagIds }],
-		[tagIds],
-	)
-	const valuesResponse = useMemo(
-		() => (tagIds.length > 0 ? store.valuesStore.getValues(valuesRequest) : []),
-		[tagIds.length, valuesRequest, store.valuesStore],
-	)
-	const values = useMemo(() => {
-		if (valuesResponse.length === 0) return {}
-		return Object.fromEntries(valuesResponse[0].tags.map((x) => [x.id, x.values[0]]))
-	}, [valuesResponse])
+	// Значения
+	const [values, setValues] = useState(new Map<number, ValueRecord>())
 
-	// Получаем статусы только если они отображаются
-	const statuses = useMemo(
-		() => (showState ? store.valuesStore.getStatus(tagIds) : {}),
-		[showState, tagIds, store.valuesStore],
-	)
-	const states = useMemo(() => {
-		if (!showState) return {}
-		const statesMap: Record<number, TagStatusInfo> = {}
-		tagIds.forEach((tagId) => {
-			const status = statuses[tagId]
-			if (status) {
-				statesMap[tagId] = {
-					tagId,
-					status,
-					isError: status !== 'Ok',
+	// Состояния расчета
+	const [collectStates, setCollectStates] = useState(new Map<number, TagStatusInfo>())
+
+	// Функция обновления
+	const pollingFunc = useCallback(() => {
+		store.api
+			.dataValuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: tagsId }])
+			.then((res) => {
+				const map = new Map<number, ValueRecord>()
+				for (const tagWithValue of res.data[0].tags) {
+					map.set(tagWithValue.id, tagWithValue.values[0])
 				}
+				setValues(map)
+			})
+			.catch(() => {
+				store.notify?.warning({ message: 'Ошибка при получении значений' })
+			})
+
+		store.api.dataTagsGetStatus({ tagsId: tagsId }).then((res) => {
+			const map = new Map<number, TagStatusInfo>()
+			for (const state of res.data) {
+				map.set(state.tagId, state)
 			}
+			setCollectStates(map)
 		})
-		return statesMap
-	}, [statuses, tagIds, showState])
+	}, [store.api, tagsId, store.notify])
 
-	const loadValues = useCallback(() => {
-		if (tagIds.length === 0) return
-		store.valuesStore.refreshValues(valuesRequest)
-		// Запрашиваем статусы только если они отображаются
-		if (showState) {
-			store.valuesStore.refreshStatus(tagIds)
-		}
-	}, [store.valuesStore, valuesRequest, tagIds, showState])
-
-	// Получаем источники из store (реактивно через MobX)
-	const sourcesData = store.sourcesStore.getSources()
+	// Данные о источниках
+	const sourcesData = store.sourcesStore.sources
 	const sources = useMemo(() => {
 		if (hideSource) return {}
 		const map: Record<number, SourceSimpleInfo> = {}
@@ -86,16 +71,19 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 		return map
 	}, [sourcesData, hideSource])
 
+	// Работа с поиском
+	const [search, setSearch] = useState('')
 	const doSearch = useCallback(() => {
 		setViewingTags(
 			search.length > 0 ? tags.filter((x) => !!x.name && x.name.toLowerCase().includes(search.toLowerCase())) : tags,
 		)
 	}, [search, tags])
-
 	useEffect(doSearch, [doSearch, search, tags])
+
+	// Рендер
 	return (
 		<>
-			{viewingTags.length ? <PollingLoader pollingFunction={loadValues} interval={5000} /> : <></>}
+			{viewingTags.length ? <PollingLoader pollingFunction={pollingFunc} interval={5000} /> : <></>}
 			<Table size='small' dataSource={viewingTags} showSorterTooltip={false} rowKey='id'>
 				<Column<TagSimpleInfo>
 					title={
@@ -159,9 +147,10 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 						<Column<TagSimpleInfo>
 							title='Значение'
 							width='12em'
-							sorter={(a: TagSimpleInfo, b: TagSimpleInfo) => compareRecords(values[a.id], values[b.id])}
+							sorter={(a: TagSimpleInfo, b: TagSimpleInfo) => compareRecords(values.get(a.id), values.get(b.id))}
 							render={(_, record: TagSimpleInfo) => {
-								const value = values[record.id]
+								const value = values.get(record.id)
+								if (!value) return <></>
 								return (
 									<TagCompactValue
 										record={value}
@@ -175,10 +164,10 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 							title='Дата записи'
 							width='13em'
 							sorter={(a: TagSimpleInfo, b: TagSimpleInfo) =>
-								compareDateStrings(values[a.id]?.date, values[b.id]?.date)
+								compareDateStrings(values.get(a.id)?.date, values.get(b.id)?.date)
 							}
 							render={(_, record: TagSimpleInfo) => {
-								const value = values[record.id]
+								const value = values.get(record.id)
 								return value?.date
 							}}
 						/>
@@ -189,15 +178,15 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 						title='Последний расчет'
 						width='25em'
 						sorter={(a: TagSimpleInfo, b: TagSimpleInfo) => {
-							const stateA = states[a.id]
-							const stateB = states[b.id]
-							const statusA = stateA?.isError ? stateA.status ?? '' : ''
-							const statusB = stateB?.isError ? stateB.status ?? '' : ''
+							const stateA = collectStates.get(a.id)
+							const stateB = collectStates.get(b.id)
+							const statusA = stateA?.isError ? (stateA.status ?? '') : ''
+							const statusB = stateB?.isError ? (stateB.status ?? '') : ''
 							return statusA.localeCompare(statusB)
 						}}
 						render={(_, record: TagSimpleInfo) => {
-							const state = states[record.id]
-							const errorMessage = state?.isError ? state.status ?? undefined : undefined
+							const state = collectStates.get(record.id)
+							const errorMessage = state?.isError ? (state.status ?? undefined) : undefined
 							return <TagReceiveStateEl receiveState={errorMessage} />
 						}}
 					/>

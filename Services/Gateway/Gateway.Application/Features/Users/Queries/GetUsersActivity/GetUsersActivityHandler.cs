@@ -6,14 +6,14 @@ using Datalake.Shared.Application.Interfaces.AccessRules;
 
 namespace Datalake.Gateway.Application.Features.Users.Queries.GetUsersActivity;
 
-public interface IGetUsersActivityHandler : IQueryHandler<GetUsersActivityQuery, IDictionary<Guid, DateTime?>> { }
+public interface IGetUsersActivityHandler : IQueryHandler<GetUsersActivityQuery, Dictionary<Guid, DateTime?>> { }
 
 public class GetUsersActivityHandler(
 	ISessionsService sessionsService,
 	IUsersAccessStore userAccessStore,
 	IUsersActivityStore usersActivityService) : IGetUsersActivityHandler
 {
-	public async Task<IDictionary<Guid, DateTime?>> HandleAsync(GetUsersActivityQuery query, CancellationToken ct = default)
+	public async Task<Dictionary<Guid, DateTime?>> HandleAsync(GetUsersActivityQuery query, CancellationToken ct = default)
 	{
 		var sessionInfo = await sessionsService.GetAsync(query.Token, ct);
 		var user = userAccessStore.Get(sessionInfo.UserGuid)

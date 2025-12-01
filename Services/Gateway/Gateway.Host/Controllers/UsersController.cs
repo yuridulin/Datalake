@@ -20,7 +20,7 @@ public class UsersController(
 	/// </summary>
 	/// <param name="users">Идентификаторы запрошенных пользователей</param>
 	[HttpPost("activity")]
-	public async Task<ActionResult<IDictionary<Guid, DateTime?>>> GetActivityAsync(
+	public async Task<ActionResult<Dictionary<Guid, DateTime?>>> GetActivityAsync(
 		[FromBody, BindRequired] IEnumerable<Guid> users)
 	{
 		var token = tokenExtractor.ExtractToken(HttpContext);

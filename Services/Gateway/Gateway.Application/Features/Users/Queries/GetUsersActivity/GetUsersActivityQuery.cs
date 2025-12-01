@@ -2,7 +2,7 @@
 
 namespace Datalake.Gateway.Application.Features.Users.Queries.GetUsersActivity;
 
-public record GetUsersActivityQuery : IQueryRequest<IDictionary<Guid, DateTime?>>
+public record GetUsersActivityQuery : IQueryRequest<Dictionary<Guid, DateTime?>>
 {
 	public required string Token { get; init; }
 

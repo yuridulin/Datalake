@@ -23,7 +23,7 @@ public class InventorySystemController(
 		return data;
 	}
 
-	public override async Task<ActionResult> UpdateSettingsAsync(
+	public override async Task<ActionResult<bool>> UpdateSettingsAsync(
 		[BindRequired][FromBody] SettingsInfo newSettings,
 		CancellationToken ct = default)
 	{
@@ -39,7 +39,7 @@ public class InventorySystemController(
 		return data;
 	}
 
-	public override async Task<ActionResult> RestartStateAsync(
+	public override async Task<ActionResult<bool>> RestartStateAsync(
 		CancellationToken ct = default)
 	{
 		var user = authenticator.Authenticate(HttpContext);

@@ -693,6 +693,34 @@ export interface SettingsInfo {
   instanceName: string;
 }
 
+export interface TagCreateRequest {
+  name?: string | null;
+  /**
+   * Тип данных
+   *
+   * 0 = String
+   * 1 = Number
+   * 2 = Boolean
+   */
+  tagType: TagType;
+  /** @format int32 */
+  sourceId?: number | null;
+  sourceItem?: string | null;
+  /** @format int32 */
+  blockId?: number | null;
+}
+
+export type TagWithSettingsAndBlocksInfo = TagWithSettingsInfo & {
+  blocks: TagBlockRelationInfo[];
+};
+
+export interface TagBlockRelationInfo {
+  /** @format int32 */
+  relationId: number;
+  localName?: string | null;
+  block?: BlockSimpleInfo | null;
+}
+
 export type TagWithSettingsInfo = TagSimpleInfo & {
   sourceItem?: string | null;
   sourceName?: string | null;
@@ -732,34 +760,6 @@ export interface TagInputInfo {
   /** @format int32 */
   blockId?: number | null;
   tag?: TagSimpleInfo | null;
-}
-
-export interface TagCreateRequest {
-  name?: string | null;
-  /**
-   * Тип данных
-   *
-   * 0 = String
-   * 1 = Number
-   * 2 = Boolean
-   */
-  tagType: TagType;
-  /** @format int32 */
-  sourceId?: number | null;
-  sourceItem?: string | null;
-  /** @format int32 */
-  blockId?: number | null;
-}
-
-export type TagWithSettingsAndBlocksInfo = TagWithSettingsInfo & {
-  blocks: TagBlockRelationInfo[];
-};
-
-export interface TagBlockRelationInfo {
-  /** @format int32 */
-  relationId: number;
-  localName?: string | null;
-  block?: BlockSimpleInfo | null;
 }
 
 export interface TagUpdateRequest {
@@ -1037,10 +1037,13 @@ export interface ValueRecord {
 
 export interface TagStatusInfo {
   /** @format int32 */
-  tagId?: number;
-  /** @format date-time */
-  date?: string;
-  isError?: boolean;
+  tagId: number;
+  /**
+   * @format date-time
+   * @minLength 1
+   */
+  date: string;
+  isError: boolean;
   status?: string | null;
 }
 
@@ -1051,10 +1054,14 @@ export interface TagMetricRequest {
 
 export interface TagUsageInfo {
   /** @format int32 */
-  tagId?: number;
-  /** @format date-time */
-  date?: string;
-  request?: string;
+  tagId: number;
+  /**
+   * @format date-time
+   * @minLength 1
+   */
+  date: string;
+  /** @minLength 1 */
+  request: string;
 }
 
 export interface ValuesResponse {

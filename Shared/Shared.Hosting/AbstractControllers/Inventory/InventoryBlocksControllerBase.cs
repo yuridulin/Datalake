@@ -32,7 +32,7 @@ public abstract class InventoryBlocksControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список блоков</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<BlockWithTagsInfo[]>> GetAllAsync(
+	public abstract Task<ActionResult<List<BlockWithTagsInfo>>> GetAllAsync(
 		CancellationToken ct = default);
 
 	/// <summary>
@@ -52,7 +52,7 @@ public abstract class InventoryBlocksControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список обособленных блоков с вложенными блоками</returns>
 	[HttpGet("tree")]
-	public abstract Task<ActionResult<BlockTreeInfo[]>> GetTreeAsync(
+	public abstract Task<ActionResult<List<BlockTreeInfo>>> GetTreeAsync(
 		CancellationToken ct = default);
 
 	/// <summary>
@@ -62,7 +62,7 @@ public abstract class InventoryBlocksControllerBase : ControllerBase
 	/// <param name="request">Новые данные блока</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{blockId}")]
-	public abstract Task<ActionResult> UpdateAsync(
+	public abstract Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] int blockId,
 		[BindRequired, FromBody] BlockUpdateRequest request,
 		CancellationToken ct = default);
@@ -74,7 +74,7 @@ public abstract class InventoryBlocksControllerBase : ControllerBase
 	/// <param name="parentId">Идентификатор родительского блока</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{blockId}/move")]
-	public abstract Task<ActionResult> MoveAsync(
+	public abstract Task<ActionResult<bool>> MoveAsync(
 		[BindRequired, FromRoute] int blockId,
 		[FromQuery] int? parentId,
 		CancellationToken ct = default);
@@ -85,7 +85,7 @@ public abstract class InventoryBlocksControllerBase : ControllerBase
 	/// <param name="blockId">Идентификатор блока</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpDelete("{blockId}")]
-	public abstract Task<ActionResult> DeleteAsync(
+	public abstract Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] int blockId,
 		CancellationToken ct = default);
 }

@@ -40,7 +40,7 @@ public abstract class InventorySourcesControllerBase : ControllerBase
 	/// <param name="ct">Токен отмены</param>
 	/// <returns>Список источников</returns>
 	[HttpGet]
-	public abstract Task<ActionResult<IEnumerable<SourceWithSettingsInfo>>> GetAllAsync(
+	public abstract Task<ActionResult<List<SourceWithSettingsInfo>>> GetAllAsync(
 		[FromQuery] bool withCustom = false,
 		CancellationToken ct = default);
 
@@ -51,7 +51,7 @@ public abstract class InventorySourcesControllerBase : ControllerBase
 	/// <param name="request">Новые данные источника</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpPut("{sourceId}")]
-	public abstract Task<ActionResult> UpdateAsync(
+	public abstract Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] int sourceId,
 		[BindRequired, FromBody] SourceUpdateRequest request,
 		CancellationToken ct = default);
@@ -62,7 +62,7 @@ public abstract class InventorySourcesControllerBase : ControllerBase
 	/// <param name="sourceId">Идентификатор источника</param>
 	/// <param name="ct">Токен отмены</param>
 	[HttpDelete("{sourceId}")]
-	public abstract Task<ActionResult> DeleteAsync(
+	public abstract Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default);
 }

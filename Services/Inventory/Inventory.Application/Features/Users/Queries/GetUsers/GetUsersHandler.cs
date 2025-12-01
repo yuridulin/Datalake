@@ -5,12 +5,12 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Users.Queries.GetUsers;
 
-public interface IGetUsersHandler : IQueryHandler<GetUsersQuery, IEnumerable<UserInfo>> { }
+public interface IGetUsersHandler : IQueryHandler<GetUsersQuery, List<UserInfo>> { }
 
 public class GetUsersHandler(
 	IUsersQueriesService usersQueriesService) : IGetUsersHandler
 {
-	public async Task<IEnumerable<UserInfo>> HandleAsync(GetUsersQuery query, CancellationToken ct = default)
+	public async Task<List<UserInfo>> HandleAsync(GetUsersQuery query, CancellationToken ct = default)
 	{
 		query.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 

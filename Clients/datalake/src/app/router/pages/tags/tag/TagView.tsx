@@ -18,6 +18,7 @@ import {
 	SourceType,
 	TagAggregation,
 	TagResolution,
+	TagUsageInfo,
 } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
@@ -33,12 +34,11 @@ const TagView = observer(() => {
 	const store = useAppStore()
 	const { id } = useParams()
 	const navigate = useNavigate()
-	const [metrics, setMetrics] = useState({} as Record<string, string>)
+	const [metrics, setMetrics] = useState([] as TagUsageInfo[])
 
 	// Получаем тег из store (реактивно через MobX)
 	const tagId = id ? Number(id) : undefined
 	const tag = tagId ? store.tagsStore.getTagById(tagId) : undefined
-	const isLoading = tagId ? store.tagsStore.isLoadingTag(tagId) : false
 
 	// Получаем источник из store, если sourceId > 0 (не системный источник)
 	const source = tag?.sourceId && tag.sourceId > 0 ? store.sourcesStore.getSourceById(tag.sourceId) : undefined
@@ -60,10 +60,9 @@ const TagView = observer(() => {
 		store.api
 			.dataTagsGetUsage({ tagsId: [tagId] })
 			.then((res) => {
-				const tagUsage = res.data?.find((item) => item.tagId === tagId)
-				setMetrics(tagUsage?.requests ?? {})
+				setMetrics(res.data)
 			})
-			.catch(() => setMetrics({}))
+			.catch(() => setMetrics([]))
 	}, [store.api, tagId])
 
 	const info: InfoTableProps['items'] = useMemo(() => {
@@ -84,10 +83,9 @@ const TagView = observer(() => {
 					}
 				/>
 			),
-			'Интервал обновления':
-				tag.sourceId !== SourceType.Manual && tag.sourceId !== SourceType.Calculated && (
-					<TagResolutionEl resolution={tag.resolution} full={true} />
-				),
+			'Интервал обновления': tag.sourceId !== SourceType.Manual && tag.sourceId !== SourceType.Calculated && (
+				<TagResolutionEl resolution={tag.resolution} full={true} />
+			),
 		}
 
 		if (tag.sourceId === SourceType.Aggregated) {
@@ -160,8 +158,7 @@ const TagView = observer(() => {
 									title: 'Блок',
 									dataIndex: 'id',
 									width: '40%',
-									render: (_, relation) =>
-										relation.block ? <BlockButton block={relation.block} /> : <i>нет</i>,
+									render: (_, relation) => (relation.block ? <BlockButton block={relation.block} /> : <i>нет</i>),
 								},
 								{
 									key: 'name',
@@ -217,10 +214,10 @@ const TagView = observer(() => {
 								},
 							},
 						]}
-						dataSource={Object.entries(metrics)
-							.map(([requestKey, date]) => ({
-								date: dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
-								requestKey: requestKey,
+						dataSource={metrics
+							.map((usage) => ({
+								date: dayjs(usage.date).format('YYYY-MM-DD HH:mm:ss'),
+								requestKey: usage.request,
 							}))
 							// внутренние запросы, игнорируем их
 							.filter((x) => CLIENT_REQUESTKEY != x.requestKey)}
@@ -246,10 +243,6 @@ const TagView = observer(() => {
 	}, [tag, metrics, tagId, relations, tagMapping])
 
 	if (!tagId) {
-		return <Spin />
-	}
-
-	if (isLoading && !tag) {
 		return <Spin />
 	}
 

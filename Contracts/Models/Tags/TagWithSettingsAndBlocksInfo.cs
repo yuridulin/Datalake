@@ -11,5 +11,5 @@ public class TagWithSettingsAndBlocksInfo : TagWithSettingsInfo
 	/// Список блоков, в которых используется этот тег
 	/// </summary>
 	[Required]
-	public required TagBlockRelationInfo[] Blocks { get; set; }
+	public required List<TagBlockRelationInfo> Blocks { get; set; }
 }

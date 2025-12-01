@@ -1,6 +1,6 @@
 import routes from '@/app/router/routes'
 import { logger } from '@/services/logger'
-import { appStore } from '@/store/AppStore'
+import { appStore } from '@/store/appStore'
 import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
 // мы передаем с сервера определенные в настройках в БД данные о сервере keycloak для внешней авторизации

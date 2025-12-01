@@ -5,12 +5,12 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.EnergoId.Queries.GetEnergoId;
 
-public interface IGetEnergoIdHandler : IQueryHandler<GetEnergoIdQuery, IEnumerable<UserEnergoIdInfo>> { }
+public interface IGetEnergoIdHandler : IQueryHandler<GetEnergoIdQuery, List<UserEnergoIdInfo>> { }
 
 public class GetEnergoIdHandler(
 	IEnergoIdQueriesService energoIdQueriesService) : IGetEnergoIdHandler
 {
-	public async Task<IEnumerable<UserEnergoIdInfo>> HandleAsync(GetEnergoIdQuery query, CancellationToken ct = default)
+	public async Task<List<UserEnergoIdInfo>> HandleAsync(GetEnergoIdQuery query, CancellationToken ct = default)
 	{
 		query.User.ThrowIfNoGlobalAccess(AccessType.Manager);
 

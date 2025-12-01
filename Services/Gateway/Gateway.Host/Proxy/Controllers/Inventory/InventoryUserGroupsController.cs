@@ -17,14 +17,14 @@ public class InventoryUserGroupsController(InventoryReverseProxyService proxySer
 			=> proxyService.ProxyAsync<Guid>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<IEnumerable<UserGroupInfo>>> GetAllAsync(
+	public override Task<ActionResult<List<UserGroupInfo>>> GetAllAsync(
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IEnumerable<UserGroupInfo>>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<UserGroupInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<UserGroupTreeInfo[]>> GetTreeAsync(
+	public override Task<ActionResult<List<UserGroupTreeInfo>>> GetTreeAsync(
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<UserGroupTreeInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<UserGroupTreeInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<UserGroupInfo>> GetAsync(
@@ -39,22 +39,22 @@ public class InventoryUserGroupsController(InventoryReverseProxyService proxySer
 			=> proxyService.ProxyAsync<UserGroupDetailedInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> MoveAsync(
+	public override Task<ActionResult<bool>> MoveAsync(
 		[BindRequired, FromRoute] Guid groupGuid,
 		[FromQuery] Guid? parentGuid,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> UpdateAsync(
+	public override Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] Guid userGroupGuid,
 		[BindRequired, FromBody] UserGroupUpdateRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, request, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> DeleteAsync(
+	public override Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] Guid userGroupGuid,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, ct);
 }

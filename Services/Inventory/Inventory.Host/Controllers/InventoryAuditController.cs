@@ -9,7 +9,7 @@ namespace Datalake.Inventory.Host.Controllers;
 public class InventoryAuditController(
 	IServiceProvider serviceProvider) : InventoryAuditControllerBase
 {
-	public override async Task<ActionResult<IEnumerable<LogInfo>>> GetAsync(
+	public override async Task<ActionResult<List<LogInfo>>> GetAsync(
 		[FromQuery] int? lastId = null,
 		[FromQuery] int? firstId = null,
 		[FromQuery] int? take = null,

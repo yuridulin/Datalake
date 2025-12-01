@@ -6,12 +6,12 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.Sources.Queries.GetSourcesWithSettings;
 
-public interface IGetSourcesWithSettingsHandler : IQueryHandler<GetSourcesWithSettingsQuery, IEnumerable<SourceWithSettingsInfo>> { }
+public interface IGetSourcesWithSettingsHandler : IQueryHandler<GetSourcesWithSettingsQuery, List<SourceWithSettingsInfo>> { }
 
 public class GetSourcesWithSettingsHandler(
 	ISourcesQueriesService sourceQueriesService) : IGetSourcesWithSettingsHandler
 {
-	public async Task<IEnumerable<SourceWithSettingsInfo>> HandleAsync(GetSourcesWithSettingsQuery query, CancellationToken ct = default)
+	public async Task<List<SourceWithSettingsInfo>> HandleAsync(GetSourcesWithSettingsQuery query, CancellationToken ct = default)
 	{
 		var sources = await sourceQueriesService.GetAllAsync(query.WithCustom, ct);
 

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Application.Features.Blocks.Commands.UpdateBlock;
 
-public interface IUpdateBlockHandler : ICommandHandler<UpdateBlockCommand, int> { }
+public interface IUpdateBlockHandler : ICommandHandler<UpdateBlockCommand, bool> { }
 
 public class UpdateBlockHandler(
 	IBlocksRepository blocksRepository,
@@ -18,7 +18,7 @@ public class UpdateBlockHandler(
 	IUnitOfWork unitOfWork,
 	IInventoryStore inventoryCache,
 	ILogger<UpdateBlockHandler> logger) :
-		TransactionalCommandHandler<UpdateBlockCommand, int>(unitOfWork, logger, inventoryCache),
+		TransactionalCommandHandler<UpdateBlockCommand, bool>(unitOfWork, logger, inventoryCache),
 		IUpdateBlockHandler
 {
 	private Block block = null!;
@@ -29,7 +29,7 @@ public class UpdateBlockHandler(
 		command.User.ThrowIfNoAccessToBlock(AccessType.Manager, command.BlockId);
 	}
 
-	public override async Task<int> ExecuteInTransactionAsync(UpdateBlockCommand command, CancellationToken ct = default)
+	public override async Task<bool> ExecuteInTransactionAsync(UpdateBlockCommand command, CancellationToken ct = default)
 	{
 		block = await blocksRepository.GetByIdAsync(command.BlockId, ct)
 			?? throw InventoryNotFoundException.NotFoundBlock(command.BlockId);
@@ -49,7 +49,7 @@ public class UpdateBlockHandler(
 		var audit = new AuditLog(command.User.Guid, $"Изменения: diff", blockId: block.Id);
 		await auditRepository.AddAsync(audit, ct);
 
-		return block.Id;
+		return true;
 	}
 
 	public override IInventoryState UpdateCache(IInventoryState state) => state.WithBlock(block).WithBlockTags(block.Id, blockTags);

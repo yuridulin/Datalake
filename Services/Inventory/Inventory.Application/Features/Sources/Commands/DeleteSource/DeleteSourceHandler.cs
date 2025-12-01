@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Datalake.Inventory.Application.Features.Sources.Commands.DeleteSource;
 
-public interface IDeleteSourceHandler : ICommandHandler<DeleteSourceCommand, int> { }
+public interface IDeleteSourceHandler : ICommandHandler<DeleteSourceCommand, bool> { }
 
 public class DeleteSourceHandler(
 	ISourcesRepository sourcesRepository,
@@ -18,7 +18,7 @@ public class DeleteSourceHandler(
 	IUnitOfWork unitOfWork,
 	IInventoryStore inventoryCache,
 	ILogger<DeleteSourceHandler> logger) :
-		TransactionalCommandHandler<DeleteSourceCommand, int>(unitOfWork, logger, inventoryCache),
+		TransactionalCommandHandler<DeleteSourceCommand, bool>(unitOfWork, logger, inventoryCache),
 		IDeleteSourceHandler
 {
 	public override void CheckPermissions(DeleteSourceCommand command)
@@ -28,7 +28,7 @@ public class DeleteSourceHandler(
 
 	Source source = null!;
 
-	public override async Task<int> ExecuteInTransactionAsync(DeleteSourceCommand command, CancellationToken ct = default)
+	public override async Task<bool> ExecuteInTransactionAsync(DeleteSourceCommand command, CancellationToken ct = default)
 	{
 		source = await sourcesRepository.GetByIdAsync(command.SourceId, ct)
 			?? throw InventoryNotFoundException.NotFoundSource(command.SourceId);
@@ -41,7 +41,7 @@ public class DeleteSourceHandler(
 		await calculatedAccessRulesRepository.RemoveBySourceId(source.Id, ct);
 		await auditRepository.AddAsync(new(command.User.Guid, "Источник данных удален", sourceId: source.Id), ct);
 
-		return source.Id;
+		return true;
 	}
 
 	public override IInventoryState UpdateCache(IInventoryState state) => state.WithSource(source);

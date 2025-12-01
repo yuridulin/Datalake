@@ -116,9 +116,9 @@ export class TagsStore extends BaseCacheStore {
 				logger.info('Tag created successfully', {
 					component: 'TagsStore',
 					method: 'createTag',
-					tagId: response.data?.id,
+					tagId: response.data.id,
 				})
-				this.tryLoadTags()
+				this.refreshTags()
 			})
 
 			return response.data

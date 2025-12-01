@@ -5,7 +5,7 @@ namespace Datalake.Inventory.Application.Queries;
 
 public interface IAuditQueriesService
 {
-	Task<IEnumerable<LogInfo>> GetAsync(
+	Task<List<LogInfo>> GetAsync(
 		int? lastId = null,
 		int? firstId = null,
 		int? take = null,

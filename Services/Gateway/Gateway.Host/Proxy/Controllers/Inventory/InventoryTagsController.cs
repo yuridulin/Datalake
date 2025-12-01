@@ -12,10 +12,10 @@ namespace Datalake.Gateway.Host.Proxy.Controllers.Inventory;
 public class InventoryTagsController(InventoryReverseProxyService proxyService) : InventoryTagsControllerBase
 {
 	/// <inheritdoc />
-	public override Task<ActionResult<int>> CreateAsync(
+	public override Task<ActionResult<TagSimpleInfo>> CreateAsync(
 		[BindRequired, FromBody] TagCreateRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<int>(HttpContext, request, ct);
+			=> proxyService.ProxyAsync<TagSimpleInfo>(HttpContext, request, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<TagWithSettingsAndBlocksInfo>> GetWithSettingsAndBlocksAsync(
@@ -24,33 +24,33 @@ public class InventoryTagsController(InventoryReverseProxyService proxyService) 
 			=> proxyService.ProxyAsync<TagWithSettingsAndBlocksInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<TagSimpleInfo[]>> GetAllAsync(
+	public override Task<ActionResult<List<TagSimpleInfo>>> GetAllAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
 		[FromQuery] TagType? type,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<TagSimpleInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<TagSimpleInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<TagWithSettingsInfo[]>> GetAllWithSettingsAsync(
+	public override Task<ActionResult<List<TagWithSettingsInfo>>> GetAllWithSettingsAsync(
 		[FromQuery] int? sourceId,
 		[FromQuery] int[]? tagsId,
 		[FromQuery] Guid[]? tagsGuid,
 		[FromQuery] TagType? type,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<TagWithSettingsInfo[]>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<TagWithSettingsInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> UpdateAsync(
+	public override Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] int tagId,
 		[BindRequired, FromBody] TagUpdateRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, request, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> DeleteAsync(
+	public override Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] int tagId,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, ct);
 }

@@ -22,21 +22,21 @@ public class InventorySourcesController(InventoryReverseProxyService proxyServic
 			=> proxyService.ProxyAsync<SourceWithSettingsAndTagsInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<IEnumerable<SourceWithSettingsInfo>>> GetAllAsync(
+	public override Task<ActionResult<List<SourceWithSettingsInfo>>> GetAllAsync(
 		[FromQuery] bool withCustom = false,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IEnumerable<SourceWithSettingsInfo>>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<SourceWithSettingsInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> UpdateAsync(
+	public override Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] int sourceId,
 		[BindRequired, FromBody] SourceUpdateRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, request, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> DeleteAsync(
+	public override Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] int sourceId,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, ct);
 }

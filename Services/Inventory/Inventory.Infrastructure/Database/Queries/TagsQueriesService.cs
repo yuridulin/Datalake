@@ -8,7 +8,7 @@ namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
 public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesService
 {
-	public async Task<TagSimpleInfo[]> GetAsync(
+	public async Task<List<TagSimpleInfo>> GetAsync(
 		IEnumerable<int>? identifiers = null,
 		IEnumerable<Guid>? guids = null,
 		TagType? type = null,
@@ -26,10 +26,10 @@ public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesSe
 		if (sourceId != null)
 			query = query.Where(x => x.SourceId == sourceId);
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 
-	public async Task<TagWithSettingsInfo[]> GetWithSettingsAsync(
+	public async Task<List<TagWithSettingsInfo>> GetWithSettingsAsync(
 		IEnumerable<int>? identifiers = null,
 		IEnumerable<Guid>? guids = null,
 		TagType? type = null,
@@ -106,10 +106,10 @@ public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesSe
 		if (sourceId != null)
 			query = query.Where(x => x.SourceId == sourceId);
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 
-	public async Task<TagInputInfo[]> GetInputsAsync(IEnumerable<int> tagsId, CancellationToken ct = default)
+	public async Task<List<TagInputInfo>> GetInputsAsync(IEnumerable<int> tagsId, CancellationToken ct = default)
 	{
 		var query =
 			from input in context.TagInputs
@@ -122,10 +122,10 @@ public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesSe
 				Tag = tag,
 			};
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 
-	public async Task<TagThresholdInfo[]> GetThresholdsAsync(IEnumerable<int> tagsId, CancellationToken ct = default)
+	public async Task<List<TagThresholdInfo>> GetThresholdsAsync(IEnumerable<int> tagsId, CancellationToken ct = default)
 	{
 		var query =
 			from threshold in context.TagThresholds
@@ -136,10 +136,10 @@ public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesSe
 				Result = threshold.OutputValue,
 			};
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 
-	public async Task<TagBlockRelationInfo[]> GetRelationsToBlocksAsync(int tagId, CancellationToken ct = default)
+	public async Task<List<TagBlockRelationInfo>> GetRelationsToBlocksAsync(int tagId, CancellationToken ct = default)
 	{
 		var query =
 			from relation in context.BlockTags
@@ -152,6 +152,6 @@ public class TagsQueriesService(InventoryDbLinqContext context) : ITagsQueriesSe
 				Block = block,
 			};
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 }

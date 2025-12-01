@@ -10,10 +10,10 @@ namespace Datalake.Inventory.Infrastructure.Database.Queries;
 
 public class UsersQueriesService(InventoryDbLinqContext context) : IUsersQueriesService
 {
-	public async Task<IEnumerable<UserInfo>> GetAsync(CancellationToken ct = default)
+	public async Task<List<UserInfo>> GetAsync(CancellationToken ct = default)
 	{
 		return await QueryUsersInfo()
-			.ToArrayAsync(ct);
+			.ToListAsync(ct);
 	}
 
 	public async Task<UserInfo?> GetByGuidAsync(Guid userGuid, CancellationToken ct = default)
@@ -24,14 +24,14 @@ public class UsersQueriesService(InventoryDbLinqContext context) : IUsersQueries
 		return await query.FirstOrDefaultAsync(ct);
 	}
 
-	public async Task<IEnumerable<UserGroupSimpleInfo>> GetGroupsWithMemberAsync(Guid userGuid, CancellationToken ct)
+	public async Task<List<UserGroupSimpleInfo>> GetGroupsWithMemberAsync(Guid userGuid, CancellationToken ct)
 	{
 		var query =
 			from relation in context.UserGroupRelations
 			from userGroup in context.UserGroups.AsSimpleInfo().InnerJoin(x => x.Guid == relation.UserGroupGuid)
 			select userGroup;
 
-		return await query.ToArrayAsync(ct);
+		return await query.ToListAsync(ct);
 	}
 
 	private IQueryable<UserInfo> QueryUsersInfo()

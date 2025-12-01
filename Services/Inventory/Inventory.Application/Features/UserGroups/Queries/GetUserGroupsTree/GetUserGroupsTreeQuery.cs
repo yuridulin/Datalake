@@ -4,7 +4,7 @@ using Datalake.Shared.Application.Interfaces;
 
 namespace Datalake.Inventory.Application.Features.UserGroups.Queries.GetUserGroupsTree;
 
-public class GetUserGroupsTreeQuery : IQueryRequest<IEnumerable<UserGroupTreeInfo>>, IWithUserAccess
+public class GetUserGroupsTreeQuery : IQueryRequest<List<UserGroupTreeInfo>>, IWithUserAccess
 {
 	public required UserAccessValue User { get; init; }
 }

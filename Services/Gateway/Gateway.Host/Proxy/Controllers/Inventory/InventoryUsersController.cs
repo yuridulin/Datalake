@@ -17,10 +17,10 @@ public class InventoryUsersController(InventoryReverseProxyService proxyService)
 			=> proxyService.ProxyAsync<Guid>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult<IEnumerable<UserInfo>>> GetAsync(
+	public override Task<ActionResult<List<UserInfo>>> GetAsync(
 		[FromQuery] Guid? userGuid,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync<IEnumerable<UserInfo>>(HttpContext, ct);
+			=> proxyService.ProxyAsync<List<UserInfo>>(HttpContext, ct);
 
 	/// <inheritdoc />
 	public override Task<ActionResult<UserWithGroupsInfo>> GetWithDetailsAsync(
@@ -29,15 +29,15 @@ public class InventoryUsersController(InventoryReverseProxyService proxyService)
 			=> proxyService.ProxyAsync<UserWithGroupsInfo>(HttpContext, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> UpdateAsync(
+	public override Task<ActionResult<bool>> UpdateAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		[BindRequired, FromBody] UserUpdateRequest request,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, request, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, request, ct);
 
 	/// <inheritdoc />
-	public override Task<ActionResult> DeleteAsync(
+	public override Task<ActionResult<bool>> DeleteAsync(
 		[BindRequired, FromRoute] Guid userGuid,
 		CancellationToken ct = default)
-			=> proxyService.ProxyAsync(HttpContext, ct);
+			=> proxyService.ProxyAsync<bool>(HttpContext, ct);
 }
