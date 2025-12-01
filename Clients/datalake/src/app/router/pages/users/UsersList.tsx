@@ -30,12 +30,46 @@ const UsersList = observer(() => {
 		navigate(routes.users.create)
 	}
 
+	// Используем ref для отслеживания монтирования компонента
+	const isMountedRef = useRef(true)
+
+	useEffect(() => {
+		isMountedRef.current = true
+		return () => {
+			isMountedRef.current = false
+		}
+	}, [])
+
+	// Стабилизируем массив guids через ref, чтобы getStates не пересоздавался
+	const usersGuidsRef = useRef<string[]>([])
+	const prevUsersGuidsStringRef = useRef<string>('')
+
+	// Обновляем ref только когда действительно меняется содержимое массива
+	useEffect(() => {
+		const currentGuids = users.map((x) => x.guid)
+		const currentGuidsString = [...currentGuids].sort().join(',')
+
+		if (currentGuidsString !== prevUsersGuidsStringRef.current) {
+			usersGuidsRef.current = currentGuids
+			prevUsersGuidsStringRef.current = currentGuidsString
+		}
+	}, [users])
+
 	const getStates = useCallback(async () => {
-		if (!store.hasGlobalAccess(AccessType.Manager) || users.length === 0) return
+		// Проверяем, что компонент все еще смонтирован
+		if (!isMountedRef.current) {
+			console.log('getStates skipped - component unmounted')
+			return
+		}
 		console.log('getStates trigger')
-		const res = await store.api.usersGetActivity(users.map((x) => x.guid))
+		const res = await store.api.usersGetActivity(usersGuidsRef.current)
+		// Проверяем еще раз после асинхронной операции
+		if (!isMountedRef.current) {
+			console.log('getStates skipped - component unmounted after request')
+			return
+		}
 		setStates(res.data)
-	}, [store, users])
+	}, [store.api])
 
 	const hasLoadedRef = useRef(false)
 

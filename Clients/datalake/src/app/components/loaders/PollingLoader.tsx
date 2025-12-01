@@ -18,6 +18,8 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 	const lastUpdateRef = useRef<dayjs.Dayjs>(dayjs())
 	const isInitialMount = useRef(true)
 	const isMountedRef = useRef(true) // Добавляем флаг монтирования
+	const pollingFunctionRef = useRef(pollingFunction) // Ref для актуальной функции
+	const hasStartedPollingRef = useRef(false) // Флаг для отслеживания запуска polling
 
 	// Добавляем стили для анимации бегунка
 	useEffect(() => {
@@ -49,14 +51,28 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 
 	useEffect(() => console.log('polling status', [status]), [status])
 
-	const executePoll = useCallback(async () => {
-		if (!isMountedRef.current) return // Прерываем если компонент размонтирован
+	// Обновляем ref при изменении pollingFunction
+	useEffect(() => {
+		pollingFunctionRef.current = pollingFunction
+	}, [pollingFunction])
 
+	const executePollRef = useRef<(() => Promise<void>) | undefined>(undefined)
+
+	const executePoll = useCallback(async () => {
+		if (!isMountedRef.current) {
+			console.log('executePoll skipped - component unmounted')
+			return // Прерываем если компонент размонтирован
+		}
+
+		console.log('executePoll called')
 		setStatus('loading')
 
 		try {
-			await pollingFunction()
-			if (!isMountedRef.current) return // Проверяем после асинхронной операции
+			await pollingFunctionRef.current()
+			if (!isMountedRef.current) {
+				console.log('executePoll skipped - component unmounted after pollingFunction')
+				return // Проверяем после асинхронной операции
+			}
 
 			setStatus('success')
 
@@ -79,7 +95,7 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 					if (newProgress < 100) {
 						animationRef.current = requestAnimationFrame(animateWaiting)
 					} else {
-						executePoll()
+						executePollRef.current?.()
 					}
 				}
 
@@ -108,24 +124,58 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 					if (newProgress < 100) {
 						animationRef.current = requestAnimationFrame(animateWaiting)
 					} else {
-						executePoll()
+						executePollRef.current?.()
 					}
 				}
 
 				animationRef.current = requestAnimationFrame(animateWaiting)
 			}, statusDuration)
 		}
-	}, [pollingFunction, interval, statusDuration])
+	}, [interval, statusDuration])
+
+	// Обновляем ref при изменении executePoll
+	executePollRef.current = executePoll
 
 	useEffect(() => {
+		console.log(
+			'PollingLoader useEffect triggered, isInitialMount:',
+			isInitialMount.current,
+			'hasStartedPolling:',
+			hasStartedPollingRef.current,
+		)
 		isMountedRef.current = true // Устанавливаем флаг при монтировании
 
+		// Очищаем предыдущие таймеры и анимации перед запуском новых
+		if (pollingRef.current) {
+			clearTimeout(pollingRef.current)
+			pollingRef.current = 0
+		}
+		if (animationRef.current) {
+			cancelAnimationFrame(animationRef.current)
+			animationRef.current = 0
+		}
+
+		// Предотвращаем двойной запуск при первом монтировании (StrictMode)
 		if (isInitialMount.current) {
-			isInitialMount.current = false
-			executePoll()
+			if (!hasStartedPollingRef.current) {
+				hasStartedPollingRef.current = true
+				console.log('Initial mount - calling executePoll')
+				// Не сбрасываем isInitialMount здесь, чтобы предотвратить запуск анимации при повторном вызове эффекта в StrictMode
+				executePollRef.current?.()
+			} else {
+				console.log('Initial mount already processed, skipping')
+			}
 			return
 		}
 
+		// Если это не первый монтирование и polling уже запущен, не запускаем анимацию заново
+		// (это может произойти при изменении interval)
+		if (hasStartedPollingRef.current) {
+			console.log('Polling already started, skipping animation setup')
+			return
+		}
+
+		console.log('Not initial mount - starting animation')
 		setStatus('waiting')
 		setProgress(0)
 		startTimeRef.current = dayjs()
@@ -143,22 +193,28 @@ const PollingLoader: React.FC<PollingLoaderProps> = ({ pollingFunction, interval
 			if (newProgress < 100) {
 				animationRef.current = requestAnimationFrame(animateWaiting)
 			} else {
-				executePoll()
+				console.log('Animation complete - calling executePoll')
+				executePollRef.current?.()
 			}
 		}
 
 		animationRef.current = requestAnimationFrame(animateWaiting)
 
 		return () => {
+			console.log('PollingLoader cleanup')
 			isMountedRef.current = false // Сбрасываем флаг при размонтировании
+			hasStartedPollingRef.current = false // Сбрасываем флаг при размонтировании
+			isInitialMount.current = true // Сбрасываем флаг для следующего монтирования
 			if (pollingRef.current) {
 				clearTimeout(pollingRef.current)
+				pollingRef.current = 0
 			}
 			if (animationRef.current) {
 				cancelAnimationFrame(animationRef.current)
+				animationRef.current = 0
 			}
 		}
-	}, [executePoll, interval])
+	}, [interval])
 
 	return (
 		<div
