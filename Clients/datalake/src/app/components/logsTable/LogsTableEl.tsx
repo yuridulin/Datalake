@@ -7,7 +7,7 @@ import { logger } from '@/services/logger'
 import { useAppStore } from '@/store/useAppStore'
 import { Button, Table } from 'antd'
 import { ColumnType } from 'antd/es/table'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 type LogsTableElProps = {
 	sourceId?: number
@@ -79,6 +79,16 @@ const LogsTableEl = ({ sourceId, blockId, tagId, userGuid, userGroupGuid }: Logs
 
 	const [logs, setLogs] = useState([] as LogInfo[])
 	const [reachEnd, setReachEnd] = useState(false)
+	const isMountedRef = useRef(true)
+
+	// Отслеживаем монтирование компонента
+	useEffect(() => {
+		isMountedRef.current = true
+		return () => {
+			isMountedRef.current = false
+		}
+	}, [])
+
 	const isGlobal = useMemo(
 		() => !sourceId && !blockId && !tagId && !userGuid && !userGroupGuid,
 		[sourceId, blockId, tagId, userGuid, userGroupGuid],
@@ -86,16 +96,16 @@ const LogsTableEl = ({ sourceId, blockId, tagId, userGuid, userGroupGuid }: Logs
 	const step = useMemo(() => (isGlobal ? 100 : 10), [isGlobal])
 
 	const addLogs = (newLogs: LogInfo[]) => {
-		if (!newLogs.length) return
+		if (!isMountedRef.current || !newLogs.length) return
 		logger.debug('addLogs', {
 			component: 'LogsTableEl',
 			action: 'addLogs',
 			from: Math.min(...newLogs.map((x) => x.id)),
 			to: Math.max(...newLogs.map((x) => x.id)),
 		})
-		setLogs(() => {
+		setLogs((prevLogs) => {
 			const uniqueLogs: Record<number, LogInfo> = {}
-			logs.concat(newLogs).forEach((log) => {
+			prevLogs.concat(newLogs).forEach((log) => {
 				uniqueLogs[log.id] = log
 			})
 			return Object.values(uniqueLogs).reverse()
@@ -103,6 +113,11 @@ const LogsTableEl = ({ sourceId, blockId, tagId, userGuid, userGroupGuid }: Logs
 	}
 
 	const loadNewLogs = () => {
+		if (!isMountedRef.current) {
+			console.log('loadNewLogs skipped - component unmounted')
+			return
+		}
+
 		store.api
 			.inventoryAuditGet({
 				lastId: logs.reduce((acc, log) => (log.id > acc ? log.id : acc), 0),
@@ -114,12 +129,21 @@ const LogsTableEl = ({ sourceId, blockId, tagId, userGuid, userGroupGuid }: Logs
 				group: userGroupGuid,
 			})
 			.then((res) => {
+				if (!isMountedRef.current) {
+					console.log('loadNewLogs skipped - component unmounted after request')
+					return
+				}
 				addLogs(res.data)
 			})
 			.catch(() => {})
 	}
 
 	const loadOldLogs = () => {
+		if (!isMountedRef.current) {
+			console.log('loadOldLogs skipped - component unmounted')
+			return
+		}
+
 		store.api
 			.inventoryAuditGet({
 				firstId: logs.reduce((acc, log) => (log.id < acc ? log.id : acc), Infinity),
@@ -131,6 +155,10 @@ const LogsTableEl = ({ sourceId, blockId, tagId, userGuid, userGroupGuid }: Logs
 				group: userGroupGuid,
 			})
 			.then((res) => {
+				if (!isMountedRef.current) {
+					console.log('loadOldLogs skipped - component unmounted after request')
+					return
+				}
 				addLogs(res.data)
 				// если пришло меньше, чем запросили - логов для загрузки не осталось, скрываем кнопку
 				if (res.data.length < step) setReachEnd(true)

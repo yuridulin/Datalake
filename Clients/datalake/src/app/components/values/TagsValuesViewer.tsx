@@ -52,6 +52,15 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	const [showWrite, setWrite] = useState<boolean>(false)
 
 	const tableRef = useRef<ExcelExportModeHandles>(null)
+	const isMountedRef = useRef(true)
+
+	// Отслеживаем монтирование компонента
+	useEffect(() => {
+		isMountedRef.current = true
+		return () => {
+			isMountedRef.current = false
+		}
+	}, [])
 
 	const [settings, setSettings] = useState<ViewerSettings>({
 		activeRelations: relations,
@@ -92,6 +101,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 	}, [relations, settings])
 
 	const getValues = useCallback(() => {
+		if (!isMountedRef.current) return
+
 		setLoading(true)
 		if (settings.activeRelations.length === 0) {
 			setLoading(false)
@@ -126,6 +137,8 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 				},
 			])
 			.then((res) => {
+				if (!isMountedRef.current) return
+
 				const tagValuesMap = new Map<number, ValueRecord[]>()
 				res.data[0].tags.forEach((tag) => {
 					tagValuesMap.set(tag.id, tag.values)
@@ -151,7 +164,11 @@ const TagsValuesViewer = observer(({ relations, tagMapping, integrated = false, 
 				setWrite(res.data[0].tags.some((x) => x.sourceType === SourceType.Manual))
 			})
 			.catch(console.error)
-			.finally(() => setLoading(false))
+			.finally(() => {
+				if (isMountedRef.current) {
+					setLoading(false)
+				}
+			})
 	}, [store.api, tagMapping, settings])
 
 	useEffect(() => {

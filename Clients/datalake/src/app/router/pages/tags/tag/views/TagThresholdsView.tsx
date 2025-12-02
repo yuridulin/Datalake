@@ -7,7 +7,7 @@ import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { DollarCircleOutlined } from '@ant-design/icons'
 import { Space, Table } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface TagThresholdsViewProps {
 	tag: TagWithSettingsAndBlocksInfo
@@ -18,11 +18,25 @@ type TagThresholdsValues = Record<number, ValueRecord>
 const TagThresholdsView = ({ tag }: TagThresholdsViewProps) => {
 	const store = useAppStore()
 	const [values, setValues] = useState<TagThresholdsValues>({})
+	const isMountedRef = useRef(true)
+
+	// Отслеживаем монтирование компонента
+	useEffect(() => {
+		isMountedRef.current = true
+		return () => {
+			isMountedRef.current = false
+		}
+	}, [])
 
 	const getValues = useCallback(async () => {
+		if (!isMountedRef.current) return
+
 		const res = await store.api.dataValuesGet([
 			{ requestKey: CLIENT_REQUESTKEY, tagsId: [tag.id, tag.thresholdSourceTag?.id ?? 0] },
 		])
+
+		if (!isMountedRef.current) return
+
 		const newValues: TagThresholdsValues = {}
 		res.data[0].tags.forEach((x) => {
 			newValues[x.id] = x.values[0]

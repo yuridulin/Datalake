@@ -7,7 +7,7 @@ import useDatalakeTitle from '@/hooks/useDatalakeTitle'
 import { useAppStore } from '@/store/useAppStore'
 import { Input, Table, TableColumnsType } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useLocalStorage } from 'react-use'
 import routes from '../../routes'
@@ -19,6 +19,15 @@ const BlocksTree = observer(() => {
 
 	const store = useAppStore()
 	const [search, setSearch] = useState('')
+	const isMountedRef = useRef(true)
+
+	// Отслеживаем монтирование компонента
+	useEffect(() => {
+		isMountedRef.current = true
+		return () => {
+			isMountedRef.current = false
+		}
+	}, [])
 
 	const [expandedRowKeys, setExpandedRowKeys] = useLocalStorage(EXPAND_KEY, [] as number[])
 	const tree = store.blocksStore.searchBlocks(search)
@@ -30,7 +39,10 @@ const BlocksTree = observer(() => {
 		setExpandedRowKeys(newKeys)
 	}
 
-	const refreshFunc = useCallback(() => store.blocksStore.refreshBlocks(), [store.blocksStore])
+	const refreshFunc = useCallback(() => {
+		if (!isMountedRef.current) return
+		store.blocksStore.refreshBlocks()
+	}, [store.blocksStore])
 	useEffect(refreshFunc, [refreshFunc])
 
 	const columns: TableColumnsType<BlockTreeInfo> = [

@@ -10,7 +10,7 @@ import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Input, Table } from 'antd'
 import Column from 'antd/es/table/Column'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 interface TagsTableProps {
 	tags: TagSimpleInfo[]
@@ -23,6 +23,15 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 	const store = useAppStore()
 	const [viewingTags, setViewingTags] = useState(tags)
 	const tagsId = useMemo(() => viewingTags.map((x) => x.id), [viewingTags])
+	const isMountedRef = useRef(true)
+
+	// Отслеживаем монтирование компонента
+	useEffect(() => {
+		isMountedRef.current = true
+		return () => {
+			isMountedRef.current = false
+		}
+	}, [])
 
 	// Значения
 	const [values, setValues] = useState(new Map<number, ValueRecord>())
@@ -32,9 +41,12 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 
 	// Функция обновления
 	const pollingFunc = useCallback(() => {
+		if (!isMountedRef.current) return
+
 		store.api
 			.dataValuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: tagsId }])
 			.then((res) => {
+				if (!isMountedRef.current) return
 				const map = new Map<number, ValueRecord>()
 				for (const tagWithValue of res.data[0].tags) {
 					map.set(tagWithValue.id, tagWithValue.values[0])
@@ -42,10 +54,12 @@ const TagsTable = observer(({ tags, hideSource = false, hideValue = false, showS
 				setValues(map)
 			})
 			.catch(() => {
+				if (!isMountedRef.current) return
 				store.notify?.warning({ message: 'Ошибка при получении значений' })
 			})
 
 		store.api.dataTagsGetStatus({ tagsId: tagsId }).then((res) => {
+			if (!isMountedRef.current) return
 			const map = new Map<number, TagStatusInfo>()
 			for (const state of res.data) {
 				map.set(state.tagId, state)

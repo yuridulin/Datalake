@@ -7,7 +7,7 @@ import { TagInputInfo, ValueRecord } from '@/generated/data-contracts'
 import { useAppStore } from '@/store/useAppStore'
 import { CLIENT_REQUESTKEY } from '@/types/constants'
 import { Table } from 'antd'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface TagFormulaViewProps {
 	id: number
@@ -21,6 +21,15 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 	const store = useAppStore()
 	const [values, setValues] = useState<TagFormulaValues>({})
 	const [status, setStatus] = useState<string | undefined>()
+	const isMountedRef = useRef(true)
+
+	// Отслеживаем монтирование компонента
+	useEffect(() => {
+		isMountedRef.current = true
+		return () => {
+			isMountedRef.current = false
+		}
+	}, [])
 
 	const renderFormulaWithValues = useCallback(
 		(values: TagFormulaValues) => {
@@ -83,11 +92,12 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 	}
 
 	const getValues = useCallback(() => {
-		if (!inputs.length) return
+		if (!isMountedRef.current || !inputs.length) return
 		const tagIds = inputs.map((x) => x.tag?.id).filter((id): id is number => id !== null && id !== undefined)
 		if (!tagIds.length) return
 		return Promise.all([
 			store.api.dataValuesGet([{ requestKey: CLIENT_REQUESTKEY, tagsId: tagIds }]).then((res) => {
+				if (!isMountedRef.current) return
 				const newValues = res.data[0].tags.reduce((acc, next) => {
 					acc[next.id] = next.values[0]
 					return acc
@@ -97,10 +107,15 @@ const TagFormulaView = ({ id, formula, inputs }: TagFormulaViewProps) => {
 			store.api
 				.dataTagsGetStatus({ tagsId: [id] })
 				.then((res) => {
+					if (!isMountedRef.current) return
 					const statusInfo = res.data[id]
 					setStatus(statusInfo?.status ?? undefined)
 				})
-				.catch(() => setStatus(undefined)),
+				.catch(() => {
+					if (isMountedRef.current) {
+						setStatus(undefined)
+					}
+				}),
 		])
 	}, [store.api, id, inputs])
 

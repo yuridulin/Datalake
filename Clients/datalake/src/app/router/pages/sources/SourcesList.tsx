@@ -9,7 +9,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { CheckOutlined, DisconnectOutlined } from '@ant-design/icons'
 import { Button, notification, Table, TableColumnsType, Tag } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 
 interface DataCell extends SourceWithSettingsInfo {
@@ -134,6 +134,15 @@ const NotEnteredTypes = [SourceType.Aggregated, SourceType.Calculated, SourceTyp
 const SourcesList = observer(() => {
 	useDatalakeTitle('Источники')
 	const store = useAppStore()
+	const isMountedRef = useRef(true)
+
+	// Отслеживаем монтирование компонента
+	useEffect(() => {
+		isMountedRef.current = true
+		return () => {
+			isMountedRef.current = false
+		}
+	}, [])
 
 	const sources = store.sourcesStore.sources
 	const sourcesIdentifiers = useMemo(() => sources.map((x) => x.id), [sources])
@@ -193,7 +202,7 @@ const SourcesList = observer(() => {
 	}, [sources, sourcesActivity])
 
 	const refreshActivityFunc = useCallback(() => {
-		if (!sourcesIdentifiers.length) return
+		if (!isMountedRef.current || !sourcesIdentifiers.length) return
 		store.sourcesStore.refreshActivity(sourcesIdentifiers)
 	}, [store.sourcesStore, sourcesIdentifiers])
 	useEffect(refreshActivityFunc, [refreshActivityFunc])
